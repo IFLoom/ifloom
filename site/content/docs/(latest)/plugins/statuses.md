@@ -187,7 +187,7 @@ Use them for a button the player presses, such as "Shake it off".
 
 `view(state, game).plugins.statuses` is a `StatusesView`.
 
-Its [React UI](#the-react-ui) lists the active statuses under the stats with [`StatusList`](#statuslist), and [`useStatuses`](#usestatuses) gives this view with no markup.
+Its [React UI](#drawing-it) lists the active statuses under the stats with [`StatusList`](#statuslist), and [`useStatuses`](#usestatuses) gives this view with no markup.
 
 ### StatusesView
 
@@ -219,18 +219,19 @@ type ActiveStatus = {
 
 The stats in `view.stats` already include the modifiers, so a UI shows the stat as it is and can list the statuses beside it.
 
-## The React UI
+## Drawing it
 
-`@ifloom/plugin-statuses/react` draws the statuses in play, for a game drawn with [`@ifloom/react`](/docs/react). List `statusesUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the [`StatusList`](#statuslist) goes under the stats in the side column, and the `statuses` panel draws it too.
+`view.plugins.statuses` is a [`StatusesView`](#statusesview): each active status with its name, its description, the turns it has left and its stacks. The stats in `view.stats` already include what the statuses add, so draw them beside the stats.
 
-It's yours to leave out. Draw the plugin yourself from `view.plugins.statuses`, or from [`useStatuses`](#usestatuses) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+`@ifloom/plugin-statuses/react` draws the statuses in play, for a game drawn with [`@ifloom/react`](/docs/react). List `statusesUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the [`StatusList`](#statuslist) goes under the stats in the side column, and the `statuses` panel draws it too. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-```tsx
-import { mountGame } from '@ifloom/react'
-import { statusesUi } from '@ifloom/plugin-statuses/react'
+::include[../../../../snippets/plain/statuses.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-mountGame(game, { plugins: [statusesUi] })
-```
+::include[../../../../snippets/react/mount-statuses.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/vue/Statuses.vue]{meta='tab="Vue" tab-group="framework"'}
+
+The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.statuses`, or from [`useStatuses`](#usestatuses) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
 ### statusesUi
 
@@ -271,14 +272,7 @@ function useStatuses(): StatusesView | null
 
 The statuses plugin's view, `active`, each an [`ActiveStatus`](/docs/plugins/statuses#statusesview) with its `name`, `description`, `turnsLeft`, `stacks` and `modifiers`. `null` in a game without the plugin. [`StatusList`](#statuslist) is drawn from it.
 
-```tsx
-import { useStatuses } from '@ifloom/plugin-statuses/react'
-
-function StatusIcons() {
-  const active = useStatuses()?.active ?? []
-  return <p>{active.map((status) => `${status.name} (${status.turnsLeft})`).join(', ')}</p>
-}
-```
+::include[../../../../snippets/react/use-statuses.tsx]
 
 ## The state
 

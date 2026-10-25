@@ -393,7 +393,7 @@ App and device names aren't strings. They're the game's own, given in each [`App
 
 `view(state, game).plugins.devices` is a `DevicesView`.
 
-Its [React UI](#the-react-ui) draws it with [`DeviceButtons`](#devicebuttons) and a [`DeviceDialog`](#devicedialog), and [`useDevices`](#usedevices) gives the devices with no markup.
+Its [React UI](#drawing-it) draws it with [`DeviceButtons`](#devicebuttons) and a [`DeviceDialog`](#devicedialog), and [`useDevices`](#usedevices) gives the devices with no markup.
 
 ### DevicesView
 
@@ -474,18 +474,19 @@ type SectionView =
 | `plugin` | `{ plugin, with }` | Only the plugin's id and `with`. The data is the plugin's own slice, at `view.plugins[plugin]`. |
 | `panel` | `{ panel, with }` | The panel's name, and the section's `with`, or `{}`. |
 
-## The React UI
+## Drawing it
 
-`@ifloom/plugin-devices/react` draws the devices and their apps, for a game drawn with [`@ifloom/react`](/docs/react). List `devicesUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a button for each device goes in the side column, and each app with news goes in the [`NoticeStrip`](/docs/react/components#noticestrip). An app's plugin sections are drawn by the UI of the plugin they name, so list [`messagesUi`](/docs/plugins/messages#messagesui) and [`feedUi`](/docs/plugins/feed#feedui) too.
+`view.plugins.devices` is a [`DevicesView`](#devicesview): each device with its apps, and the app that's open, if one is. An app's `command` opens it, and `devices/close` takes the device back to its home screen. The open app's `sections` are words, buttons, lists, or another plugin's part, such as a messages channel.
 
-It's yours to leave out. Draw the plugin yourself from `view.plugins.devices`, or from [`useDevices`](#usedevices) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+`@ifloom/plugin-devices/react` draws the devices and their apps, for a game drawn with [`@ifloom/react`](/docs/react). List `devicesUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a button for each device goes in the side column, and each app with news goes in the [`NoticeStrip`](/docs/react/components#noticestrip). An app's plugin sections are drawn by the UI of the plugin they name, so list [`messagesUi`](/docs/plugins/messages#messagesui) and [`feedUi`](/docs/plugins/feed#feedui) too. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-```tsx
-import { mountGame } from '@ifloom/react'
-import { devicesUi } from '@ifloom/plugin-devices/react'
+::include[../../../../snippets/plain/devices.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-mountGame(game, { plugins: [devicesUi] })
-```
+::include[../../../../snippets/react/mount-devices.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/vue/Devices.vue]{meta='tab="Vue" tab-group="framework"'}
+
+The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.devices`, or from [`useDevices`](#usedevices) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
 ### devicesUi
 
@@ -523,21 +524,7 @@ function DeviceDialog(props: { deviceId: string | null; onClose: () => void }): 
 
 The device with this id in a [`Dialog`](/docs/react/components#dialog), titled with its name and drawn as a [`DeviceScreen`](#devicescreen). It's closed while `deviceId` is `null` or matches no device. `onClose` is called when the player closes it. The content carries `data-frame` with the device's frame, and a phone's dialog is narrower.
 
-```tsx
-import { useState } from 'react'
-import { Button } from '@ifloom/react'
-import { DeviceDialog } from '@ifloom/plugin-devices/react'
-
-function LaptopButton() {
-  const [open, setOpen] = useState<string | null>(null)
-  return (
-    <>
-      <Button onClick={() => setOpen('laptop')}>Laptop</Button>
-      <DeviceDialog deviceId={open} onClose={() => setOpen(null)} />
-    </>
-  )
-}
-```
+::include[../../../../snippets/react/device-dialog.tsx]
 
 Replaceable as `DeviceDialog` in [`components`](/docs/react/components#components). Parts: `dialog` (with `data-frame`), `dialog-overlay`, `dialog-title` and `dialog-close`.
 
@@ -583,16 +570,7 @@ type DevicesState = DeviceView[]
 
 The devices in the view, `view.plugins.devices.devices`, as [`DeviceView`](/docs/plugins/devices#deviceview)s. It returns `[]` in a game without the plugin. Use it for a device button of your own:
 
-```tsx
-import { Badge } from '@ifloom/react'
-import { useDevices } from '@ifloom/plugin-devices/react'
-
-function PhoneBadge() {
-  const phone = useDevices().find((device) => device.id === 'phone')
-  if (!phone) return null
-  return <Badge>{phone.badge}</Badge>
-}
-```
+::include[../../../../snippets/react/use-devices.tsx]
 
 ### useDevice
 
@@ -609,19 +587,7 @@ type DeviceState = {
 
 Which device is open in a dialog, and how to open and close one. `device` is the open device as the view has it, or `null`, also when `openId` no longer names one. Each call keeps its own state, so call it once and share it between your buttons and the dialog. [`DeviceButtons`](#devicebuttons) uses it.
 
-```tsx
-import { DeviceDialog, useDevice } from '@ifloom/plugin-devices/react'
-
-function PhoneButton() {
-  const { openId, open, close } = useDevice()
-  return (
-    <>
-      <button onClick={() => open('phone')}>Phone</button>
-      <DeviceDialog deviceId={openId} onClose={close} />
-    </>
-  )
-}
-```
+::include[../../../../snippets/react/use-device.tsx]
 
 ## The state
 

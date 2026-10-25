@@ -4,6 +4,8 @@
  * ignore locks, where it isn't.
  */
 import { applyEffects, type CommandRef, type EffectRef, type Runner, type SaveMeta } from '@ifloom/engine'
+import { devices } from '@ifloom/plugin-devices'
+import { jobs } from '@ifloom/plugin-jobs'
 
 /** Sends each command, and fails the test on a refusal. */
 export function send(runner: Runner, ...commands: CommandRef[]): void {
@@ -59,6 +61,18 @@ export function playingQuickFeet(runner: Runner): void {
   press(runner, 'arrows')
 }
 
+/** At home with the phone's texts open. */
+export function readingTexts(runner: Runner): void {
+  unpacked(runner)
+  send(runner, devices.open('texts'))
+}
+
+/** The job board open, as Ava's Ask about weekend work opens it. */
+export function atTheJobBoard(runner: Runner): void {
+  inTheCafe(runner)
+  withEffects(runner, [jobs.open()])
+}
+
 /** The states every snippet is drawn in by every.test.tsx. */
 export const STATES: { name: string; play: (runner: Runner) => void }[] = [
   { name: 'moving day', play: () => {} },
@@ -68,6 +82,8 @@ export const STATES: { name: string; play: (runner: Runner) => void }[] = [
   { name: 'in the park', play: inThePark },
   { name: 'the phone ringing', play: phoneRinging },
   { name: 'playing quick feet', play: playingQuickFeet },
+  { name: 'reading texts', play: readingTexts },
+  { name: 'at the job board', play: atTheJobBoard },
 ]
 
 /** Presses the button on screen with this id: a scene's choice or a room's action. */

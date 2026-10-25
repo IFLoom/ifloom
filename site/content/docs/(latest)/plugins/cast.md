@@ -535,7 +535,7 @@ A character with no `image` has no picture as a speaker. The cast's own view sti
 
 `view(state, game).plugins.cast` is a `CastView`.
 
-Its [React UI](#the-react-ui) draws who's here with [`PeopleHere`](#peoplehere), and everyone met, with the stats you declare on the cast's kind, with [`Relationships`](#relationships). [`usePeople`](#usepeople) gives this view with no markup.
+Its [React UI](#drawing-it) draws who's here with [`PeopleHere`](#peoplehere), and everyone met, with the stats you declare on the cast's kind, with [`Relationships`](#relationships). [`usePeople`](#usepeople) gives this view with no markup.
 
 ### CastView
 
@@ -613,18 +613,19 @@ The plugin's lines go in the [strings table](/docs/reference/strings#plugins-str
 
 Both commands also use the engine's own [`finishFirst`](/docs/reference/strings#refusals) (`Finish this first.`), so rewording that changes it here too. A character's `call.busy` and a talk option's `label` are plain text written into the content.
 
-## The React UI
+## Drawing it
 
-`@ifloom/plugin-cast/react` draws who is here and everyone met, for a game drawn with [`@ifloom/react`](/docs/react). List `castUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a People section (`ui.people`) in the side column opens [`Relationships`](#relationships) in a dialog, [`PeopleHere`](#peoplehere) goes after the room's actions, and the `people` panel draws `Relationships` too.
+`view.plugins.cast` is a [`CastView`](#castview): who's here in `present`, and everyone in `people`. Each is a [`PersonView`](#personview) with their names and pictures, whether you've met them, and a Talk button in `actions`.
 
-It's yours to leave out. Draw the plugin yourself from `view.plugins.cast`, or from [`usePeople`](#usepeople) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+`@ifloom/plugin-cast/react` draws who is here and everyone met, for a game drawn with [`@ifloom/react`](/docs/react). List `castUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a People section (`ui.people`) in the side column opens [`Relationships`](#relationships) in a dialog, [`PeopleHere`](#peoplehere) goes after the room's actions, and the `people` panel draws `Relationships` too. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-```tsx
-import { mountGame } from '@ifloom/react'
-import { castUi } from '@ifloom/plugin-cast/react'
+::include[../../../../snippets/plain/cast.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-mountGame(game, { plugins: [castUi] })
-```
+::include[../../../../snippets/react/mount-cast.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/vue/People.vue]{meta='tab="Vue" tab-group="framework"'}
+
+The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.cast`, or from [`usePeople`](#usepeople) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
 ### castUi
 

@@ -14,7 +14,7 @@ To add it, list `@ifloom/plugin-debug` in your game's `package.json` and add `de
 import { debug, type DebugView } from '@ifloom/plugin-debug'
 ```
 
-Every command it adds sets [`ignoresLocks`](/docs/reference/plugins#commands-outside-the-story), so it works in any stretch of the game, including an intro that only moves through its scenes. None of them pays a cost or needs an exit. Its [React UI](#the-react-ui) draws a [debug card](#debugcard) for it when the game has it.
+Every command it adds sets [`ignoresLocks`](/docs/reference/plugins#commands-outside-the-story), so it works in any stretch of the game, including an intro that only moves through its scenes. None of them pays a cost or needs an exit. Its [React UI](#drawing-it) draws a [debug card](#debugcard) for it when the game has it.
 
 ## Install
 
@@ -188,7 +188,7 @@ These are the plugin's lines in the [strings table](/docs/reference/strings#plug
 
 `view(state, game).plugins.debug` is a `DebugView`, with what a debugger wants on screen.
 
-Its [React UI](#the-react-ui) draws it with [`DebugCard`](#debugcard), and [`useDebug`](#usedebug) gives the same data and the debug commands with no markup.
+Its [React UI](#drawing-it) draws it with [`DebugCard`](#debugcard), and [`useDebug`](#usedebug) gives the same data and the debug commands with no markup.
 
 ### DebugView
 
@@ -206,18 +206,19 @@ type DebugView = {
 | `fired` | The [triggers](/docs/reference/triggers) that have fired, with the turn each last fired on. It's a copy of [`state.fired`](/docs/reference/state). |
 | `seed` | The save's seed, which every [draw](/docs/reference/random) is hashed from. |
 
-## The React UI
+## Drawing it
 
-`@ifloom/plugin-debug/react` draws the debug card, for a game drawn with [`@ifloom/react`](/docs/react). List `debugUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the [`DebugCard`](#debugcard) goes at the end of the story. It does nothing in a build without the plugin, so it can be listed in every build.
+`view.plugins.debug` is a [`DebugView`](#debugview): the locks that are on, how often each trigger fired, and the save's seed. Its commands, such as `debug.stat`, ignore locks (see [Commands](#commands)).
 
-It's yours to leave out. Draw the plugin yourself from `view.plugins.debug`, or from [`useDebug`](#usedebug) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+`@ifloom/plugin-debug/react` draws the debug card, for a game drawn with [`@ifloom/react`](/docs/react). List `debugUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the [`DebugCard`](#debugcard) goes at the end of the story. It does nothing in a build without the plugin, so it can be listed in every build. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-```tsx
-import { mountGame } from '@ifloom/react'
-import { debugUi } from '@ifloom/plugin-debug/react'
+::include[../../../../snippets/plain/debug.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-mountGame(game, { plugins: [debugUi] })
-```
+::include[../../../../snippets/react/mount-debug.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/vue/Debug.vue]{meta='tab="Vue" tab-group="framework"'}
+
+The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.debug`, or from [`useDebug`](#usedebug) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
 ### debugUi
 

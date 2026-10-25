@@ -30,6 +30,7 @@ A UI of your own is a loop: draw `runner.view()`, send the `command` on whatever
 
 - [A UI from scratch](/docs/guide/ui-from-scratch) explains that plain JS UI a piece at a time, then adds undo, saves and a setting.
 - [Your own UI in any framework](/docs/guide/frameworks) shows the same UI in plain JS, React by hand, Vue and Svelte, side by side.
+- Every reference and plugin page for something the player sees, such as [stats](/docs/reference/stats#drawing-it), [timers](/docs/reference/timers#drawing-it) or [the shop](/docs/plugins/shop#drawing-it), has a **Drawing it** section. It says what the view hands a UI, then draws it in plain JS, with the React UI's ready-made part, and in Vue. That code is type-checked and tested against Small Town, so it runs as shown.
 - The recipes build the pieces most games want in each framework: a [title screen](/docs/recipes/title-screen), a [HUD](/docs/recipes/hud), [plugin panels](/docs/recipes/plugin-ui), [minigames](/docs/recipes/minigames), [transitions](/docs/recipes/transitions) and [actions inside the text](/docs/recipes/inline-actions).
 
 Two packages do the browser jobs every UI needs, so you don't write them again. [`@ifloom/browser`](/docs/browser) runs a minigame's clock and the keyboard shortcuts, numbers new save slots and gives a key that shows held-back prose. [`@ifloom/audio`](/docs/browser/audio-player) plays the game's music and sounds. Both are plain DOM and work under any framework.

@@ -262,7 +262,7 @@ async function enter() {
 </form>
 ```
 
-The plugin's [React UI](#the-react-ui) draws the code box for you with [`UnlocksPanel`](#unlockspanel) when the game lists `unlocksUi`, or `unlocksUiWith(...)` as above, in `plugins` on `GameShell`, `GameProvider` or `mountGame`.
+The plugin's [React UI](#drawing-it) draws the code box for you with [`UnlocksPanel`](#unlockspanel) when the game lists `unlocksUi`, or `unlocksUiWith(...)` as above, in `plugins` on `GameShell`, `GameProvider` or `mountGame`.
 
 ### unlockedPacks
 
@@ -358,7 +358,7 @@ It checks no code. Anyone who can run commands, from the browser's console say, 
 
 ## The view
 
-`runner.view().plugins.unlocks` is an `UnlocksView`. Its [React UI](#the-react-ui) draws it with [`UnlocksPanel`](#unlockspanel), and [`useUnlocks`](#useunlocks) gives it with no markup.
+`runner.view().plugins.unlocks` is an `UnlocksView`. Its [React UI](#drawing-it) draws it with [`UnlocksPanel`](#unlockspanel), and [`useUnlocks`](#useunlocks) gives it with no markup.
 
 ### UnlocksView
 
@@ -378,58 +378,17 @@ type UnlockView = { id: string; name: string; description: string; unlocked: boo
 | `unlocked` | How many are unlocked. |
 | `total` | How many there are. |
 
-### Drawing it yourself
+## Drawing it
 
-A list of the unlocks, with which the player has:
+`view.plugins.unlocks` is an [`UnlocksView`](#unlocksview): every unlock, with which the player has. Entering a code isn't a command, since a code is checked against a slow hash. See [Entering codes](#entering-codes).
 
-```ts tab="Plain JS" tab-group="framework"
-import type { View } from '@ifloom/engine'
-import type { UnlocksView } from '@ifloom/plugin-unlocks'
+`@ifloom/plugin-unlocks/react` draws the code box, for a game drawn with [`@ifloom/react`](/docs/react). List `unlocksUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and codes start on the runner, and the [`UnlocksPanel`](#unlockspanel) is on the settings page with pages on, or behind an **Enter a code** button in the menu without them. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-export function unlockList(view: View): HTMLElement | null {
-  const shown = view.plugins.unlocks as UnlocksView | undefined
-  if (!shown?.total) return null
-  const list = document.createElement('ul')
-  for (const unlock of shown.unlocks) {
-    list.appendChild(document.createElement('li')).textContent = `${unlock.name}: ${unlock.unlocked ? 'unlocked' : 'locked'}`
-  }
-  return list
-}
-```
+::include[../../../../snippets/plain/unlocks.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-```tsx tab="React" tab-group="framework"
-import { useUnlocks } from '@ifloom/plugin-unlocks/react'
+::include[../../../../snippets/react/mount-unlocks.tsx]{meta='tab="React" tab-group="framework"'}
 
-export function UnlockList() {
-  const unlocks = useUnlocks()
-  if (!unlocks?.total) return null
-  return (
-    <ul>
-      {unlocks.unlocks.map((unlock) => (
-        <li key={unlock.id}>
-          {unlock.name}: {unlock.unlocked ? 'unlocked' : 'locked'}
-        </li>
-      ))}
-    </ul>
-  )
-}
-```
-
-```vue tab="Vue" tab-group="framework"
-<script setup lang="ts">
-import { computed } from 'vue'
-import type { UnlocksView } from '@ifloom/plugin-unlocks'
-import { view } from './runner.ts'
-
-const shown = computed(() => view.value.plugins.unlocks as UnlocksView | undefined)
-</script>
-
-<template>
-  <ul v-if="shown?.total">
-    <li v-for="unlock in shown.unlocks" :key="unlock.id">{{ unlock.name }}: {{ unlock.unlocked ? 'unlocked' : 'locked' }}</li>
-  </ul>
-</template>
-```
+::include[../../../../snippets/vue/Unlocks.vue]{meta='tab="Vue" tab-group="framework"'}
 
 ```svelte tab="Svelte" tab-group="framework"
 <script lang="ts">
@@ -448,18 +407,7 @@ const shown = computed(() => view.value.plugins.unlocks as UnlocksView | undefin
 {/if}
 ```
 
-## The React UI
-
-`@ifloom/plugin-unlocks/react` draws the code box, for a game drawn with [`@ifloom/react`](/docs/react). List `unlocksUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and codes start on the runner, and the [`UnlocksPanel`](#unlockspanel) is on the settings page with pages on, or behind an **Enter a code** button in the menu without them.
-
-It's yours to leave out. Draw the plugin yourself from `view.plugins.unlocks`, or from [`useUnlocks`](#useunlocks) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
-
-```tsx
-import { mountGame } from '@ifloom/react'
-import { unlocksUi } from '@ifloom/plugin-unlocks/react'
-
-mountGame(game, { plugins: [unlocksUi] })
-```
+The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.unlocks`, or from [`useUnlocks`](#useunlocks) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
 ### unlocksUi
 
@@ -503,15 +451,7 @@ type UnlocksUiOptions = {
 | `onChange` | Builds the game again with the content a code has just opened, usually `() => location.reload()`. Without it, the box never offers to restart. |
 | `start` | How codes start on the runner. [`startUnlocks`](#startunlocks) if left out. A test passes its own locked content here. |
 
-```tsx
-import { GameShell } from '@ifloom/react'
-import { unlockedPacks } from '@ifloom/plugin-unlocks'
-import { unlocksUiWith } from '@ifloom/plugin-unlocks/react'
-
-const opened = await unlockedPacks('small-town', stored)
-// … build the game with opened.packs, and make the runner …
-<GameShell runner={runner} pages={{}} plugins={[unlocksUiWith({ problems: opened.problems, onChange: () => location.reload() })]} />
-```
+::include[../../../../snippets/react/mount-unlocks-with.tsx]
 
 The codes start when the game is drawn, and stop when it goes.
 
@@ -559,24 +499,7 @@ The unlocks plugin's view ([`UnlocksView`](/docs/plugins/unlocks#unlocksview): `
 | `restart` | `onChange` from `unlocksUiWith`, when the last code opened content that needs it. Otherwise undefined. |
 | `problems` | The `problems` given to `unlocksUiWith`. |
 
-```tsx
-import { useState } from 'react'
-import { useUnlocks } from '@ifloom/plugin-unlocks/react'
-
-function CodeBox() {
-  const unlocks = useUnlocks()
-  const [code, setCode] = useState('')
-  if (!unlocks?.available) return null
-  return (
-    <form onSubmit={(event) => { event.preventDefault(); void unlocks.enter(code) }}>
-      <input value={code} onChange={(event) => setCode(event.target.value)} />
-      <button disabled={unlocks.checking}>Unlock</button>
-      {unlocks.message ?? (unlocks.entered ? `Unlocked: ${unlocks.entered.name}.` : null)}
-      {unlocks.restart ? <button type="button" onClick={unlocks.restart}>Restart</button> : null}
-    </form>
-  )
-}
-```
+::include[../../../../snippets/react/use-unlocks.tsx]
 
 ## The state and the profile
 

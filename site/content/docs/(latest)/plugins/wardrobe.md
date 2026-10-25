@@ -249,7 +249,7 @@ export const words: Content = {
 
 `view(state, game).plugins.wardrobe` is a `WardrobeView`.
 
-Its [React UI](#the-react-ui) draws it with [`WardrobeCard`](#wardrobecard), and [`useWardrobe`](#usewardrobe) gives the same data with a button for each thing the player can do, with no markup.
+Its [React UI](#drawing-it) draws it with [`WardrobeCard`](#wardrobecard), and [`useWardrobe`](#usewardrobe) gives the same data with a button for each thing the player can do, with no markup.
 
 ### WardrobeView
 
@@ -267,18 +267,19 @@ type WardrobeView = {
 
 What you wear is also in the engine's [`view.held`](/docs/reference/view#held), since you still hold it. A UI that wants the bag without the clothes leaves out the refs in `slots`.
 
-## The React UI
+## Drawing it
 
-`@ifloom/plugin-wardrobe/react` draws what the player wears, for a game drawn with [`@ifloom/react`](/docs/react). List `wardrobeUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a Wearing section (`ui.wardrobe`) in the side column holds the [`WardrobeCard`](#wardrobecard), and the `wardrobe` panel draws it too.
+`view.plugins.wardrobe` is a [`WardrobeView`](#wardrobeview): each slot with what's in it, and the `spare` things you could wear. Send `wardrobe/takeOff` with a slot's id, or `wardrobe/wear` with a thing (see [Commands](#commands)).
 
-It's yours to leave out. Draw the plugin yourself from `view.plugins.wardrobe`, or from [`useWardrobe`](#usewardrobe) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+`@ifloom/plugin-wardrobe/react` draws what the player wears, for a game drawn with [`@ifloom/react`](/docs/react). List `wardrobeUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a Wearing section (`ui.wardrobe`) in the side column holds the [`WardrobeCard`](#wardrobecard), and the `wardrobe` panel draws it too. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-```tsx
-import { mountGame } from '@ifloom/react'
-import { wardrobeUi } from '@ifloom/plugin-wardrobe/react'
+::include[../../../../snippets/plain/wardrobe.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-mountGame(game, { plugins: [wardrobeUi] })
-```
+::include[../../../../snippets/react/mount-wardrobe.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/vue/Wardrobe.vue]{meta='tab="Vue" tab-group="framework"'}
+
+The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.wardrobe`, or from [`useWardrobe`](#usewardrobe) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
 ### wardrobeUi
 

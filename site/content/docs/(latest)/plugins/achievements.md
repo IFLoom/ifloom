@@ -10,7 +10,7 @@ What a save has earned is kept in the save. Everything earned in any save is als
 import { achievements, achievementsOf, type AchievementDef, type ProgressDef, type AchievementsState, type AchievementsProfile, type AchievementsView, type AchievementEntry } from '@ifloom/plugin-achievements'
 ```
 
-The plugin's engine side draws nothing: its React UI is a [subpath of its own](#the-react-ui), and any UI can draw it. Its view lists every achievement, earned or not, and [Building UI for plugins](/docs/recipes/plugin-ui#an-achievements-page) builds an achievements page on it.
+The plugin's engine side draws nothing: its React UI is a [subpath of its own](#drawing-it), and any UI can draw it. Its view lists every achievement, earned or not, and [Building UI for plugins](/docs/recipes/plugin-ui#an-achievements-page) builds an achievements page on it.
 
 ## Install
 
@@ -170,7 +170,7 @@ It works in any effect list, a thing's use in the [inventory](/docs/plugins/inve
 
 `runner.view().plugins.achievements` is an `AchievementsView`. With a runner that has a profile, an achievement counts as earned if this save earned it or any save did. Without one, as in `view(state, game)`, only this save's count.
 
-Its [React UI](#the-react-ui) draws it with [`AchievementList`](#achievementlist), on a page or in a dialog opened from the sidebar, and [`useAchievements`](#useachievements) gives this view with no markup.
+Its [React UI](#drawing-it) draws it with [`AchievementList`](#achievementlist), on a page or in a dialog opened from the sidebar, and [`useAchievements`](#useachievements) gives this view with no markup.
 
 ### AchievementsView
 
@@ -212,18 +212,19 @@ type AchievementEntry = {
 | `earnedOn` | The turn this save earned it, or `null`. Also `null` for one earned only in another save. |
 | `progress` | How far towards it, or `null` if it has no progress or is a secret not yet earned. |
 
-## The React UI
+## Drawing it
 
-`@ifloom/plugin-achievements/react` draws the achievements, for a game drawn with [`@ifloom/react`](/docs/react). List `achievementsUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and an [`AchievementsButton`](#achievementsbutton) goes in the side column, the title screen offers an achievements page when [pages](/docs/react/components#pages) are on, and the `achievements` panel draws the [`AchievementList`](#achievementlist).
+`view.plugins.achievements` is an [`AchievementsView`](#achievementsview): every achievement, earned or not, with progress for one that counts, and how many are earned. A secret one reads `???` until it's earned, so drawing every entry gives nothing away.
 
-It's yours to leave out. Draw the plugin yourself from `view.plugins.achievements`, or from [`useAchievements`](#useachievements) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+`@ifloom/plugin-achievements/react` draws the achievements, for a game drawn with [`@ifloom/react`](/docs/react). List `achievementsUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and an [`AchievementsButton`](#achievementsbutton) goes in the side column, the title screen offers an achievements page when [pages](/docs/react/components#pages) are on, and the `achievements` panel draws the [`AchievementList`](#achievementlist). The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-```tsx
-import { mountGame } from '@ifloom/react'
-import { achievementsUi } from '@ifloom/plugin-achievements/react'
+::include[../../../../snippets/plain/achievements.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-mountGame(game, { plugins: [achievementsUi] })
-```
+::include[../../../../snippets/react/mount-achievements.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/vue/Achievements.vue]{meta='tab="Vue" tab-group="framework"'}
+
+The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.achievements`, or from [`useAchievements`](#useachievements) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
 ### achievementsUi
 
@@ -283,14 +284,7 @@ function useAchievements(): AchievementsView | null
 
 The achievements plugin's view ([`AchievementsView`](/docs/plugins/achievements#achievementsview): `achievements`, `earned` and `total`), or `null` in a game without the plugin. [`AchievementList`](#achievementlist) and the button are drawn from it.
 
-```tsx
-import { useAchievements } from '@ifloom/plugin-achievements/react'
-
-function Trophies() {
-  const data = useAchievements()
-  return data ? <span>{data.earned}/{data.total}</span> : null
-}
-```
+::include[../../../../snippets/react/use-achievements.tsx]
 
 ## The state
 

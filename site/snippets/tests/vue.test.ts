@@ -3,9 +3,10 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { createApp, nextTick, type Component } from 'vue'
 import { runner } from '../vue/runner.ts'
 import Inputs from '../vue/Inputs.vue'
+import JobBoard from '../vue/JobBoard.vue'
 import ShopCounter from '../vue/ShopCounter.vue'
 import Timers from '../vue/Timers.vue'
-import { atTheCounter, phoneRinging } from './play.ts'
+import { atTheCounter, atTheJobBoard, phoneRinging } from './play.ts'
 
 let unmount = () => {}
 afterEach(() => unmount())
@@ -38,6 +39,14 @@ describe('the Vue snippets', () => {
     field.dispatchEvent(new Event('input'))
     box.querySelector('form')!.requestSubmit()
     expect(runner.state.kv.catName).toBe('Biscuit')
+  })
+
+  it('JobBoard: the jobs the board was opened with, each with its ready-made buttons', async () => {
+    await runner.newGame()
+    atTheJobBoard(runner)
+    const box = mounted(JobBoard)
+    expect([...box.querySelectorAll('h3')].map((heading) => heading.textContent)).toContain('Weekend help')
+    expect(box.querySelector('button')?.textContent?.trim()).toBeTruthy()
   })
 
   it('Timers: a countdown for the ringing phone, gone once it is answered', async () => {

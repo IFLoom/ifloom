@@ -153,7 +153,7 @@ With all three, the player buys the scarf from the stall, wears it, eats a pie, 
 
 `view(state, game).plugins.inventory` is an `InventoryView`: what you hold, with a button to use each thing that has a use and one to drop it, built with the engine's [`renderAction`](/docs/reference/view#renderaction) so a UI draws them like any other button.
 
-Its [React UI](#the-react-ui) draws it with [`InventoryCard`](#inventorycard), in place of the React UI's own [`Inventory`](/docs/react/components#inventory), and [`useInventory`](#useinventory) gives the same data and the commands with no markup. Without this UI, `Inventory` draws `view.held` with no buttons.
+Its [React UI](#drawing-it) draws it with [`InventoryCard`](#inventorycard), in place of the React UI's own [`Inventory`](/docs/react/components#inventory), and [`useInventory`](#useinventory) gives the same data and the commands with no markup. Without this UI, `Inventory` draws `view.held` with no buttons.
 
 ### InventoryView
 
@@ -195,18 +195,19 @@ data: { inventory: { kinds: [{ id: 'item' }] } }
 
 The checker reports a kind the game doesn't have.
 
-## The React UI
+## Drawing it
 
-`@ifloom/plugin-inventory/react` draws what the player carries with the plugin's buttons, for a game drawn with [`@ifloom/react`](/docs/react). List `inventoryUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and [`InventoryCard`](#inventorycard) is drawn wherever the React UI's own [`Inventory`](/docs/react/components#inventory) is, with a button that uses each usable thing.
+`view.plugins.inventory` is an [`InventoryView`](#inventoryview): what you hold, each thing with a `use` button when it has a use and a `drop` button, ready to draw like any other button.
 
-It's yours to leave out. Draw the plugin yourself from `view.plugins.inventory`, or from [`useInventory`](#useinventory) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+`@ifloom/plugin-inventory/react` draws what the player carries with the plugin's buttons, for a game drawn with [`@ifloom/react`](/docs/react). List `inventoryUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and [`InventoryCard`](#inventorycard) is drawn wherever the React UI's own [`Inventory`](/docs/react/components#inventory) is, with a button that uses each usable thing. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-```tsx
-import { mountGame } from '@ifloom/react'
-import { inventoryUi } from '@ifloom/plugin-inventory/react'
+::include[../../../../snippets/plain/inventory.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-mountGame(game, { plugins: [inventoryUi] })
-```
+::include[../../../../snippets/react/mount-inventory.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/vue/Inventory.vue]{meta='tab="Vue" tab-group="framework"'}
+
+The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.inventory`, or from [`useInventory`](#useinventory) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
 ### inventoryUi
 
@@ -246,15 +247,7 @@ type InventoryControls = InventoryView & {
 
 The [inventory](/docs/plugins/inventory) plugin's view ([`InventoryView`](/docs/plugins/inventory#inventoryview): `things`, each with its `use` and `drop` buttons) and its commands, or `null` in a game without the plugin. `use`, `drop` and `give` send `inventory/use`, `inventory/drop` and `inventory/give`. [`Inventory`](/docs/react/components#inventory) is drawn from it.
 
-```tsx
-import { useInventory } from '@ifloom/plugin-inventory/react'
-
-function Snacks() {
-  const bag = useInventory()
-  const food = bag?.things.filter((thing) => thing.ref.startsWith('item:') && thing.use) ?? []
-  return food.map((thing) => <button key={thing.ref} onClick={() => bag!.use(thing.ref)}>{thing.use!.label}</button>)
-}
-```
+::include[../../../../snippets/react/use-inventory.tsx]
 
 ## For code
 

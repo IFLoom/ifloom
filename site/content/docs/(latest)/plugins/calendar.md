@@ -400,7 +400,7 @@ const strings = {
 
 `view(state, game).plugins.calendar` is a `CalendarView`.
 
-The [React UI](/docs/react) shows `view.when`, the calendar's label, with [`Clock`](/docs/react/components#clock) under the title. This plugin's own [React UI](#the-react-ui) marks it with the calendar's pieces, and [`useCalendar`](#usecalendar) gives this view with no markup, for a clock of your own.
+The [React UI](/docs/react) shows `view.when`, the calendar's label, with [`Clock`](/docs/react/components#clock) under the title. This plugin's own [React UI](#drawing-it) marks it with the calendar's pieces, and [`useCalendar`](#usecalendar) gives this view with no markup, for a clock of your own.
 
 ### CalendarView
 
@@ -432,18 +432,19 @@ On a new game with the defaults:
 { day: 1, weekday: 'Monday', weekdayIndex: 0, period: 'morning', periodLabel: 'morning', label: 'Day 1 · Monday morning', curfew: false }
 ```
 
-## The React UI
+## Drawing it
 
-`@ifloom/plugin-calendar/react` marks the clock with the calendar's parts, for a game drawn with [`@ifloom/react`](/docs/react). List `calendarUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and [`CalendarClock`](#calendarclock) is drawn wherever the React UI's own [`Clock`](/docs/react/components#clock) is.
+`view.plugins.calendar` is a [`CalendarView`](#calendarview): the day, the weekday, the period and the whole `label`, which is also in `view.when`. `curfew` is `true` in the last period while the curfew binds, which is your cue to send the player to bed.
 
-It's yours to leave out. Draw the plugin yourself from `view.plugins.calendar`, or from [`useCalendar`](#usecalendar) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+`@ifloom/plugin-calendar/react` marks the clock with the calendar's parts, for a game drawn with [`@ifloom/react`](/docs/react). List `calendarUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and [`CalendarClock`](#calendarclock) is drawn wherever the React UI's own [`Clock`](/docs/react/components#clock) is. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-```tsx
-import { mountGame } from '@ifloom/react'
-import { calendarUi } from '@ifloom/plugin-calendar/react'
+::include[../../../../snippets/plain/calendar.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-mountGame(game, { plugins: [calendarUi] })
-```
+::include[../../../../snippets/react/mount-calendar.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/vue/Calendar.vue]{meta='tab="Vue" tab-group="framework"'}
+
+The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.calendar`, or from [`useCalendar`](#usecalendar) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
 ### calendarUi
 
@@ -475,14 +476,7 @@ function useCalendar(): CalendarView | null
 
 The calendar plugin's view, [`CalendarView`](#the-view), piece by piece: the day, the weekday, the period, its label, the whole line, and whether the curfew binds. `null` in a game without the plugin. `CalendarClock` is drawn from it.
 
-```tsx
-import { useCalendar } from '@ifloom/plugin-calendar/react'
-
-function Weekday() {
-  const calendar = useCalendar()
-  return calendar ? <span>{calendar.weekday}</span> : null
-}
-```
+::include[../../../../snippets/react/use-calendar.tsx]
 
 ## The state
 

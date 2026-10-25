@@ -538,7 +538,7 @@ Walk back out to the high street and the ambience stops, because the street name
 
 `view(state, game).plugins.places` is a `PlacesView`.
 
-Its [React UI](#the-react-ui) draws it with [`LocationCard`](#locationcard), and [`usePlaces`](#useplaces) gives the same data, a way to take an exit and a way to pick something up with no markup, for a map of your own.
+Its [React UI](#drawing-it) draws it with [`LocationCard`](#locationcard), and [`usePlaces`](#useplaces) gives the same data, a way to take an exit and a way to pick something up with no markup, for a map of your own.
 
 ### PlacesView
 
@@ -647,18 +647,19 @@ One thing lying where the player is.
 | `count` | How many lie here. |
 | `pickUp` | The button that picks one up: a [`RenderedChoice`](/docs/reference/view#renderedchoice) labelled with the [`places/pickUp`](#strings) string, `Pick up`, that sends `places.pickUp(ref)`. |
 
-## The React UI
+## Drawing it
 
-`@ifloom/plugin-places/react` draws where the player is and the way out, for a game drawn with [`@ifloom/react`](/docs/react). List `placesUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the [`LocationCard`](#locationcard) and the [`Exits`](#exits) go in the story, before the room's actions.
+`view.plugins.places` is a [`PlacesView`](#placesview): where the player is, the ways out, and what lies here. Each exit, and each thing's `pickUp`, is a ready-made button, so you draw them like any other button and send their `command`. The room's own buttons are in `view.actions`, and its name and words are the room scene in `view.scene`.
 
-It's yours to leave out. Draw the plugin yourself from `view.plugins.places`, or from [`usePlaces`](#useplaces) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+`@ifloom/plugin-places/react` draws where the player is and the way out, for a game drawn with [`@ifloom/react`](/docs/react). List `placesUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the [`LocationCard`](#locationcard) and the [`Exits`](#exits) go in the story, before the room's actions. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-```tsx
-import { mountGame } from '@ifloom/react'
-import { placesUi } from '@ifloom/plugin-places/react'
+::include[../../../../snippets/plain/places.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-mountGame(game, { plugins: [placesUi] })
-```
+::include[../../../../snippets/react/mount-places.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/vue/Place.vue]{meta='tab="Vue" tab-group="framework"'}
+
+The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.places`, or from [`usePlaces`](#useplaces) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
 ### placesUi
 
@@ -707,23 +708,7 @@ type PlacesControls = PlacesView & {
 
 The [places](/docs/plugins/places) plugin's view ([`PlacesView`](/docs/plugins/places#the-view): `location`, `exits` and the `things` lying there) with a way to travel and to pick things up, or `null` in a game without the plugin. `go(id)` sends the exit's own command, by the id of the place it leads to, and returns what [`runner.apply`](/docs/reference/runner#the-runners-members) did, so a refusal comes back with its reason. `places.pickUp(ref)` sends the thing's own pick-up command the same way. [`LocationCard`](#locationcard) and [`Exits`](#exits) are drawn from it.
 
-```tsx
-import { usePlaces } from '@ifloom/plugin-places/react'
-
-function ExitList() {
-  const places = usePlaces()
-  if (!places) return null
-  return (
-    <ul>
-      {places.exits.map((exit) => (
-        <li key={exit.id}>
-          <button disabled={Boolean(exit.disabled)} onClick={() => places.go(exit.id)}>{exit.label}</button>
-        </li>
-      ))}
-    </ul>
-  )
-}
-```
+::include[../../../../snippets/react/use-places.tsx]
 
 ## The state
 

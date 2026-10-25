@@ -357,7 +357,7 @@ export const words: Content = {
 
 `view(state, game).plugins.feed` is a `FeedsView`.
 
-Its [React UI](#the-react-ui) draws a feed with [`FeedSection`](#feedsection) in an app, and [`useFeed`](#usefeed) gives this view and the seen command with no markup.
+Its [React UI](#drawing-it) draws a feed with [`FeedSection`](#feedsection) in an app, and [`useFeed`](#usefeed) gives this view and the seen command with no markup.
 
 ### FeedsView
 
@@ -414,18 +414,19 @@ type PostView = {
 | `comments` | Oldest first, each with the commenter's name and the comment's words filled in. |
 | `mine` | The player's own. |
 
-## The React UI
+## Drawing it
 
-`@ifloom/plugin-feed/react` draws a feed inside an app, for a game drawn with [`@ifloom/react`](/docs/react). List `feedUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a [`FeedSection`](#feedsection) is drawn wherever a [device](/docs/plugins/devices)'s app shows a feed.
+`view.plugins.feed` is a [`FeedsView`](#feedsview): each feed's posts, with their likes and comments, and how many are new. Send `feed/seen` with a feed's id when the player has looked. A feed usually shows inside an app on a [device](/docs/plugins/devices).
 
-It's yours to leave out. Draw the plugin yourself from `view.plugins.feed`, or from [`useFeed`](#usefeed) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+`@ifloom/plugin-feed/react` draws a feed inside an app, for a game drawn with [`@ifloom/react`](/docs/react). List `feedUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a [`FeedSection`](#feedsection) is drawn wherever a [device](/docs/plugins/devices)'s app shows a feed. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-```tsx
-import { mountGame } from '@ifloom/react'
-import { feedUi } from '@ifloom/plugin-feed/react'
+::include[../../../../snippets/plain/feed.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-mountGame(game, { plugins: [feedUi] })
-```
+::include[../../../../snippets/react/mount-feed.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/vue/Feed.vue]{meta='tab="Vue" tab-group="framework"'}
+
+The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.feed`, or from [`useFeed`](#usefeed) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
 ### feedUi
 

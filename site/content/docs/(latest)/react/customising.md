@@ -713,7 +713,7 @@ Each plugin's React UI, from its `/react`, draws parts of its own when the game 
 
 #### Places
 
-From [`@ifloom/plugin-places/react`](/docs/plugins/places#the-react-ui).
+From [`@ifloom/plugin-places/react`](/docs/plugins/places#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -729,7 +729,7 @@ From [`@ifloom/plugin-places/react`](/docs/plugins/places#the-react-ui).
 
 #### Cast
 
-From [`@ifloom/plugin-cast/react`](/docs/plugins/cast#the-react-ui).
+From [`@ifloom/plugin-cast/react`](/docs/plugins/cast#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -746,7 +746,7 @@ From [`@ifloom/plugin-cast/react`](/docs/plugins/cast#the-react-ui).
 
 #### Quests
 
-From [`@ifloom/plugin-quests/react`](/docs/plugins/quests#the-react-ui).
+From [`@ifloom/plugin-quests/react`](/docs/plugins/quests#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -762,7 +762,7 @@ From [`@ifloom/plugin-quests/react`](/docs/plugins/quests#the-react-ui).
 
 #### Inventory
 
-From [`@ifloom/plugin-inventory/react`](/docs/plugins/inventory#the-react-ui).
+From [`@ifloom/plugin-inventory/react`](/docs/plugins/inventory#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -770,7 +770,7 @@ From [`@ifloom/plugin-inventory/react`](/docs/plugins/inventory#the-react-ui).
 
 #### Wardrobe
 
-From [`@ifloom/plugin-wardrobe/react`](/docs/plugins/wardrobe#the-react-ui).
+From [`@ifloom/plugin-wardrobe/react`](/docs/plugins/wardrobe#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -782,7 +782,7 @@ From [`@ifloom/plugin-wardrobe/react`](/docs/plugins/wardrobe#the-react-ui).
 
 #### Statuses
 
-From [`@ifloom/plugin-statuses/react`](/docs/plugins/statuses#the-react-ui).
+From [`@ifloom/plugin-statuses/react`](/docs/plugins/statuses#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -797,7 +797,7 @@ From [`@ifloom/plugin-statuses/react`](/docs/plugins/statuses#the-react-ui).
 
 #### Achievements
 
-From [`@ifloom/plugin-achievements/react`](/docs/plugins/achievements#the-react-ui).
+From [`@ifloom/plugin-achievements/react`](/docs/plugins/achievements#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -815,7 +815,7 @@ From [`@ifloom/plugin-achievements/react`](/docs/plugins/achievements#the-react-
 
 #### Cheats
 
-From [`@ifloom/plugin-cheats/react`](/docs/plugins/cheats#the-react-ui).
+From [`@ifloom/plugin-cheats/react`](/docs/plugins/cheats#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -829,7 +829,7 @@ From [`@ifloom/plugin-cheats/react`](/docs/plugins/cheats#the-react-ui).
 
 #### Unlocks
 
-From [`@ifloom/plugin-unlocks/react`](/docs/plugins/unlocks#the-react-ui).
+From [`@ifloom/plugin-unlocks/react`](/docs/plugins/unlocks#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -869,7 +869,7 @@ From [`@ifloom/plugin-shop/react`](/docs/plugins/shop#drawing-it).
 
 #### Jobs
 
-From [`@ifloom/plugin-jobs/react`](/docs/plugins/jobs#the-react-ui).
+From [`@ifloom/plugin-jobs/react`](/docs/plugins/jobs#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -889,7 +889,7 @@ From [`@ifloom/plugin-jobs/react`](/docs/plugins/jobs#the-react-ui).
 
 #### Devices
 
-From [`@ifloom/plugin-devices/react`](/docs/plugins/devices#the-react-ui).
+From [`@ifloom/plugin-devices/react`](/docs/plugins/devices#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -914,7 +914,7 @@ From [`@ifloom/plugin-devices/react`](/docs/plugins/devices#the-react-ui).
 
 #### Messages
 
-From [`@ifloom/plugin-messages/react`](/docs/plugins/messages#the-react-ui).
+From [`@ifloom/plugin-messages/react`](/docs/plugins/messages#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -927,7 +927,7 @@ From [`@ifloom/plugin-messages/react`](/docs/plugins/messages#the-react-ui).
 
 #### Feed
 
-From [`@ifloom/plugin-feed/react`](/docs/plugins/feed#the-react-ui).
+From [`@ifloom/plugin-feed/react`](/docs/plugins/feed#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -943,7 +943,7 @@ From [`@ifloom/plugin-feed/react`](/docs/plugins/feed#the-react-ui).
 
 #### Debug
 
-From [`@ifloom/plugin-debug/react`](/docs/plugins/debug#the-react-ui).
+From [`@ifloom/plugin-debug/react`](/docs/plugins/debug#drawing-it).
 
 | Part | What it is |
 |---|---|

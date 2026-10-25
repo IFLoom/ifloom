@@ -3,11 +3,12 @@ import { describe, expect, it } from 'vitest'
 import { runner } from '../plain/runner.ts'
 import { drawInputs } from '../plain/inputs.ts'
 import { drawNotices } from '../plain/notices.ts'
+import { drawPlace } from '../plain/places.ts'
 import { drawProse } from '../plain/prose.ts'
 import { drawRolls } from '../plain/rolls.ts'
 import { drawShop } from '../plain/shop.ts'
 import { drawTimers } from '../plain/timers.ts'
-import { atTheCounter, inThePark, phoneRinging, steppedOut } from './play.ts'
+import { atTheCounter, inTheCafe, inThePark, phoneRinging, steppedOut } from './play.ts'
 
 /** The Plain JS snippets, drawn into a box and pressed, as the vanilla template would. */
 function drawn(draw: (box: HTMLElement) => void): HTMLElement {
@@ -39,6 +40,16 @@ describe('the Plain JS snippets', () => {
     prose.querySelector<HTMLButtonElement>('button.inline-action')!.click()
     const rolls = drawn((into) => drawRolls(into, runner.view()))
     expect(rolls.querySelector('[data-roll="skim"]')?.textContent).toMatch(/^2d6: \d \+ \d = \d+ \((passed|failed)\)$/)
+  })
+
+  it('places: the café with its ways out, which take you there', async () => {
+    await runner.newGame()
+    inTheCafe(runner)
+    const box = drawn((into) => drawPlace(into, runner.view()))
+    expect(box.querySelector('h3')?.textContent).toBe('The Corner Café')
+    const out = [...box.querySelectorAll<HTMLButtonElement>('.exits button')].find((button) => button.textContent === 'High Street')!
+    out.click()
+    expect(runner.view().plugins.places?.location?.id).toBe('high-street')
   })
 
   it('timers: a countdown for the ringing phone, with the seconds left', async () => {

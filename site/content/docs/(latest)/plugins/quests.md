@@ -262,7 +262,7 @@ const strings = { 'quests/notDoing': 'That one is not on your list.' }
 
 `view(state, game).plugins.quests` is a `QuestsView`.
 
-Its [React UI](#the-react-ui) draws it with [`QuestLog`](#questlog), and [`useQuests`](#usequests) gives the same data and the track and seen commands with no markup.
+Its [React UI](#drawing-it) draws it with [`QuestLog`](#questlog), and [`useQuests`](#usequests) gives the same data and the track and seen commands with no markup.
 
 ### QuestsView
 
@@ -310,18 +310,19 @@ type QuestEntry = {
 | `tracked` | Pinned with `quests/track`. |
 | `updated` | Started or moved on since the player last looked. |
 
-## The React UI
+## Drawing it
 
-`@ifloom/plugin-quests/react` draws the quest log, for a game drawn with [`@ifloom/react`](/docs/react). List `questsUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a Quests section (`ui.quests`) in the side column opens the [`QuestLog`](#questlog) in a dialog, with the count of news on its button, and the `quests` panel draws it too.
+`view.plugins.quests` is a [`QuestsView`](#questsview): the active quests, the tracked one first, and the finished ones, each a [`QuestEntry`](#questentry) with its hint and how far along it is. `updates` counts the quests with news, for a badge. Send `quests/track` to pin one, and `quests/seen` to clear the news.
 
-It's yours to leave out. Draw the plugin yourself from `view.plugins.quests`, or from [`useQuests`](#usequests) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+`@ifloom/plugin-quests/react` draws the quest log, for a game drawn with [`@ifloom/react`](/docs/react). List `questsUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a Quests section (`ui.quests`) in the side column opens the [`QuestLog`](#questlog) in a dialog, with the count of news on its button, and the `quests` panel draws it too. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-```tsx
-import { mountGame } from '@ifloom/react'
-import { questsUi } from '@ifloom/plugin-quests/react'
+::include[../../../../snippets/plain/quests.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-mountGame(game, { plugins: [questsUi] })
-```
+::include[../../../../snippets/react/mount-quests.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/vue/Quests.vue]{meta='tab="Vue" tab-group="framework"'}
+
+The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.quests`, or from [`useQuests`](#usequests) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
 ### questsUi
 
@@ -374,15 +375,7 @@ type QuestsControls = QuestsView & {
 
 The [quests](/docs/plugins/quests) plugin's view ([`QuestsView`](/docs/plugins/quests#the-view): `active`, `done`, `toFind` and `updates`) with its two commands, or `null` in a game without the plugin. `track(id)` sends `quests/track`, and `track(null)` tracks none. `seen()` sends `quests/seen`. [`QuestLog`](#questlog) is drawn from it.
 
-```tsx
-import { useQuests } from '@ifloom/plugin-quests/react'
-
-function Objective() {
-  const quests = useQuests()
-  const tracked = quests?.active.find((quest) => quest.tracked)
-  return tracked ? <p className="text-sm">{tracked.name}: {tracked.hint}</p> : null
-}
-```
+::include[../../../../snippets/react/use-quests.tsx]
 
 ## The state
 

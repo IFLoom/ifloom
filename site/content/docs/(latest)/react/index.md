@@ -64,7 +64,7 @@ import { shopUi } from '@ifloom/plugin-shop/react'
 mountGame(game, { plugins: [placesUi, questsUi, shopUi] })
 ```
 
-Each brings its panels, its words, a page or settings if it has them, and the parts the default layout places, in the order of the list. One for a plugin the game doesn't have does nothing. A plugin you leave out of the list draws nothing of ours, so you can draw it yourself: from `view.plugins.<id>`, or from the hook its UI exports, such as [`useShop`](/docs/plugins/shop#useshop), which gives the same data and actions with no markup. That's as much a way to use a plugin as ours. [Plugin UIs and the kit](/docs/react/kit) has the whole of it, and each plugin's page has its React UI under **The React UI**.
+Each brings its panels, its words, a page or settings if it has them, and the parts the default layout places, in the order of the list. One for a plugin the game doesn't have does nothing. A plugin you leave out of the list draws nothing of ours, so you can draw it yourself: from `view.plugins.<id>`, or from the hook its UI exports, such as [`useShop`](/docs/plugins/shop#useshop), which gives the same data and actions with no markup. That's as much a way to use a plugin as ours. [Plugin UIs and the kit](/docs/react/kit) has the whole of it, and each plugin's page has its React UI under **Drawing it**, beside the same thing drawn in plain JS and Vue. So does every engine page for something the player sees, such as [stats](/docs/reference/stats#drawing-it) and [notices](/docs/reference/notices#drawing-it).
 
 ## Install
 
@@ -423,7 +423,7 @@ The look comes from a theme preset, CSS variables for the fonts, sizes and colou
 
 ## Words
 
-The UI's own words, such as "Stats", "Saves" and "Mark all seen", come from the same [strings table](/docs/reference/strings) as the engine's, under keys that start with `ui.`. A plugin's UI has words of its own, listed on that plugin's page under **The React UI**, reworded the same way, such as `ui.quests` for the quests plugin's "Quests". To reword any of them, set it in your content's `strings`:
+The UI's own words, such as "Stats", "Saves" and "Mark all seen", come from the same [strings table](/docs/reference/strings) as the engine's, under keys that start with `ui.`. A plugin's UI has words of its own, listed on that plugin's page under **Drawing it**, reworded the same way, such as `ui.quests` for the quests plugin's "Quests". To reword any of them, set it in your content's `strings`:
 
 ```ts
 import type { Content } from '@ifloom/engine'

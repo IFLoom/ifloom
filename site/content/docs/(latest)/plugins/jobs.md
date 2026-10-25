@@ -8,7 +8,7 @@ description: "Jobs with hiring requirements, shifts that cost stats and time and
 import { jobs, jobsOf, jobOf, type JobDef, type ShiftDef, type RankDef, type FireDef, type JobsState, type HeldJob, type JobsView, type JobView, type RankView } from '@ifloom/plugin-jobs'
 ```
 
-The plugin's engine side draws nothing: its React UI is a [subpath of its own](#the-react-ui), and any UI can draw it. Its commands work on any button, such as a location's actions, and the button shows the shift's cost and greys out with the reason. For a job board, its view lists every job, and [Building UI for plugins](/docs/recipes/plugin-ui#a-job-board) builds one.
+The plugin's engine side draws nothing: its React UI is a [subpath of its own](#drawing-it), and any UI can draw it. Its commands work on any button, such as a location's actions, and the button shows the shift's cost and greys out with the reason. For a job board, its view lists every job, and [Building UI for plugins](/docs/recipes/plugin-ui#a-job-board) builds one.
 
 ## Install
 
@@ -269,7 +269,7 @@ The notices are tagged `jobs`, with the ids `job.<id>.rank` and `job.<id>.fired`
 
 `view(state, game).plugins.jobs` is a `JobsView`.
 
-Its [React UI](#the-react-ui) draws the `jobs` panel as a [`JobBoard`](#jobboard) in a dialog, through [`PanelHost`](/docs/react/components#panelhost). [`useJobs`](#usejobs) gives the same data and the apply, work and quit commands with no markup.
+Its [React UI](#drawing-it) draws the `jobs` panel as a [`JobBoard`](#jobboard) in a dialog, through [`PanelHost`](/docs/react/components#panelhost). [`useJobs`](#usejobs) gives the same data and the apply, work and quit commands with no markup.
 
 ### JobsView
 
@@ -311,18 +311,19 @@ type RankView = { id: string; name: string; pay: Price | null }
 | `apply` | The button that applies, built with [`renderAction`](/docs/reference/view#renderaction), or `null` once hired or fired. Its `disabled` is the reason of the first `blocked` entry that holds. |
 | `work` | The button that works a shift, or `null` when not hired. Its `price` is the shift's cost, and its `disabled` says why not. |
 
-## The React UI
+## Drawing it
 
-`@ifloom/plugin-jobs/react` draws the job board, for a game drawn with [`@ifloom/react`](/docs/react). List `jobsUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the `jobs` panel, which [`jobs.open`](#opening-the-job-board) opens, is drawn as the [`JobBoard`](#jobboard), only the jobs it was opened with if it names any.
+Nothing about a job is drawn until content opens the board with [`jobs.open`](#opening-the-job-board). Then `view.panel` is `{ panel: 'jobs' }`, with `with: { job: [...] }` when it names only some. Each job in [`view.plugins.jobs`](#jobsview) has its pay, its rank, its next shift, and ready-made `apply` and `work` buttons.
 
-It's yours to leave out. Draw the plugin yourself from `view.plugins.jobs`, or from [`useJobs`](#usejobs) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+`@ifloom/plugin-jobs/react` draws the job board, for a game drawn with [`@ifloom/react`](/docs/react). List `jobsUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the `jobs` panel, which [`jobs.open`](#opening-the-job-board) opens, is drawn as the [`JobBoard`](#jobboard), only the jobs it was opened with if it names any. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-```tsx
-import { mountGame } from '@ifloom/react'
-import { jobsUi } from '@ifloom/plugin-jobs/react'
+::include[../../../../snippets/plain/jobs.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-mountGame(game, { plugins: [jobsUi] })
-```
+::include[../../../../snippets/react/mount-jobs.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/vue/JobBoard.vue]{meta='tab="Vue" tab-group="framework"'}
+
+The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.jobs`, or from [`useJobs`](#usejobs) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
 ### jobsUi
 
@@ -386,15 +387,7 @@ type JobsControls = JobsView & {
 
 The jobs plugin's view ([`JobsView`](/docs/plugins/jobs#jobsview): `jobs`), the jobs held as `held`, and its commands, or `null` in a game without the plugin. `apply`, `work` and `quit` send `jobs/apply`, `jobs/work` and `jobs/quit`. [`JobBoard`](#jobboard) is drawn from it.
 
-```tsx
-import { useJobs } from '@ifloom/plugin-jobs/react'
-
-function NextShift() {
-  const job = useJobs()?.held[0]
-  if (!job?.nextShift) return null
-  return <p className="text-sm">{job.name}: next shift in {job.nextShift.inDays} days</p>
-}
-```
+::include[../../../../snippets/react/use-jobs.tsx]
 
 ## The state
 

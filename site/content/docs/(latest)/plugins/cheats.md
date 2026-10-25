@@ -169,7 +169,7 @@ const honest = {
 
 ## The view
 
-`runner.view().plugins.cheats` is a `CheatsView`. Its [React UI](#the-react-ui) draws it with [`CheatPanel`](#cheatpanel), in a dialog opened from a Cheats button in the sidebar, and [`useCheats`](#usecheats) gives this view with no markup.
+`runner.view().plugins.cheats` is a `CheatsView`. Its [React UI](#drawing-it) draws it with [`CheatPanel`](#cheatpanel), in a dialog opened from a Cheats button in the sidebar, and [`useCheats`](#usecheats) gives this view with no markup.
 
 ### CheatsView
 
@@ -207,87 +207,17 @@ type CheatView = {
 | `used` | How many times this save has used it. |
 | `button` | A [`RenderedChoice`](/docs/reference/view#renderedchoice) that sends `cheats/use`. Its `disabled` is the reason it's refused now. |
 
-### Drawing it yourself
+## Drawing it
 
-Every framework reads the same slice. This panel lists the cheats under their groups:
+`view.plugins.cheats` is a [`CheatsView`](#cheatsview): every cheat with its group, how often this save has used it, and a ready-made `button`, greyed out with the reason while it's refused.
 
-```ts tab="Plain JS" tab-group="framework"
-// src/cheats.ts
-import type { Runner, View } from '@ifloom/engine'
-import type { CheatsView } from '@ifloom/plugin-cheats'
+`@ifloom/plugin-cheats/react` draws the cheats, for a game drawn with [`@ifloom/react`](/docs/react). List `cheatsUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a [`CheatsButton`](#cheatsbutton) in the side column opens the [`CheatPanel`](#cheatpanel). The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-export function cheatPanel(view: View, runner: Runner): HTMLElement | null {
-  const cheats = (view.plugins.cheats as CheatsView | undefined)?.cheats ?? []
-  if (!cheats.length) return null
-  const panel = document.createElement('section')
-  const groups = [...new Set(cheats.map((cheat) => cheat.group))]
-  for (const group of groups) {
-    if (group) panel.appendChild(document.createElement('h3')).textContent = group
-    for (const cheat of cheats.filter((entry) => entry.group === group)) {
-      const button = panel.appendChild(document.createElement('button'))
-      button.textContent = cheat.used ? `${cheat.name} (used ${cheat.used})` : cheat.name
-      button.disabled = Boolean(cheat.button.disabled)
-      button.title = cheat.button.disabled ?? cheat.description
-      button.onclick = () => runner.apply(cheat.button.command)
-    }
-  }
-  return panel
-}
-```
+::include[../../../../snippets/plain/cheats.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-```tsx tab="React" tab-group="framework"
-// src/hud/Cheats.tsx
-import { useCheats } from '@ifloom/plugin-cheats/react'
+::include[../../../../snippets/react/mount-cheats.tsx]{meta='tab="React" tab-group="framework"'}
 
-export function Cheats() {
-  const cheats = useCheats()
-  if (!cheats?.cheats.length) return null
-  return (
-    <section className="space-y-3">
-      {cheats.groups.map((group) => (
-        <div key={group.name ?? ''} className="space-y-1">
-          {group.name ? <h3 className="font-semibold">{group.name}</h3> : null}
-          {group.cheats.map((cheat) => (
-            <button key={cheat.id} disabled={Boolean(cheat.button.disabled)} title={cheat.button.disabled ?? cheat.description} onClick={() => cheats.use(cheat.id)}>
-              {cheat.name}
-              {cheat.used ? ` (used ${cheat.used})` : ''}
-            </button>
-          ))}
-        </div>
-      ))}
-    </section>
-  )
-}
-```
-
-```vue tab="Vue" tab-group="framework"
-<!-- src/Cheats.vue -->
-<script setup lang="ts">
-import { computed } from 'vue'
-import type { CheatsView } from '@ifloom/plugin-cheats'
-import { runner, view } from './runner.ts'
-
-const cheats = computed(() => (view.value.plugins.cheats as CheatsView | undefined)?.cheats ?? [])
-const groups = computed(() => [...new Set(cheats.value.map((cheat) => cheat.group))])
-</script>
-
-<template>
-  <section v-if="cheats.length">
-    <div v-for="group in groups" :key="group ?? ''">
-      <h3 v-if="group">{{ group }}</h3>
-      <button
-        v-for="cheat in cheats.filter((entry) => entry.group === group)"
-        :key="cheat.id"
-        :disabled="Boolean(cheat.button.disabled)"
-        :title="cheat.button.disabled ?? cheat.description"
-        @click="runner.apply(cheat.button.command)"
-      >
-        {{ cheat.name }}<template v-if="cheat.used"> (used {{ cheat.used }})</template>
-      </button>
-    </div>
-  </section>
-</template>
-```
+::include[../../../../snippets/vue/Cheats.vue]{meta='tab="Vue" tab-group="framework"'}
 
 ```svelte tab="Svelte" tab-group="framework"
 <!-- src/Cheats.svelte -->
@@ -315,18 +245,7 @@ const groups = computed(() => [...new Set(cheats.value.map((cheat) => cheat.grou
 
 [Building UI for plugins](/docs/recipes/plugin-ui) has more pieces built this way.
 
-## The React UI
-
-`@ifloom/plugin-cheats/react` draws the cheats, for a game drawn with [`@ifloom/react`](/docs/react). List `cheatsUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a [`CheatsButton`](#cheatsbutton) in the side column opens the [`CheatPanel`](#cheatpanel).
-
-It's yours to leave out. Draw the plugin yourself from `view.plugins.cheats`, or from [`useCheats`](#usecheats) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
-
-```tsx
-import { mountGame } from '@ifloom/react'
-import { cheatsUi } from '@ifloom/plugin-cheats/react'
-
-mountGame(game, { plugins: [cheatsUi] })
-```
+The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.cheats`, or from [`useCheats`](#usecheats) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
 ### cheatsUi
 
@@ -381,16 +300,7 @@ type CheatGroup = { name: string | null; cheats: CheatView[] }
 
 The cheats plugin's view ([`CheatsView`](/docs/plugins/cheats#cheatsview): `cheats` and `used`), the cheats by group as `groups`, and `use`, which sends `cheats/use`. `null` in a game without the plugin. `groups` has the cheats with no group first, as a group named `null`. [`CheatPanel`](#cheatpanel) and the button are drawn from it.
 
-```tsx
-import { useCheats } from '@ifloom/plugin-cheats/react'
-
-function QuickCoins() {
-  const cheats = useCheats()
-  const coins = cheats?.cheats.find((cheat) => cheat.id === 'coins')
-  if (!coins) return null
-  return <button disabled={Boolean(coins.button.disabled)} onClick={() => cheats!.use('coins')}>{coins.name}</button>
-}
-```
+::include[../../../../snippets/react/use-cheats.tsx]
 
 ## The state
 

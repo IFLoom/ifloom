@@ -424,7 +424,7 @@ export const words: Content = {
 
 `view(state, game).plugins.messages` is a `MessagesView`.
 
-Its [React UI](#the-react-ui) draws a channel with [`MessagesSection`](#messagessection) in an app, and [`useMessages`](#usemessages) gives this view and the read command with no markup.
+Its [React UI](#drawing-it) draws a channel with [`MessagesSection`](#messagessection) in an app, and [`useMessages`](#usemessages) gives this view and the read command with no markup.
 
 ### MessagesView
 
@@ -514,18 +514,19 @@ A message has no picture field of its own. Put pictures and videos in its body, 
 
 The React UI's [`MessagesSection`](#messagessection) draws each message's beats with [`Beat`](/docs/react/components#beat), videos included, so a picture in a message can be clicked to see it large.
 
-## The React UI
+## Drawing it
 
-`@ifloom/plugin-messages/react` draws a channel inside an app, for a game drawn with [`@ifloom/react`](/docs/react). List `messagesUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a [`MessagesSection`](#messagessection) is drawn wherever a [device](/docs/plugins/devices)'s app shows a messages channel.
+`view.plugins.messages` is a [`MessagesView`](#messagesview): each channel's threads and their messages, with how many are unread. A message's `replies` are ready-made buttons, and `replied` is the reply once it's sent. Send `messages/read` with a thread's id when the player has read it. Messages usually show inside an app on a [device](/docs/plugins/devices).
 
-It's yours to leave out. Draw the plugin yourself from `view.plugins.messages`, or from [`useMessages`](#usemessages) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+`@ifloom/plugin-messages/react` draws a channel inside an app, for a game drawn with [`@ifloom/react`](/docs/react). List `messagesUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a [`MessagesSection`](#messagessection) is drawn wherever a [device](/docs/plugins/devices)'s app shows a messages channel. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-```tsx
-import { mountGame } from '@ifloom/react'
-import { messagesUi } from '@ifloom/plugin-messages/react'
+::include[../../../../snippets/plain/messages.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-mountGame(game, { plugins: [messagesUi] })
-```
+::include[../../../../snippets/react/mount-messages.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/vue/Messages.vue]{meta='tab="Vue" tab-group="framework"'}
+
+The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.messages`, or from [`useMessages`](#usemessages) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
 ### messagesUi
 

@@ -5,8 +5,8 @@ import { createRunner, loadGame, startingState, type Game } from '@ifloom/engine
 import { quests } from '@ifloom/plugin-quests'
 import { debug } from '@ifloom/plugin-debug'
 import { phone } from '@ifloom/phone'
-import { calendar, pass } from '@ifloom/plugin-calendar'
-import { at, location, places } from '@ifloom/plugin-places'
+import { calendar } from '@ifloom/plugin-calendar'
+import { places } from '@ifloom/plugin-places'
 import { GameShell } from '@ifloom/react'
 import { calendarUi } from '@ifloom/plugin-calendar/react'
 import { debugUi } from '@ifloom/plugin-debug/react'
@@ -37,7 +37,7 @@ function game(strings: Record<string, string> = {}): Game {
         name: 'town',
         stats: [{ id: 'coins', label: 'Coins', start: 3, format: '{n}c', spendable: true }],
         actions: [
-          { id: 'wait', label: 'Wait a while', effects: [pass(1)] },
+          { id: 'wait', label: 'Wait a while', effects: [calendar.pass(1)] },
           { id: 'cake', label: 'Buy a cake', cost: { stats: { coins: 10 } } },
         ],
         scenes: [{ id: 'intro', title: 'Morning', body: [{ prose: 'intro' }], choices: [{ id: 'up', label: 'Get up', effects: [{ scene: null }] }] }],
@@ -48,13 +48,20 @@ function game(strings: Record<string, string> = {}): Game {
           'mum.hi': 'Did you eat?',
         },
         entities: [
-          location({ id: 'house', name: 'House', desc: 'Home', exits: ['street'], body: [{ prose: 'place.house' }] }),
-          location({ id: 'street', name: 'High Street', desc: 'Out', exits: ['house'], body: [{ prose: 'place.street' }] }),
+          places.location({ id: 'house', name: 'House', desc: 'Home', exits: ['street'], body: [{ prose: 'place.house' }] }),
+          places.location({ id: 'street', name: 'High Street', desc: 'Out', exits: ['house'], body: [{ prose: 'place.street' }] }),
         ],
         data: {
           messages: {
             messages: [
-              { id: 'mum.hi', channel: 'texts', from: 'Mum', when: at('street'), body: [{ prose: 'mum.hi' }], replies: [{ id: 'yes', label: 'Yes, Mum' }] },
+              {
+                id: 'mum.hi',
+                channel: 'texts',
+                from: 'Mum',
+                when: places.at('street'),
+                body: [{ prose: 'mum.hi' }],
+                replies: [{ id: 'yes', label: 'Yes, Mum' }],
+              },
             ],
           },
           quests: { quests: [{ id: 'out', title: 'Get out of the house', starts: { kv: 'never' }, stages: [] }] },

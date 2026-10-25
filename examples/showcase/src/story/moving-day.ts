@@ -1,6 +1,6 @@
 /** Moving day: the arrival, the cat's name, the note under the door and settling in. */
 import { give, text, type Content } from '@ifloom/engine'
-import { at } from '@ifloom/plugin-places'
+import { places } from '@ifloom/plugin-places'
 
 /** Sam's note under the door: the notice's words, and the note's, kept in the phone's Notes app. */
 const WELCOME = 'Welcome to the building! Bins go out Thursday. The radiator knocks; ignore it. — Sam, flat 2'
@@ -45,7 +45,7 @@ export const movingDay: Content = {
     // A note under the door the first time the player steps out.
     {
       id: 'welcome',
-      when: at('high-street'),
+      when: places.at('high-street'),
       effects: [{ notify: 'A note under your door', text: WELCOME, tag: 'post' }, give('note:welcome')],
     },
   ],
@@ -58,7 +58,7 @@ export const movingDay: Content = {
           summary: 'New town, new flat. Find your feet.',
           starts: { kv: 'phase', is: ['open'] },
           stages: [
-            { id: 'out', hint: 'Step out onto the high street.', done: at('high-street') },
+            { id: 'out', hint: 'Step out onto the high street.', done: places.at('high-street') },
             { id: 'ava', hint: 'Somebody runs the café. Say hello.', done: { seen: 'ava.hi' } },
             { id: 'post', hint: 'Take a photo with someone and post it.', done: { 'feed/posted': { gte: 1 } } },
           ],

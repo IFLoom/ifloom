@@ -236,7 +236,7 @@ export function channelsOf(game: Game): Channel[] {
  * messages in a pack's `data.messages.channels` and `data.messages.messages`,
  * so a mod can add either.
  */
-export function messages(): DefinedPlugin<MessagesState, MessagesView> {
+function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
   function unreadIn(record: MessagesState, game: Game, channel?: string): number {
     const channelOf = new Map(messagesOf(game).map((message) => [message.id, message.channel]))
     return record.arrived.filter(
@@ -477,14 +477,27 @@ function applyRefs(state: GameState, game: Game, refs: readonly EffectRef[]): Ga
 }
 
 /** A command: send this reply to this message: its id for its first arrival, or an arrival's key. */
-export const replyTo = (message: string, reply: string): CommandRef => ({ [`${ID}/reply`]: { message, reply } })
+const replyTo = (message: string, reply: string): CommandRef => ({ [`${ID}/reply`]: { message, reply } })
 /** An effect: deliver one message drawn from the pool, as a new arrival. */
-export const drawMessage = (pool: string): EffectRef => ({ [`${ID}/draw`]: { pool } })
+const drawMessage = (pool: string): EffectRef => ({ [`${ID}/draw`]: { pool } })
 /** A condition: whole days since the message last arrived, in this range; false if it never has. */
-export const messageSince = (message: string, range: Range): Condition => ({ [`${ID}/since`]: { message, ...range } })
+const messageSince = (message: string, range: Range): Condition => ({ [`${ID}/since`]: { message, ...range } })
 /** A command: mark a thread read, or every message with no thread given. */
-export const readThread = (thread?: string): CommandRef => ({ [`${ID}/read`]: thread === undefined ? {} : { id: thread } })
+const readThread = (thread?: string): CommandRef => ({ [`${ID}/read`]: thread === undefined ? {} : { id: thread } })
 /** A condition: the message has arrived. */
-export const messageArrived = (message: string): Condition => ({ [`${ID}/arrived`]: { message } })
+const messageArrived = (message: string): Condition => ({ [`${ID}/arrived`]: { message } })
 /** A condition: the player replied to the message, or with that reply. */
-export const messageReplied = (message: string, reply?: string): Condition => ({ [`${ID}/replied`]: reply === undefined ? { message } : { message, reply } })
+const messageReplied = (message: string, reply?: string): Condition => ({ [`${ID}/replied`]: reply === undefined ? { message } : { message, reply } })
+
+/**
+ * The plugin, with its helpers on it: `messages()` makes the plugin for the
+ * game's `plugins`, and content is written with `messages.reply('hi', 'wave')`.
+ */
+export const messages = Object.assign(messagesPlugin, {
+  reply: replyTo,
+  draw: drawMessage,
+  since: messageSince,
+  read: readThread,
+  arrived: messageArrived,
+  replied: messageReplied,
+})

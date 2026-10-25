@@ -1,6 +1,6 @@
 /** Cheats for the player, and the supporter code that opens one of them. */
 import type { Content } from '@ifloom/engine'
-import { hasUnlock } from '@ifloom/plugin-unlocks'
+import { unlocks } from '@ifloom/plugin-unlocks'
 
 export const cheats: Content = {
   data: {
@@ -14,7 +14,7 @@ export const cheats: Content = {
           label: 'Full energy',
           description: 'As if you had slept.',
           group: 'Supporters',
-          blocked: [{ when: { not: hasUnlock('supporter') }, reason: 'For supporters.' }],
+          blocked: [{ when: { not: unlocks.has('supporter') }, reason: 'For supporters.' }],
           effects: [{ stat: 'energy', to: 100 }],
         },
       ],

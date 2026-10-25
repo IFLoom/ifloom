@@ -230,9 +230,9 @@ type StatDisplay = 'number' | 'bar' | 'pips'
 ## hue
 
 ```ts
-import { person } from '@ifloom/plugin-cast'
+import { cast } from '@ifloom/plugin-cast'
 
-person({ id: 'ava', name: 'Ava', ui: { hue: 20 }, home: 'park', talk: 'ava.hi' })
+cast.person({ id: 'ava', name: 'Ava', ui: { hue: 20 }, home: 'park', talk: 'ava.hi' })
 ```
 
 On an [entity](/docs/reference/entities#entitydef), or on a [kind](/docs/reference/entities#kinddef) for all of its entities: a colour as a hue from 0 to 360. While a scene's [speaker](/docs/reference/view#speakerview) has one, `SceneStage` colours their spoken lines with it, lighter in dark mode. It sets `data-speaker-hue` and `--ifloom-speaker-hue` on the scene for your own CSS too:

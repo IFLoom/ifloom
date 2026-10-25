@@ -171,7 +171,7 @@ function cheatRef(cheat: unknown): Reference[] {
  * The plugin. Add it to the game's `plugins`, and put cheats in a pack's
  * `data.cheats.cheats`.
  */
-export function cheats(): DefinedPlugin<CheatsState, CheatsView> {
+function cheatsPlugin(): DefinedPlugin<CheatsState, CheatsView> {
   return definePlugin<CheatsState, CheatsView>({
     id: ID,
     version: 1,
@@ -237,6 +237,12 @@ export function cheats(): DefinedPlugin<CheatsState, CheatsView> {
 }
 
 /** A command: use the cheat. */
-export const runCheat = (cheat: string): CommandRef => ({ [`${ID}/use`]: { id: cheat } })
+const runCheat = (cheat: string): CommandRef => ({ [`${ID}/use`]: { id: cheat } })
 /** A condition: this save has used the cheat, or any cheat when none is named. */
-export const cheatUsed = (cheat?: string): Condition => ({ [`${ID}/used`]: cheat === undefined ? {} : { cheat } })
+const cheatUsed = (cheat?: string): Condition => ({ [`${ID}/used`]: cheat === undefined ? {} : { cheat } })
+
+/**
+ * The plugin, with its helpers on it: `cheats()` makes the plugin for the
+ * game's `plugins`, and content is written with `cheats.use('rich')`.
+ */
+export const cheats = Object.assign(cheatsPlugin, { use: runCheat, used: cheatUsed })

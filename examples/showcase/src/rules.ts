@@ -4,7 +4,7 @@
  * `world/` and `story/`.
  */
 import { artSrc, entityImage, heldBy, parseRef, PLAYER, type GameRules } from '@ifloom/engine'
-import { postTo, react } from '@ifloom/plugin-feed'
+import { feed } from '@ifloom/plugin-feed'
 
 /**
  * The game's own calls, declared as a plugin declares its own, so content
@@ -41,9 +41,9 @@ export const rules: GameRules = {
       const id = `post.photo.${parseRef(latest)!.id}`
       const likes = 2 + roll(10, 'likes') + (state.stats.charm ?? 0)
       return [
-        postTo('social', id, { text: 'New town, new faces.', ...(image ? { image: artSrc(image) } : {}) }),
+        feed.post('social', id, { text: 'New town, new faces.', ...(image ? { image: artSrc(image) } : {}) }),
         { stat: 'charm', by: 1 },
-        react(id, { likes, from: 'ava', text: 'Lovely!' }),
+        feed.react(id, { likes, from: 'ava', text: 'Lovely!' }),
       ]
     },
   },

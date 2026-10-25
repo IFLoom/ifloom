@@ -171,10 +171,10 @@ A wardrobe is something you look in at home. To show a section only in some room
 
 ```ts tab="Plain JS" tab-group="framework"
 import { holds } from '@ifloom/engine'
-import { at } from '@ifloom/plugin-places'
+import { places } from '@ifloom/plugin-places'
 
 // In draw(), after the stats:
-if (holds(runner.state, runner.game, at('flat'))) {
+if (holds(runner.state, runner.game, places.at('flat'))) {
   const worn = section(sidebar, 'wardrobe', 'Wearing')
   // …what the player has on, from view.plugins.wardrobe
 }
@@ -183,9 +183,9 @@ if (holds(runner.state, runner.game, at('flat'))) {
 ```tsx tab="React" tab-group="framework"
 import { Section, When } from '@ifloom/react'
 import { WardrobeCard } from '@ifloom/plugin-wardrobe/react'
-import { at } from '@ifloom/plugin-places'
+import { places } from '@ifloom/plugin-places'
 
-<Section id="wardrobe" title="Wearing" collapsible when={at('flat')}>
+<Section id="wardrobe" title="Wearing" collapsible when={places.at('flat')}>
   <WardrobeCard title={false} />
 </Section>
 
@@ -198,11 +198,11 @@ import { at } from '@ifloom/plugin-places'
 <script setup lang="ts">
 import { computed } from 'vue'
 import { holds } from '@ifloom/engine'
-import { at } from '@ifloom/plugin-places'
+import { places } from '@ifloom/plugin-places'
 import { runner, view } from './runner.ts'
 
 // Read `view` so it's worked out again whenever the state changes.
-const atHome = computed(() => view.value && holds(runner.state, at('flat'), runner.game))
+const atHome = computed(() => view.value && holds(runner.state, runner.game, places.at('flat')))
 </script>
 
 <template>
@@ -216,11 +216,11 @@ const atHome = computed(() => view.value && holds(runner.state, at('flat'), runn
 ```svelte tab="Svelte" tab-group="framework"
 <script lang="ts">
   import { holds } from '@ifloom/engine'
-  import { at } from '@ifloom/plugin-places'
+  import { places } from '@ifloom/plugin-places'
   import { runner, view } from './runner.ts'
 
   // Read $view so it's worked out again whenever the state changes.
-  const atHome = $derived($view && holds(runner.state, at('flat'), runner.game))
+  const atHome = $derived($view && holds(runner.state, runner.game, places.at('flat')))
 </script>
 
 {#if atHome}
@@ -299,7 +299,7 @@ const places = computed(() => view.value.plugins.places as PlacesView | undefine
 Some things shouldn't be on screen at all until the story asks for them, such as the wardrobe when the player opens the wardrobe door, or a shop's counter. Content opens them with the [`panel` effect](/docs/reference/panels), from a place's action, a choice, a thing the player uses or an app, and the UI draws the panel by its name:
 
 ```ts
-const flat = location({
+const flat = places.location({
   id: 'flat', name: 'Your flat', desc: 'Home', exits: ['high-street'],
   body: [{ prose: 'place.flat' }],
   actions: [{ id: 'wardrobe', label: 'Open the wardrobe', effects: [{ panel: 'wardrobe' }] }],

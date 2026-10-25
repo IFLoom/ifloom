@@ -233,10 +233,10 @@ export function inventoryView(state: GameState, game: Game): InventoryView {
 
 /**
  * The plugin. Add it to the game's `plugins`, and give the things that do
- * something the `inventory/usable` trait (`usable(label, effects)`). It
+ * something the `inventory/usable` trait (`inventory.usable(label, effects)`). It
  * keeps nothing in the save.
  */
-export function inventory(): DefinedPlugin<null, InventoryView> {
+function inventoryPlugin(): DefinedPlugin<null, InventoryView> {
   return definePlugin<null, InventoryView>({
     id: ID,
     version: 1,
@@ -303,13 +303,19 @@ export function inventory(): DefinedPlugin<null, InventoryView> {
  * `traits`: `traits: { ...usable('Eat the apple', [{ stat: 'energy', by: 5 }]) }`.
  * Using one spends one unless `keep` is true.
  */
-export const usable = (label: string, effects: EffectRef[], options: { keep?: boolean } = {}): { 'inventory/usable': Usable } => ({
+const usable = (label: string, effects: EffectRef[], options: { keep?: boolean } = {}): { 'inventory/usable': Usable } => ({
   [USABLE]: options.keep ? { label, effects, keep: true } : { label, effects },
 })
 
 /** A command: use one of a thing you hold. */
-export const useThing = (ref: EntityRef): CommandRef => ({ [`${ID}/use`]: { id: ref } })
+const useThing = (ref: EntityRef): CommandRef => ({ [`${ID}/use`]: { id: ref } })
 /** A command: drop one of a thing you hold. */
-export const dropThing = (ref: EntityRef): CommandRef => ({ [`${ID}/drop`]: { id: ref } })
+const dropThing = (ref: EntityRef): CommandRef => ({ [`${ID}/drop`]: { id: ref } })
 /** A command: give one of a thing you hold to someone who can hold things, such as `'character:ava'`. */
-export const giveThing = (ref: EntityRef, to: Holder): CommandRef => ({ [`${ID}/give`]: { id: ref, to } })
+const giveThing = (ref: EntityRef, to: Holder): CommandRef => ({ [`${ID}/give`]: { id: ref, to } })
+
+/**
+ * The plugin, with its helpers on it: `inventory()` makes the plugin for the
+ * game's `plugins`, and content is written with `inventory.usable('Eat', effects)` and `inventory.use('food:apple')`.
+ */
+export const inventory = Object.assign(inventoryPlugin, { usable, use: useThing, drop: dropThing, give: giveThing })

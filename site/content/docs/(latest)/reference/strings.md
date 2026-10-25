@@ -22,8 +22,8 @@ Say you want the town to sound a little friendlier:
 
 ```ts
 import { apply, whyNot, type Game } from '@ifloom/engine'
-import { go } from '@ifloom/plugin-places'
-import { talk } from '@ifloom/plugin-cast'
+import { places } from '@ifloom/plugin-places'
+import { cast } from '@ifloom/plugin-cast'
 
 const game: Game = {
   // ...
@@ -36,9 +36,9 @@ const game: Game = {
 
 // `busy` is a state with a scene open
 whyNot(busy, game, { type: 'action', id: 'coffee' })     // 'Not yet, love.'
-apply(busy, game, go('high-street')).reason              // 'Not yet, love.' (the places plugin says it too)
-whyNot(busy, game, talk('ava'))                           // 'Not yet, love.' (and so does the cast)
-whyNot(state, game, talk('ava'))                          // 'Ava has popped out.' when Ava is elsewhere
+apply(busy, game, places.go('high-street')).reason              // 'Not yet, love.' (the places plugin says it too)
+whyNot(busy, game, cast.talk('ava'))                           // 'Not yet, love.' (and so does the cast)
+whyNot(state, game, cast.talk('ava'))                          // 'Ava has popped out.' when Ava is elsewhere
 ```
 
 The refusal, the greyed-out button and the view all show the same line, because they all go through [`stringOf`](#stringof).

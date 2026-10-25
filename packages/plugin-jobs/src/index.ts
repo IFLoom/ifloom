@@ -390,7 +390,7 @@ function jobRef(job: unknown): Reference[] {
  * The plugin. Add it to the game's `plugins`, and put jobs in a pack's
  * `data.jobs.jobs`.
  */
-export function jobs(): DefinedPlugin<JobsState, JobsView> {
+function jobsPlugin(): DefinedPlugin<JobsState, JobsView> {
   return definePlugin<JobsState, JobsView>({
     id: ID,
     version: 1,
@@ -549,22 +549,39 @@ export function jobs(): DefinedPlugin<JobsState, JobsView> {
  * if given (a newspaper's ads, a café's notice), as `with: { job: [...] }`. From a place's action, a
  * person's, an item's `use`, an app or a choice; the UI draws it.
  */
-export const openJobs = (jobs?: string[]): Effect => (jobs === undefined ? { panel: PANEL } : { panel: PANEL, with: { job: jobs } })
+const openJobs = (jobs?: string[]): Effect => (jobs === undefined ? { panel: PANEL } : { panel: PANEL, with: { job: jobs } })
 /** A command: apply for the job. */
-export const applyFor = (job: string): CommandRef => ({ 'jobs/apply': { id: job } })
+const applyFor = (job: string): CommandRef => ({ 'jobs/apply': { id: job } })
 /** A command: work a shift at the job. */
-export const work = (job: string): CommandRef => ({ 'jobs/work': { id: job } })
+const work = (job: string): CommandRef => ({ 'jobs/work': { id: job } })
 /** A command: leave the job. */
-export const quit = (job: string): CommandRef => ({ 'jobs/quit': { id: job } })
+const quit = (job: string): CommandRef => ({ 'jobs/quit': { id: job } })
 /** An effect: hire the player now, asking no requirements. */
-export const hire = (job: string): EffectRef => ({ 'jobs/hire': { job } })
+const hire = (job: string): EffectRef => ({ 'jobs/hire': { job } })
 /** An effect: fire the player from the job now. */
-export const fire = (job: string): EffectRef => ({ 'jobs/fire': { job } })
+const fire = (job: string): EffectRef => ({ 'jobs/fire': { job } })
 /** A condition: the player holds the job, at this rank if given. */
-export const hasJob = (job: string, rank?: string): Condition => ({ 'jobs/hired': rank === undefined ? { job } : { job, rank } })
+const hasJob = (job: string, rank?: string): Condition => ({ 'jobs/hired': rank === undefined ? { job } : { job, rank } })
 /** A condition: the player was fired from the job. */
-export const wasFired = (job: string): Condition => ({ 'jobs/fired': { job } })
+const wasFired = (job: string): Condition => ({ 'jobs/fired': { job } })
 /** A condition: shifts worked at a job the player holds, in this range. */
-export const shiftsWorked = (job: string, range: Range): Condition => ({ 'jobs/shifts': { job, ...range } })
+const shiftsWorked = (job: string, range: Range): Condition => ({ 'jobs/shifts': { job, ...range } })
 /** A shift at `job` was worked today; any job held, without one. */
-export const workedToday = (job?: string): Condition => ({ 'jobs/worked': job === undefined ? true : { job } })
+const workedToday = (job?: string): Condition => ({ 'jobs/worked': job === undefined ? true : { job } })
+
+/**
+ * The plugin, with its helpers on it: `jobs()` makes the plugin for the
+ * game's `plugins`, and content is written with `jobs.apply('cafe')` and `jobs.fire('cafe')`.
+ */
+export const jobs = Object.assign(jobsPlugin, {
+  open: openJobs,
+  apply: applyFor,
+  work,
+  quit,
+  hire,
+  fire,
+  hired: hasJob,
+  fired: wasFired,
+  shifts: shiftsWorked,
+  worked: workedToday,
+})

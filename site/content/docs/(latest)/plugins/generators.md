@@ -7,10 +7,7 @@ description: "Make new entities from templates, with each field drawn from a wei
 The plugin knows nothing about people or anything else. A pool is any list of values, and a template can fill any kind of entity your game declares. Every draw is seeded by the save, so a replay makes the same entities and a reload can't re-roll them.
 
 ```ts
-import {
-  generators, generate, drawEntity, poolsOf, templatesOf,
-  type PoolDef, type PoolEntry, type TemplateDef, type FieldDef, type GeneratedEntity,
-} from '@ifloom/plugin-generators'
+import { generators, drawEntity, poolsOf, templatesOf, type PoolDef, type PoolEntry, type TemplateDef, type FieldDef, type GeneratedEntity } from '@ifloom/plugin-generators'
 ```
 
 ## Install
@@ -44,8 +41,8 @@ These are the showcase's park visitors. Each day the player first comes to the p
 
 ```ts
 import type { Content } from '@ifloom/engine'
-import { at } from '@ifloom/plugin-places'
-import { generate, type PoolDef, type TemplateDef } from '@ifloom/plugin-generators'
+import { places } from '@ifloom/plugin-places'
+import { generators, type PoolDef, type TemplateDef } from '@ifloom/plugin-generators'
 
 const pools: PoolDef[] = [
   { id: 'first-names', values: ['Ruth', 'Omar', 'Lena', 'Theo', 'Priya', 'Jonah', 'Maud', 'Kit'] },
@@ -65,8 +62,8 @@ const town: Content = {
     {
       id: 'visitors',
       once: 'turn',
-      when: at('park'),
-      effects: [{ each: 'visitor', effects: [{ remove: '$' }] }, generate('visitor', 2)],
+      when: places.at('park'),
+      effects: [{ each: 'visitor', effects: [{ remove: '$' }] }, generators.generate('visitor', 2)],
     },
   ],
   data: { generators: { pools, templates: [visitor] } },
@@ -154,7 +151,7 @@ type FieldDef = KvValue | { pool: string } | { between: [number, number] } | { j
 
 | Content writes | Helper | Does |
 |---|---|---|
-| `{ 'generators/generate': { template, count? } }` | `generate(template, count?)` | Makes `count` new entities (1 if left out) from the template, one after another. |
+| `{ 'generators/generate': { template, count? } }` | `generators.generate(template, count?)` | Makes `count` new entities (1 if left out) from the template, one after another. |
 
 Each is made with the engine's [`create`](/docs/reference/effects#create) effect, so it gets the next free id of its kind (`visitor:#1`, `visitor:#2` and so on), reads what it isn't given from its `like` or its kind, and goes to the template's `at`. It works in any effect list, a thing's use in the [inventory](/docs/plugins/inventory) included. In a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), which lists plain effects, write the long form, `{ 'generators/generate': { template, count } }`.
 
@@ -173,7 +170,10 @@ Every field is drawn from the save's [seed](/docs/reference/state#seed), the tem
 ### Helpers
 
 ```ts
-const generate: (template: string, count?: number) => EffectRef
+const generators: {
+  (): DefinedPlugin<null>
+  generate(template: string, count?: number): EffectRef
+}
 ```
 
 ### drawEntity
@@ -222,4 +222,4 @@ A call that names a template the game doesn't have gives `unknown template "…"
 
 ## See it in an example
 
-Small Town: `data.generators` in [`examples/showcase/src/story/park.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/park.ts) has two pools and a `visitor` template, and the park's `visitors` trigger makes two a day with `generate('visitor', 2)`.
+Small Town: `data.generators` in [`examples/showcase/src/story/park.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/park.ts) has two pools and a `visitor` template, and the park's `visitors` trigger makes two a day with `generators.generate('visitor', 2)`.

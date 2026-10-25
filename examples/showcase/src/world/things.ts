@@ -6,10 +6,10 @@
  * phone's `photo` kind, made by the camera app in `phone.ts`.
  */
 import type { Content } from '@ifloom/engine'
-import { usable } from '@ifloom/plugin-inventory'
-import { openJobs } from '@ifloom/plugin-jobs'
-import { sellable } from '@ifloom/plugin-shop'
-import { wearable } from '@ifloom/plugin-wardrobe'
+import { inventory } from '@ifloom/plugin-inventory'
+import { jobs } from '@ifloom/plugin-jobs'
+import { shop } from '@ifloom/plugin-shop'
+import { wardrobe } from '@ifloom/plugin-wardrobe'
 
 export const things: Content = {
   // Not listed with the town's people and visitors: what you hold is in `view.held`.
@@ -19,21 +19,21 @@ export const things: Content = {
     { id: 'note', label: 'Note', plural: 'Notes', listed: false },
   ],
   entities: [
-    { id: 'raincoat', of: 'clothing', name: 'raincoat', desc: 'Yellow, a size too big.', at: 'player', traits: { ...wearable('coat') } },
-    { id: 'scarf', of: 'clothing', name: 'scarf', desc: 'Knitted by someone who loved you.', traits: { ...wearable('neck') } },
+    { id: 'raincoat', of: 'clothing', name: 'raincoat', desc: 'Yellow, a size too big.', at: 'player', traits: { ...wardrobe.wearable('coat') } },
+    { id: 'scarf', of: 'clothing', name: 'scarf', desc: 'Knitted by someone who loved you.', traits: { ...wardrobe.wearable('neck') } },
     {
       id: 'sandwich',
       of: 'item',
       name: 'sandwich',
       desc: 'Cheese and pickle, wrapped in paper.',
-      traits: { ...usable('Eat the sandwich', [{ stat: 'energy', by: 25 }]), ...sellable({ coins: 4 }) },
+      traits: { ...inventory.usable('Eat the sandwich', [{ stat: 'energy', by: 25 }]), ...shop.sellable({ coins: 4 }) },
     },
     {
       id: 'flapjack',
       of: 'item',
       name: 'flapjack',
       desc: 'Oats, syrup and a lot of butter.',
-      traits: { ...usable('Eat the flapjack', [{ stat: 'energy', by: 10 }]), ...sellable({ coins: 2 }) },
+      traits: { ...inventory.usable('Eat the flapjack', [{ stat: 'energy', by: 10 }]), ...shop.sellable({ coins: 2 }) },
     },
     // Reading it opens the job board with only the paper's ads on it: a thing opening a panel. It's kept to read again.
     {
@@ -42,7 +42,7 @@ export const things: Content = {
       name: 'newspaper',
       desc: 'Today’s Small Town Gazette. The back page is job ads.',
       at: 'player',
-      traits: { ...usable('Read the job ads', [openJobs(['dogs'])], { keep: true }), ...sellable({ coins: 2 }) },
+      traits: { ...inventory.usable('Read the job ads', [jobs.open(['dogs'])], { keep: true }), ...shop.sellable({ coins: 2 }) },
     },
   ],
   data: {

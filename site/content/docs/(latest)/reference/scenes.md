@@ -90,7 +90,7 @@ This is Ava's hello from the showcase:
 
 ```ts
 import { text, type DataScene } from '@ifloom/engine'
-import { character } from '@ifloom/plugin-cast'
+import { cast } from '@ifloom/plugin-cast'
 
 const hello: DataScene = {
   id: 'ava.hi',
@@ -102,12 +102,12 @@ const hello: DataScene = {
     text('She has your cup out before you ask.', { when: { seen: 'ava.hi', gte: 3 } }),
   ],
   choices: [
-    { id: 'chat', label: 'Chat for a minute', once: { per: 'turn', reason: 'She has a queue.' }, effects: [{ stat: 'friendship', by: 5, of: character('ava') }] },
+    { id: 'chat', label: 'Chat for a minute', once: { per: 'turn', reason: 'She has a queue.' }, effects: [{ stat: 'friendship', by: 5, of: cast.character('ava') }] },
     {
       id: 'compliment',
       label: 'Tell her the café is the best thing in town',
       when: { stat: 'charm', gte: 3 },
-      effects: [{ stat: 'friendship', by: 10, of: character('ava') }, { scene: null }],
+      effects: [{ stat: 'friendship', by: 10, of: cast.character('ava') }, { scene: null }],
     },
     { id: 'bye', label: 'Leave her to it', effects: [{ scene: null }] },
   ],
@@ -219,7 +219,7 @@ A choice is a [`ButtonDef`](/docs/reference/actions#buttondef), the same fields 
 | `tags`, `irreversible`, `ui` | Passed through to the view's [`RenderedChoice`](/docs/reference/view#renderedchoice). `ui` holds [presentation hints](/docs/reference/ui-hints), such as the React UI's [`transition`](/docs/react/hints#transition-on-a-choice) for the screen it leads to. | |
 | `cost` | The stats it spends, as an action's [`cost`](/docs/reference/actions#actioncost): listed on the button as its price, checked when it's chosen (greyed out with `reasons` or the stat's own line while there's too little), and paid after its command, before its effects. | free |
 | `effects` | Literal [effects](/docs/reference/effects), or `{ 'game/name': {...} }` for effects worked out by one of the game's own [effects](/docs/reference/custom#effects) in its `rules`. An unknown name adds nothing, and the loader reports it. | |
-| `command` | A [command](/docs/reference/commands) to send as well, run before the effects: a plugin's, such as `openApp('texts')`, or a core one such as `{ type: 'action', id: 'coffee' }`. The choice is greyed out with that command's reason while it would be refused, and its price adds what the command spends. It can't be `choose`. | none |
+| `command` | A [command](/docs/reference/commands) to send as well, run before the effects: a plugin's, such as `devices.open('texts')`, or a core one such as `{ type: 'action', id: 'coffee' }`. The choice is greyed out with that command's reason while it would be refused, and its price adds what the command spends. It can't be `choose`. | none |
 
 **Label lookup order.** A line drawn by key can carry its own reply. If a `prose` or `variants` block this render used has prose at `` `${drawnKey}#${choice.id}` ``, that wins (the last such block, if there are several), so a reply can answer the line she actually gave. After that come the first matching `labels` entry, then `label`, then the bare choice id.
 
@@ -230,7 +230,7 @@ A label is never looked up as a prose key: content from before schema 25 that wr
   id: 'ask',
   labels: [{ when: { seen: 'ava.river' }, label: 'Ask about the river again' }],
   once: { per: 'turn', reason: 'You have asked today already.' },
-  effects: [{ stat: 'friendship', by: 2, of: character('ava') }],
+  effects: [{ stat: 'friendship', by: 2, of: cast.character('ava') }],
 }
 ```
 
@@ -238,7 +238,7 @@ A label is never looked up as a prose key: content from before schema 25 that wr
 
 ```ts
 // body: [text('Your phone buzzes. [[act:answer|Pick it up]], or leave it.')]
-{ id: 'answer', label: 'Answer the phone', command: openApp('texts'), effects: [{ kv: 'answered', to: true }] }
+{ id: 'answer', label: 'Answer the phone', command: devices.open('texts'), effects: [{ kv: 'answered', to: true }] }
 ```
 
 **Gotchas.**
@@ -320,7 +320,7 @@ The fields that make a scene a [storylet](/docs/reference/storylets), a scene dr
 
 ```ts
 import type { DataScene } from '@ifloom/engine'
-import { character, here } from '@ifloom/plugin-cast'
+import { cast } from '@ifloom/plugin-cast'
 
 const avasBreak: DataScene = {
   id: 'cafe.break',
@@ -328,9 +328,9 @@ const avasBreak: DataScene = {
   speaker: 'ava',
   drawnFrom: ['cafe'],
   weight: 2,
-  when: here('ava'),
+  when: cast.here('ava'),
   body: [{ prose: 'cafe.break' }],
-  choices: [{ id: 'leave', effects: [{ stat: 'friendship', by: 2, of: character('ava') }, { scene: null }] }],
+  choices: [{ id: 'leave', effects: [{ stat: 'friendship', by: 2, of: cast.character('ava') }, { scene: null }] }],
 }
 ```
 

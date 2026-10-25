@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { applyEffects, loadGame, startingState, view, type Game } from '@ifloom/engine'
-import { calendar, pass, sleep } from '@ifloom/plugin-calendar'
-import { go, location, places } from '@ifloom/plugin-places'
+import { calendar } from '@ifloom/plugin-calendar'
+import { places } from '@ifloom/plugin-places'
 import { explorer, metricsText, playtest, snapshot } from '../src/index.ts'
 
 const clock = calendar()
@@ -15,21 +15,21 @@ function game(): Game {
         name: 'row',
         stats: [{ id: 'carrots', label: 'Carrots' }],
         actions: [
-          { id: 'dig', effects: [pass(1), { stat: 'carrots', by: 1 }] },
-          { id: 'wait', label: 'Wait', effects: [pass(1)] },
+          { id: 'dig', effects: [calendar.pass(1), { stat: 'carrots', by: 1 }] },
+          { id: 'wait', label: 'Wait', effects: [calendar.pass(1)] },
         ],
         scenes: [{ id: 'wake', title: 'Morning', body: [{ prose: 'wake' }], choices: [{ id: 'up', label: 'Get up', effects: [{ scene: null }] }] }],
         entities: [
-          location({
+          places.location({
             id: 'bedroom',
             name: 'Bedroom',
             desc: 'Home',
             exits: ['hall'],
             body: [{ prose: 'bedroom' }],
-            actions: [{ id: 'bed', label: 'Sleep', command: sleep() }],
+            actions: [{ id: 'bed', label: 'Sleep', command: calendar.sleep() }],
           }),
-          location({ id: 'hall', name: 'Hall', desc: 'Home', exits: ['bedroom', 'garden'], body: [{ prose: 'hall' }] }),
-          location({
+          places.location({ id: 'hall', name: 'Hall', desc: 'Home', exits: ['bedroom', 'garden'], body: [{ prose: 'hall' }] }),
+          places.location({
             id: 'garden',
             name: 'Garden',
             desc: 'Out',
@@ -90,7 +90,7 @@ describe('playtest', () => {
 
   it('stops a policy that keeps being refused', () => {
     const g = game()
-    const result = playtest(g, startingState(g), () => go('garden'), { turns: 3 })
+    const result = playtest(g, startingState(g), () => places.go('garden'), { turns: 3 })
     expect(result.refusals.length).toBe(2)
   })
 })

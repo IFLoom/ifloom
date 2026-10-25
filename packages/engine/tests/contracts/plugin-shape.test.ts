@@ -170,16 +170,32 @@ describe('the plugin shape (ADR 0009)', () => {
     const named = Object.fromEntries(Object.entries(found).map(([name, fields]) => [name.toLowerCase(), fields.sort()]))
     expect(named).toEqual(listed)
     // A factory that takes no options takes no content either: only these three take any.
-    const takes = Object.values(SOURCES).flatMap((source) => [...source.matchAll(/^export function (\w+)\((options)[^)]*\)/gm)].map((match) => match[1]))
+    const takes = Object.values(SOURCES).flatMap((source) => [...source.matchAll(/^function (\w+)Plugin\((options)[^)]*\)/gm)].map((match) => match[1]))
     expect(takes.sort()).toEqual(Object.keys(OPTIONS).sort())
   })
 
   it('declares what each factory returns', () => {
     const bare = Object.entries(SOURCES).flatMap(([path, source]) =>
-      [...source.matchAll(/^export function (\w+)\(([^)]*)\)\s*\{/gm)]
+      [...source.matchAll(/^(?:export )?function (\w+)\(([^)]*)\)\s*\{/gm)]
         .filter((match) => source.slice(match.index, match.index + 400).includes('definePlugin'))
         .map((match) => `${path.split('/').at(-3)}: ${match[1]}`),
     )
     expect(bare).toEqual([])
+  })
+
+  it('puts its helpers on its factory, so no helper is exported on its own', () => {
+    // A helper writes a call: `quests.done('bread')`, a property of the factory `quests`, never a bare `questDone`.
+    const loose = Object.entries(SOURCES).flatMap(([path, source]) =>
+      [
+        ...source.matchAll(
+          /^export (?:const (\w+) = \([^)]*\): (?:Condition|EffectRef|CommandRef|Effect|Blocked)\b|function (\w+)\([^)]*\): (?:Condition|EffectRef|CommandRef|Effect|Blocked)\b)/gm,
+        ),
+      ].map((match) => `${path.split('/').at(-3)}: ${match[1] ?? match[2]}`),
+    )
+    expect(loose).toEqual([])
+    const assigned = Object.entries(SOURCES)
+      .filter(([path]) => path.endsWith('/src/index.ts'))
+      .flatMap(([path, source]) => (/^export const (\w+) = Object\.assign\(\1Plugin, \{/m.test(source) ? [] : [path.split('/').at(-3)]))
+    expect(assigned).toEqual([])
   })
 })

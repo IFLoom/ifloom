@@ -1,9 +1,9 @@
 /** Your flat: home, bed, the wardrobe, Ava's text on the sill, her call, and the rent every Sunday. */
 import { text, type Condition, type Content } from '@ifloom/engine'
-import { day, period, sleep, weekday } from '@ifloom/plugin-calendar'
-import { messageReplied } from '@ifloom/plugin-messages'
-import { at } from '@ifloom/plugin-places'
-import { openApp } from '@ifloom/plugin-devices'
+import { calendar } from '@ifloom/plugin-calendar'
+import { messages } from '@ifloom/plugin-messages'
+import { places } from '@ifloom/plugin-places'
+import { devices } from '@ifloom/plugin-devices'
 import { place } from '../place.ts'
 
 /** Ava's text has come and hasn't been read. */
@@ -47,14 +47,14 @@ export const flat: Content = {
     // The phone rings at home, an evening from the day after you answered Ava's text: the scene opens with its timer running.
     {
       id: 'flat.ring',
-      when: { all: [messageReplied('ava.text'), at('flat'), day({ gte: 2 }), period('evening')] },
+      when: { all: [messages.replied('ava.text'), places.at('flat'), calendar.day({ gte: 2 }), calendar.period('evening')] },
       effects: [{ scene: 'flat.ring' }, { timer: 'flat.ring' }],
     },
     // Rent, every Sunday from the first week on: the town's one bill, so money has somewhere to go.
     {
       id: 'rent',
       once: 'turn',
-      when: { all: [weekday(6), day({ gte: 6 })] },
+      when: { all: [calendar.weekday(6), calendar.day({ gte: 6 })] },
       effects: [
         { stat: 'coins', by: -30 },
         { notify: 'Rent paid: 30 coins', id: 'rent', tag: 'money' },
@@ -77,11 +77,11 @@ export const flat: Content = {
         text('Your phone buzzes on the sill: a message. [[act:read-text|Check it]].', { when: textWaiting }),
       ],
       actions: [
-        { id: 'bed', label: 'Go to bed', command: sleep() },
+        { id: 'bed', label: 'Go to bed', command: calendar.sleep() },
         // The wardrobe opens in a panel by its name; the layout also shows what you're wearing only at home.
         { id: 'wardrobe', label: 'Open the wardrobe', effects: [{ panel: 'wardrobe' }] },
         // Drawn inline by `[[act:read-text|…]]` in the line above, so it isn't a button as well.
-        { id: 'read-text', label: 'Read your messages', when: textWaiting, command: openApp('texts') },
+        { id: 'read-text', label: 'Read your messages', when: textWaiting, command: devices.open('texts') },
       ],
     }),
   ],

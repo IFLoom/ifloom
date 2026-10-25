@@ -333,7 +333,7 @@ export function startUnlocks(runner: Runner, options: { content?: Readonly<Recor
  * The plugin. Add it to the game's `plugins`, put unlocks in its content's
  * `data.unlocks.unlocks`, and start entering codes with `startUnlocks`.
  */
-export function unlocks(): DefinedPlugin<UnlocksState, UnlocksView> {
+function unlocksPlugin(): DefinedPlugin<UnlocksState, UnlocksView> {
   return definePlugin<UnlocksState, UnlocksView>({
     id: ID,
     // The words a player reads in each list of the plugin's content, for a translation's `words` table.
@@ -400,6 +400,12 @@ export function unlocks(): DefinedPlugin<UnlocksState, UnlocksView> {
 }
 
 /** A condition: the unlock is recorded in this save. */
-export const hasUnlock = (unlock: string): Condition => ({ [`${ID}/has`]: { unlock } })
+const hasUnlock = (unlock: string): Condition => ({ [`${ID}/has`]: { unlock } })
 /** A command: record the unlock in this save. `startUnlocks` sends it; a game rarely needs to. */
-export const recordUnlock = (unlock: string): CommandRef => ({ [`${ID}/record`]: { id: unlock } })
+const recordUnlock = (unlock: string): CommandRef => ({ [`${ID}/record`]: { id: unlock } })
+
+/**
+ * The plugin, with its helpers on it: `unlocks()` makes the plugin for the
+ * game's `plugins`, and content is written with `unlocks.has('supporter')`.
+ */
+export const unlocks = Object.assign(unlocksPlugin, { has: hasUnlock, record: recordUnlock })

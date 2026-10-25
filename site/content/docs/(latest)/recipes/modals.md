@@ -130,7 +130,7 @@ Here the flat's prose links to a lease. Pressing it opens a `lease` panel, and s
 
 ```ts
 import type { Content } from '@ifloom/engine'
-import { onlyAt } from '@ifloom/plugin-places'
+import { places } from '@ifloom/plugin-places'
 
 export const lease: Content = {
   // Sent by the panel's button, so it has no label and no button of its own.
@@ -138,7 +138,7 @@ export const lease: Content = {
     {
       id: 'sign-lease',
       cost: { stats: { coins: 50 }, reasons: { coins: "You can't cover the deposit yet." } },
-      blocked: [onlyAt(['flat']), { when: { kv: 'signed' }, reason: 'You signed it already.' }],
+      blocked: [places.onlyAt(['flat']), { when: { kv: 'signed' }, reason: 'You signed it already.' }],
       effects: [{ kv: 'signed', to: true }, { panel: null }],
     },
   ],

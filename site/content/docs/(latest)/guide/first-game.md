@@ -46,44 +46,44 @@ If you'd rather see a finished game of this shape first, `--template town` copie
 
 ## 1. Places
 
-The core has no map, so places come from the places plugin. A location is an entity you write with the plugin's `location()`. It has an id, a name, the exits you can walk to from it, and a `body`, which is the text shown while no scene is playing. The body is a list of blocks, each a piece of the words written in place, `text('…')`.
+The core has no map, so places come from the places plugin. A location is an entity you write with the plugin's `places.location()`. It has an id, a name, the exits you can walk to from it, and a `body`, which is the text shown while no scene is playing. The body is a list of blocks, each a piece of the words written in place, `text('…')`.
 
-`desc` is the short line the UI shows under the place's name, for what sort of place it is. `blocked` is a list of conditions, each with a reason. While one holds, the plugin won't let the player in, and says why. That's how the café keeps hours, with a condition from the calendar: `period('morning', 'afternoon')` holds in the morning and the afternoon.
+`desc` is the short line the UI shows under the place's name, for what sort of place it is. `blocked` is a list of conditions, each with a reason. While one holds, the plugin won't let the player in, and says why. That's how the café keeps hours, with a condition from the calendar: `calendar.period('morning', 'afternoon')` holds in the morning and the afternoon.
 
 ```ts
 import { text } from '@ifloom/engine'
-import { pass, period } from '@ifloom/plugin-calendar'
-import { location } from '@ifloom/plugin-places'
-import { here } from '@ifloom/plugin-cast'
+import { calendar } from '@ifloom/plugin-calendar'
+import { places } from '@ifloom/plugin-places'
+import { cast } from '@ifloom/plugin-cast'
 
 const locations = [
-  location({
+  places.location({
     id: 'house',
     name: 'Your house',
     desc: 'Home',
     exits: ['high-street'],
     body: [text('The kettle, the window, the post on the mat.')],
   }),
-  location({
+  places.location({
     id: 'high-street',
     name: 'The high street',
     desc: 'Town',
     exits: ['house', 'cafe'],
     body: [text('Shopfronts, a bus stop, a bakery smell from the corner.')],
   }),
-  location({
+  places.location({
     id: 'cafe',
     name: 'The corner café',
     desc: 'Café',
     exits: ['high-street'],
-    blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
+    blocked: [{ when: { not: calendar.period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
     body: [
       text('Steam on the windows.'),
-      text('Ruth is behind the counter, flour to the elbows.', { when: here('ruth') }),
-      text('The counter is empty.', { when: { not: here('ruth') } }),
+      text('Ruth is behind the counter, flour to the elbows.', { when: cast.here('ruth') }),
+      text('The counter is empty.', { when: { not: cast.here('ruth') } }),
     ],
     actions: [
-      { id: 'coffee', label: 'Buy a coffee', cost: { stats: { coins: 3 } }, effects: [pass(1), { stat: 'energy', by: 20 }] },
+      { id: 'coffee', label: 'Buy a coffee', cost: { stats: { coins: 3 } }, effects: [calendar.pass(1), { stat: 'energy', by: 20 }] },
     ],
   }),
 ]
@@ -91,21 +91,21 @@ const locations = [
 
 `exits` are one-way, so the street lists the café and the café lists the street.
 
-A block with a `when` only shows while its [condition](/docs/reference/conditions) holds. The cast's [`here('ruth')`](/docs/plugins/cast#conditions) holds while Ruth's schedule puts her in the room the player is in, so the café reads differently with her behind the counter.
+A block with a `when` only shows while its [condition](/docs/reference/conditions) holds. The cast's [`cast.here('ruth')`](/docs/plugins/cast#conditions) holds while Ruth's schedule puts her in the room the player is in, so the café reads differently with her behind the counter.
 
-`actions` is the list of buttons the room offers. Each is an [action](/docs/reference/actions): an id, the label on its button, what it costs and its effects. The coffee costs 3 coins, passes a period of time with the calendar's `pass(1)`, and gives 20 energy. Step 3 declares the coins and the energy. The engine charges the cost before the effects apply, and refuses the action, with the stat's `lacking` line, when the player can't pay. `{ not: … }` turns the calendar's condition round, so the door is locked for the rest of the day.
+`actions` is the list of buttons the room offers. Each is an [action](/docs/reference/actions): an id, the label on its button, what it costs and its effects. The coffee costs 3 coins, passes a period of time with the calendar's `calendar.pass(1)`, and gives 20 energy. Step 3 declares the coins and the energy. The engine charges the cost before the effects apply, and refuses the action, with the stat's `lacking` line, when the player can't pay. `{ not: … }` turns the calendar's condition round, so the door is locked for the rest of the day.
 
 The locations are content, entities like any other. In step 5 they go into the game's content, in `entities`. There's more in [Places](/docs/plugins/places#the-location-trait) and the calendar's [conditions](/docs/plugins/calendar#conditions).
 
 ## 2. A character with a schedule
 
-The core has no people either, so characters come from the cast plugin. A character is an [entity](/docs/reference/entities) written with the cast's `person()`: a name and a line about them, and the cast's own fields beside them. A character has a schedule, somewhere to be when the schedule says nothing, and a scene that talking to them opens. The schedule is checked from the top, and the first entry whose `when` holds gives a place id from step 1. When none holds, the character is at their `home`. With no `home`, they're offstage, which means nowhere on the map.
+The core has no people either, so characters come from the cast plugin. A character is an [entity](/docs/reference/entities) written with the cast's `cast.person()`: a name and a line about them, and the cast's own fields beside them. A character has a schedule, somewhere to be when the schedule says nothing, and a scene that talking to them opens. The schedule is checked from the top, and the first entry whose `when` holds gives a place id from step 1. When none holds, the character is at their `home`. With no `home`, they're offstage, which means nowhere on the map.
 
 ```ts
-import { period, weekday } from '@ifloom/plugin-calendar'
-import { person } from '@ifloom/plugin-cast'
+import { calendar } from '@ifloom/plugin-calendar'
+import { cast } from '@ifloom/plugin-cast'
 
-const ruth = person({
+const ruth = cast.person({
   id: 'ruth',
   name: 'Ruth',
   fullName: 'Ruth Okafor',
@@ -114,7 +114,7 @@ const ruth = person({
   ui: { hue: 30 },
   schedule: [
     // Monday to Friday (0 is Monday), mornings and afternoons, at the café.
-    { location: 'cafe', when: { all: [weekday(0, 1, 2, 3, 4), period('morning', 'afternoon')] } },
+    { location: 'cafe', when: { all: [calendar.weekday(0, 1, 2, 3, 4), calendar.period('morning', 'afternoon')] } },
   ],
   talk: 'ruth.talk',
 })
@@ -150,21 +150,21 @@ const stats: StatDef[] = [
 
 `format` is how the number is written for the player. `spendable` says the stat is spent on things, so it shows in prices. `lacking` is the line the player reads when a cost needs more than they have.
 
-`of: 'character'` makes `friendship` a stat that every character keeps for themselves, starting at 0, rather than one the player has. Content says whose it is with `of: character('ruth')`. There's more in [Stats](/docs/reference/stats) and the cast's [entities](/docs/plugins/cast#each-one-is-an-entity).
+`of: 'character'` makes `friendship` a stat that every character keeps for themselves, starting at 0, rather than one the player has. Content says whose it is with `of: cast.character('ruth')`. There's more in [Stats](/docs/reference/stats) and the cast's [entities](/docs/plugins/cast#each-one-is-an-entity).
 
 An [action](/docs/reference/actions) can also belong to the game rather than a room. One in the content's `actions` is offered in every room, after the room's own:
 
 ```ts
 import type { ActionDef } from '@ifloom/engine'
-import { pass, sleep } from '@ifloom/plugin-calendar'
+import { calendar } from '@ifloom/plugin-calendar'
 
 const actions: ActionDef[] = [
-  { id: 'wait', label: 'Wait a while', effects: [pass(1)] },
-  { id: 'bed', label: 'Go to bed', command: sleep() },
+  { id: 'wait', label: 'Wait a while', effects: [calendar.pass(1)] },
+  { id: 'bed', label: 'Go to bed', command: calendar.sleep() },
 ]
 ```
 
-`wait` does nothing but pass a period. `bed` sends a command rather than running effects: `sleep()` is the calendar's command for going to bed. An action can also have a `blocked` list, each entry a condition with the reason the player reads while it holds, and the engine refuses the action with that reason. See [Actions](/docs/reference/actions), and the calendar's [effects](/docs/plugins/calendar#effects).
+`wait` does nothing but pass a period. `bed` sends a command rather than running effects: `calendar.sleep()` is the calendar's command for going to bed. An action can also have a `blocked` list, each entry a condition with the reason the player reads while it holds, and the engine refuses the action with that reason. See [Actions](/docs/reference/actions), and the calendar's [effects](/docs/plugins/calendar#effects).
 
 ## 4. Scenes
 
@@ -188,14 +188,14 @@ const intro: DataScene = {
 Ruth's talk scene has a line that only appears once you're a regular, and a choice that pays once a turn. In this game a turn is a day, so that's once a day:
 
 ```ts
-import { character } from '@ifloom/plugin-cast'
+import { cast } from '@ifloom/plugin-cast'
 
 const ruthTalk: DataScene = {
   id: 'ruth.talk',
   speaker: 'ruth',
   body: [
     text('"Morning. What can I get you?"'),
-    text('She is already reaching for your usual cup.', { when: { stat: 'friendship', of: character('ruth'), gte: 5 } }),
+    text('She is already reaching for your usual cup.', { when: { stat: 'friendship', of: cast.character('ruth'), gte: 5 } }),
   ],
   choices: [
     {
@@ -203,7 +203,7 @@ const ruthTalk: DataScene = {
       label: 'Ask how the bread is going',
       once: { per: 'turn', reason: 'She has a queue.' },
       effects: [
-        { stat: 'friendship', by: 5, of: character('ruth') },
+        { stat: 'friendship', by: 5, of: cast.character('ruth') },
         { scene: null },
       ],
     },
@@ -212,7 +212,7 @@ const ruthTalk: DataScene = {
 }
 ```
 
-`character('ruth')` is how content names Ruth's entity, `'character:ruth'`. The second line only appears once her friendship has reached 5. The `chat` choice adds 5 to it, once a turn. After that it stays on screen, greyed out with its reason, until the player has slept. `speaker: 'ruth'` draws the scene as Ruth, and the cast supplies her name, colour and portrait.
+`cast.character('ruth')` is how content names Ruth's entity, `'character:ruth'`. The second line only appears once her friendship has reached 5. The `chat` choice adds 5 to it, once a turn. After that it stays on screen, greyed out with its reason, until the player has slept. `speaker: 'ruth'` draws the scene as Ruth, and the cast supplies her name, colour and portrait.
 
 That's all a scene needs. You don't write a `render` function or wire the words to the scenes: the engine renders every data scene from its blocks, and the places plugin renders every location's body the same way. The words sit in the scenes they belong to, and a translation can give them other words without touching them (see [Translating a game](/docs/recipes/translating)). There's more in [Scenes](/docs/reference/scenes).
 
@@ -256,7 +256,7 @@ export const { game, problems } = loadGame(
 for (const problem of problems) console.warn(describeProblem(problem))
 ```
 
-The loader checks the whole game once it has merged it, plugins' content included. A misspelt scene id or stat is reported, and so is an exit to a place that doesn't exist or `here('ruht')` naming a character the game doesn't have. Each problem says where it is, and `problems` is empty here. The full list is on [Checking content](/docs/reference/checks).
+The loader checks the whole game once it has merged it, plugins' content included. A misspelt scene id or stat is reported, and so is an exit to a place that doesn't exist or `cast.here('ruht')` naming a character the game doesn't have. Each problem says where it is, and `problems` is empty here. The full list is on [Checking content](/docs/reference/checks).
 
 Put `problems` in a test, so a broken id fails before anybody plays. `ifloom check` prints them too. A game you build by hand, without `loadGame`, is checked with [`checkGame`](/docs/reference/checks#checkgame) in the same way.
 
@@ -294,26 +294,26 @@ When you don't need to know, take the next state from what `apply` returns:
 
 ```ts
 import { apply, statValue } from '@ifloom/engine'
-import { sleep } from '@ifloom/plugin-calendar'
-import { go } from '@ifloom/plugin-places'
-import { character, talk } from '@ifloom/plugin-cast'
+import { calendar } from '@ifloom/plugin-calendar'
+import { places } from '@ifloom/plugin-places'
+import { cast } from '@ifloom/plugin-cast'
 
 state = apply(state, game, { type: 'choose', id: 'bed' }).state
-state = apply(state, game, sleep()).state                       // Tuesday morning: turn 1
-state = apply(state, game, go('high-street')).state
-state = apply(state, game, go('cafe')).state
-state = apply(state, game, talk('ruth')).state
+state = apply(state, game, calendar.sleep()).state                       // Tuesday morning: turn 1
+state = apply(state, game, places.go('high-street')).state
+state = apply(state, game, places.go('cafe')).state
+state = apply(state, game, cast.talk('ruth')).state
 state = apply(state, game, { type: 'choose', id: 'chat' }).state
 
-statValue(state, game, 'friendship', character('ruth')) // 5
+statValue(state, game, 'friendship', cast.character('ruth')) // 5
 ```
 
-`go(id)` is the places plugin's command for walking through an exit, one step at a time. From the house, going to the café is refused with `You cannot get there from here.` `talk(id)` is the cast's [command](/docs/plugins/cast#commands) for talking to someone in the room. Anywhere Ruth isn't, it's refused with `Ruth is not here.`
+`go(id)` is the places plugin's command for walking through an exit, one step at a time. From the house, going to the café is refused with `You cannot get there from here.` `cast.talk(id)` is the cast's [command](/docs/plugins/cast#commands) for talking to someone in the room. Anywhere Ruth isn't, it's refused with `Ruth is not here.`
 
 Try the same choice twice in one day and it is refused:
 
 ```ts
-state = apply(state, game, talk('ruth')).state
+state = apply(state, game, cast.talk('ruth')).state
 apply(state, game, { type: 'choose', id: 'chat' }).reason // 'She has a queue.'
 ```
 
@@ -385,8 +385,8 @@ view(state, game).when       // 'Day 2 · Tuesday evening · The corner café'
 ;(view(state, game).plugins.cast as CastView).present // []
 view(state, game).scene.body // 'Steam on the windows.\n\nThe counter is empty.'
 
-state = apply(state, game, go('high-street')).state
-apply(state, game, go('cafe')).reason
+state = apply(state, game, places.go('high-street')).state
+apply(state, game, places.go('cafe')).reason
 // 'Closed. Opens tomorrow morning.'
 ```
 
@@ -424,9 +424,9 @@ Play the first morning again. Going to bed moves the calendar to the next mornin
 
 ```ts
 runner.apply({ type: 'choose', id: 'bed' })
-runner.apply(sleep())                              // Tuesday morning: turn 1
+runner.apply(calendar.sleep())                              // Tuesday morning: turn 1
 runner.canUndo                                     // false: a new turn is a barrier
-runner.apply(go('high-street'))
+runner.apply(places.go('high-street'))
 runner.undo()                                      // back in the house
 runner.redo()                                      // on the high street again
 ```
@@ -561,8 +561,8 @@ Save to a slot of your own, and load it back. Slots are names you pick:
 ```ts
 await runner.save('1', 'Before the café')
 
-runner.apply(go('cafe'))
-runner.apply(talk('ruth'))  // a new scene: autosaved to 'auto'
+runner.apply(places.go('cafe'))
+runner.apply(cast.talk('ruth'))  // a new scene: autosaved to 'auto'
 
 const loaded = await runner.load('1')   // back on the high street, with a fresh undo history
 if (!loaded.ok) console.warn(loaded.reason) // why it could not be read
@@ -588,43 +588,43 @@ import {
   type DataScene,
   type StatDef,
 } from '@ifloom/engine'
-import { calendar, pass, period, sleep, weekday } from '@ifloom/plugin-calendar'
-import { go, location, places, where } from '@ifloom/plugin-places'
-import { cast, character, here, person, talk } from '@ifloom/plugin-cast'
+import { calendar } from '@ifloom/plugin-calendar'
+import { places } from '@ifloom/plugin-places'
+import { cast } from '@ifloom/plugin-cast'
 
 const locations = [
-  location({
+  places.location({
     id: 'house',
     name: 'Your house',
     desc: 'Home',
     exits: ['high-street'],
     body: [text('The kettle, the window, the post on the mat.')],
   }),
-  location({
+  places.location({
     id: 'high-street',
     name: 'The high street',
     desc: 'Town',
     exits: ['house', 'cafe'],
     body: [text('Shopfronts, a bus stop, a bakery smell from the corner.')],
   }),
-  location({
+  places.location({
     id: 'cafe',
     name: 'The corner café',
     desc: 'Café',
     exits: ['high-street'],
-    blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
+    blocked: [{ when: { not: calendar.period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
     body: [
       text('Steam on the windows.'),
-      text('Ruth is behind the counter, flour to the elbows.', { when: here('ruth') }),
-      text('The counter is empty.', { when: { not: here('ruth') } }),
+      text('Ruth is behind the counter, flour to the elbows.', { when: cast.here('ruth') }),
+      text('The counter is empty.', { when: { not: cast.here('ruth') } }),
     ],
     actions: [
-      { id: 'coffee', label: 'Buy a coffee', cost: { stats: { coins: 3 } }, effects: [pass(1), { stat: 'energy', by: 20 }] },
+      { id: 'coffee', label: 'Buy a coffee', cost: { stats: { coins: 3 } }, effects: [calendar.pass(1), { stat: 'energy', by: 20 }] },
     ],
   }),
 ]
 
-const ruth = person({
+const ruth = cast.person({
   id: 'ruth',
   name: 'Ruth',
   fullName: 'Ruth Okafor',
@@ -632,7 +632,7 @@ const ruth = person({
   pronouns: { they: 'she', them: 'her', their: 'her', theirs: 'hers' },
   ui: { hue: 30 },
   schedule: [
-    { location: 'cafe', when: { all: [weekday(0, 1, 2, 3, 4), period('morning', 'afternoon')] } },
+    { location: 'cafe', when: { all: [calendar.weekday(0, 1, 2, 3, 4), calendar.period('morning', 'afternoon')] } },
   ],
   talk: 'ruth.talk',
 })
@@ -652,8 +652,8 @@ const stats: StatDef[] = [
 ]
 
 const actions: ActionDef[] = [
-  { id: 'wait', label: 'Wait a while', effects: [pass(1)] },
-  { id: 'bed', label: 'Go to bed', command: sleep() },
+  { id: 'wait', label: 'Wait a while', effects: [calendar.pass(1)] },
+  { id: 'bed', label: 'Go to bed', command: calendar.sleep() },
 ]
 
 const intro: DataScene = {
@@ -668,7 +668,7 @@ const ruthTalk: DataScene = {
   speaker: 'ruth',
   body: [
     text('"Morning. What can I get you?"'),
-    text('She is already reaching for your usual cup.', { when: { stat: 'friendship', of: character('ruth'), gte: 5 } }),
+    text('She is already reaching for your usual cup.', { when: { stat: 'friendship', of: cast.character('ruth'), gte: 5 } }),
   ],
   choices: [
     {
@@ -676,7 +676,7 @@ const ruthTalk: DataScene = {
       label: 'Ask how the bread is going',
       once: { per: 'turn', reason: 'She has a queue.' },
       effects: [
-        { stat: 'friendship', by: 5, of: character('ruth') },
+        { stat: 'friendship', by: 5, of: cast.character('ruth') },
         { scene: null },
       ],
     },
@@ -707,19 +707,19 @@ console.assert(problems.length === 0)
 
 let state = startingState(game, { kv: { playerName: 'Sam' } })
 state = apply(state, game, { type: 'choose', id: 'bed' }).state
-state = apply(state, game, sleep()).state
-state = apply(state, game, go('high-street')).state
-state = apply(state, game, go('cafe')).state
-state = apply(state, game, talk('ruth')).state
+state = apply(state, game, calendar.sleep()).state
+state = apply(state, game, places.go('high-street')).state
+state = apply(state, game, places.go('cafe')).state
+state = apply(state, game, cast.talk('ruth')).state
 
 const screen = view(state, game)
 console.log(screen.scene.choices.map((choice) => choice.label))
 // [ 'Ask how the bread is going', 'Just the coffee, thanks' ]
 
 const chat = apply(state, game, { type: 'choose', id: 'chat' })
-console.log(chat.ok, statValue(chat.state, game, 'friendship', character('ruth'))) // true 5
+console.log(chat.ok, statValue(chat.state, game, 'friendship', cast.character('ruth'))) // true 5
 
-state = apply(chat.state, game, talk('ruth')).state
+state = apply(chat.state, game, cast.talk('ruth')).state
 state = apply(state, game, { type: 'choose', id: 'bye' }).state
 state = apply(state, game, { type: 'action', id: 'places/coffee' }).state
 console.log(state.stats) // { coins: 2, energy: 70 }
@@ -734,18 +734,18 @@ const runner = createRunner(game, startingState(game, { kv: { playerName: 'Sam' 
 runner.subscribe(() => console.log(runner.view().scene.title))
 
 runner.apply({ type: 'choose', id: 'bed' })
-runner.apply(sleep())
+runner.apply(calendar.sleep())
 console.log(runner.canUndo) // false
-runner.apply(go('high-street'))
+runner.apply(places.go('high-street'))
 runner.undo()
-console.log(where(runner.state)) // 'house'
+console.log(places.where(runner.state)) // 'house'
 runner.redo()
 
 await runner.save('1', 'Before the café')
-runner.apply(go('cafe'))
-runner.apply(talk('ruth'))
+runner.apply(places.go('cafe'))
+runner.apply(cast.talk('ruth'))
 await runner.load('1')
-console.log(where(runner.state)) // 'high-street'
+console.log(places.where(runner.state)) // 'high-street'
 ```
 
 Next, read the [core concepts](/docs/guide/concepts) behind what you just used, or [Small Town](/docs/guide/showcase), a bigger game in the same shape.

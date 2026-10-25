@@ -19,11 +19,9 @@ import {
   codeFits,
   contentScript,
   envName,
-  hasUnlock,
   lockContent,
   lockedContent,
   normaliseCode,
-  recordUnlock,
   startUnlocks,
   unlocksOf,
   unlockHash,
@@ -101,17 +99,17 @@ describe('the plugin', () => {
   it('records an unlock through its command, and unlocks/has reads the save', async () => {
     const g = build([await def()])
     const fresh = { ...startingState(g), sceneId: null }
-    expect(holds(fresh, g, hasUnlock('supporter'))).toBe(false)
-    const recorded = apply(fresh, g, recordUnlock('supporter'))
+    expect(holds(fresh, g, unlocks.has('supporter'))).toBe(false)
+    const recorded = apply(fresh, g, unlocks.record('supporter'))
     expect(recorded.reason).toBeUndefined()
-    expect(holds(recorded.state, g, hasUnlock('supporter'))).toBe(true)
+    expect(holds(recorded.state, g, unlocks.has('supporter'))).toBe(true)
     expect(unlocks().viewIn(view(recorded.state, g))).toEqual({
       unlocks: [{ id: 'supporter', label: 'Supporter edition', description: '', unlocked: true }],
       unlocked: 1,
       total: 1,
     })
-    expect(apply(recorded.state, g, recordUnlock('supporter')).reason).toBe('That’s unlocked already.')
-    expect(apply(fresh, g, recordUnlock('patron')).reason).toBe('There’s no such unlock.')
+    expect(apply(recorded.state, g, unlocks.record('supporter')).reason).toBe('That’s unlocked already.')
+    expect(apply(fresh, g, unlocks.record('patron')).reason).toBe('There’s no such unlock.')
   })
 
   it('records through a lock, as moving day would deny everything', async () => {
@@ -121,7 +119,7 @@ describe('the plugin', () => {
       title: 't',
       plugins: [unlocks()],
     })
-    expect(apply({ ...startingState(g), sceneId: null }, g, recordUnlock('supporter')).reason).toBeUndefined()
+    expect(apply({ ...startingState(g), sceneId: null }, g, unlocks.record('supporter')).reason).toBeUndefined()
   })
 
   it('reports an unlock content names that the game lacks, and a bad entry', async () => {
@@ -129,7 +127,7 @@ describe('the plugin', () => {
     const loaded = loadGame(
       [
         {
-          actions: [{ id: 'lounge', blocked: [{ when: { not: hasUnlock('patron') }, reason: 'For patrons.' }], effects: [] }],
+          actions: [{ id: 'lounge', blocked: [{ when: { not: unlocks.has('patron') }, reason: 'For patrons.' }], effects: [] }],
           data: { unlocks: { unlocks: [supporter, { ...supporter, id: 'bad', label: ' ', hash: 'BREAD-2026-KEY', iterations: 0 }] } },
         },
       ],
@@ -154,7 +152,7 @@ describe('entering a code', () => {
     await codes.ready
     expect(await codes.enter('BREAD-2027-KEY')).toEqual({ ok: false, reason: 'That code doesn’t unlock anything.' })
     expect(await codes.enter('  -  ')).toEqual({ ok: false, reason: 'Type a code first.' })
-    expect(holds(runner.state, g, hasUnlock('supporter'))).toBe(false)
+    expect(holds(runner.state, g, unlocks.has('supporter'))).toBe(false)
     expect(await runner.profile!.get('unlocks')).toBeUndefined()
   })
 
@@ -165,7 +163,7 @@ describe('entering a code', () => {
     const codes = startUnlocks(runner, { content: {} })
     const entered = await codes.enter('bread 2026 key')
     expect(entered).toEqual({ ok: true, value: { unlock: 'supporter', label: 'Supporter edition', already: false, restart: false } })
-    expect(holds(runner.state, g, hasUnlock('supporter'))).toBe(true)
+    expect(holds(runner.state, g, unlocks.has('supporter'))).toBe(true)
     await runner.settled()
     const stored = (await driver.get(`${GAME}.profile`))!
     expect(stored).toMatch(/"proof":"[0-9a-f]{64}"/)
@@ -196,14 +194,14 @@ describe('entering a code', () => {
     // The next launch: a new runner on the same profile records it as soon as the profile is read.
     const next = runnerFor(g, driver)
     const codes = startUnlocks(next, { content: {} })
-    expect(holds(next.state, g, hasUnlock('supporter'))).toBe(false)
+    expect(holds(next.state, g, unlocks.has('supporter'))).toBe(false)
     await codes.ready
-    expect(holds(next.state, g, hasUnlock('supporter'))).toBe(true)
+    expect(holds(next.state, g, unlocks.has('supporter'))).toBe(true)
     await next.newGame({ seed: 2 })
-    expect(holds(next.state, g, hasUnlock('supporter'))).toBe(true)
+    expect(holds(next.state, g, unlocks.has('supporter'))).toBe(true)
     codes.stop()
     await next.newGame({ seed: 3 })
-    expect(holds(next.state, g, hasUnlock('supporter'))).toBe(false)
+    expect(holds(next.state, g, unlocks.has('supporter'))).toBe(false)
   })
 
   it('forgets a remembered unlock once its code has changed: a new release, new codes', async () => {
@@ -214,7 +212,7 @@ describe('entering a code', () => {
     const rotated = build([await def({ salt: 'release-2' })])
     const next = runnerFor(rotated, driver)
     await startUnlocks(next, { content: {} }).ready
-    expect(holds(next.state, rotated, hasUnlock('supporter'))).toBe(false)
+    expect(holds(next.state, rotated, unlocks.has('supporter'))).toBe(false)
   })
 
   it('needs a profile to remember the code', async () => {

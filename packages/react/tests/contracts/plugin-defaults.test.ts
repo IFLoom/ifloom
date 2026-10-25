@@ -11,7 +11,7 @@ import type { PluginUi } from '../../src/index.ts'
  * want no UI are listed in NO_UI with the reason.
  *
  * Nothing about a shop or a job board is drawn by itself: content opens them
- * (`openShop`, `openJobs`), so their UI draws a panel by that name, which
+ * (`shop.open`, `jobs.open`), so their UI draws a panel by that name, which
  * `PanelHost` draws. `panel` names it.
  */
 const DEFAULTS: Record<string, { component: string; hook: string; panel?: string }> = {

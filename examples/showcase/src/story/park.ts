@@ -1,8 +1,8 @@
 /** Riverside Park: jogging, quick feet with the kids, skimming stones, the ducks, the day's visitors and dog walking. */
 import type { Block, Condition, MinigameDef, MinigameStateDef, Content } from '@ifloom/engine'
-import { generate } from '@ifloom/plugin-generators'
-import { pass } from '@ifloom/plugin-calendar'
-import { at } from '@ifloom/plugin-places'
+import { generators } from '@ifloom/plugin-generators'
+import { calendar } from '@ifloom/plugin-calendar'
+import { places } from '@ifloom/plugin-places'
 import { place } from '../place.ts'
 
 /** The four arrows of quick feet, in the order the minigame's `arrow` variable numbers them from 1. */
@@ -93,11 +93,11 @@ export const park: Content = {
     {
       id: 'visitors',
       once: 'turn',
-      when: at('park'),
-      effects: [{ each: 'visitor', effects: [{ remove: '$' }] }, generate('visitor', 2)],
+      when: places.at('park'),
+      effects: [{ each: 'visitor', effects: [{ remove: '$' }] }, generators.generate('visitor', 2)],
     },
     // And the ducks come to see what you brought: a roll no line of prose hints, so the React UI shows it over the scene.
-    { id: 'ducks', once: 'turn', when: at('park'), effects: [{ roll: 'ducks', dice: '1d6+2' }] },
+    { id: 'ducks', once: 'turn', when: places.at('park'), effects: [{ roll: 'ducks', dice: '1d6+2' }] },
   ],
   entities: [
     place({
@@ -121,7 +121,7 @@ export const park: Content = {
         skimmed({ roll: 'skim', passed: false }, 'Plop. It goes straight in, and the ducks look delighted.'),
       ],
       actions: [
-        { id: 'jog', label: 'Go for a jog', cost: { stats: { energy: 15 } }, effects: [pass(1), { stat: 'charm', by: 1 }] },
+        { id: 'jog', label: 'Go for a jog', cost: { stats: { energy: 15 } }, effects: [calendar.pass(1), { stat: 'charm', by: 1 }] },
         { id: 'arrows', label: 'Play quick feet with the kids', effects: [{ minigame: 'arrows' }] },
         // Two dice against 8: the total goes in the kv store as `skim`, and the roll is kept for `{ roll: 'skim' }`.
         // Drawn inline by `[[act:skim|…]]` in the stones line, so it isn't a button as well.

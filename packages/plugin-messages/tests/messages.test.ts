@@ -14,9 +14,9 @@ import {
   type GameState,
   type Content,
 } from '@ifloom/engine'
-import { cast, person } from '@ifloom/plugin-cast'
-import { drawMessage, messageArrived, messageReplied, messageSince, messages, readThread, replyTo, type MessagesView } from '../src/index.ts'
-import { calendar, pass, period } from '@ifloom/plugin-calendar'
+import { cast } from '@ifloom/plugin-cast'
+import { messages, type MessagesView } from '../src/index.ts'
+import { calendar } from '@ifloom/plugin-calendar'
 
 const clock = calendar()
 
@@ -43,7 +43,7 @@ function game(extra: Partial<Content> = {}): Game {
     scenes: [{ id: 'ava.hi', body: [{ prose: 'ava.hi' }], choices: [{ id: 'bye', label: 'Bye', effects: [{ scene: null }] }] }],
     // Going out is all a message waits for here: no map needed.
     actions: [
-      { id: 'wait', effects: [pass(1)] },
+      { id: 'wait', effects: [calendar.pass(1)] },
       { id: 'goOut', effects: [{ kv: 'out', to: true }] },
     ],
     prose: {
@@ -52,7 +52,7 @@ function game(extra: Partial<Content> = {}): Game {
       'msg.later': 'Coffee tomorrow?',
       'msg.bill': 'The water bill. You owe 12.',
     },
-    entities: [person({ id: 'ava', name: 'Ava', desc: 'Neighbour', ui: { hue: 200 }, talk: 'ava.hi', storyline: 'ava' })],
+    entities: [cast.person({ id: 'ava', name: 'Ava', desc: 'Neighbour', ui: { hue: 200 }, talk: 'ava.hi', storyline: 'ava' })],
     data: {
       // Ava is the cast's: messages from her are signed with her name.
       messages: {
@@ -69,7 +69,7 @@ function game(extra: Partial<Content> = {}): Game {
             ],
           },
           { id: 'msg.later', channel: 'texts', from: 'ava', when: { kv: 'saidYes' }, body: [{ prose: 'msg.later' }] },
-          { id: 'msg.bill', channel: 'post', from: 'Water Board', when: period('afternoon'), body: [{ prose: 'msg.bill' }] },
+          { id: 'msg.bill', channel: 'post', from: 'Water Board', when: calendar.period('afternoon'), body: [{ prose: 'msg.bill' }] },
         ],
       },
     },
@@ -98,16 +98,16 @@ describe('messages', () => {
       }),
     ])
     expect(view(state, g).notices.byTag).toEqual({ texts: 1 })
-    expect(holds(state, g, messageArrived('msg.hey'))).toBe(true)
+    expect(holds(state, g, messages.arrived('msg.hey'))).toBe(true)
   })
 
   it('offer replies as choices: one, once, with effects that can bring the next message', () => {
     const g = game()
     let state = apply(begin(g), g, { type: 'action', id: 'goOut' }).state
     expect(shown(state, g).channels[0].threads[0].messages[0].replies.map((reply) => reply.label)).toEqual(['Yes!', 'No…'])
-    state = apply(state, g, replyTo('msg.hey', 'yes')).state
-    expect(whyNot(state, g, replyTo('msg.hey', 'no'))).toBe('You have already replied.')
-    expect(holds(state, g, messageReplied('msg.hey', 'yes'))).toBe(true)
+    state = apply(state, g, messages.reply('msg.hey', 'yes')).state
+    expect(whyNot(state, g, messages.reply('msg.hey', 'no'))).toBe('You have already replied.')
+    expect(holds(state, g, messages.replied('msg.hey', 'yes'))).toBe(true)
     const thread = shown(state, g).channels[0].threads[0]
     expect(thread.messages.map((message) => [message.id, message.replied])).toEqual([
       ['msg.hey', 'Yes!'],
@@ -118,9 +118,9 @@ describe('messages', () => {
 
   it('refuse a reply that is not on offer or to a message that has not come', () => {
     const g = game()
-    expect(whyNot(begin(g), g, replyTo('msg.hey', 'yes'))).toBe('There is no such message.')
+    expect(whyNot(begin(g), g, messages.reply('msg.hey', 'yes'))).toBe('There is no such message.')
     const state = apply(begin(g), g, { type: 'action', id: 'goOut' }).state
-    expect(whyNot(state, g, replyTo('msg.hey', 'maybe'))).toBe('That is not a reply on offer.')
+    expect(whyNot(state, g, messages.reply('msg.hey', 'maybe'))).toBe('That is not a reply on offer.')
   })
 
   it('keep channels apart, count unread for badges, and mark threads read', () => {
@@ -132,9 +132,9 @@ describe('messages', () => {
       ['post', 1],
     ])
     expect(shown(state, g).channels[1].threads[0].name).toBe('Water Board')
-    state = apply(state, g, readThread('ava')).state
+    state = apply(state, g, messages.read('ava')).state
     expect(shown(state, g).unread).toBe(1)
-    state = apply(state, g, readThread()).state
+    state = apply(state, g, messages.read()).state
     expect(shown(state, g).unread).toBe(0)
   })
 
@@ -188,7 +188,7 @@ describe('pictures and videos in a message', () => {
         'msg.ducks': 'Look at the ducks!\n\n[[video:ducks|A duck on the pond]]',
       },
       media: { pools: { pond: [{ src: 'pond/morning.jpg', tags: ['morning'] }] } },
-      entities: [person({ id: 'ava', name: 'Ava', desc: 'Neighbour', ui: { hue: 200 }, talk: 'ava.hi', storyline: 'ava' })],
+      entities: [cast.person({ id: 'ava', name: 'Ava', desc: 'Neighbour', ui: { hue: 200 }, talk: 'ava.hi', storyline: 'ava' })],
       data: {
         messages: {
           messages: [
@@ -216,11 +216,11 @@ describe('pictures and videos in a message', () => {
 describe('pools', () => {
   /** Ava's small talk: two lines drawn from `chat`, neither again within two days; the rain one has a reply. */
   function chatty(): Game {
-    const rested = (id: string) => ({ not: messageSince(id, { lt: 2 }) })
+    const rested = (id: string) => ({ not: messages.since(id, { lt: 2 }) })
     return game({
       actions: [
-        { id: 'chat', effects: [drawMessage('chat')] },
-        { id: 'wait', effects: [pass(1)] },
+        { id: 'chat', effects: [messages.draw('chat')] },
+        { id: 'wait', effects: [calendar.pass(1)] },
       ],
       prose: {
         'ava.hi': 'Hi.',
@@ -228,7 +228,7 @@ describe('pools', () => {
         'chat.rain': 'Rain later.',
         'chat.beans': 'New beans.',
       },
-      entities: [person({ id: 'ava', name: 'Ava', desc: 'Neighbour', ui: { hue: 200 }, talk: 'ava.hi', storyline: 'ava' })],
+      entities: [cast.person({ id: 'ava', name: 'Ava', desc: 'Neighbour', ui: { hue: 200 }, talk: 'ava.hi', storyline: 'ava' })],
       data: {
         messages: {
           messages: [
@@ -260,7 +260,7 @@ describe('pools', () => {
     const [first] = keys(state, g)
     expect(['chat.rain', 'chat.beans']).toContain(first)
     expect(view(state, g).notices.byTag).toEqual({ texts: 1 })
-    expect(holds(state, g, messageArrived(first))).toBe(true)
+    expect(holds(state, g, messages.arrived(first))).toBe(true)
     expect(shown(state, g).unread).toBe(1)
     expect(replay(g, runner.log())).toEqual({ ok: true, value: runner.state })
   })
@@ -275,7 +275,7 @@ describe('pools', () => {
     expect(apply(state, g, chat).state.plugins).toEqual(state.plugins)
     // Two days on, both can come again.
     state = clock.write(state, { day: 3, period: 'morning' })
-    expect(holds(state, g, messageSince('chat.rain', { gte: 2 }))).toBe(true)
+    expect(holds(state, g, messages.since('chat.rain', { gte: 2 }))).toBe(true)
     state = apply(state, g, chat).state
     state = apply(state, g, chat).state
     const all = keys(state, g)
@@ -287,10 +287,10 @@ describe('pools', () => {
       { type: 'custom', name: 'messages/reply', with: { message: 'chat.rain', reply: 'ok' } },
       { type: 'custom', name: 'messages/reply', with: { message: 'chat.rain~2', reply: 'ok' } },
     ])
-    state = apply(state, g, replyTo('chat.rain~2', 'ok')).state
-    expect(whyNot(state, g, replyTo('chat.rain~2', 'ok'))).toBe('You have already replied.')
-    expect(whyNot(state, g, replyTo('chat.rain', 'ok'))).toBeUndefined()
-    expect(holds(state, g, messageReplied('chat.rain', 'ok'))).toBe(true)
+    state = apply(state, g, messages.reply('chat.rain~2', 'ok')).state
+    expect(whyNot(state, g, messages.reply('chat.rain~2', 'ok'))).toBe('You have already replied.')
+    expect(whyNot(state, g, messages.reply('chat.rain', 'ok'))).toBeUndefined()
+    expect(holds(state, g, messages.replied('chat.rain', 'ok'))).toBe(true)
     expect(shown(state, g).unread).toBe(3)
   })
 
@@ -307,7 +307,7 @@ describe('pools', () => {
       version: 2,
       state: { arrived: [{ key: 'msg.hey', message: 'msg.hey', turn: 3, day: 3 }], replied: { 'msg.hey': 'yes' }, read: { 'msg.hey': true } },
     })
-    expect(holds(loaded.value, g, messageReplied('msg.hey', 'yes'))).toBe(true)
+    expect(holds(loaded.value, g, messages.replied('msg.hey', 'yes'))).toBe(true)
     expect(shown(loaded.value, g).channels[0].threads[0].messages[0]).toMatchObject({ key: 'msg.hey', replied: 'Yes!', read: true })
   })
 
@@ -318,7 +318,7 @@ describe('pools', () => {
         {
           name: 'mod',
           prose: { m: 'Hi.' },
-          actions: [{ id: 'chat', effects: [drawMessage('nobody')] }],
+          actions: [{ id: 'chat', effects: [messages.draw('nobody')] }],
           data: { messages: { messages: [{ id: 'm', channel: 'texts', from: 'x', drawnFrom: ['chat'], weight: -1, body: [{ prose: 'm' }] }] } },
         },
       ],

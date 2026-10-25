@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { apply, checkGame, holds, loadGame, startingState, view, type Game, type Content } from '@ifloom/engine'
-import { __camel__, __camel__Marked, mark__Pascal__, mark__Pascal__Command, type __Pascal__Entry } from '../src/index.ts'
+import { __camel__, type __Pascal__Entry } from '../src/index.ts'
 
 const entries: __Pascal__Entry[] = [
   { id: 'bread', label: 'A loaf of bread' },
@@ -10,7 +10,7 @@ const entries: __Pascal__Entry[] = [
 function game(extra: Partial<Content> = {}): Game {
   const town: Content = {
     name: 'town',
-    actions: [{ id: 'shop', effects: [mark__Pascal__('bread')] }],
+    actions: [{ id: 'shop', effects: [__camel__.mark('bread')] }],
     data: { '__id__': { entries } },
     ...extra,
   }
@@ -30,18 +30,18 @@ describe('__id__', () => {
     expect(shown(g, fresh).entries.map((entry) => entry.marked)).toEqual([false, false])
     const shopped = apply(fresh, g, { type: 'action', id: 'shop' })
     expect(shopped.reason).toBeUndefined()
-    expect(holds(shopped.state, g, __camel__Marked('bread'))).toBe(true)
-    const milk = apply(shopped.state, g, mark__Pascal__Command('milk'))
+    expect(holds(shopped.state, g, __camel__.marked('bread'))).toBe(true)
+    const milk = apply(shopped.state, g, __camel__.markCommand('milk'))
     expect(shown(g, milk.state).entries.map((entry) => entry.marked)).toEqual([true, true])
   })
 
   it('refuses to mark what is not there', () => {
     const g = game()
-    expect(apply({ ...startingState(g), sceneId: null }, g, mark__Pascal__Command('cheese')).reason).toBe('There is nothing like that.')
+    expect(apply({ ...startingState(g), sceneId: null }, g, __camel__.markCommand('cheese')).reason).toBe('There is nothing like that.')
   })
 
   it('reports an entry content names that the game lacks', () => {
-    const loaded = loadGame([{ name: 'town', actions: [{ id: 'shop', effects: [mark__Pascal__('cheese')] }], data: { '__id__': { entries } } }], {
+    const loaded = loadGame([{ name: 'town', actions: [{ id: 'shop', effects: [__camel__.mark('cheese')] }], data: { '__id__': { entries } } }], {
       id: '__id__-town',
       title: '{{title}} town',
       plugins: [__camel__()],

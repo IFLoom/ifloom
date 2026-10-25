@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { apply, loadGame, startingState, view, whyNot, type Game, type GameState } from '@ifloom/engine'
-import { appOpen, devices, openApp, type AppDef, type DevicesView } from '../src/index.ts'
+import { devices, type AppDef, type DevicesView } from '../src/index.ts'
 
 const apps: AppDef[] = [
   { id: 'notes', name: 'Notes', icon: 'notes', on: 'laptop', sections: [{ prose: [{ prose: 'notes.intro' }] }] },
@@ -51,15 +51,15 @@ describe('devices', () => {
       ['notes', undefined],
       ['bank', 'You have no account.'],
     ])
-    expect(whyNot(begin(g), g, openApp('bank'))).toBe('You have no account.')
-    expect(whyNot(begin(g), g, openApp('mail'))).toBe('That is not installed.')
-    expect(whyNot(begin(g), g, openApp('fax'))).toBe('There is no such app.')
+    expect(whyNot(begin(g), g, devices.open('bank'))).toBe('You have no account.')
+    expect(whyNot(begin(g), g, devices.open('mail'))).toBe('That is not installed.')
+    expect(whyNot(begin(g), g, devices.open('fax'))).toBe('There is no such app.')
   })
 
   it('open an app without moving the player or ending the turn, and fill in only that one', () => {
     const g = game()
     const before = begin(g)
-    const state = apply(before, g, openApp('notes')).state
+    const state = apply(before, g, devices.open('notes')).state
     expect(state.turn).toBe(before.turn)
     expect(laptop(state, g).open).toMatchObject({ id: 'notes', sections: [{ type: 'prose', text: 'Nothing written yet.' }] })
     expect(laptop(state, g).apps.every((app) => app.sections.length === 0)).toBe(true)
@@ -69,16 +69,16 @@ describe('devices', () => {
     const g = game()
     let state = apply(begin(g), g, { type: 'action', id: 'setUpMail' }).state
     expect(laptop(state, g).badge).toBe(1)
-    state = apply(state, g, openApp('mail')).state
+    state = apply(state, g, devices.open('mail')).state
     expect(laptop(state, g).open?.sections).toEqual([{ type: 'panel', panel: 'inbox', with: { letters: 2 } }])
   })
 
   it('close an app that stops being installed', () => {
     const g = game()
-    let state = apply(apply(begin(g), g, { type: 'action', id: 'setUpMail' }).state, g, openApp('mail')).state
+    let state = apply(apply(begin(g), g, { type: 'action', id: 'setUpMail' }).state, g, devices.open('mail')).state
     state = apply(state, g, { type: 'action', id: 'uninstall' }).state
     expect(laptop(state, g).open).toBeNull()
-    expect(apply(state, g, openApp('notes')).ok).toBe(true)
+    expect(apply(state, g, devices.open('notes')).ok).toBe(true)
   })
 
   it('report apps that name what the game does not have', () => {
@@ -104,6 +104,6 @@ describe('devices', () => {
       'no prose for "x.none"',
       'the game has no plugin named "radio"',
     ])
-    expect(appOpen('x')).toEqual({ 'devices/open': { app: 'x' } })
+    expect(devices.appOpen('x')).toEqual({ 'devices/open': { app: 'x' } })
   })
 })

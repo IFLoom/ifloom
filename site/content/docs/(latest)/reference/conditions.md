@@ -6,11 +6,11 @@ A condition says when something applies, such as a line of prose, a choice, a lo
 
 ```ts
 import type { Condition } from '@ifloom/engine'
-import { at } from '@ifloom/plugin-places'
+import { places } from '@ifloom/plugin-places'
 
 const regularAtTheCafe: Condition = {
   all: [
-    at('cafe'),
+    places.at('cafe'),
     { stat: 'coins', gte: 4 },
     { seen: 'ava.hi' },
     { not: { kv: 'owesAva' } },
@@ -299,7 +299,7 @@ Whether a [storyline](/docs/reference/storylines) is open, meaning it isn't clos
 
 [`explain`](#explain) says `storyline ava is closed; wants it open`.
 
-**Gotcha.** A storyline doesn't keep score of how well someone likes the player. Test that as a stat on the [cast](/docs/plugins/cast#each-one-is-an-entity)'s characters, as in `{ stat: 'friendship', of: character('ava'), gte: 20 }`.
+**Gotcha.** A storyline doesn't keep score of how well someone likes the player. Test that as a stat on the [cast](/docs/plugins/cast#each-one-is-an-entity)'s characters, as in `{ stat: 'friendship', of: cast.character('ava'), gte: 20 }`.
 
 ### roll
 
@@ -352,13 +352,13 @@ The scene on screen is one of these. It's false when no scene is open.
 
 How many [turns](/docs/reference/state#turn) have passed, counting from 0, in a [range](#range). It names nothing, so the range is its value. An empty range, `{ turn: {} }`, is false in turn 0. Your game decides how long a turn is. It's a day with the [calendar](/docs/plugins/calendar#what-a-turn-is)'s default, or a chapter in a novel that ends its turns with the [`turn`](/docs/reference/effects#turn) effect.
 
-The engine keeps no clock but the turn, so there's no core condition for the time of day. The period, the weekday and the day come from the [calendar plugin](/docs/plugins/calendar#conditions) as [plugin calls](#calls): `period('morning')`, `weekday(5, 6)` and `day({ gte: 2 })`.
+The engine keeps no clock but the turn, so there's no core condition for the time of day. The period, the weekday and the day come from the [calendar plugin](/docs/plugins/calendar#conditions) as [plugin calls](#calls): `calendar.period('morning')`, `calendar.weekday(5, 6)` and `calendar.day({ gte: 2 })`.
 
 ### Where the player is
 
-The engine keeps no places, so it has no condition for where the player is. With the [places plugin](/docs/plugins/places#conditions), write `at('cafe', 'park')` (short for `{ 'places/at': { location: ['cafe', 'park'] } }`) for "in one of these places", and `within('cafe')` for "in the café or a room inside it".
+The engine keeps no places, so it has no condition for where the player is. With the [places plugin](/docs/plugins/places#conditions), write `places.at('cafe', 'park')` (short for `{ 'places/at': { location: ['cafe', 'park'] } }`) for "in one of these places", and `places.within('cafe')` for "in the café or a room inside it".
 
-It doesn't keep characters either. With the [cast](/docs/plugins/cast#conditions), write `here('ava')` (short for `{ 'cast/here': { character: ['ava'] } }`) for "Ava is in the room with the player", and `isAt('ava', 'park')` for "Ava is in the park, wherever the player is".
+It doesn't keep characters either. With the [cast](/docs/plugins/cast#conditions), write `cast.here('ava')` (short for `{ 'cast/here': { character: ['ava'] } }`) for "Ava is in the room with the player", and `cast.at('ava', 'park')` for "Ava is in the park, wherever the player is".
 
 **Gotcha.** An object whose key the engine doesn't know, such as `{ at: ['cafe'] }`, never holds, and the loader doesn't report it.
 
@@ -396,12 +396,12 @@ Evaluates a condition. `undefined` is true, so a `when` you leave out always app
 
 ```ts
 import { holds } from '@ifloom/engine'
-import { at } from '@ifloom/plugin-places'
-import { here } from '@ifloom/plugin-cast'
+import { places } from '@ifloom/plugin-places'
+import { cast } from '@ifloom/plugin-cast'
 
 holds(state, town, { kv: 'metAva' })          // true once you've met Ava
-holds(state, town, at('cafe'))                // a plugin's condition
-holds(state, town, here('ava'))               // the cast's
+holds(state, town, places.at('cafe'))                // a plugin's condition
+holds(state, town, cast.here('ava'))               // the cast's
 ```
 
 The state comes first and the game second, as in every function that reads the game in play. A `count`'s `where` is tested with the same game.
@@ -446,13 +446,13 @@ Walks the whole condition against the state. Every part of an `all`, `any` or `n
 
 ```ts
 import { explain } from '@ifloom/engine'
-import { at } from '@ifloom/plugin-places'
+import { places } from '@ifloom/plugin-places'
 
 const why = explain(state, town, {
   all: [
     { kv: 'metAva' },
     { any: [{ stat: 'coins', gte: 5 }, { level: 'charm', gte: 1 }] },
-    { not: at('cafe') },
+    { not: places.at('cafe') },
   ],
 })
 

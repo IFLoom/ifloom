@@ -82,7 +82,7 @@ export type ProbeStep = Effect | { play: CommandRef }
  * A command (`{ play }`) is played as the player would press it, with all
  * that follows a command, and must be allowed: a refused one throws, with why.
  *
- *     const morning = probe('first-morning', game, [{ play: { type: 'choose', id: 'unpack' } }, { play: sleep() }])
+ *     const morning = probe('first-morning', game, [{ play: { type: 'choose', id: 'unpack' } }, { play: calendar.sleep() }])
  *     probe('a-week-in', game, [{ turn: { by: 6 } }, { 'calendar/set': { period: 'afternoon' } }], morning)
  */
 export function probe(name: string, game: Game, steps: readonly ProbeStep[], from?: Probe | GameState): Probe {

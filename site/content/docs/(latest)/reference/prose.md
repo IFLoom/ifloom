@@ -281,7 +281,7 @@ const kitchen: DataScene = {
   id: 'kitchen.phone',
   body: [text('Your phone buzzes on the counter. [[act:answer|Pick it up]], or leave it.')],
   choices: [
-    { id: 'answer', label: 'Answer the phone', command: openApp('texts'), effects: [{ kv: 'answered', to: true }] },
+    { id: 'answer', label: 'Answer the phone', command: devices.open('texts'), effects: [{ kv: 'answered', to: true }] },
     { id: 'ignore', label: 'Leave it', effects: [{ scene: null }] },
   ],
 }

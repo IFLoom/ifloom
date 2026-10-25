@@ -180,7 +180,7 @@ function profileIds(stored: unknown): string[] {
  * The plugin. Add it to the game's `plugins`, and put achievements in a
  * pack's `data.achievements.achievements`.
  */
-export function achievements(): DefinedPlugin<AchievementsState, AchievementsView> {
+function achievementsPlugin(): DefinedPlugin<AchievementsState, AchievementsView> {
   return definePlugin<AchievementsState, AchievementsView>({
     id: ID,
     version: 1,
@@ -245,6 +245,12 @@ export function achievements(): DefinedPlugin<AchievementsState, AchievementsVie
 }
 
 /** A condition: the achievement is earned in this save. */
-export const achievementEarned = (id: string): Condition => ({ [`${ID}/earned`]: { achievement: id } })
+const achievementEarned = (id: string): Condition => ({ [`${ID}/earned`]: { achievement: id } })
 /** An effect: earn the achievement now. */
-export const grantAchievement = (id: string): EffectRef => ({ [`${ID}/grant`]: { achievement: id } })
+const grantAchievement = (id: string): EffectRef => ({ [`${ID}/grant`]: { achievement: id } })
+
+/**
+ * The plugin, with its helpers on it: `achievements()` makes the plugin for the
+ * game's `plugins`, and content is written with `achievements.earned('first-loaf')`.
+ */
+export const achievements = Object.assign(achievementsPlugin, { earned: achievementEarned, grant: grantAchievement })

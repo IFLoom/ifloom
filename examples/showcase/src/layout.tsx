@@ -22,7 +22,7 @@ import { CheatsButton } from '@ifloom/plugin-cheats/react'
 import { DebugCard } from '@ifloom/plugin-debug/react'
 import { DeviceButtons } from '@ifloom/plugin-devices/react'
 import { InventoryCard } from '@ifloom/plugin-inventory/react'
-import { at } from '@ifloom/plugin-places'
+import { places } from '@ifloom/plugin-places'
 import { Exits, LocationCard } from '@ifloom/plugin-places/react'
 import { QuestsSection } from '@ifloom/plugin-quests/react'
 import { StatusList } from '@ifloom/plugin-statuses/react'
@@ -54,7 +54,7 @@ export function Layout() {
           {/* With a drop button: what you drop lies in the room, in the location card, until you pick it up. */}
           <InventoryCard title={false} drop />
         </Section>
-        <Section id="wardrobe" title={words('wardrobe')} collapsible when={at('flat')}>
+        <Section id="wardrobe" title={words('wardrobe')} collapsible when={places.at('flat')}>
           <WardrobeCard title={false} />
         </Section>
         <AchievementsButton />

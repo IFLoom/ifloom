@@ -3,11 +3,11 @@
  * and weekend work.
  */
 import { give, type Content } from '@ifloom/engine'
-import { applyStatus, statusActive } from '@ifloom/plugin-statuses'
-import { wearing } from '@ifloom/plugin-wardrobe'
-import { period } from '@ifloom/plugin-calendar'
-import { character, here, talk } from '@ifloom/plugin-cast'
-import { openShop, vendor } from '@ifloom/plugin-shop'
+import { statuses } from '@ifloom/plugin-statuses'
+import { wardrobe } from '@ifloom/plugin-wardrobe'
+import { calendar } from '@ifloom/plugin-calendar'
+import { cast } from '@ifloom/plugin-cast'
+import { shop } from '@ifloom/plugin-shop'
 import { place } from '../place.ts'
 
 export const cafe: Content = {
@@ -48,13 +48,13 @@ export const cafe: Content = {
       speaker: 'ava',
       drawnFrom: ['cafe'],
       weight: 2,
-      when: here('ava'),
+      when: cast.here('ava'),
       body: [{ text: 'Ava drops into the chair opposite with a mug of her own.\n\n"Five minutes. Don’t tell anyone I sat down."' }],
       choices: [
         {
           id: 'leave',
           label: 'Keep her secret',
-          effects: [{ stat: 'friendship', by: 2, of: character('ava') }, { scene: null }],
+          effects: [{ stat: 'friendship', by: 2, of: cast.character('ava') }, { scene: null }],
         },
       ],
     },
@@ -73,7 +73,7 @@ export const cafe: Content = {
       desc: 'Café',
       exits: ['high-street'],
       // Open in the day; the door says when it opens again.
-      blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
+      blocked: [{ when: { not: calendar.period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
       actions: [
         {
           id: 'coffee',
@@ -84,11 +84,11 @@ export const cafe: Content = {
             { stat: 'energy', by: 15 },
             { kv: 'hadCoffee', to: true },
             // And a lift that lasts till tomorrow is out: 10 more energy, never written.
-            applyStatus('caffeinated'),
+            statuses.apply('caffeinated'),
           ],
         },
         // The counter, the shop plugin's vendor, opens in a panel: nothing about a shop is drawn by itself.
-        { id: 'counter', label: 'Go to the counter', effects: [openShop('counter')] },
+        { id: 'counter', label: 'Go to the counter', effects: [shop.open('counter')] },
         // A sandwich as a plain action: a cost, a place and a thing given, with no plugin. Always 4 coins, never sold out.
         { id: 'buy-sandwich', label: 'Buy a sandwich', cost: { stats: { coins: 4 } }, effects: [give('item:sandwich')] },
         // Something small happens while you sit: one of the café's storylets, drawn at random.
@@ -97,17 +97,17 @@ export const cafe: Content = {
       // A picture of the counter while Ava is on shift, with a hotspot on her that talks to her.
       stage: {
         aspect: '16/10',
-        layers: [{ id: 'counter', src: 'photo/ava.svg', when: here('ava') }],
-        hotspots: [{ id: 'ava', rect: [36, 22, 28, 44], label: 'Talk to Ava', command: talk('ava'), layer: 'counter' }],
+        layers: [{ id: 'counter', src: 'photo/ava.svg', when: cast.here('ava') }],
+        hotspots: [{ id: 'ava', rect: [36, 22, 28, 44], label: 'Talk to Ava', command: cast.talk('ava'), layer: 'counter' }],
       },
       body: [
         { text: 'Six tables, one of them wobbly. The coffee machine sighs like it has been working since dawn, which it has.' },
-        { text: 'Ava is behind the counter, flour to the elbows, and nods you in.', when: here('ava') },
-        { text: 'Someone points at your raincoat and grins. It is very yellow.', when: wearing('clothing:raincoat') },
-        { text: 'Your knee won’t stop jiggling under the table. The coffee is working.', when: statusActive('caffeinated') },
+        { text: 'Ava is behind the counter, flour to the elbows, and nods you in.', when: cast.here('ava') },
+        { text: 'Someone points at your raincoat and grins. It is very yellow.', when: wardrobe.wearing('clothing:raincoat') },
+        { text: 'Your knee won’t stop jiggling under the table. The coffee is working.', when: statuses.active('caffeinated') },
       ],
     }),
-    vendor({
+    shop.vendor({
       id: 'counter',
       name: 'The counter',
       at: ['cafe'],
@@ -132,7 +132,7 @@ export const cafe: Content = {
           id: 'weekend',
           title: 'Weekend help',
           description: 'Saturday mornings behind the counter at the Corner Café.',
-          blocked: [{ when: { not: { stat: 'friendship', of: character('ava'), gte: 10 } }, reason: 'Ava doesn’t know you well enough yet.' }],
+          blocked: [{ when: { not: { stat: 'friendship', of: cast.character('ava'), gte: 10 } }, reason: 'Ava doesn’t know you well enough yet.' }],
           at: ['cafe'],
           // Saturdays (day 5 of the calendar's week), starting in the morning; the shift takes it.
           days: [5],

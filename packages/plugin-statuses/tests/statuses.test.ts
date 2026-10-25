@@ -15,7 +15,7 @@ import {
   type GameState,
   type Content,
 } from '@ifloom/engine'
-import { applyStatus, statusActive, statuses, removeStatus, type StatusDef, type StatusesView } from '../src/index.ts'
+import { statuses, type StatusDef, type StatusesView } from '../src/index.ts'
 
 const caffeinated: StatusDef = {
   id: 'caffeinated',
@@ -49,11 +49,11 @@ function game(extra: StatusDef[] = []): Game {
       { id: 'stamina', label: 'Stamina', derive: { scale: 'energy', by: 2 }, max: 1000 },
     ],
     actions: [
-      { id: 'coffee', effects: [applyStatus('caffeinated')] },
-      { id: 'sneeze', effects: [applyStatus('cold')] },
+      { id: 'coffee', effects: [statuses.apply('caffeinated')] },
+      { id: 'sneeze', effects: [statuses.apply('cold')] },
       { id: 'rest', effects: [{ turn: true }] },
-      { id: 'cure', effects: [removeStatus('cold')] },
-      { id: 'cureFully', effects: [removeStatus('cold', true)] },
+      { id: 'cure', effects: [statuses.remove('cold')] },
+      { id: 'cureFully', effects: [statuses.remove('cold', true)] },
       { id: 'climb', cost: { stats: { energy: 55 } } },
       { id: 'tire', effects: [{ stat: 'energy', by: -10 }] },
     ],
@@ -104,10 +104,10 @@ describe('timed statuses', () => {
     ])
     state = run(state, g, 'rest')
     expect(shown(state, g).active[0].turnsLeft).toBe(1)
-    expect(holds(state, g, statusActive('caffeinated'))).toBe(true)
+    expect(holds(state, g, statuses.active('caffeinated'))).toBe(true)
     state = run(state, g, 'rest')
     expect(shown(state, g).active).toEqual([])
-    expect(holds(state, g, statusActive('caffeinated'))).toBe(false)
+    expect(holds(state, g, statuses.active('caffeinated'))).toBe(false)
     expect(state.kv.buzzing).toBe(false)
     expect(statValue(state, g, 'energy')).toBe(50)
   })
@@ -128,8 +128,8 @@ describe('timed statuses', () => {
     expect(shown(state, g).active[0]).toMatchObject({ stacks: 2, turnsLeft: 3, modifiers: [{ stat: 'energy', multiply: 0.8 * 0.8 }] })
     expect(statValue(state, g, 'energy')).toBeCloseTo(32)
     expect(state.stats.sneezes).toBe(2)
-    expect(holds(state, g, statusActive('cold', { gte: 2 }))).toBe(true)
-    expect(holds(state, g, statusActive('cold', { gte: 3 }))).toBe(false)
+    expect(holds(state, g, statuses.active('cold', { gte: 2 }))).toBe(true)
+    expect(holds(state, g, statuses.active('cold', { gte: 3 }))).toBe(false)
     // One coin a turn for the first stack's first turn, then two a turn.
     expect(state.stats.coins).toBe(19)
     state = run(state, g, 'sneeze', 'sneeze')
@@ -149,7 +149,7 @@ describe('timed statuses', () => {
     const g = game()
     const sick = run(fresh(g), g, 'sneeze', 'sneeze')
     const cured = run(sick, g, 'cure')
-    expect(holds(cured, g, statusActive('cold'))).toBe(false)
+    expect(holds(cured, g, statuses.active('cold'))).toBe(false)
     expect(cured.stats.recovered).toBe(0)
     const fully = run(sick, g, 'cureFully')
     expect(fully.stats.recovered).toBe(2)
@@ -161,7 +161,7 @@ describe('timed statuses', () => {
     expect(whyNot(fresh(g), g, remove)).toBe('That isn’t affecting you.')
     expect(whyNot(fresh(g), g, { type: 'custom', name: 'statuses/apply', with: { id: 'flu' } })).toBe('Nothing like that can happen.')
     const sick = run(fresh(g), g, 'sneeze')
-    expect(holds(apply(sick, g, remove).state, g, statusActive('cold'))).toBe(false)
+    expect(holds(apply(sick, g, remove).state, g, statuses.active('cold'))).toBe(false)
   })
 
   it('replay exactly from a command log', () => {
@@ -187,7 +187,7 @@ describe('timed statuses', () => {
         {
           name: 'mod',
           stats: [{ id: 'energy', label: 'Energy' }],
-          actions: [{ id: 'x', effects: [applyStatus('flu')] }],
+          actions: [{ id: 'x', effects: [statuses.apply('flu')] }],
           data: {
             statuses: {
               statuses: [

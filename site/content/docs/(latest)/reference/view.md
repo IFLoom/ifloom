@@ -485,10 +485,10 @@ Turns an [action](/docs/reference/actions#actiondef) into a button, exactly as t
 
 ```ts
 import { renderAction } from '@ifloom/engine'
-import { go } from '@ifloom/plugin-places'
+import { places } from '@ifloom/plugin-places'
 
 // A "go to the café" button in a map app, pressed from the flat:
-const button = renderAction(state, game, { id: 'cafe', label: 'Go to the café', command: go('cafe') })
+const button = renderAction(state, game, { id: 'cafe', label: 'Go to the café', command: places.go('cafe') })
 button.disabled  // 'You cannot get there from here.'
 ```
 

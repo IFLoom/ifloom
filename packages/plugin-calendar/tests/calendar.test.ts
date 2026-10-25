@@ -13,7 +13,7 @@ import {
   type GameRules,
   type GameState,
 } from '@ifloom/engine'
-import { calendar, day, pass, period, sleep, weekday, weekend, type CalendarOptions, type CalendarView } from '../src/index.ts'
+import { calendar, type CalendarOptions, type CalendarView } from '../src/index.ts'
 
 /** A house with no map: a nap, an afternoon out, a long walk, and bed. */
 function house(
@@ -27,16 +27,16 @@ function house(
         name: 'base',
         actions: [
           // A calendar with no sleep has no bed to offer.
-          ...(options.sleep === false ? [] : [{ id: 'bed', label: 'Bed', command: sleep() }]),
+          ...(options.sleep === false ? [] : [{ id: 'bed', label: 'Bed', command: calendar.sleep() }]),
         ],
         ...(locks ? { locks } : {}),
       },
       {
         name: 'house',
         actions: [
-          { id: 'nap', label: 'Nap', effects: [pass(1)] },
-          { id: 'outing', label: 'Go out', effects: [pass(2), { kv: 'out', to: true }] },
-          { id: 'walk', label: 'Long walk', effects: [pass(3)] },
+          { id: 'nap', label: 'Nap', effects: [calendar.pass(1)] },
+          { id: 'outing', label: 'Go out', effects: [calendar.pass(2), { kv: 'out', to: true }] },
+          { id: 'walk', label: 'Long walk', effects: [calendar.pass(3)] },
           { id: 'rest', effects: [{ turn: true }] },
         ],
         prose: { diary: 'Day {{v:calendar/day}}, a {{v:calendar/weekday}} {{v:calendar/period}}.' },
@@ -91,26 +91,26 @@ describe('the calendar', () => {
     expect(clock.read(state, game)).toEqual({ day: 0, period: 'evening' })
     expect(state.turn).toBe(0)
     state = clock.write(state, { day: 0, period: 'night' })
-    state = applyEffects(state, game, [pass(4)])
+    state = applyEffects(state, game, [calendar.pass(4)])
     expect(clock.read(state, game)).toEqual({ day: 1, period: 'evening' })
     expect(state.turn).toBe(1)
-    state = applyEffects(state, game, [pass(11)])
+    state = applyEffects(state, game, [calendar.pass(11)])
     expect(clock.read(state, game)).toEqual({ day: 3, period: 'night' })
     expect(state.turn).toBe(3)
   })
 
   it('ends a turn every period, or every week, when that is what a turn is', () => {
     const periodic = house({ turn: 'period' })
-    const one = applyEffects(startingState(periodic.game), periodic.game, [pass(3)])
+    const one = applyEffects(startingState(periodic.game), periodic.game, [calendar.pass(3)])
     expect(one.turn).toBe(3)
     const weekly = house({ turn: 'week' })
-    let state = applyEffects(startingState(weekly.game), weekly.game, [pass(5 * 6)])
+    let state = applyEffects(startingState(weekly.game), weekly.game, [calendar.pass(5 * 6)])
     expect(weekly.clock.read(state, weekly.game)).toEqual({ day: 6, period: 'morning' })
     expect(state.turn).toBe(0)
-    state = applyEffects(state, weekly.game, [pass(5)])
+    state = applyEffects(state, weekly.game, [calendar.pass(5)])
     expect(state.turn).toBe(1)
     const still = house({ turn: false })
-    expect(applyEffects(startingState(still.game), still.game, [pass(20)]).turn).toBe(0)
+    expect(applyEffects(startingState(still.game), still.game, [calendar.pass(20)]).turn).toBe(0)
   })
 
   it('moves the clock on when content ends a turn itself: a week of turns, a week on', () => {
@@ -135,19 +135,19 @@ describe('the calendar', () => {
         },
       },
     )
-    run(game, clock.write(startingState(game), { day: 0, period: 'night' }), sleep())
+    run(game, clock.write(startingState(game), { day: 0, period: 'night' }), calendar.sleep())
     expect(seen).toEqual(['1: {"day":0,"period":"night"}'])
   })
 
   it('goes to bed only late enough, and wakes the next morning a turn on', () => {
     const { game, clock } = house()
-    expect(whyNot(startingState(game), game, sleep())).toBe('Too early.')
-    const state = run(game, clock.write(startingState(game), { day: 2, period: 'evening' }), sleep())
+    expect(whyNot(startingState(game), game, calendar.sleep())).toBe('Too early.')
+    const state = run(game, clock.write(startingState(game), { day: 2, period: 'evening' }), calendar.sleep())
     expect(clock.read(state, game)).toEqual({ day: 3, period: 'morning' })
     expect(state.turn).toBe(1)
     const late = house({ sleep: { from: ['late'], wake: 'afternoon' } })
-    expect(whyNot(late.clock.write(startingState(late.game), { day: 0, period: 'night' }), late.game, sleep())).toBe('Too early.')
-    const woke = run(late.game, late.clock.write(startingState(late.game), { day: 0, period: 'late' }), sleep())
+    expect(whyNot(late.clock.write(startingState(late.game), { day: 0, period: 'night' }), late.game, calendar.sleep())).toBe('Too early.')
+    const woke = run(late.game, late.clock.write(startingState(late.game), { day: 0, period: 'late' }), calendar.sleep())
     expect(late.clock.read(woke, late.game)).toEqual({ day: 1, period: 'afternoon' })
   })
 
@@ -173,7 +173,7 @@ describe('the calendar', () => {
     // Further than tomorrow, the day by name.
     const far = {
       ...game,
-      actions: [...(game.actions ?? []).map(({ label: _label, ...action }) => action), { id: 'trek', label: 'Trek', effects: [pass(11)] }],
+      actions: [...(game.actions ?? []).map(({ label: _label, ...action }) => action), { id: 'trek', label: 'Trek', effects: [calendar.pass(11)] }],
     }
     expect(button(far, clock.write(startingState(far), { day: 0, period: 'morning' }), 'trek').price).toEqual({ notes: ['until Wednesday afternoon'] })
   })
@@ -181,18 +181,18 @@ describe('the calendar', () => {
   it('answers conditions on the period, the weekday, the weekend and the day', () => {
     const { game, clock } = house()
     const saturday = clock.write(startingState(game), { day: 5, period: 'evening' })
-    expect(holds(saturday, game, period('evening', 'night'))).toBe(true)
-    expect(holds(saturday, game, period('morning'))).toBe(false)
-    expect(holds(saturday, game, weekday(5))).toBe(true)
-    expect(holds(saturday, game, weekend())).toBe(true)
-    expect(holds(clock.write(saturday, { day: 2, period: 'evening' }), game, weekend())).toBe(false)
-    expect(holds(saturday, game, day({ gte: 5 }))).toBe(true)
-    expect(holds(saturday, game, day({ lt: 5 }))).toBe(false)
+    expect(holds(saturday, game, calendar.period('evening', 'night'))).toBe(true)
+    expect(holds(saturday, game, calendar.period('morning'))).toBe(false)
+    expect(holds(saturday, game, calendar.weekday(5))).toBe(true)
+    expect(holds(saturday, game, calendar.weekend())).toBe(true)
+    expect(holds(clock.write(saturday, { day: 2, period: 'evening' }), game, calendar.weekend())).toBe(false)
+    expect(holds(saturday, game, calendar.day({ gte: 5 }))).toBe(true)
+    expect(holds(saturday, game, calendar.day({ lt: 5 }))).toBe(false)
   })
 
   it('has no bed when it has no sleep, and sets only a period it has', () => {
     const { game, clock } = house({ sleep: false, curfew: false })
-    expect(whyNot(startingState(game), game, sleep())).toBe('There is no such thing to do.')
+    expect(whyNot(startingState(game), game, calendar.sleep())).toBe('There is no such thing to do.')
     const set = applyEffects(startingState(game), game, [{ 'calendar/set': { day: 3, period: 'teatime' } }])
     expect(clock.read(set, game)).toEqual({ day: 3, period: 'morning' })
     const short = house({ week: 1 })

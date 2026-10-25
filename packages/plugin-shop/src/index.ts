@@ -3,7 +3,7 @@
  *
  * What a vendor sells are entities, things the player then holds. A vendor
  * is an entity too, one that carries the `shop/vendor` trait, written with
- * `vendor({ ... })` in content's `entities` (of the plugin's `vendor` kind
+ * `shop.vendor({ ... })` in content's `entities` (of the plugin's `vendor` kind
  * unless it says), so it holds its stock as any holder holds things, and a
  * mod changes one as it changes any entity. A good with no `stock` never
  * runs out: buying one gives the player a new one. A good with a `stock` is
@@ -124,7 +124,7 @@ declare module '@ifloom/engine' {
 }
 
 /**
- * What `vendor()` takes: an entity's fields (its `of` is `'vendor'` if left
+ * What `shop.vendor()` takes: an entity's fields (its `of` is `'vendor'` if left
  * out) and the `shop/vendor` trait's, side by side. `at` is the trait's:
  * where on the places map it stands.
  */
@@ -225,10 +225,10 @@ function emptyState(): ShopState {
 }
 
 /**
- * The entity a vendor is, which holds its stock: `vendorRef('counter')` is
+ * The entity a vendor is, which holds its stock: `shop.vendorRef('counter')` is
  * `'vendor:counter'`. A reference is as written, for a vendor of another kind.
  */
-export function vendorRef(vendor: string): EntityRef {
+function vendorRef(vendor: string): EntityRef {
   return (vendor.includes(':') ? vendor : `${KIND}:${vendor}`) as EntityRef
 }
 
@@ -616,9 +616,9 @@ const vendorEntry = (id: string): Reference => ({ entity: vendorRef(id), carryin
 
 /**
  * The plugin. Add it to the game's `plugins`, and write vendors in the
- * content's `entities` with `vendor({ ... })`.
+ * content's `entities` with `shop.vendor({ ... })`.
  */
-export function shop(): DefinedPlugin<ShopState, ShopView> {
+function shopPlugin(): DefinedPlugin<ShopState, ShopView> {
   return definePlugin<ShopState, ShopView>({
     id: ID,
     version: 2,
@@ -703,7 +703,7 @@ export function shop(): DefinedPlugin<ShopState, ShopView> {
         problems.push({
           list: 'vendors',
           id: String(entry?.id ?? ''),
-          what: 'vendors are entities now: write them in entities with vendor({ id, name, goods, ... })',
+          what: 'vendors are entities now: write them in entities with shop.vendor({ id, name, goods, ... })',
         })
       }
       return problems
@@ -719,10 +719,10 @@ const VENDOR_FIELDS = ['at', 'hours', 'open', 'closed', 'goods', 'buysBack', 'di
  * trait's written side by side.
  *
  * ```ts
- * entities: [vendor({ id: 'counter', name: 'The counter', at: ['cafe'], goods: [{ entity: 'food:bun', price: { coins: 2 } }] })]
+ * entities: [shop.vendor({ id: 'counter', name: 'The counter', at: ['cafe'], goods: [{ entity: 'food:bun', price: { coins: 2 } }] })]
  * ```
  */
-export function vendor(def: VendorDef): EntityDef {
+function vendor(def: VendorDef): EntityDef {
   const { of, traits, ...rest } = def
   const entity: Record<string, unknown> = {}
   const trait: Record<string, unknown> = {}
@@ -739,14 +739,14 @@ export function vendor(def: VendorDef): EntityDef {
  * `traits`: `traits: { ...sellable({ coins: 4 }) }`. A vendor that lists the
  * thing without a price of its own sells it for this.
  */
-export const sellable = (price: Record<string, number>): { 'shop/sellable': Sellable } => ({ [SELLABLE]: { price } })
+const sellable = (price: Record<string, number>): { 'shop/sellable': Sellable } => ({ [SELLABLE]: { price } })
 
 /** A command: buy `count` (1 if left out) of a thing from a vendor. */
-export const buy = (vendor: string, entity: EntityRef, count?: number): CommandRef => ({
+const buy = (vendor: string, entity: EntityRef, count?: number): CommandRef => ({
   'shop/buy': count === undefined ? { vendor, entity } : { vendor, entity, count },
 })
 /** A command: sell `count` (1 if left out) of a thing back to a vendor. */
-export const sell = (vendor: string, entity: EntityRef, count?: number): CommandRef => ({
+const sell = (vendor: string, entity: EntityRef, count?: number): CommandRef => ({
   'shop/sell': count === undefined ? { vendor, entity } : { vendor, entity, count },
 })
 /**
@@ -754,8 +754,14 @@ export const sell = (vendor: string, entity: EntityRef, count?: number): Command
  * action, a person's, a thing's use, an app or a choice. The UI draws it;
  * `shopUi` from `@ifloom/plugin-shop/react` draws it as a `ShopCounter`.
  */
-export const openShop = (vendor: string): Effect => ({ panel: PANEL, with: { vendor } })
+const openShop = (vendor: string): Effect => ({ panel: PANEL, with: { vendor } })
 /** A condition: the vendor is open now. */
-export const vendorOpen = (vendor: string): Condition => ({ 'shop/open': { vendor } })
+const vendorOpen = (vendor: string): Condition => ({ 'shop/open': { vendor } })
 /** A condition: the vendor offers the thing now and has one left. */
-export const inStock = (vendor: string, entity: EntityRef): Condition => ({ 'shop/inStock': { vendor, entity } })
+const inStock = (vendor: string, entity: EntityRef): Condition => ({ 'shop/inStock': { vendor, entity } })
+
+/**
+ * The plugin, with its helpers on it: `shop()` makes the plugin for the
+ * game's `plugins`, and content is written with `shop.vendor({ ... })` and `shop.buy('counter', 'food:bun')`.
+ */
+export const shop = Object.assign(shopPlugin, { vendor, vendorRef, sellable, buy, sell, open: openShop, vendorOpen, inStock })

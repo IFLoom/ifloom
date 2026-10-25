@@ -16,9 +16,9 @@ The showcase's café has a Go to the counter action that opens the shop plugin's
 
 ```ts
 import type { Content } from '@ifloom/engine'
-import { openShop } from '@ifloom/plugin-shop'
-import { openJobs } from '@ifloom/plugin-jobs'
-import { usable } from '@ifloom/plugin-inventory'
+import { shop } from '@ifloom/plugin-shop'
+import { jobs } from '@ifloom/plugin-jobs'
+import { inventory } from '@ifloom/plugin-inventory'
 
 export const town: Content = {
   kinds: [{ id: 'item', label: 'Thing', listed: false }],
@@ -30,7 +30,7 @@ export const town: Content = {
       desc: 'Today’s Small Town Gazette. The back page is job ads.',
       at: 'player',
       // { panel: 'jobs', with: { job: ['dogs'] } }, and the paper is kept to read again.
-      traits: { ...usable('Read the job ads', [openJobs(['dogs'])], { keep: true }) },
+      traits: { ...inventory.usable('Read the job ads', [jobs.open(['dogs'])], { keep: true }) },
     },
   ],
   scenes: [
@@ -39,7 +39,7 @@ export const town: Content = {
       body: [{ prose: 'ava.hi' }],
       choices: [
         // The scene closes and the board opens over the room, in one choice.
-        { id: 'work', effects: [{ scene: null }, openJobs()] },
+        { id: 'work', effects: [{ scene: null }, jobs.open()] },
         { id: 'bye', effects: [{ scene: null }] },
       ],
     },
@@ -47,7 +47,7 @@ export const town: Content = {
 }
 ```
 
-The café's location lists the counter among its actions, `{ id: 'counter', label: 'Go to the counter', effects: [openShop('counter')] }`, which is `{ panel: 'shop', with: { vendor: 'counter' } }`. The paper is kept, so the player can read the ads again.
+The café's location lists the counter among its actions, `{ id: 'counter', label: 'Go to the counter', effects: [shop.open('counter')] }`, which is `{ panel: 'shop', with: { vendor: 'counter' } }`. The paper is kept, so the player can read the ads again.
 
 ## OpenPanel
 

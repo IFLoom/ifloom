@@ -88,7 +88,7 @@ Players type codes in any case, with or without spaces and hyphens: `7f3a 91c2 0
 A supporter cheat is refused until the unlock is recorded:
 
 ```ts
-import { hasUnlock } from '@ifloom/plugin-unlocks'
+import { unlocks } from '@ifloom/plugin-unlocks'
 
 data: {
   cheats: {
@@ -98,7 +98,7 @@ data: {
         id: 'energy',
         label: 'Full energy',
         group: 'Supporters',
-        blocked: [{ when: { not: hasUnlock('supporter') }, reason: 'For supporters.' }],
+        blocked: [{ when: { not: unlocks.has('supporter') }, reason: 'For supporters.' }],
         effects: [{ stat: 'energy', to: 100 }],
       },
     ],
@@ -115,7 +115,7 @@ Put what supporters get in `src/unlocks/supporter.ts`, named after the unlock. I
 ```ts
 // src/unlocks/supporter.ts
 import { SCHEMA, type Pack } from '@ifloom/engine'
-import { hasUnlock } from '@ifloom/plugin-unlocks'
+import { unlocks } from '@ifloom/plugin-unlocks'
 
 const supporter: Pack = {
   id: 'supporter',
@@ -126,7 +126,7 @@ const supporter: Pack = {
       title: 'The back room',
       drawnFrom: ['cafe'],
       weight: 5,
-      when: { all: [hasUnlock('supporter'), { not: { seen: 'cafe.back-room' } }] },
+      when: { all: [unlocks.has('supporter'), { not: { seen: 'cafe.back-room' } }] },
       body: [{ prose: 'cafe.back-room' }],
       choices: [{ id: 'leave', label: 'Thank her and head back out', effects: [{ scene: null }] }],
     },
@@ -179,7 +179,7 @@ Players who entered last release's code see the unlock as locked again until the
 For tiers, declare an unlock per tier, each with its own code, and give higher tiers every code they're due. A cheat for any supporter can ask for either:
 
 ```ts
-blocked: [{ when: { not: { any: [hasUnlock('supporter'), hasUnlock('patron')] } }, reason: 'For supporters.' }]
+blocked: [{ when: { not: { any: [unlocks.has('supporter'), unlocks.has('patron')] } }, reason: 'For supporters.' }]
 ```
 
 ## What's in the build

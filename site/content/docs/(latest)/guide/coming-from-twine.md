@@ -633,10 +633,10 @@ Many SugarCube games keep `$time` and `$weekday` themselves, move them on with a
 
 | SugarCube | IFLoom |
 |---|---|
-| `$time` as a number of periods, `$weekday`, `$gameDay` | The [calendar plugin](/docs/plugins/calendar), with your periods: `calendar({ periods: [{ id: 'early', label: 'early morning' }, ...] })`. The header reads them, and conditions test them with `period('evening')` and `weekday(5, 6)`. |
-| A link that costs time, `<<set $time += 2>>` | [`pass(2)`](/docs/plugins/calendar#effects) in the choice's or action's effects. The button shows `until noon` by itself. |
-| "Too late" once `$time` reaches night | The calendar's [curfew guard](/docs/plugins/calendar#the-guard), and `blocked` entries such as `{ when: period('night'), reason: 'Too late for that.' }`. |
-| A `Sleep` passage that only works late | The calendar's [`sleep()`](/docs/plugins/calendar#commands) command, with `sleep: { from: ['evening', 'night'] }`. |
+| `$time` as a number of periods, `$weekday`, `$gameDay` | The [calendar plugin](/docs/plugins/calendar), with your periods: `calendar({ periods: [{ id: 'early', label: 'early morning' }, ...] })`. The header reads them, and conditions test them with `calendar.period('evening')` and `calendar.weekday(5, 6)`. |
+| A link that costs time, `<<set $time += 2>>` | [`calendar.pass(2)`](/docs/plugins/calendar#effects) in the choice's or action's effects. The button shows `until noon` by itself. |
+| "Too late" once `$time` reaches night | The calendar's [curfew guard](/docs/plugins/calendar#the-guard), and `blocked` entries such as `{ when: calendar.period('night'), reason: 'Too late for that.' }`. |
+| A `Sleep` passage that only works late | The calendar's [`calendar.sleep()`](/docs/plugins/calendar#commands) command, with `sleep: { from: ['evening', 'night'] }`. |
 | `<<dayshift>>`: payday, rent, decay, mood, which morning passage to show | [`rules.onTurn`](/docs/reference/rules#a-days-end-step-by-step). It runs once per day, sees the state as the player went to bed as `before`, and applies effects in the order you write them, ending with the scene the morning opens on. |
 | Per-day flags reset in the widget, `<<set $talkedToday to false>>` | The content's [`resets`](/docs/reference/rules#resets): `resets: { talkedToday: false }`. |
 | Opening hours, `<<if $weekday lte 5 and $time lte 1>>[[Office]]<</if>>` | A place's [`blocked`](/docs/plugins/places#opening-hours) entries. The exit stays on screen, greyed out with the reason. |

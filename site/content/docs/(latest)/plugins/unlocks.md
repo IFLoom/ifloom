@@ -7,12 +7,7 @@ description: "Codes the player enters to unlock cheats, scenes and whole packs o
 The game never contains a code. It has a slow hash of each one, which can check a code but can't give it back. A code that works is remembered in the player's [profile](/docs/reference/profile), so it outlives saves and new games, and is entered once.
 
 ```ts
-import {
-  unlocks, startUnlocks, unlockedPacks, hasUnlock, recordUnlock, unlocksOf,
-  unlockHash, codeFits, normaliseCode, envName, lockContent, contentScript, lockedContent, ITERATIONS,
-  type UnlockDef, type UnlocksState, type UnlocksProfile, type UnlocksView, type UnlockView,
-  type UnlockCodes, type Entered, type LockedContent,
-} from '@ifloom/plugin-unlocks'
+import { unlocks, startUnlocks, unlockedPacks, unlocksOf, unlockHash, codeFits, normaliseCode, envName, lockContent, contentScript, lockedContent, ITERATIONS, type UnlockDef, type UnlocksState, type UnlocksProfile, type UnlocksView, type UnlockView, type UnlockCodes, type Entered, type LockedContent } from '@ifloom/plugin-unlocks'
 ```
 
 [Supporter content and cheats](/docs/recipes/supporter-content) puts it together for a game funded by supporters, and says what each kind of gate protects.
@@ -111,7 +106,7 @@ Content that only an unlock opens goes in `src/unlocks/<id>.ts`, one file per un
 ```ts
 // src/unlocks/supporter.ts
 import { SCHEMA, type Pack } from '@ifloom/engine'
-import { hasUnlock } from '@ifloom/plugin-unlocks'
+import { unlocks } from '@ifloom/plugin-unlocks'
 
 const supporter: Pack = {
   id: 'supporter',
@@ -122,7 +117,7 @@ const supporter: Pack = {
       title: 'The back room',
       drawnFrom: ['cafe'],
       weight: 5,
-      when: { all: [hasUnlock('supporter'), { not: { seen: 'cafe.back-room' } }] },
+      when: { all: [unlocks.has('supporter'), { not: { seen: 'cafe.back-room' } }] },
       body: [{ prose: 'cafe.back-room' }],
       choices: [{ id: 'leave', label: 'Thank her and head back out', effects: [{ scene: null }] }],
     },
@@ -327,14 +322,14 @@ type Entered = { unlock: string; label: string; already: boolean; restart: boole
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ 'unlocks/has': { unlock } }` | `hasUnlock(id)` | The unlock is recorded in this save. |
+| `{ 'unlocks/has': { unlock } }` | `unlocks.has(id)` | The unlock is recorded in this save. |
 
 Use it anywhere a condition goes: a [cheat's](/docs/plugins/cheats#supporter-cheats) `blocked`, a choice's `when`, a storylet's `when`.
 
 ```ts
-import { hasUnlock } from '@ifloom/plugin-unlocks'
+import { unlocks } from '@ifloom/plugin-unlocks'
 
-const choice = { id: 'back-room', when: hasUnlock('supporter'), effects: [{ scene: 'cafe.back-room' }] }
+const choice = { id: 'back-room', when: unlocks.has('supporter'), effects: [{ scene: 'cafe.back-room' }] }
 ```
 
 It reads the save, not the profile. Conditions must give the same answer when a save is [replayed](/docs/reference/runner#replay), and the profile is outside the save. So the save keeps its own record, which `startUnlocks` keeps in step with the profile.
@@ -343,7 +338,7 @@ It reads the save, not the profile. Conditions must give the same answer when a 
 
 | Content writes | Helper | Does |
 |---|---|---|
-| `{ 'unlocks/record': { id } }` | `recordUnlock(id)` | Records the unlock in this save. |
+| `{ 'unlocks/record': { id } }` | `unlocks.record(id)` | Records the unlock in this save. |
 
 `startUnlocks` sends it once a code has worked. It ignores locks, so it works during an intro that locks everything else, and it's in the command log, so a replay plays it. It's refused with `There's no such unlock.` for an id the game doesn't have, and `That's unlocked already.` for one already recorded.
 

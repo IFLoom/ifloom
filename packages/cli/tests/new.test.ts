@@ -219,13 +219,14 @@ describe('ifloom new', () => {
     const source = readFileSync(join(dir, 'src/index.ts'), 'utf8')
     for (const name of [
       "const ID = 'rainy-day'",
-      'export function rainyDay(): DefinedPlugin<RainyDayState, RainyDayView>',
+      'function rainyDayPlugin(): DefinedPlugin<RainyDayState, RainyDayView>',
+      'export const rainyDay = Object.assign(rainyDayPlugin, { marked, mark, markCommand })',
       'definePlugin<RainyDayState, RainyDayView>',
       'conditions: {',
       'effects: {',
       'commands: {',
       'view: (',
-      'export const markRainyDayCommand',
+      'const markCommand = (entry: string): CommandRef',
     ]) {
       expect(source).toContain(name)
     }

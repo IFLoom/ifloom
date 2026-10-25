@@ -54,7 +54,7 @@ const crossword: DataScene = {
 const chat = { id: 'chat', blocked: [{ when: { since: 'cafe.counter#chat', last: true, lt: 2 }, reason: 'You only just talked.' }], effects: [] }
 ```
 
-A message that comes again works the same way, with the messages plugin's own record of when it last arrived: `{ not: messageSince('ava.chat.rain', { lt: 3 }) }`. See [Messages that come again](/docs/plugins/messages#messages-that-come-again).
+A message that comes again works the same way, with the messages plugin's own record of when it last arrived: `{ not: messages.since('ava.chat.rain', { lt: 3 }) }`. See [Messages that come again](/docs/plugins/messages#messages-that-come-again).
 
 ## Deferred pay
 
@@ -62,7 +62,7 @@ A job pays its wage at the end of each shift. To pay wages once a week, pay the 
 
 ```ts
 import { holds, type GameRules, type StatDef } from '@ifloom/engine'
-import { weekday } from '@ifloom/plugin-calendar'
+import { calendar } from '@ifloom/plugin-calendar'
 import type { JobDef } from '@ifloom/plugin-jobs'
 
 const stats: StatDef[] = [{ id: 'owed', label: 'Wages owed', max: 9999, listed: false }]
@@ -79,7 +79,7 @@ const rules: GameRules = {
   // On Friday, pay out what's owed. Weekday 4 is Friday when the week starts on a Monday.
   onTurnDone: (state, { apply, game }) => {
     const owed = state.stats.owed ?? 0
-    if (owed <= 0 || !holds(state, game, weekday(4))) return state
+    if (owed <= 0 || !holds(state, game, calendar.weekday(4))) return state
     return apply([
       { stat: 'coins', by: owed },
       { stat: 'owed', to: 0 },
@@ -209,7 +209,7 @@ const people = computed(() => whoIsWhere(runner, view.value))
 </ul>
 ```
 
-Only people the player has met are listed, so the labels don't give away a stranger. To list everyone, read [`peopleOf(runner.game, runner.state)`](/docs/plugins/cast#helpers) instead of `people`, and each one's name with [`entityName`](/docs/reference/entities#entityname). For a line in the room's prose instead of a label, use the cast's `isAt` condition in a block (see [Who's where](/docs/plugins/places#whos-where)). In the React UI you can also put this in place of the built-in exits, as `Exits` in [`components`](/docs/react/components#components).
+Only people the player has met are listed, so the labels don't give away a stranger. To list everyone, read [`peopleOf(runner.state, runner.game)`](/docs/plugins/cast#helpers) instead of `people`, and each one's name with [`entityName`](/docs/reference/entities#entityname). For a line in the room's prose instead of a label, use the cast's `cast.at` condition in a block (see [Who's where](/docs/plugins/places#whos-where)). In the React UI you can also put this in place of the built-in exits, as `Exits` in [`components`](/docs/react/components#components).
 
 ## Shared header lines across places
 
@@ -217,7 +217,7 @@ A line that belongs on every place, such as the weather or a warning that rent i
 
 ```ts
 import type { Block } from '@ifloom/engine'
-import { location } from '@ifloom/plugin-places'
+import { places } from '@ifloom/plugin-places'
 
 const header: Block[] = [
   { prose: 'header.rent-due', when: { kv: 'rentDue' } },
@@ -226,8 +226,8 @@ const header: Block[] = [
 
 // In the content's entities.
 const locations = [
-  location({ id: 'high-street', name: 'High Street', desc: 'Small Town', exits: ['cafe'], body: [...header, { prose: 'place.high-street' }] }),
-  location({ id: 'cafe', name: 'The Café', desc: 'Small Town', exits: ['high-street'], body: [...header, { prose: 'place.cafe' }] }),
+  places.location({ id: 'high-street', name: 'High Street', desc: 'Small Town', exits: ['cafe'], body: [...header, { prose: 'place.high-street' }] }),
+  places.location({ id: 'cafe', name: 'The Café', desc: 'Small Town', exits: ['high-street'], body: [...header, { prose: 'place.cafe' }] }),
 ]
 ```
 
@@ -331,14 +331,14 @@ To put your own reason where you want it:
 
 ```ts
 import type { ActionDef } from '@ifloom/engine'
-import { period } from '@ifloom/plugin-calendar'
+import { calendar } from '@ifloom/plugin-calendar'
 
 const coffee: ActionDef = {
   id: 'coffee',
   label: 'Buy a coffee',
   // Shut beats tired, and tired beats the price.
   blocked: [
-    { when: period('night'), reason: 'The café is shut.' },
+    { when: calendar.period('night'), reason: 'The café is shut.' },
     { when: { stat: 'energy', lt: 5 }, reason: 'You are too tired to queue.' },
   ],
   cost: { stats: { coins: 3 } },

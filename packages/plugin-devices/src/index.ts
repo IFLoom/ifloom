@@ -177,7 +177,7 @@ export function appsOf(game: Game): AppDef[] {
  * apps on them in a pack's `data.devices.devices` and `data.devices.apps`, so
  * a mod can add an app or a device.
  */
-export function devices(): DefinedPlugin<DevicesState, DevicesView> {
+function devicesPlugin(): DefinedPlugin<DevicesState, DevicesView> {
   const apps = appsOf
   const known = (game: Game, id: string) => devicesOf(game).some((device) => device.id === id)
 
@@ -367,8 +367,14 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
 }
 
 /** A command: open this app. */
-export const openApp = (app: string): CommandRef => ({ [`${ID}/open`]: { id: app } })
+const openApp = (app: string): CommandRef => ({ [`${ID}/open`]: { id: app } })
 /** A command: back to this device's home screen. */
-export const closeApp = (device: string): CommandRef => ({ [`${ID}/close`]: { id: device } })
+const closeApp = (device: string): CommandRef => ({ [`${ID}/close`]: { id: device } })
 /** A condition: this app is open. */
-export const appOpen = (app: string): Condition => ({ [`${ID}/open`]: { app } })
+const appOpen = (app: string): Condition => ({ [`${ID}/open`]: { app } })
+
+/**
+ * The plugin, with its helpers on it: `devices()` makes the plugin for the
+ * game's `plugins`, and content is written with `devices.open('camera')`.
+ */
+export const devices = Object.assign(devicesPlugin, { open: openApp, close: closeApp, appOpen })

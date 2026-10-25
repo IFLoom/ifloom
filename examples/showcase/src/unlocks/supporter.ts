@@ -7,7 +7,7 @@
  * It must be data, as a mod is: no functions.
  */
 import { SCHEMA, type Pack } from '@ifloom/engine'
-import { hasUnlock } from '@ifloom/plugin-unlocks'
+import { unlocks } from '@ifloom/plugin-unlocks'
 
 const supporter: Pack = {
   id: 'supporter',
@@ -20,7 +20,7 @@ const supporter: Pack = {
       speaker: 'ava',
       drawnFrom: ['cafe'],
       weight: 5,
-      when: { all: [hasUnlock('supporter'), { not: { seen: 'cafe.back-room' } }] },
+      when: { all: [unlocks.has('supporter'), { not: { seen: 'cafe.back-room' } }] },
       body: [
         {
           text: 'Ava lifts the counter flap and waves you through to the back room, where the regulars who chip in for the new espresso machine get their names chalked on the beam above the sink. Yours is there now, in her careful capitals.',

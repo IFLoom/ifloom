@@ -124,7 +124,7 @@ function periodsIn(args: Record<string, unknown>): number {
 }
 
 /** Build a calendar. List it before other plugins, so theirs see the new day when a turn ends. */
-export function calendar(options: CalendarOptions = {}): DefinedPlugin<CalendarState, CalendarView> {
+function calendarPlugin(options: CalendarOptions = {}): DefinedPlugin<CalendarState, CalendarView> {
   const periods = (options.periods ?? DEFAULT_PERIODS).map((entry) => (typeof entry === 'string' ? { id: entry } : entry))
   const ids = periods.map((entry) => entry.id)
   const P = ids.length
@@ -295,14 +295,20 @@ function list(value: unknown): unknown[] {
 }
 
 /** The command that goes to bed. */
-export const sleep = (): CommandRef => ({ [`${ID}/sleep`]: true })
+const sleep = (): CommandRef => ({ [`${ID}/sleep`]: true })
 /** Time going by: `n` periods. */
-export const pass = (n = 1): EffectRef => ({ [`${ID}/pass`]: { by: n } })
+const pass = (n = 1): EffectRef => ({ [`${ID}/pass`]: { by: n } })
 /** True in any of these periods. */
-export const period = (...ids: string[]): Condition => ({ [`${ID}/period`]: { period: ids } })
+const period = (...ids: string[]): Condition => ({ [`${ID}/period`]: { period: ids } })
 /** True on any of these days of the week, from 0. */
-export const weekday = (...days: number[]): Condition => ({ [`${ID}/weekday`]: { day: days } })
+const weekday = (...days: number[]): Condition => ({ [`${ID}/weekday`]: { day: days } })
 /** True at the weekend. */
-export const weekend = (): Condition => ({ [`${ID}/weekend`]: true })
-/** The day, from 0, in a range: `day({ gte: 6 })`. */
-export const day = (range: Range): Condition => ({ [`${ID}/day`]: range })
+const weekend = (): Condition => ({ [`${ID}/weekend`]: true })
+/** The day, from 0, in a range: `calendar.day({ gte: 6 })`. */
+const day = (range: Range): Condition => ({ [`${ID}/day`]: range })
+
+/**
+ * The plugin, with its helpers on it: `calendar()` makes the plugin for the
+ * game's `plugins`, and content is written with `calendar.sleep()` and `calendar.day({ gte: 3 })`.
+ */
+export const calendar = Object.assign(calendarPlugin, { sleep, pass, period, weekday, weekend, day })

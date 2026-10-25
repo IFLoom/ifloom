@@ -15,7 +15,7 @@ import {
   type GameState,
   type Content,
 } from '@ifloom/engine'
-import { drawEntity, generate, generators, templatesOf, type PoolDef, type TemplateDef } from '../src/index.ts'
+import { drawEntity, generators, templatesOf, type PoolDef, type TemplateDef } from '../src/index.ts'
 
 const pools: PoolDef[] = [
   { id: 'first', values: ['Ana', 'Ben', 'Cleo', 'Dev', 'Esme', 'Finn'] },
@@ -47,8 +47,8 @@ function game(): Game {
       { id: 'patience', label: 'Patience', of: 'visitor' },
     ],
     actions: [
-      { id: 'crowd', effects: [generate('visitor', 3)] },
-      { id: 'one', effects: [generate('visitor')] },
+      { id: 'crowd', effects: [generators.generate('visitor', 3)] },
+      { id: 'one', effects: [generators.generate('visitor')] },
       { id: 'sleep', effects: [{ turn: true }] },
     ],
     data: { generators: { pools, templates: [visitor] } },
@@ -148,7 +148,7 @@ describe('generators', () => {
             { id: 'patience', label: 'Patience', of: 'visitor' },
           ],
           entities: [{ id: 'pattern', of: 'visitor', name: 'A regular', stats: { mood: 1, patience: 4 } }],
-          actions: [{ id: 'one', effects: [generate('regular')] }],
+          actions: [{ id: 'one', effects: [generators.generate('regular')] }],
           data: { generators: { pools, templates: [regular] } },
         },
       ],
@@ -178,8 +178,8 @@ describe('generators', () => {
           name: 'mod',
           kinds: [{ id: 'stall', label: 'Stall' }],
           actions: [
-            { id: 'x', effects: [generate('nope')] },
-            { id: 'y', effects: [generate('ghost', 0)] },
+            { id: 'x', effects: [generators.generate('nope')] },
+            { id: 'y', effects: [generators.generate('ghost', 0)] },
           ],
           data: {
             generators: {

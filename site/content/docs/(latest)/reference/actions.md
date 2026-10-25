@@ -87,12 +87,12 @@ A plugin's action is named with the plugin's id in front, `{ type: 'action', id:
 The engine adds no button of its own. To let the player wait in any room, add a `wait` action to your content, as the showcase does:
 
 ```ts
-import { pass } from '@ifloom/plugin-calendar'
+import { calendar } from '@ifloom/plugin-calendar'
 
-actions: [{ id: 'wait', label: 'Wait a while', effects: [pass(1)] }]
+actions: [{ id: 'wait', label: 'Wait a while', effects: [calendar.pass(1)] }]
 ```
 
-The engine keeps no time of day. An action that takes time says so in its `effects`, with the [calendar plugin](/docs/plugins/calendar)'s [`pass`](/docs/plugins/calendar#effects), as in `effects: [pass(2), ...]`.
+The engine keeps no time of day. An action that takes time says so in its `effects`, with the [calendar plugin](/docs/plugins/calendar)'s [`pass`](/docs/plugins/calendar#effects), as in `effects: [calendar.pass(2), ...]`.
 
 **Gotchas.**
 - One of the game's own effects sees the state before the cost was paid.
@@ -138,10 +138,10 @@ Why something the player could do is refused for now. Everything that can be ref
 The reducer refuses an action on its `blocked` list and the view greys the button out with it, so the two can't disagree.
 
 ```ts
-import { weekday } from '@ifloom/plugin-calendar'
+import { calendar } from '@ifloom/plugin-calendar'
 
 blocked: [
-  { when: weekday(6), reason: 'The café is shut on Sundays.' },
+  { when: calendar.weekday(6), reason: 'The café is shut on Sundays.' },
   { when: { kv: 'barred' }, reason: 'Rosa won’t serve you.', hide: true },
 ]
 ```
@@ -188,7 +188,7 @@ Because `blocked` comes before `cost`, a player short of energy is told `Too lat
 
 ```ts
 import type { ActionDef } from '@ifloom/engine'
-import { pass, period } from '@ifloom/plugin-calendar'
+import { calendar } from '@ifloom/plugin-calendar'
 
 const jog: ActionDef = {
   id: 'jog',
@@ -196,10 +196,10 @@ const jog: ActionDef = {
   cost: { stats: { energy: 10 } },
   blocked: [
     { when: { stat: 'energy', lt: 10 }, reason: 'Too tired.' },
-    { when: period('night'), reason: 'Too late for that.' },
+    { when: calendar.period('night'), reason: 'Too late for that.' },
   ],
   once: { per: 'turn', reason: 'Once a day is plenty.' },
-  effects: [pass(1)],
+  effects: [calendar.pass(1)],
 }
 ```
 
@@ -221,7 +221,7 @@ While no scene is open, the view shows the plugins' buttons first and then the g
 
 ```ts
 import type { ActionDef } from '@ifloom/engine'
-import { period } from '@ifloom/plugin-calendar'
+import { calendar } from '@ifloom/plugin-calendar'
 
 const actions: ActionDef[] = [
   {
@@ -229,7 +229,7 @@ const actions: ActionDef[] = [
     label: 'Chat with Ava',
     command: { type: 'scene', id: 'ava.hi' },
     when: { seen: 'intro' },
-    blocked: [{ when: period('afternoon'), reason: 'The afternoon queue is out the door.' }],
+    blocked: [{ when: calendar.period('afternoon'), reason: 'The afternoon queue is out the door.' }],
   },
 ]
 ```
@@ -240,14 +240,14 @@ The engine offers no travel shortcuts of its own. With the [places plugin](/docs
 
 ```ts
 import type { Content } from '@ifloom/engine'
-import { at, go } from '@ifloom/plugin-places'
+import { places } from '@ifloom/plugin-places'
 
 export const town: Content = {
-  actions: [{ id: 'home', label: 'Go home', command: go('flat'), when: { not: at('flat') } }],
+  actions: [{ id: 'home', label: 'Go home', command: places.go('flat'), when: { not: places.at('flat') } }],
 }
 ```
 
-`places/go` only goes to an exit of where the player stands, so further away the button is greyed out with `You cannot get there from here.` For a button that works from anywhere, give the action effects that hold the plugin's [`moveTo('flat')`](/docs/plugins/places#effects) instead. That doesn't run the place's [`arrive`](/docs/plugins/places#arrival).
+`places/go` only goes to an exit of where the player stands, so further away the button is greyed out with `You cannot get there from here.` For a button that works from anywhere, give the action effects that hold the plugin's [`places.move('flat')`](/docs/plugins/places#effects) instead. That doesn't run the place's [`arrive`](/docs/plugins/places#arrival).
 
 ### How a button and the reducer agree
 
@@ -275,12 +275,12 @@ A plugin command that sets [`ignoresLocks`](/docs/reference/plugins#commands-out
 
 ```ts
 import { whyNot } from '@ifloom/engine'
-import { go } from '@ifloom/plugin-places'
-import { talk } from '@ifloom/plugin-cast'
+import { places } from '@ifloom/plugin-places'
+import { cast } from '@ifloom/plugin-cast'
 
-whyNot(state, game, go('cafe'))
+whyNot(state, game, places.go('cafe'))
 // a `blocked` reason on the café, such as 'Closed. Opens tomorrow morning.', while it holds
-whyNot(state, game, talk('ava'))
+whyNot(state, game, cast.talk('ava'))
 // 'Finish this first.' while a scene is open, or 'Ava is not here.' when she's elsewhere
 ```
 
@@ -325,7 +325,7 @@ An unknown action or choice gives none.
 ```ts
 import { effectsOf } from '@ifloom/engine'
 
-// the showcase's office action { id: 'work', label: 'Do a shift', cost: { stats: { energy: 30 } }, effects: [pass(2), { stat: 'coins', by: 20 }] }
+// the showcase's office action { id: 'work', label: 'Do a shift', cost: { stats: { energy: 30 } }, effects: [calendar.pass(2), { stat: 'coins', by: 20 }] }
 effectsOf(state, game, { type: 'action', id: 'places/work' })
 // [{ stat: 'energy', by: -30 },
 //  { 'calendar/pass': { by: 2 } },

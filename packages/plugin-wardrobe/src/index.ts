@@ -143,9 +143,9 @@ function dressed(slice: WardrobeState, holder: string, slots: Record<string, Ent
 /**
  * The plugin. Add it to the game's `plugins`, put the slots in the content's
  * `data.wardrobe.slots`, and give each thing that can be worn the
- * `wardrobe/wearable` trait (`wearable('coat')`), so a mod can add either.
+ * `wardrobe/wearable` trait (`wardrobe.wearable('coat')`), so a mod can add either.
  */
-export function wardrobe(): DefinedPlugin<WardrobeState, WardrobeView> {
+function wardrobePlugin(): DefinedPlugin<WardrobeState, WardrobeView> {
   return definePlugin<WardrobeState, WardrobeView>({
     id: ID,
     version: 3,
@@ -283,13 +283,19 @@ export function wardrobe(): DefinedPlugin<WardrobeState, WardrobeView> {
  * The `wardrobe/wearable` trait, to spread into an entity's or a kind's
  * `traits`: `traits: { ...wearable('coat') }`.
  */
-export const wearable = (slot: string): { 'wardrobe/wearable': Wearable } => ({ [WEARABLE]: { slot } })
+const wearable = (slot: string): { 'wardrobe/wearable': Wearable } => ({ [WEARABLE]: { slot } })
 
 /** A condition: the thing is on whoever the player is playing, or, with a slot, on in that slot. */
-export const wearing = (entity: EntityRef, slot?: string): Condition => ({ [`${ID}/wearing`]: slot === undefined ? { entity } : { entity, slot } })
+const wearing = (entity: EntityRef, slot?: string): Condition => ({ [`${ID}/wearing`]: slot === undefined ? { entity } : { entity, slot } })
 /** A condition: something is in this slot. */
-export const slotFilled = (slot: string): Condition => ({ [`${ID}/wearing`]: { slot } })
+const slotFilled = (slot: string): Condition => ({ [`${ID}/wearing`]: { slot } })
 /** A command: put this on. */
-export const wear = (entity: EntityRef): CommandRef => ({ [`${ID}/wear`]: { id: entity } })
+const wear = (entity: EntityRef): CommandRef => ({ [`${ID}/wear`]: { id: entity } })
 /** A command: take off whatever is in this slot. */
-export const takeOff = (slot: string): CommandRef => ({ [`${ID}/takeOff`]: { id: slot } })
+const takeOff = (slot: string): CommandRef => ({ [`${ID}/takeOff`]: { id: slot } })
+
+/**
+ * The plugin, with its helpers on it: `wardrobe()` makes the plugin for the
+ * game's `plugins`, and content is written with `wardrobe.wearable('coat')` and `wardrobe.wear('clothing:scarf')`.
+ */
+export const wardrobe = Object.assign(wardrobePlugin, { wearable, wearing, slotFilled, wear, takeOff })

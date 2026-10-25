@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { apply, holds, loadGame, loadState, startingState, upgradePack, view, type Game, type GameState, type Content, type GameRules } from '@ifloom/engine'
-import { feed, hasPosted, postTo, react, seeFeed, type FeedsView } from '../src/index.ts'
-import { calendar, pass, period, day } from '@ifloom/plugin-calendar'
+import { feed, type FeedsView } from '../src/index.ts'
+import { calendar } from '@ifloom/plugin-calendar'
 
 const clock = calendar()
 
@@ -21,9 +21,9 @@ function game(): Game {
     name: 'town',
     stats: [{ id: 'fans', label: 'Fans' }],
     actions: [
-      { id: 'wait', effects: [pass(1)] },
-      { id: 'postSunset', effects: [postTo('social', 'sunset', { text: 'Sunset from the roof.', image: 'art/sunset.jpg' }), { 'game/roll': true }] },
-      { id: 'cheer', effects: [react('ava.cake', { likes: 2, from: 'Sam', text: 'Save me a slice' })] },
+      { id: 'wait', effects: [calendar.pass(1)] },
+      { id: 'postSunset', effects: [feed.post('social', 'sunset', { text: 'Sunset from the roof.', image: 'art/sunset.jpg' }), { 'game/roll': true }] },
+      { id: 'cheer', effects: [feed.react('ava.cake', { likes: 2, from: 'Sam', text: 'Save me a slice' })] },
     ],
     prose: {
       'post.cake': 'Baked a cake!',
@@ -32,14 +32,14 @@ function game(): Game {
     data: {
       feed: {
         posts: [
-          { id: 'ava.cake', feed: 'social', from: 'Ava', when: day({ gte: 1 }), body: [{ prose: 'post.cake' }], likes: 3 },
-          { id: 'fete', feed: 'board', from: 'Parish council', when: period('afternoon'), body: [{ prose: 'post.fete' }] },
+          { id: 'ava.cake', feed: 'social', from: 'Ava', when: calendar.day({ gte: 1 }), body: [{ prose: 'post.cake' }], likes: 3 },
+          { id: 'fete', feed: 'board', from: 'Parish council', when: calendar.period('afternoon'), body: [{ prose: 'post.fete' }] },
         ],
       },
     },
   }
   // The game's own roll for how a post does; here, always the same.
-  const rules: GameRules = { effects: { roll: () => [react('sunset', { likes: 12, from: 'Ava', text: 'Wow' })] } }
+  const rules: GameRules = { effects: { roll: () => [feed.react('sunset', { likes: 12, from: 'Ava', text: 'Wow' })] } }
   const loaded = loadGame([{ name: 'base', data: feeds }, pack], { id: 'feeds', title: 'Feeds', plugins: [clock, plugin], rules })
   expect(loaded.problems).toEqual([])
   return loaded.game
@@ -56,7 +56,7 @@ describe('feeds', () => {
       ['social', ['Baked a cake!'], 1],
       ['board', ['Village fete on Saturday.'], 1],
     ])
-    state = apply(state, g, seeFeed('social')).state
+    state = apply(state, g, feed.seen('social')).state
     expect(shown(state, g).unread).toBe(1)
   })
 
@@ -74,7 +74,7 @@ describe('feeds', () => {
       likes: 12,
       comments: [{ from: 'Ava', name: 'Ava', text: 'Wow' }],
     })
-    expect(holds(state, g, hasPosted())).toBe(true)
+    expect(holds(state, g, feed.posted())).toBe(true)
     expect(holds(state, g, { 'feed/likes': { post: 'sunset', gte: 10 } })).toBe(true)
   })
 
@@ -92,12 +92,12 @@ describe('words written as prose keys', () => {
       id: 'mod:posts',
       schema: 24,
       prose: { 'own.pier': 'The pier at dusk.' },
-      actions: [{ id: 'snap', effects: [postTo('social', 'pier', { text: 'own.pier' }), react('pier', { from: 'Ava', text: 'Lovely' })] }],
+      actions: [{ id: 'snap', effects: [feed.post('social', 'pier', { text: 'own.pier' }), feed.react('pier', { from: 'Ava', text: 'Lovely' })] }],
     }
     const upgraded = upgradePack(old, [feed()])
     expect(upgraded.ok && upgraded.value.actions?.[0].effects).toEqual([
-      postTo('social', 'pier', { text: 'The pier at dusk.' }),
-      react('pier', { from: 'Ava', text: 'Lovely' }),
+      feed.post('social', 'pier', { text: 'The pier at dusk.' }),
+      feed.react('pier', { from: 'Ava', text: 'Lovely' }),
     ])
 
     const g = game()
@@ -121,8 +121,8 @@ describe('video on a post', () => {
     const pack: Content = {
       name: 'town',
       actions: [
-        { id: 'wait', effects: [pass(1)] },
-        { id: 'film', effects: [postTo('social', 'pond', { text: 'Ducks.', video: 'clips/pond.mp4' })] },
+        { id: 'wait', effects: [calendar.pass(1)] },
+        { id: 'film', effects: [feed.post('social', 'pond', { text: 'Ducks.', video: 'clips/pond.mp4' })] },
       ],
       prose: { 'post.fete': 'Bunting going up.\n\n[[widevideo:fete|once]]' },
       data: {
@@ -132,7 +132,7 @@ describe('video on a post', () => {
               id: 'fete',
               feed: 'board',
               from: 'Parish council',
-              when: day({ gte: 1 }),
+              when: calendar.day({ gte: 1 }),
               body: [{ prose: 'post.fete' }],
               image: 'art/fete.jpg',
               video: 'art/fete.webm',

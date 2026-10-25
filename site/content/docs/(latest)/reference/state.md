@@ -73,7 +73,7 @@ Everything the engine dates is dated in turns: [`seen`](#seen) and [`chosen`](#c
 
 **There's no time of day in the state.** A game with days and periods keeps them in the [calendar plugin](/docs/plugins/calendar#calendarstate)'s state, at `state.plugins.calendar`.
 
-**There's no place in the state either.** The [places plugin](/docs/plugins/places#placesstate) keeps where the player is, at `state.plugins.places` (`{ at: 'cafe' }`). Read it with the plugin's [`where(state)`](/docs/plugins/places#helpers). In a game without that plugin, the player isn't anywhere.
+**There's no place in the state either.** The [places plugin](/docs/plugins/places#placesstate) keeps where the player is, at `state.plugins.places` (`{ at: 'cafe' }`). Read it with the plugin's [`places.where(state)`](/docs/plugins/places#helpers). In a game without that plugin, the player isn't anywhere.
 
 ### sceneId
 

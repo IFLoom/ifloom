@@ -176,7 +176,7 @@ function JobsPanel({ data }: { data: unknown }) {
 
 /**
  * The jobs plugin's React UI, for `plugins` on `mountGame` or
- * `GameProvider`: the `jobs` panel, which `openJobs()` opens, drawn as the
+ * `GameProvider`: the `jobs` panel, which `jobs.open()` opens, drawn as the
  * `JobBoard` (only the jobs it was opened with, if any), and the jobs' words.
  * It puts nothing in the layout by itself: content opens the board.
  */

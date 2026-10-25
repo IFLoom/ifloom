@@ -50,8 +50,8 @@ declare module '@ifloom/engine' {
   }
 }
 
-/** The game's entries: `data.__id__.entries`, from its content and packs. */
-export function __camel__Entries(game: Game): __Pascal__Entry[] {
+/** The game's entries: `data.__id__.entries`, from its content and packs. A list is read with `<list>Of(game)`, one by id with `<one>Of(game, id)`. */
+export function entriesOf(game: Game): __Pascal__Entry[] {
   return (game.data?.[ID]?.entries ?? []) as __Pascal__Entry[]
 }
 
@@ -65,9 +65,10 @@ function entryId(args: Record<string, unknown>): string {
  * `data.__id__.entries`. Anything a mod could add or change is content in
  * `data`, never an option. Hooks are flat members named `onX` (`onTurn`,
  * `onCommand`) and return the next state; providers are nouns (`view`,
- * `label`) and change nothing.
+ * `label`) and change nothing. The helpers content is written with go on the
+ * factory, below.
  */
-export function __camel__(): DefinedPlugin<__Pascal__State, __Pascal__View> {
+function __camel__Plugin(): DefinedPlugin<__Pascal__State, __Pascal__View> {
   return definePlugin<__Pascal__State, __Pascal__View>({
     id: ID,
     version: 1,
@@ -85,20 +86,19 @@ export function __camel__(): DefinedPlugin<__Pascal__State, __Pascal__View> {
       /** `{ '__id__/mark': { entry } }`: mark the entry now. */
       mark: (state, args, { slice, set, game }) => {
         const id = entryId(args)
-        if (slice.marked[id] !== undefined || !__camel__Entries(game).some((entry) => entry.id === id)) return state
+        if (slice.marked[id] !== undefined || !entriesOf(game).some((entry) => entry.id === id)) return state
         return set({ ...slice, marked: { ...slice.marked, [id]: state.turn } })
       },
     },
     commands: {
       /** `{ '__id__/mark': { id } }`: mark the entry `id`. */
       mark: {
-        whyNot: (_state, args, { game }) =>
-          __camel__Entries(game).some((entry) => entry.id === entryId(args)) ? undefined : stringOf(game, '__id__/noSuchEntry'),
+        whyNot: (_state, args, { game }) => (entriesOf(game).some((entry) => entry.id === entryId(args)) ? undefined : stringOf(game, '__id__/noSuchEntry')),
         run: (state, args, { slice, set }) => set({ ...slice, marked: { ...slice.marked, [entryId(args)]: state.turn } }),
       },
     },
     view: (_state, { slice, game }): __Pascal__View => ({
-      entries: __camel__Entries(game).map((entry) => ({ id: entry.id, label: entry.label, marked: slice.marked[entry.id] !== undefined })),
+      entries: entriesOf(game).map((entry) => ({ id: entry.id, label: entry.label, marked: slice.marked[entry.id] !== undefined })),
     }),
     references: {
       // The entry a condition, effect or command names, for the content checker.
@@ -107,7 +107,7 @@ export function __camel__(): DefinedPlugin<__Pascal__State, __Pascal__View> {
     check: (game) => {
       const problems: PluginProblem[] = []
       const seen = new Set<string>()
-      for (const entry of __camel__Entries(game)) {
+      for (const entry of entriesOf(game)) {
         if (seen.has(entry.id)) problems.push({ list: 'entries', id: entry.id, what: 'two entries share this id' })
         seen.add(entry.id)
       }
@@ -117,8 +117,15 @@ export function __camel__(): DefinedPlugin<__Pascal__State, __Pascal__View> {
 }
 
 /** A condition: the entry has been marked. */
-export const __camel__Marked = (entry: string): Condition => ({ [`${ID}/marked`]: { entry } })
+const marked = (entry: string): Condition => ({ [`${ID}/marked`]: { entry } })
 /** An effect: mark the entry. */
-export const mark__Pascal__ = (entry: string): EffectRef => ({ [`${ID}/mark`]: { entry } })
+const mark = (entry: string): EffectRef => ({ [`${ID}/mark`]: { entry } })
 /** A command: mark the entry. */
-export const mark__Pascal__Command = (entry: string): CommandRef => ({ [`${ID}/mark`]: { id: entry } })
+const markCommand = (entry: string): CommandRef => ({ [`${ID}/mark`]: { id: entry } })
+
+/**
+ * The plugin, with its helpers on it: `__camel__()` makes the plugin for the
+ * game's `plugins`, and content is written with `__camel__.mark('bread')`,
+ * so the helpers' names never clash with another plugin's.
+ */
+export const __camel__ = Object.assign(__camel__Plugin, { marked, mark, markCommand })

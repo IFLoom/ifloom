@@ -2,23 +2,23 @@ import { describe, expect, it } from 'vitest'
 import type { Command, Condition, Effect } from '../../src/index.ts'
 import { CONDITION_KEYS, EFFECT_KEYS } from '../../src/core.ts'
 import type { Plugin } from '../../src/plugin.ts'
-import { achievementEarned, achievements, grantAchievement } from '@ifloom/plugin-achievements'
-import { cheatUsed, cheats, runCheat } from '@ifloom/plugin-cheats'
-import { hasUnlock, recordUnlock, unlocks } from '@ifloom/plugin-unlocks'
-import { calendar, day, period, sleep, weekday, weekend } from '@ifloom/plugin-calendar'
-import { call, cast, hasMet, here, isAt, talk } from '@ifloom/plugin-cast'
-import { debug, debugGo, debugScene, debugHeld, debugKv, debugStat, debugTime, debugTurn } from '@ifloom/plugin-debug'
-import { appOpen, closeApp, devices, openApp } from '@ifloom/plugin-devices'
-import { applyStatus, removeStatus, statusActive, statuses } from '@ifloom/plugin-statuses'
-import { feed, hasPosted, postTo, react, seeFeed } from '@ifloom/plugin-feed'
-import { generate, generators } from '@ifloom/plugin-generators'
-import { applyFor, fire, hasJob, hire, jobs, quit, shiftsWorked, wasFired, work, workedToday } from '@ifloom/plugin-jobs'
-import { drawMessage, messageArrived, messageReplied, messageSince, messages, readThread, replyTo } from '@ifloom/plugin-messages'
-import { at, go, moveTo, pickUp, places, within } from '@ifloom/plugin-places'
-import { questActive, questDone, questReached, quests, seeQuests, startQuest, trackQuest } from '@ifloom/plugin-quests'
-import { buy, inStock, sell, shop, vendorOpen } from '@ifloom/plugin-shop'
-import { takeOff, wardrobe, wear, wearing } from '@ifloom/plugin-wardrobe'
-import { dropThing, giveThing, inventory, useThing } from '@ifloom/plugin-inventory'
+import { achievements } from '@ifloom/plugin-achievements'
+import { cheats } from '@ifloom/plugin-cheats'
+import { unlocks } from '@ifloom/plugin-unlocks'
+import { calendar } from '@ifloom/plugin-calendar'
+import { cast } from '@ifloom/plugin-cast'
+import { debug } from '@ifloom/plugin-debug'
+import { devices } from '@ifloom/plugin-devices'
+import { statuses } from '@ifloom/plugin-statuses'
+import { feed } from '@ifloom/plugin-feed'
+import { generators } from '@ifloom/plugin-generators'
+import { jobs } from '@ifloom/plugin-jobs'
+import { messages } from '@ifloom/plugin-messages'
+import { places } from '@ifloom/plugin-places'
+import { quests } from '@ifloom/plugin-quests'
+import { shop } from '@ifloom/plugin-shop'
+import { wardrobe } from '@ifloom/plugin-wardrobe'
+import { inventory } from '@ifloom/plugin-inventory'
 
 /**
  * Content naming (ADR 0008, `adr/0008-content-naming.md`): every condition,
@@ -158,84 +158,84 @@ const core = {
 type Call = { custom: string; with?: Record<string, unknown> } | { type: 'custom'; name: string; with?: Record<string, unknown> } | Record<string, unknown>
 
 const SAMPLES: Record<string, Call> = {
-  'conditions:achievements/earned': achievementEarned('regular'),
-  'effects:achievements/grant': grantAchievement('regular'),
-  'conditions:calendar/period': period('morning'),
-  'conditions:calendar/weekday': weekday(0),
-  'conditions:calendar/weekend': weekend(),
-  'conditions:calendar/day': day({ gte: 3 }),
+  'conditions:achievements/earned': achievements.earned('regular'),
+  'effects:achievements/grant': achievements.grant('regular'),
+  'conditions:calendar/period': calendar.period('morning'),
+  'conditions:calendar/weekday': calendar.weekday(0),
+  'conditions:calendar/weekend': calendar.weekend(),
+  'conditions:calendar/day': calendar.day({ gte: 3 }),
   'conditions:calendar/curfew': { 'calendar/curfew': true },
   'effects:calendar/pass': { 'calendar/pass': { by: 2 } },
   'effects:calendar/set': { 'calendar/set': { day: 3, period: 'morning' } },
-  'commands:calendar/sleep': sleep(),
-  'conditions:cast/here': here('ava'),
-  'conditions:cast/at': isAt('ava', 'cafe'),
-  'conditions:cast/met': hasMet('ava'),
-  'commands:cast/talk': talk('ava'),
-  'commands:cast/call': call('ava'),
-  'commands:debug/stat': debugStat('coins', 5),
-  'commands:debug/kv': debugKv('met', true),
-  'commands:debug/held': debugHeld('clothing:scarf', 1),
-  'commands:debug/scene': debugScene('intro'),
-  'commands:debug/time': debugTime({ day: 2, period: 'morning' }),
-  'commands:debug/turn': debugTurn(3),
-  'commands:debug/go': debugGo('park'),
-  'conditions:devices/open': appOpen('camera'),
-  'commands:devices/open': openApp('camera'),
-  'commands:devices/close': closeApp('phone'),
-  'conditions:statuses/active': statusActive('tired', { gte: 2 }),
-  'effects:statuses/apply': applyStatus('tired'),
-  'effects:statuses/remove': removeStatus('tired', true),
+  'commands:calendar/sleep': calendar.sleep(),
+  'conditions:cast/here': cast.here('ava'),
+  'conditions:cast/at': cast.at('ava', 'cafe'),
+  'conditions:cast/met': cast.met('ava'),
+  'commands:cast/talk': cast.talk('ava'),
+  'commands:cast/call': cast.call('ava'),
+  'commands:debug/stat': debug.stat('coins', 5),
+  'commands:debug/kv': debug.kv('met', true),
+  'commands:debug/held': debug.held('clothing:scarf', 1),
+  'commands:debug/scene': debug.scene('intro'),
+  'commands:debug/time': debug.time({ day: 2, period: 'morning' }),
+  'commands:debug/turn': debug.turn(3),
+  'commands:debug/go': debug.go('park'),
+  'conditions:devices/open': devices.appOpen('camera'),
+  'commands:devices/open': devices.open('camera'),
+  'commands:devices/close': devices.close('phone'),
+  'conditions:statuses/active': statuses.active('tired', { gte: 2 }),
+  'effects:statuses/apply': statuses.apply('tired'),
+  'effects:statuses/remove': statuses.remove('tired', true),
   'commands:statuses/apply': { type: 'custom', name: 'statuses/apply', with: { id: 'tired' } },
   'commands:statuses/remove': { type: 'custom', name: 'statuses/remove', with: { id: 'tired', runEnd: true } },
   'conditions:feed/appeared': { 'feed/appeared': { post: 'p1' } },
-  'conditions:feed/posted': hasPosted(2, 'fans'),
+  'conditions:feed/posted': feed.posted(2, 'fans'),
   'conditions:feed/likes': { 'feed/likes': { post: 'p1', gte: 3 } },
-  'effects:feed/post': postTo('fans', 'p1', { text: 'p1', image: 'p1.jpg', video: 'p1.mp4', likes: 2 }),
-  'effects:feed/react': react('p1', { likes: 2, from: 'ava', text: 'p1.reply' }),
-  'commands:feed/seen': seeFeed('fans'),
-  'effects:generators/generate': generate('regular', 2),
-  'conditions:jobs/hired': hasJob('barista', 'head'),
-  'conditions:jobs/fired': wasFired('barista'),
-  'conditions:jobs/shifts': shiftsWorked('barista', { gte: 3 }),
-  'conditions:jobs/worked': workedToday('barista'),
-  'effects:jobs/hire': hire('barista'),
-  'effects:jobs/fire': fire('barista'),
-  'conditions:cheats/used': cheatUsed('coins'),
-  'commands:cheats/use': runCheat('coins'),
-  'conditions:unlocks/has': hasUnlock('supporter'),
-  'commands:unlocks/record': recordUnlock('supporter'),
-  'commands:jobs/apply': applyFor('barista'),
-  'commands:jobs/work': work('barista'),
-  'commands:jobs/quit': quit('barista'),
-  'conditions:messages/arrived': messageArrived('hi'),
-  'conditions:messages/replied': messageReplied('hi', 'yes'),
-  'conditions:messages/since': messageSince('hi', { lt: 3 }),
-  'effects:messages/draw': drawMessage('smalltalk'),
+  'effects:feed/post': feed.post('fans', 'p1', { text: 'p1', image: 'p1.jpg', video: 'p1.mp4', likes: 2 }),
+  'effects:feed/react': feed.react('p1', { likes: 2, from: 'ava', text: 'p1.reply' }),
+  'commands:feed/seen': feed.seen('fans'),
+  'effects:generators/generate': generators.generate('regular', 2),
+  'conditions:jobs/hired': jobs.hired('barista', 'head'),
+  'conditions:jobs/fired': jobs.fired('barista'),
+  'conditions:jobs/shifts': jobs.shifts('barista', { gte: 3 }),
+  'conditions:jobs/worked': jobs.worked('barista'),
+  'effects:jobs/hire': jobs.hire('barista'),
+  'effects:jobs/fire': jobs.fire('barista'),
+  'conditions:cheats/used': cheats.used('coins'),
+  'commands:cheats/use': cheats.use('coins'),
+  'conditions:unlocks/has': unlocks.has('supporter'),
+  'commands:unlocks/record': unlocks.record('supporter'),
+  'commands:jobs/apply': jobs.apply('barista'),
+  'commands:jobs/work': jobs.work('barista'),
+  'commands:jobs/quit': jobs.quit('barista'),
+  'conditions:messages/arrived': messages.arrived('hi'),
+  'conditions:messages/replied': messages.replied('hi', 'yes'),
+  'conditions:messages/since': messages.since('hi', { lt: 3 }),
+  'effects:messages/draw': messages.draw('smalltalk'),
   'conditions:messages/read': { 'messages/read': { message: 'hi' } },
-  'commands:messages/reply': replyTo('hi', 'yes'),
-  'commands:messages/read': readThread('ava'),
-  'conditions:places/at': at('cafe'),
-  'conditions:places/within': within('cafe'),
-  'effects:places/move': moveTo('park'),
-  'commands:places/go': go('park'),
-  'commands:places/pickUp': pickUp('item:paper'),
-  'conditions:quests/active': questActive('settle'),
-  'conditions:quests/done': questDone('settle'),
-  'conditions:quests/reached': questReached('settle', 'unpack'),
-  'effects:quests/start': startQuest('settle'),
-  'commands:quests/track': trackQuest('settle'),
-  'commands:quests/seen': seeQuests('settle'),
-  'conditions:shop/open': vendorOpen('baker'),
-  'conditions:shop/inStock': inStock('baker', 'food:bun'),
-  'commands:shop/buy': buy('baker', 'food:bun', 2),
-  'commands:shop/sell': sell('baker', 'food:bun', 2),
-  'conditions:wardrobe/wearing': wearing('clothing:scarf', 'neck'),
-  'commands:wardrobe/wear': wear('clothing:scarf'),
-  'commands:inventory/use': useThing('food:apple'),
-  'commands:inventory/drop': dropThing('food:apple'),
-  'commands:inventory/give': giveThing('food:apple', 'character:ava'),
-  'commands:wardrobe/takeOff': takeOff('neck'),
+  'commands:messages/reply': messages.reply('hi', 'yes'),
+  'commands:messages/read': messages.read('ava'),
+  'conditions:places/at': places.at('cafe'),
+  'conditions:places/within': places.within('cafe'),
+  'effects:places/move': places.move('park'),
+  'commands:places/go': places.go('park'),
+  'commands:places/pickUp': places.pickUp('item:paper'),
+  'conditions:quests/active': quests.active('settle'),
+  'conditions:quests/done': quests.done('settle'),
+  'conditions:quests/reached': quests.reached('settle', 'unpack'),
+  'effects:quests/start': quests.start('settle'),
+  'commands:quests/track': quests.track('settle'),
+  'commands:quests/seen': quests.seen('settle'),
+  'conditions:shop/open': shop.vendorOpen('baker'),
+  'conditions:shop/inStock': shop.inStock('baker', 'food:bun'),
+  'commands:shop/buy': shop.buy('baker', 'food:bun', 2),
+  'commands:shop/sell': shop.sell('baker', 'food:bun', 2),
+  'conditions:wardrobe/wearing': wardrobe.wearing('clothing:scarf', 'neck'),
+  'commands:wardrobe/wear': wardrobe.wear('clothing:scarf'),
+  'commands:inventory/use': inventory.use('food:apple'),
+  'commands:inventory/drop': inventory.drop('food:apple'),
+  'commands:inventory/give': inventory.give('food:apple', 'character:ava'),
+  'commands:wardrobe/takeOff': wardrobe.takeOff('neck'),
 }
 
 /** What a plugin call's arguments may be named, by role, beyond the core's targets and details. */

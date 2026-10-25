@@ -8,12 +8,12 @@
 import { loadGame, type Content, type Game, type Pack, type Problem } from '@ifloom/engine'
 import { defineGame, probe, type Probe, type ProbeStep } from '@ifloom/cli/game'
 import { achievements } from '@ifloom/plugin-achievements'
-import { calendar, sleep } from '@ifloom/plugin-calendar'
+import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
 import { cheats } from '@ifloom/plugin-cheats'
 import { debug } from '@ifloom/plugin-debug'
-import { applyStatus, statuses } from '@ifloom/plugin-statuses'
+import { statuses } from '@ifloom/plugin-statuses'
 import { generators } from '@ifloom/plugin-generators'
 import { jobs } from '@ifloom/plugin-jobs'
 import { quests } from '@ifloom/plugin-quests'
@@ -22,11 +22,11 @@ import { wardrobe } from '@ifloom/plugin-wardrobe'
 import { inventory } from '@ifloom/plugin-inventory'
 import { unlocks } from '@ifloom/plugin-unlocks'
 import { phone } from '@ifloom/phone'
-import { openApp } from '@ifloom/plugin-devices'
+import { devices } from '@ifloom/plugin-devices'
 import { rules } from './rules.ts'
 import { stats } from './world/stats.ts'
 import { things } from './world/things.ts'
-import { cast as castContent } from './world/cast.ts'
+import { people } from './world/cast.ts'
 import { settings } from './world/settings.ts'
 import { actions } from './world/actions.ts'
 import { camera, notes } from './world/phone.ts'
@@ -51,7 +51,7 @@ export const content: Content[] = [
   strings,
   stats,
   things,
-  castContent,
+  people,
   settings,
   actions,
   achievementsContent,
@@ -117,7 +117,7 @@ export function smallTown({ withDebug = false, unlocked = [] as Pack[], mods = [
 }
 
 /** A command that opens the phone's camera, for tests and walkthroughs. */
-export const openCamera = openApp('camera')
+export const openCamera = devices.open('camera')
 
 /** A day goes by, and Ava says hello on it: her scene opened and left, as the player does. */
 const helloFromAva: ProbeStep[] = [{ turn: true }, { play: { type: 'scene', id: 'ava.hi' } }, { play: { type: 'leave' } }]
@@ -130,7 +130,7 @@ const helloFromAva: ProbeStep[] = [{ turn: true }, { play: { type: 'scene', id: 
  * people in the park.
  */
 function probes(game: Game): Probe[] {
-  const firstMorning = probe('first-morning', game, [{ play: { type: 'choose', id: 'unpack' } }, { play: sleep() }])
+  const firstMorning = probe('first-morning', game, [{ play: { type: 'choose', id: 'unpack' } }, { play: calendar.sleep() }])
   const aWeekIn = probe(
     'a-week-in',
     game,
@@ -149,7 +149,7 @@ function probes(game: Game): Probe[] {
       { stat: 'charm', to: 5 },
       { stat: 'friendship', of: 'character:ava', to: 30 },
       // Still buzzing from the morning's coffee.
-      applyStatus('caffeinated'),
+      statuses.apply('caffeinated'),
       // Two of the day's park visitors, made as the park's trigger makes them.
       { 'generators/generate': { template: 'visitor', count: 2 } },
     ],

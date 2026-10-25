@@ -7,11 +7,7 @@ description: "Using, dropping and giving away the things you hold: a usable trai
 What you hold is the engine's: things are [entities](/docs/reference/entities), and [`give`](/docs/reference/entities#give-take-move-and-holding), `take` and `move` change who [holds](/docs/reference/entities#holding-things) them. [`view.held`](/docs/reference/view#held) lists them without this plugin. Add it when holding things isn't enough and the player should use them.
 
 ```ts
-import {
-  inventory, usable, useThing, dropThing, giveThing,
-  usableOf, inventoryKindsOf, inventoryView,
-  type Usable, type InventoryData, type InventoryThing, type InventoryView,
-} from '@ifloom/plugin-inventory'
+import { inventory, usableOf, inventoryKindsOf, inventoryView, type Usable, type InventoryData, type InventoryThing, type InventoryView } from '@ifloom/plugin-inventory'
 ```
 
 ## Install
@@ -45,16 +41,16 @@ Give a thing the `inventory/usable` trait. `usable` writes it, to spread into an
 
 ```ts
 import type { Content } from '@ifloom/engine'
-import { openJobs } from '@ifloom/plugin-jobs'
-import { usable } from '@ifloom/plugin-inventory'
+import { jobs } from '@ifloom/plugin-jobs'
+import { inventory } from '@ifloom/plugin-inventory'
 
 const things: Content = {
   stats: [{ id: 'energy', label: 'Energy', start: 50, max: 100 }],
   kinds: [{ id: 'item', label: 'Thing', plural: 'Things', listed: false }],
   entities: [
-    { id: 'sandwich', of: 'item', name: 'sandwich', desc: 'Cheese and pickle.', at: 'player', traits: { ...usable('Eat the sandwich', [{ stat: 'energy', by: 25 }]) } },
+    { id: 'sandwich', of: 'item', name: 'sandwich', desc: 'Cheese and pickle.', at: 'player', traits: { ...inventory.usable('Eat the sandwich', [{ stat: 'energy', by: 25 }]) } },
     // Kept: reading the paper doesn't use it up.
-    { id: 'paper', of: 'item', name: 'newspaper', at: 'player', traits: { ...usable('Read the job ads', [openJobs(['dogs'])], { keep: true }) } },
+    { id: 'paper', of: 'item', name: 'newspaper', at: 'player', traits: { ...inventory.usable('Read the job ads', [jobs.open(['dogs'])], { keep: true }) } },
   ],
 }
 ```
@@ -62,8 +58,11 @@ const things: Content = {
 ### Usable
 
 ```ts
+const inventory: {
+  usable(label: string, effects: EffectRef[], options?: { keep?: boolean }): { 'inventory/usable': Usable }
+}
+
 type Usable = { label: string; effects: EffectRef[]; keep?: boolean }
-const usable: (label: string, effects: EffectRef[], options?: { keep?: boolean }) => { 'inventory/usable': Usable }
 ```
 
 | Field | What it is |
@@ -78,9 +77,9 @@ It's a [trait](/docs/reference/entities#traits), so you can write it on a kind a
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ 'inventory/use': { id } }` | `useThing(ref)` | Runs the thing's `inventory/usable` effects and, unless it's kept, takes one away from you. |
-| `{ 'inventory/drop': { id } }` | `dropThing(ref)` | Drops one. See [Dropping and giving](#dropping-and-giving). |
-| `{ 'inventory/give': { id, to } }` | `giveThing(ref, to)` | Moves one from you to `to`, a holder: a unique entity such as `'character:ava'`. |
+| `{ 'inventory/use': { id } }` | `inventory.use(ref)` | Runs the thing's `inventory/usable` effects and, unless it's kept, takes one away from you. |
+| `{ 'inventory/drop': { id } }` | `inventory.drop(ref)` | Drops one. See [Dropping and giving](#dropping-and-giving). |
+| `{ 'inventory/give': { id, to } }` | `inventory.give(ref, to)` | Moves one from you to `to`, a holder: a unique entity such as `'character:ava'`. |
 
 "You" is whoever the player is playing (see [Protagonists](/docs/reference/entities#protagonists-you-and-player)). Each command takes the thing from the protagonist while they hold one, and otherwise from the player, so what the player keeps across a switch is still theirs to use.
 
@@ -98,24 +97,24 @@ All three go through [locks](/docs/reference/locks) like any command, so a lock 
 
 ```ts
 import { apply, type Game, type GameState } from '@ifloom/engine'
-import { dropThing } from '@ifloom/plugin-inventory'
-import { pickUp } from '@ifloom/plugin-places'
+import { inventory } from '@ifloom/plugin-inventory'
+import { places } from '@ifloom/plugin-places'
 
 declare const game: Game
 declare const inFlat: GameState   // in the flat, holding the paper
 
-const dropped = apply(inFlat, game, dropThing('item:paper')).state
+const dropped = apply(inFlat, game, inventory.drop('item:paper')).state
 dropped.held['location:flat']   // { 'item:paper': 1 }: it lies in the flat
-apply(dropped, game, pickUp('item:paper')).state.held.player   // { 'item:paper': 1 }: back with you
+apply(dropped, game, places.pickUp('item:paper')).state.held.player   // { 'item:paper': 1 }: back with you
 ```
 
 `inventory/give` moves one to `to`. It's refused when you hold none, with `You already have it.` when `to` is you or the player, and with `You can’t give things to <name>.` when `to` can't hold things: a kind that isn't [`unique`](/docs/reference/entities#kinddef), or an entity that isn't in the game. Who you can give to in the story is yours to say, by where you put the button: a choice in Ava's scene, say.
 
 ```ts
-import { giveThing } from '@ifloom/plugin-inventory'
-import { character } from '@ifloom/plugin-cast'
+import { inventory } from '@ifloom/plugin-inventory'
+import { cast } from '@ifloom/plugin-cast'
 
-choices: [{ id: 'gift', when: holding('clothing:scarf'), command: giveThing('clothing:scarf', character('ava')) }],
+choices: [{ id: 'gift', when: holding('clothing:scarf'), command: inventory.give('clothing:scarf', cast.character('ava')) }],
 ```
 
 ## With the shop and the wardrobe
@@ -124,9 +123,9 @@ The inventory, the [shop](/docs/plugins/shop) and the [wardrobe](/docs/plugins/w
 
 ```ts
 import type { Content } from '@ifloom/engine'
-import { usable } from '@ifloom/plugin-inventory'
-import { sellable, vendor } from '@ifloom/plugin-shop'
-import { wearable } from '@ifloom/plugin-wardrobe'
+import { inventory } from '@ifloom/plugin-inventory'
+import { shop } from '@ifloom/plugin-shop'
+import { wardrobe } from '@ifloom/plugin-wardrobe'
 
 const market: Content = {
   stats: [
@@ -138,9 +137,9 @@ const market: Content = {
     { id: 'food', label: 'Food', listed: false },
   ],
   entities: [
-    { id: 'scarf', of: 'clothing', name: 'scarf', traits: { ...wearable('neck'), ...sellable({ coins: 8 }) } },
-    { id: 'pie', of: 'food', name: 'pie', traits: { ...usable('Eat the pie', [{ stat: 'energy', by: 20 }]), ...sellable({ coins: 3 }) } },
-    vendor({ id: 'stall', name: 'Stall', buysBack: 0.5, goods: [{ entity: 'clothing:scarf', stock: 1 }, { entity: 'food:pie' }] }),
+    { id: 'scarf', of: 'clothing', name: 'scarf', traits: { ...wardrobe.wearable('neck'), ...shop.sellable({ coins: 8 }) } },
+    { id: 'pie', of: 'food', name: 'pie', traits: { ...inventory.usable('Eat the pie', [{ stat: 'energy', by: 20 }]), ...shop.sellable({ coins: 3 }) } },
+    shop.vendor({ id: 'stall', name: 'Stall', buysBack: 0.5, goods: [{ entity: 'clothing:scarf', stock: 1 }, { entity: 'food:pie' }] }),
   ],
   data: {
     wardrobe: { slots: [{ id: 'neck', label: 'Neck' }] },
@@ -148,7 +147,7 @@ const market: Content = {
 }
 ```
 
-With all three, the player buys the scarf from the stall, wears it, eats a pie, and gives the scarf back to the stall with `giveThing('clothing:scarf', 'vendor:stall')`. It comes off as it goes, and the stall has it to sell again. With only the shop, the same content sells both, and nothing is worn or eaten. With only the wardrobe, the scarf can be worn once something gives it to the player. A game without a plugin leaves its `data` out, since the loader reports data for a plugin the game doesn't have.
+With all three, the player buys the scarf from the stall, wears it, eats a pie, and gives the scarf back to the stall with `inventory.give('clothing:scarf', 'vendor:stall')`. It comes off as it goes, and the stall has it to sell again. With only the shop, the same content sells both, and nothing is worn or eaten. With only the wardrobe, the scarf can be worn once something gives it to the player. A game without a plugin leaves its `data` out, since the loader reports data for a plugin the game doesn't have.
 
 ## The view
 
@@ -262,10 +261,13 @@ function Snacks() {
 ### Helpers
 
 ```ts
-const usable: (label: string, effects: EffectRef[], options?: { keep?: boolean }) => { 'inventory/usable': Usable }
-const useThing: (ref: EntityRef) => CommandRef
-const dropThing: (ref: EntityRef) => CommandRef
-const giveThing: (ref: EntityRef, to: Holder) => CommandRef
+const inventory: {
+  (): DefinedPlugin<null, InventoryView>
+  usable(label: string, effects: EffectRef[], options?: { keep?: boolean }): { 'inventory/usable': Usable }
+  use(ref: EntityRef): CommandRef
+  drop(ref: EntityRef): CommandRef
+  give(ref: EntityRef, to: Holder): CommandRef
+}
 ```
 
 ### usableOf

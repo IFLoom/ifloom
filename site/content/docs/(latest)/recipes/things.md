@@ -20,9 +20,9 @@ A scarf that lies in the park, can be worn, and is worth 8 coins at the market s
 
 ```ts
 import type { Content } from '@ifloom/engine'
-import { locationRef } from '@ifloom/plugin-places'
-import { sellable } from '@ifloom/plugin-shop'
-import { wearable } from '@ifloom/plugin-wardrobe'
+import { places } from '@ifloom/plugin-places'
+import { shop } from '@ifloom/plugin-shop'
+import { wardrobe } from '@ifloom/plugin-wardrobe'
 
 const scarf: Content = {
   kinds: [{ id: 'clothing', label: 'Clothing', unique: true, listed: false }],
@@ -32,8 +32,8 @@ const scarf: Content = {
       of: 'clothing',
       name: 'scarf',
       desc: 'Knitted, with a dropped stitch near one end.',
-      at: locationRef('park'),
-      traits: { ...wearable('neck'), ...sellable({ coins: 8 }) },
+      at: places.locationRef('park'),
+      traits: { ...wardrobe.wearable('neck'), ...shop.sellable({ coins: 8 }) },
     },
   ],
 }
@@ -49,20 +49,20 @@ The park the scarf lies in, the person who sells it and the stall are entities a
 
 ```ts
 import type { Content } from '@ifloom/engine'
-import { person } from '@ifloom/plugin-cast'
-import { location } from '@ifloom/plugin-places'
-import { vendor } from '@ifloom/plugin-shop'
+import { cast } from '@ifloom/plugin-cast'
+import { places } from '@ifloom/plugin-places'
+import { shop } from '@ifloom/plugin-shop'
 
 const market: Content = {
   entities: [
-    location({ id: 'park', name: 'Riverside Park', desc: 'Small Town', exits: ['high-street'], body: [{ prose: 'place.park' }] }),
-    person({ id: 'ava', name: 'Ava', desc: 'Runs the café', home: 'park' }),
-    vendor({ id: 'stall', name: 'The market stall', at: ['park'], buysBack: 0.5, goods: [{ entity: 'clothing:scarf', stock: 1 }] }),
+    places.location({ id: 'park', name: 'Riverside Park', desc: 'Small Town', exits: ['high-street'], body: [{ prose: 'place.park' }] }),
+    cast.person({ id: 'ava', name: 'Ava', desc: 'Runs the café', home: 'park' }),
+    shop.vendor({ id: 'stall', name: 'The market stall', at: ['park'], buysBack: 0.5, goods: [{ entity: 'clothing:scarf', stock: 1 }] }),
   ],
 }
 ```
 
-So a mod changes any of them the same way: it replaces the entity by its reference, `location:park`, or gives a [`traits`](/docs/reference/entities#traits) row to change only what the plugin reads. Any entity can carry one of these traits, so a person can keep a stall too: give `vendor()` an `of: 'character'`, and the shop's commands name it as `'character:ava'`. Each plugin brings its kind (`location`, `character`, `vendor`), so leave out the entities of a plugin the game doesn't have.
+So a mod changes any of them the same way: it replaces the entity by its reference, `location:park`, or gives a [`traits`](/docs/reference/entities#traits) row to change only what the plugin reads. Any entity can carry one of these traits, so a person can keep a stall too: give `shop.vendor()` an `of: 'character'`, and the shop's commands name it as `'character:ava'`. Each plugin brings its kind (`location`, `character`, `vendor`), so leave out the entities of a plugin the game doesn't have.
 
 ## Three setups
 

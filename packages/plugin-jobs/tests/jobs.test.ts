@@ -17,8 +17,8 @@ import {
   type CommandRef,
 } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
-import { go, location, places } from '@ifloom/plugin-places'
-import { applyFor, fire, hasJob, hire, jobs, openJobs, quit, shiftsWorked, wasFired, work, workedToday, type JobDef, type JobsView } from '../src/index.ts'
+import { places } from '@ifloom/plugin-places'
+import { jobs, type JobDef, type JobsView } from '../src/index.ts'
 
 /**
  * Weekend help at the café: friends of the owner only, Saturday mornings,
@@ -42,7 +42,7 @@ const cafe: JobDef = {
   fire: { missed: 2, when: { stat: 'manner', lt: 1 } },
 }
 
-const place = (id: string, exits: string[]) => location({ id, name: id, exits, body: [] })
+const place = (id: string, exits: string[]) => places.location({ id, name: id, exits, body: [] })
 
 function game(...partners: Plugin[]): Game {
   const town: Content = {
@@ -57,8 +57,8 @@ function game(...partners: Plugin[]): Game {
       { id: 'sleep', effects: [{ turn: true }] },
       { id: 'rest', effects: [{ stat: 'energy', to: 100 }] },
       { id: 'snap', effects: [{ stat: 'manner', to: 0 }] },
-      { id: 'hired', effects: [hire('cafe')] },
-      { id: 'sacked', effects: [fire('cafe')] },
+      { id: 'hired', effects: [jobs.hire('cafe')] },
+      { id: 'sacked', effects: [jobs.fire('cafe')] },
       // A week goes by, with the calendar's five periods a day.
       { id: 'week', effects: [{ 'calendar/pass': { by: 35 } }] },
     ],
@@ -86,7 +86,7 @@ const board = (state: GameState, g: Game) => (view(state, g).plugins.jobs as Job
 describe('jobs, on their own', () => {
   it('hire only when the requirements hold, in their own words', () => {
     const g = game()
-    expect(whyNot(fresh(g), g, applyFor('cafe'))).toBe('Ava needs to know you first.')
+    expect(whyNot(fresh(g), g, jobs.apply('cafe'))).toBe('Ava needs to know you first.')
     expect(board(fresh(g), g)).toMatchObject({
       hired: false,
       rank: null,
@@ -94,39 +94,39 @@ describe('jobs, on their own', () => {
       work: null,
       pay: { stats: [{ id: 'coins', amount: 12, text: '12 coins' }] },
     })
-    const state = run(fresh(g), g, act('meet'), applyFor('cafe'))
-    expect(holds(state, g, hasJob('cafe'))).toBe(true)
-    expect(holds(state, g, hasJob('cafe', 'help'))).toBe(true)
-    expect(whyNot(state, g, applyFor('cafe'))).toBe('You already work there.')
+    const state = run(fresh(g), g, act('meet'), jobs.apply('cafe'))
+    expect(holds(state, g, jobs.hired('cafe'))).toBe(true)
+    expect(holds(state, g, jobs.hired('cafe', 'help'))).toBe(true)
+    expect(whyNot(state, g, jobs.apply('cafe'))).toBe('You already work there.')
     expect(board(state, g)).toMatchObject({ hired: true, rank: { id: 'help', title: 'Weekend help' }, apply: null, next: { id: 'barista', shiftsToGo: 3 } })
   })
 
   it('work a shift a day: pay the cost, run the shift’s effects, pay the wage', () => {
     const g = game()
-    let state = run(fresh(g), g, act('meet'), applyFor('cafe'))
+    let state = run(fresh(g), g, act('meet'), jobs.apply('cafe'))
     expect(board(state, g).work).toMatchObject({ price: { stats: [{ id: 'energy', amount: 20 }] } })
-    state = run(state, g, work('cafe'))
+    state = run(state, g, jobs.work('cafe'))
     expect(state.stats).toMatchObject({ coins: 12, energy: 80, manner: 6 })
-    expect(whyNot(state, g, work('cafe'))).toBe('You’ve done today’s shift.')
-    expect(holds(state, g, shiftsWorked('cafe', { gte: 1 }))).toBe(true)
-    expect(holds(state, g, workedToday('cafe'))).toBe(true)
-    expect(holds(state, g, workedToday())).toBe(true)
-    expect(holds(state, g, workedToday('other'))).toBe(false)
+    expect(whyNot(state, g, jobs.work('cafe'))).toBe('You’ve done today’s shift.')
+    expect(holds(state, g, jobs.shifts('cafe', { gte: 1 }))).toBe(true)
+    expect(holds(state, g, jobs.worked('cafe'))).toBe(true)
+    expect(holds(state, g, jobs.worked())).toBe(true)
+    expect(holds(state, g, jobs.worked('other'))).toBe(false)
     // Without the calendar a day is a turn, and every day has a shift.
     state = run(state, g, act('sleep'))
-    expect(holds(state, g, workedToday())).toBe(false)
+    expect(holds(state, g, jobs.worked())).toBe(false)
     expect(board(state, g).nextShift).toEqual({ day: 1, inDays: 0 })
-    expect(whyNot({ ...state, stats: { ...state.stats, energy: 10 } }, g, work('cafe'))).toBe('Too tired.')
+    expect(whyNot({ ...state, stats: { ...state.stats, energy: 10 } }, g, jobs.work('cafe'))).toBe('Too tired.')
   })
 
   it('promote up the ladder as shifts and conditions allow, with a notice and more pay', () => {
     const g = game()
-    let state = run(fresh(g), g, act('meet'), applyFor('cafe'))
-    for (let n = 0; n < 3; n += 1) state = run(state, g, act('rest'), work('cafe'), act('sleep'))
+    let state = run(fresh(g), g, act('meet'), jobs.apply('cafe'))
+    for (let n = 0; n < 3; n += 1) state = run(state, g, act('rest'), jobs.work('cafe'), act('sleep'))
     expect(board(state, g).rank).toMatchObject({ id: 'barista', pay: { stats: [{ id: 'coins', amount: 18, text: '18 coins' }] } })
     expect(view(state, g).notices.unseen.map((notice) => notice.title)).toContain('Promoted: Barista')
     const coins = state.stats.coins
-    state = run(state, g, act('rest'), work('cafe'), act('sleep'), act('rest'), work('cafe'))
+    state = run(state, g, act('rest'), jobs.work('cafe'), act('sleep'), act('rest'), jobs.work('cafe'))
     expect(state.stats.coins).toBe(coins + 36)
     // Five shifts, but manager wants a manner of 15 too.
     expect(board(state, g).rank!.id).toBe('barista')
@@ -136,36 +136,36 @@ describe('jobs, on their own', () => {
 
   it('fire after missed shifts, or when the fire condition holds', () => {
     const g = game()
-    const hiredState = run(fresh(g), g, act('meet'), applyFor('cafe'))
+    const hiredState = run(fresh(g), g, act('meet'), jobs.apply('cafe'))
     // The day they're hired doesn't count; each day after with no shift does.
     let state = run(hiredState, g, act('sleep'), act('sleep'))
     expect(board(state, g)).toMatchObject({ hired: true, missed: 1 })
     state = run(state, g, act('sleep'))
     expect(board(state, g)).toMatchObject({ hired: false, firedOn: 3, apply: null, work: null })
-    expect(holds(state, g, wasFired('cafe'))).toBe(true)
+    expect(holds(state, g, jobs.fired('cafe'))).toBe(true)
     expect(view(state, g).notices.unseen.map((notice) => notice.title)).toContain('You’ve lost your job: Weekend help')
-    expect(whyNot(state, g, applyFor('cafe'))).toBe('They won’t have you back.')
+    expect(whyNot(state, g, jobs.apply('cafe'))).toBe('They won’t have you back.')
     const rude = run(hiredState, g, act('snap'))
-    expect(holds(rude, g, wasFired('cafe'))).toBe(true)
+    expect(holds(rude, g, jobs.fired('cafe'))).toBe(true)
   })
 
   it('hire and fire by effect, and quit by command', () => {
     const g = game()
     let state = run(fresh(g), g, act('hired'))
-    expect(holds(state, g, hasJob('cafe'))).toBe(true)
-    state = run(state, g, quit('cafe'))
-    expect(holds(state, g, hasJob('cafe'))).toBe(false)
-    expect(holds(state, g, wasFired('cafe'))).toBe(false)
+    expect(holds(state, g, jobs.hired('cafe'))).toBe(true)
+    state = run(state, g, jobs.quit('cafe'))
+    expect(holds(state, g, jobs.hired('cafe'))).toBe(false)
+    expect(holds(state, g, jobs.fired('cafe'))).toBe(false)
     state = run(state, g, act('hired'), act('sacked'))
-    expect(holds(state, g, wasFired('cafe'))).toBe(true)
+    expect(holds(state, g, jobs.fired('cafe'))).toBe(true)
     // Hired again by an effect: the story can give a second chance.
-    expect(holds(run(state, g, act('hired')), g, hasJob('cafe'))).toBe(true)
+    expect(holds(run(state, g, act('hired')), g, jobs.hired('cafe'))).toBe(true)
   })
 
   it('replay exactly, and an old save with no state for the plugin loads', () => {
     const g = game()
     const runner = createRunner(g, fresh(g))
-    for (const command of [act('meet'), applyFor('cafe'), work('cafe'), act('sleep'), act('sleep'), work('cafe')]) runner.apply(command)
+    for (const command of [act('meet'), jobs.apply('cafe'), jobs.work('cafe'), act('sleep'), act('sleep'), jobs.work('cafe')]) runner.apply(command)
     expect(replay(g, runner.log())).toEqual({ ok: true, value: runner.state })
     const { plugins: _none, ...old } = fresh(g)
     const loadedRead = loadState(JSON.parse(JSON.stringify({ ...old, plugins: {} })), g)
@@ -177,7 +177,7 @@ describe('jobs, on their own', () => {
   it('report jobs that name what the game does not have, and their own mistakes', () => {
     const loaded = loadGame(
       [
-        { name: 'base', actions: [{ id: 'y', label: 'Y', command: work('nope') }] },
+        { name: 'base', actions: [{ id: 'y', label: 'Y', command: jobs.work('nope') }] },
         {
           name: 'mod',
           data: {
@@ -219,24 +219,24 @@ describe('jobs with the calendar', () => {
     const clock = calendar({ turn: 'period', curfew: false })
     const g = game(clock)
     // Day 0 is a Monday: no shift until Saturday, day 5.
-    let state = run(fresh(g), g, act('meet'), applyFor('cafe'))
-    expect(whyNot(state, g, work('cafe'))).toBe('No shift today.')
+    let state = run(fresh(g), g, act('meet'), jobs.apply('cafe'))
+    expect(whyNot(state, g, jobs.work('cafe'))).toBe('No shift today.')
     expect(board(state, g).nextShift).toEqual({ day: 5, inDays: 5 })
     state = clock.write(state, { day: 5, period: 'afternoon' })
-    expect(whyNot(state, g, work('cafe'))).toBe('Not a time for a shift.')
+    expect(whyNot(state, g, jobs.work('cafe'))).toBe('Not a time for a shift.')
     state = clock.write(state, { day: 5, period: 'morning' })
-    state = run(state, g, work('cafe'))
+    state = run(state, g, jobs.work('cafe'))
     // The shift took the morning, and was the work's price note.
     expect(clock.read(state, g)).toEqual({ day: 5, period: 'afternoon' })
     // Done for the day says so, not that the hours are over.
-    expect(whyNot(state, g, work('cafe'))).toBe('You’ve done today’s shift.')
+    expect(whyNot(state, g, jobs.work('cafe'))).toBe('You’ve done today’s shift.')
     // Worked today for the rest of the calendar's day, as the refusal reads it.
-    expect(holds(state, g, workedToday('cafe'))).toBe(true)
+    expect(holds(state, g, jobs.worked('cafe'))).toBe(true)
     expect(board(state, g)).toMatchObject({ shifts: 1, missed: 0, nextShift: { day: 12, inDays: 7 } })
     // A whole week passes in one go: one Saturday missed, the weekdays not counted.
     state = run(state, g, act('week'))
     expect(clock.read(state, g)).toEqual({ day: 12, period: 'afternoon' })
-    expect(holds(state, g, workedToday('cafe'))).toBe(false)
+    expect(holds(state, g, jobs.worked('cafe'))).toBe(false)
     expect(board(state, g)).toMatchObject({ hired: true, missed: 0 })
     state = run(state, g, act('week'))
     expect(board(state, g)).toMatchObject({ hired: true, missed: 1 })
@@ -247,7 +247,7 @@ describe('jobs with the calendar', () => {
   it('price a shift with the calendar’s note for the time it takes', () => {
     const clock = calendar({ turn: 'period' })
     const g = game(clock)
-    const state = clock.write(run(fresh(g), g, act('meet'), applyFor('cafe')), { day: 5, period: 'morning' })
+    const state = clock.write(run(fresh(g), g, act('meet'), jobs.apply('cafe')), { day: 5, period: 'morning' })
     expect(board(state, g).work?.price?.notes?.length).toBeGreaterThan(0)
   })
 })
@@ -255,21 +255,21 @@ describe('jobs with the calendar', () => {
 describe('jobs with places', () => {
   it('are worked only at the workplace', () => {
     const g = game(places({ start: 'street' }))
-    const state = run(fresh(g), g, act('meet'), applyFor('cafe'))
-    expect(whyNot(state, g, work('cafe'))).toBe('You aren’t at work.')
-    expect(run(state, g, go('cafe'), work('cafe')).stats.coins).toBe(12)
+    const state = run(fresh(g), g, act('meet'), jobs.apply('cafe'))
+    expect(whyNot(state, g, jobs.work('cafe'))).toBe('You aren’t at work.')
+    expect(run(state, g, places.go('cafe'), jobs.work('cafe')).stats.coins).toBe(12)
   })
 })
 
 describe('the jobs panel', () => {
   it('opens the job board, or some of its jobs, and stays open as the player applies', () => {
-    expect(openJobs()).toEqual({ panel: 'jobs' })
-    expect(openJobs(['cafe'])).toEqual({ panel: 'jobs', with: { job: ['cafe'] } })
+    expect(jobs.open()).toEqual({ panel: 'jobs' })
+    expect(jobs.open(['cafe'])).toEqual({ panel: 'jobs', with: { job: ['cafe'] } })
     const base = game()
-    const g = { ...base, actions: [...(base.actions ?? []), { id: 'paper', effects: [openJobs(['cafe'])] }] }
+    const g = { ...base, actions: [...(base.actions ?? []), { id: 'paper', effects: [jobs.open(['cafe'])] }] }
     const open = run(fresh(g), g, act('meet'), { type: 'action', id: 'paper' })
     expect(view(open, g).panel).toEqual({ panel: 'jobs', with: { job: ['cafe'] } })
-    expect(run(open, g, applyFor('cafe')).panel).toEqual(open.panel)
+    expect(run(open, g, jobs.apply('cafe')).panel).toEqual(open.panel)
   })
 
   it('checks the jobs a panel lists', () => {
@@ -279,10 +279,10 @@ describe('the jobs panel', () => {
           name: 'town',
           data: { jobs: { jobs: [{ ...cafe, blocked: [], shift: {}, fire: undefined, ranks: [{ id: 'help', title: 'Help' }] }] } },
           actions: [
-            { id: 'a', effects: [openJobs(['cafe'])] },
-            { id: 'b', effects: [openJobs(['cafe', 'circus'])] },
+            { id: 'a', effects: [jobs.open(['cafe'])] },
+            { id: 'b', effects: [jobs.open(['cafe', 'circus'])] },
             { id: 'c', effects: [{ panel: 'jobs', with: { job: 'cafe' } }] },
-            { id: 'd', effects: [openJobs()] },
+            { id: 'd', effects: [jobs.open()] },
           ],
         },
       ],

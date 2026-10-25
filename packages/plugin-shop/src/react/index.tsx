@@ -166,7 +166,7 @@ function ShopPanel({ data }: { data: unknown }) {
 
 /**
  * The shop's React UI, for `plugins` on `mountGame` or `GameProvider`: the
- * `shop` panel, which `openShop(vendor)` opens, drawn as that vendor's
+ * `shop` panel, which `shop.open(vendor)` opens, drawn as that vendor's
  * `ShopCounter` and titled with its name, and the shop's words. The shop puts
  * nothing in the layout by itself: content opens a vendor.
  */

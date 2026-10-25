@@ -12,10 +12,10 @@ Add it to the game's `plugins`, and give it content in `data.__id__.entries`:
 
 ```ts
 import { loadGame, type Content } from '@ifloom/engine'
-import { __camel__, mark__Pascal__ } from '{{name}}'
+import { __camel__ } from '{{name}}'
 
 const town: Content = {
-  actions: [{ id: 'shop', label: 'Buy bread', effects: [mark__Pascal__('bread')] }],
+  actions: [{ id: 'shop', label: 'Buy bread', effects: [__camel__.mark('bread')] }],
   data: { '__id__': { entries: [{ id: 'bread', label: 'A loaf of bread' }] } },
 }
 
@@ -24,9 +24,9 @@ const { game } = loadGame([town], { id: 'my-game', title: 'My Game', plugins: [_
 
 | Name | Used as | What it does |
 |---|---|---|
-| `__id__/marked` (`__camel__Marked`) | condition | `{ '__id__/marked': { entry } }` holds once the entry is marked. |
-| `__id__/mark` (`mark__Pascal__`) | effect | `{ '__id__/mark': { entry } }` marks the entry. |
-| `__id__/mark` (`mark__Pascal__Command`) | command | `{ '__id__/mark': { id } }` marks the entry `id`, or says why not. |
+| `__id__/marked` (`__camel__.marked`) | condition | `{ '__id__/marked': { entry } }` holds once the entry is marked. |
+| `__id__/mark` (`__camel__.mark`) | effect | `{ '__id__/mark': { entry } }` marks the entry. |
+| `__id__/mark` (`__camel__.markCommand`) | command | `{ '__id__/mark': { id } }` marks the entry `id`, or says why not. |
 
 A UI reads `view.plugins.__id__`, typed as `__Pascal__View`, or `__camel__().viewIn(view)`.
 

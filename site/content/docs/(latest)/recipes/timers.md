@@ -13,8 +13,8 @@ Declare the timer with how long it runs and what happens when it runs out. Then 
 ```ts
 // src/story/flat.ts
 import type { Content } from '@ifloom/engine'
-import { at } from '@ifloom/plugin-places'
-import { period } from '@ifloom/plugin-calendar'
+import { places } from '@ifloom/plugin-places'
+import { calendar } from '@ifloom/plugin-calendar'
 
 export const flat: Content = {
   timers: [
@@ -48,7 +48,7 @@ export const flat: Content = {
   triggers: [
     {
       id: 'phone',
-      when: { all: [at('flat'), period('evening')] },
+      when: { all: [places.at('flat'), calendar.period('evening')] },
       effects: [
         { scene: 'phone' },
         { timer: 'phone' },

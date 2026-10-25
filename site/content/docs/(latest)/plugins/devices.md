@@ -9,11 +9,7 @@ You'd want it when the player carries or uses something with screens of its own:
 To add it, list `@ifloom/plugin-devices` in your game's `package.json` and add `devices()` to the game's `plugins`. The devices and their apps are content, in your content's `data.devices`. [Install](#install) has the details.
 
 ```ts
-import {
-  devices, devicesOf, appsOf, openApp, closeApp, appOpen,
-  type DeviceDef, type AppDef, type Section, type DevicesState,
-  type DevicesView, type DeviceView, type AppView, type SectionView,
-} from '@ifloom/plugin-devices'
+import { devices, devicesOf, appsOf, type DeviceDef, type AppDef, type Section, type DevicesState, type DevicesView, type DeviceView, type AppView, type SectionView } from '@ifloom/plugin-devices'
 ```
 
 An app isn't a place. Opening it doesn't move the player or pass time, and whatever the player does inside it costs what that action says. [Locks](/docs/reference/locks) still apply, so "no phone at work" is a lock on `devices/*`.
@@ -187,7 +183,7 @@ A `{ contacts: true }` section lists the [cast](/docs/plugins/cast)'s contacts, 
 - their `name` as its title
 - their `desc` as its text, or `''` when they have none
 - their portrait as its image
-- one action, labelled with the [`devices/call`](#strings) string ("Call"), which sends [`call(id)`](/docs/plugins/cast#commands)
+- one action, labelled with the [`devices/call`](#strings) string ("Call"), which sends [`cast.call(id)`](/docs/plugins/cast#commands)
 
 The button is greyed out with the call's own refusal, such as the character's `busy` line.
 
@@ -207,7 +203,7 @@ The laptop stays at home, so a lock refuses it anywhere else.
 ```ts
 import { loadGame, type Content } from '@ifloom/engine'
 import { devices, type AppDef } from '@ifloom/plugin-devices'
-import { at, location, places } from '@ifloom/plugin-places'
+import { places } from '@ifloom/plugin-places'
 
 const apps: AppDef[] = [
   {
@@ -243,8 +239,8 @@ const apps: AppDef[] = [
 ]
 
 const locations = [
-  location({ id: 'flat', name: 'Your flat', desc: 'Home', exits: ['high-street'], body: [{ prose: 'place.flat' }] }),
-  location({ id: 'high-street', name: 'High Street', desc: 'Small Town', exits: ['flat'], body: [{ prose: 'place.high-street' }] }),
+  places.location({ id: 'flat', name: 'Your flat', desc: 'Home', exits: ['high-street'], body: [{ prose: 'place.flat' }] }),
+  places.location({ id: 'high-street', name: 'High Street', desc: 'Small Town', exits: ['flat'], body: [{ prose: 'place.high-street' }] }),
 ]
 
 const town: Content = {
@@ -264,7 +260,7 @@ const town: Content = {
     { id: 'jot', effects: [{ create: 'note', with: { id: 'shopping', name: 'Shopping', desc: 'Milk, bread, a lemon.' }, at: 'player' }] },
     { id: 'setUpMail', effects: [{ kv: 'emailSetUp', to: true }, { kv: 'newMail', to: true }] },
   ],
-  locks: [{ when: { not: at('flat') }, deny: ['devices/*'], reason: 'The laptop is at home.' }],
+  locks: [{ when: { not: places.at('flat') }, deny: ['devices/*'], reason: 'The laptop is at home.' }],
   prose: {
     'place.flat': 'Boxes, mostly.',
     'place.high-street': 'The high street.',
@@ -290,8 +286,8 @@ Played from a new game, starting at home:
 
 ```ts
 import { apply, startingState, view, whyNot, type Game, type GameState } from '@ifloom/engine'
-import { openApp, type DevicesView } from '@ifloom/plugin-devices'
-import { go } from '@ifloom/plugin-places'
+import { devices, type DevicesView } from '@ifloom/plugin-devices'
+import { places } from '@ifloom/plugin-places'
 
 declare const game: Game // the game above
 
@@ -304,12 +300,12 @@ laptop(state)
 // No Mail: it isn't installed yet.
 
 state = apply(state, game, { type: 'action', id: 'jot' }).state
-state = apply(state, game, openApp('notes')).state     // no time passes, and the player is still at home
+state = apply(state, game, devices.open('notes')).state     // no time passes, and the player is still at home
 laptop(state).open?.sections
 // [{ type: 'prose', text: 'Your notes, newest first.', beats: [{ type: 'text', text: 'Your notes, newest first.' }] },
 //  { type: 'list', entries: [{ id: 'note:shopping', title: 'Shopping', text: 'Milk, bread, a lemon.', image: null, actions: [] }] }]
 
-state = apply(state, game, openApp('shop')).state      // the notes close: one app open per device
+state = apply(state, game, devices.open('shop')).state      // the notes close: one app open per device
 laptop(state).open?.sections
 // [{ type: 'actions', actions: [{ id: 'sandwich', label: 'Order a sandwich', ... }, { id: 'scarf', label: 'Order a scarf', ... }] }]
 state = apply(state, game, { type: 'action', id: 'devices/scarf' }).state
@@ -317,16 +313,16 @@ state.stats.coins       // 4
 laptop(state).open?.sections
 // [{ type: 'actions', actions: [{ id: 'sandwich', ... }] }]   The scarf button's `when` no longer holds.
 
-whyNot(state, game, openApp('bank'))   // 'You have no account yet.'
-whyNot(state, game, openApp('mail'))   // 'That is not installed.'
+whyNot(state, game, devices.open('bank'))   // 'You have no account yet.'
+whyNot(state, game, devices.open('mail'))   // 'That is not installed.'
 
 state = apply(state, game, { type: 'action', id: 'setUpMail' }).state
 laptop(state).badge     // 1, for Mail's dot
-state = apply(state, game, openApp('mail')).state
+state = apply(state, game, devices.open('mail')).state
 laptop(state).open?.sections    // [{ type: 'panel', panel: 'inbox', with: { unread: 1 } }]
 
-state = apply(state, game, go('high-street')).state
-whyNot(state, game, openApp('notes'))  // 'The laptop is at home.'
+state = apply(state, game, places.go('high-street')).state
+whyNot(state, game, devices.open('notes'))  // 'The laptop is at home.'
 laptop(state).open                     // null: Mail closed when the lock started to hold
 laptop(state).apps[0].disabled         // 'The laptop is at home.', and the same on every app
 ```
@@ -335,18 +331,18 @@ laptop(state).apps[0].disabled         // 'The laptop is at home.', and the same
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ 'devices/open': { app } }` | `appOpen(app)` | That app is open. |
+| `{ 'devices/open': { app } }` | `devices.appOpen(app)` | That app is open. |
 | `{ 'devices/open': { device } }` | | Any app is open on that device. |
 
 ```ts
 import type { Block } from '@ifloom/engine'
-import { appOpen } from '@ifloom/plugin-devices'
+import { devices } from '@ifloom/plugin-devices'
 
 const body: Block[] = [
   { prose: 'place.cafe' },
   // Ava looks up when you're on your phone at the counter.
   { prose: 'place.cafe.ava-looks-up', when: { 'devices/open': { device: 'phone' } } },
-  { prose: 'place.cafe.camera', when: appOpen('camera') },
+  { prose: 'place.cafe.camera', when: devices.appOpen('camera') },
 ]
 ```
 
@@ -356,8 +352,8 @@ The first `when` is the call written out. `appOpen` writes the same call for an 
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ 'devices/open': { id } }` | `openApp(app)` | Opens the app `id` on its device. Any app already open on that device closes. |
-| `{ 'devices/close': { id } }` | `closeApp(device)` | Takes the device `id` back to its home screen. |
+| `{ 'devices/open': { id } }` | `devices.open(app)` | Opens the app `id` on its device. Any app already open on that device closes. |
+| `{ 'devices/close': { id } }` | `devices.close(device)` | Takes the device `id` back to its home screen. |
 
 Both are free, so no time passes and the player doesn't move. [Locks](/docs/reference/locks) refuse them like any other command. `deny: ['devices/*']` stops both, and `deny: ['devices/open']` stops only opening.
 
@@ -454,7 +450,7 @@ type AppView = {
 |---|---|
 | `badge` | A count, a dot (`true`, or `false` when the dot's condition doesn't hold), or `0` for an app with no badge. |
 | `disabled` | Why it can't be opened now. It's [`whyNot`](/docs/reference/actions#whynot) for its `command`, so a lock's `reason`, `That is not installed.` or the first `blocked` reason that holds. It's left out if the app can be opened. |
-| `command` | The command that opens it, `openApp(id)` as the view writes commands, `{ type: 'custom', name: 'devices/open', with: { id } }`. |
+| `command` | The command that opens it, `devices.open(id)` as the view writes commands, `{ type: 'custom', name: 'devices/open', with: { id } }`. |
 | `sections` | Only filled in for the open app. In `apps`, every app's `sections` is `[]`, so read them from `open`. |
 
 ### SectionView
@@ -639,16 +635,19 @@ This is what the plugin keeps in a save, at `state.plugins.devices`. It holds th
 
 ## For code
 
-The helpers build the content objects for you, typed, in the [short form](/docs/reference/custom#plugincall). `openApp` and `closeApp` return a [`CommandRef`](/docs/reference/custom#commandref), and `appOpen` returns a `Condition`.
+The helpers build the content objects for you, typed, in the [short form](/docs/reference/custom#plugincall). `devices.open` and `devices.close` return a [`CommandRef`](/docs/reference/custom#commandref), and `devices.appOpen` returns a `Condition`.
 
 ### Helpers
 
 ```ts
-import type { CommandRef, Condition } from '@ifloom/engine'
+const devices: {
+  (): DefinedPlugin<DevicesState, DevicesView>
+  open(app: string): CommandRef
+  close(device: string): CommandRef
+  appOpen(app: string): Condition
+}
 
-const openApp: (app: string) => CommandRef
-const closeApp: (device: string) => CommandRef
-const appOpen: (app: string) => Condition
+import type { CommandRef, Condition } from '@ifloom/engine'
 ```
 
 ## Checks
@@ -686,4 +685,4 @@ phone · apps mail · no custom value named "messages/unread"
 
 ## See it in an example
 
-Small Town: the phone in [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) has two apps of the game's own, a camera with buttons and a notes app listing the notes you hold, and `openApp('camera')` opens it.
+Small Town: the phone in [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) has two apps of the game's own, a camera with buttons and a notes app listing the notes you hold, and `devices.open('camera')` opens it.

@@ -77,8 +77,8 @@ There's no separate once or cooldown setting for a storylet. Its `when` covers i
 ```ts
 when: { not: { seen: 'cafe.crossword' } }          // once ever
 when: { not: { seen: 'cafe.window', gte: 2 } }     // at most twice
-when: here('ava')                                  // only while Ava is in the café
-when: { stat: 'friendship', of: character('ava'), gte: 25 }  // only once you know her
+when: cast.here('ava')                                  // only while Ava is in the café
+when: { stat: 'friendship', of: cast.character('ava'), gte: 25 }  // only once you know her
 ```
 
 For once a turn, set a kv key in the storylet's choice, list that key in your content's [`resets`](/docs/reference/rules#resets) so it goes back each turn, and test it in `when`.
@@ -190,9 +190,9 @@ Three scenes are drawn from `'cafe'`, and a fourth is the quiet table for when n
   speaker: 'ava',
   drawnFrom: ['cafe'],
   weight: 2,
-  when: here('ava'),
+  when: cast.here('ava'),
   body: [{ prose: 'cafe.break' }],
-  choices: [{ id: 'leave', effects: [{ stat: 'friendship', by: 2, of: character('ava') }, { scene: null }] }],
+  choices: [{ id: 'leave', effects: [{ stat: 'friendship', by: 2, of: cast.character('ava') }, { scene: null }] }],
 },
 // When none of them can happen.
 {

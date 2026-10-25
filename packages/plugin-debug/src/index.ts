@@ -71,7 +71,7 @@ declare module '@ifloom/engine' {
   }
 }
 
-export function debug(): DefinedPlugin<null, DebugView> {
+function debugPlugin(): DefinedPlugin<null, DebugView> {
   return definePlugin<null, DebugView>({
     id: 'debug',
     version: 1,
@@ -195,16 +195,30 @@ function sayDebug(game: Game, key: string, id?: string, periods?: string): strin
 }
 
 /** A command: put a stat at a value. */
-export const debugStat = (stat: string, to: number, of?: string): CommandRef => ({ 'debug/stat': { stat, to, ...(of === undefined ? {} : { of }) } })
+const debugStat = (stat: string, to: number, of?: string): CommandRef => ({ 'debug/stat': { stat, to, ...(of === undefined ? {} : { of }) } })
 /** A command: set a key in the kv store. */
-export const debugKv = (key: string, to: KvValue): CommandRef => ({ 'debug/kv': { key, to } })
+const debugKv = (key: string, to: KvValue): CommandRef => ({ 'debug/kv': { key, to } })
 /** A command: set how many of a thing a holder holds, `'you'` if `at` is left out. */
-export const debugHeld = (entity: string, to: number, at?: string): CommandRef => ({ 'debug/held': { entity, to, ...(at === undefined ? {} : { at }) } })
+const debugHeld = (entity: string, to: number, at?: string): CommandRef => ({ 'debug/held': { entity, to, ...(at === undefined ? {} : { at }) } })
 /** A command: put a scene on screen, or close it. */
-export const debugScene = (scene?: string): CommandRef => ({ 'debug/scene': { id: scene } })
+const debugScene = (scene?: string): CommandRef => ({ 'debug/scene': { id: scene } })
 /** A command: set the clock. */
-export const debugTime = (time: { day?: number; period?: string }): CommandRef => ({ 'debug/time': time })
+const debugTime = (time: { day?: number; period?: string }): CommandRef => ({ 'debug/time': time })
 /** A command: set how many turns have passed. */
-export const debugTurn = (turn: number): CommandRef => ({ 'debug/turn': { to: turn } })
+const debugTurn = (turn: number): CommandRef => ({ 'debug/turn': { to: turn } })
 /** A command: be somewhere. */
-export const debugGo = (location: string): CommandRef => ({ 'debug/go': { id: location } })
+const debugGo = (location: string): CommandRef => ({ 'debug/go': { id: location } })
+
+/**
+ * The plugin, with its helpers on it: `debug()` makes the plugin for the
+ * game's `plugins`, and content is written with `debug.stat('coins', 10)`.
+ */
+export const debug = Object.assign(debugPlugin, {
+  stat: debugStat,
+  kv: debugKv,
+  held: debugHeld,
+  scene: debugScene,
+  time: debugTime,
+  turn: debugTurn,
+  go: debugGo,
+})

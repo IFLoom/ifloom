@@ -7,12 +7,7 @@ description: "Timed statuses that last some turns, change what the player's stat
 While a status lasts, it can change what the player's stats read, and it can run effects when it starts, at the end of each turn and when it ends. The stat changes use the engine's [stat modifiers](/docs/reference/plugins#stat-modifiers), so nothing is written into the stats. When the status wears off, they read as they did before.
 
 ```ts
-import {
-  statuses, applyStatus, removeStatus, statusActive,
-  statusesOf, statusOf, statusesView,
-  type StatusDef, type StatusModifier, type Reapply,
-  type StatusesState, type ActiveRecord, type StatusesView, type ActiveStatus,
-} from '@ifloom/plugin-statuses'
+import { statuses, statusesOf, statusOf, statusesView, type StatusDef, type StatusModifier, type Reapply, type StatusesState, type ActiveRecord, type StatusesView, type ActiveStatus } from '@ifloom/plugin-statuses'
 ```
 
 ## Install
@@ -46,7 +41,7 @@ This is the showcase's coffee. It adds 10 to energy until the end of the next tu
 
 ```ts
 import type { Content } from '@ifloom/engine'
-import { applyStatus, type StatusDef } from '@ifloom/plugin-statuses'
+import { statuses, type StatusDef } from '@ifloom/plugin-statuses'
 
 const caffeinated: StatusDef = {
   id: 'caffeinated',
@@ -58,7 +53,7 @@ const caffeinated: StatusDef = {
 
 const town: Content = {
   stats: [{ id: 'energy', label: 'Energy', start: 80, spendable: true }],
-  actions: [{ id: 'coffee', label: 'Buy a coffee', effects: [applyStatus('caffeinated')] }],
+  actions: [{ id: 'coffee', label: 'Buy a coffee', effects: [statuses.apply('caffeinated')] }],
   data: { statuses: { statuses: [caffeinated] } },
 }
 ```
@@ -145,13 +140,13 @@ The effects it runs are applied while the turn is ending, so a `turn` effect amo
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ 'statuses/active': { status, stacks? } }` | `statusActive(id, stacks?)` | The status is active. With `stacks`, a [range](/docs/reference/conditions#range) such as `{ gte: 2 }`, only when it has that many stacks. |
+| `{ 'statuses/active': { status, stacks? } }` | `statuses.active(id, stacks?)` | The status is active. With `stacks`, a [range](/docs/reference/conditions#range) such as `{ gte: 2 }`, only when it has that many stacks. |
 
 ```ts
 import { type Block } from '@ifloom/engine'
-import { statusActive } from '@ifloom/plugin-statuses'
+import { statuses } from '@ifloom/plugin-statuses'
 
-const block: Block = { prose: 'place.cafe.caffeinated', when: statusActive('caffeinated') }
+const block: Block = { prose: 'place.cafe.caffeinated', when: statuses.active('caffeinated') }
 ```
 
 An unknown status is never active.
@@ -160,19 +155,19 @@ An unknown status is never active.
 
 | Content writes | Helper | Does |
 |---|---|---|
-| `{ 'statuses/apply': { status } }` | `applyStatus(id)` | Starts the status, or refreshes or stacks it if it's active. |
-| `{ 'statuses/remove': { status, runEnd? } }` | `removeStatus(id, runEnd?)` | Takes every stack off. `onEnd` runs once per stack only when `runEnd` is `true`. It's `false` if left out. |
+| `{ 'statuses/apply': { status } }` | `statuses.apply(id)` | Starts the status, or refreshes or stacks it if it's active. |
+| `{ 'statuses/remove': { status, runEnd? } }` | `statuses.remove(id, runEnd?)` | Takes every stack off. `onEnd` runs once per stack only when `runEnd` is `true`. It's `false` if left out. |
 
 `runEnd` lets you decide per call. A medicine that cures a cold might skip its `onEnd`, while a scene where the cold runs its course early might want it:
 
 ```ts
-import { removeStatus } from '@ifloom/plugin-statuses'
+import { statuses } from '@ifloom/plugin-statuses'
 
-const medicine = removeStatus('cold')        // gone, nothing else happens
-const recovered = removeStatus('cold', true) // gone, and "You feel a bit better."
+const medicine = statuses.remove('cold')        // gone, nothing else happens
+const recovered = statuses.remove('cold', true) // gone, and "You feel a bit better."
 ```
 
-Applying or removing a status the game doesn't have does nothing. Both work in any effect list, a thing's use in the [inventory](/docs/plugins/inventory) included. So does a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does). Written out, `applyStatus('tired')` is `{ 'statuses/apply': { status: 'tired' } }`.
+Applying or removing a status the game doesn't have does nothing. Both work in any effect list, a thing's use in the [inventory](/docs/plugins/inventory) included. So does a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does). Written out, `statuses.apply('tired')` is `{ 'statuses/apply': { status: 'tired' } }`.
 
 ## Commands
 
@@ -303,9 +298,12 @@ What the plugin keeps in a save, at `state.plugins.statuses`: each active status
 ### Helpers
 
 ```ts
-const statusActive: (id: string, stacks?: Range) => Condition
-const applyStatus: (id: string) => EffectRef
-const removeStatus: (id: string, runEnd?: boolean) => EffectRef
+const statuses: {
+  (): DefinedPlugin<StatusesState, StatusesView>
+  active(id: string, stacks?: Range): Condition
+  apply(id: string): EffectRef
+  remove(id: string, runEnd?: boolean): EffectRef
+}
 ```
 
 ### statusesOf and statusOf
@@ -346,4 +344,4 @@ A call that names a status the game doesn't have gives `unknown status "…"` wh
 
 ## See it in an example
 
-Small Town: `caffeinated` in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts) adds 10 energy for two turns. The `coffee` action starts it with `applyStatus('caffeinated')`, and the café's body reads it with `statusActive`. The React UI lists it under the stats with its turns left.
+Small Town: `caffeinated` in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts) adds 10 energy for two turns. The `coffee` action starts it with `statuses.apply('caffeinated')`, and the café's body reads it with `statuses.active`. The React UI lists it under the stats with its turns left.

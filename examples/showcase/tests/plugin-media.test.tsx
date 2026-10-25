@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { createRunner, loadGame, startingState, type Game } from '@ifloom/engine'
 import { phone } from '@ifloom/phone'
-import { at, go, location, places } from '@ifloom/plugin-places'
+import { places } from '@ifloom/plugin-places'
 import { GameShell, Game as GamePage, Story } from '@ifloom/react'
 import { LocationCard } from '@ifloom/plugin-places/react'
 import { devicesUi } from '@ifloom/plugin-devices/react'
@@ -44,7 +44,7 @@ describe('media in places, messages and posts', () => {
             'post.cafe': 'New cakes today.\n\n[[img:photo/cake.svg|A cake]]',
           },
           entities: [
-            location({
+            places.location({
               id: 'flat',
               name: 'The flat',
               desc: 'Home',
@@ -52,15 +52,17 @@ describe('media in places, messages and posts', () => {
               body: [{ prose: 'place.flat' }],
               stage: {
                 layers: [{ id: 'room', src: 'flat/room.svg' }],
-                hotspots: [{ id: 'out', rect: [80, 10, 15, 80], label: 'The front door', command: go('street') }],
+                hotspots: [{ id: 'out', rect: [80, 10, 15, 80], label: 'The front door', command: places.go('street') }],
               },
             }),
-            location({ id: 'street', name: 'High Street', desc: 'Out', exits: ['flat'], body: [{ prose: 'place.street' }] }),
+            places.location({ id: 'street', name: 'High Street', desc: 'Out', exits: ['flat'], body: [{ prose: 'place.street' }] }),
           ],
           data: {
-            messages: { messages: [{ id: 'mum.hi', channel: 'texts', from: 'Mum', when: at('flat'), body: [{ prose: 'mum.hi' }] }] },
+            messages: { messages: [{ id: 'mum.hi', channel: 'texts', from: 'Mum', when: places.at('flat'), body: [{ prose: 'mum.hi' }] }] },
             feed: {
-              posts: [{ id: 'post.cafe', feed: 'town', from: 'The Café', when: at('flat'), body: [{ prose: 'post.cafe' }], video: 'art/clips/steam.mp4' }],
+              posts: [
+                { id: 'post.cafe', feed: 'town', from: 'The Café', when: places.at('flat'), body: [{ prose: 'post.cafe' }], video: 'art/clips/steam.mp4' },
+              ],
             },
           },
         },

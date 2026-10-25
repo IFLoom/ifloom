@@ -244,7 +244,7 @@ writeFileSync(
 \`@ifloom/plugin-${name}\` adds TODO(new-plugin).
 
 \`\`\`ts
-import { ${camel}, ${camel}Entries, ${camel}Marked, mark${Pascal}, mark${Pascal}Command } from '@ifloom/plugin-${name}'
+import { ${camel}, entriesOf } from '@ifloom/plugin-${name}'
 import type { ${Pascal}Entry, ${Pascal}State, ${Pascal}View } from '@ifloom/plugin-${name}'
 \`\`\`
 `,

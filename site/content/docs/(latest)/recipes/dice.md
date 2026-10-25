@@ -10,7 +10,7 @@ The pieces are an inline action, an effect that rolls, a block for each outcome,
 
 ```ts
 import type { Block, Condition, Content } from '@ifloom/engine'
-import { location } from '@ifloom/plugin-places'
+import { places } from '@ifloom/plugin-places'
 
 /** A line about how the stone went: only on the day you skimmed, with the dice drawn above it. */
 const skimmed = (when: Condition, text: string): Block => ({ text, when: { all: [{ kv: 'skimmed' }, when] }, ui: { dice: 'skim' } })
@@ -37,7 +37,7 @@ export const park: Content = {
         { id: 'skim', label: 'Skim a stone', effects: [{ kv: 'skimmed', to: true }, { roll: 'skim', dice: '2d6', against: 8 }] },
       ],
     },
-  ].map(location),
+  ].map(places.location),
   prose: {
     'place.park': 'The river is slow and brown and full of ducks with opinions.',
     'place.park.stones': 'Flat stones lie along the water’s edge. [[act:skim|Try to skim a stone]].',
@@ -72,7 +72,7 @@ Notation can carry its own number too, `'2d6+1'`, and `plus` adds on top. The ro
 Any effect list can roll, so the game can roll by itself. Small Town counts the ducks as you arrive at the park, with a [trigger](/docs/reference/triggers):
 
 ```ts
-triggers: [{ id: 'ducks', once: 'turn', when: at('park'), effects: [{ roll: 'ducks', dice: '1d6+2' }] }],
+triggers: [{ id: 'ducks', once: 'turn', when: places.at('park'), effects: [{ roll: 'ducks', dice: '1d6+2' }] }],
 // 'place.park.ducks': '{{ducks}} of them paddle over at once, in case you brought bread.'
 ```
 

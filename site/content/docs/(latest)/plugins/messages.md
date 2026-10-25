@@ -9,12 +9,7 @@ You'd want it when people get in touch with the player rather than the player go
 A message is like a scene that arrives instead of one the player walks into. It has [prose blocks](/docs/reference/scenes#block) for its words, a sender, and replies that carry [effects](/docs/reference/effects). It arrives the first time its condition holds at the end of a command, and it raises a [notice](/docs/reference/notices) tagged with its channel, so the UI can show a toast or a badge. A message can also sit in a pool, like a [storylet](/docs/reference/storylets), and arrive each time an effect draws it.
 
 ```ts
-import {
-  messages, messagesOf, channelsOf, replyTo, readThread, messageArrived, messageReplied,
-  messageSince, drawMessage,
-  type Channel, type MessageDef, type ReplyDef, type MessagesState, type Arrival,
-  type MessagesView, type ChannelView, type ThreadView, type MessageView,
-} from '@ifloom/plugin-messages'
+import { messages, messagesOf, channelsOf, type Channel, type MessageDef, type ReplyDef, type MessagesState, type Arrival, type MessagesView, type ChannelView, type ThreadView, type MessageView } from '@ifloom/plugin-messages'
 ```
 
 The plugin knows nothing about phones. Your game decides what the channels are and where they're shown, such as a pile of post in the hall. With the [devices plugin](/docs/plugins/devices) a channel can be an app instead, and the [phone bundle](/docs/plugins/phone) sets that up for you.
@@ -153,7 +148,7 @@ This is the showcase's text from Ava. It arrives once a day has passed since the
 
 ```ts
 import { type MessageDef } from '@ifloom/plugin-messages'
-import { character } from '@ifloom/plugin-cast'
+import { cast } from '@ifloom/plugin-cast'
 
 const text: MessageDef = {
   id: 'ava.text',
@@ -162,7 +157,7 @@ const text: MessageDef = {
   when: { all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] },
   body: [{ prose: 'ava.text' }],
   replies: [
-    { id: 'yes', effects: [{ stat: 'friendship', by: 5, of: character('ava') }] },
+    { id: 'yes', effects: [{ stat: 'friendship', by: 5, of: cast.character('ava') }] },
     { id: 'later' },
   ],
 }
@@ -177,10 +172,10 @@ Something has to run the draw. A [trigger](/docs/reference/triggers) with `once:
 
 ```ts
 import type { Condition, TriggerDef } from '@ifloom/engine'
-import { drawMessage, messageReplied, messageSince, type MessageDef } from '@ifloom/plugin-messages'
+import { messages, type MessageDef } from '@ifloom/plugin-messages'
 
 // Not the same line twice within three days.
-const rested = (id: string): Condition => ({ not: messageSince(id, { lt: 3 }) })
+const rested = (id: string): Condition => ({ not: messages.since(id, { lt: 3 }) })
 
 const smallTalk: MessageDef[] = ['rain', 'beans', 'river'].map((topic) => ({
   id: `ava.chat.${topic}`,
@@ -192,10 +187,10 @@ const smallTalk: MessageDef[] = ['rain', 'beans', 'river'].map((topic) => ({
 }))
 
 // Once a day, after she's had a reply to her first text.
-const chat: TriggerDef = { id: 'ava.chat', once: 'turn', when: messageReplied('ava.text'), effects: [drawMessage('ava.chat')] }
+const chat: TriggerDef = { id: 'ava.chat', once: 'turn', when: messages.replied('ava.text'), effects: [messages.draw('ava.chat')] }
 ```
 
-`messageSince(id, { lt: 3 })` holds while fewer than three days have passed since that message last arrived, so `{ not: … }` keeps it out of the draw for three days. Days are the [calendar](/docs/plugins/calendar)'s days, or turns in a game without the calendar. It's false for a message that has never come, so a fresh one is always in the draw.
+`messages.since(id, { lt: 3 })` holds while fewer than three days have passed since that message last arrived, so `{ not: … }` keeps it out of the draw for three days. Days are the [calendar](/docs/plugins/calendar)'s days, or turns in a game without the calendar. It's false for a message that has never come, so a fresh one is always in the draw.
 
 The draw is seeded by the save, the turn and how many messages have arrived, so a replay or an undo draws the same message. When no message in the pool can be drawn, nothing arrives.
 
@@ -209,21 +204,21 @@ The time of day comes from the [calendar](/docs/plugins/calendar), the map from 
 
 ```ts
 import { loadGame, type Content } from '@ifloom/engine'
-import { calendar, day, pass, period, sleep } from '@ifloom/plugin-calendar'
-import { places, location, type PlaceDef } from '@ifloom/plugin-places'
-import { cast, character, person } from '@ifloom/plugin-cast'
-import { messageReplied, messages } from '@ifloom/plugin-messages'
+import { calendar } from '@ifloom/plugin-calendar'
+import { places, type PlaceDef } from '@ifloom/plugin-places'
+import { cast } from '@ifloom/plugin-cast'
+import { messages } from '@ifloom/plugin-messages'
 
 const place = (id: string, name: string, exits: string[]): PlaceDef =>
   ({ id, name, desc: 'Small Town', exits, body: [{ prose: `place.${id}` }] })
 
-const ava = person({
+const ava = cast.person({
   id: 'ava',
   name: 'Ava',
   desc: 'Runs the café',
   image: 'art/character/ava.svg',
   home: 'park',
-  schedule: [{ location: 'cafe', when: period('morning', 'afternoon') }],
+  schedule: [{ location: 'cafe', when: calendar.period('morning', 'afternoon') }],
   talk: 'ava.hi',
 })
 
@@ -231,18 +226,18 @@ const map = [
   {
     ...place('flat', 'Your flat', ['high-street']),
     actions: [
-      { id: 'bed', label: 'Go to bed', command: sleep() },
+      { id: 'bed', label: 'Go to bed', command: calendar.sleep() },
       { id: 'mat', label: 'Pick up the post', command: { 'messages/read': { channel: 'letters' } } },
     ],
   },
   place('high-street', 'High Street', ['flat', 'cafe', 'park']),
   place('cafe', 'The Corner Café', ['high-street']),
   place('park', 'Riverside Park', ['high-street']),
-].map(location)
+].map(places.location)
 
 const town: Content = {
   stats: [{ id: 'friendship', label: 'Friendship', of: 'character' }],
-  actions: [{ id: 'wait', effects: [pass(1)] }],
+  actions: [{ id: 'wait', effects: [calendar.pass(1)] }],
   entities: [ava, ...map],
   scenes: [
     { id: 'ava.hi', title: 'Ava', speaker: 'ava', body: [{ prose: 'ava.hi' }], choices: [{ id: 'bye', label: 'Leave her to it', effects: [{ scene: null }] }] },
@@ -268,20 +263,20 @@ const town: Content = {
           from: 'ava',
           when: { all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] },
           body: [{ prose: 'ava.text' }],
-          replies: [{ id: 'yes', label: 'Deal!', effects: [{ stat: 'friendship', by: 5, of: character('ava') }] }, { id: 'later', label: 'Maybe later in the week' }],
+          replies: [{ id: 'yes', label: 'Deal!', effects: [{ stat: 'friendship', by: 5, of: cast.character('ava') }] }, { id: 'later', label: 'Maybe later in the week' }],
         },
         {
           id: 'ava.beans',
           channel: 'texts',
           from: 'ava',
-          when: messageReplied('ava.text', 'yes'),
+          when: messages.replied('ava.text', 'yes'),
           body: [{ prose: 'ava.beans' }],
         },
         {
           id: 'council.bins',
           channel: 'letters',
           from: 'Town council',
-          when: { all: [day({ gte: 1 }), period('afternoon')] },
+          when: { all: [calendar.day({ gte: 1 }), calendar.period('afternoon')] },
           body: [{ prose: 'council.bins' }],
         },
       ],
@@ -305,44 +300,44 @@ A new game starts in the flat on Monday morning. Played through:
 
 ```ts
 import { apply, startingState, view, whyNot, type GameState } from '@ifloom/engine'
-import { sleep } from '@ifloom/plugin-calendar'
-import { go } from '@ifloom/plugin-places'
-import { talk } from '@ifloom/plugin-cast'
-import { readThread, replyTo, type MessagesView } from '@ifloom/plugin-messages'
+import { calendar } from '@ifloom/plugin-calendar'
+import { places } from '@ifloom/plugin-places'
+import { cast } from '@ifloom/plugin-cast'
+import { messages, type MessagesView } from '@ifloom/plugin-messages'
 
 const inbox = (state: GameState) => view(state, game).plugins.messages as MessagesView
 const wait = { type: 'action', id: 'wait' } as const
 let state = startingState(game)
 
 // To the café, and say hello to Ava
-state = apply(state, game, go('high-street')).state
-state = apply(state, game, go('cafe')).state
-state = apply(state, game, talk('ava')).state
+state = apply(state, game, places.go('high-street')).state
+state = apply(state, game, places.go('cafe')).state
+state = apply(state, game, cast.talk('ava')).state
 state = apply(state, game, { type: 'choose', id: 'bye' }).state
 inbox(state).unread     // 0: a day has to pass first
 
 // Home, wait until the evening, and go to bed
-state = apply(state, game, go('high-street')).state
-state = apply(state, game, go('flat')).state
+state = apply(state, game, places.go('high-street')).state
+state = apply(state, game, places.go('flat')).state
 state = apply(state, game, wait).state
 state = apply(state, game, wait).state
-state = apply(state, game, sleep()).state    // Day 2 · Tuesday morning, turn 1
+state = apply(state, game, calendar.sleep()).state    // Day 2 · Tuesday morning, turn 1
 inbox(state).channels[0].threads
 // [{ id: 'ava', name: 'Ava', portrait: 'art/character/ava.svg', unread: 1, messages: [
 //   { id: 'ava.text', from: 'ava', name: 'Ava', text: 'Good to meet you yesterday! Coffee’s on me next time 🙂',
 //     turn: 1, read: false, replied: null,
-//     replies: [{ id: 'yes', label: 'Deal!', command: replyTo('ava.text', 'yes') }, { id: 'later', ... }] } ] }]
+//     replies: [{ id: 'yes', label: 'Deal!', command: messages.reply('ava.text', 'yes') }, { id: 'later', ... }] } ] }]
 view(state, game).notices.byTag    // { texts: 1 }
 // 'ui.inbox' reads "Inbox (1)"
 
-whyNot(state, game, replyTo('ava.text', 'maybe'))   // 'That is not a reply on offer.'
-state = apply(state, game, replyTo('ava.text', 'yes')).state
-whyNot(state, game, replyTo('ava.text', 'later'))   // 'You have already replied.'
+whyNot(state, game, messages.reply('ava.text', 'maybe'))   // 'That is not a reply on offer.'
+state = apply(state, game, messages.reply('ava.text', 'yes')).state
+whyNot(state, game, messages.reply('ava.text', 'later'))   // 'You have already replied.'
 inbox(state).channels[0].threads[0].messages
 // [{ id: 'ava.text', read: true, replied: 'Deal!', replies: [], ... },
 //  { id: 'ava.beans', read: false, replied: null, ... }]   the reply brought the next text
 
-state = apply(state, game, readThread('ava')).state   // the player read the thread
+state = apply(state, game, messages.read('ava')).state   // the player read the thread
 state = apply(state, game, wait).state                // afternoon, and the letter comes
 inbox(state).channels[1]
 // { id: 'letters', name: 'Letters', unread: 1, threads: [{ id: 'Town council', name: 'Town council', portrait: null, ... }] }
@@ -356,17 +351,17 @@ inbox(state).unread     // 0
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ 'messages/arrived': { message } }` | `messageArrived(message)` | The message has arrived, at least once. |
-| `{ 'messages/since': { message, gte… } }` | `messageSince(message, range)` | The whole days since the message last arrived are in the [range](/docs/reference/conditions#range). Days are the calendar's, or turns without it. False if it has never arrived. |
-| `{ 'messages/replied': { message, reply? } }` | `messageReplied(message, reply?)` | The player replied to the message's latest arrival. With `reply`, they sent that reply. |
+| `{ 'messages/arrived': { message } }` | `messages.arrived(message)` | The message has arrived, at least once. |
+| `{ 'messages/since': { message, gte… } }` | `messages.since(message, range)` | The whole days since the message last arrived are in the [range](/docs/reference/conditions#range). Days are the calendar's, or turns without it. False if it has never arrived. |
+| `{ 'messages/replied': { message, reply? } }` | `messages.replied(message, reply?)` | The player replied to the message's latest arrival. With `reply`, they sent that reply. |
 | `{ 'messages/read': { message } }` | | The player has read the message's latest arrival. |
 
 You can use them anywhere a condition goes, such as another message's `when`, a scene block, a lock or a quest stage. Each is a call with the full name as the only key, as in `{ 'messages/arrived': { message: 'ava.text' } }` (see [plugin calls](/docs/reference/custom#plugincall)).
 
 ```ts
-import { messageReplied } from '@ifloom/plugin-messages'
+import { messages } from '@ifloom/plugin-messages'
 
-const block = { prose: 'place.cafe.ava-coffee', when: messageReplied('ava.text', 'yes') }
+const block = { prose: 'place.cafe.ava-coffee', when: messages.replied('ava.text', 'yes') }
 ```
 
 An unknown message is false.
@@ -375,14 +370,14 @@ An unknown message is false.
 
 | Content writes | Helper | Does |
 |---|---|---|
-| `{ 'messages/draw': { pool } }` | `drawMessage(pool)` | Draws one message from the pool, from those whose `when` holds, by `weight`, and delivers it as a new arrival with its notice. Nothing arrives when none can be drawn. See [Messages that come again](#messages-that-come-again). |
+| `{ 'messages/draw': { pool } }` | `messages.draw(pool)` | Draws one message from the pool, from those whose `when` holds, by `weight`, and delivers it as a new arrival with its notice. Nothing arrives when none can be drawn. See [Messages that come again](#messages-that-come-again). |
 
 ## Commands
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ 'messages/reply': { message, reply } }` | `replyTo(message, reply)` | Sends the reply: marks the arrival replied and read, then runs the reply's effects. `message` is the [arrival's key](#arrival), which for a message that arrives once is its id. |
-| `{ 'messages/read': { id?, channel? } }` | `readThread(thread?)` | Marks every message that has arrived in the thread `id` read. With `channel`, only that channel's. Leave both out to mark everything read. |
+| `{ 'messages/reply': { message, reply } }` | `messages.reply(message, reply)` | Sends the reply: marks the arrival replied and read, then runs the reply's effects. `message` is the [arrival's key](#arrival), which for a message that arrives once is its id. |
+| `{ 'messages/read': { id?, channel? } }` | `messages.read(thread?)` | Marks every message that has arrived in the thread `id` read. With `channel`, only that channel's. Leave both out to mark everything read. |
 
 `messages/reply` is refused, in this order, with:
 
@@ -392,7 +387,7 @@ An unknown message is false.
 
 You can reword each line (see [Strings](#strings)).
 
-Only a [lock](/docs/reference/locks) can refuse `messages/read`. A UI usually sends `readThread(thread)` when the player opens a thread. `readThread` only takes a thread, so to mark a whole channel read you write the command yourself with `channel`, as the flat's button does above.
+Only a [lock](/docs/reference/locks) can refuse `messages/read`. A UI usually sends `messages.read(thread)` when the player opens a thread. `messages.read` only takes a thread, so to mark a whole channel read you write the command yourself with `channel`, as the flat's button does above.
 
 Both are commands like any other, so triggers run after them, and so does every plugin's `onCommand` hook. If a reply's effects make another message's `when` true, that message arrives in the same command.
 
@@ -597,17 +592,20 @@ One arrival of a message. `key` is the message's id for its first arrival, then 
 
 ## For code
 
-The helpers write the content objects for you, typed. `messageArrived`, `messageReplied` and `messageSince` return a `Condition`, `drawMessage` an `Effect`, and `replyTo` and `readThread` a [`CommandRef`](/docs/reference/custom#commandref).
+The helpers write the content objects for you, typed. `messages.arrived`, `messages.replied` and `messages.since` return a `Condition`, `messages.draw` an `Effect`, and `messages.reply` and `messages.read` a [`CommandRef`](/docs/reference/custom#commandref).
 
 ### Helpers
 
 ```ts
-const replyTo: (message: string, reply: string) => CommandRef
-const readThread: (thread?: string) => CommandRef
-const messageArrived: (message: string) => Condition
-const messageReplied: (message: string, reply?: string) => Condition
-const messageSince: (message: string, range: Range) => Condition
-const drawMessage: (pool: string) => EffectRef
+const messages: {
+  (): DefinedPlugin<MessagesState, MessagesView>
+  reply(message: string, reply: string): CommandRef
+  read(thread?: string): CommandRef
+  arrived(message: string): Condition
+  replied(message: string, reply?: string): Condition
+  since(message: string, range: Range): Condition
+  draw(pool: string): EffectRef
+}
 ```
 
 ### messagesOf
@@ -639,7 +637,7 @@ A `messages/arrived`, `messages/since`, `messages/replied` or `messages/read` co
 ## Gotchas
 
 - **Messages arrive only after a command.** The plugin delivers them in its `onCommand` [hook](/docs/reference/plugins#hooks-and-providers), which runs after every command that went through, never on `start`. A message whose `when` already holds when the game starts arrives after the player's first command. To open the game with one, have the first command bring it, or put the words in the intro scene.
-- **`when` is tested at the end of each command.** A message whose `when` held only partway through a command, or only before it, waits for a later command that ends while it holds. A message with the [calendar](/docs/plugins/calendar#conditions)'s `period('morning')` as its `when` doesn't arrive if the player's first command of the day ends in the afternoon. It arrives at the end of the next command that ends in a morning, which may be days later. If it matters when a message comes, write `when` for something that stays true, such as a kv key, a day (`day({ gte: 2 })`) or a scene seen.
+- **`when` is tested at the end of each command.** A message whose `when` held only partway through a command, or only before it, waits for a later command that ends while it holds. A message with the [calendar](/docs/plugins/calendar#conditions)'s `calendar.period('morning')` as its `when` doesn't arrive if the player's first command of the day ends in the afternoon. It arrives at the end of the next command that ends in a morning, which may be days later. If it matters when a message comes, write `when` for something that stays true, such as a kv key, a day (`calendar.day({ gte: 2 })`) or a scene seen.
 - **A message arrives once, unless it's in a pool.** After that it stays, whatever `when` does. A message with `drawnFrom` never arrives by `when` alone; only a draw brings it, as often as it's drawn. See [Messages that come again](#messages-that-come-again).
 - **A reply's label is its words.** Before schema 25 it was the prose line `<message>#<reply>`. A pack of an older schema gets those words as the reply's `label` when it loads, and the checker reports a reply in your own content with no label whose old prose has words.
 - **One reply, once.** After the player sends one, the others are gone and `messages/reply` refuses. To let the player say more, send a new message with replies of its own.

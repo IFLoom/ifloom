@@ -15,7 +15,7 @@ import {
   type Game,
   type GameState,
 } from '@ifloom/engine'
-import { slotFilled, takeOff, wardrobe, wear, wearable, wearing, type WardrobeView } from '../src/index.ts'
+import { wardrobe, type WardrobeView } from '../src/index.ts'
 
 const plugin = wardrobe()
 /** The slots, as the base game's content: boots on from the start. */
@@ -36,9 +36,9 @@ const town: Content = {
     { id: 'friend', label: 'Friend', unique: true, listed: false },
   ],
   entities: [
-    { id: 'raincoat', of: 'clothing', name: 'raincoat', at: 'player', traits: { ...wearable('coat') } },
-    { id: 'boots', of: 'clothing', name: 'boots', at: 'player', traits: { ...wearable('feet') } },
-    { id: 'sandals', of: 'clothing', name: 'sandals', at: 'player', traits: { ...wearable('feet') } },
+    { id: 'raincoat', of: 'clothing', name: 'raincoat', at: 'player', traits: { ...wardrobe.wearable('coat') } },
+    { id: 'boots', of: 'clothing', name: 'boots', at: 'player', traits: { ...wardrobe.wearable('feet') } },
+    { id: 'sandals', of: 'clothing', name: 'sandals', at: 'player', traits: { ...wardrobe.wearable('feet') } },
     { id: 'umbrella', of: 'clothing', name: 'umbrella', at: 'player' },
     { id: 'kim', of: 'friend', name: 'Kim' },
   ],
@@ -70,24 +70,24 @@ describe('the wardrobe, on its own', () => {
         { entity: 'clothing:sandals', name: 'sandals', slot: 'feet' },
       ],
     })
-    expect(holds(begin(g), g, wearing('clothing:boots'))).toBe(true)
-    expect(holds(begin(g), g, slotFilled('coat'))).toBe(false)
+    expect(holds(begin(g), g, wardrobe.wearing('clothing:boots'))).toBe(true)
+    expect(holds(begin(g), g, wardrobe.slotFilled('coat'))).toBe(false)
   })
 
   it('puts clothes on in place of whatever was in the slot, without changing what you hold', () => {
     const g = game()
-    const out = apply(begin(g), g, wear('clothing:sandals'))
+    const out = apply(begin(g), g, wardrobe.wear('clothing:sandals'))
     expect(out.ok).toBe(true)
     expect([heldCount(out.state, g, 'clothing:sandals'), heldCount(out.state, g, 'clothing:boots')]).toEqual([1, 1])
-    expect(holds(out.state, g, wearing('clothing:sandals', 'feet'))).toBe(true)
-    expect(holds(out.state, g, wearing('clothing:boots'))).toBe(false)
+    expect(holds(out.state, g, wardrobe.wearing('clothing:sandals', 'feet'))).toBe(true)
+    expect(holds(out.state, g, wardrobe.wearing('clothing:boots'))).toBe(false)
   })
 
   it('takes clothes off', () => {
     const g = game()
-    const out = apply(begin(g), g, takeOff('feet'))
+    const out = apply(begin(g), g, wardrobe.takeOff('feet'))
     expect(heldCount(out.state, g, 'clothing:boots')).toBe(1)
-    expect(holds(out.state, g, slotFilled('feet'))).toBe(false)
+    expect(holds(out.state, g, wardrobe.slotFilled('feet'))).toBe(false)
   })
 
   it('ignores a slot the game no longer has', () => {
@@ -96,34 +96,34 @@ describe('the wardrobe, on its own', () => {
       ...begin(g),
       plugins: { wardrobe: { version: 3, state: { worn: { player: { coat: null, feet: 'clothing:boots', hat: 'clothing:raincoat' } } } } },
     }
-    expect(holds(old, g, wearing('clothing:raincoat'))).toBe(false)
+    expect(holds(old, g, wardrobe.wearing('clothing:raincoat'))).toBe(false)
   })
 
   it('takes off what you no longer hold: lost, or given to someone', () => {
     const g = game()
-    expect(holds(apply(begin(g), g, { type: 'action', id: 'loseBoots' }).state, g, slotFilled('feet'))).toBe(false)
+    expect(holds(apply(begin(g), g, { type: 'action', id: 'loseBoots' }).state, g, wardrobe.slotFilled('feet'))).toBe(false)
     const lent = apply(begin(g), g, { type: 'action', id: 'lendBoots' }).state
-    expect(holds(lent, g, slotFilled('feet'))).toBe(false)
+    expect(holds(lent, g, wardrobe.slotFilled('feet'))).toBe(false)
     expect(heldCount(lent, g, 'clothing:boots', 'friend:kim')).toBe(1)
   })
 
   it('wears only what you hold', () => {
     const g = game()
     const lent = apply(begin(g), g, { type: 'action', id: 'lendBoots' }).state
-    expect(whyNot(lent, g, wear('clothing:boots'))).toBe('You have no boots.')
+    expect(whyNot(lent, g, wardrobe.wear('clothing:boots'))).toBe('You have no boots.')
   })
 
   it('says why it cannot', () => {
     const g = game()
     const state = begin(g)
-    expect(whyNot(state, g, wear('clothing:umbrella'))).toBe('The umbrella is not something you wear.')
-    expect(whyNot(state, g, wear('clothing:hat'))).toBe('There is no such thing.')
-    expect(whyNot(state, g, wear('clothing:boots'))).toBe('You are already wearing the boots.')
-    expect(whyNot(state, g, takeOff('coat'))).toBe('There is nothing to take off.')
-    const barefoot = apply(state, g, takeOff('feet')).state
-    const sandals = apply(barefoot, g, wear('clothing:sandals')).state
-    expect(whyNot(apply(sandals, g, takeOff('feet')).state, g, wear('clothing:raincoat'))).toBeUndefined()
-    expect(apply(state, g, wear('clothing:umbrella'))).toMatchObject({ ok: false, reason: 'The umbrella is not something you wear.' })
+    expect(whyNot(state, g, wardrobe.wear('clothing:umbrella'))).toBe('The umbrella is not something you wear.')
+    expect(whyNot(state, g, wardrobe.wear('clothing:hat'))).toBe('There is no such thing.')
+    expect(whyNot(state, g, wardrobe.wear('clothing:boots'))).toBe('You are already wearing the boots.')
+    expect(whyNot(state, g, wardrobe.takeOff('coat'))).toBe('There is nothing to take off.')
+    const barefoot = apply(state, g, wardrobe.takeOff('feet')).state
+    const sandals = apply(barefoot, g, wardrobe.wear('clothing:sandals')).state
+    expect(whyNot(apply(sandals, g, wardrobe.takeOff('feet')).state, g, wardrobe.wear('clothing:raincoat'))).toBeUndefined()
+    expect(apply(state, g, wardrobe.wear('clothing:umbrella'))).toMatchObject({ ok: false, reason: 'The umbrella is not something you wear.' })
   })
 
   it('dresses a thing made in play like a wearable one', () => {
@@ -135,7 +135,7 @@ describe('the wardrobe, on its own', () => {
     ])
     const sewn = apply(begin(g), g, { type: 'action', id: 'sew' }).state
     expect(shown(sewn, g).spare).toContainEqual({ entity: 'clothing:cape', name: 'cape', slot: 'coat' })
-    expect(holds(apply(sewn, g, wear('clothing:cape')).state, g, wearing('clothing:cape', 'coat'))).toBe(true)
+    expect(holds(apply(sewn, g, wardrobe.wear('clothing:cape')).state, g, wardrobe.wearing('clothing:cape', 'coat'))).toBe(true)
   })
 
   it('carries an older save’s item ids into references', () => {
@@ -159,12 +159,12 @@ describe('the wardrobe, on its own', () => {
               ],
             },
           },
-          actions: [{ id: 'y', label: 'Y', command: wear('clothing:cloak') }],
+          actions: [{ id: 'y', label: 'Y', command: wardrobe.wear('clothing:cloak') }],
         },
         town,
         {
           name: 'mod',
-          entities: [{ id: 'cape', of: 'clothing', name: 'cape', traits: { ...wearable('back') } }],
+          entities: [{ id: 'cape', of: 'clothing', name: 'cape', traits: { ...wardrobe.wearable('back') } }],
           actions: [{ id: 'x', effects: [] }],
         },
       ],
@@ -185,7 +185,7 @@ describe('the wardrobe, on its own', () => {
     const unheld = loadGame(
       [
         { name: 'base', data: slots },
-        { ...town, entities: [{ id: 'boots', of: 'clothing', name: 'boots', traits: { ...wearable('feet') } }] },
+        { ...town, entities: [{ id: 'boots', of: 'clothing', name: 'boots', traits: { ...wardrobe.wearable('feet') } }] },
       ],
       {
         id: 'g',
@@ -207,9 +207,9 @@ describe('the wardrobe with a protagonist', () => {
     ])
     const kim = apply(begin(g), g, { type: 'action', id: 'beKim' }).state
     // Kim has nothing on yet; the raincoat is Kim's now, to wear.
-    expect(holds(kim, g, slotFilled('feet'))).toBe(false)
+    expect(holds(kim, g, wardrobe.slotFilled('feet'))).toBe(false)
     expect(shown(kim, g).spare).toEqual([{ entity: 'clothing:raincoat', name: 'raincoat', slot: 'coat' }])
-    const dressed = apply(kim, g, wear('clothing:raincoat')).state
+    const dressed = apply(kim, g, wardrobe.wear('clothing:raincoat')).state
     expect(shown(dressed, g).slots.map((slot) => slot.entity)).toEqual(['clothing:raincoat', null])
     expect(dressed.plugins.wardrobe.state).toEqual({ worn: { player: { coat: null, feet: 'clothing:boots' }, 'friend:kim': { coat: 'clothing:raincoat' } } })
   })
@@ -224,10 +224,10 @@ describe('the wardrobe with a protagonist', () => {
         ],
       },
     ])
-    const kim = apply(apply(begin(g), g, { type: 'action', id: 'beKim' }).state, g, wear('clothing:raincoat')).state
+    const kim = apply(apply(begin(g), g, { type: 'action', id: 'beKim' }).state, g, wardrobe.wear('clothing:raincoat')).state
     const me = apply(kim, g, { type: 'action', id: 'beMe' }).state
     expect(shown(me, g).slots.map((slot) => slot.entity)).toEqual([null, 'clothing:boots'])
-    expect(holds(me, g, wearing('clothing:raincoat'))).toBe(false)
+    expect(holds(me, g, wardrobe.wearing('clothing:raincoat'))).toBe(false)
     expect(holds(me, g, { 'wardrobe/wearing': { entity: 'clothing:raincoat', at: 'friend:kim' } })).toBe(true)
   })
 

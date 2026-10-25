@@ -22,9 +22,9 @@ Runs a command and says whether it took. On a refusal, `ok` is `false`, `state` 
 
 ```ts
 import { apply } from '@ifloom/engine'
-import { go } from '@ifloom/plugin-places'
+import { places } from '@ifloom/plugin-places'
 
-const out = apply(state, game, go('cafe'))
+const out = apply(state, game, places.go('cafe'))
 if (!out.ok) console.log(out.reason) // the reason, such as a place's `blocked` line
 state = out.state
 ```
@@ -133,7 +133,7 @@ type Command =
 
 A command that names one thing names it `id`, and one that sets a value takes it as `to`. Plugins' commands follow the same rule, as in `{ type: 'custom', name: 'places/go', with: { id: 'cafe' } }`.
 
-The union is closed, so a game can't add a command type. Something new for the player to do is an [action](/docs/reference/actions), done with the `action` command. A [plugin](/docs/reference/plugins) adds its commands under the one type `custom`, by name, and so does the game's own code, as [`rules.commands`](/docs/reference/rules#commands) sent as `{ 'game/rest': true }`. For example, walking somewhere is the [places plugin](/docs/plugins/places#commands)'s `places/go`, which you write as `go('cafe')`, and talking to someone is the [cast](/docs/plugins/cast#commands)'s `cast/talk`, written `talk('ava')`.
+The union is closed, so a game can't add a command type. Something new for the player to do is an [action](/docs/reference/actions), done with the `action` command. A [plugin](/docs/reference/plugins) adds its commands under the one type `custom`, by name, and so does the game's own code, as [`rules.commands`](/docs/reference/rules#commands) sent as `{ 'game/rest': true }`. For example, walking somewhere is the [places plugin](/docs/plugins/places#commands)'s `places/go`, which you write as `places.go('cafe')`, and talking to someone is the [cast](/docs/plugins/cast#commands)'s `cast/talk`, written `cast.talk('ava')`.
 
 Each built-in handler below runs only if no lock or [guard](/docs/reference/plugins#guards), the game's own or a plugin's, stopped the command. The refusals listed for each come after a lock's and a guard's, and before a [warning](/docs/reference/actions#warningof).
 

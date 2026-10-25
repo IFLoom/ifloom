@@ -6,12 +6,12 @@
  */
 import { describe, expect, it } from 'vitest'
 import { apply, loadGame, startingState, view, type Game, type GameState, type Content, type CommandRef, type GameRules } from '@ifloom/engine'
-import { closeApp, openApp, type DevicesView } from '@ifloom/plugin-devices'
-import { postTo, react, type FeedsView } from '@ifloom/plugin-feed'
-import { replyTo, type MessagesView } from '@ifloom/plugin-messages'
-import { calendar, pass, period, sleep } from '@ifloom/plugin-calendar'
-import { at, go, location, places, where } from '@ifloom/plugin-places'
-import { call, cast, here, person, talk } from '@ifloom/plugin-cast'
+import { devices, type DevicesView } from '@ifloom/plugin-devices'
+import { feed, type FeedsView } from '@ifloom/plugin-feed'
+import { messages, type MessagesView } from '@ifloom/plugin-messages'
+import { calendar } from '@ifloom/plugin-calendar'
+import { places } from '@ifloom/plugin-places'
+import { cast } from '@ifloom/plugin-cast'
 import { phone } from '../src/index.ts'
 
 const clock = calendar()
@@ -53,7 +53,7 @@ const town: Content = {
   actions: [
     {
       id: 'photo',
-      blocked: [{ when: { not: here('ava') }, reason: 'Nobody to take a picture of.' }],
+      blocked: [{ when: { not: cast.here('ava') }, reason: 'Nobody to take a picture of.' }],
       effects: [{ create: 'photo', with: { id: 'ava.cafe', name: 'Ava at the café', image: 'art/ava-cafe.jpg' }, at: 'player' }],
     },
     {
@@ -64,8 +64,8 @@ const town: Content = {
         { when: { kv: 'postedToday' }, reason: 'You have posted today.' },
       ],
       effects: [
-        pass(1),
-        postTo('fans', 'fans.ava-cafe', { text: 'Coffee with a friend.', image: 'art/ava-cafe.jpg' }),
+        calendar.pass(1),
+        feed.post('fans', 'fans.ava-cafe', { text: 'Coffee with a friend.', image: 'art/ava-cafe.jpg' }),
         { kv: 'postedToday', to: true },
         { 'game/fanReaction': true },
       ],
@@ -81,10 +81,10 @@ const town: Content = {
     'studio.stats': '{{v:game/subscribersLine}}',
   },
   entities: [
-    location({ id: 'house', name: 'House', desc: 'Home', exits: ['cafe', 'work'], body: [{ prose: 'place.house' }] }),
-    location({ id: 'cafe', name: 'Café', desc: 'Café', exits: ['house'], body: [{ prose: 'place.cafe' }] }),
-    location({ id: 'work', name: 'Work', desc: 'Work', exits: ['house'], body: [{ prose: 'place.work' }] }),
-    person({
+    places.location({ id: 'house', name: 'House', desc: 'Home', exits: ['cafe', 'work'], body: [{ prose: 'place.house' }] }),
+    places.location({ id: 'cafe', name: 'Café', desc: 'Café', exits: ['house'], body: [{ prose: 'place.cafe' }] }),
+    places.location({ id: 'work', name: 'Work', desc: 'Work', exits: ['house'], body: [{ prose: 'place.work' }] }),
+    cast.person({
       id: 'ava',
       name: 'Ava',
       desc: 'Friend',
@@ -92,7 +92,7 @@ const town: Content = {
       home: 'cafe',
       talk: 'ava.hi',
       storyline: 'ava',
-      call: { scene: 'ava.call', when: { not: period('night') }, busy: 'Straight to voicemail.' },
+      call: { scene: 'ava.call', when: { not: calendar.period('night') }, busy: 'Straight to voicemail.' },
     }),
   ],
   data: {
@@ -116,12 +116,12 @@ const town: Content = {
 const rules: GameRules = {
   values: { subscribersLine: (state) => `${state.stats.subscribers ?? 0} subscribers` },
   // How a post did: the game's own roll, here a fixed one.
-  effects: { fanReaction: () => [{ stat: 'subscribers', by: 5 }, react('fans.ava-cafe', { likes: 12, from: 'ava', text: 'Love this' })] },
+  effects: { fanReaction: () => [{ stat: 'subscribers', by: 5 }, feed.react('fans.ava-cafe', { likes: 12, from: 'ava', text: 'Love this' })] },
 }
 
 function game(): Game {
   const loaded = loadGame(
-    [kit.content, { name: 'base', resets: { postedToday: false }, locks: [{ when: at('work'), deny: ['devices/*'], reason: 'Not at work.' }] }, town],
+    [kit.content, { name: 'base', resets: { postedToday: false }, locks: [{ when: places.at('work'), deny: ['devices/*'], reason: 'Not at work.' }] }, town],
     {
       id: 'phone-town',
       title: 'Phone town',
@@ -156,13 +156,13 @@ describe('a smartphone on the sidebar', () => {
 
   it('gets a text when the story allows, with a notice and a badge, and replies to it', () => {
     const g = game()
-    let state = run(begin(g), g, go('cafe'), talk('ava'), { type: 'choose', id: 'bye' })
-    state = run(state, g, go('house'))
-    state = run(clock.write(state, { day: 1, period: 'night' }), g, sleep())
+    let state = run(begin(g), g, places.go('cafe'), cast.talk('ava'), { type: 'choose', id: 'bye' })
+    state = run(state, g, places.go('house'))
+    state = run(clock.write(state, { day: 1, period: 'night' }), g, calendar.sleep())
     expect(view(state, g).notices.byTag).toEqual({ texts: 1 })
     expect(phoneOf(state, g).badge).toBe(1)
     expect(phoneOf(state, g).apps.find((app) => app.id === 'texts')?.badge).toBe(1)
-    state = run(state, g, openApp('texts'), replyTo('ava.hey', 'reply'))
+    state = run(state, g, devices.open('texts'), messages.reply('ava.hey', 'reply'))
     const texts = (view(state, g).plugins.messages as MessagesView).channels[0]
     expect(texts.threads[0].messages[0].replied).toBe('You too!')
     expect(phoneOf(state, g).badge).toBe(0)
@@ -170,12 +170,12 @@ describe('a smartphone on the sidebar', () => {
 
   it('takes a photo only with someone to take, and keeps it in the gallery', () => {
     const g = game()
-    let state = run(begin(g), g, openApp('camera'))
+    let state = run(begin(g), g, devices.open('camera'))
     expect(phoneOf(state, g).open?.sections[0]).toMatchObject({
       type: 'actions',
       actions: [{ label: 'Take a photo', disabled: 'Nobody to take a picture of.' }],
     })
-    state = run(state, g, closeApp('phone'), go('cafe'), openApp('camera'), { type: 'action', id: 'photo' }, openApp('gallery'))
+    state = run(state, g, devices.close('phone'), places.go('cafe'), devices.open('camera'), { type: 'action', id: 'photo' }, devices.open('gallery'))
     expect(phoneOf(state, g).open?.sections[0]).toMatchObject({
       type: 'list',
       entries: [{ id: 'photo:ava.cafe', title: 'Ava at the café', image: 'art/ava-cafe.jpg' }],
@@ -184,7 +184,7 @@ describe('a smartphone on the sidebar', () => {
 
   it('posts to the creator app once a day, at a price, and the post does what the game rolls', () => {
     const g = game()
-    let state = run(begin(g), g, go('cafe'), { type: 'action', id: 'photo' }, openApp('studio'))
+    let state = run(begin(g), g, places.go('cafe'), { type: 'action', id: 'photo' }, devices.open('studio'))
     const post = () => phoneOf(state, g).open?.sections[1]
     expect(post()).toMatchObject({ type: 'actions', actions: [{ label: 'Post a photo', disabled: undefined }] })
     state = run(state, g, { type: 'action', id: 'post' })
@@ -197,21 +197,21 @@ describe('a smartphone on the sidebar', () => {
 
   it('calls the people the player has met, unless they don’t pick up', () => {
     const g = game()
-    expect(phoneOf(run(begin(g), g, openApp('contacts')), g).open?.sections[0]).toEqual({ type: 'list', entries: [] })
-    let state = run(begin(g), g, go('cafe'), talk('ava'), { type: 'choose', id: 'bye' })
-    state = run(state, g, go('house'), openApp('contacts'))
+    expect(phoneOf(run(begin(g), g, devices.open('contacts')), g).open?.sections[0]).toEqual({ type: 'list', entries: [] })
+    let state = run(begin(g), g, places.go('cafe'), cast.talk('ava'), { type: 'choose', id: 'bye' })
+    state = run(state, g, places.go('house'), devices.open('contacts'))
     expect(phoneOf(state, g).open?.sections[0]).toMatchObject({ type: 'list', entries: [{ id: 'ava', actions: [{ label: 'Call', disabled: undefined }] }] })
-    state = run(state, g, call('ava'))
+    state = run(state, g, cast.call('ava'))
     expect(state.sceneId).toBe('ava.call')
-    expect(where(state)).toBe('house')
+    expect(places.where(state)).toBe('house')
     const night = clock.write(begin(g), { day: 1, period: 'night' })
-    expect(apply(night, g, call('ava')).reason).toBe('Straight to voicemail.')
+    expect(apply(night, g, cast.call('ava')).reason).toBe('Straight to voicemail.')
   })
 
   it('stays in the pocket at work: its apps greyed out, and one left open closes', () => {
     const g = game()
-    const state = run(begin(g), g, openApp('camera'), go('work'))
-    expect(apply(state, g, openApp('texts')).reason).toBe('Not at work.')
+    const state = run(begin(g), g, devices.open('camera'), places.go('work'))
+    expect(apply(state, g, devices.open('texts')).reason).toBe('Not at work.')
     expect(phoneOf(state, g).open).toBeNull()
     expect(phoneOf(state, g).apps.every((app) => app.disabled === 'Not at work.')).toBe(true)
   })

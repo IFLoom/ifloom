@@ -196,9 +196,9 @@ A titled part of a layout, in the side column or the story. It hides itself when
 ```tsx
 import { Section } from '@ifloom/react'
 import { WardrobeCard } from '@ifloom/plugin-wardrobe/react'
-import { at } from '@ifloom/plugin-places'
+import { places } from '@ifloom/plugin-places'
 
-<Section id="wardrobe" title="Wearing" collapsible when={at('flat')}>
+<Section id="wardrobe" title="Wearing" collapsible when={places.at('flat')}>
   <WardrobeCard title={false} />
 </Section>
 ```
@@ -291,7 +291,7 @@ Returns the runner, the current [`View`](/docs/reference/view) and `send`. `send
 
 ```tsx
 import { useState } from 'react'
-import { go } from '@ifloom/plugin-places'
+import { places } from '@ifloom/plugin-places'
 import { Button, useGame } from '@ifloom/react'
 
 function Purse() {
@@ -304,7 +304,7 @@ function GoHome() {
   const [said, setSaid] = useState<string>()
   return (
     <>
-      <Button onClick={() => setSaid(send(go('flat')).reason)}>Go home</Button>
+      <Button onClick={() => setSaid(send(places.go('flat')).reason)}>Go home</Button>
       {said ? <p className="text-sm text-muted-foreground">{said}</p> : null}
     </>
   )

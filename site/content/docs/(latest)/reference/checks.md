@@ -448,7 +448,7 @@ This is how the [places plugin](/docs/plugins/places) says what a location names
 ```ts
 references: {
   // A call to places/go names the location it goes to.
-  calls: (table, name, args) => (table === 'commands' && name === 'go' ? [location(String(args.id))] : []),
+  calls: (table, name, args) => (table === 'commands' && name === 'go' ? [places.location(String(args.id))] : []),
   content: (game) =>
     locationsOf(game).map((place) => ({
       list: 'locations',

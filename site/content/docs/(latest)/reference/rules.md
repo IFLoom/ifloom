@@ -171,7 +171,7 @@ onTurn: (state, { apply, before }) => {
 - A [`turn`](/docs/reference/effects#turn) effect applied here does nothing. A turn's own rules can't end another turn.
 - `apply` with no `on` applies to the state the hook was handed. When you've changed the state yourself first, pass it as `on`, or apply to the result of the last `apply`, as a plugin's [`set`](/docs/reference/plugins#plugincontext) does.
 - The end of a turn doesn't deliver messages. Those come from the [messages](/docs/plugins/messages) and [feed](/docs/plugins/feed) plugins, which deliver by condition after any command.
-- It's a function, so the [content checker](/docs/reference/checks) can't look inside it. A stat, scene or plugin effect it names with a typo isn't reported. Test it with the real [`sleep()`](/docs/plugins/calendar#commands) or a `turn` effect.
+- It's a function, so the [content checker](/docs/reference/checks) can't look inside it. A stat, scene or plugin effect it names with a typo isn't reported. Test it with the real [`calendar.sleep()`](/docs/plugins/calendar#commands) or a `turn` effect.
 
 ### onTurnDone
 

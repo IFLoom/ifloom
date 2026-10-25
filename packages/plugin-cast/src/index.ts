@@ -5,10 +5,10 @@
  * as stats the game declares on their kind of entity.
  *
  * The engine knows no characters. A person is an entity that carries the
- * `cast/person` trait, written with `person({ ... })` in content's
+ * `cast/person` trait, written with `cast.person({ ... })` in content's
  * `entities`: their name, `desc` and `image` are the entity's, and their
  * schedule, talk and call are the trait's. The plugin brings the kind
- * `character`, which `person()` uses, so a stat declared `of: 'character'` is
+ * `character`, which `cast.person()` uses, so a stat declared `of: 'character'` is
  * theirs: `{ stat: 'friendship', of: 'character:ava', gte: 25 }`. Inside a
  * person's own conditions, `'$'` is them.
  *
@@ -83,7 +83,7 @@ declare module '@ifloom/engine' {
 }
 
 /**
- * What `person()` takes: an entity's fields (its `of` is `'character'` if
+ * What `cast.person()` takes: an entity's fields (its `of` is `'character'` if
  * left out; its `desc` is the line under their name, "Runs the café", and
  * its `image` their portrait) and the `cast/person` trait's, side by side.
  */
@@ -100,7 +100,7 @@ export type CastOptions = {
 
 /** One person as the UI draws them. */
 export type PersonView = {
-  /** Their id, as `talk('ava')` names them; the whole reference for a person of another kind than the cast's. */
+  /** Their id, as `cast.talk('ava')` names them; the whole reference for a person of another kind than the cast's. */
   id: string
   /** As content names them: `'character:ava'`. */
   ref: EntityRef
@@ -189,7 +189,7 @@ const PERSON_FIELDS = ['fullName', 'pronouns', 'home', 'schedule', 'talk', 'call
 const talkOptions = (person: Person): TalkOption[] => (typeof person.talk === 'string' ? [{ scene: person.talk }] : (person.talk ?? []))
 
 /** Build the plugin. It asks the places plugin where the player is, by name, wherever each is listed. */
-export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
+function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
   const kind = options.kind ?? KIND
   /** Who a call names: a bare id is one of the cast's kind, a reference (what `'$'` becomes) is as written. */
   const refOf = (id: string): EntityRef => (id.includes(':') || id === '$' ? id : `${kind}:${id}`) as EntityRef
@@ -410,7 +410,7 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
         problems.push({
           list: 'characters',
           id: String(entry?.id ?? ''),
-          what: `characters are entities now: write them in entities with person({ id, name, ... })`,
+          what: `characters are entities now: write them in entities with cast.person({ id, name, ... })`,
         })
       }
       return problems
@@ -424,10 +424,10 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
  * the trait's written side by side.
  *
  * ```ts
- * entities: [person({ id: 'ava', name: 'Ava', desc: 'Runs the café', home: 'park', talk: 'ava.hi' })]
+ * entities: [cast.person({ id: 'ava', name: 'Ava', desc: 'Runs the café', home: 'park', talk: 'ava.hi' })]
  * ```
  */
-export function person(def: PersonDef): EntityDef {
+function person(def: PersonDef): EntityDef {
   const { of, traits, ...rest } = def
   const entity: Record<string, unknown> = {}
   const trait: Record<string, unknown> = {}
@@ -440,14 +440,20 @@ export function person(def: PersonDef): EntityDef {
 }
 
 /** The command that starts a conversation. */
-export const talk = (who: string): CommandRef => ({ [`${ID}/talk`]: { id: who } })
+const talk = (who: string): CommandRef => ({ [`${ID}/talk`]: { id: who } })
 /** The command that calls someone. */
-export const call = (who: string): CommandRef => ({ [`${ID}/call`]: { id: who } })
+const call = (who: string): CommandRef => ({ [`${ID}/call`]: { id: who } })
 /** True while any of these is in the room. */
-export const here = (...who: string[]): Condition => ({ [`${ID}/here`]: { character: who } })
+const here = (...who: string[]): Condition => ({ [`${ID}/here`]: { character: who } })
 /** True while this one is in one of these places. */
-export const isAt = (who: string, ...places: string[]): Condition => ({ [`${ID}/at`]: { character: who, at: places } })
+const isAt = (who: string, ...places: string[]): Condition => ({ [`${ID}/at`]: { character: who, at: places } })
 /** True once the player has met any of these. */
-export const hasMet = (...who: string[]): Condition => ({ [`${ID}/met`]: { character: who } })
-/** How content names a character's entity, for `of`, `at` and `entity`: `character('ava')` is `'character:ava'`. */
-export const character = (who: string, kind = KIND): EntityRef => `${kind}:${who}`
+const hasMet = (...who: string[]): Condition => ({ [`${ID}/met`]: { character: who } })
+/** How content names a character's entity, for `of`, `at` and `entity`: `cast.character('ava')` is `'character:ava'`. */
+const character = (who: string, kind = KIND): EntityRef => `${kind}:${who}`
+
+/**
+ * The plugin, with its helpers on it: `cast()` makes the plugin for the
+ * game's `plugins`, and content is written with `cast.person({ ... })`, `cast.talk('ava')` and `cast.call('ava')`.
+ */
+export const cast = Object.assign(castPlugin, { person, character, talk, call, here, at: isAt, met: hasMet })

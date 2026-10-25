@@ -6,7 +6,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { apply, createRunner, startingState, type GameState, type CommandRef } from '@ifloom/engine'
-import { go } from '@ifloom/plugin-places'
+import { places } from '@ifloom/plugin-places'
 import { GameShell } from '@ifloom/react'
 import { townUi } from '../src/ui.ts'
 import { clock, smallTown } from '../src/game.ts'
@@ -37,7 +37,7 @@ afterEach(() => {
 describe('quick feet, in the browser', () => {
   it('reads the arrow, takes the key in time, and pays out after five rounds', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
-    state = run(clock.write({ ...state, turn: 1 }, { day: 1, period: 'morning' }), go('high-street'), go('park'))
+    state = run(clock.write({ ...state, turn: 1 }, { day: 1, period: 'morning' }), places.go('high-street'), places.go('park'))
     const runner = createRunner(game, state)
     render(<GameShell runner={runner} plugins={townUi()} keys />)
     const coins = runner.state.stats.coins

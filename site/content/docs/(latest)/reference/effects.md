@@ -157,7 +157,7 @@ With `random`, it's set to a whole number drawn between the two ends, both inclu
 Without `of`, the key is the player's. `of` names another kv store, the same way the [`kv` condition](/docs/reference/conditions#kv) reads it:
 
 - **An [entity](/docs/reference/entities)**, as in `of: 'staff:ana'`, or `of: '$'` inside an [`each`](#each). If the entity isn't there, the effect does nothing.
-- **A [storyline](/docs/reference/storylines)**, as in `of: 'storyline:ava'`, its own kv store. A storyline doesn't keep score of how well someone likes the player. Keep that as a stat on the [cast](/docs/plugins/cast#each-one-is-an-entity)'s characters: `{ stat: 'friendship', by: 5, of: character('ava') }`.
+- **A [storyline](/docs/reference/storylines)**, as in `of: 'storyline:ava'`, its own kv store. A storyline doesn't keep score of how well someone likes the player. Keep that as a stat on the [cast](/docs/plugins/cast#each-one-is-an-entity)'s characters: `{ stat: 'friendship', by: 5, of: cast.character('ava') }`.
 - **The [minigame](/docs/reference/minigames#its-kv-store) being played**, `of: 'minigame'`, a key of its kv. With no minigame running, it does nothing. The checker reports a key that no minigame declares in its `kv`, and one a minigame uses but doesn't declare itself.
 
 #### The phase
@@ -190,7 +190,7 @@ With `{ from }` in place of a scene's id, it draws a [storylet](/docs/reference/
 
 The draw is seeded by the save, the turn and a count of draws from that set, kept in the kv key `storylet:<from>`, so the same save always draws the same scene and [`replay`](/docs/reference/runner#replay) draws it again. See [Storylets](/docs/reference/storylets) for the details and the checks.
 
-The engine has no effect that moves the player. The [places plugin](/docs/plugins/places) keeps track of places, and its [`places/move`](/docs/plugins/places#effects) effect, written `moveTo('park')`, puts the player somewhere at once. Written out, that's `{ 'places/move': { location: 'park' } }`.
+The engine has no effect that moves the player. The [places plugin](/docs/plugins/places) keeps track of places, and its [`places/move`](/docs/plugins/places#effects) effect, written `places.move('park')`, puts the player somewhere at once. Written out, that's `{ 'places/move': { location: 'park' } }`.
 
 ### closeStoryline
 
@@ -409,7 +409,7 @@ When a tick runs a timer out, the timer stops and its `effects` run. See [When a
 { panel: null }
 ```
 
-Opens a [panel](/docs/reference/panels) over the story by name, such as a shop's counter or a job board, with what it needs in `with`. A panel already open is replaced, and `panel: null` closes it. The UI decides what each name draws. The shop and jobs plugins write these for you with [`openShop`](/docs/plugins/shop#opening-a-counter) and [`openJobs`](/docs/plugins/jobs#opening-the-job-board).
+Opens a [panel](/docs/reference/panels) over the story by name, such as a shop's counter or a job board, with what it needs in `with`. A panel already open is replaced, and `panel: null` closes it. The UI decides what each name draws. The shop and jobs plugins write these for you with [`shop.open`](/docs/plugins/shop#opening-a-counter) and [`jobs.open`](/docs/plugins/jobs#opening-the-job-board).
 
 The panel stays open while the player uses it, and closes when a later command ends a turn or changes the scene. See [How long a panel stays open](/docs/reference/panels#how-long-a-panel-stays-open).
 
@@ -481,4 +481,4 @@ A [plugin](/docs/reference/plugins)'s effect is called the same way, with the pl
 
 - The Corner Café: the `end-week` action in [`examples/cafe/src/world/actions.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/actions.ts) runs two of the game's own effects, then `each` over the staff to lower their morale, `remove` on anyone below 20, and `{ turn: true }`. The `hiring` scene's choices `create` new staff.
 - The Letter: in [`examples/novel/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/novel/src/story), `{ kv: 'fibs', by: 1 }` counts a lie, and the choices in the first two chapters end with `{ turn: true }` and a `scene` effect.
-- Small Town: in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story), the café's `sit` action draws a storylet with `{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }`, the park's `arrows` action starts a minigame, its `skim` action rolls two dice against 8, and Ava's choices raise her friendship with `{ stat: 'friendship', by: 5, of: character('ava') }`.
+- Small Town: in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story), the café's `sit` action draws a storylet with `{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }`, the park's `arrows` action starts a minigame, its `skim` action rolls two dice against 8, and Ava's choices raise her friendship with `{ stat: 'friendship', by: 5, of: cast.character('ava') }`.

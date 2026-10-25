@@ -4,7 +4,7 @@ import { act, cleanup, fireEvent, render, renderHook, within } from '@testing-li
 import type { ReactNode } from 'react'
 import { createRunner, loadGame, startingState, type Game } from '@ifloom/engine'
 import { GameProvider, GameShell } from '@ifloom/react'
-import { wardrobe, wearable, type WardrobeView } from '../src/index.ts'
+import { wardrobe, type WardrobeView } from '../src/index.ts'
 import { useWardrobe, wardrobeUi } from '../src/react/index.tsx'
 
 afterEach(cleanup)
@@ -16,8 +16,8 @@ function game(): Game {
         name: 'flat',
         kinds: [{ id: 'clothing', label: 'Clothing', unique: true, listed: false }],
         entities: [
-          { id: 'coat', of: 'clothing', name: 'coat', at: 'player', traits: { ...wearable('back') } },
-          { id: 'cape', of: 'clothing', name: 'cape', at: 'player', traits: { ...wearable('back') } },
+          { id: 'coat', of: 'clothing', name: 'coat', at: 'player', traits: { ...wardrobe.wearable('back') } },
+          { id: 'cape', of: 'clothing', name: 'cape', at: 'player', traits: { ...wardrobe.wearable('back') } },
         ],
         data: { wardrobe: { slots: [{ id: 'back', label: 'Back', start: 'clothing:coat' }] } },
       },

@@ -3,7 +3,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { apply, createRunner, notify, startingState, type Command, type CommandRef, type GameState } from '@ifloom/engine'
-import { go } from '@ifloom/plugin-places'
+import { places } from '@ifloom/plugin-places'
 import { GameShell } from '@ifloom/react'
 import { townUi } from '../src/ui.ts'
 import { clock, smallTown } from '../src/game.ts'
@@ -36,7 +36,7 @@ describe('the showcase shell', () => {
     const run = (state: GameState, ...commands: (Command | CommandRef)[]) =>
       commands.reduce<GameState>((now, command) => apply(now, game, command).state, state)
     const unpacked = run(startingState(game), { type: 'choose', id: 'unpack' })
-    const cafe = run(clock.write(unpacked, { day: 1, period: 'morning' }), go('high-street'), go('cafe'), { type: 'action', id: 'places/coffee' })
+    const cafe = run(clock.write(unpacked, { day: 1, period: 'morning' }), places.go('high-street'), places.go('cafe'), { type: 'action', id: 'places/coffee' })
     const runner = createRunner(game, cafe)
     render(<GameShell runner={runner} plugins={townUi()} layout={Layout} />)
     expect(document.querySelector('[data-status="caffeinated"]')?.textContent).toContain('Caffeinated')
@@ -72,7 +72,7 @@ describe('the showcase shell', () => {
     act(() => void fireEvent.click(screen.getByRole('button', { name: /Open the wardrobe/ })))
     expect(screen.getByRole('dialog', { name: 'Wearing' }).querySelector('[data-part="wardrobe"]')).not.toBeNull()
     act(() => void fireEvent.keyDown(document.activeElement ?? document.body, { key: 'Escape' }))
-    act(() => void runner.apply(go('high-street')))
+    act(() => void runner.apply(places.go('high-street')))
     expect(document.querySelector('[data-section="wardrobe"]')).toBeNull()
   })
 })

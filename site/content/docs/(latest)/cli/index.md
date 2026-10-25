@@ -297,11 +297,11 @@ A probe made by playing. It starts from the game's [starting state](/docs/refere
 So a probe never writes the state's own shape, and it stays a whole state when the game or a plugin adds a field.
 
 ```ts
-import { sleep } from '@ifloom/plugin-calendar'
+import { calendar } from '@ifloom/plugin-calendar'
 
 probes: (game) => {
   // The first night, played: unpack, then go to bed.
-  const morning = probe('first-morning', game, [{ play: { type: 'choose', id: 'unpack' } }, { play: sleep() }])
+  const morning = probe('first-morning', game, [{ play: { type: 'choose', id: 'unpack' } }, { play: calendar.sleep() }])
   // Six days on from there, in the afternoon, with the cat named.
   const later = probe('a-week-in', game, [{ turn: { by: 6 } }, { 'calendar/set': { period: 'afternoon' } }, { kv: 'catName', to: 'Biscuit' }], morning)
   return [probe('moving-day', game, []), morning, later]
@@ -470,14 +470,14 @@ Pick probes that differ in what the content looks at: the first screen, an ordin
 ```ts
 // examples/showcase/src/game.ts
 import { probe, type Probe, type ProbeStep } from '@ifloom/cli/game'
-import { sleep } from '@ifloom/plugin-calendar'
-import { applyStatus } from '@ifloom/plugin-statuses'
+import { calendar } from '@ifloom/plugin-calendar'
+import { statuses } from '@ifloom/plugin-statuses'
 
 /** A day goes by, and Ava says hello on it: her scene opened and left, as the player does. */
 const helloFromAva: ProbeStep[] = [{ turn: true }, { play: { type: 'scene', id: 'ava.hi' } }, { play: { type: 'leave' } }]
 
 function probes(game: Game): Probe[] {
-  const firstMorning = probe('first-morning', game, [{ play: { type: 'choose', id: 'unpack' } }, { play: sleep() }])
+  const firstMorning = probe('first-morning', game, [{ play: { type: 'choose', id: 'unpack' } }, { play: calendar.sleep() }])
   const aWeekIn = probe(
     'a-week-in',
     game,
@@ -496,7 +496,7 @@ function probes(game: Game): Probe[] {
       { stat: 'charm', to: 5 },
       { stat: 'friendship', of: 'character:ava', to: 30 },
       // Still buzzing from the morning's coffee.
-      applyStatus('caffeinated'),
+      statuses.apply('caffeinated'),
       // Two of the day's park visitors, made as the park's trigger makes them.
       { 'generators/generate': { template: 'visitor', count: 2 } },
     ],

@@ -125,7 +125,7 @@ The showcase has one: [`postLatest`](/docs/guide/showcase#feeds-and-an-effect-wo
 type PluginCall = { [name: `${string}/${string}`]: PluginArgs | true }
 ```
 
-A call by name: a plugin's condition, effect or command, or the game's own, with its full name as the only key and its arguments as the value. It works anywhere a [condition](/docs/reference/conditions), an [effect](/docs/reference/effects) or a [`CommandRef`](#commandref) goes, and the [content checker](/docs/reference/checks) checks the name. Plugins' helpers, such as `questDone('bread')`, write this form.
+A call by name: a plugin's condition, effect or command, or the game's own, with its full name as the only key and its arguments as the value. It works anywhere a [condition](/docs/reference/conditions), an [effect](/docs/reference/effects) or a [`CommandRef`](#commandref) goes, and the [content checker](/docs/reference/checks) checks the name. Plugins' helpers, such as `quests.done('bread')`, write this form.
 
 In code, a call whose name a plugin or the game [declares](/docs/reference/plugins#typed-calls-queries-and-views) is checked against what it declares, so `{ 'quests/done': { qeust: 'bread' } }` fails to compile. A call nobody declares takes any arguments, as `PluginCall` says. `Condition`, `Effect` and `CommandRef` hold these as a [`ConditionCall`](/docs/reference/plugins#conditioncall-effectcall-and-commandcall), an `EffectCall` and a `CommandCall`.
 

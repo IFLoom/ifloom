@@ -11,10 +11,7 @@ To give the player cheats in the released game, such as +20 coins or a supporter
 To add it, list `@ifloom/plugin-debug` in your game's `package.json` and add `debug()` to the game's `plugins` in development builds only. [Leave it out of release builds](#leave-it-out-of-release-builds) shows how.
 
 ```ts
-import {
-  debug, debugStat, debugKv, debugHeld, debugScene, debugTime, debugTurn, debugGo,
-  type DebugView,
-} from '@ifloom/plugin-debug'
+import { debug, type DebugView } from '@ifloom/plugin-debug'
 ```
 
 Every command it adds sets [`ignoresLocks`](/docs/reference/plugins#commands-outside-the-story), so it works in any stretch of the game, including an intro that only moves through its scenes. None of them pays a cost or needs an exit. Its [React UI](#the-react-ui) draws a [debug card](#debugcard) for it when the game has it.
@@ -74,13 +71,13 @@ It lists `cooperates: ['calendar', 'places']` (see [`cooperates`](/docs/referenc
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ 'debug/stat': { stat, to, of? } }` | `debugStat(stat, to, of?)` | Puts a [stat](/docs/reference/stats) at a value, held to its range. It writes the state directly rather than running a [`stat`](/docs/reference/effects#setting-a-stat) effect with `to`. With `of`, it sets an [entity](/docs/reference/entities)'s stat, so `of: 'character:ava'` sets Ava's friendship. |
-| `{ 'debug/kv': { key, to } }` | `debugKv(key, to)` | Sets a key in the [kv store](/docs/reference/state#kv) to `true`, `false`, a number or a word. |
-| `{ 'debug/held': { entity, to, at? } }` | `debugHeld(entity, to, at?)` | Sets how many of a [thing](/docs/reference/entities#holding-things) a holder holds, `'you'` if `at` is left out, through the [`entity`](/docs/reference/effects#entity) effect with `to`. Below 0 counts as 0, and a unique thing is taken from whoever had it. |
-| `{ 'debug/scene': { id } }` | `debugScene(scene?)` | Puts the scene `id` on screen. With no `id`, it closes the one that's open. |
-| `{ 'debug/time': { day?, period? } }` | `debugTime({ day?, period? })` | Sets the [calendar](/docs/plugins/calendar)'s clock, through its [`calendar/set`](/docs/plugins/calendar#effects) effect. `day` counts from 0. A half you leave out stays as it is. |
-| `{ 'debug/turn': { to } }` | `debugTurn(turn)` | Sets [`state.turn`](/docs/reference/state#turn), how many turns have passed. |
-| `{ 'debug/go': { id } }` | `debugGo(location)` | Puts the player in the place `id`, through the places plugin's [`places/move`](/docs/plugins/places#effects) effect, which closes any scene. |
+| `{ 'debug/stat': { stat, to, of? } }` | `debug.stat(stat, to, of?)` | Puts a [stat](/docs/reference/stats) at a value, held to its range. It writes the state directly rather than running a [`stat`](/docs/reference/effects#setting-a-stat) effect with `to`. With `of`, it sets an [entity](/docs/reference/entities)'s stat, so `of: 'character:ava'` sets Ava's friendship. |
+| `{ 'debug/kv': { key, to } }` | `debug.kv(key, to)` | Sets a key in the [kv store](/docs/reference/state#kv) to `true`, `false`, a number or a word. |
+| `{ 'debug/held': { entity, to, at? } }` | `debug.held(entity, to, at?)` | Sets how many of a [thing](/docs/reference/entities#holding-things) a holder holds, `'you'` if `at` is left out, through the [`entity`](/docs/reference/effects#entity) effect with `to`. Below 0 counts as 0, and a unique thing is taken from whoever had it. |
+| `{ 'debug/scene': { id } }` | `debug.scene(scene?)` | Puts the scene `id` on screen. With no `id`, it closes the one that's open. |
+| `{ 'debug/time': { day?, period? } }` | `debug.time({ day?, period? })` | Sets the [calendar](/docs/plugins/calendar)'s clock, through its [`calendar/set`](/docs/plugins/calendar#effects) effect. `day` counts from 0. A half you leave out stays as it is. |
+| `{ 'debug/turn': { to } }` | `debug.turn(turn)` | Sets [`state.turn`](/docs/reference/state#turn), how many turns have passed. |
+| `{ 'debug/go': { id } }` | `debug.go(location)` | Puts the player in the place `id`, through the places plugin's [`places/move`](/docs/plugins/places#effects) effect, which closes any scene. |
 
 A command is refused, with a line from [Strings](#strings), when:
 
@@ -101,7 +98,7 @@ The commands set the state and nothing else, so you can get to the state you wan
 - **No cost.** Nothing is paid, and no time passes except what `debug/time` and `debug/turn` set.
 - **No locks.** A [lock](/docs/reference/locks) never stops them, even one that denies `'*'`.
 - **No exit for `debug/go`.** It ignores a place's [`blocked`](/docs/plugins/places#the-location-trait) entries, opening hours included, and runs nothing on arrival. It's a [`places/move`](/docs/plugins/places#effects), so the place's [`arrive`](/docs/plugins/places#arrival) doesn't run.
-- **No turn ends.** `debug/time` moves the calendar's clock and leaves [`state.turn`](/docs/reference/state#turn) alone. `debug/turn` changes the counter and leaves the calendar's clock alone. Neither runs [`rules.onTurn`](/docs/reference/rules#onturn) or any plugin's `onTurn` [hook](/docs/reference/plugins#hooks-and-providers), and neither puts the [`resets`](/docs/reference/rules#resets) kv keys back. To test a night, use the calendar's real [`sleep()`](/docs/plugins/calendar#commands) or a [`turn`](/docs/reference/effects#turn) effect.
+- **No turn ends.** `debug/time` moves the calendar's clock and leaves [`state.turn`](/docs/reference/state#turn) alone. `debug/turn` changes the counter and leaves the calendar's clock alone. Neither runs [`rules.onTurn`](/docs/reference/rules#onturn) or any plugin's `onTurn` [hook](/docs/reference/plugins#hooks-and-providers), and neither puts the [`resets`](/docs/reference/rules#resets) kv keys back. To test a night, use the calendar's real [`calendar.sleep()`](/docs/plugins/calendar#commands) or a [`turn`](/docs/reference/effects#turn) effect.
 - **`debug/scene` replaces any open scene.** The [`scene`](/docs/reference/commands#scene) command refuses while a scene is open, but this one doesn't.
 
 They still go through [`apply`](/docs/reference/commands#apply) like any command. Once one has run, [triggers](/docs/reference/triggers) fire, the scene left on screen is counted as seen, and every plugin's `onCommand` hook runs. Setting a kv key that a trigger watches fires that trigger.
@@ -109,15 +106,18 @@ They still go through [`apply`](/docs/reference/commands#apply) like any command
 ### Helpers
 
 ```ts
-import type { CommandRef, KvValue } from '@ifloom/engine'
+const debug: {
+  (): DefinedPlugin<null, DebugView>
+  stat(stat: string, to: number, of?: string): CommandRef
+  kv(key: string, to: KvValue): CommandRef
+  held(entity: string, to: number, at?: string): CommandRef
+  scene(scene?: string): CommandRef
+  time(time: { day?: number; period?: string }): CommandRef
+  turn(turn: number): CommandRef
+  go(location: string): CommandRef
+}
 
-const debugStat: (stat: string, to: number, of?: string) => CommandRef
-const debugKv: (key: string, to: KvValue) => CommandRef
-const debugHeld: (entity: string, to: number, at?: string) => CommandRef
-const debugScene: (scene?: string) => CommandRef
-const debugTime: (time: { day?: number; period?: string }) => CommandRef
-const debugTurn: (turn: number) => CommandRef
-const debugGo: (location: string) => CommandRef
+import type { CommandRef, KvValue } from '@ifloom/engine'
 ```
 
 Each one builds the command above, ready for [`apply`](/docs/reference/commands#apply) or a [runner](/docs/reference/runner).
@@ -128,37 +128,37 @@ Say you want to test a chat with Ava in the [showcase](/docs/guide/showcase)'s c
 
 ```ts
 import { apply, startingState, type CommandRef, type Game } from '@ifloom/engine'
-import { where } from '@ifloom/plugin-places'
-import { debugGo, debugScene, debugHeld, debugStat, debugTime, debugTurn, debugKv } from '@ifloom/plugin-debug'
+import { places } from '@ifloom/plugin-places'
+import { debug } from '@ifloom/plugin-debug'
 
 declare const game: Game // the showcase, built with debug()
 
 let state = startingState(game) // moving day, behind a lock that denies '*'
 
 const set = (command: CommandRef) => (state = apply(state, game, command).state)
-set(debugStat('coins', 40))
-set(debugKv('catName', 'Biscuit'))
-set(debugHeld('item:sandwich', 2))
-set(debugStat('friendship', 25, 'character:ava'))   // a stat declared of: 'character'
-set(debugTurn(4))
-set(debugTime({ day: 4, period: 'afternoon' }))      // the game has the calendar
-set(debugGo('cafe'))                                  // and the places plugin
-set(debugScene('ava.hi'))
+set(debug.stat('coins', 40))
+set(debug.kv('catName', 'Biscuit'))
+set(debug.held('item:sandwich', 2))
+set(debug.stat('friendship', 25, 'character:ava'))   // a stat declared of: 'character'
+set(debug.turn(4))
+set(debug.time({ day: 4, period: 'afternoon' }))      // the game has the calendar
+set(debug.go('cafe'))                                  // and the places plugin
+set(debug.scene('ava.hi'))
 
 state.stats.coins    // 40
-where(state)         // 'cafe'
+places.where(state)         // 'cafe'
 state.sceneId        // 'ava.hi'
 state.turn           // 4
 
-apply(state, game, debugStat('luck', 3)).reason     // 'There is no stat called luck.'
-apply(state, game, debugStat('friendship', 5, 'character:ghost')).reason
+apply(state, game, debug.stat('luck', 3)).reason     // 'There is no stat called luck.'
+apply(state, game, debug.stat('friendship', 5, 'character:ghost')).reason
 // 'There is nobody and nothing called character:ghost.'
-apply(state, game, debugStat('friendship', 5)).reason // 'That is not whose friendship it is.'
-apply(state, game, debugGo('moon')).reason           // 'There is no location called moon.'
-apply(state, game, debugHeld('item:sandwich', NaN)).reason // 'That needs a number.'
-apply(state, game, debugTime({ period: 'noon' })).reason
+apply(state, game, debug.stat('friendship', 5)).reason // 'That is not whose friendship it is.'
+apply(state, game, debug.go('moon')).reason           // 'There is no location called moon.'
+apply(state, game, debug.held('item:sandwich', NaN)).reason // 'That needs a number.'
+apply(state, game, debug.time({ period: 'noon' })).reason
 // 'A day is a whole number from 0, and a period one of morning, afternoon, evening, night, late.'
-apply(state, game, debugTurn(-1)).reason            // 'A turn is a whole number from 0.'
+apply(state, game, debug.turn(-1)).reason            // 'A turn is a whole number from 0.'
 ```
 
 The debug commands don't change the `phase` kv key, so the showcase's moving-day lock still stops ordinary commands here. A test that wants to play on from this point can start from a state with `phase` set to `open` and no scene, as the showcase's own `probes` do: `{ ...start, kv: { ...start.kv, phase: 'open' }, sceneId: null }`, where `start` is `startingState(game)`.
@@ -300,7 +300,7 @@ The [debug](/docs/plugins/debug) plugin's view (the locks on, the triggers fired
 ## Gotchas
 
 - **A number must be a number.** `to: '5'`, `to: ''` or `to: null` in a command written by hand is refused with `debug/notANumber`, and so are `NaN` and `Infinity`.
-- **A stat is held to its range** as the game declares it, so `debugStat('coins', 5000)` gives 999 in the showcase, where coins have `max: 999`. To test past the ceiling, raise the ceiling.
+- **A stat is held to its range** as the game declares it, so `debug.stat('coins', 5000)` gives 999 in the showcase, where coins have `max: 999`. To test past the ceiling, raise the ceiling.
 - **No rule is asked.** `debug/stat` writes the value into the state itself, held to the stat's range. It doesn't go through a `stat` effect, so neither the game's [`rules.onStat`](/docs/reference/rules#onstat) nor a plugin's `onStat` sees the change.
 - **The stat must be the owner's.** With no `of`, it has to be one of the player's stats. With `of`, it has to be one declared on that entity's kind. Otherwise the command is refused with `That is not whose friendship it is.` (`debug/notTheirs`).
 - **A kv key isn't checked.** Any key is set, including a misspelt one.

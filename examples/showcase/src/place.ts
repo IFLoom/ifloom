@@ -3,6 +3,6 @@
  * Town. Each place's file in `story/` writes its place with it, in its
  * `entities`, with the words the room shows in its `body`.
  */
-import { location, type PlaceDef } from '@ifloom/plugin-places'
+import { places, type PlaceDef } from '@ifloom/plugin-places'
 
-export const place = (def: PlaceDef) => location({ desc: 'Small Town', ...def })
+export const place = (def: PlaceDef) => places.location({ desc: 'Small Town', ...def })

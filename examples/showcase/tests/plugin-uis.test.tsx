@@ -4,10 +4,10 @@ import { act, cleanup, fireEvent, render, renderHook, screen, within } from '@te
 import type { ReactNode } from 'react'
 import { createRunner, heldCount, holding, loadGame, startingState, type Game, type Runner } from '@ifloom/engine'
 import { achievements } from '@ifloom/plugin-achievements'
-import { jobs, openJobs } from '@ifloom/plugin-jobs'
-import { openShop, shop, vendor, type ShopView } from '@ifloom/plugin-shop'
-import { applyStatus, statuses } from '@ifloom/plugin-statuses'
-import { inventory, usable } from '@ifloom/plugin-inventory'
+import { jobs } from '@ifloom/plugin-jobs'
+import { shop, type ShopView } from '@ifloom/plugin-shop'
+import { statuses } from '@ifloom/plugin-statuses'
+import { inventory } from '@ifloom/plugin-inventory'
 import { GameProvider, GameShell, Inventory, PanelHost, RoomActions, SceneStage, type Components, Game as GamePage, Story } from '@ifloom/react'
 import { AchievementList, useAchievements } from '@ifloom/plugin-achievements/react'
 import { useInventory } from '@ifloom/plugin-inventory/react'
@@ -56,14 +56,14 @@ function game(withPlugins = true): Game {
             of: 'food',
             name: 'Sandwich',
             desc: 'Cheese and pickle.',
-            traits: { ...usable('Eat the sandwich', [{ stat: 'energy', by: 20 }]) },
+            traits: { ...inventory.usable('Eat the sandwich', [{ stat: 'energy', by: 20 }]) },
           },
           { id: 'flapjack', of: 'food', name: 'Flapjack' },
           { id: 'cake', of: 'food', name: 'Cake' },
           // The counter is the shop's: a vendor only when the game has the plugin.
           ...(withPlugins
             ? [
-                vendor({
+                shop.vendor({
                   id: 'counter',
                   name: 'The counter',
                   buysBack: 0.5,
@@ -77,12 +77,12 @@ function game(withPlugins = true): Game {
             : []),
         ],
         actions: [
-          { id: 'coffee', label: 'Have a coffee', effects: [applyStatus('buzz')] },
+          { id: 'coffee', label: 'Have a coffee', effects: [statuses.apply('buzz')] },
           { id: 'sleep', label: 'Sleep', effects: [{ turn: true }] },
           // The counter and the jobs are buttons only when the game has their plugins.
-          { id: 'counter', ...(withPlugins ? { label: 'Go to the counter' } : {}), effects: [openShop('counter')] },
-          { id: 'board', ...(withPlugins ? { label: 'Read the job board' } : {}), effects: [openJobs()] },
-          { id: 'paper', ...(withPlugins ? { label: 'Read the paper' } : {}), effects: [openJobs(['weekend'])] },
+          { id: 'counter', ...(withPlugins ? { label: 'Go to the counter' } : {}), effects: [shop.open('counter')] },
+          { id: 'board', ...(withPlugins ? { label: 'Read the job board' } : {}), effects: [jobs.open()] },
+          { id: 'paper', ...(withPlugins ? { label: 'Read the paper' } : {}), effects: [jobs.open(['weekend'])] },
           { id: 'pockets', label: 'Check your pockets', effects: [{ panel: 'pockets', with: { title: 'Your pockets' } }] },
         ],
         data: {

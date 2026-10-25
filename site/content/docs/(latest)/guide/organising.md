@@ -15,7 +15,7 @@ src/
 ├── world/            what the whole game shares, one file per kind
 │   ├── stats.ts      the stats
 │   ├── things.ts     kinds and things: what the player carries, wears or buys
-│   ├── cast.ts       the people, entities written with person(), when there's a cast
+│   ├── cast.ts       the people, entities written with cast.person(), when there's a cast
 │   └── settings.ts   what the player can change
 └── story/            the story, one file per area
     ├── opening.ts    an area's scenes, their words, and its plugin content

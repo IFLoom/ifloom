@@ -134,8 +134,8 @@ The phone itself is one `phone()` call and one lock:
 ```ts
 import { loadGame, type Content, type GameRules } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
-import { at, places } from '@ifloom/plugin-places'
-import { cast, here } from '@ifloom/plugin-cast'
+import { places } from '@ifloom/plugin-places'
+import { cast } from '@ifloom/plugin-cast'
 import { phone } from '@ifloom/phone'
 
 declare const town: Content // the showcase's content, below
@@ -155,7 +155,7 @@ const kit = phone({
             ...(['ava', 'sam'] as const).map((who) => ({
               id: `photo-${who}`,
               label: who === 'ava' ? 'Photograph Ava' : 'Photograph Sam',
-              blocked: [{ when: { not: here(who) }, reason: 'They aren’t here.' }],
+              blocked: [{ when: { not: cast.here(who) }, reason: 'They aren’t here.' }],
               effects: [
                 { create: 'photo', with: { id: who, name: who === 'ava' ? 'Ava at work' : 'Sam and the dog', image: `photo/${who}.svg` }, at: 'player' },
               ],
@@ -186,7 +186,7 @@ const day: Content = {
   locks: [
     { when: { kv: 'phase', is: ['arrival'] }, deny: ['*'], except: ['choose', 'input'], reason: 'Unpack first.' },
     // No phone at work.
-    { when: at('office'), deny: ['devices/*'], reason: 'Not at work.' },
+    { when: places.at('office'), deny: ['devices/*'], reason: 'Not at work.' },
   ],
 }
 
@@ -202,15 +202,15 @@ const { game } = loadGame([kit.content, day, town], {
 The rest is the town's content. These are the parts the phone uses (the full files are in `examples/showcase/src/story/ava.ts` and `story/sam.ts`):
 
 ```ts
-import { character, person } from '@ifloom/plugin-cast'
-import { period } from '@ifloom/plugin-calendar'
+import { cast } from '@ifloom/plugin-cast'
+import { calendar } from '@ifloom/plugin-calendar'
 import type { MessageDef } from '@ifloom/plugin-messages'
 
 // Ava can be called in the evening and at night (the rest of her entry is left out here).
-const ava = person({
+const ava = cast.person({
   id: 'ava',
   name: 'Ava',
-  call: { scene: 'ava.call', when: period('evening', 'night'), busy: 'She’s busy at the counter. Try her this evening.' },
+  call: { scene: 'ava.call', when: calendar.period('evening', 'night'), busy: 'She’s busy at the counter. Try her this evening.' },
 })
 
 // Her text arrives a turn after the player first talks to her. In the showcase, a turn is a day.
@@ -220,7 +220,7 @@ const text: MessageDef = {
   from: 'ava',
   when: { all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] },
   body: [{ prose: 'ava.text' }],
-  replies: [{ id: 'yes', effects: [{ stat: 'friendship', by: 5, of: character('ava') }] }, { id: 'later' }],
+  replies: [{ id: 'yes', effects: [{ stat: 'friendship', by: 5, of: cast.character('ava') }] }, { id: 'later' }],
 }
 ```
 
@@ -250,14 +250,14 @@ The next morning the player goes to the café and talks to Ava. The camera's but
 
 ```ts
 import { apply, view, type Game, type GameState } from '@ifloom/engine'
-import { openApp, type DevicesView } from '@ifloom/plugin-devices'
+import { devices, type DevicesView } from '@ifloom/plugin-devices'
 import type { FeedsView } from '@ifloom/plugin-feed'
 
 declare const game: Game
 declare let state: GameState // at the café on the first morning, after talking to Ava
 const phoneOf = (state: GameState) => (view(state, game).plugins.devices as DevicesView).devices[0]
 
-state = apply(state, game, openApp('camera')).state
+state = apply(state, game, devices.open('camera')).state
 phoneOf(state).open?.sections[0]
 // { type: 'actions', actions: [
 //   { id: 'photo-ava', label: 'Photograph Ava', ... },
@@ -266,11 +266,11 @@ phoneOf(state).open?.sections[0]
 //     disabled: 'Take a photo first.', ... }] }
 
 state = apply(state, game, { type: 'action', id: 'devices/photo-ava' }).state
-state = apply(state, game, openApp('gallery')).state
+state = apply(state, game, devices.open('gallery')).state
 phoneOf(state).open?.sections[0]
 // { type: 'list', entries: [{ id: 'photo.ava', title: 'Ava at work', text: '', image: 'art/photo/ava.svg', actions: [] }] }
 
-state = apply(state, game, openApp('camera')).state
+state = apply(state, game, devices.open('camera')).state
 state = apply(state, game, { type: 'action', id: 'devices/post' }).state
 const social = (view(state, game).plugins.feed as FeedsView).feeds.find((feed) => feed.id === 'social')!
 social.posts[0]
@@ -285,47 +285,47 @@ Contacts lists Ava once the player has met her, because she has a `call` and the
 
 ```ts
 import { apply, view, type Game, type GameState } from '@ifloom/engine'
-import { openApp, type DevicesView } from '@ifloom/plugin-devices'
-import { call } from '@ifloom/plugin-cast'
+import { devices, type DevicesView } from '@ifloom/plugin-devices'
+import { cast } from '@ifloom/plugin-cast'
 
 declare const game: Game
 declare let state: GameState // the same day, at home
 const phoneOf = (state: GameState) => (view(state, game).plugins.devices as DevicesView).devices[0]
 
-apply(state, game, call('ava')).reason   // in the morning: 'She’s busy at the counter. Try her this evening.'
+apply(state, game, cast.call('ava')).reason   // in the morning: 'She’s busy at the counter. Try her this evening.'
 
 // ...wait until the evening
-state = apply(state, game, openApp('contacts')).state
+state = apply(state, game, devices.open('contacts')).state
 phoneOf(state).open?.sections[0]
 // { type: 'list', entries: [{ id: 'ava', title: 'Ava', text: 'Runs the café', image: 'art/character/ava.svg',
 //   actions: [{ id: 'call-ava', label: 'Call', command: { type: 'custom', name: 'cast/call', with: { id: 'ava' } } }] }] }
-state = apply(state, game, call('ava')).state
+state = apply(state, game, cast.call('ava')).state
 state.sceneId           // 'ava.call'
 ```
 
 ### A text, with a notice and a badge
 
-The player goes to bed with the calendar's [`sleep()`](/docs/plugins/calendar#commands). That command ends the day, which is a turn in the showcase, so `{ since: 'ava.hi', gte: 1 }` holds once it has run. Ava's text arrives at the end of the `sleep` command itself, with a notice tagged with the channel:
+The player goes to bed with the calendar's [`calendar.sleep()`](/docs/plugins/calendar#commands). That command ends the day, which is a turn in the showcase, so `{ since: 'ava.hi', gte: 1 }` holds once it has run. Ava's text arrives at the end of the `sleep` command itself, with a notice tagged with the channel:
 
 ```ts
 import { apply, view, type Game, type GameState } from '@ifloom/engine'
-import { openApp, type DevicesView } from '@ifloom/plugin-devices'
-import { replyTo } from '@ifloom/plugin-messages'
-import { sleep } from '@ifloom/plugin-calendar'
+import { devices, type DevicesView } from '@ifloom/plugin-devices'
+import { messages } from '@ifloom/plugin-messages'
+import { calendar } from '@ifloom/plugin-calendar'
 
 declare const game: Game
 declare let state: GameState // that night, after the call
 const phoneOf = (state: GameState) => (view(state, game).plugins.devices as DevicesView).devices[0]
 
-state = apply(state, game, sleep()).state
+state = apply(state, game, calendar.sleep()).state
 view(state, game).notices.byTag.texts                          // 1
 phoneOf(state).apps.find((app) => app.id === 'texts')?.badge   // 1
 phoneOf(state).badge     // 3: the text, and Ava's and Sam's posts on Social
 
-state = apply(state, game, openApp('texts')).state
+state = apply(state, game, devices.open('texts')).state
 phoneOf(state).open?.sections   // [{ type: 'plugin', plugin: 'messages', with: { channel: 'texts' } }]
 // The UI draws view.plugins.messages, channel 'texts'.
-state = apply(state, game, replyTo('ava.text', 'yes')).state
+state = apply(state, game, messages.reply('ava.text', 'yes')).state
 phoneOf(state).badge     // 2: Social is still unseen
 ```
 
@@ -335,19 +335,19 @@ The lock refuses every devices command, greys out every app with its reason, and
 
 ```ts
 import { apply, view, type Game, type GameState } from '@ifloom/engine'
-import { openApp, type DevicesView } from '@ifloom/plugin-devices'
-import { go } from '@ifloom/plugin-places'
+import { devices, type DevicesView } from '@ifloom/plugin-devices'
+import { places } from '@ifloom/plugin-places'
 
 declare const game: Game
 declare let state: GameState // a weekday morning, at home
 const phoneOf = (state: GameState) => (view(state, game).plugins.devices as DevicesView).devices[0]
 
-state = apply(state, game, openApp('camera')).state
-state = apply(state, game, go('high-street')).state
-state = apply(state, game, go('office')).state
+state = apply(state, game, devices.open('camera')).state
+state = apply(state, game, places.go('high-street')).state
+state = apply(state, game, places.go('office')).state
 phoneOf(state).open                              // null: the camera closed on arrival
 phoneOf(state).apps.map((app) => app.disabled)   // ['Not at work.', 'Not at work.', ...]
-apply(state, game, openApp('texts')).reason     // 'Not at work.'
+apply(state, game, devices.open('texts')).reason     // 'Not at work.'
 ```
 
 ## Gotchas

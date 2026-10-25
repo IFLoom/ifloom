@@ -14,7 +14,7 @@ This is the showcase's pair. Moving day only moves through its scene, and the ph
 
 ```ts
 import type { Content } from '@ifloom/engine'
-import { at } from '@ifloom/plugin-places'
+import { places } from '@ifloom/plugin-places'
 
 // in story/moving-day.ts
 export const movingDay: Content = {
@@ -24,11 +24,11 @@ export const movingDay: Content = {
 
 // in story/office.ts
 export const office: Content = {
-  locks: [{ id: 'no-phone', when: at('office'), deny: ['devices/*'], reason: 'Not at work.' }],
+  locks: [{ id: 'no-phone', when: places.at('office'), deny: ['devices/*'], reason: 'Not at work.' }],
 }
 ```
 
-The examples on this page use the [places plugin](/docs/plugins/places), where `go`, `moveTo` and `at` come from `@ifloom/plugin-places`.
+The examples on this page use the [places plugin](/docs/plugins/places), where `go`, `places.move` and `at` come from `@ifloom/plugin-places`.
 
 ## Lock
 
@@ -76,7 +76,7 @@ What `deny` and `except` can name. A plugin command's type is always `custom`, s
 
 ```ts
 // No phone at work: every command of the devices plugin, while the player is in the office.
-{ when: at('office'), deny: ['devices/*'], reason: 'Not at work.' }
+{ when: places.at('office'), deny: ['devices/*'], reason: 'Not at work.' }
 ```
 
 ## lockOn
@@ -113,7 +113,7 @@ locks: [{ id: 'intro', when: { kv: 'phase', is: 'arrival' }, deny: ['*'], except
 The last choice of the intro:
 
 ```ts
-effects: [{ kv: 'phase', to: 'open' }, moveTo('flat')]
+effects: [{ kv: 'phase', to: 'open' }, places.move('flat')]
 ```
 
 In a game with the [calendar](/docs/plugins/calendar), the intro's scenes may need to carry the clock through the night. Build the calendar with `calendar({ curfew: { not: { kv: 'phase', is: 'arrival' } } })` so its curfew doesn't apply during the intro.
@@ -158,11 +158,11 @@ An action whose effects hold `{ turn: true }` is greyed out with the line, and o
 On the first morning, the player should get to work, not spend the morning jogging. Actions that take no time are still allowed. With the [calendar](/docs/plugins/calendar), time passes through its [`calendar/pass`](/docs/plugins/calendar#effects) effect, so a lock on that effect stops only the actions that pass time:
 
 ```ts
-import { period } from '@ifloom/plugin-calendar'
+import { calendar } from '@ifloom/plugin-calendar'
 
 locks: [
   {
-    when: { all: [{ kv: 'phase', is: 'first-day' }, period('morning')] },
+    when: { all: [{ kv: 'phase', is: 'first-day' }, calendar.period('morning')] },
     deny: ['action', 'custom'],
     effect: 'calendar/pass',
     reason: 'No time for that. Work starts soon.',
@@ -170,7 +170,7 @@ locks: [
 ]
 ```
 
-Buying a coffee takes no time, so it still works. A jog in the park, whose effects hold `pass(1)`, is greyed out with the line. If you deny `'*'` instead, the room empties (see [`lockedOut`](#lockedout)). Add `'choose'` to stop scene choices that pass time too.
+Buying a coffee takes no time, so it still works. A jog in the park, whose effects hold `calendar.pass(1)`, is greyed out with the line. If you deny `'*'` instead, the room empties (see [`lockedOut`](#lockedout)). Add `'choose'` to stop scene choices that pass time too.
 
 ## See it in an example
 

@@ -5,12 +5,7 @@ description: "Vendors that sell things for any spendable stat, with stock the ve
 `@ifloom/plugin-shop` adds vendors the player buys from and sells back to. What a vendor sells are [entities](/docs/reference/entities), things the player then holds, for prices in any of your [spendable stats](/docs/reference/stats#statdef), such as coins, energy or both. A good never runs out unless you give it a stock, which the vendor holds and can get back each turn or each day. A vendor can take things back for part of their price, and mark a few goods down each day.
 
 ```ts
-import {
-  shop, vendor, buy, sell, vendorOpen, inStock, openShop, sellable,
-  vendorsOf, vendorOf, vendorRef, sellableOf, shopView,
-  type Vendor, type VendorDef, type GoodDef, type DiscountDef, type Restock, type Sellable,
-  type ShopState, type StockRecord, type ShopView, type VendorView, type GoodView,
-} from '@ifloom/plugin-shop'
+import { shop, vendorsOf, vendorOf, sellableOf, shopView, type Vendor, type VendorDef, type GoodDef, type DiscountDef, type Restock, type Sellable, type ShopState, type StockRecord, type ShopView, type VendorView, type GoodView } from '@ifloom/plugin-shop'
 ```
 
 The plugin's engine side draws nothing: its React UI is a [subpath of its own](#the-react-ui), and any UI can draw it. You can put its `buy` commands on any button, such as a location's actions, and the button shows the price and greys out with the reason as any action's does. For a shop screen, its view lists every vendor and their goods, and [Building UI for plugins](/docs/recipes/plugin-ui#a-shop-counter) builds one.
@@ -43,17 +38,17 @@ Without the calendar, a vendor with `hours` is always open and a day is a turn. 
 function shop(): DefinedPlugin<ShopState, ShopView>
 ```
 
-Builds the plugin, with the id `shop`. It brings the `vendor` [kind](/docs/reference/entities#kinddef), unique and unlisted, which [`vendor()`](#vendor) uses. A vendor is any entity that carries the plugin's `shop/vendor` trait, and that entity holds the vendor's stock.
+Builds the plugin, with the id `shop`. It brings the `vendor` [kind](/docs/reference/entities#kinddef), unique and unlisted, which [`shop.vendor()`](#vendor) uses. A vendor is any entity that carries the plugin's `shop/vendor` trait, and that entity holds the vendor's stock.
 
 ## Writing vendors
 
-A vendor is an entity, written with [`vendor()`](#vendor) in your content's [`entities`](/docs/reference/loader#content). Entities merge by reference, so a mod can add a vendor or replace one, and a [`traits`](/docs/reference/entities#traits) row changes what one sells. The things they sell are entities of your own kinds. This is a shop on its own, with no other plugin, the showcase's café counter:
+A vendor is an entity, written with [`shop.vendor()`](#vendor) in your content's [`entities`](/docs/reference/loader#content). Entities merge by reference, so a mod can add a vendor or replace one, and a [`traits`](/docs/reference/entities#traits) row changes what one sells. The things they sell are entities of your own kinds. This is a shop on its own, with no other plugin, the showcase's café counter:
 
 ```ts
 import { holding, type Content } from '@ifloom/engine'
-import { buy, sellable, vendor } from '@ifloom/plugin-shop'
+import { shop } from '@ifloom/plugin-shop'
 
-const counter = vendor({
+const counter = shop.vendor({
   id: 'counter',
   name: 'The counter',
   at: ['cafe'],
@@ -72,14 +67,14 @@ const town: Content = {
   stats: [{ id: 'coins', label: 'Coins', start: 12, max: 999, spendable: true, format: '{n} coins' }],
   kinds: [{ id: 'food', label: 'Food', listed: false }],
   entities: [
-    { id: 'sandwich', of: 'food', name: 'sandwich', desc: 'Cheese and pickle.', traits: { ...sellable({ coins: 4 }) } },
+    { id: 'sandwich', of: 'food', name: 'sandwich', desc: 'Cheese and pickle.', traits: { ...shop.sellable({ coins: 4 }) } },
     { id: 'flapjack', of: 'food', name: 'flapjack', desc: 'Oats and syrup.' },
     counter,
   ],
 }
 
 // A button for a location's actions, or anywhere else a button goes.
-const button = { id: 'flapjack', label: 'Buy a flapjack', command: buy('counter', 'food:flapjack') }
+const button = { id: 'flapjack', label: 'Buy a flapjack', command: shop.buy('counter', 'food:flapjack') }
 // And a line that changes once you have one.
 const line = { prose: 'cafe.full', when: holding('food:sandwich') }
 ```
@@ -89,7 +84,9 @@ The kind is unlisted (`listed: false`) because what the player holds already rea
 ### vendor
 
 ```ts
-function vendor(def: VendorDef): EntityDef
+const shop: {
+  vendor(def: VendorDef): EntityDef
+}
 
 type VendorDef = Omit<EntityDef, 'of' | 'at'> & Vendor & { of?: string }
 ```
@@ -97,7 +94,7 @@ type VendorDef = Omit<EntityDef, 'of' | 'at'> & Vendor & { of?: string }
 Writes a vendor for your content's `entities`. You give it the entity's fields and the `shop/vendor` trait's fields side by side, and it returns an [`EntityDef`](/docs/reference/entities#entitydef) of the kind `vendor` with the trait's fields in `traits['shop/vendor']`.
 
 ```ts
-vendor({ id: 'kiosk', name: 'The kiosk', goods: [{ entity: 'food:paper', price: { coins: 1 } }] })
+shop.vendor({ id: 'kiosk', name: 'The kiosk', goods: [{ entity: 'food:paper', price: { coins: 1 } }] })
 // { id: 'kiosk', of: 'vendor', name: 'The kiosk', traits: { 'shop/vendor': { goods: [{ entity: 'food:paper', price: { coins: 1 } }] } } }
 ```
 
@@ -105,7 +102,7 @@ vendor({ id: 'kiosk', name: 'The kiosk', goods: [{ entity: 'food:paper', price: 
 |---|---|
 | `id` | Unique among the entities of its kind. Commands name a vendor of the `vendor` kind by it, and its entity is `'vendor:<id>'`. |
 | `name` | What the player reads, such as "The counter". It's the entity's name, so prose tokens in it are filled in. |
-| `of` | Another kind for the vendor, such as `'character'` for a person who sells. Commands then name it by its whole reference, `buy('character:ava', 'food:bun')`. `'vendor'` if left out. |
+| `of` | Another kind for the vendor, such as `'character'` for a person who sells. Commands then name it by its whole reference, `shop.buy('character:ava', 'food:bun')`. `'vendor'` if left out. |
 
 The entity's other fields work as on any entity. `at` is left out because a vendor's `at` is the trait's, where on the map it stands.
 
@@ -129,7 +126,7 @@ What the `shop/vendor` trait holds. The plugin declares the trait and types it, 
 |---|---|
 | `at` | The [places](/docs/plugins/places) locations it stands at. Checked when the game has places. Everywhere if left out. |
 | `hours` | The [calendar](/docs/plugins/calendar)'s periods it's open in, such as `['morning', 'afternoon']`. Always open if left out. |
-| `open` | A [condition](/docs/reference/conditions) it's only open while, on top of `hours`, such as `weekday(0, 1, 2, 3, 4)`. |
+| `open` | A [condition](/docs/reference/conditions) it's only open while, on top of `hours`, such as `calendar.weekday(0, 1, 2, 3, 4)`. |
 | `closed` | What the player reads while it's closed. `Closed.` (the [`shop/closed`](#strings) string) if left out. |
 | `goods` | What it sells, in the order it lists them. |
 | `buysBack` | The fraction of a thing's price it pays to take one back, from 0 to 1. It takes nothing back if left out. |
@@ -174,11 +171,14 @@ A unique thing is always sold from the vendor's stock, since there's only one of
 ### The sellable trait
 
 ```ts
+const shop: {
+  sellable(price: Record<string, number>): { 'shop/sellable': Sellable }
+}
+
 type Sellable = { price: Record<string, number> }
-const sellable: (price: Record<string, number>) => { 'shop/sellable': Sellable }
 ```
 
-A thing's price, for every vendor that lists it without a `price` of its own. It's a [trait](/docs/reference/entities#traits), so you can write it on a kind as a default, on the entity, or in content's `traits` table, where a mod can change it. `sellable` writes it, to spread into `traits`:
+A thing's price, for every vendor that lists it without a `price` of its own. It's a [trait](/docs/reference/entities#traits), so you can write it on a kind as a default, on the entity, or in content's `traits` table, where a mod can change it. `shop.sellable` writes it, to spread into `traits`:
 
 ```ts
 kinds: [{ id: 'fruit', label: 'Fruit', listed: false, traits: { ...sellable({ coins: 1 }) } }],
@@ -202,8 +202,8 @@ Each day, `count` of the vendor's goods (1 if left out) are marked down by `off`
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ 'shop/buy': { vendor, entity, count? } }` | `buy(vendor, entity, count?)` | Pays today's price for `count` of the thing (1 if left out) and gives them to you. |
-| `{ 'shop/sell': { vendor, entity, count? } }` | `sell(vendor, entity, count?)` | Takes `count` of the thing from you and pays the vendor's `buysBack` fraction of its full price, rounded down per thing. A good with a stock goes back to the vendor. |
+| `{ 'shop/buy': { vendor, entity, count? } }` | `shop.buy(vendor, entity, count?)` | Pays today's price for `count` of the thing (1 if left out) and gives them to you. |
+| `{ 'shop/sell': { vendor, entity, count? } }` | `shop.sell(vendor, entity, count?)` | Takes `count` of the thing from you and pays the vendor's `buysBack` fraction of its full price, rounded down per thing. A good with a stock goes back to the vendor. |
 
 "You" is whoever the player is playing (see [`'you'`](/docs/reference/entities#protagonists-you-and-player)). Paying applies a [`stat`](/docs/reference/effects#stat) effect for each stat, so the game's `rules.onStat` sees it, then an `entity` or a `move` effect.
 
@@ -225,23 +225,23 @@ A button that sends `shop/buy` shows its price, because the command tells the en
 
 ```ts
 import { type ActionDef } from '@ifloom/engine'
-import { buy } from '@ifloom/plugin-shop'
+import { shop } from '@ifloom/plugin-shop'
 
 const actions: ActionDef[] = [
-  { id: 'sandwich', label: 'Buy a sandwich for later', command: buy('counter', 'food:sandwich') },
-  { id: 'flapjack', label: 'Buy a flapjack', command: buy('counter', 'food:flapjack') },
+  { id: 'sandwich', label: 'Buy a sandwich for later', command: shop.buy('counter', 'food:sandwich') },
+  { id: 'flapjack', label: 'Buy a flapjack', command: shop.buy('counter', 'food:flapjack') },
 ]
 ```
 
 ## Opening a counter
 
-Nothing about a vendor is drawn by itself. Content opens a vendor's counter in the `shop` [panel](/docs/reference/panels) with `openShop`, from anything that runs effects: a place's action, a choice in a person's scene, a thing's [use](/docs/plugins/inventory), an app's button.
+Nothing about a vendor is drawn by itself. Content opens a vendor's counter in the `shop` [panel](/docs/reference/panels) with `shop.open`, from anything that runs effects: a place's action, a choice in a person's scene, a thing's [use](/docs/plugins/inventory), an app's button.
 
 ```ts
-import { openShop } from '@ifloom/plugin-shop'
+import { shop } from '@ifloom/plugin-shop'
 
-// In the café's location. openShop('counter') is { panel: 'shop', with: { vendor: 'counter' } }.
-actions: [{ id: 'counter', label: 'Go to the counter', effects: [openShop('counter')] }],
+// In the café's location. shop.open('counter') is { panel: 'shop', with: { vendor: 'counter' } }.
+actions: [{ id: 'counter', label: 'Go to the counter', effects: [shop.open('counter')] }],
 ```
 
 The counter stays open while the player buys and sells, and closes when a turn ends or the scene changes. See [How long a panel stays open](/docs/reference/panels#how-long-a-panel-stays-open).
@@ -250,22 +250,22 @@ Opening a counter doesn't move the player. A vendor with `at` still sells only t
 
 ```ts
 // An online shop: no `at`, so it sells wherever the player is.
-const webshop = vendor({ id: 'webshop', name: 'Pinecone Online', goods: [{ entity: 'clothing:scarf', price: { coins: 10 } }] })
+const webshop = shop.vendor({ id: 'webshop', name: 'Pinecone Online', goods: [{ entity: 'clothing:scarf', price: { coins: 10 } }] })
 // A laptop app's actions section has a button that opens it.
 const app: AppDef = {
   id: 'pinecone', name: 'Pinecone', icon: 'basket', on: 'laptop',
-  sections: [{ actions: [{ id: 'browse', label: 'Browse the shop', effects: [openShop('webshop')] }] }],
+  sections: [{ actions: [{ id: 'browse', label: 'Browse the shop', effects: [shop.open('webshop')] }] }],
 }
 ```
 
-The checker reports an `openShop` for a vendor the game doesn't have (`unknown entity "vendor:kiosk"`), and a `shop` panel opened with no `vendor`.
+The checker reports an `shop.open` for a vendor the game doesn't have (`unknown entity "vendor:kiosk"`), and a `shop` panel opened with no `vendor`.
 
 ## Conditions
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ 'shop/open': { vendor } }` | `vendorOpen(vendor)` | The vendor is open now. Where the player is doesn't matter. |
-| `{ 'shop/inStock': { vendor, entity } }` | `inStock(vendor, entity)` | The vendor offers the thing now and has at least one left. Always, for a good that never runs out. |
+| `{ 'shop/open': { vendor } }` | `shop.vendorOpen(vendor)` | The vendor is open now. Where the player is doesn't matter. |
+| `{ 'shop/inStock': { vendor, entity } }` | `shop.inStock(vendor, entity)` | The vendor offers the thing now and has at least one left. Always, for a good that never runs out. |
 
 An unknown vendor or thing is false.
 
@@ -351,7 +351,7 @@ type GoodView = {
 
 ## The React UI
 
-`@ifloom/plugin-shop/react` draws a vendor's counter, for a game drawn with [`@ifloom/react`](/docs/react). List `shopUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the `shop` panel, which [`openShop`](#opening-a-counter) opens, is drawn as that vendor's [`ShopCounter`](#shopcounter), titled with its name.
+`@ifloom/plugin-shop/react` draws a vendor's counter, for a game drawn with [`@ifloom/react`](/docs/react). List `shopUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the `shop` panel, which [`shop.open`](#opening-a-counter) opens, is drawn as that vendor's [`ShopCounter`](#shopcounter), titled with its name.
 
 It's yours to leave out. Draw the plugin yourself from `view.plugins.shop`, or from [`useShop`](#useshop) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
@@ -368,7 +368,7 @@ mountGame(game, { plugins: [shopUi] })
 const shopUi: PluginUi
 ```
 
-The plugin's [`PluginUi`](/docs/react/kit#pluginui): the `shop` panel, which [`openShop`](#opening-a-counter) opens, is drawn as that vendor's [`ShopCounter`](#shopcounter), titled with its name.
+The plugin's [`PluginUi`](/docs/react/kit#pluginui): the `shop` panel, which [`shop.open`](#opening-a-counter) opens, is drawn as that vendor's [`ShopCounter`](#shopcounter), titled with its name.
 
 Its words are in `SHOP_WORDS`. A game rewords any of them with `ui.<key>` in its strings, as it does the React UI's own: `{ 'ui.buy': '…' }`.
 
@@ -389,7 +389,7 @@ function ShopDialog(props: ShopDialogProps): JSX.Element
 type ShopDialogProps = { vendorId: string | null; onClose: () => void }
 ```
 
-The vendor with this id in a [`Dialog`](/docs/react/components#dialog), titled with its name and drawn as a [`ShopCounter`](#shopcounter). It's closed while `vendorId` is `null` or names no vendor. It sends no command and keeps nothing in the state, so content usually opens a counter with [`openShop`](/docs/plugins/shop#opening-a-counter) instead. Use it for a button that is only UI:
+The vendor with this id in a [`Dialog`](/docs/react/components#dialog), titled with its name and drawn as a [`ShopCounter`](#shopcounter). It's closed while `vendorId` is `null` or names no vendor. It sends no command and keeps nothing in the state, so content usually opens a counter with [`shop.open`](/docs/plugins/shop#opening-a-counter) instead. Use it for a button that is only UI:
 
 ```tsx
 import { useState } from 'react'
@@ -469,29 +469,35 @@ A save from before the plugin was added loads with every stock full. A save from
 ### Helpers
 
 ```ts
-const buy: (vendor: string, entity: EntityRef, count?: number) => CommandRef
-const sell: (vendor: string, entity: EntityRef, count?: number) => CommandRef
-const vendorOpen: (vendor: string) => Condition
-const inStock: (vendor: string, entity: EntityRef) => Condition
-const openShop: (vendor: string) => Effect
-const sellable: (price: Record<string, number>) => { 'shop/sellable': Sellable }
+const shop: {
+  (): DefinedPlugin<ShopState, ShopView>
+  buy(vendor: string, entity: EntityRef, count?: number): CommandRef
+  sell(vendor: string, entity: EntityRef, count?: number): CommandRef
+  vendorOpen(vendor: string): Condition
+  inStock(vendor: string, entity: EntityRef): Condition
+  open(vendor: string): Effect
+  sellable(price: Record<string, number>): { 'shop/sellable': Sellable }
+}
 ```
 
-`openShop` opens the vendor's counter in the `shop` panel. See [Opening a counter](#opening-a-counter).
+`shop.open` opens the vendor's counter in the `shop` panel. See [Opening a counter](#opening-a-counter).
 
 ### vendorsOf, vendorOf and vendorRef
 
 ```ts
+const shop: {
+  vendorRef(vendor: string): EntityRef
+}
+
 function vendorsOf(state: GameState, game: Game): EntityRef[]
 function vendorOf(state: GameState, game: Game, ref: string | null | undefined): Vendor | undefined
-function vendorRef(vendor: string): EntityRef
 ```
 
 `vendorsOf` is every entity in the game now with the `shop/vendor` trait, as references: the vendors content declares, in their order, then those made in play.
 
 `vendorOf` is the [`Vendor`](#the-vendor-trait) trait of the vendor with this id or reference, with any good that names no entity left out (the checker reports it).
 
-`vendorRef` is the entity a vendor is, `vendorRef('counter')` is `'vendor:counter'`, for a condition or an effect on what it holds. A reference is returned as written.
+`vendorRef` is the entity a vendor is, `shop.vendorRef('counter')` is `'vendor:counter'`, for a condition or an effect on what it holds. A reference is returned as written.
 
 ### sellableOf
 
@@ -538,4 +544,4 @@ Vendors still written as a list in `data.shop.vendors`, as content did before sc
 
 ## See it in an example
 
-Small Town: the café's `counter` in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts) sells sandwiches, two flapjacks a day that it holds, and the newspaper, buys back at half, and has a daily discount. Their prices are their `sellable` traits, in [`examples/showcase/src/world/things.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/things.ts). The café's "Go to the counter" action opens it with `openShop('counter')`.
+Small Town: the café's `counter` in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts) sells sandwiches, two flapjacks a day that it holds, and the newspaper, buys back at half, and has a daily discount. Their prices are their `sellable` traits, in [`examples/showcase/src/world/things.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/things.ts). The café's "Go to the counter" action opens it with `shop.open('counter')`.

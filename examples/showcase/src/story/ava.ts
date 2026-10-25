@@ -4,11 +4,11 @@
  * read; the lines drawn at random, her small talk, are by key in `ava.prose.ts`.
  */
 import { choice, decide, give, holding, jump, move, point, say, text, type Content } from '@ifloom/engine'
-import { questActive } from '@ifloom/plugin-quests'
-import { day } from '@ifloom/plugin-calendar'
-import { character } from '@ifloom/plugin-cast'
-import { openJobs } from '@ifloom/plugin-jobs'
-import { drawMessage, messageReplied, messageSince, type MessageDef } from '@ifloom/plugin-messages'
+import { quests } from '@ifloom/plugin-quests'
+import { calendar } from '@ifloom/plugin-calendar'
+import { cast } from '@ifloom/plugin-cast'
+import { jobs } from '@ifloom/plugin-jobs'
+import { messages, type MessageDef } from '@ifloom/plugin-messages'
 import { prose } from './ava.prose.ts'
 
 /**
@@ -21,11 +21,11 @@ const smallTalk: MessageDef[] = ['rain', 'beans', 'river', 'ducks'].map((topic) 
   channel: 'texts',
   from: 'ava',
   drawnFrom: ['ava.chat'],
-  when: { not: messageSince(`ava.chat.${topic}`, { lt: 3 }) },
+  when: { not: messages.since(`ava.chat.${topic}`, { lt: 3 }) },
   body: [{ prose: `ava.chat.${topic}` }],
   // The beans want an answer, every time she asks.
   ...(topic === 'beans'
-    ? { replies: [{ id: 'taste', label: 'I’ll come and taste them', effects: [{ stat: 'friendship', by: 2, of: character('ava') }] }] }
+    ? { replies: [{ id: 'taste', label: 'I’ll come and taste them', effects: [{ stat: 'friendship', by: 2, of: cast.character('ava') }] }] }
     : {}),
 }))
 
@@ -50,7 +50,7 @@ export const ava: Content = {
         { variants: 'ava.smalltalk' },
         { text: 'She has your cup out before you ask.', when: { seen: 'ava.hi', gte: 3 } },
         // Things are held: once the shell is Ava's, it sits by her till.
-        { text: 'The river shell sits by the till, holding down the receipts.', when: { entity: 'keepsake:shell', at: character('ava') } },
+        { text: 'The river shell sits by the till, holding down the receipts.', when: { entity: 'keepsake:shell', at: cast.character('ava') } },
       ],
       choices: [
         // Shown while you hold the shell from the river: giving it moves it to her.
@@ -58,22 +58,22 @@ export const ava: Content = {
           id: 'shell',
           label: 'Give her the shell from the river',
           when: holding('keepsake:shell'),
-          effects: [move('keepsake:shell', character('ava')), { stat: 'friendship', by: 5, of: character('ava') }],
+          effects: [move('keepsake:shell', cast.character('ava')), { stat: 'friendship', by: 5, of: cast.character('ava') }],
         },
         {
           id: 'chat',
           label: 'Chat for a minute',
           once: { per: 'turn', reason: 'She has a queue.' },
-          effects: [{ stat: 'friendship', by: 5, of: character('ava') }],
+          effects: [{ stat: 'friendship', by: 5, of: cast.character('ava') }],
         },
         {
           id: 'compliment',
           label: 'Tell her the café is the best thing in town',
           when: { stat: 'charm', gte: 3 },
-          effects: [{ stat: 'friendship', by: 10, of: character('ava') }, { scene: null }],
+          effects: [{ stat: 'friendship', by: 10, of: cast.character('ava') }, { scene: null }],
         },
         // She points you at the job board by the till: the scene closes and the board opens over the room.
-        { id: 'work', label: 'Ask about weekend work', effects: [{ scene: null }, openJobs()] },
+        { id: 'work', label: 'Ask about weekend work', effects: [{ scene: null }, jobs.open()] },
         { id: 'bye', label: 'Leave her to it', effects: [{ scene: null }] },
       ],
     },
@@ -86,7 +86,7 @@ export const ava: Content = {
         {
           id: 'bye',
           label: 'Say goodnight',
-          effects: [{ stat: 'friendship', by: 3, of: character('ava') }, { scene: null }],
+          effects: [{ stat: 'friendship', by: 3, of: cast.character('ava') }, { scene: null }],
         },
       ],
     },
@@ -115,7 +115,7 @@ export const ava: Content = {
             then: [say('ava', 'They know my name. I never asked theirs.')],
           }),
           choice('stay', 'Sit with her until the light goes', {
-            effects: [{ stat: 'friendship', by: 5, of: character('ava') }],
+            effects: [{ stat: 'friendship', by: 5, of: cast.character('ava') }],
             then: [text(`The water goes orange, then grey. Neither of you says much.`)],
           }),
         ]),
@@ -126,7 +126,7 @@ export const ava: Content = {
   ],
   triggers: [
     // Once a day after you've answered Ava's first text, a line of her small talk from the pool.
-    { id: 'ava.chat', once: 'turn', when: messageReplied('ava.text'), effects: [drawMessage('ava.chat')] },
+    { id: 'ava.chat', once: 'turn', when: messages.replied('ava.text'), effects: [messages.draw('ava.chat')] },
   ],
   variants: {
     'ava.smalltalk': ['ava.smalltalk.rain', 'ava.smalltalk.beans', 'ava.smalltalk.river'],
@@ -138,9 +138,9 @@ export const ava: Content = {
           id: 'friend',
           title: 'A friend in town',
           storyline: 'ava',
-          starts: questActive('settle'),
+          starts: quests.active('settle'),
           stages: [
-            { id: 'close', hint: 'Spend time with Ava.', done: { stat: 'friendship', of: character('ava'), gte: 25 } },
+            { id: 'close', hint: 'Spend time with Ava.', done: { stat: 'friendship', of: cast.character('ava'), gte: 25 } },
             // A friendship takes days as well as visits: three since you met, however often you chat.
             {
               id: 'river',
@@ -166,7 +166,7 @@ export const ava: Content = {
           when: { all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] },
           body: [{ text: 'Good to meet you yesterday! Coffee’s on me next time 🙂' }],
           replies: [
-            { id: 'yes', label: 'Deal!', effects: [{ stat: 'friendship', by: 5, of: character('ava') }] },
+            { id: 'yes', label: 'Deal!', effects: [{ stat: 'friendship', by: 5, of: cast.character('ava') }] },
             { id: 'later', label: 'Maybe later in the week' },
           ],
         },
@@ -179,7 +179,7 @@ export const ava: Content = {
           id: 'ava.cake',
           feed: 'social',
           from: 'ava',
-          when: day({ gte: 1 }),
+          when: calendar.day({ gte: 1 }),
           body: [{ text: 'Lemon drizzle today. It will not last until noon.' }],
           likes: 14,
         },

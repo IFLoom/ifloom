@@ -7,10 +7,7 @@ description: "Cheats for the player: effects they can use at any time, free for 
 A cheat can be free for everyone, or refused with a reason (or hidden) while a condition holds. That's how you offer some cheats only to supporters, after the game is finished, or once a kv key is set. The plugin keeps a log of every use, so a replay shows them and your content can react, for example by refusing an achievement to a save that cheated.
 
 ```ts
-import {
-  cheats, runCheat, cheatUsed, cheatsOf, cheatsView,
-  type CheatDef, type CheatUse, type CheatsState, type CheatsView, type CheatView,
-} from '@ifloom/plugin-cheats'
+import { cheats, cheatsOf, cheatsView, type CheatDef, type CheatUse, type CheatsState, type CheatsView, type CheatView } from '@ifloom/plugin-cheats'
 ```
 
 ## Cheats or debug?
@@ -113,18 +110,18 @@ const gold: CheatDef = {
 }
 ```
 
-`unlocks/has` is the condition of the [unlocks plugin](/docs/plugins/unlocks), which checks a code the player enters. Its helper `hasUnlock('supporter')` writes the same condition. The cheats plugin doesn't know about it. It only asks the condition, as any `blocked` entry does, so you can gate a cheat on anything: a kv key, a finished storyline, an achievement. In a game without the unlocks plugin, `unlocks/has` is false, so the cheat above stays refused.
+`unlocks/has` is the condition of the [unlocks plugin](/docs/plugins/unlocks), which checks a code the player enters. Its helper `unlocks.has('supporter')` writes the same condition. The cheats plugin doesn't know about it. It only asks the condition, as any `blocked` entry does, so you can gate a cheat on anything: a kv key, a finished storyline, an achievement. In a game without the unlocks plugin, `unlocks/has` is false, so the cheat above stays refused.
 
 Add `hide: true` to leave the cheat off the panel instead of greyed out. A gate like this deters casual players, but it isn't protection: anyone who reads the game's code can find the cheat. To keep content from people without the code, put it in an unlock's [locked content](/docs/plugins/unlocks#locked-content), which ships encrypted. [Supporter content and cheats](/docs/recipes/supporter-content) compares the two.
 
 ## Using a cheat
 
-The player uses a cheat with the `cheats/use` command. Its button in the [view](#the-view) sends it, and `runCheat(id)` writes it:
+The player uses a cheat with the `cheats/use` command. Its button in the [view](#the-view) sends it, and `cheats.use(id)` writes it:
 
 ```ts
-import { runCheat } from '@ifloom/plugin-cheats'
+import { cheats } from '@ifloom/plugin-cheats'
 
-runner.apply(runCheat('coins'))
+runner.apply(cheats.use('coins'))
 ```
 
 When it takes, the cheat's effects run on the current state, then the plugin adds `{ cheat, turn }` to its log. The command:
@@ -140,19 +137,19 @@ Plugins' `onCommand` hooks run after it as after any command, so an achievement 
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ 'cheats/used': { cheat } }` | `cheatUsed(id)` | This save has used the cheat. |
-| `{ 'cheats/used': {} }` | `cheatUsed()` | This save has used any cheat. |
+| `{ 'cheats/used': { cheat } }` | `cheats.used(id)` | This save has used the cheat. |
+| `{ 'cheats/used': {} }` | `cheats.used()` | This save has used any cheat. |
 
 Use it to mark a save that cheated, or to keep something back from one:
 
 ```ts
-import { cheatUsed } from '@ifloom/plugin-cheats'
+import { cheats } from '@ifloom/plugin-cheats'
 
 const honest = {
   id: 'honest',
   title: 'By the book',
   description: 'Finish the game without a cheat.',
-  when: { all: [{ seen: 'ending' }, { not: cheatUsed() }] },
+  when: { all: [{ seen: 'ending' }, { not: cheats.used() }] },
 }
 ```
 
@@ -410,8 +407,11 @@ What the plugin keeps in a save, at `state.plugins.cheats`: every use of a cheat
 ### Helpers
 
 ```ts
-const runCheat: (cheat: string) => CommandRef
-const cheatUsed: (cheat?: string) => Condition
+const cheats: {
+  (): DefinedPlugin<CheatsState, CheatsView>
+  use(cheat: string): CommandRef
+  used(cheat?: string): Condition
+}
 ```
 
 ### cheatsOf and cheatOf

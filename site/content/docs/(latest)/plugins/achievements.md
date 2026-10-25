@@ -7,13 +7,7 @@ description: "Achievements earned by a condition or an effect, secret ones, prog
 What a save has earned is kept in the save. Everything earned in any save is also kept in the player's [profile](/docs/reference/profile), which outlives saves and new games. The view, built by a runner with a profile, shows both, so a UI can show everything the player has ever earned.
 
 ```ts
-import {
-  achievements, achievementEarned, grantAchievement,
-  achievementsOf, achievementsView,
-  type AchievementDef, type ProgressDef,
-  type AchievementsState, type AchievementsProfile,
-  type AchievementsView, type AchievementEntry,
-} from '@ifloom/plugin-achievements'
+import { achievements, achievementsOf, achievementsView, type AchievementDef, type ProgressDef, type AchievementsState, type AchievementsProfile, type AchievementsView, type AchievementEntry } from '@ifloom/plugin-achievements'
 ```
 
 The plugin's engine side draws nothing: its React UI is a [subpath of its own](#the-react-ui), and any UI can draw it. Its view lists every achievement, earned or not, and [Building UI for plugins](/docs/recipes/plugin-ui#an-achievements-page) builds an achievements page on it.
@@ -147,7 +141,7 @@ The plugin's view reads it as [`context.profile`](/docs/reference/plugins#the-pr
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ 'achievements/earned': { achievement } }` | `achievementEarned(id)` | This save has earned the achievement. |
+| `{ 'achievements/earned': { achievement } }` | `achievements.earned(id)` | This save has earned the achievement. |
 
 It reads what this save has earned, not the profile, so a replay of a save always reads the same. An unknown achievement is never earned.
 
@@ -155,7 +149,7 @@ It reads what this save has earned, not the profile, so a replay of a save alway
 
 | Content writes | Helper | Does |
 |---|---|---|
-| `{ 'achievements/grant': { achievement } }` | `grantAchievement(id)` | Earns it now, with its notice, if this save hasn't earned it. |
+| `{ 'achievements/grant': { achievement } }` | `achievements.grant(id)` | Earns it now, with its notice, if this save hasn't earned it. |
 
 It works in any effect list, a thing's use in the [inventory](/docs/plugins/inventory) included. So does a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does). Written out, it's `{ 'achievements/grant': { achievement: 'regular' } }`.
 
@@ -313,8 +307,11 @@ What the plugin keeps in a save, at `state.plugins.achievements`: each achieveme
 ### Helpers
 
 ```ts
-const achievementEarned: (id: string) => Condition
-const grantAchievement: (id: string) => EffectRef
+const achievements: {
+  (): DefinedPlugin<AchievementsState, AchievementsView>
+  earned(id: string): Condition
+  grant(id: string): EffectRef
+}
 ```
 
 ### achievementsOf
@@ -363,10 +360,10 @@ A call that names an achievement the game doesn't have gives `unknown achievemen
 
 ## Gotchas
 
-- **Earned after the command, not during it.** A trigger that asks `achievementEarned` on the same command sees it on the next one.
+- **Earned after the command, not during it.** A trigger that asks `achievements.earned` on the same command sees it on the next one.
 - **Earned stays earned.** Nothing takes an achievement back, even if its condition stops holding.
 - **`seen` counts a scene as soon as it's on screen.** An achievement with `when: { seen: 'ava.river' }` is earned when the scene opens, not when the player leaves it.
-- **A new game starts with nothing earned in its save.** The runner's view still shows everything from the profile, but `achievementEarned` and `{{v:achievements/earned}}` read this save only.
+- **A new game starts with nothing earned in its save.** The runner's view still shows everything from the profile, but `achievements.earned` and `{{v:achievements/earned}}` read this save only.
 
 ## See it in an example
 

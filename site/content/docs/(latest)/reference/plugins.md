@@ -396,7 +396,7 @@ The short form has the plugin's full name as its only key, and the call's argume
 
 A name with a `/` is a call: the part before it is a plugin's id, or `game` for the game's own [`rules`](/docs/reference/rules). A name with no `/` calls nothing, and the checker reports it.
 
-A plugin usually exports small typed helpers that write these objects for authors who work in code, such as the quests plugin's [`questDone`](/docs/plugins/quests#helpers).
+A plugin usually gives small typed helpers that write these objects for authors who work in code, as properties of its factory named after the calls they write, such as the quests plugin's [`quests.done`](/docs/plugins/quests#helpers). Put them on the factory with `Object.assign(questsPlugin, { done, ... })`, so `quests()` still makes the plugin and the helpers' names never clash with another plugin's or the engine's.
 
 **Gotchas.**
 - A value name in prose is letters, digits, `_` and `-` after the `/`, so `{{v:loyalty/stamps-left}}` prints. Its arguments follow as `key=value`. Anything else isn't a token and is left on screen as written.
@@ -742,7 +742,7 @@ Nothing is nested, so every hook sits beside the rest of the plugin.
 
 | Hook | When |
 |---|---|
-| `onTurn(state, context)` | At the end of each turn, after the game's own [`rules.onTurn`](/docs/reference/rules#onturn) and before its [`rules.onTurnDone`](/docs/reference/rules#onturndone). A turn ends on each [`turn`](/docs/reference/effects#turn) effect, including those the [calendar](/docs/plugins/calendar#what-a-turn-is)'s `calendar/pass` and `sleep()` apply. See [The end of a turn](/docs/reference/rules#the-end-of-a-turn). |
+| `onTurn(state, context)` | At the end of each turn, after the game's own [`rules.onTurn`](/docs/reference/rules#onturn) and before its [`rules.onTurnDone`](/docs/reference/rules#onturndone). A turn ends on each [`turn`](/docs/reference/effects#turn) effect, including those the [calendar](/docs/plugins/calendar#what-a-turn-is)'s `calendar/pass` and `calendar.sleep()` apply. See [The end of a turn](/docs/reference/rules#the-end-of-a-turn). |
 | `onTurnDone(state, context)` | At the end of each turn, last: after every plugin's `onTurn` and the game's `rules.onTurnDone`. It sees what every `onTurn` did, such as the calendar's new day. |
 | `onStat(before, after, stat, by, context)` | After a [`stat`](/docs/reference/effects#stat) effect on one of the player's stats, once the game's own [`rules.onStat`](/docs/reference/rules#onstat) has had its say. Return `before` to undo the change, `after` to let it stand, or `after` with more. `by` is as `rules.onStat` gets it. It isn't called for an entity's stat or an action's cost. |
 | `onCommand(before, after, context)` | After every command that took. `before` is the state the command started from, and the context belongs to `after`. |
@@ -914,7 +914,7 @@ export const dishes = definePlugin<Sink>({
 The flat offers the buttons, as a location of the [places plugin](/docs/plugins/places#the-location-trait):
 
 ```ts
-// on the flat, in its location({ ... }) in entities
+// on the flat, in its places.location({ ... }) in entities
 actions: [
   { id: 'cook', label: 'Cook dinner', effects: [{ stat: 'energy', by: 20 }, { 'dishes/add': { by: 2 } }] },
   { id: 'bake', label: 'Bake bread', effects: [{ entity: 'food:loaf', by: 1 }, { 'dishes/add': true }] },
@@ -958,7 +958,7 @@ Whether a command may go ahead. `asked.command` is the [command](/docs/reference
 The game's own `rules.guard`, then every plugin's guard, is asked about every command, in the order `game.plugins` lists them, except a command that sets [`ignoresLocks`](#commands-outside-the-story). Guards are asked after the locks, and before what the command itself needs, such as an action's `blocked` entries and cost. A refusal from any plugin wins over a warning from any plugin, and among warnings the first wins. See [`warningOf`](/docs/reference/actions#warningof).
 
 **Gotchas.**
-- `effects` is empty for a built-in command whose effects can't be known before it runs, such as `scene`, `leave` or `input`. Test `command` for those. A plugin command's list is what its [`effectsOf`](#saying-what-a-command-does) says. The calendar's `sleep()` gives the `calendar/pass` it makes, but not the turns that pass ends.
+- `effects` is empty for a built-in command whose effects can't be known before it runs, such as `scene`, `leave` or `input`. Test `command` for those. A plugin command's list is what its [`effectsOf`](#saying-what-a-command-does) says. The calendar's `calendar.sleep()` gives the `calendar/pass` it makes, but not the turns that pass ends.
 - Every button shows a guard's refusal and its warning. That includes the game's and plugins' buttons, scene choices (after the choice's own `disabled`), the [cast](/docs/plugins/cast)'s Talk buttons and the [places plugin](/docs/plugins/places#exitview)'s exits.
 - An effect applied inside another effect isn't in the list. The turn `dishes/wash` ends isn't there, only `dishes/wash` itself.
 
@@ -1204,7 +1204,7 @@ content?: Content
 A plugin can bring the [kinds](/docs/reference/entities#kinddef) of thing it keeps, and the [entities](/docs/reference/entities#entitydef) of those kinds there at the start, in its `content`. Each entity then has stats and a kv store that content works on with `of`, `each` and `count`, like any the game declares. The cast does this: each character is an entity of the kind `character`, which is how the showcase's `friendship` stat belongs to Ava and Sam.
 
 - **`content`** is a [`Content`](/docs/reference/loader#content) the plugin brings, merged by the [loader](/docs/reference/loader#loadgame) first, plugin by plugin in the order `game.plugins` lists them, under the game's content and packs. It can hold anything content can: kinds, entities, scenes, prose, actions or `data`. A plugin's kind isn't [listed](/docs/reference/entities#listing) in the view unless it sets `listed`, so its entities don't show before the plugin says. A kind the game's content declares with the same id replaces the plugin's, and keeps the plugin's fields it leaves out. That's how a game renames one. A pack can replace anything in it by id. A plugin with options builds it in its factory, from those options.
-- **An entity the game writes** is the way to give a plugin something per entity, such as a place or a vendor: the plugin declares a [trait](#traits), content writes the entity with it (often through a helper of the plugin's, as the places plugin's [`location()`](/docs/plugins/places#location) is), and the plugin finds them with [`withTrait`](/docs/reference/entities#withtrait). A mod then adds one as it adds any entity.
+- **An entity the game writes** is the way to give a plugin something per entity, such as a place or a vendor: the plugin declares a [trait](#traits), content writes the entity with it (often through a helper of the plugin's, as the places plugin's [`places.location()`](/docs/plugins/places#location) is), and the plugin finds them with [`withTrait`](/docs/reference/entities#withtrait). A mod then adds one as it adds any entity.
 
 The [phone](/docs/plugins/phone) bundle, which is no plugin, returns its content the same way, as `{ plugins, content }`, for the game to load beside its own.
 

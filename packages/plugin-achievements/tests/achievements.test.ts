@@ -15,7 +15,7 @@ import {
   type GameState,
   type Content,
 } from '@ifloom/engine'
-import { achievementEarned, achievements, grantAchievement, type AchievementDef, type AchievementsView } from '../src/index.ts'
+import { achievements, type AchievementDef, type AchievementsView } from '../src/index.ts'
 
 const defs: AchievementDef[] = [
   { id: 'regular', title: 'A regular', description: 'Ten coffees at the café.', progress: { value: { kv: 'coffees' }, target: 10 } },
@@ -35,7 +35,7 @@ function game(extra: Partial<Content> = {}): Game {
       { id: 'earn', effects: [{ stat: 'coins', by: 30 }] },
       { id: 'bank', effects: [{ kv: 'bank', to: true }] },
       { id: 'dusk', effects: [{ kv: 'dusk', to: true }] },
-      { id: 'kindness', effects: [grantAchievement('kind')] },
+      { id: 'kindness', effects: [achievements.grant('kind')] },
     ],
     data: { achievements: { achievements: defs } },
     ...extra,
@@ -85,7 +85,7 @@ describe('achievements', () => {
   it('are earned the first time their condition holds after a command, with a notice', () => {
     const g = game()
     const state = run(fresh(g), g, 'dusk')
-    expect(holds(state, g, achievementEarned('river'))).toBe(true)
+    expect(holds(state, g, achievements.earned('river'))).toBe(true)
     expect(shown(state, g).achievements[2]).toMatchObject({ title: 'Dusk by the river', description: 'Sit by the river at dusk.', earned: true, earnedOn: 0 })
     expect(view(state, g).notices.unseen.map((notice) => notice.title)).toEqual(['Achievement: Dusk by the river'])
     // Earned once: the condition holding again changes nothing.
@@ -133,7 +133,7 @@ describe('achievements', () => {
     // A new game has earned nothing in its save, but the runner's view shows what the profile remembers.
     await runner.newGame()
     await runner.settled()
-    expect(holds(runner.state, g, achievementEarned('river'))).toBe(false)
+    expect(holds(runner.state, g, achievements.earned('river'))).toBe(false)
     const ever = runner.view().plugins.achievements as AchievementsView
     expect(ever.earned).toBe(2)
     expect(ever.achievements[2]).toMatchObject({ title: 'Dusk by the river', earned: true, earnedOn: null })
@@ -185,7 +185,7 @@ describe('achievements', () => {
       [
         {
           name: 'mod',
-          actions: [{ id: 'x', effects: [grantAchievement('nope')] }],
+          actions: [{ id: 'x', effects: [achievements.grant('nope')] }],
           data: {
             achievements: {
               achievements: [

@@ -5,12 +5,7 @@ description: "Jobs with hiring requirements, shifts that cost stats and time and
 `@ifloom/plugin-jobs` adds jobs the player applies for, works shifts at, gets promoted in and can be fired from. A shift costs stats such as energy, and time on the calendar, and pays a wage in a spendable stat. A job can have a ladder of ranks, each paying more. Missing shifts, or a condition such as a low performance stat, gets the player fired.
 
 ```ts
-import {
-  jobs, applyFor, work, quit, hire, fire, hasJob, wasFired, shiftsWorked, workedToday,
-  jobsOf, jobOf, jobsView,
-  type JobDef, type ShiftDef, type RankDef, type FireDef,
-  type JobsState, type HeldJob, type JobsView, type JobView, type RankView,
-} from '@ifloom/plugin-jobs'
+import { jobs, jobsOf, jobOf, jobsView, type JobDef, type ShiftDef, type RankDef, type FireDef, type JobsState, type HeldJob, type JobsView, type JobView, type RankView } from '@ifloom/plugin-jobs'
 ```
 
 The plugin's engine side draws nothing: its React UI is a [subpath of its own](#the-react-ui), and any UI can draw it. Its commands work on any button, such as a location's actions, and the button shows the shift's cost and greys out with the reason. For a job board, its view lists every job, and [Building UI for plugins](/docs/recipes/plugin-ui#a-job-board) builds one.
@@ -51,7 +46,7 @@ Jobs are content. They go in your content's [`data`](/docs/reference/loader#cont
 
 ```ts
 import type { Content } from '@ifloom/engine'
-import { applyFor, work, type JobDef } from '@ifloom/plugin-jobs'
+import { jobs, type JobDef } from '@ifloom/plugin-jobs'
 
 const weekend: JobDef = {
   id: 'weekend',
@@ -75,8 +70,8 @@ const town: Content = {
 
 // Buttons for the café's actions.
 const buttons = [
-  { id: 'ask-work', label: 'Ask Ava about weekend work', command: applyFor('weekend') },
-  { id: 'shift', label: 'Work the Saturday shift', command: work('weekend') },
+  { id: 'ask-work', label: 'Ask Ava about weekend work', command: jobs.apply('weekend') },
+  { id: 'shift', label: 'Work the Saturday shift', command: jobs.work('weekend') },
 ]
 ```
 
@@ -135,7 +130,7 @@ type RankDef = {
 
 | Field | What it is |
 |---|---|
-| `id` | Unique within the job. [`hasJob(job, rank)`](#conditions) names it. |
+| `id` | Unique within the job. [`jobs.hired(job, rank)`](#conditions) names it. |
 | `title` | What the player reads, such as "Barista". |
 | `pay` | What a shift pays at this rank, by stat, such as `{ coins: 16 }`. |
 | `requires` | What it takes to be promoted to it: shifts worked in all, a condition, or both. The first rank can't have one. |
@@ -205,48 +200,48 @@ Days missed add nothing to `owed`, so the week's pay is the wage times the days 
 
 ### "Worked today"
 
-`workedToday(job)` holds once a shift at the job is done today, for the rest of the day. It reads the same record as the refusal "You’ve done today’s shift.", so the two always agree. Without a job it holds for any job the player holds. Use it for a reminder such as "Work is due" on every screen:
+`jobs.worked(job)` holds once a shift at the job is done today, for the rest of the day. It reads the same record as the refusal "You’ve done today’s shift.", so the two always agree. Without a job it holds for any job the player holds. Use it for a reminder such as "Work is due" on every screen:
 
 ```ts
-import { hasJob, workedToday } from '@ifloom/plugin-jobs'
-import { weekday } from '@ifloom/plugin-calendar'
+import { jobs } from '@ifloom/plugin-jobs'
+import { calendar } from '@ifloom/plugin-calendar'
 
 // a line in a place's body
-{ prose: 'warn.work', when: { all: [hasJob('weekend'), weekday(5), { not: workedToday('weekend') }] } }
+{ prose: 'warn.work', when: { all: [jobs.hired('weekend'), calendar.weekday(5), { not: jobs.worked('weekend') }] } }
 ```
 
-A day is the calendar's day, or a turn in a game without the calendar. `shiftsWorked` counts every shift instead.
+A day is the calendar's day, or a turn in a game without the calendar. `jobs.shifts` counts every shift instead.
 
 ## Conditions
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ 'jobs/hired': { job, rank? } }` | `hasJob(job, rank?)` | The player holds the job, at that rank if given. |
-| `{ 'jobs/fired': { job } }` | `wasFired(job)` | The player was fired from it and hasn't been hired again. |
-| `{ 'jobs/shifts': { job, gte… } }` | `shiftsWorked(job, range)` | The player holds the job and has worked a number of shifts in the [range](/docs/reference/conditions#range). |
-| `{ 'jobs/worked': { job } }`, or `true` for any job | `workedToday(job?)` | A shift at the job was worked today: the calendar's day, or this turn without the calendar. See ["Worked today"](#worked-today). |
+| `{ 'jobs/hired': { job, rank? } }` | `jobs.hired(job, rank?)` | The player holds the job, at that rank if given. |
+| `{ 'jobs/fired': { job } }` | `jobs.fired(job)` | The player was fired from it and hasn't been hired again. |
+| `{ 'jobs/shifts': { job, gte… } }` | `jobs.shifts(job, range)` | The player holds the job and has worked a number of shifts in the [range](/docs/reference/conditions#range). |
+| `{ 'jobs/worked': { job } }`, or `true` for any job | `jobs.worked(job?)` | A shift at the job was worked today: the calendar's day, or this turn without the calendar. See ["Worked today"](#worked-today). |
 
 ## Commands and effects
 
 | Content writes | Helper | Does |
 |---|---|---|
-| `{ 'jobs/apply': { id } }` | `applyFor(job)` | A command. Hires the player at the first rank of the job `id`, unless one of its `blocked` entries holds. Refused with `You already work there.` when they do. |
-| `{ 'jobs/work': { id } }` | `work(job)` | A command. Works a shift at the job `id`: see [Shifts](#shifts). |
-| `{ 'jobs/quit': { id } }` | `quit(job)` | A command. Leaves the job `id`. They can apply again. |
-| `{ 'jobs/hire': { job } }` | `hire(job)` | An effect. Hires the player now without asking its `blocked` entries, even after they were fired. |
-| `{ 'jobs/fire': { job } }` | `fire(job)` | An effect. Fires the player now, with the notice. |
+| `{ 'jobs/apply': { id } }` | `jobs.apply(job)` | A command. Hires the player at the first rank of the job `id`, unless one of its `blocked` entries holds. Refused with `You already work there.` when they do. |
+| `{ 'jobs/work': { id } }` | `jobs.work(job)` | A command. Works a shift at the job `id`: see [Shifts](#shifts). |
+| `{ 'jobs/quit': { id } }` | `jobs.quit(job)` | A command. Leaves the job `id`. They can apply again. |
+| `{ 'jobs/hire': { job } }` | `jobs.hire(job)` | An effect. Hires the player now without asking its `blocked` entries, even after they were fired. |
+| `{ 'jobs/fire': { job } }` | `jobs.fire(job)` | An effect. Fires the player now, with the notice. |
 
 ## Opening the job board
 
-Nothing about a job is drawn by itself. Content opens the job board in the `jobs` [panel](/docs/reference/panels) with `openJobs`, from anything that runs effects: a town hall's action, a choice in a person's scene, a newspaper's `use`, a job site's button on a laptop. Give it job ids to show only those, as a newspaper's ads would.
+Nothing about a job is drawn by itself. Content opens the job board in the `jobs` [panel](/docs/reference/panels) with `jobs.open`, from anything that runs effects: a town hall's action, a choice in a person's scene, a newspaper's `use`, a job site's button on a laptop. Give it job ids to show only those, as a newspaper's ads would.
 
 ```ts
-import { openJobs } from '@ifloom/plugin-jobs'
+import { jobs } from '@ifloom/plugin-jobs'
 
 // Every job: { panel: 'jobs' }
-{ id: 'work', effects: [{ scene: null }, openJobs()] }
+{ id: 'work', effects: [{ scene: null }, jobs.open()] }
 // Only the paper's ads: { panel: 'jobs', with: { job: ['dogs'] } }
-{ id: 'paper', name: 'newspaper', desc: 'Today’s Gazette.', use: { label: 'Read the job ads', effects: [openJobs(['dogs'])] } }
+{ id: 'paper', name: 'newspaper', desc: 'Today’s Gazette.', use: { label: 'Read the job ads', effects: [jobs.open(['dogs'])] } }
 ```
 
 The board stays open while the player applies, and closes when a turn ends or the scene changes, so working a shift that passes time closes it. See [How long a panel stays open](/docs/reference/panels#how-long-a-panel-stays-open).
@@ -318,7 +313,7 @@ type RankView = { id: string; title: string; pay: Price | null }
 
 ## The React UI
 
-`@ifloom/plugin-jobs/react` draws the job board, for a game drawn with [`@ifloom/react`](/docs/react). List `jobsUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the `jobs` panel, which [`openJobs`](#opening-the-job-board) opens, is drawn as the [`JobBoard`](#jobboard), only the jobs it was opened with if it names any.
+`@ifloom/plugin-jobs/react` draws the job board, for a game drawn with [`@ifloom/react`](/docs/react). List `jobsUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the `jobs` panel, which [`jobs.open`](#opening-the-job-board) opens, is drawn as the [`JobBoard`](#jobboard), only the jobs it was opened with if it names any.
 
 It's yours to leave out. Draw the plugin yourself from `view.plugins.jobs`, or from [`useJobs`](#usejobs) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
@@ -335,7 +330,7 @@ mountGame(game, { plugins: [jobsUi] })
 const jobsUi: PluginUi
 ```
 
-The plugin's [`PluginUi`](/docs/react/kit#pluginui): the `jobs` panel, which [`openJobs`](#opening-the-job-board) opens, is drawn as the [`JobBoard`](#jobboard), only the jobs it was opened with if it names any.
+The plugin's [`PluginUi`](/docs/react/kit#pluginui): the `jobs` panel, which [`jobs.open`](#opening-the-job-board) opens, is drawn as the [`JobBoard`](#jobboard), only the jobs it was opened with if it names any.
 
 Its words are in `JOBS_WORDS`. A game rewords any of them with `ui.<key>` in its strings, as it does the React UI's own: `{ 'ui.applyJob': '…' }`.
 
@@ -417,19 +412,22 @@ What the plugin keeps in a save, at `state.plugins.jobs`: each job the player ho
 ### Helpers
 
 ```ts
-const applyFor: (job: string) => CommandRef
-const work: (job: string) => CommandRef
-const quit: (job: string) => CommandRef
-const hire: (job: string) => EffectRef
-const fire: (job: string) => EffectRef
-const hasJob: (job: string, rank?: string) => Condition
-const wasFired: (job: string) => Condition
-const shiftsWorked: (job: string, range: Range) => Condition
-const workedToday: (job?: string) => Condition
-const openJobs: (jobs?: string[]) => Effect
+const jobs: {
+  (): DefinedPlugin<JobsState, JobsView>
+  apply(job: string): CommandRef
+  work(job: string): CommandRef
+  quit(job: string): CommandRef
+  hire(job: string): EffectRef
+  fire(job: string): EffectRef
+  hired(job: string, rank?: string): Condition
+  fired(job: string): Condition
+  shifts(job: string, range: Range): Condition
+  worked(job?: string): Condition
+  open(jobs?: string[]): Effect
+}
 ```
 
-`openJobs` opens the job board in the `jobs` panel, with only `jobs` on it if given. See [Opening the job board](#opening-the-job-board).
+`jobs.open` opens the job board in the `jobs` panel, with only `jobs` on it if given. See [Opening the job board](#opening-the-job-board).
 
 ### jobsOf and jobOf
 
@@ -469,4 +467,4 @@ A command that names a job the game doesn't have gives `unknown job "…"` where
 
 ## See it in an example
 
-Small Town: `weekend` in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts) is Saturday mornings at the café, with a promotion after three shifts and firing after two missed. Ava's "Ask about weekend work" choice opens the whole board with `openJobs()`. `dogs`, walking dogs in the park on weekday evenings ([`examples/showcase/src/story/park.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/park.ts)), is in the newspaper's ads, whose `use` opens the board with only that job.
+Small Town: `weekend` in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts) is Saturday mornings at the café, with a promotion after three shifts and firing after two missed. Ava's "Ask about weekend work" choice opens the whole board with `jobs.open()`. `dogs`, walking dogs in the park on weekday evenings ([`examples/showcase/src/story/park.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/park.ts)), is in the newspaper's ads, whose `use` opens the board with only that job.

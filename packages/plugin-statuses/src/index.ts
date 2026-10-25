@@ -234,7 +234,7 @@ function stacksOf(args: PluginArgs): Range | undefined {
  * The plugin. Add it to the game's `plugins`, and put statuses in a pack's
  * `data.statuses.statuses`.
  */
-export function statuses(): DefinedPlugin<StatusesState, StatusesView> {
+function statusesPlugin(): DefinedPlugin<StatusesState, StatusesView> {
   return definePlugin<StatusesState, StatusesView>({
     id: ID,
     version: 1,
@@ -317,8 +317,14 @@ export function statuses(): DefinedPlugin<StatusesState, StatusesView> {
 }
 
 /** A condition: the status is active, with a number of stacks in this range if given. */
-export const statusActive = (id: string, stacks?: Range): Condition => ({ 'statuses/active': stacks ? { status: id, stacks } : { status: id } })
+const statusActive = (id: string, stacks?: Range): Condition => ({ 'statuses/active': stacks ? { status: id, stacks } : { status: id } })
 /** An effect: apply the status, refreshing or stacking it if it's already active. */
-export const applyStatus = (id: string): EffectRef => ({ 'statuses/apply': { status: id } })
+const applyStatus = (id: string): EffectRef => ({ 'statuses/apply': { status: id } })
 /** An effect: take every stack of the status off. `runEnd` runs its `onEnd` once per stack. */
-export const removeStatus = (id: string, runEnd = false): EffectRef => ({ 'statuses/remove': runEnd ? { status: id, runEnd } : { status: id } })
+const removeStatus = (id: string, runEnd = false): EffectRef => ({ 'statuses/remove': runEnd ? { status: id, runEnd } : { status: id } })
+
+/**
+ * The plugin, with its helpers on it: `statuses()` makes the plugin for the
+ * game's `plugins`, and content is written with `statuses.apply('caffeinated')`.
+ */
+export const statuses = Object.assign(statusesPlugin, { active: statusActive, apply: applyStatus, remove: removeStatus })

@@ -17,27 +17,11 @@ import {
   type Content,
   type Pack,
 } from '@ifloom/engine'
-import { calendar, pass, period } from '@ifloom/plugin-calendar'
-import {
-  at,
-  go,
-  location,
-  locationOf,
-  locationRef,
-  locationsOf,
-  moveTo,
-  onlyAt,
-  pickUp,
-  places,
-  where,
-  within,
-  type PlaceDef,
-  type PlacesOptions,
-  type PlacesView,
-} from '../src/index.ts'
+import { calendar } from '@ifloom/plugin-calendar'
+import { locationOf, locationsOf, places, type PlaceDef, type PlacesOptions, type PlacesView } from '../src/index.ts'
 
 const place = (id: string, exits: string[], extra: Partial<PlaceDef> = {}) =>
-  location({
+  places.location({
     id,
     name: id[0].toUpperCase() + id.slice(1),
     desc: 'Town',
@@ -52,7 +36,7 @@ const townPlaces = (more: Record<string, Partial<PlaceDef>> = {}) => [
   place('house', ['street'], more.house),
   place('street', ['house', 'cafe', 'park'], { tags: ['outdoors'], ...more.street }),
   place('cafe', ['street', 'back'], {
-    blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
+    blocked: [{ when: { not: calendar.period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
     actions: [{ id: 'coffee', label: 'Buy a coffee', command: { type: 'action', id: 'coffee' } }],
     ...more.cafe,
   }),
@@ -71,9 +55,9 @@ const town: Content = {
     'place.park': 'Ducks.',
   },
   actions: [
-    { id: 'coffee', blocked: [onlyAt(['cafe'], 'There is no coffee here.')], effects: [{ kv: 'coffee', to: true }] },
-    { id: 'nap', label: 'Nap', effects: [pass(1)] },
-    { id: 'hop', effects: [moveTo('park')] },
+    { id: 'coffee', blocked: [places.onlyAt(['cafe'], 'There is no coffee here.')], effects: [{ kv: 'coffee', to: true }] },
+    { id: 'nap', label: 'Nap', effects: [calendar.pass(1)] },
+    { id: 'hop', effects: [places.move('park')] },
   ],
   entities: townPlaces(),
 }
@@ -91,7 +75,7 @@ function game(options: PlacesOptions = { start: 'house' }, locks: Content['locks
 
 function walk(g: Game, state: GameState, ...to: string[]): GameState {
   for (const id of to) {
-    const out = apply(state, g, go(id))
+    const out = apply(state, g, places.go(id))
     expect(out.reason).toBeUndefined()
     state = out.state
   }
@@ -104,7 +88,7 @@ describe('places', () => {
   it('start where the game says, and fill the screen with the room', () => {
     const { game: g } = game()
     const state = startingState(g)
-    expect(where(state)).toBe('house')
+    expect(places.where(state)).toBe('house')
     const screen = view(state, g)
     expect(screen.scene).toMatchObject({ title: 'House', body: 'Your house.', key: 'room:house' })
     expect(screen.when).toBe('Day 1 · Monday morning · House')
@@ -118,7 +102,7 @@ describe('places', () => {
           desc: 'Town',
           tags: ['outdoors'],
           image: 'art/place/street.jpg',
-          command: commandOf(go('street')),
+          command: commandOf(places.go('street')),
         },
       ],
       things: [],
@@ -128,7 +112,7 @@ describe('places', () => {
   it('are walked between by exit, and offer what there is to do there', () => {
     const { game: g } = game()
     const state = walk(g, startingState(g), 'street', 'cafe')
-    expect(where(state)).toBe('cafe')
+    expect(places.where(state)).toBe('cafe')
     expect(view(state, g).actions.map((action) => action.id)).toEqual(['coffee', 'nap'])
     expect(apply(state, g, { type: 'action', id: 'coffee' }).state.kv.coffee).toBe(true)
     expect(whyNot(walk(g, startingState(g), 'street'), g, { type: 'action', id: 'coffee' })).toBe('There is no coffee here.')
@@ -137,12 +121,12 @@ describe('places', () => {
   it('say why a journey is refused', () => {
     const { game: g, clock } = game()
     const house = startingState(g)
-    expect(whyNot(house, g, go('cafe'))).toBe('You cannot get there from here.')
-    expect(whyNot(house, g, go('house'))).toBe('You are already here.')
-    expect(whyNot(house, g, go('moon'))).toBe('There is no such place.')
-    expect(whyNot({ ...house, sceneId: 'x' }, g, go('street'))).toBe('Finish this first.')
+    expect(whyNot(house, g, places.go('cafe'))).toBe('You cannot get there from here.')
+    expect(whyNot(house, g, places.go('house'))).toBe('You are already here.')
+    expect(whyNot(house, g, places.go('moon'))).toBe('There is no such place.')
+    expect(whyNot({ ...house, sceneId: 'x' }, g, places.go('street'))).toBe('Finish this first.')
     const evening = clock.write(walk(g, house, 'street'), { day: 0, period: 'evening' })
-    expect(whyNot(evening, g, go('cafe'))).toBe('Closed. Opens tomorrow morning.')
+    expect(whyNot(evening, g, places.go('cafe'))).toBe('Closed. Opens tomorrow morning.')
     expect(shown(evening, g).exits.find((exit) => exit.id === 'cafe')?.disabled).toBe('Closed. Opens tomorrow morning.')
   })
 
@@ -159,17 +143,17 @@ describe('places', () => {
   it('answer `at` and `within`, following a place’s parent', () => {
     const { game: g } = game()
     const back = walk(g, { ...startingState(g), kv: { staff: true } }, 'street', 'cafe', 'back')
-    expect(holds(back, g, at('back'))).toBe(true)
-    expect(holds(back, g, at('cafe'))).toBe(false)
-    expect(holds(back, g, within('cafe'))).toBe(true)
-    expect(holds(back, g, within('street'))).toBe(false)
-    expect(holds(back, g, within('street', 'cafe'))).toBe(true)
+    expect(holds(back, g, places.at('back'))).toBe(true)
+    expect(holds(back, g, places.at('cafe'))).toBe(false)
+    expect(holds(back, g, places.within('cafe'))).toBe(true)
+    expect(holds(back, g, places.within('street'))).toBe(false)
+    expect(holds(back, g, places.within('street', 'cafe'))).toBe(true)
   })
 
   it('move the player at once by effect, closing any scene, with no exit needed', () => {
     const { game: g } = game()
     const state = apply(startingState(g), g, { type: 'action', id: 'hop' }).state
-    expect(where(state)).toBe('park')
+    expect(places.where(state)).toBe('park')
   })
 
   it('run the doorstep on arrival by exit, while its condition holds, and not on a move', () => {
@@ -200,7 +184,7 @@ describe('places', () => {
   it('leave a game nowhere with no start, and nothing on the screen but its buttons', () => {
     const { game: g } = game({})
     const state = startingState(g)
-    expect(where(state)).toBeNull()
+    expect(places.where(state)).toBeNull()
     expect(view(state, g).scene).toMatchObject({ title: 'Town', body: '' })
     expect(shown(state, g)).toEqual({ location: null, exits: [], things: [] })
   })
@@ -222,8 +206,10 @@ describe('places', () => {
   it('report places content names that are not there', () => {
     const broken: Content = {
       name: 'broken',
-      actions: [{ id: 'swim', blocked: [{ when: { not: at('lido') }, reason: 'No.' }], effects: [moveTo('pier')] }],
-      entities: [place('yard', ['lane'], { parent: 'yard', body: [{ prose: 'place.yard' }], actions: [{ id: 'dig', label: 'Dig', command: go('moon') }] })],
+      actions: [{ id: 'swim', blocked: [{ when: { not: places.at('lido') }, reason: 'No.' }], effects: [places.move('pier')] }],
+      entities: [
+        place('yard', ['lane'], { parent: 'yard', body: [{ prose: 'place.yard' }], actions: [{ id: 'dig', label: 'Dig', command: places.go('moon') }] }),
+      ],
     }
     const { problems } = loadGame([broken], { id: 'b', title: 'B', plugins: [places({ start: 'nowhere' })] })
     expect(problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
@@ -326,7 +312,7 @@ describe('places', () => {
       hotspots: [
         { id: 'menu', rect: [10, 20, 30, 20], label: 'Read the menu', command: { type: 'action', id: 'coffee' } },
         { id: 'lamp', rect: [70, 5, 10, 10], label: 'The lamp', command: { type: 'action', id: 'nap' }, layer: 'lamp' },
-        { id: 'door', rect: [85, 30, 15, 70], label: 'The back door', command: go('back') },
+        { id: 'door', rect: [85, 30, 15, 70], label: 'The back door', command: places.go('back') },
       ],
     }
 
@@ -344,7 +330,7 @@ describe('places', () => {
         hotspots: [
           { id: 'menu', rect: [10, 20, 30, 20], label: 'Read the menu', command: { type: 'action', id: 'coffee' } },
           // The back room is staff only: greyed out with the exit's own reason.
-          { id: 'door', rect: [85, 30, 15, 70], label: 'The back door', command: commandOf(go('back')), disabled: 'Staff only.' },
+          { id: 'door', rect: [85, 30, 15, 70], label: 'The back door', command: commandOf(places.go('back')), disabled: 'Staff only.' },
         ],
       })
     })
@@ -410,7 +396,7 @@ describe('places', () => {
       expect(g.entities?.find((entity) => entity.of === 'location' && entity.id === 'cafe')).toMatchObject({ name: 'Cafe', desc: 'Town' })
       const state = startingState(g)
       expect(view(state, g).entities.location).toBeUndefined()
-      expect(pluginQuery(g, 'places/holder')!(state)).toBe(locationRef('house'))
+      expect(pluginQuery(g, 'places/holder')!(state)).toBe(places.locationRef('house'))
       expect(holds(state, g, { entity: 'item:paper', at: 'location:street', gte: 2 })).toBe(true)
     })
 
@@ -426,20 +412,20 @@ describe('places', () => {
           name: 'Newspaper',
           image: null,
           count: 2,
-          pickUp: { id: 'pickUp.item:paper', label: 'Pick up', command: commandOf(pickUp('item:paper')) },
+          pickUp: { id: 'pickUp.item:paper', label: 'Pick up', command: commandOf(places.pickUp('item:paper')) },
         },
       ])
-      const took = apply(street, g, pickUp('item:paper'))
+      const took = apply(street, g, places.pickUp('item:paper'))
       expect(took.reason).toBeUndefined()
-      expect([heldCount(took.state, g, 'item:paper', 'player'), heldCount(took.state, g, 'item:paper', locationRef('street'))]).toEqual([1, 1])
-      expect(whyNot(house, g, pickUp('item:paper'))).toBe('There is no Newspaper here.')
-      expect(whyNot({ ...street, sceneId: 'x' }, g, pickUp('item:paper'))).toBe('Finish this first.')
+      expect([heldCount(took.state, g, 'item:paper', 'player'), heldCount(took.state, g, 'item:paper', places.locationRef('street'))]).toEqual([1, 1])
+      expect(whyNot(house, g, places.pickUp('item:paper'))).toBe('There is no Newspaper here.')
+      expect(whyNot({ ...street, sceneId: 'x' }, g, places.pickUp('item:paper'))).toBe('Finish this first.')
       expect(shown({ ...street, sceneId: 'x' }, g).things).toEqual([])
     })
   })
 
   describe('each place is an entity with the location trait', () => {
-    it('is written with location(): the entity has the name, desc, image and tags, and the trait the rest', () => {
+    it('is written with places.location(): the entity has the name, desc, image and tags, and the trait the rest', () => {
       const cafe = place('cafe', ['street'], { tags: ['indoors'], ui: { transition: 'fade' } })
       expect(cafe).toEqual({
         id: 'cafe',
@@ -475,7 +461,7 @@ describe('places', () => {
       const { game: g, problems } = loadGame([boat], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'park' })] })
       expect(problems).toEqual([])
       const aboard = walk(g, startingState(g), 'vessel:ferry')
-      expect(where(aboard)).toBe('vessel:ferry')
+      expect(places.where(aboard)).toBe('vessel:ferry')
       expect(shown(aboard, g).location).toMatchObject({ id: 'vessel:ferry', ref: 'vessel:ferry', name: 'The ferry' })
       expect(pluginQuery(g, 'places/holder')!(aboard)).toBe('vessel:ferry')
     })
@@ -510,7 +496,7 @@ describe('places', () => {
       const old = { name: 'old', data: { places: { locations: [{ id: 'yard' }] } } } as unknown as Content
       const { problems } = loadGame([old], { id: 't', title: 'T', plugins: [places()] })
       expect(problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
-        'locations yard: locations are entities now: write them in entities with location({ id, name, exits, body, ... })',
+        'locations yard: locations are entities now: write them in entities with places.location({ id, name, exits, body, ... })',
       ])
     })
   })
@@ -533,7 +519,7 @@ describe('places', () => {
       traits: { 'places/location': { exits: ['house'], body: [{ prose: 'place.shed' }] } },
     })
     expect(g.data?.places).toBeUndefined()
-    const shed = applyEffects(startingState(g), g, [moveTo('shed')])
+    const shed = applyEffects(startingState(g), g, [places.move('shed')])
     expect(view(shed, g).scene.body).toBe('The Garden shed.')
   })
 })

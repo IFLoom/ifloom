@@ -11,10 +11,7 @@ You wear only what you [hold](/docs/reference/entities#holding-things). Wearing 
 What's worn is kept for each body: the player's, and each [protagonist](/docs/reference/entities#protagonists-you-and-player)'s the game plays with the `you` effect. Switching to Sam shows what Sam has on, and switching back shows the player's clothes again, as they were left. See [Who wears what](#who-wears-what).
 
 ```ts
-import {
-  wardrobe, wearable, wearing, slotFilled, wear, takeOff, slotsOf, wearableOf,
-  type Wearable, type WardrobeSlot, type WardrobeState, type WardrobeView,
-} from '@ifloom/plugin-wardrobe'
+import { wardrobe, slotsOf, wearableOf, type Wearable, type WardrobeSlot, type WardrobeState, type WardrobeView } from '@ifloom/plugin-wardrobe'
 ```
 
 ## Install
@@ -48,13 +45,13 @@ A wardrobe on its own: two kinds of thing, the slots, and nothing else. This is 
 
 ```ts
 import type { Content } from '@ifloom/engine'
-import { wearable } from '@ifloom/plugin-wardrobe'
+import { wardrobe } from '@ifloom/plugin-wardrobe'
 
 const town: Content = {
   kinds: [{ id: 'clothing', label: 'Clothing', unique: true, listed: false }],
   entities: [
-    { id: 'raincoat', of: 'clothing', name: 'raincoat', desc: 'Yellow, a size too big.', at: 'player', traits: { ...wearable('coat') } },
-    { id: 'scarf', of: 'clothing', name: 'scarf', desc: 'Knitted by someone who loved you.', traits: { ...wearable('neck') } },
+    { id: 'raincoat', of: 'clothing', name: 'raincoat', desc: 'Yellow, a size too big.', at: 'player', traits: { ...wardrobe.wearable('coat') } },
+    { id: 'scarf', of: 'clothing', name: 'scarf', desc: 'Knitted by someone who loved you.', traits: { ...wardrobe.wearable('neck') } },
   ],
   data: {
     wardrobe: {
@@ -72,8 +69,11 @@ The raincoat has `at: 'player'`, so the player starts holding it, which the coat
 ### The wearable trait
 
 ```ts
+const wardrobe: {
+  wearable(slot: string): { 'wardrobe/wearable': Wearable }
+}
+
 type Wearable = { slot: string }
-const wearable: (slot: string) => { 'wardrobe/wearable': Wearable }
 ```
 
 The slot a thing is worn in. It's a [trait](/docs/reference/entities#traits), so you can write it on a kind (every uniform goes on the body), on an entity, or in content's `traits` table, where a mod can move a piece to another slot. `wearable` writes it, to spread into `traits` beside others, such as the shop's [`sellable`](/docs/plugins/shop#the-sellable-trait). A thing made in play [`like`](/docs/reference/effects#create) a wearable one is wearable too.
@@ -98,8 +98,8 @@ A cut-down Small Town. The player starts in the raincoat, which people in the ca
 
 ```ts
 import { give, need, type Content } from '@ifloom/engine'
-import { location, type PlaceDef } from '@ifloom/plugin-places'
-import { wearable, wearing } from '@ifloom/plugin-wardrobe'
+import { places, type PlaceDef } from '@ifloom/plugin-places'
+import { wardrobe } from '@ifloom/plugin-wardrobe'
 
 const place = (id: string, name: string, exits: string[]): PlaceDef =>
   ({ id, name, desc: 'Small Town', exits, body: [{ prose: `place.${id}` }] })
@@ -111,13 +111,13 @@ const map = [
   },
   {
     ...place('cafe', 'The Corner Café', ['high-street']),
-    body: [{ prose: 'place.cafe' }, { prose: 'place.cafe.raincoat', when: wearing('clothing:raincoat') }],
+    body: [{ prose: 'place.cafe' }, { prose: 'place.cafe.raincoat', when: wardrobe.wearing('clothing:raincoat') }],
   },
   {
     ...place('park', 'Riverside Park', ['high-street']),
-    actions: [{ id: 'bench', label: 'Sit on the bench by the river', blocked: [need('Too cold without a scarf.', wearing('clothing:scarf'))], effects: [] }],
+    actions: [{ id: 'bench', label: 'Sit on the bench by the river', blocked: [need('Too cold without a scarf.', wardrobe.wearing('clothing:scarf'))], effects: [] }],
   },
-].map(location)
+].map(places.location)
 
 const town: Content = {
   stats: [{ id: 'coins', label: 'Coins', start: 12, spendable: true }],
@@ -126,8 +126,8 @@ const town: Content = {
     { id: 'food', label: 'Food', listed: false },
   ],
   entities: [
-    { id: 'raincoat', of: 'clothing', name: 'raincoat', at: 'player', traits: { ...wearable('coat') } },
-    { id: 'scarf', of: 'clothing', name: 'scarf', traits: { ...wearable('neck') } },
+    { id: 'raincoat', of: 'clothing', name: 'raincoat', at: 'player', traits: { ...wardrobe.wearable('coat') } },
+    { id: 'scarf', of: 'clothing', name: 'scarf', traits: { ...wardrobe.wearable('neck') } },
     { id: 'sandwich', of: 'food', name: 'sandwich', at: 'player' },
     ...map,
   ],
@@ -152,8 +152,8 @@ Build the game and play it. `town` is the content above:
 
 ```ts
 import { apply, heldCount, holds, loadGame, startingState, view, whyNot, type GameState } from '@ifloom/engine'
-import { go, places } from '@ifloom/plugin-places'
-import { slotFilled, takeOff, wardrobe, wear, type WardrobeView } from '@ifloom/plugin-wardrobe'
+import { places } from '@ifloom/plugin-places'
+import { wardrobe, type WardrobeView } from '@ifloom/plugin-wardrobe'
 
 const { game } = loadGame([town], {
   id: 'small-town',
@@ -170,22 +170,22 @@ let state = startingState(game)
 closet(state).slots   // [{ id: 'coat', label: 'Coat', entity: 'clothing:raincoat', name: 'raincoat' }, { id: 'neck', label: 'Neck', entity: null, name: null }]
 closet(state).spare   // []
 
-const cafe = apply(state, game, go('cafe')).state
+const cafe = apply(state, game, places.go('cafe')).state
 view(cafe, game).scene.body   // 'Six tables, one of them wobbly.\n\nSomeone points at your raincoat and grins. It is very yellow.'
 
-state = apply(state, game, takeOff('coat')).state
+state = apply(state, game, wardrobe.takeOff('coat')).state
 closet(state).spare                              // [{ entity: 'clothing:raincoat', name: 'raincoat', slot: 'coat' }]
 heldCount(state, game, 'clothing:raincoat')      // 1: taking it off doesn't lose it
-apply(state, game, takeOff('coat')).reason       // 'There is nothing to take off.'
+apply(state, game, wardrobe.takeOff('coat')).reason       // 'There is nothing to take off.'
 
-whyNot(state, game, wear('clothing:scarf'))      // 'You have no scarf.'
-whyNot(state, game, wear('food:sandwich'))       // 'The sandwich is not something you wear.'
+whyNot(state, game, wardrobe.wear('clothing:scarf'))      // 'You have no scarf.'
+whyNot(state, game, wardrobe.wear('food:sandwich'))       // 'The sandwich is not something you wear.'
 state = apply(state, game, { type: 'action', id: 'places/buyScarf' }).state
-state = apply(state, game, wear('clothing:scarf')).state
-holds(state, game, slotFilled('neck'))           // true
-apply(state, game, wear('clothing:scarf')).reason  // 'You are already wearing the scarf.'
+state = apply(state, game, wardrobe.wear('clothing:scarf')).state
+holds(state, game, wardrobe.slotFilled('neck'))           // true
+apply(state, game, wardrobe.wear('clothing:scarf')).reason  // 'You are already wearing the scarf.'
 
-state = apply(state, game, go('park')).state
+state = apply(state, game, places.go('park')).state
 whyNot(state, game, { type: 'action', id: 'places/bench' })   // undefined: the scarf is on
 ```
 
@@ -193,9 +193,9 @@ whyNot(state, game, { type: 'action', id: 'places/bench' })   // undefined: the 
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ 'wardrobe/wearing': { entity } }` | `wearing(entity)` | The thing is on, in whichever slot. |
-| `{ 'wardrobe/wearing': { entity, slot } }` | `wearing(entity, slot)` | That thing is on in that slot. |
-| `{ 'wardrobe/wearing': { slot } }` | `slotFilled(slot)` | Something is in that slot. |
+| `{ 'wardrobe/wearing': { entity } }` | `wardrobe.wearing(entity)` | The thing is on, in whichever slot. |
+| `{ 'wardrobe/wearing': { entity, slot } }` | `wardrobe.wearing(entity, slot)` | That thing is on in that slot. |
+| `{ 'wardrobe/wearing': { slot } }` | `wardrobe.slotFilled(slot)` | Something is in that slot. |
 | `{ 'wardrobe/wearing': { entity, at } }` | | The thing is on `at`'s body: `'player'` or a protagonist, such as `'character:sam'`, whoever is played. |
 
 Without `at`, it asks about whoever the player is playing now ([`'you'`](/docs/reference/entities#protagonists-you-and-player)). You can use it anywhere a [condition](/docs/reference/conditions) goes: a block's `when`, a choice, a `blocked` entry or a lock. Each is a call by name (see [plugin calls](/docs/reference/custom#plugincall)). With neither `entity` nor `slot`, it's false. An unknown thing, or a slot the save has nothing in, is false.
@@ -206,8 +206,8 @@ To ask whether you hold a thing at all, worn or not, use the engine's [`holding`
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ 'wardrobe/wear': { id } }` | `wear(entity)` | Puts the thing `id` on whoever the player is playing, in its slot, in place of whatever was there. What comes off is still theirs. |
-| `{ 'wardrobe/takeOff': { id } }` | `takeOff(slot)` | Empties the slot `id` on whoever the player is playing. |
+| `{ 'wardrobe/wear': { id } }` | `wardrobe.wear(entity)` | Puts the thing `id` on whoever the player is playing, in its slot, in place of whatever was there. What comes off is still theirs. |
+| `{ 'wardrobe/takeOff': { id } }` | `wardrobe.takeOff(slot)` | Empties the slot `id` on whoever the player is playing. |
 
 `wardrobe/wear` is refused, in this order, with:
 
@@ -335,7 +335,7 @@ type WardrobeSlotControls = WardrobeView['slots'][number] & {
 }
 ```
 
-The [wardrobe](/docs/plugins/wardrobe) plugin's view, with a button for each thing the player can do, or `null` in a game without the plugin. Each slot has `takeOff`, a [`RenderedChoice`](/docs/reference/view#renderedchoice) that takes off what's in it (`null` when it's empty), and `wear`, one for each spare wearable thing for that slot, labelled with its name. Each is greyed out with the engine's reason when it can't be done now. `wear(entity)` (a reference, `'clothing:scarf'`) and `takeOff(slot)` send the commands directly. [`WardrobeCard`](#wardrobecard) is drawn from it.
+The [wardrobe](/docs/plugins/wardrobe) plugin's view, with a button for each thing the player can do, or `null` in a game without the plugin. Each slot has `takeOff`, a [`RenderedChoice`](/docs/reference/view#renderedchoice) that takes off what's in it (`null` when it's empty), and `wear`, one for each spare wearable thing for that slot, labelled with its name. Each is greyed out with the engine's reason when it can't be done now. `wardrobe.wear(entity)` (a reference, `'clothing:scarf'`) and `wardrobe.takeOff(slot)` send the commands directly. [`WardrobeCard`](#wardrobecard) is drawn from it.
 
 ## The state
 
@@ -355,31 +355,34 @@ Each body keeps its own slots. Wearing and taking off change the slots of whoeve
 
 ```ts
 import { apply, applyEffects, holds, type Game, type GameState } from '@ifloom/engine'
-import { wear, wearing } from '@ifloom/plugin-wardrobe'
+import { wardrobe } from '@ifloom/plugin-wardrobe'
 
 declare const game: Game
 declare const state: GameState   // the player in the raincoat; Sam holds a scarf
 
 const asSam = applyEffects(state, game, [{ you: 'character:sam' }])
-const dressed = apply(asSam, game, wear('clothing:scarf')).state
-holds(dressed, game, wearing('clothing:raincoat'))   // false: Sam isn't wearing it
+const dressed = apply(asSam, game, wardrobe.wear('clothing:scarf')).state
+holds(dressed, game, wardrobe.wearing('clothing:raincoat'))   // false: Sam isn't wearing it
 const back = applyEffects(dressed, game, [{ you: 'player' }])
-holds(back, game, wearing('clothing:raincoat'))      // true: the player still is
+holds(back, game, wardrobe.wearing('clothing:raincoat'))      // true: the player still is
 holds(back, game, { 'wardrobe/wearing': { entity: 'clothing:scarf', at: 'character:sam' } })   // true
 ```
 
 ## For code
 
-The helpers above write the content objects for you, typed. `wearing` and `slotFilled` return a `Condition`, `wear` and `takeOff` return a [`CommandRef`](/docs/reference/custom#commandref), and `wearable` returns the trait.
+The helpers above are properties of `wardrobe`, the plugin's factory, and write the content objects for you, typed. `wardrobe.wearing` and `wardrobe.slotFilled` return a `Condition`, `wardrobe.wear` and `wardrobe.takeOff` return a [`CommandRef`](/docs/reference/custom#commandref), and `wardrobe.wearable` returns the trait.
 
 ### Helpers
 
 ```ts
-const wearable: (slot: string) => { 'wardrobe/wearable': Wearable }
-const wearing: (entity: EntityRef, slot?: string) => Condition
-const slotFilled: (slot: string) => Condition
-const wear: (entity: EntityRef) => CommandRef
-const takeOff: (slot: string) => CommandRef
+const wardrobe: {
+  (): DefinedPlugin<WardrobeState, WardrobeView>
+  wearable(slot: string): { 'wardrobe/wearable': Wearable }
+  wearing(entity: EntityRef, slot?: string): Condition
+  slotFilled(slot: string): Condition
+  wear(entity: EntityRef): CommandRef
+  takeOff(slot: string): CommandRef
+}
 ```
 
 ### slotsOf
@@ -419,10 +422,10 @@ town · slots coat · starts with "clothing:raincoat", which the player does not
 - **Losing a thing takes it off after the command.** Whether it's sold, used up, given away or taken by an effect, once you hold none, the plugin's `onCommand` [hook](/docs/reference/plugins#hooks-and-providers) empties its slot at the end of the command. Until then, within the same command, `wardrobe/wearing` still holds. [`applyEffects`](/docs/reference/effects#applyeffects) runs no hooks, so a state made with it can show something on that you no longer hold.
 - **Worn things are still held.** `holding('clothing:raincoat')` holds while it's on. To ask whether it's on, use `wearing`.
 - **"You" is whoever the player is playing.** Switch to a [protagonist](/docs/reference/entities#protagonists-you-and-player) with the `you` effect and the wardrobe shows their clothes, not the player's. The slots are the same for everyone you play, but each body fills its own.
-- **Wearing doesn't check where you are or what's on screen.** Both commands work with a scene open and in any location. To stop the player changing somewhere, add a lock, such as `{ when: at('office'), deny: ['wardrobe/*'], reason: 'Not at work.' }`.
+- **Wearing doesn't check where you are or what's on screen.** Both commands work with a scene open and in any location. To stop the player changing somewhere, add a lock, such as `{ when: places.at('office'), deny: ['wardrobe/*'], reason: 'Not at work.' }`.
 - **One of each in a slot.** The wardrobe marks a thing as on, not a count. A player with two of a stackable thing wears one, and selling one leaves it on.
-- **A slot taken out of the game stays in old saves.** Say a save was made while the game had a `hat` slot. `wearing(entity)` with no slot, and the view, only look at the slots the game declares now, so the hat no longer counts as worn there. But a condition that names the slot reads the save directly, so `slotFilled('hat')` still holds, and `takeOff('hat')` isn't refused and empties it.
+- **A slot taken out of the game stays in old saves.** Say a save was made while the game had a `hat` slot. `wardrobe.wearing(entity)` with no slot, and the view, only look at the slots the game declares now, so the hat no longer counts as worn there. But a condition that names the slot reads the save directly, so `wardrobe.slotFilled('hat')` still holds, and `wardrobe.takeOff('hat')` isn't refused and empties it.
 
 ## See it in an example
 
-Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) adds `wardrobe()`. The raincoat and the scarf, their `wearable` traits, and the coat and neck slots are in [`examples/showcase/src/world/things.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/things.ts), and the café's body reads `wearing('clothing:raincoat')`.
+Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) adds `wardrobe()`. The raincoat and the scarf, their `wearable` traits, and the coat and neck slots are in [`examples/showcase/src/world/things.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/things.ts), and the café's body reads `wardrobe.wearing('clothing:raincoat')`.

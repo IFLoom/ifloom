@@ -14,8 +14,8 @@ These are the showcase's two triggers. The first time the player steps onto the 
 
 ```ts
 import { give, type Content } from '@ifloom/engine'
-import { day, weekday } from '@ifloom/plugin-calendar'
-import { at } from '@ifloom/plugin-places'
+import { calendar } from '@ifloom/plugin-calendar'
+import { places } from '@ifloom/plugin-places'
 
 const town: Content = {
   kinds: [{ id: 'note', label: 'Note', listed: false }],
@@ -23,7 +23,7 @@ const town: Content = {
   triggers: [
     {
       id: 'welcome',
-      when: at('high-street'),
+      when: places.at('high-street'),
       effects: [
         { notify: 'A note under your door', text: 'notice.welcome', tag: 'post' },
         give('note:welcome'),
@@ -32,7 +32,7 @@ const town: Content = {
     {
       id: 'rent',
       once: 'turn',
-      when: { all: [weekday(6), day({ gte: 6 })] },
+      when: { all: [calendar.weekday(6), calendar.day({ gte: 6 })] },
       effects: [
         { stat: 'coins', by: -30 },
         { notify: 'Rent paid: 30 coins', id: 'rent', tag: 'money' },

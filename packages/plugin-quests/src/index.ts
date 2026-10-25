@@ -240,7 +240,7 @@ function questId(args: Record<string, unknown>): string {
  * The plugin. Add it to the game's `plugins`, and put quests in a pack's
  * `data.quests.quests`.
  */
-export function quests(): DefinedPlugin<QuestsState, QuestsView> {
+function questsPlugin(): DefinedPlugin<QuestsState, QuestsView> {
   return definePlugin<QuestsState, QuestsView>({
     id: ID,
     version: 1,
@@ -339,14 +339,27 @@ export function quests(): DefinedPlugin<QuestsState, QuestsView> {
 }
 
 /** A condition: the quest is started and not finished. */
-export const questActive = (quest: string): Condition => ({ 'quests/active': { quest } })
+const questActive = (quest: string): Condition => ({ 'quests/active': { quest } })
 /** A condition: the quest is finished. */
-export const questDone = (quest: string): Condition => ({ 'quests/done': { quest } })
+const questDone = (quest: string): Condition => ({ 'quests/done': { quest } })
 /** A condition: this stage of the quest is done. */
-export const questReached = (quest: string, stage: string): Condition => ({ 'quests/reached': { quest, stage } })
+const questReached = (quest: string, stage: string): Condition => ({ 'quests/reached': { quest, stage } })
 /** An effect: start the quest now. */
-export const startQuest = (quest: string): EffectRef => ({ 'quests/start': { quest } })
+const startQuest = (quest: string): EffectRef => ({ 'quests/start': { quest } })
 /** A command: pin this quest, or unpin with no argument. */
-export const trackQuest = (quest?: string): CommandRef => ({ 'quests/track': { id: quest } })
+const trackQuest = (quest?: string): CommandRef => ({ 'quests/track': { id: quest } })
 /** A command: the player has looked at this quest, or at all of them. */
-export const seeQuests = (quest?: string): CommandRef => ({ 'quests/seen': { id: quest } })
+const seeQuests = (quest?: string): CommandRef => ({ 'quests/seen': { id: quest } })
+
+/**
+ * The plugin, with its helpers on it: `quests()` makes the plugin for the
+ * game's `plugins`, and content is written with `quests.done('bread')`.
+ */
+export const quests = Object.assign(questsPlugin, {
+  active: questActive,
+  done: questDone,
+  reached: questReached,
+  start: startQuest,
+  track: trackQuest,
+  seen: seeQuests,
+})

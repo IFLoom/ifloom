@@ -27,7 +27,7 @@ Starts a runner on `start`, which is usually [`startingState`](/docs/reference/c
 ```ts
 import { localStorageDriver } from '@ifloom/browser'
 import { createRunner, saves, startingState } from '@ifloom/engine'
-import { go } from '@ifloom/plugin-places'
+import { places } from '@ifloom/plugin-places'
 
 const runner = createRunner(game, startingState(game, { seed: Math.floor(Math.random() * 2 ** 31) }), {
   history: { depth: 50 },
@@ -37,7 +37,7 @@ const runner = createRunner(game, startingState(game, { seed: Math.floor(Math.ra
 })
 
 runner.subscribe(() => render(runner.view()))
-runner.apply(go('high-street'))
+runner.apply(places.go('high-street'))
 ```
 
 ## In a browser
@@ -131,7 +131,7 @@ This is how the backlog grows, command by command:
 
 ```ts
 import { createRunner } from '@ifloom/engine'
-import { go } from '@ifloom/plugin-places'
+import { places } from '@ifloom/plugin-places'
 
 // Ava's scene is open. Chat, then say goodbye.
 const runner = createRunner(game, start, { backlog: true })
@@ -139,7 +139,7 @@ runner.apply({ type: 'choose', id: 'chat' })
 runner.apply({ type: 'choose', id: 'bye' })
 runner.backlog().map((entry) => [entry.sceneId, entry.chose])
 // [['ava.hi', 'Chat for a minute'], ['ava.hi', 'Leave her to it']]
-runner.apply(go('high-street'))
+runner.apply(places.go('high-street'))
 runner.backlog().length // still 2
 ```
 

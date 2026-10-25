@@ -2,14 +2,14 @@ import { describe, expect, it } from 'vitest'
 import { renderToString } from 'react-dom/server'
 import { createRunner, loadGame, startingState, type Content } from '@ifloom/engine'
 import { GameProvider } from '@ifloom/react'
-import { __camel__, mark__Pascal__ } from '../src/index.ts'
+import { __camel__ } from '../src/index.ts'
 import { __camel__Ui, __Pascal__List } from '../src/react/index.tsx'
 
 /** A town with two entries, the first marked by the `shop` action. */
 function runner() {
   const town: Content = {
     name: 'town',
-    actions: [{ id: 'shop', effects: [mark__Pascal__('bread')] }],
+    actions: [{ id: 'shop', effects: [__camel__.mark('bread')] }],
     data: {
       '__id__': {
         entries: [

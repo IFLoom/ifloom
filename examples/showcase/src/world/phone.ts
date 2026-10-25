@@ -4,7 +4,7 @@
  * (texts, the feed, contacts, the gallery) come with `phone()`.
  */
 import type { AppDef } from '@ifloom/plugin-devices'
-import { here } from '@ifloom/plugin-cast'
+import { cast } from '@ifloom/plugin-cast'
 
 /** The camera: one photo of each person, if they're here to take, and a post a day. A photo is a thing the camera makes, kept by the player. */
 export const camera: Omit<AppDef, 'on'> = {
@@ -17,7 +17,7 @@ export const camera: Omit<AppDef, 'on'> = {
         ...(['ava', 'sam'] as const).map((who) => ({
           id: `photo-${who}`,
           label: who === 'ava' ? 'Photograph Ava' : 'Photograph Sam',
-          blocked: [{ when: { not: here(who) }, reason: 'They aren’t here.' }],
+          blocked: [{ when: { not: cast.here(who) }, reason: 'They aren’t here.' }],
           effects: [{ create: 'photo', with: { id: who, name: who === 'ava' ? 'Ava at work' : 'Sam and the dog', image: `photo/${who}.svg` }, at: 'player' }],
         })),
         {

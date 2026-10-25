@@ -152,7 +152,7 @@ export function feedsOf(game: Game): FeedDef[] {
  * people's posts in a pack's `data.feed.feeds` and `data.feed.posts`, so a
  * mod can add either.
  */
-export function feed(): DefinedPlugin<FeedState, FeedsView> {
+function feedPlugin(): DefinedPlugin<FeedState, FeedsView> {
   const feedIds = (game: Game) => new Set(feedsOf(game).map((entry) => entry.id))
 
   /** Posts in a feed the player hasn't looked at; never below nothing, whatever an older save counted. */
@@ -354,12 +354,18 @@ export function feed(): DefinedPlugin<FeedState, FeedsView> {
 }
 
 /** An effect: the player posts to a feed. `text` is a prose key. */
-export const postTo = (feedId: string, id: string, post: { text?: string; image?: string; video?: string; likes?: number } = {}): EffectRef => ({
+const postTo = (feedId: string, id: string, post: { text?: string; image?: string; video?: string; likes?: number } = {}): EffectRef => ({
   [`${ID}/post`]: { feed: feedId, post: id, ...post },
 })
 /** An effect: likes, a comment, or both, on a post. */
-export const react = (post: string, reaction: { likes?: number; from?: string; text?: string }): EffectRef => ({ [`${ID}/react`]: { post, ...reaction } })
+const react = (post: string, reaction: { likes?: number; from?: string; text?: string }): EffectRef => ({ [`${ID}/react`]: { post, ...reaction } })
 /** A command: the player has looked at a feed, or at every feed. */
-export const seeFeed = (feedId?: string): CommandRef => ({ [`${ID}/seen`]: feedId === undefined ? {} : { id: feedId } })
+const seeFeed = (feedId?: string): CommandRef => ({ [`${ID}/seen`]: feedId === undefined ? {} : { id: feedId } })
 /** A condition: the player has posted at least `gte` times, to one feed or any. */
-export const hasPosted = (gte = 1, feedId?: string): Condition => ({ [`${ID}/posted`]: feedId === undefined ? { gte } : { gte, feed: feedId } })
+const hasPosted = (gte = 1, feedId?: string): Condition => ({ [`${ID}/posted`]: feedId === undefined ? { gte } : { gte, feed: feedId } })
+
+/**
+ * The plugin, with its helpers on it: `feed()` makes the plugin for the
+ * game's `plugins`, and content is written with `feed.react('post-1', { likes: 2 })`.
+ */
+export const feed = Object.assign(feedPlugin, { post: postTo, react, seen: seeFeed, posted: hasPosted })

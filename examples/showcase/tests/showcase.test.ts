@@ -30,18 +30,18 @@ import {
 import type { AchievementsView } from '@ifloom/plugin-achievements'
 import type { DevicesView } from '@ifloom/plugin-devices'
 import type { StatusesView } from '@ifloom/plugin-statuses'
-import { applyFor, work, type JobsView } from '@ifloom/plugin-jobs'
+import { jobs, type JobsView } from '@ifloom/plugin-jobs'
 import type { FeedsView } from '@ifloom/plugin-feed'
-import { replyTo, type MessagesView } from '@ifloom/plugin-messages'
+import { messages, type MessagesView } from '@ifloom/plugin-messages'
 import type { QuestsView } from '@ifloom/plugin-quests'
-import { buy, sell, type ShopView } from '@ifloom/plugin-shop'
-import { dropThing, useThing, type InventoryView } from '@ifloom/plugin-inventory'
-import { wearing } from '@ifloom/plugin-wardrobe'
-import { sleep } from '@ifloom/plugin-calendar'
-import { go, pickUp, type PlacesState, type PlacesView } from '@ifloom/plugin-places'
-import { call, talk, type CastView } from '@ifloom/plugin-cast'
-import { cheatUsed, runCheat, type CheatsView } from '@ifloom/plugin-cheats'
-import { hasUnlock, lockContent, recordUnlock, startUnlocks, unlocksOf, unlockedPacks } from '@ifloom/plugin-unlocks'
+import { shop, type ShopView } from '@ifloom/plugin-shop'
+import { inventory, type InventoryView } from '@ifloom/plugin-inventory'
+import { wardrobe } from '@ifloom/plugin-wardrobe'
+import { calendar } from '@ifloom/plugin-calendar'
+import { places, type PlacesState, type PlacesView } from '@ifloom/plugin-places'
+import { cast, type CastView } from '@ifloom/plugin-cast'
+import { cheats, type CheatsView } from '@ifloom/plugin-cheats'
+import { unlocks, lockContent, startUnlocks, unlocksOf, unlockedPacks } from '@ifloom/plugin-unlocks'
 import { checkUiHints } from '@ifloom/react'
 import { readFileSync } from 'node:fs'
 import { clock, openCamera, smallTown } from '../src/game.ts'
@@ -76,7 +76,7 @@ describe('Small Town', () => {
   it('holds the player in moving day until they unpack', () => {
     const start = startingState(game)
     expect(view(start, game).scene.title).toBe('Moving day')
-    expect(apply(start, game, go('high-street')).reason).toBe('Unpack first.')
+    expect(apply(start, game, places.go('high-street')).reason).toBe('Unpack first.')
     const unpacked = run(start, { type: 'choose', id: 'unpack' })
     expect(quests(unpacked).active.map((quest) => quest.id)).toEqual(['settle', 'friend'])
   })
@@ -85,38 +85,38 @@ describe('Small Town', () => {
     let state = run(startingState(game), { type: 'input', id: 'catName', to: ' Biscuit ' }, { type: 'choose', id: 'unpack' })
     expect(view(state, game).scene.body).toContain('Biscuit has claimed the warm spot')
     expect(apply(state, game, { type: 'input', id: 'catName', to: 'Rex' }).reason).toBe('Not now.')
-    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'), buy('counter', 'item:sandwich'))
+    state = run(on(state, 1, 'morning'), places.go('high-street'), places.go('cafe'), shop.buy('counter', 'item:sandwich'))
     const carried = (view(state, game).plugins.inventory as InventoryView).things
     expect(carried.find((thing) => thing.ref === 'item:sandwich')?.use?.label).toBe('Eat the sandwich')
-    state = run({ ...state, stats: { ...state.stats, energy: 50 } }, useThing('item:sandwich'))
+    state = run({ ...state, stats: { ...state.stats, energy: 50 } }, inventory.use('item:sandwich'))
     expect(state.stats.energy).toBe(75)
     expect(heldCount(state, game, 'item:sandwich')).toBe(0)
   })
 
   it('plays a first day: a note under the door, coffee, Ava, a photo and a post', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
-    state = run(on(state, 1, 'morning'), go('high-street'))
+    state = run(on(state, 1, 'morning'), places.go('high-street'))
     expect(view(state, game).notices.unseen[0].title).toBe('A note under your door')
     expect(heldCount(state, game, 'note:welcome', 'player')).toBe(1)
 
-    state = run(state, go('cafe'))
+    state = run(state, places.go('cafe'))
     expect(view(state, game).scene.body).toContain('Ava is behind the counter')
     expect(view(state, game).scene.body).toContain('very yellow')
-    expect(holds(state, game, wearing('clothing:raincoat'))).toBe(true)
+    expect(holds(state, game, wardrobe.wearing('clothing:raincoat'))).toBe(true)
 
     // The café's stage: the counter while Ava is on shift, and a hotspot on her that talks to her.
     const cafe = (view(state, game).plugins.places as PlacesView).location!
     expect(cafe.stage).toEqual({
       aspect: '16/10',
       layers: [{ id: 'counter', src: 'art/photo/ava.svg' }],
-      hotspots: [{ id: 'ava', rect: [36, 22, 28, 44], label: 'Talk to Ava', command: commandOf(talk('ava')), layer: 'counter' }],
+      hotspots: [{ id: 'ava', rect: [36, 22, 28, 44], label: 'Talk to Ava', command: commandOf(cast.talk('ava')), layer: 'counter' }],
     })
 
     state = run(state, act('places/coffee'))
     expect(state.stats).toMatchObject({ coins: 9, energy: 95 })
     expect(apply(state, game, act('places/coffee')).reason).toBe('One is enough for today.')
 
-    state = run(state, talk('ava'), { type: 'choose', id: 'chat' }, { type: 'choose', id: 'bye' })
+    state = run(state, cast.talk('ava'), { type: 'choose', id: 'chat' }, { type: 'choose', id: 'bye' })
     state = run(state, openCamera, act('devices/photo-ava'), act('devices/post'))
     const social = (view(state, game).plugins.feed as FeedsView).feeds[0]
     expect(social.posts[0]).toMatchObject({ mine: true, text: 'New town, new faces.' })
@@ -133,10 +133,10 @@ describe('Small Town', () => {
 
   it('brings Ava’s text the next day, and she picks up in the evening', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
-    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
-    state = run(state, talk('ava'), { type: 'choose', id: 'bye' }, go('high-street'), go('flat'))
-    expect(apply(state, game, call('ava')).reason).toBe('She’s busy at the counter. Try her this evening.')
-    state = run(on(state, 1, 'night'), sleep())
+    state = run(on(state, 1, 'morning'), places.go('high-street'), places.go('cafe'))
+    state = run(state, cast.talk('ava'), { type: 'choose', id: 'bye' }, places.go('high-street'), places.go('flat'))
+    expect(apply(state, game, cast.call('ava')).reason).toBe('She’s busy at the counter. Try her this evening.')
+    state = run(on(state, 1, 'night'), calendar.sleep())
     expect(state.stats.energy).toBe(100)
     const texts = (view(state, game).plugins.messages as MessagesView).channels[0]
     expect(texts.threads[0].messages[0].text).toContain('Coffee’s on me')
@@ -150,22 +150,22 @@ describe('Small Town', () => {
     expect(flat.actions.map((action) => action.id)).not.toContain('read-text')
     const opened = run(state, check.command)
     expect((view(opened, game).plugins.devices as DevicesView).devices[0].open?.id).toBe('texts')
-    state = run(on(state, 2, 'evening'), call('ava'))
+    state = run(on(state, 2, 'evening'), cast.call('ava'))
     expect(view(state, game).scene.title).toBe('Ava, on the phone')
   })
 
   it('draws a line of Ava’s small talk each day once her text is answered, never one twice in three days', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
-    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
-    state = run(state, talk('ava'), { type: 'choose', id: 'bye' }, go('high-street'), go('flat'))
-    state = run(on(state, 1, 'night'), sleep())
+    state = run(on(state, 1, 'morning'), places.go('high-street'), places.go('cafe'))
+    state = run(state, cast.talk('ava'), { type: 'choose', id: 'bye' }, places.go('high-street'), places.go('flat'))
+    state = run(on(state, 1, 'night'), calendar.sleep())
     const lines = (at: GameState) =>
       (view(at, game).plugins.messages as MessagesView).channels[0].threads[0].messages.filter((message) => message.id.startsWith('ava.chat.'))
     // Nothing until she has her answer.
-    state = run(state, replyTo('ava.text', 'yes'))
+    state = run(state, messages.reply('ava.text', 'yes'))
     expect(lines(state)).toHaveLength(1)
     // A week of nights in: one line each morning.
-    for (let night = 2; night < 8; night += 1) state = run(on(state, night, 'night'), sleep())
+    for (let night = 2; night < 8; night += 1) state = run(on(state, night, 'night'), calendar.sleep())
     const drawn = lines(state)
     expect(drawn).toHaveLength(7)
     // Each line rests three days after it comes.
@@ -178,11 +178,11 @@ describe('Small Town', () => {
 
   it('rings the phone at home one evening once her text is answered: answer within ten seconds, or miss the call', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
-    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
-    state = run(state, talk('ava'), { type: 'choose', id: 'bye' }, go('high-street'), go('flat'))
-    state = run(on(state, 1, 'night'), sleep())
+    state = run(on(state, 1, 'morning'), places.go('high-street'), places.go('cafe'))
+    state = run(state, cast.talk('ava'), { type: 'choose', id: 'bye' }, places.go('high-street'), places.go('flat'))
+    state = run(on(state, 1, 'night'), calendar.sleep())
     // Answering her text in the evening at home: the phone rings straight after, with ten seconds on it.
-    state = run(on(state, 2, 'evening'), replyTo('ava.text', 'yes'))
+    state = run(on(state, 2, 'evening'), messages.reply('ava.text', 'yes'))
     expect(state.sceneId).toBe('flat.ring')
     expect(view(state, game).timers).toEqual([{ id: 'flat.ring', label: 'Ringing', left: 10_000, total: 10_000 }])
     // Picked up in time: Ava's call, and no missed call.
@@ -201,14 +201,14 @@ describe('Small Town', () => {
 
   it('charges rent on Sundays, and meets Ava by the river once a friendship has had time', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
-    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
-    state = run(state, talk('ava'), { type: 'choose', id: 'bye' })
+    state = run(on(state, 1, 'morning'), places.go('high-street'), places.go('cafe'))
+    state = run(state, cast.talk('ava'), { type: 'choose', id: 'bye' })
     // A Sunday a week in, with 40 coins and Ava a friend.
     state = writeEntity({ ...on(state, 6, 'evening'), stats: { ...state.stats, coins: 40 } }, 'character:ava', {
       ...entityOf(state, game, 'character:ava'),
       stats: { friendship: 30 },
     })
-    state = run(state, go('high-street'), go('park'))
+    state = run(state, places.go('high-street'), places.go('park'))
     expect(state.stats.coins).toBe(10)
     expect(view(state, game).notices.unseen.map((notice) => notice.title)).toContain('Rent paid: 30 coins')
     // The secret achievement is ??? until the evening by the river.
@@ -217,7 +217,7 @@ describe('Small Town', () => {
       expect.objectContaining({ id: 'nest-egg', title: 'Nest egg', earned: false, progress: { value: 10, target: 100 } }),
       expect.objectContaining({ id: 'river', title: '???', earned: false }),
     ])
-    state = run(state, talk('ava'))
+    state = run(state, cast.talk('ava'))
     expect(view(state, game).scene.title).toBe('By the river')
     state = run(state, { type: 'choose', id: 'stay' })
     expect(quests(state).done.map((quest) => quest.id)).toContain('friend')
@@ -227,13 +227,13 @@ describe('Small Town', () => {
 
   it('keeps a shell from the river, and gives it to Ava at the café', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
-    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
-    state = run(state, talk('ava'), { type: 'choose', id: 'bye' })
+    state = run(on(state, 1, 'morning'), places.go('high-street'), places.go('cafe'))
+    state = run(state, cast.talk('ava'), { type: 'choose', id: 'bye' })
     state = writeEntity({ ...on(state, 6, 'evening'), stats: { ...state.stats, coins: 40 } }, 'character:ava', {
       ...entityOf(state, game, 'character:ava'),
       stats: { friendship: 30 },
     })
-    state = run(state, go('high-street'), go('park'), talk('ava'), { type: 'choose', id: 'shell' })
+    state = run(state, places.go('high-street'), places.go('park'), cast.talk('ava'), { type: 'choose', id: 'shell' })
     // What you hold is in the view, after the raincoat and the paper you came with and Sam's note; the keepsake kind itself isn't listed.
     const held = () => view(state, game).held.map((thing) => thing.ref)
     expect(held()).toEqual(['clothing:raincoat', 'item:paper', 'note:welcome', 'keepsake:shell'])
@@ -250,7 +250,7 @@ describe('Small Town', () => {
     expect(view(state, game).scene.choices.map((choice) => choice.id)).toEqual(['ducks', 'stay'])
     state = run(state, { type: 'choose', id: 'stay' }, { type: 'choose', id: 'home' })
     // The next morning at the café she takes it, and keeps it by the till.
-    state = run(on(state, 7, 'morning'), go('high-street'), go('cafe'), talk('ava'), { type: 'choose', id: 'shell' })
+    state = run(on(state, 7, 'morning'), places.go('high-street'), places.go('cafe'), cast.talk('ava'), { type: 'choose', id: 'shell' })
     expect(holds(state, game, { entity: 'keepsake:shell', at: 'character:ava' })).toBe(true)
     expect(held()).toEqual(['clothing:raincoat', 'item:paper', 'note:welcome'])
     expect(statValue(state, game, 'friendship', 'character:ava')).toBeGreaterThanOrEqual(35)
@@ -259,21 +259,21 @@ describe('Small Town', () => {
   it('leaves the paper where you drop it, in the flat, until you pick it up again', () => {
     let state = on(run(startingState(game), { type: 'choose', id: 'unpack' }), 1, 'morning')
     const lying = () => (view(state, game).plugins.places as PlacesView).things.map((thing) => [thing.ref, thing.name, thing.count])
-    state = run(state, dropThing('item:paper'))
+    state = run(state, inventory.drop('item:paper'))
     expect(heldCount(state, game, 'item:paper')).toBe(0)
     expect(holds(state, game, { entity: 'item:paper', at: 'location:flat' })).toBe(true)
     expect(lying()).toEqual([['item:paper', 'newspaper', 1]])
     // Out on the high street it isn't there; back in the flat, it is.
-    state = run(state, go('high-street'))
+    state = run(state, places.go('high-street'))
     expect(lying()).toEqual([])
-    state = run(state, go('flat'), pickUp('item:paper'))
+    state = run(state, places.go('flat'), places.pickUp('item:paper'))
     expect(heldCount(state, game, 'item:paper')).toBe(1)
     expect(lying()).toEqual([])
   })
 
   it('shows Ava as an entity once met: her line, her portrait, and the friendship she keeps', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
-    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
+    state = run(on(state, 1, 'morning'), places.go('high-street'), places.go('cafe'))
     expect((view(state, game).plugins.cast as CastView).present[0]).toMatchObject({
       id: 'ava',
       ref: 'character:ava',
@@ -282,7 +282,7 @@ describe('Small Town', () => {
       portrait: 'art/character/ava.svg',
     })
     expect(view(state, game).entities.character.entries).toEqual([])
-    state = run(state, talk('ava'), { type: 'choose', id: 'chat' }, { type: 'choose', id: 'bye' })
+    state = run(state, cast.talk('ava'), { type: 'choose', id: 'chat' }, { type: 'choose', id: 'bye' })
     expect(view(state, game).entities.character.entries[0]).toMatchObject({
       ref: 'character:ava',
       name: 'Ava',
@@ -296,18 +296,18 @@ describe('Small Town', () => {
     let state = startingState(game)
     const coins = state.stats.coins
     // Moving day locks everything but the scene; a cheat still works, and no time passes.
-    state = run(state, runCheat('coins'))
+    state = run(state, cheats.use('coins'))
     expect(state.stats.coins).toBe(coins + 20)
     expect(state.turn).toBe(0)
-    expect(holds(state, game, cheatUsed('coins'))).toBe(true)
+    expect(holds(state, game, cheats.used('coins'))).toBe(true)
     const shown = (s: GameState) => view(s, game).plugins.cheats as CheatsView
     expect(shown(state).cheats.map((cheat) => [cheat.id, cheat.button.disabled ?? null])).toEqual([
       ['coins', null],
       ['energy', 'For supporters.'],
     ])
-    expect(apply(state, game, runCheat('energy')).reason).toBe('For supporters.')
-    const supporter = run({ ...state, stats: { ...state.stats, energy: 10 } }, recordUnlock('supporter'))
-    expect(run(supporter, runCheat('energy')).stats.energy).toBe(100)
+    expect(apply(state, game, cheats.use('energy')).reason).toBe('For supporters.')
+    const supporter = run({ ...state, stats: { ...state.stats, energy: 10 } }, unlocks.record('supporter'))
+    expect(run(supporter, cheats.use('energy')).stats.energy).toBe(100)
   })
 
   it('unlocks the supporter edition with the code in .env: the cheat at once, and the café scene once the game is built again', async () => {
@@ -321,8 +321,8 @@ describe('Small Town', () => {
     expect(await codes.enter('SMALL-TOWN-FAN')).toEqual({ ok: false, reason: 'That code doesn’t unlock anything.' })
     const entered = await codes.enter(code.toLowerCase())
     expect(entered).toEqual({ ok: true, value: { unlock: 'supporter', label: 'Supporter edition', already: false, restart: true } })
-    expect(holds(runner.state, game, hasUnlock('supporter'))).toBe(true)
-    expect(runner.apply(runCheat('energy')).ok).toBe(true)
+    expect(holds(runner.state, game, unlocks.has('supporter'))).toBe(true)
+    expect(runner.apply(cheats.use('energy')).ok).toBe(true)
     // Replayed, the unlock and the cheat play the same.
     const replayed = replay(game, runner.log())
     expect(replayed.ok && replayed.value).toEqual(runner.state)
@@ -333,10 +333,10 @@ describe('Small Town', () => {
     expect(opened.problems).toEqual([])
     const full = smallTown({ unlocked: opened.packs })
     expect(full.problems).toEqual([])
-    let state: GameState = apply(startingState(full.game, { seed: 4 }), full.game, recordUnlock('supporter')).state
+    let state: GameState = apply(startingState(full.game, { seed: 4 }), full.game, unlocks.record('supporter')).state
     state = apply(state, full.game, { type: 'choose', id: 'unpack' }).state
-    state = apply(on(state, 1, 'morning'), full.game, go('high-street')).state
-    state = apply(state, full.game, go('cafe')).state
+    state = apply(on(state, 1, 'morning'), full.game, places.go('high-street')).state
+    state = apply(state, full.game, places.go('cafe')).state
     state = apply(state, full.game, act('places/sit')).state
     expect(state.sceneId).toBe('cafe.back-room')
     expect(view(state, full.game).scene.title).toBe('The back room')
@@ -345,7 +345,7 @@ describe('Small Town', () => {
   it('draws something to happen when you sit a while at the café, and a quiet table when nothing can', () => {
     const sitDown = (seed: number) => {
       let state = run(startingState(game, { seed }), { type: 'choose', id: 'unpack' })
-      state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'), act('places/sit'))
+      state = run(on(state, 1, 'morning'), places.go('high-street'), places.go('cafe'), act('places/sit'))
       return state
     }
     const drawn = new Set(Array.from({ length: 20 }, (_, seed) => sitDown(seed).sceneId))
@@ -364,7 +364,7 @@ describe('Small Town', () => {
 
   it('plays quick feet at the park: inputs in time win coins, letting the clock run out loses', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
-    state = run(on(state, 1, 'morning'), go('high-street'), go('park'), act('places/arrows'))
+    state = run(on(state, 1, 'morning'), places.go('high-street'), places.go('park'), act('places/arrows'))
     expect(view(state, game).minigame).toMatchObject({ id: 'arrows', title: 'Quick feet', timeLeft: 1500, inputs: ['up', 'down', 'left', 'right'] })
     expect(apply(state, game, act('places/jog')).reason).toBe('Finish this first.')
     const coins = state.stats.coins
@@ -389,21 +389,29 @@ describe('Small Town', () => {
 
   it('leaves you caffeinated after a coffee, for the rest of the day and the next', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
-    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'), act('places/coffee'), go('high-street'), go('office'), act('places/work'))
+    state = run(
+      on(state, 1, 'morning'),
+      places.go('high-street'),
+      places.go('cafe'),
+      act('places/coffee'),
+      places.go('high-street'),
+      places.go('office'),
+      act('places/work'),
+    )
     // 80 kept, plus 15 for the coffee, less 30 for the shift: 65, and 10 more on top while it lasts.
     expect(state.stats.energy).toBe(65)
     expect(statValue(state, game, 'energy')).toBe(75)
     const effects = () => (view(state, game).plugins.statuses as StatusesView).active
     expect(effects()).toEqual([expect.objectContaining({ id: 'caffeinated', label: 'Caffeinated', turnsLeft: 2 })])
-    state = run(on(state, 1, 'night'), sleep())
+    state = run(on(state, 1, 'night'), calendar.sleep())
     expect(effects()).toEqual([expect.objectContaining({ turnsLeft: 1 })])
-    state = run(on(state, 2, 'night'), sleep())
+    state = run(on(state, 2, 'night'), calendar.sleep())
     expect(effects()).toEqual([])
   })
 
   it('sells a sandwich at the café as a plain action too, beside the counter', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
-    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
+    state = run(on(state, 1, 'morning'), places.go('high-street'), places.go('cafe'))
     const labels = view(state, game).actions.map((action) => action.label)
     expect(labels).toEqual(expect.arrayContaining(['Buy a sandwich']))
     // The counter sells one too, from the shop's view, which the React UI draws as the counter's dialog.
@@ -415,12 +423,12 @@ describe('Small Town', () => {
     expect(state.stats.coins).toBe(coins - 4)
     expect(heldCount(state, game, 'item:sandwich')).toBe(1)
     // Only in the café.
-    expect(apply(run(state, go('high-street')), game, act('places/buy-sandwich')).reason).toBeDefined()
+    expect(apply(run(state, places.go('high-street')), game, act('places/buy-sandwich')).reason).toBeDefined()
   })
 
   it('sells from the café counter: two flapjacks a day, half off one thing, and half back on a sandwich', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
-    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
+    state = run(on(state, 1, 'morning'), places.go('high-street'), places.go('cafe'))
     const counter = () => (view(state, game).plugins.shop as ShopView).vendors[0]
     expect(counter()).toMatchObject({ id: 'counter', here: true, closed: null })
     expect(counter().goods.filter((good) => good.off > 0)).toHaveLength(1)
@@ -428,19 +436,19 @@ describe('Small Town', () => {
     const flapjack = () => counter().goods.find((good) => good.entity === 'item:flapjack')!
     expect(flapjack().buy.price?.stats?.[0].id).toBe('coins')
     expect(flapjack().stock).toBe(2)
-    state = run(state, buy('counter', 'item:flapjack'), buy('counter', 'item:flapjack'))
-    expect(apply(state, game, buy('counter', 'item:flapjack')).reason).toBe('Sold out.')
+    state = run(state, shop.buy('counter', 'item:flapjack'), shop.buy('counter', 'item:flapjack'))
+    expect(apply(state, game, shop.buy('counter', 'item:flapjack')).reason).toBe('Sold out.')
     expect(flapjack().buy.disabled).toBe('Sold out.')
     // The counter holds its flapjacks, as any holder holds things; a sandwich never runs out.
     expect(heldCount(state, game, 'item:flapjack', 'vendor:counter')).toBe(0)
     expect(counter().goods[0].stock).toBeNull()
     const coins = state.stats.coins
-    state = run(state, buy('counter', 'item:sandwich'), sell('counter', 'item:sandwich'))
+    state = run(state, shop.buy('counter', 'item:sandwich'), shop.sell('counter', 'item:sandwich'))
     expect(state.stats.coins).toBe(coins - counter().goods[0].buy.price!.stats![0].amount + 2)
     // Baked again the next morning.
-    expect(apply(on(state, 2, 'morning'), game, buy('counter', 'item:flapjack')).reason).toBeUndefined()
+    expect(apply(on(state, 2, 'morning'), game, shop.buy('counter', 'item:flapjack')).reason).toBeUndefined()
     // Closed in the evening, with the café.
-    expect(apply(on(state, 1, 'evening'), game, buy('counter', 'item:sandwich')).reason).toBe('Closed.')
+    expect(apply(on(state, 1, 'evening'), game, shop.buy('counter', 'item:sandwich')).reason).toBe('Closed.')
   })
 
   it('carries a save from before things were entities: the counter’s flapjacks and the raincoat on', () => {
@@ -457,25 +465,25 @@ describe('Small Town', () => {
     if (!loaded.ok) throw new Error(loaded.reason)
     expect(loaded.value.plugins.shop.state).toEqual({ stocked: { counter: { 'item:flapjack': { at: 1, left: 1 } } } })
     expect(loaded.value.plugins.wardrobe.state).toEqual({ worn: { player: { coat: 'clothing:raincoat', neck: null } } })
-    expect(holds(loaded.value, game, wearing('clothing:raincoat'))).toBe(true)
+    expect(holds(loaded.value, game, wardrobe.wearing('clothing:raincoat'))).toBe(true)
     const flapjack = (view(loaded.value, game).plugins.shop as ShopView).vendors[0].goods.find((good) => good.entity === 'item:flapjack')!
     expect(flapjack.stock).toBe(1)
   })
 
   it('takes you on at the café for Saturday mornings once Ava knows you, and pays for each shift', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
-    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
-    expect(apply(state, game, applyFor('weekend')).reason).toBe('Ava doesn’t know you well enough yet.')
-    state = run(state, talk('ava'), { type: 'choose', id: 'chat' }, { type: 'choose', id: 'bye' })
+    state = run(on(state, 1, 'morning'), places.go('high-street'), places.go('cafe'))
+    expect(apply(state, game, jobs.apply('weekend')).reason).toBe('Ava doesn’t know you well enough yet.')
+    state = run(state, cast.talk('ava'), { type: 'choose', id: 'chat' }, { type: 'choose', id: 'bye' })
     state = writeEntity(state, 'character:ava', { ...entityOf(state, game, 'character:ava'), stats: { friendship: 10 } })
-    state = run(state, applyFor('weekend'))
+    state = run(state, jobs.apply('weekend'))
     const job = () => (view(state, game).plugins.jobs as JobsView).jobs[0]
     expect(job()).toMatchObject({ hired: true, rank: { title: 'Weekend help' }, nextShift: { day: 5, inDays: 4 } })
-    expect(apply(state, game, work('weekend')).reason).toBe('No shift today.')
+    expect(apply(state, game, jobs.work('weekend')).reason).toBe('No shift today.')
     // Saturday morning: a shift takes the morning and 25 energy, and pays 12 coins.
     state = on({ ...state, stats: { ...state.stats, energy: 100 } }, 5, 'morning')
     const coins = state.stats.coins
-    state = run(state, work('weekend'))
+    state = run(state, jobs.work('weekend'))
     expect(state.stats).toMatchObject({ coins: coins + 12, energy: 75 })
     expect(clock.read(state, game)).toEqual({ day: 5, period: 'afternoon' })
     expect(job()).toMatchObject({ shifts: 1, nextShift: { day: 12, inDays: 7 } })
@@ -483,7 +491,7 @@ describe('Small Town', () => {
 
   it('fills the park with two new visitors each day, drawn from the town’s pools', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
-    state = run(on(state, 1, 'morning'), go('high-street'), go('park'))
+    state = run(on(state, 1, 'morning'), places.go('high-street'), places.go('park'))
     const visitors = () => entitiesOf(state, game, 'visitor').map((ref) => ({ name: entityName(state, game, ref), kv: entityKv(state, game, ref) }))
     expect(visitors()).toHaveLength(2)
     for (const visitor of visitors()) {
@@ -493,7 +501,7 @@ describe('Small Town', () => {
     expect(view(state, game).scene.body).toContain('A few people are out along the path')
     const first = visitors()
     // Back the next day: yesterday's have gone home, and two more are out.
-    state = run(on(state, 2, 'morning'), go('high-street'), go('park'))
+    state = run(on(state, 2, 'morning'), places.go('high-street'), places.go('park'))
     expect(entitiesOf(state, game, 'visitor')).toEqual(['visitor:#3', 'visitor:#4'])
     expect(visitors()).not.toEqual(first)
   })
@@ -512,7 +520,7 @@ describe('Small Town', () => {
 
   it('skims a stone at the park on two dice against 8, and counts the ducks as you come in', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
-    state = run(on(state, 1, 'morning'), go('high-street'), go('park'))
+    state = run(on(state, 1, 'morning'), places.go('high-street'), places.go('park'))
     // The ducks' roll came with arriving, from the park's trigger, and no line hints it.
     const [ducks] = view(state, game).rolls
     expect(ducks).toMatchObject({ key: 'ducks', dice: '1d6', plus: 2 })
@@ -536,7 +544,7 @@ describe('Small Town', () => {
 
   it('keeps the phone in the pocket at work', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
-    state = run(on(state, 1, 'morning'), go('high-street'), go('office'))
+    state = run(on(state, 1, 'morning'), places.go('high-street'), places.go('office'))
     expect(apply(state, game, openCamera).reason).toBe('Not at work.')
     state = run(state, act('places/work'))
     expect(state.stats.coins).toBe(32)

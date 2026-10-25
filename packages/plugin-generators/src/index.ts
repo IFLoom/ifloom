@@ -197,7 +197,7 @@ function rangeProblems(field: FieldDef | undefined): string[] {
  * The plugin. Add it to the game's `plugins`, and put pools and templates in
  * a pack's `data.generators.pools` and `data.generators.templates`.
  */
-export function generators(): DefinedPlugin<null> {
+function generatorsPlugin(): DefinedPlugin<null> {
   return definePlugin({
     id: ID,
     version: 1,
@@ -267,4 +267,10 @@ export function generators(): DefinedPlugin<null> {
 }
 
 /** An effect: make `count` (1 if left out) new entities from the template. */
-export const generate = (template: string, count?: number): EffectRef => ({ 'generators/generate': count === undefined ? { template } : { template, count } })
+const generate = (template: string, count?: number): EffectRef => ({ 'generators/generate': count === undefined ? { template } : { template, count } })
+
+/**
+ * The plugin, with its helpers on it: `generators()` makes the plugin for the
+ * game's `plugins`, and content is written with `generators.generate('regular')`.
+ */
+export const generators = Object.assign(generatorsPlugin, { generate })

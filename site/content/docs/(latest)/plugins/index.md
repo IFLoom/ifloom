@@ -95,7 +95,17 @@ You choose plugins when you build the game. They're never loaded while it runs. 
 Content calls a plugin's conditions, effects and commands by their full name, `<plugin>/<name>`, as the only key, with the arguments as its value. Every plugin's helpers write it for you:
 
 ```ts
-{ 'quests/done': { quest: 'settle' } }   // what questDone('settle') writes
+{ 'quests/done': { quest: 'settle' } }   // what quests.done('settle') writes
+```
+
+A plugin's helpers are properties of its factory, the function you call for `plugins`, and each is named after the call it writes: `quests()` is the plugin, and `quests.done('settle')`, `places.go('park')`, `calendar.sleep()` and `jobs.fire('cafe')` are its calls. So two plugins can each have an `at` or an `open`, and you import one name per plugin:
+
+```ts
+import { calendar } from '@ifloom/plugin-calendar'
+import { places } from '@ifloom/plugin-places'
+
+const plugins = [calendar(), places({ start: 'flat' })]
+const bed = { id: 'bed', label: 'Go to bed', when: places.at('flat'), command: calendar.sleep() }
 ```
 
 A call works anywhere a [condition](/docs/reference/conditions), an effect or a command goes. Its value is always an object of named arguments, or `true` for none. The game's own code is called the same way, with `game/` in front. See [`PluginCall`](/docs/reference/custom#plugincall).

@@ -6,12 +6,12 @@
  * own state, fills the screen with the room's description while no scene is
  * open (`stage`), offers the room's actions as buttons, and hands the UI the
  * exits. A location is an entity that carries the `places/location` trait,
- * written with `location({ ... })` in content's `entities`: its name, `desc`
+ * written with `places.location({ ... })` in content's `entities`: its name, `desc`
  * and `image` are the entity's, and its exits, body and actions are the
  * trait's. So a mod adds a room as it adds any entity, and changes one with
  * a `traits` row or by replacing the entity.
  *
- * The plugin brings the kind `location`, which `location()` uses. Each place
+ * The plugin brings the kind `location`, which `places.location()` uses. Each place
  * is unique, so it holds things: what lies there, shown in the view with a
  * button to pick it up. The `places/holder` query names where the player is
  * as that entity, so another plugin (the inventory's drop) can put something
@@ -116,7 +116,7 @@ declare module '@ifloom/engine' {
 }
 
 /**
- * What `location()` takes: an entity's fields (its `of` is `'location'` if
+ * What `places.location()` takes: an entity's fields (its `of` is `'location'` if
  * left out; its `desc` is the line under the place's name, its `image` its
  * picture) and the `places/location` trait's, side by side. `ui` is the
  * trait's: the room's hints, as a scene's.
@@ -230,10 +230,10 @@ export const LOCATION = 'location'
 
 /**
  * How content names a place's entity, for `at` and `entity`: a bare id is
- * one of the plugin's kind (`locationRef('park')` is `'location:park'`), and
+ * one of the plugin's kind (`places.locationRef('park')` is `'location:park'`), and
  * a reference is as written.
  */
-export const locationRef = (id: string): EntityRef => (id.includes(':') ? id : `${LOCATION}:${id}`) as EntityRef
+const locationRef = (id: string): EntityRef => (id.includes(':') ? id : `${LOCATION}:${id}`) as EntityRef
 
 /** How the plugin names a place back: its id for one of its kind, else the whole reference. */
 const short = (ref: EntityRef): string => (parseRef(ref)?.kind === LOCATION ? parseRef(ref)!.id : ref)
@@ -280,7 +280,7 @@ export function locationOf(state: GameState, game: Game, ref: string | null | un
 const declaredLocation = (game: Game, id: string): Place | undefined => declared(game).get(locationRef(id))
 
 /** Where the player is, read straight from the state: no game needed. */
-export function where(state: GameState): string | null {
+function where(state: GameState): string | null {
   return (state.plugins?.[ID]?.state as PlacesState | undefined)?.at ?? null
 }
 
@@ -316,7 +316,7 @@ function ancestors(place: (id: string) => Place | undefined, id: string): string
 }
 
 /** Build the plugin. */
-export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, PlacesView> {
+function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, PlacesView> {
   /** Why the player cannot go there now, or undefined. */
   function goBlocked(state: GameState, game: Game, at: string | null, to: string): string | undefined {
     if (state.sceneId) return stringOf(game, 'finishFirst')
@@ -518,7 +518,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
         problems.push({
           list: 'locations',
           id: String(entry?.id ?? ''),
-          what: 'locations are entities now: write them in entities with location({ id, name, exits, body, ... })',
+          what: 'locations are entities now: write them in entities with places.location({ id, name, exits, body, ... })',
         })
       }
       return problems
@@ -534,10 +534,10 @@ const LOCATION_FIELDS = ['parent', 'exits', 'stage', 'blocked', 'body', 'actions
  * the trait's written side by side.
  *
  * ```ts
- * entities: [location({ id: 'cafe', name: 'The Corner Café', desc: 'Café', exits: ['street'], body: [{ prose: 'place.cafe' }] })]
+ * entities: [places.location({ id: 'cafe', name: 'The Corner Café', desc: 'Café', exits: ['street'], body: [{ prose: 'place.cafe' }] })]
  * ```
  */
-export function location(def: PlaceDef): EntityDef {
+function location(def: PlaceDef): EntityDef {
   const { of, traits, ...rest } = def
   const entity: Record<string, unknown> = {}
   const trait: Record<string, unknown> = {}
@@ -550,14 +550,20 @@ export function location(def: PlaceDef): EntityDef {
 }
 
 /** The command that picks up one of a thing lying where the player is. */
-export const pickUp = (ref: EntityRef): CommandRef => ({ [`${ID}/pickUp`]: { id: ref } })
+const pickUp = (ref: EntityRef): CommandRef => ({ [`${ID}/pickUp`]: { id: ref } })
 /** The command that walks to a place by an exit. */
-export const go = (id: string): CommandRef => ({ [`${ID}/go`]: { id } })
+const go = (id: string): CommandRef => ({ [`${ID}/go`]: { id } })
 /** True in any of these places. */
-export const at = (...places: string[]): Condition => ({ [`${ID}/at`]: { location: places } })
+const at = (...places: string[]): Condition => ({ [`${ID}/at`]: { location: places } })
 /** True in any of these places, or anywhere inside one. */
-export const within = (...places: string[]): Condition => ({ [`${ID}/within`]: { location: places } })
+const within = (...places: string[]): Condition => ({ [`${ID}/within`]: { location: places } })
 /** The effect that puts the player somewhere at once. */
-export const moveTo = (place: string): EffectRef => ({ [`${ID}/move`]: { location: place } })
+const moveTo = (place: string): EffectRef => ({ [`${ID}/move`]: { location: place } })
 /** A `blocked` entry: refused anywhere but these places. Its reason is plain text, "Not here." if left out. */
-export const onlyAt = (places: string[], reason?: string): Blocked => ({ when: { not: at(...places) }, reason: reason ?? 'Not here.' })
+const onlyAt = (places: string[], reason?: string): Blocked => ({ when: { not: at(...places) }, reason: reason ?? 'Not here.' })
+
+/**
+ * The plugin, with its helpers on it: `places()` makes the plugin for the
+ * game's `plugins`, and content is written with `places.location({ ... })`, `places.go('park')` and `places.at('cafe')`.
+ */
+export const places = Object.assign(placesPlugin, { location, locationRef, pickUp, go, at, within, move: moveTo, onlyAt, where })

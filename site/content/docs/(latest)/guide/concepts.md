@@ -14,7 +14,7 @@ See [Game state](/docs/reference/state).
 
 ## Commands go through `apply`
 
-The player changes the game only through commands. The core has a few, such as `choose`, `action`, `leave`, `use` and `input`, and plugins add their own, such as the places plugin's `go('cafe')` and the cast's `talk('ava')`. `apply(state, game, command)` returns the next state, whether the command took (`ok`), and if not, why (`refused`). A refused command returns the state unchanged.
+The player changes the game only through commands. The core has a few, such as `choose`, `action`, `leave`, `use` and `input`, and plugins add their own, such as the places plugin's `places.go('cafe')` and the cast's `cast.talk('ava')`. `apply(state, game, command)` returns the next state, whether the command took (`ok`), and if not, why (`refused`). A refused command returns the state unchanged.
 
 See [Commands](/docs/reference/commands).
 

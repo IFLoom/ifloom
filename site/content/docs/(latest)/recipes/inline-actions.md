@@ -29,9 +29,9 @@ The choice is drawn in the line and left out of the list under it, so Go out is 
 A choice can send a command as well as its effects, so an inline action can do anything a button can. This one opens the phone's messages through the [devices plugin](/docs/plugins/devices):
 
 ```ts
-import { openApp } from '@ifloom/plugin-devices'
+import { devices } from '@ifloom/plugin-devices'
 
-{ id: 'read', command: openApp('texts'), effects: [{ kv: 'readText', to: true }] }
+{ id: 'read', command: devices.open('texts'), effects: [{ kv: 'readText', to: true }] }
 ```
 
 The command runs first, then the effects. While the command would be refused (no phone at work, say), the choice is greyed out with that reason, in the line or in the list.
@@ -43,8 +43,8 @@ In a room, with no scene open, `[[act:id]]` names one of the room's buttons: a p
   id: 'flat',
   body: [{ prose: 'place.flat' }, { prose: 'place.flat.text', when: textWaiting }],
   actions: [
-    { id: 'bed', label: 'Go to bed', command: sleep() },
-    { id: 'read-text', label: 'Read your messages', when: textWaiting, command: openApp('texts') },
+    { id: 'bed', label: 'Go to bed', command: calendar.sleep() },
+    { id: 'read-text', label: 'Read your messages', when: textWaiting, command: devices.open('texts') },
   ],
 }
 // 'place.flat.text': 'Your phone buzzes on the sill: a message. [[act:read-text|Check it]].'

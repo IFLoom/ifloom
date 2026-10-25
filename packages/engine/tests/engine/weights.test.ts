@@ -55,7 +55,7 @@ describe('weights in content', () => {
     const pack: Content = {
       name: 'street',
       prose: { 'weather.sun': 'The sun is out.', 'weather.rain': 'It drizzles.' },
-      variants: { 'street.weather': [{ text: 'weather.sun', weight: 9 }, 'weather.rain'] },
+      variants: { 'street.weather': [{ prose: 'weather.sun', weight: 9 }, 'weather.rain'] },
       scenes: [{ id: 'street', body: [{ variants: 'street.weather' }], choices: [{ id: 'leave', label: 'Leave', effects: [{ scene: null }] }] }],
     }
     const { game, problems } = loadGame([pack], { id: 'weather', title: 'Weather' })
@@ -67,7 +67,7 @@ describe('weights in content', () => {
   })
 
   it('report a variants member weighing 0 or less', () => {
-    const pack: Content = { name: 'street', prose: { a: 'A' }, variants: { v: [{ text: 'a', weight: 0 }] } }
+    const pack: Content = { name: 'street', prose: { a: 'A' }, variants: { v: [{ prose: 'a', weight: 0 }] } }
     expect(loadGame([pack], { id: 'g', title: 'G' }).problems.map(describeProblem)).toContain(
       'street · variants v · "a" has a weight of 0; a weight must be above 0',
     )

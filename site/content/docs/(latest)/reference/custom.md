@@ -202,7 +202,7 @@ export const rules: GameRules = {
 
 Prose writes `A loaf is {{v:game/breadPrice}} today.`, with any arguments after the name as `key=value`: `{{v:messages/unread channel=texts}}`. Anywhere else, a value is a `ValueRef`, its name and its `with`: a stat writes `max: { value: 'game/energyCeiling', with: { per: 2 } }`.
 
-**Gotcha.** An unknown name in prose is left on screen as `{{v:game/breadPrice}}`, so you can see what's missing. An unknown stat ceiling quietly gives 100, but the [content checker](/docs/reference/checks) reports it as `no custom value named "…"`.
+**Gotcha.** An unknown name in prose is left on screen as `{{v:game/breadPrice}}`, so you can see what's missing. An unknown stat ceiling quietly gives 100, but the [content checker](/docs/reference/checks) reports it as `no game value named "…"`.
 
 ## Reading them in code
 

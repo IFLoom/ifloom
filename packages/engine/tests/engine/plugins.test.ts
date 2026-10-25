@@ -188,7 +188,7 @@ describe('plugins', () => {
       ...withShells(),
       triggers: [{ id: 'cloth', when: { turn: { gte: 1 } }, effects: [{ 'shells/polish': true as const }] }],
     }
-    expect(problemsOf(triggered)).toContain('trigger cloth: no custom effect named "shells/polish"')
+    expect(problemsOf(triggered)).toContain('trigger cloth: no plugin effect named "shells/polish"')
   })
 })
 
@@ -239,8 +239,8 @@ describe('plugins working together', () => {
 
   it('still report a plugin nobody cooperates with', () => {
     const { problems } = loadWhole([pack], { id, title })
-    expect(problems.map((problem) => problem.what)).toContain('no custom condition named "tides/high"')
-    expect(problems.map((problem) => problem.what)).toContain('no custom effect named "tides/turn"')
+    expect(problems.map((problem) => problem.what)).toContain('no plugin condition named "tides/high"; the game has no plugin "tides"')
+    expect(problems.map((problem) => problem.what)).toContain('no plugin effect named "tides/turn"; the game has no plugin "tides"')
   })
 })
 

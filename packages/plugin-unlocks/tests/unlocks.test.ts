@@ -199,7 +199,7 @@ describe('entering a code', () => {
     expect(holds(next.state, g, unlocks.has('supporter'))).toBe(true)
     await next.newGame({ seed: 2 })
     expect(holds(next.state, g, unlocks.has('supporter'))).toBe(true)
-    codes.stop()
+    codes()
     await next.newGame({ seed: 3 })
     expect(holds(next.state, g, unlocks.has('supporter'))).toBe(false)
   })

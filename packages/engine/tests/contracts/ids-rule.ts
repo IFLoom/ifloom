@@ -44,7 +44,7 @@ export function proseOffences(pack: Content, where: string): string[] {
     ...Object.keys(pack.prose ?? {}),
     ...Object.values(pack.variants ?? {})
       .flat()
-      .map((member) => (typeof member === 'string' ? member : member.text)),
+      .map((member) => (typeof member === 'string' ? member : member.prose)),
   ]
   return keys.filter((key) => !PROSE_KEY.test(key)).map((key) => `${where} prose: "${key}" is not an id, or scene#choice`)
 }

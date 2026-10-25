@@ -267,6 +267,14 @@ export type Plugin<S = any, V = unknown> = {
    */
   words?: Readonly<Record<string, WordShape>>
   /**
+   * Which arguments of its effects are words a player reads, by the effect's
+   * name without the prefix, for a translation's `words` table: `{ post: {
+   * text: true } }`. Each is keyed under where the effect is written, the
+   * call's full name and a hash of its words:
+   * `action.snap.feed/post.ab12cd.text`. See `WordShape`.
+   */
+  callWords?: Readonly<Record<string, WordShape>>
+  /**
    * What plays on background channels, by channel: a place's ambience. Below
    * an open scene's choice and an `audio` effect's, above the game's default.
    * Null silences a channel; a channel left out is the next plugin's, then
@@ -504,6 +512,20 @@ export function pluginsOf(game: Game | undefined): readonly Plugin[] {
   const rules = rulesPlugin(game)
   const plugins = game?.plugins ?? []
   return rules ? [rules, ...plugins] : plugins
+}
+
+/**
+ * What the checker and `explain` say of a call by name that nobody declares,
+ * saying whose it would be: `no game condition named "game/tired"`, `no
+ * plugin effect named "quests/finsh"`, with why when the plugin isn't there
+ * or the name has no owner in front.
+ */
+export function missingCall(game: Game | undefined, what: 'condition' | 'effect' | 'command' | 'value', name: string): string {
+  const parts = pluginName(name)
+  if (!parts) return `no game ${what} named "${name}"; the game's own code is called with "game/" in front, as "game/${name}"`
+  if (parts.plugin === GAME_ID) return `no game ${what} named "${name}"`
+  const plugin = pluginOf(game, parts.plugin)
+  return `no plugin ${what} named "${name}"${plugin ? '' : `; the game has no plugin "${parts.plugin}"`}`
 }
 
 /** The plugin with this id, if the game has it; `game` is the game's own rules. */

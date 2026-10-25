@@ -45,7 +45,7 @@ const MEMBERS = {
   providers: ['guard', 'price', 'label', 'stage', 'actions', 'action', 'audio', 'statModifiers', 'view', 'profile'],
   // What entities carry that it gives meaning to: data, each named `<id>/<name>`; the content it brings, under the game's;
   // and which fields of its content are words a translation can replace.
-  declares: ['traits', 'content', 'words'],
+  declares: ['traits', 'content', 'words', 'callWords'],
   // What the content checker asks.
   checks: ['references', 'check'],
   // What `definePlugin` adds for code outside the plugin.

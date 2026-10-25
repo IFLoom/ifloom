@@ -148,9 +148,9 @@ describe('a cooperating partner the game does not have', () => {
       ],
     }
     expect(problemsOf(game)).toEqual([
-      'action net: no custom effect named "moon/pull"',
-      'action look: no custom condition named "moon/up"',
-      'action look: no plugin command named "moon/look"',
+      'action net: no plugin effect named "moon/pull"; the game has no plugin "moon"',
+      'action look: no plugin condition named "moon/up"; the game has no plugin "moon"',
+      'action look: no plugin command named "moon/look"; the game has no plugin "moon"',
     ])
   })
 })

@@ -114,7 +114,7 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | `gated on unknown scene "…"` | A scene that doesn't exist, in `seen`, `since` or `scene`. |
 | `gated on a choice in unknown scene "…"` | A `chose` key, or a `since` naming a `scene#choice`, whose scene doesn't exist. |
 | `gated on unknown choice "…"` | A `chose` or `since` key whose data scene has no such choice. |
-| `no custom condition named "…"` | A [call](/docs/reference/custom#plugincall) to a condition that neither the game's `rules` nor a plugin declares. A name with no `/` adds `; the game's own code is called with "game/" in front, as "game/…"`. |
+| `no game condition named "…"`, `no plugin condition named "…"` | A [call](/docs/reference/custom#plugincall) to a condition that nobody declares: the game's `rules` for a `game/` name, else the plugin its name starts with. When the game has no such plugin, it adds `; the game has no plugin "…"`. A name with no `/` reads as the game's, and adds `; the game's own code is called with "game/" in front, as "game/…"`. |
 | A stat owner problem | See [Stat owners](#stat-owners). |
 | `minigame key "…" is not in any minigame's kv` | A `kv` condition with `of: 'minigame'` naming a key no [minigame](/docs/reference/minigames) declares. |
 | `unknown timer "…"` | A `timer` condition naming a timer the game doesn't declare in `timers`. |
@@ -130,7 +130,7 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | `effects are told apart by their key now, as { …: … }, not { kind: "…" }` | An effect still written with `kind`, as before schema 21. It does nothing. |
 | `an effect does one thing, but this one has … keys that each say what it does: …` | Two keys that each say what it does, such as `{ stat, kv }`. It does nothing. |
 | `an effect needs one key that says what it does, such as stat or kv, or a call by name; …` | An effect with no such key, such as `{}` or `{ by: 2 }`. It does nothing. |
-| `no custom effect named "…"` | A [call](/docs/reference/custom#plugincall) to an effect that neither the game's `rules` nor a plugin declares. A name with no `/` adds where the game's own goes, as for a condition. |
+| `no game effect named "…"`, `no plugin effect named "…"` | A [call](/docs/reference/custom#plugincall) to an effect that nobody declares, worded as for a condition. |
 | `unknown stat "…"` | A `stat` effect names a stat nobody declares. |
 | A stat owner problem | A `stat` effect names a stat on the wrong owner. See [Stat owners](#stat-owners). |
 | `stat "…" is derived: it is worked out, never written` | A `stat` effect names a [derived stat](/docs/reference/stats#derived-stats), or a `create` effect gives one a value. |
@@ -169,7 +169,7 @@ Inside an `each`, its `where` is checked as a condition and its `effects` as eff
 | `action` | `unknown action "…"`, for one the game's content doesn't declare. A plugin's action (`places/coffee`) is the plugin's to answer for in play, so it isn't checked. |
 | `input` | `unknown input "…"` |
 | `setting` | The setting and the value, as a `{ setting, is }` condition is checked. |
-| `custom`, or a call in short (a plugin's or the game's own) | `no plugin command named "…"`, then what the plugin's references name, and any `{ problem }` among them. |
+| `custom`, or a call in short (a plugin's or the game's own) | `no game command named "…"` or `no plugin command named "…"`, then what the plugin's references name, and any `{ problem }` among them. |
 
 `start`, `newGame`, `choose`, `leave`, `dismiss`, `tick`, `minigame` and `closePanel` name nothing to check. A `type` the engine doesn't have is reported as `unknown command type "…"`, and in play it's refused with `This game does not do that.`
 
@@ -226,7 +226,7 @@ A condition, effect or command named after a plugin the game wasn't built with i
 | `minigame <id> state <state>` | Its `label`'s prose, `a timer needs ms above 0`, `a final state ends the minigame, so its after, on and always never run`, and for each transition (`after`, `on <input>`, `always <n>`): `goes to unknown state "…"`, `to lists no states`, and `the weight of "…" must be above 0`. Each transition's `when` and `effects` are checked under `minigame <id> state <state> <transition>`, and a final state's effects under `… final`. |
 | `timer <id>` | `a timer needs ms above 0`, `two timers share this id`, and its `effects`. See [Timers](/docs/reference/timers#the-checks). |
 | `setting <id>` | `a choice with no options`, `min is above max`, `step must be above 0`, and a `default` the setting can't take, such as `default 9 is not between 0 and 5`. |
-| `stat <id>` | `belongs to unknown kind "…"` for its `of`, `no custom value named "…"` for a `max: { value }`, its `visible` condition and its `ui` (see [Presentation hints](#presentation-hints)). For a [derived stat](/docs/reference/stats#derived-stats): `derive reads unknown stat "…"`, `derive reads stat "…", which belongs to …, not …`, `a derived stat cannot be spendable: it is never written`, `a derived stat has no start: it is worked out`, and `derive goes round in a cycle: … → …`. For [levels](/docs/reference/stats#levels): `levels.at needs at least one threshold`, `levels.at must go up, each threshold above the last`, and `levels.at … outside the stat's range (… to …)`. |
+| `stat <id>` | `belongs to unknown kind "…"` for its `of`, `no game value named "…"` (or `no plugin value`) for a `max: { value }`, its `visible` condition and its `ui` (see [Presentation hints](#presentation-hints)). For a [derived stat](/docs/reference/stats#derived-stats): `derive reads unknown stat "…"`, `derive reads stat "…", which belongs to …, not …`, `a derived stat cannot be spendable: it is never written`, `a derived stat has no start: it is worked out`, and `derive goes round in a cycle: … → …`. For [levels](/docs/reference/stats#levels): `levels.at needs at least one threshold`, `levels.at must go up, each threshold above the last`, and `levels.at … outside the stat's range (… to …)`. |
 | `entity <kind>:<id>` | `unknown kind "…"`, `no <kind> stat named "…"` for a stat in its `stats` that isn't declared `of` its kind, `stat "…" is derived: it is worked out, never written`, and `an entity id must not be a whole number` (see [Ids](/docs/reference/entities#ids)). What its `visible` names, with `'$'` as it, and its `image` file. For its [`at`](/docs/reference/entities#holding-things): `at can't be "you" where a thing starts: …`, `at names the entity itself: nothing can hold itself`, `at names unknown holder "…"` (a holder has to be declared), `at names "…", whose kind isn't unique, so it can't hold things`, `at gives "…" <n>: a count is a whole number above 0`, `a unique thing starts in one place, one of it`, and `holders go round in a cycle: … → …` for unique things that start inside each other. |
 | `kind <id>` | What its `listed` and `flags` conditions name, with `'$'` as any one of the kind, and its `ui`. |
 | `trait <id>` | `plugin "…" has no trait "…"`, for a trait id whose plugin the game has but which that plugin doesn't declare. See [Traits](#traits). |

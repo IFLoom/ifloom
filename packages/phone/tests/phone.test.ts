@@ -34,7 +34,7 @@ const kit = phone({
       id: 'studio',
       name: 'Fans · post',
       icon: 'star',
-      sections: [{ prose: [{ prose: 'studio.stats' }] }, { actions: [{ id: 'post', label: 'Post a photo', command: { type: 'action', id: 'post' } }] }],
+      sections: [{ blocks: [{ prose: 'studio.stats' }] }, { actions: [{ id: 'post', label: 'Post a photo', command: { type: 'action', id: 'post' } }] }],
     },
   ],
 })

@@ -65,7 +65,7 @@ One member of a variants list, in your [content](/docs/reference/loader#content)
 ```ts
 variants: {
   // Sun three times as often as drizzle or wind.
-  'street.weather': [{ text: 'street.weather.sun', weight: 3 }, 'street.weather.drizzle', 'street.weather.wind'],
+  'street.weather': [{ prose: 'street.weather.sun', weight: 3 }, 'street.weather.drizzle', 'street.weather.wind'],
 }
 ```
 

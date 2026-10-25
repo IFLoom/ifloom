@@ -7,7 +7,7 @@
 import { amountProblems, amountReferences } from './amount.ts'
 import { commandOf, customCall, customValue, hasCustomEffect, customCondition, shortFormProblem, type CommandRef, type EffectRef } from './custom.ts'
 import type { Game } from './game.ts'
-import { absentPartner, pluginOf, pluginCommand, pluginName, pluginsOf, type CallTable, type Plugin } from './plugin.ts'
+import { absentPartner, missingCall, pluginOf, pluginCommand, pluginName, pluginsOf, type CallTable, type Plugin } from './plugin.ts'
 import { commandReferences, conditionReferences, effectReferences, type Reference } from './references.ts'
 import { wordClashes } from './words.ts'
 import { artSrc } from './sceneBody.ts'
@@ -115,11 +115,6 @@ function typeProblem(ref: CommandRef): string[] {
   return (COMMAND_TYPES as string[]).includes(command.type) ? [] : [`unknown command type "${String(command.type)}"`]
 }
 
-/** For a name with no plugin in front: how to call the game's own code by that name. */
-function unprefixed(name: string): string {
-  return name.includes('/') ? '' : `; the game's own code is called with "game/" in front, as "game/${name}"`
-}
-
 /** A page path as written (`art/photo/ava.svg`), or null for a URL or nothing. */
 function pagePath(path: string): string | null {
   if (!path.trim() || /^(?:[a-z]+:|\/\/)/i.test(path)) return null
@@ -166,8 +161,7 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
     if (!known) {
       // A cooperating partner the game doesn't have: content may name it, and it is simply not there.
       if (absentPartner(game, name)) return []
-      const noun = table === 'conditions' ? 'custom condition' : table === 'commands' ? 'plugin command' : 'custom effect'
-      return [`no ${noun} named "${name}"${unprefixed(name)}`]
+      return [missingCall(game, table === 'conditions' ? 'condition' : table === 'commands' ? 'command' : 'effect', name)]
     }
     const parts = pluginName(name)
     const plugin = parts && pluginOf(game, parts.plugin)
@@ -220,7 +214,7 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
       for (const key of members) proseNamed.add(key)
       return members.length ? [] : [`variants "${ref.variants}" has no lines`]
     }
-    if ('value' in ref) return customValue(game, ref.value) ? [] : [`no custom value named "${ref.value}"${unprefixed(ref.value)}`]
+    if ('value' in ref) return customValue(game, ref.value) ? [] : [missingCall(game, 'value', ref.value)]
     if ('reason' in ref) {
       const key = typeof ref.reason === 'object' && ref.reason !== null ? ref.reason.string : undefined
       return key === undefined || stringOf(game, key) !== key ? [] : [`no string named "${key}"`]

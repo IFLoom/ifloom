@@ -180,6 +180,8 @@ function feedPlugin(): DefinedPlugin<FeedState, FeedsView> {
     contentMigrations,
     // The words a player reads in each list of the plugin's content, for a translation's `words` table.
     words: { feeds: { name: true }, posts: { body: 'blocks' } },
+    // A post's words and a comment's, written in the effect that makes them.
+    callWords: { post: { text: true }, react: { text: true } },
     commandVersion: COMMAND_VERSION,
     commandMigrations,
     // Posters are the cast's characters when the game has the cast: a name and a face.

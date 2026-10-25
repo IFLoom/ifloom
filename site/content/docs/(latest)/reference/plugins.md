@@ -112,7 +112,7 @@ const { game } = loadGame([cafe], {
 
 After five coffees, `loyalty.read(state, game)` is `{ stamps: 5 }`, the counter says `Your card has 5 stamps.`, and Claim a free coffee is on offer.
 
-That's a working plugin. The engine saves its state with the game, and the [content checker](/docs/reference/checks) reports a call to a name the plugin doesn't have, such as `content · action coffee · no custom effect named "loyalty/stomp"`. To have a typo caught as you type rather than when the game loads, declare what each call takes, as [Typed calls, queries and views](#typed-calls-queries-and-views) shows. The rest of this page builds on the same card: a command the player can press, a migration for when the state changes shape, and the hooks, guards and view a bigger system needs.
+That's a working plugin. The engine saves its state with the game, and the [content checker](/docs/reference/checks) reports a call to a name the plugin doesn't have, such as `content · action coffee · no plugin effect named "loyalty/stomp"`. To have a typo caught as you type rather than when the game loads, declare what each call takes, as [Typed calls, queries and views](#typed-calls-queries-and-views) shows. The rest of this page builds on the same card: a command the player can press, a migration for when the state changes shape, and the hooks, guards and view a bigger system needs.
 
 ## A worked example
 
@@ -229,6 +229,7 @@ type Plugin<S = any, V = unknown> = {
   content?: Content
   traits?: readonly TraitDef[]
   words?: Readonly<Record<string, WordShape>>
+  callWords?: Readonly<Record<string, WordShape>>
   audio?: (state: GameState, context: PluginContext<S>) => Record<string, string | null> | undefined
   view?: (state: GameState, context: PluginContext<S>) => V
   profile?: (state: GameState, previous: GameState, stored: unknown, context: PluginContext<S>) => unknown
@@ -270,6 +271,7 @@ type Plugin<S = any, V = unknown> = {
 | `content` | [Content](/docs/reference/loader#content) the plugin brings, such as its kinds of entity, merged under the game's. See [Kinds and entities](#kinds-and-entities). |
 | `traits` | [Traits](/docs/reference/entities#traits) the plugin gives meaning to: named data that entities carry. See [Traits](#traits). |
 | `words` | Which fields of each list of its `data` are words a player reads, for a translation's words table. See [Words](#words). |
+| `callWords` | Which arguments of its effects are words a player reads. See [Words](#words). |
 | `audio` | What plays on background audio channels, such as a place's ambience. See [Audio](#audio). |
 | `view` | What the UI needs from the plugin, at [`view.plugins[id]`](/docs/reference/view#plugins). See [The view](#the-view). |
 | `profile` | What the plugin keeps in the player's [profile](/docs/reference/profile), which outlives saves and new games. See [The profile](#the-profile). |
@@ -562,7 +564,7 @@ export const loyalty = definePlugin<Card>({
 
 **Gotchas.**
 - It only covers plugins the game doesn't have. In a game that has the partner, a name the partner doesn't declare is reported as usual.
-- A plugin nobody lists in `cooperates` is still reported, as `no custom condition named "calendar/weekend"`.
+- A plugin nobody lists in `cooperates` is still reported, as `no plugin condition named "calendar/weekend"; the game has no plugin "calendar"`.
 - It covers a condition, an effect and a command. See [Absent partners](/docs/reference/checks#absent-partners).
 - A value in prose from an absent partner is left on screen.
 
@@ -1333,6 +1335,17 @@ definePlugin({
 ```
 
 Each field is keyed `<plugin>/<list>.<id>.<field>`, so a card's name is `loyalty/cards.cafe.name` and a perk's label `loyalty/cards.cafe.perks.coffee.label`. [`translatableFields`](/docs/reference/words#translatablefields) lists them with the rest of the game's. A field the plugin doesn't name isn't in the table. The plugin's own lines, such as refusals, stay in its [`strings`](/docs/reference/strings#plugins-strings).
+
+An effect of the plugin's can carry words too, such as the text of a post the player makes. `callWords` gives a `WordShape` for each such effect's arguments, by its name without the prefix:
+
+```ts
+definePlugin({ id: 'loyalty', version: 1, callWords: { stamp: { note: true } } })
+
+// In content: { id: 'buy', label: 'Buy a coffee', effects: [{ 'loyalty/stamp': { card: 'cafe', note: 'One more for a free one!' } }] }
+// Keyed under where the effect is: action.buy.loyalty/stamp.<hash>.note
+```
+
+Each is keyed under the entry the effect is written in, then the call's full name and a hash of its words, as a [notice](/docs/reference/words#keys) is. The [feed plugin](/docs/plugins/feed) declares a post's and a comment's `text` this way. Words a function of the game's works out in play aren't content, so they aren't in the table.
 
 ## Content and checks
 

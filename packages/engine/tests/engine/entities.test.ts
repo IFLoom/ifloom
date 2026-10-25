@@ -187,7 +187,7 @@ describe('entities', () => {
       'action payAna: stat "morale" belongs to staff: say whose with "of"',
       'action week: in each staff: stat "quality" belongs to dish, not staff',
       'action week: in each staff: stat "quality" belongs to dish, not staff',
-      'action week: in each staff: no custom effect named "game/nope"',
+      'action week: in each staff: no game effect named "game/nope"',
     ])
   })
 

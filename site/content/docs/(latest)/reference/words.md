@@ -42,10 +42,12 @@ A key is the path to the field, as your content writes it, with each list entry 
 | A picture's `alt`, a fold's label | `scene.cafe.counter.alt.<hash>`, `scene.cafe.counter.fold.<hash>` |
 | A hotspot on a scene's stage | `scene.flat.stage.hotspots.door.label` |
 | A notice an effect raises | `action.wait.notify.<id or hash>.title` and `.text` |
+| What a `create` effect names the thing it makes | `action.sketch.create.<hash>.name` and `.description` |
+| Words in a plugin's effect, as its [`callWords`](/docs/reference/plugins#words) declare | `action.snap.feed/post.<hash>.text` |
 | An entity's name and description | `entity.character:ava.name`, `entity.character:ava.description` |
 | A kind's label and plural | `kind.staff.label`, `kind.staff.plural` |
 | A trait's words on an entity | `entity.location:cafe.traits.places/location.blocked.<hash>.reason` |
-| A trait's words a kind gives | `kind.vendor.traits.shop/vendor.closed` |
+| A trait's words a kind gives | `kind.vendor.traits.shop/vendor.blocked.<hash>.reason` |
 | A stat's label, format and refusal | `stat.coins.label`, `stat.coins.format` (or `.format.one` and `.format.other`), `stat.coins.lacking`, `stat.coins.levels.notice` |
 | A storyline's name | `storyline.ava.name` |
 | A setting's or an input's label, and an option's | `setting.difficulty.label`, `setting.difficulty.options.hard.label` |
@@ -58,7 +60,7 @@ Some things are named so that a key stays put while you rearrange a scene:
 
 - **Every choice** in a scene is `scene.<scene>.choice.<id>`, whether it's among the ending choices or at a decision in the body. A choice's id is unique in its scene.
 - **Every block of words** written in place, `{ text }` or `say`, is `scene.<scene>.text.<id>`, wherever it sits: in the body, in a section, in a choice's `then`. Give a block an `id` (`text('…', { id: 'intro' })`) to name it. Without one, it's named by six hex digits of a hash of its words.
-- **Every notice** an effect raises is `<entry>.notify.<id>`, by the notice's `id`, or a hash of its title and text.
+- **Every notice** an effect raises is `<entry>.notify.<id>`, by the notice's `id`, or a hash of its title and text. A `create` effect's words are `<entry>.create.<hash>`, and a plugin effect's `<entry>.<plugin>/<name>.<hash>`, each by a hash of its own words.
 - **An entry of a list with no id**, such as a `blocked` entry or a `labels` entry, is named by its `value` (a setting's option), else a hash of its own words, else its place in the list.
 
 Blocks, choices and notices in an entity's trait are named under the entity in the same way: a place's room text is `entity.location:cafe.text.<hash>`, and its button `entity.location:cafe.traits.places/location.actions.sit.label`.
@@ -74,7 +76,8 @@ Two blocks with the same words in one scene share a key, and a translation gives
 - **Lines read by key**: `{ prose }` blocks, `variants`, the lines a pool or a `[[tip:…]]` names, and the prose a `[[ui:modal|…]]` piece shows. Translate them in the pack's own `prose`, under the same keys.
 - **Strings**: the engine's and plugins' own words, in the pack's `strings`.
 - **UI hints**, which are carried as written, except a `fold()`'s label, which is the player's words.
-- **A plugin call's arguments**, such as the text of a post the feed's `feed/post` makes, and a generator's pools. Write a pack's own version of the effect, or a `traits` row, to change those.
+- **A plugin call's arguments its plugin doesn't declare** in [`callWords`](/docs/reference/plugins#words). The feed's post and comment text are in the table; a call's ids aren't.
+- **A generator's pools.** Their values can be names, but also kv values a condition reads, so translating one could change what the game decides. Give a translated game its own pools in a pack instead.
 
 ## translatableFields
 

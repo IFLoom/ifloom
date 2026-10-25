@@ -1,5 +1,19 @@
 import { describe, expect, it } from 'vitest'
-import { apply, holds, loadGame, loadState, startingState, upgradePack, view, type Game, type GameState, type Content, type GameRules } from '@ifloom/engine'
+import {
+  SCHEMA,
+  apply,
+  holds,
+  loadGame,
+  loadState,
+  startingState,
+  translatableFields,
+  upgradePack,
+  view,
+  type Game,
+  type GameState,
+  type Content,
+  type GameRules,
+} from '@ifloom/engine'
 import { feed, type FeedsView } from '../src/index.ts'
 import { calendar } from '@ifloom/plugin-calendar'
 
@@ -113,6 +127,24 @@ describe('words written as prose keys', () => {
     }
     const loaded = loadState(saved, g)
     expect(loaded.ok && shown(loaded.value, g).feeds[0].posts[0].text).toBe('Baked a cake!')
+  })
+})
+
+describe('words in a post’s effect', () => {
+  it('are fields a translation gives other words, under where the effect is', () => {
+    const fields = translatableFields(game()).filter((field) => field.key.startsWith('action.'))
+    expect(fields.map((field) => [field.key.replace(/\.[0-9a-f]{6}\./, '.#.'), field.text])).toEqual([
+      ['action.postSunset.feed/post.#.text', 'Sunset from the roof.'],
+      ['action.cheer.feed/react.#.text', 'Save me a slice'],
+    ])
+    const key = fields[0].key
+    const { game: translated, problems } = loadGame(
+      [{ name: 'base', data: feeds }],
+      { id: 'feeds', title: 'Feeds', plugins: [clock, plugin], rules: { effects: { roll: () => [] } } },
+      { packs: [{ id: 'mod:fr', schema: SCHEMA, actions: game().actions, words: { [key]: 'Coucher de soleil.' } }] },
+    )
+    expect(problems).toEqual([])
+    expect(JSON.stringify(translated.actions)).toContain('Coucher de soleil.')
   })
 })
 

@@ -19,7 +19,17 @@ import { actionOf } from './action.ts'
 import { sceneContext } from './context.ts'
 import { fillTokens } from './prose.ts'
 import { amountOf } from './amount.ts'
-import { pluginAudio, pluginCommand, pluginEffect, pluginStatModifiers, rulesContext, runStatHooks, runTurnDoneHooks, runTurnHooks } from './plugin.ts'
+import {
+  missingCall,
+  pluginAudio,
+  pluginCommand,
+  pluginEffect,
+  pluginStatModifiers,
+  rulesContext,
+  runStatHooks,
+  runTurnDoneHooks,
+  runTurnHooks,
+} from './plugin.ts'
 import { runEffects, runIn } from './reduce.ts'
 import { effectsIn, effectsOf, whyNotIn } from './availability.ts'
 import { draw, weighted } from './random.ts'
@@ -120,7 +130,7 @@ const callCondition: ConditionEntry<Condition> = {
   explain: (_state, condition, game) => {
     const call = customCall(condition)
     if (!call) return 'a call with no name'
-    return customCondition(game, call.custom) ? `condition ${call.custom}` : `condition ${call.custom} is not declared by the game or a plugin`
+    return customCondition(game, call.custom) ? `condition ${call.custom}` : missingCall(game, 'condition', call.custom)
   },
   references: (condition) => {
     const call = customCall(condition)

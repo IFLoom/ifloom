@@ -99,6 +99,6 @@ The [content checker](/docs/reference/checks) reads every amount content writes.
 ```
 action odd: unknown stat "gold"
 action odd: unknown storyline "nobody"
-action odd: no custom value named "game/nothing"
+action odd: no game value named "game/nothing"
 action odd: an amount is a number, a stat id, a formula, { stat }, { kv }, { value } or { count }; this one is [3]
 ```

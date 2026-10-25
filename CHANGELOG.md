@@ -10,6 +10,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- A translation's words table reaches words written inside effects: what a `create` effect names the thing it makes (`action.sketch.create.<hash>.name`), and a plugin effect's word arguments as its new `callWords` declare them, such as a feed post's and a comment's `text` (`action.snap.feed/post.<hash>.text`).
+
 - Your game's `rules` can keep a state of its own, as a plugin does: `start: () => ({ entries: [] })` begins it, saves keep it at `state.plugins.game`, and its hooks, commands and providers read `context.slice` and write `context.set(next)`. Type it as `GameRules<Diary>`. See [The game's own state](/docs/reference/rules#the-games-own-state).
 - `rules` can also declare the game's own `traits` (ids without a `/`, with their `check`, `references` and `words`), `references` for its `game/…` calls and panels, and a `check` of its own, which the content checker runs as it runs a plugin's.
 - A plugin's `references.panels(panel, args, game)` says what a panel its UI draws is opened with, and `references.calls` can return `{ problem: '…' }` for a rule of its own about a call's arguments.
@@ -194,6 +196,11 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - A Life sim patterns recipe in the docs: work each new day with `rules.onTurnDone`, cooldowns with `since` and `last`, wages paid on a Friday, who's behind an exit, lines shared across places, a placeholder for missing art, and the order refusals come in, with how to put your own where you want them.
 
 ### Changed
+
+- **Breaking:** a weighted variants member is `{ prose: key, weight }`, where it was `{ text: key, weight }`, since it names a prose key and not words. An older pack is rewritten when it loads.
+- **Breaking:** a device app's section of words is `{ blocks: [...] }`, where it was `{ prose: [...] }`, so it doesn't read like a `{ prose: key }` block. An older pack is rewritten when it loads.
+- **Breaking:** [`startUnlocks`](/docs/plugins/unlocks#startunlocks) returns the function that stops it, as every `start*` does, with `ready` and `enter` on it: call `codes()` where you called `codes.stop()`.
+- The checker says whose a missing call would be: `no game condition named "game/tired"`, `no plugin effect named "quests/finsh"`, and `; the game has no plugin "…"` when that plugin isn't in the game, where it said "custom condition" or "custom effect". `explain` says the same.
 
 - **Breaking:** the view lists things one way: a list of things the game declares is an array in the order declared, each with its `id`. `view.inputs` is an `InputView[]` (it was a record by id) and `view.entities` an `EntitiesView[]`, each kind with its `id` (it was a record by kind). Find one with `find`: `view.entities.find((kind) => kind.id === 'staff')`. `statsById` stays beside `stats`, for a HUD that reads one stat by id.
 

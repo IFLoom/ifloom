@@ -291,18 +291,19 @@ Starts taking codes on a runner. It reads the profile, checks each remembered un
 ### UnlockCodes
 
 ```ts
-type UnlockCodes = {
+type UnlockCodes = (() => void) & {
   ready: Promise<void>
   enter(code: string): Promise<Result<Entered>>
-  stop(): void
 }
 ```
+
+The function that stops it, as every `start*` returns one, with `ready` and `enter` on it: `const codes = startUnlocks(runner)`, then `codes.enter('…')`, and `codes()` to stop.
 
 | Member | What it does |
 |---|---|
 | `ready` | Settles once the remembered unlocks have been checked and recorded. |
 | `enter` | Tries the code against every unlock in turn. On a match it stores a proof made from the code in the profile, records the unlock in the game in play, and says what it unlocked. It never throws. |
-| `stop` | Stops recording remembered unlocks into new games and loaded saves. |
+| Calling it | Stops recording remembered unlocks into new games and loaded saves. |
 
 `enter` refuses an empty code with `Type a code first.`, a code that matches nothing with `That code doesn't unlock anything.`, and a runner with no profile with `This game can't remember codes here.`. Checking takes a moment on purpose: a fraction of a second per unlock on a phone.
 

@@ -134,7 +134,7 @@ describe('quests', () => {
     expect(loaded.problems).toEqual([
       { pack: 'mod', where: 'quests broken', what: 'unknown storyline "nobody"' },
       { pack: 'mod', where: 'quests broken', what: 'stage a: unknown kind "thing"' },
-      { pack: 'mod', where: 'quests broken', what: 'starts: no custom condition named "quests/nope"' },
+      { pack: 'mod', where: 'quests broken', what: 'starts: no plugin condition named "quests/nope"' },
       { pack: 'mod', where: 'quests broken', what: 'two stages are called "a"' },
     ])
   })

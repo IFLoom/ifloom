@@ -3,7 +3,7 @@ import { apply, loadGame, startingState, view, whyNot, type Game, type GameState
 import { devices, type AppDef, type DevicesView } from '../src/index.ts'
 
 const apps: AppDef[] = [
-  { id: 'notes', name: 'Notes', icon: 'notes', on: 'laptop', sections: [{ prose: [{ prose: 'notes.intro' }] }] },
+  { id: 'notes', name: 'Notes', icon: 'notes', on: 'laptop', sections: [{ blocks: [{ prose: 'notes.intro' }] }] },
   { id: 'bank', name: 'Bank', icon: 'bank', on: 'laptop', blocked: [{ when: { not: { kv: 'bankAccount' } }, reason: 'You have no account.' }], sections: [] },
   {
     id: 'mail',
@@ -89,7 +89,7 @@ describe('devices', () => {
         icon: 'x',
         on: 'watch',
         badge: { value: 'nope/value' },
-        sections: [{ things: { of: 'album' } }, { plugin: 'radio' }, { panel: 'nothing' }, { prose: [{ prose: 'x.none' }] }],
+        sections: [{ things: { of: 'album' } }, { plugin: 'radio' }, { panel: 'nothing' }, { blocks: [{ prose: 'x.none' }] }],
       },
     ]
     const loaded = loadGame([{ name: 'base', data: { devices: { devices: [{ id: 'laptop', name: 'Laptop' }], apps: bad } } }], {
@@ -99,7 +99,7 @@ describe('devices', () => {
     })
     expect(loaded.problems.map((problem) => problem.what)).toEqual([
       'unknown device "watch"',
-      'no custom value named "nope/value"',
+      'no plugin value named "nope/value"; the game has no plugin "nope"',
       'unknown kind "album"',
       'no prose for "x.none"',
       'the game has no plugin named "radio"',

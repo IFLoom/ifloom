@@ -40,7 +40,7 @@ type Declarations = {
   words?: Record<string, string>
   /**
    * Variants membership by variants name, in draw order. Content and packs
-   * append to a name. A member is a prose key, or `{ text: key, weight }` to
+   * append to a name. A member is a prose key, or `{ prose: key, weight }` to
    * be drawn more or less often than the rest.
    */
   variants?: Record<string, VariantMember[]>
@@ -323,7 +323,7 @@ export function loadGame(content: readonly Content[], base: GameBase, { packs = 
       weightedVariants[name] = [...(weightedVariants[name] ?? []), ...members]
       for (const member of members) {
         if (typeof member !== 'string' && member.weight !== undefined && !(member.weight > 0)) {
-          problems.push({ pack: from, where: `variants ${name}`, what: `"${member.text}" has a weight of ${member.weight}; a weight must be above 0` })
+          problems.push({ pack: from, where: `variants ${name}`, what: `"${member.prose}" has a weight of ${member.weight}; a weight must be above 0` })
         }
       }
     }

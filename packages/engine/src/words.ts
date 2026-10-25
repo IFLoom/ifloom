@@ -17,6 +17,7 @@
 import type { Game } from './game.ts'
 import type { Block, Choice, DataScene } from './scene.ts'
 import { hash } from './random.ts'
+import { callOf } from './calls.ts'
 
 /** One field of a game's content a translation can give other words for. */
 export type WordField = {
@@ -96,6 +97,12 @@ const CORE: readonly { list: keyof Game; noun: string; shape: WordPart; name?: (
 /** Collects the fields it is shown, in order. */
 class Walk {
   readonly spots: WordSpot[] = []
+  /** The words in each plugin call's arguments, by the call's full name, as its plugin's `callWords` declare them. */
+  readonly calls: ReadonlyMap<string, WordShape>
+
+  constructor(calls: ReadonlyMap<string, WordShape> = new Map()) {
+    this.calls = calls
+  }
   /** The entry being walked, for the problems about its fields. */
   source: WordSource | undefined
 
@@ -171,6 +178,15 @@ class Walk {
         this.field(`${entry}.notify.${name}.title`, effect.notify, [...here, 'notify'], where)
         this.field(`${entry}.notify.${name}.text`, effect.text, [...here, 'text'], where)
       }
+      // What a `create` effect gives the thing it makes: its name and description, named by a hash of them.
+      if (typeof effect.create === 'string' && isRecord(effect.with)) {
+        const shape: WordShape = { name: true, description: true }
+        this.part(shape, effect.with, entry, `${entry}.create.${entryName(effect.with, shape, index)}`, [...here, 'with'], where)
+      }
+      // A plugin call with words in its arguments, as its plugin declares them: a post's text, under the call's name.
+      const call = callOf(effect)
+      const shape = call && this.calls.get(call.name)
+      if (call && shape) this.part(shape, call.with, entry, `${entry}.${call.name}.${entryName(call.with, shape, index)}`, [...here, call.name], where)
       if (Array.isArray(effect.effects)) this.effects(effect.effects, entry, [...here, 'effects'], where)
     })
   }
@@ -220,7 +236,9 @@ function traitShapes(game: Game): Map<string, WordShape> {
  * the loader lays the words over all of them.
  */
 export function wordSpots(game: Game): WordSpot[] {
-  const walk = new Walk()
+  const calls = new Map<string, WordShape>()
+  for (const plugin of game.plugins ?? []) for (const [name, shape] of Object.entries(plugin.callWords ?? {})) calls.set(`${plugin.id}/${name}`, shape)
+  const walk = new Walk(calls)
   ;(game.scenes ?? []).forEach((scene, index) => {
     if ('body' in scene && Array.isArray(scene.body)) sceneWords(walk, scene as unknown as DataScene, index)
   })

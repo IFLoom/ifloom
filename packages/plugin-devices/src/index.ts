@@ -63,8 +63,8 @@ export type DeviceDef = {
 
 /** What fills an app. */
 export type Section =
-  /** Words, as prose blocks. */
-  | { prose: Block[] }
+  /** Words, as a scene's body is written: `{ blocks: [text('…'), { prose: 'bank.balance' }] }`. */
+  | { blocks: Block[] }
   /**
    * Buttons, the same as a room's. One with a cost or effects is done as
    * `{ type: 'action', id: 'devices/<id>' }`, so give each an id no other app's action has.
@@ -206,8 +206,8 @@ function devicesPlugin(): DefinedPlugin<DevicesState, DevicesView> {
 
   function sectionView(state: GameState, context: PluginContext<DevicesState>, app: AppDef, section: Section, index: number): SectionView {
     const { game } = context
-    if ('prose' in section) {
-      const beats = context.beats(section.prose, `${app.id}.${index}`)
+    if ('blocks' in section) {
+      const beats = context.beats(section.blocks, `${app.id}.${index}`)
       return { type: 'prose', text: beats.flatMap((beat) => ('text' in beat ? [beat.text] : [])).join('\n\n'), beats }
     }
     if ('actions' in section) {
@@ -274,7 +274,7 @@ function devicesPlugin(): DefinedPlugin<DevicesState, DevicesView> {
     contentVersion: CONTENT_VERSION,
     contentMigrations,
     // The words a player reads in each list of the plugin's content, for a translation's `words` table.
-    words: { devices: { name: true }, apps: { name: true, blocked: [{ reason: true }], sections: [{ prose: 'blocks', actions: ['button'] }] } },
+    words: { devices: { name: true }, apps: { name: true, blocked: [{ reason: true }], sections: [{ blocks: 'blocks', actions: ['button'] }] } },
     commandVersion: COMMAND_VERSION,
     commandMigrations,
     // The contacts section lists the cast's characters when the game has the cast.
@@ -353,7 +353,7 @@ function devicesPlugin(): DefinedPlugin<DevicesState, DevicesView> {
             ...app.sections.flatMap((section): Reference[] => {
               if ('things' in section) return [{ kind: section.things.of }, ...(section.things.at !== undefined ? [{ holder: section.things.at }] : [])]
               if ('panel' in section) return [{ openPanel: section.panel, with: section.with ?? {} }]
-              if ('prose' in section) return [{ blocks: section.prose }]
+              if ('blocks' in section) return [{ blocks: section.blocks }]
               if ('actions' in section) return section.actions.map((action) => ({ within: `action ${action.id}`, refs: actionReferences(action) }))
               return []
             }),

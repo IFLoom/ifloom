@@ -116,14 +116,16 @@ export type Entered = {
   restart: boolean
 }
 
-/** Entering codes in a running game, as `startUnlocks` gives it. */
-export type UnlockCodes = {
+/**
+ * Entering codes in a running game, as `startUnlocks` gives it: the function
+ * that stops it, as every `start*` gives, with `ready` and `enter` on it.
+ * Calling it stops recording remembered unlocks into new games and loaded saves.
+ */
+export type UnlockCodes = (() => void) & {
   /** Settles once the codes the profile remembers have been checked and recorded in the game in play. */
   ready: Promise<void>
   /** Try a code against every unlock: what it unlocked, or why not. Never throws. */
   enter(code: string): Promise<Result<Entered>>
-  /** Stop recording remembered unlocks into new games and loaded saves. */
-  stop(): void
 }
 
 /** The game's unlocks: `data.unlocks.unlocks`, from its packs. */
@@ -299,9 +301,13 @@ export function startUnlocks(runner: Runner, options: { content?: Readonly<Recor
     record()
   })()
 
-  return {
+  const stop = () => {
+    stopped = true
+    unsubscribe()
+  }
+  return Object.assign(stop, {
     ready,
-    async enter(code) {
+    async enter(code: string): Promise<Result<Entered>> {
       if (!normaliseCode(code)) return { ok: false, reason: stringOf(game, 'unlocks/empty') }
       const profile = runner.profile
       if (!profile) return { ok: false, reason: stringOf(game, 'unlocks/noProfile') }
@@ -324,11 +330,7 @@ export function startUnlocks(runner: Runner, options: { content?: Readonly<Recor
       }
       return { ok: false, reason: stringOf(game, 'unlocks/wrong') }
     },
-    stop() {
-      stopped = true
-      unsubscribe()
-    },
-  }
+  })
 }
 
 /**

@@ -198,7 +198,7 @@ describe('the game’s own code, as a plugin’s', () => {
     expect(problems).toContain('plugin game: "game" is reserved for the game\'s own rules')
     const bare = { ...fixture(), stats: [{ id: 'puff', label: 'Puff', max: { value: 'ceiling' } }] }
     expect(checkGame(bare).problems.map((problem) => problem.what)).toContain(
-      'no custom value named "ceiling"; the game\'s own code is called with "game/" in front, as "game/ceiling"',
+      'no game value named "ceiling"; the game\'s own code is called with "game/" in front, as "game/ceiling"',
     )
   })
 })

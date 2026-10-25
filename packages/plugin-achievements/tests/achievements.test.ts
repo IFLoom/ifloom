@@ -202,7 +202,7 @@ describe('achievements', () => {
       'action x: unknown achievement "nope"',
       'achievements a: when: unknown kind "thing"',
       'achievements a: progress: unknown stat "luck"',
-      'achievements b: progress: no custom value named "game/nothing"',
+      'achievements b: progress: no game value named "game/nothing"',
       'achievements a: progress target must be more than 0',
     ])
   })

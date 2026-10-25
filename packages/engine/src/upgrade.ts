@@ -151,6 +151,8 @@ function wordKeys(pack: RawPack, rename: (key: string) => string): RawPack {
  * 26 → 27:
  * - a `variants` block's `art`, the variants each member's picture is drawn
  *   from, is `image`;
+ * - a weighted variants member `{ text: key, weight }` is `{ prose: key,
+ *   weight }`, since it names a prose key, not words;
  * - a trigger's `once` is `{ per: 'game' }` or `{ per: 'turn' }`, the one
  *   shape a button's `once` has, where it was `'game'` or `'turn'`.
  * The plugins' own steps rename their content's fields.
@@ -159,6 +161,21 @@ function toSchema27(pack: RawPack): RawPack {
   let out = TOOLS.objects(pack, (value) =>
     typeof value.variants === 'string' && isRecord(value.art) && !('image' in value) ? renamed(value, { art: 'image' }) : value,
   )
+  // A variants member with a weight names its prose key as `prose`, which reads as the key it is.
+  if (isRecord(out.variants))
+    out = {
+      ...out,
+      variants: Object.fromEntries(
+        Object.entries(out.variants).map(([name, members]) => [
+          name,
+          Array.isArray(members)
+            ? members.map((member) =>
+                isRecord(member) && typeof member.text === 'string' && !('prose' in member) ? renamed(member, { text: 'prose' }) : member,
+              )
+            : members,
+        ]),
+      ),
+    }
   if (Array.isArray(out.triggers))
     out = {
       ...out,

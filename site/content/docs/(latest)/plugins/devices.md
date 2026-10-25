@@ -16,7 +16,7 @@ An app isn't a place. Opening it doesn't move the player or pass time, and whate
 
 You build an app from sections, and each section is something the engine already has:
 
-- prose
+- words, as a scene's blocks
 - actions, the same buttons a room has, with prices and reasons
 - a list, either the [things of a kind](/docs/reference/entities#notes-photos-and-other-things-made-in-play) you hold, such as notes or photos, or the people the player can call
 - another plugin's view, such as a [messages](/docs/plugins/messages) channel or a [feed](/docs/plugins/feed)
@@ -142,7 +142,7 @@ An icon's states come from fields you already have. A locked icon comes from `bl
 import type { Block, ActionDef } from '@ifloom/engine'
 
 type Section =
-  | { prose: Block[] }
+  | { blocks: Block[] }
   | { actions: ActionDef[] }
   | { things: { of: string; at?: string } }
   | { contacts: true }
@@ -152,7 +152,7 @@ type Section =
 
 | Section | What it shows |
 |---|---|
-| `{ prose }` | Words, as [prose blocks](/docs/reference/scenes#block). They're the same blocks as a scene's body, with tokens and `when`s, so a [value](/docs/reference/custom#values) of the game's own in a token can print a balance or the weather. |
+| `{ blocks }` | Words, as [blocks](/docs/reference/scenes#block), written as a scene's body is. They're the same blocks as a scene's body, with tokens and `when`s, so a [value](/docs/reference/custom#values) of the game's own in a token can print a balance or the weather. |
 | `{ actions }` | Buttons, the same [`ActionDef`](/docs/reference/actions#actiondef)s as a room's, rendered with [`renderAction`](/docs/reference/view#renderaction), so each has its price, `blocked` and the reason it can't be done. An action whose `when` doesn't hold is left out. One with a cost or effects is done as `{ type: 'action', id: 'devices/<id>' }`, so give each an id no other app's action has. |
 | `{ things: { of, at? } }` | The [things](/docs/reference/entities#notes-photos-and-other-things-made-in-play) of the kind `of` that a holder holds, newest first, such as photos or notes. `at` is `'you'` if left out, or name `'player'` or a unique entity. Each entry is the thing's reference, name, description and picture, and has no buttons. |
 | `{ contacts: true }` | The [cast](/docs/plugins/cast)'s people the player can call and has met, each with a Call button that sends the cast's [`call`](/docs/plugins/cast#commands) command. See [Contacts](#contacts). |
@@ -165,7 +165,7 @@ import type { AppDef } from '@ifloom/plugin-devices'
 const bank: AppDef = {
   id: 'bank', name: 'Bank', icon: 'bank', on: 'laptop',
   blocked: [{ when: { not: { kv: 'bankAccount' } }, reason: 'You have no account yet.' }],
-  sections: [{ prose: [{ prose: 'bank.balance' }] }],   // 'You have {{v:game/balance}}.'
+  sections: [{ blocks: [{ prose: 'bank.balance' }] }],   // 'You have {{v:game/balance}}.'
 }
 
 const mail: AppDef = {
@@ -208,7 +208,7 @@ import { places } from '@ifloom/plugin-places'
 const apps: AppDef[] = [
   {
     id: 'notes', name: 'Notes', icon: 'notes', on: 'laptop',
-    sections: [{ prose: [{ prose: 'notes.top' }] }, { things: { of: 'note' } }],
+    sections: [{ blocks: [{ prose: 'notes.top' }] }, { things: { of: 'note' } }],
   },
   {
     id: 'shop', name: 'Corner Café', icon: 'basket', on: 'laptop',
@@ -228,7 +228,7 @@ const apps: AppDef[] = [
   {
     id: 'bank', name: 'Bank', icon: 'bank', on: 'laptop',
     blocked: [{ when: { not: { kv: 'bankAccount' } }, reason: 'You have no account yet.' }],
-    sections: [{ prose: [{ prose: 'bank.balance' }] }],
+    sections: [{ blocks: [{ prose: 'bank.balance' }] }],
   },
   {
     id: 'mail', name: 'Mail', icon: 'mail', on: 'laptop',
@@ -468,7 +468,7 @@ type SectionView =
 
 | Type | From | What it holds |
 |---|---|---|
-| `prose` | `{ prose }` | The blocks drawn as [beats](/docs/reference/prose#scenebeat) for the current state, with [`context.beats`](/docs/reference/plugins#beats), and their words joined as `text` for a UI that draws no beats. |
+| `prose` | `{ blocks }` | The blocks drawn as [beats](/docs/reference/prose#scenebeat) for the current state, with [`context.beats`](/docs/reference/plugins#beats), and their words joined as `text` for a UI that draws no beats. |
 | `actions` | `{ actions }` | The buttons, as [`RenderedChoice`](/docs/reference/view#renderedchoice)s. |
 | `list` | `{ things }`, `{ contacts }` | One entry per thing (its reference as `id`, name, description filled in, picture, no actions) or per contact (name, description, portrait, a Call button). |
 | `plugin` | `{ plugin, with }` | Only the plugin's id and `with`. The data is the plugin's own slice, at `view.plugins[plugin]`. |
@@ -656,7 +656,7 @@ When the game loads, the plugin reports, with `where` as `apps <id>`:
 
 - an app on a device the game doesn't have (`unknown device "…"`)
 - anything the app's `when`, a `blocked` entry or a dot badge names that the game doesn't have, such as `unknown storyline "…"`
-- a count badge naming a value neither a plugin nor the game has (`no custom value named "…"`), or a stat the game doesn't declare
+- a count badge naming a value neither a plugin nor the game has (`no plugin value named "…"` or `no game value named "…"`), or a stat the game doesn't declare
 - a `things` section's kind the game doesn't declare (`unknown kind "…"`), and a holder in its `at` that can't hold things
 - a plugin the game wasn't built with (`the game has no plugin named "…"`)
 - a panel's `with` that the plugin drawing that panel refuses, such as the shop's unknown vendor
@@ -668,7 +668,7 @@ The action check catches an unknown scene or action, a plugin command no plugin 
 A problem with an app is pinned on the content or pack it came from, such as `phone` for one of the phone's own apps.
 
 ```text
-phone · apps mail · no custom value named "messages/unread"
+phone · apps mail · no plugin value named "messages/unread"; the game has no plugin "messages"
 ```
 
 ## Gotchas

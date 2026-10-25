@@ -135,7 +135,7 @@ describe('checking declared stats', () => {
     const problems = problemsOf(game)
     expect(problems).toContain('action buy: spends unknown stat "gold"')
     expect(problems).toContain('action rest: unknown stat "sleep"')
-    expect(problems).toContain('stat puff: no custom value named "game/neverRegistered"')
+    expect(problems).toContain('stat puff: no game value named "game/neverRegistered"')
   })
 })
 

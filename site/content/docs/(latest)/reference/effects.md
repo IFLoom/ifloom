@@ -133,7 +133,7 @@ With `to` in place of `by`, the stat is set to `to`, held to its declared range.
 
 Runs a [plugin](/docs/reference/plugins)'s effect by its full name, or one of the game's own [effects in `rules`](#computed-effects) with `game/` in front, on the state the effects before it left. The name is the only key, and its value is the arguments, or `true` for none. A name that neither the game nor its plugins has does nothing. See [`PluginCall`](/docs/reference/custom#plugincall).
 
-**Gotcha.** The [content checker](/docs/reference/checks) checks the name wherever the effect is data, as `no custom effect named "…"`. [`rules.onTurn`](/docs/reference/rules#onturn) is a function, so nothing checks a name it applies, and a typo there silently does nothing.
+**Gotcha.** The [content checker](/docs/reference/checks) checks the name wherever the effect is data, as `no game effect named "…"` or `no plugin effect named "…"`. [`rules.onTurn`](/docs/reference/rules#onturn) is a function, so nothing checks a name it applies, and a typo there silently does nothing.
 
 ### kv
 

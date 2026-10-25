@@ -961,6 +961,7 @@ describe('content migrations', () => {
       id: 'mod:p9b',
       schema: 26,
       scenes: [{ id: 'hall', body: [{ variants: 'hall.lines', art: { 'hall.lines.1': 'hall.stills' } }], choices: [] }],
+      variants: { 'hall.lines': [{ text: 'hall.lines.1', weight: 3 }, 'hall.lines.2'] },
       triggers: [
         { id: 'ducks', once: 'turn', when: { kv: 'park' }, effects: [] },
         { id: 'welcome', once: 'game', when: { kv: 'home' }, effects: [] },
@@ -981,6 +982,7 @@ describe('content migrations', () => {
             { id: 'rich', name: 'Rich', once: false, effects: [] },
           ],
         },
+        devices: { apps: [{ id: 'notes', name: 'Notes', icon: 'notes', on: 'phone', sections: [{ prose: [{ prose: 'notes.top' }] }] }] },
       },
       words: { 'entity.vendor:counter.traits.shop/vendor.closed': 'Le rideau est baissé.' },
     }
@@ -989,6 +991,7 @@ describe('content migrations', () => {
     expect(out).toMatchObject({
       schema: SCHEMA,
       scenes: [{ id: 'hall', body: [{ variants: 'hall.lines', image: { 'hall.lines.1': 'hall.stills' } }], choices: [] }],
+      variants: { 'hall.lines': [{ prose: 'hall.lines.1', weight: 3 }, 'hall.lines.2'] },
       triggers: [
         { id: 'ducks', once: { per: 'turn' } },
         { id: 'welcome', once: { per: 'game' } },
@@ -1011,7 +1014,10 @@ describe('content migrations', () => {
           traits: { 'shop/vendor': { goods: [], blocked: [{ when: { 'shop/outside': { period: ['morning'] } }, reason: { string: 'shop/closed' } }] } },
         },
       ],
-      data: { cheats: { cheats: [{ id: 'map', once: { per: 'game' } }, { id: 'rich' }] } },
+      data: {
+        cheats: { cheats: [{ id: 'map', once: { per: 'game' } }, { id: 'rich' }] },
+        devices: { apps: [{ id: 'notes', sections: [{ blocks: [{ prose: 'notes.top' }] }] }] },
+      },
     })
     const counter = (out.entities as { traits: { 'shop/vendor': Record<string, unknown> } }[])[0].traits['shop/vendor']
     expect(counter).not.toHaveProperty('hours')

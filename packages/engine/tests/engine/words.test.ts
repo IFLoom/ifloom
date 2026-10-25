@@ -32,6 +32,7 @@ const cafe: Content = {
   inputs: [{ id: 'drink', label: 'Your usual', type: 'choice', options: [{ value: 'tea', label: 'Tea' }] }],
   actions: [
     { id: 'wait', label: 'Wait a while', effects: [{ notify: 'Time passes', text: 'The clock ticks.' }] },
+    { id: 'sketch', label: 'Sketch the street', effects: [{ create: 'shop', with: { name: 'A sketch', description: 'Pencil on a napkin.' } }] },
     { id: 'tip', label: 'Leave a tip', blocked: [{ when: { not: { stat: 'coins', gte: 1 } }, reason: 'Your pockets are empty.' }] },
   ],
   scenes: [
@@ -91,6 +92,12 @@ describe('the words table', () => {
     expect(fields[hashed('scene.cafe.counter.text.')]).toBeDefined()
     expect(Object.values(fields)).toEqual(expect.arrayContaining(['What can I get you?', 'She warms the pot.', 'See you tomorrow', 'Your pockets are empty.']))
     expect(Object.values(fields)).toEqual(expect.arrayContaining(['Time passes', 'The clock ticks.', 'Tulips in the window.', 'Soup', 'Bread']))
+    // What a create effect names the thing it makes, under the effect's action.
+    expect(
+      Object.entries(fields)
+        .filter(([key]) => key.startsWith('action.sketch.create.'))
+        .map(([, text]) => text),
+    ).toEqual(['A sketch', 'Pencil on a napkin.'])
     // The bakery's sign is its kind's, so it is translated once, as the kind's.
     expect(Object.keys(fields).some((key) => key.startsWith('entity.shop:bakery.traits'))).toBe(false)
     // A hashed key follows the words: the same words, the same key.

@@ -39,7 +39,7 @@ describe('the loader', () => {
     expect(problems).toEqual(
       expect.arrayContaining([
         'broken · action dig · unknown stat "stamina"',
-        'broken · action dig · no custom effect named "game/findTreasure"',
+        'broken · action dig · no game effect named "game/findTreasure"',
         'base · action nap · unknown storyline "dreams"',
       ]),
     )
@@ -72,7 +72,7 @@ describe('the loader', () => {
         'post · trigger parcel · unknown kind "parcel"',
         'post · trigger parcel · unknown kind "drawer"',
         'post · trigger parcel · goes to unknown scene "nowhere"',
-        'post · trigger parcel · no custom effect named "game/shred"',
+        'post · trigger parcel · no game effect named "game/shred"',
         'post · input colour · a choice with no options',
         'post · input age · min is above max',
         'post · input age · unknown storyline "ghost"',

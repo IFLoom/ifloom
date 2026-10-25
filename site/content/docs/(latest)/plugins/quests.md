@@ -443,7 +443,7 @@ When the game loads, the plugin reports these problems against the content or pa
 - An unknown `storyline` (`unknown storyline "…"`).
 - Two stages with the same id (`two stages are called "…"`).
 - Anything a stage's `done` names that the game doesn't have (`stage <id>: unknown location "…"`).
-- The same for `starts` (`starts: no custom condition named "…"`).
+- The same for `starts` (`starts: no plugin condition named "…"`).
 
 ```text
 mod:sunday-market · quests stall · stage haggle: unknown character "trader"

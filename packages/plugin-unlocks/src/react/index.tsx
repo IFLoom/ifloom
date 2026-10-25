@@ -209,9 +209,10 @@ function codesProvider(options: UnlocksUiOptions) {
     const [codes, setCodes] = useState<UnlockCodes | null>(null)
     useEffect(() => {
       const started = start(runner)
-      setCodes(started)
+      // A function, so it's set as the value rather than called as an update.
+      setCodes(() => started)
       return () => {
-        started.stop()
+        started()
         setCodes(null)
       }
     }, [runner])

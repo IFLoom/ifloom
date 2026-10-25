@@ -120,7 +120,7 @@ describe('custom functions belong to their game', () => {
 
   it('reports a ceiling that names a value nobody declared', () => {
     const game = { ...fixture(), stats: [{ id: 'puff', label: 'Puff', max: { value: 'game/gone' } }] }
-    expect(problemsOf(game)).toContain('stat puff: no custom value named "game/gone"')
+    expect(problemsOf(game)).toContain('stat puff: no game value named "game/gone"')
   })
 
   it('keeps the base game’s functions when content is loaded over it', () => {

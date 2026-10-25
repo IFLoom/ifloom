@@ -10,7 +10,7 @@ const entries: __Pascal__Entry[] = [
 function game(extra: Partial<Content> = {}): Game {
   const town: Content = {
     name: 'town',
-    activities: [{ id: 'shop', effects: [mark__Pascal__('bread')] }],
+    actions: [{ id: 'shop', effects: [mark__Pascal__('bread')] }],
     data: { '__id__': { entries } },
     ...extra,
   }
@@ -28,7 +28,7 @@ describe('__id__', () => {
     const g = game()
     const fresh = { ...startingState(g), sceneId: null }
     expect(shown(g, fresh).entries.map((entry) => entry.marked)).toEqual([false, false])
-    const shopped = apply(fresh, g, { type: 'activity', id: 'shop' })
+    const shopped = apply(fresh, g, { type: 'action', id: 'shop' })
     expect(shopped.reason).toBeUndefined()
     expect(holds(shopped.state, __camel__Marked('bread'), g)).toBe(true)
     const milk = apply(shopped.state, g, mark__Pascal__Command('milk'))
@@ -41,7 +41,7 @@ describe('__id__', () => {
   })
 
   it('reports an entry content names that the game lacks', () => {
-    const loaded = loadGame([{ name: 'town', activities: [{ id: 'shop', effects: [mark__Pascal__('cheese')] }], data: { '__id__': { entries } } }], {
+    const loaded = loadGame([{ name: 'town', actions: [{ id: 'shop', effects: [mark__Pascal__('cheese')] }], data: { '__id__': { entries } } }], {
       id: '__id__-town',
       title: '{{title}} town',
       plugins: [__camel__()],

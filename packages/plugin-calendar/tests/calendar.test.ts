@@ -26,9 +26,6 @@ function house(
       {
         name: 'base',
         actions: [
-          { id: 'nap', label: 'Nap', command: { type: 'activity', id: 'nap' } },
-          { id: 'outing', label: 'Go out', command: { type: 'activity', id: 'outing' } },
-          { id: 'walk', label: 'Long walk', command: { type: 'activity', id: 'walk' } },
           // A calendar with no sleep has no bed to offer.
           ...(options.sleep === false ? [] : [{ id: 'bed', label: 'Bed', command: sleep() }]),
         ],
@@ -36,10 +33,10 @@ function house(
       },
       {
         name: 'house',
-        activities: [
-          { id: 'nap', effects: [pass(1)] },
-          { id: 'outing', effects: [pass(2), { kind: 'kv', key: 'out', to: true }] },
-          { id: 'walk', effects: [pass(3)] },
+        actions: [
+          { id: 'nap', label: 'Nap', effects: [pass(1)] },
+          { id: 'outing', label: 'Go out', effects: [pass(2), { kind: 'kv', key: 'out', to: true }] },
+          { id: 'walk', label: 'Long walk', effects: [pass(3)] },
           { id: 'rest', effects: [{ kind: 'turn' }] },
         ],
         prose: { diary: 'Day {{v:calendar/day}}, a {{v:calendar/weekday}} {{v:calendar/period}}.' },
@@ -58,7 +55,7 @@ function house(
 
 /** Apply effects as content writes them, short forms and all. */
 const applyEffects = (state: GameState, game: Game, refs: Parameters<typeof buildEffects>[2]) => applyBuilt(state, game, buildEffects(state, game, refs))
-const act = (id: string) => ({ type: 'activity' as const, id })
+const act = (id: string) => ({ type: 'action' as const, id })
 function run(game: Game, state: GameState, ...commands: Parameters<typeof apply>[2][]): GameState {
   for (const command of commands) {
     const out = apply(state, game, command)
@@ -176,8 +173,7 @@ describe('the calendar', () => {
     // Further than tomorrow, the day by name.
     const far = {
       ...game,
-      actions: [{ id: 'trek', label: 'Trek', command: { type: 'activity' as const, id: 'trek' } }],
-      activities: [...(game.activities ?? []), { id: 'trek', effects: [pass(11)] }],
+      actions: [...(game.actions ?? []).map(({ label: _label, ...action }) => action), { id: 'trek', label: 'Trek', effects: [pass(11)] }],
     }
     expect(button(far, clock.write(startingState(far), { day: 0, period: 'morning' }), 'trek').price).toEqual({ notes: ['until Wednesday afternoon'] })
   })

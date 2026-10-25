@@ -12,7 +12,7 @@ import { activities, begin, fixture } from '../fixtures/town.ts'
 function withPanels(rules: Parameters<typeof fixture>[0] = {}): Game {
   return {
     ...fixture(rules),
-    activities: [
+    actions: [
       ...activities,
       { id: 'counter', effects: [{ kind: 'panel', panel: 'shop', with: { vendor: 'bakery' } }] },
       { id: 'board', effects: [{ kind: 'panel', panel: 'jobs' }] },
@@ -23,7 +23,7 @@ function withPanels(rules: Parameters<typeof fixture>[0] = {}): Game {
   }
 }
 
-const act = (id: string): Command => ({ type: 'activity', id })
+const act = (id: string): Command => ({ type: 'action', id })
 
 function run(game: Game, state: GameState, ...commands: Command[]): GameState {
   return commands.reduce((next, command) => {
@@ -92,7 +92,7 @@ describe('panels', () => {
     const game: Game = {
       ...withPanels(),
       plugins: [counter],
-      activities: [
+      actions: [
         ...activities,
         { id: 'a', effects: [{ kind: 'panel', panel: 'shop', with: { vendor: 'nowhere' } }] },
         { id: 'b', effects: [{ kind: 'panel', panel: 'shop' }] },
@@ -100,8 +100,8 @@ describe('panels', () => {
       ],
     }
     expect(checkGame(game).problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
-      'activity a: unknown entity "nowhere": name one as "kind:id"',
-      'activity b: the shop panel needs a vendor',
+      'action a: unknown entity "nowhere": name one as "kind:id"',
+      'action b: the shop panel needs a vendor',
     ])
   })
 })
@@ -120,7 +120,7 @@ describe('a scene’s panel', () => {
           panel: { panel: 'prices', with: { stall: 'bread' } },
         },
       ],
-      activities: [...activities, { id: 'counter', effects: [{ kind: 'panel', panel: 'shop', with: { vendor: 'bakery' } }] }],
+      actions: [...activities, { id: 'counter', effects: [{ kind: 'panel', panel: 'shop', with: { vendor: 'bakery' } }] }],
     }
   }
 

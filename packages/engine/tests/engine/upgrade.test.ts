@@ -41,13 +41,12 @@ afterEach(() => {
 /** The cafe fixture's game, split into its base and its own pack. */
 function cafe() {
   const { game } = withCafe()
-  const { id, title, rules, scenes, storylines, activities, stats, introScene, kv, actions } = game
+  const { id, title, rules, scenes, storylines, stats, introScene, kv, actions } = game
   const base = { id, title, rules }
   const own: Content = {
     name: 'town',
     scenes,
     storylines,
-    activities,
     stats,
     introScene,
     kv,
@@ -305,7 +304,7 @@ describe('content migrations', () => {
       id: 'evening',
       schema: SCHEMA,
       prose: { has: 'Words are left alone.' },
-      activities: [
+      actions: [
         {
           id: 'nap',
           blocked: [
@@ -429,7 +428,7 @@ describe('content migrations', () => {
       schema: SCHEMA,
       prose: { badge: 'You have {{v:messages/unread channel=texts}} new and {{v:feed/unread feed=social}} posts; {{v:game/rentDue}} due.' },
       strings: { hint: '{{v:messages/unread channel=post}} letters' },
-      activities: [
+      actions: [
         {
           id: 'jog',
           blocked: [
@@ -481,19 +480,18 @@ describe('content migrations', () => {
       id: 'colds',
       schema: SCHEMA,
       strings: { 'statuses/unknown': 'No such thing.', 'quests/done': 'Done.' },
-      activities: [
-        {
-          id: 'sneeze',
-          blocked: [{ when: { 'statuses/active': { status: 'cold', stacks: { gte: 3 } } }, reason: 'Enough.' }],
-          effects: [{ 'statuses/apply': { status: 'cold' } }, { kind: 'custom', name: 'statuses/remove', with: { status: 'warm', runEnd: true } }],
-        },
-      ],
       actions: [
         {
           id: 'cure',
           label: 'Cure',
           command: { type: 'custom', name: 'statuses/remove', with: { id: 'cold' } },
           when: { 'statuses/active': { status: 'cold' } },
+        },
+        // An activity is an action with no label, after the pack's own.
+        {
+          id: 'sneeze',
+          blocked: [{ when: { 'statuses/active': { status: 'cold', stacks: { gte: 3 } } }, reason: 'Enough.' }],
+          effects: [{ 'statuses/apply': { status: 'cold' } }, { kind: 'custom', name: 'statuses/remove', with: { status: 'warm', runEnd: true } }],
         },
       ],
       data: { quests: { quests: [] }, statuses: { statuses: [{ id: 'cold', label: 'A cold', turns: 3, onEnd: [{ 'statuses/apply': { status: 'tired' } }] }] } },
@@ -569,7 +567,7 @@ describe('content migrations', () => {
         { id: 'charm', label: 'Charm', levels: { at: [10, 20, 30], hidden: true } },
         { id: 'cooking', label: 'Cooking', levels: { at: [10, 30] } },
       ],
-      activities: [{ id: 'flirt', blocked: [{ when: { not: { level: 'charm', gte: 2 } }, reason: 'Not yet.' }] }],
+      actions: [{ id: 'flirt', blocked: [{ when: { not: { level: 'charm', gte: 2 } }, reason: 'Not yet.' }] }],
     })
   })
 
@@ -623,7 +621,7 @@ describe('content migrations', () => {
     expect(added.ok && up(added.value.pack)).toEqual({
       id: 'mod:naps',
       schema: SCHEMA,
-      activities: [
+      actions: [
         {
           id: 'nap',
           blocked: [{ when: { not: { entity: 'item:pillow', at: 'you' } }, reason: 'No pillow.' }],
@@ -801,7 +799,7 @@ describe('content migrations', () => {
       id: 'rent',
       schema: SCHEMA,
       stats: [{ id: 'energy', label: 'Energy', max: { value: 'game/ceiling' } }],
-      activities: [
+      actions: [
         {
           id: 'pay',
           blocked: [
@@ -1003,7 +1001,7 @@ describe('content migrations', () => {
         { id: 'scarf', of: 'item', name: 'Scarf', desc: 'Wool.' },
       ],
       traits: { 'wardrobe/wearable': { 'item:scarf': { slot: 'neck' } } },
-      activities: [
+      actions: [
         {
           id: 'snap',
           blocked: [{ when: { count: { of: 'photo', at: 'player' }, gte: 3 }, reason: 'Full.' }],
@@ -1122,7 +1120,7 @@ describe('plugin-owned migrations', () => {
     schema: SCHEMA,
     plugins: { bells: 1 },
     data: { bells: { bells: [{ id: 'chapel', tone: 'low' }] } },
-    activities: [{ id: 'ring', label: 'Ring', command: { 'bells/ring': { bell: 'chapel' } } }],
+    actions: [{ id: 'ring', label: 'Ring', command: { 'bells/ring': { bell: 'chapel' } } }],
   }
   const base = { id: 'chimes', title: 'Chimes', plugins: [bells()] }
 
@@ -1132,7 +1130,7 @@ describe('plugin-owned migrations', () => {
       schema: SCHEMA,
       plugins: { bells: 2 },
       data: { bells: { bells: [{ id: 'chapel', sound: 'low' }] } },
-      activities: [{ id: 'ring', label: 'Ring', command: { 'bells/ring': { id: 'chapel' } } }],
+      actions: [{ id: 'ring', label: 'Ring', command: { 'bells/ring': { id: 'chapel' } } }],
     })
     // At the plugin's version, nothing is done.
     const now = { ...written, plugins: { bells: 2 } }
@@ -1166,7 +1164,7 @@ describe('plugin-owned migrations', () => {
     expect((await store.add(file)).ok).toBe(true)
     const { game, problems } = loadGame([{ name: 'town' }], base, { packs: await store.packs() })
     expect(problems.filter((problem) => problem.pack === 'mod:chimes')).toEqual([])
-    expect((game.activities?.[0] as { command?: unknown } | undefined)?.command).toEqual({ 'bells/ring': { id: 'chapel' } })
+    expect((game.actions?.[0] as { command?: unknown } | undefined)?.command).toEqual({ 'bells/ring': { id: 'chapel' } })
   })
 
   it('run only the command steps a log’s versions need', () => {

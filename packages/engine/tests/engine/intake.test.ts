@@ -93,7 +93,7 @@ describe('loadState', () => {
 
   it('starts a command log from an old save', () => {
     const game = oldSavesGame()
-    const played = replay(game, { game: game.id, start: OLD_SAVES[9] as unknown as GameState, commands: [{ type: 'activity', id: 'wait' }] })
+    const played = replay(game, { game: game.id, start: OLD_SAVES[9] as unknown as GameState, commands: [{ type: 'action', id: 'wait' }] })
     expect(unwrap(played)).toMatchObject({ version: SAVE_VERSION, media: { picks: {} } })
     expect(replay(game, { game: game.id, start: { version: 0 } as unknown as GameState, commands: [] })).toEqual({
       ok: false,

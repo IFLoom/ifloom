@@ -15,6 +15,7 @@ import { say } from './strings.ts'
 import { holds } from './condition.ts'
 import { buildEffects, customCall, customCondition, customContext, customEffect, customValue } from './custom.ts'
 import { sceneById } from './game.ts'
+import { actionById } from './action.ts'
 import { sceneContext } from './context.ts'
 import { fillTokens } from './prose.ts'
 import { pluginAudio, pluginCommand, pluginEffect, pluginStatModifiers, rulesContext, runStatHooks, runTurnDoneHooks, runTurnHooks } from './plugin.ts'
@@ -54,6 +55,7 @@ export function featureContext(): FeatureContext {
     pluginAudio,
     statModifiers: (state, game) => pluginStatModifiers(game, state),
     sceneById,
+    actionOf: (state, game, id) => actionById(state, game, id),
     sceneView: (state, game) => (state.sceneId ? sceneById(game, state.sceneId)?.render(state, sceneContext(state, game)) : undefined),
   })
 }

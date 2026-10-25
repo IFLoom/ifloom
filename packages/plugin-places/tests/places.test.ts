@@ -38,9 +38,9 @@ const town: Content = {
     'place.back': 'Crates of milk.',
     'place.park': 'Ducks.',
   },
-  activities: [
+  actions: [
     { id: 'coffee', blocked: [onlyAt(['cafe'], 'There is no coffee here.')], effects: [{ kind: 'kv', key: 'coffee', to: true }] },
-    { id: 'nap', effects: [pass(1)] },
+    { id: 'nap', label: 'Nap', effects: [pass(1)] },
     { id: 'hop', effects: [moveTo('park')] },
   ],
   data: {
@@ -50,7 +50,7 @@ const town: Content = {
         place('street', ['house', 'cafe', 'park'], { tags: ['outdoors'] }),
         place('cafe', ['street', 'back'], {
           blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
-          actions: [{ id: 'coffee', label: 'Buy a coffee', command: { type: 'activity', id: 'coffee' } }],
+          actions: [{ id: 'coffee', label: 'Buy a coffee', command: { type: 'action', id: 'coffee' } }],
         }),
         place('back', ['cafe'], { parent: 'cafe', blocked: [{ when: { not: { kv: 'staff' } }, reason: 'Staff only.', hide: true }] }),
         place('park', ['street']),
@@ -61,7 +61,7 @@ const town: Content = {
 
 function game(options: PlacesOptions = { start: 'house' }, locks: Content['locks'] = []) {
   const clock = calendar()
-  const { game, problems } = loadGame([{ name: 'base', actions: [{ id: 'nap', label: 'Nap', command: { type: 'activity', id: 'nap' } }], locks }, town], {
+  const { game, problems } = loadGame([{ name: 'base', locks }, town], {
     id: 'town',
     title: 'Town',
     plugins: [clock, places(options)],
@@ -101,8 +101,8 @@ describe('places', () => {
     const state = walk(g, startingState(g), 'street', 'cafe')
     expect(where(state)).toBe('cafe')
     expect(view(state, g).actions.map((action) => action.id)).toEqual(['coffee', 'nap'])
-    expect(apply(state, g, { type: 'activity', id: 'coffee' }).state.kv.coffee).toBe(true)
-    expect(whyNot(walk(g, startingState(g), 'street'), g, { type: 'activity', id: 'coffee' })).toBe('There is no coffee here.')
+    expect(apply(state, g, { type: 'action', id: 'coffee' }).state.kv.coffee).toBe(true)
+    expect(whyNot(walk(g, startingState(g), 'street'), g, { type: 'action', id: 'coffee' })).toBe('There is no coffee here.')
   })
 
   it('say why a journey is refused', () => {
@@ -139,7 +139,7 @@ describe('places', () => {
 
   it('move the player at once by effect, closing any scene, with no exit needed', () => {
     const { game: g } = game()
-    const state = apply(startingState(g), g, { type: 'activity', id: 'hop' }).state
+    const state = apply(startingState(g), g, { type: 'action', id: 'hop' }).state
     expect(where(state)).toBe('park')
   })
 
@@ -171,7 +171,7 @@ describe('places', () => {
     expect(there.kv).toMatchObject({ ducks: true, fed: 1 })
     // Once it no longer holds, nothing happens on the doorstep.
     expect(walk(g, walk(g, there, 'street'), 'park').kv.fed).toBe(1)
-    const moved = apply(startingState(g), g, { type: 'activity', id: 'hop' }).state
+    const moved = apply(startingState(g), g, { type: 'action', id: 'hop' }).state
     expect(moved.kv.ducks).toBeUndefined()
   })
 
@@ -207,7 +207,7 @@ describe('places', () => {
   it('report places content names that are not there', () => {
     const broken: Content = {
       name: 'broken',
-      activities: [{ id: 'swim', blocked: [{ when: { not: at('lido') }, reason: 'No.' }], effects: [moveTo('pier')] }],
+      actions: [{ id: 'swim', blocked: [{ when: { not: at('lido') }, reason: 'No.' }], effects: [moveTo('pier')] }],
       data: {
         places: {
           locations: [place('yard', ['lane'], { parent: 'yard', body: [{ text: 'place.yard' }], actions: [{ id: 'dig', label: 'Dig', command: go('moon') }] })],
@@ -216,8 +216,8 @@ describe('places', () => {
     }
     const { problems } = loadGame([broken], { id: 'b', title: 'B', plugins: [places({ start: 'nowhere' })] })
     expect(problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
-      'activity swim: unknown location "lido"',
-      'activity swim: unknown location "pier"',
+      'action swim: unknown location "lido"',
+      'action swim: unknown location "pier"',
       'options start: unknown location "nowhere"',
       'locations yard: no prose for "place.yard"',
       'locations yard: action dig: unknown location "moon"',
@@ -240,7 +240,7 @@ describe('places', () => {
           },
           default: { music: 'calm' },
         },
-        activities: [
+        actions: [
           { id: 'hush', effects: [{ kind: 'audio', channel: 'ambience', to: null }] },
           { id: 'listen', effects: [{ kind: 'audio', channel: 'ambience' }] },
         ],
@@ -266,10 +266,10 @@ describe('places', () => {
     it('give way to an audio effect', () => {
       const { g } = withSound()
       const cafe = walk(g, startingState(g), 'cafe')
-      const hushed = apply(cafe, g, { type: 'activity', id: 'hush' }).state
+      const hushed = apply(cafe, g, { type: 'action', id: 'hush' }).state
       expect(view(hushed, g).audio.channels.ambience.track).toBeNull()
       // Handed back, the place's murmur plays again.
-      const back = apply(hushed, g, { type: 'activity', id: 'listen' }).state
+      const back = apply(hushed, g, { type: 'action', id: 'listen' }).state
       expect(view(back, g).audio.channels.ambience.track).toBe('murmur')
     })
 
@@ -312,8 +312,8 @@ describe('places', () => {
         { id: 'lamp', src: 'cafe/lamp.png', when: { kv: 'evening' } },
       ],
       hotspots: [
-        { id: 'menu', rect: [10, 20, 30, 20], label: 'Read the menu', command: { type: 'activity', id: 'coffee' } },
-        { id: 'lamp', rect: [70, 5, 10, 10], label: 'The lamp', command: { type: 'activity', id: 'nap' }, layer: 'lamp' },
+        { id: 'menu', rect: [10, 20, 30, 20], label: 'Read the menu', command: { type: 'action', id: 'coffee' } },
+        { id: 'lamp', rect: [70, 5, 10, 10], label: 'The lamp', command: { type: 'action', id: 'nap' }, layer: 'lamp' },
         { id: 'door', rect: [85, 30, 15, 70], label: 'The back door', command: go('back') },
       ],
     }
@@ -330,7 +330,7 @@ describe('places', () => {
           { id: 'counter', src: 'art/cafe/counter-day.jpg' },
         ],
         hotspots: [
-          { id: 'menu', rect: [10, 20, 30, 20], label: 'Read the menu', command: { type: 'activity', id: 'coffee' } },
+          { id: 'menu', rect: [10, 20, 30, 20], label: 'Read the menu', command: { type: 'action', id: 'coffee' } },
           // The back room is staff only: greyed out with the exit's own reason.
           { id: 'door', rect: [85, 30, 15, 70], label: 'The back door', command: commandOf(go('back')), disabled: 'Staff only.' },
         ],
@@ -353,7 +353,7 @@ describe('places', () => {
 
     it('records the pool’s pick after a command, under the place', () => {
       const { g } = withStage(stage)
-      const after = apply(startingState(g), g, { type: 'activity', id: 'nap' }).state
+      const after = apply(startingState(g), g, { type: 'action', id: 'nap' }).state
       expect(after.media.picks).toEqual({ 'counter|day|cafe|stage:1': 'cafe/counter-day.jpg' })
     })
 
@@ -362,7 +362,7 @@ describe('places', () => {
         layers: [{ id: 'room', pool: 'shelves' }],
         hotspots: [
           { id: 'menu', rect: [90, 0, 20, 10], label: 'Menu', choice: 'order' },
-          { id: 'lamp', rect: [0, 0, 10, 10], label: 'Lamp', command: { type: 'activity', id: 'dance' }, layer: 'lamp' },
+          { id: 'lamp', rect: [0, 0, 10, 10], label: 'Lamp', command: { type: 'action', id: 'dance' }, layer: 'lamp' },
         ],
       })
       expect(problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
@@ -370,7 +370,7 @@ describe('places', () => {
         'locations cafe: hotspot menu: names choice "order", but only a scene has choices',
         'locations cafe: hotspot menu: rect runs off the stage: x + width and y + height must be 100 or less',
         'locations cafe: hotspot lamp: unknown layer "lamp"',
-        'locations cafe: hotspot lamp: unknown activity "dance"',
+        'locations cafe: hotspot lamp: unknown action "dance"',
       ])
     })
   })
@@ -384,7 +384,7 @@ describe('places', () => {
           { id: 'paper', of: 'item', name: 'Newspaper', at: { 'location:street': 2 } },
           { id: 'coin', of: 'item', name: 'Coin', at: 'location:house', visible: { kv: 'lookedClosely' } },
         ],
-        activities: [...(town.activities ?? []), { id: 'drop', effects: [{ kind: 'move', entity: 'item:paper', from: 'you', to: 'location:park' }] }],
+        actions: [...(town.actions ?? []), { id: 'drop', effects: [{ kind: 'move', entity: 'item:paper', from: 'you', to: 'location:park' }] }],
       }
       const { game: g, problems } = loadGame([withThings], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'house' })] })
       expect(problems).toEqual([])

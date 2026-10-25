@@ -42,7 +42,7 @@ const town: Content = {
     { id: 'umbrella', of: 'clothing', name: 'umbrella', at: 'player' },
     { id: 'kim', of: 'friend', name: 'Kim' },
   ],
-  activities: [
+  actions: [
     { id: 'lendBoots', effects: [move('clothing:boots', 'friend:kim')] },
     { id: 'loseBoots', effects: [take('clothing:boots')] },
   ],
@@ -101,15 +101,15 @@ describe('the wardrobe, on its own', () => {
 
   it('takes off what you no longer hold: lost, or given to someone', () => {
     const g = game()
-    expect(holds(apply(begin(g), g, { type: 'activity', id: 'loseBoots' }).state, slotFilled('feet'), g)).toBe(false)
-    const lent = apply(begin(g), g, { type: 'activity', id: 'lendBoots' }).state
+    expect(holds(apply(begin(g), g, { type: 'action', id: 'loseBoots' }).state, slotFilled('feet'), g)).toBe(false)
+    const lent = apply(begin(g), g, { type: 'action', id: 'lendBoots' }).state
     expect(holds(lent, slotFilled('feet'), g)).toBe(false)
     expect(heldCount(lent, g, 'clothing:boots', 'friend:kim')).toBe(1)
   })
 
   it('wears only what you hold', () => {
     const g = game()
-    const lent = apply(begin(g), g, { type: 'activity', id: 'lendBoots' }).state
+    const lent = apply(begin(g), g, { type: 'action', id: 'lendBoots' }).state
     expect(whyNot(lent, g, wear('clothing:boots'))).toBe('You have no boots.')
   })
 
@@ -130,10 +130,10 @@ describe('the wardrobe, on its own', () => {
     const g = game([
       {
         name: 'tailor',
-        activities: [{ id: 'sew', effects: [{ kind: 'create', like: 'clothing:raincoat', entity: { id: 'cape', name: 'cape' }, at: 'player' }] }],
+        actions: [{ id: 'sew', effects: [{ kind: 'create', like: 'clothing:raincoat', entity: { id: 'cape', name: 'cape' }, at: 'player' }] }],
       },
     ])
-    const sewn = apply(begin(g), g, { type: 'activity', id: 'sew' }).state
+    const sewn = apply(begin(g), g, { type: 'action', id: 'sew' }).state
     expect(shown(sewn, g).spare).toContainEqual({ entity: 'clothing:cape', name: 'cape', slot: 'coat' })
     expect(holds(apply(sewn, g, wear('clothing:cape')).state, wearing('clothing:cape', 'coat'), g)).toBe(true)
   })
@@ -165,7 +165,7 @@ describe('the wardrobe, on its own', () => {
         {
           name: 'mod',
           entities: [{ id: 'cape', of: 'clothing', name: 'cape', traits: { ...wearable('back') } }],
-          activities: [{ id: 'x', effects: [] }],
+          actions: [{ id: 'x', effects: [] }],
         },
       ],
       {
@@ -202,10 +202,10 @@ describe('the wardrobe with a protagonist', () => {
     const g = game([
       {
         name: 'play',
-        activities: [{ id: 'beKim', effects: [{ kind: 'you', to: 'friend:kim' }, give('clothing:raincoat')] }],
+        actions: [{ id: 'beKim', effects: [{ kind: 'you', to: 'friend:kim' }, give('clothing:raincoat')] }],
       },
     ])
-    const kim = apply(begin(g), g, { type: 'activity', id: 'beKim' }).state
+    const kim = apply(begin(g), g, { type: 'action', id: 'beKim' }).state
     // Kim has nothing on yet; the raincoat is Kim's now, to wear.
     expect(holds(kim, slotFilled('feet'), g)).toBe(false)
     expect(shown(kim, g).spare).toEqual([{ entity: 'clothing:raincoat', name: 'raincoat', slot: 'coat' }])
@@ -218,14 +218,14 @@ describe('the wardrobe with a protagonist', () => {
     const g = game([
       {
         name: 'play',
-        activities: [
+        actions: [
           { id: 'beKim', effects: [{ kind: 'you', to: 'friend:kim' }, give('clothing:raincoat')] },
           { id: 'beMe', effects: [{ kind: 'you', to: 'player' }] },
         ],
       },
     ])
-    const kim = apply(apply(begin(g), g, { type: 'activity', id: 'beKim' }).state, g, wear('clothing:raincoat')).state
-    const me = apply(kim, g, { type: 'activity', id: 'beMe' }).state
+    const kim = apply(apply(begin(g), g, { type: 'action', id: 'beKim' }).state, g, wear('clothing:raincoat')).state
+    const me = apply(kim, g, { type: 'action', id: 'beMe' }).state
     expect(shown(me, g).slots.map((slot) => slot.entity)).toEqual([null, 'clothing:boots'])
     expect(holds(me, wearing('clothing:raincoat'), g)).toBe(false)
     expect(holds(me, { 'wardrobe/wearing': { entity: 'clothing:raincoat', at: 'friend:kim' } }, g)).toBe(true)

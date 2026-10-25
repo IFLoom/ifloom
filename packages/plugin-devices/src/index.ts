@@ -12,6 +12,7 @@
  * messages channel, a feed), or a panel the UI draws by name.
  */
 import {
+  actionReferences,
   artSrc,
   customValue,
   defaultRuntime,
@@ -63,7 +64,10 @@ export type DeviceDef = {
 export type Section =
   /** Words, as prose blocks. */
   | { prose: Block[] }
-  /** Buttons, the same as a room's. */
+  /**
+   * Buttons, the same as a room's. One with a cost or effects is done as
+   * `{ type: 'action', id: 'devices/<id>' }`, so give each an id no other app's action has.
+   */
   | { actions: ActionDef[] }
   /**
    * The things of a kind a holder holds, newest first: `{ things: { of: 'photo' } }`
@@ -191,7 +195,7 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
         kind: 'actions',
         actions: section.actions
           .filter((action) => holds(state, action.when, game) && !hides(state, game, action.blocked))
-          .map((action) => renderAction(state, game, action)),
+          .map((action) => renderAction(state, game, action, ID)),
       }
     }
     if ('things' in section) {
@@ -273,6 +277,11 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
         run: (_state, args, { slice, set }) => set({ ...slice, open: { ...slice.open, [String(args.id)]: null } }),
       },
     },
+    // An app's action with a cost or effects is done as `devices/<id>`, from whichever app has it.
+    action: (_state, id, { game }) =>
+      apps(game)
+        .flatMap((app) => app.sections.flatMap((section) => ('actions' in section ? section.actions : [])))
+        .find((action) => action.id === id),
     // An app that could not be opened now — not installed, blocked, or a lock on
     // the device (no phone at work) — closes, so its buttons are not left live.
     onCommand: (_before, after, { slice, set, game }) => {
@@ -315,12 +324,7 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
               if ('things' in section) return [{ kind: section.things.of }, ...(section.things.at !== undefined ? [{ holder: section.things.at }] : [])]
               if ('panel' in section) return [{ openPanel: section.panel, with: section.with ?? {} }]
               if ('prose' in section) return [{ blocks: section.prose }]
-              if ('actions' in section) {
-                return section.actions.map((action) => ({
-                  within: `action ${action.id}`,
-                  refs: [{ when: action.when }, ...(action.blocked ?? []).map((entry) => ({ when: entry.when })), { command: action.command }],
-                }))
-              }
+              if ('actions' in section) return section.actions.map((action) => ({ within: `action ${action.id}`, refs: actionReferences(action) }))
               return []
             }),
           ],

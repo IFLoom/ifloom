@@ -31,7 +31,7 @@ const tide = definePlugin<{ height: number }>({
     },
   },
   guard: (_state, { command, effects }, { slice }) => {
-    if (command.type === 'activity' && command.id === 'swim' && slice.height >= 3) return 'Not at high tide.'
+    if (command.type === 'action' && command.id === 'swim' && slice.height >= 3) return 'Not at high tide.'
     const rising = effects.filter((effect): effect is Extract<Effect, { kind: 'custom' }> => effect.kind === 'custom' && effect.name === 'tide/rise')
     const by = rising.reduce((sum, effect) => sum + Number(effect.with?.by ?? 1), 0)
     return slice.height + by > 3 ? { reason: 'The tide would turn.', soft: true } : undefined
@@ -48,14 +48,11 @@ function shore(rules: Parameters<typeof fixture>[0] = {}): Game {
   return {
     ...town,
     plugins: [tide],
-    activities: [
-      ...(town.activities ?? []),
-      { id: 'swim', effects: [{ 'tide/rise': true }] },
-      { id: 'dig', cost: { stats: { coins: 1 } }, effects: [{ 'tide/rise': { by: 2 } }, { kind: 'stat', stat: 'luck', by: 1 }] },
-    ],
     actions: [
-      { id: 'swim', label: 'Swim', command: { type: 'activity', id: 'swim' } },
-      { id: 'dig', label: 'Dig', command: { type: 'activity', id: 'dig' } },
+      // The town's things to do, and none of its buttons: waiting is done by its command here.
+      ...(town.actions ?? []).map(({ label: _label, ...action }) => action),
+      { id: 'swim', label: 'Swim', effects: [{ 'tide/rise': true }] },
+      { id: 'dig', label: 'Dig', cost: { stats: { coins: 1 } }, effects: [{ 'tide/rise': { by: 2 } }, { kind: 'stat', stat: 'luck', by: 1 }] },
       { id: 'paddle', label: 'Paddle', command: { type: 'custom', name: 'tide/paddle' } },
     ],
   }
@@ -68,7 +65,7 @@ describe('effectsOf', () => {
   it('says what each kind of command would apply, before it runs', () => {
     const game = shore()
     const state = begin(game)
-    expect(effectsOf(state, game, { type: 'activity', id: 'dig' })).toEqual([
+    expect(effectsOf(state, game, { type: 'action', id: 'dig' })).toEqual([
       { kind: 'stat', stat: 'coins', by: -1 },
       { kind: 'custom', name: 'tide/rise', with: { by: 2 } },
       { kind: 'stat', stat: 'luck', by: 1 },
@@ -81,9 +78,9 @@ describe('effectsOf', () => {
 describe('plugin guards', () => {
   it('refuse outright, the button and the reducer alike', () => {
     const game = shore()
-    expect(whyNot(at(game, 3), game, { type: 'activity', id: 'swim' })).toBe('Not at high tide.')
+    expect(whyNot(at(game, 3), game, { type: 'action', id: 'swim' })).toBe('Not at high tide.')
     expect(action(game, 3, 'swim').disabled).toBe('Not at high tide.')
-    expect(apply(at(game, 3), game, { type: 'activity', id: 'swim' }).reason).toBe('Not at high tide.')
+    expect(apply(at(game, 3), game, { type: 'action', id: 'swim' }).reason).toBe('Not at high tide.')
   })
 
   it('warn softly: the button stays pressable with the warning, and the reducer refuses it', () => {
@@ -91,8 +88,8 @@ describe('plugin guards', () => {
     const dig = action(game, 2, 'dig')
     expect(dig.disabled).toBeUndefined()
     expect(dig.warning).toBe('The tide would turn.')
-    expect(apply(at(game, 2), game, { type: 'activity', id: 'dig' }).reason).toBe('The tide would turn.')
-    expect(warningOf(at(game, 0), game, { type: 'activity', id: 'dig' })).toBeUndefined()
+    expect(apply(at(game, 2), game, { type: 'action', id: 'dig' }).reason).toBe('The tide would turn.')
+    expect(warningOf(at(game, 0), game, { type: 'action', id: 'dig' })).toBeUndefined()
     expect(action(game, 2, 'paddle').warning).toBe('The tide would turn.')
   })
 })
@@ -128,13 +125,13 @@ describe('locks by effect', () => {
   it('stop only the commands that would apply that effect', () => {
     const game = shore({ locks: [{ when: { kv: 'storm' }, deny: ['*'], effect: 'tide/rise', reason: 'Not in a storm.' }] })
     const stormy = { ...begin(game), kv: { storm: true } }
-    expect(whyNot(stormy, game, { type: 'activity', id: 'dig' })).toBe('Not in a storm.')
+    expect(whyNot(stormy, game, { type: 'action', id: 'dig' })).toBe('Not in a storm.')
     expect(whyNot(stormy, game, { type: 'custom', name: 'tide/paddle' })).toBe('Not in a storm.')
-    expect(whyNot(stormy, game, { type: 'activity', id: 'read' })).toBeUndefined()
-    const built = fixture({ locks: [{ when: { kv: 'storm' }, deny: ['activity'], effect: 'turn', reason: 'Not yet.' }] })
-    const turning = { ...built, activities: [...(built.activities ?? []), { id: 'rest', effects: [{ kind: 'turn' as const }] }] }
-    expect(whyNot({ ...begin(turning), kv: { storm: true } }, turning, { type: 'activity', id: 'rest' })).toBe('Not yet.')
-    expect(whyNot({ ...begin(turning), kv: { storm: true } }, turning, { type: 'activity', id: 'read' })).toBeUndefined()
+    expect(whyNot(stormy, game, { type: 'action', id: 'read' })).toBeUndefined()
+    const built = fixture({ locks: [{ when: { kv: 'storm' }, deny: ['action'], effect: 'turn', reason: 'Not yet.' }] })
+    const turning = { ...built, actions: [...(built.actions ?? []), { id: 'rest', effects: [{ kind: 'turn' as const }] }] }
+    expect(whyNot({ ...begin(turning), kv: { storm: true } }, turning, { type: 'action', id: 'rest' })).toBe('Not yet.')
+    expect(whyNot({ ...begin(turning), kv: { storm: true } }, turning, { type: 'action', id: 'read' })).toBeUndefined()
   })
 })
 

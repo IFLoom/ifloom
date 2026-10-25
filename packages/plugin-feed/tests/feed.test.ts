@@ -20,7 +20,7 @@ function game(): Game {
   const pack: Content = {
     name: 'town',
     stats: [{ id: 'fans', label: 'Fans' }],
-    activities: [
+    actions: [
       { id: 'wait', effects: [pass(1)] },
       { id: 'postSunset', effects: [postTo('social', 'sunset', { text: 'own.sunset', image: 'art/sunset.jpg' }), { 'game/roll': true }] },
       { id: 'cheer', effects: [react('ava.cake', { likes: 2, from: 'Sam', text: 'comment.yum' })] },
@@ -54,7 +54,7 @@ const shown = (state: GameState, g: Game) => view(state, g).plugins.feed as Feed
 describe('feeds', () => {
   it('show other people’s posts once they appear, counted until the player looks', () => {
     const g = game()
-    let state = apply(begin(g), g, { type: 'activity', id: 'wait' }).state
+    let state = apply(begin(g), g, { type: 'action', id: 'wait' }).state
     expect(shown(state, g).feeds.map((entry) => [entry.id, entry.posts.map((post) => post.text), entry.unread])).toEqual([
       ['social', ['Baked a cake!'], 1],
       ['board', ['Village fete on Saturday.'], 1],
@@ -65,8 +65,8 @@ describe('feeds', () => {
 
   it('take the player’s own posts, newest first, with the reactions they get', () => {
     const g = game()
-    let state = apply(begin(g), g, { type: 'activity', id: 'wait' }).state
-    state = apply(state, g, { type: 'activity', id: 'postSunset' }).state
+    let state = apply(begin(g), g, { type: 'action', id: 'wait' }).state
+    state = apply(state, g, { type: 'action', id: 'postSunset' }).state
     const social = shown(state, g).feeds[0]
     expect(social.posts[0]).toMatchObject({
       id: 'sunset',
@@ -83,8 +83,8 @@ describe('feeds', () => {
 
   it('add reactions to other people’s posts', () => {
     const g = game()
-    let state = apply(begin(g), g, { type: 'activity', id: 'wait' }).state
-    state = apply(state, g, { type: 'activity', id: 'cheer' }).state
+    let state = apply(begin(g), g, { type: 'action', id: 'wait' }).state
+    state = apply(state, g, { type: 'action', id: 'cheer' }).state
     expect(shown(state, g).feeds[0].posts[0]).toMatchObject({ likes: 5, comments: [{ from: 'Sam', name: 'Sam', text: 'Save me a slice' }] })
   })
 })
@@ -93,7 +93,7 @@ describe('video on a post', () => {
   it('sits beside the picture, on other people’s posts and the player’s own', () => {
     const pack: Content = {
       name: 'town',
-      activities: [
+      actions: [
         { id: 'wait', effects: [pass(1)] },
         { id: 'film', effects: [postTo('social', 'pond', { text: 'own.pond', video: 'clips/pond.mp4' })] },
       ],
@@ -116,8 +116,8 @@ describe('video on a post', () => {
     }
     const { game: g, problems } = loadGame([{ name: 'base', data: feeds }, pack], { id: 'feeds', title: 'Feeds', plugins: [clock, plugin] })
     expect(problems).toEqual([])
-    let state = apply(begin(g), g, { type: 'activity', id: 'wait' }).state
-    state = apply(state, g, { type: 'activity', id: 'film' }).state
+    let state = apply(begin(g), g, { type: 'action', id: 'wait' }).state
+    state = apply(state, g, { type: 'action', id: 'film' }).state
     const [social, board] = shown(state, g).feeds
     expect(social.posts[0]).toMatchObject({ id: 'pond', image: null, video: 'clips/pond.mp4', beats: [{ kind: 'text', text: 'Ducks.' }] })
     expect(board.posts[0]).toMatchObject({ id: 'fete', image: 'art/fete.jpg', video: 'art/fete.webm' })

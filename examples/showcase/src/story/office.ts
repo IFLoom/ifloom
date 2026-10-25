@@ -1,13 +1,12 @@
 /** The office: shifts on weekdays, in the day. */
 import type { Content } from '@ifloom/engine'
 import { pass, period, weekday } from '@ifloom/plugin-calendar'
-import { at, onlyAt } from '@ifloom/plugin-places'
+import { at } from '@ifloom/plugin-places'
 import { place } from '../place.ts'
 
 export const office: Content = {
   // No phone at work.
   locks: [{ id: 'no-phone', when: at('office'), deny: ['devices/*'], reason: 'Not at work.' }],
-  activities: [{ id: 'work', cost: { stats: { energy: 30 } }, blocked: [onlyAt(['office'])], effects: [pass(2), { kind: 'stat', stat: 'coins', by: 20 }] }],
   data: {
     places: {
       locations: [
@@ -19,7 +18,7 @@ export const office: Content = {
             { when: { all: [weekday(4), { not: period('morning', 'afternoon') }] }, reason: 'Closed. Back on Monday.' },
             { when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' },
           ],
-          actions: [{ id: 'work', label: 'Do a shift', command: { type: 'activity', id: 'work' } }],
+          actions: [{ id: 'work', label: 'Do a shift', cost: { stats: { energy: 30 } }, effects: [pass(2), { kind: 'stat', stat: 'coins', by: 20 }] }],
         },
       ],
     },

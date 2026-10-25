@@ -74,7 +74,7 @@ describe('one kv vocabulary, with whose store in `of`', () => {
   it('reports a storyline, a kind or a minigame key that isn’t there', () => {
     const game = {
       ...town(),
-      activities: [
+      actions: [
         {
           id: 'x',
           effects: [

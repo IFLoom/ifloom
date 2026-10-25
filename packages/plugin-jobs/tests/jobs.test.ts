@@ -52,7 +52,7 @@ function game(...partners: Plugin[]): Game {
       { id: 'energy', label: 'Energy', start: 100, spendable: true, lacking: 'Too tired.' },
       { id: 'manner', label: 'Manner', start: 5 },
     ],
-    activities: [
+    actions: [
       { id: 'meet', effects: [{ kind: 'kv', key: 'metAva', to: true }] },
       { id: 'sleep', effects: [{ kind: 'turn' }] },
       { id: 'rest', effects: [{ kind: 'stat', stat: 'energy', to: 100 }] },
@@ -81,7 +81,7 @@ function run(state: GameState, g: Game, ...commands: CommandRef[]): GameState {
   return state
 }
 
-const act = (id: string): Command => ({ type: 'activity', id })
+const act = (id: string): Command => ({ type: 'action', id })
 const fresh = (g: Game) => ({ ...startingState(g), sceneId: null })
 const board = (state: GameState, g: Game) => (view(state, g).plugins.jobs as JobsView).jobs[0]
 
@@ -268,8 +268,8 @@ describe('the jobs panel', () => {
     expect(openJobs()).toEqual({ kind: 'panel', panel: 'jobs' })
     expect(openJobs(['cafe'])).toEqual({ kind: 'panel', panel: 'jobs', with: { job: ['cafe'] } })
     const base = game()
-    const g = { ...base, activities: [...(base.activities ?? []), { id: 'paper', effects: [openJobs(['cafe'])] }] }
-    const open = run(fresh(g), g, act('meet'), { type: 'activity', id: 'paper' })
+    const g = { ...base, actions: [...(base.actions ?? []), { id: 'paper', effects: [openJobs(['cafe'])] }] }
+    const open = run(fresh(g), g, act('meet'), { type: 'action', id: 'paper' })
     expect(view(open, g).panel).toEqual({ panel: 'jobs', with: { job: ['cafe'] } })
     expect(run(open, g, applyFor('cafe')).panel).toEqual(open.panel)
   })
@@ -280,7 +280,7 @@ describe('the jobs panel', () => {
         {
           name: 'town',
           data: { jobs: { jobs: [{ ...cafe, blocked: [], shift: {}, fire: undefined, ranks: [{ id: 'help', title: 'Help' }] }] } },
-          activities: [
+          actions: [
             { id: 'a', effects: [openJobs(['cafe'])] },
             { id: 'b', effects: [openJobs(['cafe', 'circus'])] },
             { id: 'c', effects: [{ kind: 'panel', panel: 'jobs', with: { job: 'cafe' } }] },
@@ -291,8 +291,8 @@ describe('the jobs panel', () => {
       { id: 'g', title: 'g', plugins: [jobs()] },
     )
     expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
-      'activity b: unknown job "circus"',
-      "activity c: the jobs panel's job is a list of job ids",
+      'action b: unknown job "circus"',
+      "action c: the jobs panel's job is a list of job ids",
     ])
   })
 })

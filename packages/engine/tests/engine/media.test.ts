@@ -85,7 +85,7 @@ function town(scenes: (Scene | DataScene)[], extra: Partial<Content> = {}) {
       'flat#tea': 'Make tea',
       'doorstep#leave': 'Leave',
     },
-    activities: [{ id: 'nap' }, { id: 'jog', blocked: [{ when: { not: { kv: 'rested' } }, reason: 'Too tired.' }] }],
+    actions: [{ id: 'nap' }, { id: 'jog', blocked: [{ when: { not: { kv: 'rested' } }, reason: 'Too tired.' }] }],
     scenes,
     ...extra,
   }
@@ -189,10 +189,10 @@ describe('pools', () => {
   })
 
   it('are recorded after a command, under pool, tags, owner and slot, and the view then reads them', () => {
-    const g = game([doorstep], { activities: [{ id: 'knock', effects: [{ kind: 'scene', scene: 'doorstep' }] }] })
+    const g = game([doorstep], { actions: [{ id: 'knock', effects: [{ kind: 'scene', scene: 'doorstep' }] }] })
     const before = startingState(g, { seed: 7 })
     expect(before.media).toEqual({ picks: {} })
-    const after = apply(before, g, { type: 'activity', id: 'knock' }).state
+    const after = apply(before, g, { type: 'action', id: 'knock' }).state
     expect(Object.keys(after.media.picks).sort()).toEqual(['door|blue,red|doorstep|1', 'door|red,night|doorstep|0.0', 'window||doorstep|2'])
     expect(after.media.picks['door|red,night|doorstep|0.0']).toBe('door/red-night.jpg')
     expect(pickKey({ pool: 'door', tags: ['blue', 'red'], owner: 'doorstep', slot: '1' })).toBe('door|blue,red|doorstep|1')
@@ -201,8 +201,8 @@ describe('pools', () => {
   })
 
   it('stay the same across a reload, even once the pool has more files', () => {
-    const g = game([doorstep], { activities: [{ id: 'knock', effects: [{ kind: 'scene', scene: 'doorstep' }] }] })
-    const after = apply(startingState(g, { seed: 7 }), g, { type: 'activity', id: 'knock' }).state
+    const g = game([doorstep], { actions: [{ id: 'knock', effects: [{ kind: 'scene', scene: 'doorstep' }] }] })
+    const after = apply(startingState(g, { seed: 7 }), g, { type: 'action', id: 'knock' }).state
     const shown = view(after, g).scene.beats[3]
     const loaded = unwrap(loadState(JSON.parse(JSON.stringify(after)), g))
     const more: Game = { ...g, media: { pools: { ...pools, door: [{ src: 'door/blue-dusk.jpg', tags: ['blue', 'red'] }, ...pools.door] } } }
@@ -213,12 +213,12 @@ describe('pools', () => {
   })
 
   it('replay exactly', () => {
-    const g = game([doorstep], { activities: [{ id: 'knock', effects: [{ kind: 'scene', scene: 'doorstep' }] }] })
+    const g = game([doorstep], { actions: [{ id: 'knock', effects: [{ kind: 'scene', scene: 'doorstep' }] }] })
     const start = startingState(g, { seed: 3 })
     const commands: Command[] = [
-      { type: 'activity', id: 'knock' },
+      { type: 'action', id: 'knock' },
       { type: 'choose', id: 'leave' },
-      { type: 'activity', id: 'knock' },
+      { type: 'action', id: 'knock' },
     ]
     let state = start
     for (const command of commands) state = apply(state, g, command).state
@@ -257,8 +257,8 @@ describe('the stage', () => {
         { id: 'door', rect: [80, 20, 20, 80], label: 'The front door', choice: 'leave' },
         { id: 'kettle', rect: [10, 50, 10, 15], label: 'The kettle', choice: 'tea' },
         { id: 'phone', rect: [40, 60, 10, 10], label: 'The phone', choice: 'phone', layer: 'phone' },
-        { id: 'jog', rect: [0, 0, 10, 10], label: 'Go for a jog', command: { type: 'activity', id: 'jog' } },
-        { id: 'nap', rect: [0, 90, 10, 10], label: 'Nap', command: { type: 'activity', id: 'nap' }, when: { kv: 'tired' } },
+        { id: 'jog', rect: [0, 0, 10, 10], label: 'Go for a jog', command: { type: 'action', id: 'jog' } },
+        { id: 'nap', rect: [0, 90, 10, 10], label: 'Nap', command: { type: 'action', id: 'nap' }, when: { kv: 'tired' } },
       ],
     },
     body: [{ text: 'flat.wake' }],
@@ -278,7 +278,7 @@ describe('the stage', () => {
         // A choice hotspot is the choice: its command, and why it can't be taken.
         { id: 'door', rect: [80, 20, 20, 80], label: 'The front door', command: { type: 'choose', id: 'leave' }, disabled: 'Get dressed first.' },
         // A command hotspot is worked out as an action's button is. Inside a scene, that is "finish first".
-        { id: 'jog', rect: [0, 0, 10, 10], label: 'Go for a jog', command: { type: 'activity', id: 'jog' }, disabled: 'Finish this first.' },
+        { id: 'jog', rect: [0, 0, 10, 10], label: 'Go for a jog', command: { type: 'action', id: 'jog' }, disabled: 'Finish this first.' },
       ],
     })
   })
@@ -363,10 +363,10 @@ describe('media checks', () => {
             { src: 'flat/mug', once: true },
           ],
           hotspots: [
-            { id: 'door', rect: [80, 20, 30, 80], label: 'Door', choice: 'leave', command: { type: 'activity', id: 'nap' } },
+            { id: 'door', rect: [80, 20, 30, 80], label: 'Door', choice: 'leave', command: { type: 'action', id: 'nap' } },
             { id: 'door', rect: [0, 0, 10, 10], label: 'Door again', choice: 'sing' },
             { id: 'rug', rect: [0, 0, 10, 10], label: 'Rug' },
-            { id: 'cat', rect: [-5, 0, 10, 10], label: 'Cat', command: { type: 'activity', id: 'stroke' }, layer: 'cat', when: { kv: 'cat' } },
+            { id: 'cat', rect: [-5, 0, 10, 10], label: 'Cat', command: { type: 'action', id: 'stroke' }, layer: 'cat', when: { kv: 'cat' } },
           ],
         },
         body: [],
@@ -384,7 +384,7 @@ describe('media checks', () => {
       'scene flat: hotspot rug: needs exactly one of command and choice',
       'scene flat: hotspot cat: unknown layer "cat"',
       'scene flat: hotspot cat: rect is outside 0 to 100',
-      'scene flat: hotspot cat: unknown activity "stroke"',
+      'scene flat: hotspot cat: unknown action "stroke"',
     ])
   })
 

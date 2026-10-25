@@ -23,7 +23,7 @@ export function oldSavesGame(extra: Partial<Game> = {}): Game {
     title: 'Old saves',
     introScene: 'start',
     kv: { phase: 'open' },
-    activities: [{ id: 'wait' }],
+    actions: [{ id: 'wait' }],
     stats: [
       { id: 'coins', label: 'Coins', start: 3 },
       { id: 'patience', label: 'Patience', start: 7 },

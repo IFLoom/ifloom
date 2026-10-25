@@ -3,6 +3,7 @@ import type { Condition } from './condition.ts'
 import type { CustomCondition, CustomContext, CustomEffect, CustomValue, EffectRef, TurnContext } from './custom.ts'
 import type { CommandRef } from './calls.ts'
 import type { MediaStage } from './features/media.ts'
+import type { ActionCost } from './features/actions.ts'
 import type { ScenePanel } from './features/panels.ts'
 import type { StoryletFields } from './features/scenes.ts'
 import type { MinigameSceneFields } from './features/minigames.ts'
@@ -19,7 +20,7 @@ export type { MinigameSceneFields } from './features/minigames.ts'
 
 /**
  * Why something the player could do is refused for now: a choice, an action,
- * an activity, a place, an app. Each entry is checked in order, and the first
+ * a place, an app. Each entry is checked in order, and the first
  * whose `when` holds refuses it with its `reason`, which the button shows
  * greyed out. With `hide`, the button is left off the screen instead.
  */
@@ -32,20 +33,45 @@ export type Blocked = {
   hide?: boolean
 }
 
-/** Something to do, as a button: a command, and when it is offered. The game's own, a plugin's, a place's. */
+/**
+ * Something the player can do, as a button: the game's own in content's
+ * `actions`, a plugin's (a place's, an app's). It has the fields a choice has:
+ * what it costs, why it is refused, what it does, and a command it sends.
+ *
+ * Pressing one with only a `command` sends that command. One with a cost,
+ * effects or `once` sends `{ type: 'action', id }`, which runs its command
+ * first, then pays its cost and applies its effects: the game's by its id,
+ * a plugin's as `'<plugin>/<id>'`.
+ */
 export type ActionDef = {
   id: string
-  label: string
-  /** What it sends: a command, or a plugin's in short (`{ 'places/go': { id: 'cafe' } }`). */
-  command: CommandRef
-  /** Only offered while this holds. */
+  /**
+   * The button's words. An action with none is never drawn as a button: a
+   * choice's command, another button or a hotspot runs it with
+   * `{ type: 'action', id }`.
+   */
+  label?: string
+  /** Only offered, and only done, while this holds. */
   when?: Condition
   /**
    * Shown but greyed out while one of these holds, with its reason (or left
-   * off with `hide`). For a reason the engine already knows, such as a lock
-   * or an activity's own `blocked`, let `whyNot` say it instead.
+   * off with `hide`), and refused with it.
    */
   blocked?: Blocked[]
+  /** Stats it spends, checked before it runs and listed on its button. */
+  cost?: ActionCost
+  /** Applied after the cost, in order. A plugin's or the game's own in short for one that is computed. */
+  effects?: EffectRef[]
+  /**
+   * A command it sends, run first: a plugin's in short (`{ 'places/go': { id: 'cafe' } }`)
+   * or the engine's. Any command but `choose`.
+   */
+  command?: CommandRef
+  /**
+   * Once a turn: refused, with `reason` on its button, once it has been done
+   * this turn. It is counted in `state.chosen` under its id.
+   */
+  once?: { per: 'turn'; reason: string }
   /** Presentation hints for the UI, carried to the button as written. See `ChoiceUi`. */
   ui?: Ui<ChoiceUi>
 }
@@ -235,6 +261,8 @@ export type GameRules = {
   stage?: (state: GameState, context: RulesContext) => StageDef | undefined
   /** Buttons offered while no scene is open, before the plugins'. As a plugin's `buttons`. */
   buttons?: (state: GameState, context: RulesContext) => readonly ActionDef[] | undefined
+  /** One of the game's actions that isn't in content, by id: `{ type: 'action', id: 'game/<id>' }` does it. As a plugin's `action`. */
+  action?: (state: GameState, id: string, context: RulesContext) => ActionDef | undefined
   /** Changes to what the player's stats read right now. As a plugin's `statModifiers`. */
   statModifiers?: (state: GameState, context: RulesContext) => readonly StatModifier[] | undefined
   /** What plays on background channels, before the plugins'. As a plugin's `audio`. */

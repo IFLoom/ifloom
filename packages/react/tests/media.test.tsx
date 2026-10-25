@@ -24,7 +24,7 @@ function flat(extra: Partial<Content> = {}): Game {
       { name: 'base', introScene: 'evening' },
       {
         name: 'flat',
-        activities: [{ id: 'taxi' }],
+        actions: [{ id: 'taxi' }],
         scenes: [
           {
             id: 'evening',
@@ -37,7 +37,7 @@ function flat(extra: Partial<Content> = {}): Game {
               ],
               hotspots: [
                 { id: 'phone', rect: [10, 60, 20, 15], label: 'The phone on the desk', choice: 'call' },
-                { id: 'door', rect: [70, 10, 20, 80], label: 'The front door', command: { type: 'activity', id: 'taxi' } },
+                { id: 'door', rect: [70, 10, 20, 80], label: 'The front door', command: { type: 'action', id: 'taxi' } },
               ],
             },
             body: [{ text: 'evening' }],

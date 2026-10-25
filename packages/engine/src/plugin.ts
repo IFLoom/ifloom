@@ -222,6 +222,13 @@ export type Plugin<S = any, V = unknown> = {
    */
   buttons?: (state: GameState, context: PluginContext<S>) => readonly ActionDef[] | undefined
   /**
+   * One of this plugin's actions that isn't among its buttons now, by id
+   * without the prefix: an app's, say. `{ type: 'action', id: '<plugin>/<id>' }`
+   * does it, as for a button with a cost or effects, which is looked up
+   * among the buttons when this has none. Undefined when there is none.
+   */
+  action?: (state: GameState, id: string, context: PluginContext<S>) => ActionDef | undefined
+  /**
    * Who a scene's `speaker` id is, for the screen: a name and a face. The first
    * plugin that answers is believed; with none, a scene has no speaker shown.
    */
@@ -645,9 +652,11 @@ export function pluginSpeaker(game: Game, state: GameState, id: string): Speaker
   return undefined
 }
 
-/** Every plugin's buttons, in plugin order. */
-export function pluginButtons(game: Game, state: GameState): ActionDef[] {
-  return pluginsOf(game).flatMap((plugin) => [...(plugin.buttons?.(state, pluginContext(plugin, state, game)) ?? [])])
+/** Every plugin's buttons, in plugin order, with the id of the plugin that offers each. */
+export function pluginButtons(game: Game, state: GameState): { action: ActionDef; owner: string }[] {
+  return pluginsOf(game).flatMap((plugin) =>
+    (plugin.buttons?.(state, pluginContext(plugin, state, game)) ?? []).map((action) => ({ action, owner: plugin.id })),
+  )
 }
 
 /** What a plugin says is wrong with how content calls it, by full name; nothing for a name with no plugin behind it. */

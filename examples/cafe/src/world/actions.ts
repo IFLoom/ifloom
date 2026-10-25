@@ -1,17 +1,11 @@
-/** What the café can do in a week: end it, feed the staff, improve the soup, hire. The buttons run the activities. */
+/** What the café can do in a week: end it, feed the staff, improve the soup, hire. Each is a button the café always has. */
 import type { Content } from '@ifloom/engine'
 
-export const activities: Content = {
-  // The buttons the café always has.
+export const actions: Content = {
   actions: [
-    { id: 'end-week', label: 'Count the till and end the week', command: { type: 'activity', id: 'endWeek' } },
-    { id: 'lunch', label: 'Buy the staff lunch', command: { type: 'activity', id: 'staffLunch' } },
-    { id: 'soup', label: 'Better ingredients for the soup', command: { type: 'activity', id: 'improveSoup' } },
-    { id: 'hire', label: 'Put a card in the window', command: { type: 'activity', id: 'interview' } },
-  ],
-  activities: [
     {
-      id: 'endWeek',
+      id: 'end-week',
+      label: 'Count the till and end the week',
       effects: [
         { 'game/takings': true },
         { 'game/wages': true },
@@ -23,19 +17,22 @@ export const activities: Content = {
       ],
     },
     {
-      id: 'staffLunch',
+      id: 'lunch',
+      label: 'Buy the staff lunch',
       cost: { stats: { coins: 25 } },
       blocked: [{ when: { not: { count: 'staff' } }, reason: 'There is nobody to feed.' }],
       effects: [{ kind: 'each', of: 'staff', effects: [{ kind: 'stat', stat: 'morale', by: 15, of: '$' }] }],
     },
     {
-      id: 'improveSoup',
+      id: 'soup',
+      label: 'Better ingredients for the soup',
       cost: { stats: { coins: 40 } },
       blocked: [{ when: { stat: 'quality', of: 'dish:soup', gte: 5 }, reason: 'It could not be better.' }],
       effects: [{ kind: 'stat', stat: 'quality', by: 1, of: 'dish:soup' }],
     },
     {
-      id: 'interview',
+      id: 'hire',
+      label: 'Put a card in the window',
       blocked: [{ when: { count: 'staff', gte: 4 }, reason: 'There is no room behind the counter.' }],
       effects: [{ kind: 'scene', scene: 'hiring' }],
     },

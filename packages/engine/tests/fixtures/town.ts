@@ -1,5 +1,4 @@
-import type { ActivityDef } from '../../src/activity.ts'
-import type { Game } from '../../src/game.ts'
+import type { ActionDef, Game } from '../../src/game.ts'
 import { loadGame, type Content, type GameBase, type LoadOptions } from '../../src/loader.ts'
 import { proseStore } from '../../src/prose.ts'
 import { startingState } from '../../src/intake.ts'
@@ -14,8 +13,10 @@ import type { GameState } from '../../src/types.ts'
  * one, is the kv key `at`, moved by the `go-*` activities.
  */
 
-export const activities: ActivityDef[] = [
-  { id: 'wait' },
+/** What there is to do in the town. Only waiting is a button; the rest are done by their commands. */
+export const activities: ActionDef[] = [
+  // Offered while no scene is open.
+  { id: 'wait', label: 'Wait a while' },
   // The turn ends, as a night's sleep or the end of a week would end it.
   { id: 'rest', effects: [{ kind: 'turn' }] },
   { id: 'tidy', blocked: [{ when: { not: { kv: 'at', is: 'house' } }, reason: 'Not here.' }] },
@@ -37,7 +38,7 @@ export function fixture({ locks, resets, ...rules }: Game['rules'] & Pick<Game, 
     title: 'Fixture',
     introScene: 'start',
     kv: { phase: 'open' },
-    activities,
+    actions: activities,
     stats: [
       { id: 'intelligence', label: 'Intelligence', start: 5, levels: { at: [10, 20], hidden: true } },
       { id: 'coins', label: 'Coins', start: 3, max: 999, format: '{n}c' },
@@ -52,8 +53,6 @@ export function fixture({ locks, resets, ...rules }: Game['rules'] & Pick<Game, 
       },
     ],
     storylines: [{ id: 'rosa', name: 'Rosa' }],
-    // Offered while no scene is open.
-    actions: [{ id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } }],
     rules,
   }
   game.prose = proseStore(game, townProse)

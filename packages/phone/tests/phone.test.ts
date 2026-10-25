@@ -28,13 +28,13 @@ const kit = phone({
       id: 'camera',
       name: 'Camera',
       icon: 'camera',
-      sections: [{ actions: [{ id: 'photo', label: 'Take a photo', command: { type: 'activity', id: 'photo' } }] }],
+      sections: [{ actions: [{ id: 'photo', label: 'Take a photo', command: { type: 'action', id: 'photo' } }] }],
     },
     {
       id: 'studio',
       name: 'Fans · post',
       icon: 'star',
-      sections: [{ prose: [{ text: 'studio.stats' }] }, { actions: [{ id: 'post', label: 'Post a photo', command: { type: 'activity', id: 'post' } }] }],
+      sections: [{ prose: [{ text: 'studio.stats' }] }, { actions: [{ id: 'post', label: 'Post a photo', command: { type: 'action', id: 'post' } }] }],
     },
   ],
 })
@@ -50,7 +50,7 @@ const town: Content = {
     { id: 'ava.hi', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ kind: 'scene', scene: null }] }] },
     { id: 'ava.call', body: [{ text: 'ava.call' }], choices: [{ id: 'bye', effects: [{ kind: 'scene', scene: null }] }] },
   ],
-  activities: [
+  actions: [
     {
       id: 'photo',
       blocked: [{ when: { not: here('ava') }, reason: 'Nobody to take a picture of.' }],
@@ -184,7 +184,7 @@ describe('a smartphone on the sidebar', () => {
       kind: 'actions',
       actions: [{ label: 'Take a photo', disabled: 'Nobody to take a picture of.' }],
     })
-    state = run(state, g, closeApp('phone'), go('cafe'), openApp('camera'), { type: 'activity', id: 'photo' }, openApp('gallery'))
+    state = run(state, g, closeApp('phone'), go('cafe'), openApp('camera'), { type: 'action', id: 'photo' }, openApp('gallery'))
     expect(phoneOf(state, g).open?.sections[0]).toMatchObject({
       kind: 'list',
       entries: [{ id: 'photo:ava.cafe', title: 'Ava at the café', image: 'art/ava-cafe.jpg' }],
@@ -193,10 +193,10 @@ describe('a smartphone on the sidebar', () => {
 
   it('posts to the creator app once a day, at a price, and the post does what the game rolls', () => {
     const g = game()
-    let state = run(begin(g), g, go('cafe'), { type: 'activity', id: 'photo' }, openApp('studio'))
+    let state = run(begin(g), g, go('cafe'), { type: 'action', id: 'photo' }, openApp('studio'))
     const post = () => phoneOf(state, g).open?.sections[1]
     expect(post()).toMatchObject({ kind: 'actions', actions: [{ label: 'Post a photo', disabled: undefined }] })
-    state = run(state, g, { type: 'activity', id: 'post' })
+    state = run(state, g, { type: 'action', id: 'post' })
     expect(state.stats).toMatchObject({ energy: 40, subscribers: 5 })
     expect(phoneOf(state, g).open?.sections[0]).toEqual({ kind: 'prose', text: '5 subscribers' })
     expect(post()).toMatchObject({ actions: [{ disabled: 'You have posted today.' }] })

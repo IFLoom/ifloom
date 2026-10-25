@@ -60,7 +60,7 @@ describe('the first and last time', () => {
       expect(opened.ok).toBe(true)
       return apply(opened.state, game, { type: 'choose', id: 'bye' }).state
     }
-    const rest = (state: GameState) => apply(state, game, { type: 'activity', id: 'rest' }).state
+    const rest = (state: GameState) => apply(state, game, { type: 'action', id: 'rest' }).state
     // Turn 2: first visit. Turn 5: the second. Then turn 6.
     let state = visit(begin(game))
     state = visit(rest(rest(rest(state))))

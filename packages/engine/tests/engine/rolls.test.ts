@@ -15,7 +15,7 @@ import { activities, begin, fixture } from '../fixtures/town.ts'
 function withDice(extra: Effect[] = []): Game {
   return {
     ...fixture(),
-    activities: [
+    actions: [
       ...activities,
       { id: 'skim', effects: [{ kind: 'roll', key: 'skim', dice: '2d6', against: 8 }] },
       {
@@ -33,7 +33,7 @@ function withDice(extra: Effect[] = []): Game {
   }
 }
 
-const act = (id: string): Command => ({ type: 'activity', id })
+const act = (id: string): Command => ({ type: 'action', id })
 
 function run(game: Game, state: GameState, ...commands: Command[]): GameState {
   return commands.reduce((next, command) => {

@@ -72,7 +72,7 @@ describe('New Game+', () => {
   })
 
   it('is checked by the loader: unknown stats and kinds, and stats that are not the player’s', () => {
-    const { scenes: _s, introScene: _in, storylines: _t, activities: _a, actions: _ac, stats, ...base } = fixture()
+    const { scenes: _s, introScene: _in, storylines: _t, actions: _a, actions: _ac, stats, ...base } = fixture()
     const problems = loadWhole(
       [
         {

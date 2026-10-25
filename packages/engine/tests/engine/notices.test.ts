@@ -8,8 +8,8 @@ import { begin, fixture } from '../fixtures/town.ts'
 function withNotices(): Game {
   return {
     ...fixture(),
-    activities: [
-      ...(fixture().activities ?? []),
+    actions: [
+      ...(fixture().actions ?? []),
       { id: 'rent', effects: [{ kind: 'notify', id: 'rent', title: 'Rent is due', tag: 'money' }] },
       { id: 'post', effects: [{ kind: 'notify', title: 'A letter came', tag: 'post' }] },
       { id: 'hum', effects: [{ kind: 'notify', title: 'Something hums' }] },
@@ -17,7 +17,7 @@ function withNotices(): Game {
   }
 }
 
-const act = (id: string) => ({ type: 'activity' as const, id })
+const act = (id: string) => ({ type: 'action' as const, id })
 
 describe('notices', () => {
   it('are shown newest first, counted by tag, until dismissed', () => {

@@ -11,7 +11,7 @@ afterEach(cleanup)
 function cafe() {
   const { game, problems } = loadGame(
     [
-      { name: 'base', actions: [{ id: 'hire', label: 'Hire someone', command: { type: 'activity', id: 'hire' } }] },
+      { name: 'base', actions: [] },
       {
         name: 'cafe',
         kinds: [{ id: 'staff', label: 'Member of staff', plural: 'Staff' }],
@@ -23,7 +23,7 @@ function cafe() {
           { id: 'ana', of: 'staff', name: 'Ana', stats: { wage: 12 } },
           { id: 'ben', of: 'staff', name: 'Ben', desc: 'New this week.', image: 'staff/ben' },
         ],
-        activities: [{ id: 'hire', effects: [{ kind: 'create', of: 'staff', entity: { name: 'Cleo', stats: { morale: 90 } } }] }],
+        actions: [{ id: 'hire', label: 'Hire someone', effects: [{ kind: 'create', of: 'staff', entity: { name: 'Cleo', stats: { morale: 90 } } }] }],
       },
     ],
     { id: 'cafe', title: 'The Café' },
@@ -46,7 +46,7 @@ describe('EntityTable', () => {
     ])
     expect(staff.querySelector('[data-entity="staff:ben"] img')?.getAttribute('src')).toBe('art/staff/ben.jpg')
     expect(staff.querySelector('[data-entity="staff:ana"] img')).toBeNull()
-    act(() => void runner.apply({ type: 'activity', id: 'hire' }))
+    act(() => void runner.apply({ type: 'action', id: 'hire' }))
     expect(rows()).toEqual([
       ['Ana', '60', '£12'],
       ['BenNew this week.', '60', '£10'],

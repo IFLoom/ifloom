@@ -219,7 +219,7 @@ describe('the cast', () => {
     const broken: Content = {
       name: 'broken',
       stats: [{ id: 'trust', label: 'Trust', of: 'character' }],
-      activities: [{ id: 'wave', blocked: [{ when: { not: here('ghost') }, reason: 'No.' }] }],
+      actions: [{ id: 'wave', blocked: [{ when: { not: here('ghost') }, reason: 'No.' }] }],
       entities: [
         person({
           id: 'mole',
@@ -237,7 +237,7 @@ describe('the cast', () => {
     }
     const { problems } = loadGame([broken], { id: 'b', title: 'B', plugins: [places(), cast()] })
     expect(problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
-      'activity wave: unknown entity "character:ghost"',
+      'action wave: unknown entity "character:ghost"',
       'trait cast/person on character:mole: unknown location "burrow"',
       'trait cast/person on character:mole: talk: opens unknown scene "mole.hi"',
       'trait cast/person on character:mole: unknown storyline "tunnels"',

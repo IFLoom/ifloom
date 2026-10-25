@@ -58,21 +58,16 @@ function town(): Game {
     [
       {
         name: 'base',
-        actions: [
-          { id: 'street', label: 'High Street', when: home, command: { type: 'activity', id: 'street' } },
-          { id: 'house', label: 'House', when: out, command: { type: 'activity', id: 'house' } },
-          { id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } },
-          { id: 'look', label: 'Check your pockets', command: { type: 'activity', id: 'look' } },
-        ],
+        actions: [],
       },
       {
         name: 'town',
         stats: [{ id: 'coins', label: 'Coins', start: 3 }],
-        activities: [
-          { id: 'wait', effects: [{ kind: 'stat', stat: 'coins', by: 1 }] },
-          { id: 'look', effects: [{ kind: 'panel', panel: 'stats' }] },
-          { id: 'street', effects: [{ kind: 'kv', key: 'out', to: true }] },
-          { id: 'house', effects: [{ kind: 'kv', key: 'out', to: false }] },
+        actions: [
+          { id: 'wait', label: 'Wait a while', effects: [{ kind: 'stat', stat: 'coins', by: 1 }] },
+          { id: 'look', label: 'Check your pockets', effects: [{ kind: 'panel', panel: 'stats' }] },
+          { id: 'street', label: 'High Street', when: home, effects: [{ kind: 'kv', key: 'out', to: true }] },
+          { id: 'house', label: 'House', when: out, effects: [{ kind: 'kv', key: 'out', to: false }] },
         ],
       },
     ],
@@ -263,11 +258,11 @@ describe('when, as the state changes', () => {
     )
     expect(section('home')).not.toBeNull()
     expect(screen.queryByText('Out and about')).toBeNull()
-    act(() => void runner.apply({ type: 'activity', id: 'street' }))
+    act(() => void runner.apply({ type: 'action', id: 'street' }))
     expect(section('home')).toBeNull()
     expect(screen.getByText('Out and about')).toBeTruthy()
     expect(document.querySelector('[data-out]')!.getAttribute('data-out')).toBe('true')
-    act(() => void runner.apply({ type: 'activity', id: 'house' }))
+    act(() => void runner.apply({ type: 'action', id: 'house' }))
     expect(section('home')).not.toBeNull()
   })
 })

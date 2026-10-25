@@ -9,10 +9,10 @@ afterEach(cleanup)
 function game(): Game {
   return loadGame(
     [
-      { name: 'base', introScene: 'intro', actions: [{ id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } }] },
+      { name: 'base', introScene: 'intro', actions: [] },
       {
         name: 'town',
-        activities: [{ id: 'wait', effects: [{ kind: 'kv', key: 'waited', by: 1 }] }],
+        actions: [{ id: 'wait', label: 'Wait a while', effects: [{ kind: 'kv', key: 'waited', by: 1 }] }],
         scenes: [{ id: 'intro', title: 'Hello', body: [{ text: 'intro' }], choices: [{ id: 'go', effects: [{ kind: 'scene', scene: null }] }] }],
         inputs: [
           { id: 'catName', label: 'Name the cat', kind: 'text', maxLength: 8 },

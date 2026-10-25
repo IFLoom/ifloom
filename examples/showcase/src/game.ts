@@ -27,7 +27,8 @@ import { stats } from './world/stats.ts'
 import { things } from './world/things.ts'
 import { cast as castContent } from './world/cast.ts'
 import { settings } from './world/settings.ts'
-import { activities } from './world/activities.ts'
+import { actions } from './world/actions.ts'
+import { camera, notes } from './world/phone.ts'
 import { achievements as achievementsContent } from './world/achievements.ts'
 import { cheats as cheatsContent } from './world/cheats.ts'
 import { strings } from './world/strings.ts'
@@ -51,7 +52,7 @@ export const content: Content[] = [
   things,
   castContent,
   settings,
-  activities,
+  actions,
   achievementsContent,
   cheatsContent,
   movingDay,
@@ -68,26 +69,7 @@ export const content: Content[] = [
 export const clock = calendar({ start: { day: 0, period: 'night' } })
 
 /** The phone: texts and a social feed, plus the game's own camera, with buttons for each photo. */
-export const kit = phone({
-  sidebar: true,
-  apps: [
-    {
-      id: 'camera',
-      name: 'Camera',
-      icon: 'camera',
-      sections: [
-        {
-          actions: [
-            { id: 'photo-ava', label: 'Photograph Ava', command: { type: 'activity', id: 'photo-ava' } },
-            { id: 'photo-sam', label: 'Photograph Sam', command: { type: 'activity', id: 'photo-sam' } },
-            { id: 'post', label: 'Post your latest photo', command: { type: 'activity', id: 'post' } },
-          ],
-        },
-      ],
-    },
-    { id: 'notes', name: 'Notes', icon: 'notes', sections: [{ things: { of: 'note' } }] },
-  ],
-})
+export const kit = phone({ sidebar: true, apps: [camera, notes] })
 
 /**
  * Build the game. `withDebug` adds the debugger; leave it off in a release

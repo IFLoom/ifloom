@@ -11,7 +11,7 @@ function game(): Game {
     id: 'g',
     title: 'G',
     introScene: 'intro',
-    activities: [],
+    actions: [],
     data: {
       places: {
         locations: [

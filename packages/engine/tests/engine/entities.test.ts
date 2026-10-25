@@ -165,7 +165,7 @@ describe('entities', () => {
       [
         {
           ...cafe,
-          activities: [
+          actions: [
             { id: 'adopt', effects: [{ kind: 'create', of: 'cat', entity: { name: 'Biscuit' } }] },
             {
               id: 'payAna',
@@ -194,12 +194,12 @@ describe('entities', () => {
     )
     expect(problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
       'scene yard: unknown kind "pig"',
-      'activity adopt: unknown kind "cat"',
-      'activity payAna: stat "coins" is the player\'s, not staff:ana\'s',
-      'activity payAna: stat "morale" belongs to staff: say whose with "of"',
-      'activity week: in each staff: stat "quality" belongs to dish, not staff',
-      'activity week: in each staff: stat "quality" belongs to dish, not staff',
-      'activity week: in each staff: no custom effect named "game/nope"',
+      'action adopt: unknown kind "cat"',
+      'action payAna: stat "coins" is the player\'s, not staff:ana\'s',
+      'action payAna: stat "morale" belongs to staff: say whose with "of"',
+      'action week: in each staff: stat "quality" belongs to dish, not staff',
+      'action week: in each staff: stat "quality" belongs to dish, not staff',
+      'action week: in each staff: no custom effect named "game/nope"',
     ])
   })
 

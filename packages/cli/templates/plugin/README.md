@@ -15,7 +15,7 @@ import { loadGame, type Content } from '@ifloom/engine'
 import { __camel__, mark__Pascal__ } from '{{name}}'
 
 const town: Content = {
-  activities: [{ id: 'shop', effects: [mark__Pascal__('bread')] }],
+  actions: [{ id: 'shop', label: 'Buy bread', effects: [mark__Pascal__('bread')] }],
   data: { '__id__': { entries: [{ id: 'bread', label: 'A loaf of bread' }] } },
 }
 

@@ -19,12 +19,12 @@ describe('stats', () => {
   it('holds a change to the stat’s own range', () => {
     const game = fixture()
     const state = begin(game, { stats: { intelligence: 99, coins: 998, luck: 0 } })
-    const read = apply(state, game, { type: 'activity', id: 'read' }).state
+    const read = apply(state, game, { type: 'action', id: 'read' }).state
     expect(read.stats.intelligence).toBe(100)
     const rich = apply(
       begin(game, { stats: { intelligence: 5, coins: 998, luck: 0 } }),
-      { ...game, activities: [{ id: 'find', effects: [{ kind: 'stat', stat: 'coins', by: 5 }] }] },
-      { type: 'activity', id: 'find' },
+      { ...game, actions: [{ id: 'find', effects: [{ kind: 'stat', stat: 'coins', by: 5 }] }] },
+      { type: 'action', id: 'find' },
     ).state
     expect(rich.stats.coins).toBe(999)
   })
@@ -61,9 +61,9 @@ describe('stats', () => {
   it('reports an effect on a stat the game never declared', () => {
     const game = {
       ...fixture(),
-      activities: [{ id: 'train', effects: [{ kind: 'stat' as const, stat: 'strength', by: 1 }] }],
+      actions: [{ id: 'train', effects: [{ kind: 'stat' as const, stat: 'strength', by: 1 }] }],
     }
-    expect(problemsOf(game)).toContain('activity train: unknown stat "strength"')
+    expect(problemsOf(game)).toContain('action train: unknown stat "strength"')
   })
 })
 
@@ -75,7 +75,7 @@ describe('spending stats', () => {
       { id: 'puff', label: 'Puff', start: 5, max: { value: 'game/puffMax' }, spendable: true, listed: false },
       { id: 'charm', label: 'Charm', start: 1 },
     ],
-    activities: [
+    actions: [
       { id: 'cake', cost: { stats: { coins: 4, puff: 2 } } },
       { id: 'feast', cost: { stats: { coins: 40 } } },
       { id: 'run', cost: { stats: { puff: 9 } } },
@@ -84,17 +84,17 @@ describe('spending stats', () => {
 
   it('prices a button in the stats it spends, each written through its format', () => {
     const house = begin(game, { stats: { coins: 10, puff: 5, charm: 1 } })
-    const withButton: Game = { ...game, actions: [{ id: 'cake', label: 'Cake', command: { type: 'activity', id: 'cake' } }] }
+    const withButton: Game = { ...game, actions: game.actions!.map((action) => (action.id === 'cake' ? { ...action, label: 'Cake' } : action)) }
     const cake = view(house, withButton).actions.find((action) => action.id === 'cake')
     expect(cake?.price?.stats?.map((spent) => spent.text)).toEqual(['4c', '2'])
   })
 
   it('spends the cost, and refuses in the stat’s own words when it cannot be covered', () => {
     const house = begin(game, { stats: { coins: 10, puff: 5, charm: 1 } })
-    const ate = apply(house, game, { type: 'activity', id: 'cake' })
+    const ate = apply(house, game, { type: 'action', id: 'cake' })
     expect(ate.state.stats).toMatchObject({ coins: 6, puff: 3 })
-    expect(apply(house, game, { type: 'activity', id: 'feast' }).reason).toBe('Short by a few.')
-    expect(apply(house, game, { type: 'activity', id: 'run' }).reason).toBe('Not enough puff.')
+    expect(apply(house, game, { type: 'action', id: 'feast' }).reason).toBe('Short by a few.')
+    expect(apply(house, game, { type: 'action', id: 'run' }).reason).toBe('Not enough puff.')
   })
 
   it('works a moving ceiling out from a named value', () => {
@@ -116,8 +116,8 @@ describe('spending stats', () => {
   })
 
   it('can put a stat at a value, held to its range', () => {
-    const topUp: Game = { ...game, activities: [{ id: 'nap', effects: [{ kind: 'stat' as const, stat: 'coins', to: 5000 }] }] }
-    expect(apply(begin(topUp), topUp, { type: 'activity', id: 'nap' }).state.stats.coins).toBe(999)
+    const topUp: Game = { ...game, actions: [{ id: 'nap', effects: [{ kind: 'stat' as const, stat: 'coins', to: 5000 }] }] }
+    expect(apply(begin(topUp), topUp, { type: 'action', id: 'nap' }).state.stats.coins).toBe(999)
   })
 })
 
@@ -126,14 +126,14 @@ describe('checking declared stats', () => {
     const game: Game = {
       ...fixture(),
       stats: [{ id: 'puff', label: 'Puff', max: { value: 'game/neverRegistered' } }],
-      activities: [
+      actions: [
         { id: 'buy', cost: { stats: { gold: 1 } } },
         { id: 'rest', effects: [{ kind: 'stat', stat: 'sleep', to: 1 }] },
       ],
     }
     const problems = problemsOf(game)
-    expect(problems).toContain('activity buy: spends unknown stat "gold"')
-    expect(problems).toContain('activity rest: unknown stat "sleep"')
+    expect(problems).toContain('action buy: spends unknown stat "gold"')
+    expect(problems).toContain('action rest: unknown stat "sleep"')
     expect(problems).toContain('stat puff: no custom value named "game/neverRegistered"')
   })
 })

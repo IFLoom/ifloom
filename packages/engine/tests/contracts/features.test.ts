@@ -63,7 +63,7 @@ const FEATURE_FILES = Object.keys(SOURCES).filter((file) => file.startsWith(`${S
 describe('core features are leaves', () => {
   it('finds the features', () => {
     expect(FEATURE_FILES.map((file) => file.slice(SRC.length)).sort()).toEqual([
-      'features/activities.ts',
+      'features/actions.ts',
       'features/audio.ts',
       'features/entities.ts',
       'features/feature.ts',
@@ -134,7 +134,7 @@ describe('the registry', () => {
       scenes: { conditions: ['chose', 'seen', 'since', 'scene'], effects: ['scene'], commands: ['scene', 'choose', 'leave'] },
       minigames: { conditions: [], effects: ['minigame'], commands: ['minigame'] },
       timers: { conditions: ['timer'], effects: ['timer'], commands: ['tick'] },
-      activities: { conditions: [], effects: [], commands: ['activity'] },
+      actions: { conditions: [], effects: [], commands: ['action'] },
       inputs: { conditions: [], effects: [], commands: ['input'] },
       settings: { conditions: ['setting'], effects: [], commands: ['setting'] },
       stats: { conditions: ['stat', 'level'], effects: ['stat'], commands: [] },

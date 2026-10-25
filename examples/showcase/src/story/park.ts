@@ -2,7 +2,7 @@
 import type { Block, Condition, MinigameDef, MinigameStateDef, Content } from '@ifloom/engine'
 import { generate } from '@ifloom/plugin-generators'
 import { pass } from '@ifloom/plugin-calendar'
-import { at, onlyAt } from '@ifloom/plugin-places'
+import { at } from '@ifloom/plugin-places'
 import { place } from '../place.ts'
 
 /** The four arrows of quick feet, in the order the minigame's `arrow` variable numbers them from 1. */
@@ -65,19 +65,6 @@ const skimmed = (when: Condition, text: string): Block => ({ text, when: { all: 
 export const park: Content = {
   // One skimmed stone a day: each new day resets it.
   resets: { skimmed: false },
-  activities: [
-    { id: 'jog', cost: { stats: { energy: 15 } }, blocked: [onlyAt(['park'])], effects: [pass(1), { kind: 'stat', stat: 'charm', by: 1 }] },
-    { id: 'arrows', blocked: [onlyAt(['park'])], effects: [{ kind: 'minigame', minigame: 'arrows' }] },
-    // Two dice against 8: the total goes in the kv store as `skim`, and the roll is kept for `{ roll: 'skim' }`.
-    {
-      id: 'skim',
-      blocked: [onlyAt(['park'])],
-      effects: [
-        { kind: 'kv', key: 'skimmed', to: true },
-        { kind: 'roll', key: 'skim', dice: '2d6', against: 8 },
-      ],
-    },
-  ],
   scenes: [
     // How quick feet ends.
     {
@@ -123,10 +110,18 @@ export const park: Content = {
             skimmed({ roll: 'skim', passed: false }, 'park.skim.failed'),
           ],
           actions: [
-            { id: 'jog', label: 'Go for a jog', command: { type: 'activity', id: 'jog' } },
-            { id: 'arrows', label: 'Play quick feet with the kids', command: { type: 'activity', id: 'arrows' } },
+            { id: 'jog', label: 'Go for a jog', cost: { stats: { energy: 15 } }, effects: [pass(1), { kind: 'stat', stat: 'charm', by: 1 }] },
+            { id: 'arrows', label: 'Play quick feet with the kids', effects: [{ kind: 'minigame', minigame: 'arrows' }] },
+            // Two dice against 8: the total goes in the kv store as `skim`, and the roll is kept for `{ roll: 'skim' }`.
             // Drawn inline by `[[act:skim|…]]` in the stones line, so it isn't a button as well.
-            { id: 'skim', label: 'Skim a stone', command: { type: 'activity', id: 'skim' } },
+            {
+              id: 'skim',
+              label: 'Skim a stone',
+              effects: [
+                { kind: 'kv', key: 'skimmed', to: true },
+                { kind: 'roll', key: 'skim', dice: '2d6', against: 8 },
+              ],
+            },
           ],
         },
       ],

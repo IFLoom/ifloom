@@ -105,7 +105,7 @@ describe('custom functions belong to their game', () => {
     const game: Game = {
       ...fixture(),
       plugins: [tides],
-      actions: [{ id: 'wade', label: 'Wade', command: { type: 'activity', id: 'wait' }, when: { 'tides/high': ['noon'] } as never }],
+      actions: [{ id: 'wade', label: 'Wade', command: { type: 'leave' }, when: { 'tides/high': ['noon'] } as never }],
     }
     expect(problemsOf(game)).toEqual([
       'action wade: "tides/high" takes its arguments as an object, such as { "tides/high": { … } }, or true for none; this one has ["noon"]',
@@ -114,8 +114,8 @@ describe('custom functions belong to their game', () => {
   })
 
   it("reports a key content can't hold, rather than dropping it quietly", () => {
-    const { scenes: _s, storylines, activities, stats, ...rest } = fixture()
-    const { problems } = loadWhole([{ name: 'town', storylines, activities, stats, rules: {} } as never], rest)
+    const { scenes: _s, storylines, actions, stats, ...rest } = fixture()
+    const { problems } = loadWhole([{ name: 'town', storylines, actions, stats, rules: {} } as never], rest)
     expect(problems.map((problem) => `${problem.pack} · ${problem.where} · ${problem.what}`)).toContain(
       'town · content · content has no "rules", so it was left out',
     )
@@ -129,8 +129,8 @@ describe('custom functions belong to their game', () => {
 
   it('keeps the base game’s functions when content is loaded over it', () => {
     const base = { ...fixture(), rules: { conditions: { fine: () => true } } }
-    const { scenes: _s, storylines, activities, stats, ...rest } = base
-    const { game } = loadWhole([{ name: 'town', storylines, activities, stats }], rest)
+    const { scenes: _s, storylines, actions, stats, ...rest } = base
+    const { game } = loadWhole([{ name: 'town', storylines, actions, stats }], rest)
     expect(holds(begin(game), { 'game/fine': true }, game)).toBe(true)
   })
 

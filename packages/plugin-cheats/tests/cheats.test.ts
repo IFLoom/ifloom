@@ -57,7 +57,7 @@ function game(options: { pack?: Partial<Content>; plugins?: Plugin<any>[] } = {}
       { id: 'intro', body: [], choices: [] },
       { id: 'ending', body: [], choices: [] },
     ],
-    activities: [
+    actions: [
       { id: 'rest', effects: [{ kind: 'turn' }] },
       { id: 'support', effects: [{ kind: 'kv', key: 'unlock.supporter', to: true }] },
     ],
@@ -88,7 +88,7 @@ describe('cheats', () => {
   it('runs a cheat’s effects through a lock, in a scene, with no turn passing', () => {
     const g = game()
     const start = { ...startingState(g), sceneId: 'intro' }
-    expect(apply(start, g, { type: 'activity', id: 'rest' }).reason).toBe('Finish the intro.')
+    expect(apply(start, g, { type: 'action', id: 'rest' }).reason).toBe('Finish the intro.')
     const after = run(start, g, runCheat('coins'), runCheat('coins'))
     expect(after.stats.coins).toBe(45)
     expect(after.turn).toBe(start.turn)
@@ -97,7 +97,7 @@ describe('cheats', () => {
 
   it('logs each use with its turn, for content and a replay to read', () => {
     const g = game()
-    let state = run(fresh(g), g, runCheat('coins'), { type: 'activity', id: 'rest' }, runCheat('coins'))
+    let state = run(fresh(g), g, runCheat('coins'), { type: 'action', id: 'rest' }, runCheat('coins'))
     expect(cheats().read(state, g).used).toEqual([
       { cheat: 'coins', turn: 0 },
       { cheat: 'coins', turn: 1 },
@@ -142,7 +142,7 @@ describe('cheats', () => {
     const g = game()
     const runner = createRunner(g, fresh(g))
     runner.apply(runCheat('coins'))
-    runner.apply({ type: 'activity', id: 'rest' })
+    runner.apply({ type: 'action', id: 'rest' })
     runner.apply(runCheat('map'))
     runner.apply(runCheat('coins'))
     expect(replay(g, runner.log())).toEqual({ ok: true, value: runner.state })
@@ -154,9 +154,9 @@ describe('cheats', () => {
   })
 
   it('lets content react to a cheat being used', () => {
-    const g = game({ pack: { activities: [{ id: 'honest', blocked: [{ when: cheatUsed(), reason: 'You cheated.' }], effects: [] }] } })
-    expect(apply(fresh(g), g, { type: 'activity', id: 'honest' }).reason).toBeUndefined()
-    expect(apply(run(fresh(g), g, runCheat('coins')), g, { type: 'activity', id: 'honest' }).reason).toBe('You cheated.')
+    const g = game({ pack: { actions: [{ id: 'honest', blocked: [{ when: cheatUsed(), reason: 'You cheated.' }], effects: [] }] } })
+    expect(apply(fresh(g), g, { type: 'action', id: 'honest' }).reason).toBeUndefined()
+    expect(apply(run(fresh(g), g, runCheat('coins')), g, { type: 'action', id: 'honest' }).reason).toBe('You cheated.')
   })
 
   it('reports a cheat content names that the game lacks, and what a cheat names', () => {
@@ -164,7 +164,7 @@ describe('cheats', () => {
       [
         {
           name: 'town',
-          activities: [{ id: 'peek', blocked: [{ when: cheatUsed('nope'), reason: 'x' }], effects: [] }],
+          actions: [{ id: 'peek', blocked: [{ when: cheatUsed('nope'), reason: 'x' }], effects: [] }],
           data: { cheats: { cheats: [{ id: 'coins', label: '+20 coins', effects: [{ kind: 'stat', stat: 'coins', by: 20 }] }] } },
         },
       ],
@@ -200,7 +200,7 @@ describe('cheats with an unlocks plugin (a stand-in)', () => {
     expect(apply(fresh(g), g, runCheat('gold')).reason).toBe('For supporters.')
     expect(apply(fresh(g), g, runCheat('secret')).reason).toBe('For supporters.')
 
-    const unlocked = run(fresh(g), g, { type: 'activity', id: 'support' })
+    const unlocked = run(fresh(g), g, { type: 'action', id: 'support' })
     const open = shown(g, unlocked)
     expect(open.cheats.map((cheat) => cheat.id)).toEqual(['coins', 'map', 'gold', 'secret'])
     expect(open.cheats.every((cheat) => cheat.button.disabled === undefined)).toBe(true)
@@ -212,6 +212,6 @@ describe('cheats with an unlocks plugin (a stand-in)', () => {
   it('without the plugin, the condition is false, so a supporter cheat stays refused', () => {
     const g = game()
     expect(g.plugins?.some((plugin) => plugin.id === 'unlocks')).toBe(false)
-    expect(apply(run(fresh(g), g, { type: 'activity', id: 'support' }), g, runCheat('gold')).reason).toBe('For supporters.')
+    expect(apply(run(fresh(g), g, { type: 'action', id: 'support' }), g, runCheat('gold')).reason).toBe('For supporters.')
   })
 })

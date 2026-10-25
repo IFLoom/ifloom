@@ -30,7 +30,7 @@ function game(extra: Partial<Content> = {}): Game {
       { id: 'coins', label: 'Coins', start: 10, max: 999 },
       { id: 'charm', label: 'Charm', start: 2 },
     ],
-    activities: [
+    actions: [
       { id: 'earn', effects: [{ kind: 'stat', stat: 'coins', by: 30 }] },
       { id: 'bank', effects: [{ kind: 'kv', key: 'bank', to: true }] },
       { id: 'dusk', effects: [{ kind: 'kv', key: 'dusk', to: true }] },
@@ -46,7 +46,7 @@ function game(extra: Partial<Content> = {}): Game {
 
 function run(state: GameState, g: Game, ...ids: string[]): GameState {
   for (const id of ids) {
-    const out = apply(state, g, { type: 'activity', id })
+    const out = apply(state, g, { type: 'action', id })
     expect(out.reason).toBeUndefined()
     state = out.state
   }
@@ -124,9 +124,9 @@ describe('achievements', () => {
     const g = game()
     const driver = memoryDriver()
     const runner = createRunner(g, fresh(g), { profile: profile(g, driver) })
-    runner.apply({ type: 'activity', id: 'dusk' })
-    runner.apply({ type: 'activity', id: 'kindness' })
-    runner.apply({ type: 'activity', id: 'dusk' })
+    runner.apply({ type: 'action', id: 'dusk' })
+    runner.apply({ type: 'action', id: 'kindness' })
+    runner.apply({ type: 'action', id: 'dusk' })
     await runner.settled()
     expect(await runner.profile!.get('achievements')).toEqual({ earned: ['river', 'kind'] })
     // A new game has earned nothing in its save, but the runner's view shows what the profile remembers.
@@ -169,7 +169,7 @@ describe('achievements', () => {
   it('replay exactly, and an old save with no state for the plugin loads', () => {
     const g = game()
     const runner = createRunner(g, fresh(g))
-    for (const id of ['earn', 'dusk', 'bank', 'kindness']) runner.apply({ type: 'activity', id })
+    for (const id of ['earn', 'dusk', 'bank', 'kindness']) runner.apply({ type: 'action', id })
     expect(replay(g, runner.log())).toEqual({ ok: true, value: runner.state })
     const { plugins: _none, ...old } = fresh(g)
     const loadedRead = loadState(JSON.parse(JSON.stringify({ ...old, plugins: {} })), g)
@@ -184,7 +184,7 @@ describe('achievements', () => {
       [
         {
           name: 'mod',
-          activities: [{ id: 'x', effects: [grantAchievement('nope')] }],
+          actions: [{ id: 'x', effects: [grantAchievement('nope')] }],
           data: {
             achievements: {
               achievements: [
@@ -198,7 +198,7 @@ describe('achievements', () => {
       { id: 'g', title: 'g', plugins: [achievements()] },
     )
     expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
-      'activity x: unknown achievement "nope"',
+      'action x: unknown achievement "nope"',
       'achievements a: when: unknown kind "thing"',
       'achievements a: progress: unknown stat "luck"',
       'achievements b: progress: no custom value named "game/nothing"',

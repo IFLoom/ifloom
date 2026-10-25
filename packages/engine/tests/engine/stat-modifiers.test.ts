@@ -30,8 +30,8 @@ function game(modifiers: StatModifier[], more: Partial<Game> = {}): Game {
     ...base,
     stats: [...base.stats!, { id: 'wits', label: 'Wits', derive: { scale: 'intelligence', by: 2 } }, { id: 'baking', label: 'Baking', of: 'baker' }],
     kinds: [{ id: 'baker', label: 'Baker' }],
-    activities: [
-      ...(base.activities ?? []),
+    actions: [
+      ...(base.actions ?? []),
       { id: 'put-on', effects: [{ 'glasses/wear': true }] },
       { id: 'crossword', cost: { stats: { intelligence: 8 } } },
       { id: 'study', effects: [{ kind: 'stat', stat: 'intelligence', by: 1 }] },
@@ -42,7 +42,7 @@ function game(modifiers: StatModifier[], more: Partial<Game> = {}): Game {
   }
 }
 
-const wearing = (g: Game, patch: Partial<GameState> = {}) => apply(begin(g, patch), g, { type: 'activity', id: 'put-on' }).state
+const wearing = (g: Game, patch: Partial<GameState> = {}) => apply(begin(g, patch), g, { type: 'action', id: 'put-on' }).state
 
 describe('stat modifiers', () => {
   it('change what the player’s stat reads, everywhere it is read', () => {
@@ -63,10 +63,10 @@ describe('stat modifiers', () => {
     const g = game([{ stat: 'intelligence', add: 4 }])
     const on = wearing(g)
     expect(on.stats.intelligence).toBe(5)
-    const studied = apply(on, g, { type: 'activity', id: 'study' }).state
+    const studied = apply(on, g, { type: 'action', id: 'study' }).state
     expect(studied.stats.intelligence).toBe(6)
     expect(statValue(studied, g, 'intelligence')).toBe(10)
-    const reset = apply(on, g, { type: 'activity', id: 'reset' }).state
+    const reset = apply(on, g, { type: 'action', id: 'reset' }).state
     expect(reset.stats.intelligence).toBe(2)
     expect(statValue(reset, g, 'intelligence')).toBe(6)
   })
@@ -97,10 +97,10 @@ describe('stat modifiers', () => {
 
   it('let a cost check the changed value, and pay from the kept one', () => {
     const g = game([{ stat: 'intelligence', add: 4 }])
-    expect(whyNot(begin(g), g, { type: 'activity', id: 'crossword' })).toBeTruthy()
+    expect(whyNot(begin(g), g, { type: 'action', id: 'crossword' })).toBeTruthy()
     const on = wearing(g)
-    expect(whyNot(on, g, { type: 'activity', id: 'crossword' })).toBeUndefined()
-    const done = apply(on, g, { type: 'activity', id: 'crossword' })
+    expect(whyNot(on, g, { type: 'action', id: 'crossword' })).toBeUndefined()
+    const done = apply(on, g, { type: 'action', id: 'crossword' })
     expect(done.reason).toBeUndefined()
     // 5 kept, less 8, held at 0: the glasses' 4 is still added on top.
     expect(done.state.stats.intelligence).toBe(0)
@@ -155,7 +155,7 @@ describe('rounding a stat as it reads', () => {
     expect(on.stats.intelligence).toBe(5)
     // A derived stat reads its inputs rounded: 5 × 2, not 5.4 × 2.
     expect(statValue(on, g, 'wits')).toBe(10)
-    const study = apply(on, g, { type: 'activity', id: 'study' }).state
+    const study = apply(on, g, { type: 'action', id: 'study' }).state
     expect(study.stats.intelligence).toBe(6)
     expect(statValue(study, g, 'intelligence')).toBe(6)
     // A derived stat rounds its own result: 2.5 × 1.3 = 3.25 floors to 3.

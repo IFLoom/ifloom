@@ -17,8 +17,8 @@ function withStats(...more: StatDef[]): Game {
   return {
     ...game,
     stats: [...game.stats!, { id: 'baking', label: 'Baking', start: 4 }, { id: 'patience', label: 'Patience', start: 6 }, ...more],
-    activities: [
-      ...(game.activities ?? []),
+    actions: [
+      ...(game.actions ?? []),
       { id: 'bake', effects: [{ kind: 'stat', stat: 'baking', by: 5 }] },
       { id: 'set', effects: [{ kind: 'stat', stat: 'skill', to: 50 }] },
       { id: 'nudge', effects: [{ kind: 'stat', stat: 'skill', by: 5 }] },
@@ -61,31 +61,31 @@ describe('derived stats', () => {
     expect(holds(state, { stat: 'skill', gt: 10 }, game)).toBe(false)
     expect(view(state, game).statsById.skill).toMatchObject({ value: 10, text: '10' })
     expect(explainText(explain(state, { stat: 'skill', gte: 11 }, game))).toContain('stat skill is 10')
-    const baked = apply(state, game, { type: 'activity', id: 'bake' }).state
+    const baked = apply(state, game, { type: 'action', id: 'bake' }).state
     expect(view(baked, game).statsById.skill.value).toBe(15)
   })
 
   it('are never written: the effects do nothing, and the loader says so', () => {
     const game = derived({ sum: ['baking', 'patience'] })
     for (const id of ['set', 'nudge']) {
-      const after = apply(begin(game), game, { type: 'activity', id }).state
+      const after = apply(begin(game), game, { type: 'action', id }).state
       expect(after.stats.skill).toBeUndefined()
       expect(statValue(after, game, 'skill')).toBe(10)
     }
-    expect(problemsOf(game)).toEqual(expect.arrayContaining(['activity set: stat "skill" is derived: it is worked out, never written']))
+    expect(problemsOf(game)).toEqual(expect.arrayContaining(['action set: stat "skill" is derived: it is worked out, never written']))
     const pack: Content = {
       name: 'town',
       stats: [
         { id: 'baking', label: 'Baking' },
         { id: 'skill', label: 'Skill', derive: 'baking', spendable: true, start: 3 },
       ],
-      activities: [{ id: 'set', effects: [{ kind: 'stat', stat: 'skill', to: 5 }], cost: { stats: { skill: 1 } } }],
+      actions: [{ id: 'set', effects: [{ kind: 'stat', stat: 'skill', to: 5 }], cost: { stats: { skill: 1 } } }],
     }
     const problems = loadGame([pack], { id: 'g', title: 'G' }).problems.map(describeProblem)
     expect(problems).toEqual(
       expect.arrayContaining([
-        'town · activity set · stat "skill" is derived: it is worked out, never written',
-        'town · activity set · spends stat "skill", which is derived and never written',
+        'town · action set · stat "skill" is derived: it is worked out, never written',
+        'town · action set · spends stat "skill", which is derived and never written',
         'town · stat skill · a derived stat cannot be spendable: it is never written',
         'town · stat skill · a derived stat has no start: it is worked out',
       ]),
@@ -173,8 +173,8 @@ describe('levels', () => {
     const quiet = withStats({ id: 'cooking', label: 'Cooking', levels: { at: [5] } })
     const loud = withStats({ id: 'cooking', label: 'Cooking', levels: { at: [5, 10], notice: '{label} is now level {level}.' } })
     const cook = (game: Game, from: number) => {
-      const withCook = { ...game, activities: [...(game.activities ?? []), { id: 'cook', effects: [{ kind: 'stat' as const, stat: 'cooking', by: 3 }] }] }
-      return apply(begin(withCook, { stats: { ...startingState(game).stats, cooking: from } }), withCook, { type: 'activity', id: 'cook' }).state
+      const withCook = { ...game, actions: [...(game.actions ?? []), { id: 'cook', effects: [{ kind: 'stat' as const, stat: 'cooking', by: 3 }] }] }
+      return apply(begin(withCook, { stats: { ...startingState(game).stats, cooking: from } }), withCook, { type: 'action', id: 'cook' }).state
     }
     expect(cook(quiet, 3).notices).toEqual([])
     // 3 to 6 passes 5.

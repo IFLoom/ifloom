@@ -51,7 +51,8 @@ export type Reference =
   | { like: string; of?: string }
   /** A trait, by id. */
   | { trait: string }
-  | { activity: string }
+  /** An action the `action` command does, by its id. */
+  | { action: string }
   | { input: string }
   /** A minigame, by id. */
   | { minigame: string }

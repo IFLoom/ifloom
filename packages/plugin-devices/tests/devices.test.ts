@@ -22,7 +22,7 @@ function game(): Game {
       { name: 'base', data: { devices: { devices: [{ id: 'laptop', name: 'Laptop', frame: 'laptop' }], apps } } },
       {
         name: 'office',
-        activities: [
+        actions: [
           {
             id: 'setUpMail',
             effects: [
@@ -67,7 +67,7 @@ describe('devices', () => {
 
   it('count a dot badge as one, and hand a panel what it is opened with', () => {
     const g = game()
-    let state = apply(begin(g), g, { type: 'activity', id: 'setUpMail' }).state
+    let state = apply(begin(g), g, { type: 'action', id: 'setUpMail' }).state
     expect(laptop(state, g).badge).toBe(1)
     state = apply(state, g, openApp('mail')).state
     expect(laptop(state, g).open?.sections).toEqual([{ kind: 'panel', panel: 'inbox', with: { letters: 2 } }])
@@ -75,8 +75,8 @@ describe('devices', () => {
 
   it('close an app that stops being installed', () => {
     const g = game()
-    let state = apply(apply(begin(g), g, { type: 'activity', id: 'setUpMail' }).state, g, openApp('mail')).state
-    state = apply(state, g, { type: 'activity', id: 'uninstall' }).state
+    let state = apply(apply(begin(g), g, { type: 'action', id: 'setUpMail' }).state, g, openApp('mail')).state
+    state = apply(state, g, { type: 'action', id: 'uninstall' }).state
     expect(laptop(state, g).open).toBeNull()
     expect(apply(state, g, openApp('notes')).ok).toBe(true)
   })

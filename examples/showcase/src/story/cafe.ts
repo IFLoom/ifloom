@@ -6,7 +6,6 @@ import { give, type Content } from '@ifloom/engine'
 import { applyStatus, statusActive } from '@ifloom/plugin-statuses'
 import { wearing } from '@ifloom/plugin-wardrobe'
 import { period } from '@ifloom/plugin-calendar'
-import { onlyAt } from '@ifloom/plugin-places'
 import { character, here, talk } from '@ifloom/plugin-cast'
 import { openShop } from '@ifloom/plugin-shop'
 import { place } from '../place.ts'
@@ -15,22 +14,6 @@ import { prose } from './cafe.prose.ts'
 export const cafe: Content = {
   // One coffee a day: each new day resets it.
   resets: { hadCoffee: false },
-  activities: [
-    {
-      id: 'coffee',
-      cost: { stats: { coins: 3 } },
-      blocked: [onlyAt(['cafe']), { when: { kv: 'hadCoffee' }, reason: 'One is enough for today.' }],
-      effects: [
-        { kind: 'stat', stat: 'energy', by: 15 },
-        { kind: 'kv', key: 'hadCoffee', to: true },
-        // And a lift that lasts till tomorrow is out: 10 more energy, never written.
-        applyStatus('caffeinated'),
-      ],
-    },
-    { id: 'buySandwich', cost: { stats: { coins: 4 } }, blocked: [onlyAt(['cafe'])], effects: [give('item:sandwich')] },
-    { id: 'counter', blocked: [onlyAt(['cafe'])], effects: [openShop('counter')] },
-    { id: 'sit', blocked: [onlyAt(['cafe'])], effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] },
-  ],
   scenes: [
     // The café's storylets: scenes drawn from 'cafe' by "Sit a while", by weight, while their when holds.
     {
@@ -92,13 +75,24 @@ export const cafe: Content = {
           // Open in the day; the door says when it opens again.
           blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
           actions: [
-            { id: 'coffee', label: 'Buy a coffee', command: { type: 'activity', id: 'coffee' } },
+            {
+              id: 'coffee',
+              label: 'Buy a coffee',
+              cost: { stats: { coins: 3 } },
+              blocked: [{ when: { kv: 'hadCoffee' }, reason: 'One is enough for today.' }],
+              effects: [
+                { kind: 'stat', stat: 'energy', by: 15 },
+                { kind: 'kv', key: 'hadCoffee', to: true },
+                // And a lift that lasts till tomorrow is out: 10 more energy, never written.
+                applyStatus('caffeinated'),
+              ],
+            },
             // The counter, the shop plugin's vendor, opens in a panel: nothing about a shop is drawn by itself.
-            { id: 'counter', label: 'Go to the counter', command: { type: 'activity', id: 'counter' } },
-            // A sandwich as a plain activity: a cost, a place and a thing given, with no plugin. Always 4 coins, never sold out.
-            { id: 'buy-sandwich', label: 'Buy a sandwich', command: { type: 'activity', id: 'buySandwich' } },
+            { id: 'counter', label: 'Go to the counter', effects: [openShop('counter')] },
+            // A sandwich as a plain action: a cost, a place and a thing given, with no plugin. Always 4 coins, never sold out.
+            { id: 'buy-sandwich', label: 'Buy a sandwich', cost: { stats: { coins: 4 } }, effects: [give('item:sandwich')] },
             // Something small happens while you sit: one of the café's storylets, drawn at random.
-            { id: 'sit', label: 'Sit a while', command: { type: 'activity', id: 'sit' } },
+            { id: 'sit', label: 'Sit a while', effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] },
           ],
           // A picture of the counter while Ava is on shift, with a hotspot on her that talks to her.
           stage: {

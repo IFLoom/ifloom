@@ -61,11 +61,12 @@
  * `storylineKv`, `minigameVar` or `phase` condition or effect, `GameState.phase`,
  * `View.phase` or `Phase`; the `kv` condition's `is` takes a list, the `kv`
  * effect takes `random`, `of` names a storyline or the minigame, and
- * `Game.kv` and `Pack.kv` are the kv store a new game starts with.
+ * `Game.kv` and `Pack.kv` are the kv store a new game starts with. One kind
+ * of button: `activities` fold into `actions` (an `ActionDef` with a cost,
+ * effects and once), and the `activity` command is `action`.
  */
 import type {
   ActionDef,
-  ActivityDef,
   AudioState,
   AudioView,
   CarryOver,
@@ -269,8 +270,8 @@ export type FrozenCommand =
    */
   | { type: 'start'; seed?: number; kv?: Record<string, KvValue> }
   | { type: 'newGame' }
-  /** Anything the pack declares as an ActivityDef: paperwork, a jog, a drink. */
-  | { type: 'activity'; id: string }
+  /** An action, by its id: the game's, or a plugin's as `'<plugin>/<id>'`. */
+  | { type: 'action'; id: string }
   | { type: 'scene'; id: string }
   | { type: 'choose'; id: string }
   | { type: 'leave' }
@@ -404,7 +405,6 @@ export type FrozenGame = {
   packs?: string[]
   /** The scene on screen on the first frame. Left out, the game opens on its idle screen. */
   introScene?: string
-  activities?: ActivityDef[]
   /** Hand-written scenes and data scenes, side by side. */
   scenes: (Scene | DataScene)[]
   storylines?: StorylineDef[]
@@ -451,7 +451,6 @@ export type FrozenPack = {
   plugins?: Record<string, number>
   scenes?: (Scene | DataScene)[]
   storylines?: StorylineDef[]
-  activities?: ActivityDef[]
   /** Stats the game keeps. A later pack can redeclare one by id. */
   stats?: StatDef[]
   /** Kinds of thing the game keeps several of. A later pack can redeclare one by id. */

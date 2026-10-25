@@ -14,7 +14,7 @@ function play(state: GameState, ...commands: Command[]): GameState {
   return state
 }
 
-const act = (id: string): Command => ({ type: 'activity', id })
+const act = (id: string): Command => ({ type: 'action', id })
 const open = (): GameState => play(startingState(game), { type: 'choose', id: 'begin' })
 
 describe('The Corner Café', () => {
@@ -32,20 +32,20 @@ describe('The Corner Café', () => {
   })
 
   it('hires in play: each new member of staff gets their own numbers and the next id', () => {
-    let state = play(open(), act('interview'))
+    let state = play(open(), act('hire'))
     expect(view(state, game).scene.body).toContain('Wages are 12 a week already.')
-    state = play(state, { type: 'choose', id: 'dev' }, act('interview'), { type: 'choose', id: 'fen' })
+    state = play(state, { type: 'choose', id: 'dev' }, act('hire'), { type: 'choose', id: 'fen' })
     expect(entitiesOf(state, game, 'staff')).toEqual(['staff:ana', 'staff:#1', 'staff:#2'])
     // Ana is declared, so the save keeps only what changed about her; Dev was hired in play, with his own numbers.
     expect(state.entities.staff['#1']).toEqual({ name: 'Dev', stats: { skill: 2, morale: 80, wage: 8 } })
     expect(holds(state, { count: 'staff', gte: 3 }, game)).toBe(true)
-    state = play(state, act('interview'), { type: 'choose', id: 'dev' })
-    expect(apply(state, game, act('interview')).reason).toBe('There is no room behind the counter.')
+    state = play(state, act('hire'), { type: 'choose', id: 'dev' })
+    expect(apply(state, game, act('hire')).reason).toBe('There is no room behind the counter.')
   })
 
   it('ends a week: takings in, wages out, everyone a little more tired, and the turn moves on', () => {
     const before = open()
-    const after = play(before, act('endWeek'))
+    const after = play(before, act('end-week'))
     expect(after.turn).toBe(1)
     // Ten covers, plus Ana's skill twice, plus reputation over five: 24, at £26 a cover, over ten.
     expect(after.stats.coins).toBe(120 + Math.round((24 * 26) / 10) - 12)
@@ -54,28 +54,28 @@ describe('The Corner Café', () => {
 
   it('loses staff whose morale runs out, and says so when nobody is left', () => {
     let state = open()
-    for (let week = 0; week < 6; week += 1) state = play(state, act('endWeek'))
+    for (let week = 0; week < 6; week += 1) state = play(state, act('end-week'))
     expect(entitiesOf(state, game, 'staff')).toEqual([])
     expect(state.notices.map((notice) => notice.title)).toContain('Nobody to open up tomorrow.')
     // With nobody in the kitchen nothing sells, but nobody is paid either.
     const coins = state.stats.coins
-    expect(play(state, act('endWeek')).stats.coins).toBe(coins)
+    expect(play(state, act('end-week')).stats.coins).toBe(coins)
   })
 
   it('keeps a team that is looked after, and a happy team earns a review once', () => {
-    let state = play(open(), act('interview'), { type: 'choose', id: 'dev' })
-    state = play(state, act('staffLunch'))
+    let state = play(open(), act('hire'), { type: 'choose', id: 'dev' })
+    state = play(state, act('lunch'))
     expect(state.stats.reputation).toBe(30)
     expect(state.notices.map((notice) => notice.title)).toEqual(['A glowing review in the local paper.'])
-    for (let week = 0; week < 6; week += 1) state = play(state, act('staffLunch'), act('endWeek'))
+    for (let week = 0; week < 6; week += 1) state = play(state, act('lunch'), act('end-week'))
     expect(entitiesOf(state, game, 'staff')).toEqual(['staff:ana', 'staff:#1'])
     expect(state.stats.reputation).toBe(30)
   })
 
   it('reads reputation in levels, and says when word gets round', () => {
     expect(view(open(), game).statsById.reputation.level).toEqual({ level: 0, next: 40, progress: 0.5 })
-    let state = play(open(), act('interview'), { type: 'choose', id: 'dev' })
-    state = play({ ...state, stats: { ...state.stats, reputation: 35 } }, act('staffLunch'))
+    let state = play(open(), act('hire'), { type: 'choose', id: 'dev' })
+    state = play({ ...state, stats: { ...state.stats, reputation: 35 } }, act('lunch'))
     expect(state.stats.reputation).toBe(45)
     expect(state.notices.map((notice) => notice.title)).toContain('Word gets round: Reputation is now level 1.')
   })

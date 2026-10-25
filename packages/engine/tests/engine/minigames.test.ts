@@ -76,8 +76,8 @@ function withMinigames(extra: Partial<Game> = {}): Game {
   const game: Game = {
     ...base,
     minigames: [arrows, toss],
-    activities: [
-      ...(base.activities ?? []),
+    actions: [
+      ...(base.actions ?? []),
       { id: 'play', effects: [{ kind: 'minigame', minigame: 'arrows' }] },
       { id: 'flip', effects: [{ kind: 'minigame', minigame: 'toss' }] },
     ],
@@ -104,7 +104,7 @@ const wrong = (state: GameState): Command => ({ type: 'minigame', input: state.m
 describe('minigames', () => {
   it('start from an effect, and show over the room with its own inputs, timer and keys', () => {
     const game = withMinigames()
-    const state = run(begin(game), game, { type: 'activity', id: 'play' })
+    const state = run(begin(game), game, { type: 'action', id: 'play' })
     expect(state.minigame).toMatchObject({ id: 'arrows', state: 'show', elapsed: 0, vars: { round: 1, score: 0 } })
     expect(state.kv['minigame:arrows']).toBe(1)
     const shown = view(state, game)
@@ -127,8 +127,8 @@ describe('minigames', () => {
 
   it('refuse everything else while one runs, but not a notice dismissed', () => {
     const game = withMinigames()
-    const state = run(begin(game), game, { type: 'activity', id: 'play' })
-    expect(whyNot(state, game, { type: 'activity', id: 'wait' })).toBe('Finish this first.')
+    const state = run(begin(game), game, { type: 'action', id: 'play' })
+    expect(whyNot(state, game, { type: 'action', id: 'wait' })).toBe('Finish this first.')
     expect(whyNot(state, game, { type: 'scene', id: 'rosa.hello' })).toBe('Finish this first.')
     expect(whyNot(state, game, { type: 'dismiss' })).toBeUndefined()
     // In a scene too: its choices are refused, and hidden.
@@ -140,7 +140,7 @@ describe('minigames', () => {
 
   it('take the first live input, and refuse one that does nothing now', () => {
     const game = withMinigames()
-    let state = run(begin(game), game, { type: 'activity', id: 'play' })
+    let state = run(begin(game), game, { type: 'action', id: 'play' })
     expect(whyNot(state, game, { type: 'minigame', input: 'left' })).toBe('That does nothing now.')
     expect(whyNot(begin(game), game, { type: 'minigame', input: 'up' })).toBe('Nothing is being played.')
     state = run(state, game, right(state))
@@ -151,7 +151,7 @@ describe('minigames', () => {
 
   it('run timers down with ticks, carrying what is left into the next state', () => {
     const game = withMinigames()
-    let state = run(begin(game), game, { type: 'activity', id: 'play' })
+    let state = run(begin(game), game, { type: 'action', id: 'play' })
     state = run(state, game, { type: 'tick', ms: 1000 })
     expect(state.minigame).toMatchObject({ state: 'show', elapsed: 1000, vars: { round: 1 } })
     expect(view(state, game).minigame?.timeLeft).toBe(500)
@@ -168,19 +168,19 @@ describe('minigames', () => {
   it('refuse a tick with nothing counting down', () => {
     const game = withMinigames()
     expect(whyNot(begin(game), game, { type: 'tick', ms: 100 })).toBe('Nothing is counting down.')
-    const playing = run(begin(game), game, { type: 'activity', id: 'play' })
+    const playing = run(begin(game), game, { type: 'action', id: 'play' })
     expect(whyNot(playing, game, { type: 'tick', ms: 0 })).toBe('A tick is a number of milliseconds above 0.')
     const untimed: Game = withMinigames({
       minigames: [{ id: 'arrows', start: 'a', states: { a: { on: [{ input: 'go', go: 'b' }] }, b: { final: {} } } }],
     })
-    const waiting = run(begin(untimed), untimed, { type: 'activity', id: 'play' })
+    const waiting = run(begin(untimed), untimed, { type: 'action', id: 'play' })
     expect(waiting.minigame?.state).toBe('a')
     expect(whyNot(waiting, untimed, { type: 'tick', ms: 100 })).toBe('Nothing is counting down.')
   })
 
   it('end in a final state: variables copied out, then its effects, a scene among them', () => {
     const game = withMinigames()
-    let state = run(begin(game), game, { type: 'activity', id: 'play' })
+    let state = run(begin(game), game, { type: 'action', id: 'play' })
     for (let round = 0; round < 3; round += 1) state = run(state, game, right(state))
     expect(state.minigame).toBeNull()
     expect(state.stats.coins).toBe(8)
@@ -191,7 +191,7 @@ describe('minigames', () => {
 
   it('end with a turn effect among the final effects', () => {
     const game = withMinigames()
-    let state = run(begin(game), game, { type: 'activity', id: 'play' })
+    let state = run(begin(game), game, { type: 'action', id: 'play' })
     for (let round = 0; round < 3; round += 1) state = run(state, game, wrong(state))
     expect(state.minigame).toBeNull()
     expect(state.turn).toBe(3)
@@ -201,7 +201,7 @@ describe('minigames', () => {
   it('draw random variables and states from the seed, the same every time', () => {
     const game = withMinigames()
     const arrowsOf = (seed: number) => {
-      let state = run(startingState(game, { seed }), game, { type: 'leave' }, { type: 'activity', id: 'play' })
+      let state = run(startingState(game, { seed }), game, { type: 'leave' }, { type: 'action', id: 'play' })
       const seen: number[] = []
       while (state.minigame) {
         seen.push(state.minigame.vars.arrow)
@@ -215,7 +215,7 @@ describe('minigames', () => {
     // A second play in the same save draws afresh.
     const sides = Array.from(
       { length: 200 },
-      (_, seed) => run(startingState(game, { seed }), game, { type: 'leave' }, { type: 'activity', id: 'flip' }, { type: 'tick', ms: 100 }).kv.side,
+      (_, seed) => run(startingState(game, { seed }), game, { type: 'leave' }, { type: 'action', id: 'flip' }, { type: 'tick', ms: 100 }).kv.side,
     )
     expect(new Set(sides)).toEqual(new Set(['heads', 'tails']))
     expect(sides.filter((side) => side === 'tails').length).toBeGreaterThan(sides.filter((side) => side === 'heads').length)
@@ -245,7 +245,7 @@ describe('the runner, with a minigame', () => {
   it('logs ticks and plays them back exactly', () => {
     const game = withMinigames()
     const runner = createRunner(game, begin(game))
-    runner.apply({ type: 'activity', id: 'play' })
+    runner.apply({ type: 'action', id: 'play' })
     runner.apply({ type: 'tick', ms: 700 })
     runner.apply(right(runner.state))
     runner.apply({ type: 'tick', ms: 1600 })
@@ -258,7 +258,7 @@ describe('the runner, with a minigame', () => {
     const game = withMinigames()
     const runner = createRunner(game, begin(game), { history: true })
     const before = runner.state
-    runner.apply({ type: 'activity', id: 'play' })
+    runner.apply({ type: 'action', id: 'play' })
     runner.apply({ type: 'tick', ms: 300 })
     runner.apply(right(runner.state))
     runner.apply({ type: 'tick', ms: 200 })
@@ -266,7 +266,7 @@ describe('the runner, with a minigame', () => {
     expect(runner.undo()).toBe(true)
     // Back to before the input: the tick before it stays.
     expect(runner.state.minigame).toMatchObject({ elapsed: 300, vars: { round: 1 } })
-    expect(runner.log().commands.map((command) => command.type)).toEqual(['activity', 'tick'])
+    expect(runner.log().commands.map((command) => command.type)).toEqual(['action', 'tick'])
     expect(runner.undo()).toBe(true)
     expect(runner.canUndo).toBe(false)
     expect(runner.state).toBe(before)
@@ -298,13 +298,13 @@ describe('the runner, with a minigame', () => {
       },
     }
     const runner = createRunner(game, begin(game), { saves: watched, autosave: { every: 'command' } })
-    runner.apply({ type: 'activity', id: 'play' })
+    runner.apply({ type: 'action', id: 'play' })
     runner.apply({ type: 'tick', ms: 100 })
     runner.apply({ type: 'tick', ms: 100 })
     await runner.settled()
     expect(writes).toHaveLength(1)
     const turns = createRunner(game, begin(game), { saves: watched, autosave: { every: 'turn' } })
-    turns.apply({ type: 'activity', id: 'play' })
+    turns.apply({ type: 'action', id: 'play' })
     // Three rounds time out, and the lost game ends the turn: that tick saves.
     turns.apply({ type: 'tick', ms: 10_000 })
     await turns.settled()
@@ -363,12 +363,12 @@ describe('the minigame checks', () => {
     const good = withMinigames()
     const game: Game = {
       ...good,
-      activities: [...(good.activities ?? []), { id: 'chess', effects: [{ kind: 'minigame', minigame: 'chess' }] }],
+      actions: [...(good.actions ?? []), { id: 'chess', effects: [{ kind: 'minigame', minigame: 'chess' }] }],
       scenes: [...good.scenes, { id: 'board', body: [], minigame: 'draughts', choices: [] }],
     }
     expect(checkGame(game).problems.map((problem) => `${problem.where} · ${problem.what}`)).toEqual([
       'scene board · unknown minigame "draughts"',
-      'activity chess · unknown minigame "chess"',
+      'action chess · unknown minigame "chess"',
     ])
   })
 })

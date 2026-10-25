@@ -27,14 +27,14 @@ const market: Content = {
   name: 'market',
   prose: { 'stall.open': 'Crates of eggs and a heap of loaves.', 'stall.cries/1': '“Fresh bread!”', 'stall.cries/2': '“Eggs, a dozen!”' },
   variants: { 'stall.cries': ['stall.cries/1', 'stall.cries/2'] },
-  activities: [
-    { id: 'buy', blocked: [{ when: { not: { 'stall/sells': { item: 'bread' } } }, reason: 'Sold out.' }] },
+  actions: [
+    { id: 'buy', label: 'Buy bread', blocked: [{ when: { not: { 'stall/sells': { item: 'bread' } } }, reason: 'Sold out.' }] },
     { id: 'ask', blocked: [{ when: { not: { 'stall/sells': { item: 'fish' } } }, reason: 'No.' }] },
   ],
 }
 
 function game(locks: Content['locks'] = []) {
-  return loadGame([{ name: 'base', actions: [{ id: 'buy', label: 'Buy bread', command: { type: 'activity', id: 'buy' } }], locks }, market], {
+  return loadGame([{ name: 'base', locks }, market], {
     id: 'market',
     title: 'Market Day',
     plugins: [stall],
@@ -73,7 +73,7 @@ describe('checking content that calls a plugin', () => {
   it('asks the plugin about what each call passes, and lends its check the loader’s words', () => {
     const { problems } = game()
     expect(problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
-      'activity ask: nobody sells "fish"',
+      'action ask: nobody sells "fish"',
       'stall market: no prose for "stall.sign"',
       'stall market: opens unknown scene "stall.closing"',
     ])

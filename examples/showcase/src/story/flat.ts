@@ -2,7 +2,7 @@
 import type { Condition, Content } from '@ifloom/engine'
 import { day, period, sleep, weekday } from '@ifloom/plugin-calendar'
 import { messageReplied } from '@ifloom/plugin-messages'
-import { at, onlyAt } from '@ifloom/plugin-places'
+import { at } from '@ifloom/plugin-places'
 import { openApp } from '@ifloom/plugin-devices'
 import { place } from '../place.ts'
 
@@ -51,7 +51,6 @@ export const flat: Content = {
       ],
     },
   ],
-  activities: [{ id: 'openWardrobe', blocked: [onlyAt(['flat'])], effects: [{ kind: 'panel', panel: 'wardrobe' }] }],
   triggers: [
     // The phone rings at home, an evening from the day after you answered Ava's text: the scene opens with its timer running.
     {
@@ -83,7 +82,7 @@ export const flat: Content = {
           actions: [
             { id: 'bed', label: 'Go to bed', command: sleep() },
             // The wardrobe opens in a panel by its name; the layout also shows what you're wearing only at home.
-            { id: 'wardrobe', label: 'Open the wardrobe', command: { type: 'activity', id: 'openWardrobe' } },
+            { id: 'wardrobe', label: 'Open the wardrobe', effects: [{ kind: 'panel', panel: 'wardrobe' }] },
             // Drawn inline by `[[act:read-text|…]]` in the line above, so it isn't a button as well.
             { id: 'read-text', label: 'Read your messages', when: textWaiting, command: openApp('texts') },
           ],

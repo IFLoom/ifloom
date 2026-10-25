@@ -122,7 +122,7 @@ describe('the game’s own migrations', () => {
     expect(untouched.kv).not.toHaveProperty('tidied')
     // Missing stats still read as their start.
     const game = grown({ version: 2 })
-    const waited = apply(untouched, game, { type: 'activity', id: 'wait' }).state
+    const waited = apply(untouched, game, { type: 'action', id: 'wait' }).state
     expect(waited.stats).not.toHaveProperty('patience')
     expect(statValue(waited, game, 'patience')).toBe(7)
     expect(view(waited, game).statsById.patience.value).toBe(7)

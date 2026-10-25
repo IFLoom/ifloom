@@ -73,7 +73,7 @@ describe('checkGame', () => {
     const game: Game = {
       id: 'town',
       title: 'Town',
-      activities: [],
+      actions: [],
       storylines: [],
       scenes: [{ id: 'intro', body: [], choices: [{ id: 'go', effects: [{ kind: 'scene', scene: 'nowhere' }] }] }],
     }

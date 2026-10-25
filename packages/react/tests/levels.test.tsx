@@ -10,14 +10,14 @@ afterEach(cleanup)
 function kitchen(strings: Record<string, string> = {}) {
   const { game, problems } = loadGame(
     [
-      { name: 'base', strings, actions: [{ id: 'cook', label: 'Cook', command: { type: 'activity', id: 'cook' } }] },
+      { name: 'base', strings, actions: [] },
       {
         name: 'kitchen',
         stats: [
           { id: 'cooking', label: 'Cooking', start: 15, levels: { at: [10, 30, 60] } },
           { id: 'coins', label: 'Coins', start: 5 },
         ],
-        activities: [{ id: 'cook', effects: [{ kind: 'stat', stat: 'cooking', by: 50 }] }],
+        actions: [{ id: 'cook', label: 'Cook', effects: [{ kind: 'stat', stat: 'cooking', by: 50 }] }],
       },
     ],
     { id: 'kitchen', title: 'The Kitchen' },
@@ -46,7 +46,7 @@ describe('StatList', () => {
     expect(row('coins').querySelector('[data-part="stat-progress"]')).toBeNull()
 
     // At the top level: the level, and no bar.
-    act(() => void runner.apply({ type: 'activity', id: 'cook' }))
+    act(() => void runner.apply({ type: 'action', id: 'cook' }))
     expect(row('cooking').querySelector('[data-part="stat-level"]')!.textContent).toBe('Level 3')
     expect(row('cooking').querySelector('[data-part="stat-progress"]')).toBeNull()
   })

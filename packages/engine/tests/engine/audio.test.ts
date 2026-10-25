@@ -68,7 +68,7 @@ const house: Content = {
     { id: 'storm', audio: { ambience: 'rain' }, body: [{ text: 'storm.text' }], choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }] },
     { id: 'quiet', audio: { music: null }, body: [{ text: 'quiet.text' }], choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }] },
   ],
-  activities: [
+  actions: [
     { id: 'radio', effects: [{ kind: 'audio', channel: 'music', to: 'radio' }] },
     { id: 'silence', effects: [{ kind: 'audio', channel: 'music', to: null }] },
     { id: 'default', effects: [{ kind: 'audio', channel: 'music' }] },
@@ -84,7 +84,7 @@ const settings = [
 ]
 
 function baseOf() {
-  const { scenes: _s, storylines: _t, activities: _a, stats: _st, introScene: _in, actions: _ac, ...base } = fixture()
+  const { scenes: _s, storylines: _t, actions: _a, stats: _st, introScene: _in, actions: _ac, ...base } = fixture()
   return { ...base, settings }
 }
 
@@ -150,7 +150,7 @@ describe('audio', () => {
       expect(music(state, g)).toBeNull()
       expect(view(state, g).audio.channels.ambience.track).toBe('traffic')
       // An effect wins over the plugin.
-      state = play(state, g, { type: 'activity', id: 'radio' })
+      state = play(state, g, { type: 'action', id: 'radio' })
       expect(music(state, g)).toBe('radio')
       // The open scene wins over the effect, and lets it back when it closes.
       state = play(state, g, { type: 'scene', id: 'door' })
@@ -167,11 +167,11 @@ describe('audio', () => {
       const storm = play(state, g, { type: 'scene', id: 'storm' })
       expect(view(storm, g).audio.channels.ambience).toMatchObject({ track: 'rain', loop: false })
       expect(music(storm, g)).toBe('calm')
-      const silenced = play(state, g, { type: 'activity', id: 'silence' })
+      const silenced = play(state, g, { type: 'action', id: 'silence' })
       expect(music(silenced, g)).toBeNull()
       expect(silenced.audio.channels).toEqual({ music: null })
       // Left out, the track hands the channel back.
-      const handed = play(silenced, g, { type: 'activity', id: 'default' })
+      const handed = play(silenced, g, { type: 'action', id: 'default' })
       expect(handed.audio.channels).toEqual({})
       expect(music(handed, g)).toBe('calm')
     })
@@ -181,10 +181,10 @@ describe('audio', () => {
     it('keep a sound as a cue with a running count, the last 20 only', () => {
       const { game: g } = game()
       let state: GameState = { ...startingState(g), kv: { at: 'house' } }
-      state = play(state, g, { type: 'activity', id: 'buzz' })
+      state = play(state, g, { type: 'action', id: 'buzz' })
       expect(state.audio.cues).toEqual([{ seq: 1, track: 'buzz' }])
       expect(view(state, g).audio.cues).toEqual([{ key: `cue:${state.seed}:1`, channel: 'sfx', track: 'buzz', src: 'audio/buzz.ogg', volume: 0.5 }])
-      for (let n = 0; n < 24; n += 1) state = play(state, g, { type: 'activity', id: 'buzz' })
+      for (let n = 0; n < 24; n += 1) state = play(state, g, { type: 'action', id: 'buzz' })
       expect(state.audio.seq).toBe(25)
       expect(state.audio.cues).toHaveLength(20)
       expect(state.audio.cues[0].seq).toBe(6)
@@ -252,9 +252,9 @@ describe('audio', () => {
 
       const start = { ...startingState(g, { seed: 7 }), kv: { at: 'house' } }
       const commands = [
-        { type: 'activity', id: 'rest' },
-        { type: 'activity', id: 'radio' },
-        { type: 'activity', id: 'rest' },
+        { type: 'action', id: 'rest' },
+        { type: 'action', id: 'radio' },
+        { type: 'action', id: 'rest' },
       ] as const
       const played = play(start, g, ...commands)
       const order = view(played, g).audio.channels.music.playlist!
@@ -281,7 +281,7 @@ describe('audio', () => {
           choices: [{ id: 'go', effects: [{ kind: 'sound', track: 'radio' }] }],
         },
       ],
-      activities: [
+      actions: [
         {
           id: 'bang',
           effects: [
@@ -308,8 +308,8 @@ describe('audio', () => {
         'broken · scene bad · track "knock" is a sound on channel "sfx", not background audio',
         'broken · scene bad · channel "sfx" plays sounds, not background audio',
         'broken · scene bad · unknown channel "stereo"',
-        'broken · activity bang · unknown track "bang"',
-        'broken · activity bang · unknown track "gone"',
+        'broken · action bang · unknown track "bang"',
+        'broken · action bang · unknown track "gone"',
         'broken · track hiss · on undeclared channel "radio"',
         'broken · track hiss · volume is not between 0 and 1',
         'broken · track mix · track "knock" is a sound on channel "sfx", not background audio',
@@ -344,8 +344,8 @@ describe('audio', () => {
           'prose bad.text: track "calm" is background audio on channel "music", not a sound',
           'prose bad.text: unknown track "nobody"',
           'scene bad: "radio" is a playlist, not a sound',
-          'activity bang: unknown track "bang"',
-          'activity bang: unknown track "gone"',
+          'action bang: unknown track "bang"',
+          'action bang: unknown track "gone"',
         ]),
       )
       expect(problemsOf(game().game)).toEqual([])
@@ -366,7 +366,7 @@ describe('audio', () => {
 
     it('keep the effects’ channels and cues', () => {
       const { game: g } = game()
-      const state = play({ ...startingState(g), kv: { at: 'house' } }, g, { type: 'activity', id: 'radio' }, { type: 'activity', id: 'buzz' })
+      const state = play({ ...startingState(g), kv: { at: 'house' } }, g, { type: 'action', id: 'radio' }, { type: 'action', id: 'buzz' })
       expect(unwrap(loadState(JSON.parse(JSON.stringify(state)), g)).audio).toEqual(state.audio)
     })
   })

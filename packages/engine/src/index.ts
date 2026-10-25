@@ -96,8 +96,8 @@ export type { Explanation } from './explain.ts'
 export { explain, explainText } from './explain.ts'
 
 // Actions and locks
-export type { ActivityCost, ActivityDef } from './activity.ts'
-export { activityBlocked, activityById, need, payCost } from './activity.ts'
+export type { ActionCost } from './action.ts'
+export { actionBlocked, actionById, actionReferences, need, payCost } from './action.ts'
 export { effectsOf, warningOf, whyNot } from './availability.ts'
 export type { Lock, LockTarget } from './locks.ts'
 export { lockOn, lockedBy, lockedOut } from './locks.ts'

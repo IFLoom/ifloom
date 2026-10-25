@@ -17,7 +17,7 @@
  * features aren't plugins: see ADR 0007.
  */
 import type { EffectRef, TurnContext } from '../custom.ts'
-import type { CarryOver, Game, Scene, SceneView } from '../game.ts'
+import type { ActionDef, CarryOver, Game, Scene, SceneView } from '../game.ts'
 import type { StatModifier } from '../plugin.ts'
 import type { Profile } from '../profile.ts'
 import type { Reference } from '../references.ts'
@@ -53,6 +53,8 @@ export type FeatureContext = {
   statModifiers: (state: GameState, game: Game) => readonly StatModifier[]
   /** What the plugins put on background channels, by channel. */
   pluginAudio: (game: Game, state: GameState) => Record<string, string | null>
+  /** An action by the id the `action` command names it by: the game's, or a plugin's as `'<plugin>/<id>'`, in this state. */
+  actionOf: (state: GameState, game: Game, id: string) => ActionDef | undefined
   /** A scene ready to render, by id, as `sceneById` gives it. */
   sceneById: (game: Game, id: string) => Scene | undefined
   /** The open scene rendered, for a caller with no screen; undefined with none open. */
@@ -123,7 +125,7 @@ export type CommandEntry<C> = {
   /** Whether no lock or plugin guard stops it. False if left out. */
   ignoresLocks?: (command: C, game: Game) => boolean
   /** The stats it spends, by id, for its button's price. None if left out. */
-  spends?: (command: C, game: Game, state: GameState) => Record<string, number> | undefined
+  spends?: (command: C, game: Game, state: GameState, cx: FeatureContext) => Record<string, number> | undefined
   references: (command: C) => Reference[]
 }
 

@@ -9,7 +9,7 @@
  */
 import type { CarryOver, Game } from '../game.ts'
 import type { GameState } from '../types.ts'
-import { activities, type ActivitiesShape } from './activities.ts'
+import { actions, type ActionsShape } from './actions.ts'
 import { audio, type AudioShape } from './audio.ts'
 import { entities, type EntitiesShape } from './entities.ts'
 import { holdings, type HoldingsShape } from './holdings.ts'
@@ -40,7 +40,7 @@ type Shapes =
   | KvShape
   | StorylinesShape
   | NoticesShape
-  | ActivitiesShape
+  | ActionsShape
   | TriggersShape
   | InputsShape
   | SettingsShape
@@ -80,7 +80,7 @@ export const FEATURES = [
   scenes,
   minigames,
   timers,
-  activities,
+  actions,
   inputs,
   settings,
   stats,

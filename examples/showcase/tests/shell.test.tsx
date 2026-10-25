@@ -36,7 +36,7 @@ describe('the showcase shell', () => {
     const run = (state: GameState, ...commands: (Command | CommandRef)[]) =>
       commands.reduce<GameState>((now, command) => apply(now, game, command).state, state)
     const unpacked = run(startingState(game), { type: 'choose', id: 'unpack' })
-    const cafe = run(clock.write(unpacked, { day: 1, period: 'morning' }), go('high-street'), go('cafe'), { type: 'activity', id: 'coffee' })
+    const cafe = run(clock.write(unpacked, { day: 1, period: 'morning' }), go('high-street'), go('cafe'), { type: 'action', id: 'places/coffee' })
     const runner = createRunner(game, cafe)
     render(<GameShell runner={runner} plugins={townUi()} layout={Layout} />)
     expect(document.querySelector('[data-status="caffeinated"]')?.textContent).toContain('Caffeinated')

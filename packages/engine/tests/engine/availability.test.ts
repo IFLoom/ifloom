@@ -16,15 +16,15 @@ function buttons(state: GameState, game: Game) {
 }
 
 describe('one answer to "can I do this?"', () => {
-  const town = fixture({ locks: [{ when: { kv: 'phase', is: ['night'] }, deny: ['activity'], except: [], reason: 'Shut for the night.' }] })
+  const town = fixture({ locks: [{ when: { kv: 'phase', is: ['night'] }, deny: ['action'], except: [], reason: 'Shut for the night.' }] })
   const game: Game = {
     ...town,
     actions: [
       ...(town.actions ?? []),
-      { id: 'tidy', label: 'Tidy up', command: { type: 'activity', id: 'tidy' } },
-      { id: 'read', label: 'Read', command: { type: 'activity', id: 'read' } },
-      { id: 'rest', label: 'Rest', command: { type: 'activity', id: 'rest' } },
-      { id: 'ghost', label: 'Haunt', command: { type: 'activity', id: 'haunt' } },
+      { id: 'tidy', label: 'Tidy up', command: { type: 'action', id: 'tidy' } },
+      { id: 'read', label: 'Read', command: { type: 'action', id: 'read' } },
+      { id: 'rest', label: 'Rest', command: { type: 'action', id: 'rest' } },
+      { id: 'ghost', label: 'Haunt', command: { type: 'action', id: 'haunt' } },
     ],
   }
   const closed = { rosa: { closedUntil: 9, kv: {} } }
@@ -59,7 +59,7 @@ describe('one answer to "can I do this?"', () => {
 
   it('says plainly what is wrong with a command no button offers', () => {
     const state = begin(game)
-    expect(whyNot(state, game, { type: 'activity', id: 'haunt' })).toBe('There is no such thing to do.')
+    expect(whyNot(state, game, { type: 'action', id: 'haunt' })).toBe('There is no such thing to do.')
     expect(whyNot(state, game, { type: 'choose', id: 'x' })).toBe('There is nothing to choose.')
   })
 })

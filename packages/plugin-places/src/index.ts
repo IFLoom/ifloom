@@ -14,6 +14,7 @@
  * plugin (the inventory's drop) can put something down there by name.
  */
 import {
+  actionReferences,
   artSrc,
   bindCurrent,
   commandOf,
@@ -372,10 +373,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
             { ui: place.ui },
             ...(place.blocked ?? []).map((entry) => ({ when: entry.when })),
             ...(place.arrive ? [{ within: 'arrive', refs: [{ when: place.arrive.when }, { effects: place.arrive.effects }] }] : []),
-            ...(place.actions ?? []).map((action) => ({
-              within: `action ${action.id}`,
-              refs: [{ when: action.when }, ...(action.blocked ?? []).map((entry) => ({ when: entry.when })), { command: action.command }],
-            })),
+            ...(place.actions ?? []).map((action) => ({ within: `action ${action.id}`, refs: actionReferences(action) })),
           ],
         })),
       ],

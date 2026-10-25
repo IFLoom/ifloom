@@ -5,11 +5,11 @@ import { GameProvider } from '@ifloom/react'
 import { __camel__, mark__Pascal__ } from '../src/index.ts'
 import { __camel__Ui, __Pascal__List } from '../src/react/index.tsx'
 
-/** A town with two entries, the first marked by the `shop` activity. */
+/** A town with two entries, the first marked by the `shop` action. */
 function runner() {
   const town: Content = {
     name: 'town',
-    activities: [{ id: 'shop', effects: [mark__Pascal__('bread')] }],
+    actions: [{ id: 'shop', effects: [mark__Pascal__('bread')] }],
     data: {
       '__id__': {
         entries: [
@@ -28,7 +28,7 @@ function runner() {
 describe('the React UI', () => {
   it('lists the entries, marked ones with a badge', () => {
     const playing = runner()
-    playing.apply({ type: 'activity', id: 'shop' })
+    playing.apply({ type: 'action', id: 'shop' })
     const html = renderToString(
       <GameProvider runner={playing} plugins={[__camel__Ui]}>
         <__Pascal__List />

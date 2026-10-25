@@ -48,7 +48,7 @@ function game(extra: StatusDef[] = []): Game {
       { id: 'recovered', label: 'Recovered' },
       { id: 'stamina', label: 'Stamina', derive: { scale: 'energy', by: 2 }, max: 1000 },
     ],
-    activities: [
+    actions: [
       { id: 'coffee', effects: [applyStatus('caffeinated')] },
       { id: 'sneeze', effects: [applyStatus('cold')] },
       { id: 'rest', effects: [{ kind: 'turn' }] },
@@ -66,7 +66,7 @@ function game(extra: StatusDef[] = []): Game {
 
 function run(state: GameState, g: Game, ...ids: string[]): GameState {
   for (const id of ids) {
-    const out = apply(state, g, { type: 'activity', id })
+    const out = apply(state, g, { type: 'action', id })
     expect(out.reason).toBeUndefined()
     state = out.state
   }
@@ -87,8 +87,8 @@ describe('timed statuses', () => {
     // A derived stat reads the changed value.
     expect(statValue(state, g, 'stamina')).toBe(120)
     // A cost is checked against what the stat reads.
-    expect(whyNot(state, g, { type: 'activity', id: 'climb' })).toBeUndefined()
-    expect(whyNot(fresh(g), g, { type: 'activity', id: 'climb' })).toBeTruthy()
+    expect(whyNot(state, g, { type: 'action', id: 'climb' })).toBeUndefined()
+    expect(whyNot(fresh(g), g, { type: 'action', id: 'climb' })).toBeTruthy()
     // Effects write the kept value underneath.
     const tired = run(state, g, 'tire')
     expect(tired.stats.energy).toBe(40)
@@ -167,7 +167,7 @@ describe('timed statuses', () => {
   it('replay exactly from a command log', () => {
     const g = game()
     const runner = createRunner(g, fresh(g))
-    for (const id of ['sneeze', 'coffee', 'rest', 'sneeze', 'rest', 'rest']) runner.apply({ type: 'activity', id })
+    for (const id of ['sneeze', 'coffee', 'rest', 'sneeze', 'rest', 'rest']) runner.apply({ type: 'action', id })
     expect(replay(g, runner.log())).toEqual({ ok: true, value: runner.state })
   })
 
@@ -187,7 +187,7 @@ describe('timed statuses', () => {
         {
           name: 'mod',
           stats: [{ id: 'energy', label: 'Energy' }],
-          activities: [{ id: 'x', effects: [applyStatus('flu')] }],
+          actions: [{ id: 'x', effects: [applyStatus('flu')] }],
           data: {
             statuses: {
               statuses: [
@@ -207,7 +207,7 @@ describe('timed statuses', () => {
       { id: 'g', title: 'g', plugins: [statuses()] },
     )
     expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
-      'activity x: unknown status "flu"',
+      'action x: unknown status "flu"',
       'statuses bad: unknown stat "luck"',
       'statuses bad: onEnd: unknown kind "thing"',
       'statuses bad: turns must be 1 or more',

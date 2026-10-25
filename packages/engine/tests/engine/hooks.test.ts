@@ -23,7 +23,7 @@ describe('the game’s hooks', () => {
       },
     })
     const evening = begin(game, { kv: { tidied: true } })
-    const next = apply(evening, game, { type: 'activity', id: 'rest' })
+    const next = apply(evening, game, { type: 'action', id: 'rest' })
     expect(next.ok).toBe(true)
     expect(next.state.turn).toBe(3)
     expect(next.state.kv.tidied).toBe(false)
@@ -68,11 +68,11 @@ describe('the game’s hooks', () => {
   it('lets the game veto a stat change, or add to it', () => {
     const vetoed = fixture({ onStat: (before) => before })
     const state = begin(vetoed)
-    expect(apply(state, vetoed, { type: 'activity', id: 'read' }).state.stats.intelligence).toBe(state.stats.intelligence)
+    expect(apply(state, vetoed, { type: 'action', id: 'read' }).state.stats.intelligence).toBe(state.stats.intelligence)
     const noted = fixture({
       onStat: (_before, after, key, by) => ({ ...after, kv: { ...after.kv, [`${key}+`]: by } }),
     })
-    const read = apply(begin(noted), noted, { type: 'activity', id: 'read' }).state
+    const read = apply(begin(noted), noted, { type: 'action', id: 'read' }).state
     expect(read.kv['intelligence+']).toBe(2)
   })
 })
@@ -117,7 +117,7 @@ describe('the game’s own code, as a plugin’s', () => {
         label: () => 'the game',
         guard: (_state, asked) => {
           order.push('game')
-          return asked.command.type === 'activity' && asked.command.id === 'read' ? 'Not now.' : undefined
+          return asked.command.type === 'action' && asked.command.id === 'read' ? 'Not now.' : undefined
         },
         price: (_state, effects) => (effects.some((effect) => effect.kind === 'turn') ? ['the night'] : undefined),
         view: (state) => ({ coins: state.stats.coins }),
@@ -125,7 +125,7 @@ describe('the game’s own code, as a plugin’s', () => {
       plugins: [watch],
     }
     const state = begin(game)
-    expect(whyNot(state, game, { type: 'activity', id: 'read' })).toBe('Not now.')
+    expect(whyNot(state, game, { type: 'action', id: 'read' })).toBe('Not now.')
     expect(order).toEqual(['game', 'plugin'])
     const shown = view(state, game)
     expect(shown.when).toBe('the game · the watch')
@@ -151,13 +151,13 @@ describe('the game’s own code, as a plugin’s', () => {
       }),
       plugins: [after],
     }
-    apply(begin(game), game, { type: 'activity', id: 'wait' })
+    apply(begin(game), game, { type: 'action', id: 'wait' })
     expect(seen).toEqual(['game', 'plugin:true'])
   })
 
   it('reports a plugin that takes the game’s id, and a call with no plugin in front', () => {
     const impostor = definePlugin<null>({ id: 'game', version: 1 })
-    const game = { ...fixture(), plugins: [impostor], activities: [{ id: 'x', effects: [{ 'tired/now': true as const }] }] }
+    const game = { ...fixture(), plugins: [impostor], actions: [{ id: 'x', effects: [{ 'tired/now': true as const }] }] }
     const problems = checkGame(game).problems.map((problem) => `${problem.where}: ${problem.what}`)
     expect(problems).toContain('plugin game: "game" is reserved for the game\'s own rules')
     const bare = { ...fixture(), stats: [{ id: 'puff', label: 'Puff', max: { value: 'ceiling' } }] }

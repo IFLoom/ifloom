@@ -10,7 +10,7 @@ import { problemsOf } from '../fixtures/checked.ts'
 
 /** The fixture's base, for loading packs over: its content comes from the packs. */
 function base(patch: Partial<Game> = {}) {
-  const { scenes: _s, introScene: _in, storylines: _t, activities: _a, stats: _st, actions: _ac, ...rest } = fixture()
+  const { scenes: _s, introScene: _in, storylines: _t, actions: _a, stats: _st, actions: _ac, ...rest } = fixture()
   return { ...rest, ...patch }
 }
 
@@ -46,12 +46,9 @@ describe('checkGame', () => {
     expect(
       problemsOf({
         ...fixture(),
-        activities: [
-          ...(fixture().activities ?? []),
-          { id: 'eat', blocked: [{ when: { not: { entity: 'thing:missing', at: 'you' } }, reason: 'Nothing to eat.' }] },
-        ],
+        actions: [...(fixture().actions ?? []), { id: 'eat', blocked: [{ when: { not: { entity: 'thing:missing', at: 'you' } }, reason: 'Nothing to eat.' }] }],
       }),
-    ).toEqual(['activity eat: unknown kind "thing"'])
+    ).toEqual(['action eat: unknown kind "thing"'])
   })
 
   it('reports what the engine would quietly skip: a condition with no kind or two, an effect or command it does not have', () => {
@@ -63,15 +60,15 @@ describe('checkGame', () => {
       actions: [
         ...(town.actions ?? []),
         { id: 'blank', label: 'Blank', when: {} as never, command: { type: 'dance' } as never },
-        { id: 'odd', label: 'Odd', command: { type: 'activity', id: 'wait' } },
+        { id: 'odd', label: 'Odd', command: { type: 'action', id: 'wait' } },
+        { id: 'kite', effects: [{ kind: 'fly' } as never, {} as never] },
       ],
-      activities: [...(town.activities ?? []), { id: 'kite', effects: [{ kind: 'fly' } as never, {} as never] }],
     } as Game
     expect(problemsOf(game)).toEqual([
-      'activity kite: unknown effect kind "fly"',
-      'activity kite: an effect needs a kind, or a custom call by name',
       'action blank: a condition needs one kind, such as kv or stat; this one has nothing in it',
       'action blank: unknown command type "dance"',
+      'action kite: unknown effect kind "fly"',
+      'action kite: an effect needs a kind, or a custom call by name',
       // Its parts aren't looked into: the engine wouldn't know which one it means.
       'finished: a condition has one kind, but this one has 2: kv, setting',
     ])
@@ -143,7 +140,7 @@ describe('a cooperating partner the game does not have', () => {
       name: 'shore',
       prose: { 'shore#wade': 'Wade in.' },
       scenes: [{ id: 'shore', body: [], choices: [{ id: 'wade', when: named.when, effects: [named.short, named.long] }] }],
-      activities: [{ id: 'paddle', blocked: [{ when: { not: named.when }, reason: 'Not now.' }], effects: [named.short, named.long] }],
+      actions: [{ id: 'paddle', blocked: [{ when: { not: named.when }, reason: 'Not now.' }], effects: [named.short, named.long] }],
     }
     const loaded = loadWhole([pack], base({ plugins: [beach], actions: [{ id: 'look', label: 'Look', command: named.command }] }))
     expect(loaded.problems).toEqual([])
@@ -154,11 +151,14 @@ describe('a cooperating partner the game does not have', () => {
     const game: Game = {
       ...fixture(),
       plugins: [beach],
-      actions: [{ id: 'look', label: 'Look', when: { 'moon/up': true }, command: { type: 'custom', name: 'moon/look' } }],
-      activities: [...(fixture().activities ?? []), { id: 'net', effects: [{ kind: 'custom', name: 'moon/pull' }] }],
+      actions: [
+        ...(fixture().actions ?? []),
+        { id: 'net', effects: [{ kind: 'custom', name: 'moon/pull' }] },
+        { id: 'look', label: 'Look', when: { 'moon/up': true }, command: { type: 'custom', name: 'moon/look' } },
+      ],
     }
     expect(problemsOf(game)).toEqual([
-      'activity net: no plugin effect named "moon/pull"',
+      'action net: no plugin effect named "moon/pull"',
       'action look: no custom condition named "moon/up"',
       'action look: no plugin command named "moon/look"',
     ])

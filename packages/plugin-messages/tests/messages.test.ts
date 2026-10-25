@@ -23,7 +23,7 @@ function game(extra: Partial<Content> = {}): Game {
     storylines: [{ id: 'ava', name: 'Ava' }],
     scenes: [{ id: 'ava.hi', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ kind: 'scene', scene: null }] }] }],
     // Going out is all a message waits for here: no map needed.
-    activities: [
+    actions: [
       { id: 'wait', effects: [pass(1)] },
       { id: 'goOut', effects: [{ kind: 'kv', key: 'out', to: true }] },
     ],
@@ -68,7 +68,7 @@ describe('messages', () => {
   it('arrive the first time their condition holds, and raise a notice tagged with the channel', () => {
     const g = game()
     expect(shown(begin(g), g).unread).toBe(0)
-    const state = apply(begin(g), g, { type: 'activity', id: 'goOut' }).state
+    const state = apply(begin(g), g, { type: 'action', id: 'goOut' }).state
     const texts = shown(state, g).channels[0]
     expect(texts.threads).toEqual([
       expect.objectContaining({
@@ -84,7 +84,7 @@ describe('messages', () => {
 
   it('offer replies as choices: one, once, with effects that can bring the next message', () => {
     const g = game()
-    let state = apply(begin(g), g, { type: 'activity', id: 'goOut' }).state
+    let state = apply(begin(g), g, { type: 'action', id: 'goOut' }).state
     expect(shown(state, g).channels[0].threads[0].messages[0].replies.map((reply) => reply.label)).toEqual(['Yes!', 'No…'])
     state = apply(state, g, replyTo('msg.hey', 'yes')).state
     expect(whyNot(state, g, replyTo('msg.hey', 'no'))).toBe('You have already replied.')
@@ -100,14 +100,14 @@ describe('messages', () => {
   it('refuse a reply that is not on offer or to a message that has not come', () => {
     const g = game()
     expect(whyNot(begin(g), g, replyTo('msg.hey', 'yes'))).toBe('There is no such message.')
-    const state = apply(begin(g), g, { type: 'activity', id: 'goOut' }).state
+    const state = apply(begin(g), g, { type: 'action', id: 'goOut' }).state
     expect(whyNot(state, g, replyTo('msg.hey', 'maybe'))).toBe('That is not a reply on offer.')
   })
 
   it('keep channels apart, count unread for badges, and mark threads read', () => {
     const g = game()
-    let state = apply(begin(g), g, { type: 'activity', id: 'goOut' }).state
-    state = apply(state, g, { type: 'activity', id: 'wait' }).state
+    let state = apply(begin(g), g, { type: 'action', id: 'goOut' }).state
+    state = apply(state, g, { type: 'action', id: 'wait' }).state
     expect(shown(state, g).channels.map((channel) => [channel.id, channel.unread])).toEqual([
       ['texts', 1],
       ['post', 1],
@@ -170,7 +170,7 @@ describe('pictures and videos in a message', () => {
         },
       },
     })
-    const state = apply(begin(g), g, { type: 'activity', id: 'goOut' }).state
+    const state = apply(begin(g), g, { type: 'action', id: 'goOut' }).state
     const message = shown(state, g).channels[0].threads[0].messages[0]
     expect(message.beats).toEqual([
       { kind: 'text', text: 'Look at the ducks!' },
@@ -185,7 +185,7 @@ describe('pools', () => {
   function chatty(): Game {
     const rested = (id: string) => ({ not: messageSince(id, { lt: 2 }) })
     return game({
-      activities: [
+      actions: [
         { id: 'chat', effects: [drawMessage('chat')] },
         { id: 'wait', effects: [pass(1)] },
       ],
@@ -215,12 +215,12 @@ describe('pools', () => {
       },
     })
   }
-  const chat = { type: 'activity', id: 'chat' } as const
+  const chat = { type: 'action', id: 'chat' } as const
   const keys = (state: GameState, g: Game) => shown(state, g).channels[0].threads.flatMap((thread) => thread.messages.map((message) => message.key))
 
   it('wait to be drawn, then arrive as a new arrival with a notice, drawn the same way on replay', () => {
     const g = chatty()
-    let state = apply(begin(g), g, { type: 'activity', id: 'wait' }).state
+    let state = apply(begin(g), g, { type: 'action', id: 'wait' }).state
     expect(keys(state, g)).toEqual([])
     const runner = createRunner(g, begin(g))
     expect(runner.apply(chat).ok).toBe(true)
@@ -264,7 +264,7 @@ describe('pools', () => {
 
   it('load an old save, with one arrival per message by id, as arrivals', () => {
     const g = game()
-    const old = apply(begin(g), g, { type: 'activity', id: 'goOut' }).state
+    const old = apply(begin(g), g, { type: 'action', id: 'goOut' }).state
     const saved = {
       ...old,
       plugins: { ...old.plugins, messages: { version: 1, state: { arrived: { 'msg.hey': 3 }, replied: { 'msg.hey': 'yes' }, read: { 'msg.hey': true } } } },
@@ -286,7 +286,7 @@ describe('pools', () => {
         {
           name: 'mod',
           prose: { m: 'Hi.' },
-          activities: [{ id: 'chat', effects: [drawMessage('nobody')] }],
+          actions: [{ id: 'chat', effects: [drawMessage('nobody')] }],
           data: { messages: { messages: [{ id: 'm', channel: 'texts', from: 'x', drawnFrom: ['chat'], weight: -1, body: [{ text: 'm' }] }] } },
         },
       ],

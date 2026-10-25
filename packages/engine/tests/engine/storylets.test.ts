@@ -25,7 +25,7 @@ function cafe(scenes: DataScene[], extra: Partial<Content> = {}) {
       ]),
     ),
     scenes,
-    activities: [
+    actions: [
       { id: 'sit', effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] },
       { id: 'linger', effects: [{ kind: 'scene', from: 'cafe' }] },
       { id: 'tip', effects: [{ kind: 'kv', key: 'tipped', to: true }] },
@@ -43,7 +43,7 @@ const quiet = scene('cafe.quiet')
 const seeds = Array.from({ length: 300 }, (_, n) => n)
 
 function sit(seed: number, game = cafe([gossip, busker, regular, quiet]).game) {
-  return apply(startingState(game, { seed }), game, { type: 'activity', id: 'sit' }).state
+  return apply(startingState(game, { seed }), game, { type: 'action', id: 'sit' }).state
 }
 
 describe('storylets', () => {
@@ -54,8 +54,8 @@ describe('storylets', () => {
     // The regular only comes in once the player has tipped.
     expect(drawn).toEqual(new Set(['cafe.busker', 'cafe.gossip']))
     const tipped = (seed: number) => {
-      const state = apply(startingState(game, { seed }), game, { type: 'activity', id: 'tip' }).state
-      return apply(state, game, { type: 'activity', id: 'sit' }).state.sceneId
+      const state = apply(startingState(game, { seed }), game, { type: 'action', id: 'tip' }).state
+      return apply(state, game, { type: 'action', id: 'sit' }).state.sceneId
     }
     expect(new Set(seeds.map(tipped)).has('cafe.regular')).toBe(true)
   })
@@ -72,9 +72,9 @@ describe('storylets', () => {
     const { game } = cafe([gossip, quiet])
     const first = sit(1, game)
     expect(first.sceneId).toBe('cafe.gossip')
-    const after = apply({ ...first, sceneId: null }, game, { type: 'activity', id: 'sit' }).state
+    const after = apply({ ...first, sceneId: null }, game, { type: 'action', id: 'sit' }).state
     expect(after.sceneId).toBe('cafe.quiet')
-    const nothing = apply({ ...first, sceneId: null }, game, { type: 'activity', id: 'linger' })
+    const nothing = apply({ ...first, sceneId: null }, game, { type: 'action', id: 'linger' })
     expect(nothing.ok).toBe(true)
     expect(nothing.state.sceneId).toBeNull()
   })
@@ -84,7 +84,7 @@ describe('storylets', () => {
     const runner = createRunner(game, startingState(game, { seed: 4 }))
     const opened: (string | null)[] = []
     for (let n = 0; n < 12; n += 1) {
-      runner.apply({ type: 'activity', id: 'sit' })
+      runner.apply({ type: 'action', id: 'sit' })
       opened.push(runner.state.sceneId)
       runner.apply({ type: 'choose', id: 'leave' })
     }
@@ -96,13 +96,13 @@ describe('storylets', () => {
     const problems = cafe(
       [scene('cafe.lonely', { weight: 2 }), scene('cafe.heavy', { drawnFrom: ['cafe'], weight: 0 }), scene('cafe.picky', { when: { kv: 'x' } })],
       {
-        activities: [{ id: 'sit', effects: [{ kind: 'scene', from: 'nowhere', otherwise: 'cafe.gone' }] }],
+        actions: [{ id: 'sit', effects: [{ kind: 'scene', from: 'nowhere', otherwise: 'cafe.gone' }] }],
       },
     ).problems.map(describeProblem)
     expect(problems).toEqual(
       expect.arrayContaining([
-        'cafe · activity sit · draws from "nowhere", but no scene is drawn from it',
-        'cafe · activity sit · goes to unknown scene "cafe.gone"',
+        'cafe · action sit · draws from "nowhere", but no scene is drawn from it',
+        'cafe · action sit · goes to unknown scene "cafe.gone"',
         'cafe · scene cafe.heavy · weight must be above 0',
         'cafe · scene cafe.lonely · has a weight but no drawnFrom, so it is never drawn',
         'cafe · scene cafe.picky · has a when but no drawnFrom; when only gates draws',
@@ -112,9 +112,9 @@ describe('storylets', () => {
 
   it('are checked in a hand-built game too', () => {
     const { game } = cafe([gossip, quiet])
-    const broken = { ...game, activities: [{ id: 'sit', effects: [{ kind: 'scene' as const, from: 'nowhere', otherwise: 'cafe.gone' }] }] }
+    const broken = { ...game, actions: [{ id: 'sit', effects: [{ kind: 'scene' as const, from: 'nowhere', otherwise: 'cafe.gone' }] }] }
     expect(problemsOf(broken)).toEqual(
-      expect.arrayContaining(['activity sit: draws from "nowhere", but no scene is drawn from it', 'activity sit: goes to unknown scene "cafe.gone"']),
+      expect.arrayContaining(['action sit: draws from "nowhere", but no scene is drawn from it', 'action sit: goes to unknown scene "cafe.gone"']),
     )
   })
 })

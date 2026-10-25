@@ -54,7 +54,7 @@ const supporterPack: Pack = {
 function build(unlockDefs: UnlockDef[], packs: Pack[] = []): Game {
   const town: Content = {
     scenes: [{ id: 'intro', body: [], choices: [] }],
-    activities: [{ id: 'rest', effects: [{ kind: 'turn' }] }],
+    actions: [{ id: 'rest', effects: [{ kind: 'turn' }] }],
     data: { unlocks: { unlocks: unlockDefs } },
   }
   const loaded = loadGame([town], { id: GAME, title: 'Unlocks town', plugins: [unlocks()] }, { packs })
@@ -129,7 +129,7 @@ describe('the plugin', () => {
     const loaded = loadGame(
       [
         {
-          activities: [{ id: 'lounge', blocked: [{ when: { not: hasUnlock('patron') }, reason: 'For patrons.' }], effects: [] }],
+          actions: [{ id: 'lounge', blocked: [{ when: { not: hasUnlock('patron') }, reason: 'For patrons.' }], effects: [] }],
           data: { unlocks: { unlocks: [supporter, { ...supporter, id: 'bad', label: ' ', hash: 'BREAD-2026-KEY', iterations: 0 }] } },
         },
       ],
@@ -179,9 +179,9 @@ describe('entering a code', () => {
     const g = build([await def()])
     const runner = runnerFor(g)
     const codes = startUnlocks(runner, { content: {} })
-    runner.apply({ type: 'activity', id: 'rest' })
+    runner.apply({ type: 'action', id: 'rest' })
     await codes.enter(CODE)
-    runner.apply({ type: 'activity', id: 'rest' })
+    runner.apply({ type: 'action', id: 'rest' })
     const played = replay(g, runner.log())
     expect(played.ok && played.value).toEqual(runner.state)
   })

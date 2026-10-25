@@ -10,13 +10,13 @@ const clock = calendar()
 function game(): Game {
   return loadGame(
     [
-      { name: 'base', introScene: 'wake', actions: [{ id: 'wait', label: 'Wait', command: { type: 'activity', id: 'wait' } }] },
+      { name: 'base', introScene: 'wake', actions: [] },
       {
         name: 'row',
         stats: [{ id: 'carrots', label: 'Carrots' }],
-        activities: [
+        actions: [
           { id: 'dig', effects: [pass(1), { kind: 'stat', stat: 'carrots', by: 1 }] },
-          { id: 'wait', effects: [pass(1)] },
+          { id: 'wait', label: 'Wait', effects: [pass(1)] },
         ],
         scenes: [{ id: 'wake', title: 'Morning', body: [{ text: 'wake' }], choices: [{ id: 'up', effects: [{ kind: 'scene', scene: null }] }] }],
         data: {
@@ -39,7 +39,7 @@ function game(): Game {
                 exits: ['hall'],
                 art: '',
                 body: [{ text: 'garden' }],
-                actions: [{ id: 'dig', label: 'Dig', command: { type: 'activity', id: 'dig' } }],
+                actions: [{ id: 'dig', label: 'Dig', command: { type: 'action', id: 'dig' } }],
               },
             ],
           },
@@ -72,7 +72,7 @@ describe('playtest', () => {
   it('counts the kinds the game lists, and leaves out those it never lists', () => {
     const g = loadGame(
       [
-        { name: 'base', actions: [{ id: 'wait', label: 'Wait', command: { type: 'activity', id: 'wait' } }] },
+        { name: 'base', actions: [] },
         {
           name: 'shed',
           kinds: [
@@ -85,7 +85,7 @@ describe('playtest', () => {
             { id: 'bean', of: 'seed', name: 'Bean' },
             { id: 'list', of: 'note', name: 'List' },
           ],
-          activities: [{ id: 'wait', effects: [{ kind: 'turn' }] }],
+          actions: [{ id: 'wait', label: 'Wait', effects: [{ kind: 'turn' }] }],
         },
       ],
       { id: 'shed', title: 'Shed' },

@@ -29,7 +29,7 @@ const catchBall: MinigameDef = {
 function game(): Game {
   const { game, problems } = loadGame(
     [
-      { name: 'base', introScene: 'intro', actions: [{ id: 'wave', label: 'Wave', command: { type: 'activity', id: 'wave' } }] },
+      { name: 'base', introScene: 'intro', actions: [] },
       {
         name: 'park',
         stats: [
@@ -52,7 +52,7 @@ function game(): Game {
           { id: 'caught', title: 'Caught it', body: [{ text: 'caught' }], choices: [{ id: 'back', effects: [{ kind: 'scene', scene: 'intro' }] }] },
           { id: 'missed', title: 'Missed', body: [{ text: 'missed' }], choices: [{ id: 'back', effects: [{ kind: 'scene', scene: 'intro' }] }] },
         ],
-        activities: [{ id: 'wave', effects: [{ kind: 'notify', title: 'Someone waves back' }] }],
+        actions: [{ id: 'wave', label: 'Wave', effects: [{ kind: 'notify', title: 'Someone waves back' }] }],
         prose: {
           intro: 'Kids are throwing a ball about.',
           'intro#play': 'Join in',
@@ -325,7 +325,7 @@ describe('hotkeys', () => {
 
   it('send the game’s own commands from its map, before the built-in keys', () => {
     const runner = runnerFor()
-    render(<GameShell runner={runner} keys={{ map: { w: { type: 'activity', id: 'wave' }, '1': { type: 'choose', id: 'rest' } } }} />)
+    render(<GameShell runner={runner} keys={{ map: { w: { type: 'action', id: 'wave' }, '1': { type: 'choose', id: 'rest' } } }} />)
     press('1')
     expect(runner.state.stats.energy).toBe(70)
     press('3')
@@ -337,7 +337,7 @@ describe('hotkeys', () => {
     const g = game()
     g.minigames = [{ ...catchBall, keys: { space: ['1'] } }]
     const runner = runnerFor(g)
-    render(<GameShell runner={runner} keys={{ map: { '1': { type: 'activity', id: 'wave' } } }} />)
+    render(<GameShell runner={runner} keys={{ map: { '1': { type: 'action', id: 'wave' } } }} />)
     act(() => void fireEvent.click(button(/Join in/)))
     press('1')
     expect(runner.state.minigame?.state).toBe('throw')

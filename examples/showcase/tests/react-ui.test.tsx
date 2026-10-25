@@ -30,18 +30,15 @@ function game(strings: Record<string, string> = {}): Game {
       {
         name: 'base',
         introScene: 'intro',
-        actions: [
-          { id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } },
-          { id: 'cake', label: 'Buy a cake', command: { type: 'activity', id: 'cake' } },
-        ],
+        actions: [],
         strings,
       },
       {
         name: 'town',
         stats: [{ id: 'coins', label: 'Coins', start: 3, format: '{n}c', spendable: true }],
-        activities: [
-          { id: 'wait', effects: [pass(1)] },
-          { id: 'cake', cost: { stats: { coins: 10 } } },
+        actions: [
+          { id: 'wait', label: 'Wait a while', effects: [pass(1)] },
+          { id: 'cake', label: 'Buy a cake', cost: { stats: { coins: 10 } } },
         ],
         scenes: [{ id: 'intro', title: 'Morning', body: [{ text: 'intro' }], choices: [{ id: 'up', effects: [{ kind: 'scene', scene: null }] }] }],
         prose: {

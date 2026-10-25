@@ -47,8 +47,8 @@ function withTimers(extra: Partial<Game> = {}): Game {
     ...base,
     timers: [phone, kettle, again],
     minigames: [toss],
-    activities: [
-      ...(base.activities ?? []),
+    actions: [
+      ...(base.actions ?? []),
       { id: 'ring', effects: [{ kind: 'timer', timer: 'phone' }] },
       { id: 'boil', effects: [{ kind: 'timer', timer: 'kettle' }] },
       { id: 'answer', effects: [{ kind: 'timer', timer: 'phone', to: null }] },
@@ -71,7 +71,7 @@ function run(state: GameState, game: Game, ...commands: Command[]): GameState {
   return state
 }
 
-const act = (id: string): Command => ({ type: 'activity', id })
+const act = (id: string): Command => ({ type: 'action', id })
 const tick = (ms: number): Command => ({ type: 'tick', ms })
 
 describe('timers', () => {

@@ -16,7 +16,7 @@ import type { Pack } from './loader.ts'
 import type { Plugin } from './plugin.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
-export const SCHEMA = 19
+export const SCHEMA = 20
 
 /** A pack as it came in: some schema's shape, not necessarily this one. */
 export type RawPack = Record<string, unknown> & { schema: number }
@@ -104,6 +104,53 @@ export const PACK_STEPS: Record<number, (pack: RawPack) => RawPack> = {
   17: (pack) => toSchema18(pack),
   // 18 → 19: one kv vocabulary, with whose store in `of`. See `toSchema19`.
   18: (pack) => toSchema19(pack),
+  // 19 → 20: one kind of button. An activity is an action with no label. See `toSchema20`.
+  19: (pack) => toSchema20(pack),
+}
+
+/** An `activity` command, as the `action` command it is from schema 20. */
+const activityToAction = (value: Record<string, unknown>): Record<string, unknown> =>
+  value.type === 'activity' && typeof value.id === 'string' ? { ...value, type: 'action' } : value
+
+/**
+ * Schema 19 content as schema 20 writes it, where an action has the fields a
+ * choice has and activities fold into actions:
+ * - each of `activities` is an action with no label (so no button of its
+ *   own), its `cost`, `blocked` and `effects` as they were; an action the
+ *   pack declares with the same id, whose command did that activity, takes
+ *   them in place of its command;
+ * - `{ type: 'activity', id }` is `{ type: 'action', id }`, wherever a command is;
+ * - a lock's `deny` and `except` name `action` for `activity`.
+ */
+function toSchema20(pack: RawPack): RawPack {
+  const { activities, ...rest } = pack
+  let out = rest as RawPack
+  if (Array.isArray(activities) && activities.length) {
+    const actions = Array.isArray(out.actions) ? [...out.actions] : []
+    for (const activity of activities) {
+      if (!isRecord(activity) || typeof activity.id !== 'string') continue
+      const at = actions.findIndex((action) => isRecord(action) && action.id === activity.id)
+      if (at < 0) {
+        actions.push(activity)
+        continue
+      }
+      const action = actions[at] as Record<string, unknown>
+      const command = isRecord(action.command) ? action.command : undefined
+      const ranIt = command?.type === 'activity' && command.id === activity.id
+      const { command: _command, ...own } = action
+      const blocked = [...(Array.isArray(own.blocked) ? own.blocked : []), ...(Array.isArray(activity.blocked) ? activity.blocked : [])]
+      actions[at] = ranIt ? { ...activity, ...own, ...(blocked.length ? { blocked } : {}) } : action
+    }
+    out = { ...out, actions }
+  }
+  return TOOLS.objects(out, (value) => {
+    let next = activityToAction(value)
+    if (Array.isArray(next.deny) && typeof next.reason === 'string') {
+      const rename = (list: unknown) => (Array.isArray(list) ? list.map((entry) => (entry === 'activity' ? 'action' : entry)) : list)
+      next = { ...next, deny: rename(next.deny), ...(next.except !== undefined ? { except: rename(next.except) } : {}) }
+    }
+    return next
+  })
 }
 
 /** The range keys a kv condition can carry. */
@@ -680,6 +727,8 @@ const TOOLS: ContentTools = {
 export const COMMAND_STEPS: Record<number, (command: RawCommand) => RawCommand> = {
   // 5 → 6: the naming rule. `use`'s `itemId` is `id`, and `setting` and `input` set with `to`.
   5: (command) => (COMMAND_FIELDS[command.type] ? (renamed(command, COMMAND_FIELDS[command.type]) as RawCommand) : command),
+  // 19 → 20: an activity is an action, done by `{ type: 'action', id }`.
+  19: (command) => activityToAction(command) as RawCommand,
 }
 
 /**

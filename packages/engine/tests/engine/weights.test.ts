@@ -97,7 +97,7 @@ describe('weights in content', () => {
     const first = tally(orders.map((order) => order[0]))
     expect(first.a).toBeGreaterThan(320)
     // The order is drawn from the save, so it replays.
-    const again = view(apply(startingState(game, { seed: 3 }), game, { type: 'activity', id: 'wait' }).state, game)
+    const again = view(apply(startingState(game, { seed: 3 }), game, { type: 'action', id: 'wait' }).state, game)
     expect(again.audio.channels.music.playlist!.tracks).toEqual(orders[3])
   })
 

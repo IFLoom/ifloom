@@ -59,7 +59,7 @@ function withShells(): Game {
   return {
     ...fixture(),
     plugins: [shells],
-    activities: [...(fixture().activities ?? []), { id: 'beachcomb', effects: [{ 'shells/find': { shell: 'whelk' } }] }],
+    actions: [...(fixture().actions ?? []), { id: 'beachcomb', effects: [{ 'shells/find': { shell: 'whelk' } }] }],
   }
 }
 
@@ -81,7 +81,7 @@ describe('plugins', () => {
 
   it('are called from content by name, with the plugin id in front', () => {
     const game = withShells()
-    const after = apply(begin(game), game, { type: 'activity', id: 'beachcomb' })
+    const after = apply(begin(game), game, { type: 'action', id: 'beachcomb' })
     expect(after.ok).toBe(true)
     expect(shells.read(after.state, game).found).toEqual(['whelk'])
     expect(holds(after.state, { 'shells/has': { shell: 'whelk' } }, game)).toBe(true)
@@ -91,8 +91,8 @@ describe('plugins', () => {
   it('apply their effects in order, each on the state the one before left', () => {
     const game = withShells()
     const both = [{ 'shells/find': { shell: 'whelk' } }, { 'shells/find': { shell: 'conch' } }]
-    const after = apply(begin(game), game, { type: 'activity', id: 'beachcomb' })
-    const twice = apply(after.state, { ...game, activities: [{ id: 'two', effects: both }] }, { type: 'activity', id: 'two' })
+    const after = apply(begin(game), game, { type: 'action', id: 'beachcomb' })
+    const twice = apply(after.state, { ...game, actions: [{ id: 'two', effects: both }] }, { type: 'action', id: 'two' })
     expect(shells.read(twice.state, game).found).toEqual(['whelk', 'conch'])
   })
 
@@ -102,7 +102,7 @@ describe('plugins', () => {
     expect(whyNot(begin(game), game, drop)).toBe('You do not have that shell.')
     const refused = apply(begin(game), game, drop)
     expect(refused).toMatchObject({ ok: false, reason: 'You do not have that shell.' })
-    const found = apply(begin(game), game, { type: 'activity', id: 'beachcomb' }).state
+    const found = apply(begin(game), game, { type: 'action', id: 'beachcomb' }).state
     expect(shells.read(apply(found, game, drop).state, game).found).toEqual([])
     expect(whyNot(begin(game), game, { type: 'custom', name: 'shells/juggle' })).toBe('There is no such thing to do.')
   })
@@ -115,7 +115,7 @@ describe('plugins', () => {
 
   it('can be stopped by a lock, one command or the whole plugin', () => {
     const drop = { type: 'custom' as const, name: 'shells/drop', with: { shell: 'whelk' } }
-    const found = (game: Game) => apply(begin(game), game, { type: 'activity', id: 'beachcomb' }).state
+    const found = (game: Game) => apply(begin(game), game, { type: 'action', id: 'beachcomb' }).state
     for (const deny of [['shells/drop'], ['shells/*'], ['custom']] as const) {
       const game = { ...withShells(), locks: [{ when: { all: [] }, deny, reason: 'Not now.' }] }
       expect(whyNot(found(game), game, drop)).toBe('Not now.')
@@ -126,13 +126,13 @@ describe('plugins', () => {
 
   it('print their values in prose by full name', () => {
     const game = withShells()
-    const found = apply(begin(game), game, { type: 'activity', id: 'beachcomb' }).state
+    const found = apply(begin(game), game, { type: 'action', id: 'beachcomb' }).state
     expect(fillTokens('Shells: {{v:shells/count}}.', found, game)).toBe('Shells: 1.')
   })
 
   it('run their hooks after the game’s own, and show in the view', () => {
     const game = withShells()
-    const night = apply(begin(game), game, { type: 'activity', id: 'rest' })
+    const night = apply(begin(game), game, { type: 'action', id: 'rest' })
     expect(shells.read(night.state, game).days).toBe(1)
     expect(view(night.state, game).plugins).toEqual({ shells: { count: 0 } })
   })
@@ -164,7 +164,7 @@ describe('plugins', () => {
   })
 
   it('take content from packs, merged by id, and check it', () => {
-    const { scenes: _s, introScene: _in, storylines: _t, activities: _a, stats: _st, actions: _ac, ...base } = withShells()
+    const { scenes: _s, introScene: _in, storylines: _t, actions: _a, stats: _st, actions: _ac, ...base } = withShells()
     const beach: Content = {
       name: 'beach',
       data: { shells: { spots: [{ id: 'rockpool', when: { storyline: 'tides' } }] } },
@@ -210,7 +210,7 @@ describe('plugins working together', () => {
   })
   const pack: Content = {
     name: 'shore',
-    activities: [
+    actions: [
       { id: 'wade', blocked: [{ when: { not: { 'tides/high': true } }, reason: 'The tide is out.' }], effects: [{ 'tides/turn': true }] },
       { id: 'swim', effects: [{ 'tides/turn': {} }] },
     ],
@@ -223,7 +223,7 @@ describe('plugins working together', () => {
     const state = startingState(game)
     expect(holds(state, { 'tides/high': true }, game)).toBe(false)
     expect(view(state, game).plugins.beach).toEqual({ next: 'high tide' })
-    const swum = apply({ ...state, sceneId: null }, game, { type: 'activity', id: 'swim' }).state
+    const swum = apply({ ...state, sceneId: null }, game, { type: 'action', id: 'swim' }).state
     expect(holds(swum, { 'tides/high': true }, game)).toBe(true)
     expect(holds(swum, { 'tides/high': true }, game)).toBe(true)
   })
@@ -234,7 +234,7 @@ describe('plugins working together', () => {
     const state = { ...startingState(game), sceneId: null }
     expect(view(state, game).plugins.beach).toEqual({ next: 'no tides here' })
     expect(holds(state, { 'tides/high': true }, game)).toBe(false)
-    expect(apply(state, game, { type: 'activity', id: 'swim' }).state.plugins).toEqual(state.plugins)
+    expect(apply(state, game, { type: 'action', id: 'swim' }).state.plugins).toEqual(state.plugins)
   })
 
   it('still report a plugin nobody cooperates with', () => {

@@ -18,7 +18,7 @@ describe('the runner', () => {
     const runner = createRunner(game, begin(game))
     const heard: string[] = []
     runner.subscribe((state) => heard.push(String(state.kv.at)))
-    expect(runner.apply({ type: 'activity', id: 'go-street' }).ok).toBe(true)
+    expect(runner.apply({ type: 'action', id: 'go-street' }).ok).toBe(true)
     expect(heard).toEqual(['street'])
     expect(runner.canUndo).toBe(false)
     expect(runner.undo()).toBe(false)
@@ -28,23 +28,23 @@ describe('the runner', () => {
   it('undoes and redoes when the game turns history on, as deep as it says', () => {
     const game = fixture()
     const runner = createRunner(game, begin(game), { history: { depth: 2 } })
-    runner.apply({ type: 'activity', id: 'go-street' })
-    runner.apply({ type: 'activity', id: 'go-house' })
-    runner.apply({ type: 'activity', id: 'go-street' })
+    runner.apply({ type: 'action', id: 'go-street' })
+    runner.apply({ type: 'action', id: 'go-house' })
+    runner.apply({ type: 'action', id: 'go-street' })
     expect(runner.undo()).toBe(true)
     expect(runner.undo()).toBe(true)
     expect(runner.state.kv.at).toBe('street')
     expect(runner.undo()).toBe(false)
     expect(runner.redo()).toBe(true)
     expect(runner.state.kv.at).toBe('house')
-    runner.apply({ type: 'activity', id: 'go-street' })
+    runner.apply({ type: 'action', id: 'go-street' })
     expect(runner.canRedo).toBe(false)
   })
 
   it('never undoes past a barrier: a new turn, an irreversible choice, or a condition', () => {
     const game = fixture()
     const night = createRunner(game, begin(game), { history: { stopAtNewTurn: true } })
-    night.apply({ type: 'activity', id: 'rest' })
+    night.apply({ type: 'action', id: 'rest' })
     expect(night.canUndo).toBe(false)
 
     const vow: Game = {
@@ -57,9 +57,9 @@ describe('the runner', () => {
     expect(sworn.canUndo).toBe(false)
 
     const marked = createRunner(game, begin(game), { history: { stopWhen: { kv: 'at', is: 'shop' } } })
-    marked.apply({ type: 'activity', id: 'go-street' })
+    marked.apply({ type: 'action', id: 'go-street' })
     expect(marked.canUndo).toBe(true)
-    marked.apply({ type: 'activity', id: 'go-shop' })
+    marked.apply({ type: 'action', id: 'go-shop' })
     expect(marked.canUndo).toBe(false)
   })
 
@@ -73,16 +73,16 @@ describe('the runner', () => {
       ['cafe.counter', 'Talk about the weather'],
       ['cafe.counter', 'Leave'],
     ])
-    runner.apply({ type: 'activity', id: 'go-street' })
+    runner.apply({ type: 'action', id: 'go-street' })
     expect(runner.backlog()).toHaveLength(2)
   })
 
   it('logs every command, and the log replays to the same state', () => {
     const game = fixture()
     const runner = createRunner(game, begin(game))
-    runner.apply({ type: 'activity', id: 'go-street' })
-    runner.apply({ type: 'activity', id: 'wait' })
-    runner.apply({ type: 'activity', id: 'go-nowhere' })
+    runner.apply({ type: 'action', id: 'go-street' })
+    runner.apply({ type: 'action', id: 'wait' })
+    runner.apply({ type: 'action', id: 'go-nowhere' })
     expect(runner.log().commands).toHaveLength(2)
     expect(unwrap(replay(game, runner.log()))).toEqual(runner.state)
   })
@@ -96,12 +96,12 @@ describe('the runner', () => {
       autosave: { every: 'turn' },
       now: () => clock,
     })
-    runner.apply({ type: 'activity', id: 'go-street' })
-    runner.apply({ type: 'activity', id: 'go-house' })
+    runner.apply({ type: 'action', id: 'go-street' })
+    runner.apply({ type: 'action', id: 'go-house' })
     await runner.settled()
     expect(await store.read('auto')).toEqual({ ok: true, value: null })
     clock = 60_000
-    runner.apply({ type: 'activity', id: 'rest' })
+    runner.apply({ type: 'action', id: 'rest' })
     await runner.settled()
     const auto = await store.read('auto')
     expect(auto.ok && auto.value?.meta.played).toBe(60_000)
@@ -128,11 +128,11 @@ describe('the runner when saving goes wrong, or comes from elsewhere', () => {
     const store = saves(game, { ...driver, get: inner.get, keys: inner.keys, remove: inner.remove })
     const errors: unknown[] = []
     const runner = createRunner(game, begin(game), { saves: store, autosave: { every: 'command' }, onSaveError: (error) => errors.push(error) })
-    runner.apply({ type: 'activity', id: 'go-street' })
+    runner.apply({ type: 'action', id: 'go-street' })
     await runner.settled()
     expect(errors).toHaveLength(1)
     fail = false
-    runner.apply({ type: 'activity', id: 'go-house' })
+    runner.apply({ type: 'action', id: 'go-house' })
     await runner.settled()
     const auto = await store.read('auto')
     expect(auto.ok && auto.value?.state.kv.at).toBe('house')
@@ -142,7 +142,7 @@ describe('the runner when saving goes wrong, or comes from elsewhere', () => {
     const game = fixture()
     const store = saves(game, memoryDriver())
     const runner = createRunner(game, begin(game), { saves: store, history: true, autosave: { every: 'command' } })
-    runner.apply({ type: 'activity', id: 'go-street' })
+    runner.apply({ type: 'action', id: 'go-street' })
     runner.undo()
     await runner.settled()
     const auto = await store.read('auto')
@@ -227,7 +227,7 @@ describe('the game’s say in saving', () => {
     runner.apply({ type: 'choose', id: 'bye' })
     expect(runner.view().saving).toEqual({ allowed: true, reason: null, visible: true })
     expect((await runner.save('one')).ok).toBe(true)
-    runner.apply({ type: 'activity', id: 'go-shop' })
+    runner.apply({ type: 'action', id: 'go-shop' })
     expect(runner.view().saving).toEqual({ allowed: false, reason: 'Not in the shop.', visible: false })
   })
 
@@ -275,7 +275,7 @@ describe('starting over from content', () => {
     expect(runner.log()).toEqual({ game: game.id, start: runner.state, commands: [], schema: SCHEMA, plugins: {} })
     expect(runner.canUndo).toBe(false)
     expect(runner.backlog()).toEqual([])
-    runner.apply({ type: 'activity', id: 'read' })
+    runner.apply({ type: 'action', id: 'read' })
     expect(runner.apply({ type: 'newGame' }).ok).toBe(true)
     expect(runner.state.stats.intelligence).toBe(5)
   })

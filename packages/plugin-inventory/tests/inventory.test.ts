@@ -118,8 +118,8 @@ describe('the inventory alone', () => {
   })
 
   it('works on a thing made in play like another, through its trait', () => {
-    const g = game([{ name: 'bag', activities: [{ id: 'pick', effects: [{ kind: 'create', like: 'food:apple', entity: { id: 'windfall' }, at: 'player' }] }] }])
-    const picked = run(begin(g), g, { type: 'activity', id: 'pick' })
+    const g = game([{ name: 'bag', actions: [{ id: 'pick', effects: [{ kind: 'create', like: 'food:apple', entity: { id: 'windfall' }, at: 'player' }] }] }])
+    const picked = run(begin(g), g, { type: 'action', id: 'pick' })
     const windfall = shown(g, picked).things.find((thing) => thing.ref === 'food:windfall')
     expect(windfall?.use?.label).toBe('Eat the apple')
     expect(statValue(run(picked, g, useThing('food:windfall')), g, 'energy')).toBe(15)
@@ -133,7 +133,7 @@ describe('the inventory alone', () => {
         {
           name: 'broken',
           entities: [{ id: 'pear', of: 'food', name: 'pear', traits: { 'inventory/usable': { label: '', effects: [{ kind: 'stat', stat: 'joy', by: 1 }] } } }],
-          activities: [{ id: 'eat', effects: [] }],
+          actions: [{ id: 'eat', effects: [] }],
           data: { inventory: { kinds: [{ id: 'drink' }] } },
         },
       ],
@@ -194,8 +194,8 @@ describe('the inventory with the cast', () => {
   })
 
   it('hands what a protagonist holds over to them as you', () => {
-    const g = game([{ ...town, activities: [{ id: 'be', effects: [{ kind: 'you', to: character('ava') }, give('food:apple')] }] }], [inventory(), cast()])
-    const played = run(begin(g), g, { type: 'activity', id: 'be' })
+    const g = game([{ ...town, actions: [{ id: 'be', effects: [{ kind: 'you', to: character('ava') }, give('food:apple')] }] }], [inventory(), cast()])
+    const played = run(begin(g), g, { type: 'action', id: 'be' })
     expect(shown(g, played).things.map((thing) => [thing.ref, thing.at])).toEqual([
       ['food:apple', 'character:ava'],
       ['food:apple', 'player'],

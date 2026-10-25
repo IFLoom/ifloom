@@ -8,7 +8,7 @@ import { fixture, loadWhole } from '../fixtures/town.ts'
 /** Content whose activities name things that are not there. (Places and characters are checked by their plugins.) */
 const broken: Content = {
   name: 'broken',
-  activities: [
+  actions: [
     {
       id: 'dig',
       label: 'Dig',
@@ -21,7 +21,7 @@ const broken: Content = {
 
 /** The town's rules and settings, with none of its content. */
 function baseOf() {
-  const { scenes: _s, introScene: _in, storylines: _t, activities: _a, stats: _st, ...base } = fixture()
+  const { scenes: _s, introScene: _in, storylines: _t, actions: _a, stats: _st, ...base } = fixture()
   return base
 }
 
@@ -33,13 +33,13 @@ describe('the loader', () => {
   it('checks what activities and actions name, as it does for scenes', () => {
     const base = {
       ...baseOf(),
-      actions: [{ id: 'nap', label: 'Nap', command: { type: 'activity' as const, id: 'rest' }, when: { storyline: 'dreams' } }],
+      actions: [{ id: 'nap', label: 'Nap', command: { type: 'action' as const, id: 'rest' }, when: { storyline: 'dreams' } }],
     }
     const problems = loadWhole([broken], base).problems.map(describeProblem)
     expect(problems).toEqual(
       expect.arrayContaining([
-        'broken · activity dig · unknown stat "stamina"',
-        'broken · activity dig · no custom effect named "game/findTreasure"',
+        'broken · action dig · unknown stat "stamina"',
+        'broken · action dig · no custom effect named "game/findTreasure"',
         'base · action nap · unknown storyline "dreams"',
       ]),
     )

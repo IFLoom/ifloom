@@ -1,17 +1,8 @@
 /** The high street: the way to everywhere, the weather, and the market's scarves. */
 import { give, holding, type Content } from '@ifloom/engine'
-import { onlyAt } from '@ifloom/plugin-places'
 import { place } from '../place.ts'
 
 export const highStreet: Content = {
-  activities: [
-    {
-      id: 'buyScarf',
-      cost: { stats: { coins: 8 } },
-      blocked: [onlyAt(['high-street']), { when: holding('clothing:scarf'), reason: 'You have one.' }],
-      effects: [give('clothing:scarf')],
-    },
-  ],
   variants: {
     'street.weather': ['street.weather.drizzle', 'street.weather.sun', 'street.weather.wind'],
   },
@@ -22,7 +13,15 @@ export const highStreet: Content = {
           ...place({ id: 'high-street', name: 'High Street', tags: ['outdoors'], exits: ['flat', 'cafe', 'park', 'office'] }),
           // The street, then a line about the weather, drawn afresh each day.
           body: [{ text: 'place.high-street' }, { variants: 'street.weather' }, { text: 'place.high-street.hint', when: { setting: 'hints' } }],
-          actions: [{ id: 'scarf', label: 'Buy a scarf at the market', command: { type: 'activity', id: 'buyScarf' } }],
+          actions: [
+            {
+              id: 'scarf',
+              label: 'Buy a scarf at the market',
+              cost: { stats: { coins: 8 } },
+              blocked: [{ when: holding('clothing:scarf'), reason: 'You have one.' }],
+              effects: [give('clothing:scarf')],
+            },
+          ],
         },
       ],
     },

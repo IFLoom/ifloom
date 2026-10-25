@@ -10,7 +10,7 @@ import { begin, fixture } from '../fixtures/town.ts'
 describe('the strings table', () => {
   it('says the engine’s words when the game gives none', () => {
     const game = fixture()
-    expect(whyNot(begin(game, { sceneId: 'rosa.hello' }), game, { type: 'activity', id: 'go-street' })).toBe(STRINGS.finishFirst)
+    expect(whyNot(begin(game, { sceneId: 'rosa.hello' }), game, { type: 'action', id: 'go-street' })).toBe(STRINGS.finishFirst)
     expect(say(game, 'notEnough', { stat: 'coins', n: 3 })).toBe('Not enough coins.')
   })
 
@@ -20,13 +20,13 @@ describe('the strings table', () => {
       strings: { finishFirst: 'Not yet, love.' },
     }
     const busy = begin(game, { sceneId: 'rosa.hello' })
-    expect(whyNot(busy, game, { type: 'activity', id: 'go-street' })).toBe('Not yet, love.')
-    expect(apply(busy, game, { type: 'activity', id: 'go-street' }).reason).toBe('Not yet, love.')
+    expect(whyNot(busy, game, { type: 'action', id: 'go-street' })).toBe('Not yet, love.')
+    expect(apply(busy, game, { type: 'action', id: 'go-street' }).reason).toBe('Not yet, love.')
   })
 
   it('come from packs too, so a translation can ship as a mod, later packs winning', () => {
-    const { scenes: _s, introScene: _in, storylines, activities, stats, ...base } = fixture()
-    const town = { name: 'town', storylines, activities, stats, scenes: _s }
+    const { scenes: _s, introScene: _in, storylines, actions, stats, ...base } = fixture()
+    const town = { name: 'town', storylines, actions, stats, scenes: _s }
     const dutch = { name: 'nl', strings: { finishFirst: 'Eerst dit afmaken.', tooEarly: 'Te vroeg.' } }
     const fixes = { name: 'nl-fixes', strings: { tooEarly: 'Nog te vroeg.' } }
     const { game } = loadGame([{ name: 'base', strings: { tooEarly: 'Too soon.' } }, town, dutch, fixes], { ...base })

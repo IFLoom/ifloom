@@ -61,7 +61,7 @@ function run(state: GameState, ...commands: CommandRef[]): GameState {
   return state
 }
 
-const act = (id: string): Command => ({ type: 'activity', id })
+const act = (id: string): Command => ({ type: 'action', id })
 const quests = (state: GameState) => view(state, game).plugins.quests as QuestsView
 
 describe('Small Town', () => {
@@ -112,12 +112,12 @@ describe('Small Town', () => {
       hotspots: [{ id: 'ava', rect: [36, 22, 28, 44], label: 'Talk to Ava', command: commandOf(talk('ava')), layer: 'counter' }],
     })
 
-    state = run(state, act('coffee'))
+    state = run(state, act('places/coffee'))
     expect(state.stats).toMatchObject({ coins: 9, energy: 95 })
-    expect(apply(state, game, act('coffee')).reason).toBe('One is enough for today.')
+    expect(apply(state, game, act('places/coffee')).reason).toBe('One is enough for today.')
 
     state = run(state, talk('ava'), { type: 'choose', id: 'chat' }, { type: 'choose', id: 'bye' })
-    state = run(state, openCamera, act('photo-ava'), act('post'))
+    state = run(state, openCamera, act('devices/photo-ava'), act('devices/post'))
     const social = (view(state, game).plugins.feed as FeedsView).feeds[0]
     expect(social.posts[0]).toMatchObject({ mine: true, text: 'New town, new faces.' })
     expect(social.posts[0].likes).toBeGreaterThan(2)
@@ -196,7 +196,7 @@ describe('Small Town', () => {
     expect(missed.kv.missedAva).toBe(true)
     expect(missed.notices.map((notice) => notice.title)).toContain('Missed call: Ava')
     // It rings once.
-    expect(run(on(missed, 3, 'evening'), { type: 'activity', id: 'openWardrobe' }).sceneId).toBeNull()
+    expect(run(on(missed, 3, 'evening'), { type: 'action', id: 'places/wardrobe' }).sceneId).toBeNull()
   })
 
   it('charges rent on Sundays, and meets Ava by the river once a friendship has had time', () => {
@@ -334,7 +334,7 @@ describe('Small Town', () => {
     state = apply(state, full.game, { type: 'choose', id: 'unpack' }).state
     state = apply(on(state, 1, 'morning'), full.game, go('high-street')).state
     state = apply(state, full.game, go('cafe')).state
-    state = apply(state, full.game, act('sit')).state
+    state = apply(state, full.game, act('places/sit')).state
     expect(state.sceneId).toBe('cafe.back-room')
     expect(view(state, full.game).scene.title).toBe('The back room')
   })
@@ -342,7 +342,7 @@ describe('Small Town', () => {
   it('draws something to happen when you sit a while at the café, and a quiet table when nothing can', () => {
     const sitDown = (seed: number) => {
       let state = run(startingState(game, { seed }), { type: 'choose', id: 'unpack' })
-      state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'), act('sit'))
+      state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'), act('places/sit'))
       return state
     }
     const drawn = new Set(Array.from({ length: 20 }, (_, seed) => sitDown(seed).sceneId))
@@ -355,15 +355,15 @@ describe('Small Town', () => {
       sceneId: null,
       seen: { ...state.seen, 'cafe.window': { n: 2, first: 1, last: 5 }, 'cafe.crossword': { n: 1, first: 4, last: 4 } },
     }
-    const after = run(spent, act('sit'))
+    const after = run(spent, act('places/sit'))
     expect(view(after, game).scene.title).toBe('A quiet table')
   })
 
   it('plays quick feet at the park: inputs in time win coins, letting the clock run out loses', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
-    state = run(on(state, 1, 'morning'), go('high-street'), go('park'), act('arrows'))
+    state = run(on(state, 1, 'morning'), go('high-street'), go('park'), act('places/arrows'))
     expect(view(state, game).minigame).toMatchObject({ id: 'arrows', title: 'Quick feet', timeLeft: 1500, inputs: ['up', 'down', 'left', 'right'] })
-    expect(apply(state, game, act('jog')).reason).toBe('Finish this first.')
+    expect(apply(state, game, act('places/jog')).reason).toBe('Finish this first.')
     const coins = state.stats.coins
     // Three arrows pressed in time, after a moment's thought; the last two left to time out.
     for (let round = 0; round < 3; round += 1) {
@@ -378,7 +378,7 @@ describe('Small Town', () => {
     expect(view(state, game).scene.body).toContain('you win')
 
     // Again, and this time every arrow times out in one long wait.
-    state = run(state, { type: 'choose', id: 'leave' }, act('arrows'), { type: 'tick', ms: 10_000 })
+    state = run(state, { type: 'choose', id: 'leave' }, act('places/arrows'), { type: 'tick', ms: 10_000 })
     expect(state.minigame).toBeNull()
     expect(state.sceneId).toBe('park.arrows-lost')
     expect(state.kv['minigame:arrows']).toBe(2)
@@ -386,7 +386,7 @@ describe('Small Town', () => {
 
   it('leaves you caffeinated after a coffee, for the rest of the day and the next', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
-    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'), act('coffee'), go('high-street'), go('office'), act('work'))
+    state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'), act('places/coffee'), go('high-street'), go('office'), act('places/work'))
     // 80 kept, plus 15 for the coffee, less 30 for the shift: 65, and 10 more on top while it lasts.
     expect(state.stats.energy).toBe(65)
     expect(statValue(state, game, 'energy')).toBe(75)
@@ -408,11 +408,11 @@ describe('Small Town', () => {
     const button = view(state, game).actions.find((action) => action.id === 'buy-sandwich')!
     expect(button.price?.stats).toEqual([{ id: 'coins', amount: 4, text: '4 coins' }])
     const coins = state.stats.coins
-    state = run(state, act('buySandwich'))
+    state = run(state, act('places/buy-sandwich'))
     expect(state.stats.coins).toBe(coins - 4)
     expect(heldCount(state, game, 'item:sandwich')).toBe(1)
     // Only in the café.
-    expect(apply(run(state, go('high-street')), game, act('buySandwich')).reason).toBeDefined()
+    expect(apply(run(state, go('high-street')), game, act('places/buy-sandwich')).reason).toBeDefined()
   })
 
   it('sells from the café counter: two flapjacks a day, half off one thing, and half back on a sandwich', () => {
@@ -517,7 +517,7 @@ describe('Small Town', () => {
     // The stones line holds the inline action that rolls.
     const inline = view(state, game).scene.beats.flatMap((beat) => ('spans' in beat && beat.spans ? beat.spans : []))
     expect(inline.some((span) => span.kind === 'action' && span.text === 'Try to skim a stone' && span.choice.id === 'skim')).toBe(true)
-    state = run(state, act('skim'))
+    state = run(state, act('places/skim'))
     const [skim] = view(state, game).rolls
     expect(skim).toMatchObject({ key: 'skim', dice: '2d6', against: 8 })
     expect(state.kv.skim).toBe(skim.total)
@@ -535,7 +535,7 @@ describe('Small Town', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
     state = run(on(state, 1, 'morning'), go('high-street'), go('office'))
     expect(apply(state, game, openCamera).reason).toBe('Not at work.')
-    state = run(state, act('work'))
+    state = run(state, act('places/work'))
     expect(state.stats.coins).toBe(32)
   })
 

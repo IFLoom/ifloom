@@ -29,10 +29,10 @@ function withTriggers(): Game {
 describe('triggers', () => {
   it('fire the first time their condition holds after a command, and only once', () => {
     const game = withTriggers()
-    let state = apply(begin(game), game, { type: 'activity', id: 'go-street' }).state
+    let state = apply(begin(game), game, { type: 'action', id: 'go-street' }).state
     expect(state.notices.map((notice) => notice.title)).toEqual(['A note on the mat'])
     expect(state.stats.intelligence).toBe(6)
-    state = apply(apply(state, game, { type: 'activity', id: 'go-house' }).state, game, { type: 'activity', id: 'go-street' }).state
+    state = apply(apply(state, game, { type: 'action', id: 'go-house' }).state, game, { type: 'action', id: 'go-street' }).state
     expect(state.notices).toHaveLength(1)
     expect(state.fired).toMatchObject({ note: 2, read: 2 })
   })
@@ -40,19 +40,19 @@ describe('triggers', () => {
   it('can fire once a turn', () => {
     const game = withTriggers()
     const shop = begin(game, { kv: { at: 'street' } })
-    let state = apply(shop, game, { type: 'activity', id: 'go-shop' }).state
-    state = apply(state, game, { type: 'activity', id: 'read' }).state
+    let state = apply(shop, game, { type: 'action', id: 'go-shop' }).state
+    state = apply(state, game, { type: 'action', id: 'read' }).state
     expect(state.stats.luck).toBe(1)
-    state = apply({ ...state, turn: 3 }, game, { type: 'activity', id: 'read' }).state
+    state = apply({ ...state, turn: 3 }, game, { type: 'action', id: 'read' }).state
     expect(state.stats.luck).toBe(2)
   })
 
   it('count a scene they open as seen', () => {
     const game = {
       ...withTriggers(),
-      activities: [...(fixture().activities ?? []), { id: 'ring', effects: [{ kind: 'kv' as const, key: 'callRosa', to: true }] }],
+      actions: [...(fixture().actions ?? []), { id: 'ring', effects: [{ kind: 'kv' as const, key: 'callRosa', to: true }] }],
     }
-    const state = apply(begin(game), game, { type: 'activity', id: 'ring' }).state
+    const state = apply(begin(game), game, { type: 'action', id: 'ring' }).state
     expect(state.sceneId).toBe('rosa.hello')
     expect(state.seen['rosa.hello']?.n).toBe(1)
   })

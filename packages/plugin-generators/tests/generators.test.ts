@@ -46,7 +46,7 @@ function game(): Game {
       { id: 'mood', label: 'Mood', of: 'visitor', max: 5 },
       { id: 'patience', label: 'Patience', of: 'visitor' },
     ],
-    activities: [
+    actions: [
       { id: 'crowd', effects: [generate('visitor', 3)] },
       { id: 'one', effects: [generate('visitor')] },
       { id: 'sleep', effects: [{ kind: 'turn' }] },
@@ -60,7 +60,7 @@ function game(): Game {
 
 function run(state: GameState, g: Game, ...ids: string[]): GameState {
   for (const id of ids) {
-    const out = apply(state, g, { type: 'activity', id })
+    const out = apply(state, g, { type: 'action', id })
     expect(out.reason).toBeUndefined()
     state = out.state
   }
@@ -117,7 +117,7 @@ describe('generators', () => {
   it('replay exactly, and an old save loads', () => {
     const g = game()
     const runner = createRunner(g, fresh(g))
-    for (const id of ['crowd', 'sleep', 'one', 'crowd']) runner.apply({ type: 'activity', id })
+    for (const id of ['crowd', 'sleep', 'one', 'crowd']) runner.apply({ type: 'action', id })
     expect(entitiesOf(runner.state, g, 'visitor')).toHaveLength(7)
     expect(replay(g, runner.log())).toEqual({ ok: true, value: runner.state })
     const { plugins: _none, ...old } = fresh(g)
@@ -148,7 +148,7 @@ describe('generators', () => {
             { id: 'patience', label: 'Patience', of: 'visitor' },
           ],
           entities: [{ id: 'pattern', of: 'visitor', name: 'A regular', stats: { mood: 1, patience: 4 } }],
-          activities: [{ id: 'one', effects: [generate('regular')] }],
+          actions: [{ id: 'one', effects: [generate('regular')] }],
           data: { generators: { pools, templates: [regular] } },
         },
       ],
@@ -177,7 +177,7 @@ describe('generators', () => {
         {
           name: 'mod',
           kinds: [{ id: 'stall', label: 'Stall' }],
-          activities: [
+          actions: [
             { id: 'x', effects: [generate('nope')] },
             { id: 'y', effects: [generate('ghost', 0)] },
           ],
@@ -192,8 +192,8 @@ describe('generators', () => {
       { id: 'g', title: 'g', plugins: [generators()] },
     )
     expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
-      'activity x: unknown template "nope"',
-      'activity y: count must be a whole number, 1 or more',
+      'action x: unknown template "nope"',
+      'action y: count must be a whole number, 1 or more',
       'templates ghost: unknown kind "ghost"',
       'templates ghost: no ghost stat named "fear"',
       'templates ghost: unknown pool "names"',

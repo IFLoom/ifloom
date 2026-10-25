@@ -44,21 +44,6 @@ function game(withPlugins = true): Game {
   return loadGame(
     [
       {
-        name: 'base',
-        actions: [
-          { id: 'coffee', label: 'Have a coffee', command: { type: 'activity', id: 'coffee' } },
-          { id: 'sleep', label: 'Sleep', command: { type: 'activity', id: 'sleep' } },
-          ...(withPlugins
-            ? [
-                { id: 'counter', label: 'Go to the counter', command: { type: 'activity' as const, id: 'counter' } },
-                { id: 'board', label: 'Read the job board', command: { type: 'activity' as const, id: 'board' } },
-                { id: 'paper', label: 'Read the paper', command: { type: 'activity' as const, id: 'paper' } },
-              ]
-            : []),
-          { id: 'pockets', label: 'Check your pockets', command: { type: 'activity', id: 'pockets' } },
-        ],
-      },
-      {
         name: 'street',
         stats: [
           { id: 'coins', label: 'Coins', start: 5, max: 999, spendable: true, format: '{n} coins', lacking: 'You need {n} coins.' },
@@ -76,13 +61,14 @@ function game(withPlugins = true): Game {
           { id: 'flapjack', of: 'food', name: 'Flapjack' },
           { id: 'cake', of: 'food', name: 'Cake' },
         ],
-        activities: [
-          { id: 'coffee', effects: [applyStatus('buzz')] },
-          { id: 'sleep', effects: [{ kind: 'turn' }] },
-          { id: 'counter', effects: [openShop('counter')] },
-          { id: 'board', effects: [openJobs()] },
-          { id: 'paper', effects: [openJobs(['weekend'])] },
-          { id: 'pockets', effects: [{ kind: 'panel', panel: 'pockets', with: { title: 'Your pockets' } }] },
+        actions: [
+          { id: 'coffee', label: 'Have a coffee', effects: [applyStatus('buzz')] },
+          { id: 'sleep', label: 'Sleep', effects: [{ kind: 'turn' }] },
+          // The counter and the jobs are buttons only when the game has their plugins.
+          { id: 'counter', ...(withPlugins ? { label: 'Go to the counter' } : {}), effects: [openShop('counter')] },
+          { id: 'board', ...(withPlugins ? { label: 'Read the job board' } : {}), effects: [openJobs()] },
+          { id: 'paper', ...(withPlugins ? { label: 'Read the paper' } : {}), effects: [openJobs(['weekend'])] },
+          { id: 'pockets', label: 'Check your pockets', effects: [{ kind: 'panel', panel: 'pockets', with: { title: 'Your pockets' } }] },
         ],
         data: {
           shop: {
@@ -340,7 +326,7 @@ describe('the statuses', () => {
     expect(buzz.getByText('Buzzing')).toBeTruthy()
     expect(buzz.getByText('2 turns left')).toBeTruthy()
     expect(buzz.getByText('+10 Energy')).toBeTruthy()
-    act(() => void runner.apply({ type: 'activity', id: 'sleep' }))
+    act(() => void runner.apply({ type: 'action', id: 'sleep' }))
     expect(buzz.getByText('1 turn left')).toBeTruthy()
   })
 })
@@ -431,7 +417,7 @@ describe('the panels', () => {
         <PanelHost />
       </GameProvider>,
     )
-    act(() => void runner.apply({ type: 'activity', id: 'counter' }))
+    act(() => void runner.apply({ type: 'action', id: 'counter' }))
     expect(screen.getByRole('dialog', { name: 'The counter' })).toBeTruthy()
   })
 })

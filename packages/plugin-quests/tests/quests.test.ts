@@ -25,7 +25,7 @@ const secret: QuestDef = { id: 'secret', title: 'A secret', secret: true, starts
 function game(extra: QuestDef[] = []): Game {
   const town: Content = {
     name: 'town',
-    activities: [
+    actions: [
       { id: 'getHungry', effects: [{ kind: 'kv', key: 'hungry', to: true }] },
       // Out and in again: all the quest asks of where the player is.
       { id: 'goOut', effects: [{ kind: 'kv', key: 'out', to: true }] },
@@ -56,7 +56,7 @@ function run(state: GameState, g: Game, ...commands: Parameters<typeof apply>[2]
   return state
 }
 
-const act = (id: string) => ({ type: 'activity' as const, id })
+const act = (id: string) => ({ type: 'action' as const, id })
 const shown = (state: GameState, g: Game) => view(state, g).plugins.quests as QuestsView
 
 describe('quests', () => {
@@ -74,7 +74,7 @@ describe('quests', () => {
     let state = run({ ...startingState(g), sceneId: null }, g, act('getHungry'), act('buyLoaf'))
     // The loaf is bought, but the street stage comes first.
     expect(shown(state, g).active[0]).toMatchObject({ stage: 0, hint: 'Go out to the street.' })
-    state = run(state, g, { type: 'activity', id: 'goOut' })
+    state = run(state, g, { type: 'action', id: 'goOut' })
     expect(shown(state, g).done).toEqual([expect.objectContaining({ id: 'bread', hint: '', doneOn: state.turn })])
     expect(holds(state, questDone('bread'), g)).toBe(true)
     expect(holds(state, questReached('bread', 'out'), g)).toBe(true)
@@ -82,8 +82,8 @@ describe('quests', () => {
 
   it('keep progress once it is made', () => {
     const g = game()
-    let state = run({ ...startingState(g), sceneId: null }, g, act('getHungry'), { type: 'activity', id: 'goOut' })
-    state = run(state, g, { type: 'activity', id: 'goIn' })
+    let state = run({ ...startingState(g), sceneId: null }, g, act('getHungry'), { type: 'action', id: 'goOut' })
+    state = run(state, g, { type: 'action', id: 'goIn' })
     // Back in the house, the street stage stays done.
     expect(shown(state, g).active[0]).toMatchObject({ stage: 1, hint: 'Buy a loaf.' })
     state = run(state, g, act('buyLoaf'), act('eat'))
@@ -114,7 +114,7 @@ describe('quests', () => {
     expect(shown(state, g).updates).toBe(2)
     state = run(state, g, seeQuests('bread'))
     expect(shown(state, g).updates).toBe(1)
-    state = run(state, g, seeQuests(), { type: 'activity', id: 'goOut' })
+    state = run(state, g, seeQuests(), { type: 'action', id: 'goOut' })
     expect(shown(state, g).active.find((quest) => quest.id === 'bread')?.updated).toBe(true)
     expect(view(state, g).plugins.quests).toMatchObject({ updates: 1 })
   })

@@ -1,4 +1,5 @@
 import {
+  actionById,
   apply,
   buildEffects,
   entitiesOf,
@@ -90,7 +91,7 @@ function isBed(command: Command): boolean {
 /** Does this place offer a bed: an action, its own or the game's, that goes to bed? */
 function hasBed(game: Game, all: Place[], locationId: string | null): boolean {
   const actions = [...(all.find((place) => place.id === locationId)?.actions ?? []), ...(game.actions ?? [])]
-  return actions.some((action) => isBed(commandOf(action.command)))
+  return actions.some((action) => action.command !== undefined && isBed(commandOf(action.command)))
 }
 
 /** The first step on the shortest walk from here to a place where `goal` holds, if there is one. */
@@ -158,14 +159,13 @@ export function explorer(): Policy {
       today.add(`talk:${person.id}`)
       return person.command
     }
-    // Something to do here that isn't simply passing time, nor the end of the turn: an activity with an effect, or another command.
+    // Something to do here that isn't simply passing time, nor the end of the turn: an action with an effect, or another command.
     const action = screen.actions.find((entry) => {
       if (entry.disabled || entry.warning || today.has(`do:${entry.id}`) || isBed(entry.command)) return false
       if (endsTurn(game, state, entry.command)) return false
-      if (entry.command.type !== 'activity') return true
-      // An activity that only lets time pass is waiting, not doing; its cost does not count.
-      const id = entry.command.id
-      const effects = buildEffects(state, game, (game.activities ?? []).find((activity) => activity.id === id)?.effects ?? [])
+      if (entry.command.type !== 'action') return true
+      // An action that only lets time pass is waiting, not doing; its cost does not count.
+      const effects = buildEffects(state, game, actionById(state, game, entry.command.id)?.effects ?? [])
       return effects.some((effect) => !(effect.kind === 'custom' && effect.name === 'calendar/pass'))
     })
     if (action) {

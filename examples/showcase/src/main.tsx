@@ -1,7 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { indexedDbDriver, localStorageDriver } from '@ifloom/browser'
-import { createRunner, mods, profile, saves, startingState } from '@ifloom/engine'
+import { createRunner, describeProblem, mods, profile, saves, startingState } from '@ifloom/engine'
 import { GameShell, type PagesOptions } from '@ifloom/react'
 import { unlockedPacks } from '@ifloom/plugin-unlocks'
 import { smallTown } from './game.ts'
@@ -17,7 +17,9 @@ const unlocked = await unlockedPacks('small-town', stored)
 
 // The player's mods live in IndexedDB; they're loaded over the town at start-up.
 const modStore = mods('small-town', indexedDbDriver({ database: 'small-town-mods' }))
-const { game, problems } = smallTown({ withDebug: import.meta.env.DEV, unlocked: unlocked.packs, mods: await modStore.packs() })
+const built = smallTown({ withDebug: import.meta.env.DEV, unlocked: unlocked.packs, mods: await modStore.packs() })
+const { game } = built
+const problems = built.problems.map(describeProblem)
 if (problems.length) console.warn(problems.join('\n'))
 
 // The title screen's New game starts afresh with a random seed; this state is

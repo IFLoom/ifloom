@@ -156,7 +156,7 @@ describe('ifloom new', () => {
     expect(pkg.scripts.playtest).toMatch(/^ifloom playtest/)
     expect(readFileSync(join(dir, 'next.config.ts'), 'utf8')).not.toContain('transpilePackages')
     expect(readFileSync(join(dir, 'app/Game.tsx'), 'utf8')).toMatch(/^'use client'/)
-    expect(readFileSync(join(dir, 'app/Game.tsx'), 'utf8')).toContain('browserRunner(loaded.game)')
+    expect(readFileSync(join(dir, 'app/Game.tsx'), 'utf8')).toContain('browserRunner(game)')
     expect(readFileSync(join(dir, 'app/Game.tsx'), 'utf8')).toContain('layout={Layout}')
     expect(readFileSync(join(dir, 'src/layout.tsx'), 'utf8')).toContain('<Sidebar>')
     expect(readFileSync(join(dir, 'app/layout.tsx'), 'utf8')).toContain("title: 'The Door'")

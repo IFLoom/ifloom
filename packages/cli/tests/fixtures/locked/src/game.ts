@@ -1,4 +1,5 @@
 import { loadGame, type Content, type Pack } from '@ifloom/engine'
+import { defineGame } from '@ifloom/cli/game'
 import { unlocks } from '@ifloom/plugin-unlocks'
 
 /** The code is FIXTURE-CODE-1234, from .env; this is its hash, with few rounds for a quick test. */
@@ -16,4 +17,4 @@ export function build({ unlocked = [] as Pack[] } = {}) {
   return loadGame([{ name: 'base', introScene: 'intro' }, town], { id: 'locked-fixture', title: 'Locked', plugins: [unlocks()] }, { packs: unlocked })
 }
 
-export default build
+export default defineGame({ build })

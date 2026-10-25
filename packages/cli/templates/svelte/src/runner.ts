@@ -5,9 +5,10 @@
 import { readable } from 'svelte/store'
 import { startAudio } from '@ifloom/audio'
 import { browserRunner, startClock, startKeys } from '@ifloom/browser'
-import loaded from './game.ts'
+import module from './game.ts'
 
-const { game, problems } = loaded
+// The game module builds the game, and says what the loader found wrong with it.
+const { game, problems } = module.build()
 if (problems.length) console.warn(problems)
 
 // A new game with a random seed, undo, saves in localStorage and an autosave each turn.

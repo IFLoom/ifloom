@@ -8,7 +8,7 @@ import { useEffect, useState } from 'react'
 import { browserRunner } from '@ifloom/browser'
 import type { Runner } from '@ifloom/engine'
 import { GameShell, useAudio, type PluginUi } from '@ifloom/react'
-import loaded from '../src/game.ts'
+import module from '../src/game.ts'
 import { Layout } from '../src/layout.tsx'
 
 /** The plugins' own UIs. One list for the whole app, so the provider keeps the same one. */
@@ -18,10 +18,12 @@ export function Game() {
   const [runner, setRunner] = useState<Runner | null>(null)
 
   useEffect(() => {
-    if (loaded.problems.length) console.warn(loaded.problems)
+    // The game module builds the game, and says what the loader found wrong with it.
+    const { game, problems } = module.build()
+    if (problems.length) console.warn(problems)
     // A new game with a random seed, undo, saves in localStorage and an autosave each turn.
     let live = true
-    void browserRunner(loaded.game).then((made) => {
+    void browserRunner(game).then((made) => {
       if (live) setRunner(made)
     })
     return () => {

@@ -1,6 +1,6 @@
 ---
 title: "The CLI"
-description: "The ifloom command: new, dev, build, check, playtest, snapshot and unlock-hash, the Vite preset, and the functions behind them for scripts."
+description: "The ifloom command: new, dev, build, check, playtest, snapshot and unlock-hash, the game module it reads, the Vite preset, and the functions behind them for scripts."
 ---
 `@ifloom/cli` starts new games, runs your game while you write it, and builds it into a folder that opens from disk. It can also check the game for problems the loader finds, play it with no one at the keyboard, and record how every scene reads. It has seven commands and a Vite preset:
 
@@ -15,6 +15,8 @@ description: "The ifloom command: new, dev, build, check, playtest, snapshot and
 | `ifloom unlock-hash <unlock> [module]` | Prints the hash of an unlock's code, for the [unlocks plugin](/docs/plugins/unlocks), without printing the code. |
 
 Start a game with `npm create ifloom`, which runs `ifloom new`, and run the others from the game's folder. They use the `vite.config.ts` there, which is where the [preset](#the-vite-preset) goes. [Small Town](/docs/guide/showcase) is built with them.
+
+`check`, `playtest`, `snapshot` and `unlock-hash` read the game from its [game module](#the-game-module), `src/game.ts`, whose default export is made with `defineGame`.
 
 `check`, `playtest` and `snapshot` load the game module with the CLI's own Vite and need no `vite.config.ts`, so they work the same in a game built with [Next.js](/docs/recipes/next), [webpack](/docs/recipes/webpack) or [esbuild](/docs/recipes/esbuild). `dev` and `build` are the parts those tools replace.
 
@@ -66,7 +68,7 @@ The `ifloom` command is compiled JavaScript and needs Node 20.19 or later, or 22
 
 ### Type-checking scripts that use the CLI
 
-A game's `tsconfig.json` covers code that runs in the browser. A file that imports `@ifloom/cli`, such as a [playtest policy](#policy), pulls in the CLI's types, which use Node's modules, so `tsc` reports `Cannot find name 'node:fs'`. Either keep such files out of `include` (in a `tools/` folder, say), or add `@types/node` to your dev dependencies and `"node"` to `types`.
+A game's `tsconfig.json` covers code that runs in the browser. `@ifloom/cli/game`, which the [game module](#the-game-module) imports, uses only the engine, so it type-checks there and the page can import it. A file that imports `@ifloom/cli` itself, such as a script that calls [`snapshot`](#snapshot), pulls in the CLI's types, which use Node's modules, so `tsc` reports `Cannot find name 'node:fs'`. Either keep such files out of `include` (in a `tools/` folder, say), or add `@types/node` to your dev dependencies and `"node"` to `types`.
 
 ## ifloom new
 
@@ -206,6 +208,113 @@ Vite reads `.env`, `.env.local` and `.env.production` from the game's folder. Pu
 
 **What it doesn't check.** The build isn't searched for `fetch` or a dynamic `import()`. A bundled library can name `fetch` without ever calling it, so finding the word in the output means nothing. The engine's and the UI's own contract tests check their source never loads anything at runtime. Your own code has to keep that rule too.
 
+## The game module
+
+Every command that reads the game reads it from `src/game.ts`, or the module named on the command line. Its default export is made with `defineGame`, from `@ifloom/cli/game`:
+
+```ts
+// src/game.ts
+import { loadGame, startingState } from '@ifloom/engine'
+import { defineGame, probe } from '@ifloom/cli/game'
+import { stats } from './world/stats.ts'
+import { opening } from './story/opening.ts'
+
+export default defineGame({
+  build: ({ unlocked }) => loadGame([stats, opening], { id: 'my-story', title: 'My Story' }, { packs: unlocked }),
+  // Each of these is optional.
+  start: (game) => startingState(game, { kv: { playerName: 'Robin' } }),
+  probes: (game) => [probe('start', game, []), probe('knocked', game, [{ play: { type: 'choose', id: 'knock' } }])],
+})
+```
+
+The page builds the game from the same module, so the game the CLI checks is the one the player gets:
+
+```ts
+// src/main.ts, in any UI
+import module from './game.ts'
+
+const { game, problems } = module.build()
+if (problems.length) console.warn(problems)
+```
+
+`@ifloom/cli/game` imports only the engine, so the page can import it without bringing Node or Vite into the browser build.
+
+A module whose default export isn't made with `defineGame` stops the command with this message, and the command exits with `1`:
+
+```
+The game module's default export isn't made with defineGame. Export the game with defineGame:
+
+  import { loadGame } from '@ifloom/engine'
+  import { defineGame } from '@ifloom/cli/game'
+
+  export default defineGame({
+    build: ({ unlocked }) => loadGame(content, { id: 'my-story', title: 'My Story' }, { packs: unlocked }),
+  })
+
+See https://ifloom.dev/docs/cli#the-game-module
+```
+
+### defineGame
+
+```ts
+function defineGame(def: GameModuleDef): GameModule
+
+type GameModuleDef = {
+  build: (options: BuildOptions) => { game: Game; problems: Problem[] }
+  start?: (game: Game) => GameState
+  probes?: (game: Game) => Probe[]
+  policy?: Policy
+}
+
+type BuildOptions = { unlocked: Pack[] }
+
+type GameModule = Omit<GameModuleDef, 'build'> & {
+  build: (options?: Partial<BuildOptions>) => { game: Game; problems: Problem[] }
+}
+```
+
+- **`build`** makes the game. It returns what [`loadGame`](/docs/reference/loader#loadgame) returns, or at least its `game` and its `problems`. The CLI prints each [`Problem`](/docs/reference/checks#problem-and-describeproblem) with `describeProblem` and doesn't check the game a second time. `unlocked` holds the packs to load over the content, for `loadGame`'s `{ packs: unlocked }`. `ifloom check` passes a game's [locked content](#locked-content-in-a-check) here. Otherwise it's empty. The module `defineGame` returns has a `build` you can call with no options, as a page does.
+- **`start`** is where `ifloom playtest` starts. `ifloom snapshot` reads it too when there are no `probes`. Without it, the start is [`startingState(game)`](/docs/reference/commands#startingstate).
+- **`probes`** are the states `ifloom snapshot` renders every scene and place in, each made with [`probe`](#probe).
+- **`policy`** picks each command `ifloom playtest` plays. Without it, the policy is [`explorer()`](#explorer). `@ifloom/cli/game` exports `explorer` and the `Policy` type too.
+
+`build` returns a loaded game, never a `Game` put together by hand. `loadGame` is the one way content becomes a game. It merges the plugins' content and the packs, lays the words tables over them and runs the content checker, and the problems it finds are what `check` prints. A game that's built more than one way, such as with a debug plugin in development, takes options of its own and calls that from `build`. Small Town's `build` is `({ unlocked }) => smallTown({ unlocked })`: the release build, with no debug plugin and no mods.
+
+### probe
+
+```ts
+function probe(name: string, game: Game, steps: readonly ProbeStep[], from?: Probe | GameState): Probe
+
+type ProbeStep = Effect | { play: CommandRef }
+```
+
+A probe made by playing. It starts from the game's [starting state](/docs/reference/commands#startingstate), or from `from` (another probe, or a state), and takes each step in order:
+
+- **An [effect](/docs/reference/effects)** is applied as content applies it. That can be any effect, a plugin's included, such as `{ 'calendar/set': { period: 'afternoon' } }` or `{ 'statuses/apply': { status: 'caffeinated' } }`.
+- **`{ play: command }`** plays a [command](/docs/reference/commands) as if the player pressed its button, with everything that follows a command: triggers, plugins' hooks, and the scene it opens counted as seen.
+
+So a probe never writes the state's own shape, and it stays a whole state when the game or a plugin adds a field.
+
+```ts
+import { sleep } from '@ifloom/plugin-calendar'
+
+probes: (game) => {
+  // The first night, played: unpack, then go to bed.
+  const morning = probe('first-morning', game, [{ play: { type: 'choose', id: 'unpack' } }, { play: sleep() }])
+  // Six days on from there, in the afternoon, with the cat named.
+  const later = probe('a-week-in', game, [{ turn: { by: 6 } }, { 'calendar/set': { period: 'afternoon' } }, { kv: 'catName', to: 'Biscuit' }], morning)
+  return [probe('moving-day', game, []), morning, later]
+}
+```
+
+A command that's refused throws, with the probe's name and the reason, such as `probe first-morning: {"type":"choose","id":"unpack"} was refused: …`. So a probe can't quietly stop short of the state it's meant to reach.
+
+**Gotchas.**
+
+- **Only a command counts as a viewing.** The `scene` effect opens a scene but doesn't add to `seen`, as in play, where only the scene a command leaves the player looking at is seen. To have a scene seen, play it: `{ play: { type: 'scene', id: 'ava.hi' } }`, then `{ play: { type: 'leave' } }`.
+- **Effects skip the locks; commands don't.** An effect is applied whatever the locks and guards say. A command is refused when the player's would be, so play commands in the order a player could press them.
+- **A `turn` effect runs the whole turn.** The game's `onTurn` rules and every plugin's hooks run each time, as in play, so rent is paid and messages arrive. `calendar/set` alone ends no turn and leaves the turn count where it was.
+
 ## ifloom check
 
 ```sh
@@ -213,7 +322,7 @@ ifloom check                     # reads src/game.ts
 ifloom check src/release.ts      # another module
 ```
 
-Loads the module through Vite, so it can import TypeScript, the engine and anything your config resolves. It takes the game the module exports and prints every problem the [content checker](/docs/reference/checks) finds, one per line, then a count. A loaded game's problems come from `loadGame`, which ran the checker already. A game built by hand is checked here, and its problems name the pack `game`. Either way each problem is printed once.
+Loads the [game module](#the-game-module) through Vite, so it can import TypeScript, the engine and anything your config resolves. It builds the game and prints every problem the [content checker](/docs/reference/checks) found while `loadGame` ran, one per line, then a count.
 
 ```
 No problems.
@@ -237,11 +346,11 @@ locations cafe: no file public/art/cafe/room.jpg
 
 ### Locked content in a check
 
-A game with [locked content](#locked-content) is checked with it. `check` reads the packs in `src/unlocks/` from source, so it needs no code, and passes them to the module's function as `{ unlocked }` (see below). It checks the game with them, and reports:
+A game with [locked content](#locked-content) is checked with it. `check` reads the packs in `src/unlocks/` from source, so it needs no code, and passes them to the module's `build` as `{ unlocked }` (see [`defineGame`](#definegame)). It checks the game with them, and reports:
 
 - a file in `src/unlocks/` whose name isn't one of the game's unlocks
 - a code that's set (in the environment or a `.env` file) but doesn't match its unlock's hash
-- a module that left the packs out of its game. The message says to pass them to `loadGame` as `{ packs: unlocked }`.
+- a module whose `build` left the packs out of its game. The message says to pass them to `loadGame` as `{ packs: unlocked }`.
 
 An unlock whose code isn't set gets a note, and doesn't count as a problem. The game without its unlocks is checked as well. What it lacks that the locked packs bring, such as a scene only they have, is listed after the problems as references into locked content, skipped. Make sure the game reaches each of those only behind `unlocks/has`.
 
@@ -252,42 +361,6 @@ Without its unlocks the game has 1 reference into locked content, skipped here. 
 No problems.
 ```
 
-### What the module exports
-
-Export the game as `default` or as `game`, in any of these shapes:
-
-- a [`Game`](/docs/reference/game#game).
-- what [`loadGame`](/docs/reference/loader#loadgame) returns, `{ game, problems }`. Its `problems` are printed as the game's, and the game isn't checked a second time. They can be [`Problem`](/docs/reference/checks#problem-and-describeproblem) objects, which the CLI writes with `describeProblem`, or strings, which are printed as they are.
-- a function, called with no arguments, that returns either of those. A game with [locked content](#locked-content-in-a-check) is called with `{ unlocked }` too, the locked packs, to load over its content.
-
-The simplest module returns what `loadGame` gave it:
-
-```ts
-// src/game.ts
-import { loadGame } from '@ifloom/engine'
-import { story } from './story.ts'
-
-/** What `ifloom check` loads. */
-export default function release() {
-  return loadGame([story], { id: 'my-game', title: 'My Game' })
-}
-```
-
-A function export lets you check the release build when the module builds the game with options, because `check` calls it with none. Small Town does this. Its `smallTown({ withDebug, unlocked, mods })` builds the game with the calendar, places, cast, phone, quests and wardrobe plugins, and its default export is `release({ unlocked })`, which calls `smallTown({ unlocked })` with no debug plugin and no mods. See [`examples/showcase/src/game.ts`](/docs/guide/showcase#the-files).
-
-```ts
-// src/game.ts, for a game with locked content
-import { loadGame, type Pack } from '@ifloom/engine'
-import { unlocks } from '@ifloom/plugin-unlocks'
-import { story } from './story.ts'
-
-export function build({ unlocked = [] as Pack[] } = {}) {
-  return loadGame([story], { id: 'my-game', title: 'My Game', plugins: [unlocks()] }, { packs: unlocked })
-}
-
-export default build
-```
-
 ## ifloom playtest
 
 ```sh
@@ -296,7 +369,7 @@ ifloom playtest --turns 30 --out playtest/month.txt
 ifloom playtest src/release.ts                   # another module
 ```
 
-Loads the module as `check` does, then plays the game from its start for `--turns` [turns](/docs/reference/state) (default 7). At each step a [policy](#policy) looks at the screen and picks the next command. In Small Town a turn is a day, so seven turns is a week. A game that starts over with [`newGame`](/docs/reference/commands#newgame) ends the playtest there.
+Loads the module as `check` does, then plays the game from its [`start`](#definegame) for `--turns` [turns](/docs/reference/state) (default 7). At each step a [policy](#policy) looks at the screen and picks the next command. In Small Town a turn is a day, so seven turns is a week. A game that starts over with [`newGame`](/docs/reference/commands#newgame) ends the playtest there.
 
 It writes two files:
 
@@ -342,30 +415,18 @@ Wind down the street, rattling the bakery sign.
 
 ### What playtest reads
 
-The same exports as [`check`](#what-the-module-exports), plus two that `playtest` reads if they're there:
-
-- **`start`**: the state to start from, or a function that takes the game and returns it. Without it, the start is [`startingState(game)`](/docs/reference/commands#startingstate).
-- **`policy`**: a [`Policy`](#policy). Without it, the policy is [`explorer()`](#explorer).
+The module's [`start`](#definegame), where the play begins, and its `policy`, which picks each command. Without them, the start is [`startingState(game)`](/docs/reference/commands#startingstate) and the policy is [`explorer()`](#explorer).
 
 ```ts
 // src/game.ts
-import { startingState, type Game } from '@ifloom/engine'
+import { loadGame, startingState } from '@ifloom/engine'
+import { defineGame, explorer } from '@ifloom/cli/game'
 
-export const start = (game: Game) => startingState(game, { kv: { playerName: 'Robin' } })
-```
-
-A policy imports from `@ifloom/cli`, which runs in Node. Keep it out of the module your page imports, or the browser build pulls the CLI in with it. Give it a module of its own that re-exports the game, and name that module on the command line:
-
-```ts
-// tools/playtest.ts
-import { explorer, type Policy } from '@ifloom/cli'
-export { default } from '../src/game.ts'
-
-export const policy: Policy = explorer()
-```
-
-```sh
-ifloom playtest tools/playtest.ts --turns 14
+export default defineGame({
+  build: () => loadGame(content, { id: 'my-story', title: 'My Story' }),
+  start: (game) => startingState(game, { kv: { playerName: 'Robin' } }),
+  policy: explorer(),
+})
 ```
 
 **Gotchas.**
@@ -401,51 +462,53 @@ Commit the file. A difference is either a bug or a change you meant. Read the di
 
 ### What snapshot reads
 
-The same exports as [`check`](#what-the-module-exports), plus `probes` if it's there. `probes` is a function that takes the game and returns a list of [`Probe`](#probe)s, `{ name, state }`. Without it, the one probe is `start`, the same [`start`](#what-playtest-reads) state `playtest` uses.
+The module's [`probes`](#definegame): a function that takes the game and returns a list of [`Probe`](#probe)s, `{ name, state }`, each made with [`probe`](#probe). Without it, the one probe is `start`, the same [`start`](#definegame) state `playtest` uses.
 
-Pick probes that differ in what the content looks at: the first screen, an ordinary day, and a state well along, with kv keys set, a friendship grown and scenes seen. Small Town's three are `moving-day`, `first-morning` and `a-week-in`:
+Pick probes that differ in what the content looks at: the first screen, an ordinary day, and a state well along, with kv keys set, a friendship grown and scenes seen. Small Town's three are `moving-day`, `first-morning` and `a-week-in`, each played from the start:
 
 ```ts
-// src/game.ts, after Small Town's `clock` and `start`
-import { applyEffects, type Game } from '@ifloom/engine'
+// examples/showcase/src/game.ts
+import { probe, type Probe, type ProbeStep } from '@ifloom/cli/game'
+import { sleep } from '@ifloom/plugin-calendar'
+import { applyStatus } from '@ifloom/plugin-statuses'
 
-export function probes(game: Game) {
-  // `clock` is the game's calendar(...). Its write() sets the calendar's clock in a state.
-  const first = clock.write({ ...start(game), kv: { ...start(game).kv, phase: 'open' }, sceneId: null, turn: 1 }, { day: 1, period: 'morning' })
-  return [
-    { name: 'moving-day', state: start(game) },
-    { name: 'first-morning', state: first },
-    {
-      name: 'a-week-in',
+/** A day goes by, and Ava says hello on it: her scene opened and left, as the player does. */
+const helloFromAva: ProbeStep[] = [{ turn: true }, { play: { type: 'scene', id: 'ava.hi' } }, { play: { type: 'leave' } }]
+
+function probes(game: Game): Probe[] {
+  const firstMorning = probe('first-morning', game, [{ play: { type: 'choose', id: 'unpack' } }, { play: sleep() }])
+  const aWeekIn = probe(
+    'a-week-in',
+    game,
+    [
+      // Days 2, 3 and 4 with a hello each, a quiet day 5, a hello on day 6, then day 7's afternoon.
+      ...helloFromAva,
+      ...helloFromAva,
+      ...helloFromAva,
+      { turn: true },
+      ...helloFromAva,
+      { turn: true },
+      { 'calendar/set': { period: 'afternoon' } },
+      // The raincoat off, as the player takes it off.
+      { play: { 'wardrobe/takeOff': { id: 'coat' } } },
+      { kv: 'catName', to: 'Biscuit' },
+      { stat: 'charm', to: 5 },
+      { stat: 'friendship', of: 'character:ava', to: 30 },
+      // Still buzzing from the morning's coffee.
+      applyStatus('caffeinated'),
       // Two of the day's park visitors, made as the park's trigger makes them.
-      state: applyEffects(
-        {
-          ...clock.write(first, { day: 7, period: 'afternoon' }),
-          turn: 7,
-          seen: { ...first.seen, 'ava.hi': { n: 4, first: 2, last: 6 } },
-          kv: { catName: 'Biscuit' },
-          // Only what play changed is saved: Ava's friendship, a stat of the cast's `character` kind.
-          entities: { ...first.entities, character: { ava: { stats: { friendship: 30 } } } },
-          stats: { ...first.stats, charm: 5 },
-          plugins: {
-            ...first.plugins,
-            wardrobe: { version: 3, state: { worn: { player: { coat: null, neck: null } } } },
-            // Still buzzing from the morning's coffee.
-            statuses: { version: 1, state: { active: [{ id: 'caffeinated', left: [2] }] } },
-          },
-        },
-        game,
-        [{ 'generators/generate': { template: 'visitor', count: 2 } }],
-      ),
-    },
-  ]
+      { 'generators/generate': { template: 'visitor', count: 2 } },
+    ],
+    firstMorning,
+  )
+  return [probe('moving-day', game, []), firstMorning, aWeekIn]
 }
 ```
 
 **Gotchas.**
 
 - **Each scene is rendered as if it were open in the probe's state**, wherever the probe's player stands. A scene that only makes sense in one place is rendered in all of them. That's deliberate, because it shows what its conditions do, but keep it in mind when you read the file.
-- **A probe is a state you wrote by hand.** Nothing checks that a game could reach it, so set the calendar's clock and `turn` so they agree. Build each probe from the start state, as above, so it stays a whole state when the game adds a field.
+- **A probe is only as real as its steps.** Nothing checks that a player could reach it, and effects skip the locks a command would meet. Play commands where you can, and end turns with the `turn` effect, so the calendar's day and the turn count agree.
 
 ## ifloom unlock-hash
 
@@ -527,11 +590,11 @@ export default ifloom({ vite: { server: { port: 5180 }, plugins: [myPlugin()] } 
 
 ## For scripts
 
-These are the parts the commands are made from, exported from `@ifloom/cli` for a build script or a test that wants them without the command line.
+These are the parts the commands are made from, exported from `@ifloom/cli` for a build script or a test that wants them without the command line. `@ifloom/cli` also exports [`defineGame`](#definegame) and [`probe`](#probe), and their types, for a script that wants everything from one import.
 
 ```ts
-import { TEMPLATES, THEMES, buildFiles, checkBuild, checkFiles, checkGame, explorer, gameFrom, inlineAssets, metricsText, newGame, playtest, screenText, snapshot } from '@ifloom/cli'
-import type { NewGameOptions, Playtest, PlaytestOptions, Policy, Probe, TemplateName, ThemeName, TurnMetrics } from '@ifloom/cli'
+import { TEMPLATES, THEMES, buildFiles, checkBuild, checkFiles, checkGame, defineGame, explorer, gameFrom, inlineAssets, metricsText, newGame, playtest, probe, screenText, snapshot } from '@ifloom/cli'
+import type { BuildOptions, GameModule, GameModuleDef, NewGameOptions, Playtest, PlaytestOptions, Policy, Probe, ProbeStep, TemplateName, ThemeName, TurnMetrics } from '@ifloom/cli'
 ```
 
 ### newGame
@@ -632,7 +695,7 @@ checkBuild('dist')   // []
 function checkGame(module: Record<string, unknown>, publicDir?: string): string[]
 ```
 
-Everything wrong with the game a module exports: the problems it came with from `loadGame`, or for a game built by hand, what [`checkGame`](/docs/reference/checks#checkgame) finds in it. Given `publicDir`, it also adds every sound, picture and video file the game names that's missing from it, with [`checkFiles`](#checkfiles). This is what `ifloom check` prints, with `publicDir` set to `'public'`. The module is read as in [What the module exports](#what-the-module-exports).
+Everything wrong with the game a [game module](#the-game-module) builds: the problems `loadGame` found, in `describeProblem`'s words. Given `publicDir`, it also adds every sound, picture and video file the game names that's missing from it, with [`checkFiles`](#checkfiles). This is what `ifloom check` prints, with `publicDir` set to `'public'`. A module whose default export isn't made with `defineGame` throws, with the message `ifloom check` prints.
 
 ```ts
 import { expect, it } from 'vitest'
@@ -676,9 +739,7 @@ checkFiles(files, 'dist')   // []
 function gameFrom(module: Record<string, unknown>, unlocked?: Pack[]): { game: Game; problems: string[]; files: FileRef[] }
 ```
 
-`unlocked` is passed to a module that exports a function, as `{ unlocked }`, for a game with [locked content](#locked-content-in-a-check).
-
-The game a module exports, and its problems as text. A module that exports what `loadGame` returns comes with its problems: [`Problem`](/docs/reference/checks#problem-and-describeproblem) objects are written with `describeProblem`, and anything else with `String()`. A game exported without problems, such as one built by hand, is checked with [`checkGame`](/docs/reference/checks#checkgame) here. `files` is the checker's list of the files the game names, for [`checkFiles`](#checkfiles) or [`checkBuild`](#checkbuild). It throws when the module has neither a `default` nor a `game` export.
+The game a [game module](#the-game-module) builds, and its problems as text, each [`Problem`](/docs/reference/checks#problem-and-describeproblem) written with `describeProblem`. `unlocked` goes to the module's `build` as `{ unlocked }`, for a game with [locked content](#locked-content-in-a-check). `files` is the checker's list of the files the game names, for [`checkFiles`](#checkfiles) or [`checkBuild`](#checkbuild). It throws when the module's default export isn't made with `defineGame`.
 
 ```ts
 import { gameFrom } from '@ifloom/cli'
@@ -758,11 +819,11 @@ There's one entry for each turn played through. A run that stopped before its `t
 type Policy = (screen: View, state: GameState, game: Game) => Command | null
 ```
 
-How a playtest picks the next command, from the [`View`](/docs/reference/view#view) on screen, the state behind it and the game. Returning `null` stops the play. A policy can keep its own memory in a closure, as `explorer` does.
+How a playtest picks the next command, from the [`View`](/docs/reference/view#view) on screen, the state behind it and the game. Returning `null` stops the play. A policy can keep its own memory in a closure, as `explorer` does. The game module gives `ifloom playtest` its policy as [`policy`](#definegame), and imports `Policy` and `explorer` from `@ifloom/cli/game`.
 
 ```ts
 import { pluginQuery } from '@ifloom/engine'
-import { explorer, type Policy } from '@ifloom/cli'
+import { explorer, type Policy } from '@ifloom/cli/game'
 
 // Work every morning, and otherwise do what the explorer would.
 function worker(): Policy {
@@ -831,7 +892,7 @@ It takes on Dev, then Fen, then turns the next applicant away, taking a differen
 
 - **"Once a turn" is per action id and per person, not per place.** A `wait` done on the high street counts as done in the café too. That memory resets each turn, while the choices made in scenes are remembered for the whole playtest.
 - **Trying a button runs it.** Each action's command is applied once to see whether it ends the turn, so the game's own [functions](/docs/reference/custom) run for buttons that are never pressed. One that only reads the state and returns, as [`apply`](/docs/reference/commands#apply) expects, won't notice. One that logs or counts its calls outside the state will see the extra runs.
-- **It only presses the screen's buttons.** That means choices, actions, people and exits. It never uses a thing, opens a device, answers a message or types into an [input](/docs/reference/inputs). An intro that won't go on until the player types a name stops the run there, so give the input a fallback (a [value](/docs/reference/custom#values) of the game's own that prints a default name) or set the name in [`start`](#what-playtest-reads). In Small Town it buys a sandwich most days and never eats one. Write a policy for what it doesn't reach.
+- **It only presses the screen's buttons.** That means choices, actions, people and exits. It never uses a thing, opens a device, answers a message or types into an [input](/docs/reference/inputs). An intro that won't go on until the player types a name stops the run there, so give the input a fallback (a [value](/docs/reference/custom#values) of the game's own that prints a default name) or set the name in [`start`](#definegame). In Small Town it buys a sandwich most days and never eats one. Write a policy for what it doesn't reach.
 
 ### screenText
 
@@ -899,18 +960,18 @@ Draws come from the save's seed, so the same game and the same probes give the s
 import { readFileSync } from 'node:fs'
 import { expect, it } from 'vitest'
 import { snapshot } from '@ifloom/cli'
-import { probes, smallTown } from '../src/game.ts'
+import town from '../src/game.ts'
 
 it('every scene and place reads as it did', () => {
-  const { game } = smallTown()
-  expect(snapshot(game, probes(game))).toBe(readFileSync(new URL('../snapshots/scenes.txt', import.meta.url), 'utf8'))
+  const { game } = town.build()
+  expect(snapshot(game, town.probes!(game))).toBe(readFileSync(new URL('../snapshots/scenes.txt', import.meta.url), 'utf8'))
 })
 ```
 
 **Gotchas.**
 
 - **Hidden choices are left out.** A choice whose `when` fails isn't in the block. One greyed out by `blocked` is, with its reason.
-- **A place's variants are drawn from the turn alone.** A room has no choices to record a draw, so the probe's seed and `turn` pick the line, the same on every run. Set `turn` in a probe along with the calendar's clock. Otherwise a probe dated a week in draws as if it were the first turn.
+- **A place's variants are drawn from the turn alone.** A room has no choices to record a draw, so the probe's seed and `turn` pick the line, the same on every run. End a probe's turns with the `turn` effect, or a command that ends one, rather than with `calendar/set` alone. Otherwise a probe dated a week in draws as if it were the first turn.
 
 ### Probe
 
@@ -918,4 +979,4 @@ it('every scene and place reads as it did', () => {
 type Probe = { name: string; state: GameState }
 ```
 
-A state to render every scene in. `name` goes in each block's header, `=== <scene> @ <name>`, so keep it short and without spaces.
+A state to render every scene in, made with [`probe`](#probe). `name` goes in each block's header, `=== <scene> @ <name>`, so keep it short and without spaces.

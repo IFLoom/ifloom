@@ -20,27 +20,27 @@
  *                            the hash of an unlock's code, from IFLOOM_UNLOCK_<UNLOCK> or piped in,
  *                            to put in the unlock; the code itself is never printed
  *
- * Run from the game's folder. `check` reads `src/game.ts` unless told otherwise;
- * it exports the game as `default` or `game`. `playtest` also reads its
- * `policy` (a function that picks the next command; an explorer if absent) and
- * `start` (a state, or a function of the game); `snapshot` reads `probes`
- * (a function of the game returning `{ name, state }`s; the start if absent).
+ * Run from the game's folder. Each command reads `src/game.ts` unless told
+ * otherwise, whose default export is made with `defineGame` (`module.ts`):
+ * its `build` makes the game, `playtest` starts from its `start` and plays its
+ * `policy` (an explorer if absent), and `snapshot` renders its `probes` (the
+ * start if absent).
  *
  * A game with locked content keeps it in `src/unlocks/<unlock>.ts`. `build`
  * and `dev` encrypt it into the page under each unlock's code (see
  * `unlocks.ts`), and `build` refuses a page with any of it, or a code, in
  * plain text. `check` checks the game with it, passing it to the module's
- * function as `{ unlocked }`.
+ * `build` as `{ unlocked }`.
  */
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { basename, dirname, relative, resolve } from 'node:path'
 import { startingState, type FileRef, type Game, type GameState } from '@ifloom/engine'
 import { build, createServer } from 'vite'
 import { buildFiles, checkBuild, inlineAssets } from './build.ts'
-import { checkFiles, gameFrom } from './check.ts'
+import { GameModuleError, checkFiles, gameFrom, gameModule } from './check.ts'
 import { checkUnlocks, codesFrom, leaks, linesOf, lockedFiles, packsOf, unlocksModule } from './unlocks.ts'
-import { explorer, metricsText, playtest, type Policy } from './playtest.ts'
-import { snapshot, type Probe } from './snapshot.ts'
+import { explorer, metricsText, playtest } from './playtest.ts'
+import { snapshot } from './snapshot.ts'
 import { configLoader, sourcePlugin } from './source.ts'
 import { TEMPLATES, THEMES, inCheckout, newGame, type TemplateName, type ThemeName } from './new.ts'
 
@@ -78,9 +78,9 @@ function write(file: string, text: string): void {
   writeFileSync(file, text)
 }
 
+/** Where the playtest starts, and the snapshot without probes: the module's `start`, else the game's starting state. */
 function startOf(module: Record<string, unknown>, game: Game): GameState {
-  const start = module.start as GameState | ((game: Game) => GameState) | undefined
-  return typeof start === 'function' ? start(game) : (start ?? startingState(game))
+  return gameModule(module).start?.(game) ?? startingState(game)
 }
 
 /** A snapshot file's renders, each from its `===` line to the next: prose has blank lines of its own. */
@@ -93,7 +93,9 @@ async function builtFiles(): Promise<FileRef[] | undefined> {
   if (!existsSync(resolve('src/game.ts'))) return undefined
   try {
     return await withModule(undefined, (module) => gameFrom(module).files)
-  } catch {
+  } catch (error) {
+    // A module that isn't a game module is worth stopping the build for; one that won't load in Node isn't.
+    if (error instanceof GameModuleError) throw error
     return undefined
   }
 }
@@ -112,9 +114,7 @@ async function check(entry?: string): Promise<number> {
       checked = gameFrom(module, unlocks.packs)
       const left = unlocks.packs.filter((pack) => !(checked.game.packs ?? []).includes(pack.id)).map((pack) => pack.id)
       if (left.length)
-        problems.push(
-          `the game module left out the locked packs ${left.join(', ')}: export a function that takes { unlocked } and passes them to loadGame as { packs: unlocked }`,
-        )
+        problems.push(`the game module left out the locked packs ${left.join(', ')}: its build takes { unlocked }, to pass to loadGame as { packs: unlocked }`)
       // What the game without them lacks is what its unlocks bring: fine while it's reached only behind unlocks/has.
       const without = base.problems.filter((problem) => !checked.problems.includes(problem))
       if (without.length) {
@@ -176,7 +176,7 @@ async function unlockHash(unlock: string | undefined, entry?: string): Promise<n
 async function play(entry?: string): Promise<number> {
   return withModule(entry, (module) => {
     const { game } = gameFrom(module)
-    const policy = (module.policy as Policy | undefined) ?? explorer()
+    const policy = gameModule(module).policy ?? explorer()
     const turns = Number(flag('turns') ?? 7)
     if (!Number.isInteger(turns) || turns < 1) {
       console.error('--turns takes a whole number of turns, 1 or more.')
@@ -197,7 +197,7 @@ async function play(entry?: string): Promise<number> {
 async function snap(entry?: string): Promise<number> {
   return withModule(entry, (module) => {
     const { game } = gameFrom(module)
-    const probes = (module.probes as ((game: Game) => Probe[]) | undefined)?.(game) ?? [{ name: 'start', state: startOf(module, game) }]
+    const probes = gameModule(module).probes?.(game) ?? [{ name: 'start', state: startOf(module, game) }]
     const text = snapshot(game, probes)
     const out = flag('out') ?? 'snapshots/scenes.txt'
     const before = existsSync(out) ? readFileSync(out, 'utf8') : null
@@ -295,4 +295,11 @@ async function main(): Promise<number> {
   }
 }
 
-process.exitCode = await main()
+try {
+  process.exitCode = await main()
+} catch (error) {
+  // A module that isn't a game module says how to write one; anything else is a bug worth its stack.
+  if (!(error instanceof GameModuleError)) throw error
+  console.error(error.message)
+  process.exitCode = 1
+}

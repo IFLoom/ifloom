@@ -1,7 +1,5 @@
-import { applyEffects, inlineChoices, pluginQuery, startingState, view, type Game, type GameState, type RenderedChoice } from '@ifloom/engine'
-
-/** A state to render every scene in, with a name for the snapshot file. */
-export type Probe = { name: string; state: GameState }
+import { applyEffects, inlineChoices, pluginQuery, startingState, view, type Game, type RenderedChoice } from '@ifloom/engine'
+import type { Probe } from './module.ts'
 
 /** A choice as the snapshot writes it: `[>]` to press, `[ ]` greyed out with the reason. */
 function choiceLine(choice: RenderedChoice): string {

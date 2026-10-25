@@ -1,37 +1,39 @@
 import { existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { checkGame as checkContent, describeProblem, type FileRef, type Game, type Pack, type Problem } from '@ifloom/engine'
+import { checkGame as checkContent, describeProblem, type FileRef, type Game, type Pack } from '@ifloom/engine'
+import { isGameModule, type GameModule } from './module.ts'
 
-/**
- * What a game module can export: a game, `{ game, problems }`, or a function
- * that returns either. A game with locked content (`src/unlocks/`) exports a
- * function that takes `{ unlocked }`, the packs to load over its content, so
- * `ifloom check` can check the game with them.
- */
-type Exported = Game | { game: Game; problems?: unknown[] } | ((options?: { unlocked?: Pack[] }) => Game | { game: Game; problems?: unknown[] })
+/** How to write a game module, for a module that isn't one. */
+export const GAME_MODULE_HELP = `Export the game with defineGame:
 
-/**
- * The game a module exports, as `default` or `game`, with its content
- * checker's problems and the files it names. A loaded game comes with its
- * problems, since `loadGame` ran the checker; a hand-built one is checked
- * here. Either way each problem is listed once. `unlocked` packs are passed
- * to a module that exports a function, as `{ unlocked }`.
- */
-export function gameFrom(module: Record<string, unknown>, unlocked?: Pack[]): { game: Game; problems: string[]; files: FileRef[] } {
-  let found = (module.default ?? module.game) as Exported | undefined
-  if (typeof found === 'function') found = unlocked ? found({ unlocked }) : found()
-  if (!found) throw new Error('The game module exports no game: export it as `default` or `game`.')
-  if ('game' in found && typeof found.game === 'object' && Array.isArray(found.problems)) {
-    return { game: found.game, problems: found.problems.map(asText), files: checkContent(found.game).files }
-  }
-  const game = ('game' in found && typeof found.game === 'object' ? found.game : found) as Game
-  const checked = checkContent(game)
-  return { game, problems: checked.problems.map(describeProblem), files: checked.files }
+  import { loadGame } from '@ifloom/engine'
+  import { defineGame } from '@ifloom/cli/game'
+
+  export default defineGame({
+    build: ({ unlocked }) => loadGame(content, { id: 'my-story', title: 'My Story' }, { packs: unlocked }),
+  })
+
+See https://ifloom.dev/docs/cli#the-game-module`
+
+/** A game module the CLI can't read: the command line prints its message alone, with no stack. */
+export class GameModuleError extends Error {
+  override name = 'GameModuleError'
 }
 
-/** A problem as `describeProblem` words it; anything else as a string. */
-function asText(problem: unknown): string {
-  return typeof problem === 'object' && problem !== null && 'what' in problem ? describeProblem(problem as Problem) : String(problem)
+/** The module `defineGame` made, from a game module's default export; an error saying how to write one if it isn't. */
+export function gameModule(module: Record<string, unknown>): GameModule {
+  if (isGameModule(module.default)) return module.default
+  throw new GameModuleError(`The game module's default export isn't made with defineGame. ${GAME_MODULE_HELP}`)
+}
+
+/**
+ * The game a game module builds, with its loader's problems in
+ * `describeProblem`'s words and the files it names. `unlocked` packs go to
+ * its `build` as `{ unlocked }`.
+ */
+export function gameFrom(module: Record<string, unknown>, unlocked: Pack[] = []): { game: Game; problems: string[]; files: FileRef[] } {
+  const { game, problems } = gameModule(module).build({ unlocked })
+  return { game, problems: problems.map(describeProblem), files: checkContent(game).files }
 }
 
 /**

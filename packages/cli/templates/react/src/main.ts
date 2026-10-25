@@ -1,5 +1,5 @@
 import { mountGame } from '@ifloom/react'
-import game from './game.ts'
+import module from './game.ts'
 import { Layout } from './layout.tsx'
 import './styles.css'
 
@@ -8,4 +8,4 @@ import './styles.css'
 // in the story. `plugins` lists the UIs of the plugins in game.ts, such as
 // `shopUi` from `@ifloom/plugin-shop/react`; leave one out to draw that
 // plugin yourself.
-mountGame(game, { layout: Layout, pages: true, plugins: [] })
+mountGame(module.build(), { layout: Layout, pages: true, plugins: [] })

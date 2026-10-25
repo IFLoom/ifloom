@@ -5,14 +5,15 @@
  * and the story is in `story/`, one file per place or arc, its prose beside
  * it. The game's own code is in `rules.ts`.
  */
-import { applyEffects, describeProblem, loadGame, startingState, type Content, type Game, type Pack } from '@ifloom/engine'
+import { loadGame, type Content, type Game, type Pack, type Problem } from '@ifloom/engine'
+import { defineGame, probe, type Probe, type ProbeStep } from '@ifloom/cli/game'
 import { achievements } from '@ifloom/plugin-achievements'
-import { calendar } from '@ifloom/plugin-calendar'
+import { calendar, sleep } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
 import { cheats } from '@ifloom/plugin-cheats'
 import { debug } from '@ifloom/plugin-debug'
-import { statuses } from '@ifloom/plugin-statuses'
+import { applyStatus, statuses } from '@ifloom/plugin-statuses'
 import { generators } from '@ifloom/plugin-generators'
 import { jobs } from '@ifloom/plugin-jobs'
 import { quests } from '@ifloom/plugin-quests'
@@ -77,7 +78,7 @@ export const kit = phone({ sidebar: true, apps: [camera, notes] })
  * (from `unlockedPacks`), and `mods` the packs of the player's mods, loaded
  * over the town's content in that order.
  */
-export function smallTown({ withDebug = false, unlocked = [] as Pack[], mods = [] as Pack[] } = {}): { game: Game; problems: string[] } {
+export function smallTown({ withDebug = false, unlocked = [] as Pack[], mods = [] as Pack[] } = {}): { game: Game; problems: Problem[] } {
   const { game, problems } = loadGame(
     // The phone's content before the town's: its `photo` kind, for the camera's photos, and the phone, its apps,
     // the texts and the feed, so the town's content or a mod can add an app.
@@ -112,56 +113,58 @@ export function smallTown({ withDebug = false, unlocked = [] as Pack[], mods = [
     // Packs go over the content: what the player's codes opened, then their mods.
     { packs: [...unlocked, ...mods] },
   )
-  return { game, problems: problems.map(describeProblem) }
+  return { game, problems }
 }
 
 /** A command that opens the phone's camera, for tests and walkthroughs. */
 export const openCamera = openApp('camera')
 
-/**
- * What `ifloom check` loads: the release build of the game, and its loader's
- * problems. It passes the supporter content as `unlocked`, read from
- * src/unlocks/, to check the game with it too.
- */
-export default function release({ unlocked = [] as Pack[] } = {}) {
-  return smallTown({ unlocked })
-}
-
-/** Where `ifloom playtest` and `ifloom snapshot` start: moving day. */
-export const start = (game: Game) => startingState(game)
+/** A day goes by, and Ava says hello on it: her scene opened and left, as the player does. */
+const helloFromAva: ProbeStep[] = [{ turn: true }, { play: { type: 'scene', id: 'ava.hi' } }, { play: { type: 'leave' } }]
 
 /**
- * The states `ifloom snapshot` renders every scene and place in: moving day,
- * a first morning, and a week in with Ava as a friend, the cat named, the
- * raincoat off, a coffee inside you and people in the park.
+ * The states `ifloom snapshot` renders every scene and place in, each made by
+ * playing: moving day; the first morning, after unpacking and a night's
+ * sleep; and a week in, with Ava's hello seen on four of its days, the cat
+ * named, a friendship grown, the raincoat off, a coffee inside you and
+ * people in the park.
  */
-export function probes(game: Game) {
-  const first = clock.write({ ...start(game), kv: { ...start(game).kv, phase: 'open' }, sceneId: null, turn: 1 }, { day: 1, period: 'morning' })
-  return [
-    { name: 'moving-day', state: start(game) },
-    { name: 'first-morning', state: first },
-    {
-      name: 'a-week-in',
+function probes(game: Game): Probe[] {
+  const firstMorning = probe('first-morning', game, [{ play: { type: 'choose', id: 'unpack' } }, { play: sleep() }])
+  const aWeekIn = probe(
+    'a-week-in',
+    game,
+    [
+      // Days 2, 3 and 4 with a hello each, a quiet day 5, a hello on day 6, then day 7's afternoon.
+      ...helloFromAva,
+      ...helloFromAva,
+      ...helloFromAva,
+      { turn: true },
+      ...helloFromAva,
+      { turn: true },
+      { 'calendar/set': { period: 'afternoon' } },
+      // The raincoat off, as the player takes it off.
+      { play: { 'wardrobe/takeOff': { id: 'coat' } } },
+      { kv: 'catName', to: 'Biscuit' },
+      { stat: 'charm', to: 5 },
+      { stat: 'friendship', of: 'character:ava', to: 30 },
+      // Still buzzing from the morning's coffee.
+      applyStatus('caffeinated'),
       // Two of the day's park visitors, made as the park's trigger makes them.
-      state: applyEffects(
-        {
-          ...clock.write(first, { day: 7, period: 'afternoon' }),
-          turn: 7,
-          seen: { ...first.seen, 'ava.hi': { n: 4, first: 2, last: 6 } },
-          kv: { catName: 'Biscuit' },
-          // Only what play changed is saved: Ava's friendship.
-          entities: { ...first.entities, character: { ava: { stats: { friendship: 30 } } } },
-          stats: { ...first.stats, charm: 5 },
-          plugins: {
-            ...first.plugins,
-            wardrobe: { version: 3, state: { worn: { player: { coat: null, neck: null } } } },
-            // Still buzzing from the morning's coffee.
-            statuses: { version: 1, state: { active: [{ id: 'caffeinated', left: [2] }] } },
-          },
-        },
-        game,
-        [{ 'generators/generate': { template: 'visitor', count: 2 } }],
-      ),
-    },
-  ]
+      { 'generators/generate': { template: 'visitor', count: 2 } },
+    ],
+    firstMorning,
+  )
+  return [probe('moving-day', game, []), firstMorning, aWeekIn]
 }
+
+/**
+ * What the command line reads: the release build of the town, with the
+ * supporter content `ifloom check` passes as `unlocked`, read from
+ * src/unlocks/; moving day as the start; and the states `ifloom snapshot`
+ * renders every scene and place in.
+ */
+export default defineGame({
+  build: ({ unlocked }) => smallTown({ unlocked }),
+  probes,
+})

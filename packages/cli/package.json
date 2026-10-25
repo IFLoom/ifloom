@@ -15,6 +15,12 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
+    "./game": {
+      "ifloom-source": "./src/game.ts",
+      "types": "./dist/game.d.ts",
+      "import": "./dist/game.js",
+      "default": "./dist/game.js"
+    },
     "./vite": {
       "ifloom-source": "./src/vite.ts",
       "types": "./dist/vite.d.ts",

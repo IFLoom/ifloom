@@ -2,12 +2,12 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 
 /**
- * Everything the CLI exports, from `@ifloom/cli` and `@ifloom/cli/vite`, is on
+ * Everything the CLI exports, from `@ifloom/cli`, `@ifloom/cli/game` and `@ifloom/cli/vite`, is on
  * its docs page. A developer learns the CLI from the docs site alone, so an
  * export the page does not name is a feature nobody can find.
  */
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8')
-const SOURCES = ['../../src/index.ts', '../../src/vite.ts'].map(read)
+const SOURCES = ['../../src/index.ts', '../../src/game.ts', '../../src/vite.ts'].map(read)
 const PAGE = Object.values(
   import.meta.glob('../../../../site/content/docs/\\(latest\\)/cli/index.{md,mdx}', {
     query: '?raw',
@@ -35,7 +35,7 @@ function exportedNames(source: string): string[] {
 }
 
 describe('the docs', () => {
-  it('name every export of @ifloom/cli and @ifloom/cli/vite on its page', () => {
+  it('name every export of @ifloom/cli, @ifloom/cli/game and @ifloom/cli/vite on its page', () => {
     const names = SOURCES.flatMap(exportedNames)
     expect(names.length).toBeGreaterThan(4)
     expect(PAGE.length).toBeGreaterThan(0)

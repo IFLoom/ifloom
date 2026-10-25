@@ -12,7 +12,8 @@
  * and each chapter is a file of its own in `story/`, its words written in
  * its scenes.
  */
-import { loadGame, startingState, type Content, type Game } from '@ifloom/engine'
+import { loadGame, startingState, type Content, type Loaded } from '@ifloom/engine'
+import { defineGame } from '@ifloom/cli/game'
 import { stats } from './world/stats.ts'
 import { ch1 } from './story/ch1.ts'
 import { ch2 } from './story/ch2.ts'
@@ -22,8 +23,8 @@ import { ch3 } from './story/ch3.ts'
 export const content: Content[] = [stats, ch1, ch2, ch3]
 
 /** The game: its content, with a base that says what it is, and rules that name its saves and carry old ones forward. */
-export function theLetter(): { game: Game; problems: string[] } {
-  const { game, problems } = loadGame(content, {
+export function theLetter(): Loaded {
+  return loadGame(content, {
     id: 'the-letter',
     title: 'The Letter',
     // Version 2 counts `fibs` where version 1 counted `lies`. A version-1 save is carried
@@ -39,11 +40,10 @@ export function theLetter(): { game: Game; problems: string[] } {
       saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : null),
     },
   })
-  return { game, problems: problems.map((problem) => `${problem.pack} · ${problem.where} · ${problem.what}`) }
 }
 
-const built = theLetter()
-export default built
-
-/** Where `ifloom playtest` starts: a reader who has already typed a name. */
-export const start = (game: Game) => startingState(game, { kv: { playerName: 'Sam' } })
+/** What the command line reads: the game, and where `ifloom playtest` and `ifloom snapshot` start, a reader who has already typed a name. */
+export default defineGame({
+  build: theLetter,
+  start: (game) => startingState(game, { kv: { playerName: 'Sam' } }),
+})

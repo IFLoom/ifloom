@@ -230,6 +230,8 @@ Boxes, mostly. The window looks over the high street, and [[ui:modal|the radiato
 === place:flat @ a-week-in
 Boxes, mostly. The window looks over the high street, and [[ui:modal|the radiator knocks|notice.welcome|Sam's note]] when it feels like it. Biscuit has claimed the warm spot on the sill.
 
+Your phone buzzes on the sill: a message. [[act:read-text|Check it]].
+
 === place:high-street @ moving-day
 A bakery, a launderette, a bus stop with a bench nobody sits on. The café on the corner has its door propped open.
 

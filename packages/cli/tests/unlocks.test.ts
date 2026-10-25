@@ -65,12 +65,12 @@ describe('locked content in a build', () => {
     const dir = await buildFixture()
     const all = everything(dir)
     for (const secret of [CODE, 'FIXTURECODE1234', PROSE, 'walled garden', 'quinces', 'The walled garden']) expect(all).not.toContain(secret)
-    expect(leaks(dir, { codes: [CODE, 'FIXTURECODE1234'], packs: [supporter], shared: linesOf(fixtureGame().game) })).toEqual([])
+    expect(leaks(dir, { codes: [CODE, 'FIXTURECODE1234'], packs: [supporter], shared: linesOf(fixtureGame.build().game) })).toEqual([])
 
     // A player enters the code in the built game's runner, and next launch the content opens.
     const content = contentIn(readFileSync(join(dir, 'index.html'), 'utf8'))
     const driver = memoryDriver()
-    const { game } = fixtureGame()
+    const { game } = fixtureGame.build()
     const runner = createRunner(game, startingState(game), { profile: profile(game, driver) })
     const codes = startUnlocks(runner, { content })
     expect((await codes.enter('wrong code')).ok).toBe(false)
@@ -79,7 +79,7 @@ describe('locked content in a build', () => {
     await runner.settled()
     const opened = await unlockedPacks(game.id, profile(game, driver), content)
     expect(opened).toEqual({ packs: [supporter], problems: [] })
-    expect(fixtureGame({ unlocked: opened.packs }).game.scenes.map((scene) => scene.id)).toEqual(['intro', 'garden'])
+    expect(fixtureGame.build({ unlocked: opened.packs }).game.scenes.map((scene) => scene.id)).toEqual(['intro', 'garden'])
   })
 
   it('refuses a page that imports locked content', async () => {
@@ -141,7 +141,7 @@ describe('checking a game with locked content', () => {
       appType: 'custom',
     })
     try {
-      return await checkUnlocks({ root: ROOT, mode: 'production', game: fixtureGame().game, load: (path) => server.ssrLoadModule(path) })
+      return await checkUnlocks({ root: ROOT, mode: 'production', game: fixtureGame.build().game, load: (path) => server.ssrLoadModule(path) })
     } finally {
       await server.close()
     }

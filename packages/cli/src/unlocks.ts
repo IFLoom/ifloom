@@ -14,6 +14,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { basename, extname, join, resolve, sep } from 'node:path'
 import type { Game, Pack } from '@ifloom/engine'
+import { gameFrom } from './check.ts'
 import { loadEnv } from 'vite'
 import { buildFiles } from './build.ts'
 
@@ -80,15 +81,6 @@ export function codesFrom(root: string, mode: string): Record<string, string> {
   return loadEnv(mode, root, 'IFLOOM_UNLOCK_')
 }
 
-/** The game a module exports, called with no arguments if it's a function. */
-function gameIn(module: Record<string, unknown>): Game {
-  let found = (module.default ?? module.game) as unknown
-  if (typeof found === 'function') found = (found as () => unknown)()
-  const game = (found && typeof found === 'object' && 'game' in found ? (found as { game: Game }).game : found) as Game | undefined
-  if (!game?.id) throw new Error('The game module exports no game: export it as `default` or `game`.')
-  return game
-}
-
 /**
  * The script with every unlock's content, encrypted, for the page's head; and
  * what stopped any of it. `strict` (a build) makes a missing code a problem;
@@ -105,7 +97,7 @@ export async function lockedScript(options: {
   const out = { script: '', problems: [] as string[], notes: [] as string[], secrets: { codes: [] as string[], packs: [] as Pack[] } }
   if (!files.length) return out
   const plugin = await unlocksModule(root, load)
-  const game = gameIn(await load(resolve(root, 'src/game.ts')))
+  const { game } = gameFrom(await load(resolve(root, 'src/game.ts')))
   const defs = plugin.unlockDefs(game)
   const codes = codesFrom(root, mode)
   const locked: { unlock: string }[] = []

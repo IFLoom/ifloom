@@ -11,7 +11,8 @@
  * kind (stats, staff, the menu, actions, triggers), with its two scenes in
  * `story/` and its sums in `rules.ts`. This file only puts it together.
  */
-import { loadGame, startingState, type Content, type Game } from '@ifloom/engine'
+import { loadGame, type Content, type Loaded } from '@ifloom/engine'
+import { defineGame, probe } from '@ifloom/cli/game'
 import { rules } from './rules.ts'
 import { stats } from './world/stats.ts'
 import { staff } from './world/staff.ts'
@@ -25,17 +26,16 @@ import { hiring } from './story/hiring.ts'
 export const content: Content[] = [stats, staff, menu, actions, triggers, opening, hiring]
 
 /** The game: its content, with a base that has its own sums. */
-export function cornerCafe(): { game: Game; problems: string[] } {
-  const { game, problems } = loadGame(content, {
+export function cornerCafe(): Loaded {
+  return loadGame(content, {
     id: 'corner-cafe',
     title: 'The Corner Café',
     rules,
   })
-  return { game, problems: problems.map((problem) => `${problem.pack} · ${problem.where} · ${problem.what}`) }
 }
 
-const built = cornerCafe()
-export default built
-
-/** Where `ifloom playtest` starts: the doors already open. */
-export const start = (game: Game) => ({ ...startingState(game), sceneId: null })
+/** What the command line reads: the game, and where `ifloom playtest` and `ifloom snapshot` start, the opening scene closed and the doors open. */
+export default defineGame({
+  build: cornerCafe,
+  start: (game) => probe('open', game, [{ scene: null }]).state,
+})

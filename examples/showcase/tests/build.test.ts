@@ -16,13 +16,13 @@ describe('ifloom check and build', () => {
 
 import { readFileSync } from 'node:fs'
 import { snapshot } from '@ifloom/cli'
-import { probes, smallTown } from '../src/game.ts'
+import town from '../src/game.ts'
 
 describe('ifloom snapshot', () => {
   // Every scene and place in every probe state reads as recorded. A change you
   // meant: `npm run snapshot -- --update`, and read the diff before committing.
   it('every scene and place reads as it did', () => {
-    const { game } = smallTown()
-    expect(snapshot(game, probes(game))).toBe(readFileSync(new URL('../snapshots/scenes.txt', import.meta.url), 'utf8'))
+    const { game } = town.build()
+    expect(snapshot(game, town.probes!(game))).toBe(readFileSync(new URL('../snapshots/scenes.txt', import.meta.url), 'utf8'))
   })
 })

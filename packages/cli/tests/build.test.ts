@@ -2,8 +2,9 @@ import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { loadGame, type Game } from '@ifloom/engine'
-import { checkBuild, checkGame } from '../src/index.ts'
+import { SCHEMA, loadGame, type Pack } from '@ifloom/engine'
+import { GameModuleError } from '../src/check.ts'
+import { checkBuild, checkGame, defineGame, gameFrom, probe } from '../src/index.ts'
 
 function built(html: string): string {
   const dir = mkdtempSync(join(tmpdir(), 'ifloom-build-'))
@@ -66,21 +67,42 @@ describe('checkGame', () => {
         title: 'Town',
       },
     )
-    expect(checkGame({ default: loaded })).toContain('town · scene intro · goes to unknown scene "nowhere"')
+    expect(checkGame({ default: defineGame({ build: () => loaded }) })).toContain('town · scene intro · goes to unknown scene "nowhere"')
   })
 
-  it('prints a hand-built game’s problems once, in the same words, with the pack "game"', () => {
-    const game: Game = {
-      id: 'town',
-      title: 'Town',
-      actions: [],
-      storylines: [],
-      scenes: [{ id: 'intro', body: [], choices: [{ id: 'go', effects: [{ scene: 'nowhere' }] }] }],
+  it('reads only a module made with defineGame, and says how to write one', () => {
+    const loaded = loadGame([{ name: 'town', scenes: [{ id: 'intro', body: [], choices: [] }] }], { id: 'town', title: 'Town' })
+    for (const old of [{ default: loaded }, { game: loaded.game }, { default: () => loaded }, {}]) {
+      expect(() => checkGame(old)).toThrow(GameModuleError)
+      expect(() => checkGame(old)).toThrow(/defineGame\(\{\n    build: \(\{ unlocked \}\) => loadGame/)
     }
-    expect(checkGame({ default: game })).toEqual(['game · scene intro · goes to unknown scene "nowhere"'])
-    // A loaded game's problems come from its loader, and aren't found a second time.
-    const loaded = loadGame([{ name: 'town', scenes: game.scenes }], { id: 'town', title: 'Town' })
-    expect(checkGame({ default: loaded })).toEqual(['town · scene intro · goes to unknown scene "nowhere"'])
+  })
+
+  it('passes build the unlocked packs, and makes a probe by playing', () => {
+    const extra: Pack = { id: 'mod:garden', schema: SCHEMA, scenes: [{ id: 'garden', body: [{ text: 'Roses.' }], choices: [] }] }
+    const module = defineGame({
+      build: ({ unlocked }) =>
+        loadGame(
+          [{ name: 'town', introScene: 'intro', scenes: [{ id: 'intro', body: [{ text: 'A square.' }], choices: [] }] }],
+          { id: 'town', title: 'Town' },
+          { packs: unlocked },
+        ),
+    })
+    expect(module.build().game.scenes.map((scene) => scene.id)).toEqual(['intro'])
+    expect(gameFrom({ default: module }, [extra]).game.scenes.map((scene) => scene.id)).toEqual(['intro', 'garden'])
+    const { game } = module.build({ unlocked: [extra] })
+    // An effect opens a scene as content does; only a command played counts as a viewing.
+    const opened = probe('opened', game, [{ scene: 'garden' }, { kv: 'visits', by: 1 }])
+    expect(opened.name).toBe('opened')
+    expect(opened.state.sceneId).toBe('garden')
+    expect(opened.state.kv.visits).toBe(1)
+    expect(opened.state.seen.garden).toBeUndefined()
+    const first = probe('first', game, [{ play: { type: 'leave' } }, { kv: 'visits', by: 1 }])
+    const later = probe('later', game, [{ play: { type: 'scene', id: 'garden' } }, { kv: 'visits', by: 1 }], first)
+    expect(later.state.kv.visits).toBe(2)
+    expect(later.state.sceneId).toBe('garden')
+    expect(later.state.seen.garden?.n).toBe(1)
+    expect(() => probe('nowhere', game, [{ play: { type: 'choose', id: 'nope' } }])).toThrow(/^probe nowhere: \{"type":"choose","id":"nope"\} was refused: /)
   })
 })
 
@@ -196,9 +218,9 @@ describe('the files a game names', () => {
 
   it('is what ifloom check adds, given the public folder', () => {
     const dir = without('audio/bell.ogg')
-    expect(checkGame({ default: game() }, dir)).toEqual([`track bell: no file ${join(dir, 'audio/bell.ogg')}`])
+    expect(checkGame({ default: defineGame({ build: game }) }, dir)).toEqual([`track bell: no file ${join(dir, 'audio/bell.ogg')}`])
     // Without a folder to look in, check reads only the game.
-    expect(checkGame({ default: game() })).toEqual([])
+    expect(checkGame({ default: defineGame({ build: game }) })).toEqual([])
   })
 
   it('reports them missing from a build too', () => {

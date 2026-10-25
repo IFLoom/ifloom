@@ -181,7 +181,7 @@ const mail: AppDef = {
 A `{ contacts: true }` section lists the [cast](/docs/plugins/cast)'s contacts, which it gets from the cast's [`cast/contacts`](/docs/plugins/cast#queries) query. That's everyone the player has [met](/docs/plugins/cast#meeting-people) who has a [`call`](/docs/plugins/cast#calls). Each entry has:
 
 - their `name` as its title
-- their `desc` as its text, or `''` when they have none
+- their `description` as its text, or `''` when they have none
 - their portrait as its image
 - one action, labelled with the [`devices/call`](#strings) string ("Call"), which sends [`cast.call(id)`](/docs/plugins/cast#commands)
 
@@ -239,8 +239,8 @@ const apps: AppDef[] = [
 ]
 
 const locations = [
-  places.location({ id: 'flat', name: 'Your flat', desc: 'Home', exits: ['high-street'], body: [{ prose: 'place.flat' }] }),
-  places.location({ id: 'high-street', name: 'High Street', desc: 'Small Town', exits: ['flat'], body: [{ prose: 'place.high-street' }] }),
+  places.location({ id: 'flat', name: 'Your flat', description: 'Home', exits: ['high-street'], body: [{ prose: 'place.flat' }] }),
+  places.location({ id: 'high-street', name: 'High Street', description: 'Small Town', exits: ['flat'], body: [{ prose: 'place.high-street' }] }),
 ]
 
 const town: Content = {
@@ -251,13 +251,13 @@ const town: Content = {
     { id: 'note', label: 'Note', listed: false },
   ],
   entities: [
-    { id: 'sandwich', of: 'item', name: 'sandwich', desc: 'Cheese and pickle, wrapped in paper.' },
-    { id: 'scarf', of: 'clothing', name: 'scarf', desc: 'Knitted by someone who loved you.' },
+    { id: 'sandwich', of: 'item', name: 'sandwich', description: 'Cheese and pickle, wrapped in paper.' },
+    { id: 'scarf', of: 'clothing', name: 'scarf', description: 'Knitted by someone who loved you.' },
     ...locations,
   ],
   // Done from elsewhere in the game, by a choice or a test: no label, so no button of their own.
   actions: [
-    { id: 'jot', effects: [{ create: 'note', with: { id: 'shopping', name: 'Shopping', desc: 'Milk, bread, a lemon.' }, at: 'player' }] },
+    { id: 'jot', effects: [{ create: 'note', with: { id: 'shopping', name: 'Shopping', description: 'Milk, bread, a lemon.' }, at: 'player' }] },
     { id: 'setUpMail', effects: [{ kv: 'emailSetUp', to: true }, { kv: 'newMail', to: true }] },
   ],
   locks: [{ when: { not: places.at('flat') }, deny: ['devices/*'], reason: 'The laptop is at home.' }],
@@ -470,7 +470,7 @@ type SectionView =
 |---|---|---|
 | `prose` | `{ prose }` | The blocks drawn as [beats](/docs/reference/prose#scenebeat) for the current state, with [`context.beats`](/docs/reference/plugins#beats), and their words joined as `text` for a UI that draws no beats. |
 | `actions` | `{ actions }` | The buttons, as [`RenderedChoice`](/docs/reference/view#renderedchoice)s. |
-| `list` | `{ things }`, `{ contacts }` | One entry per thing (its reference as `id`, name, description filled in, picture, no actions) or per contact (name, desc, portrait, a Call button). |
+| `list` | `{ things }`, `{ contacts }` | One entry per thing (its reference as `id`, name, description filled in, picture, no actions) or per contact (name, description, portrait, a Call button). |
 | `plugin` | `{ plugin, with }` | Only the plugin's id and `with`. The data is the plugin's own slice, at `view.plugins[plugin]`. |
 | `panel` | `{ panel, with }` | The panel's name, and the section's `with`, or `{}`. |
 

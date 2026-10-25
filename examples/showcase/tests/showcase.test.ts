@@ -214,14 +214,14 @@ describe('Small Town', () => {
     // The secret achievement is ??? until the evening by the river.
     const achievements = () => (view(state, game).plugins.achievements as AchievementsView).achievements
     expect(achievements()).toEqual([
-      expect.objectContaining({ id: 'nest-egg', title: 'Nest egg', earned: false, progress: { value: 10, target: 100 } }),
-      expect.objectContaining({ id: 'river', title: '???', earned: false }),
+      expect.objectContaining({ id: 'nest-egg', name: 'Nest egg', earned: false, progress: { value: 10, target: 100 } }),
+      expect.objectContaining({ id: 'river', name: '???', earned: false }),
     ])
     state = run(state, cast.talk('ava'))
     expect(view(state, game).scene.title).toBe('By the river')
     state = run(state, { type: 'choose', id: 'stay' })
     expect(quests(state).done.map((quest) => quest.id)).toContain('friend')
-    expect(achievements()[1]).toMatchObject({ title: 'Dusk by the river', earned: true })
+    expect(achievements()[1]).toMatchObject({ name: 'Dusk by the river', earned: true })
     expect(view(state, game).notices.unseen.map((notice) => notice.title)).toContain('Achievement: Dusk by the river')
   })
 
@@ -278,7 +278,7 @@ describe('Small Town', () => {
       id: 'ava',
       ref: 'character:ava',
       fullName: 'Ava Marsh',
-      desc: 'Runs the café',
+      description: 'Runs the café',
       portrait: 'art/character/ava.svg',
     })
     expect(view(state, game).entities.character.entries).toEqual([])
@@ -286,7 +286,7 @@ describe('Small Town', () => {
     expect(view(state, game).entities.character.entries[0]).toMatchObject({
       ref: 'character:ava',
       name: 'Ava',
-      desc: 'Runs the café',
+      description: 'Runs the café',
       image: 'art/character/ava.svg',
       stats: [{ key: 'friendship' }],
     })
@@ -320,7 +320,7 @@ describe('Small Town', () => {
     const codes = startUnlocks(runner, { content })
     expect(await codes.enter('SMALL-TOWN-FAN')).toEqual({ ok: false, reason: 'That code doesn’t unlock anything.' })
     const entered = await codes.enter(code.toLowerCase())
-    expect(entered).toEqual({ ok: true, value: { unlock: 'supporter', label: 'Supporter edition', already: false, restart: true } })
+    expect(entered).toEqual({ ok: true, value: { unlock: 'supporter', name: 'Supporter edition', already: false, restart: true } })
     expect(holds(runner.state, game, unlocks.has('supporter'))).toBe(true)
     expect(runner.apply(cheats.use('energy')).ok).toBe(true)
     // Replayed, the unlock and the cheat play the same.
@@ -402,7 +402,7 @@ describe('Small Town', () => {
     expect(state.stats.energy).toBe(65)
     expect(statValue(state, game, 'energy')).toBe(75)
     const effects = () => (view(state, game).plugins.statuses as StatusesView).active
-    expect(effects()).toEqual([expect.objectContaining({ id: 'caffeinated', label: 'Caffeinated', turnsLeft: 2 })])
+    expect(effects()).toEqual([expect.objectContaining({ id: 'caffeinated', name: 'Caffeinated', turnsLeft: 2 })])
     state = run(on(state, 1, 'night'), calendar.sleep())
     expect(effects()).toEqual([expect.objectContaining({ turnsLeft: 1 })])
     state = run(on(state, 2, 'night'), calendar.sleep())
@@ -478,7 +478,7 @@ describe('Small Town', () => {
     state = writeEntity(state, 'character:ava', { ...entityOf(state, game, 'character:ava'), stats: { friendship: 10 } })
     state = run(state, jobs.apply('weekend'))
     const job = () => (view(state, game).plugins.jobs as JobsView).jobs[0]
-    expect(job()).toMatchObject({ hired: true, rank: { title: 'Weekend help' }, nextShift: { day: 5, inDays: 4 } })
+    expect(job()).toMatchObject({ hired: true, rank: { name: 'Weekend help' }, nextShift: { day: 5, inDays: 4 } })
     expect(apply(state, game, jobs.work('weekend')).reason).toBe('No shift today.')
     // Saturday morning: a shift takes the morning and 25 energy, and pays 12 coins.
     state = on({ ...state, stats: { ...state.stats, energy: 100 } }, 5, 'morning')

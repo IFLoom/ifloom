@@ -15,8 +15,8 @@ function game(): Game {
     kinds: [{ id: 'thing', label: 'Thing' }],
     entities: [
       { id: 'key', of: 'thing', name: 'key' },
-      places.location({ id: 'house', name: 'House', desc: 'Home', exits: [], body: [] }),
-      places.location({ id: 'island', name: 'Island', desc: 'Far', exits: [], body: [] }),
+      places.location({ id: 'house', name: 'House', description: 'Home', exits: [], body: [] }),
+      places.location({ id: 'island', name: 'Island', description: 'Far', exits: [], body: [] }),
     ],
     scenes: [
       { id: 'intro', body: [], choices: [] },

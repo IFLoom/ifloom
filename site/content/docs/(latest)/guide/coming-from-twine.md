@@ -295,7 +295,7 @@ stats: [
   { id: 'energy', label: 'Energy', start: 80 },
 ],
 kinds: [{ id: 'item', label: 'Thing', listed: false }],
-entities: [{ id: 'umbrella', of: 'item', name: 'umbrella', desc: 'Big enough for two.', at: 'player' }],
+entities: [{ id: 'umbrella', of: 'item', name: 'umbrella', description: 'Big enough for two.', at: 'player' }],
 ```
 
 A thing starts with whoever its `at` names, here the player, and with nobody if it gives none. Keys in the kv store need no declaration, and one that's never been set reads as 0, so `$visits` needs no line at all. The first scene is the content's `introScene`.

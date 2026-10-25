@@ -3,7 +3,7 @@ import { memoryDriver } from '../../src/drivers.ts'
 import type { Game } from '../../src/game.ts'
 import { FIELDS, loadState, startingState } from '../../src/intake.ts'
 import { heldBy } from '../../src/holdings.ts'
-import { proseStore } from '../../src/prose.ts'
+import { entityDescription, proseStore } from '../../src/prose.ts'
 import { replay } from '../../src/runner.ts'
 import { saves } from '../../src/save.ts'
 import { SAVE_VERSION, type GameState } from '../../src/types.ts'
@@ -87,7 +87,7 @@ describe('loadState', () => {
     expect(loaded.held.player).toEqual({ 'item:umbrella': 0, 'item:apple': 5, 'clothing:scarf': 1, 'item:kite': 2, 'photo:pier': 1, 'letters:gran': 1 })
     expect(loaded.entities.photo).toEqual({ pier: { name: 'The pier', image: 'art/pier.jpg', kv: { sunny: true } } })
     // A prose key's words, as written: their tokens are filled when the description is read.
-    expect(loaded.entities.letters).toEqual({ gran: { desc: 'Love, {{grannyName}}.' } })
+    expect(loaded.entities.letters).toEqual({ gran: { description: 'Love, {{grannyName}}.' } })
     expect(heldBy(loaded, game, 'player').map((entry) => entry.ref)).toEqual(['item:apple', 'clothing:scarf', 'photo:pier', 'letters:gran'])
   })
 
@@ -102,6 +102,17 @@ describe('loadState', () => {
       ],
     }
     expect(unwrap(loadState(old, game)).notices.map((notice) => notice.text)).toEqual(['The rent is due on {{day}}.', 'Back soon.'])
+  })
+
+  it('carries a version-21 save’s things made in play to their `description`, which was their `desc`', () => {
+    const game = oldSavesGame()
+    const old = {
+      ...OLD_SAVES[21],
+      entities: { item: { '#1': { name: 'Kite', desc: 'Red and torn.' }, '#2': { name: 'Map', description: 'Already new.' } } },
+    }
+    const loaded = unwrap(loadState(old, game))
+    expect(loaded.entities.item).toEqual({ '#1': { name: 'Kite', description: 'Red and torn.' }, '#2': { name: 'Map', description: 'Already new.' } })
+    expect(entityDescription(loaded, game, 'item:#1')).toBe('Red and torn.')
   })
 
   it('starts a command log from an old save', () => {

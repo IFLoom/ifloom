@@ -65,7 +65,7 @@ export const flat: Content = {
     place({
       id: 'flat',
       name: 'Your flat',
-      desc: 'Home',
+      description: 'Home',
       exits: ['high-street'],
       body: [
         // `[[ui:modal|…]]` is the React UI's: "the radiator knocks" opens Sam's welcome note, the prose `notice.welcome`, in a dialog.

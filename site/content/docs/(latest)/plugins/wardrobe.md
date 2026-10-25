@@ -50,8 +50,8 @@ import { wardrobe } from '@ifloom/plugin-wardrobe'
 const town: Content = {
   kinds: [{ id: 'clothing', label: 'Clothing', unique: true, listed: false }],
   entities: [
-    { id: 'raincoat', of: 'clothing', name: 'raincoat', desc: 'Yellow, a size too big.', at: 'player', traits: { ...wardrobe.wearable('coat') } },
-    { id: 'scarf', of: 'clothing', name: 'scarf', desc: 'Knitted by someone who loved you.', traits: { ...wardrobe.wearable('neck') } },
+    { id: 'raincoat', of: 'clothing', name: 'raincoat', description: 'Yellow, a size too big.', at: 'player', traits: { ...wardrobe.wearable('coat') } },
+    { id: 'scarf', of: 'clothing', name: 'scarf', description: 'Knitted by someone who loved you.', traits: { ...wardrobe.wearable('neck') } },
   ],
   data: {
     wardrobe: {
@@ -102,7 +102,7 @@ import { places, type PlaceDef } from '@ifloom/plugin-places'
 import { wardrobe } from '@ifloom/plugin-wardrobe'
 
 const place = (id: string, name: string, exits: string[]): PlaceDef =>
-  ({ id, name, desc: 'Small Town', exits, body: [{ prose: `place.${id}` }] })
+  ({ id, name, description: 'Small Town', exits, body: [{ prose: `place.${id}` }] })
 
 const map = [
   {

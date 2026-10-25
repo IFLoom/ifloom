@@ -47,7 +47,7 @@ describe('media in places, messages and posts', () => {
             places.location({
               id: 'flat',
               name: 'The flat',
-              desc: 'Home',
+              description: 'Home',
               exits: ['street'],
               body: [{ prose: 'place.flat' }],
               stage: {
@@ -55,7 +55,7 @@ describe('media in places, messages and posts', () => {
                 hotspots: [{ id: 'out', rect: [80, 10, 15, 80], label: 'The front door', command: places.go('street') }],
               },
             }),
-            places.location({ id: 'street', name: 'High Street', desc: 'Out', exits: ['flat'], body: [{ prose: 'place.street' }] }),
+            places.location({ id: 'street', name: 'High Street', description: 'Out', exits: ['flat'], body: [{ prose: 'place.street' }] }),
           ],
           data: {
             messages: { messages: [{ id: 'mum.hi', channel: 'texts', from: 'Mum', when: places.at('flat'), body: [{ prose: 'mum.hi' }] }] },

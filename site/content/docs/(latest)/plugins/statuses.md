@@ -45,8 +45,8 @@ import { statuses, type StatusDef } from '@ifloom/plugin-statuses'
 
 const caffeinated: StatusDef = {
   id: 'caffeinated',
-  label: 'Caffeinated',
-  summary: 'A coffee’s worth of get-up-and-go.',
+  name: 'Caffeinated',
+  description: 'A coffee’s worth of get-up-and-go.',
   turns: 2,
   modifiers: [{ stat: 'energy', add: 10 }],
 }
@@ -63,13 +63,11 @@ const town: Content = {
 ```ts
 type StatusDef = {
   id: string
-  label: string
-  summary?: string
+  name: string
+  description?: string
   turns: number
   modifiers?: StatusModifier[]
-  onStart?: EffectRef[]
-  eachTurn?: EffectRef[]
-  onEnd?: EffectRef[]
+  effects?: { start?: EffectRef[]; turn?: EffectRef[]; end?: EffectRef[] }
   reapply?: Reapply
   max?: number
 }
@@ -78,13 +76,11 @@ type StatusDef = {
 | Field | What it is |
 |---|---|
 | `id` | Unique among statuses. Content names the status by it. |
-| `label` | What the player reads, such as "Caffeinated". |
-| `summary` | A line about it for the UI. |
+| `name` | What the player reads, such as "Caffeinated". |
+| `description` | A line about it for the UI. |
 | `turns` | How many turns it lasts. The turn it's applied in counts, so `turns: 2` lasts the rest of this turn and all of the next. |
 | `modifiers` | What it does to the player's stats while it lasts, once per stack. See [StatusModifier](#statusmodifier). |
-| `onStart` | Effects applied when it starts, and each time a stack is added. |
-| `eachTurn` | Effects applied at the end of each turn while it's active, once per stack, before its turns go down. |
-| `onEnd` | Effects applied when it runs out, once for each stack that ran out. |
+| `effects` | What it does as it goes. `start`: effects applied when it starts, and each time a stack is added. `turn`: effects applied at the end of each turn while it's active, once per stack, before its turns go down. `end`: effects applied when it runs out, once for each stack that ran out. |
 | `reapply` | What applying it again does while it's active. `'refresh'` if left out. See [Applying one again](#applying-one-again). |
 | `max` | With `reapply: 'stack'`, the most stacks it can have. No limit if left out. |
 
@@ -106,8 +102,8 @@ type Reapply = 'refresh' | 'stack'
 
 You choose, per status, what happens when it's applied while it's already active:
 
-- **`'refresh'`**, the default. Its turns start over. `onStart` doesn't run again.
-- **`'stack'`**. Another stack is added, with its own turns, and `onStart` runs for it. Each stack adds the modifiers again and runs `eachTurn` again. With `max`, once it's at its most stacks, applying it again takes off the oldest stack and puts on a fresh one, without running `onStart`.
+- **`'refresh'`**, the default. Its turns start over. Its `start` effects don't run again.
+- **`'stack'`**. Another stack is added, with its own turns, and its `start` effects run for it. Each stack adds the modifiers again and runs the `turn` effects again. With `max`, once it's at its most stacks, applying it again takes off the oldest stack and puts on a fresh one, without running `onStart`.
 
 A cold that gets worse with every sneeze, up to three times:
 
@@ -116,13 +112,15 @@ import { type StatusDef } from '@ifloom/plugin-statuses'
 
 const cold: StatusDef = {
   id: 'cold',
-  label: 'A cold',
+  name: 'A cold',
   turns: 3,
   reapply: 'stack',
   max: 3,
   modifiers: [{ stat: 'energy', multiply: 0.8 }],
-  eachTurn: [{ stat: 'coins', by: -1 }],
-  onEnd: [{ notify: 'You feel a bit better.' }],
+  effects: {
+    turn: [{ stat: 'coins', by: -1 }],
+    end: [{ notify: 'You feel a bit better.' }],
+  },
 }
 ```
 
@@ -130,9 +128,9 @@ const cold: StatusDef = {
 
 The plugin counts statuses down in its `onTurn` [hook](/docs/reference/plugins#hooks-and-providers), which runs when a turn ends. For each active status, in the order they were first applied:
 
-1. `eachTurn` runs once per stack.
+1. The `turn` effects run once per stack.
 2. Every stack loses a turn.
-3. Stacks with no turns left are taken off, and `onEnd` runs once for each.
+3. Stacks with no turns left are taken off, and the `end` effects run once for each.
 
 The effects it runs are applied while the turn is ending, so a `turn` effect among them does nothing.
 
@@ -156,9 +154,9 @@ An unknown status is never active.
 | Content writes | Helper | Does |
 |---|---|---|
 | `{ 'statuses/apply': { status } }` | `statuses.apply(id)` | Starts the status, or refreshes or stacks it if it's active. |
-| `{ 'statuses/remove': { status, runEnd? } }` | `statuses.remove(id, runEnd?)` | Takes every stack off. `onEnd` runs once per stack only when `runEnd` is `true`. It's `false` if left out. |
+| `{ 'statuses/remove': { status, runEnd? } }` | `statuses.remove(id, runEnd?)` | Takes every stack off. The `end` effects run once per stack only when `runEnd` is `true`. It's `false` if left out. |
 
-`runEnd` lets you decide per call. A medicine that cures a cold might skip its `onEnd`, while a scene where the cold runs its course early might want it:
+`runEnd` lets you decide per call. A medicine that cures a cold might skip its `end` effects, while a scene where the cold runs its course early might want it:
 
 ```ts
 import { statuses } from '@ifloom/plugin-statuses'
@@ -204,8 +202,8 @@ The active statuses, in the order they were first applied.
 ```ts
 type ActiveStatus = {
   id: string
-  label: string
-  summary: string
+  name: string
+  description: string
   turnsLeft: number
   stacks: number
   modifiers: StatModifier[]
@@ -214,7 +212,7 @@ type ActiveStatus = {
 
 | Field | What it is |
 |---|---|
-| `summary` | `''` if the status has none. |
+| `description` | `''` if the status has none. |
 | `turnsLeft` | The turns left on its longest-lasting stack. |
 | `stacks` | How many stacks it has. 1 for a status that refreshes. |
 | `modifiers` | What it does to the stats right now, all its stacks together, one entry per stat. |
@@ -259,7 +257,7 @@ Its words are in `STATUSES_WORDS`. A game rewords any of them with `ui.<key>` in
 function StatusList(props: { className?: string; title?: string | false }): JSX.Element | null
 ```
 
-The [statuses](/docs/plugins/statuses) active now, from [`StatusesView`](/docs/plugins/statuses#the-view). Each status (`data-status`) shows its label, its stacks when there's more than one (`ui.statusStacks`, `×2`), the turns left on its longest stack (`ui.turnsLeft`, or `ui.turnLeft` for the last one), its summary, and what it does to the stats, such as `+10 Energy` (`ui.modifierAdd` and `ui.modifierMultiply`, with the stat's label). The heading is `ui.statuses`, or `title`, and `false` leaves it out.
+The [statuses](/docs/plugins/statuses) active now, from [`StatusesView`](/docs/plugins/statuses#the-view). Each status (`data-status`) shows its name, its stacks when there's more than one (`ui.statusStacks`, `×2`), the turns left on its longest stack (`ui.turnsLeft`, or `ui.turnLeft` for the last one), its summary, and what it does to the stats, such as `+10 Energy` (`ui.modifierAdd` and `ui.modifierMultiply`, with the stat's label). The heading is `ui.statuses`, or `title`, and `false` leaves it out.
 
 It draws nothing while no status is active, so the side column has no empty box most of the time, and nothing in a game without the plugin.
 
@@ -271,14 +269,14 @@ Replaceable as `StatusList` in [`components`](/docs/react/components#components)
 function useStatuses(): StatusesView | null
 ```
 
-The statuses plugin's view, `active`, each an [`ActiveStatus`](/docs/plugins/statuses#statusesview) with its `label`, `summary`, `turnsLeft`, `stacks` and `modifiers`. `null` in a game without the plugin. [`StatusList`](#statuslist) is drawn from it.
+The statuses plugin's view, `active`, each an [`ActiveStatus`](/docs/plugins/statuses#statusesview) with its `name`, `description`, `turnsLeft`, `stacks` and `modifiers`. `null` in a game without the plugin. [`StatusList`](#statuslist) is drawn from it.
 
 ```tsx
 import { useStatuses } from '@ifloom/plugin-statuses/react'
 
 function StatusIcons() {
   const active = useStatuses()?.active ?? []
-  return <p>{active.map((status) => `${status.label} (${status.turnsLeft})`).join(', ')}</p>
+  return <p>{active.map((status) => `${status.name} (${status.turnsLeft})`).join(', ')}</p>
 }
 ```
 
@@ -330,7 +328,7 @@ When the game loads, the plugin reports these problems against the content or pa
 - `turns` below 1 (`turns must be 1 or more`).
 - `max` on a status that refreshes (`max only applies with reapply: "stack"`), or below 1.
 - A modifier on a stat the game doesn't have (`unknown stat "…"`), or on an entity's stat.
-- Anything `onStart`, `eachTurn` or `onEnd` names that the game doesn't have (`onEnd: unknown kind "…"`).
+- Anything its `effects` name that the game doesn't have (`effects.end: unknown kind "…"`).
 
 A call that names a status the game doesn't have gives `unknown status "…"` where it's written.
 

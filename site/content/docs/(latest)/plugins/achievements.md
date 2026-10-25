@@ -45,14 +45,14 @@ import { type AchievementDef } from '@ifloom/plugin-achievements'
 
 const nestEgg: AchievementDef = {
   id: 'nest-egg',
-  title: 'Nest egg',
+  name: 'Nest egg',
   description: 'Have 100 coins at once.',
   progress: { value: 'coins', target: 100 },
 }
 
 const river: AchievementDef = {
   id: 'river',
-  title: 'Dusk by the river',
+  name: 'Dusk by the river',
   description: 'Spend an evening by the river with Ava.',
   secret: true,
   when: { seen: 'ava.river' },
@@ -69,7 +69,7 @@ const town: Content = {
 ```ts
 type AchievementDef = {
   id: string
-  title: string
+  name: string
   description?: string
   image?: string
   secret?: boolean
@@ -81,7 +81,7 @@ type AchievementDef = {
 | Field | What it is |
 |---|---|
 | `id` | Unique among achievements. Content names it by this. |
-| `title` | Its name in the list, and in the notice when it's earned. |
+| `name` | Its name in the list, and in the notice when it's earned. |
 | `description` | What it's for. |
 | `image` | A picture for a UI to show, through [`artSrc`](/docs/reference/prose#artsrc). Checked by `ifloom check`. |
 | `secret` | Shown as `???`, with no description, picture or progress, until it's earned. |
@@ -163,8 +163,8 @@ It works in any effect list, a thing's use in the [inventory](/docs/plugins/inve
 
 | Key | English |
 |---|---|
-| `achievements/earned` | `Achievement: {title}`, the notice's title. |
-| `achievements/secret` | `???`, a secret achievement's title until it's earned. |
+| `achievements/earned` | `Achievement: {title}`, the notice's title, with the achievement's name. |
+| `achievements/secret` | `???`, a secret achievement's name until it's earned. |
 
 ## The view
 
@@ -193,7 +193,7 @@ type AchievementsView = {
 ```ts
 type AchievementEntry = {
   id: string
-  title: string
+  name: string
   description: string
   image: string | null
   secret: boolean
@@ -205,7 +205,7 @@ type AchievementEntry = {
 
 | Field | What it is |
 |---|---|
-| `title` | Its title, or `???` while it's secret and not earned. |
+| `name` | Its name, or `???` while it's secret and not earned. |
 | `description` | Its description, or `''` if it has none or is a secret not yet earned. |
 | `image` | Its picture as written, or `null`. Always `null` for a secret not yet earned. |
 | `earned` | Whether this save earned it, or any save did, as the profile records. |

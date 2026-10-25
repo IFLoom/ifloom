@@ -210,12 +210,12 @@ import { cast } from '@ifloom/plugin-cast'
 import { messages } from '@ifloom/plugin-messages'
 
 const place = (id: string, name: string, exits: string[]): PlaceDef =>
-  ({ id, name, desc: 'Small Town', exits, body: [{ prose: `place.${id}` }] })
+  ({ id, name, description: 'Small Town', exits, body: [{ prose: `place.${id}` }] })
 
 const ava = cast.person({
   id: 'ava',
   name: 'Ava',
-  desc: 'Runs the café',
+  description: 'Runs the café',
   image: 'art/character/ava.svg',
   home: 'park',
   schedule: [{ location: 'cafe', when: calendar.period('morning', 'afternoon') }],

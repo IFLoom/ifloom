@@ -38,7 +38,7 @@ export const movingDay: Content = {
     },
   ],
   // Sam's note: the notice says it, and you keep it in the phone's Notes app.
-  entities: [{ id: 'welcome', of: 'note', name: 'Welcome note', desc: WELCOME }],
+  entities: [{ id: 'welcome', of: 'note', name: 'Welcome note', description: WELCOME }],
   // On moving day the cat needs a name; the prose says it from then on.
   inputs: [{ id: 'catName', label: 'Name your cat', type: 'text', maxLength: 16, when: { kv: 'phase', is: ['arrival'] } }],
   triggers: [
@@ -54,8 +54,8 @@ export const movingDay: Content = {
       quests: [
         {
           id: 'settle',
-          title: 'Settle in',
-          summary: 'New town, new flat. Find your feet.',
+          name: 'Settle in',
+          description: 'New town, new flat. Find your feet.',
           starts: { kv: 'phase', is: ['open'] },
           stages: [
             { id: 'out', hint: 'Step out onto the high street.', done: places.at('high-street') },

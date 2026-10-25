@@ -88,7 +88,7 @@ function ShopCounterImpl({ vendor, className }: ShopCounterProps) {
   const list = usePart('goods', 'flex flex-col gap-2')
   const row = useKitPart('card', 'good', ENTRY_CLASSES.row)
   const name = useKitPart('title', 'good-name', 'font-medium')
-  const desc = useKitPart('note', 'good-desc', 'text-xs text-muted-foreground')
+  const description = useKitPart('note', 'good-desc', 'text-xs text-muted-foreground')
   const image = useKitPart('thumb', 'good-image', 'size-12 shrink-0 rounded-md object-cover')
   const details = usePart('good-details', 'flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground')
   const stock = usePart('good-stock', '')
@@ -106,7 +106,7 @@ function ShopCounterImpl({ vendor, className }: ShopCounterProps) {
               {good.image ? <img {...image} src={good.image} alt="" /> : null}
               <div className={ENTRY_CLASSES.body}>
                 <p {...name}>{good.name}</p>
-                {good.desc ? <p {...desc}>{good.desc}</p> : null}
+                {good.description ? <p {...description}>{good.description}</p> : null}
                 <p {...details}>
                   {good.off > 0 ? <span {...off}>{words('percentOff', { percent: Math.round(good.off * 100) })}</span> : null}
                   {good.fullPrice ? <s {...full}>{priceText(good.fullPrice)}</s> : null}

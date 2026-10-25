@@ -23,7 +23,7 @@ const ava = cast.person({
   id: 'ava',
   name: 'Ava',
   fullName: 'Ava Marsh',
-  desc: 'Runs the café',
+  description: 'Runs the café',
   ui: { hue: 20 },
   home: 'park',
   // At the counter in the day; by the river otherwise.
@@ -58,9 +58,9 @@ const town: Content = {
 const map: Content = {
   name: 'map',
   entities: [
-    places.location({ id: 'street', name: 'Street', desc: 'Town', exits: ['cafe', 'park'], body: [] }),
-    places.location({ id: 'cafe', name: 'Café', desc: 'Town', exits: ['street'], body: [] }),
-    places.location({ id: 'park', name: 'Park', desc: 'Town', exits: ['street'], body: [] }),
+    places.location({ id: 'street', name: 'Street', description: 'Town', exits: ['cafe', 'park'], body: [] }),
+    places.location({ id: 'cafe', name: 'Café', description: 'Town', exits: ['street'], body: [] }),
+    places.location({ id: 'park', name: 'Park', description: 'Town', exits: ['street'], body: [] }),
   ],
 }
 
@@ -106,9 +106,9 @@ describe('the cast', () => {
     const state = startingState(g)
     expect(peopleOf(state, g)).toEqual(['character:ava', 'character:sam'])
     expect(personOf(state, g, 'character:sam')).toEqual({ home: 'park', talk: 'sam.hi' })
-    // Their desc is the line under their name, their image their portrait.
+    // Their description is the line under their name, their image their portrait.
     const cafe = run(g, state, places.go('cafe'))
-    expect(shown(cafe, g).present[0]).toMatchObject({ id: 'ava', ref: 'character:ava', desc: 'Runs the café', portrait: 'art/character/ava.jpg' })
+    expect(shown(cafe, g).present[0]).toMatchObject({ id: 'ava', ref: 'character:ava', description: 'Runs the café', portrait: 'art/character/ava.jpg' })
   })
 
   it('include anyone with the trait, of any kind or made in play, named by reference', () => {

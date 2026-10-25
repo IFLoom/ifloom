@@ -19,6 +19,9 @@ import { quests } from '@ifloom/plugin-quests'
 import { shop } from '@ifloom/plugin-shop'
 import { statuses } from '@ifloom/plugin-statuses'
 import { wardrobe } from '@ifloom/plugin-wardrobe'
+import { cheats } from '@ifloom/plugin-cheats'
+import { generators } from '@ifloom/plugin-generators'
+import { unlocks } from '@ifloom/plugin-unlocks'
 import { withCafe } from '../fixtures/cafe.ts'
 import { unwrap } from '../fixtures/result.ts'
 
@@ -327,7 +330,7 @@ describe('content migrations', () => {
           id: 'tea',
           of: 'item',
           name: 'Tea',
-          desc: '',
+          description: '',
           tags: ['stuff'],
           traits: { 'inventory/usable': { label: 'Drink', effects: [{ stat: 'energy', to: 100, of: 'staff:ana' }] } },
         },
@@ -496,7 +499,10 @@ describe('content migrations', () => {
           effects: [{ 'statuses/apply': { status: 'cold' } }, { 'statuses/remove': { status: 'warm', runEnd: true } }],
         },
       ],
-      data: { quests: { quests: [] }, statuses: { statuses: [{ id: 'cold', label: 'A cold', turns: 3, onEnd: [{ 'statuses/apply': { status: 'tired' } }] }] } },
+      data: {
+        quests: { quests: [] },
+        statuses: { statuses: [{ id: 'cold', name: 'A cold', turns: 3, effects: { end: [{ 'statuses/apply': { status: 'tired' } }] } }] },
+      },
     })
   })
 
@@ -517,11 +523,11 @@ describe('content migrations', () => {
       // And at schema 13 they are things: a start of one is the player's from the start.
       kinds: [{ id: 'item', label: 'Item', plural: 'Items', listed: false }],
       entities: [
-        { id: 'umbrella', of: 'item', name: 'Umbrella', desc: '', tags: ['gear'], at: { player: 1 } },
-        { id: 'coat', of: 'item', name: 'Coat', desc: '', tags: ['clothes', 'gear'] },
-        { id: 'bun', of: 'item', name: 'Bun', desc: '', tags: ['stuff'] },
-        // And at schema 24 the place is an entity: its tag the entity's desc, and an empty picture none.
-        { id: 'park', of: 'location', name: 'Park', desc: 'Town', tags: ['street'], traits: { 'places/location': { exits: [], body: [] } } },
+        { id: 'umbrella', of: 'item', name: 'Umbrella', description: '', tags: ['gear'], at: { player: 1 } },
+        { id: 'coat', of: 'item', name: 'Coat', description: '', tags: ['clothes', 'gear'] },
+        { id: 'bun', of: 'item', name: 'Bun', description: '', tags: ['stuff'] },
+        // And at schema 24 the place is an entity: its tag the entity's desc (its description from schema 26), and an empty picture none.
+        { id: 'park', of: 'location', name: 'Park', description: 'Town', tags: ['street'], traits: { 'places/location': { exits: [], body: [] } } },
       ],
     })
   })
@@ -671,7 +677,7 @@ describe('content migrations', () => {
           id: 'rosa',
           of: 'character',
           name: 'Rosa',
-          desc: 'Next door',
+          description: 'Next door',
           image: 'art/rosa.png',
           tags: ['neighbour'],
           stats: { trust: 3 },
@@ -838,6 +844,101 @@ describe('content migrations', () => {
     )
     expect(problems).toEqual([])
     expect(game.scenes[0]).toMatchObject({ body: [{ text: 'A door.' }], choices: [{ id: 'knock', label: 'Knock' }] })
+  })
+
+  it('name a thing’s line its description at schema 26, with name for a thing and title for a heading, in the plugins’ content and the words table', () => {
+    const v25 = {
+      id: 'mod:words',
+      schema: 25,
+      prose: { 'place.flat': 'Home, {{v:places/desc}}.' },
+      entities: [{ id: 'flat', of: 'location', name: 'Flat', desc: 'Home' }],
+      actions: [{ id: 'snap', label: 'Snap', effects: [{ create: 'photo', with: { name: 'Pier', desc: 'Gulls.' } }] }],
+      scenes: [{ id: 'hall', body: [{ text: 'You are {{v:places/desc}}.' }], choices: [{ id: 'go', label: 'Go', when: { value: 'places/desc' } }] }],
+      minigames: [{ id: 'darts', label: 'Darts', start: 'aim', states: { aim: { label: 'Aim!' } } }],
+      data: {
+        quests: { quests: [{ id: 'settle', title: 'Settle in', summary: 'Find your feet.', stages: [] }] },
+        statuses: {
+          statuses: [
+            {
+              id: 'cold',
+              label: 'A cold',
+              summary: 'Sniffles.',
+              turns: 3,
+              onStart: [{ stat: 'sneezes', by: 1 }],
+              eachTurn: [{ stat: 'coins', by: -1 }],
+              onEnd: [],
+            },
+          ],
+        },
+        achievements: { achievements: [{ id: 'first', title: 'First loaf', description: 'Bake one.' }] },
+        jobs: { jobs: [{ id: 'cafe', title: 'Weekend help', ranks: [{ id: 'help', title: 'Help', pay: {} }] }] },
+        cheats: { cheats: [{ id: 'coins', label: '+20 coins', effects: [] }] },
+        unlocks: { unlocks: [{ id: 'supporter', label: 'Supporter edition', hash: 'ab' }] },
+        generators: { templates: [{ id: 'regular', of: 'visitor', desc: { pool: 'lines' } }] },
+      },
+      words: {
+        'entity.location:flat.desc': 'Chez vous',
+        'minigame.darts.label': 'Fléchettes',
+        'minigame.darts.states.aim.label': 'Visez !',
+        'quests/quests.settle.title': "S'installer",
+        'quests/quests.settle.summary': 'Trouvez vos marques.',
+        'statuses/statuses.cold.label': 'Un rhume',
+        'achievements/achievements.first.title': 'Première miche',
+        'jobs/jobs.cafe.title': 'Aide du week-end',
+        'jobs/jobs.cafe.ranks.help.title': 'Aide',
+        'jobs/jobs.cafe.notify.abc123.title': 'Payé',
+        'cheats/cheats.coins.label': '+20 pièces',
+        'unlocks/unlocks.supporter.label': 'Édition soutien',
+      },
+    }
+    const plugins = [places(), quests(), statuses(), achievements(), jobs(), cheats(), unlocks(), generators()] as Plugin[]
+    const out = unwrap(upgradePack(v25, plugins)) as unknown as Record<string, unknown>
+    expect(out).toMatchObject({
+      schema: SCHEMA,
+      prose: { 'place.flat': 'Home, {{v:places/description}}.' },
+      entities: [{ id: 'flat', of: 'location', name: 'Flat', description: 'Home' }],
+      actions: [{ id: 'snap', label: 'Snap', effects: [{ create: 'photo', with: { name: 'Pier', description: 'Gulls.' } }] }],
+      scenes: [
+        { id: 'hall', body: [{ text: 'You are {{v:places/description}}.' }], choices: [{ id: 'go', label: 'Go', when: { value: 'places/description' } }] },
+      ],
+      minigames: [{ id: 'darts', title: 'Darts', start: 'aim', states: { aim: { label: 'Aim!' } } }],
+      data: {
+        quests: { quests: [{ id: 'settle', name: 'Settle in', description: 'Find your feet.', stages: [] }] },
+        statuses: {
+          statuses: [
+            {
+              id: 'cold',
+              name: 'A cold',
+              description: 'Sniffles.',
+              turns: 3,
+              effects: { start: [{ stat: 'sneezes', by: 1 }], turn: [{ stat: 'coins', by: -1 }], end: [] },
+            },
+          ],
+        },
+        achievements: { achievements: [{ id: 'first', name: 'First loaf', description: 'Bake one.' }] },
+        jobs: { jobs: [{ id: 'cafe', name: 'Weekend help', ranks: [{ id: 'help', name: 'Help', pay: {} }] }] },
+        cheats: { cheats: [{ id: 'coins', name: '+20 coins', effects: [] }] },
+        unlocks: { unlocks: [{ id: 'supporter', name: 'Supporter edition', hash: 'ab' }] },
+        generators: { templates: [{ id: 'regular', of: 'visitor', description: { pool: 'lines' } }] },
+      },
+    })
+    expect(Object.keys(out.words as Record<string, string>)).toEqual([
+      'entity.location:flat.description',
+      'minigame.darts.title',
+      'minigame.darts.states.aim.label',
+      'quests/quests.settle.name',
+      'quests/quests.settle.description',
+      'statuses/statuses.cold.name',
+      'achievements/achievements.first.name',
+      'jobs/jobs.cafe.name',
+      'jobs/jobs.cafe.ranks.help.name',
+      // A notice's words keep their key.
+      'jobs/jobs.cafe.notify.abc123.title',
+      'cheats/cheats.coins.name',
+      'unlocks/unlocks.supporter.name',
+    ])
+    const data = out.data as { statuses: { statuses: Record<string, unknown>[] } }
+    expect(data.statuses.statuses[0]).not.toHaveProperty('onStart')
   })
 
   it('read every kv store the one way at schema 19, with whose in of, and the phase as a kv key', () => {
@@ -1131,11 +1232,11 @@ describe('content migrations', () => {
           id: 'tea',
           of: 'item',
           name: 'Tea',
-          desc: 'Hot.',
+          description: 'Hot.',
           at: { player: 2 },
           traits: { 'inventory/usable': { label: 'Drink', effects: [{ stat: 'energy', by: 5 }] } },
         },
-        { id: 'scarf', of: 'item', name: 'Scarf', desc: 'Wool.' },
+        { id: 'scarf', of: 'item', name: 'Scarf', description: 'Wool.' },
         // And at schema 24 the vendor is an entity with the shop's trait.
         {
           id: 'kiosk',
@@ -1152,7 +1253,7 @@ describe('content migrations', () => {
           effects: [
             {
               create: 'photo',
-              with: { id: 'pier', name: 'The pier', desc: 'Gulls, and the end of the pier.', image: 'art/pier.jpg', kv: { sunny: true } },
+              with: { id: 'pier', name: 'The pier', description: 'Gulls, and the end of the pier.', image: 'art/pier.jpg', kv: { sunny: true } },
               at: 'player',
             },
             { create: 'letters', with: { id: 'gran' }, at: 'player' },

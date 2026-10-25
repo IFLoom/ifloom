@@ -226,8 +226,8 @@ const header: Block[] = [
 
 // In the content's entities.
 const locations = [
-  places.location({ id: 'high-street', name: 'High Street', desc: 'Small Town', exits: ['cafe'], body: [...header, { prose: 'place.high-street' }] }),
-  places.location({ id: 'cafe', name: 'The Café', desc: 'Small Town', exits: ['high-street'], body: [...header, { prose: 'place.cafe' }] }),
+  places.location({ id: 'high-street', name: 'High Street', description: 'Small Town', exits: ['cafe'], body: [...header, { prose: 'place.high-street' }] }),
+  places.location({ id: 'cafe', name: 'The Café', description: 'Small Town', exits: ['high-street'], body: [...header, { prose: 'place.cafe' }] }),
 ]
 ```
 

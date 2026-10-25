@@ -32,7 +32,7 @@ const smallTalk: MessageDef[] = ['rain', 'beans', 'river', 'ducks'].map((topic) 
 export const ava: Content = {
   // A keepsake is one particular thing, so whoever has it has the only one. Not listed: what you hold is in `view.held`.
   kinds: [{ id: 'keepsake', label: 'Keepsake', unique: true, listed: false }],
-  entities: [{ id: 'shell', of: 'keepsake', name: 'A river shell', desc: 'Smooth and grey, from the bank by Ava’s bench.' }],
+  entities: [{ id: 'shell', of: 'keepsake', name: 'A river shell', description: 'Smooth and grey, from the bank by Ava’s bench.' }],
   scenes: [
     {
       id: 'ava.hi',
@@ -136,7 +136,7 @@ export const ava: Content = {
       quests: [
         {
           id: 'friend',
-          title: 'A friend in town',
+          name: 'A friend in town',
           storyline: 'ava',
           starts: quests.active('settle'),
           stages: [
@@ -154,7 +154,7 @@ export const ava: Content = {
     achievements: {
       achievements: [
         // Hidden until it happens.
-        { id: 'river', title: 'Dusk by the river', description: 'Spend an evening by the river with Ava.', secret: true, when: { seen: 'ava.river' } },
+        { id: 'river', name: 'Dusk by the river', description: 'Spend an evening by the river with Ava.', secret: true, when: { seen: 'ava.river' } },
       ],
     },
     messages: {

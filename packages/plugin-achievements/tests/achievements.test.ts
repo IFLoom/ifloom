@@ -18,10 +18,10 @@ import {
 import { achievements, type AchievementDef, type AchievementsView } from '../src/index.ts'
 
 const defs: AchievementDef[] = [
-  { id: 'regular', title: 'A regular', description: 'Ten coffees at the café.', progress: { value: { kv: 'coffees' }, target: 10 } },
-  { id: 'saver', title: 'Nest egg', progress: { value: 'coins', target: 50 }, when: { kv: 'bank' } },
-  { id: 'river', title: 'Dusk by the river', description: 'Sit by the river at dusk.', secret: true, when: { kv: 'dusk' } },
-  { id: 'kind', title: 'A kind word', description: 'Given by a scene.' },
+  { id: 'regular', name: 'A regular', description: 'Ten coffees at the café.', progress: { value: { kv: 'coffees' }, target: 10 } },
+  { id: 'saver', name: 'Nest egg', progress: { value: 'coins', target: 50 }, when: { kv: 'bank' } },
+  { id: 'river', name: 'Dusk by the river', description: 'Sit by the river at dusk.', secret: true, when: { kv: 'dusk' } },
+  { id: 'kind', name: 'A kind word', description: 'Given by a scene.' },
 ]
 
 function game(extra: Partial<Content> = {}): Game {
@@ -65,7 +65,7 @@ describe('achievements', () => {
       achievements: [
         {
           id: 'regular',
-          title: 'A regular',
+          name: 'A regular',
           description: 'Ten coffees at the café.',
           image: null,
           secret: false,
@@ -73,9 +73,9 @@ describe('achievements', () => {
           earnedOn: null,
           progress: { value: 0, target: 10 },
         },
-        { id: 'saver', title: 'Nest egg', description: '', image: null, secret: false, earned: false, earnedOn: null, progress: { value: 10, target: 50 } },
-        { id: 'river', title: '???', description: '', image: null, secret: true, earned: false, earnedOn: null, progress: null },
-        { id: 'kind', title: 'A kind word', description: 'Given by a scene.', image: null, secret: false, earned: false, earnedOn: null, progress: null },
+        { id: 'saver', name: 'Nest egg', description: '', image: null, secret: false, earned: false, earnedOn: null, progress: { value: 10, target: 50 } },
+        { id: 'river', name: '???', description: '', image: null, secret: true, earned: false, earnedOn: null, progress: null },
+        { id: 'kind', name: 'A kind word', description: 'Given by a scene.', image: null, secret: false, earned: false, earnedOn: null, progress: null },
       ],
       earned: 0,
       total: 4,
@@ -86,7 +86,7 @@ describe('achievements', () => {
     const g = game()
     const state = run(fresh(g), g, 'dusk')
     expect(holds(state, g, achievements.earned('river'))).toBe(true)
-    expect(shown(state, g).achievements[2]).toMatchObject({ title: 'Dusk by the river', description: 'Sit by the river at dusk.', earned: true, earnedOn: 0 })
+    expect(shown(state, g).achievements[2]).toMatchObject({ name: 'Dusk by the river', description: 'Sit by the river at dusk.', earned: true, earnedOn: 0 })
     expect(view(state, g).notices.unseen.map((notice) => notice.title)).toEqual(['Achievement: Dusk by the river'])
     // Earned once: the condition holding again changes nothing.
     const again = run(state, g, 'dusk')
@@ -136,7 +136,7 @@ describe('achievements', () => {
     expect(holds(runner.state, g, achievements.earned('river'))).toBe(false)
     const ever = runner.view().plugins.achievements as AchievementsView
     expect(ever.earned).toBe(2)
-    expect(ever.achievements[2]).toMatchObject({ title: 'Dusk by the river', earned: true, earnedOn: null })
+    expect(ever.achievements[2]).toMatchObject({ name: 'Dusk by the river', earned: true, earnedOn: null })
     // A view built without a runner has no profile: only this save's achievements.
     expect(shown(runner.state, g).earned).toBe(0)
     // A second runner on the same profile sees it once it has read it.
@@ -189,8 +189,8 @@ describe('achievements', () => {
           data: {
             achievements: {
               achievements: [
-                { id: 'a', title: 'A', when: { entity: 'thing:moonstone', at: 'you' }, progress: { value: { sum: ['luck', 1] }, target: 0 } },
-                { id: 'b', title: 'B', progress: { value: { value: 'game/nothing' }, target: 3 } },
+                { id: 'a', name: 'A', when: { entity: 'thing:moonstone', at: 'you' }, progress: { value: { sum: ['luck', 1] }, target: 0 } },
+                { id: 'b', name: 'B', progress: { value: { value: 'game/nothing' }, target: 3 } },
               ],
             },
           },

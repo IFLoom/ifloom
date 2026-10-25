@@ -31,7 +31,7 @@ const showArrow = (arrow: (typeof ARROWS)[number]): MinigameStateDef => ({
 
 const quickFeet: MinigameDef = {
   id: 'arrows',
-  label: 'Quick feet',
+  title: 'Quick feet',
   start: 'round',
   kv: { round: 0, arrow: 0, score: 0 },
   keys: { up: ['ArrowUp', 'w'], down: ['ArrowDown', 's'], left: ['ArrowLeft', 'a'], right: ['ArrowRight', 'd'] },
@@ -86,7 +86,7 @@ The React UI draws a minigame with [`MinigameCard`](/docs/react/components#minig
 ## How a minigame runs
 
 - **Starting.** The [`minigame` effect](/docs/reference/effects#minigame) starts one, from a choice, an action, a trigger or anything else that applies effects. A scene with a `minigame` field starts it when the scene is entered (see [`MinigameSceneFields`](#minigamescenefields)). It starts in its `start` state with its `kv` at their starting values. Starting one while another runs drops the old one.
-- **While it runs.** The view draws it over the open scene or the room. `view.scene` keeps the scene's id, but its title is the minigame's `label` and its body is the running state's words. The scene's choices and the room's buttons are left out. Every command but [`tick`](/docs/reference/commands#tick), [`minigame`](/docs/reference/commands#minigame), [`dismiss`](/docs/reference/commands#dismiss) and [`setting`](/docs/reference/commands#setting) is refused with `Finish this first.`, apart from a plugin command that ignores locks, such as the [debugger](/docs/plugins/debug)'s.
+- **While it runs.** The view draws it over the open scene or the room. `view.scene` keeps the scene's id, but its title is the minigame's `title` and its body is the running state's words. The scene's choices and the room's buttons are left out. Every command but [`tick`](/docs/reference/commands#tick), [`minigame`](/docs/reference/commands#minigame), [`dismiss`](/docs/reference/commands#dismiss) and [`setting`](/docs/reference/commands#setting) is refused with `Finish this first.`, apart from a plugin command that ignores locks, such as the [debugger](/docs/plugins/debug)'s.
 - **Inputs.** `{ type: 'minigame', input }` takes the running state's first `on` entry for that input whose `when` holds. An input with no such entry isn't live, and is refused with `That does nothing now.` `view.minigame.inputs` lists the live ones.
 - **Timers.** `{ type: 'tick', ms }` adds `ms` to how long the minigame has been in its state. When that reaches the state's `after.ms`, its transition is taken. Whatever is left of `ms` carries on into the next state, so one long tick can run out several timers in a row. It stops when the minigame ends. See [Minigames and the game's timers](#minigames-and-the-games-timers).
 - **Transitions.** A transition runs its `effects`, then goes to `go`, or to a state drawn from `to`. Entering a state resets its clock to 0. A transition with neither stays where it is: an `on` entry keeps the clock running, and an `after` starts it again.
@@ -124,7 +124,7 @@ Ticks are commands like any other, so they're in the runner's [log](/docs/refere
 ```ts
 type MinigameDef = {
   id: string
-  label?: string
+  title?: string
   start: string
   kv?: Record<string, number>
   keys?: Record<string, string[]>
@@ -135,7 +135,7 @@ type MinigameDef = {
 | Field | What it does |
 |---|---|
 | `id` | What the `minigame` effect and a scene's `minigame` field name. |
-| `label` | What the UI calls it. It's `view.minigame.title`, and the title of `view.scene` while it runs. |
+| `title` | What the UI calls it, its heading. It's `view.minigame.title`, and the title of `view.scene` while it runs. |
 | `start` | The state it starts in. |
 | `kv` | Its kv store: each key it uses, with the number it starts at. None if left out. |
 | `keys` | The keys a UI maps to each input, by input name, as `KeyboardEvent.key` names them. A UI uses its own if left out. |
@@ -240,7 +240,7 @@ What [`view.minigame`](/docs/reference/view#minigame) holds while one runs.
 | Field | What it holds |
 |---|---|
 | `id`, `state` | The minigame and the state it's in. |
-| `title` | Its `label`, or `null`. |
+| `title` | Its `title`, or `null`. |
 | `label` | The running state's words, with tokens filled in, or `null` if it has no `label`. `view.scene.body` has the same words rendered with their markup. |
 | `timeLeft`, `timeTotal` | Milliseconds left on the state's timer and its whole length, or `null` for a state with no timer. |
 | `inputs` | The inputs that do something now, without repeats. |

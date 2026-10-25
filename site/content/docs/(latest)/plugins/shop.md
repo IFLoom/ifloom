@@ -67,8 +67,8 @@ const town: Content = {
   stats: [{ id: 'coins', label: 'Coins', start: 12, max: 999, spendable: true, format: '{n} coins' }],
   kinds: [{ id: 'food', label: 'Food', listed: false }],
   entities: [
-    { id: 'sandwich', of: 'food', name: 'sandwich', desc: 'Cheese and pickle.', traits: { ...shop.sellable({ coins: 4 }) } },
-    { id: 'flapjack', of: 'food', name: 'flapjack', desc: 'Oats and syrup.' },
+    { id: 'sandwich', of: 'food', name: 'sandwich', description: 'Cheese and pickle.', traits: { ...shop.sellable({ coins: 4 }) } },
+    { id: 'flapjack', of: 'food', name: 'flapjack', description: 'Oats and syrup.' },
     counter,
   ],
 }
@@ -324,7 +324,7 @@ type VendorView = {
 type GoodView = {
   entity: EntityRef
   name: string
-  desc: string | null
+  description: string | null
   image: string | null
   stock: number | null
   owned: number
@@ -339,7 +339,7 @@ type GoodView = {
 | Field | What it is |
 |---|---|
 | `entity` | The thing, such as `'food:sandwich'`. |
-| `name`, `desc` | The thing's name and description, with prose tokens filled in. `desc` is `null` when it has none. |
+| `name`, `description` | The thing's name and description, with prose tokens filled in. `description` is `null` when it has none. |
 | `image` | Its picture's path, through `artSrc`, or `null`. |
 | `stock` | How many the vendor has left, or `null` for a good that never runs out. |
 | `owned` | How many you hold. |

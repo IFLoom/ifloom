@@ -11,7 +11,7 @@ export const office: Content = {
     place({
       id: 'office',
       name: 'The Office',
-      desc: 'Work',
+      description: 'Work',
       exits: ['high-street'],
       body: [text('Strip lights, a kettle, a stack of forms that never gets shorter.')],
       // Weekdays only, in the day.

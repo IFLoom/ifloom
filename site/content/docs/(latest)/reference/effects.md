@@ -234,7 +234,7 @@ Adds an [entity](/docs/reference/entities) of the kind `create` names, after the
 type CreatedEntity = {
   id?: string
   name?: string
-  desc?: string
+  description?: string
   image?: string
   tags?: string[]
   traits?: Record<string, unknown>
@@ -243,7 +243,7 @@ type CreatedEntity = {
 }
 ```
 
-Its `desc` is read like a declared entity's, with tokens filled in, and its `image` goes through [`artSrc`](/docs/reference/prose#artsrc). Every other stat of its kind reads as that stat's `start`.
+Its `description` is read like a declared entity's, with tokens filled in, and its `image` goes through [`artSrc`](/docs/reference/prose#artsrc). Every other stat of its kind reads as that stat's `start`.
 
 A thing made in play this way is how a game keeps notes, photos or letters. The phone's camera makes a photo the player keeps:
 

@@ -15,8 +15,20 @@ const renamed = (args: unknown, names: Record<string, string>): unknown =>
 /** The commands whose one target became `id` at schema 6. */
 const COMMANDS_6: Record<string, Record<string, string>> = { 'quests/track': { quest: 'id' }, 'quests/seen': { quest: 'id' } }
 
+/** An entry with some fields renamed, where it has them and not the new name already. */
+const withNames = (entry: Record<string, unknown>, names: Record<string, string>): Record<string, unknown> =>
+  Object.fromEntries(Object.entries(entry).map(([key, value]) => [names[key] && !(names[key] in entry) ? names[key] : key, value]))
+
+/** A `words` table key for a field of this list renamed: `<list>.<id>.<old>` is `<list>.<id>.<new>`. A notice's words keep their keys. */
+const wordKey = (key: string, list: string, names: Record<string, string>): string => {
+  if (!key.startsWith(`${list}.`) || key.includes('.notify.')) return key
+  const at = key.lastIndexOf('.')
+  const field = key.slice(at + 1)
+  return names[field] ? `${key.slice(0, at)}.${names[field]}` : key
+}
+
 /** The version of what content writes for this plugin. */
-export const CONTENT_VERSION = 6
+export const CONTENT_VERSION = 26
 
 export const contentMigrations: Record<number, ContentStep> = {
   // 5 → 6: a command's one target is `id`.
@@ -24,6 +36,14 @@ export const contentMigrations: Record<number, ContentStep> = {
     tools.calls(pack, (call) =>
       call.form === 'command' && COMMANDS_6[call.name] ? { name: call.name, with: renamed(call.with, COMMANDS_6[call.name]) } : call,
     ),
+  // 25 → 26: one word each: a quest's `title` is its `name` and its `summary` its `description`, and the words table's keys follow.
+  25: (pack, tools) => {
+    const names = { title: 'name', summary: 'description' }
+    return tools.wordKeys(
+      tools.entries(pack, 'quests/quests', (quest) => withNames(quest, names)),
+      (key) => wordKey(key, 'quests/quests', names),
+    )
+  },
 }
 
 /** The version of this plugin's commands. */

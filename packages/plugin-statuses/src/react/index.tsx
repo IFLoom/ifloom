@@ -50,7 +50,7 @@ function StatusListImpl({ className, title }: { className?: string; title?: stri
   const label = useKitPart('title', 'status-label', 'flex items-center gap-1.5 font-medium')
   const stacks = usePart('status-stacks', 'text-xs text-muted-foreground')
   const turns = useKitPart('note', 'status-turns', 'flex-1 text-right text-xs font-normal text-muted-foreground tabular-nums')
-  const summary = useKitPart('note', 'status-summary', 'text-xs text-muted-foreground')
+  const description = useKitPart('note', 'status-summary', 'text-xs text-muted-foreground')
   const modifiers = usePart('status-modifiers', 'text-xs')
   const data = useStatuses()
   if (!data?.active.length) return null
@@ -70,11 +70,11 @@ function StatusListImpl({ className, title }: { className?: string; title?: stri
           return (
             <li key={status.id} {...row} data-status={status.id}>
               <p {...label}>
-                {status.label}
+                {status.name}
                 {status.stacks > 1 ? <span {...stacks}>{words('statusStacks', { n: status.stacks })}</span> : null}
                 <span {...turns}>{status.turnsLeft === 1 ? words('turnLeft') : words('turnsLeft', { n: status.turnsLeft })}</span>
               </p>
-              {status.summary ? <p {...summary}>{status.summary}</p> : null}
+              {status.description ? <p {...description}>{status.description}</p> : null}
               {changes.length ? <p {...modifiers}>{changes.join(words('priceSeparator'))}</p> : null}
             </li>
           )
@@ -85,8 +85,8 @@ function StatusListImpl({ className, title }: { className?: string; title?: stri
 }
 
 /**
- * The statuses active now: each with its label, its stacks, the turns left on
- * its longest stack, its summary and what it does to the stats. Nothing while
+ * The statuses active now: each with its name, its stacks, the turns left on
+ * its longest stack, its description and what it does to the stats. Nothing while
  * none is active, or in a game without the plugin. A thin default on
  * `useStatuses`.
  */

@@ -70,7 +70,7 @@ export const cafe: Content = {
     place({
       id: 'cafe',
       name: 'The Corner Café',
-      desc: 'Café',
+      description: 'Café',
       exits: ['high-street'],
       // Open in the day; the door says when it opens again.
       blocked: [{ when: { not: calendar.period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
@@ -130,7 +130,7 @@ export const cafe: Content = {
       jobs: [
         {
           id: 'weekend',
-          title: 'Weekend help',
+          name: 'Weekend help',
           description: 'Saturday mornings behind the counter at the Corner Café.',
           blocked: [{ when: { not: { stat: 'friendship', of: cast.character('ava'), gte: 10 } }, reason: 'Ava doesn’t know you well enough yet.' }],
           at: ['cafe'],
@@ -139,8 +139,8 @@ export const cafe: Content = {
           hours: ['morning'],
           shift: { cost: { energy: 25 }, passes: 1 },
           ranks: [
-            { id: 'help', title: 'Weekend help', pay: { coins: 12 } },
-            { id: 'barista', title: 'Barista', pay: { coins: 16 }, requires: { shifts: 3 } },
+            { id: 'help', name: 'Weekend help', pay: { coins: 12 } },
+            { id: 'barista', name: 'Barista', pay: { coins: 16 }, requires: { shifts: 3 } },
           ],
           // Miss two Saturdays and Ava finds someone else.
           fire: { missed: 2 },
@@ -149,7 +149,7 @@ export const cafe: Content = {
     },
     statuses: {
       statuses: [
-        { id: 'caffeinated', label: 'Caffeinated', summary: 'A coffee’s worth of get-up-and-go.', turns: 2, modifiers: [{ stat: 'energy', add: 10 }] },
+        { id: 'caffeinated', name: 'Caffeinated', description: 'A coffee’s worth of get-up-and-go.', turns: 2, modifiers: [{ stat: 'energy', add: 10 }] },
       ],
     },
   },

@@ -71,7 +71,7 @@ function LocationCardImpl() {
       {location.stage?.layers.length ? <Stage stage={location.stage} /> : null}
       <div className={PROSE}>
         <h3 {...name}>{location.name}</h3>
-        {location.desc ? <p {...tag}>{location.desc}</p> : null}
+        {location.description ? <p {...tag}>{location.description}</p> : null}
         {things.length ? (
           <ul {...list}>
             {things.map((thing) => (
@@ -93,7 +93,7 @@ function LocationCardImpl() {
 }
 
 /**
- * Where the player is: the place's name and the line under it (its `desc`), with its stage above them,
+ * Where the player is: the place's name and the line under it (its `description`), with its stage above them,
  * hotspots and all, and what lies there with a button to pick each up. The
  * exits are `Exits`. A thin default on `usePlaces`.
  */

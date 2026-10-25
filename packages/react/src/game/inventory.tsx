@@ -31,7 +31,7 @@ function InventoryImpl({ className, title: titleText }: InventoryProps) {
               <span {...name}>{thing.name}</span>
               {thing.count > 1 ? <span {...count}> {words('heldCount', { n: thing.count })}</span> : null}
             </p>
-            {thing.desc ? <p {...text}>{thing.desc}</p> : null}
+            {thing.description ? <p {...text}>{thing.description}</p> : null}
           </li>
         ))}
       </ul>

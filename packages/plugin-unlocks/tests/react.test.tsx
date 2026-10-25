@@ -13,7 +13,7 @@ afterEach(() => {
 })
 
 const CODE = 'HIGH-STREET-2026'
-const base = { id: 'supporter', label: 'Supporter edition', description: 'A scene behind the bakery.', iterations: 1000 }
+const base = { id: 'supporter', name: 'Supporter edition', description: 'A scene behind the bakery.', iterations: 1000 }
 const supporter: UnlockDef = { ...base, hash: await unlockHash(CODE, 'unlocks-ui', base) }
 const extra: Pack = { id: 'supporter', schema: SCHEMA, prose: { thanks: 'Thank you for helping the bakery stay open.' } }
 const content: Record<string, LockedContent> = { supporter: await lockContent(CODE, 'unlocks-ui', supporter, [extra]) }

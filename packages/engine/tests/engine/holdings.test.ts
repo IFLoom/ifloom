@@ -35,7 +35,7 @@ const house: Content = {
     { id: 'ava', of: 'person', name: 'Ava', stats: { energy: 70 } },
     { id: 'sam', of: 'person', name: 'Sam' },
     { id: 'larder', of: 'place', name: 'The larder' },
-    { id: 'apple', of: 'food', name: 'Apple', desc: 'A red apple.', tags: ['fruit'], at: { player: 2, 'place:larder': 6 }, stats: { fresh: 8 } },
+    { id: 'apple', of: 'food', name: 'Apple', description: 'A red apple.', tags: ['fruit'], at: { player: 2, 'place:larder': 6 }, stats: { fresh: 8 } },
     { id: 'bread', of: 'food', name: 'Bread', at: 'place:larder', kv: { sliced: true }, traits: { 'washable-no': true } },
     { id: 'scarf', of: 'gift', name: 'A scarf', at: 'player' },
     { id: 'box', of: 'gift', name: 'A gift box' },
@@ -166,7 +166,7 @@ describe('holdings', () => {
     expect(view(state, g).held[0]).toEqual({
       ref: 'food:apple',
       name: 'Apple',
-      desc: 'A red apple.',
+      description: 'A red apple.',
       image: null,
       tags: ['food', 'fruit'],
       count: 2,

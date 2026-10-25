@@ -8,7 +8,7 @@ const town: Content = {
   prose: { intro: 'A small square with a fountain.' },
   data: {
     unlocks: {
-      unlocks: [{ id: 'supporter', label: 'Supporter edition', iterations: 1000, hash: 'a1df77b1dbeebae57eba5218fdd1bd1266f6ad8b38b251dd08a6123543dee57c' }],
+      unlocks: [{ id: 'supporter', name: 'Supporter edition', iterations: 1000, hash: 'a1df77b1dbeebae57eba5218fdd1bd1266f6ad8b38b251dd08a6123543dee57c' }],
     },
   },
 }

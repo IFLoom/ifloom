@@ -35,7 +35,7 @@ const picnic: Content = {
       id: 'apple',
       of: 'food',
       name: 'apple',
-      desc: 'Crisp.',
+      description: 'Crisp.',
       at: { player: 2 },
       traits: { ...inventory.usable('Eat the apple', [{ stat: 'energy', by: 5 }]) },
     },
@@ -71,7 +71,7 @@ describe('the inventory alone', () => {
       ['gear:torch', 1, 'Switch it on'],
       ['gear:stone', 1, null],
     ])
-    expect(things[0]).toMatchObject({ name: 'apple', desc: 'Crisp.', image: null, at: 'player' })
+    expect(things[0]).toMatchObject({ name: 'apple', description: 'Crisp.', image: null, at: 'player' })
     expect(things[0].use?.command).toEqual({ type: 'custom', name: 'inventory/use', with: { id: 'food:apple' } })
   })
 
@@ -154,8 +154,8 @@ describe('the inventory with places', () => {
   const park: Content = {
     name: 'park',
     entities: [
-      places.location({ id: 'lawn', name: 'Lawn', desc: 'Park', exits: ['pond'], body: [] }),
-      places.location({ id: 'pond', name: 'Pond', desc: 'Park', exits: ['lawn'], body: [] }),
+      places.location({ id: 'lawn', name: 'Lawn', description: 'Park', exits: ['pond'], body: [] }),
+      places.location({ id: 'pond', name: 'Pond', description: 'Park', exits: ['lawn'], body: [] }),
     ],
   }
 

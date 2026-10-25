@@ -17,7 +17,7 @@ import {
   amountOf,
   commandOf,
   definePlugin,
-  entityDesc,
+  entityDescription,
   entityImage,
   entityName,
   heldBy,
@@ -47,7 +47,7 @@ import {
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** One of the cast's contacts, as `cast/contacts` answers: read by shape, so devices need no cast. */
-type Contact = { id: string; name: string; desc: string | null; portrait: string | null; command: Command }
+type Contact = { id: string; name: string; description: string | null; portrait: string | null; command: Command }
 
 export type DeviceDef = {
   id: string
@@ -225,7 +225,13 @@ function devicesPlugin(): DefinedPlugin<DevicesState, DevicesView> {
           .reverse()
           .map(({ ref }) => {
             const image = entityImage(state, game, ref)
-            return { id: ref, title: entityName(state, game, ref), text: entityDesc(state, game, ref) ?? '', image: image ? artSrc(image) : null, actions: [] }
+            return {
+              id: ref,
+              title: entityName(state, game, ref),
+              text: entityDescription(state, game, ref) ?? '',
+              image: image ? artSrc(image) : null,
+              actions: [],
+            }
           }),
       }
     }
@@ -236,7 +242,7 @@ function devicesPlugin(): DefinedPlugin<DevicesState, DevicesView> {
         entries: ((pluginQuery(game, 'cast/contacts')?.(state) ?? []) as Contact[]).map((contact) => ({
           id: contact.id,
           title: contact.name,
-          text: contact.desc ?? '',
+          text: contact.description ?? '',
           image: contact.portrait,
           actions: [renderAction(state, game, { id: `call-${contact.id}`, label: stringOf(game, 'devices/call'), command: contact.command })],
         })),

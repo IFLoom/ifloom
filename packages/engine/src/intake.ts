@@ -289,6 +289,24 @@ const STEPS: Record<number, (state: Saved, game: Game) => Saved> = {
       ),
     }
   },
+  // 21 → 22: a thing's line is its `description`, as content writes it, so what an entity made in play was given is kept under that name too.
+  21: (state) => {
+    const entities = state.entities as Record<string, Record<string, Record<string, unknown>> | undefined> | undefined
+    if (!entities || typeof entities !== 'object') return state
+    const kinds = Object.entries(entities).map(([kind, byId]) => [
+      kind,
+      byId && typeof byId === 'object'
+        ? Object.fromEntries(
+            Object.entries(byId).map(([id, record]) => {
+              if (!record || typeof record !== 'object' || !('desc' in record) || 'description' in record) return [id, record]
+              const { desc, ...rest } = record
+              return [id, { ...rest, description: desc }]
+            }),
+          )
+        : byId,
+    ])
+    return { ...state, entities: Object.fromEntries(kinds) }
+  },
 }
 
 /** A data scene's choice, as far as the version 18 step reads it. */

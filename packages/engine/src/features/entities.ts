@@ -52,7 +52,7 @@ export type EntityView = {
   /** Its name, with prose tokens filled in. */
   name: string
   /** Its description, filled in the same way; null with none. */
-  desc: string | null
+  description: string | null
   /** Its picture's path, through `artSrc`; null with none. */
   image: string | null
   /** Its kind's tags, then its own. */
@@ -101,7 +101,7 @@ export type CreatedEntity = {
   /** What the player reads. The `like`'s, if it is made like one and left out. */
   name?: string
   /** A line or two about it, tokens filled in when it is read. The `like`'s, if left out. */
-  desc?: string
+  description?: string
   /** Its picture, through `artSrc`. The `like`'s, if left out. */
   image?: string
   /** Its tags, after its kind's and its `like`'s. */
@@ -553,13 +553,13 @@ export const entities = defineFeature<EntitiesShape>({
             .filter((ref) => listed(ref) && holdsFor(entityDef(game, ref)?.visible, ref))
             .map((ref): EntityView => {
               const id = parseRef(ref)!.id
-              const desc = entityText(state, game, ref, 'desc')
+              const description = entityText(state, game, ref, 'description')
               const image = entityImage(state, game, ref)
               return {
                 id,
                 ref,
                 name: cx.fillTokens(state, game, entityText(state, game, ref, 'name') ?? id),
-                desc: desc === undefined ? null : cx.fillTokens(state, game, desc),
+                description: description === undefined ? null : cx.fillTokens(state, game, description),
                 image: image === undefined ? null : artSrc(image),
                 tags: entityTags(state, game, ref),
                 flags: Object.fromEntries(Object.entries(kind.flags ?? {}).map(([name, when]) => [name, holdsFor(when, ref)])),
@@ -627,8 +627,8 @@ function checkTraits(game: Game, tools: FeatureCheckTools): void {
 function tidiedRecord(record: EntityState, def: EntityDef | undefined, kind: string, game: Game): EntityState | undefined {
   const next: EntityState = {}
   if (record.name !== undefined && record.name !== def?.name) next.name = record.name
-  // What it was created with, desc and picture included, is only ever written by play.
-  if (record.desc !== undefined) next.desc = record.desc
+  // What it was created with, description and picture included, is only ever written by play.
+  if (record.description !== undefined) next.description = record.description
   if (record.image !== undefined) next.image = record.image
   // What it was created like and with is only ever written by play.
   if (record.like !== undefined) next.like = record.like

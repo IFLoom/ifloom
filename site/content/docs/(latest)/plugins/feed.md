@@ -179,7 +179,7 @@ import { cast } from '@ifloom/plugin-cast'
 import { feed } from '@ifloom/plugin-feed'
 
 const place = (id: string, name: string, exits: string[]): PlaceDef =>
-  ({ id, name, desc: 'Small Town', exits, body: [{ prose: `place.${id}` }] })
+  ({ id, name, description: 'Small Town', exits, body: [{ prose: `place.${id}` }] })
 
 const map = [
   { ...place('flat', 'Your flat', ['high-street']), actions: [{ id: 'bed', label: 'Go to bed', command: calendar.sleep() }] },
@@ -213,8 +213,8 @@ const town: Content = {
     'comment.nice': 'Lovely!',
   },
   entities: [
-    cast.person({ id: 'ava', name: 'Ava', desc: 'Runs the café', image: 'art/character/ava.svg', home: 'park' }),
-    cast.person({ id: 'sam', name: 'Sam', desc: 'Neighbour', image: 'art/character/sam.svg', home: 'park' }),
+    cast.person({ id: 'ava', name: 'Ava', description: 'Runs the café', image: 'art/character/ava.svg', home: 'park' }),
+    cast.person({ id: 'sam', name: 'Sam', description: 'Neighbour', image: 'art/character/sam.svg', home: 'park' }),
     ...map,
   ],
   data: {

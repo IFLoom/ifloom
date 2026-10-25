@@ -27,6 +27,7 @@ import {
   type PluginProblem,
   type Reference,
 } from '@ifloom/engine'
+import { CONTENT_VERSION, contentMigrations } from './upgrade.ts'
 
 /** One value in a pool: the value, or the value with a weight (1 if left out). */
 export type PoolEntry = KvValue | { value: KvValue; weight?: number }
@@ -54,7 +55,7 @@ export type TemplateDef = {
   /** Its name. The `like`'s if left out. */
   name?: FieldDef
   /** A line or two about it, drawn as the name is. */
-  desc?: FieldDef
+  description?: FieldDef
   /** Its picture, through `artSrc`, drawn as the name is: `{ pool: 'faces' }`. */
   image?: FieldDef
   /** Words it has, after its kind's and its `like`'s. */
@@ -70,7 +71,7 @@ export type TemplateDef = {
 }
 
 /** What a template draws for one entity: the fields of the engine's `create` effect that come from pools and ranges. */
-export type GeneratedEntity = { name?: string; desc?: string; image?: string; stats: Record<string, number>; kv: Record<string, KvValue> }
+export type GeneratedEntity = { name?: string; description?: string; image?: string; stats: Record<string, number>; kv: Record<string, KvValue> }
 
 /**
  * What content writes for each of the plugin's calls, its queries' answers
@@ -126,7 +127,9 @@ function drawField(field: FieldDef, game: Game, parts: (string | number)[]): KvV
  */
 export function drawEntity(state: GameState, game: Game, template: TemplateDef, n: number): GeneratedEntity {
   const parts = (field: string) => [ID, state.seed, template.id, n, field]
-  const text = (field: FieldDef | undefined, name: string) => (field === undefined ? {} : { [name]: String(drawField(field, game, parts(name))) })
+  // Each field is drawn under a name of its own; the description under `desc`, its name before schema 26, so a seed deals what it always has.
+  const text = (field: FieldDef | undefined, name: string, drawnAs = name) =>
+    field === undefined ? {} : { [name]: String(drawField(field, game, parts(drawnAs))) }
   const stats: Record<string, number> = {}
   for (const [id, field] of Object.entries(template.stats ?? {})) {
     const value = Number(drawField(field, game, parts(`stat:${id}`)))
@@ -135,7 +138,7 @@ export function drawEntity(state: GameState, game: Game, template: TemplateDef, 
   const kv: Record<string, KvValue> = {}
   // Drawn under `flag:<id>`, the name from before the kv store, so a seed deals the same values it always has.
   for (const [id, field] of Object.entries(template.kv ?? {})) kv[id] = drawField(field, game, parts(`flag:${id}`))
-  return { ...text(template.name, 'name'), ...text(template.desc, 'desc'), ...text(template.image, 'image'), stats, kv }
+  return { ...text(template.name, 'name'), ...text(template.description, 'description', 'desc'), ...text(template.image, 'image'), stats, kv }
 }
 
 /** The kind a template makes: its `of`, else its `like`'s. */
@@ -175,7 +178,7 @@ function poolsIn(field: FieldDef | undefined): string[] {
 
 function fields(template: TemplateDef): { where: string; field: FieldDef }[] {
   return [
-    ...(['name', 'desc', 'image'] as const).flatMap((where) => (template[where] === undefined ? [] : [{ where, field: template[where] }])),
+    ...(['name', 'description', 'image'] as const).flatMap((where) => (template[where] === undefined ? [] : [{ where, field: template[where] }])),
     ...Object.entries(template.stats ?? {}).map(([id, field]) => ({ where: `stat ${id}`, field })),
     ...Object.entries(template.kv ?? {}).map(([id, field]) => ({ where: `kv ${id}`, field })),
   ]
@@ -201,6 +204,8 @@ function generatorsPlugin(): DefinedPlugin<null> {
   return definePlugin({
     id: ID,
     version: 1,
+    contentVersion: CONTENT_VERSION,
+    contentMigrations,
     effects: {
       /** `{ 'generators/generate': { template, count? } }`: make `count` (1 if left out) entities from the template. */
       generate: (state, args, { game, apply }) => {

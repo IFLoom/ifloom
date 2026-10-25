@@ -38,7 +38,7 @@ For a game with one scene and an action, `words.en.json` reads:
   "scene.cafe.counter.choice.leave.label": "Leave",
   "action.wait.label": "Wait a while",
   "entity.character:ava.name": "Ava",
-  "entity.character:ava.desc": "Runs the café"
+  "entity.character:ava.description": "Runs the café"
 }
 ```
 
@@ -64,7 +64,7 @@ export const french: Pack = {
     'scene.cafe.counter.choice.tea.label': 'Une théière',
     'scene.cafe.counter.choice.leave.label': 'Partir',
     'action.wait.label': 'Attendre un peu',
-    'entity.character:ava.desc': 'Tient le café',
+    'entity.character:ava.description': 'Tient le café',
   },
 }
 ```

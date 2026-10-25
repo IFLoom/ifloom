@@ -92,7 +92,7 @@ type TemplateDef = {
   of?: string
   like?: EntityRef
   name?: FieldDef
-  desc?: FieldDef
+  description?: FieldDef
   image?: FieldDef
   tags?: string[]
   traits?: Record<string, unknown>
@@ -110,7 +110,7 @@ A template has the fields of the engine's [`create`](/docs/reference/effects#cre
 | `of` | The [kind](/docs/reference/entities#kinddef) of entity it makes. | The `like`'s kind. One of `of` and `like` is required. |
 | `like` | A declared entity it's made [like](/docs/reference/entities#things-made-like-another): what it isn't given, such as its name, picture, traits and stats, is read from that one. | Like nothing. |
 | `name` | Where the entity's name comes from. | The `like`'s. Required without a `like`. |
-| `desc` | Where its description comes from, drawn as the name is. | The `like`'s, or none. |
+| `description` | Where its description comes from, drawn as the name is. | The `like`'s, or none. |
 | `image` | Where its picture comes from, through [`artSrc`](/docs/reference/prose#artsrc): a path, or `{ pool: 'faces' }` to pick one. | The `like`'s, or none. |
 | `tags` | Words it has, after its kind's and its `like`'s. | None of its own. |
 | `traits` | [Trait](/docs/reference/entities#traits) data, by trait id, laid over its `like`'s or its kind's: `{ 'cast/person': { home: 'park', talk: 'visitor.hi' } }` makes someone the [cast](/docs/plugins/cast) can find. | None of its own. |
@@ -159,7 +159,7 @@ A template the game doesn't have makes nothing.
 
 ## Seeded draws
 
-Every field is drawn from the save's [seed](/docs/reference/state#seed), the template's id, the number the new entity will get, and the field's name. A field added to a template, such as a `desc`, has a name of its own, so it doesn't change what the others draw. So:
+Every field is drawn from the save's [seed](/docs/reference/state#seed), the template's id, the number the new entity will get, and the field's name. A field added to a template, such as a `description`, has a name of its own, so it doesn't change what the others draw. So:
 
 - The same save makes the same entities every time, and a replay of its commands makes them again exactly.
 - Each new entity is drawn differently, because its number is new. Making three at once gives the same three as making one three times.
@@ -180,7 +180,7 @@ const generators: {
 
 ```ts
 function drawEntity(state: GameState, game: Game, template: TemplateDef, n: number): GeneratedEntity
-type GeneratedEntity = { name?: string; desc?: string; image?: string; stats: Record<string, number>; kv: Record<string, KvValue> }
+type GeneratedEntity = { name?: string; description?: string; image?: string; stats: Record<string, number>; kv: Record<string, KvValue> }
 ```
 
 What the template draws for the `n`th entity of its kind made in play, without making it: the fields that come from pools and ranges, each only when the template has it. `stats` holds every stat drawn, before the effect leaves out the ones equal to what the entity would read anyway. The effect passes the number the next one will get. Use it to preview a template, or in a test.

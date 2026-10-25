@@ -34,9 +34,10 @@ export type QuestStage = {
 
 export type QuestDef = {
   id: string
-  title: string
+  /** What the player reads: "Find your feet". */
+  name: string
   /** A line or two about it, for the quest list. */
-  summary?: string
+  description?: string
   /** The storyline it belongs to, for a UI that groups quests by person. */
   storyline?: string
   /**
@@ -67,8 +68,8 @@ export type QuestsState = {
 /** A quest as the UI shows it. */
 export type QuestEntry = {
   id: string
-  title: string
-  summary: string
+  name: string
+  description: string
   storyline: string | null
   /** The hint for the stage the player is on; empty once the quest is done. */
   hint: string
@@ -198,8 +199,8 @@ function entry(quest: QuestDef, record: QuestsState): QuestEntry {
   const doneOn = record.done[quest.id] ?? null
   return {
     id: quest.id,
-    title: quest.title,
-    summary: quest.summary ?? '',
+    name: quest.name,
+    description: quest.description ?? '',
     storyline: quest.storyline ?? null,
     hint: doneOn === null ? (quest.stages[stage]?.hint ?? '') : '',
     stage,
@@ -247,7 +248,7 @@ function questsPlugin(): DefinedPlugin<QuestsState, QuestsView> {
     contentVersion: CONTENT_VERSION,
     contentMigrations,
     // The words a player reads in each list of the plugin's content, for a translation's `words` table.
-    words: { quests: { title: true, summary: true, stages: [{ hint: true }] } },
+    words: { quests: { name: true, description: true, stages: [{ hint: true }] } },
     commandVersion: COMMAND_VERSION,
     commandMigrations,
     start: emptyState,

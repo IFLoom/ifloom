@@ -6,7 +6,7 @@ import { applyEffects } from '../../src/reduce.ts'
 import { loadState, startingState } from '../../src/intake.ts'
 import { view } from '../../src/view.ts'
 import { bindCurrent, entitiesOf, entityKv, entityOf, entityTags } from '../../src/entities.ts'
-import { entityDesc, entityName } from '../../src/prose.ts'
+import { entityDescription, entityName } from '../../src/prose.ts'
 import { statValue } from '../../src/stats.ts'
 import { unwrap } from '../fixtures/result.ts'
 
@@ -230,7 +230,7 @@ describe('the view of entities', () => {
         id: 'ana',
         of: 'staff',
         name: 'Ana, {{title}}',
-        desc: 'Runs the kitchen for {{owner}}.',
+        description: 'Runs the kitchen for {{owner}}.',
         image: 'staff/ana',
         tags: ['cook', 'crew'],
         stats: { skill: 5 },
@@ -268,15 +268,15 @@ describe('the view of entities', () => {
     const [ana, ben] = view(state, game).entities.staff.entries
     expect(ana).toMatchObject({
       name: 'Ana, head cook',
-      desc: 'Runs the kitchen for Rosa.',
+      description: 'Runs the kitchen for Rosa.',
       image: 'art/staff/ana.jpg',
       tags: ['crew', 'cook'],
       flags: { senior: true },
     })
-    expect(ben).toMatchObject({ name: 'Ben', desc: null, image: null, tags: ['crew'], flags: { senior: false } })
+    expect(ben).toMatchObject({ name: 'Ben', description: null, image: null, tags: ['crew'], flags: { senior: false } })
     expect(view(state, game).entities.staff.unique).toBe(false)
-    expect(entityDesc(state, game, 'staff:ana')).toBe('Runs the kitchen for Rosa.')
-    expect(entityDesc(state, game, 'staff:ben')).toBeUndefined()
+    expect(entityDescription(state, game, 'staff:ana')).toBe('Runs the kitchen for Rosa.')
+    expect(entityDescription(state, game, 'staff:ben')).toBeUndefined()
     expect(entityTags(state, game, 'staff:ana')).toEqual(['crew', 'cook'])
   })
 

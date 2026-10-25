@@ -151,7 +151,7 @@ The layer has a `when`, and the hotspot names the layer, so both go when Ava doe
 
 ### People and schedules
 
-`world/cast.ts`, and `cast()` in `src/game.ts`. Ava and Sam are the [cast plugin](/docs/plugins/cast)'s characters, entities written with [`cast.person()`](/docs/plugins/cast#person) in that file's `entities`: each one's name, a line about them (`desc`) and portrait (`image`), with the cast's schedule, talk and call beside them. `cast()` is listed after `places({ start: 'flat' })`, and asks it through `places/here` to find out who is in the room.
+`world/cast.ts`, and `cast()` in `src/game.ts`. Ava and Sam are the [cast plugin](/docs/plugins/cast)'s characters, entities written with [`cast.person()`](/docs/plugins/cast#person) in that file's `entities`: each one's name, a line about them (`description`) and portrait (`image`), with the cast's schedule, talk and call beside them. `cast()` is listed after `places({ start: 'flat' })`, and asks it through `places/here` to find out who is in the room.
 
 Ava's [schedule](/docs/plugins/cast#where-people-are) puts her at the café Monday to Saturday, mornings and afternoons:
 

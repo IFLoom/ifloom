@@ -109,7 +109,7 @@ function AchievementListImpl({ className, title }: { className?: string; title?:
                 {entry.image ? <Picture {...image} src={entry.image} alt="" /> : null}
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
                   <p {...name}>
-                    {entry.title}
+                    {entry.name}
                     {entry.earned ? <span {...earnedBadge}>{words('achievementEarned')}</span> : null}
                   </p>
                   {entry.description ? <p {...text}>{entry.description}</p> : null}
@@ -118,7 +118,7 @@ function AchievementListImpl({ className, title }: { className?: string; title?:
                       <div
                         {...bar}
                         role="progressbar"
-                        aria-label={entry.title}
+                        aria-label={entry.name}
                         aria-valuemin={0}
                         aria-valuemax={progress.target}
                         aria-valuenow={Math.min(progress.value, progress.target)}

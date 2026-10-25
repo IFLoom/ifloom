@@ -14,7 +14,7 @@ import { cheats, cheatsOf, cheatsView, type CheatDef, type CheatUse, type Cheats
 
 The [debug plugin](/docs/plugins/debug) is for you while you build the game. Its commands set any stat, scene or clock by hand, it has no words for the player, and you leave it out of release builds.
 
-Cheats are part of the game the player gets. You write each one as content, with a label, effects and the reasons it's refused, and the plugin's React UI draws a panel for them. A game can have both: the showcase adds `cheats()` always and `debug()` only in development.
+Cheats are part of the game the player gets. You write each one as content, with a name, effects and the reasons it's refused, and the plugin's React UI draws a panel for them. A game can have both: the showcase adds `cheats()` always and `debug()` only in development.
 
 ## Install
 
@@ -49,14 +49,14 @@ import type { CheatDef } from '@ifloom/plugin-cheats'
 
 const coins: CheatDef = {
   id: 'coins',
-  label: '+20 coins',
+  name: '+20 coins',
   description: 'A little help with the rent.',
   effects: [{ stat: 'coins', by: 20 }],
 }
 
 const energy: CheatDef = {
   id: 'energy',
-  label: 'Full energy',
+  name: 'Full energy',
   description: 'As if you had slept.',
   group: 'Supporters',
   blocked: [{ when: { not: { 'unlocks/has': { unlock: 'supporter' } } }, reason: 'For supporters.' }],
@@ -73,7 +73,7 @@ const town: Content = {
 ```ts
 type CheatDef = {
   id: string
-  label: string
+  name: string
   description?: string
   effects: EffectRef[]
   blocked?: Blocked[]
@@ -85,7 +85,7 @@ type CheatDef = {
 | Field | What it is |
 |---|---|
 | `id` | Unique among cheats. Content and the `cheats/use` command name it by this. |
-| `label` | What its button says. |
+| `name` | What the player reads, on its button. |
 | `description` | A line about it, under the button. |
 | `effects` | What it does, as any [effect list](/docs/reference/effects) runs, in order. Plugins' effects in their short form work too. |
 | `blocked` | Why it's refused. The first entry whose `when` holds greys the button out with its `reason`, or leaves it off the panel with `hide`. See [Supporter cheats](#supporter-cheats). |
@@ -103,7 +103,7 @@ import type { CheatDef } from '@ifloom/plugin-cheats'
 
 const gold: CheatDef = {
   id: 'gold',
-  label: '+500 coins',
+  name: '+500 coins',
   group: 'Supporters',
   blocked: [{ when: { not: { 'unlocks/has': { unlock: 'supporter' } } }, reason: 'For supporters.' }],
   effects: [{ stat: 'coins', by: 500 }],
@@ -190,7 +190,7 @@ type CheatsView = {
 ```ts
 type CheatView = {
   id: string
-  label: string
+  name: string
   description: string
   group: string | null
   once: boolean
@@ -224,7 +224,7 @@ export function cheatPanel(view: View, runner: Runner): HTMLElement | null {
     if (group) panel.appendChild(document.createElement('h3')).textContent = group
     for (const cheat of cheats.filter((entry) => entry.group === group)) {
       const button = panel.appendChild(document.createElement('button'))
-      button.textContent = cheat.used ? `${cheat.label} (used ${cheat.used})` : cheat.label
+      button.textContent = cheat.used ? `${cheat.name} (used ${cheat.used})` : cheat.name
       button.disabled = Boolean(cheat.button.disabled)
       button.title = cheat.button.disabled ?? cheat.description
       button.onclick = () => runner.apply(cheat.button.command)
@@ -248,7 +248,7 @@ export function Cheats() {
           {group.name ? <h3 className="font-semibold">{group.name}</h3> : null}
           {group.cheats.map((cheat) => (
             <button key={cheat.id} disabled={Boolean(cheat.button.disabled)} title={cheat.button.disabled ?? cheat.description} onClick={() => cheats.use(cheat.id)}>
-              {cheat.label}
+              {cheat.name}
               {cheat.used ? ` (used ${cheat.used})` : ''}
             </button>
           ))}
@@ -281,7 +281,7 @@ const groups = computed(() => [...new Set(cheats.value.map((cheat) => cheat.grou
         :title="cheat.button.disabled ?? cheat.description"
         @click="runner.apply(cheat.button.command)"
       >
-        {{ cheat.label }}<template v-if="cheat.used"> (used {{ cheat.used }})</template>
+        {{ cheat.name }}<template v-if="cheat.used"> (used {{ cheat.used }})</template>
       </button>
     </div>
   </section>
@@ -304,7 +304,7 @@ const groups = computed(() => [...new Set(cheats.value.map((cheat) => cheat.grou
       {#if group}<h3>{group}</h3>{/if}
       {#each cheats.filter((entry) => entry.group === group) as cheat (cheat.id)}
         <button disabled={Boolean(cheat.button.disabled)} title={cheat.button.disabled ?? cheat.description} onclick={() => runner.apply(cheat.button.command)}>
-          {cheat.label}{#if cheat.used} (used {cheat.used}){/if}
+          {cheat.name}{#if cheat.used} (used {cheat.used}){/if}
         </button>
       {/each}
     {/each}
@@ -387,7 +387,7 @@ function QuickCoins() {
   const cheats = useCheats()
   const coins = cheats?.cheats.find((cheat) => cheat.id === 'coins')
   if (!coins) return null
-  return <button disabled={Boolean(coins.button.disabled)} onClick={() => cheats!.use('coins')}>{coins.label}</button>
+  return <button disabled={Boolean(coins.button.disabled)} onClick={() => cheats!.use('coins')}>{coins.name}</button>
 }
 ```
 
@@ -436,7 +436,7 @@ The plugin's view, as its `view` provider builds it. You need it only inside a p
 When the game loads, the plugin reports these problems against the content or pack each cheat came from, with `where` as `cheats <id>`:
 
 - Anything a cheat's effects or `blocked` conditions name that the game doesn't have (`unknown stat "…"`).
-- A cheat with an empty label (`has no label`) or no effects (`has no effects`).
+- A cheat with an empty name (`has no name`) or no effects (`has no effects`).
 - A `blocked` entry with no reason.
 - Two cheats with one id, in a game built by hand. Packs merge by id, so a loaded game never has this.
 

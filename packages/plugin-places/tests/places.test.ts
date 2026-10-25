@@ -24,7 +24,7 @@ const place = (id: string, exits: string[], extra: Partial<PlaceDef> = {}) =>
   places.location({
     id,
     name: id[0].toUpperCase() + id.slice(1),
-    desc: 'Town',
+    description: 'Town',
     exits,
     image: `place/${id}`,
     body: [{ prose: `place.${id}` }],
@@ -93,13 +93,13 @@ describe('places', () => {
     expect(screen.scene).toMatchObject({ title: 'House', body: 'Your house.', key: 'room:house' })
     expect(screen.when).toBe('Day 1 · Monday morning · House')
     expect(shown(state, g)).toEqual({
-      location: { id: 'house', ref: 'location:house', name: 'House', desc: 'Town', tags: [], image: 'art/place/house.jpg', stage: null },
+      location: { id: 'house', ref: 'location:house', name: 'House', description: 'Town', tags: [], image: 'art/place/house.jpg', stage: null },
       exits: [
         {
           id: 'street',
           label: 'Street',
           ref: 'location:street',
-          desc: 'Town',
+          description: 'Town',
           tags: ['outdoors'],
           image: 'art/place/street.jpg',
           command: commandOf(places.go('street')),
@@ -393,7 +393,7 @@ describe('places', () => {
     it('are what the place’s entity holds: each location is a unique entity of the kind location', () => {
       const { g } = lying()
       expect(g.kinds?.find((kind) => kind.id === 'location')).toMatchObject({ unique: true, listed: false })
-      expect(g.entities?.find((entity) => entity.of === 'location' && entity.id === 'cafe')).toMatchObject({ name: 'Cafe', desc: 'Town' })
+      expect(g.entities?.find((entity) => entity.of === 'location' && entity.id === 'cafe')).toMatchObject({ name: 'Cafe', description: 'Town' })
       const state = startingState(g)
       expect(view(state, g).entities.location).toBeUndefined()
       expect(pluginQuery(g, 'places/holder')!(state)).toBe(places.locationRef('house'))
@@ -425,13 +425,13 @@ describe('places', () => {
   })
 
   describe('each place is an entity with the location trait', () => {
-    it('is written with places.location(): the entity has the name, desc, image and tags, and the trait the rest', () => {
+    it('is written with places.location(): the entity has the name, description, image and tags, and the trait the rest', () => {
       const cafe = place('cafe', ['street'], { tags: ['indoors'], ui: { transition: 'fade' } })
       expect(cafe).toEqual({
         id: 'cafe',
         of: 'location',
         name: 'Cafe',
-        desc: 'Town',
+        description: 'Town',
         image: 'place/cafe',
         tags: ['indoors'],
         traits: { 'places/location': { exits: ['street'], body: [{ prose: 'place.cafe' }], ui: { transition: 'fade' } } },
@@ -482,11 +482,11 @@ describe('places', () => {
       expect(shown(park, g).exits.map((exit) => exit.id)).toEqual(['street', 'house'])
     })
 
-    it('answers the `places/desc` value with the place’s desc', () => {
+    it('answers the `places/description` value with the place’s description', () => {
       const { game: g } = game()
       expect(view(startingState(g), g).when).toBe('Day 1 · Monday morning · House')
       const { game: told } = (() => {
-        const content: Content = { ...town, prose: { ...town.prose, 'place.house': 'A {{v:places/desc}} house: {{v:places/name}}.' } }
+        const content: Content = { ...town, prose: { ...town.prose, 'place.house': 'A {{v:places/description}} house: {{v:places/name}}.' } }
         return { game: loadGame([content], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'house' })] }).game }
       })()
       expect(view(startingState(told), told).scene.body).toBe('A Town house: House.')
@@ -501,7 +501,7 @@ describe('places', () => {
     })
   })
 
-  it('carries an older pack’s locations forward into entities, art as the image and tag as the desc', () => {
+  it('carries an older pack’s locations forward into entities, art as the image and tag as the description', () => {
     const old = {
       id: 'mod:old',
       schema: 23,
@@ -514,7 +514,7 @@ describe('places', () => {
       of: 'location',
       id: 'shed',
       name: 'Shed',
-      desc: 'Garden',
+      description: 'Garden',
       image: 'place/shed',
       traits: { 'places/location': { exits: ['house'], body: [{ prose: 'place.shed' }] } },
     })

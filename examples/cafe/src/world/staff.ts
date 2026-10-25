@@ -8,5 +8,5 @@ export const staff: Content = {
     { id: 'morale', label: 'Morale', of: 'staff', start: 60 },
     { id: 'wage', label: 'Wage', of: 'staff', start: 10, max: 50, format: '£{n}' },
   ],
-  entities: [{ id: 'ana', of: 'staff', name: 'Ana', desc: 'Has run the kitchen since the day you opened.', stats: { skill: 5, wage: 12 } }],
+  entities: [{ id: 'ana', of: 'staff', name: 'Ana', description: 'Has run the kitchen since the day you opened.', stats: { skill: 5, wage: 12 } }],
 }

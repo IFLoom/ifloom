@@ -48,8 +48,8 @@ function game(strings: Record<string, string> = {}): Game {
           'mum.hi': 'Did you eat?',
         },
         entities: [
-          places.location({ id: 'house', name: 'House', desc: 'Home', exits: ['street'], body: [{ prose: 'place.house' }] }),
-          places.location({ id: 'street', name: 'High Street', desc: 'Out', exits: ['house'], body: [{ prose: 'place.street' }] }),
+          places.location({ id: 'house', name: 'House', description: 'Home', exits: ['street'], body: [{ prose: 'place.house' }] }),
+          places.location({ id: 'street', name: 'High Street', description: 'Out', exits: ['house'], body: [{ prose: 'place.street' }] }),
         ],
         data: {
           messages: {

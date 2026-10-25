@@ -53,7 +53,7 @@ import type { UnlockDef } from '@ifloom/plugin-unlocks'
 
 const supporter: UnlockDef = {
   id: 'supporter',
-  label: 'Supporter edition',
+  name: 'Supporter edition',
   description: 'A thank-you scene in the café, and the Full energy cheat.',
   // From `ifloom unlock-hash supporter`. The code itself is in .env, never here.
   hash: '7b141ff9f5210e0e3064dd089920697c712fa1b31ff56c2e42737dcd71bbed5f',
@@ -67,7 +67,7 @@ const town: Content = { data: { unlocks: { unlocks: [supporter] } } }
 ```ts
 type UnlockDef = {
   id: string
-  label: string
+  name: string
   description?: string
   hash: string
   salt?: string
@@ -78,8 +78,8 @@ type UnlockDef = {
 | Field | What it is |
 |---|---|
 | `id` | Unique among unlocks. `unlocks/has` names it by this, and its locked content is `src/unlocks/<id>.ts`. |
-| `label` | Its name for the player, in the list of unlocks. |
-| `description` | What it opens, under the label. |
+| `name` | Its name for the player, in the list of unlocks. |
+| `description` | What it opens, under the name. |
 | `hash` | The code's hash, 64 hex digits, as [`ifloom unlock-hash`](/docs/cli#ifloom-unlock-hash) prints it. |
 | `salt` | Extra salt for the hash. Change it to get a new hash for the same code. |
 | `iterations` | PBKDF2's rounds for this code. `600000` if left out. Use fewer only in tests. |
@@ -188,7 +188,7 @@ const said = form.appendChild(document.createElement('p'))
 form.onsubmit = async (event) => {
   event.preventDefault()
   const result = await codes.enter(input.value)
-  said.textContent = result.ok ? `Unlocked: ${result.value.label}.` : result.reason
+  said.textContent = result.ok ? `Unlocked: ${result.value.name}.` : result.reason
   if (result.ok && result.value.restart) location.reload()
 }
 ```
@@ -225,7 +225,7 @@ const code = ref('')
 const said = ref('')
 async function enter() {
   const result = await codes.enter(code.value)
-  said.value = result.ok ? `Unlocked: ${result.value.label}.` : result.reason
+  said.value = result.ok ? `Unlocked: ${result.value.name}.` : result.reason
   if (result.ok && result.value.restart) location.reload()
 }
 </script>
@@ -250,7 +250,7 @@ async function enter() {
   async function enter(event: SubmitEvent) {
     event.preventDefault()
     const result = await codes.enter(code)
-    said = result.ok ? `Unlocked: ${result.value.label}.` : result.reason
+    said = result.ok ? `Unlocked: ${result.value.name}.` : result.reason
     if (result.ok && result.value.restart) location.reload()
   }
 </script>
@@ -309,12 +309,12 @@ type UnlockCodes = {
 ### Entered
 
 ```ts
-type Entered = { unlock: string; label: string; already: boolean; restart: boolean }
+type Entered = { unlock: string; name: string; already: boolean; restart: boolean }
 ```
 
 | Field | What it is |
 |---|---|
-| `unlock`, `label` | The unlock the code opened. |
+| `unlock`, `name` | The unlock the code opened. |
 | `already` | It was unlocked already. The code worked and nothing changed. |
 | `restart` | It has locked content that the game in play doesn't have yet. Build the game again to add it, usually by reloading the page, as for [mods](/docs/reference/mods). |
 
@@ -368,7 +368,7 @@ type UnlocksView = {
   total: number
 }
 
-type UnlockView = { id: string; label: string; description: string; unlocked: boolean }
+type UnlockView = { id: string; name: string; description: string; unlocked: boolean }
 ```
 
 | Field | What it is |
@@ -390,7 +390,7 @@ export function unlockList(view: View): HTMLElement | null {
   if (!shown?.total) return null
   const list = document.createElement('ul')
   for (const unlock of shown.unlocks) {
-    list.appendChild(document.createElement('li')).textContent = `${unlock.label}: ${unlock.unlocked ? 'unlocked' : 'locked'}`
+    list.appendChild(document.createElement('li')).textContent = `${unlock.name}: ${unlock.unlocked ? 'unlocked' : 'locked'}`
   }
   return list
 }
@@ -406,7 +406,7 @@ export function UnlockList() {
     <ul>
       {unlocks.unlocks.map((unlock) => (
         <li key={unlock.id}>
-          {unlock.label}: {unlock.unlocked ? 'unlocked' : 'locked'}
+          {unlock.name}: {unlock.unlocked ? 'unlocked' : 'locked'}
         </li>
       ))}
     </ul>
@@ -425,7 +425,7 @@ const shown = computed(() => view.value.plugins.unlocks as UnlocksView | undefin
 
 <template>
   <ul v-if="shown?.total">
-    <li v-for="unlock in shown.unlocks" :key="unlock.id">{{ unlock.label }}: {{ unlock.unlocked ? 'unlocked' : 'locked' }}</li>
+    <li v-for="unlock in shown.unlocks" :key="unlock.id">{{ unlock.name }}: {{ unlock.unlocked ? 'unlocked' : 'locked' }}</li>
   </ul>
 </template>
 ```
@@ -441,7 +441,7 @@ const shown = computed(() => view.value.plugins.unlocks as UnlocksView | undefin
 {#if shown?.total}
   <ul>
     {#each shown.unlocks as unlock (unlock.id)}
-      <li>{unlock.label}: {unlock.unlocked ? 'unlocked' : 'locked'}</li>
+      <li>{unlock.name}: {unlock.unlocked ? 'unlocked' : 'locked'}</li>
     {/each}
   </ul>
 {/if}
@@ -570,7 +570,7 @@ function CodeBox() {
     <form onSubmit={(event) => { event.preventDefault(); void unlocks.enter(code) }}>
       <input value={code} onChange={(event) => setCode(event.target.value)} />
       <button disabled={unlocks.checking}>Unlock</button>
-      {unlocks.message ?? (unlocks.entered ? `Unlocked: ${unlocks.entered.label}.` : null)}
+      {unlocks.message ?? (unlocks.entered ? `Unlocked: ${unlocks.entered.name}.` : null)}
       {unlocks.restart ? <button type="button" onClick={unlocks.restart}>Restart</button> : null}
     </form>
   )
@@ -645,7 +645,7 @@ One unlock's content as the page holds it: the game's and unlock's ids, the nonc
 
 When the game loads, the plugin reports these against the content or pack each unlock came from, with `where` as `unlocks <id>`:
 
-- An unlock with an empty label (`has no label`).
+- An unlock with an empty name (`has no name`).
 - A hash that isn't 64 hex digits (`its hash isn't one ifloom unlock-hash printed (64 hex digits)`), such as a code pasted in by mistake.
 - `iterations` that isn't a whole number above 0.
 - Two unlocks with one id, in a game built by hand.

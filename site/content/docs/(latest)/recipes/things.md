@@ -31,7 +31,7 @@ const scarf: Content = {
       id: 'scarf',
       of: 'clothing',
       name: 'scarf',
-      desc: 'Knitted, with a dropped stitch near one end.',
+      description: 'Knitted, with a dropped stitch near one end.',
       at: places.locationRef('park'),
       traits: { ...wardrobe.wearable('neck'), ...shop.sellable({ coins: 8 }) },
     },
@@ -45,7 +45,7 @@ Take a plugin out and its part goes with it. Its trait stays on the scarf and do
 
 ## Places, people and vendors are entities too
 
-The park the scarf lies in, the person who sells it and the stall are entities as well, each with its plugin's trait. You write them in the same `entities` list, each with its plugin's helper, which puts the entity's own fields (name, `desc`, `image`) on the entity and the rest in the trait:
+The park the scarf lies in, the person who sells it and the stall are entities as well, each with its plugin's trait. You write them in the same `entities` list, each with its plugin's helper, which puts the entity's own fields (name, `description`, `image`) on the entity and the rest in the trait:
 
 ```ts
 import type { Content } from '@ifloom/engine'
@@ -55,8 +55,8 @@ import { shop } from '@ifloom/plugin-shop'
 
 const market: Content = {
   entities: [
-    places.location({ id: 'park', name: 'Riverside Park', desc: 'Small Town', exits: ['high-street'], body: [{ prose: 'place.park' }] }),
-    cast.person({ id: 'ava', name: 'Ava', desc: 'Runs the café', home: 'park' }),
+    places.location({ id: 'park', name: 'Riverside Park', description: 'Small Town', exits: ['high-street'], body: [{ prose: 'place.park' }] }),
+    cast.person({ id: 'ava', name: 'Ava', description: 'Runs the café', home: 'park' }),
     shop.vendor({ id: 'stall', name: 'The market stall', at: ['park'], buysBack: 0.5, goods: [{ entity: 'clothing:scarf', stock: 1 }] }),
   ],
 }

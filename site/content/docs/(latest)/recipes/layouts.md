@@ -300,7 +300,7 @@ Some things shouldn't be on screen at all until the story asks for them, such as
 
 ```ts
 const flat = places.location({
-  id: 'flat', name: 'Your flat', desc: 'Home', exits: ['high-street'],
+  id: 'flat', name: 'Your flat', description: 'Home', exits: ['high-street'],
   body: [{ prose: 'place.flat' }],
   actions: [{ id: 'wardrobe', label: 'Open the wardrobe', effects: [{ panel: 'wardrobe' }] }],
 })

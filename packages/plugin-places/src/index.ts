@@ -6,7 +6,7 @@
  * own state, fills the screen with the room's description while no scene is
  * open (`stage`), offers the room's actions as buttons, and hands the UI the
  * exits. A location is an entity that carries the `places/location` trait,
- * written with `places.location({ ... })` in content's `entities`: its name, `desc`
+ * written with `places.location({ ... })` in content's `entities`: its name, `description`
  * and `image` are the entity's, and its exits, body and actions are the
  * trait's. So a mod adds a room as it adds any entity, and changes one with
  * a `traits` row or by replacing the entity.
@@ -23,7 +23,7 @@ import {
   bindCurrent,
   commandOf,
   definePlugin,
-  entityDesc,
+  entityDescription,
   entityImage,
   entityName,
   entityOf,
@@ -67,7 +67,7 @@ import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations 
 
 /**
  * What the `places/location` trait holds: what makes an entity a place the
- * player can be in. The place's name, its `desc` (a word or two under the
+ * player can be in. The place's name, its `description` (a word or two under the
  * name: "Home", "Café"), its `image` and its `tags` are the entity's.
  */
 export type Place = {
@@ -117,7 +117,7 @@ declare module '@ifloom/engine' {
 
 /**
  * What `places.location()` takes: an entity's fields (its `of` is `'location'` if
- * left out; its `desc` is the line under the place's name, its `image` its
+ * left out; its `description` is the line under the place's name, its `image` its
  * picture) and the `places/location` trait's, side by side. `ui` is the
  * trait's: the room's hints, as a scene's.
  */
@@ -143,8 +143,8 @@ export type PlacesState = { at: string | null }
 export type ExitView = RenderedChoice & {
   /** The place's entity: `'location:park'`. */
   ref: EntityRef
-  /** The place's line under its name, its entity's `desc`; null with none. */
-  desc: string | null
+  /** The place's line under its name, its entity's `description`; null with none. */
+  description: string | null
   /** The place's tags, its entity's. */
   tags: string[]
   /** The place's picture's path, its entity's `image` through `artSrc`; null with none. */
@@ -171,8 +171,8 @@ export type PlaceView = {
   /** Its entity: `'location:park'`. */
   ref: EntityRef
   name: string
-  /** The line under its name, its entity's `desc`; null with none. */
-  desc: string | null
+  /** The line under its name, its entity's `description`; null with none. */
+  description: string | null
   tags: string[]
   /** Its picture's path, its entity's `image` through `artSrc`; null with none. */
   image: string | null
@@ -436,8 +436,8 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
     },
     values: {
       name: (state, _args, { slice, game }) => (slice.at !== null && locationOf(state, game, slice.at) ? entityName(state, game, locationRef(slice.at)) : ''),
-      desc: (state, _args, { slice, game }) =>
-        slice.at !== null && locationOf(state, game, slice.at) ? (entityDesc(state, game, locationRef(slice.at)) ?? '') : '',
+      description: (state, _args, { slice, game }) =>
+        slice.at !== null && locationOf(state, game, slice.at) ? (entityDescription(state, game, locationRef(slice.at)) ?? '') : '',
     },
     label: (state, { slice, game }) => (slice.at !== null && locationOf(state, game, slice.at) ? entityName(state, game, locationRef(slice.at)) : undefined),
     stage: (state, { slice, game }) => {
@@ -462,7 +462,7 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
         exits.push({
           ...renderAction(state, game, { id, label: entityName(state, game, ref), command }),
           ref,
-          desc: entityDesc(state, game, ref) ?? null,
+          description: entityDescription(state, game, ref) ?? null,
           tags: entityTags(state, game, ref),
           image: pictureOf(state, game, ref),
         })
@@ -482,7 +482,7 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
           id: at,
           ref,
           name: entityName(state, game, ref),
-          desc: entityDesc(state, game, ref) ?? null,
+          description: entityDescription(state, game, ref) ?? null,
           tags: entityTags(state, game, ref),
           image: pictureOf(state, game, ref),
           stage: stage && !idle ? { ...stage, hotspots: [] } : stage,
@@ -534,7 +534,7 @@ const LOCATION_FIELDS = ['parent', 'exits', 'stage', 'blocked', 'body', 'actions
  * the trait's written side by side.
  *
  * ```ts
- * entities: [places.location({ id: 'cafe', name: 'The Corner Café', desc: 'Café', exits: ['street'], body: [{ prose: 'place.cafe' }] })]
+ * entities: [places.location({ id: 'cafe', name: 'The Corner Café', description: 'Café', exits: ['street'], body: [{ prose: 'place.cafe' }] })]
  * ```
  */
 function location(def: PlaceDef): EntityDef {

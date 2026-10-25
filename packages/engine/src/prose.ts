@@ -47,9 +47,9 @@ export function entityName(state: GameState, game: Game, ref: string): string {
 }
 
 /** An entity's description, filled like its name; undefined when it has none. */
-export function entityDesc(state: GameState, game: Game, ref: string): string | undefined {
-  const desc = entityText(state, game, ref, 'desc')
-  return desc === undefined ? undefined : fillTokens(state, game, desc)
+export function entityDescription(state: GameState, game: Game, ref: string): string | undefined {
+  const description = entityText(state, game, ref, 'description')
+  return description === undefined ? undefined : fillTokens(state, game, description)
 }
 
 /** A value token: `{{v:game/name}}`, or `{{v:game/name key=value …}}` with arguments. */

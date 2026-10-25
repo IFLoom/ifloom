@@ -706,6 +706,8 @@ type ContentTools = {
   calls: (pack: RawPack, rewrite: (call: { name: string; with: unknown; form: 'short' | 'long' | 'command' }) => { name: string; with: unknown }) => RawPack
   words: (pack: RawPack, rewrite: (text: string, key: string) => string) => RawPack
   effects: (pack: RawPack) => RawPack
+  wordKeys: (pack: RawPack, rename: (key: string) => string) => RawPack
+  entries: (pack: RawPack, list: string, rewrite: (entry: Record<string, unknown>) => Record<string, unknown>) => RawPack
   prose: (key: string) => string | undefined
 }
 ```
@@ -719,6 +721,8 @@ Ways to rewrite a pack without walking it by hand. Each returns a new pack.
 | `words` | Every line of the pack's `prose` and `strings`, handed with its key, for a token such as <code v-pre>{{v:loyalty/stamps}}</code> that changed. |
 | `prose` | A line of prose by key, as written: the pack's own, else the game's under it (its content's and the packs' loaded before it). `undefined` if neither has it. For a step that writes words in place that were a prose key, as the messages plugin's step to version 25 gives a reply the words of its old `<message>#<reply>` prose. |
 | `effects` | Every effect the pack holds, in plugin `data` and traits too, in the keyed form: one still written with `kind`, as before schema 21, becomes `{ stat, by }` and the rest. For a plugin whose content holds effects where the engine's own step can't see them, as the first-party plugins' steps to version 21 do. |
+| `wordKeys` | Every key of the pack's [`words` table](/docs/reference/words), renamed, the words kept: for a step that renames a field the table names, as the quests plugin's step to version 26 makes `quests/quests.settle.title` `quests/quests.settle.name`. |
+| `entries` | Each entry of one list of the plugin's `data`, named `<plugin>/<list>`: `'loyalty/cards'` is `data.loyalty.cards`. A pack without the list comes back as it is. |
 
 ### CommandStep
 
@@ -1327,12 +1331,12 @@ A plugin says which fields of its content are words a player reads, so a transla
 definePlugin({
   id: 'loyalty',
   version: 1,
-  words: { cards: { title: true, perks: [{ label: true }], onFull: 'effects' } },
+  words: { cards: { name: true, perks: [{ label: true }], effects: { full: 'effects' } } },
   traits: [{ id: 'loyalty/till', words: { greeting: true } }],
 })
 ```
 
-Each field is keyed `<plugin>/<list>.<id>.<field>`, so a card's title is `loyalty/cards.cafe.title` and a perk's label `loyalty/cards.cafe.perks.coffee.label`. [`translatableFields`](/docs/reference/words#translatablefields) lists them with the rest of the game's. A field the plugin doesn't name isn't in the table. The plugin's own lines, such as refusals, stay in its [`strings`](/docs/reference/strings#plugins-strings).
+Each field is keyed `<plugin>/<list>.<id>.<field>`, so a card's name is `loyalty/cards.cafe.name` and a perk's label `loyalty/cards.cafe.perks.coffee.label`. [`translatableFields`](/docs/reference/words#translatablefields) lists them with the rest of the game's. A field the plugin doesn't name isn't in the table. The plugin's own lines, such as refusals, stay in its [`strings`](/docs/reference/strings#plugins-strings).
 
 ## Content and checks
 

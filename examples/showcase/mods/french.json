@@ -7,7 +7,7 @@
   "description": "The start of a French translation: moving day, the flat and the quest to settle in.",
   "pack": {
     "id": "french",
-    "schema": 25,
+    "schema": 26,
     "words": {
       "scene.intro.title": "Le jour du déménagement",
       "scene.intro.text.arrival": "La camionnette repart et vous laisse sur le trottoir avec trois cartons, une clé et *un chat dans un panier*. L'appartement est au-dessus d'une [[tip:intro.launderette|laverie]] ; ça sent **le coton chaud**.",
@@ -15,10 +15,10 @@
       "scene.intro.choice.unpack.label": "Déballer",
       "action.wait.label": "Attendre un peu",
       "entity.location:flat.name": "Votre appartement",
-      "entity.location:flat.desc": "Chez vous",
+      "entity.location:flat.description": "Chez vous",
       "entity.location:flat.traits.places/location.actions.bed.label": "Aller au lit",
-      "entity.character:ava.desc": "Tient le café",
-      "quests/quests.settle.title": "S'installer",
+      "entity.character:ava.description": "Tient le café",
+      "quests/quests.settle.name": "S'installer",
       "quests/quests.settle.stages.out.hint": "Sortez dans la grand-rue."
     },
     "prose": {

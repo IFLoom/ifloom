@@ -81,13 +81,13 @@ const town: Content = {
     'studio.stats': '{{v:game/subscribersLine}}',
   },
   entities: [
-    places.location({ id: 'house', name: 'House', desc: 'Home', exits: ['cafe', 'work'], body: [{ prose: 'place.house' }] }),
-    places.location({ id: 'cafe', name: 'Café', desc: 'Café', exits: ['house'], body: [{ prose: 'place.cafe' }] }),
-    places.location({ id: 'work', name: 'Work', desc: 'Work', exits: ['house'], body: [{ prose: 'place.work' }] }),
+    places.location({ id: 'house', name: 'House', description: 'Home', exits: ['cafe', 'work'], body: [{ prose: 'place.house' }] }),
+    places.location({ id: 'cafe', name: 'Café', description: 'Café', exits: ['house'], body: [{ prose: 'place.cafe' }] }),
+    places.location({ id: 'work', name: 'Work', description: 'Work', exits: ['house'], body: [{ prose: 'place.work' }] }),
     cast.person({
       id: 'ava',
       name: 'Ava',
-      desc: 'Friend',
+      description: 'Friend',
       ui: { hue: 200 },
       home: 'cafe',
       talk: 'ava.hi',

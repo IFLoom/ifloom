@@ -17,7 +17,7 @@ export const people: Content = {
       id: 'ava',
       name: 'Ava',
       fullName: 'Ava Marsh',
-      desc: 'Runs the café',
+      description: 'Runs the café',
       image: 'art/character/ava.svg',
       pronouns: they,
       // The React UI colours her lines with this hue.
@@ -33,7 +33,7 @@ export const people: Content = {
     cast.person({
       id: 'sam',
       name: 'Sam',
-      desc: 'Neighbour',
+      description: 'Neighbour',
       image: 'art/character/sam.svg',
       pronouns: { they: 'they', them: 'them', their: 'their', theirs: 'theirs' },
       ui: { hue: 200 },

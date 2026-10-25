@@ -131,7 +131,7 @@ describe('generators', () => {
     const regular: TemplateDef = {
       id: 'regular',
       like: 'visitor:pattern',
-      desc: { pool: 'company' },
+      description: { pool: 'company' },
       image: 'art/visitor.png',
       tags: ['regular'],
       traits: { 'town/seat': { table: 2 } },
@@ -165,7 +165,7 @@ describe('generators', () => {
       traitData: { 'town/seat': { table: 2 } },
       stats: { patience: 0 },
     })
-    expect(['none', 'dog', 'parrot']).toContain(record.desc)
+    expect(['none', 'dog', 'parrot']).toContain(record.description)
     expect(record.stats).not.toHaveProperty('mood')
     expect(entityName(state, g, 'visitor:#1')).toBe('A regular')
     expect(state.held.player).toEqual({ 'visitor:#1': 1 })

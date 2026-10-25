@@ -102,8 +102,8 @@ Writes a place for your content's `entities`. You give it the entity's fields an
 ```ts
 import { places } from '@ifloom/plugin-places'
 
-places.location({ id: 'cafe', name: 'The Corner Café', desc: 'Café', exits: ['high-street'], body: [{ prose: 'place.cafe' }] })
-// { id: 'cafe', of: 'location', name: 'The Corner Café', desc: 'Café',
+places.location({ id: 'cafe', name: 'The Corner Café', description: 'Café', exits: ['high-street'], body: [{ prose: 'place.cafe' }] })
+// { id: 'cafe', of: 'location', name: 'The Corner Café', description: 'Café',
 //   traits: { 'places/location': { exits: ['high-street'], body: [{ prose: 'place.cafe' }] } } }
 ```
 
@@ -113,7 +113,7 @@ The entity's own fields are the place's:
 |---|---|
 | `id` | What content names the place by, as in `places.go('cafe')` or `places.at('cafe')`. Unique among the entities of its kind. |
 | `name` | Shown on the exit, as the screen's title while the player is here, and in the [label](#the-label). Tokens are filled, as in any entity's name. |
-| `desc` | A word or two under the name, such as `Home` or `Café`. |
+| `description` | A word or two under the name, such as `Home` or `Café`. |
 | `image` | The place's picture, through [`artSrc`](/docs/reference/prose#artsrc). The checker lists it in its [`files`](/docs/reference/checks#fileref), as any entity's picture. |
 | `tags` | Words your UI can style or filter places by, such as `['outdoors']`. The view passes them through, and the plugin gives them no meaning. |
 
@@ -182,22 +182,22 @@ import { places } from '@ifloom/plugin-places'
 export const town: Content = {
   entities: [
     places.location({
-      id: 'flat', name: 'Your flat', desc: 'Home', exits: ['high-street'],
+      id: 'flat', name: 'Your flat', description: 'Home', exits: ['high-street'],
       body: [{ prose: 'place.flat' }],
       actions: [{ id: 'bed', label: 'Go to bed', command: calendar.sleep() }],
     }),
     places.location({
-      id: 'high-street', name: 'High Street', desc: 'Small Town', tags: ['outdoors'], exits: ['flat', 'cafe', 'park', 'office'],
+      id: 'high-street', name: 'High Street', description: 'Small Town', tags: ['outdoors'], exits: ['flat', 'cafe', 'park', 'office'],
       body: [{ prose: 'place.high-street' }],
     }),
     places.location({
-      id: 'cafe', name: 'The Corner Café', desc: 'Café', exits: ['high-street'],
+      id: 'cafe', name: 'The Corner Café', description: 'Café', exits: ['high-street'],
       blocked: [{ when: { not: calendar.period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
       body: [{ prose: 'place.cafe' }],
       actions: [{ id: 'coffee', label: 'Buy a coffee', effects: [{ kv: 'hadCoffee', to: true }] }],
     }),
-    places.location({ id: 'park', name: 'Riverside Park', desc: 'Small Town', exits: ['high-street'], body: [{ prose: 'place.park' }] }),
-    places.location({ id: 'office', name: 'The Office', desc: 'Work', exits: ['high-street'], body: [{ prose: 'place.office' }] }),
+    places.location({ id: 'park', name: 'Riverside Park', description: 'Small Town', exits: ['high-street'], body: [{ prose: 'place.park' }] }),
+    places.location({ id: 'office', name: 'The Office', description: 'Work', exits: ['high-street'], body: [{ prose: 'place.office' }] }),
   ],
   prose: {
     'place.flat': 'Boxes, mostly. The radiator knocks when it feels like it.',
@@ -231,7 +231,7 @@ Give a place a `parent` when it's inside another, such as a back room inside the
 import { places } from '@ifloom/plugin-places'
 
 const backRoom = places.location({
-  id: 'cafe.back', name: 'The back room', desc: 'Café', parent: 'cafe', exits: ['cafe'],
+  id: 'cafe.back', name: 'The back room', description: 'Café', parent: 'cafe', exits: ['cafe'],
   blocked: [{ when: { not: { kv: 'staff' } }, reason: 'Staff only.', hide: true }],
   body: [{ prose: 'place.cafe.back' }],
 })
@@ -248,7 +248,7 @@ import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 
 const office = places.location({
-  id: 'office', name: 'The Office', desc: 'Work', exits: ['high-street'],
+  id: 'office', name: 'The Office', description: 'Work', exits: ['high-street'],
   blocked: [
     { when: calendar.weekday(5, 6), reason: 'Shut at weekends.' },
     { when: { all: [calendar.weekday(4), { not: calendar.period('morning', 'afternoon') }] }, reason: 'Closed. Back on Monday.' },
@@ -469,7 +469,7 @@ The [cast](/docs/plugins/cast) asks `places/here` to know who's in the room, and
 | Prose writes | Prints |
 |---|---|
 | `{{v:places/name}}` | The current place's `name`, such as `High Street`. Empty when nowhere. |
-| `{{v:places/desc}}` | The current place's `desc`, such as `Small Town`. Empty when nowhere, or with none. |
+| `{{v:places/description}}` | The current place's `description`, such as `Small Town`. Empty when nowhere, or with none. |
 
 ```ts
 const prose = { postcard: 'Greetings from the {{v:places/name}}.' }
@@ -492,7 +492,7 @@ A place can give a `stage` as well as its `image`: layers of pictures or videos 
 
 ```ts
 places.location({
-  id: 'cafe', name: 'The Corner Café', desc: 'Café', exits: ['high-street', 'cafe.back'],
+  id: 'cafe', name: 'The Corner Café', description: 'Café', exits: ['high-street', 'cafe.back'],
   stage: {
     aspect: '16/9',
     layers: [
@@ -529,7 +529,7 @@ The place's `name`, which the view joins into [`view.when`](/docs/reference/view
 The place the player is at supplies its `audio` through the plugin's [`audio` provider](/docs/reference/plugins#audio). Here a café has its own murmur, and the music carries on from the game's default:
 
 ```ts
-places.location({ id: 'cafe', name: 'The Corner Café', desc: 'Café', exits: ['high-street'], body: [{ prose: 'place.cafe' }], audio: { ambience: 'cafe.murmur' } })
+places.location({ id: 'cafe', name: 'The Corner Café', description: 'Café', exits: ['high-street'], body: [{ prose: 'place.cafe' }], audio: { ambience: 'cafe.murmur' } })
 ```
 
 Walk back out to the high street and the ambience stops, because the street names none. A place's audio is the third of [four levels](/docs/reference/audio#what-plays-on-a-background-channel). An open scene's `audio` and an [`audio` effect](/docs/reference/effects#audio) both win over it, and it wins over the game's default. A room inside another doesn't take its parent's audio, so give the back room its own if it should sound the same. Nothing plays while the player is nowhere.
@@ -571,7 +571,7 @@ type PlaceView = {
   id: string
   ref: EntityRef
   name: string
-  desc: string | null
+  description: string | null
   tags: string[]
   image: string | null
   stage: StageView | null
@@ -585,7 +585,7 @@ Where the player is.
 | `id` | The place's id as the plugin's calls name it: the bare id for one of the `location` kind, else its whole reference. |
 | `ref` | Its entity, such as `'location:flat'`. |
 | `name` | Its entity's [name](/docs/reference/entities#entityname), tokens filled. |
-| `desc` | Its entity's `desc`, tokens filled, or `null` with none. |
+| `description` | Its entity's `description`, tokens filled, or `null` with none. |
 | `tags` | Its entity's tags, `[]` with none. |
 | `image` | Its entity's `image` through [`artSrc`](/docs/reference/prose#artsrc), or `null` with none. |
 | `stage` | The place's [picture stage](#the-picture-stage) as a [`StageView`](/docs/reference/media#stageview), or `null` when it has none. |
@@ -595,7 +595,7 @@ Where the player is.
 ```ts
 type ExitView = RenderedChoice & {
   ref: EntityRef
-  desc: string | null
+  description: string | null
   tags: string[]
   image: string | null
 }
@@ -607,7 +607,7 @@ An exit is a button like any other, a [`RenderedChoice`](/docs/reference/view#re
 |---|---|
 | `id` | The destination's id. |
 | `label` | The destination's `name`. |
-| `ref`, `desc`, `tags`, `image` | The destination's, from its entity, as in a [`PlaceView`](#placeview). |
+| `ref`, `description`, `tags`, `image` | The destination's, from its entity, as in a [`PlaceView`](#placeview). |
 | `disabled` | Why it can't be taken now: what [`whyNot`](/docs/reference/actions#whynot) says for its command. A closed café's exit reads `Closed. Opens tomorrow morning.` |
 | `warning` | Set when the exit can be pressed but a plugin [guard](/docs/reference/plugins#guards) warns against it. The reducer refuses it. |
 | `price` | What going costs, when a plugin says, such as the time it takes. |
@@ -617,9 +617,9 @@ On a new game in the flat:
 
 ```ts
 {
-  location: { id: 'flat', ref: 'location:flat', name: 'Your flat', desc: 'Home', tags: [], image: null, stage: null },
+  location: { id: 'flat', ref: 'location:flat', name: 'Your flat', description: 'Home', tags: [], image: null, stage: null },
   exits: [
-    { id: 'high-street', label: 'High Street', ref: 'location:high-street', desc: 'Small Town', tags: ['outdoors'], image: null, command: places.go('high-street') },
+    { id: 'high-street', label: 'High Street', ref: 'location:high-street', description: 'Small Town', tags: ['outdoors'], image: null, command: places.go('high-street') },
   ],
   things: [],
 }
@@ -674,7 +674,7 @@ The plugin's [`PluginUi`](/docs/react/kit#pluginui): the [`LocationCard`](#locat
 function LocationCard(): JSX.Element | null
 ```
 
-Where the player is: the place's name and the line under it (its `desc`), and what lies there, each with a small **Pick up** button that sends the thing's [`pickUp`](/docs/plugins/places#things-lying-in-a-place) command. It reads the [places](/docs/plugins/places) plugin's view at [`view.plugins.places`](/docs/plugins/places#the-view), typed with the plugin's `PlacesView` but without importing the plugin's code.
+Where the player is: the place's name and the line under it (its `description`), and what lies there, each with a small **Pick up** button that sends the thing's [`pickUp`](/docs/plugins/places#things-lying-in-a-place) command. It reads the [places](/docs/plugins/places) plugin's view at [`view.plugins.places`](/docs/plugins/places#the-view), typed with the plugin's `PlacesView` but without importing the plugin's code.
 
 A place with a [stage](/docs/plugins/places#the-picture-stage) shows it above the name as a [`Stage`](/docs/react/components#stage), with its hotspots. The places plugin leaves the hotspots out while a scene is open, so the room can't be used from behind a scene.
 

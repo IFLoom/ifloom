@@ -48,7 +48,7 @@ const things: Content = {
   stats: [{ id: 'energy', label: 'Energy', start: 50, max: 100 }],
   kinds: [{ id: 'item', label: 'Thing', plural: 'Things', listed: false }],
   entities: [
-    { id: 'sandwich', of: 'item', name: 'sandwich', desc: 'Cheese and pickle.', at: 'player', traits: { ...inventory.usable('Eat the sandwich', [{ stat: 'energy', by: 25 }]) } },
+    { id: 'sandwich', of: 'item', name: 'sandwich', description: 'Cheese and pickle.', at: 'player', traits: { ...inventory.usable('Eat the sandwich', [{ stat: 'energy', by: 25 }]) } },
     // Kept: reading the paper doesn't use it up.
     { id: 'paper', of: 'item', name: 'newspaper', at: 'player', traits: { ...inventory.usable('Read the job ads', [jobs.open(['dogs'])], { keep: true }) } },
   ],
@@ -162,7 +162,7 @@ type InventoryView = { things: InventoryThing[] }
 type InventoryThing = {
   ref: EntityRef
   name: string
-  desc: string | null
+  description: string | null
   image: string | null
   count: number
   at: Holder
@@ -175,7 +175,7 @@ type InventoryThing = {
 |---|---|
 | `things` | What you hold: the protagonist's things while one is played, then the player's, each in the game's order of its entities. A thing whose `visible` doesn't hold is left out, as in `view.held`. |
 | `ref` | The thing, such as `'item:sandwich'`. |
-| `name`, `desc` | Its name and description, with prose tokens filled in. `desc` is `null` when it has none. |
+| `name`, `description` | Its name and description, with prose tokens filled in. `description` is `null` when it has none. |
 | `image` | Its picture's path, through `artSrc`, or `null`. |
 | `count`, `at` | How many are held, and who holds them: the protagonist or `'player'`. |
 | `use` | The button that uses one, labelled by its trait, or `null` for a thing that does nothing. |

@@ -67,7 +67,7 @@ export type { Block, Choice, DataScene, FlowChoice } from './scene.ts'
 export type { BlockExtras } from './flow.ts'
 export { choice, decide, fold, image, jump, minigame, panel, point, say, text, when } from './flow.ts'
 export type { VariantMember } from './prose.ts'
-export { entityDesc, entityName, fillTokens } from './prose.ts'
+export { entityDescription, entityName, fillTokens } from './prose.ts'
 export type { InlinePart, InlineSpan, SceneBeat, VideoFlags, VideoView } from './sceneBody.ts'
 export { artSrc, inlineMarkup, mediaType, parseBeats, styledBeats } from './sceneBody.ts'
 

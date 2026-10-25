@@ -111,8 +111,8 @@ function JobBoardImpl({ className, title, jobs: only }: { className?: string; ti
   const nextLine = (job: JobView) => {
     const up = job.next
     if (!up) return null
-    if (up.shiftsToGo === 0) return words('jobNextRankSoon', { title: up.title })
-    return up.shiftsToGo === 1 ? words('jobNextRankOne', { title: up.title }) : words('jobNextRank', { title: up.title, n: up.shiftsToGo })
+    if (up.shiftsToGo === 0) return words('jobNextRankSoon', { title: up.name })
+    return up.shiftsToGo === 1 ? words('jobNextRankOne', { title: up.name }) : words('jobNextRank', { title: up.name, n: up.shiftsToGo })
   }
   return (
     <section {...board} data-jobs>
@@ -123,9 +123,9 @@ function JobBoardImpl({ className, title, jobs: only }: { className?: string; ti
         return (
           <article key={job.id} {...card} data-job={job.id} data-hired={job.hired ? '' : undefined} data-fired={job.firedOn !== null ? '' : undefined}>
             <p {...jobTitle}>
-              {job.title}
-              {/* The rank, unless it's only the job's own title again. */}
-              {job.rank && job.rank.title !== job.title ? <span {...rank}>{job.rank.title}</span> : null}
+              {job.name}
+              {/* The rank, unless it's only the job's own name again. */}
+              {job.rank && job.rank.name !== job.name ? <span {...rank}>{job.rank.name}</span> : null}
               {job.firedOn !== null ? <span {...fired}>{words('jobFired')}</span> : null}
             </p>
             {job.description ? <p {...text}>{job.description}</p> : null}

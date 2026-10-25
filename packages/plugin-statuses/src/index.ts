@@ -35,19 +35,19 @@ export type StatusModifier = StatModifier
 export type StatusDef = {
   id: string
   /** What the player reads: "Caffeinated". */
-  label: string
+  name: string
   /** A line about it, for the UI. */
-  summary?: string
+  description?: string
   /** How many turns it lasts, counting the end of the turn it was applied in. */
   turns: number
   /** What it does to the player's stats while it lasts, per stack. Never written. */
   modifiers?: StatusModifier[]
-  /** Applied when it starts, and each time a stack is added. */
-  onStart?: EffectRef[]
-  /** Applied at the end of each turn it is active, once per stack, before its turns go down. */
-  eachTurn?: EffectRef[]
-  /** Applied when it runs out, once per stack that ran out. */
-  onEnd?: EffectRef[]
+  /**
+   * What it does as it goes: `start` when it starts, and each time a stack is
+   * added; `turn` at the end of each turn it is active, once per stack, before
+   * its turns go down; `end` when it runs out, once per stack that ran out.
+   */
+  effects?: { start?: EffectRef[]; turn?: EffectRef[]; end?: EffectRef[] }
   /** What applying it again does while it is active. `'refresh'` if left out. */
   reapply?: Reapply
   /** With `reapply: 'stack'`, the most stacks it can have. No limit if left out. */
@@ -66,8 +66,8 @@ export type StatusesState = {
 /** An active status as the UI shows it. */
 export type ActiveStatus = {
   id: string
-  label: string
-  summary: string
+  name: string
+  description: string
   /** The turns left on its longest stack. */
   turnsLeft: number
   stacks: number
@@ -151,8 +151,8 @@ export function statusesView(record: StatusesState, game: Game): StatusesView {
     if (!def || !entry.left.length) continue
     active.push({
       id: def.id,
-      label: def.label,
-      summary: def.summary ?? '',
+      name: def.name,
+      description: def.description ?? '',
       turnsLeft: Math.max(...entry.left),
       stacks: entry.left.length,
       modifiers: combined(game, [entry]),
@@ -182,29 +182,29 @@ function applyTo(state: GameState, id: string, context: PluginContext<StatusesSt
   } else left = [...current.left, turns]
   const active = current ? slice.active.map((entry, n) => (n === at ? { id, left } : entry)) : [...slice.active, { id, left }]
   const next = context.set({ active }, state)
-  return started && def.onStart?.length ? context.apply(def.onStart, next) : next
+  return started && def.effects?.start?.length ? context.apply(def.effects.start, next) : next
 }
 
-/** The state with every stack of the status taken off, running `onEnd` once per stack if asked. */
+/** The state with every stack of the status taken off, running its `end` effects once per stack if asked. */
 function removeFrom(state: GameState, id: string, runEnd: boolean, context: PluginContext<StatusesState>): GameState {
   const slice = sliceOf(state)
   const current = slice.active.find((entry) => entry.id === id)
   if (!current) return state
   let next = context.set({ active: slice.active.filter((entry) => entry !== current) }, state)
-  const onEnd = runEnd ? statusOf(context.game, id)?.onEnd : undefined
-  if (onEnd?.length) for (let n = 0; n < current.left.length; n += 1) next = context.apply(onEnd, next)
+  const end = runEnd ? statusOf(context.game, id)?.effects?.end : undefined
+  if (end?.length) for (let n = 0; n < current.left.length; n += 1) next = context.apply(end, next)
   return next
 }
 
-/** The end of a turn: each stack's `eachTurn`, a turn off every stack, then `onEnd` for each stack that ran out. */
+/** The end of a turn: each stack's `turn` effects, a turn off every stack, then `end` for each stack that ran out. */
 function endTurn(state: GameState, context: PluginContext<StatusesState>): GameState {
   const { game } = context
   let next = state
   for (const record of sliceOf(state).active) {
-    const eachTurn = statusOf(game, record.id)?.eachTurn
-    if (eachTurn?.length) for (let n = 0; n < record.left.length; n += 1) next = context.apply(eachTurn, next)
+    const turn = statusOf(game, record.id)?.effects?.turn
+    if (turn?.length) for (let n = 0; n < record.left.length; n += 1) next = context.apply(turn, next)
   }
-  // `eachTurn` may have applied or removed statuses: count down what is active now.
+  // The `turn` effects may have applied or removed statuses: count down what is active now.
   const ended: string[] = []
   const active: ActiveRecord[] = []
   for (const record of sliceOf(next).active) {
@@ -215,8 +215,8 @@ function endTurn(state: GameState, context: PluginContext<StatusesState>): GameS
   }
   next = context.set({ active }, next)
   for (const id of ended) {
-    const onEnd = statusOf(game, id)?.onEnd
-    if (onEnd?.length) next = context.apply(onEnd, next)
+    const end = statusOf(game, id)?.effects?.end
+    if (end?.length) next = context.apply(end, next)
   }
   return next
 }
@@ -241,7 +241,7 @@ function statusesPlugin(): DefinedPlugin<StatusesState, StatusesView> {
     contentVersion: CONTENT_VERSION,
     contentMigrations,
     // The words a player reads in each list of the plugin's content, for a translation's `words` table.
-    words: { statuses: { label: true, summary: true, onStart: 'effects', eachTurn: 'effects', onEnd: 'effects' } },
+    words: { statuses: { name: true, description: true, effects: { start: 'effects', turn: 'effects', end: 'effects' } } },
     commandVersion: COMMAND_VERSION,
     commandMigrations,
     start: emptyState,
@@ -258,7 +258,7 @@ function statusesPlugin(): DefinedPlugin<StatusesState, StatusesView> {
     effects: {
       /** `{ 'statuses/apply': { status } }`: start it, refresh it or add a stack. */
       apply: (state, args, context) => applyTo(state, idOf(args), context),
-      /** `{ 'statuses/remove': { status, runEnd? } }`: take every stack off, running `onEnd` only if asked. */
+      /** `{ 'statuses/remove': { status, runEnd? } }`: take every stack off, running its `end` effects only if asked. */
       remove: (state, args, context) => removeFrom(state, idOf(args), args.runEnd === true, context),
     },
     commands: {
@@ -292,9 +292,9 @@ function statusesPlugin(): DefinedPlugin<StatusesState, StatusesView> {
           id: def.id,
           refs: [
             ...(def.modifiers ?? []).map((modifier) => ({ stat: modifier.stat })),
-            { within: 'onStart', refs: [{ effects: def.onStart }] },
-            { within: 'eachTurn', refs: [{ effects: def.eachTurn }] },
-            { within: 'onEnd', refs: [{ effects: def.onEnd }] },
+            { within: 'effects.start', refs: [{ effects: def.effects?.start }] },
+            { within: 'effects.turn', refs: [{ effects: def.effects?.turn }] },
+            { within: 'effects.end', refs: [{ effects: def.effects?.end }] },
           ],
         })),
     },
@@ -320,7 +320,7 @@ function statusesPlugin(): DefinedPlugin<StatusesState, StatusesView> {
 const statusActive = (id: string, stacks?: Range): Condition => ({ 'statuses/active': stacks ? { status: id, stacks } : { status: id } })
 /** An effect: apply the status, refreshing or stacking it if it's already active. */
 const applyStatus = (id: string): EffectRef => ({ 'statuses/apply': { status: id } })
-/** An effect: take every stack of the status off. `runEnd` runs its `onEnd` once per stack. */
+/** An effect: take every stack of the status off. `runEnd` runs its `end` effects once per stack. */
 const removeStatus = (id: string, runEnd = false): EffectRef => ({ 'statuses/remove': runEnd ? { status: id, runEnd } : { status: id } })
 
 /**

@@ -19,20 +19,20 @@ export const things: Content = {
     { id: 'note', label: 'Note', plural: 'Notes', listed: false },
   ],
   entities: [
-    { id: 'raincoat', of: 'clothing', name: 'raincoat', desc: 'Yellow, a size too big.', at: 'player', traits: { ...wardrobe.wearable('coat') } },
-    { id: 'scarf', of: 'clothing', name: 'scarf', desc: 'Knitted by someone who loved you.', traits: { ...wardrobe.wearable('neck') } },
+    { id: 'raincoat', of: 'clothing', name: 'raincoat', description: 'Yellow, a size too big.', at: 'player', traits: { ...wardrobe.wearable('coat') } },
+    { id: 'scarf', of: 'clothing', name: 'scarf', description: 'Knitted by someone who loved you.', traits: { ...wardrobe.wearable('neck') } },
     {
       id: 'sandwich',
       of: 'item',
       name: 'sandwich',
-      desc: 'Cheese and pickle, wrapped in paper.',
+      description: 'Cheese and pickle, wrapped in paper.',
       traits: { ...inventory.usable('Eat the sandwich', [{ stat: 'energy', by: 25 }]), ...shop.sellable({ coins: 4 }) },
     },
     {
       id: 'flapjack',
       of: 'item',
       name: 'flapjack',
-      desc: 'Oats, syrup and a lot of butter.',
+      description: 'Oats, syrup and a lot of butter.',
       traits: { ...inventory.usable('Eat the flapjack', [{ stat: 'energy', by: 10 }]), ...shop.sellable({ coins: 2 }) },
     },
     // Reading it opens the job board with only the paper's ads on it: a thing opening a panel. It's kept to read again.
@@ -40,7 +40,7 @@ export const things: Content = {
       id: 'paper',
       of: 'item',
       name: 'newspaper',
-      desc: 'Today’s Small Town Gazette. The back page is job ads.',
+      description: 'Today’s Small Town Gazette. The back page is job ads.',
       at: 'player',
       traits: { ...inventory.usable('Read the job ads', [jobs.open(['dogs'])], { keep: true }), ...shop.sellable({ coins: 2 }) },
     },

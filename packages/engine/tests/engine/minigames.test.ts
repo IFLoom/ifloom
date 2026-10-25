@@ -19,7 +19,7 @@ import { unwrap } from '../fixtures/result.ts'
  */
 const arrows: MinigameDef = {
   id: 'arrows',
-  label: 'Quick feet',
+  title: 'Quick feet',
   start: 'round',
   kv: { arrow: 0, round: 0, score: 0 },
   keys: { up: ['ArrowUp', 'w'], down: ['ArrowDown', 's'] },

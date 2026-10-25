@@ -737,11 +737,11 @@ From [`@ifloom/plugin-cast/react`](/docs/plugins/cast#the-react-ui).
 | `person` | One person. Carries `data-person`. |
 | `person-portrait` | Their portrait. |
 | `person-name` | Their name. |
-| `person-desc` | Their `desc`, under the name, such as `Runs the café`. |
+| `person-desc` | Their `description`, under the name, such as `Runs the café`. |
 | `person-actions` | Their buttons. |
 | `relationships` | Everyone the player has met, in [`Relationships`](/docs/plugins/cast#relationships). |
-| `relationship` | One of them. Carries `data-person`. Their portrait, name and desc use the `person-` parts. |
-| `relationship-header` | The row with their portrait, name and desc. |
+| `relationship` | One of them. Carries `data-person`. Their portrait, name and description use the `person-` parts. |
+| `relationship-header` | The row with their portrait, name and description. |
 | `relationship-stats` | The stats the game keeps on them, each with the `stat-` parts. |
 
 #### Quests

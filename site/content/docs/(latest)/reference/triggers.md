@@ -19,7 +19,7 @@ import { places } from '@ifloom/plugin-places'
 
 const town: Content = {
   kinds: [{ id: 'note', label: 'Note', listed: false }],
-  entities: [{ id: 'welcome', of: 'note', name: 'Welcome note', desc: 'Bins go out Thursday. — Sam, flat 2' }],
+  entities: [{ id: 'welcome', of: 'note', name: 'Welcome note', description: 'Bins go out Thursday. — Sam, flat 2' }],
   triggers: [
     {
       id: 'welcome',

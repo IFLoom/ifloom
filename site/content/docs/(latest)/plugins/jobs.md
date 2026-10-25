@@ -50,7 +50,7 @@ import { jobs, type JobDef } from '@ifloom/plugin-jobs'
 
 const weekend: JobDef = {
   id: 'weekend',
-  title: 'Weekend help',
+  name: 'Weekend help',
   description: 'Saturday mornings behind the counter at the Corner Café.',
   blocked: [{ when: { not: { stat: 'friendship', of: 'character:ava', gte: 10 } }, reason: 'Ava doesn’t know you well enough yet.' }],
   at: ['cafe'],
@@ -58,8 +58,8 @@ const weekend: JobDef = {
   hours: ['morning'],
   shift: { cost: { energy: 25 }, passes: 1 },
   ranks: [
-    { id: 'help', title: 'Weekend help', pay: { coins: 12 } },
-    { id: 'barista', title: 'Barista', pay: { coins: 16 }, requires: { shifts: 3 } },
+    { id: 'help', name: 'Weekend help', pay: { coins: 12 } },
+    { id: 'barista', name: 'Barista', pay: { coins: 16 }, requires: { shifts: 3 } },
   ],
   fire: { missed: 2 },
 }
@@ -80,7 +80,7 @@ const buttons = [
 ```ts
 type JobDef = {
   id: string
-  title: string
+  name: string
   description?: string
   blocked?: Blocked[]
   at?: string[]
@@ -95,7 +95,7 @@ type JobDef = {
 | Field | What it is |
 |---|---|
 | `id` | Unique among jobs. Commands name the job by it. |
-| `title` | Its name on the job board and in its notices. |
+| `name` | Its name on the job board and in its notices. |
 | `description` | A line or two about it. |
 | `blocked` | Why an application is refused. Each is a [`Blocked`](/docs/reference/actions#blocked) entry, `{ when, reason }`, as an action's are. The first whose `when` holds refuses `jobs/apply` with its `reason`. |
 | `at` | The [places](/docs/plugins/places) locations shifts are worked at. Anywhere if left out. |
@@ -122,7 +122,7 @@ type ShiftDef = { cost?: Record<string, number>; passes?: number; effects?: Effe
 ```ts
 type RankDef = {
   id: string
-  title: string
+  name: string
   pay: Record<string, number>
   requires?: { shifts?: number; when?: Condition }
 }
@@ -131,7 +131,7 @@ type RankDef = {
 | Field | What it is |
 |---|---|
 | `id` | Unique within the job. [`jobs.hired(job, rank)`](#conditions) names it. |
-| `title` | What the player reads, such as "Barista". |
+| `name` | What the player reads, such as "Barista". |
 | `pay` | What a shift pays at this rank, by stat, such as `{ coins: 16 }`. |
 | `requires` | What it takes to be promoted to it: shifts worked in all, a condition, or both. The first rank can't have one. |
 
@@ -181,7 +181,7 @@ import type { GameRules, StatDef } from '@ifloom/engine'
 
 const stats: StatDef[] = [{ id: 'owed', label: 'Wages owed', max: 9999, listed: false }]
 
-// in the job: ranks: [{ id: 'help', title: 'Weekend help', pay: { owed: 12 } }]
+// in the job: ranks: [{ id: 'help', name: 'Weekend help', pay: { owed: 12 } }]
 
 const rules: GameRules = {
   // Friday night, in a game whose turn is a day and starts on a Monday.
@@ -241,7 +241,7 @@ import { jobs } from '@ifloom/plugin-jobs'
 // Every job: { panel: 'jobs' }
 { id: 'work', effects: [{ scene: null }, jobs.open()] }
 // Only the paper's ads: { panel: 'jobs', with: { job: ['dogs'] } }
-{ id: 'paper', name: 'newspaper', desc: 'Today’s Gazette.', use: { label: 'Read the job ads', effects: [jobs.open(['dogs'])] } }
+{ id: 'paper', name: 'newspaper', description: 'Today’s Gazette.', use: { label: 'Read the job ads', effects: [jobs.open(['dogs'])] } }
 ```
 
 The board stays open while the player applies, and closes when a turn ends or the scene changes, so working a shift that passes time closes it. See [How long a panel stays open](/docs/reference/panels#how-long-a-panel-stays-open).
@@ -260,8 +260,8 @@ The checker reports a `job` list entry the game doesn't have (`unknown job "circ
 | `jobs/noShiftToday` | `No shift today.` |
 | `jobs/notNow` | `Not a time for a shift.` |
 | `jobs/workedToday` | `You’ve done today’s shift.` |
-| `jobs/promoted` | `Promoted: {title}`, the notice's title, with the new rank's title. |
-| `jobs/firedNotice` | `You’ve lost your job: {title}`, with the job's title. |
+| `jobs/promoted` | `Promoted: {title}`, the notice's title, with the new rank's name. |
+| `jobs/firedNotice` | `You’ve lost your job: {title}`, with the job's name. |
 
 The notices are tagged `jobs`, with the ids `job.<id>.rank` and `job.<id>.fired`.
 
@@ -284,7 +284,7 @@ Every job, in the order the game declares them.
 ```ts
 type JobView = {
   id: string
-  title: string
+  name: string
   description: string
   hired: boolean
   firedOn: number | null
@@ -297,7 +297,7 @@ type JobView = {
   apply: RenderedChoice | null
   work: RenderedChoice | null
 }
-type RankView = { id: string; title: string; pay: Price | null }
+type RankView = { id: string; name: string; pay: Price | null }
 ```
 
 | Field | What it is |
@@ -392,7 +392,7 @@ import { useJobs } from '@ifloom/plugin-jobs/react'
 function NextShift() {
   const job = useJobs()?.held[0]
   if (!job?.nextShift) return null
-  return <p className="text-sm">{job.title}: next shift in {job.nextShift.inDays} days</p>
+  return <p className="text-sm">{job.name}: next shift in {job.nextShift.inDays} days</p>
 }
 ```
 

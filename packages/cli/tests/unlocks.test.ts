@@ -75,7 +75,7 @@ describe('locked content in a build', () => {
     const codes = startUnlocks(runner, { content })
     expect((await codes.enter('wrong code')).ok).toBe(false)
     const entered = await codes.enter(CODE.toLowerCase())
-    expect(entered.ok && entered.value).toEqual({ unlock: 'supporter', label: 'Supporter edition', already: false, restart: true })
+    expect(entered.ok && entered.value).toEqual({ unlock: 'supporter', name: 'Supporter edition', already: false, restart: true })
     await runner.settled()
     const opened = await unlockedPacks(game.id, profile(game, driver), content)
     expect(opened).toEqual({ packs: [supporter], problems: [] })

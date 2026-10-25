@@ -21,7 +21,7 @@ import {
   bindCurrent,
   canHold,
   entitiesOf,
-  entityDesc,
+  entityDescription,
   entityImage,
   entityKv,
   entityName,
@@ -71,9 +71,9 @@ const corner: Content = {
     { id: 'quality', label: 'Quality', of: 'dish', start: 2, min: 1, max: 5 },
   ],
   entities: [
-    { id: 'ana', of: 'staff', name: 'Ana', desc: 'Has run the kitchen since the day you opened.', stats: { skill: 5, wage: 12 } },
-    { id: 'toast', of: 'dish', name: 'Cheese on toast', desc: 'Thick bread, sharp cheddar.', stats: { price: 4, quality: 2 } },
-    { id: 'soup', of: 'dish', name: 'Soup of the day', desc: 'Whatever the market had.', stats: { price: 6, quality: 3 } },
+    { id: 'ana', of: 'staff', name: 'Ana', description: 'Has run the kitchen since the day you opened.', stats: { skill: 5, wage: 12 } },
+    { id: 'toast', of: 'dish', name: 'Cheese on toast', description: 'Thick bread, sharp cheddar.', stats: { price: 4, quality: 2 } },
+    { id: 'soup', of: 'dish', name: 'Soup of the day', description: 'Whatever the market had.', stats: { price: 6, quality: 3 } },
   ],
   // ...
 }
@@ -139,7 +139,7 @@ type EntityDef = {
   id: string
   of: string
   name: string
-  desc?: string
+  description?: string
   image?: string
   tags?: string[]
   visible?: Condition
@@ -158,7 +158,7 @@ One entity that exists from the start of the game, and stays until a [`remove`](
 | `id` | Unique within its kind. Two kinds may each have an entity with the same id. It can't be a whole number, so the loader refuses `'7'` (see [Ids](#ids)). |
 | `of` | Its kind's id. |
 | `name` | What the player reads, such as "Ana". [Prose tokens](/docs/reference/prose#tokens) are filled in each time it's read, so `'{{partnerName}}'` shows the name the player typed. |
-| `desc` | A line or two about it, filled in the same way. |
+| `description` | A line or two about it, filled in the same way. |
 | `image` | Its picture, through [`artSrc`](/docs/reference/prose#artsrc). The [content checker](/docs/reference/checks) lists the file. |
 | `tags` | Words a UI or a plugin can sort or pick it by. They come after its kind's tags. |
 | `visible` | Whether the view lists it, asked with `'$'` as it. Always, if left out. It narrows its kind's [`listed`](#listing), and changes nothing else: `each`, `count` and the rest still see it. |
@@ -177,7 +177,7 @@ A [plugin](/docs/reference/plugins#kinds-and-entities)'s `entities` adds more, m
 ```ts
 type EntityState = {
   name?: string
-  desc?: string
+  description?: string
   image?: string
   like?: EntityRef
   tags?: string[]
@@ -188,14 +188,14 @@ type EntityState = {
 }
 ```
 
-What play has changed about one entity, at [`state.entities[kind][id]`](/docs/reference/state#entities). A declared entity has no record until an effect changes it, and then only what changed is there: `{ stats: { morale: 52 } }` after Ana's first week. Everything else is read from your content. An entity [created](/docs/reference/effects#create) in play has a record from the start, with what it was given: a `name`, a `desc` and an `image`, the entity it was made `like`, its own `tags`, its trait data (`traitData`), stats and kv.
+What play has changed about one entity, at [`state.entities[kind][id]`](/docs/reference/state#entities). A declared entity has no record until an effect changes it, and then only what changed is there: `{ stats: { morale: 52 } }` after Ana's first week. Everything else is read from your content. An entity [created](/docs/reference/effects#create) in play has a record from the start, with what it was given: a `name`, a `description` and an `image`, the entity it was made `like`, its own `tags`, its trait data (`traitData`), stats and kv.
 
 Reads fall back in this order:
 
 - **A stat:** the record, then the entity it was made [like](#things-made-like-another), then the declaration's `stats`, then the stat's `start`. [`statValue`](/docs/reference/stats#statvalue) does this.
 - **A kv key:** the record, then the declaration's `kv`, then the `like`'s. See [`entityKv`](#entitykv).
 - **The name:** the record's `name` (one created in play), then the `like`'s, then the declaration's, always with its tokens filled. See [`entityName`](#entityname).
-- **The description and picture:** the record's (one created in play), then the `like`'s, then the declaration's. See [`entityDesc`](#entitydesc) and [`entityImage`](#entityimage).
+- **The description and picture:** the record's (one created in play), then the `like`'s, then the declaration's. See [`entityDescription`](#entitydescription) and [`entityImage`](#entityimage).
 - **Tags:** the kind's, the `like`'s, the declaration's and the record's, each once.
 - **A trait's data:** the record's `traitData` laid over the `like`'s, else over the kind's default. See [`traitOf`](#traitof).
 - **A trait's state:** the record's `traits`, for the rare [trait](#traits) that keeps state, then where the trait says it starts. See [`traitState`](#traitstate).
@@ -270,7 +270,7 @@ withTrait(state, game, 'laundry/washable')                   // ['clothing:scarf
 
 **Checked by the plugin.** The [content checker](/docs/reference/checks#traits) asks each plugin's trait about the data on every entity that has it. A trait of a plugin the game doesn't have is let through, as content for a [cooperating](/docs/reference/plugins#cooperates) plugin is.
 
-**Translated by its words.** A plugin's trait says which of its fields are words a player reads (a vendor's `closed`, a place's room text), and a translation's [words table](/docs/reference/words) gives them other words under `entity.<ref>.traits.<trait>.<field>`. Words an entity has from its kind's default are keyed under the kind, `kind.<kind>.traits.<trait>.<field>`, so a translation gives them once. An entity's own `name` and `desc` are `entity.<ref>.name` and `entity.<ref>.desc`.
+**Translated by its words.** A plugin's trait says which of its fields are words a player reads (a vendor's `closed`, a place's room text), and a translation's [words table](/docs/reference/words) gives them other words under `entity.<ref>.traits.<trait>.<field>`. Words an entity has from its kind's default are keyed under the kind, `kind.<kind>.traits.<trait>.<field>`, so a translation gives them once. An entity's own `name` and `description` are `entity.<ref>.name` and `entity.<ref>.description`.
 
 ### TraitRegistry and TraitData
 
@@ -407,13 +407,13 @@ export const notes: Content = {
     { id: 'note', label: 'Note', plural: 'Notes', listed: false },
     { id: 'photo', label: 'Photo', plural: 'Photos', listed: false },
   ],
-  entities: [{ id: 'welcome', of: 'note', name: 'Welcome note', desc: 'Bins go out Thursday. — Sam, flat 2' }],
+  entities: [{ id: 'welcome', of: 'note', name: 'Welcome note', description: 'Bins go out Thursday. — Sam, flat 2' }],
   triggers: [{ id: 'welcome', when: { seen: 'street' }, effects: [give('note:welcome')] }],
   actions: [
     {
       id: 'photo-pier',
       label: 'Take a photo of the pier',
-      effects: [{ create: 'photo', with: { id: 'pier', name: 'The pier', desc: 'Gulls, and the end of the pier.', image: 'photo/pier.jpg' }, at: 'player' }],
+      effects: [{ create: 'photo', with: { id: 'pier', name: 'The pier', description: 'Gulls, and the end of the pier.', image: 'photo/pier.jpg' }, at: 'player' }],
     },
   ],
 }
@@ -569,10 +569,10 @@ entityName(state, game, 'staff:ana')        // 'Ana'
 entityName(state, game, 'character:partner') // 'Sam', when the declaration says '{{partnerName}}' and the player typed Sam
 ```
 
-### entityDesc
+### entityDescription
 
 ```ts
-function entityDesc(state: GameState, game: Game, ref: EntityRef): string | undefined
+function entityDescription(state: GameState, game: Game, ref: EntityRef): string | undefined
 ```
 
 An entity's description, with its tokens filled, or `undefined` if it has none. It's the one it was created with, else the `like`'s, else its declaration's.

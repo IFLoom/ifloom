@@ -43,7 +43,7 @@ function PeopleHereImpl({ className }: { className?: string }) {
   const card = usePart('person', 'flex flex-col gap-1.5')
   const portrait = usePart('person-portrait', 'size-8 rounded-full object-cover')
   const name = usePart('person-name', 'text-sm font-medium')
-  const desc = usePart('person-desc', 'text-xs text-muted-foreground')
+  const description = usePart('person-desc', 'text-xs text-muted-foreground')
   const actions = usePart('person-actions', 'flex flex-wrap gap-1.5')
   const people = usePeople()?.present ?? []
   if (!people.length) return null
@@ -55,7 +55,7 @@ function PeopleHereImpl({ className }: { className?: string }) {
             {person.portrait ? <Picture {...portrait} src={person.portrait} alt="" /> : null}
             <div className="flex-1">
               <p {...name}>{person.name}</p>
-              {person.desc ? <p {...desc}>{person.desc}</p> : null}
+              {person.description ? <p {...description}>{person.description}</p> : null}
             </div>
           </div>
           {person.actions.length ? (
@@ -81,7 +81,7 @@ function RelationshipsImpl({ className }: { className?: string }) {
   const head = usePart('relationship-header', 'flex items-center gap-2')
   const portrait = usePart('person-portrait', 'size-8 rounded-full object-cover')
   const name = usePart('person-name', 'text-sm font-medium')
-  const desc = usePart('person-desc', 'text-xs text-muted-foreground')
+  const description = usePart('person-desc', 'text-xs text-muted-foreground')
   const stats = usePart('relationship-stats', 'grid grid-cols-[1fr_auto] gap-x-3 gap-y-1')
   const label = usePart('stat-label', 'text-muted-foreground')
   const value = usePart('stat-value', 'text-right font-medium tabular-nums')
@@ -99,7 +99,7 @@ function RelationshipsImpl({ className }: { className?: string }) {
               {person.portrait ? <Picture {...portrait} src={person.portrait} alt="" /> : null}
               <div className="flex-1">
                 <p {...name}>{person.name}</p>
-                {person.desc ? <p {...desc}>{person.desc}</p> : null}
+                {person.description ? <p {...description}>{person.description}</p> : null}
               </div>
             </div>
             {shown.length ? (

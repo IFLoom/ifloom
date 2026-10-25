@@ -164,7 +164,7 @@ function UnlocksPanelImpl({ className }: { className?: string }) {
       ) : null}
       {entered ? (
         <p {...done} role="status">
-          {entered.already ? words('unlockedAlready', { label: entered.label }) : words('unlockedNow', { label: entered.label })}
+          {entered.already ? words('unlockedAlready', { label: entered.name }) : words('unlockedNow', { label: entered.name })}
         </p>
       ) : null}
       {unlocks.restart ? (
@@ -181,7 +181,7 @@ function UnlocksPanelImpl({ className }: { className?: string }) {
         {unlocks.unlocks.map((unlock) => (
           <li key={unlock.id} {...row} data-unlock={unlock.id} data-unlocked={unlock.unlocked ? '' : undefined}>
             <p {...name}>
-              {unlock.label}
+              {unlock.name}
               <span {...state}>{unlock.unlocked ? words('unlocked') : words('locked')}</span>
             </p>
             {unlock.description ? <p {...text}>{unlock.description}</p> : null}

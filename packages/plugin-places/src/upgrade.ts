@@ -132,7 +132,7 @@ function locationsToEntities(pack: RawPack): RawPack {
 }
 
 /** The version of what content writes for this plugin. */
-export const CONTENT_VERSION = 24
+export const CONTENT_VERSION = 26
 
 export const contentMigrations: Record<number, ContentStep> = {
   // 5 → 6: a command's one target is `id`.
@@ -163,6 +163,19 @@ export const contentMigrations: Record<number, ContentStep> = {
       tools.words(locationsToEntities(pack), (text) => text.replace(/\{\{v:places\/tag(?=[\s}])/g, '{{v:places/desc')),
       (value) => (value.value === 'places/tag' ? { ...value, value: 'places/desc' } : value),
     ),
+  // 25 → 26: one word each: a thing's line is its `description` (the engine renames the entity's `desc`), so the
+  // value `places/desc` is `places/description`, in a value's name and in a token wherever words are written.
+  25: (pack, tools) => {
+    const token = (text: string) => text.replace(/\{\{v:places\/desc(?=[\s}])/g, '{{v:places/description')
+    let out = tools.objects(pack, (value) => {
+      const next = Object.fromEntries(Object.entries(value).map(([key, inner]) => [key, typeof inner === 'string' ? token(inner) : inner]))
+      return next.value === 'places/desc' ? { ...next, value: 'places/description' } : next
+    })
+    out = tools.words(out, token)
+    if (typeof out.words === 'object' && out.words !== null && !Array.isArray(out.words))
+      out = { ...out, words: Object.fromEntries(Object.entries(out.words).map(([key, text]) => [key, typeof text === 'string' ? token(text) : text])) }
+    return out
+  },
 }
 
 /** The version of this plugin's commands. */

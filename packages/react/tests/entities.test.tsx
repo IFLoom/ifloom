@@ -21,7 +21,7 @@ function cafe() {
         ],
         entities: [
           { id: 'ana', of: 'staff', name: 'Ana', stats: { wage: 12 } },
-          { id: 'ben', of: 'staff', name: 'Ben', desc: 'New this week.', image: 'staff/ben' },
+          { id: 'ben', of: 'staff', name: 'Ben', description: 'New this week.', image: 'staff/ben' },
         ],
         actions: [{ id: 'hire', label: 'Hire someone', effects: [{ create: 'staff', with: { name: 'Cleo', stats: { morale: 90 } } }] }],
       },

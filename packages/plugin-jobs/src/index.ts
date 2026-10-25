@@ -55,7 +55,7 @@ export type ShiftDef = {
 export type RankDef = {
   id: string
   /** What the player reads: "Barista". */
-  title: string
+  name: string
   /** What a shift pays at this rank, by stat: `{ coins: 18 }`. */
   pay: Record<string, number>
   /** What it takes to be promoted to it. The first rank, where the player starts, needs nothing. */
@@ -73,7 +73,8 @@ export type FireDef = {
 /** A job, as content declares it. */
 export type JobDef = {
   id: string
-  title: string
+  /** What the player reads: "Weekend help". */
+  name: string
   /** A line or two about it, for the job board. */
   description?: string
   /** Why an application is refused: the first entry whose `when` holds gives its reason. */
@@ -113,12 +114,12 @@ export type JobsState = {
 }
 
 /** A rank as the UI shows it. */
-export type RankView = { id: string; title: string; pay: Price | null }
+export type RankView = { id: string; name: string; pay: Price | null }
 
 /** A job as the UI shows it. */
 export type JobView = {
   id: string
-  title: string
+  name: string
   description: string
   hired: boolean
   /** The day the player was fired, or null. */
@@ -295,7 +296,7 @@ function firedFrom(state: GameState, job: JobDef, context: PluginContext<JobsSta
   const held = { ...slice.held }
   delete held[job.id]
   const next = context.set({ held, fired: { ...slice.fired, [job.id]: dayOf(state, context.game) } }, state)
-  return notify(next, { id: `job.${job.id}.fired`, title: stringOf(context.game, 'jobs/firedNotice', { title: job.title }), tag: 'jobs' })
+  return notify(next, { id: `job.${job.id}.fired`, title: stringOf(context.game, 'jobs/firedNotice', { title: job.name }), tag: 'jobs' })
 }
 
 /**
@@ -334,7 +335,7 @@ function review(before: GameState, after: GameState, context: PluginContext<Jobs
     }
     if (rank !== held.rank) {
       next = context.set({ ...sliceOf(next), held: { ...sliceOf(next).held, [job.id]: { ...held, rank } } }, next)
-      next = notify(next, { id: `job.${job.id}.rank`, title: stringOf(game, 'jobs/promoted', { title: job.ranks[rank].title }), tag: 'jobs' })
+      next = notify(next, { id: `job.${job.id}.rank`, title: stringOf(game, 'jobs/promoted', { title: job.ranks[rank].name }), tag: 'jobs' })
     }
   }
   return next
@@ -351,7 +352,7 @@ function nextShift(job: JobDef, held: HeldJob, state: GameState, context: Plugin
 }
 
 function rankView(game: Game, rank: RankDef): RankView {
-  return { id: rank.id, title: rank.title, pay: priceView(game, rank.pay) }
+  return { id: rank.id, name: rank.name, pay: priceView(game, rank.pay) }
 }
 
 /** Everything the UI needs for a job board. */
@@ -365,7 +366,7 @@ export function jobsView(state: GameState, context: PluginContext<JobsState>): J
       const firedOn = slice.fired[job.id] ?? null
       return {
         id: job.id,
-        title: job.title,
+        name: job.name,
         description: job.description ?? '',
         hired: Boolean(held),
         firedOn,
@@ -375,8 +376,8 @@ export function jobsView(state: GameState, context: PluginContext<JobsState>): J
         shifts: held?.shifts ?? 0,
         missed: held?.missed ?? 0,
         nextShift: held ? nextShift(job, held, state, context) : null,
-        apply: held || firedOn !== null ? null : renderAction(state, game, { id: `apply.${job.id}`, label: job.title, command: applyFor(job.id) }),
-        work: held ? renderAction(state, game, { id: `work.${job.id}`, label: job.title, command: work(job.id) }) : null,
+        apply: held || firedOn !== null ? null : renderAction(state, game, { id: `apply.${job.id}`, label: job.name, command: applyFor(job.id) }),
+        work: held ? renderAction(state, game, { id: `work.${job.id}`, label: job.name, command: work(job.id) }) : null,
       }
     }),
   }
@@ -397,7 +398,7 @@ function jobsPlugin(): DefinedPlugin<JobsState, JobsView> {
     contentVersion: CONTENT_VERSION,
     contentMigrations,
     // The words a player reads in each list of the plugin's content, for a translation's `words` table.
-    words: { jobs: { title: true, description: true, blocked: [{ reason: true }], shift: { effects: 'effects' }, ranks: [{ title: true }] } },
+    words: { jobs: { name: true, description: true, blocked: [{ reason: true }], shift: { effects: 'effects' }, ranks: [{ name: true }] } },
     commandVersion: COMMAND_VERSION,
     commandMigrations,
     start: emptyState,

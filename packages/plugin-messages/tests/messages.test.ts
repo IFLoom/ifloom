@@ -52,7 +52,7 @@ function game(extra: Partial<Content> = {}): Game {
       'msg.later': 'Coffee tomorrow?',
       'msg.bill': 'The water bill. You owe 12.',
     },
-    entities: [cast.person({ id: 'ava', name: 'Ava', desc: 'Neighbour', ui: { hue: 200 }, talk: 'ava.hi', storyline: 'ava' })],
+    entities: [cast.person({ id: 'ava', name: 'Ava', description: 'Neighbour', ui: { hue: 200 }, talk: 'ava.hi', storyline: 'ava' })],
     data: {
       // Ava is the cast's: messages from her are signed with her name.
       messages: {
@@ -188,7 +188,7 @@ describe('pictures and videos in a message', () => {
         'msg.ducks': 'Look at the ducks!\n\n[[video:ducks|A duck on the pond]]',
       },
       media: { pools: { pond: [{ src: 'pond/morning.jpg', tags: ['morning'] }] } },
-      entities: [cast.person({ id: 'ava', name: 'Ava', desc: 'Neighbour', ui: { hue: 200 }, talk: 'ava.hi', storyline: 'ava' })],
+      entities: [cast.person({ id: 'ava', name: 'Ava', description: 'Neighbour', ui: { hue: 200 }, talk: 'ava.hi', storyline: 'ava' })],
       data: {
         messages: {
           messages: [
@@ -228,7 +228,7 @@ describe('pools', () => {
         'chat.rain': 'Rain later.',
         'chat.beans': 'New beans.',
       },
-      entities: [cast.person({ id: 'ava', name: 'Ava', desc: 'Neighbour', ui: { hue: 200 }, talk: 'ava.hi', storyline: 'ava' })],
+      entities: [cast.person({ id: 'ava', name: 'Ava', description: 'Neighbour', ui: { hue: 200 }, talk: 'ava.hi', storyline: 'ava' })],
       data: {
         messages: {
           messages: [

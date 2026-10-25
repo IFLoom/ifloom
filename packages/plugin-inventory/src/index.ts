@@ -16,7 +16,7 @@ import {
   buildEffects,
   canHold,
   definePlugin,
-  entityDesc,
+  entityDescription,
   entityImage,
   entityName,
   traitOf,
@@ -78,7 +78,7 @@ export type InventoryThing = {
   /** How content names it: `'food:apple'`. */
   ref: EntityRef
   name: string
-  desc: string | null
+  description: string | null
   /** Its picture's path, through `artSrc`; null with none. */
   image: string | null
   /** How many are held. */
@@ -214,7 +214,7 @@ function thingsOf(state: GameState, game: Game, holder: Holder): InventoryThing[
       return {
         ref,
         name,
-        desc: entityDesc(state, game, ref) ?? null,
+        description: entityDescription(state, game, ref) ?? null,
         image: image === undefined ? null : artSrc(image),
         count,
         at: holder,

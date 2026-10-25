@@ -13,7 +13,7 @@ function EntityTableImpl({ kinds, className }: { kinds?: string[]; className?: s
   const row = usePart('entity-row', 'border-t')
   const name = usePart('entity-name', 'py-1 pr-3 font-medium')
   const image = usePart('entity-image', 'mr-2 inline-block size-8 rounded object-cover align-middle')
-  const desc = usePart('entity-desc', 'block text-xs font-normal text-muted-foreground')
+  const description = usePart('entity-desc', 'block text-xs font-normal text-muted-foreground')
   const value = usePart('entity-value', 'py-1 pl-3 text-right tabular-nums')
   const shown = Object.entries(view.entities).filter(([id, kind]) => (!kinds || kinds.includes(id)) && kind.entries.length)
   if (!shown.length) return null
@@ -42,7 +42,7 @@ function EntityTableImpl({ kinds, className }: { kinds?: string[]; className?: s
                     <td {...name}>
                       {entry.image ? <Picture {...image} src={entry.image} alt="" /> : null}
                       {entry.name}
-                      {entry.desc ? <span {...desc}>{entry.desc}</span> : null}
+                      {entry.description ? <span {...description}>{entry.description}</span> : null}
                     </td>
                     {columns.map(([key]) => (
                       <td key={key} {...value}>

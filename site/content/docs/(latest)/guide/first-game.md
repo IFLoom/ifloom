@@ -48,7 +48,7 @@ If you'd rather see a finished game of this shape first, `--template town` copie
 
 The core has no map, so places come from the places plugin. A location is an entity you write with the plugin's `places.location()`. It has an id, a name, the exits you can walk to from it, and a `body`, which is the text shown while no scene is playing. The body is a list of blocks, each a piece of the words written in place, `text('…')`.
 
-`desc` is the short line the UI shows under the place's name, for what sort of place it is. `blocked` is a list of conditions, each with a reason. While one holds, the plugin won't let the player in, and says why. That's how the café keeps hours, with a condition from the calendar: `calendar.period('morning', 'afternoon')` holds in the morning and the afternoon.
+`description` is the short line the UI shows under the place's name, for what sort of place it is. `blocked` is a list of conditions, each with a reason. While one holds, the plugin won't let the player in, and says why. That's how the café keeps hours, with a condition from the calendar: `calendar.period('morning', 'afternoon')` holds in the morning and the afternoon.
 
 ```ts
 import { text } from '@ifloom/engine'
@@ -60,21 +60,21 @@ const locations = [
   places.location({
     id: 'house',
     name: 'Your house',
-    desc: 'Home',
+    description: 'Home',
     exits: ['high-street'],
     body: [text('The kettle, the window, the post on the mat.')],
   }),
   places.location({
     id: 'high-street',
     name: 'The high street',
-    desc: 'Town',
+    description: 'Town',
     exits: ['house', 'cafe'],
     body: [text('Shopfronts, a bus stop, a bakery smell from the corner.')],
   }),
   places.location({
     id: 'cafe',
     name: 'The corner café',
-    desc: 'Café',
+    description: 'Café',
     exits: ['high-street'],
     blocked: [{ when: { not: calendar.period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
     body: [
@@ -109,7 +109,7 @@ const ruth = cast.person({
   id: 'ruth',
   name: 'Ruth',
   fullName: 'Ruth Okafor',
-  desc: 'Baker',
+  description: 'Baker',
   pronouns: { they: 'she', them: 'her', their: 'her', theirs: 'hers' },
   ui: { hue: 30 },
   schedule: [
@@ -596,21 +596,21 @@ const locations = [
   places.location({
     id: 'house',
     name: 'Your house',
-    desc: 'Home',
+    description: 'Home',
     exits: ['high-street'],
     body: [text('The kettle, the window, the post on the mat.')],
   }),
   places.location({
     id: 'high-street',
     name: 'The high street',
-    desc: 'Town',
+    description: 'Town',
     exits: ['house', 'cafe'],
     body: [text('Shopfronts, a bus stop, a bakery smell from the corner.')],
   }),
   places.location({
     id: 'cafe',
     name: 'The corner café',
-    desc: 'Café',
+    description: 'Café',
     exits: ['high-street'],
     blocked: [{ when: { not: calendar.period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
     body: [
@@ -628,7 +628,7 @@ const ruth = cast.person({
   id: 'ruth',
   name: 'Ruth',
   fullName: 'Ruth Okafor',
-  desc: 'Baker',
+  description: 'Baker',
   pronouns: { they: 'she', them: 'her', their: 'her', theirs: 'hers' },
   ui: { hue: 30 },
   schedule: [

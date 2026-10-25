@@ -7,8 +7,8 @@ const plugin = quests()
 /** Bread for breakfast: get hungry, go out, buy a loaf. A letter that only a scene can start. */
 const bread: QuestDef = {
   id: 'bread',
-  title: 'Bread for breakfast',
-  summary: 'There is nothing in the house.',
+  name: 'Bread for breakfast',
+  description: 'There is nothing in the house.',
   starts: { kv: 'hungry' },
   stages: [
     { id: 'out', hint: 'Go out to the street.', done: { kv: 'out' } },
@@ -17,10 +17,10 @@ const bread: QuestDef = {
 }
 const letter: QuestDef = {
   id: 'letter',
-  title: 'The letter',
+  name: 'The letter',
   stages: [{ id: 'post', hint: 'Post it.', done: { kv: 'posted' } }],
 }
-const secret: QuestDef = { id: 'secret', title: 'A secret', secret: true, starts: { kv: 'never' }, stages: [{ id: 'x', hint: '', done: { kv: 'never' } }] }
+const secret: QuestDef = { id: 'secret', name: 'A secret', secret: true, starts: { kv: 'never' }, stages: [{ id: 'x', hint: '', done: { kv: 'never' } }] }
 
 function game(extra: QuestDef[] = []): Game {
   const town: Content = {
@@ -122,7 +122,7 @@ describe('quests', () => {
   it('report quests that name things the game does not have, against the pack they came from', () => {
     const broken: QuestDef = {
       id: 'broken',
-      title: 'Broken',
+      name: 'Broken',
       storyline: 'nobody',
       starts: { 'quests/nope': true },
       stages: [
@@ -140,7 +140,7 @@ describe('quests', () => {
   })
 
   it('can start off another quest, in the same command', () => {
-    const errand: QuestDef = { id: 'errand', title: 'An errand', starts: quests.active('bread'), stages: [{ id: 'go', hint: 'Go.', done: { kv: 'never' } }] }
+    const errand: QuestDef = { id: 'errand', name: 'An errand', starts: quests.active('bread'), stages: [{ id: 'go', hint: 'Go.', done: { kv: 'never' } }] }
     const g = game([errand])
     const state = run({ ...startingState(g), sceneId: null }, g, act('getHungry'))
     expect(shown(state, g).active.map((quest) => quest.id)).toEqual(['bread', 'errand'])

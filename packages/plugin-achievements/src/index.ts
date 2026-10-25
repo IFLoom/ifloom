@@ -35,7 +35,8 @@ export type ProgressDef = { value: Amount; target: number }
 /** An achievement, as content declares it. */
 export type AchievementDef = {
   id: string
-  title: string
+  /** What the player reads: "First loaf". */
+  name: string
   /** What it's for, for the list. */
   description?: string
   /** A picture for it, for a UI to show. */
@@ -64,8 +65,8 @@ export type AchievementsProfile = { earned: string[] }
 /** An achievement as the UI shows it. */
 export type AchievementEntry = {
   id: string
-  /** Its title, or `???` while it's secret and not earned. */
-  title: string
+  /** Its name, or `???` while it's secret and not earned. */
+  name: string
   /** Its description, or `''` while it's secret and not earned. */
   description: string
   image: string | null
@@ -132,7 +133,7 @@ function earn(
   let next = state
   for (const id of ids) {
     earned[id] = state.turn
-    const title = achievementsOf(game).find((def) => def.id === id)?.title ?? id
+    const title = achievementsOf(game).find((def) => def.id === id)?.name ?? id
     next = notify(next, { id: `achievement.${id}`, title: stringOf(game, 'achievements/earned', { title }), tag: 'achievements' })
   }
   return set({ earned }, next)
@@ -147,7 +148,7 @@ function entry(def: AchievementDef, earnedOn: number | null, earned: boolean, st
   }
   return {
     id: def.id,
-    title: hidden ? stringOf(game, 'achievements/secret') : def.title,
+    name: hidden ? stringOf(game, 'achievements/secret') : def.name,
     description: hidden ? '' : (def.description ?? ''),
     image: hidden ? null : (def.image ?? null),
     secret: Boolean(def.secret),
@@ -187,7 +188,7 @@ function achievementsPlugin(): DefinedPlugin<AchievementsState, AchievementsView
     contentVersion: CONTENT_VERSION,
     contentMigrations,
     // The words a player reads in each list of the plugin's content, for a translation's `words` table.
-    words: { achievements: { title: true, description: true } },
+    words: { achievements: { name: true, description: true } },
     start: emptyState,
     strings: { earned: 'Achievement: {title}', secret: '???' },
     conditions: {

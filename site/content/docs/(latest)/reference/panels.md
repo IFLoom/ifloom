@@ -27,7 +27,7 @@ export const town: Content = {
       id: 'paper',
       of: 'item',
       name: 'newspaper',
-      desc: 'Today’s Small Town Gazette. The back page is job ads.',
+      description: 'Today’s Small Town Gazette. The back page is job ads.',
       at: 'player',
       // { panel: 'jobs', with: { job: ['dogs'] } }, and the paper is kept to read again.
       traits: { ...inventory.usable('Read the job ads', [jobs.open(['dogs'])], { keep: true }) },

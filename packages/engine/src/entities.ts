@@ -113,7 +113,7 @@ export type EntityDef = {
   /** What the player reads: "Ana". Prose tokens are filled in when it is read. */
   name: string
   /** A line or two about it, tokens filled in as for the name. */
-  desc?: string
+  description?: string
   /** Its picture, through `artSrc`. */
   image?: string
   /** Words a UI or a plugin can sort or pick it by, after its kind's. */
@@ -148,7 +148,7 @@ export type EntityState = {
   /** The name it was created with. A declared entity's name is read from content. */
   name?: string
   /** The description it was created with, as written. */
-  desc?: string
+  description?: string
   /** The picture it was created with, as written. */
   image?: string
   /**
@@ -355,13 +355,13 @@ function entityTagsThrough(state: GameState, game: Game, ref: string, depth: num
 /**
  * An entity's name or description as written, before its tokens are filled:
  * what it was created with, then what the one it was created `like`
- * has, then its declaration's. `entityName` and `entityDesc` fill them.
+ * has, then its declaration's. `entityName` and `entityDescription` fill them.
  */
-export function entityText(state: GameState, game: Game | undefined, ref: string, field: 'name' | 'desc'): string | undefined {
+export function entityText(state: GameState, game: Game | undefined, ref: string, field: 'name' | 'description'): string | undefined {
   return textThrough(state, game, ref, field, 0)
 }
 
-function textThrough(state: GameState, game: Game | undefined, ref: string, field: 'name' | 'desc', depth: number): string | undefined {
+function textThrough(state: GameState, game: Game | undefined, ref: string, field: 'name' | 'description', depth: number): string | undefined {
   const given = recordOf(state, ref)?.[field]
   if (given !== undefined) return given
   const like = likeOf(state, ref, depth)
@@ -400,7 +400,7 @@ function entityUiThrough(state: GameState, game: Game | undefined, ref: string, 
 /** What an entity is created with: a name or a `like` to read it from, and its own tags, traits, stats and kv. */
 export type CreatedFields = {
   name?: string
-  desc?: string
+  description?: string
   image?: string
   like?: EntityRef
   tags?: string[]
@@ -413,7 +413,7 @@ export type CreatedFields = {
 export function createdRecord(given: CreatedFields): EntityState {
   const record: EntityState = {}
   if (given.name !== undefined) record.name = given.name
-  if (given.desc !== undefined) record.desc = given.desc
+  if (given.description !== undefined) record.description = given.description
   if (given.image !== undefined) record.image = given.image
   if (given.like !== undefined) record.like = given.like
   if (given.tags?.length) record.tags = [...given.tags]

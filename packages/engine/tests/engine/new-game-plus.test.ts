@@ -17,8 +17,8 @@ function game(carryOver: Game['carryOver']): Game {
       { id: 'photo', label: 'Photo' },
     ],
     entities: [
-      { id: 'umbrella', of: 'thing', name: 'Umbrella', desc: 'Black, with a bent spoke.', at: 'player' },
-      { id: 'bun', of: 'thing', name: 'Bun', desc: 'From the bakery.' },
+      { id: 'umbrella', of: 'thing', name: 'Umbrella', description: 'Black, with a bent spoke.', at: 'player' },
+      { id: 'bun', of: 'thing', name: 'Bun', description: 'From the bakery.' },
     ],
     carryOver,
   }

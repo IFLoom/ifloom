@@ -27,6 +27,7 @@ import {
   type Runner,
 } from '@ifloom/engine'
 import { ITERATIONS, fromHex, hashOfProof, normaliseCode, proofOf, saltOf, seal, toHex, unseal } from './crypto.ts'
+import { CONTENT_VERSION, contentMigrations } from './upgrade.ts'
 
 export { ITERATIONS, normaliseCode } from './crypto.ts'
 
@@ -55,7 +56,7 @@ const GLOBAL = '__ifloomUnlocks'
 export type UnlockDef = {
   id: string
   /** Its name for the player: "Supporter edition". */
-  label: string
+  name: string
   /** What it opens, for the list of unlocks. */
   description?: string
   /** The code's hash, in hex, as `ifloom unlock-hash` prints it. Never the code. */
@@ -88,7 +89,7 @@ export type LockedContent = {
 /** An unlock as the UI shows it. */
 export type UnlockView = {
   id: string
-  label: string
+  name: string
   description: string
   /** Recorded in this save. */
   unlocked: boolean
@@ -107,7 +108,8 @@ export type UnlocksView = {
 export type Entered = {
   /** The unlock's id. */
   unlock: string
-  label: string
+  /** Its name. */
+  name: string
   /** It was unlocked already: the code worked, and nothing changed. */
   already: boolean
   /** It has content the game in play doesn't have yet: build the game again (reload the page) to add it. */
@@ -318,7 +320,7 @@ export function startUnlocks(runner: Runner, options: { content?: Readonly<Recor
         const locked = content[def.id]
         const opened = locked ? await openContent(proof, game.id, locked) : undefined
         const restart = Boolean(opened?.some((pack) => !(game.packs ?? []).includes(pack.id)))
-        return { ok: true, value: { unlock: def.id, label: def.label, already, restart } }
+        return { ok: true, value: { unlock: def.id, name: def.name, already, restart } }
       }
       return { ok: false, reason: stringOf(game, 'unlocks/wrong') }
     },
@@ -337,8 +339,10 @@ function unlocksPlugin(): DefinedPlugin<UnlocksState, UnlocksView> {
   return definePlugin<UnlocksState, UnlocksView>({
     id: ID,
     // The words a player reads in each list of the plugin's content, for a translation's `words` table.
-    words: { unlocks: { label: true, description: true } },
+    words: { unlocks: { name: true, description: true } },
     version: 1,
+    contentVersion: CONTENT_VERSION,
+    contentMigrations,
     start: () => ({ unlocked: [] }),
     strings: {
       wrong: 'That code doesn’t unlock anything.',
@@ -371,7 +375,7 @@ function unlocksPlugin(): DefinedPlugin<UnlocksState, UnlocksView> {
     view: (_state, { slice, game }): UnlocksView => {
       const list = unlocksOf(game).map((def) => ({
         id: def.id,
-        label: def.label,
+        name: def.name,
         description: def.description ?? '',
         unlocked: slice.unlocked.includes(def.id),
       }))
@@ -390,7 +394,7 @@ function unlocksPlugin(): DefinedPlugin<UnlocksState, UnlocksView> {
         const problem = (what: string) => problems.push({ list: 'unlocks', id: def.id, what })
         if (seen.has(def.id)) problem('two unlocks share this id')
         seen.add(def.id)
-        if (typeof def.label !== 'string' || !def.label.trim()) problem('has no label')
+        if (typeof def.name !== 'string' || !def.name.trim()) problem('has no name')
         if (typeof def.hash !== 'string' || !/^[0-9a-f]{64}$/i.test(def.hash)) problem('its hash isn’t one ifloom unlock-hash printed (64 hex digits)')
         if (def.iterations !== undefined && !(Number.isInteger(def.iterations) && def.iterations > 0)) problem('iterations must be a whole number above 0')
       }

@@ -38,7 +38,7 @@ export type HeldView = {
   /** Its name, with prose tokens filled in. */
   name: string
   /** Its description, filled in the same way; null with none. */
-  desc: string | null
+  description: string | null
   /** Its picture's path, through `artSrc`; null with none. */
   image: string | null
   /** Its kind's tags, then its own. */
@@ -93,12 +93,12 @@ function heldView(state: GameState, game: Game, holder: Holder, cx: FeatureConte
   return heldBy(state, game, holder)
     .filter(({ ref }) => cx.holds(state, game, bindCurrent(entityDef(game, ref)?.visible, ref)))
     .map(({ ref, count }) => {
-      const desc = entityText(state, game, ref, 'desc')
+      const description = entityText(state, game, ref, 'description')
       const image = entityImage(state, game, ref)
       return {
         ref,
         name: cx.fillTokens(state, game, entityText(state, game, ref, 'name') ?? parseRef(ref)?.id ?? ref),
-        desc: desc === undefined ? null : cx.fillTokens(state, game, desc),
+        description: description === undefined ? null : cx.fillTokens(state, game, description),
         image: image === undefined ? null : artSrc(image),
         tags: entityTags(state, game, ref),
         count,

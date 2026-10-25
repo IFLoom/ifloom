@@ -29,7 +29,7 @@ const showArrow = (arrow: (typeof ARROWS)[number]): MinigameStateDef => ({
  */
 const quickFeet: MinigameDef = {
   id: 'arrows',
-  label: 'Quick feet',
+  title: 'Quick feet',
   start: 'round',
   kv: { round: 0, arrow: 0, score: 0 },
   keys: { up: ['ArrowUp', 'w'], down: ['ArrowDown', 's'], left: ['ArrowLeft', 'a'], right: ['ArrowRight', 'd'] },
@@ -141,13 +141,13 @@ export const park: Content = {
       jobs: [
         {
           id: 'dogs',
-          title: 'Dog walker',
+          name: 'Dog walker',
           description: 'An hour round the park with somebody’s spaniel, on weekday evenings. In the Gazette’s ads.',
           at: ['park'],
           days: [0, 1, 2, 3, 4],
           hours: ['evening'],
           shift: { cost: { energy: 15 }, passes: 1 },
-          ranks: [{ id: 'walker', title: 'Dog walker', pay: { coins: 6 } }],
+          ranks: [{ id: 'walker', name: 'Dog walker', pay: { coins: 6 } }],
         },
       ],
     },

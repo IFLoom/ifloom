@@ -56,8 +56,8 @@ const ID = 'cheats'
 /** A cheat, as content declares it in a pack's `data.cheats.cheats`. */
 export type CheatDef = {
   id: string
-  /** What its button says: "+20 coins". */
-  label: string
+  /** What the player reads, on its button: "+20 coins". */
+  name: string
   /** A line about it, for the panel. */
   description?: string
   /** What it does, in order, as any effect list runs. */
@@ -86,7 +86,7 @@ export type CheatsState = {
 /** A cheat as the UI shows it. */
 export type CheatView = {
   id: string
-  label: string
+  name: string
   description: string
   /** The heading it goes under, or null. */
   group: string | null
@@ -152,12 +152,12 @@ export function cheatsView(state: GameState, context: PluginContext<CheatsState>
   return {
     cheats: shown.map((cheat): CheatView => ({
       id: cheat.id,
-      label: cheat.label,
+      name: cheat.name,
       description: cheat.description ?? '',
       group: cheat.group ?? null,
       once: Boolean(cheat.once),
       used: timesUsed(slice, cheat.id),
-      button: renderAction(state, game, { id: `cheat.${cheat.id}`, label: cheat.label, command: runCheat(cheat.id) }),
+      button: renderAction(state, game, { id: `cheat.${cheat.id}`, label: cheat.name, command: runCheat(cheat.id) }),
     })),
     used: slice.used.length,
   }
@@ -178,7 +178,7 @@ function cheatsPlugin(): DefinedPlugin<CheatsState, CheatsView> {
     contentVersion: CONTENT_VERSION,
     contentMigrations,
     // The words a player reads in each list of the plugin's content, for a translation's `words` table.
-    words: { cheats: { label: true, description: true, blocked: [{ reason: true }], effects: 'effects' } },
+    words: { cheats: { name: true, description: true, blocked: [{ reason: true }], effects: 'effects' } },
     start: () => ({ used: [] }),
     // Unlocks is what a supporter-only cheat names in its `blocked`, when the game has it.
     cooperates: ['unlocks'],
@@ -227,7 +227,7 @@ function cheatsPlugin(): DefinedPlugin<CheatsState, CheatsView> {
         const problem = (what: string) => problems.push({ list: 'cheats', id: cheat.id, what })
         if (seen.has(cheat.id)) problem('two cheats share this id')
         seen.add(cheat.id)
-        if (typeof cheat.label !== 'string' || !cheat.label.trim()) problem('has no label')
+        if (typeof cheat.name !== 'string' || !cheat.name.trim()) problem('has no name')
         if (!Array.isArray(cheat.effects) || !cheat.effects.length) problem('has no effects')
         for (const entry of cheat.blocked ?? []) if (typeof entry.reason !== 'string' || !entry.reason.trim()) problem('a blocked entry has no reason')
       }

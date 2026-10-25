@@ -601,7 +601,7 @@ type EntityView = {
   id: string
   ref: string
   name: string
-  desc: string | null
+  description: string | null
   image: string | null
   tags: string[]
   flags: Record<string, boolean>
@@ -618,7 +618,7 @@ A [kind](/docs/reference/entities#kinddef) of entity as the UI draws it. It has 
 | `id` | Its id within the kind: `'ana'`, `'#1'`. |
 | `ref` | How content names it, such as `'staff:ana'`. It's what an effect's `of` or an [`{ entity }`](/docs/reference/conditions#entity) condition takes. |
 | `name` | Its name, with [prose tokens](/docs/reference/prose#tokens) filled in for this save. |
-| `desc` | Its description, filled in the same way, or `null`. |
+| `description` | Its description, filled in the same way, or `null`. |
 | `image` | Its picture's path through [`artSrc`](/docs/reference/prose#artsrc), or `null`. |
 | `tags` | Its kind's tags, then its own. |
 | `flags` | Each of its kind's [`flags`](/docs/reference/entities#listing), by name, and whether it holds for this entity. `{}` when the kind declares none. Use it to split a list, such as people you've met and people you haven't, without the engine hiding anything more. |
@@ -634,7 +634,7 @@ A [kind](/docs/reference/entities#kinddef) of entity as the UI draws it. It has 
 type HeldView = {
   ref: EntityRef
   name: string
-  desc: string | null
+  description: string | null
   image: string | null
   tags: string[]
   count: number
@@ -643,7 +643,7 @@ type HeldView = {
 }
 ```
 
-One thing in [`view.held`](#held). `ref` is how content names it. `name` and `desc` are filled in for this save, `image` is its picture through [`artSrc`](/docs/reference/prose#artsrc), and `tags` are its kind's then its own. All of them read through the entity it was made [like](/docs/reference/entities#things-made-like-another). `ui` is its [presentation hints](/docs/reference/ui-hints), as [`entityUi`](/docs/reference/ui-hints#entityui) gives them, and is left out when it has none. `count` is how many are held, and `at` who holds them: the protagonist's reference, or `'player'`. They come in the game's order of its entities, each holder's in turn. A thing whose `visible` doesn't hold is left out, but its kind's `listed` doesn't matter here.
+One thing in [`view.held`](#held). `ref` is how content names it. `name` and `description` are filled in for this save, `image` is its picture through [`artSrc`](/docs/reference/prose#artsrc), and `tags` are its kind's then its own. All of them read through the entity it was made [like](/docs/reference/entities#things-made-like-another). `ui` is its [presentation hints](/docs/reference/ui-hints), as [`entityUi`](/docs/reference/ui-hints#entityui) gives them, and is left out when it has none. `count` is how many are held, and `at` who holds them: the protagonist's reference, or `'player'`. They come in the game's order of its entities, each holder's in turn. A thing whose `visible` doesn't hold is left out, but its kind's `listed` doesn't matter here.
 
 ## NoticesView and NoticeView
 

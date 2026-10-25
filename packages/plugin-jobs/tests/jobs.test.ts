@@ -27,7 +27,7 @@ import { jobs, type JobDef, type JobsView } from '../src/index.ts'
  */
 const cafe: JobDef = {
   id: 'cafe',
-  title: 'Weekend help',
+  name: 'Weekend help',
   description: 'Saturdays at the Corner Café.',
   blocked: [{ when: { not: { kv: 'metAva' } }, reason: 'Ava needs to know you first.' }],
   at: ['cafe'],
@@ -35,9 +35,9 @@ const cafe: JobDef = {
   hours: ['morning'],
   shift: { cost: { energy: 20 }, passes: 1, effects: [{ stat: 'manner', by: 1 }] },
   ranks: [
-    { id: 'help', title: 'Weekend help', pay: { coins: 12 } },
-    { id: 'barista', title: 'Barista', pay: { coins: 18 }, requires: { shifts: 3 } },
-    { id: 'manager', title: 'Manager', pay: { coins: 30 }, requires: { shifts: 5, when: { stat: 'manner', gte: 15 } } },
+    { id: 'help', name: 'Weekend help', pay: { coins: 12 } },
+    { id: 'barista', name: 'Barista', pay: { coins: 18 }, requires: { shifts: 3 } },
+    { id: 'manager', name: 'Manager', pay: { coins: 30 }, requires: { shifts: 5, when: { stat: 'manner', gte: 15 } } },
   ],
   fire: { missed: 2, when: { stat: 'manner', lt: 1 } },
 }
@@ -98,7 +98,7 @@ describe('jobs, on their own', () => {
     expect(holds(state, g, jobs.hired('cafe'))).toBe(true)
     expect(holds(state, g, jobs.hired('cafe', 'help'))).toBe(true)
     expect(whyNot(state, g, jobs.apply('cafe'))).toBe('You already work there.')
-    expect(board(state, g)).toMatchObject({ hired: true, rank: { id: 'help', title: 'Weekend help' }, apply: null, next: { id: 'barista', shiftsToGo: 3 } })
+    expect(board(state, g)).toMatchObject({ hired: true, rank: { id: 'help', name: 'Weekend help' }, apply: null, next: { id: 'barista', shiftsToGo: 3 } })
   })
 
   it('work a shift a day: pay the cost, run the shift’s effects, pay the wage', () => {
@@ -185,12 +185,12 @@ describe('jobs, on their own', () => {
               jobs: [
                 {
                   id: 'bad',
-                  title: 'Bad',
+                  name: 'Bad',
                   blocked: [{ when: { not: { entity: 'thing:badge', at: 'you' } }, reason: 'x' }],
                   shift: { cost: { stamina: 1 } },
                   ranks: [
-                    { id: 'a', title: 'A', pay: { gold: 1 }, requires: { shifts: 1 } },
-                    { id: 'a', title: 'A', pay: {} },
+                    { id: 'a', name: 'A', pay: { gold: 1 }, requires: { shifts: 1 } },
+                    { id: 'a', name: 'A', pay: {} },
                   ],
                   fire: { missed: 0 },
                 },
@@ -277,7 +277,7 @@ describe('the jobs panel', () => {
       [
         {
           name: 'town',
-          data: { jobs: { jobs: [{ ...cafe, blocked: [], shift: {}, fire: undefined, ranks: [{ id: 'help', title: 'Help' }] }] } },
+          data: { jobs: { jobs: [{ ...cafe, blocked: [], shift: {}, fire: undefined, ranks: [{ id: 'help', name: 'Help' }] }] } },
           actions: [
             { id: 'a', effects: [jobs.open(['cafe'])] },
             { id: 'b', effects: [jobs.open(['cafe', 'circus'])] },

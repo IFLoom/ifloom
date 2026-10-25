@@ -21,18 +21,18 @@ import { cheatsOf, cheats, type CheatDef, type CheatsView } from '../src/index.t
 const supporter = { not: { 'unlocks/has': { unlock: 'supporter' } } }
 
 const defs: CheatDef[] = [
-  { id: 'coins', label: '+20 coins', description: 'A little help.', effects: [{ stat: 'coins', by: 20 }] },
-  { id: 'map', label: 'Show the map', group: 'Story', once: true, effects: [{ kv: 'map', to: true }] },
+  { id: 'coins', name: '+20 coins', description: 'A little help.', effects: [{ stat: 'coins', by: 20 }] },
+  { id: 'map', name: 'Show the map', group: 'Story', once: true, effects: [{ kv: 'map', to: true }] },
   {
     id: 'gold',
-    label: '+500 coins',
+    name: '+500 coins',
     group: 'Supporters',
     blocked: [{ when: supporter, reason: 'For supporters.' }],
     effects: [{ stat: 'coins', by: 500 }],
   },
   {
     id: 'secret',
-    label: 'Skip to the end',
+    name: 'Skip to the end',
     group: 'Supporters',
     blocked: [{ when: supporter, reason: 'For supporters.', hide: true }],
     effects: [{ scene: 'ending' }],
@@ -119,7 +119,7 @@ describe('cheats', () => {
     const g = game()
     const before = shown(g, fresh(g))
     expect(before.cheats.map((cheat) => cheat.id)).toEqual(['coins', 'map', 'gold'])
-    expect(before.cheats[0]).toMatchObject({ label: '+20 coins', description: 'A little help.', group: null, once: false, used: 0 })
+    expect(before.cheats[0]).toMatchObject({ name: '+20 coins', description: 'A little help.', group: null, once: false, used: 0 })
     expect(before.cheats[0].button).toMatchObject({
       id: 'cheat.coins',
       label: '+20 coins',
@@ -165,7 +165,7 @@ describe('cheats', () => {
         {
           name: 'town',
           actions: [{ id: 'peek', blocked: [{ when: cheats.used('nope'), reason: 'x' }], effects: [] }],
-          data: { cheats: { cheats: [{ id: 'coins', label: '+20 coins', effects: [{ stat: 'coins', by: 20 }] }] } },
+          data: { cheats: { cheats: [{ id: 'coins', name: '+20 coins', effects: [{ stat: 'coins', by: 20 }] }] } },
         },
       ],
       { id: 'g', title: 'g', plugins: [cheats()] },
@@ -173,15 +173,15 @@ describe('cheats', () => {
     expect(loaded.problems.map((problem) => problem.what).sort()).toEqual(['unknown cheat "nope"', 'unknown stat "coins"'])
   })
 
-  it('reports a cheat with no label, no effects or two with one id', () => {
+  it('reports a cheat with no name, no effects or two with one id', () => {
     const g = game()
     const broken = {
       ...g,
-      data: { cheats: { cheats: [...defs, defs[0], { id: 'blank', label: ' ', effects: [] }] } },
+      data: { cheats: { cheats: [...defs, defs[0], { id: 'blank', name: ' ', effects: [] }] } },
     }
     const problems = checkGame(broken).problems.map((problem) => problem.what)
     expect(problems).toContain('two cheats share this id')
-    expect(problems).toContain('has no label')
+    expect(problems).toContain('has no name')
     expect(problems).toContain('has no effects')
   })
 

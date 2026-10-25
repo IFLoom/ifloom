@@ -58,7 +58,7 @@ export function useInventory(): InventoryControls | null {
 }
 
 /** A thing you hold as the card draws it: the plugin's, with its buttons. */
-type Shown = Pick<InventoryThing, 'ref' | 'name' | 'desc' | 'count' | 'at'> & Partial<Pick<InventoryThing, 'use' | 'drop'>>
+type Shown = Pick<InventoryThing, 'ref' | 'name' | 'description' | 'count' | 'at'> & Partial<Pick<InventoryThing, 'use' | 'drop'>>
 
 function InventoryCardImpl({ className, title: titleText, drop: showDrop = false }: InventoryProps) {
   const { view, send } = useGame()
@@ -83,7 +83,7 @@ function InventoryCardImpl({ className, title: titleText, drop: showDrop = false
               <span {...name}>{thing.name}</span>
               {thing.count > 1 ? <span {...count}> {words('heldCount', { n: thing.count })}</span> : null}
             </p>
-            {thing.desc ? <p {...text}>{thing.desc}</p> : null}
+            {thing.description ? <p {...text}>{thing.description}</p> : null}
             {thing.use ? <ChoiceButton choice={thing.use} /> : null}
             {showDrop && thing.drop ? (
               <button {...dropButton} disabled={Boolean(thing.drop.disabled)} title={thing.drop.disabled} onClick={() => send(thing.drop!.command)}>

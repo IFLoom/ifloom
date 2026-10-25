@@ -8,7 +8,7 @@ import { storyOf } from './layouts.tsx'
 /** Catch: wait for the throw, then press space within a second. Left drops it. */
 const catchBall: MinigameDef = {
   id: 'catch',
-  label: 'Catch the ball',
+  title: 'Catch the ball',
   start: 'ready',
   kv: { tries: 0 },
   states: {

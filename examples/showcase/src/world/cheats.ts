@@ -7,11 +7,11 @@ export const cheats: Content = {
     cheats: {
       cheats: [
         // Free for everyone.
-        { id: 'coins', label: '+20 coins', description: 'A little help with the rent.', effects: [{ stat: 'coins', by: 20 }] },
+        { id: 'coins', name: '+20 coins', description: 'A little help with the rent.', effects: [{ stat: 'coins', by: 20 }] },
         // For supporters: refused until the supporter code has been entered (the unlocks plugin's `unlocks/has`).
         {
           id: 'energy',
-          label: 'Full energy',
+          name: 'Full energy',
           description: 'As if you had slept.',
           group: 'Supporters',
           blocked: [{ when: { not: unlocks.has('supporter') }, reason: 'For supporters.' }],
@@ -25,7 +25,7 @@ export const cheats: Content = {
         // It opens the cheat above and src/unlocks/supporter.ts, a scene in the café.
         {
           id: 'supporter',
-          label: 'Supporter edition',
+          name: 'Supporter edition',
           description: 'A thank-you scene in the café, and the Full energy cheat.',
           hash: '7b141ff9f5210e0e3064dd089920697c712fa1b31ff56c2e42737dcd71bbed5f',
         },

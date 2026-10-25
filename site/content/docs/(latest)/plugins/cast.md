@@ -10,14 +10,14 @@ The engine's core has no people of its own: no character list, no talk or call c
 
 ## What a character is
 
-A character is an [entity](/docs/reference/entities) that carries the plugin's `cast/person` [trait](/docs/reference/entities#traits): their schedule, how to talk to them and whether they can be called. You write one with [`cast.person()`](#person) in your content's `entities`, so a mod can add someone or change them as it would any entity. Their name, `desc` (a line under the name, such as `Runs the café`) and `image` (their portrait) are the entity's own, so anything that draws entities draws them too.
+A character is an [entity](/docs/reference/entities) that carries the plugin's `cast/person` [trait](/docs/reference/entities#traits): their schedule, how to talk to them and whether they can be called. You write one with [`cast.person()`](#person) in your content's `entities`, so a mod can add someone or change them as it would any entity. Their name, `description` (a line under the name, such as `Runs the café`) and `image` (their portrait) are the entity's own, so anything that draws entities draws them too.
 
 ```ts
 import type { Content } from '@ifloom/engine'
 import { cast } from '@ifloom/plugin-cast'
 
 const town: Content = {
-  entities: [cast.person({ id: 'sam', name: 'Sam', desc: 'Neighbour', home: 'park', talk: 'sam.hi' })],
+  entities: [cast.person({ id: 'sam', name: 'Sam', description: 'Neighbour', home: 'park', talk: 'sam.hi' })],
 }
 ```
 
@@ -133,8 +133,8 @@ Writes a character for your content's `entities`: an [`EntityDef`](/docs/referen
 ```ts
 import { cast } from '@ifloom/plugin-cast'
 
-cast.person({ id: 'sam', name: 'Sam', desc: 'Neighbour', home: 'park', talk: 'sam.hi' })
-// { id: 'sam', name: 'Sam', desc: 'Neighbour', of: 'character',
+cast.person({ id: 'sam', name: 'Sam', description: 'Neighbour', home: 'park', talk: 'sam.hi' })
+// { id: 'sam', name: 'Sam', description: 'Neighbour', of: 'character',
 //   traits: { 'cast/person': { home: 'park', talk: 'sam.hi' } } }
 ```
 
@@ -144,7 +144,7 @@ The entity's fields that matter most to a character:
 |---|---|---|
 | `id` | What content names them by, as in `cast.talk('ava')`, `cast.here('ava')` or `cast.character('ava')`. It's also how a scene names them as its [speaker](#speakers). | Required. |
 | `name` | Shown over their lines, on their card, and in refusals such as `Ava is not here.` [Prose tokens](/docs/reference/prose) in it are filled for the save wherever it's shown, so `'{{friendName}}'` is the name the player typed (see [A name the player chooses](#a-name-the-player-chooses)). | Required. |
-| `desc` | A word or two about them, such as `Runs the café`, shown under the name. | `null` in the view. |
+| `description` | A word or two about them, such as `Runs the café`, shown under the name. | `null` in the view. |
 | `image` | Their portrait, through [`artSrc`](/docs/reference/prose#artsrc). A bare name under `art/` is taken as a `.jpg`. | `art/character/<id>.jpg` in the cast's own view; none in [`view.entities`](/docs/reference/view#entities) or as a scene's speaker. |
 | `tags` | Labels for your own code. The plugin doesn't read them. | None. |
 | `stats` | Their stats at the start, where they differ from each stat's own `start`. | Each stat's `start`. |
@@ -236,7 +236,7 @@ const ava = cast.person({
   id: 'ava',
   name: 'Ava',
   fullName: 'Ava Marsh',
-  desc: 'Runs the café',
+  description: 'Runs the café',
   image: 'art/character/ava.svg',
   pronouns: { they: 'she', them: 'her', their: 'her', theirs: 'hers' },
   ui: { hue: 20 },
@@ -252,7 +252,7 @@ const ava = cast.person({
 const sam = cast.person({
   id: 'sam',
   name: 'Sam',
-  desc: 'Neighbour',
+  description: 'Neighbour',
   image: 'art/character/sam.svg',
   pronouns: { they: 'they', them: 'them', their: 'their', theirs: 'theirs' },
   ui: { hue: 200 },
@@ -263,7 +263,7 @@ const sam = cast.person({
 })
 
 const place = (id: string, name: string, exits: string[]): PlaceDef =>
-  ({ id, name, desc: 'Small Town', exits, body: [{ prose: `place.${id}` }] })
+  ({ id, name, description: 'Small Town', exits, body: [{ prose: `place.${id}` }] })
 const chat = (id: string, who: string, by: number, label: string): DataScene => ({
   id, speaker: who, body: [{ prose: id }],
   choices: [{ id: 'bye', label, effects: [{ stat: 'friendship', by, of: cast.character(who) }, { scene: null }] }],
@@ -498,7 +498,7 @@ These answer other plugins' code, through the context's [`query`](/docs/referenc
 |---|---|
 | `cast/present` | The ids of everyone in the room, in the game's order. Empty with no places plugin or with the player nowhere. |
 | `cast/where` | Where that character is: a place id or `OFFSTAGE`. `undefined` for one the game doesn't have. |
-| `cast/contacts` | Everyone [met](#meeting-people) who has a `call`, each as `{ id, name, desc, portrait, command, disabled }`. `desc` is `null` when they have none, `command` is `cast.call(id)`, and `disabled` is the [refusal](#commands) the call would get now, or `undefined`. |
+| `cast/contacts` | Everyone [met](#meeting-people) who has a `call`, each as `{ id, name, description, portrait, command, disabled }`. `description` is `null` when they have none, `command` is `cast.call(id)`, and `disabled` is the [refusal](#commands) the call would get now, or `undefined`. |
 
 For example, a contacts plugin of your own might list them in its view:
 
@@ -556,7 +556,7 @@ type PersonView = {
   ref: string
   name: string
   fullName: string
-  desc: string | null
+  description: string | null
   ui?: Ui<EntityUi>
   portrait: string | null
   here: boolean
@@ -573,7 +573,7 @@ type PersonView = {
 | `name` | Their entity's name, tokens filled. |
 | `ui` | Their entity's [presentation hints](/docs/reference/ui-hints), over their kind's, as [`entityUi`](/docs/reference/ui-hints#entityui) reads them. Left out when they have none. |
 | `fullName` | Their `fullName`, or `name`. |
-| `desc` | Their entity's `desc`, tokens filled, or `null`. |
+| `description` | Their entity's `description`, tokens filled, or `null`. |
 | `portrait` | Their entity's `image`, or `art/<kind>/<id>.jpg`. Typed `string | null` like every plugin's portrait, though the cast always gives one. |
 | `here` | They're in the room with the player. |
 | `closed` | Their storyline is closed for now. |
@@ -584,7 +584,7 @@ In the café on Monday morning, Ava's card is:
 
 ```ts
 {
-  id: 'ava', ref: 'character:ava', name: 'Ava', fullName: 'Ava Marsh', desc: 'Runs the café', ui: { hue: 20 },
+  id: 'ava', ref: 'character:ava', name: 'Ava', fullName: 'Ava Marsh', description: 'Runs the café', ui: { hue: 20 },
   portrait: 'art/character/ava.svg', here: true, closed: false, met: false,
   actions: [{ id: 'talk-ava', label: 'Talk', command: cast.talk('ava') }],
 }
@@ -649,7 +649,7 @@ What `castUi` puts in the side column: a [`Section`](/docs/react/components#sect
 function PeopleHere(props: { className?: string }): JSX.Element | null
 ```
 
-Who is here, read from the [cast plugin](/docs/plugins/cast)'s view at `view.plugins.cast.present`. For each person it shows their portrait and `desc`, the line under their name (when they have them), and their name, with a [`ChoiceButton`](/docs/react/components#choicebutton) for each thing the player can do with them, such as **Talk**. Each person carries `data-person`. It draws nothing when nobody is here, and nothing in a game without the cast, since the engine has no people of its own.
+Who is here, read from the [cast plugin](/docs/plugins/cast)'s view at `view.plugins.cast.present`. For each person it shows their portrait and `description`, the line under their name (when they have them), and their name, with a [`ChoiceButton`](/docs/react/components#choicebutton) for each thing the player can do with them, such as **Talk**. Each person carries `data-person`. It draws nothing when nobody is here, and nothing in a game without the cast, since the engine has no people of its own.
 
 Replaceable as `PeopleHere` in [`components`](/docs/react/components#components). Parts: `people`, `person` (with `data-person`), `person-portrait`, `person-name`, `person-desc` and `person-actions`.
 
@@ -659,7 +659,7 @@ Replaceable as `PeopleHere` in [`components`](/docs/react/components#components)
 function Relationships(props: { className?: string }): JSX.Element | null
 ```
 
-Everyone the player has met, from `view.plugins.cast.people`, each with their portrait, name and `desc`, and the stats the player can see on them. Each character is an [entity](/docs/reference/entities) of the cast's kind, so those are the stats the game declares on that kind, such as friendship, read from [`view.entities`](/docs/reference/view#entities) and drawn like the [`StatList`](/docs/react/components#statlist)'s, with a bar or pips for a stat with a `display`. It draws nothing before anyone is met, and nothing without the cast. The default layout opens it from the People section, and it's the built-in `people` [panel](/docs/react/components#built_in_panels).
+Everyone the player has met, from `view.plugins.cast.people`, each with their portrait, name and `description`, and the stats the player can see on them. Each character is an [entity](/docs/reference/entities) of the cast's kind, so those are the stats the game declares on that kind, such as friendship, read from [`view.entities`](/docs/reference/view#entities) and drawn like the [`StatList`](/docs/react/components#statlist)'s, with a bar or pips for a stat with a `display`. It draws nothing before anyone is met, and nothing without the cast. The default layout opens it from the People section, and it's the built-in `people` [panel](/docs/react/components#built_in_panels).
 
 Replaceable as `Relationships` in [`components`](/docs/react/components#components). Parts: `relationships`, `relationship` (with `data-person`), `relationship-header`, `relationship-stats`, and the `person-` and `stat-` parts inside.
 

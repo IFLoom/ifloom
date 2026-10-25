@@ -12,7 +12,7 @@ const french: Pack = {
   schema: SCHEMA,
   words: {
     'action.wait.label': 'Attendre un peu',
-    'entity.character:ava.desc': 'Tient le café',
+    'entity.character:ava.description': 'Tient le café',
     'scene.cafe.counter.title': 'Le comptoir',
     'scene.cafe.counter.text.intro': 'Ava lève les yeux de la caisse.',
     'scene.cafe.counter.choice.tea.label': 'Une théière',
@@ -42,7 +42,7 @@ A key is the path to the field, as your content writes it, with each list entry 
 | A picture's `alt`, a fold's label | `scene.cafe.counter.alt.<hash>`, `scene.cafe.counter.fold.<hash>` |
 | A hotspot on a scene's stage | `scene.flat.stage.hotspots.door.label` |
 | A notice an effect raises | `action.wait.notify.<id or hash>.title` and `.text` |
-| An entity's name and description | `entity.character:ava.name`, `entity.character:ava.desc` |
+| An entity's name and description | `entity.character:ava.name`, `entity.character:ava.description` |
 | A kind's label and plural | `kind.staff.label`, `kind.staff.plural` |
 | A trait's words on an entity | `entity.location:cafe.traits.places/location.blocked.<hash>.reason` |
 | A trait's words a kind gives | `kind.vendor.traits.shop/vendor.closed` |
@@ -51,8 +51,8 @@ A key is the path to the field, as your content writes it, with each list entry 
 | A setting's or an input's label, and an option's | `setting.difficulty.label`, `setting.difficulty.options.hard.label` |
 | A lock's reason, a saveable reason | `lock.<id or hash>.reason`, `saveable.<id or hash>.reason` |
 | A timer's label | `timer.phone.label` |
-| A minigame's label and a state's | `minigame.arrows.label`, `minigame.arrows.states.round.label` |
-| A plugin's content | `<plugin>/<list>.<id>.<field>`: `quests/quests.coffee.title`, `quests/quests.coffee.stages.order.hint` |
+| A minigame's title and a state's label | `minigame.arrows.title`, `minigame.arrows.states.round.label` |
+| A plugin's content | `<plugin>/<list>.<id>.<field>`: `quests/quests.coffee.name`, `quests/quests.coffee.stages.order.hint` |
 
 Some things are named so that a key stays put while you rearrange a scene:
 
@@ -134,7 +134,7 @@ A plugin gives one for each list of its `data` in its [`words`](/docs/reference/
 definePlugin({
   id: 'quests',
   version: 1,
-  words: { quests: { title: true, summary: true, stages: [{ hint: true }] } },
+  words: { quests: { name: true, description: true, stages: [{ hint: true }] } },
   traits: [{ id: 'quests/giver', words: { greeting: true } }],
 })
 ```

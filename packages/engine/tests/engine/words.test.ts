@@ -23,7 +23,7 @@ const cafe: Content = {
     { id: 'shop', label: 'Shop', traits: { 'signs/door': { sign: 'Closed' } } },
   ],
   entities: [
-    { id: 'ava', of: 'character', name: 'Ava', desc: 'Runs the café' },
+    { id: 'ava', of: 'character', name: 'Ava', description: 'Runs the café' },
     { id: 'bakery', of: 'shop', name: 'The bakery' },
     { id: 'florist', of: 'shop', name: 'The florist', traits: { 'signs/door': { sign: 'Back at two', body: [text('Tulips in the window.')] } } },
   ],
@@ -77,7 +77,7 @@ describe('the words table', () => {
       'kind.character.plural': 'Characters',
       'kind.shop.traits.signs/door.sign': 'Closed',
       'entity.character:ava.name': 'Ava',
-      'entity.character:ava.desc': 'Runs the café',
+      'entity.character:ava.description': 'Runs the café',
       'entity.shop:florist.traits.signs/door.sign': 'Back at two',
       'stat.coins.label': 'Coins',
       'stat.coins.format.one': '{n} coin',
@@ -111,7 +111,7 @@ describe('the words table', () => {
         'scene.cafe.counter.choice.tea.label': 'Une théière',
         'action.wait.label': 'Attendre un peu',
         [english['Time passes']]: 'Le temps passe',
-        'entity.character:ava.desc': 'Tient le café',
+        'entity.character:ava.description': 'Tient le café',
         'kind.shop.traits.signs/door.sign': 'Fermé',
         'stat.coins.format.other': '{n} pièces',
         'signs/boards.menu.title': "Aujourd'hui",
@@ -131,7 +131,7 @@ describe('the words table', () => {
     const idle = apply({ ...startingState(game), sceneId: null }, game, { type: 'action', id: 'wait' }).state
     expect(view(idle, game).actions[0].label).toBe('Attendre un peu')
     expect(view(idle, game).notices.unseen[0]).toMatchObject({ title: 'Le temps passe', text: 'The clock ticks.' })
-    expect(game.entities?.find((entity) => entity.id === 'ava')?.desc).toBe('Tient le café')
+    expect(game.entities?.find((entity) => entity.id === 'ava')?.description).toBe('Tient le café')
     // The kind's default reaches every shop that has it, and one with its own sign keeps it.
     expect(game.traits?.['signs/door']).toMatchObject({ 'shop:bakery': { sign: 'Fermé' }, 'shop:florist': { sign: 'Back at two' } })
     expect(game.stats?.[0].format).toEqual({ one: '{n} coin', other: '{n} pièces' })

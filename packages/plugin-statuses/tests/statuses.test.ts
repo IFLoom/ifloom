@@ -19,23 +19,20 @@ import { statuses, type StatusDef, type StatusesView } from '../src/index.ts'
 
 const caffeinated: StatusDef = {
   id: 'caffeinated',
-  label: 'Caffeinated',
+  name: 'Caffeinated',
   turns: 2,
   modifiers: [{ stat: 'energy', add: 10 }],
-  onStart: [{ kv: 'buzzing', to: true }],
-  onEnd: [{ kv: 'buzzing', to: false }],
+  effects: { start: [{ kv: 'buzzing', to: true }], end: [{ kv: 'buzzing', to: false }] },
 }
 /** A cold: a stack per sneeze, at most three, each taking a fifth off energy and a coin a turn for tissues. */
 const cold: StatusDef = {
   id: 'cold',
-  label: 'A cold',
+  name: 'A cold',
   turns: 3,
   reapply: 'stack',
   max: 3,
   modifiers: [{ stat: 'energy', multiply: 0.8 }],
-  onStart: [{ stat: 'sneezes', by: 1 }],
-  eachTurn: [{ stat: 'coins', by: -1 }],
-  onEnd: [{ stat: 'recovered', by: 1 }],
+  effects: { start: [{ stat: 'sneezes', by: 1 }], turn: [{ stat: 'coins', by: -1 }], end: [{ stat: 'recovered', by: 1 }] },
 }
 
 function game(extra: StatusDef[] = []): Game {
@@ -95,12 +92,12 @@ describe('timed statuses', () => {
     expect(statValue(tired, g, 'energy')).toBe(50)
   })
 
-  it('run onStart, count down at the end of each turn, and run onEnd when they run out', () => {
+  it('run their start effects, count down at the end of each turn, and run their end effects when they run out', () => {
     const g = game()
     let state = run(fresh(g), g, 'coffee')
     expect(state.kv.buzzing).toBe(true)
     expect(shown(state, g).active).toEqual([
-      { id: 'caffeinated', label: 'Caffeinated', summary: '', turnsLeft: 2, stacks: 1, modifiers: [{ stat: 'energy', add: 10 }] },
+      { id: 'caffeinated', name: 'Caffeinated', description: '', turnsLeft: 2, stacks: 1, modifiers: [{ stat: 'energy', add: 10 }] },
     ])
     state = run(state, g, 'rest')
     expect(shown(state, g).active[0].turnsLeft).toBe(1)
@@ -112,8 +109,8 @@ describe('timed statuses', () => {
     expect(statValue(state, g, 'energy')).toBe(50)
   })
 
-  it('refresh by default: applied again, the turns start over and onStart does not run again', () => {
-    const g = game([{ id: 'count', label: 'Counted', turns: 2, onStart: [{ stat: 'sneezes', by: 1 }] }])
+  it('refresh by default: applied again, the turns start over and its start effects do not run again', () => {
+    const g = game([{ id: 'count', name: 'Counted', turns: 2, effects: { start: [{ stat: 'sneezes', by: 1 }] } }])
     let state = run(fresh(g), g, 'rest')
     state = apply(state, g, { type: 'custom', name: 'statuses/apply', with: { id: 'count' } }).state
     state = run(state, g, 'rest')
@@ -133,10 +130,10 @@ describe('timed statuses', () => {
     // One coin a turn for the first stack's first turn, then two a turn.
     expect(state.stats.coins).toBe(19)
     state = run(state, g, 'sneeze', 'sneeze')
-    // At three, a fourth takes the oldest off and puts a fresh one on: no onStart.
+    // At three, a fourth takes the oldest off and puts a fresh one on: no start effects.
     expect(shown(state, g).active[0]).toMatchObject({ stacks: 3 })
     expect(state.stats.sneezes).toBe(3)
-    // The oldest stacks run out first, each running onEnd.
+    // The oldest stacks run out first, each running its end effects.
     state = run(state, g, 'rest', 'rest')
     expect(state.stats.coins).toBe(19 - 3 - 3)
     expect(state.stats.recovered).toBe(0)
@@ -145,7 +142,7 @@ describe('timed statuses', () => {
     expect(shown(state, g).active).toEqual([])
   })
 
-  it('come off with statuses/remove, running onEnd only when asked', () => {
+  it('come off with statuses/remove, running the end effects only when asked', () => {
     const g = game()
     const sick = run(fresh(g), g, 'sneeze', 'sneeze')
     const cured = run(sick, g, 'cure')
@@ -193,11 +190,11 @@ describe('timed statuses', () => {
               statuses: [
                 {
                   id: 'bad',
-                  label: 'Bad',
+                  name: 'Bad',
                   turns: 0,
                   max: 2,
                   modifiers: [{ stat: 'luck', add: 1 }],
-                  onEnd: [{ entity: 'thing:moonstone', by: 1 }],
+                  effects: { end: [{ entity: 'thing:moonstone', by: 1 }] },
                 },
               ],
             },
@@ -209,7 +206,7 @@ describe('timed statuses', () => {
     expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
       'action x: unknown status "flu"',
       'statuses bad: unknown stat "luck"',
-      'statuses bad: onEnd: unknown kind "thing"',
+      'statuses bad: effects.end: unknown kind "thing"',
       'statuses bad: turns must be 1 or more',
       'statuses bad: max only applies with reapply: "stack"',
     ])

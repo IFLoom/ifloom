@@ -85,7 +85,7 @@ const CORE: readonly { list: keyof Game; noun: string; shape: WordPart; name?: (
     list: 'minigames',
     noun: 'minigame',
     shape: {
-      label: true,
+      title: true,
       states: {
         '*': { label: true, after: { effects: 'effects' }, on: [{ effects: 'effects' }], always: [{ effects: 'effects' }], final: { effects: 'effects' } },
       },
@@ -255,7 +255,7 @@ export function wordSpots(game: Game): WordSpot[] {
   ;(game.entities ?? []).forEach((entity, index) => {
     const ref = `${entity.of}:${entity.id}`
     walk.source = { list: 'entity', id: ref }
-    walk.part({ name: true, desc: true }, entity, `entity.${ref}`, `entity.${ref}`, ['entities', index], `entity ${ref}`)
+    walk.part({ name: true, description: true }, entity, `entity.${ref}`, `entity.${ref}`, ['entities', index], `entity ${ref}`)
   })
   for (const [id, byRef] of Object.entries(game.traits ?? {})) {
     const shape = shapes.get(id)

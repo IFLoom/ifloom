@@ -9,7 +9,7 @@ import type { FeatureCommands, FeatureConditions, FeatureEffects, FeatureState }
  * An added field doesn't: it declares a load default in `FIELDS` or in its
  * feature's `state`, and older saves get that default when they load.
  */
-export const SAVE_VERSION = 21 as const
+export const SAVE_VERSION = 22 as const
 
 /** A value in the kv store: true/false, a number or text. */
 export type KvValue = boolean | number | string

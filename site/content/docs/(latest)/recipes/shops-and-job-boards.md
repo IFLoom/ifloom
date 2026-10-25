@@ -26,7 +26,7 @@ import { places } from '@ifloom/plugin-places'
 import { shop } from '@ifloom/plugin-shop'
 
 const cafe = places.location({
-  id: 'cafe', name: 'The Corner Café', desc: 'Café', exits: ['high-street'],
+  id: 'cafe', name: 'The Corner Café', description: 'Café', exits: ['high-street'],
   body: [{ prose: 'place.cafe' }],
   actions: [{ id: 'counter', label: 'Go to the counter', effects: [shop.open('counter')] }],
 })
@@ -65,7 +65,7 @@ const paper: EntityDef = {
   id: 'paper',
   of: 'item',
   name: 'newspaper',
-  desc: 'Today’s Small Town Gazette. The back page is job ads.',
+  description: 'Today’s Small Town Gazette. The back page is job ads.',
   at: 'player',
   traits: { ...inventory.usable('Read the job ads', [jobs.open(['dogs'])], { keep: true }) },
 }

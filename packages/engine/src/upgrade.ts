@@ -16,7 +16,7 @@ import type { Pack } from './loader.ts'
 import type { Plugin } from './plugin.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
-export const SCHEMA = 25
+export const SCHEMA = 26
 
 /** A pack as it came in: some schema's shape, not necessarily this one. */
 export type RawPack = Record<string, unknown> & { schema: number }
@@ -135,6 +135,43 @@ export const PACK_STEPS: Record<number, (pack: RawPack, context: PackContext) =>
   23: (pack) => pack,
   // 24 → 25: words are written in place. See `toSchema25`.
   24: (pack, context) => toSchema25(pack, context),
+  // 25 → 26: one word each: a thing's line is its `description`, and a heading its `title`. See `toSchema26`.
+  25: (pack) => toSchema26(pack),
+}
+
+/** Keys of a pack's `words` table renamed, the words kept. */
+function wordKeys(pack: RawPack, rename: (key: string) => string): RawPack {
+  if (!isRecord(pack.words)) return pack
+  return { ...pack, words: Object.fromEntries(Object.entries(pack.words).map(([key, text]) => [rename(key), text])) }
+}
+
+/**
+ * 25 → 26: a thing's line is its `description`, everywhere, and a heading its
+ * `title`:
+ * - an entity's `desc` is `description`, in `entities` and in what a
+ *   `create` effect gives one (`{ create, with: { description } }`);
+ * - a minigame's `label`, the heading the UI shows over it, is `title`;
+ * - the `words` table's keys follow: `entity.<ref>.desc` is
+ *   `entity.<ref>.description` and `minigame.<id>.label` is
+ *   `minigame.<id>.title`.
+ * The plugins' own steps rename their content's fields.
+ */
+function toSchema26(pack: RawPack): RawPack {
+  const described = (value: Record<string, unknown>) => ('desc' in value && !('description' in value) ? renamed(value, { desc: 'description' }) : value)
+  let out: RawPack = TOOLS.objects(pack, (value) =>
+    typeof value.create === 'string' && isRecord(value.with) ? { ...value, with: described(value.with) } : value,
+  )
+  if (Array.isArray(out.entities)) out = { ...out, entities: out.entities.map((entity) => (isRecord(entity) ? described(entity) : entity)) }
+  if (Array.isArray(out.minigames))
+    out = {
+      ...out,
+      minigames: out.minigames.map((game) => (isRecord(game) && 'label' in game && !('title' in game) ? renamed(game, { label: 'title' }) : game)),
+    }
+  return wordKeys(out, (key) => {
+    if (key.startsWith('entity.') && key.endsWith('.desc')) return `${key.slice(0, -'.desc'.length)}.description`
+    if (key.startsWith('minigame.') && key.endsWith('.label') && !key.includes('.states.')) return `${key.slice(0, -'.label'.length)}.title`
+    return key
+  })
 }
 
 /** Whether every key of an object is one of these. */
@@ -1055,6 +1092,18 @@ export type ContentTools = {
   /** Every line of the pack's `prose` and `strings`, given with its key. */
   words: (pack: RawPack, rewrite: (text: string, key: string) => string) => RawPack
   /**
+   * Every key of the pack's `words` table, the translation's other words for
+   * a field (`quests/quests.settle.title`), renamed: for a step that renames a
+   * field the table names. The words are kept.
+   */
+  wordKeys: (pack: RawPack, rename: (key: string) => string) => RawPack
+  /**
+   * Each entry of one list of a plugin's `data`, named `<plugin>/<list>`
+   * (`'quests/quests'` is `data.quests.quests`), rewritten. A pack without
+   * the list comes back as it is.
+   */
+  entries: (pack: RawPack, list: string, rewrite: (entry: Record<string, unknown>) => Record<string, unknown>) => RawPack
+  /**
    * A line of prose by key, as written: the pack's own, else the game's
    * under it (its content's and the packs' before it). Undefined if neither
    * has it. For a step that writes words in place that were a prose key.
@@ -1128,6 +1177,14 @@ const TOOLS: Omit<ContentTools, 'prose'> = {
       ]),
     ) as RawPack,
   effects: (pack) => TOOLS.objects(pack, keyedEffect),
+  wordKeys,
+  entries: (pack, list, rewrite) => {
+    const [plugin, name] = list.split('/')
+    const data = pack.data
+    if (!isRecord(data) || !isRecord(data[plugin]) || !Array.isArray(data[plugin][name])) return pack
+    const own = data[plugin]
+    return { ...pack, data: { ...data, [plugin]: { ...own, [name]: (own[name] as unknown[]).map((entry) => (isRecord(entry) ? rewrite(entry) : entry)) } } }
+  },
 }
 
 /**

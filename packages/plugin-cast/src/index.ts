@@ -6,7 +6,7 @@
  *
  * The engine knows no characters. A person is an entity that carries the
  * `cast/person` trait, written with `cast.person({ ... })` in content's
- * `entities`: their name, `desc` and `image` are the entity's, and their
+ * `entities`: their name, `description` and `image` are the entity's, and their
  * schedule, talk and call are the trait's. The plugin brings the kind
  * `character`, which `cast.person()` uses, so a stat declared `of: 'character'` is
  * theirs: `{ stat: 'friendship', of: 'character:ava', gte: 25 }`. Inside a
@@ -19,7 +19,7 @@ import {
   artSrc,
   bindCurrent,
   definePlugin,
-  entityDesc,
+  entityDescription,
   entityImage,
   entityName,
   entityOf,
@@ -84,7 +84,7 @@ declare module '@ifloom/engine' {
 
 /**
  * What `cast.person()` takes: an entity's fields (its `of` is `'character'` if
- * left out; its `desc` is the line under their name, "Runs the café", and
+ * left out; its `description` is the line under their name, "Runs the café", and
  * its `image` their portrait) and the `cast/person` trait's, side by side.
  */
 export type PersonDef = Omit<EntityDef, 'of'> & Person & { of?: string }
@@ -106,8 +106,8 @@ export type PersonView = {
   ref: EntityRef
   name: string
   fullName: string
-  /** Their entity's `desc`, tokens filled: "Runs the café". */
-  desc: string | null
+  /** Their entity's `description`, tokens filled: "Runs the café". */
+  description: string | null
   /** Their entity's presentation hints, as written (the React UI's `hue`, say); left out with none. */
   ui?: Ui<EntityUi>
   /** The portrait's path: the entity's `image`, else `<kind>/<id>`. Typed as every plugin's portrait is, though the cast always gives one. */
@@ -146,7 +146,14 @@ declare module '@ifloom/engine' {
   interface QueryRegistry {
     'cast/present': () => string[]
     'cast/where': (args: { character: string }) => string | undefined
-    'cast/contacts': () => { id: string; name: string; desc: string | null; portrait: string | null; command: CommandRef; disabled: string | undefined }[]
+    'cast/contacts': () => {
+      id: string
+      name: string
+      description: string | null
+      portrait: string | null
+      command: CommandRef
+      disabled: string | undefined
+    }[]
   }
   interface ViewRegistry {
     cast: CastView
@@ -229,8 +236,8 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
   const nameOf = (state: GameState, game: Game, them: One) => entityName(state, game, them.ref)
   const fullNameOf = (state: GameState, game: Game, them: One) =>
     them.person.fullName !== undefined ? fillTokens(state, game, them.person.fullName) : nameOf(state, game, them)
-  /** Their entity's `desc`, tokens filled: "Runs the café". */
-  const descOf = (state: GameState, game: Game, them: One) => entityDesc(state, game, them.ref) ?? null
+  /** Their entity's `description`, tokens filled: "Runs the café". */
+  const descriptionOf = (state: GameState, game: Game, them: One) => entityDescription(state, game, them.ref) ?? null
 
   function talkBlocked(state: GameState, context: PluginContext<null>, ref: EntityRef | undefined): string | undefined {
     const { game } = context
@@ -263,7 +270,7 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
       ref: them.ref,
       name: nameOf(state, game, them),
       fullName: fullNameOf(state, game, them),
-      desc: descOf(state, game, them),
+      description: descriptionOf(state, game, them),
       ...uiOf(state, game, them.ref),
       portrait: portraitOf(state, game, them.ref),
       here: isHere(state, context, them),
@@ -384,7 +391,7 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
           .map((them) => ({
             id: short(them.ref),
             name: nameOf(state, game, them),
-            desc: descOf(state, game, them),
+            description: descriptionOf(state, game, them),
             portrait: portraitOf(state, game, them.ref),
             command: call(short(them.ref)),
             disabled: whyNot(state, game, call(short(them.ref))),
@@ -424,7 +431,7 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
  * the trait's written side by side.
  *
  * ```ts
- * entities: [cast.person({ id: 'ava', name: 'Ava', desc: 'Runs the café', home: 'park', talk: 'ava.hi' })]
+ * entities: [cast.person({ id: 'ava', name: 'Ava', description: 'Runs the café', home: 'park', talk: 'ava.hi' })]
  * ```
  */
 function person(def: PersonDef): EntityDef {

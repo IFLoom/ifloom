@@ -66,8 +66,8 @@ export type MinigameStateDef = {
 /** A minigame: its states, the one it starts in, its kv store and the keys a UI maps to its inputs. */
 export type MinigameDef = {
   id: string
-  /** What the UI calls it. */
-  label?: string
+  /** Its heading, what the UI calls it. */
+  title?: string
   /** The state it starts in. */
   start: string
   /**
@@ -100,7 +100,7 @@ export type MinigameState = {
 /** The minigame being played, as the UI draws it. */
 export type MinigameView = {
   id: string
-  /** The minigame's own label, or null. */
+  /** The minigame's own title, or null. */
   title: string | null
   /** The state it is in. */
   state: string
@@ -439,7 +439,7 @@ export const minigames = defineFeature<MinigamesShape>({
     return {
       minigame: {
         id: running.id,
-        title: def.label ?? null,
+        title: def.title ?? null,
         state: running.state,
         label: current?.label !== undefined ? cx.fillTokens(state, game, current.label) : null,
         timeLeft: timer ? Math.max(0, timer.ms - running.elapsed) : null,

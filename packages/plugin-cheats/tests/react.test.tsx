@@ -48,14 +48,14 @@ function game(options: { plugins?: boolean; hideAll?: boolean } = {}): Game {
             cheats: [
               {
                 id: 'coins',
-                label: '+20 coins',
+                name: '+20 coins',
                 description: 'A little help.',
                 effects: [{ stat: 'coins', by: 20 }],
                 ...(hide ? { blocked: [{ when: supporter, reason: 'x', hide: true }] } : {}),
               },
               {
                 id: 'map',
-                label: 'Show the map',
+                name: 'Show the map',
                 once: true,
                 group: 'Story',
                 effects: [{ kv: 'map', to: true }],
@@ -63,7 +63,7 @@ function game(options: { plugins?: boolean; hideAll?: boolean } = {}): Game {
               },
               {
                 id: 'gold',
-                label: '+500 coins',
+                name: '+500 coins',
                 group: 'Supporters',
                 blocked: [{ when: supporter, reason: 'For supporters.', hide }],
                 effects: [{ stat: 'coins', by: 500 }],

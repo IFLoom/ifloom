@@ -210,7 +210,7 @@ function playingScene(state: GameState, game: Game, under: ScreenScene, drawing:
   return {
     ...rest,
     key: `minigame:${def.id}`,
-    title: def.label ?? under.title,
+    title: def.title ?? under.title,
     body: beats.flatMap((beat) => ('text' in beat ? [beat.text] : [])).join('\n\n'),
     beats,
     fresh: 0,

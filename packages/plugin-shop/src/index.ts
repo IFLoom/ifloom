@@ -20,7 +20,7 @@
  */
 import {
   definePlugin,
-  entityDesc,
+  entityDescription,
   entityImage,
   entityName,
   entityOf,
@@ -150,7 +150,7 @@ export type GoodView = {
   /** Its name. */
   name: string
   /** Its description; null with none. */
-  desc: string | null
+  description: string | null
   /** Its picture's path, through `artSrc`; null with none. */
   image: string | null
   /** How many the vendor has left, or null when it never runs out. */
@@ -515,7 +515,7 @@ export function shopView(state: GameState, slice: ShopState, cx: Ctx): ShopView 
         return {
           entity: good.entity,
           name,
-          desc: entityDesc(state, game, good.entity) ?? null,
+          description: entityDescription(state, game, good.entity) ?? null,
           image: image === undefined ? null : artSrc(image),
           stock: stockLeft(state, slice, one, good, cx),
           owned: heldCount(state, game, good.entity, YOU),

@@ -37,7 +37,7 @@ const GAME = 'unlocks-town'
 const FAST = 1000
 
 async function def(extra: Partial<UnlockDef> = {}): Promise<UnlockDef> {
-  const base = { id: 'supporter', label: 'Supporter edition', iterations: FAST, ...extra }
+  const base = { id: 'supporter', name: 'Supporter edition', iterations: FAST, ...extra }
   return { ...base, hash: await unlockHash(CODE, GAME, base), ...extra }
 }
 
@@ -104,7 +104,7 @@ describe('the plugin', () => {
     expect(recorded.reason).toBeUndefined()
     expect(holds(recorded.state, g, unlocks.has('supporter'))).toBe(true)
     expect(unlocks().viewIn(view(recorded.state, g))).toEqual({
-      unlocks: [{ id: 'supporter', label: 'Supporter edition', description: '', unlocked: true }],
+      unlocks: [{ id: 'supporter', name: 'Supporter edition', description: '', unlocked: true }],
       unlocked: 1,
       total: 1,
     })
@@ -128,14 +128,14 @@ describe('the plugin', () => {
       [
         {
           actions: [{ id: 'lounge', blocked: [{ when: { not: unlocks.has('patron') }, reason: 'For patrons.' }], effects: [] }],
-          data: { unlocks: { unlocks: [supporter, { ...supporter, id: 'bad', label: ' ', hash: 'BREAD-2026-KEY', iterations: 0 }] } },
+          data: { unlocks: { unlocks: [supporter, { ...supporter, id: 'bad', name: ' ', hash: 'BREAD-2026-KEY', iterations: 0 }] } },
         },
       ],
       { id: GAME, title: 't', plugins: [unlocks()] },
     )
     expect(loaded.problems.map((problem) => problem.what)).toEqual([
       'unknown unlock "patron"',
-      'has no label',
+      'has no name',
       'its hash isn’t one ifloom unlock-hash printed (64 hex digits)',
       'iterations must be a whole number above 0',
     ])
@@ -162,14 +162,14 @@ describe('entering a code', () => {
     const runner = runnerFor(g, driver)
     const codes = startUnlocks(runner, { content: {} })
     const entered = await codes.enter('bread 2026 key')
-    expect(entered).toEqual({ ok: true, value: { unlock: 'supporter', label: 'Supporter edition', already: false, restart: false } })
+    expect(entered).toEqual({ ok: true, value: { unlock: 'supporter', name: 'Supporter edition', already: false, restart: false } })
     expect(holds(runner.state, g, unlocks.has('supporter'))).toBe(true)
     await runner.settled()
     const stored = (await driver.get(`${GAME}.profile`))!
     expect(stored).toMatch(/"proof":"[0-9a-f]{64}"/)
     for (const form of [CODE, normaliseCode(CODE), 'bread']) expect(stored.toLowerCase()).not.toContain(form.toLowerCase())
     // Entered again, it works and changes nothing.
-    expect(await codes.enter(CODE)).toEqual({ ok: true, value: { unlock: 'supporter', label: 'Supporter edition', already: true, restart: false } })
+    expect(await codes.enter(CODE)).toEqual({ ok: true, value: { unlock: 'supporter', name: 'Supporter edition', already: true, restart: false } })
     expect(runner.log().commands).toEqual([{ type: 'custom', name: 'unlocks/record', with: { id: 'supporter' } }])
   })
 

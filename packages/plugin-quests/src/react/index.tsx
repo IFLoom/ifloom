@@ -64,7 +64,7 @@ function QuestLogImpl({ className, title }: { className?: string; title?: string
   const card = usePart('quest', 'flex flex-col gap-1 rounded-lg border p-3')
   const questTitle = usePart('quest-title', 'flex items-center gap-2 font-medium')
   const fresh = usePart('badge', badgeVariants({ variant: 'secondary' }))
-  const summary = usePart('quest-summary', 'text-sm text-muted-foreground')
+  const description = usePart('quest-summary', 'text-sm text-muted-foreground')
   const hint = usePart('quest-hint', 'text-sm')
   const stage = usePart('quest-stage', 'text-xs text-muted-foreground')
   const tracked = usePart('button', buttonVariants({ size: 'sm', variant: 'secondary' }))
@@ -85,10 +85,10 @@ function QuestLogImpl({ className, title }: { className?: string; title?: string
       {quests.active.map((quest) => (
         <div key={quest.id} {...card} data-quest={quest.id}>
           <p {...questTitle}>
-            {quest.title}
+            {quest.name}
             {quest.updated ? <span {...fresh}>{words('questNew')}</span> : null}
           </p>
-          {quest.summary ? <p {...summary}>{quest.summary}</p> : null}
+          {quest.description ? <p {...description}>{quest.description}</p> : null}
           <p {...hint}>{quest.hint}</p>
           <p {...stage}>{words('questStage', { stage: quest.stage, stages: quest.stages })}</p>
           <button type="button" {...(quest.tracked ? tracked : untracked)} onClick={() => quests.track(quest.tracked ? null : quest.id)}>
@@ -100,7 +100,7 @@ function QuestLogImpl({ className, title }: { className?: string; title?: string
         <ul {...doneList}>
           {quests.done.map((quest) => (
             <li key={quest.id} {...done}>
-              <s>{quest.title}</s>
+              <s>{quest.name}</s>
             </li>
           ))}
         </ul>

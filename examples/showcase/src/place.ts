@@ -5,4 +5,4 @@
  */
 import { places, type PlaceDef } from '@ifloom/plugin-places'
 
-export const place = (def: PlaceDef) => places.location({ desc: 'Small Town', ...def })
+export const place = (def: PlaceDef) => places.location({ description: 'Small Town', ...def })

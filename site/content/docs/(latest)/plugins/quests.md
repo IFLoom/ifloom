@@ -68,8 +68,8 @@ const town: Content = {
 ```ts
 type QuestDef = {
   id: string
-  title: string
-  summary?: string
+  name: string
+  description?: string
   storyline?: string
   starts?: Condition
   secret?: boolean
@@ -80,8 +80,8 @@ type QuestDef = {
 | Field | What it is |
 |---|---|
 | `id` | Unique among quests. Content names the quest by it. |
-| `title` | Its name in the quest list. |
-| `summary` | A line or two about it. |
+| `name` | Its name in the quest list. |
+| `description` | A line or two about it. |
 | `storyline` | The [storyline](/docs/reference/storylines) it belongs to, for a UI that groups quests by person. Checked when the game loads. |
 | `starts` | The quest starts the first time this holds. Leave it out to start the quest only with the [`quests/start`](#effects) effect. |
 | `secret` | Not counted in `toFind` until it starts. |
@@ -110,8 +110,8 @@ import { quests, type QuestDef } from '@ifloom/plugin-quests'
 
 const settle: QuestDef = {
   id: 'settle',
-  title: 'Settle in',
-  summary: 'New town, new flat. Find your feet.',
+  name: 'Settle in',
+  description: 'New town, new flat. Find your feet.',
   starts: { kv: 'phase', is: ['open'] },
   stages: [
     { id: 'out', hint: 'Step out onto the high street.', done: places.at('high-street') },
@@ -121,12 +121,12 @@ const settle: QuestDef = {
 
 const scarf: QuestDef = {
   id: 'scarf',
-  title: 'Something warm',
+  name: 'Something warm',
   stages: [{ id: 'buy', hint: 'Buy a scarf at the market.', done: { entity: 'clothing:scarf', at: 'you' } }],
 }
 
 const place = (id: string, name: string, exits: string[]): PlaceDef =>
-  ({ id, name, desc: 'Small Town', exits, body: [{ prose: `place.${id}` }] })
+  ({ id, name, description: 'Small Town', exits, body: [{ prose: `place.${id}` }] })
 
 const map = [
   { ...place('flat', 'Your flat', ['high-street']), actions: [{ id: 'unpack', label: 'Unpack', effects: [{ kv: 'phase', to: 'open' }] }] },
@@ -142,7 +142,7 @@ const map = [
 
 const town: Content = {
   kinds: [{ id: 'clothing', label: 'Clothing', unique: true, listed: false }],
-  entities: [{ id: 'scarf', of: 'clothing', name: 'scarf', desc: 'Knitted by someone who loved you.' }, ...map],
+  entities: [{ id: 'scarf', of: 'clothing', name: 'scarf', description: 'Knitted by someone who loved you.' }, ...map],
   // The game starts in the arrival phase.
   kv: { phase: 'arrival' },
   prose: {
@@ -287,8 +287,8 @@ type QuestsView = {
 ```ts
 type QuestEntry = {
   id: string
-  title: string
-  summary: string
+  name: string
+  description: string
   storyline: string | null
   hint: string
   stage: number
@@ -302,7 +302,7 @@ type QuestEntry = {
 
 | Field | What it is |
 |---|---|
-| `summary` | `''` if the quest has none. |
+| `description` | `''` if the quest has none. |
 | `storyline` | `null` if the quest has none. |
 | `hint` | The hint for the stage the player is on, or `''` once the quest is done. |
 | `stage`, `stages` | How many stages are done, and how many there are. |
@@ -355,7 +355,7 @@ What `questsUi` puts in the side column: a [`Section`](/docs/react/components#se
 function QuestLog(props: { className?: string; title?: string | false }): JSX.Element | null
 ```
 
-The [quests plugin](/docs/plugins/quests)'s view. Each active quest (`data-quest`) shows its summary, the hint for what to do next, and how far it has got (`ui.questStage`). It has a **New** badge when it has changed, and a button to track or untrack it, which sends `quests/track`. The finished quests follow, struck through. While anything is new, the heading shows a count and a **Mark all seen** button (`ui.allSeen`) sends `quests/seen`.
+The [quests plugin](/docs/plugins/quests)'s view. Each active quest (`data-quest`) shows its description, the hint for what to do next, and how far it has got (`ui.questStage`). It has a **New** badge when it has changed, and a button to track or untrack it, which sends `quests/track`. The finished quests follow, struck through. While anything is new, the heading shows a count and a **Mark all seen** button (`ui.allSeen`) sends `quests/seen`.
 
 `title` replaces the heading, `ui.quests`, for this one list, and `false` leaves it out with its count. It draws nothing in a game without the plugin.
 
@@ -380,7 +380,7 @@ import { useQuests } from '@ifloom/plugin-quests/react'
 function Objective() {
   const quests = useQuests()
   const tracked = quests?.active.find((quest) => quest.tracked)
-  return tracked ? <p className="text-sm">{tracked.title}: {tracked.hint}</p> : null
+  return tracked ? <p className="text-sm">{tracked.name}: {tracked.hint}</p> : null
 }
 ```
 

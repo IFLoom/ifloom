@@ -28,6 +28,7 @@ The same scene in IFLoom, in one file to keep it short:
 ```ts
 // src/game.ts
 import { loadGame, text, type Content } from '@ifloom/engine'
+import { defineGame } from '@ifloom/cli/game'
 
 const cafe: Content = {
   introScene: 'cafe',
@@ -51,7 +52,8 @@ const cafe: Content = {
   ],
 }
 
-export default loadGame([cafe], { id: 'corner-cafe', title: 'The Corner Café' })
+// What the page and the CLI build the game from.
+export default defineGame({ build: () => loadGame([cafe], { id: 'corner-cafe', title: 'The Corner Café' }) })
 ```
 
 It's longer, and it does a few things the passage doesn't:
@@ -69,7 +71,7 @@ A Twine story is one file of passages. An IFLoom game is a few files, each expor
 | `StoryInit`, the variables every passage uses | `src/world/`, a file per kind: `stats.ts`, `things.ts`, `cast.ts` for the people |
 | The passages of one place, chapter or character | A file in `src/story/`, such as `story/cafe.ts`, with those scenes, their words and anything else that belongs there |
 | Passages tagged `widget`, and JavaScript in the Story JavaScript | `src/rules.ts`: the game's own code, its hooks and the functions content calls by name |
-| The story's title and its start passage | `src/game.ts`, which lists the files' content for `loadGame` and holds the title. The start passage is `introScene`, in the content that holds it. |
+| The story's title and its start passage | `src/game.ts`, the [game module](/docs/cli#the-game-module), which lists the files' content for `loadGame` and holds the title. The start passage is `introScene`, in the content that holds it. |
 
 So the café above would be `src/story/cafe.ts`, with its scenes and their words, and `coins` would go in `src/world/stats.ts`, where every other area can use it.
 
@@ -381,10 +383,10 @@ export function Layout() {
 ```ts tab="React" tab-group="framework"
 // src/main.ts
 import { mountGame } from '@ifloom/react'
-import game from './game.ts'
+import module from './game.ts'
 import { Layout } from './layout.tsx'
 
-mountGame(game, { layout: Layout, pages: { subtitle: 'A week at the corner café' } })
+mountGame(module.build(), { layout: Layout, pages: { subtitle: 'A week at the corner café' } })
 ```
 
 ```vue tab="Vue" tab-group="framework"
@@ -473,6 +475,7 @@ In SugarCube, when an update renames a variable, you set a save version and patc
 
 ```ts
 import { loadGame, type GameRules } from '@ifloom/engine'
+import { defineGame } from '@ifloom/cli/game'
 
 const rules: GameRules = {
   migrations: {
@@ -484,7 +487,7 @@ const rules: GameRules = {
   },
 }
 
-export default loadGame([cafe], { id: 'corner-cafe', title: 'The Corner Café', version: 2, rules })
+export default defineGame({ build: () => loadGame([cafe], { id: 'corner-cafe', title: 'The Corner Café', version: 2, rules }) })
 ```
 
 The engine runs every step from the save's version up to the game's when the save loads, so a save from two versions ago runs both. See [The game's own migrations](/docs/reference/saves#the-games-own-migrations).

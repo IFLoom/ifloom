@@ -275,7 +275,7 @@ Give the shell or the provider an `inline` object with a component per name. Eac
 // src/main.tsx
 import { mountGame, InlineTrigger, PartDialog, type InlineComponents, type InlineProps } from '@ifloom/react'
 import { useState } from 'react'
-import { game } from './game.ts'
+import module from './game.ts'
 
 declare module '@ifloom/engine' {
   interface InlineUi {
@@ -301,7 +301,7 @@ function TownMap({ text, args: [place] }: InlineProps<'map'>) {
 // Outside any component, so it's the same object on every render.
 const inline: InlineComponents = { map: TownMap }
 
-mountGame(game, { inline })
+mountGame(module.build(), { inline })
 // 'park.gate': 'A sign by the gate shows [[ui:map|where you are|park]].'
 ```
 
@@ -335,7 +335,9 @@ It reads the game's scenes, choices and blocks, its actions, stats, kinds and en
 ```ts
 import { describe, expect, it } from 'vitest'
 import { checkUiHints } from '@ifloom/react'
-import { game } from '../src/game.ts'
+import module from '../src/game.ts'
+
+const { game } = module.build()
 
 describe('the content', () => {
   it("has hints the React UI can draw", () => {

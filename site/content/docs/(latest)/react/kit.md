@@ -14,9 +14,9 @@ Our UI is never the only way to draw a plugin. Leave a plugin's UI out of the li
 import { mountGame } from '@ifloom/react'
 import { questsUi } from '@ifloom/plugin-quests/react'
 import { shopUi } from '@ifloom/plugin-shop/react'
-import game from './game.ts'
+import module from './game.ts'
 
-mountGame(game, { plugins: [questsUi, shopUi] })
+mountGame(module.build(), { plugins: [questsUi, shopUi] })
 ```
 
 `plugins` is the same on [`mountGame`](/docs/react#mountgame), [`GameShell`](/docs/react#gameshell) and [`GameProvider`](/docs/react/components#gameprovider). It's a plain list, in the order you want things placed. Nothing is found by itself: a plugin UI you don't list is never drawn.

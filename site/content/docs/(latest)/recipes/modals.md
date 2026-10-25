@@ -204,7 +204,7 @@ export function drawPanel(runner: Runner): void {
 // src/main.tsx: the React UI draws the panel by name, in its dialog.
 import { useState } from 'react'
 import { mountGame, useGame, type PanelComponent } from '@ifloom/react'
-import { game } from './game.ts'
+import module from './game.ts'
 
 function LeasePanel() {
   const { runner, send } = useGame()
@@ -227,7 +227,7 @@ function LeasePanel() {
 // Outside any component, so it's the same object on every render.
 const panels: Record<string, PanelComponent> = { lease: LeasePanel }
 
-mountGame(game, { panels })
+mountGame(module.build(), { panels })
 ```
 
 ```vue tab="Vue" tab-group="framework"

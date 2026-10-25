@@ -87,10 +87,12 @@ The entry is the template's `src/main.ts`, unchanged:
 // src/main.ts: the vanilla template's, cut down
 import { browserRunner, startClock, startKeys } from '@ifloom/browser'
 import { startAudio } from '@ifloom/audio'
-import loaded from './game.ts'
+import module from './game.ts'
 import './styles.css'
 
-const runner = await browserRunner(loaded.game)
+const { game } = module.build()
+
+const runner = await browserRunner(game)
 startAudio(runner)
 startClock(runner)
 startKeys(runner)
@@ -102,10 +104,10 @@ const root = document.querySelector<HTMLElement>('#root')!
 ```ts tab="React" tab-group="framework"
 // src/main.ts: the react template's, without the stylesheet, which Tailwind's CLI builds
 import { mountGame } from '@ifloom/react'
-import game from './game.ts'
+import module from './game.ts'
 import { Layout } from './layout.tsx'
 
-mountGame(game, { layout: Layout, pages: true })
+mountGame(module.build(), { layout: Layout, pages: true })
 ```
 
 ```ts tab="Vue" tab-group="framework"
@@ -172,6 +174,6 @@ console.log(`dist/index.html  ${(html.length / 1024).toFixed(1)} kB`)
 
 ## Check and playtest it
 
-`ifloom check` and `ifloom playtest` load `src/game.ts` with the CLI's own Vite, not with esbuild, so they work unchanged. Add `@ifloom/cli` as a dev dependency and keep the game in `src/game.ts`, exported as `default` or `game`. Pictures and sound go in `public/`, where `ifloom check` looks for them.
+`ifloom check` and `ifloom playtest` load `src/game.ts` with the CLI's own Vite, not with esbuild, so they work unchanged. Add `@ifloom/cli` as a dev dependency and keep the game in `src/game.ts`, its [game module](/docs/cli#the-game-module) the default export, made with `defineGame`. The page imports the same module and calls its `build`. Pictures and sound go in `public/`, where `ifloom check` looks for them.
 
 `import.meta.env.DEV`, which the docs use to leave the [debug plugin](/docs/plugins/debug#leave-it-out-of-release-builds) out of a release, is Vite's. Under esbuild, set your own with `--define:DEV=true` in `dev` and `false` in `build.js` (`define: { DEV: 'false' }`), and declare it in TypeScript with `declare const DEV: boolean`.

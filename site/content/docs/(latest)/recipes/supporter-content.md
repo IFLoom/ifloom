@@ -29,17 +29,16 @@ Add both packages to `package.json`, then put the plugins in the game:
 
 ```ts
 // src/game.ts
-import { loadGame, type Pack } from '@ifloom/engine'
+import { loadGame } from '@ifloom/engine'
+import { defineGame } from '@ifloom/cli/game'
 import { cheats } from '@ifloom/plugin-cheats'
 import { unlocks } from '@ifloom/plugin-unlocks'
 import { town } from './town.ts'
 
-export function build({ unlocked = [] as Pack[] } = {}) {
-  return loadGame([town], { id: 'small-town', title: 'Small Town', plugins: [cheats(), unlocks()] }, { packs: unlocked })
-}
-
-// What `ifloom check` loads. It passes the locked packs as `unlocked`.
-export default build
+// What the page and `ifloom check` build the game from. `ifloom check` passes the locked packs as `unlocked`.
+export default defineGame({
+  build: ({ unlocked }) => loadGame([town], { id: 'small-town', title: 'Small Town', plugins: [cheats(), unlocks()] }, { packs: unlocked }),
+})
 ```
 
 `unlocked` is where the supporter content comes in, at runtime and in `ifloom check`. It's a list of [packs](/docs/reference/loader#content-and-packs), laid over the town's content.
@@ -150,7 +149,7 @@ Open the remembered content before the game is built, and start taking codes onc
 // src/main.tsx (the React UI)
 const stored = profile({ id: 'small-town' }, driver)
 const opened = await unlockedPacks('small-town', stored)
-const { game } = build({ unlocked: opened.packs })
+const { game } = module.build({ unlocked: opened.packs })
 // … make the runner with `profile: stored`, then, with unlocksUiWith from '@ifloom/plugin-unlocks/react':
 // <GameShell runner={runner} pages={{}} plugins={[unlocksUiWith({ problems: opened.problems, onChange: () => location.reload() })]} />
 ```

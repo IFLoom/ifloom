@@ -102,9 +102,11 @@ The templates make their runner with [`browserRunner`](/docs/browser#browserrunn
 // src/main.ts
 import { browserRunner, indexedDbDriver } from '@ifloom/browser'
 import { saves } from '@ifloom/engine'
-import loaded from './game.ts' // what loadGame returned: { game, problems }
+import module from './game.ts'
 
-const runner = await browserRunner(loaded.game, { saves: saves(loaded.game, indexedDbDriver()) })
+const { game } = module.build()
+
+const runner = await browserRunner(game, { saves: saves(game, indexedDbDriver()) })
 ```
 
 ```ts tab="React" tab-group="framework"
@@ -112,7 +114,9 @@ const runner = await browserRunner(loaded.game, { saves: saves(loaded.game, inde
 import { indexedDbDriver } from '@ifloom/browser'
 import { saves } from '@ifloom/engine'
 import { mountGame } from '@ifloom/react'
-import loaded from './game.ts' // what loadGame returned: { game, problems }
+import module from './game.ts'
+
+const loaded = module.build() // { game, problems }
 
 mountGame(loaded, { runner: { saves: saves(loaded.game, indexedDbDriver()) } })
 ```
@@ -122,9 +126,11 @@ mountGame(loaded, { runner: { saves: saves(loaded.game, indexedDbDriver()) } })
 import { shallowRef } from 'vue'
 import { browserRunner, indexedDbDriver } from '@ifloom/browser'
 import { saves } from '@ifloom/engine'
-import loaded from './game.ts' // what loadGame returned: { game, problems }
+import module from './game.ts'
 
-export const runner = await browserRunner(loaded.game, { saves: saves(loaded.game, indexedDbDriver()) })
+const { game } = module.build()
+
+export const runner = await browserRunner(game, { saves: saves(game, indexedDbDriver()) })
 export const view = shallowRef(runner.view())
 runner.subscribe(() => (view.value = runner.view()))
 ```
@@ -134,9 +140,11 @@ runner.subscribe(() => (view.value = runner.view()))
 import { readable } from 'svelte/store'
 import { browserRunner, indexedDbDriver } from '@ifloom/browser'
 import { saves } from '@ifloom/engine'
-import loaded from './game.ts' // what loadGame returned: { game, problems }
+import module from './game.ts'
 
-export const runner = await browserRunner(loaded.game, { saves: saves(loaded.game, indexedDbDriver()) })
+const { game } = module.build()
+
+export const runner = await browserRunner(game, { saves: saves(game, indexedDbDriver()) })
 export const view = readable(runner.view(), (set) => runner.subscribe(() => set(runner.view())))
 ```
 

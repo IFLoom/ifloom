@@ -54,8 +54,10 @@ for coding agents working on the game.
 
 ## Where things go
 
-- `src/game.ts` only assembles the game: `loadGame([...content], { ... })`,
-  with the plugins and rules. Content doesn't go here.
+- `src/game.ts` only assembles the game: its default export is
+  `defineGame({ build })`, the game module the page and the CLI build it from,
+  where `build` returns `loadGame([...content], { ... })` with the plugins and
+  rules. Content doesn't go here.
 - `src/world/` holds what the whole game shares, one file per kind:
   `stats.ts`, `things.ts`, `cast.ts` for the people, `settings.ts` for what the
   player can change. Each file exports a `Content` object.

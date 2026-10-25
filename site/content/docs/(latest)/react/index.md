@@ -6,9 +6,9 @@ description: "The optional React UI: mountGame, GameShell, the layout in layout.
 
 ```ts
 import { mountGame } from '@ifloom/react'
-import game from './game.ts'
+import module from './game.ts'
 
-mountGame(game)
+mountGame(module.build())
 ```
 
 [`mountGame`](#mountgame) starts the game and draws it into the page. Underneath, [`GameShell`](#gameshell) is the whole UI in one component. Every part it's made of is exported too, as are the shadcn/ui primitives it's built from, so you can:
@@ -128,11 +128,11 @@ The UI's stylesheet imports Tailwind itself and tells it to scan the UI's compon
 ```ts
 // src/main.ts
 import { mountGame } from '@ifloom/react'
-import game from './game.ts'
+import module from './game.ts'
 import { Layout } from './layout.tsx'
 import './styles.css'
 
-mountGame(game, { layout: Layout })
+mountGame(module.build(), { layout: Layout })
 ```
 
 Here `src/layout.tsx` is the page, a copy of [the default layout](#layouts) to change as you like (leave `layout` out to use the default as it is), and `src/game.ts` exports what [`loadGame`](/docs/reference/loader#loadgame) returned, `{ game, problems }`. `mountGame` logs any problems as warnings.
@@ -188,10 +188,10 @@ Any other option goes to `GameShell` as a prop, such as `layout`, `panels` or `m
 
 ```ts
 import { mountGame } from '@ifloom/react'
-import game from './game.ts'
+import module from './game.ts'
 import { Layout } from './layout.tsx'
 
-const runner = await mountGame(game, {
+const runner = await mountGame(module.build(), {
   runner: { backlog: { limit: 200 } },
   layout: Layout,
 })
@@ -205,10 +205,10 @@ import { createRoot } from 'react-dom/client'
 import { localStorageDriver } from '@ifloom/browser'
 import { createRunner, profile, saves, startingState } from '@ifloom/engine'
 import { GameShell } from '@ifloom/react'
-import loaded from './game.ts'
+import module from './game.ts'
 import './styles.css'
 
-const { game } = loaded
+const { game } = module.build()
 const runner = createRunner(game, startingState(game, { seed: Math.floor(Math.random() * 2 ** 31) }), {
   saves: saves(game, localStorageDriver()),
   profile: profile(game, localStorageDriver()),
@@ -301,10 +301,10 @@ export function Layout() {
 ```ts
 // src/main.ts
 import { mountGame } from '@ifloom/react'
-import game from './game.ts'
+import module from './game.ts'
 import { Layout } from './layout.tsx'
 
-mountGame(game, { layout: Layout, pages: true, plugins: [] })
+mountGame(module.build(), { layout: Layout, pages: true, plugins: [] })
 ```
 
 Each [`Plugins`](/docs/react/kit#plugins) is where the plugin UIs in `plugins` put what they bring: the quests' section and the cast's People in the side column, where you are and the way out before the room's actions. Replace one with the plugin's own components, in any order, to place them yourself.
@@ -335,10 +335,10 @@ Turn on `pages` and the game opens on a title screen, with the game's title and 
 
 ```ts
 import { mountGame } from '@ifloom/react'
-import game from './game.ts'
+import module from './game.ts'
 import { Layout } from './layout.tsx'
 
-mountGame(game, {
+mountGame(module.build(), {
   layout: Layout,
   pages: {
     subtitle: 'A novel in three chapters',

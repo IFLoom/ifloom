@@ -137,19 +137,18 @@ export default supporter
 
 The game's own content can't point into a locked pack without a problem when the pack isn't there. Reach locked content from inside it, as this storylet does by joining a deck the base game draws from, or only behind `unlocks/has`. `ifloom check` [lists](/docs/cli#locked-content-in-a-check) any reference into locked content it finds.
 
-Your game module takes the packs as `unlocked`, and passes them to `loadGame` as `packs`, over its content:
+Your [game module](/docs/cli#the-game-module)'s `build` takes the packs as `unlocked`, and passes them to `loadGame` as `packs`, over its content:
 
 ```ts
 // src/game.ts
-import { loadGame, type Pack } from '@ifloom/engine'
+import { loadGame } from '@ifloom/engine'
+import { defineGame } from '@ifloom/cli/game'
 import { unlocks } from '@ifloom/plugin-unlocks'
 import { town } from './town.ts'
 
-export function build({ unlocked = [] as Pack[] } = {}) {
-  return loadGame([town], { id: 'small-town', title: 'Small Town', plugins: [unlocks()] }, { packs: unlocked })
-}
-
-export default build
+export default defineGame({
+  build: ({ unlocked }) => loadGame([town], { id: 'small-town', title: 'Small Town', plugins: [unlocks()] }, { packs: unlocked }),
+})
 ```
 
 ## Entering codes
@@ -178,11 +177,11 @@ sequenceDiagram
 import { browserRunner, localStorageDriver } from '@ifloom/browser'
 import { profile } from '@ifloom/engine'
 import { startUnlocks, unlockedPacks } from '@ifloom/plugin-unlocks'
-import { build } from './game.ts'
+import module from './game.ts'
 
 // The profile browserRunner uses, opened before the game is built.
 const opened = await unlockedPacks('small-town', profile({ id: 'small-town' }, localStorageDriver()))
-const { game } = build({ unlocked: opened.packs })
+const { game } = module.build({ unlocked: opened.packs })
 const runner = await browserRunner(game)
 const codes = startUnlocks(runner)
 
@@ -207,12 +206,12 @@ import { GameShell } from '@ifloom/react'
 import { unlockedPacks } from '@ifloom/plugin-unlocks'
 import { unlocksUiWith } from '@ifloom/plugin-unlocks/react'
 import { createRoot } from 'react-dom/client'
-import { build } from './game.ts'
+import module from './game.ts'
 
 const driver = localStorageDriver()
 const stored = profile({ id: 'small-town' }, driver)
 const opened = await unlockedPacks('small-town', stored)
-const { game } = build({ unlocked: opened.packs })
+const { game } = module.build({ unlocked: opened.packs })
 const runner = createRunner(game, startingState(game), { saves: saves(game, driver), profile: stored })
 
 // A code box on the settings page, and in the menu without pages.

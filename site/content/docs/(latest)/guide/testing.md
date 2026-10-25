@@ -1,6 +1,6 @@
 ---
 title: "Testing your game"
-description: "Test an IFLoom game with Vitest and the engine, no browser needed: play a route and check the stats and the view, find out whether a scene can be reached, replay a player's bug from their save, and run playtests and snapshots in CI."
+description: "Test an IFLoom game with Vitest and the engine, no browser needed: play a route and check the stats and the view, find out whether a scene can be reached, replay a player's bug from their save, and run playtests and snapshots, with probes made by playing, in CI."
 ---
 The engine runs the same in Node as in a browser, so you can test a game the way you'd test any other code. A test plays some commands and checks what came out, without opening a page.
 
@@ -36,9 +36,9 @@ A test starts a game, plays some commands, and checks the state and the view. Wi
 // tests/game.test.ts
 import { describe, expect, it } from 'vitest'
 import { createRunner, startingState, type Command } from '@ifloom/engine'
-import loaded from '../src/game.ts'
+import module from '../src/game.ts'
 
-const { game, problems } = loaded
+const { game, problems } = module.build()
 
 /** A runner on a new game, after the given commands. Fails the test if one is refused. */
 function play(...commands: Command[]) {
@@ -158,14 +158,31 @@ Two of the CLI's commands are tests of a kind, and they run from the game's fold
 - [`ifloom playtest`](/docs/cli#ifloom-playtest) plays the game for some turns with no one at the keyboard, writes every screen to a transcript, and exits with an error if the game offered a button and then refused it. The [explorer](/docs/cli#explorer) picks a choice it hasn't tried yet each time, or you give it a policy of your own.
 - [`ifloom snapshot`](/docs/cli#ifloom-snapshot) writes how every scene reads to a file, and fails when one reads differently from last time. Commit the file, and a change you didn't mean shows up in review.
 
+Both read what they need from the game module in `src/game.ts`: playtest its `start` and `policy`, snapshot its `probes`, the states every scene is read in. Make each probe with [`probe`](/docs/cli#probe), by playing commands and effects from the start, so it's a state a player could be in:
+
+```ts
+// src/game.ts
+import { defineGame, probe } from '@ifloom/cli/game'
+
+export default defineGame({
+  build: () => loadGame([stats, opening], { id: 'my-story', title: 'My Story' }),
+  // The first screen, and after knocking, played as the player would.
+  probes: (game) => [probe('start', game, []), probe('knocked', game, [{ play: { type: 'choose', id: 'knock' } }])],
+})
+```
+
 Both are functions too, from `@ifloom/cli`, so a test can call them:
 
 ```ts
-import { explorer, playtest } from '@ifloom/cli'
+import { explorer, playtest, snapshot } from '@ifloom/cli'
 
 it('plays five turns with nothing refused', () => {
   const result = playtest(game, startingState(game), explorer(), { turns: 5 })
   expect(result.refusals).toEqual([])
+})
+
+it('reads every scene as it did', () => {
+  expect(snapshot(game, module.probes!(game))).toBe(readFileSync(new URL('../snapshots/scenes.txt', import.meta.url), 'utf8'))
 })
 ```
 

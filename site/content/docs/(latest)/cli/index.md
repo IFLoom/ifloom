@@ -805,12 +805,13 @@ What `ifloom playtest` runs. It plays `game` from `start`, asking `policy` (defa
 
 ```ts
 import { expect, it } from 'vitest'
+import { startingState } from '@ifloom/engine'
 import { explorer, playtest } from '@ifloom/cli'
-import { smallTown, start } from '../src/game.ts'
+import town from '../src/game.ts'
 
 it('charges rent on Sunday', () => {
-  const { game } = smallTown()
-  const result = playtest(game, start(game), explorer(), { turns: 7 })
+  const { game } = town.build()
+  const result = playtest(game, startingState(game), explorer(), { turns: 7 })
   expect(result.refusals).toEqual([])
   expect(result.turns[6].stats.coins).toBeLessThan(result.turns[5].stats.coins)
 })
@@ -1016,4 +1017,4 @@ it('every scene and place reads as it did', () => {
 type Probe = { name: string; state: GameState }
 ```
 
-A state to render every scene in, made with [`probe`](#probe). `name` goes in each block's header, `=== <scene> @ <name>`, so keep it short and without spaces.
+A state to render every scene in, made with [`probe`](#probe). It's the engine's [`Probe`](/docs/reference/checks#probes), the same shape [`checkGame`](/docs/reference/checks#checkgame) takes in its `probes`. `name` goes in each block's header, `=== <scene> @ <name>`, so keep it short and without spaces.

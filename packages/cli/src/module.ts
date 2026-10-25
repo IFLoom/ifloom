@@ -4,7 +4,18 @@
  * `ifloom snapshot` by playing. It imports only the engine, so the game's
  * page can import the same module (`@ifloom/cli/game`).
  */
-import { apply, applyEffects, startingState, type CommandRef, type Effect, type Game, type GameState, type Pack, type Problem } from '@ifloom/engine'
+import {
+  apply,
+  applyEffects,
+  startingState,
+  type CommandRef,
+  type Effect,
+  type Game,
+  type GameState,
+  type Pack,
+  type Probe,
+  type Problem,
+} from '@ifloom/engine'
 import type { Policy } from './playtest.ts'
 
 /** What `build` is given: the packs to load over the content, such as the locked content a player's codes opened. */
@@ -13,8 +24,8 @@ export type BuildOptions = {
   unlocked: Pack[]
 }
 
-/** A state to render every scene in, with a name for the snapshot file. */
-export type Probe = { name: string; state: GameState }
+/** A state to render every scene in, with a name for the snapshot file: the engine's, which `checkGame` takes too. */
+export type { Probe }
 
 /** What a game module says about the game, as written to `defineGame`. */
 export type GameModuleDef = {

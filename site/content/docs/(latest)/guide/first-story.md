@@ -79,10 +79,13 @@ export const opening: Content = {
 ```ts
 // src/game.ts
 import { loadGame } from '@ifloom/engine'
+import { defineGame } from '@ifloom/cli/game'
 import { stats } from './world/stats.ts'
 import { opening } from './story/opening.ts'
 
-export default loadGame([stats, opening], { id: 'last-bus', title: 'The Last Bus' })
+export default defineGame({
+  build: () => loadGame([stats, opening], { id: 'last-bus', title: 'The Last Bus' }),
+})
 ```
 
 The scene is a [data scene](/docs/reference/scenes#datascene). Its `body` is a list of blocks, read top to bottom, and `text('…')` is a block of words, written where it's read. It's plain data, `{ text: '…' }`, which you can write by hand too. A blank line in the words starts a new paragraph.
@@ -91,7 +94,7 @@ The words are plain text, with `**bold**` and `*italic*` as in Markdown (see [Pr
 
 `loadGame` takes your content, in a list, and a base with the game's `id` and `title`. Everything the story holds, its first scene included, is content. The base holds only what says which game this is, its plugins and its own code.
 
-The default export is what the [CLI](/docs/cli) reads: `loadGame` returns `{ game, problems }`, and `npm run check` prints each problem, or `No problems.` when there are none.
+The default export is the [game module](/docs/cli#the-game-module), made with `defineGame`. Its `build` returns what `loadGame` returns, `{ game, problems }`. The page calls it to start the game, and `npm run check` calls it too and prints each problem, or `No problems.` when there are none.
 
 ## 2. Choices
 
@@ -226,12 +229,15 @@ choices: [
 Saves can use `playerName` too. A save's [`SaveMeta`](/docs/reference/saves#savemeta) has a `playerName` field for a load screen to show, which comes from the game's `saveName`. It's code, so it goes in the game's [`rules`](/docs/reference/rules#gamerules), in the base in `src/game.ts`:
 
 ```ts
-export default loadGame([stats, opening], {
-  id: 'last-bus',
-  title: 'The Last Bus',
-  rules: {
-    saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : null),
-  },
+export default defineGame({
+  build: () =>
+    loadGame([stats, opening], {
+      id: 'last-bus',
+      title: 'The Last Bus',
+      rules: {
+        saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : null),
+      },
+    }),
 })
 ```
 
@@ -253,10 +259,12 @@ The engine has no UI of its own. Your template already has the code that draws t
 // src/main.ts in the vanilla template, cut down to the scene and its choices
 import { browserRunner } from '@ifloom/browser'
 import type { View } from '@ifloom/engine'
-import loaded from './game.ts'
+import module from './game.ts'
 import './styles.css'
 
-const runner = await browserRunner(loaded.game)
+const { game } = module.build()
+
+const runner = await browserRunner(game)
 const root = document.querySelector<HTMLElement>('#root')!
 
 function draw(view: View): void {
@@ -281,23 +289,23 @@ draw(runner.view())
 ```ts tab="React" tab-group="framework"
 // src/main.ts
 import { mountGame } from '@ifloom/react'
-import game from './game.ts'
+import module from './game.ts'
 import { Layout } from './layout.tsx'
 import './styles.css'
 
 // `layout` is the page, in `layout.tsx`. `pages` opens on a title screen
 // with New game, Continue, Load and Settings. Leave it out to start straight
 // in the story.
-mountGame(game, { layout: Layout, pages: true })
+mountGame(module.build(), { layout: Layout, pages: true })
 ```
 
 ```ts tab="Vue" tab-group="framework"
 // src/runner.ts
 import { shallowRef } from 'vue'
 import { browserRunner } from '@ifloom/browser'
-import loaded from './game.ts'
+import module from './game.ts'
 
-export const runner = await browserRunner(loaded.game)
+export const runner = await browserRunner(game)
 
 // The view as Vue state, replaced after every change of state.
 export const view = shallowRef(runner.view())
@@ -310,6 +318,8 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import './styles.css'
 
+const { game } = module.build()
+
 createApp(App).mount('#root')
 ```
 
@@ -317,9 +327,9 @@ createApp(App).mount('#root')
 // src/runner.ts
 import { readable } from 'svelte/store'
 import { browserRunner } from '@ifloom/browser'
-import loaded from './game.ts'
+import module from './game.ts'
 
-export const runner = await browserRunner(loaded.game)
+export const runner = await browserRunner(game)
 
 // The view as a store, set again after every change of state.
 export const view = readable(runner.view(), (set) => runner.subscribe(() => set(runner.view())))
@@ -328,6 +338,8 @@ export const view = readable(runner.view(), (set) => runner.subscribe(() => set(
 import { mount } from 'svelte'
 import App from './App.svelte'
 import './styles.css'
+
+const { game } = module.build()
 
 mount(App, { target: document.querySelector('#root')! })
 ```
@@ -342,12 +354,16 @@ npm run check   # No problems.
 
 If you misspelled a scene id or a key along the way, `check` names it.
 
-A playtest plays the game with no one at the keyboard. It needs somewhere to start, and a new game would stop at the name input. So export a `start` from `src/game.ts`, a player who has already typed a name:
+A playtest plays the game with no one at the keyboard. It needs somewhere to start, and a new game would stop at the name input. So give the game module a `start`, a player who has already typed a name:
 
 ```ts
-import { startingState, type Game } from '@ifloom/engine'
+import { startingState } from '@ifloom/engine'
 
-export const start = (game: Game) => startingState(game, { kv: { playerName: 'Sam' } })
+export default defineGame({
+  build: () => loadGame(/* the content and the base, as above */),
+  // Where `ifloom playtest` starts: a player who has already typed a name.
+  start: (game) => startingState(game, { kv: { playerName: 'Sam' } }),
+})
 ```
 
 Then run it:
@@ -368,20 +384,23 @@ The game is three files. `src/game.ts` puts it together:
 
 ```ts
 // src/game.ts
-import { loadGame, startingState, type Game } from '@ifloom/engine'
+import { loadGame, startingState } from '@ifloom/engine'
+import { defineGame } from '@ifloom/cli/game'
 import { stats } from './world/stats.ts'
 import { opening } from './story/opening.ts'
 
-export default loadGame([stats, opening], {
-  id: 'last-bus',
-  title: 'The Last Bus',
-  rules: {
-    saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : null),
-  },
+export default defineGame({
+  build: () =>
+    loadGame([stats, opening], {
+      id: 'last-bus',
+      title: 'The Last Bus',
+      rules: {
+        saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : null),
+      },
+    }),
+  /** Where `ifloom playtest` starts: a player who has already typed a name. */
+  start: (game) => startingState(game, { kv: { playerName: 'Sam' } }),
 })
-
-/** Where `ifloom playtest` starts: a player who has already typed a name. */
-export const start = (game: Game) => startingState(game, { kv: { playerName: 'Sam' } })
 ```
 
 `src/world/stats.ts` declares the stat:

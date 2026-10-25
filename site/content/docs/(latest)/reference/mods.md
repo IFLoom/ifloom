@@ -146,12 +146,15 @@ A game builds itself once, when the page opens. It reads the mods that are on, l
 ```ts
 // src/runner.ts, or src/main.ts in the vanilla template
 import { browserRunner, indexedDbDriver } from '@ifloom/browser'
-import { mods } from '@ifloom/engine'
+import { describeProblem, mods } from '@ifloom/engine'
 import { smallTown } from './game.ts'
 
 // The player's mods live in IndexedDB; they're loaded over the town at start-up.
 export const modStore = mods('small-town', indexedDbDriver({ database: 'small-town-mods' }))
-export const { game, problems } = smallTown({ mods: await modStore.packs() })
+const built = smallTown({ mods: await modStore.packs() })
+export const game = built.game
+// Each problem as a line; a mod's start with `mod:<id> `, which the manager below files under its mod.
+export const problems = built.problems.map(describeProblem)
 if (problems.length) console.warn(problems.join('\n'))
 
 export const runner = await browserRunner(game)
@@ -160,7 +163,7 @@ export const runner = await browserRunner(game)
 `smallTown`, in `src/game.ts`, passes the packs to [`loadGame`](/docs/reference/loader#loadgame) as its third argument, over the town's content. Trimmed, it reads:
 
 ```ts
-import { describeProblem, loadGame, type Pack } from '@ifloom/engine'
+import { loadGame, type Pack } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { stats } from './world/stats.ts'
@@ -169,12 +172,11 @@ import { cafe } from './story/cafe.ts'
 const content = [stats, cafe /* , … */]
 
 export function smallTown({ withDebug = false, mods = [] as Pack[] } = {}) {
-  const { game, problems } = loadGame(
+  return loadGame(
     content,
     { id: 'small-town', title: 'Small Town', plugins: [calendar({ start: { day: 0, period: 'night' } }), places({ start: 'flat' }), /* … */], /* … */ },
     { packs: mods },
   )
-  return { game, problems: problems.map(describeProblem) }
 }
 ```
 
@@ -221,14 +223,16 @@ export async function modManager(store: Mods, problems: string[]): Promise<HTMLE
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { indexedDbDriver, localStorageDriver } from '@ifloom/browser'
-import { createRunner, mods, saves, startingState } from '@ifloom/engine'
+import { createRunner, describeProblem, mods, saves, startingState } from '@ifloom/engine'
 import { GameShell } from '@ifloom/react'
 import { smallTown } from './game.ts'
 import './styles.css'
 
 // The player's mods live in IndexedDB; they're loaded over the town at start-up.
 const modStore = mods('small-town', indexedDbDriver({ database: 'small-town-mods' }))
-const { game, problems } = smallTown({ withDebug: import.meta.env.DEV, mods: await modStore.packs() })
+const built = smallTown({ withDebug: import.meta.env.DEV, mods: await modStore.packs() })
+const { game } = built
+const problems = built.problems.map(describeProblem)
 if (problems.length) console.warn(problems.join('\n'))
 
 // A fresh seed per new game, so each playthrough deals its own variants.

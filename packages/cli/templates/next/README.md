@@ -22,8 +22,9 @@ esbuild recipe in the docs.
 | `npm run playtest` | `pnpm playtest` | `yarn run playtest` | `bun run playtest` | Plays 5 turns with no one at the keyboard, into `playtest/run.txt`. |
 | `npm run typecheck` | `pnpm typecheck` | `yarn run typecheck` | `bun run typecheck` | Type-checks the app and the game. |
 
-`check` and `playtest` are the `ifloom` CLI. They load `src/game.ts` on their
-own, through the CLI's own Vite, so they work beside Next.
+`check` and `playtest` are the `ifloom` CLI. They load `src/game.ts`, the game
+module, on their own, through the CLI's own Vite, so they work beside Next.
+`app/Game.tsx` builds the game from the same module with `build()`.
 
 ## Docs
 

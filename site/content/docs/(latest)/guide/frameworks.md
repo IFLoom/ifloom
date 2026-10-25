@@ -49,10 +49,10 @@ Each template makes the runner once, in a module of its own, and turns the view 
 import { browserRunner, startClock, startKeys } from '@ifloom/browser'
 import type { InputView, MinigameView, SceneBeat, View } from '@ifloom/engine'
 import { startAudio } from '@ifloom/audio'
-import loaded from './game.ts'
+import module from './game.ts'
 import './styles.css'
 
-const { game, problems } = loaded
+const { game, problems } = module.build()
 if (problems.length) console.warn(problems)
 
 // A new game with a random seed, undo, saves in localStorage and an autosave each turn.
@@ -75,9 +75,11 @@ draw(runner.view())
 import { useSyncExternalStore } from 'react'
 import { browserRunner, startClock, startKeys } from '@ifloom/browser'
 import { startAudio } from '@ifloom/audio'
-import loaded from './game.ts'
+import module from './game.ts'
 
-export const runner = await browserRunner(loaded.game)
+const { game } = module.build()
+
+export const runner = await browserRunner(game)
 // Its `play` plays a file on demand, such as a voice line again.
 export const player = startAudio(runner)
 startClock(runner)
@@ -96,9 +98,9 @@ export const useView = () => useSyncExternalStore(runner.subscribe, runner.view)
 import { shallowRef } from 'vue'
 import { browserRunner, startClock, startKeys } from '@ifloom/browser'
 import { startAudio } from '@ifloom/audio'
-import loaded from './game.ts'
+import module from './game.ts'
 
-const { game, problems } = loaded
+const { game, problems } = module.build()
 if (problems.length) console.warn(problems)
 
 // A new game with a random seed, undo, saves in localStorage and an autosave each turn.
@@ -128,9 +130,9 @@ startKeys(runner)
 import { readable } from 'svelte/store'
 import { browserRunner, startClock, startKeys } from '@ifloom/browser'
 import { startAudio } from '@ifloom/audio'
-import loaded from './game.ts'
+import module from './game.ts'
 
-const { game, problems } = loaded
+const { game, problems } = module.build()
 if (problems.length) console.warn(problems)
 
 // A new game with a random seed, undo, saves in localStorage and an autosave each turn.

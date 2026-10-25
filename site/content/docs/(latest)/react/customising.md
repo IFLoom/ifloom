@@ -208,7 +208,7 @@ Plain CSS adds to the look. When you'd rather change the Tailwind classes themse
 
 ```ts
 import { mountGame, type Classes } from '@ifloom/react'
-import game from './game.ts'
+import module from './game.ts'
 import './styles.css'
 
 const classes: Classes = {
@@ -219,7 +219,7 @@ const classes: Classes = {
   stats: () => 'flex flex-wrap gap-x-4 text-xs uppercase',
 }
 
-mountGame(game, { classes })
+mountGame(module.build(), { classes })
 ```
 
 A string is merged with [tailwind-merge](https://github.com/dcastil/tailwind-merge), the same way [`cn`](/docs/react/components#cn) works. `rounded-none` replaces the button's `rounded-md`, and every other class stays. A function `(defaults) => string` is given the built-in classes as one string and returns what to use instead. Return a new string to replace them, or build on the old one.
@@ -341,7 +341,7 @@ Here a game draws its spoken lines and letters its own way and leaves the other 
 // src/main.tsx
 import type { SceneBeat } from '@ifloom/engine'
 import { mountGame, usePart, type Components, type Override } from '@ifloom/react'
-import game from './game.ts'
+import module from './game.ts'
 import './styles.css'
 
 const TownBeat: Override<{ beat: SceneBeat }> = ({ beat, Default }) => {
@@ -360,7 +360,7 @@ const TownBeat: Override<{ beat: SceneBeat }> = ({ beat, Default }) => {
 
 const components: Components = { Beat: TownBeat }
 
-mountGame(game, { components })
+mountGame(module.build(), { components })
 ```
 
 The names you can replace are the keys of [`Components`](/docs/react/components#components): the React UI's own, such as `Game`, `Sidebar`, `Story`, `Section`, `Title`, `Clock`, `StatList`, `RoomActions`, `SceneStage`, `Beat`, `ChoiceButton`, `Notices`, `GameMenu`, `Inventory`, `Picture` and `Icon`, and every component a plugin's UI draws, such as `ShopCounter`, `QuestLog` and `DebugCard`, once you import that plugin's `/react`.
@@ -435,7 +435,7 @@ For a page that isn't a side column and a story at all, give `mountGame` your ow
 ```tsx
 // src/main.tsx
 import { SceneStage, InputFields, Notices, mountGame, useGame, useSaves } from '@ifloom/react'
-import game from './game.ts'
+import module from './game.ts'
 import './styles.css'
 
 function TownApp() {
@@ -460,7 +460,7 @@ function TownApp() {
   )
 }
 
-mountGame(game, { app: TownApp })
+mountGame(module.build(), { app: TownApp })
 ```
 
 `layout` is ignored when you pass `app`, since there's no `GameShell` to use it. An `app` is a layout too: it can use `Game`, `Sidebar` and `Story` like any other.

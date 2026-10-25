@@ -523,9 +523,9 @@ export function Layout() {
 import { mountGame } from '@ifloom/react'
 import { Achievements } from './pages/Achievements.tsx'
 import { Layout } from './layout.tsx'
-import game from './game.ts'
+import module from './game.ts'
 
-mountGame(game, {
+mountGame(module.build(), {
   layout: Layout,
   // A page with the id `achievements` takes the built-in one's place, title-screen button and all.
   pages: { pages: { achievements: { label: 'Achievements', component: Achievements } } },

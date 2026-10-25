@@ -28,10 +28,11 @@ npm run dev
 import { browserRunner, startClock, startKeys } from '@ifloom/browser'
 import type { InlineSpan, InputView, MinigameView, SceneBeat, View } from '@ifloom/engine'
 import { startAudio } from '@ifloom/audio'
-import loaded from './game.ts'
+import module from './game.ts'
 import './styles.css'
 
-const { game, problems } = loaded
+// The game module builds the game, and says what the loader found wrong with it.
+const { game, problems } = module.build()
 if (problems.length) console.warn(problems)
 
 // A new game with a random seed, undo, saves in localStorage and an autosave each turn.
@@ -44,7 +45,7 @@ startClock(runner)
 startKeys(runner)
 ```
 
-`loaded` is what [`loadGame`](/docs/reference/loader#loadgame) returned in `src/game.ts`: the game, and anything wrong with its content. `npm run check` prints the same problems, so the warning is only a reminder.
+`module.build()` is what [`loadGame`](/docs/reference/loader#loadgame) returns in `src/game.ts`'s [game module](/docs/cli#the-game-module): the game, and anything wrong with its content. `npm run check` prints the same problems, so the warning is only a reminder.
 
 The three `start…` calls each follow the runner by themselves, so you call them once and forget them:
 

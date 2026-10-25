@@ -13,7 +13,8 @@ Next.js app. This file is for coding agents working on the game.
 
 ## Where things go
 
-- `src/game.ts` only assembles the game: `loadGame([...content], { id, title, plugins, rules })`.
+- `src/game.ts` only assembles the game: its default export is `defineGame({ build })`, where
+  `build` returns `loadGame([...content], { id, title, plugins, rules })`.
   Content doesn't go here, and neither does anything a mod could change: the
   actions, locks, where the game starts (`introScene`) and its starting kv are
   content too.

@@ -86,10 +86,12 @@ The entry is the template's `src/main.ts`, unchanged. With the React UI, it's [`
 // src/main.ts: the vanilla template's, cut down
 import { browserRunner, startClock, startKeys } from '@ifloom/browser'
 import { startAudio } from '@ifloom/audio'
-import loaded from './game.ts'
+import module from './game.ts'
 import './styles.css'
 
-const runner = await browserRunner(loaded.game)
+const { game } = module.build()
+
+const runner = await browserRunner(game)
 startAudio(runner)
 startClock(runner)
 startKeys(runner)
@@ -101,11 +103,11 @@ const root = document.querySelector<HTMLElement>('#root')!
 ```ts tab="React" tab-group="framework"
 // src/main.ts: the react template's
 import { mountGame } from '@ifloom/react'
-import game from './game.ts'
+import module from './game.ts'
 import { Layout } from './layout.tsx'
 import './styles.css'
 
-mountGame(game, { layout: Layout, pages: true })
+mountGame(module.build(), { layout: Layout, pages: true })
 ```
 
 ```ts tab="Vue" tab-group="framework"
@@ -136,7 +138,7 @@ declare module '*.css'
 
 ## Check and playtest it
 
-`ifloom check` and `ifloom playtest` load `src/game.ts` with the CLI's own Vite, not with webpack, so they work unchanged. Add `@ifloom/cli` as a dev dependency and keep the game in `src/game.ts`, exported as `default` or `game`. Pictures and sound go in `public/`, where `ifloom check` looks for them. Copy that folder into the build yourself, with [copy-webpack-plugin](https://github.com/webpack-contrib/copy-webpack-plugin), say.
+`ifloom check` and `ifloom playtest` load `src/game.ts` with the CLI's own Vite, not with webpack, so they work unchanged. Add `@ifloom/cli` as a dev dependency and keep the game in `src/game.ts`, its [game module](/docs/cli#the-game-module) the default export, made with `defineGame`. The page imports the same module and calls its `build`. Pictures and sound go in `public/`, where `ifloom check` looks for them. Copy that folder into the build yourself, with [copy-webpack-plugin](https://github.com/webpack-contrib/copy-webpack-plugin), say.
 
 `import.meta.env.DEV`, which the docs use to leave the [debug plugin](/docs/plugins/debug#leave-it-out-of-release-builds) out of a release, is Vite's. Under webpack, use `process.env.NODE_ENV !== 'production'`, which webpack sets from `--mode` (TypeScript needs `@types/node` to know `process`).
 

@@ -271,9 +271,9 @@ else if (view.minigame) drawMinigame(view.minigame)
 // src/main.ts
 import { mountGame } from '@ifloom/react'
 import { QuickFeet } from './QuickFeet.tsx'
-import game from './game.ts'
+import module from './game.ts'
 
-mountGame(game, { panels: { arrows: QuickFeet } })
+mountGame(module.build(), { panels: { arrows: QuickFeet } })
 ```
 
 ```vue tab="Vue" tab-group="framework"

@@ -433,7 +433,7 @@ runner.redo()                                      // on the high street again
 
 Undo can't be used to re-roll anything. Every draw is seeded, so the same command from the same state gives the same result.
 
-To see it in a browser, put steps 1 to 5 in `src/game.ts` and export `game` from it. That's fine for a game this size. When it grows, split the content into files in `src/world/` and `src/story/` as [Organising a game](/docs/guide/organising) shows. Put the runner in `src/runner.ts`, exported as `runner`. Then draw its view. Each tab below matches one of the templates:
+To see it in a browser, put steps 1 to 5 in `src/game.ts`, and make its default export a [game module](/docs/cli#the-game-module), `defineGame({ build: () => loadGame(content, base) })`, so the CLI can check it too. Build the game from it with `module.build()`. That's fine for a game this size. When it grows, split the content into files in `src/world/` and `src/story/` as [Organising a game](/docs/guide/organising) shows. Put the runner in `src/runner.ts`, exported as `runner`. Then draw its view. Each tab below matches one of the templates:
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/main.ts

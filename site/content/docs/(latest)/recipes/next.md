@@ -41,7 +41,7 @@ Its scripts are `dev`, `build` and `start` from Next, `check` and `playtest` fro
 
 ## Add the packages
 
-The @ifloom packages are compiled JavaScript with their type declarations, so Next uses them like any other package, with no `transpilePackages` or other setting. Add `@ifloom/engine`, `@ifloom/browser` and `@ifloom/react` to the app, any plugins your game uses, and `@ifloom/cli` as a dev dependency for `check` and `playtest`:
+The @ifloom packages are compiled JavaScript with their type declarations, so Next uses them like any other package, with no `transpilePackages` or other setting. Add `@ifloom/engine`, `@ifloom/browser` and `@ifloom/react` to the app, any plugins your game uses, and `@ifloom/cli` as a dev dependency for `check` and `playtest`, and for `@ifloom/cli/game`, which `src/game.ts` imports `defineGame` from:
 
 ```sh tab="npm" tab-group="package-manager"
 npm install @ifloom/engine @ifloom/browser @ifloom/react
@@ -116,16 +116,18 @@ import { useEffect, useState } from 'react'
 import { browserRunner } from '@ifloom/browser'
 import type { Runner } from '@ifloom/engine'
 import { GameShell, useAudio } from '@ifloom/react'
-import loaded from '../src/game.ts'
+import module from '../src/game.ts'
 import { Layout } from '../src/layout.tsx'
 
 export function Game() {
   const [runner, setRunner] = useState<Runner | null>(null)
 
   useEffect(() => {
-    if (loaded.problems.length) console.warn(loaded.problems)
+    // The game module builds the game, and says what the loader found wrong with it.
+    const { game, problems } = module.build()
+    if (problems.length) console.warn(problems)
     let live = true
-    void browserRunner(loaded.game).then((made) => {
+    void browserRunner(game).then((made) => {
       if (live) setRunner(made)
     })
     return () => {
@@ -201,7 +203,7 @@ The CLI's `check` and `playtest` don't use Next. They load `src/game.ts` with th
 }
 ```
 
-Keep the game in `src/game.ts`, exported as `default` or `game`, or pass its path: `ifloom check app/game/content.ts`. Pictures and sound go in `public/`, as for any Next app, and `ifloom check` looks for them there. In a Next app, use Next's own `dev` and `build` in place of `ifloom dev` and `ifloom build`.
+Keep the game in `src/game.ts`, its [game module](/docs/cli#the-game-module) the default export, made with `defineGame`, or pass its path: `ifloom check app/game/module.ts`. Pictures and sound go in `public/`, as for any Next app, and `ifloom check` looks for them there. In a Next app, use Next's own `dev` and `build` in place of `ifloom dev` and `ifloom build`.
 
 ## Can it make the single offline file?
 

@@ -22,16 +22,19 @@ src/
     └── cafe.ts       ...and one more for each place, chapter or arc
 ```
 
-Each file in `world/` and `story/` exports one `Content` object, and `game.ts` lists them:
+Each file in `world/` and `story/` exports one `Content` object, and `game.ts` lists them. It only assembles: its default export is the [game module](/docs/cli#the-game-module), made with `defineGame`, whose `build` loads the content. The page and the CLI both build the game from it.
 
 ```ts
 // src/game.ts
 import { loadGame } from '@ifloom/engine'
+import { defineGame } from '@ifloom/cli/game'
 import { stats } from './world/stats.ts'
 import { opening } from './story/opening.ts'
 import { cafe } from './story/cafe.ts'
 
-export default loadGame([stats, opening, cafe], { id: 'my-game', title: 'My Game' })
+export default defineGame({
+  build: ({ unlocked }) => loadGame([stats, opening, cafe], { id: 'my-game', title: 'My Game' }, { packs: unlocked }),
+})
 ```
 
 ```ts
@@ -117,9 +120,9 @@ One file on its own usually can't load, since a scene in `story/cafe.ts` names s
 // tests/cafe.test.ts
 import { describe, expect, it } from 'vitest'
 import { createRunner, startingState } from '@ifloom/engine'
-import loaded from '../src/game.ts'
+import module from '../src/game.ts'
 
-const { game } = loaded
+const { game } = module.build()
 
 describe('the café', () => {
   it('sells a coffee for 3 coins', () => {
@@ -139,13 +142,17 @@ A [mod](/docs/reference/mods) is a [pack](/docs/reference/loader#content-and-pac
 ```ts
 // src/game.ts
 import { loadGame, type Pack } from '@ifloom/engine'
+import { defineGame } from '@ifloom/cli/game'
 import { stats } from './world/stats.ts'
 import { opening } from './story/opening.ts'
 import { cafe } from './story/cafe.ts'
 
+/** The game, with the player's mods over its content. The page passes them; the CLI checks it without. */
 export function myGame(mods: Pack[] = []) {
   return loadGame([stats, opening, cafe], { id: 'my-game', title: 'My Game' }, { packs: mods })
 }
+
+export default defineGame({ build: ({ unlocked }) => myGame(unlocked) })
 ```
 
 A pack replaces whatever it repeats, since changing your game is what it's for, and the problems it causes are pinned on `mod:<id>`, not on your files. Saves record the ids of the mods they were made with, so a player who removes one is told when they load such a save.

@@ -286,20 +286,24 @@ Merges each plugin's own [`content`](/docs/reference/plugins#kinds-and-entities)
 
 `base` needs only `id` and `title`. Anything else on it is left out with a problem that says where it goes: `the base has no "actions", so it was left out; it is content now, so it goes in the game's content`, or, for `custom`, `migrations` and `saveName`, one that says it is the game's code and goes in `rules`. Where the game opens is content's `introScene`: leave it out for a game that opens on its idle screen (with the [places plugin](/docs/plugins/places), the room it starts in). See [Shapes of game](/docs/guide/shapes).
 
-A game with no mods or unlocks leaves out the third argument. This is the template's `src/game.ts`:
+A game with no mods or unlocks leaves out the third argument. This is the template's `src/game.ts`, whose [game module](/docs/cli#the-game-module) builds the game with `loadGame`, passing on the locked packs `ifloom check` gives it:
 
 ```ts
 import { loadGame } from '@ifloom/engine'
+import { defineGame } from '@ifloom/cli/game'
 import { stats } from './world/stats.ts'
 import { opening } from './story/opening.ts'
 
-export default loadGame([stats, opening], { id: 'my-story', title: 'My Story' })
+export default defineGame({
+  build: ({ unlocked }) => loadGame([stats, opening], { id: 'my-story', title: 'My Story' }, { packs: unlocked }),
+})
 ```
 
 This is how the showcase builds Small Town, trimmed to the parts that matter here. The player's unlocked supporter content and mods are packs, over the town's content:
 
 ```ts
-import { describeProblem, loadGame, type Content, type Pack } from '@ifloom/engine'
+import { loadGame, type Content, type Pack } from '@ifloom/engine'
+import { defineGame } from '@ifloom/cli/game'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
@@ -313,7 +317,7 @@ import { cafe } from './story/cafe.ts'
 export const content: Content[] = [stats, actions, movingDay, cafe]
 
 export function smallTown({ unlocked = [] as Pack[], mods = [] as Pack[] } = {}) {
-  const { game, problems } = loadGame(
+  return loadGame(
     content,
     {
       id: 'small-town',
@@ -323,11 +327,13 @@ export function smallTown({ unlocked = [] as Pack[], mods = [] as Pack[] } = {})
     },
     { packs: [...unlocked, ...mods] },
   )
-  return { game, problems: problems.map(describeProblem) }
 }
+
+// The release build, for the CLI: the unlocked packs `ifloom check` reads from src/unlocks/, and no mods.
+export default defineGame({ build: ({ unlocked }) => smallTown({ unlocked }) })
 ```
 
-The real file is `examples/showcase/src/game.ts`, which lists all of the town's content files from `world/` and `story/`, with the phone's content first. It also adds the phone, quests, wardrobe and debug plugins. Its `main.tsx` logs the problems as warnings and starts the game anyway.
+The real file is `examples/showcase/src/game.ts`, which lists all of the town's content files from `world/` and `story/`, with the phone's content first. It also adds the phone, quests, wardrobe and debug plugins. Its `main.tsx` calls `smallTown` with the player's mods, logs the problems as warnings with `describeProblem`, and starts the game anyway.
 
 **Gotchas:**
 - `loadGame` never throws on bad content. It returns problems, and it's up to you whether to refuse to start.

@@ -46,11 +46,11 @@ void titleScreen(root, runner, () => {
 ```ts tab="React" tab-group="framework"
 // src/main.ts
 import { mountGame } from '@ifloom/react'
-import game from './game.ts'
+import module from './game.ts'
 import { Layout } from './layout.tsx'
 import './styles.css'
 
-mountGame(game, { layout: Layout, pages: true })
+mountGame(module.build(), { layout: Layout, pages: true })
 ```
 
 ```ts tab="React" tab-group="framework"

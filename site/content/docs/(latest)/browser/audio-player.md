@@ -41,9 +41,11 @@ What it does with each part of the view:
 ```ts
 import { browserRunner } from '@ifloom/browser'
 import { startAudio } from '@ifloom/audio'
-import loaded from './game.ts'
+import module from './game.ts'
 
-const runner = await browserRunner(loaded.game)
+const { game } = module.build()
+
+const runner = await browserRunner(game)
 startAudio(runner)
 ```
 

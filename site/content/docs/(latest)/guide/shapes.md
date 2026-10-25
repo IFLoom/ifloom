@@ -114,10 +114,13 @@ So `state.turn` is the chapter the reader has reached, counting from 0. Anything
 
 ### Playing it
 
-`src/game.ts`'s default export is the game, with the loader's problems, and `start` gives [`ifloom playtest`](/docs/cli#ifloom-playtest) a reader who has already typed a name:
+`src/game.ts`'s default export is its [game module](/docs/cli#the-game-module). Its `build` is `theLetter`, and its `start` gives [`ifloom playtest`](/docs/cli#ifloom-playtest) a reader who has already typed a name:
 
 ```ts
-export const start = (game: Game) => startingState(game, { kv: { playerName: 'Sam' } })
+export default defineGame({
+  build: theLetter,
+  start: (game) => startingState(game, { kv: { playerName: 'Sam' } }),
+})
 ```
 
 The example's `playtest` script is `ifloom playtest --turns 3 --out playtest/read.txt`. With no plugin to say when or where, each screen in the transcript is headed by its turn alone.

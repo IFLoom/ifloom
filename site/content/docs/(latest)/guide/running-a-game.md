@@ -14,18 +14,20 @@ In a browser, use [`browserRunner`](/docs/browser#browserrunner). It starts a ne
 
 ```ts
 import { browserRunner } from '@ifloom/browser'
-import loaded from './game.ts'
+import module from './game.ts'
 
-const runner = await browserRunner(loaded.game)
+const { game } = module.build()
+
+const runner = await browserRunner(game)
 ```
 
 Anywhere else, or when you want to choose every option yourself, use [`createRunner`](/docs/reference/runner#createrunner). It takes the state to start from, and turns on nothing you don't ask for:
 
 ```ts
 import { createRunner, startingState } from '@ifloom/engine'
-import loaded from './game.ts'
+import module from './game.ts'
 
-const { game, problems } = loaded
+const { game, problems } = module.build()
 if (problems.length) console.warn(problems)
 
 const runner = createRunner(game, startingState(game), { history: true })

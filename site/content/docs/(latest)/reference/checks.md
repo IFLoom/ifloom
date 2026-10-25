@@ -11,7 +11,9 @@ import { checkGame, describeProblem, type Checked, type FileRef, type Probe, typ
 ```ts
 import { describe, expect, it } from 'vitest'
 import { checkGame, startingState } from '@ifloom/engine'
-import { game } from '../src/game.ts'
+import module from '../src/game.ts'
+
+const { game } = module.build()
 
 describe('the game', () => {
   it('has nothing wrong with it', () => {
@@ -49,6 +51,8 @@ A probe is a state to draw every scene in, with a name for the problems it finds
 const later = { ...startingState(game), turn: 5 }
 checkGame(game, { probes: [{ name: 'day five', state: later }] })
 ```
+
+[`probe`](/docs/cli#probe), from `@ifloom/cli/game`, makes one by playing commands and effects from the start, and a [game module](/docs/cli#the-game-module)'s `probes` can go here as they are.
 
 For each probe the checker draws every scene and reports `render threw: …` against `scene <id> (<name>)` when drawing one throws, such as when one of the game's own values throws for that state. A scene's content is checked already, without probes.
 

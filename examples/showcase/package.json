@@ -16,7 +16,6 @@
   "dependencies": {
     "@ifloom/browser": "^0.0.0",
     "@ifloom/engine": "^0.0.0",
-    "@ifloom/phone": "^0.0.0",
     "@ifloom/plugin-achievements": "^0.0.0",
     "@ifloom/plugin-calendar": "^0.0.0",
     "@ifloom/plugin-cast": "^0.0.0",

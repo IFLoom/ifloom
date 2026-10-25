@@ -3,8 +3,9 @@ import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { createRunner, loadGame, startingState } from '@ifloom/engine'
-import { phone } from '@ifloom/phone'
+import { messages } from '@ifloom/plugin-messages'
 import { Game as GamePage, GameShell, NoticeStrip, Scene, Story } from '@ifloom/react'
+import { devices } from '../src/index.ts'
 import { devicesUi } from '../src/react/index.tsx'
 import { messagesUi } from '@ifloom/plugin-messages/react'
 
@@ -31,10 +32,27 @@ const click = (name: string) => act(() => void fireEvent.click(screen.getByRole(
 
 describe('the notice strip, with a phone', () => {
   it('counts each app with a badge, and opens the device on it', () => {
-    const kit = phone({ feeds: [] })
     const { game: g, problems } = loadGame(
       [
-        kit.content,
+        {
+          name: 'phone',
+          data: {
+            devices: {
+              devices: [{ id: 'phone', name: 'Phone', frame: 'phone', sidebar: true }],
+              apps: [
+                {
+                  id: 'texts',
+                  name: 'Messages',
+                  icon: 'messages',
+                  on: 'phone',
+                  badge: { value: 'messages/unread', with: { channel: 'texts' } },
+                  sections: [{ plugin: 'messages', with: { channel: 'texts' } }],
+                },
+              ],
+            },
+            messages: { channels: [{ id: 'texts', name: 'Messages' }] },
+          },
+        },
         { name: 'base', introScene: 'intro' },
         {
           name: 'home',
@@ -45,7 +63,7 @@ describe('the notice strip, with a phone', () => {
           },
         },
       ],
-      { id: 'phone-test', title: 'Home', plugins: [...kit.plugins] },
+      { id: 'phone-test', title: 'Home', plugins: [devices(), messages()] },
     )
     expect(problems).toEqual([])
     const runner = createRunner(g, startingState(g))

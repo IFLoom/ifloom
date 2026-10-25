@@ -2,8 +2,10 @@
 import type { ReactNode } from 'react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { createRunner, loadGame, startingState, type Game } from '@ifloom/engine'
-import { phone } from '@ifloom/phone'
+import { createRunner, loadGame, startingState, type Content, type Game } from '@ifloom/engine'
+import { devices } from '@ifloom/plugin-devices'
+import { feed } from '@ifloom/plugin-feed'
+import { messages } from '@ifloom/plugin-messages'
 import { places } from '@ifloom/plugin-places'
 import { GameShell, Game as GamePage, Story } from '@ifloom/react'
 import { LocationCard } from '@ifloom/plugin-places/react'
@@ -29,12 +31,26 @@ function storyOf(children: ReactNode) {
 afterEach(cleanup)
 
 describe('media in places, messages and posts', () => {
-  const kit = phone({ feeds: [{ id: 'town', name: 'Town' }] })
+  /** A phone on the sidebar with an app for the texts and one for the town's feed. */
+  const phone: Content = {
+    name: 'phone',
+    data: {
+      devices: {
+        devices: [{ id: 'phone', name: 'Phone', frame: 'phone', sidebar: true }],
+        apps: [
+          { id: 'texts', name: 'Messages', icon: 'messages', on: 'phone', sections: [{ plugin: 'messages', with: { channel: 'texts' } }] },
+          { id: 'town', name: 'Town', icon: 'feed', on: 'phone', sections: [{ plugin: 'feed', with: { feed: 'town' } }] },
+        ],
+      },
+      messages: { channels: [{ id: 'texts', name: 'Messages' }] },
+      feed: { feeds: [{ id: 'town', name: 'Town' }] },
+    },
+  }
 
   function town(): Game {
     return loadGame(
       [
-        kit.content,
+        phone,
         {
           name: 'town',
           prose: {
@@ -67,7 +83,7 @@ describe('media in places, messages and posts', () => {
           },
         },
       ],
-      { id: 'town', title: 'Town', plugins: [places({ start: 'flat' }), ...kit.plugins] },
+      { id: 'town', title: 'Town', plugins: [places({ start: 'flat' }), devices(), messages(), feed()] },
     ).game
   }
 

@@ -98,7 +98,6 @@ A few guarantees hold for every game:
 | `@ifloom/plugin-devices` | Phones, laptops and other in-game devices with their own apps. |
 | `@ifloom/plugin-messages` | Message threads whose replies are choices. |
 | `@ifloom/plugin-feed` | Social feeds, the player's posts and the reactions to them. |
-| `@ifloom/phone` | A ready-made smartphone combining devices, messages and feeds. |
 | `@ifloom/plugin-cheats` | Cheats for the player, free or kept for supporters, with a log of each use. |
 | `@ifloom/plugin-unlocks` | Codes the player enters to unlock cheats and encrypted content. |
 | `@ifloom/plugin-debug` | Commands for testing: set stats, jump to scenes, move time. |

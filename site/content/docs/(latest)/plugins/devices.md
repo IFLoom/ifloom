@@ -4,7 +4,7 @@ description: "Devices such as a phone or a laptop, with apps declared as data, b
 ---
 `@ifloom/plugin-devices` gives the player devices, such as a phone, a laptop or a radio, with apps on them that the game declares as data. Each app can show a badge, and opening one doesn't take the player out of the room.
 
-You'd want it when the player carries or uses something with screens of its own: a phone for texts, a laptop with a bank app, a radio with stations. For a smartphone with messages, a feed, contacts and a gallery already wired up, use the [phone bundle](/docs/plugins/phone) instead, which is built on this plugin.
+You'd want it when the player carries or uses something with screens of its own: a phone for texts, a laptop with a bank app, a radio with stations. For a smartphone with messages, a feed, contacts and a gallery, see [A phone](/docs/recipes/phone), which puts this plugin together with messages and feed.
 
 To add it, list `@ifloom/plugin-devices` in your game's `package.json` and add `devices()` to the game's `plugins`. The devices and their apps are content, in your content's `data.devices`. [Install](#install) has the details.
 
@@ -103,7 +103,7 @@ The game's devices and apps, merged from its content and packs, in order.
 
 ## Writing apps
 
-Apps are content, in your content's [`data`](/docs/reference/loader#content) under `devices.apps`, merged by id as scenes are, so a mod can add an app or replace one. Apps in content that comes earlier in the list, as the [phone](/docs/plugins/phone)'s content gives its stock apps, come first, and later content or a pack with an app of the same id replaces it.
+Apps are content, in your content's [`data`](/docs/reference/loader#content) under `devices.apps`, merged by id as scenes are, so a mod can add an app or replace one. Apps in content that comes earlier in the list, such as a [phone](/docs/recipes/phone)'s own content, come first, and later content or a pack with an app of the same id replaces it.
 
 ### AppDef
 
@@ -685,4 +685,4 @@ phone · apps mail · no plugin value named "messages/unread"; the game has no p
 
 ## See it in an example
 
-Small Town: the phone in [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) has two apps of the game's own, a camera with buttons and a notes app listing the notes you hold, and `devices.open('camera')` opens it.
+Small Town: the phone in [`examples/showcase/src/world/phone.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/phone.ts) is a device with an app for its texts and its feed, contacts, a gallery, a camera with buttons and a notes app listing the notes you hold. `devices.open('camera')` in `src/game.ts` opens the camera.

@@ -395,6 +395,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Removed
 
+- **Breaking:** `@ifloom/phone` and its `phone()` are gone. A phone is the devices, messages and feed plugins listed in your game's `plugins`, with a little content of your own: the device, an app for each channel and feed, contacts, a gallery and the `photo` kind. [A phone](/docs/recipes/phone) shows the whole of it, ready to copy, and the showcase's is in `examples/showcase/src/world/phone.ts`. Drop `@ifloom/phone` from your `package.json`, put the three plugins where `...kit.plugins` was, and the recipe's content where `kit.content` was.
+
 - **Breaking:** `view.inScene` is gone. A scene is open while `view.scene.id !== null`.
 
 - **Breaking:** the plugins' view builders are no longer exported: `achievementsView`, `questsView`, `statusesView`, `cheatsView`, `jobsView`, `shopView` and `inventoryView`. Read a plugin's view from the view, typed by its factory's `viewIn`: `quests().viewIn(runner.view())`. For a state the runner isn't playing, pass the profile to [`view`](/docs/reference/view#view): `view(state, game, { profile })`.

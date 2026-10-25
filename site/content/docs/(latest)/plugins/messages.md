@@ -12,7 +12,7 @@ A message is like a scene that arrives instead of one the player walks into. It 
 import { messages, messagesOf, channelsOf, type Channel, type MessageDef, type ReplyDef, type MessagesState, type Arrival, type MessagesView, type ChannelView, type ThreadView, type MessageView } from '@ifloom/plugin-messages'
 ```
 
-The plugin knows nothing about phones. Your game decides what the channels are and where they're shown, such as a pile of post in the hall. With the [devices plugin](/docs/plugins/devices) a channel can be an app instead, and the [phone bundle](/docs/plugins/phone) sets that up for you.
+The plugin knows nothing about phones. Your game decides what the channels are and where they're shown, such as a pile of post in the hall. With the [devices plugin](/docs/plugins/devices) a channel can be an app instead, as in [A phone](/docs/recipes/phone).
 
 ## Install
 

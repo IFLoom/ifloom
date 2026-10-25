@@ -41,7 +41,7 @@ The default layout, [`DefaultLayout`](#layouts), puts these on the page. A secti
 - **Panels**, in a dialog, when content opens one with the [`panel` effect](/docs/reference/panels), such as a shop's counter from a place or the job board from a newspaper.
 - **A title screen**, if you turn on [`pages`](#pages): the title, New game, Continue, Load, Settings and Credits, before the game itself.
 - **Saves, the backlog and mods**, each in a dialog opened from the player's menu. The saves dialog lists every slot to load, overwrite, export or delete. The backlog shows every scene so far with the choice made in it. The mods dialog lists the player's [mods](/docs/reference/mods), each on, off or removed, with a button to restart the game with the change.
-- **Devices**, in a dialog, when the game has the [devices plugin](/docs/plugins/devices) or the [phone](/docs/plugins/phone). This covers the home screen and each app's sections, including [messages](/docs/plugins/messages) and [feeds](/docs/plugins/feed).
+- **Devices**, in a dialog, when the game has the [devices plugin](/docs/plugins/devices), such as a [phone](/docs/recipes/phone). This covers the home screen and each app's sections, including [messages](/docs/plugins/messages) and [feeds](/docs/plugins/feed).
 - **A debug card**, at the foot of the story, when the game has the [debug plugin](/docs/plugins/debug).
 - **Achievements**: a page with `pages` on, otherwise a dialog. Earned ones are marked, secret ones show as `???`, and counts have a progress bar.
 - **A code box**, on the settings page (or in the menu without pages), when the game has the [unlocks plugin](/docs/plugins/unlocks). It lists the unlocks, and a code that opens new content offers to restart.

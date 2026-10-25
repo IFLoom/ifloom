@@ -12,7 +12,7 @@ Other people's posts are content, and each appears the first time its [condition
 import { feed, feedsOf, postsOf, type FeedDef, type PostDef, type OwnPost, type Comment, type FeedState, type FeedsView, type FeedView, type PostView } from '@ifloom/plugin-feed'
 ```
 
-The plugin knows nothing about devices. Your game decides where a feed is shown, such as a board on the high street. With the [devices plugin](/docs/plugins/devices) a feed can be an app instead, and the [phone bundle](/docs/plugins/phone) sets that up for you.
+The plugin knows nothing about devices. Your game decides where a feed is shown, such as a board on the high street. With the [devices plugin](/docs/plugins/devices) a feed can be an app instead, as in [A phone](/docs/recipes/phone).
 
 ## Install
 

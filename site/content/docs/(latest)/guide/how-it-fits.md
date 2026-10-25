@@ -29,7 +29,7 @@ flowchart TB
 | Layer | Packages | Needed? |
 |---|---|---|
 | [The engine](#the-engine) | `@ifloom/engine` | Always. |
-| [Plugins](#plugins) | `@ifloom/plugin-*`, `@ifloom/phone` | Only the ones your game uses. A novel uses none. |
+| [Plugins](#plugins) | `@ifloom/plugin-*` | Only the ones your game uses. A novel uses none. |
 | [The UI](#the-ui) | `@ifloom/react`, or your own code with `@ifloom/browser` and `@ifloom/audio` | To play in a browser. Tests and scripts don't need one. |
 | [The toolchain](#the-toolchain) | `@ifloom/cli`, or the bundler you already use | To build and check the game. |
 

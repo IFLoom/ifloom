@@ -31,7 +31,7 @@ describe('the React UI', () => {
         .map((match) => ({ file, name: match[2].startsWith('@') ? match[2].split('/').slice(0, 2).join('/') : match[2].split('/')[0] })),
     )
     expect(used.filter((entry) => !declared.has(entry.name)).map((entry) => `${entry.file} → ${entry.name}`)).toEqual([])
-    const plugins = /^@ifloom\/(plugin-|phone$)/
+    const plugins = /^@ifloom\/plugin-/
     expect(used.filter((entry) => plugins.test(entry.name)).map((entry) => `${entry.file} → ${entry.name}`)).toEqual([])
     const named = Object.keys({ ...pkg.dependencies, ...pkg.peerDependencies, ...pkg.devDependencies }).filter((name) => plugins.test(name))
     expect(named).toEqual([])

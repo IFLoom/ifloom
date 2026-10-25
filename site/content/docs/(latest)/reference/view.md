@@ -130,7 +130,7 @@ type ScreenScene = {
 
 ## View
 
-`View` has a fixed set of fields, plus [`plugins`](#plugins), where each plugin adds its own slice. What the player wears, for example, is the [wardrobe plugin](/docs/plugins/wardrobe)'s slice. The engine has no phone of its own, but it has the parts one is built from: the [things you hold](#held), such as notes and photos, [notices](#notices) and [inputs](#inputs). [Messages](/docs/plugins/messages), [feeds](/docs/plugins/feed) and [devices](/docs/plugins/devices) are plugins, each with its own slice, and the [phone bundle](/docs/plugins/phone) wires them together.
+`View` has a fixed set of fields, plus [`plugins`](#plugins), where each plugin adds its own slice. What the player wears, for example, is the [wardrobe plugin](/docs/plugins/wardrobe)'s slice. The engine has no phone of its own, but it has the parts one is built from: the [things you hold](#held), such as notes and photos, [notices](#notices) and [inputs](#inputs). [Messages](/docs/plugins/messages), [feeds](/docs/plugins/feed) and [devices](/docs/plugins/devices) are plugins, each with its own slice, and [A phone](/docs/recipes/phone) puts them together.
 
 A list of things the game declares is an array in the order they're declared, each with its `id`: `stats`, `entities`, `inputs`, `settings`, `timers`, `held`. Find one by id with `find`, as in `view.inputs.find((input) => input.id === 'petName')`. Only `statsById` sits beside its list as a record, because a HUD reads one stat by id far more often than it draws them all. A record keyed by name is otherwise only for counts and lookups that aren't a list, such as `notices.byTag` and the audio's `channels`. Whether a scene is open is `scene.id !== null` (the room's `scene.id` is `null`).
 

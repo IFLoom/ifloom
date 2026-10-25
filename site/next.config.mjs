@@ -22,6 +22,8 @@ const MOVED = {
   'reference/collections': 'reference/entities',
   // Transitions and reveals left the engine for the React UI's presentation hints.
   'reference/transitions': 'react/hints',
+  // The phone bundle became a recipe: a game puts the devices, messages and feed plugins together itself.
+  'plugins/phone': 'recipes/phone',
 }
 
 /** @type {import('next').NextConfig} */

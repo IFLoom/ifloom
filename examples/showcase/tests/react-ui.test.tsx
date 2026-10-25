@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import { createRunner, loadGame, startingState, type Game } from '@ifloom/engine'
+import { createRunner, loadGame, startingState, type Content, type Game } from '@ifloom/engine'
 import { quests } from '@ifloom/plugin-quests'
 import { debug } from '@ifloom/plugin-debug'
-import { phone } from '@ifloom/phone'
+import { devices } from '@ifloom/plugin-devices'
+import { messages } from '@ifloom/plugin-messages'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { GameShell } from '@ifloom/react'
@@ -21,12 +22,31 @@ const UIS = [calendarUi, debugUi, devicesUi, feedUi, messagesUi, placesUi, quest
 
 afterEach(cleanup)
 
-const kit = phone({ feeds: [] })
+/** A phone on the sidebar with one app, Messages, counting the unread texts. */
+const phone: Content = {
+  name: 'phone',
+  data: {
+    devices: {
+      devices: [{ id: 'phone', name: 'Phone', frame: 'phone', sidebar: true }],
+      apps: [
+        {
+          id: 'texts',
+          name: 'Messages',
+          icon: 'messages',
+          on: 'phone',
+          badge: { value: 'messages/unread', with: { channel: 'texts' } },
+          sections: [{ plugin: 'messages', with: { channel: 'texts' } }],
+        },
+      ],
+    },
+    messages: { channels: [{ id: 'texts', name: 'Messages' }] },
+  },
+}
 
 function game(strings: Record<string, string> = {}): Game {
   const loaded = loadGame(
     [
-      kit.content,
+      phone,
       {
         name: 'base',
         introScene: 'intro',
@@ -71,7 +91,7 @@ function game(strings: Record<string, string> = {}): Game {
     {
       id: 'ui-test',
       title: 'Small Town',
-      plugins: [calendar(), places({ start: 'house' }), ...kit.plugins, quests(), debug()],
+      plugins: [calendar(), places({ start: 'house' }), devices(), messages(), quests(), debug()],
     },
   )
   return loaded.game

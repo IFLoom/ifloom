@@ -65,7 +65,7 @@ tasks['typecheck:all'] = { command: 'echo "Every project type-checks."', depends
 // because Next's workers and Turbopack read far more than the build depends on. That's site/ but for what it writes,
 // the source of each @ifloom package the site depends on (and those packages' own @ifloom peers,
 // as the React UI's on audio and browser), the changelog the docs include, and the root files that pick dependencies.
-// So an edit to the CLI, the phone bundle, a test, an example or a template skips it.
+// So an edit to the CLI, a test, an example or a template skips it.
 // Vercel doesn't use these tasks: it runs `next build` in site/ after a clean install.
 const siteManifest = read('site')
 const siteUses = new Set<string>()

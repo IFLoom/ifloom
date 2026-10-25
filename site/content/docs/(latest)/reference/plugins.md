@@ -1208,7 +1208,7 @@ A plugin can bring the [kinds](/docs/reference/entities#kinddef) of thing it kee
 - **`content`** is a [`Content`](/docs/reference/loader#content) the plugin brings, merged by the [loader](/docs/reference/loader#loadgame) first, plugin by plugin in the order `game.plugins` lists them, under the game's content and packs. It can hold anything content can: kinds, entities, scenes, prose, actions or `data`. A plugin's kind isn't [listed](/docs/reference/entities#listing) in the view unless it sets `listed`, so its entities don't show before the plugin says. A kind the game's content declares with the same id replaces the plugin's, and keeps the plugin's fields it leaves out. That's how a game renames one. A pack can replace anything in it by id. A plugin with options builds it in its factory, from those options.
 - **An entity the game writes** is the way to give a plugin something per entity, such as a place or a vendor: the plugin declares a [trait](#traits), content writes the entity with it (often through a helper of the plugin's, as the places plugin's [`places.location()`](/docs/plugins/places#location) is), and the plugin finds them with [`withTrait`](/docs/reference/entities#withtrait). A mod then adds one as it adds any entity.
 
-The [phone](/docs/plugins/phone) bundle, which is no plugin, returns its content the same way, as `{ plugins, content }`, for the game to load beside its own.
+Content that puts several plugins together, such as a phone with an app for each messages channel and feed, is the game's own. The game lists the plugins in `plugins` and writes the content beside the rest, as [A phone](/docs/recipes/phone) shows.
 
 The regulars above, each also an entity with a stat of their own:
 

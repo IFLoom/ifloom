@@ -2,42 +2,73 @@
  * The acceptance test from design/devices.md: a smartphone on the sidebar with
  * notifications, messages, a creator app, a camera, a gallery, social media
  * and contacts — every app declared as data, and the only code one custom
- * effect that rolls how a post did.
+ * effect that rolls how a post did. The phone is the devices, messages and
+ * feed plugins put together with plain content, as the docs' phone recipe
+ * writes it.
  */
 import { describe, expect, it } from 'vitest'
 import { apply, loadGame, startingState, view, type Game, type GameState, type Content, type CommandRef, type GameRules } from '@ifloom/engine'
-import { devices, type DevicesView } from '@ifloom/plugin-devices'
-import { feed, type FeedsView } from '@ifloom/plugin-feed'
-import { messages, type MessagesView } from '@ifloom/plugin-messages'
+import { feed, type FeedDef, type FeedsView } from '@ifloom/plugin-feed'
+import { messages, type Channel, type MessagesView } from '@ifloom/plugin-messages'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
-import { phone } from '../src/index.ts'
+import { devices, type AppDef, type DevicesView } from '../src/index.ts'
 
 const clock = calendar()
 
-const kit = phone({
-  sidebar: true,
-  wallpaper: 'art/wall.jpg',
-  feeds: [
-    { id: 'social', name: 'Social' },
-    { id: 'fans', name: 'Fans' },
-  ],
-  apps: [
-    {
-      id: 'camera',
-      name: 'Camera',
-      icon: 'camera',
-      sections: [{ actions: [{ id: 'photo', label: 'Take a photo', command: { type: 'action', id: 'photo' } }] }],
+const channels: Channel[] = [{ id: 'texts', name: 'Messages' }]
+const feeds: FeedDef[] = [
+  { id: 'social', name: 'Social' },
+  { id: 'fans', name: 'Fans' },
+]
+
+/** The phone: an app per channel and feed with its badge, contacts, a gallery of photos, and the game's camera and creator app. */
+const phone: Content = {
+  name: 'phone',
+  kinds: [{ id: 'photo', label: 'Photo', plural: 'Photos', listed: false }],
+  data: {
+    devices: {
+      devices: [{ id: 'phone', name: 'Phone', frame: 'phone', sidebar: true, wallpaper: 'art/wall.jpg' }],
+      apps: [
+        ...channels.map((channel): AppDef => ({
+          id: channel.id,
+          name: channel.name,
+          icon: 'messages',
+          on: 'phone',
+          badge: { value: 'messages/unread', with: { channel: channel.id } },
+          sections: [{ plugin: 'messages', with: { channel: channel.id } }],
+        })),
+        ...feeds.map((entry): AppDef => ({
+          id: entry.id,
+          name: entry.name,
+          icon: 'feed',
+          on: 'phone',
+          badge: { value: 'feed/unread', with: { feed: entry.id } },
+          sections: [{ plugin: 'feed', with: { feed: entry.id } }],
+        })),
+        { id: 'contacts', name: 'Contacts', icon: 'contacts', on: 'phone', sections: [{ contacts: true }] },
+        { id: 'gallery', name: 'Gallery', icon: 'gallery', on: 'phone', sections: [{ things: { of: 'photo' } }] },
+        {
+          id: 'camera',
+          name: 'Camera',
+          icon: 'camera',
+          on: 'phone',
+          sections: [{ actions: [{ id: 'photo', label: 'Take a photo', command: { type: 'action', id: 'photo' } }] }],
+        },
+        {
+          id: 'studio',
+          name: 'Fans · post',
+          icon: 'star',
+          on: 'phone',
+          sections: [{ blocks: [{ prose: 'studio.stats' }] }, { actions: [{ id: 'post', label: 'Post a photo', command: { type: 'action', id: 'post' } }] }],
+        },
+      ] satisfies AppDef[],
     },
-    {
-      id: 'studio',
-      name: 'Fans · post',
-      icon: 'star',
-      sections: [{ blocks: [{ prose: 'studio.stats' }] }, { actions: [{ id: 'post', label: 'Post a photo', command: { type: 'action', id: 'post' } }] }],
-    },
-  ],
-})
+    messages: { channels },
+    feed: { feeds },
+  },
+}
 
 const town: Content = {
   name: 'town',
@@ -121,13 +152,13 @@ const rules: GameRules = {
 
 function game(): Game {
   const loaded = loadGame(
-    [kit.content, { name: 'base', resets: { postedToday: false }, locks: [{ when: places.at('work'), deny: ['devices/*'], reason: 'Not at work.' }] }, town],
+    [phone, { name: 'base', resets: { postedToday: false }, locks: [{ when: places.at('work'), deny: ['devices/*'], reason: 'Not at work.' }] }, town],
     {
       id: 'phone-town',
       title: 'Phone town',
       rules,
 
-      plugins: [clock, places({ start: 'house' }), cast(), ...kit.plugins],
+      plugins: [clock, places({ start: 'house' }), cast(), devices(), messages(), feed()],
     },
   )
   expect(loaded.problems).toEqual([])

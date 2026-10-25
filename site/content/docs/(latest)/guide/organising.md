@@ -159,6 +159,6 @@ A pack replaces whatever it repeats, since changing your game is what it's for, 
 
 ## See it in the examples
 
-- **Small Town** (`examples/showcase`): `world/` has stats, things, cast, settings, actions, the phone's apps, strings, achievements and cheats, and `story/` has moving day, Ava, the flat, the high street, the café, the park, the office and Sam. The tour in [The showcase](/docs/guide/showcase#the-files) lists every file.
+- **Small Town** (`examples/showcase`): `world/` has stats, things, cast, settings, actions, the phone, strings, achievements and cheats, and `story/` has moving day, Ava, the flat, the high street, the café, the park, the office and Sam. The tour in [The showcase](/docs/guide/showcase#the-files) lists every file.
 - **The Letter** (`examples/novel`): `world/stats.ts` and a file per chapter in `story/`.
 - **The Corner Café** (`examples/cafe`): nearly everything in `world/`, by kind, with its sums in `rules.ts`.

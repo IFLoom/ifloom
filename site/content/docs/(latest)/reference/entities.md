@@ -426,7 +426,7 @@ They're held, so they're in [`view.held`](/docs/reference/view#held), and you as
 { count: { of: 'photo', at: 'player' }, gte: 3 }  // three photos taken
 ```
 
-A UI lists them by kind. The [devices plugin](/docs/plugins/devices#section)'s `things` section lists the things of a kind you hold, newest first, so the [phone](/docs/plugins/phone)'s gallery is the `photo` things you hold and a notes app is `{ things: { of: 'note' } }`. To leave them out of the inventory card, list the kinds the inventory shows in its [`data.inventory.kinds`](/docs/plugins/inventory).
+A UI lists them by kind. The [devices plugin](/docs/plugins/devices#section)'s `things` section lists the things of a kind you hold, newest first, so a [phone](/docs/recipes/phone)'s gallery is the `photo` things you hold and a notes app is `{ things: { of: 'note' } }`. To leave them out of the inventory card, list the kinds the inventory shows in its [`data.inventory.kinds`](/docs/plugins/inventory).
 
 ### Protagonists: you and player
 

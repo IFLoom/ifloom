@@ -21,15 +21,16 @@ import { shop } from '@ifloom/plugin-shop'
 import { wardrobe } from '@ifloom/plugin-wardrobe'
 import { inventory } from '@ifloom/plugin-inventory'
 import { unlocks } from '@ifloom/plugin-unlocks'
-import { phone } from '@ifloom/phone'
 import { devices } from '@ifloom/plugin-devices'
+import { messages } from '@ifloom/plugin-messages'
+import { feed } from '@ifloom/plugin-feed'
 import { rules } from './rules.ts'
 import { stats } from './world/stats.ts'
 import { things } from './world/things.ts'
 import { people } from './world/cast.ts'
 import { settings } from './world/settings.ts'
 import { actions } from './world/actions.ts'
-import { camera, notes } from './world/phone.ts'
+import { phone } from './world/phone.ts'
 import { achievements as achievementsContent } from './world/achievements.ts'
 import { cheats as cheatsContent } from './world/cheats.ts'
 import { strings } from './world/strings.ts'
@@ -48,6 +49,8 @@ import { sam } from './story/sam.ts'
  * board and the places list show things in it.
  */
 export const content: Content[] = [
+  // The phone first: its `photo` kind, for the camera's photos, and the phone with its apps, the texts and the feed.
+  phone,
   strings,
   stats,
   things,
@@ -69,9 +72,6 @@ export const content: Content[] = [
 /** The town's calendar: a turn is a day, and a new game starts on the night you move in. */
 export const clock = calendar({ start: { day: 0, period: 'night' } })
 
-/** The phone: texts and a social feed, plus the game's own camera, with buttons for each photo. */
-export const kit = phone({ sidebar: true, apps: [camera, notes] })
-
 /**
  * Build the game. `withDebug` adds the debugger; leave it off in a release
  * build. `unlocked` are the supporter packs the player's codes have opened
@@ -80,9 +80,7 @@ export const kit = phone({ sidebar: true, apps: [camera, notes] })
  */
 export function smallTown({ withDebug = false, unlocked = [] as Pack[], mods = [] as Pack[] } = {}): { game: Game; problems: Problem[] } {
   const { game, problems } = loadGame(
-    // The phone's content before the town's: its `photo` kind, for the camera's photos, and the phone, its apps,
-    // the texts and the feed, so the town's content or a mod can add an app.
-    [kit.content, ...content],
+    content,
     {
       id: 'small-town',
       title: 'Small Town',
@@ -92,7 +90,10 @@ export function smallTown({ withDebug = false, unlocked = [] as Pack[], mods = [
         // After the calendar, so the header reads "Day 1 · Monday morning · Your flat".
         places({ start: 'flat' }),
         cast(),
-        ...kit.plugins,
+        // The phone is these three, put together in world/phone.ts: devices for its apps, and the texts and the feed they show.
+        devices(),
+        messages(),
+        feed(),
         quests(),
         statuses(),
         achievements(),

@@ -81,7 +81,7 @@ work/
    }
    ```
 
-   Leave the rest as it is. `@ifloom/audio` and `@ifloom/browser` are peer dependencies of `@ifloom/react`. A package manager would install them from the registry, so list their files too. A package's file is its name with the `@` dropped and the `/` turned into a `-`, then its version, so `@ifloom/plugin-jobs` is `packs/ifloom-plugin-jobs-0.0.0.tgz`. Add one for each plugin your game uses. The [phone](/docs/plugins/phone) needs the devices, messages and feed plugins beside it.
+   Leave the rest as it is. `@ifloom/audio` and `@ifloom/browser` are peer dependencies of `@ifloom/react`. A package manager would install them from the registry, so list their files too. A package's file is its name with the `@` dropped and the `/` turned into a `-`, then its version, so `@ifloom/plugin-jobs` is `packs/ifloom-plugin-jobs-0.0.0.tgz`. Add one for each plugin your game uses.
 
 4. Install it and run it:
 

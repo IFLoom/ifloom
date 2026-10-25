@@ -1,6 +1,6 @@
 ---
 title: "First-party plugins"
-description: "The first-party plugins and the phone bundle, what each adds, how they work together, and how to add one to a game."
+description: "The first-party plugins, what each adds, how they work together, and how to add one to a game."
 ---
 The engine's core knows about turns, scenes, stats, entities, the kv store and the rest of the [core concepts](/docs/guide/concepts), but not about clocks, maps or people. Those come from plugins. A [plugin](/docs/reference/plugins) adds a whole system to a game, with its own state, conditions, effects, commands, hooks and view. The first-party plugins below live in the IFLoom repository beside the engine, and you add the ones your game needs.
 
@@ -26,11 +26,7 @@ A linear novel might use none of them. A life sim like the [showcase](/docs/guid
 | [Unlocks](/docs/plugins/unlocks) | `@ifloom/plugin-unlocks` | Codes the player enters, such as a supporter's, checked against a slow hash so no code ships in the game. An unlock opens cheats and choices through `unlocks/has`, and can carry packs of its own that the build encrypts under the code. It's remembered in the profile. |
 | [Debug](/docs/plugins/debug) | `@ifloom/plugin-debug` | Commands for testing that ignore locks. You can set a stat (a character's too) or a kv key, set how many of a thing someone holds (`debug/held`), jump to a scene, set the turn or the calendar's clock, and go anywhere on the places map. Use it in development builds only. |
 
-There's also one bundle:
-
-| Bundle | Package | What it adds |
-|---|---|---|
-| [Phone](/docs/plugins/phone) | `@ifloom/phone` | A smartphone in one call. It wires devices, messages and feed together, with apps for each channel and feed, contacts and a gallery. |
+For a smartphone, put devices, messages and feed together in your content, as [A phone](/docs/recipes/phone) shows: an app for each channel and feed, contacts and a gallery.
 
 Plugins other people have written are listed on [Community plugins](/docs/plugins/community), with how to get yours listed.
 
@@ -49,9 +45,7 @@ Plugins other people have written are listed on [Community plugins](/docs/plugin
   - Cheats cooperate with unlocks by name. A supporter-only cheat names `unlocks/has` in its `blocked`, and without that plugin the condition is false, so the cheat stays refused.
   - Debug cooperates with the calendar and places. `debug/time` sets the calendar's clock and `debug/go` moves the player on the places map.
   - Messages, the feed and devices cooperate with the cast. Messages and posts show the [cast](/docs/plugins/cast)'s names and faces, and a device's contacts section lists the people the player can call.
-  - A device's app can show another plugin's view by name, such as a messages channel or a feed. Messages and feeds work without a device.
-
-  A bundle such as the [phone](/docs/plugins/phone) is the one thing that does depend on plugins, because its job is to wire several together for you.
+  - A device's app can show another plugin's view by name, such as a messages channel or a feed. Messages and feeds work without a device. Your game puts them together in its content, as the [phone recipe](/docs/recipes/phone) does.
 
 ## Adding one
 

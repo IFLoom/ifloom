@@ -178,12 +178,30 @@ The time of day comes from the [calendar](/docs/plugins/calendar), the map from 
 ```ts
 import { loadGame, roll, type Content, type GameRules } from '@ifloom/engine'
 import { calendar, day, pass, sleep } from '@ifloom/plugin-calendar'
-import { places, type LocationDef } from '@ifloom/plugin-places'
+import { places, location, type LocationDef } from '@ifloom/plugin-places'
 import { cast, person } from '@ifloom/plugin-cast'
 import { feed, postTo, react, seeFeed } from '@ifloom/plugin-feed'
 
 const place = (id: string, name: string, exits: string[]): LocationDef =>
-  ({ id, name, tag: 'Small Town', art: '', exits, body: [{ text: `place.${id}` }] })
+  ({ id, name, desc: 'Small Town', exits, body: [{ text: `place.${id}` }] })
+
+const map = [
+  { ...place('flat', 'Your flat', ['high-street']), actions: [{ id: 'bed', label: 'Go to bed', command: sleep() }] },
+  {
+    ...place('high-street', 'High Street', ['flat', 'park']),
+    actions: [{ id: 'board', label: 'Read the notice board', command: seeFeed('board') }],
+  },
+  {
+    ...place('park', 'Riverside Park', ['high-street']),
+    actions: [
+      {
+        id: 'photoRiver',
+        label: 'Photograph the river',
+        effects: [pass(1), postTo('social', 'river', { text: 'own.river', image: 'art/photo/river.svg' }), { 'game/howItDid': true }],
+      },
+    ],
+  },
+].map(location)
 
 const town: Content = {
   // A label-less action is no button of its own: a test or a choice sends it.
@@ -201,27 +219,9 @@ const town: Content = {
   entities: [
     person({ id: 'ava', name: 'Ava', desc: 'Runs the café', image: 'art/character/ava.svg', home: 'park' }),
     person({ id: 'sam', name: 'Sam', desc: 'Neighbour', image: 'art/character/sam.svg', home: 'park' }),
+    ...map,
   ],
   data: {
-    places: {
-      locations: [
-        { ...place('flat', 'Your flat', ['high-street']), actions: [{ id: 'bed', label: 'Go to bed', command: sleep() }] },
-        {
-          ...place('high-street', 'High Street', ['flat', 'park']),
-          actions: [{ id: 'board', label: 'Read the notice board', command: seeFeed('board') }],
-        },
-        {
-          ...place('park', 'Riverside Park', ['high-street']),
-          actions: [
-            {
-              id: 'photoRiver',
-              label: 'Photograph the river',
-              effects: [pass(1), postTo('social', 'river', { text: 'own.river', image: 'art/photo/river.svg' }), { 'game/howItDid': true }],
-            },
-          ],
-        },
-      ],
-    },
     feed: {
       feeds: [{ id: 'social', name: 'Social' }, { id: 'board', name: 'Notice board' }],
       posts: [

@@ -209,12 +209,12 @@ The time of day comes from the [calendar](/docs/plugins/calendar), the map from 
 ```ts
 import { loadGame, type Content } from '@ifloom/engine'
 import { calendar, day, pass, period, sleep } from '@ifloom/plugin-calendar'
-import { places, type LocationDef } from '@ifloom/plugin-places'
+import { places, location, type LocationDef } from '@ifloom/plugin-places'
 import { cast, character, person } from '@ifloom/plugin-cast'
 import { messageReplied, messages } from '@ifloom/plugin-messages'
 
 const place = (id: string, name: string, exits: string[]): LocationDef =>
-  ({ id, name, tag: 'Small Town', art: '', exits, body: [{ text: `place.${id}` }] })
+  ({ id, name, desc: 'Small Town', exits, body: [{ text: `place.${id}` }] })
 
 const ava = person({
   id: 'ava',
@@ -226,10 +226,23 @@ const ava = person({
   talk: 'ava.hi',
 })
 
+const map = [
+  {
+    ...place('flat', 'Your flat', ['high-street']),
+    actions: [
+      { id: 'bed', label: 'Go to bed', command: sleep() },
+      { id: 'mat', label: 'Pick up the post', command: { 'messages/read': { channel: 'letters' } } },
+    ],
+  },
+  place('high-street', 'High Street', ['flat', 'cafe', 'park']),
+  place('cafe', 'The Corner Café', ['high-street']),
+  place('park', 'Riverside Park', ['high-street']),
+].map(location)
+
 const town: Content = {
   stats: [{ id: 'friendship', label: 'Friendship', of: 'character' }],
   actions: [{ id: 'wait', effects: [pass(1)] }],
-  entities: [ava],
+  entities: [ava, ...map],
   scenes: [
     { id: 'ava.hi', title: 'Ava', speaker: 'ava', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ scene: null }] }] },
   ],
@@ -248,20 +261,6 @@ const town: Content = {
     'ui.inbox': 'Inbox ({{v:messages/unread}})',
   },
   data: {
-    places: {
-      locations: [
-        {
-          ...place('flat', 'Your flat', ['high-street']),
-          actions: [
-            { id: 'bed', label: 'Go to bed', command: sleep() },
-            { id: 'mat', label: 'Pick up the post', command: { 'messages/read': { channel: 'letters' } } },
-          ],
-        },
-        place('high-street', 'High Street', ['flat', 'cafe', 'park']),
-        place('cafe', 'The Corner Café', ['high-street']),
-        place('park', 'Riverside Park', ['high-street']),
-      ],
-    },
     messages: {
       channels: [{ id: 'texts', name: 'Texts' }, { id: 'letters', name: 'Letters' }],
       messages: [

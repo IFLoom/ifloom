@@ -560,7 +560,7 @@ import { cast } from '@ifloom/plugin-cast'
 plugins: [calendar(), places({ start: 'flat' }), cast()]
 ```
 
-A place keeps hours with its `blocked` list and the calendar's conditions. Something to do in one place is an action in that place's own `actions`, and a game action that belongs somewhere lists [`onlyAt(['cafe'])`](/docs/plugins/places#helpers) in its `blocked`. A character's [schedule](/docs/plugins/cast#where-people-are) says where they are while each condition holds, and they're in the room when the places plugin's `places/here` says the player is there too.
+A place is an [entity](/docs/reference/entities) you write with [`location()`](/docs/plugins/places#location), as a character is written with `person()`, and both go in the content's `entities`. A place keeps hours with its `blocked` list and the calendar's conditions. Something to do in one place is an action in that place's own `actions`, and a game action that belongs somewhere lists [`onlyAt(['cafe'])`](/docs/plugins/places#helpers) in its `blocked`. A character's [schedule](/docs/plugins/cast#where-people-are) says where they are while each condition holds, and they're in the room when the places plugin's `places/here` says the player is there too.
 
 Each character is an [entity](/docs/reference/entities) of the kind `character`, so a relationship is a stat the game declares on that kind, `{ id: 'friendship', label: 'Friendship', of: 'character' }`. Content reads it with `{ stat: 'friendship', of: character('ava'), gte: 25 }`. [Small Town](/docs/guide/showcase) is a small life sim made that way, where a turn is a day. [A game with a world](/docs/guide/first-game) builds a smaller one step by step.
 

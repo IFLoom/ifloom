@@ -167,31 +167,27 @@ A Monday in Small Town, the [showcase](/docs/guide/showcase)'s world. The player
 ```ts
 import { apply, loadGame, startingState, view, whyNot, type GameState, type Content } from '@ifloom/engine'
 import { calendar, pass, period, sleep, weekday } from '@ifloom/plugin-calendar'
-import { go, places, type LocationDef } from '@ifloom/plugin-places'
+import { go, places, location, type LocationDef } from '@ifloom/plugin-places'
 
 const place = (id: string, name: string, exits: string[]): LocationDef =>
-  ({ id, name, tag: 'Small Town', art: '', exits, body: [{ text: `place.${id}` }] })
+  ({ id, name, desc: 'Small Town', exits, body: [{ text: `place.${id}` }] })
 
 const town: Content = {
   stats: [{ id: 'coins', label: 'Coins', start: 12 }],
-  data: {
-    places: {
-      locations: [
-        { ...place('flat', 'Your flat', ['high-street']), actions: [{ id: 'bed', label: 'Go to bed', command: sleep() }] },
-        place('high-street', 'High Street', ['flat', 'cafe', 'park', 'office']),
-        {
-          ...place('cafe', 'The Corner Café', ['high-street']),
-          blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
-        },
-        { ...place('park', 'Riverside Park', ['high-street']), actions: [{ id: 'jog', label: 'Go for a jog', effects: [pass(1)] }] },
-        {
-          ...place('office', 'The Office', ['high-street']),
-          blocked: [{ when: weekday(5, 6), reason: 'Shut at weekends.' }],
-          actions: [{ id: 'work', label: 'Do a shift', effects: [pass(2), { stat: 'coins', by: 20 }] }],
-        },
-      ],
+  entities: [
+    { ...place('flat', 'Your flat', ['high-street']), actions: [{ id: 'bed', label: 'Go to bed', command: sleep() }] },
+    place('high-street', 'High Street', ['flat', 'cafe', 'park', 'office']),
+    {
+      ...place('cafe', 'The Corner Café', ['high-street']),
+      blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
     },
-  },
+    { ...place('park', 'Riverside Park', ['high-street']), actions: [{ id: 'jog', label: 'Go for a jog', effects: [pass(1)] }] },
+    {
+      ...place('office', 'The Office', ['high-street']),
+      blocked: [{ when: weekday(5, 6), reason: 'Shut at weekends.' }],
+      actions: [{ id: 'work', label: 'Do a shift', effects: [pass(2), { stat: 'coins', by: 20 }] }],
+    },
+  ].map(location),
   prose: {
     'place.flat': 'Boxes everywhere.',
     'place.high-street': 'Shops and puddles.',

@@ -207,7 +207,7 @@ The laptop stays at home, so a lock refuses it anywhere else.
 ```ts
 import { loadGame, type Content } from '@ifloom/engine'
 import { devices, type AppDef } from '@ifloom/plugin-devices'
-import { at, places, type LocationDef } from '@ifloom/plugin-places'
+import { at, location, places } from '@ifloom/plugin-places'
 
 const apps: AppDef[] = [
   {
@@ -242,9 +242,9 @@ const apps: AppDef[] = [
   },
 ]
 
-const locations: LocationDef[] = [
-  { id: 'flat', name: 'Your flat', tag: 'Home', art: 'place/flat', exits: ['high-street'], body: [{ text: 'place.flat' }] },
-  { id: 'high-street', name: 'High Street', tag: 'Small Town', art: 'place/high-street', exits: ['flat'], body: [{ text: 'place.high-street' }] },
+const locations = [
+  location({ id: 'flat', name: 'Your flat', desc: 'Home', exits: ['high-street'], body: [{ text: 'place.flat' }] }),
+  location({ id: 'high-street', name: 'High Street', desc: 'Small Town', exits: ['flat'], body: [{ text: 'place.high-street' }] }),
 ]
 
 const town: Content = {
@@ -257,6 +257,7 @@ const town: Content = {
   entities: [
     { id: 'sandwich', of: 'item', name: 'sandwich', desc: 'Cheese and pickle, wrapped in paper.' },
     { id: 'scarf', of: 'clothing', name: 'scarf', desc: 'Knitted by someone who loved you.' },
+    ...locations,
   ],
   // Done from elsewhere in the game, by a choice or a test: no label, so no button of their own.
   actions: [
@@ -271,7 +272,6 @@ const town: Content = {
     'bank.balance': 'You have {{v:game/balance}}.',
   },
   data: {
-    places: { locations },
     devices: { devices: [{ id: 'laptop', name: 'Laptop', frame: 'laptop' }], apps },
   },
 }

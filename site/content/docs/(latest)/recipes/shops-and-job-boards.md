@@ -22,14 +22,14 @@ Any list of effects can hold one. The sections below put them in each kind of co
 A location's action runs effects, so put the effect on the action. It's only offered in that place.
 
 ```ts
-import type { LocationDef } from '@ifloom/plugin-places'
+import { location } from '@ifloom/plugin-places'
 import { openShop } from '@ifloom/plugin-shop'
 
-const cafe: LocationDef = {
-  id: 'cafe', name: 'The Corner Café', tag: 'Café', art: 'place/cafe', exits: ['high-street'],
+const cafe = location({
+  id: 'cafe', name: 'The Corner Café', desc: 'Café', exits: ['high-street'],
   body: [{ text: 'place.cafe' }],
   actions: [{ id: 'counter', label: 'Go to the counter', effects: [openShop('counter')] }],
-}
+})
 ```
 
 A town hall's job board is the same, with `openJobs()` in its action's effects.
@@ -77,9 +77,10 @@ An app's actions section has buttons that run effects too. A vendor opened away 
 
 ```ts
 import type { AppDef } from '@ifloom/plugin-devices'
-import { openShop, type VendorDef } from '@ifloom/plugin-shop'
+import { openShop, vendor } from '@ifloom/plugin-shop'
 
-const webshop: VendorDef = { id: 'webshop', name: 'Pinecone Online', goods: [{ entity: 'clothing:scarf', price: { coins: 10 } }] }
+// In the content's entities.
+const webshop = vendor({ id: 'webshop', name: 'Pinecone Online', goods: [{ entity: 'clothing:scarf', price: { coins: 10 } }] })
 const app: AppDef = {
   id: 'pinecone', name: 'Pinecone', icon: 'basket', on: 'phone',
   sections: [{ actions: [{ id: 'browse', label: 'Browse the shop', effects: [openShop('webshop')] }] }],

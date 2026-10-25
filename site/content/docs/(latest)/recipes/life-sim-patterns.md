@@ -217,16 +217,17 @@ A line that belongs on every place, such as the weather or a warning that rent i
 
 ```ts
 import type { Block } from '@ifloom/engine'
-import type { LocationDef } from '@ifloom/plugin-places'
+import { location } from '@ifloom/plugin-places'
 
 const header: Block[] = [
   { text: 'header.rent-due', when: { kv: 'rentDue' } },
   { text: 'header.rain', when: { kv: 'weather', is: 'drizzle' } },
 ]
 
-const locations: LocationDef[] = [
-  { id: 'high-street', name: 'High Street', tag: 'Small Town', exits: ['cafe'], art: 'place/high-street', body: [...header, { text: 'place.high-street' }] },
-  { id: 'cafe', name: 'The Café', tag: 'Small Town', exits: ['high-street'], art: 'place/cafe', body: [...header, { text: 'place.cafe' }] },
+// In the content's entities.
+const locations = [
+  location({ id: 'high-street', name: 'High Street', desc: 'Small Town', exits: ['cafe'], body: [...header, { text: 'place.high-street' }] }),
+  location({ id: 'cafe', name: 'The Café', desc: 'Small Town', exits: ['high-street'], body: [...header, { text: 'place.cafe' }] }),
 ]
 ```
 

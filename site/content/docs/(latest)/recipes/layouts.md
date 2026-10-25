@@ -299,11 +299,11 @@ const places = computed(() => view.value.plugins.places as PlacesView | undefine
 Some things shouldn't be on screen at all until the story asks for them, such as the wardrobe when the player opens the wardrobe door, or a shop's counter. Content opens them with the [`panel` effect](/docs/reference/panels), from a place's action, a choice, a thing the player uses or an app, and the UI draws the panel by its name:
 
 ```ts
-const flat: LocationDef = {
-  id: 'flat', name: 'Your flat', tag: 'Home', art: 'place/flat', exits: ['high-street'],
+const flat = location({
+  id: 'flat', name: 'Your flat', desc: 'Home', exits: ['high-street'],
   body: [{ text: 'place.flat' }],
   actions: [{ id: 'wardrobe', label: 'Open the wardrobe', effects: [{ panel: 'wardrobe' }] }],
-}
+})
 ```
 
 The React UI's [`PanelHost`](/docs/react/components#panelhost) draws the built-in `wardrobe`, `inventory`, `quests`, `people`, `stats`, `statuses`, `achievements`, `shop` and `jobs` panels, and a game's own `panels` of the same name go over them. Keep a `PanelHost` in your layout. In the prose, `[[act:wardrobe|the wardrobe]]` turns words into a button for the same action (see [Inline actions](/docs/recipes/inline-actions)). The other frameworks read `view.panel` and draw what they like for each name, as the templates' `Panel` does. [Opening a shop or a job board from anywhere](/docs/recipes/shops-and-job-boards) shows the effect in every kind of content.

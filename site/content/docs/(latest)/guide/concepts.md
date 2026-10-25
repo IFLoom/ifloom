@@ -133,7 +133,7 @@ See [Locks](/docs/reference/locks).
 
 ## Plugins
 
-A plugin adds a system to the engine, such as a calendar, a map, people or quests. The game lists the plugins it uses in `plugins`, and the game's content gives each plugin its content under `data`, by the plugin's id. The places plugin reads `data.places.locations`, for example. A plugin brings its own conditions, effects and commands, its own part of the state and the view, and its own checks of its content.
+A plugin adds a system to the engine, such as a calendar, a map, people or quests. The game lists the plugins it uses in `plugins`, and the game's content gives each plugin its content under `data`, by the plugin's id. The quests plugin reads `data.quests.quests`, for example. A plugin that gives meaning to things, places or people reads a [trait](/docs/reference/entities#traits) on the entities instead: a place is an entity with the places plugin's `places/location` trait. A plugin brings its own conditions, effects and commands, its own part of the state and the view, and its own checks of its content.
 
 First-party plugins don't import each other. One plugin asks another for an answer by name through a query, as the cast asks the places plugin where the player is. A plugin can also list the plugins it `cooperates` with. Content may then name their conditions and effects in a game that leaves them out: the condition is false and the effect does nothing.
 

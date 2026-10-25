@@ -10,6 +10,7 @@ The pieces are an inline action, an effect that rolls, a block for each outcome,
 
 ```ts
 import type { Block, Condition, Content } from '@ifloom/engine'
+import { location } from '@ifloom/plugin-places'
 
 /** A line about how the stone went: only on the day you skimmed, with the dice drawn above it. */
 const skimmed = (when: Condition, text: string): Block => ({ text, when: { all: [{ kv: 'skimmed' }, when] }, ui: { dice: 'skim' } })
@@ -17,30 +18,26 @@ const skimmed = (when: Condition, text: string): Block => ({ text, when: { all: 
 export const park: Content = {
   // `skimmed` goes back to false each day.
   resets: { skimmed: false },
-  data: {
-    places: {
-      locations: [
-        {
-          id: 'park',
-          name: 'Riverside Park',
-          exits: ['high-street'],
-          body: [
-            { text: 'place.park' },
-            // 2. The link, in the line.
-            { text: 'place.park.stones' },
-            // 3. A block for each outcome, read from the roll.
-            skimmed({ roll: 'skim', critical: 'max' }, 'park.skim.best'),
-            skimmed({ roll: 'skim', passed: true, critical: false }, 'park.skim.passed'),
-            skimmed({ roll: 'skim', passed: false }, 'park.skim.failed'),
-          ],
-          actions: [
-            // 1. The roll: two dice against 8. The total goes in the kv store as `skim`.
-            { id: 'skim', label: 'Skim a stone', effects: [{ kv: 'skimmed', to: true }, { roll: 'skim', dice: '2d6', against: 8 }] },
-          ],
-        },
+  entities: [
+    {
+      id: 'park',
+      name: 'Riverside Park',
+      exits: ['high-street'],
+      body: [
+        { text: 'place.park' },
+        // 2. The link, in the line.
+        { text: 'place.park.stones' },
+        // 3. A block for each outcome, read from the roll.
+        skimmed({ roll: 'skim', critical: 'max' }, 'park.skim.best'),
+        skimmed({ roll: 'skim', passed: true, critical: false }, 'park.skim.passed'),
+        skimmed({ roll: 'skim', passed: false }, 'park.skim.failed'),
+      ],
+      actions: [
+        // 1. The roll: two dice against 8. The total goes in the kv store as `skim`.
+        { id: 'skim', label: 'Skim a stone', effects: [{ kv: 'skimmed', to: true }, { roll: 'skim', dice: '2d6', against: 8 }] },
       ],
     },
-  },
+  ].map(location),
   prose: {
     'place.park': 'The river is slow and brown and full of ducks with opinions.',
     'place.park.stones': 'Flat stones lie along the water’s edge. [[act:skim|Try to skim a stone]].',

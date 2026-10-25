@@ -46,38 +46,35 @@ If you'd rather see a finished game of this shape first, `--template town` copie
 
 ## 1. Places
 
-The core has no map, so places come from the places plugin. A location has an id, the exits you can walk to from it, and a `body`, which is the text shown while no scene is playing. The body is a list of blocks, each naming a piece of prose by key. You write the words themselves in step 4.
+The core has no map, so places come from the places plugin. A location is an entity you write with the plugin's `location()`. It has an id, a name, the exits you can walk to from it, and a `body`, which is the text shown while no scene is playing. The body is a list of blocks, each naming a piece of prose by key. You write the words themselves in step 4.
 
-`tag` is the short word the UI shows for what sort of place it is. `blocked` is a list of conditions, each with a reason. While one holds, the plugin won't let the player in, and says why. That's how the café keeps hours, with a condition from the calendar: `period('morning', 'afternoon')` holds in the morning and the afternoon.
+`desc` is the short line the UI shows under the place's name, for what sort of place it is. `blocked` is a list of conditions, each with a reason. While one holds, the plugin won't let the player in, and says why. That's how the café keeps hours, with a condition from the calendar: `period('morning', 'afternoon')` holds in the morning and the afternoon.
 
 ```ts
 import { pass, period } from '@ifloom/plugin-calendar'
-import type { LocationDef } from '@ifloom/plugin-places'
+import { location } from '@ifloom/plugin-places'
 import { here } from '@ifloom/plugin-cast'
 
-const locations: LocationDef[] = [
-  {
+const locations = [
+  location({
     id: 'house',
     name: 'Your house',
-    tag: 'Home',
+    desc: 'Home',
     exits: ['high-street'],
-    art: 'place/house',
     body: [{ text: 'house' }],
-  },
-  {
+  }),
+  location({
     id: 'high-street',
     name: 'The high street',
-    tag: 'Town',
+    desc: 'Town',
     exits: ['house', 'cafe'],
-    art: 'place/high-street',
     body: [{ text: 'high-street' }],
-  },
-  {
+  }),
+  location({
     id: 'cafe',
     name: 'The corner café',
-    tag: 'Café',
+    desc: 'Café',
     exits: ['high-street'],
-    art: 'place/cafe',
     blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
     body: [
       { text: 'cafe' },
@@ -87,7 +84,7 @@ const locations: LocationDef[] = [
     actions: [
       { id: 'coffee', label: 'Buy a coffee', cost: { stats: { coins: 3 } }, effects: [pass(1), { stat: 'energy', by: 20 }] },
     ],
-  },
+  }),
 ]
 ```
 
@@ -97,7 +94,7 @@ A block with a `when` only shows while its [condition](/docs/reference/condition
 
 `actions` is the list of buttons the room offers. Each is an [action](/docs/reference/actions): an id, the label on its button, what it costs and its effects. The coffee costs 3 coins, passes a period of time with the calendar's `pass(1)`, and gives 20 energy. Step 3 declares the coins and the energy. The engine charges the cost before the effects apply, and refuses the action, with the stat's `lacking` line, when the player can't pay. `{ not: … }` turns the calendar's condition round, so the door is locked for the rest of the day.
 
-The locations are content. In step 5 they go into the game's content, under `data.places.locations`. There's more in [Places](/docs/plugins/places#the-location-trait) and the calendar's [conditions](/docs/plugins/calendar#conditions).
+The locations are content, entities like any other. In step 5 they go into the game's content, in `entities`. There's more in [Places](/docs/plugins/places#the-location-trait) and the calendar's [conditions](/docs/plugins/calendar#conditions).
 
 ## 2. A character with a schedule
 
@@ -245,7 +242,7 @@ For the odd screen that doesn't fit blocks and choices, a scene can also be a pl
 
 ## 5. The game
 
-The game gathers everything. [`loadGame`](/docs/reference/loader) merges your content into one game, here one object, and a mod would be a pack laid over it. The locations are the places plugin's content, so they go in the content's `data`, under the plugin's id and the list's name: `data.places.locations`. Ruth is an entity, so she goes in `entities`.
+The game gathers everything. [`loadGame`](/docs/reference/loader) merges your content into one game, here one object, and a mod would be a pack laid over it. The locations and Ruth are entities, so they all go in the content's `entities`.
 
 The content's `introScene` is on screen from the first frame. A story that opens on its room leaves it out. The second argument, the base, holds what isn't content: the game's `id` and `title`, its plugins, and its own code in [`rules`](/docs/reference/rules) when it has any. Only `id` and `title` are required.
 
@@ -271,8 +268,7 @@ export const { game, problems } = loadGame(
       scenes: [intro, ruthTalk],
       introScene: 'intro',
       prose,
-      entities: [ruth],
-      data: { places: { locations } },
+      entities: [...locations, ruth],
     },
   ],
   {
@@ -617,32 +613,29 @@ import {
   type StatDef,
 } from '@ifloom/engine'
 import { calendar, pass, period, sleep, weekday } from '@ifloom/plugin-calendar'
-import { go, places, where, type LocationDef } from '@ifloom/plugin-places'
+import { go, location, places, where } from '@ifloom/plugin-places'
 import { cast, character, here, person, talk } from '@ifloom/plugin-cast'
 
-const locations: LocationDef[] = [
-  {
+const locations = [
+  location({
     id: 'house',
     name: 'Your house',
-    tag: 'Home',
+    desc: 'Home',
     exits: ['high-street'],
-    art: 'place/house',
     body: [{ text: 'house' }],
-  },
-  {
+  }),
+  location({
     id: 'high-street',
     name: 'The high street',
-    tag: 'Town',
+    desc: 'Town',
     exits: ['house', 'cafe'],
-    art: 'place/high-street',
     body: [{ text: 'high-street' }],
-  },
-  {
+  }),
+  location({
     id: 'cafe',
     name: 'The corner café',
-    tag: 'Café',
+    desc: 'Café',
     exits: ['high-street'],
-    art: 'place/cafe',
     blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
     body: [
       { text: 'cafe' },
@@ -652,7 +645,7 @@ const locations: LocationDef[] = [
     actions: [
       { id: 'coffee', label: 'Buy a coffee', cost: { stats: { coins: 3 } }, effects: [pass(1), { stat: 'energy', by: 20 }] },
     ],
-  },
+  }),
 ]
 
 const ruth = person({
@@ -736,8 +729,7 @@ export const { game, problems } = loadGame(
       scenes: [intro, ruthTalk],
       introScene: 'intro',
       prose,
-      entities: [ruth],
-      data: { places: { locations } },
+      entities: [...locations, ruth],
     },
   ],
   {

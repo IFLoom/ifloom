@@ -12,7 +12,7 @@ Every type on this page comes from the package root: `Game`, `StorylineDef` and 
 
 You don't usually write a `Game` by hand. [`loadGame`](/docs/reference/loader#loadgame) builds one from your content and a base: the base says what the game is and holds its code (`id`, `title`, `version`, `plugins` and `rules`), and everything else comes from the content and packs, so a mod can reach it.
 
-The core has no places and no characters. Locations, exits, walking and where the player is come from the [places plugin](/docs/plugins/places), whose locations are content in your content's `data.places.locations`. People, their hours, talking and calling come from the [cast plugin](/docs/plugins/cast), whose characters are entities in your content's `entities`, written with its `person()`.
+The core has no places and no characters. Locations, exits, walking and where the player is come from the [places plugin](/docs/plugins/places), whose locations are entities in your content's `entities`, written with its `location()`. People, their hours, talking and calling come from the [cast plugin](/docs/plugins/cast), whose characters are entities in your content's `entities`, written with its `person()`.
 
 ## Game
 
@@ -144,7 +144,7 @@ const { game, problems } = loadGame([movingDay], {
 })
 ```
 
-The town's locations are the places plugin's content, in `data.places.locations`, and its people are entities, in `entities`; `loadGame` fills in `data` from the content. To build a game from several files, with mods layered on top, see [Content, packs and loading](/docs/reference/loader).
+The town's locations and its people are entities, in `entities`, written with the places plugin's `location()` and the cast's `person()`. `loadGame` fills in `game.entities` from the content. To build a game from several files, with mods layered on top, see [Content, packs and loading](/docs/reference/loader).
 
 ## Scene
 

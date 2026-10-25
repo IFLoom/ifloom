@@ -229,7 +229,7 @@ Characters go in your [content](/docs/reference/loader#content)'s `entities`, wr
 ```ts
 import type { DataScene, Content } from '@ifloom/engine'
 import { period, weekday } from '@ifloom/plugin-calendar'
-import { at, type LocationDef } from '@ifloom/plugin-places'
+import { at, location, type LocationDef } from '@ifloom/plugin-places'
 import { character, person } from '@ifloom/plugin-cast'
 
 const ava = person({
@@ -263,16 +263,22 @@ const sam = person({
 })
 
 const place = (id: string, name: string, exits: string[]): LocationDef =>
-  ({ id, name, tag: 'Small Town', art: '', exits, body: [{ text: `place.${id}` }] })
+  ({ id, name, desc: 'Small Town', exits, body: [{ text: `place.${id}` }] })
 const chat = (id: string, who: string, by: number): DataScene => ({
   id, speaker: who, body: [{ text: id }],
   choices: [{ id: 'bye', effects: [{ stat: 'friendship', by, of: character(who) }, { scene: null }] }],
 })
 
+const map = [
+  place('high-street', 'High Street', ['cafe', 'park']),
+  place('cafe', 'The Corner Café', ['high-street']),
+  place('park', 'Riverside Park', ['high-street']),
+].map(location)
+
 const town: Content = {
   stats: [{ id: 'friendship', label: 'Friendship', of: 'character' }],
   storylines: [{ id: 'ava', name: 'Ava' }, { id: 'sam', name: 'Sam' }],
-  entities: [ava, sam],
+  entities: [ava, sam, ...map],
   scenes: [chat('ava.hi', 'ava', 10), chat('ava.river', 'ava', 5), chat('ava.call', 'ava', 3), chat('sam.hi', 'sam', 5)],
   prose: {
     'place.high-street': 'A bakery, a launderette, a bus stop.',
@@ -283,15 +289,6 @@ const town: Content = {
     'ava.call': '"Oh, hello! I’m by the river."',
     'sam.hi': 'Sam is walking a dog that is clearly not theirs.',
     'ava.hi#bye': 'Leave her to it', 'ava.river#bye': 'Sit with her', 'ava.call#bye': 'Say goodnight', 'sam.hi#bye': 'Pat the dog',
-  },
-  data: {
-    places: {
-      locations: [
-        place('high-street', 'High Street', ['cafe', 'park']),
-        place('cafe', 'The Corner Café', ['high-street']),
-        place('park', 'Riverside Park', ['high-street']),
-      ],
-    },
   },
 }
 ```

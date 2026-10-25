@@ -125,7 +125,7 @@ The inventory, the [shop](/docs/plugins/shop) and the [wardrobe](/docs/plugins/w
 ```ts
 import type { Content } from '@ifloom/engine'
 import { usable } from '@ifloom/plugin-inventory'
-import { sellable } from '@ifloom/plugin-shop'
+import { sellable, vendor } from '@ifloom/plugin-shop'
 import { wearable } from '@ifloom/plugin-wardrobe'
 
 const market: Content = {
@@ -140,9 +140,9 @@ const market: Content = {
   entities: [
     { id: 'scarf', of: 'clothing', name: 'scarf', traits: { ...wearable('neck'), ...sellable({ coins: 8 }) } },
     { id: 'pie', of: 'food', name: 'pie', traits: { ...usable('Eat the pie', [{ stat: 'energy', by: 20 }]), ...sellable({ coins: 3 }) } },
+    vendor({ id: 'stall', name: 'Stall', buysBack: 0.5, goods: [{ entity: 'clothing:scarf', stock: 1 }, { entity: 'food:pie' }] }),
   ],
   data: {
-    shop: { vendors: [{ id: 'stall', name: 'Stall', buysBack: 0.5, goods: [{ entity: 'clothing:scarf', stock: 1 }, { entity: 'food:pie' }] }] },
     wardrobe: { slots: [{ id: 'neck', label: 'Neck' }] },
   },
 }

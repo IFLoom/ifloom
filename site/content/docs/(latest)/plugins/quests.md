@@ -109,7 +109,7 @@ Two quests from a cut-down Small Town, the [showcase](/docs/guide/showcase)'s wo
 
 ```ts
 import type { Content } from '@ifloom/engine'
-import { at, type LocationDef } from '@ifloom/plugin-places'
+import { at, location, type LocationDef } from '@ifloom/plugin-places'
 import { startQuest, type QuestDef } from '@ifloom/plugin-quests'
 
 const settle: QuestDef = {
@@ -130,11 +130,23 @@ const scarf: QuestDef = {
 }
 
 const place = (id: string, name: string, exits: string[]): LocationDef =>
-  ({ id, name, tag: 'Small Town', art: '', exits, body: [{ text: `place.${id}` }] })
+  ({ id, name, desc: 'Small Town', exits, body: [{ text: `place.${id}` }] })
+
+const map = [
+  { ...place('flat', 'Your flat', ['high-street']), actions: [{ id: 'unpack', label: 'Unpack', effects: [{ kv: 'phase', to: 'open' }] }] },
+  {
+    ...place('high-street', 'High Street', ['flat', 'cafe']),
+    actions: [
+      { id: 'collar', label: 'Turn up your collar', effects: [startQuest('scarf')] },
+      { id: 'buyScarf', label: 'Buy a scarf at the market', effects: [{ entity: 'clothing:scarf', by: 1 }] },
+    ],
+  },
+  { ...place('cafe', 'The Corner Café', ['high-street']), actions: [{ id: 'coffee', label: 'Buy a coffee', effects: [{ kv: 'hadCoffee', to: true }] }] },
+].map(location)
 
 const town: Content = {
   kinds: [{ id: 'clothing', label: 'Clothing', unique: true, listed: false }],
-  entities: [{ id: 'scarf', of: 'clothing', name: 'scarf', desc: 'Knitted by someone who loved you.' }],
+  entities: [{ id: 'scarf', of: 'clothing', name: 'scarf', desc: 'Knitted by someone who loved you.' }, ...map],
   // The game starts in the arrival phase.
   kv: { phase: 'arrival' },
   prose: {
@@ -144,19 +156,6 @@ const town: Content = {
     todo: 'To do ({{v:quests/updates}})',
   },
   data: {
-    places: {
-      locations: [
-        { ...place('flat', 'Your flat', ['high-street']), actions: [{ id: 'unpack', label: 'Unpack', effects: [{ kv: 'phase', to: 'open' }] }] },
-        {
-          ...place('high-street', 'High Street', ['flat', 'cafe']),
-          actions: [
-            { id: 'collar', label: 'Turn up your collar', effects: [startQuest('scarf')] },
-            { id: 'buyScarf', label: 'Buy a scarf at the market', effects: [{ entity: 'clothing:scarf', by: 1 }] },
-          ],
-        },
-        { ...place('cafe', 'The Corner Café', ['high-street']), actions: [{ id: 'coffee', label: 'Buy a coffee', effects: [{ kv: 'hadCoffee', to: true }] }] },
-      ],
-    },
     quests: { quests: [settle, scarf] },
   },
 }

@@ -98,11 +98,26 @@ A cut-down Small Town. The player starts in the raincoat, which people in the ca
 
 ```ts
 import { give, need, type Content } from '@ifloom/engine'
-import type { LocationDef } from '@ifloom/plugin-places'
+import { location, type LocationDef } from '@ifloom/plugin-places'
 import { wearable, wearing } from '@ifloom/plugin-wardrobe'
 
 const place = (id: string, name: string, exits: string[]): LocationDef =>
-  ({ id, name, tag: 'Small Town', art: '', exits, body: [{ text: `place.${id}` }] })
+  ({ id, name, desc: 'Small Town', exits, body: [{ text: `place.${id}` }] })
+
+const map = [
+  {
+    ...place('high-street', 'High Street', ['cafe', 'park']),
+    actions: [{ id: 'buyScarf', label: 'Buy a scarf at the market', cost: { stats: { coins: 8 } }, effects: [give('clothing:scarf')] }],
+  },
+  {
+    ...place('cafe', 'The Corner Café', ['high-street']),
+    body: [{ text: 'place.cafe' }, { text: 'place.cafe.raincoat', when: wearing('clothing:raincoat') }],
+  },
+  {
+    ...place('park', 'Riverside Park', ['high-street']),
+    actions: [{ id: 'bench', label: 'Sit on the bench by the river', blocked: [need('Too cold without a scarf.', wearing('clothing:scarf'))], effects: [] }],
+  },
+].map(location)
 
 const town: Content = {
   stats: [{ id: 'coins', label: 'Coins', start: 12, spendable: true }],
@@ -114,6 +129,7 @@ const town: Content = {
     { id: 'raincoat', of: 'clothing', name: 'raincoat', at: 'player', traits: { ...wearable('coat') } },
     { id: 'scarf', of: 'clothing', name: 'scarf', traits: { ...wearable('neck') } },
     { id: 'sandwich', of: 'food', name: 'sandwich', at: 'player' },
+    ...map,
   ],
   prose: {
     'place.high-street': 'A bakery, a launderette, a bus stop.',
@@ -122,22 +138,6 @@ const town: Content = {
     'place.park': 'The river is slow and brown.',
   },
   data: {
-    places: {
-      locations: [
-        {
-          ...place('high-street', 'High Street', ['cafe', 'park']),
-          actions: [{ id: 'buyScarf', label: 'Buy a scarf at the market', cost: { stats: { coins: 8 } }, effects: [give('clothing:scarf')] }],
-        },
-        {
-          ...place('cafe', 'The Corner Café', ['high-street']),
-          body: [{ text: 'place.cafe' }, { text: 'place.cafe.raincoat', when: wearing('clothing:raincoat') }],
-        },
-        {
-          ...place('park', 'Riverside Park', ['high-street']),
-          actions: [{ id: 'bench', label: 'Sit on the bench by the river', blocked: [need('Too cold without a scarf.', wearing('clothing:scarf'))], effects: [] }],
-        },
-      ],
-    },
     wardrobe: {
       slots: [
         { id: 'coat', label: 'Coat', start: 'clothing:raincoat' },

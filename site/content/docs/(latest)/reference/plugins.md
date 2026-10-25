@@ -809,7 +809,7 @@ export const dishes = definePlugin<Sink>({
 The flat offers the buttons, as a location of the [places plugin](/docs/plugins/places#the-location-trait):
 
 ```ts
-// on the flat, in data.places.locations
+// on the flat, in its location({ ... }) in entities
 actions: [
   { id: 'cook', label: 'Cook dinner', effects: [{ stat: 'energy', by: 20 }, { 'dishes/add': { by: 2 } }] },
   { id: 'bake', label: 'Bake bread', effects: [{ entity: 'food:loaf', by: 1 }, { 'dishes/add': true }] },
@@ -932,8 +932,8 @@ If your view draws pictures from a [pool](/docs/reference/media#pools), pass the
 
 ```ts
 view: (state, { game, slice, picks }) => {
-  const place = locationById(game, slice.at)
-  return { stage: place ? stageView(state, game, place.stage, place.id, null, picks) : null }
+  const place = locationOf(game, slice.at, state)
+  return { stage: place && slice.at ? stageView(state, game, place.stage, slice.at, null, picks) : null }
 },
 ```
 

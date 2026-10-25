@@ -58,7 +58,7 @@ const quickFeet: MinigameDef = {
 
 export const park: Content = {
   minigames: [quickFeet],
-  // ...and the park, in data.places.locations, lists an action that starts it:
+  // ...and the park's location, in entities, lists an action that starts it:
   // { id: 'arrows', label: 'Play quick feet with the kids', effects: [{ minigame: 'arrows' }] }
 }
 ```

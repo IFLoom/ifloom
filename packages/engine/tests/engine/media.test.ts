@@ -38,10 +38,8 @@ describe('picture and video markup', () => {
     expect(parseBeats('[[wide:street.gif]]')[0]).toMatchObject({ type: 'image', src: 'art/street.gif', size: 'wide' })
   })
 
-  it('keeps the picture markup as it was: alt text and rot', () => {
-    expect(parseBeats('[[img:cafe/cup|rot|A cup of tea]]')).toEqual([
-      { type: 'image', src: 'art/cafe/cup.jpg', alt: 'A cup of tea', size: 'inline', rotate: true },
-    ])
+  it('keeps the picture markup as it was: its alt text', () => {
+    expect(parseBeats('[[img:cafe/cup|A cup of tea]]')).toEqual([{ type: 'image', src: 'art/cafe/cup.jpg', alt: 'A cup of tea', size: 'inline' }])
   })
 
   it('leaves out a pool nobody resolved, rather than drawing a broken picture', () => {
@@ -306,10 +304,10 @@ describe('the stage', () => {
     expect(view({ ...startingState(g), sceneId: null }, g).scene.stage).toBeNull()
   })
 
-  it('keeps stageImage as it was', () => {
-    const portrait: Scene = { id: 'portrait', render: () => ({ portrait: 'art/people/ava.jpg', choices: [] }) }
+  it("draws a hand-built scene's own picture as the scene's image", () => {
+    const portrait: Scene = { id: 'portrait', render: () => ({ image: 'art/people/ava.jpg', choices: [] }) }
     const g = game([portrait])
-    expect(view(open(g, 'portrait'), g).scene).toMatchObject({ stageImage: 'art/people/ava.jpg', stage: null })
+    expect(view(open(g, 'portrait'), g).scene).toMatchObject({ image: 'art/people/ava.jpg', stage: null })
   })
 })
 
@@ -343,7 +341,7 @@ describe('media checks', () => {
       'prose flat.b: video flag "controls" on a picture in [[img:flat/mug|controls|A mug]]',
       'prose flat.c: unknown flag "speed=2" in [[video:clips/rain|speed=2]]',
       'prose flat.d: unknown pool "cupboard"',
-      'prose flat.e: flag "rot" turns a picture, not a video, in [[video:clips/rain|rot]]',
+      'prose flat.e: "rot" is read as alt text in [[video:clips/rain|rot]]; turning a picture is a UI\'s block hint now',
     ])
   })
 

@@ -44,7 +44,6 @@ export const UI_STRINGS = {
   close: 'Close',
   priceSeparator: ' · ',
   heldCount: '×{n}',
-  mailHeader: '{key}: {value}',
   newGame: 'New game',
   continue: 'Continue',
   newGamePlus: 'New Game+',

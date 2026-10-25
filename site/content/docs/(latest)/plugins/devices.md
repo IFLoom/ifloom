@@ -306,7 +306,7 @@ laptop(state)
 state = apply(state, game, { type: 'action', id: 'jot' }).state
 state = apply(state, game, openApp('notes')).state     // no time passes, and the player is still at home
 laptop(state).open?.sections
-// [{ type: 'prose', text: 'Your notes, newest first.' },
+// [{ type: 'prose', text: 'Your notes, newest first.', beats: [{ type: 'text', text: 'Your notes, newest first.' }] },
 //  { type: 'list', entries: [{ id: 'note:shopping', title: 'Shopping', text: 'Milk, bread, a lemon.', image: null, actions: [] }] }]
 
 state = apply(state, game, openApp('shop')).state      // the notes close: one app open per device
@@ -463,7 +463,7 @@ type AppView = {
 import type { RenderedChoice } from '@ifloom/engine'
 
 type SectionView =
-  | { type: 'prose'; text: string }
+  | { type: 'prose'; text: string; beats: SceneBeat[] }
   | { type: 'actions'; actions: RenderedChoice[] }
   | { type: 'list'; entries: { id: string; title: string; text: string; image: string | null; actions: RenderedChoice[] }[] }
   | { type: 'plugin'; plugin: string; with: Record<string, unknown> }
@@ -472,7 +472,7 @@ type SectionView =
 
 | Type | From | What it holds |
 |---|---|---|
-| `prose` | `{ prose }` | The blocks rendered for the current state. |
+| `prose` | `{ prose }` | The blocks drawn as [beats](/docs/reference/prose#scenebeat) for the current state, with [`context.beats`](/docs/reference/plugins#beats), and their words joined as `text` for a UI that draws no beats. |
 | `actions` | `{ actions }` | The buttons, as [`RenderedChoice`](/docs/reference/view#renderedchoice)s. |
 | `list` | `{ things }`, `{ contacts }` | One entry per thing (its reference as `id`, name, description filled in, picture, no actions) or per contact (name, desc, portrait, a Call button). |
 | `plugin` | `{ plugin, with }` | Only the plugin's id and `with`. The data is the plugin's own slice, at `view.plugins[plugin]`. |
@@ -569,7 +569,7 @@ One [`SectionView`](/docs/plugins/devices#sectionview) of an open app, drawn by 
 
 | Type | Drawn as |
 |---|---|
-| `prose` | A paragraph, with line breaks kept. |
+| `prose` | Its beats, drawn with [`Beat`](/docs/react/components#beat). |
 | `actions` | A [`ChoiceList`](/docs/react/components#choicelist). |
 | `list` | Each entry (`data-entry`) with its picture, title, text and actions. |
 | `plugin` | The renderer in `sections` for that plugin id, given the plugin's view and the section's `with`. Nothing if there's no renderer. |

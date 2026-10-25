@@ -80,16 +80,16 @@ describe('ui hints', () => {
   })
 
   it('put hints on beats by where each block starts in the body', () => {
-    const beats = parseBeats('One.\n\nTwo.\n\n[[mail]]\nFrom: Ava\n\nHi.\n[[/mail]]\n\nThree.', [
+    const beats = parseBeats('One.\n\nTwo.\n\n[[ui:mail|Hi.\n\nBye.|From: Ava]]\n\nThree.', [
       { at: 6, ui: { a: 1 } },
-      { at: 11, ui: { b: 2 } },
-      { at: 43, ui: { c: 3 } },
+      { at: 12, ui: { b: 2 } },
+      { at: 45, ui: { c: 3 } },
     ])
-    expect(beats.map((beat) => [beat.type, beat.ui])).toEqual([
-      ['text', undefined],
-      ['text', { a: 1 }],
-      ['mail', { b: 2 }],
-      ['text', { c: 3 }],
+    expect(beats.map((beat) => ['text' in beat ? beat.text : beat.type, beat.ui])).toEqual([
+      ['One.', undefined],
+      ['Two.', { a: 1 }],
+      ['[[ui:mail|Hi.\n\nBye.|From: Ava]]', { b: 2 }],
+      ['Three.', { c: 3 }],
     ])
   })
 

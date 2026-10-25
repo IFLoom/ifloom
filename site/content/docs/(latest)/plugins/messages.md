@@ -77,7 +77,7 @@ data: {
 }
 ```
 
-The plugin lists `cooperates: ['cast']` (see [`cooperates`](/docs/reference/plugins#cooperates)). When the game has the [cast](/docs/plugins/cast), a sender who is one of its characters is shown with their name and portrait, which the plugin gets from the cast's [`cast/person`](/docs/plugins/cast#queries) query. Without the cast, every sender is shown as written.
+The plugin lists `cooperates: ['cast']` (see [`cooperates`](/docs/reference/plugins#cooperates)). A sender who is an [entity](/docs/reference/entities), such as one of the [cast](/docs/plugins/cast)'s characters, is shown with their name and portrait, which the plugin reads with [`speakerOf`](/docs/reference/plugins#speakerof). Anyone else is shown as written.
 
 ### Channel
 
@@ -124,7 +124,7 @@ type MessageDef = {
 |---|---|
 | `id` | Unique among messages. Its replies' labels are prose keys built from it. |
 | `channel` | The [channel](#channel) it arrives in. |
-| `from` | Who sent it. Either a [cast](/docs/plugins/cast) character's id, or any name as it should be shown (`'Town council'`). A character's name and portrait are looked up, and anything else is shown as written. |
+| `from` | Who sent it. Either an entity, by reference or a bare id as a scene's [speaker](/docs/reference/scenes#speakers) is (`'ava'`), or any name as it should be shown (`'Town council'`). An entity's name and picture are looked up, and anything else is shown as written. |
 | `thread` | The thread it goes in. If you leave it out, the thread is the sender, so every message from `ava` in a channel goes in one thread. |
 | `when` | It arrives the first time this [condition](/docs/reference/conditions) holds at the end of a command. Leave it out and it arrives after the first command. For a message in a pool, it can only be drawn while `when` holds. |
 | `drawnFrom` | The pools it's in. A message in a pool arrives only when [`messages/draw`](#effects) draws it, and it can arrive again each time. See [Messages that come again](#messages-that-come-again). |
@@ -477,7 +477,7 @@ type ThreadView = {
 |---|---|
 | `id` | The messages' `thread`, or their sender. |
 | `name` | The [cast](/docs/plugins/cast) character's name if `id` is one, or `id` as written. |
-| `portrait` | The cast character's portrait (their `portrait`, or `art/character/<id>.jpg`). It's `null` if `id` isn't a character or the game has no cast. |
+| `portrait` | The sender's entity's `image`, through `artSrc`. It's `null` if `id` names no entity, or one with no picture. |
 | `messages` | Oldest first. |
 | `unread` | Unread messages in the thread. |
 
@@ -504,8 +504,8 @@ type MessageView = {
 | `key` | This arrival's [key](#arrival). Use it as the list key when you draw the thread. |
 | `from` | The sender, as written. |
 | `name` | The sender's name if they're a [cast](/docs/plugins/cast) character, or `from` as written. |
-| `text` | The body, rendered for the current state. It has the blocks whose `when` holds, with tokens filled in. Any picture or video is in it as markup. |
-| `beats` | `text` parsed into [beats](/docs/reference/prose#scenebeat), as a scene's body is, with its [bold and italics](/docs/reference/prose#bold-and-italics) as spans. Draw these when the message can hold pictures or videos: Ava's photo of the ducks is an `image` beat, and a clip of them a `video` beat, in the order she wrote them. |
+| `text` | The words of its beats, joined, for a UI that draws no beats. |
+| `beats` | The body drawn as [beats](/docs/reference/prose#scenebeat) for the current state with [`context.beats`](/docs/reference/plugins#beats), as a scene's body is: the blocks whose `when` holds, tokens filled in, spoken lines with their speakers, and [bold and italics](/docs/reference/prose#bold-and-italics) as spans. Draw these when the message can hold pictures or videos: Ava's photo of the ducks is an `image` beat, and a clip of them a `video` beat, in the order she wrote them. |
 | `turn` | The [turn](/docs/reference/state#turn) it arrived on. With the [calendar](/docs/plugins/calendar#what-a-turn-is)'s default, a turn is a day. |
 | `read` | Opened with `messages/read`, or replied to. |
 | `replies` | The replies on offer now, each a button like a scene's choices ([`RenderedChoice`](/docs/reference/view#renderedchoice)) with its `label` and the `command` that sends it. Empty once one is sent. |
@@ -648,7 +648,7 @@ A `messages/arrived`, `messages/since`, `messages/replied` or `messages/read` co
 - **One reply, once.** After the player sends one, the others are gone and `messages/reply` refuses. To let the player say more, send a new message with replies of its own.
 - **A channel the game doesn't have counts nothing.** `messages/unread` with `{ channel: 'post' }` is 0 when there's no `post` channel, so a badge that names a renamed channel stops counting. A [devices](/docs/plugins/devices) app badge that names a value nobody has is reported when the game loads.
 - **The notice is the engine's.** Each arrival raises a [notice](/docs/reference/notices) with the id `messages.<key>`, the [arrival's key](#arrival), the sender's name as its `title` and the channel as its `tag`. So `view.notices.byTag.texts` counts arrivals the player hasn't dismissed. Reading a message doesn't dismiss its notice, and dismissing doesn't read the message. If your UI wants them to go together, send both commands.
-- **The sender is matched by id.** A `from` that's a [cast](/docs/plugins/cast) character's id shows the character's name and portrait. A typo shows the typo, and the loader doesn't report it, because any name is allowed. Without the cast, `from: 'ava'` shows `ava`.
+- **The sender is matched by id.** A `from` that names an entity shows its name and picture. A typo shows the typo, and the loader doesn't report it, because any name is allowed. In a game with no `ava` entity, `from: 'ava'` shows `ava`.
 - **A message doesn't need a device.** You can show `view.plugins.messages` anywhere, such as letters on the mat or a pigeonhole at work. The [devices](/docs/plugins/devices) plugin is one way to show a channel, not a requirement.
 
 ## See it in an example

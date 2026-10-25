@@ -9,8 +9,8 @@ import type { StoryletFields } from './features/scenes.ts'
 import type { MinigameSceneFields } from './features/minigames.ts'
 import type { BlockUi, ChoiceUi, SceneUi, Ui } from './features/ui.ts'
 import type { FeatureGame } from './features/registry.ts'
-import type { VideoFlags } from './sceneBody.ts'
-import { bakeScene, isDataScene } from './scene.ts'
+import type { SceneBeat, VideoFlags } from './sceneBody.ts'
+import { bakeScene, isDataScene, type Block } from './scene.ts'
 import type { MigrationTools } from './intake.ts'
 import type { Effect, Flat, KvValue, GameState, StatKey } from './types.ts'
 
@@ -121,7 +121,8 @@ export type SceneView = {
   speaker?: string
   /** Words the UI can style the scene by: `['letter']`, `['flashback']`. The engine gives them no meaning. */
   tags?: string[]
-  portrait?: string
+  /** The big picture to draw with it, through `artSrc`. Left out, the speaker's. */
+  image?: string
   /** The scene's prose, with its markup. Left out, the scene has no body text. */
   body?: string
   media?: SceneMedia[]
@@ -283,6 +284,8 @@ export type RulesContext = CustomContext & {
   apply: (effects: readonly EffectRef[], on?: GameState) => GameState
   /** Only in `view`: where the pool picks it makes are written. See `PluginContext.picks`. */
   picks?: Record<string, string>
+  /** Blocks drawn as beats, as a scene's body is. See `PluginContext.beats`. */
+  beats: (blocks: readonly Block[], id: string) => SceneBeat[]
   /** Only in `view`, with a runner that has a profile: what the profile holds under `game`. */
   profile?: unknown
 }

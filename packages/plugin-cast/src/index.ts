@@ -341,13 +341,6 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
       },
     },
     queries: {
-      /** `{ id, name, portrait, ui }` of someone (`{ character }`), or undefined. */
-      person: (state, args, { game }) => {
-        const them = one(state, game, who(args.character)[0])
-        return them
-          ? { id: short(them.ref), name: nameOf(state, game, them), portrait: portraitOf(state, game, them.ref), ...uiOf(state, game, them.ref) }
-          : undefined
-      },
       /** The ids of everyone in the room. */
       present: (state, _args, context) =>
         everyone(state, context.game)
@@ -370,10 +363,6 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
             command: call(short(them.ref)),
             disabled: whyNot(state, game, call(short(them.ref))),
           })),
-    },
-    speaker: (id, state, { game }) => {
-      const them = one(state, game, refOf(id))
-      return them ? { id, name: nameOf(state, game, them), portrait: portraitOf(state, game, them.ref), ...uiOf(state, game, them.ref) } : undefined
     },
     view: (state, context): CastView => {
       const { game } = context

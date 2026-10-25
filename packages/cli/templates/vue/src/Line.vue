@@ -5,7 +5,7 @@ import { runner } from './runner.ts'
 
 // A line's words, with bold and italics, and its inline actions and tooltips as buttons in it. A tooltip, or a
 // greyed-out action's reason, is a note after the button that shows on hover, on focus
-// and on a tap (see `.note` in styles.css). A UI piece (`[[ui:…]]`) shows its words.
+// and on a tap (see `.note` in styles.css). A UI piece (`[[ui:…]]`) shows its words, styled by its name.
 defineProps<{ text: string; spans?: InlineSpan[] }>()
 const id = useId()
 const open = ref<number | null>(null)
@@ -23,7 +23,7 @@ const note = (span: InlineSpan) => (span.type === 'tip' ? span.tip : span.type =
     <template v-if="span.type === 'text'">{{ span.text }}</template>
     <strong v-else-if="span.type === 'bold'">{{ span.text }}</strong>
     <em v-else-if="span.type === 'italic'">{{ span.text }}</em>
-    <template v-else-if="span.type === 'ui'">{{ span.text }}</template>
+    <span v-else-if="span.type === 'ui'" class="ui" :data-ui="span.name">{{ span.text }}</span>
     <template v-else>
       <button
         type="button"

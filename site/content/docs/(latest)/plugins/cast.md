@@ -6,7 +6,7 @@ description: "Characters with schedules, who is in the room, talking and calling
 
 You'd want it for any game with people the player meets and gets to know, such as the neighbours in a life sim. A novel where people only appear inside scenes usually doesn't need it.
 
-The engine's core has no people of its own: no character list, no talk or call command and no "is she here" condition. This plugin adds them. In a game without it, a scene's `speaker` is only drawn by name if some other plugin knows the id (see [Speakers](#speakers)).
+The engine's core has no people of its own: no character list, no talk or call command and no "is she here" condition. This plugin adds them. Who a scene's speaker is doesn't need it: the engine reads any [entity](/docs/reference/scenes#speakers) a scene names (see [Speakers](#speakers)).
 
 ## What a character is
 
@@ -83,7 +83,7 @@ const plugins = [calendar(), places({ start: 'flat' }), cast()]
 
 The plugin [cooperates](/docs/reference/plugins#cooperates) with `places` and `calendar`. It asks the places plugin where the player is, and schedules are usually written with the calendar's conditions. Neither is required. Without places, nobody is ever in the room, but calls still work. Without the calendar, a schedule that names `calendar/...` conditions still loads, and those conditions never hold.
 
-Where the player is comes from a [query](/docs/reference/plugins#queries) asked by name, so the order of `plugins` doesn't change who's here. The order only matters when two plugins both know a [speaker](#speakers) id, and then the one listed first answers.
+Where the player is comes from a [query](/docs/reference/plugins#queries) asked by name, so the order of `plugins` doesn't change who's here. The order of `plugins` doesn't matter to the cast.
 
 ## cast
 
@@ -142,14 +142,14 @@ The entity's fields that matter most to a character:
 
 | Field | What it is | If left out |
 |---|---|---|
-| `id` | What content names them by, as in `talk('ava')`, `here('ava')` or `character('ava')`. It's also their [speaker](#speakers) id. | Required. |
+| `id` | What content names them by, as in `talk('ava')`, `here('ava')` or `character('ava')`. It's also how a scene names them as its [speaker](#speakers). | Required. |
 | `name` | Shown over their lines, on their card, and in refusals such as `Ava is not here.` [Prose tokens](/docs/reference/prose) in it are filled for the save wherever it's shown, so `'{{friendName}}'` is the name the player typed (see [A name the player chooses](#a-name-the-player-chooses)). | Required. |
 | `desc` | A word or two about them, such as `Runs the café`, shown under the name. | `null` in the view. |
-| `image` | Their portrait, through [`artSrc`](/docs/reference/prose#artsrc). A bare name under `art/` is taken as a `.jpg`. | `art/character/<id>.jpg` in the cast's view; none in [`view.entities`](/docs/reference/view#entities). |
+| `image` | Their portrait, through [`artSrc`](/docs/reference/prose#artsrc). A bare name under `art/` is taken as a `.jpg`. | `art/character/<id>.jpg` in the cast's own view; none in [`view.entities`](/docs/reference/view#entities) or as a scene's speaker. |
 | `tags` | Labels for your own code. The plugin doesn't read them. | None. |
 | `stats` | Their stats at the start, where they differ from each stat's own `start`. | Each stat's `start`. |
 | `kv` | Their kv store at the start. | `{}` |
-| `ui` | [Presentation hints](/docs/reference/ui-hints) for the UI, such as the React UI's [`hue`](/docs/react/hints#hue), the colour of their lines: `ui: { hue: 20 }`. The plugin passes them to its view and to the speaker as written. | None. |
+| `ui` | [Presentation hints](/docs/reference/ui-hints) for the UI, such as the React UI's [`hue`](/docs/react/hints#hue), the colour of their lines: `ui: { hue: 20 }`. The plugin passes them to its view as written, and the engine to a scene's speaker. | None. |
 
 ### Person
 
@@ -198,7 +198,7 @@ const town: Content = {
 }
 ```
 
-Once the player has typed `Robin`, the plugin shows `Robin` on Sam's card, over their lines, in `cast/person` and `cast/contacts`, and in refusals such as `Robin is not here.`. Until then the token shows as written, so ask for the name before the player can meet them.
+Once the player has typed `Robin`, the plugin shows `Robin` on Sam's card, over their lines, in `cast/contacts`, and in refusals such as `Robin is not here.`. Until then the token shows as written, so ask for the name before the player can meet them.
 
 The name is the entity's, as written, and it's filled in wherever it's read: in [`view.entities`](/docs/reference/view#entitiesview-and-entityview) and through [`entityName`](/docs/reference/entities#entityname) too.
 
@@ -495,7 +495,6 @@ These answer other plugins' code, through the context's [`query`](/docs/referenc
 
 | Query | Answers |
 |---|---|
-| `cast/person` | `{ id, name, portrait, ui }` for that character (`ui` only when they have hints), as the [`speaker` provider](#speakers) gives it, or `undefined`. |
 | `cast/present` | The ids of everyone in the room, in the game's order. Empty with no places plugin or with the player nowhere. |
 | `cast/where` | Where that character is: a place id or `OFFSTAGE`. `undefined` for one the game doesn't have. |
 | `cast/contacts` | Everyone [met](#meeting-people) who has a `call`, each as `{ id, name, desc, portrait, command, disabled }`. `desc` is `null` when they have none, `command` is `call(id)`, and `disabled` is the [refusal](#commands) the call would get now, or `undefined`. |
@@ -518,15 +517,15 @@ const contacts = definePlugin<null>({
 
 ## Speakers
 
-A scene whose [`speaker`](/docs/reference/scenes#sceneview) is a character's id is drawn as them. The plugin's [`speaker` provider](/docs/reference/plugins#speakers) answers with their `name`, their portrait (their `image`, or `art/character/<id>.jpg` if they have none) and their entity's `ui` hints, which the view puts at `view.scene.speaker`. In the worked example, once Ava's talk scene is open:
+A scene whose [`speaker`](/docs/reference/scenes#speakers) is a character's id is drawn as them. A character is an entity, so the engine reads their `name`, their `image` and their entity's `ui` hints itself, and puts them at `view.scene.speaker`. In the worked example, once Ava's talk scene is open:
 
 ```ts
-import { view } from '@ifloom/engine'
-
-view(state, game).scene.speaker   // { id: 'ava', name: 'Ava', portrait: 'art/character/ava.svg', ui: { hue: 20 } }
+view(state, game).scene.speaker   // { id: 'ava', ref: 'character:ava', name: 'Ava', image: 'art/character/ava.svg', ui: { hue: 20 } }
 ```
 
-Talking to someone doesn't set the speaker, because a scene names its own. An id the cast doesn't have is left to the next plugin that has a `speaker` provider. When no plugin knows it, `view.scene.speaker` is `null` and the scene shows no speaker.
+Talking to someone doesn't set the speaker, because a scene names its own. A spoken line written under their name, `Ava: "Morning."`, gets her reference as its beat's `speaker` too.
+
+A character with no `image` has no picture as a speaker. The cast's own view still guesses `art/<kind>/<id>.jpg` for their card, but the scene doesn't, so give everyone who speaks an `image`.
 
 ## The view
 
@@ -729,7 +728,7 @@ The places in `cast/at` aren't checked. An `image` the game gives is listed in t
 
 ## Gotchas
 
-- **No places, nobody here.** Without the places plugin, `present` is empty, `cast/here` never holds and `cast/talk` says `Ava is not here.` Calls, `cast/at`, `cast/met` and the `speaker` provider still work.
+- **No places, nobody here.** Without the places plugin, `present` is empty, `cast/here` never holds and `cast/talk` says `Ava is not here.` Calls, `cast/at`, `cast/met` and a scene's speaker still work.
 - **`'$'` is only bound in a character's own conditions.** In a scene, an action or a trigger, write `of: character('ava')`.
 - **The first entry wins.** A schedule entry or talk option with no `when` always holds, so nothing below it is reached.
 - **A portrait you name must exist.** `ifloom check` reports `no file public/art/character/ava.jpg` for an `image` whose file isn't there. Leave `image` out while the art is still to come. The default path isn't checked, and the React UI leaves out a picture whose file is missing.

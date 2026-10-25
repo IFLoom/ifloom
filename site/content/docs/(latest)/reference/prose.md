@@ -81,7 +81,7 @@ variants: {
 
 How a list draws depends on its weights:
 
-- **Every member weighs 1.** The list rotates, as [`drawVariant`](/docs/reference/scenes#drawvariant) describes. It starts somewhere different each turn and walks one step per draw, so a line doesn't come up twice running until the list has gone round.
+- **Every member weighs 1.** The list rotates. It starts somewhere different each turn and walks one step per draw, so a line doesn't come up twice running until the list has gone round.
 - **Any member weighs something else.** Each draw is a [weighted](/docs/reference/random#weighted) pick from the whole list, seeded by the save, the turn and the count of draws so far. Heavier members come up more often, and the same line can come up twice running.
 
 The members counted are the ones left after a [`variants` block](/docs/reference/scenes#block)'s `gate`, so if every member with a weight is gated out, the rest rotate.
@@ -130,22 +130,6 @@ fillTokens('{{playerName}} has been here {{kv:visits of=storyline:ava}} times.',
 // 'Sam has been here 4 times.'
 ```
 
-## Prose
-
-```ts
-import type { Prose } from '@ifloom/engine'
-
-type Prose = {
-  line: (key: string, state?: GameState) => string | undefined
-  variants: (name: string) => string[]
-  draw: (state: GameState, name: string, members: string[]) => { id: string; remember: Effect }
-}
-```
-
-How [`renderScene`](/docs/reference/scenes#renderscene) reads its words, as part of a [`SceneRuntime`](/docs/reference/scenes#sceneruntime). It's a `ProseStore` plus `draw`. `draw` picks one member of a set of variants for this state and returns an effect that records the pick, so the next draw can rotate. You only need it for a custom runtime. The [default runtime](/docs/reference/scenes#defaultruntime) uses `game.prose` and [`drawVariant`](/docs/reference/scenes#drawvariant).
-
-See [Randomness](/docs/reference/random) for why each draw is named.
-
 ## Markup
 
 The text at a prose key is split into paragraphs on blank lines, and each paragraph becomes one [`SceneBeat`](#scenebeat). The view does this for you, so `view().scene.beats` is the parsed body.
@@ -153,20 +137,14 @@ The text at a prose key is split into paragraphs on blank lines, and each paragr
 | Write | Beat |
 |---|---|
 | Plain paragraph | `{ type: 'text', text }` |
-| `> A thought, in your own head.` | `{ type: 'mono', text }`. The `> ` is only removed from the start of the paragraph. |
-| `Ava: "New beans this week."` | `{ type: 'say', who: 'character', text }` |
+| `Ava: "New beans this week."` | `{ type: 'say', who: 'character', speaker: 'character:ava', text }` |
 | `You: "Just a coffee, then."` | `{ type: 'say', who: 'player', text }` |
 | `"Anything else?"` (a bare quote) | `say`, alternating (see below). |
 | `[[img:place/market]]` | `{ type: 'image', size: 'inline', src }` |
 | `[[wide:scene/market-morning\|The market at seven]]` | `{ type: 'image', size: 'wide', src, alt }` |
-| `[[wide:scene/sign.svg\|A painted sign\|rot]]` | adds `rotate: true` |
 | `[[video:clips/kettle]]` | `{ type: 'video', size: 'inline', src, autoplay, loop, muted, controls }` |
 | `[[widevideo:clips/rain\|controls\|Rain on the window]]` | `{ type: 'video', size: 'wide', src, alt, ... }` |
 | `[[img:@door\|red,night]]` | `image`, with a file picked from the pool `door` |
-| `[[mail]] … [[/mail]]` | `{ type: 'mail', headers, body }` |
-| `[[sticky]] … [[/sticky]]` | `{ type: 'prop', face: 'sticky', text }` |
-| `[[clip]] … [[/clip]]` | `{ type: 'prop', face: 'clip', text }` |
-| `[[diary]] … [[/diary]]` | `{ type: 'prop', face: 'diary', text }` |
 | `[[sound:knock]]` | `{ type: 'sound', track }`. Nothing to draw. |
 | `Ava: "Hi!" [[voice:ava.hello]]` | `say`, with `voice: 'ava.hello'` |
 | `… [[act:answer\|Pick it up]] …` inside a paragraph | The paragraph's `text` or `say` beat gets `spans`, with an `action` span for the choice. See [Inline actions and tooltips](#inline-actions-and-tooltips). |
@@ -178,7 +156,7 @@ A paragraph can't carry a class. A line that should stand out, such as a warning
 
 ### Speech
 
-- **A named line** is a whole paragraph of the form `Name: "…"`, where the name is letters, spaces, `'` and `-`. `You` makes it the player's line, and any other name makes it a character's. The name itself isn't kept on the beat, because the UI takes the speaker from the scene.
+- **A named line** is a whole paragraph of the form `Name: "…"`, where the name is letters in any alphabet, spaces, `'` and `-`. It's the player's line (`who: 'player'`) when the name is the game's word for the player, the string `you` (`You` in English, so a game in Spanish sets `strings: { you: 'Tú' }`), or the name of whoever the player is [playing](/docs/reference/entities#protagonists-you-and-player). Any other name makes it a character's line. When the name is an entity's (its name as the player reads it, tokens filled), the beat's `speaker` is that entity's reference, so a UI can tell Ava's lines from Sam's.
 - **A bare quote** is a whole paragraph wrapped in `"…"` or `“…”`. After a character's line it's the player's. Anywhere else (after the player, after narration, or at the start) it's the character's.
 - **Any other paragraph** resets the alternation.
 
@@ -206,7 +184,7 @@ Ava looks up from the till.
 
 ### Images
 
-Write `[[size:path|…]]`, with size `img` (inline) or `wide`. Optional parts follow the path, each after a `|`. `rot` turns the picture (`rotate: true`), and any other part is the alt text. So `[[img:place/market|rot]]` is rotated with no alt, and `[[img:place/market|rot|The market]]` is the same as `[[img:place/market|The market|rot]]`. The path goes through [`artSrc`](#artsrc).
+Write `[[size:path|…]]`, with size `img` (inline) or `wide`. A part after the path, after a `|`, is the alt text: `[[img:place/market|The market]]`. The path goes through [`artSrc`](#artsrc). How a picture sits on the page is the UI's, written as a [hint](/docs/reference/ui-hints) on its block, such as the React UI's [`tilt`](/docs/react/hints#tilt).
 
 **Gotcha.** The image must be a paragraph on its own. If there's anything else in the paragraph, or a size word other than `img`, `wide`, `video` or `widevideo`, the whole paragraph is drawn as plain text, brackets included.
 
@@ -238,7 +216,7 @@ The React UI draws video beats with [`Video`](/docs/react/components#video). A U
 **Gotchas:**
 - Only one part can be the alt text. The loader reports a second one, because it's usually a misspelt flag (`contols`).
 - A `name=value` part with a name that isn't a flag, such as `speed=2`, is reported as an unknown flag.
-- The loader reports a video flag on a picture, and `rot` on a video.
+- The loader reports a video flag on a picture, and `rot`, which turned a picture before schema 22 and is now read as alt text.
 
 ### Pools
 
@@ -314,7 +292,7 @@ const kitchen: DataScene = {
 - A choice left off the screen (its `when` fails, or a `blocked` entry with `hide` holds) is drawn as its words, with no link. So is one the scene doesn't have, and the loader reports it.
 - One choice is drawn inline once. A second `[[act:]]` for it shows as words, and the loader reports it when both can be on screen together. Two blocks that each have a `when` are taken to be alternatives and aren't reported.
 - A tooltip whose key has no prose shows its words with no note, and the loader reports it. `[[tip:key]]` with no words is shown as written.
-- Inline markup in a `> ` line, a picture's alt text or a fenced section is shown as written.
+- Inline markup in a picture's alt text or a UI piece's words is shown as written.
 - The backlog keeps an inline action as its words, with nothing to press. Tooltips stay.
 
 ### UI pieces
@@ -333,9 +311,9 @@ Boxes, mostly. The window looks over the high street, and [[ui:modal|the radiato
 
 The engine gives a UI piece no meaning. The view hands it to the UI as a `ui` span, `{ type: 'ui', name, text, args }`, with the words in `text`, and the beat's `text` has the words as for any other span. So a piece can't change the state, and it isn't in the log or a replay. Something that should change the game, such as a dialog with buttons that buy things, is an [inline action](#inline-actions-and-tooltips) whose choice opens a [panel](/docs/reference/panels). [Popups and modals](/docs/recipes/modals) shows both.
 
-The React UI draws two pieces itself: `modal`, whose words open a dialog with a prose line, and `image`, whose words open a picture in the viewer. A game adds its own by name. See [Inline pieces](/docs/react/hints#inline-pieces). A UI types its names and arguments by augmenting [`InlineUi`](/docs/reference/ui-hints#inlineui).
+The React UI draws five pieces itself. `modal` opens a dialog with a prose line, and `image` opens a picture in the viewer. `mail`, `prop` and `mono` draw a letter, a note and a sign, as the engine's own beats did before schema 22. A game adds its own by name. See [Inline pieces](/docs/react/hints#inline-pieces). A UI types its names and arguments by augmenting [`InlineUi`](/docs/reference/ui-hints#inlineui).
 
-The content checker reports a piece with no name, a name that isn't an id, no words or an empty argument, markup that isn't closed, and a piece in a `> ` line, where it's shown as written. It doesn't know what a name means, so whether your UI draws it is that UI's check: the React UI's is [`checkUiHints`](/docs/react/hints#checkuihints).
+The content checker reports a piece with no name, a name that isn't an id, no words or an empty argument, and markup that isn't closed. It doesn't know what a name means, so whether your UI draws it is that UI's check: the React UI's is [`checkUiHints`](/docs/react/hints#checkuihints).
 
 ### Bold and italics
 
@@ -355,21 +333,22 @@ To show a star as it is, write `\*`: `Five \* three` shows "Five * three". You r
 - Bold and italics don't go inside each other, and `***words***` isn't read. The stars are shown as written, and the loader reports them.
 - A star that opens and never closes, such as `*sigh`, is shown as written, and the loader reports it. Close it, or write `\*`.
 - Stars around an inline action or a tooltip (`**[[act:go]]**`), or inside their words, are shown as written, and the loader reports the first kind.
-- A `> ` line, a picture's alt text, a fenced section and a choice's label show stars as written.
+- A picture's alt text, a UI piece's words and a choice's label show stars as written.
 - In a TypeScript string, `\*` is written `'\\*'`, because the backslash has to survive the string.
 
-### Fenced sections
+### Letters, notes and signs
 
-`[[mail]]`, `[[sticky]]`, `[[clip]]` and `[[diary]]` open a section that runs to the matching close tag, across blank lines. Text before and after is parsed as usual. In `mail`, leading `From:`, `To:`, `Cc:`, `Bcc:`, `Subject:` and `Date:` lines become `headers` (`{ key, value }`, in order). One blank line after them is skipped, and the rest is `body`.
+The engine's beats are text, speech, pictures, video and sound. How a letter, a sticky note or a sign looks is a UI's, so you write one as a [UI piece](#ui-pieces) on a paragraph of its own. The React UI draws these three:
 
 ```md
-[[mail]]
-From: The Library
-Subject: Your reservation
+[[ui:mail|The atlas you asked for is in. We hold books for a week.|From: The Library|Subject: Your reservation]]
 
-The atlas you asked for is in. We hold books for a week.
-[[/mail]]
+[[ui:prop|Back in five minutes|sticky]]
+
+[[ui:mono|CLOSED FOR STOCKTAKING]]
 ```
+
+A UI piece's words can run over blank lines, so a letter's body can have paragraphs. A pack written before schema 22 used `[[mail]] … [[/mail]]`, `[[sticky]]`, `[[clip]]`, `[[diary]]` and `> ` lines, and [`upgradePack`](/docs/reference/loader#upgradepack) rewrites them into these pieces.
 
 ## SceneBeat
 
@@ -378,9 +357,8 @@ import type { SceneBeat } from '@ifloom/engine'
 
 type SceneBeat = (
   | { type: 'text'; text: string; spans?: InlineSpan[] }
-  | { type: 'mono'; text: string }
-  | { type: 'say'; who: 'character' | 'player'; text: string; voice?: string; spans?: InlineSpan[] }
-  | { type: 'image'; src: string; alt?: string; size: 'inline' | 'wide'; rotate?: boolean }
+  | { type: 'say'; who: 'character' | 'player'; speaker?: EntityRef; text: string; voice?: string; spans?: InlineSpan[] }
+  | { type: 'image'; src: string; alt?: string; size: 'inline' | 'wide' }
   | {
       type: 'video'
       src: string
@@ -392,13 +370,11 @@ type SceneBeat = (
       muted: boolean
       controls: boolean
     }
-  | { type: 'mail'; headers: { key: string; value: string }[]; body: string }
-  | { type: 'prop'; face: 'sticky' | 'clip' | 'diary'; text: string }
   | { type: 'sound'; track: string }
 ) & { ui?: Ui<BlockUi> }
 ```
 
-One piece of a scene. A UI switches on `type`, and draws nothing for `sound`. `ui` is there on the first beat of a [block](/docs/reference/scenes#block) that has [presentation hints](/docs/reference/ui-hints), as the block wrote them, so a UI knows where the block starts and what it asked for.
+One piece of a scene. A UI switches on `type`, and draws nothing for `sound`. A `say` beat's `who` says whether it's the player's line, and `speaker` is the entity it's written under, when it's one's (see [Speech](#speech)). `ui` is there on the first beat of a [block](/docs/reference/scenes#block) that has [presentation hints](/docs/reference/ui-hints), as the block wrote them, so a UI knows where the block starts and what it asked for.
 
 A `text` or `say` beat has `spans` only when its paragraph holds an [inline action or a tooltip](#inline-actions-and-tooltips) that the view could draw, or [bold or italics](#bold-and-italics). Its `text` is the same words without the markup either way.
 
@@ -435,10 +411,14 @@ A UI draws an `action` as a button in the line, a `tip` as a button that shows i
 ```ts
 import { parseBeats } from '@ifloom/engine'
 
-function parseBeats(body: string, hints?: readonly { at: number; ui: Ui<BlockUi> }[]): SceneBeat[]
+function parseBeats(
+  body: string,
+  hints?: readonly { at: number; ui: Ui<BlockUi> }[],
+  find?: (name: string) => { who: 'character' | 'player'; speaker?: EntityRef },
+): SceneBeat[]
 ```
 
-The parser described above. `hints` puts each block's `ui` on the first beat that starts at or after its `at`, a character offset into `body`, as a data scene's render gives them in [`SceneView.blockUi`](/docs/reference/scenes#sceneview). [`view`](/docs/reference/view) already calls it, so you only need it to parse text outside a scene. It leaves `[[act:]]`, `[[tip:]]`, `[[ui:]]` and the stars of bold and italics in the text: the view draws them, and only the view knows the choices and the prose.
+The parser described above. `hints` puts each block's `ui` on the first beat of the block that starts at its `at`, a character offset into `body`, as a hand-built scene's render gives them in [`SceneView.blockUi`](/docs/reference/scenes#sceneview). `find` says whose a named spoken line is. Left out, a line under `You` is the player's and any other is a character's, with no `speaker`. [`view`](/docs/reference/view) already calls it, so you only need it to parse text outside a scene. It leaves `[[act:]]`, `[[tip:]]`, `[[ui:]]` and the stars of bold and italics in the text: the view draws them, and only the view knows the choices and the prose.
 
 ## styledBeats
 
@@ -448,7 +428,7 @@ import { parseBeats, styledBeats } from '@ifloom/engine'
 function styledBeats(beats: readonly SceneBeat[]): SceneBeat[]
 ```
 
-Draws the [bold and italics](#bold-and-italics) and the [UI pieces](#ui-pieces) in `text` and `say` beats that don't go through a scene's view: each gets `bold`, `italic` and `ui` [spans](#inlinespan), and its `text` has the words alone. The view does this for a scene and a room, and the messages and feed plugins do it for their `beats`. Call it on beats you parse yourself:
+Draws the [bold and italics](#bold-and-italics) and the [UI pieces](#ui-pieces) in `text` and `say` beats that don't go through a scene's view: each gets `bold`, `italic` and `ui` [spans](#inlinespan), and its `text` has the words alone. The view does this for a scene and a room, and a plugin's [`context.beats`](/docs/reference/plugins#beats) does it for the blocks it draws. Call it on beats you parse yourself:
 
 ```ts
 styledBeats(parseBeats('The sign says **Closed**.'))

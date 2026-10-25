@@ -13,7 +13,7 @@ import {
   // the game
   GameShell, GameProvider, useGame, Icon, WithPages,
   DefaultLayout, Game, Sidebar, Story, Overlay, Section, When, useHolds, Title, RoomActions, Plugins, usePluginUis,
-  SceneStage, Beat, InlineAction, Tip, InlineTrigger, InlineModal, InlineImage, BUILT_IN_INLINE, Picture, Video, Stage, Hotspot, MediaViewer, assetUrl, ChoiceButton, ChoiceList, PriceTag, usePriceText,
+  SceneStage, Beat, InlineAction, Tip, InlineTrigger, InlineModal, InlineImage, InlineMail, InlineProp, InlineMono, BUILT_IN_INLINE, Picture, Video, Stage, Hotspot, MediaViewer, assetUrl, ChoiceButton, ChoiceList, PriceTag, usePriceText,
   Clock, StatList, StatGauge, EntityTable, Inventory, useClock,
   InputField, InputFields,
   GameMenu, SavesMenu, Backlog, ModManager, useSaves, useBacklog, useMods,
@@ -62,7 +62,7 @@ Every element the UI draws carries a `data-part` naming what kind of thing it is
 | `data-vendor`, `data-closed`, `data-good` | Each vendor's button and counter, a counter while the vendor is closed, and each good. |
 | `data-job`, `data-hired`, `data-fired` | Each job on the board, and on it whether the player holds it or was fired from it. |
 | `data-device`, `data-open-app`, `data-app`, `data-entry` | Each device button, each app icon, an open app, and each entry in an app's list. |
-| `data-frame`, `data-icon`, `data-face` | A device's frame, an app's icon name, and a `prop` beat's face, for a stylesheet to dress. |
+| `data-frame`, `data-icon`, `data-face` | A device's frame, an app's icon name, and an [`InlineProp`](#inlineprop)'s face, for a stylesheet to dress. |
 | `data-beat`, `data-who` | Each beat's type, and on a spoken line, `character` or `player`. |
 | `data-from` | Each message bubble: `them` or `player`. |
 | `data-has-sidebar` | The page, when the layout has a side column. |
@@ -586,12 +586,9 @@ One beat of a scene's body, drawn by its type:
 | Kind | Drawn as |
 |---|---|
 | `text` | A paragraph. Its `spans`, when it has them, are drawn in the line: an inline action as an [`InlineAction`](#inlineaction) and a tooltip as a [`Tip`](#tip). |
-| `mono` | A paragraph in a monospace font. |
 | `say` | A paragraph in `--speech`. The player's own line is in `--player-speech` and indented. A line with a `voice` ends with a button that plays it again, while the [audio player](/docs/react#sound) is running. Its `spans` are drawn as a `text` beat's are. |
-| `image` | A [`Picture`](#picture). It's full width, or at most `max-w-sm` for `size: 'inline'`, and tilted a little with `rotate`. Clicking it opens the [`MediaViewer`](#mediaviewer). |
+| `image` | A [`Picture`](#picture). It's full width, or at most `max-w-sm` for `size: 'inline'`, and tilted a little when its block has the [`tilt`](/docs/react/hints#tilt) hint. Clicking it opens the [`MediaViewer`](#mediaviewer). |
 | `video` | A [`Video`](#video), sized as a picture is. Clicking it opens the `MediaViewer`, unless the clip has controls, which have a full-screen button of their own. |
-| `mail` | A card with its headers (each written with `ui.mailHeader`), then the body. |
-| `prop` | A dashed box, with `data-face` set to its face for a stylesheet to dress. |
 | `sound` | Nothing. The audio player plays it. |
 
 ```tsx
@@ -604,7 +601,7 @@ The [`Backlog`](#backlog), [`MessagesSection`](/docs/plugins/messages#messagesse
 
 While the viewer is on, a picture or a clip sits inside a `viewer-open` button whose `aria-label` is `ui.zoom` ("Enlarge"), followed by the beat's alt text when it has some. A picture whose file is missing draws nothing, button included.
 
-Replaceable as `Beat` in [`components`](#components). Parts: `beat` (with `data-beat`, and `data-who` on a spoken line), `mail-header`, `mail-body`, `voice-replay` and `viewer-open`. A video beat is a `video` part, with `data-beat="video"`.
+Replaceable as `Beat` in [`components`](#components). Parts: `beat` (with `data-beat`, and `data-who` on a spoken line), `voice-replay` and `viewer-open`. A letter, a note or a sign is an [inline piece](/docs/react/hints#inline-pieces) inside a paragraph: see [`InlineMail`](#inlinemail), [`InlineProp`](#inlineprop) and [`InlineMono`](#inlinemono). A video beat is a `video` part, with `data-beat="video"`.
 
 A paragraph's [bold and italics](/docs/reference/prose#bold-and-italics) are a `<strong>` with the part `bold` and an `<em>` with the part `italic`, inside the beat. Restyle them with [`classes`](#classes) or CSS on `[data-part="bold"]`.
 
@@ -658,13 +655,37 @@ function InlineImage(props: InlineProps<'image'>): JSX.Element
 
 The built-in `image`, from `[[ui:image|words|path]]` or `[[ui:image|words|path|alt]]`. The words are an [`InlineTrigger`](#inlinetrigger) that opens the picture at `path` in the [`MediaViewer`](#mediaviewer), the same lightbox a story's pictures open in. The path is resolved as [`[[img:…]]`](/docs/reference/prose#images) resolves it, and `alt` describes the picture, or the words when there's none. It opens even with `viewer: false`, because the words are the only way to see it. Replace it with an `image` of your own in `inline`.
 
+### InlineMail
+
+```tsx
+function InlineMail(props: InlineProps<'mail'>): JSX.Element
+```
+
+The built-in `mail`, from `[[ui:mail|body|From: Ava|Subject: Hello]]`: a letter or an email as a card, the part `inline-mail` with `data-ui="mail"`. Each argument is a header line, drawn as written in a `mail-header` part, and the words are the body, in a `mail-body` part with its line breaks kept. Written as a paragraph of its own, it draws as one. Replace it with a `mail` of your own in `inline`.
+
+### InlineProp
+
+```tsx
+function InlineProp(props: InlineProps<'prop'>): JSX.Element
+```
+
+The built-in `prop`, from `[[ui:prop|words|face]]`: a note in the story's world, such as a sticky note, a cutting or a page from a diary. It's a dashed box, the part `inline-prop`, with `data-face` set to the face (`sticky`, `clip` or `diary`) for a stylesheet to dress. Replace it with a `prop` of your own in `inline`.
+
+### InlineMono
+
+```tsx
+function InlineMono(props: InlineProps<'mono'>): JSX.Element
+```
+
+The built-in `mono`, from `[[ui:mono|words]]`: the words in a monospace face, the part `inline-mono`, for a sign, a screen or a thought typed out. Replace it with a `mono` of your own in `inline`.
+
 ### BUILT_IN_INLINE
 
 ```ts
 const BUILT_IN_INLINE: Readonly<InlineComponents>
 ```
 
-The inline pieces the React UI draws by name: `modal` ([`InlineModal`](#inlinemodal)) and `image` ([`InlineImage`](#inlineimage)). A game's own `inline` of the same name go over them. Use them in a component of your own to fall back on the built-in one.
+The inline pieces the React UI draws by name: `modal` ([`InlineModal`](#inlinemodal)), `image` ([`InlineImage`](#inlineimage)), `mail` ([`InlineMail`](#inlinemail)), `prop` ([`InlineProp`](#inlineprop)) and `mono` ([`InlineMono`](#inlinemono)). A game's own `inline` of the same name go over them. Use them in a component of your own to fall back on the built-in one.
 
 ```tsx
 import type { Components } from '@ifloom/react'
@@ -1807,7 +1828,7 @@ type Say<K extends string = UiStringKey> = (key: K, vars?: Record<string, string
 
 The UI's own words in English, by key without the `ui.` prefix. The full table is on [The React UI](/docs/react#words). `UiStringKey` is one of its keys. Each plugin UI has a table of its own, a `Words`, such as the shop's `SHOP_WORDS`, on the plugin's page.
 
-Among them are `close` (the dialogs' close button), `priceSeparator` (between the parts of a price), `heldCount` (`×{n}` after a thing you hold) and `mailHeader` (`{key}: {value}` for a letter's headers).
+Among them are `close` (the dialogs' close button), `priceSeparator` (between the parts of a price) and `heldCount` (`×{n}` after a thing you hold).
 
 ### uiSay
 

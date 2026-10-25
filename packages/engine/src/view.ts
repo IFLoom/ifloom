@@ -1,7 +1,7 @@
 import { pluginLabel } from './plugin.ts'
 import type { Game } from './game.ts'
 import type { StageView } from './features/media.ts'
-import type { SpeakerView } from './plugin.ts'
+import type { SpeakerView } from './speakers.ts'
 import type { SceneBeat } from './sceneBody.ts'
 import type { SceneUi, Ui } from './features/ui.ts'
 import type { RenderedChoice } from './screen.ts'
@@ -30,8 +30,10 @@ type ViewBase = {
     beats: SceneBeat[]
     /** The scene's tags, for the UI to style it by. */
     tags: string[]
+    /** Who is speaking: the scene's `speaker`, as their entity is, or null. See `SpeakerView`. */
     speaker: SpeakerView | null
-    stageImage: string | null
+    /** The big picture to draw with the scene: the speaker's, else null. */
+    image: string | null
     /** The scene's layered picture and its hotspots, or null when it has none. See `stageView`. */
     stage: StageView | null
     choices: RenderedChoice[]

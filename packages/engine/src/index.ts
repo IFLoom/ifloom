@@ -47,15 +47,16 @@ export type {
   PluginReferences,
   PluginSlice,
   Refusal,
-  SpeakerView,
   StageDef,
   StatModifier,
 } from './plugin.ts'
-export { definePlugin, pluginById, pluginQuery, pluginSpeaker } from './plugin.ts'
+export { definePlugin, pluginById, pluginQuery } from './plugin.ts'
+export type { SpeakerView } from './speakers.ts'
+export { speakerOf } from './speakers.ts'
 
 // Scenes and prose
-export type { Block, Choice, DataScene, Prose, SceneRuntime } from './scene.ts'
-export { bakeScene, defaultRuntime, drawVariant, isDataScene, renderScene } from './scene.ts'
+export type { Block, Choice, DataScene } from './scene.ts'
+export { bakeScene, isDataScene } from './scene.ts'
 export type { VariantMember } from './prose.ts'
 export { entityDesc, entityName, fillTokens, proseStore } from './prose.ts'
 export type { InlinePart, InlineSpan, SceneBeat, VideoFlags, VideoView } from './sceneBody.ts'

@@ -14,10 +14,13 @@
  *   tumble and settle before the block comes in.
  * - `ui.timer` on a block: the timer by that id counts down here, after the
  *   block, while it runs.
+ * - `ui.tilt` on a block: its picture sits at a slight angle, like a photo
+ *   dropped on a table.
  *
  * It also declares the inline pieces it draws in prose by default, by
- * augmenting `InlineUi`: `[[ui:modal|words|key|title]]` and
- * `[[ui:image|words|path|alt]]`.
+ * augmenting `InlineUi`: `[[ui:modal|words|key|title]]`,
+ * `[[ui:image|words|path|alt]]`, and the paper the story shows:
+ * `[[ui:mail|body|header|…]]`, `[[ui:prop|words|face]]` and `[[ui:mono|words]]`.
  */
 import type { Game, RenderedChoice, Roll, SceneBeat, View } from '@ifloom/engine'
 
@@ -52,6 +55,8 @@ declare module '@ifloom/engine' {
     dice?: string
     /** Draw the running timer by this id here, after this block, as a `Countdown`: `ui: { timer: 'phone' }`. */
     timer?: string
+    /** Set the block's picture at a slight angle, like a photo dropped on a table: `ui: { tilt: true }`. */
+    tilt?: boolean
   }
   interface StatUi {
     /** How the sidebar draws it. `'number'` if left out; pips suit a range of 20 or less. */
@@ -66,6 +71,12 @@ declare module '@ifloom/engine' {
     modal: [key: string, title?: string]
     /** `[[ui:image|words|path]]`: the words open the picture at `path` (resolved as `[[img:…]]` resolves it) in the viewer, described by `alt`. */
     image: [path: string, alt?: string]
+    /** `[[ui:mail|body|From: Ava|Subject: Hello]]`: a letter or an email, its header lines as written, then the body. A paragraph of its own. */
+    mail: string[]
+    /** `[[ui:prop|words|sticky]]`: a note in the story's world, by its face (`sticky`, `clip` or `diary`). A paragraph of its own. */
+    prop: [face?: 'sticky' | 'clip' | 'diary']
+    /** `[[ui:mono|words]]`: words in a typewriter face, such as a sign or a screen. */
+    mono: []
   }
   interface GameUi {
     /** How every screen comes and goes when it says nothing itself. `'none'` if left out. */

@@ -267,7 +267,7 @@ describe('bold and italics', () => {
       ...prose,
       'hall.ring': 'An *open line, and ***too many***.',
       'hall.door': '*A **nested** one* and **[[act:knock]]**. Five * three is fine.',
-      'hall.post': '> A *mono line is shown as written.',
+      'hall.post': '[[ui:mono|A *mono line is shown as written.]]',
     }
     const { game } = make({ prose: lines, scenes: [{ ...hall, body: [...(hall.body as { text: string }[]), { text: 'hall.post' }] }] })
     const problems = checkGame(game).problems.map(describeProblem)

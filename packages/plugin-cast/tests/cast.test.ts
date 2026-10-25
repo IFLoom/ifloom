@@ -181,11 +181,12 @@ describe('the cast', () => {
     expect(where(cafe, { character: 'nobody' })).toBeUndefined()
   })
 
-  it('say who is speaking in their scenes', () => {
+  it('are who is speaking in their scenes, as their entity is', () => {
     const { game: g } = game()
     const withSpeaker = { ...g, scenes: g.scenes.map((entry) => (entry.id === 'ava.hi' ? { ...entry, speaker: 'ava' } : entry)) }
     const state = run(withSpeaker, startingState(withSpeaker), go('cafe'), talk('ava'))
-    expect(view(state, withSpeaker).scene.speaker).toEqual({ id: 'ava', name: 'Ava', portrait: 'art/character/ava.jpg', ui: { hue: 20 } })
+    // The core reads the entity: no picture of her own, so none is guessed.
+    expect(view(state, withSpeaker).scene.speaker).toEqual({ id: 'ava', ref: 'character:ava', name: 'Ava', image: null, ui: { hue: 20 } })
   })
 
   it('fill prose tokens in a name wherever it is shown, so the player can name someone', () => {
@@ -201,7 +202,6 @@ describe('the cast', () => {
     const state = { ...start, kv: { ...start.kv, friendName: 'Robin' } }
     expect(shown(state, withSpeaker).present.find((person) => person.id === 'sam')).toMatchObject({ name: 'Robin', fullName: 'Robin Reed' })
     expect(whyNot(state, withSpeaker, call('sam'))).toBe('You cannot reach Robin from here.')
-    expect(pluginQuery(withSpeaker, 'cast/person')!(state, { character: 'sam' })).toMatchObject({ name: 'Robin' })
     expect(view(run(withSpeaker, state, talk('sam')), withSpeaker).scene.speaker).toMatchObject({ name: 'Robin' })
     // Before the player names them, the token shows as written.
     expect(shown(start, withSpeaker).present.find((person) => person.id === 'sam')?.name).toBe('{{friendName}}')

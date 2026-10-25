@@ -76,7 +76,7 @@ data: {
 }
 ```
 
-The plugin lists `cooperates: ['cast']` (see [`cooperates`](/docs/reference/plugins#cooperates)). When the game has the [cast](/docs/plugins/cast), a poster or commenter who is one of its characters is shown with their name, and a poster with their portrait too. The plugin gets these from the cast's [`cast/person`](/docs/plugins/cast#queries) query. Without the cast, every poster is shown as written, with no portrait.
+The plugin lists `cooperates: ['cast']` (see [`cooperates`](/docs/reference/plugins#cooperates)). A poster or commenter who is an [entity](/docs/reference/entities), such as one of the [cast](/docs/plugins/cast)'s characters, is shown with their name, and a poster with their picture too. The plugin reads these with [`speakerOf`](/docs/reference/plugins#speakerof). Anyone else is shown as written, with no portrait.
 
 ### FeedDef
 
@@ -408,9 +408,9 @@ type PostView = {
 |---|---|
 | `from` | The poster, as written. `''` for the player's own. |
 | `name` | The poster's name if they're a [cast](/docs/plugins/cast) character, or `from` as written. On the player's own posts it's the `playerName` key in the game's [kv store](/docs/reference/state#kv) when that's a string, and otherwise the [`feed/you`](#strings) string, `You`. |
-| `portrait` | A cast character's portrait (their `portrait`, or `art/character/<id>.jpg`), or `null`. Always `null` for the player's own. |
-| `text` | The words, filled in. For someone else's post it's the body rendered for the current state, and for the player's own it's the prose line. |
-| `beats` | `text` parsed into [beats](/docs/reference/prose#scenebeat), as a scene's body is, so a picture or video written into a post's words with [markup](/docs/reference/prose#videos) sits in order with them. [Bold and italics](/docs/reference/prose#bold-and-italics) come as spans. |
+| `portrait` | The poster's entity's `image`, through `artSrc`, or `null`. Always `null` for the player's own. |
+| `text` | The words of its beats, joined, for a UI that draws no beats. |
+| `beats` | The words as [beats](/docs/reference/prose#scenebeat), as a scene's body is drawn: someone else's post's body drawn for the current state with [`context.beats`](/docs/reference/plugins#beats), and the player's own post's prose line, so a picture or video written into a post's words with [markup](/docs/reference/prose#videos) sits in order with them. [Bold and italics](/docs/reference/prose#bold-and-italics) come as spans. |
 | `image` | The image path, or `null`. |
 | `video` | The video path, or `null`. The React UI's [`FeedSection`](#feedsection) draws it under the image with [`Video`](/docs/react/components#video). |
 | `turn` | The [turn](/docs/reference/state#turn) it appeared or was posted on. With the [calendar](/docs/plugins/calendar#what-a-turn-is)'s default, a turn is a day. |

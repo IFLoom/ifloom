@@ -67,9 +67,9 @@ import type { SceneView } from '@ifloom/engine'
 
 type SceneView = {
   title?: string
-  speaker?: string               // a speaker id, as a plugin knows it: the cast's characters
+  speaker?: string               // who is talking: an entity, by reference or bare id
   tags?: string[]
-  portrait?: string
+  image?: string
   body?: string                  // the scene's prose, with its markup
   media?: SceneMedia[]
   stage?: MediaStage             // a layered picture with hotspots
@@ -84,15 +84,29 @@ What `render` returns.
 | Field | Meaning |
 |---|---|
 | `title` | The heading. Falls back to `Scene.title`, then the title of a plugin's [stage](/docs/reference/plugins#stage) (with the [places plugin](/docs/plugins/places#the-stage), the room's name), then the game's title. |
-| `speaker` | Who's talking, as an id that a [plugin's `speaker`](/docs/reference/plugins#speakers) knows, such as a [cast](/docs/plugins/cast#speakers) character's. The view shows their name and portrait. Falls back to `Scene.speaker`. Nothing else sets a speaker. The engine never reads one from the scene's id, so `ava.chat` with no `speaker` has none. An id no plugin knows gives no speaker either, so a game without the cast (or another plugin that answers) shows none. |
+| `speaker` | Who's talking: an [entity](/docs/reference/entities), by reference (`'character:ava'`) or by a bare id. See [Speakers](#speakers). Falls back to `Scene.speaker`. Nothing else sets a speaker. The engine never reads one from the scene's id, so `ava.chat` with no `speaker` has none. |
 | `tags` | Words the UI can style the scene by, such as `['letter']` or `['flashback']`. The engine gives them no meaning and passes them to [`view.scene.tags`](/docs/reference/view#the-scene). Falls back to `Scene.tags`, then `[]`. |
-| `portrait` | Replaces the speaker's portrait as the stage image. |
+| `image` | Replaces the speaker's picture as the scene's [`image`](/docs/reference/view#the-scene). |
 | `body` | The scene's prose, with its [markup](/docs/reference/prose#markup). The view parses it into beats. If it's left out, the scene has no body text. |
 | `media` | Pictures and videos that aren't in the prose. See [`SceneMedia`](#scenemedia). |
 | `stage` | A layered picture with hotspots, drawn as the scene's stage. See [The stage](#the-stage). |
 | `audio` | What plays on [background channels](/docs/reference/audio#what-plays-on-a-background-channel) while the scene is open, by channel. It wins over effects, places and the default. `null` silences a channel. |
-| `blockUi` | Where each block with [hints](/docs/reference/ui-hints) starts in `body`, by character, so the view can put its `ui` on the first beat it makes. [`renderScene`](#renderscene) fills it for a data scene; a hand-built render leaves it out. |
+| `blockUi` | Where each block with [hints](/docs/reference/ui-hints) starts in `body`, by character, so the view can put its `ui` on the first beat it makes. A hand-built render that wants hints on its beats fills it; a data scene's hints go on its beats by themselves. |
 | `choices` | Every choice the scene knows about, including hidden ones. |
+
+## Speakers
+
+A scene's `speaker` says who is talking, and the view draws them as [`view.scene.speaker`](/docs/reference/view#speakerview): their name, picture and [hints](/docs/reference/ui-hints). People are [entities](/docs/reference/entities), so the engine reads these from the entity itself, with no plugin to ask.
+
+```ts
+{ id: 'cafe.counter', speaker: 'ava', body: [{ text: 'cafe.counter' }], choices: [] }
+```
+
+- A reference names the entity as written: `'character:ava'`, or `'you'` for whoever the player is [playing](/docs/reference/entities#protagonists-you-and-player).
+- A bare id is `character:<id>` when the game has that entity (the [cast](/docs/plugins/cast)'s kind), else the one entity the game declares with that id. So `'ava'` finds `character:ava`, and `'tom'` finds `pet:tom` when Tom is the only entity called `tom`.
+- An id that names no entity gives no speaker, and the view's `speaker` is `null`.
+
+The speaker's picture is the entity's `image`. With none, there's no picture. The engine doesn't guess a file from the id.
 
 ## SceneChoice
 
@@ -150,7 +164,7 @@ type SceneCtx = {
 }
 ```
 
-The second argument to `render`. It gives a hand-written scene shortcuts into the state, though everything here can also be read from `state`. `kv(key)` reads a key in the player's [kv store](/docs/reference/state#kv), and `kv(key, of)` one in the store `of` names, as the [`kv` condition](/docs/reference/conditions#kv) names it: a [storyline](/docs/reference/storylines)'s (`'storyline:ava'`), the running minigame's (`'minigame'`) or an entity's. It's `undefined` when unset. `picks` is set when the engine draws a [`screen`](/docs/reference/view#screen) and wants the render's new [pool picks](/docs/reference/media#remembered-picks) recorded. Pass it on to [`renderScene`](#renderscene) if you call that yourself.
+The second argument to `render`. It gives a hand-written scene shortcuts into the state, though everything here can also be read from `state`. `kv(key)` reads a key in the player's [kv store](/docs/reference/state#kv), and `kv(key, of)` one in the store `of` names, as the [`kv` condition](/docs/reference/conditions#kv) names it: a [storyline](/docs/reference/storylines)'s (`'storyline:ava'`), the running minigame's (`'minigame'`) or an entity's. It's `undefined` when unset. `picks` is set when the engine draws a [`screen`](/docs/reference/view#screen) and wants the render's new [pool picks](/docs/reference/media#remembered-picks) recorded. The engine records them for a data scene by itself.
 
 ```ts
 render: (state, ctx) => {
@@ -267,7 +281,7 @@ Its prose lives under the keys `ava.hi` and `ava.hi.regular`, the members of the
 
 ### audio
 
-A data scene's `audio` names what plays on [background channels](/docs/reference/audio#channels) while it's open, and `renderScene` passes it on to the `SceneView`. Here the flat goes quiet for a letter:
+A data scene's `audio` names what plays on [background channels](/docs/reference/audio#channels) while it's open, and the render passes it on to the `SceneView`. Here the flat goes quiet for a letter:
 
 ```ts
 { id: 'flat.letter', audio: { music: null, ambience: 'rain' }, body: [{ text: 'flat.letter' }], choices: [/* ... */] }
@@ -288,7 +302,7 @@ type Block = (
 Blocks render in order, and a block whose `when` fails is dropped. Rendered blocks are joined with a blank line between them.
 
 - **`text`** renders the prose at that key. An unwritten key renders nothing.
-- **`variants`** renders one member of a named set of variants, drawn by [`drawVariant`](#drawvariant) (or a custom runtime's `prose.draw`). What the draw needs to remember, so the variants rotate, is added to the effects of every choice. The members are `game.prose.variants(name)`, minus any key the same scene uses as a `text` block and any key with no prose. So a scene's own fixed block named `ava.smalltalk/closing` is never dealt as a random line.
+- **`variants`** renders one member of a named set of variants, drawn as [How variants are drawn](#how-variants-are-drawn) says. What the draw needs to remember, so the variants rotate, is added to the effects of every choice. The members are `game.prose.variants(name)`, minus any key the same scene uses as a `text` block and any key with no prose. So a scene's own fixed block named `ava.smalltalk/closing` is never dealt as a random line.
   - **`gate`** puts conditions on individual members, by key. A member whose gate fails is left out of the draw, so one set of variants can hold a line that only makes sense later.
   - **`art`** names, for a member, another set of variants to draw a picture from. The drawn picture's prose (usually a single image line) goes in front of the drawn member.
 - **`media`** renders a picture or a video, [`SceneMedia`](#scenemedia), with no prose key. Without `at`, it's drawn right there in the body, between the blocks around it.
@@ -335,7 +349,7 @@ The view resolves the stage into [`view.scene.stage`](/docs/reference/view#the-s
 
 **Gotchas.**
 - The loader reports a hotspot with both or neither of `command` and `choice`, a `choice` the scene doesn't have, a rect outside 0 to 100 or running off the edge, two hotspots with one id, a `layer` no layer has, and an unknown pool or tag.
-- `view.scene.stageImage` is still set as before, next to `stage`. A UI decides which to draw.
+- `view.scene.image` is still set as before, next to `stage`. A UI decides which to draw.
 
 ### Choice
 
@@ -385,7 +399,7 @@ type Choice = {
 ```
 
 **Gotchas.**
-- With the [default runtime](#defaultruntime), `per: 'turn'` reads the choice's `last` turn in [`chosen`](/docs/reference/state#chosen), which picking any choice records, so it writes nothing to the kv store. The turn ending clears it, through a [`turn`](/docs/reference/effects#turn) effect or the calendar's sleep. Leaving the scene doesn't. A choice that ends the turn is dated the turn it was picked in, so it's free again on the next.
+- `per: 'turn'` reads the choice's `last` turn in [`chosen`](/docs/reference/state#chosen), which picking any choice records, so it writes nothing to the kv store. The turn ending clears it, through a [`turn`](/docs/reference/effects#turn) effect or the calendar's sleep. Leaving the scene doesn't. A choice that ends the turn is dated the turn it was picked in, so it's free again on the next.
 - For a once-a-turn limit outside a `DataScene`, see [`oncePerTurn`](/docs/reference/progress#onceperturn).
 
 ### panel
@@ -471,16 +485,20 @@ const avasBreak: DataScene = {
 
 ## Running data scenes
 
-A game lists data scenes in `game.scenes` and the engine runs them. The reducer and the view get every scene through [`sceneById`](/docs/reference/game#scenebyid). The first time it's asked for a `DataScene`, it bakes it into a `Scene` that renders with [`defaultRuntime`](#defaultruntime), and keeps the result. You don't have to write a runtime, wrap your scenes or give them a `render`.
+A game lists data scenes in `game.scenes` and the engine runs them. The reducer and the view get every scene through [`sceneById`](/docs/reference/game#scenebyid). The first time it's asked for a `DataScene`, it bakes it into a `Scene` and keeps the result. You don't have to wrap your scenes or give them a `render`.
 
-The default runtime reads:
+A data scene reads:
 
 - **words** from `game.prose` (set by [`loadGame`](/docs/reference/loader#loadgame), or by you with [`proseStore`](/docs/reference/prose#prosestore-1)), with tokens filled in for the save
-- **variants** drawn by [`drawVariant`](#drawvariant), which rotates and starts somewhere different each turn, or draws by weight when a member has a [weight](/docs/reference/prose#variantmember)
+- **variants** drawn as described below
 - **`once: { per: 'turn' }`** from the choice's record in [`chosen`](/docs/reference/state#chosen): spent while it was last picked this turn
 - **conditions and the game's own effects** from the game
 
-Only write a [`SceneRuntime`](#sceneruntime) and call [`renderScene`](#renderscene) yourself when a game needs something different, such as words from another store or its own idea of what "once" counts.
+### How variants are drawn
+
+A `variants` block gets one member of its set each time it's drawn. The [turn](/docs/reference/state#turn) picks a starting offset through its own [hash](/docs/reference/random), mixed with the save's seed. The count of draws so far, kept in the kv key `variants:<name>`, then walks one step at a time from there. So a scene doesn't repeat itself on consecutive visits, and two playthroughs don't deal the same lines. When a member has a [weight](/docs/reference/prose#variantmember), the draw is by weight instead, seeded by the name, the save's seed, the turn and the count. What the draw needs to remember is added to the effects of every choice, so picking one moves the rotation on.
+
+The count is per name, not per scene. Two scenes drawing the same variants share one rotation.
 
 ### bakeScene
 
@@ -488,53 +506,9 @@ Only write a [`SceneRuntime`](#sceneruntime) and call [`renderScene`](#rendersce
 function bakeScene(game: Game, scene: DataScene): Scene
 ```
 
-The `Scene` the engine runs for a data scene. It has the data scene's `id`, `title`, `speaker`, `tags` and `panel`, its `drawnFrom`, `weight`, `when`, `minigame` and `ui` when it has them, and a `render` that calls `renderScene` with `defaultRuntime(game)`. It's built once per `DataScene` object and game, and cached. `sceneById` calls it for you.
+The `Scene` the engine runs for a data scene. It has the data scene's `id`, `title`, `speaker`, `tags` and `panel`, its `drawnFrom`, `weight`, `when`, `minigame` and `ui` when it has them, and a `render` that draws it as above. It's built once per `DataScene` object and game, and cached. `sceneById` calls it for you.
 
 The cache is per game, so the same scene object listed in two games runs with each game's own prose and code.
-
-### defaultRuntime
-
-```ts
-function defaultRuntime(game: Game): SceneRuntime
-```
-
-The runtime described above, for one game. It reads `game.prose` each time it needs a line, so setting `game.prose` after the runtime is made still works. It's a useful base for a custom runtime that changes one thing:
-
-```ts
-import { defaultRuntime, type SceneRuntime } from '@ifloom/engine'
-
-const runtime: SceneRuntime = {
-  ...defaultRuntime(game),
-  spent: (state, scene, choice) => Boolean(state.kv[`once:${scene}.${choice}`]),
-  spend: (state, scene, choice) => [{ kv: `once:${scene}.${choice}`, to: true }],
-}
-```
-
-### drawVariant
-
-```ts
-function drawVariant(
-  state: GameState,
-  name: string,
-  members: string[],
-  weightOf?: (key: string) => number | undefined,
-): { id: string; remember: Effect }
-```
-
-Returns the member of a set of variants this state gets, and the effect that records the draw. The [turn](/docs/reference/state#turn) picks a starting offset through its own [hash](/docs/reference/random), mixed with the save's seed, as `roll(members.length, name, seed, turn)`. The count of draws so far, kept in the kv key `variants:<name>`, then walks one step at a time from there. So a scene doesn't repeat itself on consecutive visits, and two playthroughs don't deal the same lines.
-
-With `weightOf`, and any member weighing something other than 1, it draws by weight instead, with [`weighted`](/docs/reference/random#weighted) seeded by the name, the save's seed, the turn and the count. A weight `weightOf` leaves out counts as 1. The count still goes up, so the next draw is a fresh one. The [default runtime](#defaultruntime) passes the weights from `game.prose`.
-
-```ts
-import { drawVariant } from '@ifloom/engine'
-
-const { id, remember } = drawVariant(state, 'street.weather', ['street.weather.drizzle', 'street.weather.sun', 'street.weather.wind'])
-// id: one of the three; remember: { kv: 'variants:street.weather', to: 1 }
-```
-
-**Gotchas.**
-- It throws on an empty `members`. Data scenes never call it with one, because a block whose members are all gated out renders nothing.
-- The count is per name, not per scene. Two scenes drawing the same variants share one rotation.
 
 ### isDataScene
 
@@ -544,39 +518,7 @@ function isDataScene(scene: Scene | DataScene): scene is DataScene
 
 True for a data scene (it has a `body` list) and false for a hand-written one. Use it in tools that walk `game.scenes`.
 
-## renderScene
-
-```ts
-function renderScene(scene: DataScene, state: GameState, runtime: SceneRuntime, picks?: Record<string, string>): SceneView
-```
-
-Turns a `DataScene` and a state into a `SceneView` with the runtime you give it. A pool pick the save doesn't hold yet is written into `picks`, when you pass it. The engine calls it for you through [`bakeScene`](#bakescene). To render a data scene with a runtime of your own, list a hand-written `Scene` that wraps it, and pass on the context's `picks` so its pictures are remembered:
-
-```ts
-import { renderScene, type Scene } from '@ifloom/engine'
-
-const counter: Scene = {
-  id: 'cafe.counter',
-  render: (state, ctx) => renderScene(counterData, state, runtime, ctx.picks),
-}
-```
-
-### SceneRuntime
-
-```ts
-type SceneRuntime = {
-  prose: Prose
-  game: Game
-  spent: (state: GameState, scene: string, choice: string) => boolean
-  spend: (state: GameState, scene: string, choice: string) => Effect[]
-}
-```
-
-What a custom runtime supplies. You only need one if [`defaultRuntime`](#defaultruntime), the one the engine uses, doesn't suit you.
-
-- `prose` is a [`Prose`](/docs/reference/prose#prose): a [`ProseStore`](/docs/reference/prose#prosestore) plus `draw`, which picks a member and returns an effect that records the pick. [`drawVariant`](#drawvariant) is a ready-made `draw`.
-- `game` is the game, used for conditions and the game's own effects.
-- `spent` and `spend` back `once`, called with `(scene.id, choice.id)`. The default runtime's `spent` reads [`chosen`](/docs/reference/state#chosen) and its `spend` records nothing, since `choose` already counts the choice.
+To draw blocks outside a scene, such as a message's words, a plugin uses [`context.beats`](/docs/reference/plugins#beats).
 
 ## See it in an example
 

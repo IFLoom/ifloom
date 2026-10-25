@@ -1,11 +1,9 @@
 import type { RenderedChoice } from './screen.ts'
 import type { BlockUi, Ui } from './features/ui.ts'
+import type { EntityRef } from './entities.ts'
+import { STRINGS } from './strings.ts'
 
 export type BeatSize = 'inline' | 'wide'
-
-export type MailHeader = { key: string; value: string }
-
-export type PropFace = 'sticky' | 'clip' | 'diary'
 
 /**
  * A piece of a line of prose that holds inline markup, in order. `text` is
@@ -47,10 +45,15 @@ export type SceneBeat =
    */
   (
     | { type: 'text'; text: string; spans?: InlineSpan[] }
-    | { type: 'mono'; text: string }
-    /** A spoken line. `voice` is the track of it read aloud, from `[[voice:id]]` at the end of the line. `spans` as a text beat has them. */
-    | { type: 'say'; who: 'character' | 'player'; text: string; voice?: string; spans?: InlineSpan[] }
-    | { type: 'image'; src: string; alt?: string; size: BeatSize; rotate?: boolean }
+    /**
+     * A spoken line. `who` is `'player'` for the player's own line and
+     * `'character'` for anyone else's. `speaker` is the entity whose line it
+     * is, when the name it is written under is one's (left out when it isn't,
+     * and for a quote with no name). `voice` is the track of it read aloud,
+     * from `[[voice:id]]` at the end of the line. `spans` as a text beat has them.
+     */
+    | { type: 'say'; who: 'character' | 'player'; speaker?: EntityRef; text: string; voice?: string; spans?: InlineSpan[] }
+    | { type: 'image'; src: string; alt?: string; size: BeatSize }
     /**
      * A video clip, from `[[video:…]]` or `[[widevideo:…]]`. Like a GIF unless its
      * flags say otherwise: it plays by itself, loops, has no sound and plays inline.
@@ -67,8 +70,6 @@ export type SceneBeat =
         muted: boolean
         controls: boolean
       }
-    | { type: 'mail'; headers: MailHeader[]; body: string }
-    | { type: 'prop'; face: PropFace; text: string }
     /** A sound played once when the scene is shown, from `[[sound:id]]` on a line of its own. Nothing to draw. */
     | { type: 'sound'; track: string }
   ) & {
@@ -152,7 +153,7 @@ export function mediaParts(
   pool?: string
   path: string
   tags: string[]
-  flags: VideoFlags & { rot?: boolean }
+  flags: VideoFlags
   /** The video flags written, by name, for the checks. */
   videoFlags: string[]
   alt?: string
@@ -176,7 +177,7 @@ export function mediaParts(
           .map((tag) => tag.trim())
           .filter(Boolean)
       : []
-  const flags: VideoFlags & { rot?: boolean } = {}
+  const flags: VideoFlags = {}
   const videoFlags: string[] = []
   const alts: string[] = []
   const unknown: string[] = []
@@ -185,8 +186,7 @@ export function mediaParts(
     if ((VIDEO_FLAGS as readonly string[]).includes(part)) {
       flags[part as (typeof VIDEO_FLAGS)[number]] = true
       videoFlags.push(part)
-    } else if (part === 'rot') flags.rot = true
-    else if (part.startsWith('poster=')) {
+    } else if (part.startsWith('poster=')) {
       flags.poster = part.slice('poster='.length).trim()
       videoFlags.push('poster')
     } else if (/^[a-z]+=\S*$/i.test(part)) unknown.push(part)
@@ -213,15 +213,7 @@ function mediaBeat(tag: string, path: string, rest: string): SceneBeat[] {
       },
     ]
   }
-  return [
-    {
-      type: 'image',
-      src: artSrc(read.path),
-      alt: read.alt,
-      size,
-      ...(read.flags.rot ? { rotate: true } : {}),
-    },
-  ]
+  return [{ type: 'image', src: artSrc(read.path), alt: read.alt, size }]
 }
 
 function quoteOnly(block: string): string | null {
@@ -230,29 +222,26 @@ function quoteOnly(block: string): string | null {
   return wrapped[1]
 }
 
-const MAIL_HEADER = /^(From|To|Cc|Bcc|Subject|Date):\s*(.*)$/i
+/**
+ * Who a named spoken line is: the player's own, or someone else's, and the
+ * entity it is when the name is one's. Given the name the line is written
+ * under. See `lineSpeakers` for the engine's.
+ */
+export type SpeakerFinder = (name: string) => { who: 'character' | 'player'; speaker?: EntityRef }
 
-export function parseMail(text: string): {
-  headers: MailHeader[]
-  body: string
-} {
-  const lines = text.trim().split('\n')
-  const headers: MailHeader[] = []
-  let i = 0
-  while (i < lines.length) {
-    const match = lines[i].match(MAIL_HEADER)
-    if (!match) break
-    headers.push({ key: match[1], value: match[2].trim() })
-    i += 1
-  }
-  if (lines[i] === '') i += 1
-  return { headers, body: lines.slice(i).join('\n').trim() }
-}
+/** The default finder, for beats read with no game: a line under the engine's word for the player (`You`) is the player's, any other a character's. */
+const byWord: SpeakerFinder = (name) => ({ who: name === STRINGS.you ? 'player' : 'character' })
+
+/** A named spoken line: `Name: "…"`, the name letters (in any alphabet), spaces, `'` and `-`. */
+const NAMED = /^(\p{L}[\p{L}\p{M}' -]*):\s*"([\s\S]+)"$/u
 
 /** A block as a spoken line, if it is one: `Name: "…"`, or a bare quote answering the line before. */
-function spoken(block: string, lastSay: 'character' | 'player' | null): Extract<SceneBeat, { type: 'say' }> | null {
-  const named = block.match(/^([A-Za-z][A-Za-z' -]*):\s*"([\s\S]+)"$/)
-  if (named) return { type: 'say', who: named[1] === 'You' ? 'player' : 'character', text: named[2] }
+function spoken(block: string, lastSay: 'character' | 'player' | null, find: SpeakerFinder): Extract<SceneBeat, { type: 'say' }> | null {
+  const named = block.match(NAMED)
+  if (named) {
+    const found = find(named[1].trim())
+    return { type: 'say', who: found.who, ...(found.speaker !== undefined ? { speaker: found.speaker } : {}), text: named[2] }
+  }
   const quoted = quoteOnly(block)
   if (quoted !== null) return { type: 'say', who: lastSay === 'character' ? 'player' : 'character', text: quoted }
   return null
@@ -443,87 +432,100 @@ export function styledBeats(beats: readonly SceneBeat[]): SceneBeat[] {
   })
 }
 
-/** A body's blocks, split at blank lines, trimmed, each with where it starts in the body. Empty ones are left out. */
-function blocksOf(body: string, base: number): { block: string; from: number }[] {
-  const out: { block: string; from: number }[] = []
-  let from = 0
-  for (const piece of body.split('\n\n')) {
-    const block = piece.trim()
-    if (block) out.push({ block, from: base + from })
-    from += piece.length + 2
-  }
+/** Where `[[ui:…]]` pieces sit in a body, by character: a blank line inside one doesn't end its paragraph. */
+function pieceSpans(body: string): [number, number][] {
+  const out: [number, number][] = []
+  for (const match of body.matchAll(/\[\[ui:[^\]]*\]\]/g)) out.push([match.index, match.index + match[0].length])
   return out
 }
 
-/** Beats with where in the body each came from, so a block's hints can find its first. */
-type Placed = { beat: SceneBeat; from: number }
-
-function parseBlocks(body: string, base: number): Placed[] {
-  let lastSay: 'character' | 'player' | null = null
-  return blocksOf(body, base).flatMap(({ block, from }) => beatsOfBlock(block).map((beat) => ({ beat, from })))
-
-  function beatsOfBlock(block: string): SceneBeat[] {
-    const sound = block.match(/^\[\[sound:([^\]]+)\]\]$/)
-    if (sound) return [{ type: 'sound', track: sound[1].trim() }]
-    // A voice line read aloud: `Ava: "Morning." [[voice:ava.morning]]`. Only on a spoken line.
-    const voiced = block.match(/^([\s\S]*?)\s*\[\[voice:([^\]]+)\]\]$/)
-    const said = voiced ? spoken(voiced[1], lastSay) : null
-    if (voiced && said) {
-      lastSay = said.who
-      return [{ ...said, voice: voiced[2].trim() }]
+/** A body's paragraphs, split at blank lines (but never inside a UI piece), trimmed. Empty ones are left out. */
+function paragraphsOf(body: string): string[] {
+  const inside = pieceSpans(body)
+  const out: string[] = []
+  let from = 0
+  let at = body.indexOf('\n\n')
+  while (at >= 0) {
+    if (!inside.some(([start, end]) => at > start && at < end)) {
+      out.push(body.slice(from, at))
+      from = at + 2
     }
-    const media = block.match(new RegExp(`^${MEDIA_MARKUP.source}$`))
-    if (media) {
-      lastSay = null
-      return mediaBeat(media[1], media[2], media[3])
-    }
-    if (block.startsWith('> ')) {
-      lastSay = null
-      return [{ type: 'mono' as const, text: block.slice(2) }]
-    }
-    const line = spoken(block, lastSay)
-    if (line) {
-      lastSay = line.who
-      return [line]
-    }
-    lastSay = null
-    return [{ type: 'text' as const, text: block }]
+    at = body.indexOf('\n\n', at + 2)
   }
+  out.push(body.slice(from))
+  return out.map((piece) => piece.trim()).filter(Boolean)
+}
+
+/**
+ * A piece of a body before it is cut into beats: markup with the hints of
+ * the block that wrote it, or a beat already made, such as a spoken line a
+ * `say` block wrote. Internal: how a data scene's render hands its body to the screen.
+ */
+export type BodyPart = { text: string; ui?: Ui<BlockUi> } | { beat: SceneBeat }
+
+/** The beats of one paragraph. `last` is who spoke the paragraph before, for a bare quote to answer. */
+function beatsOfParagraph(block: string, last: { say: 'character' | 'player' | null }, find: SpeakerFinder): SceneBeat[] {
+  const sound = block.match(/^\[\[sound:([^\]]+)\]\]$/)
+  if (sound) return [{ type: 'sound', track: sound[1].trim() }]
+  // A voice line read aloud: `Ava: "Morning." [[voice:ava.morning]]`. Only on a spoken line.
+  const voiced = block.match(/^([\s\S]*?)\s*\[\[voice:([^\]]+)\]\]$/)
+  const said = voiced ? spoken(voiced[1], last.say, find) : null
+  if (voiced && said) {
+    last.say = said.who
+    return [{ ...said, voice: voiced[2].trim() }]
+  }
+  const media = block.match(new RegExp(`^${MEDIA_MARKUP.source}$`))
+  if (media) {
+    last.say = null
+    return mediaBeat(media[1], media[2], media[3])
+  }
+  const line = spoken(block, last.say, find)
+  if (line) {
+    last.say = line.who
+    return [line]
+  }
+  last.say = null
+  return [{ type: 'text' as const, text: block }]
+}
+
+/**
+ * The beats of a body's parts, in order: each markup part cut into
+ * paragraphs and read, its hints on the first beat it made, and each beat
+ * part as it is. A bare quote answers the spoken line before it, across
+ * parts. Internal; `parseBeats` reads a whole body this way.
+ */
+export function beatsOfParts(parts: readonly BodyPart[], find: SpeakerFinder = byWord): { beats: SceneBeat[]; starts: number[] } {
+  const beats: SceneBeat[] = []
+  const starts: number[] = []
+  const last = { say: null as 'character' | 'player' | null }
+  for (const part of parts) {
+    starts.push(beats.length)
+    if ('beat' in part) {
+      beats.push(part.beat)
+      last.say = part.beat.type === 'say' ? part.beat.who : null
+      continue
+    }
+    const made = paragraphsOf(part.text).flatMap((paragraph) => beatsOfParagraph(paragraph, last, find))
+    if (part.ui && made.length) made[0] = { ...made[0], ui: part.ui }
+    beats.push(...made)
+  }
+  return { beats, starts }
 }
 
 /**
  * A body's beats, in order. `hints` puts each block's `ui` on the first beat
  * that block made: `at` is where the block starts in `body`, by character, as
- * a data scene's render gives it in `SceneView.blockUi`.
+ * a hand-built scene's render gives it in `SceneView.blockUi`. `find` says
+ * who a named spoken line is; left out, a line under `You` is the player's.
  */
-export function parseBeats(body: string, hints?: readonly { at: number; ui: Ui<BlockUi> }[]): SceneBeat[] {
-  const placed: Placed[] = []
-  const fence = /\[\[(mail|sticky|clip|diary)\]\]([\s\S]*?)\[\[\/\1\]\]/g
-  let last = 0
-  let match: RegExpExecArray | null
-  while ((match = fence.exec(body))) {
-    if (match.index > last) {
-      placed.push(...parseBlocks(body.slice(last, match.index), last))
-    }
-    const tag = match[1]
-    const inner = match[2].trim()
-    if (tag === 'mail') {
-      const mail = parseMail(inner)
-      placed.push({ beat: { type: 'mail', headers: mail.headers, body: mail.body }, from: match.index })
-    } else {
-      placed.push({ beat: { type: 'prop', face: tag as PropFace, text: inner }, from: match.index })
-    }
-    last = match.index + match[0].length
-  }
-  if (last < body.length) {
-    placed.push(...parseBlocks(body.slice(last), last))
-  }
-  // Each hint goes on the first beat its block made, if it made one before the next hinted block starts.
+export function parseBeats(body: string, hints?: readonly { at: number; ui: Ui<BlockUi> }[], find?: SpeakerFinder): SceneBeat[] {
   const sorted = [...(hints ?? [])].sort((a, b) => a.at - b.at)
-  sorted.forEach((hint, index) => {
-    const until = sorted[index + 1]?.at ?? Infinity
-    const first = placed.find((entry) => entry.from >= hint.at && entry.from < until)
-    if (first) first.beat = { ...first.beat, ui: hint.ui }
+  if (!sorted.length) return beatsOfParts([{ text: body }], find).beats
+  // Cut the body where each hinted block starts, so its hints go on the first beat it made.
+  const cuts = [0, ...sorted.map((hint) => hint.at)]
+  const parts: BodyPart[] = cuts.map((from, index) => {
+    const text = body.slice(from, cuts[index + 1] ?? body.length)
+    return index === 0 ? { text } : { text, ui: sorted[index - 1].ui }
   })
-  return placed.map((entry) => entry.beat)
+  return beatsOfParts(parts, find).beats
 }

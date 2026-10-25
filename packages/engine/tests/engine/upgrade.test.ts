@@ -707,6 +707,32 @@ describe('content migrations', () => {
     })
   })
 
+  it('turn letters, notes and > lines into UI pieces at schema 22, and a turned picture into its block hint', () => {
+    const v21 = {
+      id: 'mail',
+      schema: 21,
+      prose: {
+        letter: 'A reply lands.\n\n[[mail]]\nFrom: Pat\nSubject: Saturday\n\nMany thanks.\n\nPat\n[[/mail]]\n\n> CLOSED',
+        note: 'On the fridge: [[sticky]]Milk[[/sticky]] and that is all.',
+        pipe: '[[clip]]Two | three[[/clip]]',
+        blot: '[[img:scene/blot|rot|A blot]]',
+      },
+      scenes: [{ id: 'desk', body: [{ text: 'letter' }, { text: 'blot', ui: { reveal: { delay: 200 } } }], choices: [] }],
+    }
+    expect(up(v21)).toEqual({
+      id: 'mail',
+      schema: SCHEMA,
+      prose: {
+        letter: 'A reply lands.\n\n[[ui:mail|Many thanks.\n\nPat|From: Pat|Subject: Saturday]]\n\n[[ui:mono|CLOSED]]',
+        note: 'On the fridge:\n\n[[ui:prop|Milk|sticky]]\n\n and that is all.',
+        // Words a piece can't hold are kept as they are, without their fence.
+        pipe: 'Two | three',
+        blot: '[[img:scene/blot|A blot]]',
+      },
+      scenes: [{ id: 'desk', body: [{ text: 'letter' }, { text: 'blot', ui: { tilt: true, reveal: { delay: 200 } } }], choices: [] }],
+    })
+  })
+
   it('read every kv store the one way at schema 19, with whose in of, and the phase as a kv key', () => {
     const v18 = {
       id: 'baker',

@@ -270,7 +270,6 @@ type Plugin<S = any> = {
 | `stage` | What the screen shows while no scene is open: a title and prose blocks. See [Stage](#stage). |
 | `buttons` | Buttons offered while no scene is open, before the content's `actions`. See [Buttons](#buttons). |
 | `action` | One of its actions that isn't among its buttons right now, by id, for `{ type: 'action', id: '<plugin>/<id>' }`. See [Buttons](#buttons). |
-| `speaker` | Who a scene's `speaker` id is: a name, a colour and a picture. See [Speakers](#speakers). |
 | `content` | [Content](/docs/reference/loader#content) the plugin brings, such as its kinds of entity, merged under the game's. See [Kinds and entities](#kinds-and-entities). |
 | `entities` | [Entities](/docs/reference/entities#entitydef) there at the start, made from the plugin's content when the game is loaded. See [Kinds and entities](#kinds-and-entities). |
 | `traits` | [Traits](/docs/reference/entities#traits) the plugin gives meaning to: named data that entities carry. See [Traits](#traits). |
@@ -290,6 +289,7 @@ type PluginContext<S> = CustomContext & {
   set: (next: S, on?: GameState) => GameState
   apply: (effects: readonly EffectRef[], on?: GameState) => GameState
   picks?: Record<string, string>
+  beats: (blocks: readonly Block[], id: string) => SceneBeat[]
   profile?: unknown
 }
 ```
@@ -304,6 +304,7 @@ Every plugin function gets this alongside the game state. It has everything one 
 - `query(name, args?)` asks another plugin's [query](#queries) by its full name, about the state the function was handed. It returns `undefined` when the game doesn't have that plugin or that query. `args` is `{}` when left out.
 - `apply(effects, on?)` applies a list of [effects](/docs/reference/effects) as content would, and returns the next state. See [Applying effects](#applying-effects).
 - `picks` is only there in [`view`](#the-view). It's where the view's new pool picks go, for the reducer to record. See [The view](#the-view).
+- `beats(blocks, id)` draws [blocks](/docs/reference/scenes#block) as [beats](/docs/reference/prose#scenebeat), as a scene's body is drawn. See [beats](#beats).
 - `profile` is only there in `view`, and only when a [runner](/docs/reference/runner#the-view-cache) with a profile builds it. It's what the plugin's own namespace in the [profile](/docs/reference/profile) holds, frozen so you can't change it, or `undefined` while nothing is stored. See [The profile](#the-profile).
 
 **Gotcha.** Without `on`, `set` builds on the state the function was handed, not on one you've changed since. When a command or effect changes other parts of the game state too, make those changes first and pass the result as `on`. The `redeem` command above does this with [`applyEffects`](/docs/reference/effects#applyeffects):
@@ -630,7 +631,7 @@ A step of `commandMigrations` is given every command in an older log, the engine
 A plugin's members follow one naming rule, as the game's [rules](/docs/reference/rules) do:
 
 - **A hook** runs at an event and returns the next state. It's named `on` and the event: `onTurn`, `onTurnDone`, `onStat`, `onCommand`.
-- **A provider** answers a question and never changes the state. It's named by the noun it gives: `guard`, `price`, `label`, `stage`, `buttons`, `action`, `speaker`, `audio`, `statModifiers`, `view`, `profile`, `entities`.
+- **A provider** answers a question and never changes the state. It's named by the noun it gives: `guard`, `price`, `label`, `stage`, `buttons`, `action`, `audio`, `statModifiers`, `view`, `profile`, `entities`.
 - **A table** of named functions content calls is a plural noun: `conditions`, `effects`, `commands`, `queries`, `values`.
 - **Data** is named by its noun too: `content`, `traits`, `strings`.
 
@@ -929,7 +930,7 @@ import { view } from '@ifloom/engine'
 const card = view(state, game).plugins.loyalty as { stamps: number; free: number } | undefined
 ```
 
-If your view draws pictures from a [pool](/docs/reference/media#pools), pass the context's `picks` to [`stageView`](/docs/reference/view#stageview) or [`renderScene`](/docs/reference/scenes#renderscene). Each new pick is written there, and the reducer records them after the command, so the same picture shows on every visit. The places plugin does this for a room's stage:
+If your view draws pictures from a [pool](/docs/reference/media#pools), pass the context's `picks` to [`stageView`](/docs/reference/view#stageview). Words drawn with [`beats`](#beats) record their own. Each new pick is written there, and the reducer records them after the command, so the same picture shows on every visit. The places plugin does this for a room's stage:
 
 ```ts
 view: (state, { game, slice, picks }) => {
@@ -937,6 +938,27 @@ view: (state, { game, slice, picks }) => {
   return { stage: place ? stageView(state, game, place.stage, place.id, null, picks) : null }
 },
 ```
+
+### beats
+
+```ts
+beats: (blocks: readonly Block[], id: string) => SceneBeat[]
+```
+
+Your plugin's content can hold words as a scene's [blocks](/docs/reference/scenes#block), as a message's body does. `context.beats` draws them as beats, the way a scene's body is drawn:
+
+- the blocks whose `when` holds, with their words filled in for this save
+- variants drawn and pools picked under `id`, so the same block shows the same line or picture on every visit
+- spoken lines with their [speakers](/docs/reference/prose#speech)
+- bold, italics and [UI pieces](/docs/reference/prose#ui-pieces) as spans, through [`styledBeats`](/docs/reference/prose#styledbeats)
+
+```ts
+view: (state, { beats, game }) => ({
+  notes: notesOf(game).map((note) => ({ id: note.id, beats: beats(note.body, note.id) })),
+}),
+```
+
+Inline actions and tooltips stay in the words as written, because only a scene offers choices. In `view`, the pool picks it makes are recorded with the rest.
 
 ## Stage
 
@@ -1049,73 +1071,26 @@ It comes third of [four levels](/docs/reference/audio#what-plays-on-a-background
 - The engine asks it on every [`view`](/docs/reference/view) and after every command, so keep it cheap.
 - The content checker doesn't see the tracks it names. Say them in [`references`](#references), as `{ channel, track }`.
 
-## Speakers
+## Who someone is
+
+A plugin doesn't say who a scene's speaker is. People are [entities](/docs/reference/entities), so the engine reads their name, picture and hints from the entity itself (see [Speakers](/docs/reference/scenes#speakers)). A plugin that brings people gives them as entities, in its [`content`](#kinds-and-entities) or its `entities`, and a scene names one as its `speaker`.
+
+A plugin that shows who sent something, as the messages and feed plugins do, asks the same way with [`speakerOf`](#speakerof).
+
+### speakerOf
 
 ```ts
-speaker?: (id: string, state: GameState, context: PluginContext<S>) => SpeakerView | undefined
+import { speakerOf } from '@ifloom/engine'
 
-type SpeakerView = {
-  id: string
-  name: string
-  portrait: string | null
-  ui?: Ui<EntityUi>
-}
+function speakerOf(state: GameState, game: Game, id: string): SpeakerView | null
 ```
 
-Who a scene's [`speaker`](/docs/reference/scenes#sceneview) id is, for the screen. The view asks each plugin in the order `game.plugins` lists them, and the first that returns a [`SpeakerView`](/docs/reference/view#speakerview) becomes [`view.scene.speaker`](/docs/reference/view#the-scene). Return `undefined` for an id that isn't yours, so the next plugin can answer.
-
-| Field | What it is |
-|---|---|
-| `id` | The speaker id, as the scene named it. |
-| `name` | What the player reads over their lines. |
-| `portrait` | Their picture, as a path or URL. `null` for none. |
-| `ui` | Their [presentation hints](/docs/reference/ui-hints), such as the React UI's [`hue`](/docs/react/hints#hue). A plugin whose speakers are entities passes on [`entityUi`](/docs/reference/ui-hints#entityui). |
-
-With no plugin answering, the scene has no speaker. The [cast](/docs/plugins/cast#speakers) answers for its characters, such as Ava in the showcase. The id is never guessed from the scene's id.
-
-A plugin that keeps the café's regulars says who's talking from its own content:
+Who an id is, as the view draws a scene's speaker: a [`SpeakerView`](/docs/reference/view#speakerview) with the entity's name (tokens filled), picture and hints, or `null` when the id names no entity. A bare id is `character:<id>`, else the one entity the game declares with that id. A reference is read as written, and `'you'` is whoever the player is playing.
 
 ```ts
-import { definePlugin, type EntityUi, type Ui } from '@ifloom/engine'
-
-type Regular = { id: string; name: string; portrait?: string; ui?: Ui<EntityUi> }
-
-const regulars = definePlugin<null>({
-  id: 'regulars',
-  version: 1,
-  speaker: (id, _state, { game }) => {
-    const regular = (game.data?.regulars?.people as readonly Regular[] | undefined)?.find((entry) => entry.id === id)
-    return regular ? { id, name: regular.name, portrait: regular.portrait ?? null, ...(regular.ui ? { ui: regular.ui } : {}) } : undefined
-  },
-})
-
-// in your content
-data: { regulars: { people: [{ id: 'mo', name: 'Mo', ui: { hue: 200 } }] } },
-scenes: [{ id: 'counter', speaker: 'mo', body: [{ text: 'counter' }], choices: [] }],
+speakerOf(state, game, 'ava')      // { id: 'ava', ref: 'character:ava', name: 'Ava', image: 'art/character/ava.svg', ui: { hue: 20 } }
+speakerOf(state, game, 'Council')  // null: show the name as written
 ```
-
-```ts
-view(state, game).scene.speaker   // { id: 'mo', name: 'Mo', portrait: null, ui: { hue: 200 } }
-```
-
-### pluginSpeaker
-
-```ts
-import { pluginSpeaker } from '@ifloom/engine'
-
-function pluginSpeaker(game: Game, state: GameState, id: string): SpeakerView | undefined
-```
-
-What the first plugin that knows `id` says it is, or `undefined` if none does. The view calls it for every scene with a speaker. A tool or a UI drawing a speaker outside a scene, such as a list of who's in the room, can call it the same way.
-
-```ts
-pluginSpeaker(game, state, 'mo')?.name   // 'Mo'
-pluginSpeaker(game, state, 'nobody')     // undefined
-```
-
-**Gotchas.**
-- The first answer wins, so for an id two plugins both know, the one listed earlier in `game.plugins` decides.
-- The loader doesn't check a scene's `speaker` against any plugin. An id nobody knows gives no speaker, without a problem.
 
 ## Kinds and entities
 

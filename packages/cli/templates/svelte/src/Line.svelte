@@ -4,7 +4,7 @@
 
   // A line's words, with bold and italics, and its inline actions and tooltips as buttons in it. A tooltip, or a
   // greyed-out action's reason, is a note after the button that shows on hover, on focus
-  // and on a tap (see `.note` in styles.css). A UI piece (`[[ui:…]]`) shows its words.
+  // and on a tap (see `.note` in styles.css). A UI piece (`[[ui:…]]`) shows its words, styled by its name.
   let { text, spans }: { text: string; spans?: InlineSpan[] } = $props()
   const id = $props.id()
   let open: number | null = $state(null)
@@ -16,7 +16,7 @@
   const note = (span: InlineSpan) => (span.type === 'tip' ? span.tip : span.type === 'action' ? span.choice.disabled : undefined)
 </script>
 
-{#if !spans}{text}{:else}{#each spans as span, at (at)}{#if span.type === 'text'}{span.text}{:else if span.type === 'bold'}<strong>{span.text}</strong>{:else if span.type === 'italic'}<em>{span.text}</em>{:else if span.type === 'ui'}{span.text}{:else}<button
+{#if !spans}{text}{:else}{#each spans as span, at (at)}{#if span.type === 'text'}{span.text}{:else if span.type === 'bold'}<strong>{span.text}</strong>{:else if span.type === 'italic'}<em>{span.text}</em>{:else if span.type === 'ui'}<span class="ui" data-ui={span.name}>{span.text}</span>{:else}<button
         type="button"
         class={span.type === 'tip' ? 'tip' : 'inline-action'}
         aria-disabled={span.type === 'action' && span.choice.disabled ? 'true' : undefined}

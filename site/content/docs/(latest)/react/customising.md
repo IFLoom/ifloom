@@ -160,9 +160,9 @@ Some parts carry a second attribute that says more:
 
 | Attribute | On | Values |
 |---|---|---|
-| `data-beat` | Every `beat`, and a video beat's `video` | The beat's type: `text`, `mono`, `say`, `image`, `video`, `mail` or `prop`. |
+| `data-beat` | Every `beat`, and a video beat's `video` | The beat's type: `text`, `say`, `image` or `video`. |
 | `data-who` | A `say` beat | `character` or `player`. |
-| `data-face` | A `prop` beat | The prop's face, such as a sign or a note. |
+| `data-face` | An `inline-prop` | The note's face, `sticky`, `clip` or `diary`. |
 | `data-from` | Every `bubble` | `them` or `player`. |
 | `data-has-sidebar` | The `page` | Present when the layout has a side column. |
 | `data-frame` | A device's `dialog` | The device's frame: `phone`, `laptop`, or a name of the game's own. |
@@ -341,7 +341,7 @@ import './styles.css'
 
 const TownBeat: Override<{ beat: SceneBeat }> = ({ beat, Default }) => {
   const line = usePart('beat', 'border-l-2 border-speech pl-4 leading-prose italic')
-  const letter = usePart('beat', 'mx-auto max-w-md rotate-1 bg-card p-6 font-heading shadow-card')
+  const picture = usePart('beat', 'mx-auto max-w-md rotate-1 rounded-lg shadow-card')
   if (beat.type === 'say' && beat.who === 'character') {
     return (
       <blockquote {...line} data-beat="say" data-who="character">
@@ -349,13 +349,7 @@ const TownBeat: Override<{ beat: SceneBeat }> = ({ beat, Default }) => {
       </blockquote>
     )
   }
-  if (beat.type === 'mail') {
-    return (
-      <article {...letter} data-beat="mail">
-        <p className="whitespace-pre-wrap">{beat.body}</p>
-      </article>
-    )
-  }
+  if (beat.type === 'image') return <img {...picture} data-beat="image" src={beat.src} alt={beat.alt ?? ''} />
   return <Default beat={beat} />
 }
 
@@ -547,8 +541,11 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `beats` | The scene's text, holding every beat. |
 | `beat` | One beat. Carries `data-beat` with its kind, and a `say` beat carries `data-who`. |
 | `reveal` | The beats from a block with a [`reveal`](/docs/react/hints#reveal) hint, which wait for it. Carries `data-reveal` with its transition. The choices waiting for the last reveal are one too, with `data-reveal-choices`. |
-| `mail-header` | One header line of a letter (a `mail` beat). |
+| `inline-mail` | A letter, from `[[ui:mail\|…]]`. |
+| `mail-header` | One header line of a letter. |
 | `mail-body` | A letter's body. |
+| `inline-prop` | A note, from `[[ui:prop\|…]]`. Carries `data-face`. |
+| `inline-mono` | Words in a monospace face, from `[[ui:mono\|…]]`. |
 | `voice-replay` | The button after a spoken line that plays its voice again. |
 | `inline-action` | An [inline action](/docs/react/components#inlineaction) in the prose, a button inside the line. Carries `data-choice`, and `data-disabled` while it's greyed out (it stays focusable, with `aria-disabled`). Each preset styles it as its own kind of link. |
 | `tip` | A [tooltip](/docs/react/components#tip)'s words in the prose, a button underlined with dots. |

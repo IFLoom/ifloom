@@ -193,7 +193,7 @@ type ProseStore = {
 }
 ```
 
-The words a data scene draws on. `line` gives the text for a key, filled in for this save. `variants` gives the member keys of a named set of variants, in order. `weight` gives a member's [weight](/docs/reference/prose#variantmember) in a set, 1 if it has none, and every member weighs 1 if it's left out. `keys` lists every key the store has words for, so the [content checker](/docs/reference/checks) can read the markup in all of them. Without it, the checker reads only the keys content names. Data scenes read it through the [default runtime](/docs/reference/scenes#defaultruntime). See [Prose and markup](/docs/reference/prose).
+The words a data scene draws on. `line` gives the text for a key, filled in for this save. `variants` gives the member keys of a named set of variants, in order. `weight` gives a member's [weight](/docs/reference/prose#variantmember) in a set, 1 if it has none, and every member weighs 1 if it's left out. `keys` lists every key the store has words for, so the [content checker](/docs/reference/checks) can read the markup in all of them. Without it, the checker reads only the keys content names. Data scenes read it as they're [drawn](/docs/reference/scenes#running-data-scenes). See [Prose and markup](/docs/reference/prose).
 
 **Gotcha.** A game with data scenes and no `prose` renders them empty, because every line counts as unwritten. [`loadGame`](/docs/reference/loader#loadgame) sets it. A game built by hand sets it with [`proseStore`](/docs/reference/prose#prosestore-1).
 

@@ -8,8 +8,10 @@
  * about it.
  */
 import { say } from './strings.ts'
-import { pluginButtons, pluginCommand, pluginSpeaker, type SpeakerView, pluginPrices, pluginStage, pluginsWatch, pluginViews } from './plugin.ts'
-import { defaultRuntime, renderScene } from './scene.ts'
+import { pluginButtons, pluginCommand, pluginPrices, pluginStage, pluginsWatch, pluginViews } from './plugin.ts'
+import { defaultRuntime, renderScene, type RenderedScene } from './scene.ts'
+import { blockBeats } from './beats.ts'
+import { lineSpeakers, speakerOf, type SpeakerView } from './speakers.ts'
 import { effectsIn, rendering, warningIn, whyNotIn, type Rendering } from './availability.ts'
 import { formatStat, statDef } from './features/stats.ts'
 import { holds } from './condition.ts'
@@ -17,7 +19,7 @@ import { lockIn, lockedOut } from './locks.ts'
 import { sceneById, type ActionDef, type Blocked, type Game, type SceneMedia } from './game.ts'
 import { actionById } from './action.ts'
 import { runsAsAction } from './features/actions.ts'
-import { artSrc, inlineMarkup, mediaType, parseBeats, videoView, type InlineSpan, type SceneBeat } from './sceneBody.ts'
+import { artSrc, beatsOfParts, inlineMarkup, mediaType, parseBeats, videoView, type BodyPart, type InlineSpan, type SceneBeat } from './sceneBody.ts'
 import {
   mediaMarkup,
   poolPick,
@@ -86,8 +88,10 @@ export type ScreenScene = {
   beats: SceneBeat[]
   /** The scene's tags, for the UI to style it by. */
   tags: string[]
+  /** Who is speaking: the scene's `speaker`, as their entity is. Null with none, or one that names no entity. */
   speaker: SpeakerView | null
-  stageImage: string | null
+  /** The big picture to draw with the scene: the speaker's, else null. */
+  image: string | null
   /** The scene's presentation hints (the room's stage's, when no scene is open), as written; left out with none. See `SceneUi`. */
   ui?: Ui<SceneUi>
 }
@@ -167,25 +171,17 @@ export function screen(state: GameState, game: Game, options: ViewOptions = {}):
 /** The room itself, when no scene is playing over it. */
 function standing(state: GameState, game: Game, stage: ReturnType<typeof pluginStage>, drawing: Drawing): ScreenScene {
   // A plugin's stage; with none, there is nothing to read but the buttons.
-  const rendered = stage?.body ? renderScene({ id: stage.id, body: [...stage.body], choices: [] }, state, defaultRuntime(game), drawing.picks) : { body: '' }
-  const body = rendered.body ?? ''
+  const rendered = stage?.body ? renderScene({ id: stage.id, body: [...stage.body], choices: [] }, state, defaultRuntime(game), drawing.picks) : undefined
+  const body = rendered?.body ?? ''
   return {
     id: null,
     key: stage ? `room:${stage.id}` : 'room',
     title: stage?.title ?? game.title,
     body,
-    beats: beatsOf(
-      state,
-      game,
-      stage?.id ?? '',
-      body,
-      'media' in rendered ? rendered.media : undefined,
-      drawing.picks,
-      'blockUi' in rendered ? rendered.blockUi : undefined,
-    ),
+    beats: beatsOf(state, game, stage?.id ?? '', rendered ?? { parts: [] }, rendered?.media, drawing.picks),
     tags: [],
     speaker: null,
-    stageImage: null,
+    image: null,
     ...withUi(stage?.ui),
   }
 }
@@ -201,40 +197,40 @@ function playingScene(state: GameState, game: Game, under: ScreenScene, drawing:
   if (!running || !def) return null
   const owner = `minigame.${def.id}`
   const label = def.states[running.state]?.label
-  const rendered =
-    label !== undefined ? renderScene({ id: owner, body: [{ text: label }], choices: [] }, state, defaultRuntime(game), drawing.picks) : { body: '' }
-  const body = rendered.body ?? ''
+  const beats = label !== undefined ? blockBeats(state, game, [{ text: label }], owner, drawing.picks) : []
   const { ui: _under, ...rest } = under
   return {
     ...rest,
     key: `minigame:${def.id}`,
     title: def.label ?? under.title,
-    body,
-    beats: beatsOf(state, game, owner, body, undefined, drawing.picks),
+    body: beats.flatMap((beat) => ('text' in beat ? [beat.text] : [])).join('\n\n'),
+    beats,
   }
 }
 
 /**
  * A body's beats, with media that opens or closes it around them. Media with no
  * `at` in a hand-built scene's list goes at the end, as it always has; a data
- * scene's `{ media }` blocks are already in the body, in place.
+ * scene's `{ media }` blocks are already in the body, in place. `body` is a
+ * data scene's parts, or a hand-built scene's text with where its hinted
+ * blocks start.
  */
 function beatsOf(
   state: GameState,
   game: Game,
   owner: string,
-  body: string,
+  body: { parts: readonly BodyPart[] } | { text: string; hints?: readonly { at: number; ui: Ui<BlockUi> }[] },
   media: readonly SceneMedia[] | undefined,
   picks: Record<string, string>,
-  hints?: readonly { at: number; ui: Ui<BlockUi> }[],
 ): SceneBeat[] {
   const placed = (media ?? []).flatMap((item, index) => {
     const shown = resolveMedia(item, state, game, owner, `media.${index}`, featureContext(), picks)
     return shown ? [{ at: shown.at ?? 'end', beats: parseBeats(mediaMarkup(shown)) }] : []
   })
+  const find = lineSpeakers(state, game)
   return [
     ...placed.filter((item) => item.at === 'lead').flatMap((item) => item.beats),
-    ...parseBeats(body, hints),
+    ...('parts' in body ? beatsOfParts(body.parts, find).beats : parseBeats(body.text, body.hints, find)),
     ...placed.filter((item) => item.at !== 'lead').flatMap((item) => item.beats),
   ]
 }
@@ -431,7 +427,7 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
         beats: parseBeats(say(game, 'momentPassed')),
         tags: [],
         speaker: null,
-        stageImage: null,
+        image: null,
       },
       choices: [{ id: 'leave', label: say(game, 'lookAround'), command: { type: 'leave' }, effects: [] }],
       stage: null,
@@ -441,10 +437,18 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
   // again here would overwrite a declarative scene's composed body with
   // whatever single block happens to share the scene's id.
   const rendered = drawing.rendered.scene()!
+  const parts = (rendered as Partial<RenderedScene>).parts
   // A hand-built scene's body may still ask pools for files; a data scene's has had them filled in.
-  const body = resolvePoolMarkup(rendered.body ?? '', state, game, state.sceneId, 'body', featureContext(), drawing.picks)
+  const body = parts ? (rendered.body ?? '') : resolvePoolMarkup(rendered.body ?? '', state, game, state.sceneId, 'body', featureContext(), drawing.picks)
   // A block's hints say where it starts in the body; a hand-built body whose pools were just filled has none.
-  const beats = beatsOf(state, game, state.sceneId, body, rendered.media, drawing.picks, body === rendered.body ? rendered.blockUi : undefined)
+  const beats = beatsOf(
+    state,
+    game,
+    state.sceneId,
+    parts ? { parts } : { text: body, hints: body === rendered.body ? rendered.blockUi : undefined },
+    rendered.media,
+    drawing.picks,
+  )
   const choices: ScreenChoice[] = rendered.choices
     .filter((choice) => choice.visible !== false)
     .map((choice) => {
@@ -471,7 +475,8 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
   // Choices the prose holds inline are drawn there, and leave the list. A stage's hotspot may still name one.
   const labels = new Map(rendered.choices.map((choice) => [choice.id, choice.label]))
   const inline = inlineBeats(beats, choices, (id) => labels.get(id), state, game)
-  const speaker = speakerOf(rendered.speaker ?? scene.speaker, game, state)
+  const named = rendered.speaker ?? scene.speaker
+  const speaker = named ? speakerOf(state, game, named) : null
   return {
     audio: rendered.audio,
     scene: {
@@ -482,17 +487,12 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
       beats: inline.beats,
       tags: rendered.tags ?? scene.tags ?? [],
       speaker,
-      stageImage: rendered.portrait ?? speaker?.portrait ?? null,
+      image: rendered.image ?? speaker?.image ?? null,
       ...withUi(scene.ui),
     },
     choices: inline.offered,
     stage: drawStage(state, game, rendered.stage, state.sceneId, choices, drawing),
   }
-}
-
-/** Who is speaking: the id the scene names, as a plugin knows them. Never guessed from the scene's id. */
-function speakerOf(id: string | undefined, game: Game, state: GameState): SpeakerView | null {
-  return id ? (pluginSpeaker(game, state, id) ?? null) : null
 }
 
 /** A screen's choice as the view shows it: without its effects. */

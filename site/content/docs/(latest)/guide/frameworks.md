@@ -401,18 +401,15 @@ The templates lay this out as a page in one file of its own: `src/Layout.vue`, `
 
 ## Beats
 
-A scene's prose comes as [beats](/docs/reference/prose#scenebeat): a paragraph, a spoken line, a picture, a video, a letter or a prop such as a sticky note. Draw `view.scene.beats` rather than `view.scene.body`, which is the raw prose with its markup.
+A scene's prose comes as [beats](/docs/reference/prose#scenebeat): a paragraph, a spoken line, a picture or a video. A letter or a sticky note is a [UI piece](/docs/reference/prose#letters-notes-and-signs) inside a paragraph, which the templates show as its words. Draw `view.scene.beats` rather than `view.scene.body`, which is the raw prose with its markup.
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/main.ts
-/** One paragraph of a scene: narration, a spoken line, a picture, a letter. A sound beat is heard, not drawn. */
+/** One paragraph of a scene: narration, a spoken line, a picture, a clip. A sound beat is heard, not drawn. */
 function drawBeat(beat: SceneBeat): void {
   switch (beat.type) {
     case 'text':
       add(root, 'p', beat.text)
-      break
-    case 'mono':
-      add(root, 'p', beat.text, 'beat-mono')
       break
     case 'say':
       add(root, 'p', beat.text, 'beat-say').dataset.who = beat.who
@@ -431,15 +428,6 @@ function drawBeat(beat: SceneBeat): void {
         playsInline: true,
       })
       break
-    case 'mail': {
-      const mail = add(root, 'div', '', 'beat-prop')
-      for (const line of beat.headers) add(mail, 'p', `${line.key}: ${line.value}`)
-      add(mail, 'p', beat.body)
-      break
-    }
-    case 'prop':
-      add(root, 'div', beat.text, 'beat-prop')
-      break
   }
 }
 ```
@@ -448,13 +436,11 @@ function drawBeat(beat: SceneBeat): void {
 // src/Beat.tsx
 import type { SceneBeat } from '@ifloom/engine'
 
-/** One paragraph of a scene: narration, a spoken line, a picture, a letter. A sound beat is heard, not drawn. */
+/** One paragraph of a scene: narration, a spoken line, a picture, a clip. A sound beat is heard, not drawn. */
 export function Beat({ beat }: { beat: SceneBeat }) {
   switch (beat.type) {
     case 'text':
       return <p>{beat.text}</p>
-    case 'mono':
-      return <p className="beat-mono">{beat.text}</p>
     case 'say':
       return (
         <p className="beat-say" data-who={beat.who}>
@@ -476,19 +462,6 @@ export function Beat({ beat }: { beat: SceneBeat }) {
           playsInline
         />
       )
-    case 'mail':
-      return (
-        <div className="beat-prop">
-          {beat.headers.map((line) => (
-            <p key={line.key}>
-              {line.key}: {line.value}
-            </p>
-          ))}
-          <p>{beat.body}</p>
-        </div>
-      )
-    case 'prop':
-      return <div className="beat-prop">{beat.text}</div>
     default:
       return null
   }
@@ -500,13 +473,12 @@ export function Beat({ beat }: { beat: SceneBeat }) {
 <script setup lang="ts">
 import type { SceneBeat } from '@ifloom/engine'
 
-// One paragraph of a scene: narration, a spoken line, a picture, a letter. A sound beat is heard, not drawn.
+// One paragraph of a scene: narration, a spoken line, a picture, a clip. A sound beat is heard, not drawn.
 defineProps<{ beat: SceneBeat }>()
 </script>
 
 <template>
   <p v-if="beat.type === 'text'">{{ beat.text }}</p>
-  <p v-else-if="beat.type === 'mono'" class="beat-mono">{{ beat.text }}</p>
   <p v-else-if="beat.type === 'say'" class="beat-say" :data-who="beat.who">{{ beat.text }}</p>
   <img v-else-if="beat.type === 'image'" class="beat-image" :src="beat.src" :alt="beat.alt ?? ''" />
   <video
@@ -520,11 +492,6 @@ defineProps<{ beat: SceneBeat }>()
     :controls="beat.controls"
     playsinline
   />
-  <div v-else-if="beat.type === 'mail'" class="beat-prop">
-    <p v-for="line in beat.headers" :key="line.key">{{ line.key }}: {{ line.value }}</p>
-    <p>{{ beat.body }}</p>
-  </div>
-  <div v-else-if="beat.type === 'prop'" class="beat-prop">{{ beat.text }}</div>
 </template>
 ```
 
@@ -533,14 +500,12 @@ defineProps<{ beat: SceneBeat }>()
 <script lang="ts">
   import type { SceneBeat } from '@ifloom/engine'
 
-  // One paragraph of a scene: narration, a spoken line, a picture, a letter. A sound beat is heard, not drawn.
+  // One paragraph of a scene: narration, a spoken line, a picture, a clip. A sound beat is heard, not drawn.
   let { beat }: { beat: SceneBeat } = $props()
 </script>
 
 {#if beat.type === 'text'}
   <p>{beat.text}</p>
-{:else if beat.type === 'mono'}
-  <p class="beat-mono">{beat.text}</p>
 {:else if beat.type === 'say'}
   <p class="beat-say" data-who={beat.who}>{beat.text}</p>
 {:else if beat.type === 'image'}
@@ -556,17 +521,10 @@ defineProps<{ beat: SceneBeat }>()
     controls={beat.controls}
     playsinline
   ></video>
-{:else if beat.type === 'mail'}
-  <div class="beat-prop">
-    {#each beat.headers as line (line.key)}<p>{line.key}: {line.value}</p>{/each}
-    <p>{beat.body}</p>
-  </div>
-{:else if beat.type === 'prop'}
-  <div class="beat-prop">{beat.text}</div>
 {/if}
 ```
 
-A spoken line's `who` is `'character'` or `'player'`, which the stylesheet uses to set the player's lines apart. The speaker's name and picture are `view.scene.speaker` and `view.scene.stageImage`. A sound beat draws nothing, because the audio player plays it.
+A spoken line's `who` is `'character'` or `'player'`, which the stylesheet uses to set the player's lines apart. The scene's speaker is `view.scene.speaker`, with their name and picture, and the big picture is `view.scene.image`. A spoken line's `speaker` names the entity it's written under, when there is one. A sound beat draws nothing, because the audio player plays it.
 
 ## Inputs
 
@@ -905,7 +863,7 @@ The [view reference](/docs/reference/view) lists every field. Beyond what the te
 
 - `when`, where the game is in time and place, when a plugin says.
 - `notices`, news the player hasn't dismissed. Send `{ type: 'dismiss' }` to clear them.
-- `scene.speaker` and `scene.stageImage`, who is talking and the picture to show with them.
+- `scene.speaker` and `scene.image`, who is talking and the picture to show with them.
 - `plugins`, each plugin's own part of the view, by plugin id. The places plugin's exits are at `plugins.places`, for example. Each plugin's page documents its slice, and [Building UI for plugins](/docs/recipes/plugin-ui) draws some of them.
 - `settings`, for a settings page. See [The title screen and settings](/docs/recipes/title-screen#add-settings).
 

@@ -15,7 +15,6 @@ import {
   actionReferences,
   artSrc,
   customValue,
-  defaultRuntime,
   commandOf,
   definePlugin,
   entityDesc,
@@ -26,7 +25,6 @@ import {
   parseRef,
   pluginQuery,
   renderAction,
-  renderScene,
   say,
   whyNot,
   YOU,
@@ -39,8 +37,10 @@ import {
   type Game,
   type GameState,
   type ActionDef,
+  type PluginContext,
   type PluginProblem,
   type Reference,
+  type SceneBeat,
   type RenderedChoice,
   type ValueRef,
 } from '@ifloom/engine'
@@ -105,7 +105,8 @@ export type AppDef = {
 export type DevicesState = { open: Record<string, string | null> }
 
 export type SectionView =
-  | { type: 'prose'; text: string }
+  /** Words: the section's blocks as beats, drawn as a scene's are, and their words as text, for a UI that draws no beats. */
+  | { type: 'prose'; text: string; beats: SceneBeat[] }
   | { type: 'actions'; actions: RenderedChoice[] }
   | {
       type: 'list'
@@ -185,10 +186,11 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
     return Number.isFinite(value) ? value : 0
   }
 
-  function sectionView(state: GameState, game: Game, app: AppDef, section: Section, index: number): SectionView {
+  function sectionView(state: GameState, context: PluginContext<DevicesState>, app: AppDef, section: Section, index: number): SectionView {
+    const { game } = context
     if ('prose' in section) {
-      const rendered = renderScene({ id: `${app.id}.${index}`, body: section.prose, choices: [] }, state, defaultRuntime(game))
-      return { type: 'prose', text: rendered.body ?? '' }
+      const beats = context.beats(section.prose, `${app.id}.${index}`)
+      return { type: 'prose', text: beats.flatMap((beat) => ('text' in beat ? [beat.text] : [])).join('\n\n'), beats }
     }
     if ('actions' in section) {
       return {
@@ -228,7 +230,8 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
     return { type: 'panel', panel: section.panel, with: { ...section.with } }
   }
 
-  function appView(state: GameState, game: Game, app: AppDef, open: boolean): AppView {
+  function appView(state: GameState, context: PluginContext<DevicesState>, app: AppDef, open: boolean): AppView {
+    const { game } = context
     return {
       id: app.id,
       name: app.name,
@@ -237,7 +240,7 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
       // The same answer opening it gets: the app's own `blocked`, and any lock on `devices/open`.
       disabled: whyNot(state, game, openApp(app.id)),
       command: commandOf(openApp(app.id)),
-      sections: open ? app.sections.map((section, index) => sectionView(state, game, app, section, index)) : [],
+      sections: open ? app.sections.map((section, index) => sectionView(state, context, app, section, index)) : [],
     }
   }
 
@@ -291,10 +294,11 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
       }
       return open === slice.open ? after : set({ ...slice, open })
     },
-    view: (state, { slice, game }): DevicesView => ({
-      devices: devicesOf(game).map((device): DeviceView => {
+    view: (state, context): DevicesView => ({
+      devices: devicesOf(context.game).map((device): DeviceView => {
+        const { slice, game } = context
         const installed = apps(game).filter((app) => app.on === device.id && holds(state, app.when, game) && !hides(state, game, app.blocked))
-        const shown = installed.map((app) => appView(state, game, app, false))
+        const shown = installed.map((app) => appView(state, context, app, false))
         const openId = slice.open[device.id] ?? null
         const openApp = installed.find((app) => app.id === openId)
         return {
@@ -305,7 +309,7 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
           wallpaper: device.wallpaper ?? null,
           badge: shown.reduce((sum, app) => sum + (typeof app.badge === 'number' ? app.badge : app.badge ? 1 : 0), 0),
           apps: shown,
-          open: openApp ? appView(state, game, openApp, true) : null,
+          open: openApp ? appView(state, context, openApp, true) : null,
         }
       }),
     }),

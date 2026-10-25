@@ -116,14 +116,11 @@ function drawChoices(parent: HTMLElement, choices: RenderedChoice[]): void {
   }
 }
 
-/** One paragraph of a scene: narration, a spoken line, a picture, a letter. A sound beat is heard, not drawn. */
+/** One paragraph of a scene: narration, a spoken line, a picture, a clip. A sound beat is heard, not drawn. */
 function drawBeat(parent: HTMLElement, beat: SceneBeat): void {
   switch (beat.type) {
     case 'text':
       drawLine(add(parent, 'p'), beat.text, beat.spans)
-      break
-    case 'mono':
-      add(parent, 'p', beat.text, 'beat-mono')
       break
     case 'say':
       drawLine(add(parent, 'p', '', 'beat-say'), beat.text, beat.spans).dataset.who = beat.who
@@ -141,15 +138,6 @@ function drawBeat(parent: HTMLElement, beat: SceneBeat): void {
         controls: beat.controls,
         playsInline: true,
       })
-      break
-    case 'mail': {
-      const mail = add(parent, 'div', '', 'beat-prop')
-      for (const line of beat.headers) add(mail, 'p', `${line.key}: ${line.value}`)
-      add(mail, 'p', beat.body)
-      break
-    }
-    case 'prop':
-      add(parent, 'div', beat.text, 'beat-prop')
       break
   }
 }
@@ -177,8 +165,8 @@ function drawLine(line: HTMLElement, text: string, spans: InlineSpan[] | undefin
       continue
     }
     if (span.type === 'ui') {
-      // A UI piece (`[[ui:name|words]]`): this page has no components of its own, so it shows the words.
-      line.append(span.text)
+      // A UI piece (`[[ui:name|words]]`): this page has no components of its own, so it shows the words, styled by name.
+      add(line, 'span', span.text, 'ui').dataset.ui = span.name
       continue
     }
     const button = add(line, 'button', span.text, span.type === 'tip' ? 'tip' : 'inline-action')

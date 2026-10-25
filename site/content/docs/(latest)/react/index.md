@@ -473,7 +473,6 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/do
 | `ui.close` | `Close` | |
 | `ui.priceSeparator` | ` · ` | |
 | `ui.heldCount` | `×{n}` | `n` |
-| `ui.mailHeader` | `{key}: {value}` | `key`, `value` |
 | `ui.newGame` | `New game` | |
 | `ui.continue` | `Continue` | |
 | `ui.newGamePlus` | `New Game+` | |
@@ -512,7 +511,7 @@ Which component uses which keys:
 - **[Stat list](/docs/react/components#statlist)**: `ui.statLevel` after a levelled stat's label, and `ui.statProgress` as the label on its bar.
 - **[Inventory](/docs/react/components#inventory)**: `ui.inventory`, and `ui.heldCount` after a thing there's more than one of.
 - **[Price tag](/docs/react/components#pricetag)**: `ui.priceSeparator`, between the parts of a price.
-- **[Beat](/docs/react/components#beat)**: `ui.mailHeader`, for each header line of a letter, `ui.replayVoice`, the label on a spoken line's replay button, and `ui.zoom`, the label on the button around a picture or a clip that opens the viewer.
+- **[Beat](/docs/react/components#beat)**: `ui.replayVoice`, the label on a spoken line's replay button, and `ui.zoom`, the label on the button around a picture or a clip that opens the viewer.
 - **[Media viewer](/docs/react/components#mediaviewer)**: `ui.closeViewer`, the label on its close button, and `ui.zoom` as its title when the picture has no alt text.
 - **[Notices](/docs/react/components#notices)**: `ui.dismiss`, the label on each notice's dismiss button, and `ui.noticesMore` and `ui.noticesFewer` on the button that shows or hides the older notices on a phone.
 - **[Notice strip](/docs/react/components#noticestrip)**: `ui.notices` on its notices count and its dialog, `ui.unread` as its label for screen readers, and `ui.allSeen` on the dialog's button.

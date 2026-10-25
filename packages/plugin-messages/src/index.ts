@@ -13,16 +13,13 @@
 import {
   applyEffects,
   buildEffects,
-  defaultRuntime,
   commandOf,
   definePlugin,
   holds,
   inRange,
   notify,
-  parseBeats,
-  styledBeats,
   pluginQuery,
-  renderScene,
+  speakerOf,
   say,
   type Block,
   type CommandRef,
@@ -162,10 +159,10 @@ function threadOf(message: MessageDef): string {
   return message.thread ?? message.from
 }
 
-/** Who a message is from, as the cast plugin knows them, asked by name: a name and a face, or the name as written. */
+/** Who a message is from, as their entity is (`speakerOf`): a name and a face, or the name as written. */
 function personOf(game: Game, state: GameState, from: string): { name: string; portrait: string | null } {
-  const known = pluginQuery(game, 'cast/person')?.(state, { character: from }) as { name: string; portrait: string | null } | undefined
-  return known ?? { name: from, portrait: null }
+  const known = speakerOf(state, game, from)
+  return known ? { name: known.name, portrait: known.image } : { name: from, portrait: null }
 }
 
 /** The replies on offer for an arrival now: none once one is sent. */
@@ -348,8 +345,7 @@ export function messages(): DefinedPlugin<MessagesState, MessagesView> {
       }
       return next
     },
-    view: (state, { slice, game, picks }): MessagesView => {
-      const runtime = defaultRuntime(game)
+    view: (state, { slice, game, beats }): MessagesView => {
       const channels = channelsOf(game).map((channel): ChannelView => {
         const threads = new Map<string, MessageView[]>()
         const latest = new Map<string, number>()
@@ -367,14 +363,14 @@ export function messages(): DefinedPlugin<MessagesState, MessagesView> {
             const thread = threadOf(message)
             const sent = slice.replied[arrival.key]
             const label = (reply: string) => game.prose?.line(`${message.id}#${reply}`, state) ?? reply
-            const text = renderScene({ id: message.id, body: message.body, choices: [] }, state, runtime, picks).body ?? ''
+            const words = beats(message.body, message.id)
             const shown: MessageView = {
               id: message.id,
               key: arrival.key,
               from: message.from,
               name: personOf(game, state, message.from).name,
-              text,
-              beats: styledBeats(parseBeats(text)),
+              text: words.flatMap((beat) => ('text' in beat ? [beat.text] : [])).join('\n\n'),
+              beats: words,
               turn: arrival.turn,
               read: Boolean(slice.read[arrival.key]),
               replies: offered(state, game, slice, message, arrival.key).map((reply) => ({

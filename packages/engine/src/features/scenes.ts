@@ -249,15 +249,13 @@ function inlineActionProblems(game: Game, body: readonly Block[] | string | unde
 
 /**
  * Stars that don't make bold or italics in the paragraphs where they're read:
- * narration and spoken lines, between inline actions and tooltips. A mail,
- * a prop or a `> ` line shows its stars as written.
+ * narration and spoken lines, between inline actions and tooltips.
  */
 function emphasisProblems(text: string): string[] {
   if (!text.includes('*')) return []
   const out: string[] = []
-  const prose = text.replace(/\[\[(mail|sticky|clip|diary)\]\][\s\S]*?\[\[\/\1\]\]/g, '\n\n')
-  for (const block of prose.split('\n\n')) {
-    if (block.trim().startsWith('> ') || !block.includes('*')) continue
+  for (const block of text.split('\n\n')) {
+    if (!block.includes('*')) continue
     if (/\*\[\[(act|tip|ui):|\]\]\*/.test(block))
       out.push("stars next to [[act]], [[tip]] or [[ui]] are shown as written; bold and italics don't reach into them")
     for (const piece of block.split(INLINE_MARKUP).filter((_, at) => at % 4 === 0)) out.push(...emphasis(piece).problems)
@@ -287,11 +285,6 @@ function inlineMarkupProblems(text: string, where: string, tools: ResolveTools):
   }
   const opened = (text.match(/\[\[(act|tip)\b/g) ?? []).length
   if (opened > written) out.push('[[act:…]] or [[tip:…]] is not closed with "]]", or is missing its ":"')
-  // Drawn in narration and spoken lines only.
-  for (const block of text.split('\n\n')) {
-    if (block.trim().startsWith('> ') && /\[\[(act|tip):/.test(block))
-      out.push('[[act]] and [[tip]] are shown as written in a "> " line; use them in narration or a spoken line')
-  }
   return out
 }
 

@@ -9,13 +9,11 @@
  * Nothing here knows about phones; a device shows a feed as an app.
  */
 import {
-  defaultRuntime,
   definePlugin,
   holds,
   parseBeats,
   styledBeats,
-  pluginQuery,
-  renderScene,
+  speakerOf,
   say,
   type Block,
   type CommandRef,
@@ -109,11 +107,17 @@ export function postDefs(game: Game): PostDef[] {
   return (game.data?.[ID]?.posts ?? []) as PostDef[]
 }
 
-/** Who posted, as the cast plugin knows them, asked by name: a name and a face, or the name as written. */
+/** Who posted, as their entity is (`speakerOf`): a name and a face, or the name as written. */
 function personOf(game: Game, state: GameState, from: string): { name: string; portrait: string | null } {
-  const known = pluginQuery(game, 'cast/person')?.(state, { character: from }) as { name: string; portrait: string | null } | undefined
-  return known ?? { name: from, portrait: null }
+  const known = from ? speakerOf(state, game, from) : null
+  return known ? { name: known.name, portrait: known.image } : { name: from, portrait: null }
 }
+
+/** A post's words: its beats, and their words as a line of text, for a UI that draws no beats. */
+const drawn = (beats: SceneBeat[]) => ({ text: wordsOf(beats), beats })
+
+/** Beats' words, as a line of text. */
+const wordsOf = (beats: readonly SceneBeat[]) => beats.flatMap((beat) => ('text' in beat ? [beat.text] : [])).join('\n\n')
 
 /** The game's feeds, in order: `data.feed.feeds`, from its packs. */
 export function feedsOf(game: Game): FeedDef[] {
@@ -242,8 +246,7 @@ export function feed(): DefinedPlugin<FeedState, FeedsView> {
       }
       return appeared === slice.appeared ? after : set({ ...slice, appeared })
     },
-    view: (state, { slice, game, picks }): FeedsView => {
-      const runtime = defaultRuntime(game)
+    view: (state, { slice, game, beats }): FeedsView => {
       const words = (key: string | undefined) => (key ? (game.prose?.line(key, state) ?? '') : '')
       const comments = (list: Comment[]) =>
         list.map((comment) => ({ from: comment.from, name: personOf(game, state, comment.from).name, text: words(comment.text) }))
@@ -255,8 +258,7 @@ export function feed(): DefinedPlugin<FeedState, FeedsView> {
             from: post.from,
             name: personOf(game, state, post.from).name,
             portrait: personOf(game, state, post.from).portrait,
-            text: renderScene({ id: post.id, body: post.body, choices: [] }, state, runtime, picks).body ?? '',
-            beats: [],
+            ...drawn(beats(post.body, post.id)),
             image: post.image ?? null,
             video: post.video ?? null,
             turn: slice.appeared[post.id],
@@ -272,8 +274,7 @@ export function feed(): DefinedPlugin<FeedState, FeedsView> {
             from: '',
             name: typeof state.kv.playerName === 'string' ? state.kv.playerName : say(game, 'feed/you'),
             portrait: null,
-            text: words(post.text),
-            beats: [],
+            ...drawn(styledBeats(parseBeats(words(post.text)))),
             image: post.image ?? null,
             video: post.video ?? null,
             turn: post.turn,
@@ -282,9 +283,7 @@ export function feed(): DefinedPlugin<FeedState, FeedsView> {
             mine: true,
             order: 1000000 + order,
           }))
-        const posts = [...theirs, ...mine]
-          .sort((a, b) => b.turn - a.turn || b.order - a.order)
-          .map(({ order: _order, ...post }) => ({ ...post, beats: styledBeats(parseBeats(post.text)) }))
+        const posts = [...theirs, ...mine].sort((a, b) => b.turn - a.turn || b.order - a.order).map(({ order: _order, ...post }) => post)
         return { id: entry.id, name: entry.name, posts, unread: unseenIn(slice, game, entry.id) }
       })
       return { feeds, unread: feeds.reduce((sum, entry) => sum + entry.unread, 0) }

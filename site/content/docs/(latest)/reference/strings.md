@@ -115,6 +115,7 @@ Why a [setting](/docs/reference/settings) can't be changed to a value. A setting
 |---|---|---|
 | `lookAround` | `Look around` | The way out of a scene the game no longer has. |
 | `momentPassed` | `The moment has passed.` | The body of a scene the game no longer has. |
+| `you` | `You` | The name the player's [spoken lines](/docs/reference/prose#speech) are written under in prose, `You: "Hi."`. A game in another language sets its own word, and its prose writes the player's lines under it. |
 
 ### Saves
 

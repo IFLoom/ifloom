@@ -10,6 +10,7 @@ import type { DevicesView, DeviceView, SectionView } from '../index.ts'
 import { useState, type ComponentProps } from 'react'
 import {
   assetUrl,
+  Beat,
   badgeVariants,
   buttonVariants,
   ChoiceList,
@@ -115,7 +116,7 @@ export const DeviceButtons = overridable('DeviceButtons', DeviceButtonsImpl)
 
 function AppSectionImpl({ section }: { section: SectionView }) {
   const { view, panels, sections } = useGame()
-  const prose = usePart('app-prose', 'leading-relaxed whitespace-pre-wrap')
+  const prose = usePart('app-prose', 'flex flex-col gap-2 leading-relaxed')
   const entries = usePart('app-entries', 'flex flex-col gap-2')
   const entry = usePart('app-entry', 'flex items-start gap-3 rounded-lg border p-2')
   const image = usePart('app-entry-image', 'size-12 rounded object-cover')
@@ -123,7 +124,13 @@ function AppSectionImpl({ section }: { section: SectionView }) {
   const text = usePart('app-entry-text', 'text-sm text-muted-foreground')
   switch (section.type) {
     case 'prose':
-      return <p {...prose}>{section.text}</p>
+      return (
+        <div {...prose}>
+          {section.beats.map((beat, index) => (
+            <Beat key={index} beat={beat} />
+          ))}
+        </div>
+      )
     case 'actions':
       return <ChoiceList choices={section.actions} />
     case 'list':

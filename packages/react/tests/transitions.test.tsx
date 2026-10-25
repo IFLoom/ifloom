@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { createRunner, definePlugin, loadGame, startingState, type Game } from '@ifloom/engine'
+import { createRunner, loadGame, startingState, type Game } from '@ifloom/engine'
 import { checkUiHints, GameShell } from '../src/index.ts'
 import { Reading } from './layouts.tsx'
 
@@ -18,6 +18,9 @@ function house(): Game {
       { name: 'base', introScene: 'door' },
       {
         name: 'house',
+        // Ann, who speaks in the hall, has a colour for her lines.
+        kinds: [{ id: 'character', label: 'Character', unique: true }],
+        entities: [{ id: 'ann', of: 'character', name: 'Ann', ui: { hue: 280 } }],
         scenes: [
           {
             id: 'door',
@@ -53,10 +56,7 @@ function house(): Game {
     {
       id: 'house',
       title: 'The House',
-      // Ann, who speaks in the hall, has a colour for her lines.
-      plugins: [
-        definePlugin<null>({ id: 'voices', version: 1, speaker: (id) => (id === 'ann' ? { id, name: 'Ann', portrait: null, ui: { hue: 280 } } : undefined) }),
-      ],
+      plugins: [],
     },
   ).game
 }

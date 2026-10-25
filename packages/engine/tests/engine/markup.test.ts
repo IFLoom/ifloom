@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { artSrc, parseBeats } from '../../src/sceneBody.ts'
 
 describe('scene body', () => {
-  it('parses monologue, text, and image markers', () => {
+  it('parses text and image markers', () => {
     const beats = parseBeats(['She looks up.', "> Don't stare.", '[[img:character/rosa]]', '[[wide:scene/rosa-coffee|Coffee]]'].join('\n\n'))
-    expect(beats.map((beat) => beat.type)).toEqual(['text', 'mono', 'image', 'image'])
+    // A `> ` line is narration like any other: a typewriter face is a UI's piece now, `[[ui:mono|…]]`.
+    expect(beats.map((beat) => beat.type)).toEqual(['text', 'text', 'image', 'image'])
     expect(beats[2]).toMatchObject({
       type: 'image',
       src: 'art/character/rosa.jpg',
@@ -17,19 +18,8 @@ describe('scene body', () => {
     })
   })
 
-  it('reads `|rot` as turning the picture, never as its alt text', () => {
-    expect(parseBeats('[[img:scene/blot|rot]]')[0]).toEqual({ type: 'image', src: 'art/scene/blot.jpg', alt: undefined, size: 'inline', rotate: true })
-  })
-
-  it('parses a rotated blot marker', () => {
-    const beats = parseBeats('[[wide:scene/blot.svg|Inkblot|rot]]')
-    expect(beats[0]).toMatchObject({
-      type: 'image',
-      src: 'art/scene/blot.svg',
-      alt: 'Inkblot',
-      rotate: true,
-      size: 'wide',
-    })
+  it('reads a part after the path as alt text: turning a picture is a UI hint', () => {
+    expect(parseBeats('[[img:scene/blot|rot]]')[0]).toEqual({ type: 'image', src: 'art/scene/blot.jpg', alt: 'rot', size: 'inline' })
   })
 
   it('splits quoted lines into character and player speech', () => {
@@ -56,42 +46,20 @@ describe('scene body', () => {
     expect(beats[2]).toMatchObject({ who: 'character', text: 'Hi. Rosa. Sorry.' })
   })
 
-  it('parses a fenced mail card with headers', () => {
-    const beats = parseBeats(
-      [
-        'A reply lands.',
-        '[[mail]]\nFrom: Pat Ellery\nTo: Ms. Lane\nSubject: Re: Saturday shift\n\nEllery & Daughters Bakery\nMs. Lane,\n\nMany thanks.\n\nKind regards,\nPat Ellery\n[[/mail]]',
-        '> Short notice.',
-      ].join('\n\n'),
-    )
-    expect(beats.map((beat) => beat.type)).toEqual(['text', 'mail', 'mono'])
-    expect(beats[1]).toMatchObject({
-      type: 'mail',
-      headers: [
-        { key: 'From', value: 'Pat Ellery' },
-        { key: 'To', value: 'Ms. Lane' },
-        { key: 'Subject', value: 'Re: Saturday shift' },
-      ],
-      body: 'Ellery & Daughters Bakery\nMs. Lane,\n\nMany thanks.\n\nKind regards,\nPat Ellery',
-    })
+  it('keeps a UI piece one paragraph, blank lines and all', () => {
+    const beats = parseBeats(['A reply lands.', '[[ui:mail|Many thanks.\n\nKind regards,\nPat|From: Pat Ellery|Subject: Saturday]]', 'After.'].join('\n\n'))
+    expect(beats.map((beat) => beat.type)).toEqual(['text', 'text', 'text'])
+    expect(beats[1]).toEqual({ type: 'text', text: '[[ui:mail|Many thanks.\n\nKind regards,\nPat|From: Pat Ellery|Subject: Saturday]]' })
   })
 
-  it('parses paper props', () => {
-    const beats = parseBeats(
-      [
-        'Halfway down.',
-        '[[clip]]\nNHS copy\nThe long hours.\n\nFile copy\nThe short hours.\n[[/clip]]',
-        '[[sticky]]\nSTANDARD.\nDO NOT RECONCILE WITH DIARY.\n[[/sticky]]',
-        '[[diary]]\nThursday\n[[/diary]]',
-      ].join('\n\n'),
+  it('reads a name in any alphabet, and asks who it is', () => {
+    const beats = parseBeats(['Zoë: "Hola."', 'Tú: "Hola, Zoë."'].join('\n\n'), undefined, (name) =>
+      name === 'Tú' ? { who: 'player' } : { who: 'character', speaker: 'character:zoe' },
     )
-    expect(beats.map((beat) => beat.type)).toEqual(['text', 'prop', 'prop', 'prop'])
-    expect(beats[1]).toMatchObject({ face: 'clip' })
-    expect(beats[2]).toMatchObject({
-      face: 'sticky',
-      text: 'STANDARD.\nDO NOT RECONCILE WITH DIARY.',
-    })
-    expect(beats[3]).toMatchObject({ face: 'diary', text: 'Thursday' })
+    expect(beats).toEqual([
+      { type: 'say', who: 'character', speaker: 'character:zoe', text: 'Hola.' },
+      { type: 'say', who: 'player', text: 'Hola, Zoë.' },
+    ])
   })
 
   it('normalises art paths', () => {

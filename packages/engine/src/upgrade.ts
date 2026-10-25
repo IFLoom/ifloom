@@ -16,7 +16,7 @@ import type { Pack } from './loader.ts'
 import type { Plugin } from './plugin.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
-export const SCHEMA = 21
+export const SCHEMA = 22
 
 /** A pack as it came in: some schema's shape, not necessarily this one. */
 export type RawPack = Record<string, unknown> & { schema: number }
@@ -116,6 +116,105 @@ export const PACK_STEPS: Record<number, (pack: RawPack) => RawPack> = {
     if (Array.isArray(out.settings)) out.settings = typed(out.settings)
     return out
   },
+  // 21 → 22: the engine's beats are text, say, image, video and sound. Letters, notes and `> ` lines are
+  // the React UI's inline pieces, and a turned picture its block hint. See `toSchema22`.
+  21: (pack) => toSchema22(pack),
+}
+
+/** A letter or a note, as prose wrote it before schema 22: `[[mail]]…[[/mail]]`, `[[sticky]]…[[/sticky]]`. */
+const FENCE = /\[\[(mail|sticky|clip|diary)\]\]([\s\S]*?)\[\[\/\1\]\]/g
+
+/** The header lines a letter's fence began with, before schema 22. */
+const MAIL_HEADER = /^(From|To|Cc|Bcc|Subject|Date):\s*(.*)$/i
+
+/** Words a UI piece can hold as its words or an argument: no `|` and no `]`. */
+const pieceSafe = (text: string) => text !== '' && !/[|\]]/.test(text)
+
+/** A letter's fence as the `mail` piece: its body the words, each header line an argument; or the lines as they are, when they can't be one. */
+function mailPiece(inner: string): string {
+  const lines = inner.trim().split('\n')
+  const headers: string[] = []
+  let at = 0
+  for (; at < lines.length; at += 1) {
+    const match = lines[at].match(MAIL_HEADER)
+    if (!match) break
+    headers.push(`${match[1]}: ${match[2].trim()}`)
+  }
+  const body = lines.slice(at).join('\n').trim()
+  if (pieceSafe(body) && headers.every(pieceSafe)) return `[[ui:mail|${[body, ...headers].join('|')}]]`
+  return [headers.join('\n'), body].filter(Boolean).join('\n\n')
+}
+
+/** A paragraph of prose that isn't a fence, with a `> ` line as the `mono` piece. */
+function monoPiece(paragraph: string): string {
+  const trimmed = paragraph.trim()
+  if (!trimmed.startsWith('> ')) return paragraph
+  const words = trimmed.slice(2).trim()
+  return pieceSafe(words) ? paragraph.replace(trimmed, `[[ui:mono|${words}]]`) : paragraph.replace(trimmed, words)
+}
+
+/**
+ * A line of prose as schema 22 writes it: each fence as a paragraph of its
+ * own holding the React UI's piece (`[[ui:mail|body|From: Ava|…]]`,
+ * `[[ui:prop|words|sticky]]`), each `> ` paragraph as `[[ui:mono|words]]`,
+ * and a picture's `rot` flag gone. Words a piece can't hold (a `|` or a
+ * `]`) are kept as plain paragraphs.
+ */
+function paperToPieces(text: string): string {
+  const out: string[] = []
+  let last = 0
+  const plain = (piece: string) => out.push(piece.split('\n\n').map(monoPiece).join('\n\n'))
+  for (const match of text.matchAll(FENCE)) {
+    plain(text.slice(last, match.index))
+    const inner = match[2].trim()
+    const piece = match[1] === 'mail' ? mailPiece(inner) : pieceSafe(inner) ? `[[ui:prop|${inner}|${match[1]}]]` : inner
+    // A paragraph of its own, as the fence was drawn.
+    const before = out.pop() ?? ''
+    out.push(`${before.replace(/\s*$/, '')}${before.trim() ? '\n\n' : ''}${piece}`)
+    last = match.index + match[0].length
+    const rest = text.slice(last)
+    if (rest.trim() && !/^\s*\n\n/.test(rest)) out.push('\n\n')
+  }
+  plain(text.slice(last))
+  return out.join('')
+}
+
+/** A picture's markup with no `rot` flag: `[[img:cup|rot|A cup]]` is `[[img:cup|A cup]]`. */
+const unturned = (text: string) =>
+  text.replace(/\[\[(img|wide):([^\]|]+)((?:\|[^\]|]*)*)\]\]/g, (whole, tag: string, path: string, rest: string) => {
+    const parts = rest.split('|').slice(1)
+    return parts.some((part) => part.trim() === 'rot')
+      ? `[[${tag}:${path}${parts
+          .filter((part) => part.trim() !== 'rot')
+          .map((part) => `|${part}`)
+          .join('')}]]`
+      : whole
+  })
+
+/**
+ * Schema 21 content as schema 22 writes it, where the engine's beats are
+ * text, say, image, video and sound, and how a letter or a sign looks is the
+ * UI's:
+ * - in prose and strings, `[[mail]]From: Ava\n\nHi.[[/mail]]` is the React
+ *   UI's piece `[[ui:mail|Hi.|From: Ava]]`, `[[sticky]]Milk[[/sticky]]` (and
+ *   `clip` and `diary`) is `[[ui:prop|Milk|sticky]]`, and a `> ` paragraph is
+ *   `[[ui:mono|…]]`, each a paragraph of its own;
+ * - a picture's `rot` flag goes, and a scene's `{ text }` block naming a line
+ *   that had one gets the React UI's block hint `ui: { tilt: true }`.
+ */
+function toSchema22(pack: RawPack): RawPack {
+  const tilted = new Set<string>()
+  const out = TOOLS.words(pack, (text, key) => {
+    const next = unturned(paperToPieces(text))
+    if (unturned(text) !== text) tilted.add(key)
+    return next
+  })
+  if (!tilted.size || !Array.isArray(out.scenes)) return out
+  const tilt = (block: unknown) =>
+    isRecord(block) && typeof block.text === 'string' && tilted.has(block.text)
+      ? { ...block, ui: { tilt: true, ...(isRecord(block.ui) ? block.ui : {}) } }
+      : block
+  return { ...out, scenes: out.scenes.map((scene) => (isRecord(scene) && Array.isArray(scene.body) ? { ...scene, body: scene.body.map(tilt) } : scene)) }
 }
 
 /**

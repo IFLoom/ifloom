@@ -13,11 +13,12 @@ How a game looks and moves is the UI's business, not the engine's. Content says 
 | [`reveal`](#reveal) | A block | The block waits, then comes in. |
 | [`dice`](#dice) | A block | The roll under that key is drawn above the block, which waits for the dice to settle. |
 | [`timer`](#timer) | A block | The running timer by that id counts down under the block. |
+| [`tilt`](#tilt) | A block | Its picture sits at a slight angle. |
 | [`display`](#display) | A stat | A number, a bar or pips in the sidebar. |
 | [`hue`](#hue) | An entity or a kind | The colour of their spoken lines. |
 | [`transitionNames`](#your-own-transition-names) | The game | Transition names of the game's own. |
 
-Prose can also hold [inline pieces](#inline-pieces), `[[ui:name|words|arg]]`, which the React UI draws by name: a popup with a prose line, a picture to open, or a component of your own.
+Prose can also hold [inline pieces](#inline-pieces), `[[ui:name|words|arg]]`, which the React UI draws by name: a popup with a prose line, a picture to open, a letter, a note, a sign, or a component of your own.
 
 Importing `@ifloom/react` anywhere in your game types them: `ui: { display: 'bar' }` on a stat is checked, and `display: 'dial'` is a type error. A hint the React UI doesn't know still compiles, so another UI or a mod can add its own. [`checkUiHints`](#checkuihints) catches a typo the types let through.
 
@@ -189,6 +190,14 @@ The hint only draws the timer. The game's clock runs whether or not anything dra
 
 The [Timed choices and countdowns](/docs/recipes/timers) recipe builds a whole timed choice.
 
+## tilt
+
+```ts
+body: [{ text: 'flat.photo', ui: { tilt: true } }]   // '[[img:photo/ava.svg|Ava at the café]]'
+```
+
+On a [block](/docs/reference/scenes#block): `true` sets the block's picture at a slight angle, like a photo dropped on a table. The engine's picture markup has no flag for it, since how a picture sits is the UI's.
+
 ## display
 
 ```ts
@@ -224,12 +233,15 @@ On an [entity](/docs/reference/entities#entitydef), or on a [kind](/docs/referen
 
 ## Inline pieces
 
-A [UI piece](/docs/reference/prose#ui-pieces) in prose, `[[ui:name|words|arg|…]]`, is drawn by the component of that name. The React UI has two:
+A [UI piece](/docs/reference/prose#ui-pieces) in prose, `[[ui:name|words|arg|…]]`, is drawn by the component of that name. The React UI has five:
 
 | Markup | What the player sees |
 |---|---|
 | `[[ui:modal\|words\|key]]`, `[[ui:modal\|words\|key\|title]]` | The words as a link that opens a dialog with the prose line `key`, titled `title` or the words. See [`InlineModal`](/docs/react/components#inlinemodal). |
 | `[[ui:image\|words\|path]]`, `[[ui:image\|words\|path\|alt]]` | The words as a link that opens the picture at `path` in the viewer, as a story's pictures open. See [`InlineImage`](/docs/react/components#inlineimage). |
+| `[[ui:mail\|body\|From: Ava\|Subject: Hello]]` | A letter or an email as a card: the header lines as written, then the body. See [`InlineMail`](/docs/react/components#inlinemail). |
+| `[[ui:prop\|words\|sticky]]` | A note in the story's world in a dashed box, by its face: `sticky`, `clip` or `diary`. See [`InlineProp`](/docs/react/components#inlineprop). |
+| `[[ui:mono\|words]]` | The words in a monospace face, for a sign or a screen. See [`InlineMono`](/docs/react/components#inlinemono). |
 
 ```ts
 const prose = {
@@ -239,7 +251,7 @@ const prose = {
 }
 ```
 
-Both are buttons in the line, with the part [`inline-ui`](/docs/react/customising#scenes) and `data-ui` set to the name, so a screen reader announces them as buttons that open a dialog. Escape, the close button or a click outside closes what they opened, and focus goes back to the words. Each preset styles the words differently from an inline action or a tooltip, and the dialog's text has the part `inline-modal`.
+`mail`, `prop` and `mono` draw words and open nothing, and a `mail` or `prop` written as a paragraph of its own draws as one. A letter's body can run over blank lines. The modal and the image are buttons in the line, with the part [`inline-ui`](/docs/react/customising#scenes) and `data-ui` set to the name, so a screen reader announces them as buttons that open a dialog. Escape, the close button or a click outside closes what they opened, and focus goes back to the words. Each preset styles the words differently from an inline action or a tooltip, and the dialog's text has the part `inline-modal`.
 
 A modal shows words and nothing else. It can't change the game, so it suits a note, a letter or a sign. For a dialog with buttons that do something, open a [panel](/docs/reference/panels) from an [inline action](/docs/reference/prose#inline-actions-and-tooltips). [Popups and modals](/docs/recipes/modals) shows both.
 

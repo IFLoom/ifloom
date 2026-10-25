@@ -111,7 +111,7 @@ type ScreenScene = {
   beats: SceneBeat[]
   tags: string[]
   speaker: SpeakerView | null
-  stageImage: string | null
+  image: string | null
   ui?: Ui<SceneUi>
 }
 ```
@@ -178,7 +178,7 @@ for (const person of people) for (const talk of person.actions) addButton(`${per
 
 ### The scene
 
-`scene` is what fills the main column. With a scene open, it's that scene's render. Without one, it's the stage: `id: null`, no choices, and a title and body from the first plugin whose [`stage`](/docs/reference/plugins#stage) answers. The stage's `body` blocks go through the same [renderer](/docs/reference/scenes#renderscene) as a data scene, with the game's prose. The [places plugin](/docs/plugins/places#the-stage)'s stage is the room the player is in, with its name as the title. With no plugin answering, the title is the game's `title` and the body is empty.
+`scene` is what fills the main column. With a scene open, it's that scene's render. Without one, it's the stage: `id: null`, no choices, and a title and body from the first plugin whose [`stage`](/docs/reference/plugins#stage) answers. The stage's `body` blocks are drawn as a data scene's are, with the game's prose. The [places plugin](/docs/plugins/places#the-stage)'s stage is the room the player is in, with its name as the title. With no plugin answering, the title is the game's `title` and the body is empty.
 
 | Field | Type | Meaning |
 |---|---|---|
@@ -188,8 +188,8 @@ for (const person of people) for (const talk of person.actions) addButton(`${per
 | `body` | `string` | The raw prose, with its markup. In-place `{ media }` blocks are in it as markup, and `@pool` markup is already resolved to files. |
 | `beats` | [`SceneBeat[]`](/docs/reference/prose#scenebeat) | The prose parsed, with the scene's pictures and videos in place and pool markup resolved to files. Draw these, not `body`. |
 | `tags` | `string[]` | The render's `tags`, else the scene's, else `[]`. The engine gives them no meaning, so style the scene by them. The stage has none. |
-| `speaker` | [`SpeakerView`](#speakerview) ` \| null` | Who's talking. The id is the render's `speaker`, else the scene's, and the first plugin whose [`speaker`](/docs/reference/plugins#speakers) knows it says who it is (the [cast](/docs/plugins/cast#speakers) does for its characters). `null` otherwise. Never guessed from the scene's id. |
-| `stageImage` | `string \| null` | The big picture: the render's `portrait`, else the speaker's portrait, else `null`. |
+| `speaker` | [`SpeakerView`](#speakerview) ` \| null` | Who's talking: the render's `speaker`, else the scene's, as their [entity](/docs/reference/scenes#speakers) is. `null` when there's none, or the id names no entity. Never guessed from the scene's id. |
+| `image` | `string \| null` | The big picture: the render's `image`, else the speaker's, else `null`. |
 | `stage` | [`StageView`](/docs/reference/media#stageview) ` \| null` | The scene's [layered picture and hotspots](/docs/reference/scenes#the-stage), resolved by [`stageView`](#stageview). `null` when the scene has none, and on the idle screen (a place's stage is in its [plugin view](/docs/plugins/places#placesview)). |
 | `choices` | [`RenderedChoice[]`](#renderedchoice) | The visible choices. Hidden ones (`visible: false`) are left out, and disabled ones stay. So are the ones the prose draws inline with `[[act:id]]`: those are in `beats`, as `action` [spans](/docs/reference/prose#inlinespan). |
 | `ui` | `Ui<SceneUi>`, optional | The scene's [presentation hints](/docs/reference/ui-hints) as written, or the room's (a place's) while no scene is open. Left out when there are none, and while a minigame runs. The engine gives them no meaning. |
@@ -712,22 +712,22 @@ Send a change of either kind through [`runner.setSetting`](/docs/reference/runne
 ```ts
 type SpeakerView = {
   id: string
+  ref: EntityRef
   name: string
-  portrait: string | null
+  image: string | null
   ui?: Ui<EntityUi>
 }
 ```
 
-Who's speaking in a scene, at `view.scene.speaker`. The id is the render's `speaker`, else the scene's `speaker`. It's never guessed from the scene's id. The first [plugin](/docs/reference/plugins#speakers) whose `speaker` knows the id says who it is, and the [cast](/docs/plugins/cast#speakers) answers for its characters. An id no plugin knows gives `null`, so a game with no such plugin shows no speaker, whatever its scenes name.
+Who's speaking in a scene, at `view.scene.speaker`, read from their [entity](/docs/reference/scenes#speakers). The id is the render's `speaker`, else the scene's `speaker`. It's never guessed from the scene's id. An id that names no entity gives `null`. [`speakerOf`](/docs/reference/plugins#speakerof) gives the same for any id, such as a message's sender.
 
 | Field | What it is |
 |---|---|
 | `id` | The speaker id, as the scene named it. |
-| `name` | What the player reads over their lines. |
-| `portrait` | Their picture. `null` for none, and the UI draws no face. The cast always gives one: the character's `portrait`, or `art/character/<id>.jpg`. |
-| `ui` | Their [presentation hints](/docs/reference/ui-hints), such as the React UI's [`hue`](/docs/react/hints#hue) for the colour of their lines. The cast gives their entity's, as [`entityUi`](/docs/reference/ui-hints#entityui) reads them. Left out when there are none. |
-
-Exported from `@ifloom/engine` alongside [`Plugin`](/docs/reference/plugins#plugin), which returns it from `speaker`.
+| `ref` | The entity it names, such as `'character:ava'`. |
+| `name` | The entity's name, with its tokens filled. |
+| `image` | The entity's `image`, through [`artSrc`](/docs/reference/prose#artsrc). `null` for none, and the UI draws no face. |
+| `ui` | The entity's [presentation hints](/docs/reference/ui-hints), as [`entityUi`](/docs/reference/ui-hints#entityui) reads them, such as the React UI's [`hue`](/docs/react/hints#hue) for the colour of their lines. Left out when there are none. |
 
 ## See it in an example
 

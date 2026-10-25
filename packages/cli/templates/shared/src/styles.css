@@ -87,7 +87,8 @@ body {
   border-top: 1px solid #ddd;
 }
 
-.beat-mono {
+/* A UI piece shows its words: a sign in a typewriter face, a letter or a note as a card. */
+.ui[data-ui='mono'] {
   font-family: ui-monospace, monospace;
 }
 
@@ -104,10 +105,12 @@ body {
   max-width: 100%;
 }
 
-.beat-prop {
+.ui[data-ui='mail'],
+.ui[data-ui='prop'] {
+  display: block;
   padding: 1rem;
   border: 2px dashed #bbb;
-  text-align: center;
+  white-space: pre-wrap;
 }
 
 .choices,

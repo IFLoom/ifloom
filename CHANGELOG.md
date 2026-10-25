@@ -10,6 +10,13 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- A plugin's context has [`beats(blocks, id)`](/docs/reference/plugins#beats), which draws a scene's kind of blocks as beats, as a scene's body is drawn: `when`s, tokens, variants, pool picks recorded, spoken lines with their speakers, and bold, italics and UI pieces. The game's own code gets it too. The messages, feed and devices plugins draw their words with it.
+- A spoken line's beat says whose it is: `Ava: "Morning."` gives `{ type: 'say', who: 'character', speaker: 'character:ava', text }` when Ava is an entity, so a UI can tell her lines from Sam's. The name can be in any alphabet.
+- The string [`you`](/docs/reference/strings#buttons-and-labels) is the name the player's spoken lines are written under, `You` in English. A game in another language sets its own, `strings: { you: 'Tú' }`, and a line under the name of whoever the player is playing is theirs too.
+- [`speakerOf(state, game, id)`](/docs/reference/plugins#speakerof) says who an id is, as a scene's speaker is shown: the entity's name, picture and hints, or `null`.
+- The React UI draws three more [inline pieces](/docs/react/hints#inline-pieces): `[[ui:mail|body|From: Ava|Subject: Hi]]` a letter, `[[ui:prop|words|sticky]]` a note (`sticky`, `clip` or `diary`) and `[[ui:mono|words]]` a sign in a monospace face, as [`InlineMail`](/docs/react/components#inlinemail), [`InlineProp`](/docs/react/components#inlineprop) and [`InlineMono`](/docs/react/components#inlinemono). A UI piece's words can run over blank lines.
+- The React UI's [`tilt`](/docs/react/hints#tilt) block hint sets a picture at a slight angle.
+
 - A plugin can bring content of its own in `content`, a [`Content`](/docs/reference/loader#content) merged first, under the game's content and packs, which can replace anything in it by id. Its kinds stay unlisted unless it says. The cast's `character` kind, the places plugin's `location` kind and the shop's `vendor` kind come this way.
 - A lock can have an `id`, so a pack can replace it: a pack's lock with the same id takes its place.
 - Content can give the kv store a new game starts with, `kv: { phase: 'arrival', lives: 3 }`, declared once per key across the content; a pack's value replaces the content's. `startingState`'s `kv` still goes over it.
@@ -155,6 +162,11 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Changed
 
+- **Breaking:** who a scene's speaker is comes from their entity, with no plugin to ask. A scene's `speaker` names an entity, by reference (`'character:ava'`) or a bare id (`'ava'` is `character:ava`, else the one entity with that id), and the view shows its name, picture and hints. A message's and a post's `from` work the same way, so any entity can send one. The speaker's picture is their entity's `image`: the `art/character/<id>.jpg` the cast used to guess is gone, so give each speaker an `image`.
+- **Breaking:** `SpeakerView` has `ref` and `image` (was `portrait`), `view.scene.stageImage` is `view.scene.image`, and a hand-built scene's `portrait` is `image`.
+- **Breaking:** the engine's beats are text, speech, pictures, video and sound. A letter, a note and a `> ` line are the React UI's inline pieces, `[[ui:mail|…]]`, `[[ui:prop|…|sticky]]` and `[[ui:mono|…]]`, and a picture's `rot` flag is the React UI's `tilt` block hint. A pack of an older schema is rewritten when it loads (schema 22). In your own prose, rewrite `[[mail]] … [[/mail]]`, `[[sticky]]`, `[[clip]]`, `[[diary]]`, `> ` lines and `|rot` the same way.
+- The devices plugin's prose section is `{ type: 'prose', text, beats }`, and its React UI draws the beats. A message's and a post's `text` is the words of its beats.
+
 - **Breaking:** an effect is told apart by its key, as a condition is, not by `kind`. The key says what it changes and its value is the target: `{ kind: 'stat', stat: 'coins', by: -2 }` is `{ stat: 'coins', by: -2 }`, `{ kind: 'kv', key: 'met', to: true }` is `{ kv: 'met', to: true }`, `{ kind: 'scene', to: null }` is `{ scene: null }`, and `{ kind: 'timer', timer: 'phone' }` is `{ timer: 'phone' }`. The rest read the same way: `{ entity, at, by }`, `{ create: 'photo', with: { name }, at }` (what was `of` and `entity`), `{ remove: 'staff:ana' }`, `{ each: 'staff', where, effects }` (or `each` a [`Select`](/docs/reference/entities#select)), `{ move: 'gift:scarf', to }`, `{ you: 'character:ava' }`, `{ scene: { from, otherwise } }`, `{ turn: true }` and `{ turn: { by: 2 } }`, `{ closeStoryline: 'baker', turns }`, `{ notify: 'Payday', text }`, `{ audio: 'music', to }`, `{ sound: 'bell' }`, `{ minigame: 'darts' }`, `{ roll: 'skim', dice, against }` and `{ panel: 'shop', with }`. A pack written for an older schema is rewritten when it loads, effects inside a plugin's `data` and an entity's traits included.
 - **Breaking:** a call to a plugin's or the game's effect is always the short form, `{ 'calendar/pass': { by: 2 } }`. The long form `{ kind: 'custom', name, with }` is gone. Commands keep `type`, and `{ type: 'custom', name, with }` still sends a plugin's command. [`callOf`](/docs/reference/plugins#callof) reads a call's name and arguments, for code that looks through effects.
 - **Breaking:** "kind" means only a kind of entity. A scene block, a prose span and a part of a line say what they are in `type` (`{ type: 'sound', track }`, `{ type: 'ui', name }`), and so do an input (`{ id: 'name', type: 'text' }`), a setting (`{ type: 'toggle' }`), a missing file the checker lists (`FileRef.type`) and a section of a device's app (`{ type: 'panel' }`). `FillKind` is `FillPart` and `fill(kinds)` is `fill(parts)`, the first argument of `argProblems` and `references.calls` is a `CallTable`, `mediaKind` is `mediaType`, and `ConditionKind` is `ConditionKey`, beside the new `EffectKey`. A pack's inputs and settings are rewritten when it loads.
@@ -289,6 +301,10 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - **Breaking:** `PeopleCard` is `PeopleHere`, `Actions` is `RoomActions`, and `LocationCard` draws the place without its exits, which are `Exits`. `Title` no longer has the clock under it; `Clock` goes where you put it.
 
 ### Removed
+
+- **Breaking:** the `mono`, `mail` and `prop` beats, an image beat's `rotate`, `MailHeader`, `PropFace` and the React UI's `ui.mailHeader` word.
+- **Breaking:** a plugin's `speaker` provider, `pluginSpeaker` and the cast's `cast/person` query. A scene's speaker is its entity.
+- **Breaking:** `renderScene`, `defaultRuntime`, `SceneRuntime`, `Prose` and `drawVariant` aren't exported. A plugin draws blocks with `context.beats`.
 
 - **Breaking:** from `@ifloom/react`: every plugin's component, hook and type (`ShopCounter`, `QuestLog`, `DebugCard`, `useShop` and the rest, now in each plugin's `/react`), `UnlocksOption`, and its optional peer dependencies on the plugins.
 

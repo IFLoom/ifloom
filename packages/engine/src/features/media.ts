@@ -285,7 +285,7 @@ export function mediaMarkupProblems(game: Game, text: string): string[] {
     }
     const video = tag === 'video' || tag === 'widevideo' || (read.pool !== undefined ? poolHasVideo(game, read.pool) : mediaType(read.path) === 'video')
     if (!video) for (const flag of read.videoFlags) out.push(`video flag "${flag}" on a picture in ${match[0]}`)
-    if (video && read.flags.rot) out.push(`flag "rot" turns a picture, not a video, in ${match[0]}`)
+    if ([read.alt, ...read.extraAlts].includes('rot')) out.push(`"rot" is read as alt text in ${match[0]}; turning a picture is a UI's block hint now`)
   }
   return out
 }

@@ -245,17 +245,13 @@ describe('plugins working together', () => {
 })
 
 describe('plugins that bring entities and speakers', () => {
-  // A choir: its singers are entities of a kind it brings, made from its own content, and it says who is singing.
+  // A choir: its singers are entities of a kind it brings, made from its own content, so a scene can name one as its speaker.
   const choir = definePlugin<null>({
     id: 'choir',
     version: 1,
-    content: { kinds: [{ id: 'singer', label: 'Singer', plural: 'Choir', listed: true }] },
+    content: { kinds: [{ id: 'singer', label: 'Singer', plural: 'Choir', listed: true, ui: { hue: 280 } }] },
     entities: (game) =>
       ((game.data?.choir?.singers ?? []) as unknown as { id: string; name: string }[]).map((singer) => ({ id: singer.id, of: 'singer', name: singer.name })),
-    speaker: (id, _state, { game }) => {
-      const singer = ((game.data?.choir?.singers ?? []) as unknown as { id: string; name: string }[]).find((entry) => entry.id === id)
-      return singer ? { id, name: singer.name, portrait: null, ui: { hue: 280 } } : undefined
-    },
   })
   const hall: Content = {
     name: 'hall',
@@ -286,9 +282,9 @@ describe('plugins that bring entities and speakers', () => {
     ])
   })
 
-  it('say who is speaking', () => {
+  it('give the scene its speaker, as their entity is', () => {
     const { game } = loadWhole([{ name: 'base', introScene: 'hymn' }, hall], { id: 'hall', title: 'Hall', plugins: [choir] })
-    expect(view(startingState(game), game).scene.speaker).toEqual({ id: 'ann', name: 'Ann', portrait: null, ui: { hue: 280 } })
+    expect(view(startingState(game), game).scene.speaker).toEqual({ id: 'ann', ref: 'singer:ann', name: 'Ann', image: null, ui: { hue: 280 } })
     const { game: plain } = loadWhole([{ name: 'base', introScene: 'hymn' }, hall], { id: 'hall', title: 'Hall', plugins: [] })
     expect(view(startingState(plain), plain).scene.speaker).toBeNull()
   })

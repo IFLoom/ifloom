@@ -78,29 +78,17 @@ function ImageBeat({ beat, attrs }: { beat: Extract<SceneBeat, { type: 'image' }
 }
 
 function BeatImpl({ beat }: { beat: SceneBeat }) {
-  const words = useWords()
   const text = usePart('beat', 'leading-prose')
-  const mono = usePart('beat', 'font-mono text-sm leading-prose')
   const say = usePart('beat', beat.type === 'say' && beat.who === 'player' ? 'leading-prose pl-6 text-player-speech' : 'leading-prose text-speech')
   const image = usePart(
     'beat',
-    cn('w-full rounded-lg', beat.type === 'image' && beat.size === 'inline' && 'max-w-sm', beat.type === 'image' && beat.rotate && 'rotate-1'),
+    cn('w-full rounded-lg', beat.type === 'image' && beat.size === 'inline' && 'max-w-sm', beat.type === 'image' && beat.ui?.tilt === true && 'rotate-1'),
   )
-  const mail = usePart('beat', 'rounded-lg border bg-card p-4 text-sm')
-  const header = usePart('mail-header', 'text-muted-foreground')
-  const body = usePart('mail-body', 'mt-2 whitespace-pre-wrap')
-  const prop = usePart('beat', 'rounded-lg border-2 border-dashed p-4 text-center font-medium')
   switch (beat.type) {
     case 'text':
       return (
         <p {...text} data-beat="text">
           {beat.spans ? <InlineSpans spans={beat.spans} /> : beat.text}
-        </p>
-      )
-    case 'mono':
-      return (
-        <p {...mono} data-beat="mono">
-          {beat.text}
         </p>
       )
     case 'say':
@@ -128,23 +116,6 @@ function BeatImpl({ beat }: { beat: SceneBeat }) {
           />
         </Zoomable>
       )
-    case 'mail':
-      return (
-        <div {...mail} data-beat="mail">
-          {beat.headers.map((line) => (
-            <p key={line.key} {...header}>
-              {words('mailHeader', { key: line.key, value: line.value })}
-            </p>
-          ))}
-          <p {...body}>{beat.body}</p>
-        </div>
-      )
-    case 'prop':
-      return (
-        <div {...prop} data-beat="prop" data-face={beat.face}>
-          {beat.text}
-        </div>
-      )
     case 'sound':
       // Heard, not seen: the audio player plays it.
       return null
@@ -152,8 +123,10 @@ function BeatImpl({ beat }: { beat: SceneBeat }) {
 }
 
 /**
- * One beat of a scene's body: narration, a spoken line, a picture, a video, a
- * letter, a sign. A sound beat draws nothing, and a spoken line with a voice
+ * One beat of a scene's body: narration, a spoken line, a picture, a video.
+ * Letters, notes and signs are inline pieces in a line (`InlineMail`,
+ * `InlineProp`, `InlineMono`). A picture whose block has `ui.tilt` sits at a
+ * slight angle. A sound beat draws nothing, and a spoken line with a voice
  * gets a button to hear it again while the game's sound is playing. A picture
  * or a clip opens in the `MediaViewer` when clicked, unless the viewer is off.
  * Each carries `data-beat` with its kind, and `data-part="beat"`, except a
@@ -280,10 +253,10 @@ function SceneArticle({ className, motion, transition, rolls }: { className?: st
       onClick={pending ? skip : undefined}
     >
       <header {...header}>
-        {scene.speaker?.portrait ? <Picture {...portrait} src={scene.speaker.portrait} alt="" /> : null}
+        {scene.speaker?.image ? <Picture {...portrait} src={scene.speaker.image} alt="" /> : null}
         <h2 {...title}>{scene.title}</h2>
       </header>
-      {scene.stage?.layers.length ? <Stage stage={scene.stage} /> : scene.stageImage ? <Picture {...image} src={scene.stageImage} alt="" /> : null}
+      {scene.stage?.layers.length ? <Stage stage={scene.stage} /> : scene.image ? <Picture {...image} src={scene.image} alt="" /> : null}
       <Beats beats={scene.beats} motion={motion} rolls={rolls} skipped={revealed} />
       {/* With reveals to come, the choices come with the last of them: not pressable, or read out, until then. */}
       {last > 0 && motion ? (
@@ -346,7 +319,7 @@ function SceneStageImpl({ className }: { className?: string }) {
 
 /**
  * The main column: the scene on screen, or the room when none is. Its stage (the
- * layered `Stage` when the scene has one, else its `stageImage`), its body, then
+ * layered `Stage` when the scene has one, else its `image`), its body, then
  * either the game's own panel for it or its choices. While a minigame runs, it
  * draws that instead: the game's panel named by the minigame's id, else
  * `MinigameCard`.

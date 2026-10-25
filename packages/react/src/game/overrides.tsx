@@ -76,8 +76,11 @@ export const PART_KEYS = [
   'beats',
   'beat',
   'reveal',
+  'inline-mail',
   'mail-header',
   'mail-body',
+  'inline-prop',
+  'inline-mono',
   'voice-replay',
   // Inline actions, tooltips, inline pieces, bold and italics in the prose
   'inline-action',

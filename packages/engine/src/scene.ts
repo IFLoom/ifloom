@@ -8,6 +8,7 @@ import { buildEffects, type EffectRef } from './custom.ts'
 import type { ScenePanel } from './features/panels.ts'
 import type { Effect, GameState } from './types.ts'
 import { commandOf, type CommandRef } from './calls.ts'
+import type { BodyPart } from './sceneBody.ts'
 
 /**
  * A scene, as data.
@@ -193,36 +194,38 @@ function blockText(
   }
 }
 
+/** A data scene as its render gives it: its view, and its body as parts, for the screen to cut into beats. Internal. */
+export type RenderedScene = SceneView & { parts: BodyPart[] }
+
 /**
  * Turn a scene and a state into what the player sees. Blocks that do not
- * apply are dropped; the rest are joined in declaration order. New pool
- * picks are written into `picks` when it is given.
+ * apply are dropped; the rest are kept in declaration order, as parts of the
+ * body. New pool picks are written into `picks` when it is given. Internal:
+ * plugins draw blocks with `context.beats`.
  */
-export function renderScene(scene: DataScene, state: GameState, runtime: SceneRuntime, picks?: Record<string, string>): SceneView {
-  const parts: string[] = []
+export function renderScene(scene: DataScene, state: GameState, runtime: SceneRuntime, picks?: Record<string, string>): RenderedScene {
+  const parts: BodyPart[] = []
   const media: SceneMedia[] = []
   const remember: Effect[] = []
   /** Every block this render used, in order. Later ones win a label. */
   const drawn: string[] = []
-  /** The blocks with hints, by the first of `parts` each wrote. */
-  const hinted: { part: number; ui: Ui<BlockUi> }[] = []
 
   scene.body.forEach((block, index) => {
     if (!holds(state, block.when, runtime.game)) return
     const resolved = blockText(scene, block, state, runtime)
     // A pool's pick is kept per scene and block, so the same block shows the same file every visit.
     const shown = resolved.media && resolveMedia(resolved.media, state, runtime.game, scene.id, String(index), featureContext(), picks)
-    const first = parts.length
+    const pieces: string[] = []
     if (shown) {
       // In place unless it says otherwise: written as its markup, so it lands among the prose's beats.
       if (shown.at) media.push(shown)
-      else parts.push(mediaMarkup(shown))
+      else pieces.push(mediaMarkup(shown))
     }
-    if (resolved.text) parts.push(resolvePoolMarkup(resolved.text, state, runtime.game, scene.id, String(index), featureContext(), picks))
+    if (resolved.text) pieces.push(resolvePoolMarkup(resolved.text, state, runtime.game, scene.id, String(index), featureContext(), picks))
     if (resolved.remember) remember.push(resolved.remember)
     if (resolved.also) remember.push(resolved.also)
     if (resolved.drawn) drawn.push(resolved.drawn)
-    if (block.ui && parts.length > first) hinted.push({ part: first, ui: block.ui })
+    if (pieces.length) parts.push({ text: pieces.join('\n\n'), ...(block.ui ? { ui: block.ui } : {}) })
   })
 
   const choices: SceneChoice[] = []
@@ -260,8 +263,8 @@ export function renderScene(scene: DataScene, state: GameState, runtime: SceneRu
     title: scene.title,
     speaker: scene.speaker,
     tags: scene.tags,
-    body: parts.join('\n\n'),
-    ...(hinted.length ? { blockUi: hintOffsets(parts, hinted) } : {}),
+    body: parts.map(partText).join('\n\n'),
+    parts,
     media: media.length ? media : undefined,
     ...(scene.stage ? { stage: scene.stage } : {}),
     ...(scene.audio ? { audio: scene.audio } : {}),
@@ -269,15 +272,10 @@ export function renderScene(scene: DataScene, state: GameState, runtime: SceneRu
   }
 }
 
-/** Where each hinted block starts in the body its parts join into, by character. */
-function hintOffsets(parts: readonly string[], hinted: readonly { part: number; ui: Ui<BlockUi> }[]): { at: number; ui: Ui<BlockUi> }[] {
-  const starts: number[] = []
-  let at = 0
-  for (const part of parts) {
-    starts.push(at)
-    at += part.length + 2
-  }
-  return hinted.map((entry) => ({ at: starts[entry.part], ui: entry.ui }))
+/** A part as the body's text has it: its markup, or a beat's words. */
+function partText(part: BodyPart): string {
+  if ('text' in part) return part.text
+  return 'text' in part.beat ? part.beat.text : ''
 }
 
 /**

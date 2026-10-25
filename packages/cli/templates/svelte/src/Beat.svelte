@@ -2,14 +2,12 @@
   import type { SceneBeat } from '@ifloom/engine'
   import Line from './Line.svelte'
 
-  // One paragraph of a scene: narration, a spoken line, a picture, a letter. A sound beat is heard, not drawn.
+  // One paragraph of a scene: narration, a spoken line, a picture, a clip. A sound beat is heard, not drawn.
   let { beat }: { beat: SceneBeat } = $props()
 </script>
 
 {#if beat.type === 'text'}
   <p><Line text={beat.text} spans={beat.spans} /></p>
-{:else if beat.type === 'mono'}
-  <p class="beat-mono">{beat.text}</p>
 {:else if beat.type === 'say'}
   <p class="beat-say" data-who={beat.who}><Line text={beat.text} spans={beat.spans} /></p>
 {:else if beat.type === 'image'}
@@ -25,11 +23,4 @@
     controls={beat.controls}
     playsinline
   ></video>
-{:else if beat.type === 'mail'}
-  <div class="beat-prop">
-    {#each beat.headers as line (line.key)}<p>{line.key}: {line.value}</p>{/each}
-    <p>{beat.body}</p>
-  </div>
-{:else if beat.type === 'prop'}
-  <div class="beat-prop">{beat.text}</div>
 {/if}

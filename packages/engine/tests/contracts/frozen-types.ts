@@ -63,7 +63,9 @@
  * effect takes `random`, `of` names a storyline or the minigame, and
  * `Game.kv` and `Pack.kv` are the kv store a new game starts with. One kind
  * of button: `activities` fold into `actions` (an `ActionDef` with a cost,
- * effects and once), and the `activity` command is `action`.
+ * effects and once), and the `activity` command is `action`. Scenes and
+ * beats (API pass P3): `view.scene.image` for `stageImage`, and
+ * `SpeakerView` read from the speaker's entity.
  */
 import type {
   ActionDef,
@@ -536,7 +538,7 @@ export type FrozenView = {
     /** The scene's tags, for the UI to style it by. */
     tags: string[]
     speaker: SpeakerView | null
-    stageImage: string | null
+    image: string | null
     /** The scene's layered picture and its hotspots, or null when it has none. See `stageView`. */
     stage: StageView | null
     choices: RenderedChoice[]

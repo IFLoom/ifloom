@@ -9,12 +9,12 @@ import type { InlineComponents } from './game/context.tsx'
 import { MAX_PIPS, TRANSITIONS } from './hints.ts'
 
 /** The inline pieces the React UI draws itself, as `BUILT_IN_INLINE` has them. */
-const INLINE = ['modal', 'image']
+const INLINE = ['modal', 'image', 'mail', 'prop', 'mono']
 
 const KNOWN = {
   scene: ['transition'],
   choice: ['transition'],
-  block: ['reveal', 'dice', 'timer'],
+  block: ['reveal', 'dice', 'timer', 'tilt'],
   stat: ['display'],
   entity: ['hue'],
   game: ['transition', 'transitionNames'],
@@ -30,15 +30,16 @@ const isRecord = (value: unknown): value is Record<string, unknown> => typeof va
  * neither built in nor in `game.ui.transitionNames`, a negative `ms`, a reveal
  * `delay` that isn't whole milliseconds, a `display` that isn't `number`, `bar`
  * or `pips`, pips on a stat with a range over 20, a `hue` outside 0 to 360,
- * a block's `dice` that isn't a roll's key, and a block's `timer` that isn't a
- * timer the game declares.
+ * a block's `dice` that isn't a roll's key, a block's `timer` that isn't a
+ * timer the game declares, and a `tilt` that isn't true or false.
  *
  * It also reads the prose for inline pieces, `[[ui:name|…]]`: a name that is
- * neither built in (`modal`, `image`) nor one of the game's own `inline`
+ * neither built in (`modal`, `image`, `mail`, `prop`, `mono`) nor one of the game's own `inline`
  * components (pass the same object you give `mountGame` or the
  * `GameProvider`), which would show only its words; a `modal` with no prose
- * key, or one with no prose; an `image` with no path; and either with more
- * than two arguments.
+ * key, or one with no prose; an `image` with no path; either with more
+ * than two arguments; a `prop` whose face isn't `sticky`, `clip` or
+ * `diary`; and a `mono` with arguments.
  *
  * Hints and inline names in `allow` (`['mood']`, say, for another UI's)
  * aren't reported. Empty when all is well.
@@ -85,6 +86,7 @@ export function checkUiHints(game: Game, options: { allow?: readonly string[]; i
       out.push(`${where}: ui.dice names a roll's key: letters, digits and _`)
     if (ui.timer !== undefined && !(typeof ui.timer === 'string' && timers.has(ui.timer)))
       out.push(`${where}: ui.timer "${String(ui.timer)}" is not a timer the game has`)
+    if (ui.tilt !== undefined && typeof ui.tilt !== 'boolean') out.push(`${where}: ui.tilt is true or false`)
     if (ui.hue !== undefined && !(typeof ui.hue === 'number' && ui.hue >= 0 && ui.hue <= 360)) out.push(`${where}: ui.hue is a number from 0 to 360`)
     if (ui.transitionNames !== undefined) {
       const list = ui.transitionNames
@@ -137,6 +139,9 @@ export function checkUiHints(game: Game, options: { allow?: readonly string[]; i
       }
       if (part.name === 'image' && !first) out.push(`${where} needs a picture's path: [[ui:image|words|path]]`)
       if ((part.name === 'modal' || part.name === 'image') && part.args.length > 2) out.push(`${where} takes two arguments at most`)
+      if (part.name === 'prop' && (part.args.length > 1 || (first !== undefined && !['sticky', 'clip', 'diary'].includes(first))))
+        out.push(`${where} takes one face: sticky, clip or diary`)
+      if (part.name === 'mono' && part.args.length) out.push(`${where} takes no arguments`)
     }
   }
   return out

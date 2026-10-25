@@ -198,7 +198,7 @@ describe('a smartphone on the sidebar', () => {
     expect(post()).toMatchObject({ type: 'actions', actions: [{ label: 'Post a photo', disabled: undefined }] })
     state = run(state, g, { type: 'action', id: 'post' })
     expect(state.stats).toMatchObject({ energy: 40, subscribers: 5 })
-    expect(phoneOf(state, g).open?.sections[0]).toEqual({ type: 'prose', text: '5 subscribers' })
+    expect(phoneOf(state, g).open?.sections[0]).toEqual({ type: 'prose', text: '5 subscribers', beats: [{ type: 'text', text: '5 subscribers' }] })
     expect(post()).toMatchObject({ actions: [{ disabled: 'You have posted today.' }] })
     const fans = (view(state, g).plugins.feed as FeedsView).feeds.find((entry) => entry.id === 'fans')!
     expect(fans.posts[0]).toMatchObject({ mine: true, text: 'Coffee with a friend.', likes: 12, comments: [{ name: 'Ava', text: 'Love this' }] })

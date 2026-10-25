@@ -8,7 +8,9 @@ import type { ActionDef, GameRules } from './game.ts'
 import type { EntityDef, TraitDef } from './entities.ts'
 import type { Content } from './loader.ts'
 import type { Reference } from './references.ts'
-import type { EntityUi, SceneUi, Ui } from './features/ui.ts'
+import type { SceneUi, Ui } from './features/ui.ts'
+import { styledBeats, type SceneBeat } from './sceneBody.ts'
+import { blockBeats } from './beats.ts'
 import type { MigrationTools } from './intake.ts'
 import type { CommandStep, ContentStep } from './upgrade.ts'
 
@@ -40,10 +42,20 @@ export type PluginContext<S> = CustomContext & {
   apply: (effects: readonly EffectRef[], on?: GameState) => GameState
   /**
    * Only in `view`: where the pool picks the view makes are written, for the
-   * reducer to record. Pass it to `stageView` and `renderScene` so a stage's
-   * or a body's pick stays the same on every visit. Undefined elsewhere.
+   * reducer to record. Pass it to `stageView` so a stage's pick stays the
+   * same on every visit (`beats` records its own). Undefined elsewhere.
    */
   picks?: Record<string, string>
+  /**
+   * Blocks drawn as beats, as a scene's body is drawn: a message's words, a
+   * post's, an app's. The blocks whose `when` holds, their words filled in
+   * for this save, variants drawn and pools picked under `id` (so a block's
+   * pick stays the same on every visit), spoken lines with their speakers,
+   * and bold, italics and UI pieces as spans. Inline actions and tooltips stay
+   * in the words as written, since only a scene offers choices. In `view`,
+   * the pool picks it makes are recorded.
+   */
+  beats: (blocks: readonly Block[], id: string) => SceneBeat[]
   /**
    * Only in `view`, and only when a runner with a profile builds it: what the
    * plugin's own profile namespace (its id) held when the runner last read or
@@ -83,7 +95,7 @@ export type Asked = { command: Command; effects: readonly Effect[] }
  * returns the next state, and is named `on` and the event: `onTurn`,
  * `onCommand`. A provider answers a question and never changes the state, and
  * is named by the noun it gives: `guard`, `price`, `label`, `stage`,
- * `buttons`, `speaker`, `audio`, `statModifiers`, `view`, `profile`. Tables of
+ * `buttons`, `audio`, `statModifiers`, `view`, `profile`. Tables of
  * named functions (`conditions`, `effects`, `commands`, `queries`, `values`)
  * are plural nouns. Nothing is nested: there is no `hooks: {}`.
  *
@@ -232,11 +244,6 @@ export type Plugin<S = any, V = unknown> = {
    */
   action?: (state: GameState, id: string, context: PluginContext<S>) => ActionDef | undefined
   /**
-   * Who a scene's `speaker` id is, for the screen: a name and a face. The first
-   * plugin that answers is believed; with none, a scene has no speaker shown.
-   */
-  speaker?: (id: string, state: GameState, context: PluginContext<S>) => SpeakerView | undefined
-  /**
    * Content the plugin brings, merged first, under the game's content and
    * packs, which can replace anything in it by id: its kinds of entity (the
    * people of a cast, unlisted in the view unless the kind sets `listed`; a
@@ -313,16 +320,6 @@ export type StatModifier = {
   add?: number
   /** What the value, with the adds, is multiplied by. 1 if left out. */
   multiply?: number
-}
-
-/** Who is speaking in a scene, as the screen draws them. */
-export type SpeakerView = {
-  id: string
-  name: string
-  /** Their picture; null for none. */
-  portrait: string | null
-  /** Their presentation hints, as their entity has them; left out with none. See `EntityUi`. */
-  ui?: Ui<EntityUi>
 }
 
 /** What the screen shows while no scene is open, from a plugin's `stage`. */
@@ -431,6 +428,7 @@ export function pluginContext<S>(plugin: Plugin<S>, state: GameState, game: Game
     slice: readSlice(plugin, state, game),
     set: (next, on = state) => writeSlice(plugin, on, next),
     apply: (effects, on = state) => runEffects(on, game, buildEffects(on, game, effects), options.ending ?? false),
+    beats: (blocks, id) => styledBeats(blockBeats(state, game, blocks, id, options.picks)),
   }
   if (options.picks) context.picks = options.picks
   if (options.profile !== undefined) context.profile = options.profile
@@ -642,15 +640,6 @@ export function pluginStage(game: Game, state: GameState): (StageDef & { id: str
   for (const plugin of pluginsOf(game)) {
     const stage = plugin.stage?.(state, pluginContext(plugin, state, game))
     if (stage) return { ...stage, id: stage.id ?? plugin.id }
-  }
-  return undefined
-}
-
-/** Who a speaker id is, as the first plugin that knows says; undefined if none does. */
-export function pluginSpeaker(game: Game, state: GameState, id: string): SpeakerView | undefined {
-  for (const plugin of pluginsOf(game)) {
-    const speaker = plugin.speaker?.(id, state, pluginContext(plugin, state, game))
-    if (speaker) return speaker
   }
   return undefined
 }

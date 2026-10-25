@@ -322,10 +322,60 @@ export function InlineImage({ text, args }: InlineProps<'image'>) {
   )
 }
 
+/**
+ * The built-in `mail`, from `[[ui:mail|body|From: Ava|Subject: Hello]]`: a
+ * letter or an email as a card, an `inline-mail` part, with each header line
+ * as written (a `mail-header` part), then the body (a `mail-body` part).
+ * Written as a paragraph of its own, it draws as one. Replace it with a
+ * `mail` of your own in `inline`.
+ */
+export function InlineMail({ text, args }: InlineProps<'mail'>) {
+  const card = usePart('inline-mail', 'block rounded-lg border bg-card p-4 text-sm')
+  const header = usePart('mail-header', 'block text-muted-foreground')
+  const body = usePart('mail-body', 'mt-2 block whitespace-pre-wrap')
+  return (
+    <span {...card} data-ui="mail">
+      {args.map((line, index) => (
+        <span key={index} {...header}>
+          {line}
+        </span>
+      ))}
+      <span {...body}>{text}</span>
+    </span>
+  )
+}
+
+/**
+ * The built-in `prop`, from `[[ui:prop|words|face]]`: a note in the story's
+ * world, an `inline-prop` part with `data-face` (`sticky`, `clip`, `diary`, or
+ * whatever face the prose gives). Written as a paragraph of its own, it draws
+ * as one. Replace it with a `prop` of your own in `inline`.
+ */
+export function InlineProp({ text, args }: InlineProps<'prop'>) {
+  const attrs = usePart('inline-prop', 'block whitespace-pre-wrap rounded-lg border-2 border-dashed p-4 text-center font-medium')
+  return (
+    <span {...attrs} data-ui="prop" data-face={args[0]}>
+      {text}
+    </span>
+  )
+}
+
+/** The built-in `mono`, from `[[ui:mono|words]]`: the words in a typewriter face, an `inline-mono` part. Replace it with a `mono` of your own in `inline`. */
+export function InlineMono({ text }: InlineProps<'mono'>) {
+  return (
+    <span {...usePart('inline-mono', 'font-mono text-sm')} data-ui="mono">
+      {text}
+    </span>
+  )
+}
+
 /** The inline pieces the React UI draws by name. A game's own `inline` of the same name go over these. */
 export const BUILT_IN_INLINE: Readonly<InlineComponents> = {
   modal: InlineModal,
   image: InlineImage,
+  mail: InlineMail,
+  prop: InlineProp,
+  mono: InlineMono,
 }
 
 /** An inline piece: the game's component by its name, else a built-in one, else its words. */

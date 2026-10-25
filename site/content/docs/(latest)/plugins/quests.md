@@ -109,7 +109,7 @@ Two quests from a cut-down Small Town, the [showcase](/docs/guide/showcase)'s wo
 
 ```ts
 import type { Content } from '@ifloom/engine'
-import { at, location, type LocationDef } from '@ifloom/plugin-places'
+import { at, location, type PlaceDef } from '@ifloom/plugin-places'
 import { startQuest, type QuestDef } from '@ifloom/plugin-quests'
 
 const settle: QuestDef = {
@@ -129,7 +129,7 @@ const scarf: QuestDef = {
   stages: [{ id: 'buy', hint: 'Buy a scarf at the market.', done: { entity: 'clothing:scarf', at: 'you' } }],
 }
 
-const place = (id: string, name: string, exits: string[]): LocationDef =>
+const place = (id: string, name: string, exits: string[]): PlaceDef =>
   ({ id, name, desc: 'Small Town', exits, body: [{ text: `place.${id}` }] })
 
 const map = [

@@ -21,8 +21,8 @@ These are the parts of a game that deal with places, and where each one comes fr
 ```ts
 import {
   places, location, go, at, within, moveTo, onlyAt, pickUp, locationRef, where, locationsOf, locationOf, LOCATION,
-  type PlacesOptions, type PlacesState, type PlacesView, type LocationView, type ExitView, type LyingView,
-  type Location, type LocationDef, type Arrival,
+  type PlacesOptions, type PlacesState, type PlacesView, type PlaceView, type ExitView, type LyingView,
+  type Place, type PlaceDef, type Arrival,
 } from '@ifloom/plugin-places'
 ```
 
@@ -94,9 +94,9 @@ The options are code, not content, so a mod can't change them. Everything a mod 
 ### location
 
 ```ts
-function location(def: LocationDef): EntityDef
+function location(def: PlaceDef): EntityDef
 
-type LocationDef = Omit<EntityDef, 'of' | 'ui'> & Location & { of?: string }
+type PlaceDef = Omit<EntityDef, 'of' | 'ui'> & Place & { of?: string }
 ```
 
 Writes a place for your content's `entities`. You give it the entity's fields and the `places/location` trait's fields side by side, and it returns an [`EntityDef`](/docs/reference/entities#entitydef) of the kind `location` with the trait's fields in `traits['places/location']`. Give `of` to make the place an entity of another kind, such as a boat the player can step aboard.
@@ -124,7 +124,7 @@ Every other entity field (`at`, `visible`, `stats`, `kv`, `traits`) works as on 
 ### The location trait
 
 ```ts
-type Location = {
+type Place = {
   parent?: string
   exits: readonly string[]
   stage?: MediaStage
@@ -151,7 +151,7 @@ What the `places/location` trait holds. Any entity that carries it is a place th
 | `ui` | [Presentation hints](/docs/reference/ui-hints) for the room while no scene is open, carried to `view.scene.ui` as a scene's are. The React UI reads [`transition`](/docs/react/hints#transition): `{ ui: { transition: 'slide-left' } }` slides the room in. The view's [`scene.key`](/docs/reference/view#the-scene) is `room:<id>`, so walking to another place counts as a new screen. |
 | `arrive` | What happens on the doorstep as the player walks in by an exit. See [Arrival](#arrival). |
 
-The plugin declares the trait and types it, so `traitOf(game, 'location:cafe', 'places/location')` reads a `Location`.
+The plugin declares the trait and types it, so `traitOf(game, 'location:cafe', 'places/location')` reads a `Place`.
 
 ### Arrival
 
@@ -271,7 +271,7 @@ There's no header or footer that the plugin adds to every place. For a line that
 ```ts
 import type { Block } from '@ifloom/engine'
 import { weekday } from '@ifloom/plugin-calendar'
-import { location, type LocationDef } from '@ifloom/plugin-places'
+import { location, type PlaceDef } from '@ifloom/plugin-places'
 
 // Shown under every place's own words while they hold.
 const warnings: Block[] = [
@@ -279,7 +279,7 @@ const warnings: Block[] = [
   { text: 'warn.tired', when: { stat: 'energy', lt: 10 } },
 ]
 
-const place = (def: Omit<LocationDef, 'body'>, text: string) => location({ ...def, body: [{ text }, ...warnings] })
+const place = (def: Omit<PlaceDef, 'body'>, text: string) => location({ ...def, body: [{ text }, ...warnings] })
 ```
 
 Prose has no styling of its own, so a warning reads like any other line. Make it stand out in your UI if you need to, or show it as a [notice](/docs/reference/notices) instead.
@@ -439,7 +439,7 @@ These answer other plugins' code, through the context's [`query`](/docs/referenc
 | Query | Answers |
 |---|---|
 | `places/here` | Where the player is: the place's id, or `null`. |
-| `places/all` | Every place the game has now, each its [`Location`](#the-location-trait) trait with its `id` and `ref`. |
+| `places/all` | Every place the game has now, each its [`Place`](#the-location-trait) trait with its `id` and `ref`. |
 | `places/known` | Whether the game has a place with this id or reference, given as `{ location }`: `true` or `false`. |
 | `places/exits` | The current place's `exits`, as listed, leaving out any the game doesn't have. Empty when nowhere. |
 | `places/holder` | The entity of where the player is, such as `'location:park'`, which holds what's put down there; `null` when nowhere. The [inventory](/docs/plugins/inventory)'s `drop` asks it. |
@@ -546,7 +546,7 @@ Its [React UI](#the-react-ui) draws it with [`LocationCard`](#locationcard), and
 
 ```ts
 type PlacesView = {
-  location: LocationView | null
+  location: PlaceView | null
   exits: ExitView[]
   things: LyingView[]
 }
@@ -554,7 +554,7 @@ type PlacesView = {
 
 | Field | What it is |
 |---|---|
-| `location` | Where the player is, as a [`LocationView`](#locationview). `null` when nowhere, or when `at` names a place the game no longer has. |
+| `location` | Where the player is, as a [`PlaceView`](#placeview). `null` when nowhere, or when `at` names a place the game no longer has. |
 | `exits` | The ways out, in the order the place lists them. Empty while a scene is open, or while a lock stops everything ([`lockedOut`](/docs/reference/locks#lockedout)). |
 | `things` | What lies here, as [`LyingView`](#lyingview)s, in the order the place's entity holds them. Empty when nothing does, while a scene is open, or while a lock stops everything. |
 
@@ -566,10 +566,10 @@ An exit is left out when:
 
 Any other exit is shown, greyed out with its refusal if it can't be taken.
 
-### LocationView
+### PlaceView
 
 ```ts
-type LocationView = {
+type PlaceView = {
   id: string
   ref: EntityRef
   name: string
@@ -609,7 +609,7 @@ An exit is a button like any other, a [`RenderedChoice`](/docs/reference/view#re
 |---|---|
 | `id` | The destination's id. |
 | `label` | The destination's `name`. |
-| `ref`, `desc`, `tags`, `image` | The destination's, from its entity, as in a [`LocationView`](#locationview). |
+| `ref`, `desc`, `tags`, `image` | The destination's, from its entity, as in a [`PlaceView`](#placeview). |
 | `disabled` | Why it can't be taken now: what [`whyNot`](/docs/reference/actions#whynot) says for its command. A closed café's exit reads `Closed. Opens tomorrow morning.` |
 | `warning` | Set when the exit can be pressed but a plugin [guard](/docs/reference/plugins#guards) warns against it. The reducer refuses it. |
 | `price` | What going costs, when a plugin says, such as the time it takes. |
@@ -761,7 +761,7 @@ The plugin's lines go in the [strings table](/docs/reference/strings#plugins-str
 
 ```ts
 function locationsOf(game: Game, state?: GameState): EntityRef[]
-function locationOf(game: Game, id: string | null | undefined, state?: GameState): Location | undefined
+function locationOf(game: Game, id: string | null | undefined, state?: GameState): Place | undefined
 function where(state: GameState): string | null
 
 const go: (to: string) => CommandRef
@@ -777,7 +777,7 @@ const onlyAt: (places: string[], reason?: string) => Blocked
 | Helper | Returns |
 |---|---|
 | `locationsOf` | Every entity with the `places/location` trait, as references. Given only the game, the places content declares, in its order. Given a state too, every place in the game now, those made in play included. |
-| `locationOf` | The [`Location`](#the-location-trait) trait of the place with this id or reference, or `undefined`. Without a state, only the places content declares. With one, a place made in play too. `undefined` for `null`. |
+| `locationOf` | The [`Place`](#the-location-trait) trait of the place with this id or reference, or `undefined`. Without a state, only the places content declares. With one, a place made in play too. `undefined` for `null`. |
 | `where` | Where the player is, read straight from the state with no game needed: the place's id, or `null`. |
 | `go` | The [`places/go`](#commands) command. |
 | `pickUp` | The [`places/pickUp`](#commands) command. |

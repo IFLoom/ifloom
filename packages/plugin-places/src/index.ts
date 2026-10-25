@@ -69,7 +69,7 @@ import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations 
  * player can be in. The place's name, its `desc` (a word or two under the
  * name: "Home", "Café"), its `image` and its `tags` are the entity's.
  */
-export type Location = {
+export type Place = {
   /** The place it is inside: a room's building. `places/within` follows it. */
   parent?: string
   /** The places one step away. */
@@ -110,7 +110,7 @@ export type Location = {
 
 declare module '@ifloom/engine' {
   interface Traits {
-    'places/location': Location
+    'places/location': Place
   }
 }
 
@@ -120,7 +120,7 @@ declare module '@ifloom/engine' {
  * picture) and the `places/location` trait's, side by side. `ui` is the
  * trait's: the room's hints, as a scene's.
  */
-export type LocationDef = Omit<EntityDef, 'of' | 'ui'> & Location & { of?: string }
+export type PlaceDef = Omit<EntityDef, 'of' | 'ui'> & Place & { of?: string }
 
 /** What happens as the player walks into a place: effects, while `when` holds. */
 export type Arrival = { when?: Condition; effects: EffectRef[] }
@@ -164,7 +164,7 @@ export type LyingView = {
 }
 
 /** Where the player is, as the UI draws it. */
-export type LocationView = {
+export type PlaceView = {
   /** The place's id, as `go` names it. */
   id: string
   /** Its entity: `'location:park'`. */
@@ -186,7 +186,7 @@ export type LocationView = {
 /** What the UI reads at `view.plugins.places`. */
 export type PlacesView = {
   /** Where the player is; null when nowhere. */
-  location: LocationView | null
+  location: PlaceView | null
   /** The exits, in the order the place lists them; none while a scene is open or a lock holds everything. */
   exits: ExitView[]
   /** What lies here, held by the place's entity: a thing the player dropped, say. None while a scene is open or a lock holds everything. */
@@ -209,10 +209,10 @@ export const locationRef = (id: string): EntityRef => (id.includes(':') ? id : `
 /** How the plugin names a place back: its id for one of its kind, else the whole reference. */
 const short = (ref: EntityRef): string => (parseRef(ref)?.kind === LOCATION ? parseRef(ref)!.id : ref)
 
-const declaredCache = new WeakMap<object, Map<EntityRef, Location>>()
+const declaredCache = new WeakMap<object, Map<EntityRef, Place>>()
 
 /** The places content declares, by reference, with their traits. */
-function declared(game: Game): Map<EntityRef, Location> {
+function declared(game: Game): Map<EntityRef, Place> {
   let found = declaredCache.get(game)
   if (!found) {
     found = new Map()
@@ -241,7 +241,7 @@ export function locationsOf(game: Game, state?: GameState): EntityRef[] {
  * place made in play too, read through what it was made `like`. Undefined
  * for anything else.
  */
-export function locationOf(game: Game, id: string | null | undefined, state?: GameState): Location | undefined {
+export function locationOf(game: Game, id: string | null | undefined, state?: GameState): Place | undefined {
   if (id === null || id === undefined) return undefined
   const ref = locationRef(id)
   const own = declared(game).get(ref)
@@ -505,7 +505,7 @@ const LOCATION_FIELDS = ['parent', 'exits', 'stage', 'blocked', 'body', 'actions
  * entities: [location({ id: 'cafe', name: 'The Corner Café', desc: 'Café', exits: ['street'], body: [{ text: 'place.cafe' }] })]
  * ```
  */
-export function location(def: LocationDef): EntityDef {
+export function location(def: PlaceDef): EntityDef {
   const { of, traits, ...rest } = def
   const entity: Record<string, unknown> = {}
   const trait: Record<string, unknown> = {}
@@ -514,7 +514,7 @@ export function location(def: LocationDef): EntityDef {
     if ((LOCATION_FIELDS as readonly string[]).includes(field)) trait[field] = value
     else entity[field] = value
   }
-  return { ...(entity as Omit<EntityDef, 'of'>), of: of ?? LOCATION, traits: { ...traits, [TRAIT]: trait as Location } }
+  return { ...(entity as Omit<EntityDef, 'of'>), of: of ?? LOCATION, traits: { ...traits, [TRAIT]: trait as Place } }
 }
 
 /** The command that picks up one of a thing lying where the player is. */

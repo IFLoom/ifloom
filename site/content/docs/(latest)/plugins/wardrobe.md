@@ -98,10 +98,10 @@ A cut-down Small Town. The player starts in the raincoat, which people in the ca
 
 ```ts
 import { give, need, type Content } from '@ifloom/engine'
-import { location, type LocationDef } from '@ifloom/plugin-places'
+import { location, type PlaceDef } from '@ifloom/plugin-places'
 import { wearable, wearing } from '@ifloom/plugin-wardrobe'
 
-const place = (id: string, name: string, exits: string[]): LocationDef =>
+const place = (id: string, name: string, exits: string[]): PlaceDef =>
   ({ id, name, desc: 'Small Town', exits, body: [{ text: `place.${id}` }] })
 
 const map = [

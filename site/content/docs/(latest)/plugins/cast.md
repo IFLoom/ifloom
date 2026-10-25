@@ -229,7 +229,7 @@ Characters go in your [content](/docs/reference/loader#content)'s `entities`, wr
 ```ts
 import type { DataScene, Content } from '@ifloom/engine'
 import { period, weekday } from '@ifloom/plugin-calendar'
-import { at, location, type LocationDef } from '@ifloom/plugin-places'
+import { at, location, type PlaceDef } from '@ifloom/plugin-places'
 import { character, person } from '@ifloom/plugin-cast'
 
 const ava = person({
@@ -262,7 +262,7 @@ const sam = person({
   storyline: 'sam',
 })
 
-const place = (id: string, name: string, exits: string[]): LocationDef =>
+const place = (id: string, name: string, exits: string[]): PlaceDef =>
   ({ id, name, desc: 'Small Town', exits, body: [{ text: `place.${id}` }] })
 const chat = (id: string, who: string, by: number): DataScene => ({
   id, speaker: who, body: [{ text: id }],

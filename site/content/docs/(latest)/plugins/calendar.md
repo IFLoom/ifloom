@@ -167,9 +167,9 @@ A Monday in Small Town, the [showcase](/docs/guide/showcase)'s world. The player
 ```ts
 import { apply, loadGame, startingState, view, whyNot, type GameState, type Content } from '@ifloom/engine'
 import { calendar, pass, period, sleep, weekday } from '@ifloom/plugin-calendar'
-import { go, places, location, type LocationDef } from '@ifloom/plugin-places'
+import { go, places, location, type PlaceDef } from '@ifloom/plugin-places'
 
-const place = (id: string, name: string, exits: string[]): LocationDef =>
+const place = (id: string, name: string, exits: string[]): PlaceDef =>
   ({ id, name, desc: 'Small Town', exits, body: [{ text: `place.${id}` }] })
 
 const town: Content = {

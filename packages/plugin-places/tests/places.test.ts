@@ -31,12 +31,12 @@ import {
   places,
   where,
   within,
-  type LocationDef,
+  type PlaceDef,
   type PlacesOptions,
   type PlacesView,
 } from '../src/index.ts'
 
-const place = (id: string, exits: string[], extra: Partial<LocationDef> = {}) =>
+const place = (id: string, exits: string[], extra: Partial<PlaceDef> = {}) =>
   location({
     id,
     name: id[0].toUpperCase() + id.slice(1),
@@ -48,7 +48,7 @@ const place = (id: string, exits: string[], extra: Partial<LocationDef> = {}) =>
   })
 
 /** The town's places, with more on some of them by id. */
-const townPlaces = (more: Record<string, Partial<LocationDef>> = {}) => [
+const townPlaces = (more: Record<string, Partial<PlaceDef>> = {}) => [
   place('house', ['street'], more.house),
   place('street', ['house', 'cafe', 'park'], { tags: ['outdoors'], ...more.street }),
   place('cafe', ['street', 'back'], {
@@ -239,7 +239,7 @@ describe('places', () => {
 
   describe('audio', () => {
     /** The town with sounds: music everywhere by default, the café's murmur on the ambience channel. */
-    function withSound(extra: Partial<LocationDef> = {}) {
+    function withSound(extra: Partial<PlaceDef> = {}) {
       const sounds: Pack = {
         id: 'sounds',
         schema: SCHEMA,
@@ -298,7 +298,7 @@ describe('places', () => {
 
   describe('a place’s stage', () => {
     /** The café with a layered picture: the room, a lamp in the evening, and hotspots on them. */
-    function withStage(stage: LocationDef['stage']) {
+    function withStage(stage: PlaceDef['stage']) {
       const pictures: Pack = {
         id: 'pictures',
         schema: SCHEMA,
@@ -316,7 +316,7 @@ describe('places', () => {
       return { g, problems }
     }
 
-    const stage: LocationDef['stage'] = {
+    const stage: PlaceDef['stage'] = {
       aspect: '16/9',
       layers: [
         { id: 'room', src: 'cafe/room' },

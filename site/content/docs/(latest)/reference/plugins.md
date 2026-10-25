@@ -190,7 +190,7 @@ On a new game the same command is refused with `Your card is not full yet.`, and
 
 ```ts
 import {
-  definePlugin, pluginById, pluginQuery, pluginSpeaker,
+  definePlugin, pluginById, pluginQuery, speakerOf,
   type Plugin, type DefinedPlugin, type PluginContext, type PluginArgs,
   type PluginCommand, type PluginEntry, type PluginProblem, type PluginSlice,
   type Asked, type Refusal, type StageDef, type SpeakerView, type CheckTools,
@@ -226,7 +226,6 @@ type Plugin<S = any> = {
   stage?: (state: GameState, context: PluginContext<S>) => StageDef | undefined
   buttons?: (state: GameState, context: PluginContext<S>) => readonly ActionDef[] | undefined
   action?: (state: GameState, id: string, context: PluginContext<S>) => ActionDef | undefined
-  speaker?: (id: string, state: GameState, context: PluginContext<S>) => SpeakerView | undefined
   content?: Content
   traits?: readonly TraitDef[]
   audio?: (state: GameState, context: PluginContext<S>) => Record<string, string | null> | undefined

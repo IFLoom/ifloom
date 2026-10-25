@@ -178,11 +178,11 @@ The time of day comes from the [calendar](/docs/plugins/calendar), the map from 
 ```ts
 import { loadGame, roll, type Content, type GameRules } from '@ifloom/engine'
 import { calendar, day, pass, sleep } from '@ifloom/plugin-calendar'
-import { places, location, type LocationDef } from '@ifloom/plugin-places'
+import { places, location, type PlaceDef } from '@ifloom/plugin-places'
 import { cast, person } from '@ifloom/plugin-cast'
 import { feed, postTo, react, seeFeed } from '@ifloom/plugin-feed'
 
-const place = (id: string, name: string, exits: string[]): LocationDef =>
+const place = (id: string, name: string, exits: string[]): PlaceDef =>
   ({ id, name, desc: 'Small Town', exits, body: [{ text: `place.${id}` }] })
 
 const map = [

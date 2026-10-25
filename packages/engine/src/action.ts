@@ -3,7 +3,8 @@
  * feature, and what an action is, are in `features/actions.ts`.
  */
 import type { ActionDef, Game } from './game.ts'
-import { featureContext } from './core.ts'
+import { commandContext, featureContext } from './core.ts'
+import { rendering } from './availability.ts'
 import * as actions from './features/actions.ts'
 import { pluginById, pluginContext, pluginName } from './plugin.ts'
 import type { GameState } from './types.ts'
@@ -28,10 +29,12 @@ export function actionById(state: GameState, game: Game, id: string): ActionDef 
 /**
  * Why the player cannot do this action right now, or undefined if they can.
  * Checked in the order the player would notice: a scene open, its `when`, a
- * lock, its own `blocked`, once a turn, then what it costs.
+ * lock, its own `blocked`, once a turn, what it costs, then whether its
+ * command would be refused.
  */
 export function actionBlocked(state: GameState, game: Game, action: ActionDef): string | undefined {
-  return actions.actionBlocked(state, game, action, featureContext())
+  // With the command context, so an action whose command would be refused is refused with that command's reason.
+  return actions.actionBlocked(state, game, action, commandContext(rendering(state, game)))
 }
 
 /** The state with an action's cost paid. A derived stat is never written. */

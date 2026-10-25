@@ -64,6 +64,8 @@ export type LockTarget = Command['type'] | '*' | `${string}/${string}`
 function names(list: readonly LockTarget[] | undefined, command: Command): boolean {
   if (!list) return false
   if (list.includes(command.type)) return true
+  // A plugin's action, `{ type: 'action', id: 'devices/camera' }`, is the plugin's as its commands are, so `devices/*` names it.
+  if (command.type === 'action') return command.id.includes('/') && list.includes(`${command.id.split('/')[0]}/*` as LockTarget)
   if (command.type !== 'custom') return false
   const plugin = command.name.split('/')[0]
   return list.includes(command.name as LockTarget) || list.includes(`${plugin}/*`)

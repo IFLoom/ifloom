@@ -5,6 +5,7 @@ import { definePlugin } from '../../src/plugin.ts'
 import { view } from '../../src/view.ts'
 import { checkGame } from '../../src/check.ts'
 import { upgradePack, commandUpgrade } from '../../src/upgrade.ts'
+import { actionBlocked } from '../../src/action.ts'
 import type { ActionDef, Game } from '../../src/game.ts'
 import { activities, begin, fixture } from '../fixtures/town.ts'
 
@@ -92,6 +93,30 @@ describe('one kind of button', () => {
     expect(apply(begin(game), game, bun.command).state.kv.bun).toBe(true)
     expect(apply(begin(game), game, { type: 'action', id: 'stall/pie' }).state.kv.pie).toBe(true)
     expect(whyNot(begin(game), game, { type: 'action', id: 'stall/cake' })).toBe('There is no such thing to do.')
+  })
+
+  it('is blocked, asked from code, with its command’s reason', () => {
+    const stall = definePlugin<null>({
+      id: 'stall',
+      version: 1,
+      commands: { serve: { whyNot: () => 'The stall is empty.', run: (state) => state } },
+    })
+    const game: Game = { ...town(), plugins: [stall] }
+    expect(actionBlocked(begin(game), game, { id: 'bun', label: 'Buy a bun', effects: [{ kv: 'bun', to: true }], command: { 'stall/serve': true } })).toBe(
+      'The stall is empty.',
+    )
+  })
+
+  it('is stopped by a lock that names its plugin, as the plugin’s commands are', () => {
+    const stall = definePlugin<null>({
+      id: 'stall',
+      version: 1,
+      buttons: () => [{ id: 'bun', label: 'Buy a bun', effects: [{ kv: 'bun', to: true }] }],
+    })
+    const game: Game = { ...town(), plugins: [stall], locks: [{ when: { kv: 'closed' }, deny: ['stall/*'], reason: 'The stall is shut.' }] }
+    const closed = { ...begin(game), kv: { ...begin(game).kv, closed: true } }
+    expect(whyNot(closed, game, { type: 'action', id: 'stall/bun' })).toBe('The stall is shut.')
+    expect(whyNot(begin(game), game, { type: 'action', id: 'stall/bun' })).toBeUndefined()
   })
 })
 

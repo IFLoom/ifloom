@@ -32,7 +32,7 @@ describe('inputs', () => {
     state = apply(state, game, { type: 'input', id: 'alarm', to: 7 }).state
     state = apply(state, game, { type: 'input', id: 'tea', to: 'coffee' }).state
     expect(state.kv).toMatchObject({ petName: 'Biscuit', wakeAt: 7, tea: 'coffee' })
-    expect(view(state, game).inputs.alarm).toMatchObject({ type: 'number', min: 5, max: 10, value: 7 })
+    expect(view(state, game).inputs.find((input) => input.id === 'alarm')).toMatchObject({ type: 'number', min: 5, max: 10, value: 7 })
   })
 
   it('refuse what the declaration does not allow, in words the player can read', () => {
@@ -51,7 +51,7 @@ describe('inputs', () => {
 
   it('are only offered in the view while they apply', () => {
     const game = withInputs()
-    expect(Object.keys(view(begin(game), game).inputs)).toEqual(['petName', 'alarm', 'tea'])
-    expect(Object.keys(view(begin(game, { kv: { knowsDoor: true } }), game).inputs)).toContain('secret')
+    expect(view(begin(game), game).inputs.map((input) => input.id)).toEqual(['petName', 'alarm', 'tea'])
+    expect(view(begin(game, { kv: { knowsDoor: true } }), game).inputs.map((input) => input.id)).toContain('secret')
   })
 })

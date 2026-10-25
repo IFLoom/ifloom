@@ -59,7 +59,7 @@ function draw(view: View): void {
   if (view.minigame) drawMinigame(view.minigame)
 
   const inputs = add(story, 'div', '', 'inputs')
-  for (const input of Object.values(view.inputs)) drawInput(inputs, input)
+  for (const input of view.inputs) drawInput(inputs, input)
 
   drawChoices(add(story, 'div', '', 'choices'), view.scene.choices)
   // The bottom of the story: the game's own buttons and its plugins', such as a place's exits and things to do.

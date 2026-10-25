@@ -15,15 +15,15 @@ function EntityTableImpl({ kinds, className }: { kinds?: string[]; className?: s
   const image = usePart('entity-image', 'mr-2 inline-block size-8 rounded object-cover align-middle')
   const description = usePart('entity-desc', 'block text-xs font-normal text-muted-foreground')
   const value = usePart('entity-value', 'py-1 pl-3 text-right tabular-nums')
-  const shown = Object.entries(view.entities).filter(([id, kind]) => (!kinds || kinds.includes(id)) && kind.entries.length)
+  const shown = view.entities.filter((kind) => (!kinds || kinds.includes(kind.id)) && kind.entries.length)
   if (!shown.length) return null
   return (
     <div {...list}>
-      {shown.map(([id, kind]) => {
+      {shown.map((kind) => {
         // The columns are every stat any of them shows, in the order they first appear.
         const columns = [...new Map(kind.entries.flatMap((entry) => entry.stats.map((stat) => [stat.key, stat.label] as const)))]
         return (
-          <section key={id} className="flex flex-col gap-2" data-kind={id}>
+          <section key={kind.id} className="flex flex-col gap-2" data-kind={kind.id}>
             <h3 {...heading}>{kind.plural}</h3>
             <table {...table}>
               <thead>

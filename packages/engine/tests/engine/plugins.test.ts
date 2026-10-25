@@ -270,7 +270,7 @@ describe('plugins that bring entities and speakers', () => {
     expect(problems).toEqual([])
     const state = startingState(game)
     expect(state.entities).toEqual({})
-    const singers = view(state, game).entities.singer
+    const singers = view(state, game).entities.find((kind) => kind.id === 'singer')!
     expect(singers.plural).toBe('Choir')
     expect(singers.entries.map((entry) => [entry.ref, entry.name, entry.stats.map((stat) => stat.value)])).toEqual([
       ['singer:ann', 'Ann', [3]],

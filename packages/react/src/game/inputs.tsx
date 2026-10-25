@@ -70,7 +70,7 @@ export const InputField = overridable('InputField', InputFieldImpl)
 function InputFieldsImpl({ className }: { className?: string }) {
   const { view } = useGame()
   const list = usePart('inputs', cn(PROSE, 'flex flex-col gap-3'), className)
-  const inputs = Object.values(view.inputs)
+  const inputs = view.inputs
   if (!inputs.length) return null
   return (
     <section {...list}>

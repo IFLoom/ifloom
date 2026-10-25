@@ -400,7 +400,7 @@ describe('places', () => {
       expect(g.kinds?.find((kind) => kind.id === 'location')).toMatchObject({ unique: true, listed: false })
       expect(g.entities?.find((entity) => entity.of === 'location' && entity.id === 'cafe')).toMatchObject({ name: 'Cafe', description: 'Town' })
       const state = startingState(g)
-      expect(view(state, g).entities.location).toBeUndefined()
+      expect(view(state, g).entities.find((kind) => kind.id === 'location')).toBeUndefined()
       expect(pluginQuery(g, 'places/holder')!(state)).toBe(places.locationRef('house'))
       expect(holds(state, g, { entity: 'item:paper', at: 'location:street', gte: 2 })).toBe(true)
     })

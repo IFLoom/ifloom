@@ -112,7 +112,11 @@ describe('derived stats', () => {
     expect(statValue(state, game, 'service', 'staff:ana')).toBe(9)
     expect(statValue(state, game, 'service', 'staff:ben')).toBe(5)
     expect(holds(state, game, { count: 'staff', where: { stat: 'service', of: '$', gte: 8 } })).toBe(true)
-    expect(view(state, game).entities.staff.entries.map((entry) => entry.stats.find((stat) => stat.key === 'service')?.value)).toEqual([9, 5])
+    expect(
+      view(state, game)
+        .entities.find((kind) => kind.id === 'staff')!
+        .entries.map((entry) => entry.stats.find((stat) => stat.key === 'service')?.value),
+    ).toEqual([9, 5])
   })
 
   it('report unknown stats, another owner’s and cycles', () => {

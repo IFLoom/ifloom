@@ -256,7 +256,7 @@ function draw(view: View): void {
   if (view.minigame) drawMinigame(view.minigame)
 
   const inputs = add(root, 'div', '', 'inputs')
-  for (const input of Object.values(view.inputs)) drawInput(inputs, input)
+  for (const input of view.inputs) drawInput(inputs, input)
 
   const choices = add(root, 'div', '', 'choices')
   // A scene's choices, or the game's own buttons when no scene is open.
@@ -296,7 +296,7 @@ export function App() {
       {view.minigame ? <Minigame minigame={view.minigame} /> : null}
 
       <div className="inputs">
-        {Object.values(view.inputs).map((input) => (
+        {view.inputs.map((input) => (
           <InputField key={input.id} input={input} />
         ))}
       </div>
@@ -340,7 +340,7 @@ const choices = computed(() => [...view.value.scene.choices, ...view.value.actio
   <Minigame v-if="view.minigame" :minigame="view.minigame" />
 
   <div class="inputs">
-    <InputField v-for="input in Object.values(view.inputs)" :key="input.id" :input="input" />
+    <InputField v-for="input in view.inputs" :key="input.id" :input="input" />
   </div>
 
   <div class="choices">
@@ -376,7 +376,7 @@ const choices = computed(() => [...view.value.scene.choices, ...view.value.actio
 {#if $view.minigame}<Minigame minigame={$view.minigame} />{/if}
 
 <div class="inputs">
-  {#each Object.values($view.inputs) as input (input.id)}<InputField {input} />{/each}
+  {#each $view.inputs as input (input.id)}<InputField {input} />{/each}
 </div>
 
 <div class="choices">

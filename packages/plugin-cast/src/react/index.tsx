@@ -88,7 +88,7 @@ function RelationshipsImpl({ className }: { className?: string }) {
   const people = (usePeople()?.people ?? []).filter((person) => person.met)
   if (!people.length) return null
   // Each character is an entity: the stats the player can see on it are its relationship.
-  const entries = Object.values(view.entities).flatMap((kind) => kind.entries)
+  const entries = view.entities.flatMap((kind) => kind.entries)
   return (
     <div {...list}>
       {people.map((person) => {

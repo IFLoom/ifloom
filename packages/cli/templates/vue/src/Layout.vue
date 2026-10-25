@@ -57,7 +57,7 @@ async function load() {
       <Minigame v-if="view.minigame" :minigame="view.minigame" />
 
       <div class="inputs">
-        <InputField v-for="input in Object.values(view.inputs)" :key="input.id" :input="input" />
+        <InputField v-for="input in view.inputs" :key="input.id" :input="input" />
       </div>
 
       <div class="choices">

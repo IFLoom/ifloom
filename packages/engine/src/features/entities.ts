@@ -68,6 +68,8 @@ export type EntityView = {
 }
 
 export type EntitiesView = {
+  /** The kind's id: `'character'`. */
+  id: string
   label: string
   plural: string
   /** The kind's `unique`: each one is one particular thing. */
@@ -204,7 +206,8 @@ export type EntitiesShape = {
      * first, then those created in play. A listed kind is here, empty or not;
      * a kind whose `listed` is false is not.
      */
-    entities: Record<string, EntitiesView>
+    /** Each listed kind with its listed entities, in the order the kinds are declared. */
+    entities: EntitiesView[]
   }
   lists: 'kind' | 'entity' | 'trait'
 }
@@ -542,35 +545,33 @@ export const entities = defineFeature<EntitiesShape>({
     ),
   // Each listed kind's listed, visible entities, with the stats the player can see on each.
   view: (state, game, _shown, cx) => ({
-    entities: Object.fromEntries(
-      (game.kinds ?? [])
-        .filter((kind) => kind.listed !== false)
-        .map((kind) => {
-          const stats = (game.stats ?? []).filter((stat) => stat.of === kind.id && stat.listed !== false)
-          const holdsFor = (when: Condition | undefined, ref: EntityRef) => cx.holds(state, game, bindCurrent(when, ref))
-          const listed = (ref: EntityRef) => (typeof kind.listed === 'object' ? holdsFor(kind.listed, ref) : true)
-          const entries = entitiesOf(state, game, kind.id)
-            .filter((ref) => listed(ref) && holdsFor(entityDef(game, ref)?.visible, ref))
-            .map((ref): EntityView => {
-              const id = parseRef(ref)!.id
-              const description = entityText(state, game, ref, 'description')
-              const image = entityImage(state, game, ref)
-              return {
-                id,
-                ref,
-                name: cx.fillTokens(state, game, entityText(state, game, ref, 'name') ?? id),
-                description: description === undefined ? null : cx.fillTokens(state, game, description),
-                image: image === undefined ? null : artSrc(image),
-                tags: entityTags(state, game, ref),
-                flags: Object.fromEntries(Object.entries(kind.flags ?? {}).map(([name, when]) => [name, holdsFor(when, ref)])),
-                stats: stats.filter((stat) => holdsFor(stat.visible, ref)).map((stat) => statView(state, game, stat, ref, cx)),
-                kv: entityKv(state, game, ref),
-                ...withUi(entityUi(state, game, ref)),
-              }
-            })
-          return [kind.id, { label: kind.label, plural: kind.plural ?? kind.label, unique: kind.unique ?? false, entries }]
-        }),
-    ),
+    entities: (game.kinds ?? [])
+      .filter((kind) => kind.listed !== false)
+      .map((kind) => {
+        const stats = (game.stats ?? []).filter((stat) => stat.of === kind.id && stat.listed !== false)
+        const holdsFor = (when: Condition | undefined, ref: EntityRef) => cx.holds(state, game, bindCurrent(when, ref))
+        const listed = (ref: EntityRef) => (typeof kind.listed === 'object' ? holdsFor(kind.listed, ref) : true)
+        const entries = entitiesOf(state, game, kind.id)
+          .filter((ref) => listed(ref) && holdsFor(entityDef(game, ref)?.visible, ref))
+          .map((ref): EntityView => {
+            const id = parseRef(ref)!.id
+            const description = entityText(state, game, ref, 'description')
+            const image = entityImage(state, game, ref)
+            return {
+              id,
+              ref,
+              name: cx.fillTokens(state, game, entityText(state, game, ref, 'name') ?? id),
+              description: description === undefined ? null : cx.fillTokens(state, game, description),
+              image: image === undefined ? null : artSrc(image),
+              tags: entityTags(state, game, ref),
+              flags: Object.fromEntries(Object.entries(kind.flags ?? {}).map(([name, when]) => [name, holdsFor(when, ref)])),
+              stats: stats.filter((stat) => holdsFor(stat.visible, ref)).map((stat) => statView(state, game, stat, ref, cx)),
+              kv: entityKv(state, game, ref),
+              ...withUi(entityUi(state, game, ref)),
+            }
+          })
+        return { id: kind.id, label: kind.label, plural: kind.plural ?? kind.label, unique: kind.unique ?? false, entries }
+      }),
   }),
 })
 

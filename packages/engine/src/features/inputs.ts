@@ -57,8 +57,8 @@ export type InputsShape = {
     inputs?: InputDef[]
   }
   view: {
-    /** The inputs on offer now, by id, with the value each holds. */
-    inputs: Record<string, InputView>
+    /** The inputs on offer now, in the order the game declares them, with the value each holds. */
+    inputs: InputView[]
   }
   lists: 'input'
 }
@@ -133,22 +133,17 @@ export const inputs = defineFeature<InputsShape>({
     return { input: (ref) => (ids.has(ref.input) ? [] : [`unknown input "${ref.input}"`]) }
   },
   view: (state, game, _shown, cx) => ({
-    inputs: Object.fromEntries(
-      (game.inputs ?? [])
-        .filter((input) => cx.holds(state, game, input.when))
-        .map((input) => [
-          input.id,
-          {
-            id: input.id,
-            label: input.label,
-            type: input.type,
-            maxLength: input.type === 'text' ? (input.maxLength ?? 40) : null,
-            min: input.min ?? null,
-            max: input.max ?? null,
-            options: input.options ?? [],
-            value: state.kv[input.key ?? input.id] ?? null,
-          },
-        ]),
-    ),
+    inputs: (game.inputs ?? [])
+      .filter((input) => cx.holds(state, game, input.when))
+      .map((input): InputView => ({
+        id: input.id,
+        label: input.label,
+        type: input.type,
+        maxLength: input.type === 'text' ? (input.maxLength ?? 40) : null,
+        min: input.min ?? null,
+        max: input.max ?? null,
+        options: input.options ?? [],
+        value: state.kv[input.key ?? input.id] ?? null,
+      })),
   }),
 })

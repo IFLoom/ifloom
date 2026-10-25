@@ -34,7 +34,7 @@ The UI reads what to draw from [`view.inputs`](/docs/reference/view#inputs), and
 ```ts
 import { apply, view } from '@ifloom/engine'
 
-view(state, game).inputs.alarm
+view(state, game).inputs.find((input) => input.id === 'alarm')
 // { id: 'alarm', label: 'Wake at', type: 'number', maxLength: null, min: 5, max: 10, options: [], value: null }
 
 state = apply(state, game, { type: 'input', id: 'alarm', to: 7 }).state

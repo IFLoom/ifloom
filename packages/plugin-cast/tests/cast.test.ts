@@ -95,9 +95,13 @@ describe('the cast', () => {
     expect(entitiesOf(state, g, 'character')).toEqual(['character:ava', 'character:sam'])
     expect([statValue(state, g, 'friendship', cast.character('ava')), statValue(state, g, 'friendship', cast.character('sam'))]).toEqual([0, 5])
     // Listed in the view once met, so nobody is given away before then.
-    expect(view(state, g).entities.character).toMatchObject({ plural: 'People', unique: true, entries: [] })
+    expect(view(state, g).entities.find((kind) => kind.id === 'character')).toMatchObject({ plural: 'People', unique: true, entries: [] })
     const met = run(g, run(g, state, places.go('cafe')), cast.talk('ava'))
-    expect(view(met, g).entities.character.entries.map((entry) => [entry.ref, entry.name])).toEqual([['character:ava', 'Ava']])
+    expect(
+      view(met, g)
+        .entities.find((kind) => kind.id === 'character')!
+        .entries.map((entry) => [entry.ref, entry.name]),
+    ).toEqual([['character:ava', 'Ava']])
   })
 
   it('are called what the game calls them, by redeclaring the kind', () => {
@@ -105,7 +109,12 @@ describe('the cast', () => {
     const { game: g, problems } = loadGame([town, map, named], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'street' }), cast()] })
     expect(problems).toEqual([])
     // The game's words, and the cast's own rule that each is one particular person, listed once met.
-    expect(view(startingState(g), g).entities.character).toMatchObject({ label: 'Neighbour', plural: 'Neighbours', unique: true, entries: [] })
+    expect(view(startingState(g), g).entities.find((kind) => kind.id === 'character')).toMatchObject({
+      label: 'Neighbour',
+      plural: 'Neighbours',
+      unique: true,
+      entries: [],
+    })
   })
 
   it('are written as entities with the person trait, by cast.person()', () => {

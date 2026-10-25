@@ -244,7 +244,7 @@ describe('Small Town', () => {
       'keepsake:shell',
     ])
     expect(view(state, game).held[3]).toMatchObject({ ref: 'keepsake:shell', name: 'A river shell', count: 1, at: 'player' })
-    expect(view(state, game).entities.keepsake).toBeUndefined()
+    expect(view(state, game).entities.find((kind) => kind.id === 'keepsake')).toBeUndefined()
     // The evening reads on: the shell's line, the question again, then sitting with her, then home.
     expect(view(state, game).scene.beats.some((beat) => beat.type === 'chose' && beat.label === 'Pocket a smooth shell from the bank')).toBe(true)
     expect(view(state, game).scene.choices.map((choice) => choice.id)).toEqual(['ducks', 'stay'])
@@ -281,9 +281,9 @@ describe('Small Town', () => {
       description: 'Runs the café',
       portrait: 'art/character/ava.svg',
     })
-    expect(view(state, game).entities.character.entries).toEqual([])
+    expect(view(state, game).entities.find((kind) => kind.id === 'character')!.entries).toEqual([])
     state = run(state, cast.talk('ava'), { type: 'choose', id: 'chat' }, { type: 'choose', id: 'bye' })
-    expect(view(state, game).entities.character.entries[0]).toMatchObject({
+    expect(view(state, game).entities.find((kind) => kind.id === 'character')!.entries[0]).toMatchObject({
       ref: 'character:ava',
       name: 'Ava',
       description: 'Runs the café',

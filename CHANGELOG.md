@@ -195,6 +195,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Changed
 
+- **Breaking:** the view lists things one way: a list of things the game declares is an array in the order declared, each with its `id`. `view.inputs` is an `InputView[]` (it was a record by id) and `view.entities` an `EntitiesView[]`, each kind with its `id` (it was a record by kind). Find one with `find`: `view.entities.find((kind) => kind.id === 'staff')`. `statsById` stays beside `stats`, for a HUD that reads one stat by id.
+
 - **Breaking:** a plugin's `buttons` provider is [`actions`](/docs/reference/plugins#actions), since it gives `ActionDef`s, and `rules.buttons` is `rules.actions`.
 - **Breaking:** a plugin's `argProblems` and `panelProblems` are gone. Return a `{ problem }` reference from `references.calls` for what was an argument problem, and say what a panel names in `references.panels`.
 - **Breaking:** the cast plugin's `label` and `plural` options are gone. To call the cast's people something else, declare the `character` kind (or your `kind`) in your content with your own `label` and `plural`; the rest stays the plugin's.
@@ -380,6 +382,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - **Breaking:** `PeopleCard` is `PeopleHere`, `Actions` is `RoomActions`, and `LocationCard` draws the place without its exits, which are `Exits`. `Title` no longer has the clock under it; `Clock` goes where you put it.
 
 ### Removed
+
+- **Breaking:** `view.inScene` is gone. A scene is open while `view.scene.id !== null`.
 
 - **Breaking:** the plugins' view builders are no longer exported: `achievementsView`, `questsView`, `statusesView`, `cheatsView`, `jobsView`, `shopView` and `inventoryView`. Read a plugin's view from the view, typed by its factory's `viewIn`: `quests().viewIn(runner.view())`. For a state the runner isn't playing, pass the profile to [`view`](/docs/reference/view#view): `view(state, game, { profile })`.
 

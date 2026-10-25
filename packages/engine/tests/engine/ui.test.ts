@@ -95,7 +95,7 @@ describe('ui hints', () => {
     const { game } = make({ scenes: [] }, { introScene: undefined })
     const shown = view(startingState(game), game)
     expect(shown.statsById.energy.ui).toEqual({ display: 'bar' })
-    expect(shown.entities.cat.entries.map((entry) => entry.ui)).toEqual([
+    expect(shown.entities.find((kind) => kind.id === 'cat')!.entries.map((entry) => entry.ui)).toEqual([
       { hue: 200, badge: 'paw' },
       { hue: 30, badge: 'paw' },
     ])

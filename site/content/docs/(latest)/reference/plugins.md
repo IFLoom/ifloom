@@ -1231,7 +1231,7 @@ entities: [{ id: 'mo', of: 'regular', name: 'Mo from next door', stats: { fondne
 
 ```ts
 const state = startingState(game)
-view(state, game).entities.regular.entries.map((entry) => [entry.name, entry.stats[0].value])
+view(state, game).entities.find((kind) => kind.id === 'regular')!.entries.map((entry) => [entry.name, entry.stats[0].value])
 // [['Mo from next door', 8], ['Sal', 3]]
 ```
 

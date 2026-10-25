@@ -131,13 +131,17 @@ describe('entities', () => {
     const state = applyEffects(startingState(g), g, [{ kv: 'tasted', to: true, of: 'dish:soup' }])
     const shown = view(state, g)
     expect(shown.stats.map((stat) => stat.key)).toEqual(['coins'])
-    expect(shown.entities.staff.plural).toBe('Staff')
-    expect(shown.entities.staff.entries.map((entry) => [entry.ref, entry.name, entry.stats.map((stat) => `${stat.key} ${stat.value}`)])).toEqual([
+    expect(shown.entities.find((kind) => kind.id === 'staff')!.plural).toBe('Staff')
+    expect(
+      shown.entities
+        .find((kind) => kind.id === 'staff')!
+        .entries.map((entry) => [entry.ref, entry.name, entry.stats.map((stat) => `${stat.key} ${stat.value}`)]),
+    ).toEqual([
       ['staff:ana', 'Ana', ['morale 50', 'skill 4']],
       ['staff:ben', 'Ben', ['morale 50', 'skill 1']],
     ])
-    expect(shown.entities.dish.entries[0].stats.map((stat) => stat.key)).toEqual(['quality'])
-    expect(view(startingState(g), g).entities.dish.entries[0].stats).toEqual([])
+    expect(shown.entities.find((kind) => kind.id === 'dish')!.entries[0].stats.map((stat) => stat.key)).toEqual(['quality'])
+    expect(view(startingState(g), g).entities.find((kind) => kind.id === 'dish')!.entries[0].stats).toEqual([])
   })
 
   it('read a missing one’s kv key as no answer at all, and do not create one numbered like the rest', () => {
@@ -251,21 +255,30 @@ describe('the view of entities', () => {
     const game = g()
     const state = startingState(game, { kv: { title: 'head cook', owner: 'Rosa' } })
     const shown = view(state, game).entities
-    expect(Object.keys(shown)).toEqual(['staff', 'dish'])
-    expect(shown.staff.entries.map((entry) => entry.ref)).toEqual(['staff:ana'])
-    expect(shown.dish.entries.map((entry) => entry.ref)).toEqual(['dish:soup'])
+    // In the order the kinds are declared, each with its id.
+    expect(shown.map((kind) => kind.id)).toEqual(['staff', 'dish'])
+    expect(shown[0].entries.map((entry) => entry.ref)).toEqual(['staff:ana'])
+    expect(shown[1].entries.map((entry) => entry.ref)).toEqual(['dish:soup'])
     const later = applyEffects(state, game, [
       { kv: 'benHired', to: true },
       { kv: 'onMenu', to: true, of: 'dish:pie' },
     ])
-    expect(view(later, game).entities.staff.entries.map((entry) => entry.ref)).toEqual(['staff:ana', 'staff:ben'])
-    expect(view(later, game).entities.dish.entries.map((entry) => entry.ref)).toEqual(['dish:soup', 'dish:pie'])
+    expect(
+      view(later, game)
+        .entities.find((kind) => kind.id === 'staff')!
+        .entries.map((entry) => entry.ref),
+    ).toEqual(['staff:ana', 'staff:ben'])
+    expect(
+      view(later, game)
+        .entities.find((kind) => kind.id === 'dish')!
+        .entries.map((entry) => entry.ref),
+    ).toEqual(['dish:soup', 'dish:pie'])
   })
 
   it('fill each entry’s name and description, with its picture, tags and flags', () => {
     const game = g()
     const state = applyEffects(startingState(game, { kv: { title: 'head cook', owner: 'Rosa' } }), game, [{ kv: 'benHired', to: true }])
-    const [ana, ben] = view(state, game).entities.staff.entries
+    const [ana, ben] = view(state, game).entities.find((kind) => kind.id === 'staff')!.entries
     expect(ana).toMatchObject({
       name: 'Ana, head cook',
       description: 'Runs the kitchen for Rosa.',
@@ -274,7 +287,7 @@ describe('the view of entities', () => {
       flags: { senior: true },
     })
     expect(ben).toMatchObject({ name: 'Ben', description: null, image: null, tags: ['crew'], flags: { senior: false } })
-    expect(view(state, game).entities.staff.unique).toBe(false)
+    expect(view(state, game).entities.find((kind) => kind.id === 'staff')!.unique).toBe(false)
     expect(entityDescription(state, game, 'staff:ana')).toBe('Runs the kitchen for Rosa.')
     expect(entityDescription(state, game, 'staff:ben')).toBeUndefined()
     expect(entityTags(state, game, 'staff:ana')).toEqual(['crew', 'cook'])
@@ -302,7 +315,7 @@ describe('the view of entities', () => {
       ],
       { id: 'c', title: 'C', plugins: [plugin] },
     )
-    expect(Object.keys(view(startingState(game), game).entities)).toEqual(['song'])
+    expect(view(startingState(game), game).entities.map((kind) => kind.id)).toEqual(['song'])
     const relabelled = loadGame([{ kinds: [{ id: 'singer', label: 'Voice', plural: 'Choir' }] }], { id: 'c', title: 'C', plugins: [plugin] }).game
     expect(relabelled.kinds?.find((kind) => kind.id === 'singer')).toEqual({ id: 'singer', label: 'Voice', plural: 'Choir', listed: false })
   })

@@ -250,7 +250,7 @@ describe('the shop’s stock, held by the vendor', () => {
       ['counter', 'The counter'],
       ['stall', 'Fruit stall'],
     ])
-    expect(view(fresh(g), g).entities.vendor).toBeUndefined()
+    expect(view(fresh(g), g).entities.find((kind) => kind.id === 'vendor')).toBeUndefined()
     expect(shown(fresh(g), g).vendors[0]).toMatchObject({ id: 'counter', ref: 'vendor:counter', name: 'The counter' })
     // The vendor holds what it has left once anything has been done, and buying moves it to you.
     const state = run(fresh(g), g, shop.buy('counter', 'food:biscuit'))

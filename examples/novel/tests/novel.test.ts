@@ -28,7 +28,7 @@ describe('The Letter', () => {
   it('asks for a name before the story moves, and the prose uses it', () => {
     let state = startingState(game)
     expect(view(state, game).scene.choices).toEqual([])
-    expect(view(state, game).inputs.playerName).toBeDefined()
+    expect(view(state, game).inputs.find((input) => input.id === 'playerName')).toBeDefined()
     state = read(state, { type: 'input', id: 'playerName', to: 'Robin' })
     expect(view(state, game).scene.body).toContain('You turn it over, Robin.')
     expect(view(state, game).scene.choices.map((choice) => choice.id)).toEqual(['open', 'shelf'])

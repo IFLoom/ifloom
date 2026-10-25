@@ -56,7 +56,7 @@
     {#if $view.minigame}<Minigame minigame={$view.minigame} />{/if}
 
     <div class="inputs">
-      {#each Object.values($view.inputs) as input (input.id)}<InputField {input} />{/each}
+      {#each $view.inputs as input (input.id)}<InputField {input} />{/each}
     </div>
 
     <div class="choices">

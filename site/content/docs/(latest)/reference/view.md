@@ -132,6 +132,8 @@ type ScreenScene = {
 
 `View` has a fixed set of fields, plus [`plugins`](#plugins), where each plugin adds its own slice. What the player wears, for example, is the [wardrobe plugin](/docs/plugins/wardrobe)'s slice. The engine has no phone of its own, but it has the parts one is built from: the [things you hold](#held), such as notes and photos, [notices](#notices) and [inputs](#inputs). [Messages](/docs/plugins/messages), [feeds](/docs/plugins/feed) and [devices](/docs/plugins/devices) are plugins, each with its own slice, and the [phone bundle](/docs/plugins/phone) wires them together.
 
+A list of things the game declares is an array in the order they're declared, each with its `id`: `stats`, `entities`, `inputs`, `settings`, `timers`, `held`. Find one by id with `find`, as in `view.inputs.find((input) => input.id === 'petName')`. Only `statsById` sits beside its list as a record, because a HUD reads one stat by id far more often than it draws them all. A record keyed by name is otherwise only for counts and lookups that aren't a list, such as `notices.byTag` and the audio's `channels`. Whether a scene is open is `scene.id !== null` (the room's `scene.id` is `null`).
+
 ### The clock and the player
 
 | Field | Type | Meaning |
@@ -197,8 +199,6 @@ for (const person of people) for (const talk of person.actions) addButton(`${per
 
 If `state.sceneId` names a scene the game doesn't have, the scene reads "The moment has passed." under the stage's title (else the game's), with one choice, Look around, which sends `leave`. Both lines are in the [strings table](/docs/reference/strings#buttons-and-labels), as `momentPassed` and `lookAround`.
 
-`inScene` (`boolean`) is `true` whenever a scene is open.
-
 While a [minigame](#minigame) runs, `scene` is drawn over: its `title` is the minigame's `label` (else the scene's or the stage's title), its `body` and `beats` are the running state's `label` rendered as prose. Its `id` and the rest stay those of the scene or the stage underneath. `choices` is empty and `stage` is `null`.
 
 ### The player's numbers and things
@@ -214,10 +214,10 @@ What the player carries is in [`held`](#held). The [inventory plugin](/docs/plug
 
 | Field | Type | Meaning |
 |---|---|---|
-| `entities` | `Record<string, `[`EntitiesView`](#entitiesview-and-entityview)`>` | Every [listed](/docs/reference/entities#listing) [kind](/docs/reference/entities), by id, with the entities whose `listed` and `visible` hold, declared ones first, and the stats the player can see on each. A listed kind with none to show is there, with no entries. A kind whose `listed` is `false` isn't here, and neither are a plugin's kinds unless the plugin lists them. |
+| `entities` | [`EntitiesView`](#entitiesview-and-entityview)`[]` | Every [listed](/docs/reference/entities#listing) [kind](/docs/reference/entities), in the order the kinds are declared, each with its `id` and the entities whose `listed` and `visible` hold, declared ones first, and the stats the player can see on each. A listed kind with none to show is there, with no entries. A kind whose `listed` is `false` isn't here, and neither are a plugin's kinds unless the plugin lists them. |
 
 ```ts
-const { staff } = view(state, game).entities
+const staff = view(state, game).entities.find((kind) => kind.id === 'staff')!
 staff.plural                                   // 'Staff'
 staff.entries.map((entry) => entry.name)       // ['Ana', 'Dev'], once Dev is hired
 staff.entries[0].stats.map((stat) => stat.text) // ['5', '60', '£12']
@@ -249,7 +249,7 @@ if (unseen[0]) toast(unseen[0].title, unseen[0].text)
 
 | Field | Type | Meaning |
 |---|---|---|
-| `inputs` | `Record<string, `[`InputView`](#inputview)`>` | The [inputs](/docs/reference/inputs) on offer now (those whose `when` holds), by id, each with the value its kv key holds. |
+| `inputs` | [`InputView`](#inputview)`[]` | The [inputs](/docs/reference/inputs) on offer now (those whose `when` holds), in the order declared, each with its `id` and the value its kv key holds. |
 
 ### settings
 
@@ -591,6 +591,7 @@ Each entry in `stats` is a stat spent, its amount, and the amount written throug
 
 ```ts
 type EntitiesView = {
+  id: string
   label: string
   plural: string
   unique: boolean
@@ -611,7 +612,7 @@ type EntityView = {
 }
 ```
 
-A [kind](/docs/reference/entities#kinddef) of entity as the UI draws it. It has the kind's `label`, its `plural` (the `label` if the kind declares none), its `unique` (`false` if left out), and an entry for each entity of that kind the view may show: the [listed](/docs/reference/entities#listing) ones whose `visible` holds, declared ones in content order, then those created in play.
+A [kind](/docs/reference/entities#kinddef) of entity as the UI draws it. It has the kind's `id`, its `label`, its `plural` (the `label` if the kind declares none), its `unique` (`false` if left out), and an entry for each entity of that kind the view may show: the [listed](/docs/reference/entities#listing) ones whose `visible` holds, declared ones in content order, then those created in play.
 
 | `EntityView` field | What it holds |
 |---|---|

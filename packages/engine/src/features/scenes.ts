@@ -123,9 +123,6 @@ export type ScenesShape = {
     /** The scene on screen on the first frame: a later pack's replaces an earlier one's. */
     introScene?: string
   }
-  view: {
-    inScene: boolean
-  }
   lists: 'scene' | 'introScene'
 }
 
@@ -570,7 +567,6 @@ export const scenes = defineFeature<ScenesShape>({
     }
   },
   markup: (_game, text, where, tools) => inlineMarkupProblems(text, where, tools),
-  view: (state) => ({ inScene: Boolean(state.sceneId) }),
   // A new showing is seen, and dated the first time. Straight after the triggers, so plugins' `onCommand` hooks see it.
   afterCommand: { at: 'beforePlugins', run: witnessed },
 })

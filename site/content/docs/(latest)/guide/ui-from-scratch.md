@@ -84,7 +84,7 @@ function draw(view: View): void {
   if (view.minigame) drawMinigame(view.minigame)
 
   const inputs = add(root, 'div', '', 'inputs')
-  for (const input of Object.values(view.inputs)) drawInput(inputs, input)
+  for (const input of view.inputs) drawInput(inputs, input)
 
   const choices = add(root, 'div', '', 'choices')
   // A scene's choices, or the game's own buttons when no scene is open.

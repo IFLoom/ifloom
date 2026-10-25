@@ -75,6 +75,8 @@
  * now `${string}:${string}`. The prune (P6): `Game.scenes` and
  * `Pack.scenes` hold data scenes only, as hand-built scenes are internal.
  * Words (P7): `Pack.words` (and so `Content.words`), a translation's table.
+ * The rest of the API pass (P9b): `View.inputs` and `View.entities` are
+ * arrays in order (each kind with its `id`), and `View.inScene` is gone.
  */
 import type {
   Amount,
@@ -569,14 +571,13 @@ export type FrozenView = {
   stats: StatView[]
   /** Every declared stat, by id, whether or not it is listed. */
   statsById: Record<string, StatView>
-  inScene: boolean
-  /** Each listed kind's listed, visible entities, by kind id. */
-  entities: Record<string, EntitiesView>
+  /** Each listed kind, with its listed, visible entities, in the order the kinds are declared. */
+  entities: EntitiesView[]
   /** What you hold: the protagonist's things while one is played, then the player's. */
   held: HeldView[]
   notices: NoticesView
-  /** The inputs on offer now, by id, with the value each holds. */
-  inputs: Record<string, InputView>
+  /** The inputs on offer now, in the order declared, with the value each holds. */
+  inputs: InputView[]
   /** What each plugin gives the UI, by plugin id. */
   plugins: Record<string, unknown>
   /** Every setting the game declares, in order, for a settings screen. */

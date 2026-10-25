@@ -397,7 +397,7 @@ const root = document.querySelector<HTMLElement>('#root')!
 
 /** A table for each kind, the staff and the menu: a row for each one, a cell for each stat. */
 function drawTables(view: View): HTMLElement[] {
-  return Object.values(view.entities).map((kind) => {
+  return view.entities.map((kind) => {
     const table = document.createElement('table')
     table.createCaption().textContent = kind.plural
     for (const entity of kind.entries) {
@@ -481,7 +481,7 @@ import { runner, view } from './runner.ts'
     </template>
   </article>
   <!-- A table for each kind, the staff and the menu: a row for each one, a cell for each stat. -->
-  <table v-for="(kind, id) in view.entities" :key="id">
+  <table v-for="kind in view.entities" :key="kind.id">
     <caption>{{ kind.plural }}</caption>
     <tbody>
       <tr v-for="entity in kind.entries" :key="entity.id">
@@ -513,7 +513,7 @@ import { runner, view } from './runner.ts'
   {/each}
 </article>
 <!-- A table for each kind, the staff and the menu: a row for each one, a cell for each stat. -->
-{#each Object.entries($view.entities) as [id, kind] (id)}
+{#each $view.entities as kind (kind.id)}
   <table>
     <caption>{kind.plural}</caption>
     <tbody>

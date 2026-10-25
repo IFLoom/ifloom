@@ -337,7 +337,7 @@ To split a list rather than shorten it, give the kind `flags`. Each is a conditi
 ```ts
 { id: 'staff', label: 'Member of staff', plural: 'Staff', flags: { senior: { stat: 'skill', of: '$', gte: 4 } } }
 
-view(state, game).entities.staff.entries.map((entry) => [entry.name, entry.flags.senior])   // [['Ana', true], ['Ben', false]]
+view(state, game).entities.find((kind) => kind.id === 'staff')!.entries.map((entry) => [entry.name, entry.flags.senior])   // [['Ana', true], ['Ben', false]]
 ```
 
 **Gotchas.**

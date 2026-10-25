@@ -324,7 +324,7 @@ A save keeps only what play changed about a character, such as their friendship,
 
 Each character is [`unique`](/docs/reference/entities#kinddef), so they can hold things: `{ entity: 'keepsake:shell', at: cast.character('ava') }` is true once the player gives her the shell.
 
-The kind is [listed](/docs/reference/entities#listing) with `{ 'cast/met': { character: '$' } }`. So [`view.entities.character`](/docs/reference/view#entities) only has the people the player has met, and a UI that draws every entity gives nobody away early. To list everyone, or to split the list instead, redeclare the kind in your content. What you leave out keeps the plugin's:
+The kind is [listed](/docs/reference/entities#listing) with `{ 'cast/met': { character: '$' } }`. So the `character` kind in [`view.entities`](/docs/reference/view#entities) only has the people the player has met, and a UI that draws every entity gives nobody away early. To list everyone, or to split the list instead, redeclare the kind in your content. What you leave out keeps the plugin's:
 
 ```ts
 import type { Content } from '@ifloom/engine'

@@ -278,6 +278,7 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
 
   const personTrait: TraitDef<'cast/person'> = {
     id: PERSON,
+    words: { fullName: true, pronouns: true, talk: [{ label: true }], call: { busy: true } },
     check: (data, { game }) => {
       const problems: string[] = []
       if (data?.call && !data.call.scene && !talkOptions(data).length)

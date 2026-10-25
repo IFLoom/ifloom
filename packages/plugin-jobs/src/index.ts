@@ -390,6 +390,8 @@ export function jobs(): DefinedPlugin<JobsState, JobsView> {
     version: 1,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
+    // The words a player reads in each list of the plugin's content, for a translation's `words` table.
+    words: { jobs: { title: true, description: true, blocked: [{ reason: true }], shift: { effects: 'effects' }, ranks: [{ title: true }] } },
     commandVersion: COMMAND_VERSION,
     commandMigrations,
     start: emptyState,

@@ -7,6 +7,7 @@ import { checkContent, type Problem, type Source } from './check.ts'
 import { listOwners, packFeatures, type FeaturePack } from './features/registry.ts'
 import type { PackMerge } from './features/feature.ts'
 import { upgradePack } from './upgrade.ts'
+import { layWords } from './words.ts'
 
 /**
  * A game arrives as content and packs, and is merged into one game.
@@ -27,6 +28,16 @@ type Declarations = {
   strings?: Record<string, string>
   /** Prose by key. */
   prose?: Record<string, string>
+  /**
+   * Other words for fields of the content, by key: a translation, which is
+   * one pack with this table (and its own `prose` for the lines read by
+   * key). Each key names one field the player reads, as
+   * `translatableFields` lists them: `action.wait.label`,
+   * `entity.character:ava.name`, `scene.cafe.counter.text.intro`. It is laid
+   * over the content once everything is merged, a later pack's over an
+   * earlier one's, and a key that names no field is reported.
+   */
+  words?: Record<string, string>
   /**
    * Variants membership by variants name, in draw order. Content and packs
    * append to a name. A member is a prose key, or `{ text: key, weight }` to
@@ -103,6 +114,7 @@ export type LoadOptions = {
 const DECLARATION_KEYS: { [K in keyof Declarations | keyof FeaturePack]-?: true } = {
   strings: true,
   prose: true,
+  words: true,
   variants: true,
   data: true,
   finished: true,
@@ -182,6 +194,7 @@ const DECLARES: { [K in keyof Content]-?: ((content: Content) => Declared[]) | n
   name: null,
   strings: byKey('string', (content) => content.strings),
   prose: byKey('prose', (content) => content.prose),
+  words: byKey('words', (content) => content.words),
   // Content appends to a variants name, so only the same line listed twice is a clash.
   variants: (content) =>
     Object.entries(content.variants ?? {}).flatMap(([name, members]) => members.map((member) => `variants "${name}" line "${memberKey(member)}"`)),
@@ -245,6 +258,9 @@ export function loadGame(content: readonly Content[], base: GameBase, { packs = 
   /** Where each prose key came from, for markup problems. */
   const proseFrom = new Map<string, string>()
   const strings: Record<string, string> = {}
+  /** Other words for the content's fields, by key, and where each came from, for a key that names none. */
+  const words: Record<string, string> = {}
+  const wordsFrom = new Map<string, string>()
   const variants: Record<string, string[]> = {}
   /** The same, with each member's weight where it has one. */
   const weightedVariants: Record<string, VariantMember[]> = {}
@@ -300,6 +316,8 @@ export function loadGame(content: readonly Content[], base: GameBase, { packs = 
     Object.assign(prose, piece.prose ?? {})
     for (const key of Object.keys(piece.prose ?? {})) proseFrom.set(key, from)
     Object.assign(strings, piece.strings ?? {})
+    Object.assign(words, piece.words ?? {})
+    for (const key of Object.keys(piece.words ?? {})) wordsFrom.set(key, from)
     for (const [name, members] of Object.entries(piece.variants ?? {})) {
       variants[name] = [...(variants[name] ?? []), ...members.map(memberKey)]
       weightedVariants[name] = [...(weightedVariants[name] ?? []), ...members]
@@ -383,6 +401,10 @@ export function loadGame(content: readonly Content[], base: GameBase, { packs = 
     ),
   }
   for (const merge of merges.values()) merge.finish(game)
+  // A translation's words over the merged content, field by field.
+  for (const key of layWords(game, words)) {
+    problems.push({ pack: wordsFrom.get(key) ?? 'base', where: `words ${key}`, what: 'names no field the game has (translatableFields lists every key)' })
+  }
   // Scenes read their words from here; the store fills tokens for the save.
   game.prose = proseStore(game, prose, weightedVariants)
 

@@ -336,6 +336,8 @@ export function startUnlocks(runner: Runner, options: { content?: Readonly<Recor
 export function unlocks(): DefinedPlugin<UnlocksState, UnlocksView> {
   return definePlugin<UnlocksState, UnlocksView>({
     id: ID,
+    // The words a player reads in each list of the plugin's content, for a translation's `words` table.
+    words: { unlocks: { label: true, description: true } },
     version: 1,
     start: () => ({ unlocked: [] }),
     strings: {

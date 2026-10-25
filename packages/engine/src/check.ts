@@ -9,6 +9,7 @@ import { commandOf, customCall, customValue, hasCustomEffect, customCondition, s
 import type { Game } from './game.ts'
 import { absentPartner, pluginArgProblems, pluginById, pluginCommand, pluginName, type CallTable, type Plugin } from './plugin.ts'
 import { commandReferences, conditionReferences, effectReferences, type Reference } from './references.ts'
+import { wordClashes } from './words.ts'
 import { artSrc } from './sceneBody.ts'
 import { carryChecks, featureChecks, markupChecks, probeChecks, resolverSteps, type FeatureList } from './features/registry.ts'
 import type { FeatureCheckTools, ResolveTools, Resolvers } from './features/feature.ts'
@@ -306,6 +307,11 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
     const text = game.prose?.line(key)
     if (text === undefined) continue
     for (const what of markup(text, `prose ${key}`)) say({ list: 'prose', id: key }, `prose ${key}`, what)
+  }
+
+  // Two fields one words key names, with different words: a translation could give them only one.
+  for (const clash of wordClashes(game)) {
+    say(clash.source as Source, clash.where, `two fields with different words share the words key "${clash.key}"; give a block of words an id, or rename one`)
   }
 
   // Each probe state, as the features check against it: every scene rendered.

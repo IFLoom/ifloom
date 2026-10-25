@@ -249,6 +249,8 @@ export function messages(): DefinedPlugin<MessagesState, MessagesView> {
     version: 2,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
+    // The words a player reads in each list of the plugin's content, for a translation's `words` table.
+    words: { channels: { name: true }, messages: { body: 'blocks', replies: [{ label: true, effects: 'effects' }] } },
     commandVersion: COMMAND_VERSION,
     commandMigrations,
     // Senders are the cast's characters when the game has the cast: a name and a face.

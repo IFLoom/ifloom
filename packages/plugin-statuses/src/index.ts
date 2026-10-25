@@ -239,6 +239,8 @@ export function statuses(): DefinedPlugin<StatusesState, StatusesView> {
     version: 1,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
+    // The words a player reads in each list of the plugin's content, for a translation's `words` table.
+    words: { statuses: { label: true, summary: true, onStart: 'effects', eachTurn: 'effects', onEnd: 'effects' } },
     commandVersion: COMMAND_VERSION,
     commandMigrations,
     start: emptyState,

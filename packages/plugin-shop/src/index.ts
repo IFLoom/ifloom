@@ -582,6 +582,7 @@ function vendorProblems(vendor: Vendor | undefined, game: Game): string[] {
 
 const vendorTrait: TraitDef<'shop/vendor'> = {
   id: VENDOR,
+  words: { closed: true },
   check: (data, { game }) => vendorProblems(data, game),
   references: (vendor, { game }) => {
     // Where a vendor stands is the places plugin's to know, by name; without it there is no map to check against.

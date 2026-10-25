@@ -171,6 +171,8 @@ export function cheats(): DefinedPlugin<CheatsState, CheatsView> {
     version: 1,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
+    // The words a player reads in each list of the plugin's content, for a translation's `words` table.
+    words: { cheats: { label: true, description: true, blocked: [{ reason: true }], effects: 'effects' } },
     start: () => ({ used: [] }),
     // Unlocks is what a supporter-only cheat names in its `blocked`, when the game has it.
     cooperates: ['unlocks'],

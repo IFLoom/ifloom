@@ -241,6 +241,8 @@ export function quests(): DefinedPlugin<QuestsState, QuestsView> {
     version: 1,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
+    // The words a player reads in each list of the plugin's content, for a translation's `words` table.
+    words: { quests: { title: true, summary: true, stages: [{ hint: true }] } },
     commandVersion: COMMAND_VERSION,
     commandMigrations,
     start: emptyState,

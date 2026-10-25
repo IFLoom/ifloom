@@ -339,6 +339,8 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
 
   const locationTrait: TraitDef<'places/location'> = {
     id: TRAIT,
+    // The words a player reads: why an exit is refused, the room's text, its buttons, its hotspots and what happens on arriving.
+    words: { blocked: [{ reason: true }], body: 'blocks', actions: ['button'], stage: { hotspots: [{ label: true }] }, arrive: { effects: 'effects' } },
     check: (data, { game, ref }) => {
       const problems: string[] = []
       if (!Array.isArray(data?.exits)) problems.push('a place needs its exits: exits: [] for none')

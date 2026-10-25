@@ -271,6 +271,8 @@ withTrait(game, 'laundry/washable')                   // ['clothing:scarf', 'clo
 
 **Checked by the plugin.** The [content checker](/docs/reference/checks#traits) asks each plugin's trait about the data on every entity that has it. A trait of a plugin the game doesn't have is let through, as content for a [cooperating](/docs/reference/plugins#cooperates) plugin is.
 
+**Translated by its words.** A plugin's trait says which of its fields are words a player reads (a vendor's `closed`, a place's room text), and a translation's [words table](/docs/reference/words) gives them other words under `entity.<ref>.traits.<trait>.<field>`. Words an entity has from its kind's default are keyed under the kind, `kind.<kind>.traits.<trait>.<field>`, so a translation gives them once. An entity's own `name` and `desc` are `entity.<ref>.name` and `entity.<ref>.desc`.
+
 ### TraitRegistry and TraitData
 
 ```ts

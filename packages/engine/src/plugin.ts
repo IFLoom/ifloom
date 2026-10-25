@@ -13,6 +13,7 @@ import { styledBeats, type SceneBeat } from './sceneBody.ts'
 import { blockBeats } from './beats.ts'
 import type { MigrationTools } from './intake.ts'
 import type { CommandStep, ContentStep } from './upgrade.ts'
+import type { WordShape } from './words.ts'
 
 /** What content passes to a plugin's condition, effect or command: `with`. */
 export type PluginArgs = Record<string, unknown>
@@ -258,6 +259,13 @@ export type Plugin<S = any, V = unknown> = {
    * what a trait does is the plugin's code.
    */
   traits?: readonly TraitDef<any, any>[]
+  /**
+   * Which fields of each list of this plugin's `data` are words a player
+   * reads, by list, for a translation's `words` table:
+   * `{ quests: { title: true, stages: [{ hint: true }] } }`. Each is keyed
+   * `<plugin>/<list>.<id>.<field>`: `quests/quests.coffee.title`. See `WordShape`.
+   */
+  words?: Readonly<Record<string, WordShape>>
   /**
    * What plays on background channels, by channel: a place's ambience. Below
    * an open scene's choice and an `audio` effect's, above the game's default.

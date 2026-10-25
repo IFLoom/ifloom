@@ -186,6 +186,8 @@ export function achievements(): DefinedPlugin<AchievementsState, AchievementsVie
     version: 1,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
+    // The words a player reads in each list of the plugin's content, for a translation's `words` table.
+    words: { achievements: { title: true, description: true } },
     start: emptyState,
     strings: { earned: 'Achievement: {title}', secret: '???' },
     conditions: {

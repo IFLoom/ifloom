@@ -170,6 +170,8 @@ export function feed(): DefinedPlugin<FeedState, FeedsView> {
     version: 3,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
+    // The words a player reads in each list of the plugin's content, for a translation's `words` table.
+    words: { feeds: { name: true }, posts: { body: 'blocks' } },
     commandVersion: COMMAND_VERSION,
     commandMigrations,
     // Posters are the cast's characters when the game has the cast: a name and a face.

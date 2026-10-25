@@ -43,8 +43,9 @@ const MEMBERS = {
   hooks: ['onTurn', 'onTurnDone', 'onStat', 'onCommand'],
   // Providers: answers, never a change to the state.
   providers: ['guard', 'price', 'label', 'stage', 'buttons', 'action', 'speaker', 'audio', 'statModifiers', 'view', 'profile'],
-  // What entities carry that it gives meaning to: data, each named `<id>/<name>`; and the content it brings, under the game's.
-  declares: ['traits', 'content'],
+  // What entities carry that it gives meaning to: data, each named `<id>/<name>`; the content it brings, under the game's;
+  // and which fields of its content are words a translation can replace.
+  declares: ['traits', 'content', 'words'],
   // What the content checker asks.
   checks: ['references', 'check', 'argProblems', 'panelProblems'],
   // What `definePlugin` adds for code outside the plugin.

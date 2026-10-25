@@ -151,6 +151,8 @@ export function wardrobe(): DefinedPlugin<WardrobeState, WardrobeView> {
     version: 3,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
+    // The words a player reads in each list of the plugin's content, for a translation's `words` table.
+    words: { slots: { label: true } },
     commandVersion: COMMAND_VERSION,
     commandMigrations,
     migrations: {

@@ -4,6 +4,7 @@ import type { Game } from './game.ts'
 import type { Reference } from './references.ts'
 import type { KvValue, GameState, Stats } from './types.ts'
 import type { EntityUi, Ui } from './features/ui.ts'
+import type { WordShape } from './words.ts'
 
 /**
  * The traits plugins give meaning to, by trait id, with the data each one
@@ -51,6 +52,12 @@ export type TraitDef<K extends string = string, S = unknown> = {
    * data that names it as `'$'`.
    */
   references?(data: TraitData<K>, tools: TraitTools): readonly Reference[]
+  /**
+   * Which fields of the data are words a player reads, for a translation's
+   * `words` table: `{ closed: true, body: 'blocks' }`. Each is keyed
+   * `entity.<ref>.traits.<id>.<field>`, or under the kind for a kind's default. See `WordShape`.
+   */
+  words?: WordShape
   /**
    * For the rare trait that keeps state of its own on each entity, such as
    * the uses left in a torch: where it starts, from the entity's data. Read

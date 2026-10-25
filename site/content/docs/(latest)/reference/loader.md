@@ -59,6 +59,7 @@ type Content = {
   carryOver?: CarryOver
   strings?: Record<string, string>
   prose?: Record<string, string>
+  words?: Record<string, string>
   variants?: Record<string, VariantMember[]>
   data?: Record<string, Record<string, readonly PluginEntry[]>>
   audio?: Partial<GameAudio>
@@ -91,6 +92,7 @@ export const ch1: Content = {
 | `traits` | By trait id and then entity, one row each. See [Traits](#traits). |
 | `strings` | By key. A file of nothing but `strings` is a translation. See [Strings](/docs/reference/strings#overriding). |
 | `prose` | By key. |
+| `words` | By key: other words for the fields of the content, laid over it once everything is merged. A translation is one pack with this table. See [The words table](/docs/reference/words). |
 | `variants` | By variants name. Each file appends its members to the list, so several files can add lines to one name. A member is a prose key, or `{ text, weight }` to give it a [weight](/docs/reference/prose#variantmember). |
 | `data` | Content for the game's [plugins](/docs/reference/plugins#content-and-checks), by plugin id and then list name, such as `{ quests: { quests: [...] } }`. Each list merges by entry `id`, as scenes do. The result is at `game.data.quests.quests`. The [places plugin](/docs/plugins/places#in-your-content)'s locations, the [shop](/docs/plugins/shop#writing-vendors)'s vendors and the [cast](/docs/plugins/cast#in-your-content)'s characters are entities instead, in `entities`. |
 | `audio` | [Audio](/docs/reference/audio#gameaudio). `tracks` and `channels` merge by id, and `mute` and `default` go over the earlier ones. |
@@ -160,7 +162,7 @@ Content from outside your code, laid over the game. It has everything [`Content`
 | `plugins` | The version of each plugin's content it was written for, by plugin id: `{ shop: 13 }`. A plugin's own steps carry an older one forward as it loads, and a newer one is skipped whole, with a problem. A plugin left out is read as written for the pack's `schema`, or for the plugin's own version if that's lower. See [Content and command migrations](/docs/reference/plugins#content-and-command-migrations). |
 | `patches` | Small changes to scenes the content or an earlier pack declared, applied straight away, in order. See [Patches](#patches). |
 
-A pack merges as content does, except that it may repeat any key. Its scene, entity, stat or plugin entry replaces the one with the same id as a whole, so fields aren't merged. So does a row of its `traits` table, for that trait on that entity. Its `prose`, `strings`, `kv`, `resets` and `ui` hints replace the ones with the same key, and the rest are kept. Its `locks` and `saveable` entries come after the ones before, and a lock with an `id` replaces the one with that id. Its `introScene`, `finished` and `carryOver` replace the content's whole. Its `variants` members are appended. Its audio `tracks` and media `pools` replace the ones with the same id, its audio `channels` merge field by field, and its `mute` and `default` win. To add a file to a pool, a mod redeclares the pool with every file.
+A pack merges as content does, except that it may repeat any key. Its scene, entity, stat or plugin entry replaces the one with the same id as a whole, so fields aren't merged. So does a row of its `traits` table, for that trait on that entity. Its `prose`, `strings`, `words`, `kv`, `resets` and `ui` hints replace the ones with the same key, and the rest are kept. Its `locks` and `saveable` entries come after the ones before, and a lock with an `id` replaces the one with that id. Its `introScene`, `finished` and `carryOver` replace the content's whole. Its `variants` members are appended. Its audio `tracks` and media `pools` replace the ones with the same id, its audio `channels` merge field by field, and its `mute` and `default` win. To add a file to a pool, a mod redeclares the pool with every file.
 
 So a mod that changes one button ships only that one:
 

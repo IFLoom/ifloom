@@ -74,6 +74,7 @@
  * the registries a plugin augments, and `GameState.you` is an `EntityRef`,
  * now `${string}:${string}`. The prune (P6): `Game.scenes` and
  * `Pack.scenes` hold data scenes only, as hand-built scenes are internal.
+ * Words (P7): `Pack.words` (and so `Content.words`), a translation's table.
  */
 import type {
   Amount,
@@ -489,6 +490,8 @@ export type FrozenPack = {
   strings?: Record<string, string>
   /** Prose by key. Later packs override earlier ones. */
   prose?: Record<string, string>
+  /** Other words for the content's fields, by key: a translation. Later packs override earlier ones. */
+  words?: Record<string, string>
   /**
    * Variants membership by variants name, in draw order. Later packs append.
    * A member is a prose key, or `{ text: key, weight }` to be drawn more or

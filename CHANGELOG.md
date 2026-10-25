@@ -10,6 +10,10 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- [The words table](/docs/reference/words): a translation is one pack with a `words` table, which gives other words to any field a player reads, by key: `action.wait.label`, `entity.character:ava.name`, `scene.cafe.counter.choice.tea.label`, `scene.cafe.counter.text.intro`, `quests/quests.coffee.title`. The loader lays it over your content once everything is merged, a later pack's over an earlier one's, and reports a key that names no field. Lines read by key (`{ prose }` blocks, variants, pools) are translated in the pack's own `prose`, and the engine's and plugins' own words in its `strings`, as before. A block of words takes an `id` to name it, `text('…', { id: 'intro' })`; without one it's named by a hash of its words, so a changed line is reported until it's translated again.
+- [`translatableFields(game)`](/docs/reference/words#translatablefields) lists every field a player reads with its key, its words and where it is, ready to hand to a translator.
+- A plugin says which fields of its content are words with [`words`](/docs/reference/plugins#words), a [`WordShape`](/docs/reference/words#wordshape) for each list of its `data`, and a trait with `TraitDef.words`. Every first-party plugin declares its own.
+
 - [Typed calls, queries and views](/docs/reference/plugins#typed-calls-queries-and-views): a plugin declares what each of its calls takes, what its queries answer and what its view holds, by adding to the engine's `ConditionRegistry`, `EffectRegistry`, `CommandRegistry`, `QueryRegistry` and `ViewRegistry`, as it types its traits. In code, `{ 'quests/done': { qeust: 'bread' } }` now fails to compile, `context.query('calendar/now')` is a `CalendarState`, and `view.plugins.shop` is a `ShopView`. Every first-party plugin declares all of its own, and so does the plugin template. A call nobody declares still takes any arguments, so a third-party plugin that declares nothing still compiles.
 - Your game can declare its own `game/…` calls the same way, beside its `rules`. Small Town and the café do.
 

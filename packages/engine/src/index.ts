@@ -176,6 +176,8 @@ export type { Content, GameBase, Loaded, LoadOptions, Pack, Patch } from './load
 export { SCHEMA, loadGame } from './loader.ts'
 export type { CommandStep, ContentStep, ContentTools, PackContext, RawCommand, RawPack } from './upgrade.ts'
 export { upgradePack } from './upgrade.ts'
+export type { WordField, WordPart, WordShape } from './words.ts'
+export { translatableFields } from './words.ts'
 export type { Checked, FileRef, Probe, Problem } from './check.ts'
 export { checkGame, describeProblem } from './check.ts'
 export type { Reference } from './references.ts'

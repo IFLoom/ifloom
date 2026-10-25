@@ -265,6 +265,8 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
     version: 1,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
+    // The words a player reads in each list of the plugin's content, for a translation's `words` table.
+    words: { devices: { name: true }, apps: { name: true, blocked: [{ reason: true }], sections: [{ prose: 'blocks', actions: ['button'] }] } },
     commandVersion: COMMAND_VERSION,
     commandMigrations,
     // The contacts section lists the cast's characters when the game has the cast.

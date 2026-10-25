@@ -127,6 +127,7 @@ export function usableOf(state: GameState, game: Game, ref: EntityRef): Usable |
 
 const usableTrait: TraitDef<'inventory/usable'> = {
   id: USABLE,
+  words: { label: true, effects: 'effects' },
   check: (data) => [
     ...(typeof data?.label === 'string' && data.label.trim() !== '' ? [] : ['a usable thing needs a label for its button']),
     ...(Array.isArray(data?.effects) ? [] : ['a usable thing needs its effects, a list']),

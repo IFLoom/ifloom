@@ -11,7 +11,7 @@
 import {
   definePlugin,
   inRange,
-  say,
+  stringOf,
   type Condition,
   type DefinedPlugin,
   type EffectRef,
@@ -240,13 +240,13 @@ export function statuses(): DefinedPlugin<StatusesState, StatusesView> {
     commands: {
       /** `{ 'statuses/apply': { id } }`. */
       apply: {
-        whyNot: (_state, args, { game }) => (defOf(game, idOf(args)) ? undefined : say(game, 'statuses/unknown')),
+        whyNot: (_state, args, { game }) => (defOf(game, idOf(args)) ? undefined : stringOf(game, 'statuses/unknown')),
         run: (state, args, context) => applyTo(state, idOf(args), context),
         effectsOf: (_state, args) => [{ 'statuses/apply': { status: idOf(args) } }],
       },
       /** `{ 'statuses/remove': { id, runEnd? } }`. */
       remove: {
-        whyNot: (_state, args, { slice, game }) => (slice.active.some((entry) => entry.id === idOf(args)) ? undefined : say(game, 'statuses/notActive')),
+        whyNot: (_state, args, { slice, game }) => (slice.active.some((entry) => entry.id === idOf(args)) ? undefined : stringOf(game, 'statuses/notActive')),
         run: (state, args, context) => removeFrom(state, idOf(args), args.runEnd === true, context),
         effectsOf: (_state, args) => [{ 'statuses/remove': { status: idOf(args), runEnd: args.runEnd === true } }],
       },

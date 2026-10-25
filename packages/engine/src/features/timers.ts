@@ -15,7 +15,7 @@
  * was set for. What it does when it runs out stays in content, read when it
  * runs out, as an entity's definition is.
  */
-import { say } from '../strings.ts'
+import { stringOf } from '../strings.ts'
 import type { EffectRef } from '../custom.ts'
 import type { Game } from '../game.ts'
 import type { GameState, Range } from '../types.ts'
@@ -230,8 +230,8 @@ export const timers = defineFeature<TimersShape>({
   commands: {
     tick: {
       whyNot: (state, command, game) => {
-        if (!counting(state, game)) return say(game, 'noTimer')
-        return Number.isFinite(command.ms) && command.ms > 0 ? undefined : say(game, 'tickLength')
+        if (!counting(state, game)) return stringOf(game, 'noTimer')
+        return Number.isFinite(command.ms) && command.ms > 0 ? undefined : stringOf(game, 'tickLength')
       },
       run: (state, command, game, cx) => tick(state, game, command.ms, cx),
       // Time passes whatever is open: no lock or guard stops the clock.

@@ -14,7 +14,7 @@
  */
 import {
   definePlugin,
-  say,
+  stringOf,
   upgradePack,
   type CommandRef,
   type Condition,
@@ -284,9 +284,9 @@ export function startUnlocks(runner: Runner, options: { content?: Readonly<Recor
   return {
     ready,
     async enter(code) {
-      if (!normaliseCode(code)) return { ok: false, reason: say(game, 'unlocks/empty') }
+      if (!normaliseCode(code)) return { ok: false, reason: stringOf(game, 'unlocks/empty') }
       const profile = runner.profile
-      if (!profile) return { ok: false, reason: say(game, 'unlocks/noProfile') }
+      if (!profile) return { ok: false, reason: stringOf(game, 'unlocks/noProfile') }
       for (const def of defs()) {
         const proof = await proofFor(code, game.id, def)
         if (!proof) continue
@@ -294,7 +294,7 @@ export function startUnlocks(runner: Runner, options: { content?: Readonly<Recor
         try {
           await profile.update<UnlocksProfile>(ID, (stored) => ({ unlocked: { ...stored?.unlocked, [def.id]: { proof: toHex(proof) } } }))
         } catch {
-          return { ok: false, reason: say(game, 'unlocks/notSaved') }
+          return { ok: false, reason: stringOf(game, 'unlocks/notSaved') }
         }
         known.add(def.id)
         await ready
@@ -304,7 +304,7 @@ export function startUnlocks(runner: Runner, options: { content?: Readonly<Recor
         const restart = Boolean(opened?.some((pack) => !(game.packs ?? []).includes(pack.id)))
         return { ok: true, value: { unlock: def.id, label: def.label, already, restart } }
       }
-      return { ok: false, reason: say(game, 'unlocks/wrong') }
+      return { ok: false, reason: stringOf(game, 'unlocks/wrong') }
     },
     stop() {
       stopped = true
@@ -344,8 +344,8 @@ export function unlocks(): DefinedPlugin<UnlocksState, UnlocksView> {
         ignoresLocks: true,
         whyNot: (_state, args, { game, slice }) => {
           const id = String(args.id ?? '')
-          if (!unlockDefs(game).some((def) => def.id === id)) return say(game, 'unlocks/unknown')
-          return slice.unlocked.includes(id) ? say(game, 'unlocks/already') : undefined
+          if (!unlockDefs(game).some((def) => def.id === id)) return stringOf(game, 'unlocks/unknown')
+          return slice.unlocked.includes(id) ? stringOf(game, 'unlocks/already') : undefined
         },
         run: (_state, args, { slice, set }) => set({ unlocked: [...slice.unlocked, String(args.id)] }),
       },

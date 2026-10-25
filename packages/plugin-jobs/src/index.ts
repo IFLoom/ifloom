@@ -20,7 +20,7 @@ import {
   notify,
   pluginQuery,
   renderAction,
-  say,
+  stringOf,
   statDef,
   statValue,
   type Blocked,
@@ -207,9 +207,9 @@ function priceView(game: Game, amounts: Record<string, number>): Price | null {
 function cantApply(state: GameState, args: PluginArgs, context: PluginContext<JobsState>): string | undefined {
   const { game, slice } = context
   const job = jobOf(game, args.id)
-  if (!job) return say(game, 'jobs/unknown')
-  if (slice.held[job.id]) return say(game, 'jobs/alreadyHired')
-  if (slice.fired[job.id] !== undefined) return say(game, 'jobs/wasFired')
+  if (!job) return stringOf(game, 'jobs/unknown')
+  if (slice.held[job.id]) return stringOf(game, 'jobs/alreadyHired')
+  if (slice.fired[job.id] !== undefined) return stringOf(game, 'jobs/wasFired')
   for (const entry of job.blocked ?? []) if (holds(state, entry.when, game)) return entry.reason
   return undefined
 }
@@ -218,18 +218,18 @@ function cantApply(state: GameState, args: PluginArgs, context: PluginContext<Jo
 function cantWork(state: GameState, args: PluginArgs, context: PluginContext<JobsState>): string | undefined {
   const { game, slice } = context
   const job = jobOf(game, args.id)
-  if (!job) return say(game, 'jobs/unknown')
+  if (!job) return stringOf(game, 'jobs/unknown')
   const held = slice.held[job.id]
-  if (!held) return say(game, 'jobs/notHired')
-  if (!atWork(job, context)) return say(game, 'jobs/notHere')
+  if (!held) return stringOf(game, 'jobs/notHired')
+  if (!atWork(job, context)) return stringOf(game, 'jobs/notHere')
   const today = dayOf(state, game)
   // A finished shift says so first: once worked, the shift's day and hours
   // have usually moved on, and "not today" would hide why.
-  if (held.lastWorked === today) return say(game, 'jobs/workedToday')
-  if (!shiftDay(job, today, state, context)) return say(game, 'jobs/noShiftToday')
+  if (held.lastWorked === today) return stringOf(game, 'jobs/workedToday')
+  if (!shiftDay(job, today, state, context)) return stringOf(game, 'jobs/noShiftToday')
   if (job.hours) {
     const period = context.query<{ period: string }>('calendar/now')?.period
-    if (period !== undefined && !job.hours.includes(period)) return say(game, 'jobs/notNow')
+    if (period !== undefined && !job.hours.includes(period)) return stringOf(game, 'jobs/notNow')
   }
   for (const [stat, amount] of Object.entries(job.shift.cost ?? {})) {
     if (amount > 0 && statValue(state, game, stat) < amount) return lackingLine(statDef(game, stat), stat, amount, game)
@@ -264,7 +264,7 @@ function firedFrom(state: GameState, job: JobDef, context: PluginContext<JobsSta
   const held = { ...slice.held }
   delete held[job.id]
   const next = context.set({ held, fired: { ...slice.fired, [job.id]: dayOf(state, context.game) } }, state)
-  return notify(next, { id: `job.${job.id}.fired`, title: say(context.game, 'jobs/firedNotice', { title: job.title }), tag: 'jobs' })
+  return notify(next, { id: `job.${job.id}.fired`, title: stringOf(context.game, 'jobs/firedNotice', { title: job.title }), tag: 'jobs' })
 }
 
 /**
@@ -303,7 +303,7 @@ function review(before: GameState, after: GameState, context: PluginContext<Jobs
     }
     if (rank !== held.rank) {
       next = context.set({ ...sliceOf(next), held: { ...sliceOf(next).held, [job.id]: { ...held, rank } } }, next)
-      next = notify(next, { id: `job.${job.id}.rank`, title: say(game, 'jobs/promoted', { title: job.ranks[rank].title }), tag: 'jobs' })
+      next = notify(next, { id: `job.${job.id}.rank`, title: stringOf(game, 'jobs/promoted', { title: job.ranks[rank].title }), tag: 'jobs' })
     }
   }
   return next
@@ -450,7 +450,7 @@ export function jobs(): DefinedPlugin<JobsState, JobsView> {
       },
       /** `{ 'jobs/quit': { id } }`: leave the job `id`. The player can apply again. */
       quit: {
-        whyNot: (_state, args, { slice, game }) => (slice.held[String(args.id ?? '')] ? undefined : say(game, 'jobs/notHired')),
+        whyNot: (_state, args, { slice, game }) => (slice.held[String(args.id ?? '')] ? undefined : stringOf(game, 'jobs/notHired')),
         run: (state, args, context) => {
           const held = { ...context.slice.held }
           delete held[String(args.id)]

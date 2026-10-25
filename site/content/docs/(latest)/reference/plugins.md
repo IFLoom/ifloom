@@ -121,7 +121,7 @@ That's a working plugin. The engine saves its state with the game, and the [cont
 The full card also counts free coffees, and lets the player redeem one at the café. Its state gained a field, so its version goes up to 2 with a migration for saves made with version 1.
 
 ```ts
-import { applyEffects, definePlugin, say } from '@ifloom/engine'
+import { applyEffects, definePlugin, stringOf } from '@ifloom/engine'
 
 type Card = { stamps: number; free: number }
 
@@ -148,9 +148,9 @@ export const loyalty = definePlugin<Card>({
   commands: {
     redeem: {
       whyNot: (_state, _args, { slice, game, query }) => {
-        if (slice.free === 0) return say(game, 'loyalty/notFull')
+        if (slice.free === 0) return stringOf(game, 'loyalty/notFull')
         // Where the player is, asked of the places plugin by name.
-        if (query('places/here') !== 'cafe') return say(game, 'loyalty/onlyAtCafe')
+        if (query('places/here') !== 'cafe') return stringOf(game, 'loyalty/onlyAtCafe')
         return undefined
       },
       run: (state, _args, { slice, set, game }) =>
@@ -255,7 +255,7 @@ type Plugin<S = any> = {
 | `conditions` | Tests that content can use anywhere a [condition](/docs/reference/conditions#calls) goes, by name without the prefix. |
 | `effects` | Changes that content can make in a choice's, an action's or a trigger's effects. Each takes the game state and returns the next one. |
 | `commands` | Commands a button can send. See [`PluginCommand`](#plugincommand). |
-| `strings` | The plugin's player-facing lines in English, by name without the prefix, such as `{ notFull: 'Your card is not full yet.' }`. The plugin says one with [`say(game, 'loyalty/notFull')`](/docs/reference/strings#say), and a game rewords it as `strings: { 'loyalty/notFull': '…' }`. See [Plugins' strings](/docs/reference/strings#plugins-strings). |
+| `strings` | The plugin's player-facing lines in English, by name without the prefix, such as `{ notFull: 'Your card is not full yet.' }`. The plugin says one with [`stringOf(game, 'loyalty/notFull')`](/docs/reference/strings#stringof), and a game rewords it as `strings: { 'loyalty/notFull': '…' }`. See [Plugins' strings](/docs/reference/strings#plugins-strings). |
 | `queries` | Answers other plugins can ask for by name, with their context's `query`. See [Queries](#queries). |
 | `cooperates` | Ids of plugins it works with when the game has them. Content may name their conditions, effects and commands in a game without them. See [Cooperates](#cooperates). |
 | `statModifiers` | Changes to what the player's stats read right now, such as a timed boost to energy. Nothing is written into the state. See [Stat modifiers](#stat-modifiers). |
@@ -358,7 +358,7 @@ The engine's [`whyNot`](/docs/reference/actions#whynot) asks these in order, and
 3. `There is no such thing to do.` (the [`noSuchAction`](/docs/reference/strings#refusals) string) if no plugin, nor the game's [`rules.commands`](/docs/reference/rules#commands), has a command by that name.
 4. The command's own `whyNot`.
 
-The reducer refuses with that reason, and the view greys out the button with it. Put the line in the plugin's [`strings`](/docs/reference/strings#plugins-strings) and return `say(game, 'loyalty/notFull')`, so a game can reword it.
+The reducer refuses with that reason, and the view greys out the button with it. Put the line in the plugin's [`strings`](/docs/reference/strings#plugins-strings) and return `stringOf(game, 'loyalty/notFull')`, so a game can reword it.
 
 **Gotchas.**
 - A command without `whyNot` can always be done, apart from locks and guards.
@@ -765,7 +765,7 @@ Three more fields let a plugin watch every command, not only its own. A guard sa
 As an example, take a sink of dirty dishes in the flat. Cooking and baking add to it, and washing up takes the rest of the turn.
 
 ```ts
-import { callOf, definePlugin, say, type Effect } from '@ifloom/engine'
+import { callOf, definePlugin, stringOf, type Effect } from '@ifloom/engine'
 
 type Sink = { dirty: number }
 
@@ -796,8 +796,8 @@ export const dishes = definePlugin<Sink>({
     },
   },
   guard: (_state, { command, effects }, { slice, game }) => {
-    if (command.type === 'action' && command.id === 'places/bake' && slice.dirty >= 3) return say(game, 'dishes/full')
-    if (slice.dirty + added(effects) > 3) return { reason: say(game, 'dishes/piling'), soft: true }
+    if (command.type === 'action' && command.id === 'places/bake' && slice.dirty >= 3) return stringOf(game, 'dishes/full')
+    if (slice.dirty + added(effects) > 3) return { reason: stringOf(game, 'dishes/piling'), soft: true }
     return undefined
   },
   price: (_state, effects) => {

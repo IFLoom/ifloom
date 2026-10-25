@@ -1,5 +1,5 @@
 /**
- * @ifloom/engine/flow — builders for flowing scenes: a scene's body written
+ * Builders for flowing scenes, exported from @ifloom/engine: a scene's body written
  * as the words and decisions it reads as, top to bottom.
  *
  * Each builder returns plain data, the same objects a pack or a mod writes
@@ -7,7 +7,7 @@
  * other.
  *
  * ```ts
- * import { choice, decide, jump, point, say, text } from '@ifloom/engine/flow'
+ * import { choice, decide, jump, point, say, text } from '@ifloom/engine'
  *
  * body: [
  *   text(`Ava looks up from the till.`),
@@ -23,7 +23,7 @@
 import type { Condition } from './condition.ts'
 import type { SceneMedia } from './game.ts'
 import type { PluginArgs } from './plugin.ts'
-import type { Block, Choice, FlowChoice } from './scene.ts'
+import type { Block, FlowChoice } from './scene.ts'
 import type { BlockUi, Ui } from './features/ui.ts'
 
 /** What any block can have besides its own: a condition it shows under, and presentation hints. */
@@ -122,5 +122,3 @@ export function point(id: string): Block {
 export function jump(id: string): { point: string } {
   return { point: id }
 }
-
-export type { Block, Choice, FlowChoice }

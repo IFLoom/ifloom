@@ -58,6 +58,8 @@ export { speakerOf } from './speakers.ts'
 // Scenes and prose
 export type { Block, Choice, DataScene, FlowChoice } from './scene.ts'
 export { bakeScene, isDataScene } from './scene.ts'
+export type { BlockExtras } from './flow.ts'
+export { choice, decide, fold, image, jump, minigame, panel, point, say, text, when } from './flow.ts'
 export type { VariantMember } from './prose.ts'
 export { entityDesc, entityName, fillTokens, proseStore } from './prose.ts'
 export type { InlinePart, InlineSpan, SceneBeat, VideoFlags, VideoView } from './sceneBody.ts'
@@ -83,7 +85,7 @@ export { SAVE_VERSION } from './types.ts'
 
 // Player-facing words
 export type { StringKey, Strings } from './strings.ts'
-export { STRINGS, say } from './strings.ts'
+export { STRINGS, stringOf } from './strings.ts'
 
 // Running the game
 export type { Result } from './result.ts'

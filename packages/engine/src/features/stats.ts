@@ -3,7 +3,7 @@
  * stats worked out from others, and levels, shown or hidden. The engine has no
  * stats of its own; a game declares every one it uses.
  */
-import { say } from '../strings.ts'
+import { stringOf } from '../strings.ts'
 import type { Game } from '../game.ts'
 import { entityOf, entityStat, hasEntity, ofKind, ownerOf, statOwnerProblem, writeEntity } from '../entities.ts'
 import { notify } from '../notices.ts'
@@ -387,7 +387,7 @@ export function clampStat(state: GameState, game: Game, id: string, value: numbe
 /** The refusal for a cost the player cannot cover. */
 export function lackingLine(def: StatDef | undefined, id: string, amount: number, game?: Game): string {
   if (def?.lacking) return counted(def.lacking, amount)
-  return say(game, 'notEnough', { stat: (def?.label ?? id).toLowerCase(), n: amount })
+  return stringOf(game, 'notEnough', { stat: (def?.label ?? id).toLowerCase(), n: amount })
 }
 
 /** A value as the player reads it, through the stat's `format`. */

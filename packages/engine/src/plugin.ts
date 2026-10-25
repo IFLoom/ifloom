@@ -163,7 +163,7 @@ export type Plugin<S = any, V = unknown> = {
   /**
    * The plugin's player-facing lines, by name without the prefix, in English.
    * A game overrides one as `strings['<id>/<name>']`; the plugin reads them with
-   * `say(game, '<id>/<name>')`.
+   * `stringOf(game, '<id>/<name>')`.
    */
   strings?: Record<string, string>
   /**

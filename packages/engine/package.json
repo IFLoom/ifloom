@@ -11,12 +11,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
-    },
-    "./flow": {
-      "ifloom-source": "./src/flow.ts",
-      "types": "./dist/flow.d.ts",
-      "import": "./dist/flow.js",
-      "default": "./dist/flow.js"
     }
   },
   "files": [

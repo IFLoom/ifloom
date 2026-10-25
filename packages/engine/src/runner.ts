@@ -10,7 +10,7 @@ import { runnerHooks } from './features/registry.ts'
 import { savingIn } from './features/saving.ts'
 import { fail, ok, type Result } from './result.ts'
 import { saves, type LoadedSave, type SaveMeta, type Saves } from './save.ts'
-import { say } from './strings.ts'
+import { stringOf } from './strings.ts'
 import type { SceneBeat } from './sceneBody.ts'
 import type { Command, KvValue, GameState } from './types.ts'
 import { view, type View } from './view.ts'
@@ -550,7 +550,7 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     saves: options.saves,
     offers: { undo: Boolean(history), backlog: backlogLimit > 0 },
     async save(slot: string, name?: string): Promise<Result<SaveMeta>> {
-      if (!options.saves) return fail(say(game, 'noSaves'))
+      if (!options.saves) return fail(stringOf(game, 'noSaves'))
       const policy = savingIn(state, game, holds)
       if (!policy.allowed) return fail(policy.reason!)
       const saves = options.saves
@@ -560,15 +560,15 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
         return ok(await saves.write(slot, toSave, { name, played: played() }))
       } catch (error) {
         options.onSaveError?.(error)
-        return fail(say(game, 'notSaved'))
+        return fail(stringOf(game, 'notSaved'))
       }
     },
     restore,
     async load(slot: string): Promise<Result<LoadedSave>> {
-      if (!options.saves) return fail(say(game, 'noSaves'))
+      if (!options.saves) return fail(stringOf(game, 'noSaves'))
       const read = await options.saves.read(slot)
       if (!read.ok) return read
-      if (!read.value) return fail(say(game, 'emptySlot'))
+      if (!read.value) return fail(stringOf(game, 'emptySlot'))
       restore(read.value)
       return ok(read.value)
     },
@@ -580,12 +580,12 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     settings: settingsNow,
     setSetting(id: string, to: KvValue): Result<KvValue> {
       const setting = settingById(game, id)
-      if (!setting) return fail(say(game, 'noSuchSetting'))
+      if (!setting) return fail(stringOf(game, 'noSuchSetting'))
       if (settingAffects(setting) === 'play') {
         const applied = run({ type: 'setting', id, to })
         return applied.ok ? ok(to) : fail(applied.reason)
       }
-      if (!options.profile) return fail(say(game, 'noProfile'))
+      if (!options.profile) return fail(stringOf(game, 'noProfile'))
       const refused = settingRefusal(game, id, to, 'runner')
       if (refused) return fail(refused)
       // Shown at once; the profile catches up in order.

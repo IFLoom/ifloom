@@ -14,7 +14,7 @@ import {
   parseBeats,
   styledBeats,
   speakerOf,
-  say,
+  stringOf,
   type Block,
   type CommandRef,
   type DefinedPlugin,
@@ -272,7 +272,7 @@ export function feed(): DefinedPlugin<FeedState, FeedsView> {
           .map((post, order): PostView & { order: number } => ({
             id: post.id,
             from: '',
-            name: typeof state.kv.playerName === 'string' ? state.kv.playerName : say(game, 'feed/you'),
+            name: typeof state.kv.playerName === 'string' ? state.kv.playerName : stringOf(game, 'feed/you'),
             portrait: null,
             ...drawn(styledBeats(parseBeats(words(post.text)))),
             image: post.image ?? null,

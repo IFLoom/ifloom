@@ -24,7 +24,7 @@ import {
   PLAYER,
   protagonist,
   resolveHolder,
-  say,
+  stringOf,
   traitOf,
   withTrait,
   YOU,
@@ -176,11 +176,11 @@ export function wardrobe(): DefinedPlugin<WardrobeState, WardrobeView> {
       wear: {
         whyNot: (state, args, { slice, game }) => {
           const ref = String(args.id ?? '')
-          if (!entityOf(state, game, ref)) return say(game, 'noSuchThing')
+          if (!entityOf(state, game, ref)) return stringOf(game, 'noSuchThing')
           const wearable = wearableOf(state, game, ref)
-          if (!wearable) return say(game, 'wardrobe/notClothing', { thing: nameOf(state, game, ref) })
-          if (wornBy(slice, protagonist(state))[wearable.slot] === ref) return say(game, 'wardrobe/alreadyWearing', { thing: nameOf(state, game, ref) })
-          if (heldCount(state, game, ref, YOU) <= 0) return say(game, 'wardrobe/haveNone', { thing: nameOf(state, game, ref) })
+          if (!wearable) return stringOf(game, 'wardrobe/notClothing', { thing: nameOf(state, game, ref) })
+          if (wornBy(slice, protagonist(state))[wearable.slot] === ref) return stringOf(game, 'wardrobe/alreadyWearing', { thing: nameOf(state, game, ref) })
+          if (heldCount(state, game, ref, YOU) <= 0) return stringOf(game, 'wardrobe/haveNone', { thing: nameOf(state, game, ref) })
           return undefined
         },
         run: (state, args, { slice, set, game }) => {
@@ -192,7 +192,7 @@ export function wardrobe(): DefinedPlugin<WardrobeState, WardrobeView> {
       /** `{ 'wardrobe/takeOff': { id } }`: take off what is in the slot `id`. */
       takeOff: {
         whyNot: (state, args, { slice, game }) =>
-          wornBy(slice, protagonist(state))[String(args.id ?? '')] ? undefined : say(game, 'wardrobe/nothingToTakeOff'),
+          wornBy(slice, protagonist(state))[String(args.id ?? '')] ? undefined : stringOf(game, 'wardrobe/nothingToTakeOff'),
         run: (state, args, { slice, set }) => set(dressed(slice, protagonist(state), { [String(args.id)]: null })),
       },
     },

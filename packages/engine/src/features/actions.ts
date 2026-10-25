@@ -4,7 +4,7 @@
  * buttons (a place's) or answered by its `action` (an app's). One with a
  * cost, effects or `once` is run by the `action` command, by its id.
  */
-import { say } from '../strings.ts'
+import { stringOf } from '../strings.ts'
 import type { ActionDef, Blocked, Game } from '../game.ts'
 import type { Command, Condition, Effect, GameState } from '../types.ts'
 import { commandOf } from '../calls.ts'
@@ -83,8 +83,8 @@ export function actionBlocked(
   cx: FeatureContext & Partial<CommandContext>,
   id = action.id,
 ): string | undefined {
-  if (state.sceneId) return say(game, 'finishFirst')
-  if (!cx.holds(state, action.when, game)) return say(game, 'notOnOffer')
+  if (state.sceneId) return stringOf(game, 'finishFirst')
+  if (!cx.holds(state, action.when, game)) return stringOf(game, 'notOnOffer')
   const locked = lockedBy(state, game, { type: 'action', id }, cx)
   if (locked) return locked
   for (const entry of action.blocked ?? []) {
@@ -93,7 +93,7 @@ export function actionBlocked(
   if (action.once && doneThisTurn(state, id)) return action.once.reason
   const short = costRefusal(state, game, action.cost, cx)
   if (short) return short
-  if (action.command && commandOf(action.command).type === 'choose') return say(game, 'notOnOffer')
+  if (action.command && commandOf(action.command).type === 'choose') return stringOf(game, 'notOnOffer')
   const sends = sent(action, id)
   return sends && cx.whyNotCommand ? deeper(() => cx.whyNotCommand!(state, game, sends)) : undefined
 }
@@ -155,7 +155,7 @@ export const actions = defineFeature<ActionsShape>({
     action: {
       whyNot: (state, command, game, cx) => {
         const action = cx.actionOf(state, game, command.id)
-        if (!action) return say(game, 'noSuchAction')
+        if (!action) return stringOf(game, 'noSuchAction')
         return actionBlocked(state, game, action, cx, command.id)
       },
       // Counted first when it's once a turn, then its command, its cost and its effects, in that order.

@@ -9,7 +9,7 @@
  *
  * How each part is named: https://ifloom.dev/docs/reference/plugins#naming
  */
-import { definePlugin, say, type CommandRef, type Condition, type DefinedPlugin, type EffectRef, type Game, type PluginProblem } from '@ifloom/engine'
+import { definePlugin, stringOf, type CommandRef, type Condition, type DefinedPlugin, type EffectRef, type Game, type PluginProblem } from '@ifloom/engine'
 
 const ID = '__id__'
 
@@ -68,7 +68,8 @@ export function __camel__(): DefinedPlugin<__Pascal__State, __Pascal__View> {
     commands: {
       /** `{ '__id__/mark': { id } }`: mark the entry `id`. */
       mark: {
-        whyNot: (_state, args, { game }) => (__camel__Entries(game).some((entry) => entry.id === entryId(args)) ? undefined : say(game, '__id__/noSuchEntry')),
+        whyNot: (_state, args, { game }) =>
+          __camel__Entries(game).some((entry) => entry.id === entryId(args)) ? undefined : stringOf(game, '__id__/noSuchEntry'),
         run: (state, args, { slice, set }) => set({ ...slice, marked: { ...slice.marked, [entryId(args)]: state.turn } }),
       },
     },

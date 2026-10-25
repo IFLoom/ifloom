@@ -1,4 +1,4 @@
-import { say } from './strings.ts'
+import { stringOf } from './strings.ts'
 import { sceneContext } from './context.ts'
 import { sceneById, type Game, type SceneView } from './game.ts'
 import { pluginGuards, pluginsWatch } from './plugin.ts'
@@ -63,7 +63,7 @@ export function whyNotIn(rendered: Rendering, state: GameState, game: Game, comm
     if (refused !== undefined) return refused
   }
   const entry = commandEntry(command)
-  return entry ? entry.whyNot(state, command, game, commandContext(rendered)) : say(game, 'notSupported')
+  return entry ? entry.whyNot(state, command, game, commandContext(rendered)) : stringOf(game, 'notSupported')
 }
 
 /**

@@ -20,7 +20,7 @@ import {
   resolveHolder,
   YOU,
   parseRef,
-  say,
+  stringOf,
   sceneById,
   statDef,
   writeEntity,
@@ -172,7 +172,7 @@ export function debug(): DefinedPlugin<null, DebugView> {
 }
 
 function sayDebug(game: Game, key: string, id?: string, periods?: string): string {
-  return say(game, `debug/${key}`, { ...(id === undefined ? {} : { id }), ...(periods === undefined ? {} : { periods }) })
+  return stringOf(game, `debug/${key}`, { ...(id === undefined ? {} : { id }), ...(periods === undefined ? {} : { periods }) })
 }
 
 /** A command: put a stat at a value. */

@@ -1,4 +1,4 @@
-import { say } from './strings.ts'
+import { stringOf } from './strings.ts'
 import { rendering, warningIn, whyNotIn, type Rendering } from './availability.ts'
 import type { Game } from './game.ts'
 import type { Command, Effect, GameState } from './types.ts'
@@ -121,7 +121,7 @@ function run(current: GameState, game: Game, command: Command): GameState {
  */
 export function runIn(rendered: Rendering, current: GameState, game: Game, command: Command): GameState {
   const entry = commandEntry(command)
-  if (!entry) return refuse(say(game, 'notSupported'))
+  if (!entry) return refuse(stringOf(game, 'notSupported'))
   return entry.run(current, command, game, commandContext(rendered))
 }
 

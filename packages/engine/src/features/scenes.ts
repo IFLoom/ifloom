@@ -3,7 +3,7 @@
  * and leaving them, and storylets, the scenes a `{ scene: { from } }`
  * effect draws at random from a named set (ADR 0005).
  */
-import { say } from '../strings.ts'
+import { stringOf } from '../strings.ts'
 import { sceneContext } from '../context.ts'
 import type { Game, Scene } from '../game.ts'
 import type { Reference } from '../references.ts'
@@ -427,25 +427,25 @@ export const scenes = defineFeature<ScenesShape>({
   commands: {
     scene: {
       whyNot: (state, command, game, cx) => {
-        if (state.sceneId) return say(game, 'finishFirst')
-        return cx.sceneById(game, command.id) ? undefined : say(game, 'noSuchScene')
+        if (state.sceneId) return stringOf(game, 'finishFirst')
+        return cx.sceneById(game, command.id) ? undefined : stringOf(game, 'noSuchScene')
       },
       run: (state, command) => ({ ...state, sceneId: command.id, flow: null }),
       references: (command) => [{ scene: command.id, as: 'open' }],
     },
     choose: {
       whyNot: (state, command, game, cx) => {
-        if (!state.sceneId) return say(game, 'nothingToChoose')
+        if (!state.sceneId) return stringOf(game, 'nothingToChoose')
         // A scene the game no longer has is let through: choosing closes it.
         if (!cx.sceneById(game, state.sceneId)) return undefined
         const choice = cx.rendered.scene()!.choices.find((entry) => entry.id === command.id)
-        if (!choice || choice.visible === false) return say(game, 'notOnOffer')
+        if (!choice || choice.visible === false) return stringOf(game, 'notOnOffer')
         if (choice.disabled) return choice.disabled
         const short = costRefusal(state, game, choice.cost, cx)
         if (short) return short
         // The command it sends, asked as it would be on its own. A choice can't send a choice.
         const sends = choice.command && commandOf(choice.command)
-        if (sends) return sends.type === 'choose' ? say(game, 'notOnOffer') : cx.whyNotCommand(state, game, sends)
+        if (sends) return sends.type === 'choose' ? stringOf(game, 'notOnOffer') : cx.whyNotCommand(state, game, sends)
         return undefined
       },
       run: (state, command, game, cx) => {

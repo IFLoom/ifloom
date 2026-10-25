@@ -73,7 +73,7 @@ export type Strings = Partial<Record<StringKey, string>> & Record<string, string
  * key, else the engine's, else the key itself so a missing line shows up. Each
  * `{name}` is replaced from `vars`; one with no value is left as it is.
  */
-export function say(game: Game | undefined, key: StringKey | (string & {}), vars: Record<string, string | number> = {}): string {
+export function stringOf(game: Game | undefined, key: StringKey | (string & {}), vars: Record<string, string | number> = {}): string {
   let text = game?.strings?.[key]
   if (text === undefined) {
     const at = key.indexOf('/')

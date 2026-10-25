@@ -1,11 +1,11 @@
 ---
 title: "Flowing scenes"
-description: "A scene that reads on as the player chooses: decisions partway through whose picks bring their own text, sections under a condition, points to come back to, minigames and panels where they stand, and folds. The blocks, the builders in @ifloom/engine/flow, state.flow and what the view shows."
+description: "A scene that reads on as the player chooses: decisions partway through whose picks bring their own text, sections under a condition, points to come back to, minigames and panels where they stand, and folds. The blocks, their builders, state.flow and what the view shows."
 ---
 A scene's body is read top to bottom. Most scenes show their blocks and then their choices. A flowing scene stops partway through at a decision instead. Once the player picks, the pick's own text comes next, then the blocks after the decision, so the earlier text stays on the page and the scene reads on like a story. [Writing a flowing scene](/docs/recipes/flowing-scenes) walks through one.
 
 ```ts
-import { choice, decide, jump, point, say, text } from '@ifloom/engine/flow'
+import { choice, decide, jump, point, say, text } from '@ifloom/engine'
 
 const counter: DataScene = {
   id: 'cafe.counter',
@@ -131,10 +131,10 @@ A UI that only draws "beats, then choices" draws a flowing scene with no change.
 
 ## The builders
 
-`@ifloom/engine/flow` has a builder for each block. Each returns plain data, the same objects a pack or a mod writes by hand.
+`@ifloom/engine` exports a builder for each block. Each returns plain data, the same objects a pack or a mod writes by hand.
 
 ```ts
-import { choice, decide, fold, image, jump, minigame, panel, point, say, text, when } from '@ifloom/engine/flow'
+import { choice, decide, fold, image, jump, minigame, panel, point, say, text, when } from '@ifloom/engine'
 ```
 
 | Builder | Writes |

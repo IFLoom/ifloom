@@ -10,7 +10,7 @@ from disk. Pre-release; nothing here is a stable API yet.
 
 | Package | What |
 |---|---|
-| `packages/engine` (`@ifloom/engine`) | State, commands, scenes, conditions, effects, saves, the plugin API. Pure TypeScript, no DOM. `@ifloom/engine/flow` has the builders a flowing scene is written with (`text`, `say`, `when`, `decide`, `choice`, `image`, `minigame`, `panel`, `fold`, `point`, `jump`). |
+| `packages/engine` (`@ifloom/engine`) | State, commands, scenes, conditions, effects, saves, the plugin API. Pure TypeScript, no DOM. It also exports the builders a flowing scene is written with (`text`, `say`, `when`, `decide`, `choice`, `image`, `minigame`, `panel`, `fold`, `point`, `jump`). |
 | `packages/plugin-calendar` (`@ifloom/plugin-calendar`) | The periods of a day, the days of a week, sleep and a curfew, and what a turn is: a period, a day or a week. |
 | `packages/plugin-places` (`@ifloom/plugin-places`) | Locations with exits and things to do, travel between them, and where the player is. Each location is a unique `location:<id>` entity, so things lie in rooms: the view lists them with a pick-up button, and `places/holder` names where a dropped thing goes. Locations are content: `data.places.locations`. |
 | `packages/plugin-cast` (`@ifloom/plugin-cast`) | Characters with schedules, who is in the room, talking and calling. A character is an entity carrying the `cast/person` trait, written in content's `entities` with `person({ ... })` (named by `character('ava')`), so relationships are stats the game declares on the kind `character`. |

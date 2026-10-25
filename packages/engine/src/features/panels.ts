@@ -11,7 +11,7 @@
  * it, or the story moves on: a command that ends a turn or changes the scene
  * on screen closes it, unless that same command opened it.
  */
-import { say } from '../strings.ts'
+import { stringOf } from '../strings.ts'
 import type { PluginArgs } from '../plugin.ts'
 import type { GameState } from '../types.ts'
 import { defineFeature } from './feature.ts'
@@ -78,7 +78,7 @@ export const panels = defineFeature<PanelsShape>({
   },
   commands: {
     closePanel: {
-      whyNot: (state, _command, game) => (state.panel ? undefined : say(game, 'noPanel')),
+      whyNot: (state, _command, game) => (state.panel ? undefined : stringOf(game, 'noPanel')),
       run: (state) => ({ ...state, panel: null }),
       // Closing a panel changes nothing in the story, and a lock must never hold one open.
       ignoresLocks: () => true,

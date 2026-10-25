@@ -202,7 +202,7 @@ On a [block](/docs/reference/scenes#block): `true` sets the block's picture at a
 ## fold
 
 ```ts
-import { fold, text } from '@ifloom/engine/flow'
+import { fold, text } from '@ifloom/engine'
 
 fold('Read the postcard', [text(`Wish you were here. The sea is cold and the chips are good. J.`)])
 // { blocks: [{ words: '…' }], ui: { fold: 'Read the postcard' } }

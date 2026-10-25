@@ -17,7 +17,7 @@
  * - `ui.tilt` on a block: its picture sits at a slight angle, like a photo
  *   dropped on a table.
  * - `ui.fold` on a section: its beats are drawn as one part that opens and
- *   shuts, under the words given. `fold()` from `@ifloom/engine/flow` writes it.
+ *   shuts, under the words given. `fold()` from `@ifloom/engine` writes it.
  *
  * It also declares the inline pieces it draws in prose by default, by
  * augmenting `InlineUi`: `[[ui:modal|words|key|title]]`,

@@ -27,7 +27,7 @@ import {
   holds,
   lockOn,
   lockedOut,
-  say,
+  stringOf,
   renderAction,
   stageView,
   type ActionDef,
@@ -201,21 +201,21 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
 
   /** Why the player cannot go there now, or undefined. */
   function goBlocked(state: GameState, game: Game, at: string | null, to: string): string | undefined {
-    if (state.sceneId) return say(game, 'finishFirst')
+    if (state.sceneId) return stringOf(game, 'finishFirst')
     const place = locationById(game, to)
-    if (!place) return say(game, `${ID}/noSuchPlace`)
-    if (to === at) return say(game, `${ID}/alreadyHere`)
+    if (!place) return stringOf(game, `${ID}/noSuchPlace`)
+    if (to === at) return stringOf(game, `${ID}/alreadyHere`)
     const blocked = place.blocked?.find((entry) => holds(state, entry.when, game))
     if (blocked) return blocked.reason
-    if (at === null || !locationById(game, at)?.exits.includes(to)) return say(game, `${ID}/cannotGetThere`)
+    if (at === null || !locationById(game, at)?.exits.includes(to)) return stringOf(game, `${ID}/cannotGetThere`)
     return undefined
   }
 
   /** Why the player can't pick this up now, or undefined. */
   function pickUpBlocked(state: GameState, game: Game, at: string | null, ref: EntityRef): string | undefined {
-    if (state.sceneId) return say(game, 'finishFirst')
-    if (!entityOf(state, game, ref)) return say(game, 'noSuchThing')
-    if (at === null || heldCount(state, game, ref, location(at)) <= 0) return say(game, `${ID}/notLyingHere`, { thing: entityName(state, game, ref) })
+    if (state.sceneId) return stringOf(game, 'finishFirst')
+    if (!entityOf(state, game, ref)) return stringOf(game, 'noSuchThing')
+    if (at === null || heldCount(state, game, ref, location(at)) <= 0) return stringOf(game, `${ID}/notLyingHere`, { thing: entityName(state, game, ref) })
     return undefined
   }
   /** Picking one up: from the place to whoever the player is playing. */
@@ -321,7 +321,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
           name: entityName(state, game, ref),
           image: image === undefined ? null : artSrc(image),
           count,
-          pickUp: renderAction(state, game, { id: `pickUp.${ref}`, label: say(game, `${ID}/pickUp`), command: pickUp(ref) }),
+          pickUp: renderAction(state, game, { id: `pickUp.${ref}`, label: stringOf(game, `${ID}/pickUp`), command: pickUp(ref) }),
         }
       })
       return {

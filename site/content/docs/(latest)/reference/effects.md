@@ -415,7 +415,7 @@ The checker allows any name. A plugin that knows a panel checks its `with`, so t
 ### point
 
 ```ts
-{ point: 'questions' }   // jump('questions') from @ifloom/engine/flow
+{ point: 'questions' }   // jump('questions') writes this
 ```
 
 In a choice of a [flowing scene](/docs/reference/flows): once the choice's `then` is done, the flow carries on from the point `{ point: 'questions' }` marks, instead of after the decision. It's only a choice's effect, in the scene that has the point, so a flow loops only through a pick. Anywhere else it does nothing, and the loader reports it.

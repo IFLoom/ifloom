@@ -25,7 +25,7 @@ import {
   parseRef,
   pluginQuery,
   renderAction,
-  say,
+  stringOf,
   whyNot,
   YOU,
   type Block,
@@ -169,8 +169,8 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
   }
 
   function refusal(state: GameState, game: Game, app: AppDef | undefined): string | undefined {
-    if (!app) return say(game, 'devices/noSuchApp')
-    if (!holds(state, app.when, game)) return say(game, 'devices/notInstalled')
+    if (!app) return stringOf(game, 'devices/noSuchApp')
+    if (!holds(state, app.when, game)) return stringOf(game, 'devices/notInstalled')
     return app.blocked?.find((entry) => holds(state, entry.when, game))?.reason
   }
 
@@ -222,7 +222,7 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
           title: contact.name,
           text: contact.desc ?? '',
           image: contact.portrait,
-          actions: [renderAction(state, game, { id: `call-${contact.id}`, label: say(game, 'devices/call'), command: contact.command })],
+          actions: [renderAction(state, game, { id: `call-${contact.id}`, label: stringOf(game, 'devices/call'), command: contact.command })],
         })),
       }
     }
@@ -276,7 +276,7 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
       },
       /** `{ 'devices/close': { id } }`: the device `id` back to its home screen. */
       close: {
-        whyNot: (_state, args, { game }) => (known(game, String(args.id ?? '')) ? undefined : say(game, 'devices/noSuchDevice')),
+        whyNot: (_state, args, { game }) => (known(game, String(args.id ?? '')) ? undefined : stringOf(game, 'devices/noSuchDevice')),
         run: (_state, args, { slice, set }) => set({ ...slice, open: { ...slice.open, [String(args.id)]: null } }),
       },
     },

@@ -7,7 +7,7 @@
  * a scene is rendered once per screen rather than once per question asked
  * about it.
  */
-import { say } from './strings.ts'
+import { stringOf } from './strings.ts'
 import { pluginButtons, pluginCommand, pluginPrices, pluginStage, pluginsWatch, pluginViews } from './plugin.ts'
 import { defaultRuntime, renderScene, type RenderedScene } from './scene.ts'
 import { blockBeats } from './beats.ts'
@@ -446,14 +446,14 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
         id: state.sceneId,
         key: `scene:${state.sceneId}`,
         title: pluginStage(game, state)?.title ?? game.title,
-        body: say(game, 'momentPassed'),
-        beats: parseBeats(say(game, 'momentPassed')),
+        body: stringOf(game, 'momentPassed'),
+        beats: parseBeats(stringOf(game, 'momentPassed')),
         fresh: 0,
         tags: [],
         speaker: null,
         image: null,
       },
-      choices: [{ id: 'leave', label: say(game, 'lookAround'), command: { type: 'leave' }, effects: [] }],
+      choices: [{ id: 'leave', label: stringOf(game, 'lookAround'), command: { type: 'leave' }, effects: [] }],
       stage: null,
     }
   }

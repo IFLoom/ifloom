@@ -1,4 +1,4 @@
-import { say } from './strings.ts'
+import { stringOf } from './strings.ts'
 import type { SaveDriver } from './drivers.ts'
 import type { Game } from './game.ts'
 import { pluginById, pluginLabel } from './plugin.ts'
@@ -113,7 +113,7 @@ export function saves(game: Game, driver: SaveDriver): Saves {
       game: game.id,
       slot,
       // When and where, in the plugins' words; the turn if none says.
-      name: extra.name ?? when ?? say(game, 'turnLabel', { turn: state.turn + 1 }),
+      name: extra.name ?? when ?? stringOf(game, 'turnLabel', { turn: state.turn + 1 }),
       savedAt: extra.savedAt ?? Date.now(),
       played: extra.played ?? 0,
       turn: state.turn,
@@ -132,10 +132,10 @@ export function saves(game: Game, driver: SaveDriver): Saves {
     try {
       data = JSON.parse(text)
     } catch {
-      return fail(say(game, 'notASave'))
+      return fail(stringOf(game, 'notASave'))
     }
-    if (!isSaveFile(data)) return fail(say(game, 'notASave'))
-    if (data.meta.game !== game.id) return fail(say(game, 'otherGame', { game: data.meta.game }))
+    if (!isSaveFile(data)) return fail(stringOf(game, 'notASave'))
+    if (data.meta.game !== game.id) return fail(stringOf(game, 'otherGame', { game: data.meta.game }))
     const loaded = loadState(data.state, game)
     if (!loaded.ok) return loaded
     const state = loaded.value

@@ -12,7 +12,7 @@
 import {
   definePlugin,
   holds,
-  say,
+  stringOf,
   type CommandRef,
   type Condition,
   type DefinedPlugin,
@@ -254,7 +254,7 @@ export function quests(): DefinedPlugin<QuestsState, QuestsView> {
           const id = questId(args)
           if (!id) return undefined
           const record = advance(slice, state, game)
-          if (record.started[id] === undefined || record.done[id] !== undefined) return say(game, 'quests/notDoing')
+          if (record.started[id] === undefined || record.done[id] !== undefined) return stringOf(game, 'quests/notDoing')
           return undefined
         },
         run: (_state, args, { slice, set }) => set({ ...slice, tracked: questId(args) || null }),

@@ -31,7 +31,7 @@ import {
   parseRef,
   pluginQuery,
   renderAction,
-  say,
+  stringOf,
   startingState,
   storylineOpen,
   whyNot,
@@ -211,23 +211,23 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
 
   function talkBlocked(state: GameState, context: PluginContext<null>, ref: EntityRef | undefined): string | undefined {
     const { game } = context
-    if (state.sceneId) return say(game, 'finishFirst')
+    if (state.sceneId) return stringOf(game, 'finishFirst')
     const them = one(state, game, ref)
-    if (!them) return say(game, `${ID}/noSuchPerson`)
-    if (!isHere(state, context, them)) return say(game, `${ID}/notHere`, { name: nameOf(state, game, them) })
-    if (closed(state, them)) return say(game, `${ID}/notTaking`, { name: nameOf(state, game, them) })
-    if (!talkOption(state, game, them)) return say(game, `${ID}/nothingToSay`, { name: nameOf(state, game, them) })
+    if (!them) return stringOf(game, `${ID}/noSuchPerson`)
+    if (!isHere(state, context, them)) return stringOf(game, `${ID}/notHere`, { name: nameOf(state, game, them) })
+    if (closed(state, them)) return stringOf(game, `${ID}/notTaking`, { name: nameOf(state, game, them) })
+    if (!talkOption(state, game, them)) return stringOf(game, `${ID}/nothingToSay`, { name: nameOf(state, game, them) })
     return undefined
   }
 
   function callBlocked(state: GameState, game: Game, ref: EntityRef | undefined): string | undefined {
-    if (state.sceneId) return say(game, 'finishFirst')
+    if (state.sceneId) return stringOf(game, 'finishFirst')
     const them = one(state, game, ref)
-    if (!them) return say(game, `${ID}/noSuchPerson`)
+    if (!them) return stringOf(game, `${ID}/noSuchPerson`)
     const call = them.person.call
-    if (!call) return say(game, `${ID}/cannotCall`, { name: nameOf(state, game, them) })
-    if (closed(state, them)) return say(game, `${ID}/notTaking`, { name: nameOf(state, game, them) })
-    if (!holdsFor(state, game, them, call.when)) return call.busy ?? say(game, `${ID}/notPickingUp`, { name: nameOf(state, game, them) })
+    if (!call) return stringOf(game, `${ID}/cannotCall`, { name: nameOf(state, game, them) })
+    if (closed(state, them)) return stringOf(game, `${ID}/notTaking`, { name: nameOf(state, game, them) })
+    if (!holdsFor(state, game, them, call.when)) return call.busy ?? stringOf(game, `${ID}/notPickingUp`, { name: nameOf(state, game, them) })
     return undefined
   }
 
@@ -246,7 +246,9 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
       here: isHere(state, context, them),
       closed: closed(state, them),
       met: met(state, game, them),
-      actions: them.person.talk ? [renderAction(state, game, { id: `talk-${id}`, label: option?.label ?? say(game, `${ID}/talk`), command: talk(id) })] : [],
+      actions: them.person.talk
+        ? [renderAction(state, game, { id: `talk-${id}`, label: option?.label ?? stringOf(game, `${ID}/talk`), command: talk(id) })]
+        : [],
     }
   }
 

@@ -2,8 +2,7 @@
  * Ava's arc: meeting her at the café, her calls and texts, the evening by the
  * river, and the friendship quest. Her words are in `ava.prose.ts`.
  */
-import { holding, move, give, type Content } from '@ifloom/engine'
-import { choice, decide, jump, point, say, text } from '@ifloom/engine/flow'
+import { choice, decide, give, holding, jump, move, point, say, text, type Content } from '@ifloom/engine'
 import { questActive } from '@ifloom/plugin-quests'
 import { day } from '@ifloom/plugin-calendar'
 import { character } from '@ifloom/plugin-cast'

@@ -3,7 +3,7 @@
  * engine checks the value against the declaration, so a UI can't put
  * anything else in.
  */
-import { say } from '../strings.ts'
+import { stringOf } from '../strings.ts'
 import type { Game } from '../game.ts'
 import type { Condition, KvValue, GameState } from '../types.ts'
 import { defineFeature, mergedById, type FeatureContext } from './feature.ts'
@@ -75,25 +75,25 @@ export function inputValue(input: InputDef, value: KvValue): KvValue {
 /** Why this value can't be entered, as the player reads it; undefined if it can. */
 export function inputRefusal(state: GameState, game: Game, id: string, value: KvValue | undefined, cx: FeatureContext): string | undefined {
   const input = inputById(game, id)
-  if (!input) return say(game, 'noSuchInput')
-  if (!cx.holds(state, input.when, game)) return say(game, 'notNow')
-  if (value === undefined) return say(game, 'enterSomething')
+  if (!input) return stringOf(game, 'noSuchInput')
+  if (!cx.holds(state, input.when, game)) return stringOf(game, 'notNow')
+  if (value === undefined) return stringOf(game, 'enterSomething')
   switch (input.type) {
     case 'text': {
-      if (typeof value !== 'string' || !value.trim()) return say(game, 'enterSomething')
+      if (typeof value !== 'string' || !value.trim()) return stringOf(game, 'enterSomething')
       const most = input.maxLength ?? 40
-      return value.trim().length > most ? say(game, 'tooLong', { n: most }) : undefined
+      return value.trim().length > most ? stringOf(game, 'tooLong', { n: most }) : undefined
     }
     case 'number': {
-      if (typeof value !== 'number' || !Number.isFinite(value)) return say(game, 'enterNumber')
+      if (typeof value !== 'number' || !Number.isFinite(value)) return stringOf(game, 'enterNumber')
       if ((input.min !== undefined && value < input.min) || (input.max !== undefined && value > input.max)) {
-        if (input.min !== undefined && input.max !== undefined) return say(game, 'between', { min: input.min, max: input.max })
-        return input.min !== undefined ? say(game, 'atLeast', { min: input.min }) : say(game, 'atMost', { max: input.max! })
+        if (input.min !== undefined && input.max !== undefined) return stringOf(game, 'between', { min: input.min, max: input.max })
+        return input.min !== undefined ? stringOf(game, 'atLeast', { min: input.min }) : stringOf(game, 'atMost', { max: input.max! })
       }
       return undefined
     }
     case 'choice':
-      return (input.options ?? []).some((option) => option.value === value) ? undefined : say(game, 'notAnOption')
+      return (input.options ?? []).some((option) => option.value === value) ? undefined : stringOf(game, 'notAnOption')
   }
 }
 

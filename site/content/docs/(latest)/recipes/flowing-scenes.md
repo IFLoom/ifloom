@@ -6,11 +6,11 @@ Most scenes are one screen: some text, then the choices. When you want a convers
 
 ## Write the words in place
 
-Start with the builders from `@ifloom/engine/flow`. `text()` takes a page of words, so you can write a scene's prose where its structure is, without a prose key for each paragraph. It takes off the indentation the lines share, and a blank line starts a new paragraph:
+Start with the builders `@ifloom/engine` exports. `text()` takes a page of words, so you can write a scene's prose where its structure is, without a prose key for each paragraph. It takes off the indentation the lines share, and a blank line starts a new paragraph:
 
 ```ts
 import type { DataScene } from '@ifloom/engine'
-import { choice, decide, fold, jump, minigame, point, say, text, when } from '@ifloom/engine/flow'
+import { choice, decide, fold, jump, minigame, point, say, text, when } from '@ifloom/engine'
 
 const river: DataScene = {
   id: 'ava.river',

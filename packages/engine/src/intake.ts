@@ -6,7 +6,7 @@
  * and its load default once, in `FIELDS`, and both paths read that table.
  */
 import { fail, ok, type Result } from './result.ts'
-import { say } from './strings.ts'
+import { stringOf } from './strings.ts'
 import type { Game } from './game.ts'
 import type { PluginSlice } from './plugin.ts'
 import { SAVE_VERSION, type GameState, type StartOptions } from './types.ts'
@@ -335,7 +335,7 @@ function carryPlugins(state: GameState, game: Game): GameState | string {
     }
     if (slice.version === plugin.version) continue
     if (slice.version > plugin.version) {
-      return say(game, 'pluginNewer', { plugin: plugin.id })
+      return stringOf(game, 'pluginNewer', { plugin: plugin.id })
     }
     let version = slice.version
     let inner = slice.state
@@ -343,7 +343,7 @@ function carryPlugins(state: GameState, game: Game): GameState | string {
     const tools: MigrationTools = { game, fill: (parts) => fillDeclared(state, game, parts) }
     while (version < plugin.version) {
       const step = plugin.migrations?.[version]
-      if (!step) return say(game, 'pluginUnreadable', { plugin: plugin.id })
+      if (!step) return stringOf(game, 'pluginUnreadable', { plugin: plugin.id })
       inner = step(inner, tools)
       version += 1
     }
@@ -389,7 +389,7 @@ function fillDeclared(state: GameState, game: Game, parts?: readonly FillPart[])
 function carryGame(state: GameState, game: Game): GameState | string {
   const target = game.version ?? 1
   let version = state.gameVersion ?? 1
-  if (version > target) return say(game, 'gameNewer')
+  if (version > target) return stringOf(game, 'gameNewer')
   let next = state
   while (version < target) {
     const step = game.rules?.migrations?.[version]
@@ -423,9 +423,9 @@ function fillGame(state: GameState, game: Game): GameState {
  * game's migrations, then what the game declares and the save lacks.
  */
 export function loadState(raw: unknown, game: Game): Result<GameState> {
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return fail(say(game, 'notASave'))
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return fail(stringOf(game, 'notASave'))
   const engine = carryEngine(raw as Saved, game)
-  if (!engine) return fail(say(game, 'saveTooOld'))
+  if (!engine) return fail(stringOf(game, 'saveTooOld'))
   const plugged = carryPlugins(engine, game)
   if (typeof plugged === 'string') return fail(plugged)
   const carried = carryGame(plugged, game)

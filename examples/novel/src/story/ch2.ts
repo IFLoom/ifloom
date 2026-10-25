@@ -3,8 +3,7 @@
  * flowing scene: its words are written in place, the answer you give brings
  * her reply, and the chapter reads on to Saturday.
  */
-import type { Content } from '@ifloom/engine'
-import { choice, decide, text, when } from '@ifloom/engine/flow'
+import { choice, decide, text, when, type Content } from '@ifloom/engine'
 
 export const ch2: Content = {
   scenes: [

@@ -3,7 +3,7 @@
  * game (ADR 0002). A `play` setting is in the state, saved with it and read by
  * the `{ setting }` condition; a `ui` setting lives only in the profile.
  */
-import { say } from '../strings.ts'
+import { stringOf } from '../strings.ts'
 import type { Game } from '../game.ts'
 import type { KvValue, Range } from '../types.ts'
 import { defineFeature } from './feature.ts'
@@ -125,19 +125,19 @@ export function settingValue(game: Game, stored: Record<string, unknown> | undef
  */
 export function settingRefusal(game: Game, id: string, value: unknown, through: 'command' | 'runner' = 'command'): string | undefined {
   const setting = settingById(game, id)
-  if (!setting) return say(game, 'noSuchSetting')
-  if (through === 'command' && settingAffects(setting) !== 'play') return say(game, 'notAGameSetting')
+  if (!setting) return stringOf(game, 'noSuchSetting')
+  if (through === 'command' && settingAffects(setting) !== 'play') return stringOf(game, 'notAGameSetting')
   switch (settingFault(setting, value)) {
     case 'toggle':
-      return say(game, 'onOrOff')
+      return stringOf(game, 'onOrOff')
     case 'option':
-      return say(game, 'notAnOption')
+      return stringOf(game, 'notAnOption')
     case 'number':
-      return say(game, 'enterNumber')
+      return stringOf(game, 'enterNumber')
     case 'range':
-      return setting.type === 'range' ? say(game, 'between', { min: setting.min, max: setting.max }) : undefined
+      return setting.type === 'range' ? stringOf(game, 'between', { min: setting.min, max: setting.max }) : undefined
     case 'step':
-      return setting.type === 'range' ? say(game, 'inSteps', { step: setting.step ?? 1 }) : undefined
+      return setting.type === 'range' ? stringOf(game, 'inSteps', { step: setting.step ?? 1 }) : undefined
     default:
       return undefined
   }

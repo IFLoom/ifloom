@@ -9,7 +9,7 @@
  * `of: 'minigame'`, gone when it ends unless `final.copy` writes them out. Every random pick
  * is drawn from the save's seed, so a command log plays back exactly.
  */
-import { say } from '../strings.ts'
+import { stringOf } from '../strings.ts'
 import type { EffectRef } from '../custom.ts'
 import type { Game } from '../game.ts'
 import type { Condition, GameState } from '../types.ts'
@@ -388,8 +388,8 @@ export const minigames = defineFeature<MinigamesShape>({
   commands: {
     minigame: {
       whyNot: (state, command, game, cx) => {
-        if (!state.minigame) return say(game, 'noMinigame')
-        return liveOn(state, game, command.input, cx) ? undefined : say(game, 'notLive')
+        if (!state.minigame) return stringOf(game, 'noMinigame')
+        return liveOn(state, game, command.input, cx) ? undefined : stringOf(game, 'notLive')
       },
       run: (state, command, game, cx) => take(state, game, liveOn(state, game, command.input, cx)!, 'on', cx, 0),
       ignoresLocks: () => true,
@@ -401,7 +401,7 @@ export const minigames = defineFeature<MinigamesShape>({
     return intro ? startMinigame(state, game, intro, cx) : state
   },
   // While a minigame runs, only its own commands and dismissing a notice go through. Settings ignore locks, so they do too.
-  refuses: (state, command, game) => (state.minigame && command.type !== 'dismiss' ? say(game, 'finishFirst') : undefined),
+  refuses: (state, command, game) => (state.minigame && command.type !== 'dismiss' ? stringOf(game, 'finishFirst') : undefined),
   pack: mergedById<MinigamesShape['game'], MinigamesShape['pack'], MinigameDef>(
     { base: (game) => game.minigames, pack: (pack) => pack.minigames },
     (game, list) => {

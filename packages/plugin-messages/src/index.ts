@@ -20,7 +20,7 @@ import {
   notify,
   pluginQuery,
   speakerOf,
-  say,
+  stringOf,
   type Block,
   type CommandRef,
   type DefinedPlugin,
@@ -294,9 +294,9 @@ export function messages(): DefinedPlugin<MessagesState, MessagesView> {
         whyNot: (state, args, { slice, game }) => {
           const arrival = slice.arrived.find((entry) => entry.key === args.message)
           const message = arrival && messageDefs(game).find((entry) => entry.id === arrival.message)
-          if (!arrival || !message) return say(game, 'messages/noSuchMessage')
-          if (slice.replied[arrival.key] !== undefined) return say(game, 'messages/alreadyReplied')
-          return offered(state, game, slice, message, arrival.key).some((reply) => reply.id === args.reply) ? undefined : say(game, 'messages/notOnOffer')
+          if (!arrival || !message) return stringOf(game, 'messages/noSuchMessage')
+          if (slice.replied[arrival.key] !== undefined) return stringOf(game, 'messages/alreadyReplied')
+          return offered(state, game, slice, message, arrival.key).some((reply) => reply.id === args.reply) ? undefined : stringOf(game, 'messages/notOnOffer')
         },
         run: (_state, args, { slice, set, game }) => {
           const arrival = slice.arrived.find((entry) => entry.key === args.message)!

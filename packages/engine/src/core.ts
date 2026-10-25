@@ -11,7 +11,7 @@
  * Also the `FeatureContext` the core lends features: its helpers, built the
  * first time one is asked for, so nothing runs while the modules load.
  */
-import { say } from './strings.ts'
+import { stringOf } from './strings.ts'
 import { holds } from './condition.ts'
 import { buildEffects, customCall, customCondition, customContext, customEffect, customValue } from './custom.ts'
 import { sceneById } from './game.ts'
@@ -173,7 +173,7 @@ export class StartOver extends Error {
 /** The core's commands. `start` is handled by `apply` before any of these are asked. */
 const commands: { [K in keyof CoreCommands]: CommandEntry<CoreCommands[K]> } = {
   start: {
-    whyNot: (_state, _command, game) => say(game, 'notSupported'),
+    whyNot: (_state, _command, game) => stringOf(game, 'notSupported'),
     run: (state) => state,
     references: none,
   },
@@ -191,7 +191,7 @@ const commands: { [K in keyof CoreCommands]: CommandEntry<CoreCommands[K]> } = {
   custom: {
     whyNot: (state, command, game) => {
       const fn = pluginCommand(game, command.name)
-      if (!fn) return say(game, 'noSuchAction')
+      if (!fn) return stringOf(game, 'noSuchAction')
       return fn.whyNot(state, command.with ?? {})
     },
     run: (state, command, game) => pluginCommand(game, command.name)!.run(state, command.with ?? {}),

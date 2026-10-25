@@ -11,7 +11,7 @@ import {
   definePlugin,
   holds,
   inRange,
-  say,
+  stringOf,
   type CommandRef,
   type Condition,
   type DefinedPlugin,
@@ -142,8 +142,8 @@ export function calendar(options: CalendarOptions = {}): DefinedPlugin<CalendarS
 
   const words = (context: PluginContext<CalendarState>, clock: CalendarState) => ({
     day: clock.day + 1,
-    weekday: say(context.game, `${ID}/weekday.${weekdayIndex(clock.day)}`),
-    period: say(context.game, `${ID}/period.${clock.period}`),
+    weekday: stringOf(context.game, `${ID}/weekday.${weekdayIndex(clock.day)}`),
+    period: stringOf(context.game, `${ID}/period.${clock.period}`),
   })
 
   return definePlugin<CalendarState, CalendarView>({
@@ -181,8 +181,8 @@ export function calendar(options: CalendarOptions = {}): DefinedPlugin<CalendarS
       ? {
           sleep: {
             whyNot: (state, _args, { slice, game }) => {
-              if (state.sceneId) return say(game, 'finishFirst')
-              return sleep.from.includes(slice.period) ? undefined : say(game, `${ID}/tooEarly`)
+              if (state.sceneId) return stringOf(game, 'finishFirst')
+              return sleep.from.includes(slice.period) ? undefined : stringOf(game, `${ID}/tooEarly`)
             },
             run: (state, _args, context) => pass(state, untilMorning(context.slice), context),
             effectsOf: (_state, _args, { slice }) => [{ [`${ID}/pass`]: { by: untilMorning(slice) } }],
@@ -214,7 +214,7 @@ export function calendar(options: CalendarOptions = {}): DefinedPlugin<CalendarS
       if (command.type === 'custom' && command.name === `${ID}/sleep`) return undefined
       const n = passed(effects)
       if (n <= 0 || index(context.slice.period) + n < P) return undefined
-      return curfewBinds(state, context) ? { reason: say(context.game, `${ID}/pastDawn`), soft: true } : undefined
+      return curfewBinds(state, context) ? { reason: stringOf(context.game, `${ID}/pastDawn`), soft: true } : undefined
     },
     price: (_state, effects, context) => {
       const n = passed(effects)
@@ -222,9 +222,9 @@ export function calendar(options: CalendarOptions = {}): DefinedPlugin<CalendarS
       const after = fromAbsolute(absolute(context.slice) + n)
       const { weekday, period } = words(context, after)
       const days = after.day - context.slice.day
-      return [say(context.game, days === 0 ? `${ID}/until` : days === 1 ? `${ID}/tomorrow` : `${ID}/later`, { weekday, period })]
+      return [stringOf(context.game, days === 0 ? `${ID}/until` : days === 1 ? `${ID}/tomorrow` : `${ID}/later`, { weekday, period })]
     },
-    label: (_state, context) => say(context.game, `${ID}/label`, words(context, context.slice)),
+    label: (_state, context) => stringOf(context.game, `${ID}/label`, words(context, context.slice)),
     view: (state, context): CalendarView => {
       const { slice } = context
       const shown = words(context, slice)
@@ -234,7 +234,7 @@ export function calendar(options: CalendarOptions = {}): DefinedPlugin<CalendarS
         weekdayIndex: weekdayIndex(slice.day),
         period: slice.period,
         periodLabel: shown.period,
-        label: say(context.game, `${ID}/label`, shown),
+        label: stringOf(context.game, `${ID}/label`, shown),
         curfew: curfewBinds(state, context) && !state.sceneId && index(slice.period) === P - 1,
       }
     },

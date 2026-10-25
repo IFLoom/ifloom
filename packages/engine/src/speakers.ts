@@ -10,7 +10,7 @@ import { entityImage, entityUi, hasEntity, protagonist, PLAYER, YOU, type Entity
 import type { EntityUi, Ui } from './features/ui.ts'
 import { entityName } from './prose.ts'
 import { artSrc, type SpeakerFinder } from './sceneBody.ts'
-import { say } from './strings.ts'
+import { stringOf } from './strings.ts'
 
 /** Who is speaking, or who sent something, as the screen draws them. */
 export type SpeakerView = {
@@ -70,7 +70,7 @@ export function speakerOf(state: GameState, game: Game, id: string): SpeakerView
  * line, with no entity.
  */
 export function lineSpeakers(state: GameState, game: Game): SpeakerFinder {
-  const word = say(game, 'you')
+  const word = stringOf(game, 'you')
   const playing = protagonist(state)
   let byName: Map<string, EntityRef> | undefined
   return (name) => {

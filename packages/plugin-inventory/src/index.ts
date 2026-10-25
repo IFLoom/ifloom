@@ -29,7 +29,7 @@ import {
   PLAYER,
   protagonist,
   renderAction,
-  say,
+  stringOf,
   YOU,
   type CommandRef,
   type DefinedPlugin,
@@ -154,8 +154,8 @@ function takenFrom(state: GameState, game: Game, ref: EntityRef): Holder | undef
 
 /** Why you can't do anything with this thing now: not in the game, or you hold none. */
 function notHeld(state: GameState, game: Game, ref: EntityRef): string | undefined {
-  if (!inGame(state, game, ref)) return say(game, 'noSuchThing')
-  return takenFrom(state, game, ref) === undefined ? say(game, 'inventory/haveNone', { thing: nameOf(state, game, ref) }) : undefined
+  if (!inGame(state, game, ref)) return stringOf(game, 'noSuchThing')
+  return takenFrom(state, game, ref) === undefined ? stringOf(game, 'inventory/haveNone', { thing: nameOf(state, game, ref) }) : undefined
 }
 
 function useEffects(state: GameState, game: Game, ref: EntityRef): Effect[] {
@@ -243,7 +243,7 @@ export function inventory(): DefinedPlugin<null, InventoryView> {
           const ref = idOf(args)
           const held = notHeld(state, game, ref)
           if (held) return held
-          return usableOf(state, game, ref) ? undefined : say(game, 'inventory/doesNothing', { thing: nameOf(state, game, ref) })
+          return usableOf(state, game, ref) ? undefined : stringOf(game, 'inventory/doesNothing', { thing: nameOf(state, game, ref) })
         },
         // Its effects read the state as it was before one was spent, as an action's do before its cost.
         effectsOf: (state, args, { game }) => useEffects(state, game, idOf(args)),
@@ -262,8 +262,8 @@ export function inventory(): DefinedPlugin<null, InventoryView> {
           const held = notHeld(state, game, ref)
           if (held) return held
           const to = String(args.to ?? '')
-          if (to === YOU || to === protagonist(state) || to === PLAYER) return say(game, 'inventory/giveToSelf')
-          return canHold(state, game, to) ? undefined : say(game, 'inventory/cantGiveTo', { to: nameOf(state, game, to) })
+          if (to === YOU || to === protagonist(state) || to === PLAYER) return stringOf(game, 'inventory/giveToSelf')
+          return canHold(state, game, to) ? undefined : stringOf(game, 'inventory/cantGiveTo', { to: nameOf(state, game, to) })
         },
         effectsOf: (state, args, { game }) => giveEffects(state, game, args),
         run: (state, args, { game, apply }) => apply(giveEffects(state, game, args), state),

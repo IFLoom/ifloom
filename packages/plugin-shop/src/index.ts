@@ -32,7 +32,7 @@ import {
   lackingLine,
   parseRef,
   renderAction,
-  say,
+  stringOf,
   statDef,
   statValue,
   traitOf,
@@ -323,7 +323,7 @@ function isHere(vendor: VendorDef, cx: Ctx): boolean {
 
 /** Why the vendor is closed, or undefined if it's open. */
 function closedReason(state: GameState, vendor: VendorDef, cx: Ctx): string | undefined {
-  const reason = () => vendor.closed ?? say(cx.game, 'shop/closed')
+  const reason = () => vendor.closed ?? stringOf(cx.game, 'shop/closed')
   if (vendor.hours) {
     const period = cx.query<{ period: string }>('calendar/now')?.period
     if (period !== undefined && !vendor.hours.includes(period)) return reason()
@@ -342,13 +342,13 @@ function cantBuy(state: GameState, args: PluginArgs, slice: ShopState, cx: Ctx):
   const { game } = cx
   const vendor = vendorOf(game, args.vendor)
   const good = vendor && goodOf(state, game, vendor, args.entity)
-  if (!vendor || !good || !entityOf(state, game, good.entity)) return say(game, 'shop/unknown')
-  if (!isHere(vendor, cx)) return say(game, 'shop/notHere')
+  if (!vendor || !good || !entityOf(state, game, good.entity)) return stringOf(game, 'shop/unknown')
+  if (!isHere(vendor, cx)) return stringOf(game, 'shop/notHere')
   const closed = closedReason(state, vendor, cx)
   if (closed) return closed
   const count = countOf(args)
   const left = stockLeft(state, slice, vendor, good, cx)
-  if (left !== null && left < count) return say(game, 'shop/soldOut')
+  if (left !== null && left < count) return stringOf(game, 'shop/soldOut')
   for (const [stat, amount] of Object.entries(times(priceToday(state, vendor, good, cx), count))) {
     if (amount > 0 && statValue(state, game, stat) < amount) return lackingLine(statDef(game, stat), stat, amount, game)
   }
@@ -360,12 +360,12 @@ function cantSell(state: GameState, args: PluginArgs, cx: Ctx): string | undefin
   const { game } = cx
   const vendor = vendorOf(game, args.vendor)
   const good = vendor && goodOf(state, game, vendor, args.entity)
-  if (!vendor || !good) return say(game, 'shop/unknown')
-  if (vendor.buysBack === undefined) return say(game, 'shop/noBuyBack')
-  if (!isHere(vendor, cx)) return say(game, 'shop/notHere')
+  if (!vendor || !good) return stringOf(game, 'shop/unknown')
+  if (vendor.buysBack === undefined) return stringOf(game, 'shop/noBuyBack')
+  if (!isHere(vendor, cx)) return stringOf(game, 'shop/notHere')
   const closed = closedReason(state, vendor, cx)
   if (closed) return closed
-  if (heldCount(state, game, good.entity, YOU) < countOf(args)) return say(game, 'shop/notOwned')
+  if (heldCount(state, game, good.entity, YOU) < countOf(args)) return stringOf(game, 'shop/notOwned')
   return undefined
 }
 

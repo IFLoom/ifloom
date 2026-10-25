@@ -14,7 +14,7 @@ import {
   definePlugin,
   holds,
   notify,
-  say,
+  stringOf,
   statValue,
   type Condition,
   type DefinedPlugin,
@@ -146,7 +146,7 @@ function earn(
   for (const id of ids) {
     earned[id] = state.turn
     const title = achievementDefs(game).find((def) => def.id === id)?.title ?? id
-    next = notify(next, { id: `achievement.${id}`, title: say(game, 'achievements/earned', { title }), tag: 'achievements' })
+    next = notify(next, { id: `achievement.${id}`, title: stringOf(game, 'achievements/earned', { title }), tag: 'achievements' })
   }
   return set({ earned }, next)
 }
@@ -160,7 +160,7 @@ function entry(def: AchievementDef, earnedOn: number | null, earned: boolean, st
   }
   return {
     id: def.id,
-    title: hidden ? say(game, 'achievements/secret') : def.title,
+    title: hidden ? stringOf(game, 'achievements/secret') : def.title,
     description: hidden ? '' : (def.description ?? ''),
     image: hidden ? null : (def.image ?? null),
     secret: Boolean(def.secret),

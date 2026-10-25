@@ -1,8 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, render, screen } from '@testing-library/react'
-import { createRunner, loadGame, startingState } from '@ifloom/engine'
-import { choice, decide, fold, text } from '@ifloom/engine/flow'
+import { choice, createRunner, decide, fold, loadGame, startingState, text } from '@ifloom/engine'
 import { GameShell, checkUiHints } from '../src/index.ts'
 import { Reading } from './layouts.tsx'
 

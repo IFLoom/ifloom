@@ -19,7 +19,7 @@ import {
   definePlugin,
   holds,
   renderAction,
-  say,
+  stringOf,
   type Blocked,
   type CommandRef,
   type Condition,
@@ -116,10 +116,10 @@ function blockedBy(cheat: CheatDef, state: GameState, game: Game): Blocked | und
 function cantUse(state: GameState, args: PluginArgs, context: PluginContext<CheatsState>): string | undefined {
   const { game, slice } = context
   const cheat = cheatOf(game, args.id)
-  if (!cheat) return say(game, 'cheats/unknown')
+  if (!cheat) return stringOf(game, 'cheats/unknown')
   const blocked = blockedBy(cheat, state, game)
   if (blocked) return blocked.reason
-  if (cheat.once && timesUsed(slice, cheat.id) > 0) return say(game, 'cheats/usedOnce')
+  if (cheat.once && timesUsed(slice, cheat.id) > 0) return stringOf(game, 'cheats/usedOnce')
   return undefined
 }
 

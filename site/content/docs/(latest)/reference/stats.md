@@ -53,7 +53,7 @@ type StatRound = 'none' | 'floor' | 'round' | 'ceil'
 | `label` | | What the player reads, in the view's stat list and in the default `lacking` line. |
 | `start` | `0` | The value a new game starts with. |
 | `min` | `0` | The lowest any effect or cost can take it. A number, or an [`Amount`](/docs/reference/amounts#amount) for a floor that moves. |
-| `max` | `100` | The highest any effect or payment can take it. A number, or an [`Amount`](/docs/reference/amounts#amount) for a ceiling that moves, worked out against the state each time: another stat (`{ stat: 'fitness' }`), a kv key, or a [value](/docs/reference/custom#values) by name, the game's own as `game/<name>` or a plugin's, asked with `with`. See [`statMax`](#statmax). Raise it for coins and other open-ended counts. |
+| `max` | `100` | The highest any effect or payment can take it. A number, or an [`Amount`](/docs/reference/amounts#amount) for a ceiling that moves, worked out against the state each time: another stat (`{ stat: 'fitness' }`), a kv key, or a [value](/docs/reference/custom#values) by name, the game's own as `game/<name>` or a plugin's, asked with `with`. A `max` that names a value nobody declares, or one that comes back to the stat itself while it's worked out, gives `100`. Raise it for coins and other open-ended counts. |
 | `visible` | always | A [condition](/docs/reference/conditions). The stat appears in [`view().stats`](/docs/reference/view) only while it holds. Use it for a stat the player hasn't discovered yet. |
 | `listed` | `true` | `false` keeps it out of `view().stats`, for a stat your UI shows its own way, such as a purse in the corner or an energy gauge. It's still in [`view().statsById`](/docs/reference/view#statview). |
 | `spendable` | `false` | The stat is spent on things. A scene choice's [price](/docs/reference/view#price) only counts its negative `stat` effects on spendable stats. |
@@ -105,7 +105,7 @@ const stats: StatDef[] = [
 ]
 ```
 
-A stat with `of` is kept on every [entity](/docs/reference/entities) of that kind. It starts at `start` unless the entity's declaration or its [`create`](/docs/reference/effects#create) effect gives another value. It isn't one of the player's stats, so [`startingStats`](#startingstats), [`view().stats`](/docs/reference/view#the-players-numbers-and-things) and `view().statsById` all leave it out. Each entity's stats are in [`view().entities`](/docs/reference/view#entities) instead.
+A stat with `of` is kept on every [entity](/docs/reference/entities) of that kind. It starts at `start` unless the entity's declaration or its [`create`](/docs/reference/effects#create) effect gives another value. It isn't one of the player's stats, so a new game's `state.stats`, [`view().stats`](/docs/reference/view#the-players-numbers-and-things) and `view().statsById` all leave it out. Each entity's stats are in [`view().entities`](/docs/reference/view#entities) instead.
 
 The other fields work much as they do for the player's stats:
 
@@ -164,38 +164,13 @@ function statDef(game: Game, id: string): StatDef | undefined
 
 The declaration for a stat, or `undefined` if the game declares none by that id.
 
-## startingStats
-
-```ts
-function startingStats(game: Game): Stats
-```
-
-Every one of the player's stats (those declared without `of`) at its `start` value. A [derived stat](#derived-stats) isn't in it, because it's never kept. [`startingState`](/docs/reference/commands#startingstate) uses it for a new game.
-
-## statMax
-
-```ts
-function statMax(state: GameState, game: Game, id: string): number
-```
-
-The highest the stat can go right now. If its `max` is a number, that's the answer. If it's any other [`Amount`](/docs/reference/amounts#amount), it's worked out against `state`, such as the player's `fitness` for `{ stat: 'fitness' }` or the [value](/docs/reference/custom#values) of that name for `{ value: name }`. If the stat declares no `max`, or isn't declared at all, it's `100`.
-
-```ts
-import { statMax } from '@ifloom/engine'
-
-// max: { value: 'game/energyCeiling' }, declared in rules.values as 80 + fitness
-statMax(state, game, 'energy') // fitness 12 → 92
-```
-
-**Gotcha.** A `{ value }` name that neither the game's [`rules.values`](/docs/reference/custom#values) nor a plugin declares quietly gives `100`. So does a ceiling that comes back to the stat itself while it's worked out. A value that returns text that isn't a number gives `100` too.
-
 ## clampStat
 
 ```ts
 function clampStat(state: GameState, game: Game, id: string, value: number): number
 ```
 
-Returns `value` held between the stat's declared `min` and its [`statMax`](#statmax), each worked out against `state`. Those are 0 and 100 if the stat declares neither, or isn't declared. Effects and costs both go through it.
+Returns `value` held between the stat's declared `min` and its `max`, each worked out against `state`. Those are 0 and 100 if the stat declares neither, or isn't declared. Effects and costs both go through it.
 
 **Gotcha.** A moving ceiling doesn't pull a stat down when it drops. The value is only held to the new ceiling the next time something changes it.
 
@@ -207,7 +182,7 @@ function lackingLine(def: StatDef | undefined, id: string, amount: number, game?
 
 The refusal for a cost of `amount` that the player can't cover. It's the declaration's `lacking` with `{n}` replaced by `amount`. Without a `lacking`, it's the [`notEnough`](/docs/reference/strings#refusals) line, `Not enough {stat}.`, with the label in lower case (or the id, if the stat isn't declared).
 
-Pass the game to get its own wording of `notEnough`. Without it you get the engine's English. A stat's `lacking` always wins over `notEnough`. [`actionBlocked`](/docs/reference/actions#actionblocked) uses this unless the action's `cost.reasons` has a line for that stat.
+Pass the game to get its own wording of `notEnough`. Without it you get the engine's English. A stat's `lacking` always wins over `notEnough`. [An action's refusal](/docs/reference/actions#why-an-action-is-refused) uses this unless the action's `cost.reasons` has a line for that stat.
 
 ```ts
 import { lackingLine, statDef } from '@ifloom/engine'
@@ -463,22 +438,6 @@ import { statLevel } from '@ifloom/engine'
 
 // levels: { at: [10, 30, 60] }, cooking at 20
 statLevel(state, game, 'cooking') // { level: 1, next: 30, progress: 0.5 }
-```
-
-## levelAt
-
-```ts
-function levelAt(value: number, at: readonly number[]): number
-```
-
-Which level a value is at: how many of the thresholds, lowest first, it has reached. It's what `statLevel` and the [`{ level }`](/docs/reference/conditions#level) condition count with, exported for thresholds of your own.
-
-```ts
-import { levelAt } from '@ifloom/engine'
-
-levelAt(4, [5, 10, 20])   // 0
-levelAt(12, [5, 10, 20])  // 2
-levelAt(20, [5, 10, 20])  // 3
 ```
 
 ## See it in an example

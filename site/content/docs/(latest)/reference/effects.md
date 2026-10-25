@@ -95,7 +95,7 @@ The keys that tell the engine's effects apart. Narrow an `Effect` by one with `i
 { stat: 'energy', to: 100 }
 ```
 
-Adds `by` to a stat, or puts it `to` a value, held to the stat's declared `min` and [`max`](/docs/reference/stats#statmax) (0 to 100 unless it says otherwise). Spending and earning both use this effect, because coins, energy and every other number are [declared stats](/docs/reference/stats). Afterwards [`rules.onStat`](/docs/reference/rules#onstat) sees the before and after, and can veto or add to the change. `stat` must be a [declared stat](/docs/reference/stats).
+Adds `by` to a stat, or puts it `to` a value, held to the stat's declared `min` and [`max`](/docs/reference/stats#statdef) (0 to 100 unless it says otherwise). Spending and earning both use this effect, because coins, energy and every other number are [declared stats](/docs/reference/stats). Afterwards [`rules.onStat`](/docs/reference/rules#onstat) sees the before and after, and can veto or add to the change. `stat` must be a [declared stat](/docs/reference/stats).
 
 A [derived stat](/docs/reference/stats#derived-stats) is never written, so a `stat` effect on one does nothing, and the loader reports it. The effect adds to the value the save keeps, which is 0 for a stat the save doesn't have yet, such as one added in an update. See [Filling new content](/docs/reference/saves#filling-new-content).
 
@@ -349,7 +349,7 @@ Switches who `'you'` is: the [protagonist](/docs/reference/entities#protagonists
 { notify: 'Rent is due on Friday', id: 'rent', text: 'notice.rent', tag: 'money' }
 ```
 
-Raises a [notice](/docs/reference/notices), which is something the game tells the player outside a scene. Its title, in `notify`, is written out, `text` is a prose key for more words, and `tag` groups notices for badges. A notice with the `id` of an earlier one replaces it as the newest, unseen. With no `id`, one is made up. Only the newest [`NOTICES_KEPT`](/docs/reference/notices#notices_kept) are kept.
+Raises a [notice](/docs/reference/notices), which is something the game tells the player outside a scene. Its title, in `notify`, is written out, `text` is a prose key for more words, and `tag` groups notices for badges. A notice with the `id` of an earlier one replaces it as the newest, unseen. With no `id`, one is made up. Only the newest 50 are kept.
 
 ### audio
 
@@ -473,7 +473,7 @@ The game's effect runs in its turn. Its function is called with the state the ef
 A [plugin](/docs/reference/plugins)'s effect is called the same way, with the plugin's id in front: `{ 'quests/start': { quest: 'letter' } }`. See [Effects run in order](/docs/reference/plugins#effects-run-in-order).
 
 **Gotchas.**
-- A button's price, a guard and a lock see a computed effect worked out against the state on screen, before anything applies ([`previewEffects`](/docs/reference/custom#previeweffects)). In play it's worked out again in its turn.
+- A button's price, a guard and a lock see a computed effect worked out against the state on screen, before anything applies. In play it's worked out again in its turn.
 - Effects that return calls to the game's effects run up to 10 deep. One that names itself, or a loop of them, does nothing past that.
 - A name that neither the game nor its plugins declare does nothing. The [content checker](/docs/reference/checks) reports it.
 

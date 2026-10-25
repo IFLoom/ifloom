@@ -47,7 +47,7 @@ function storylineOf(state: GameState, id: string): StorylineState
 function storylineOpen(state: GameState, id: string): boolean
 ```
 
-`storylineOf` returns a storyline's state, or an [empty one](#emptystoryline) if the save has none, so it never returns `undefined`. `storylineOpen` is `closedUntil === null || state.turn >= closedUntil`, so a storyline closed until turn 5 is open again on turn 5.
+`storylineOf` returns a storyline's state, or an empty one, `{ closedUntil: null, kv: {} }`, if the save has none, so it never returns `undefined`. `storylineOpen` is `closedUntil === null || state.turn >= closedUntil`, so a storyline closed until turn 5 is open again on turn 5.
 
 ```ts
 storylineOpen(state, 'ava')              // true on a new game
@@ -55,16 +55,6 @@ storylineOf(state, 'ava').kv.met      // undefined until { kv: 'met', of: 'story
 ```
 
 **Gotcha:** a storyline the game doesn't declare isn't an error here. It reads as empty and open. The [content checker](/docs/reference/checks) reports a condition, a `kv` effect with `of: 'storyline:…'` or a `closeStoryline` effect that names an unknown storyline.
-
-## emptyStoryline
-
-```ts
-import { emptyStoryline } from '@ifloom/engine'
-
-function emptyStoryline(): StorylineState
-```
-
-A storyline as a new game has it: `{ closedUntil: null, kv: {} }`. [`startingState`](/docs/reference/commands#startingstate) gives every declared storyline one, and [`loadState`](/docs/reference/saves#loadstate) adds one for a storyline a save lacks, such as one a mod has added since.
 
 ## See it in an example
 

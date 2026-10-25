@@ -7,7 +7,7 @@ An action is something the player can do, offered as a button: buying a coffee, 
 Your game's own actions go in your content's `actions`, and each one with a `label` is a button in every room while no scene is open. Plugins offer theirs too, such as the [places plugin](/docs/plugins/places#the-buttons)'s room actions and a [device](/docs/plugins/devices#section)'s app buttons.
 
 ```ts
-import { actionBlocked, actionById, actionReferences, effectsOf, need, payCost, warningOf, whyNot, type ActionCost, type ActionDef, type Blocked } from '@ifloom/engine'
+import { actionById, actionReferences, effectsOf, need, warningOf, whyNot, type ActionCost, type ActionDef, type Blocked } from '@ifloom/engine'
 ```
 
 ## ButtonDef
@@ -172,13 +172,9 @@ function actionById(state: GameState, game: Game, id: string): ActionDef | undef
 
 The action `{ type: 'action', id }` does, in this state, or `undefined`. An id with no plugin in front is one of the game's `actions`. One with a plugin's id in front, `'places/coffee'`, is that plugin's: what its [`action`](/docs/reference/plugins#action) answers, else the button of that id it offers now.
 
-## actionBlocked
+## Why an action is refused
 
-```ts
-function actionBlocked(state: GameState, game: Game, action: ActionDef): string | undefined
-```
-
-Why the player can't do this action right now, or `undefined` if they can. It checks in this order, and the first that fails gives the line:
+An action the player can't do right now is refused with one line, which is also its button's disabled text. The engine checks in this order, and the first that fails gives the line:
 
 1. A scene is open: `Finish this first.`
 2. Its `when` doesn't hold: `That is not on offer.`
@@ -187,8 +183,6 @@ Why the player can't do this action right now, or `undefined` if they can. It ch
 5. It has `once` and has been done this turn: `once.reason`.
 6. Each stat in `cost.stats`, in the order written, that the player has less of than the cost: `cost.reasons[id]`, or the stat's [`lackingLine`](/docs/reference/stats#lackingline).
 7. Its `command` would be refused: that command's reason.
-
-The [`action`](/docs/reference/commands#action) command refuses with this line, and the view uses it as the button's disabled text.
 
 Because `blocked` comes before `cost`, a player short of energy is told `Too late for that.` before `Not enough energy.` when both hold. To have the energy line come first, give it a `blocked` entry of its own, ahead of the others, and keep the cost for spending it:
 
@@ -212,14 +206,6 @@ const jog: ActionDef = {
 If the action also costs coins, that's still checked after `blocked`, so the player hears that they can't afford it only once nothing else stands in the way. You can reword the engine's own lines here (`finishFirst`, `notOnOffer` and `notEnough`) in the [strings table](/docs/reference/strings#refusals). A lock's and a `blocked` entry's `reason` are already your game's words.
 
 **Gotcha.** A plugin guard's soft refusal isn't in this list. An action a plugin warns against, such as one the [calendar](/docs/plugins/calendar#the-guard) says `That would run past dawn.` about, isn't blocked. Its button stays pressable with the line as its `warning`, and the command is refused with it. See [`warningOf`](#warningof).
-
-## payCost
-
-```ts
-function payCost(state: GameState, game: Game, cost: ActionCost): GameState
-```
-
-Spends a cost without checking it. Each stat in `cost.stats` goes down by its amount, held to the stat's range by [`clampStat`](/docs/reference/stats#clampstat). The `action` command calls it after `actionBlocked` has passed. Use it when a command of your own needs to charge the same way.
 
 ## actionReferences
 
@@ -325,7 +311,7 @@ warningOf(state, game, { type: 'action', id: 'places/work' })
 function effectsOf(state: GameState, game: Game, command: CommandRef): Effect[]
 ```
 
-What a command would apply, worked out before it runs, as plain [effects](/docs/reference/effects). [Plugins' guards and prices](/docs/reference/plugins#guards-prices-and-labels) and [locks with `effect`](/docs/reference/locks#lock) look at this. The game's own effects among them are worked out against `state`, as [`previewEffects`](/docs/reference/custom#previeweffects) does, so a guard sees what they'd do.
+What a command would apply, worked out before it runs, as plain [effects](/docs/reference/effects). [Plugins' guards and prices](/docs/reference/plugins#guards-prices-and-labels) and [locks with `effect`](/docs/reference/locks#lock) look at this. The game's own effects among them are worked out against `state`, so a guard sees what they'd do.
 
 | Command | Effects |
 |---|---|

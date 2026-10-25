@@ -6,7 +6,6 @@ You give a game sound by listing its tracks in `game.audio` and naming them from
 
 ```ts
 import {
-  audioChannels,
   audioSrc,
   type AudioChannelView,
   type AudioCue,
@@ -307,18 +306,6 @@ Where a sound file is, relative to the page. Works like [`artSrc`](/docs/referen
 audioSrc('cafe-murmur.ogg')   // 'audio/cafe-murmur.ogg'
 audioSrc('/audio/knock.mp3')  // 'audio/knock.mp3'
 audioSrc('music/calm')        // 'audio/music/calm.ogg'
-```
-
-## audioChannels
-
-```ts
-function audioChannels(game: Game): Record<string, ChannelDef>
-```
-
-The game's channels: the four defaults with `game.audio.channels` merged over them, field by field.
-
-```ts
-audioChannels(game).music  // { mode: 'background', crossfade: 1000, volume: 'musicVolume' }
 ```
 
 ## Checks

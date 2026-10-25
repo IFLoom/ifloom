@@ -5,7 +5,7 @@ description: "Locks that refuse commands while a condition holds, with one line 
 A lock stops the player doing something for a while, and says why. Use one for a stretch of the game with its own limits, such as an intro that only moves through its scenes, or a first night that keeps the player at home. Each lock is data: what it stops, while what holds, and the line the player reads.
 
 ```ts
-import { lockOn, lockedBy, lockedOut, type Lock, type LockTarget } from '@ifloom/engine'
+import { lockOn, lockedOut, type Lock, type LockTarget } from '@ifloom/engine'
 ```
 
 Locks are content: they go in your content's `locks`, so a mod can add one, and are checked in order. The reducer refuses a command on the first lock that stops it, and the view greys the button out (or hides it) with the same line, so the two can't disagree.
@@ -60,7 +60,7 @@ type Lock = {
 - `effect` only sees what [`effectsOf`](/docs/reference/actions#effectsof) lists, which is an action's cost and effects (and its command's), a choice's effects, and a plugin command's own [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does). The calendar's `sleep` lists a `calendar/pass`, not a `turn`, so `effect: 'turn'` doesn't stop it but `effect: 'calendar/pass'` does.
 - A lock that denies `'*'` counts for [`lockedOut`](#lockedout) even when it has an `effect`, so the room shows no exits, people or actions while it's on.
 - Locks stop the game's own [`rules.commands`](/docs/reference/rules#commands) too, named `'game/rest'` or `'game/*'`. They never stop `start`.
-- A plugin command that sets [`ignoresLocks`](/docs/reference/plugins#commands-outside-the-story) is never stopped by a lock, even under `'*'`, and `hide` never leaves its button off. Only tools outside the story set it, such as the [debug plugin](/docs/plugins/debug)'s commands. [`lockOn`](#lockon) and [`lockedBy`](#lockedby) still report the lock that matches it. It's [`whyNot`](/docs/reference/actions#whynot) that skips it.
+- A plugin command that sets [`ignoresLocks`](/docs/reference/plugins#commands-outside-the-story) is never stopped by a lock, even under `'*'`, and `hide` never leaves its button off. Only tools outside the story set it, such as the [debug plugin](/docs/plugins/debug)'s commands. [`lockOn`](#lockon) still reports the lock that matches it. It's [`whyNot`](/docs/reference/actions#whynot) that skips it.
 - The [`setting`](/docs/reference/commands#setting) command is never stopped by a lock either, because changing a setting is the menu's business.
 - `hide` goes by the first lock that stops the command. If a lock without `hide` stops a button first, the button stays on screen greyed out, even if a later lock would hide it.
 - `when` is tested against the state before the command runs. A choice that sets the kv key `phase` is judged by the phase it was picked in.
@@ -86,21 +86,6 @@ function lockOn(state: GameState, game: Game, command: Command): Lock | undefine
 ```
 
 The first lock in `game.locks` that stops this command right now, or `undefined`.
-
-## lockedBy
-
-```ts
-function lockedBy(state: GameState, game: Game, command: Command): string | undefined
-```
-
-Why this command is stopped, as `lockOn(...)?.reason`, or `undefined`.
-
-```ts
-import { lockedBy } from '@ifloom/engine'
-import { go } from '@ifloom/plugin-places'
-
-lockedBy(state, town, go('high-street')) // 'Stay in tonight.' on the first night, with the lock in the example below
-```
 
 ## lockedOut
 

@@ -18,7 +18,7 @@ export const park: Content = {
 Then `{ roll: 'skim', passed: true }` holds when the total was 8 or more, `{ kv: 'skim', gte: 11 }` when it was 11 or more, and `{{skim}}` prints the total in prose. The [Dice rolls and checks](/docs/recipes/dice) recipe builds a whole check: an inline action in the prose, the roll, a line for each outcome, and the dice drawn above it.
 
 ```ts
-import { readDice, type Dice, type Roll, type RollsState } from '@ifloom/engine'
+import { type Dice, type Roll, type RollsState } from '@ifloom/engine'
 ```
 
 ## Where a roll can happen
@@ -82,20 +82,6 @@ Each die is a separate [seeded draw](/docs/reference/random): `draw(sides, 'roll
 - two rolls in one command never share a draw, even under the same key
 - trying a check again in the same turn rolls afresh
 - a [replay](/docs/reference/runner#replay) of the same commands makes the same rolls, and reloading a save and trying again rolls what it rolled before
-
-## readDice
-
-```ts
-function readDice(dice: unknown): { count: number; sides: number; plus: number } | { problem: string }
-```
-
-Reads dice as the effect does: notation or `{ count, sides }`, into the count, the sides and the number the notation adds. For dice it can't read, it says why, in the words the content checker uses. An editor can use it to check what an author types.
-
-```ts
-readDice('2d6+1')   // { count: 2, sides: 6, plus: 1 }
-readDice('d100')    // { count: 1, sides: 100, plus: 0 }
-readDice('2x6')     // { problem: 'dice "2x6" is not dice notation such as "2d6+1", "1d20" or "d100"' }
-```
 
 ## See it in an example
 

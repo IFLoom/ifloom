@@ -42,7 +42,7 @@ export const flat: Content = {
 `{ timer: 'phone' }` holds while it runs, and `{ timer: 'phone', lte: 3000 }` in its last three seconds. [`view.timers`](/docs/reference/view#timers) lists each running timer with the time left, for a UI to draw a countdown. The [Timed choices and countdowns](/docs/recipes/timers) recipe builds this in each framework.
 
 ```ts
-import { timerDef, type RunningTimer, type TimerDef, type TimerView } from '@ifloom/engine'
+import { type RunningTimer, type TimerDef, type TimerView } from '@ifloom/engine'
 ```
 
 ## How time passes
@@ -91,14 +91,6 @@ type TimerView = { id: string; label: string | null; left: number; total: number
 ```
 
 A running timer as [`view.timers`](/docs/reference/view#timers) shows it, in the order they started. `left / total` is the share left. It never includes the effects, so drawing every running timer gives nothing away. A timer is in the view only while it runs.
-
-## timerDef
-
-```ts
-function timerDef(game: Game, id: string): TimerDef | undefined
-```
-
-The declaration with that id, or `undefined`.
 
 ## The checks
 

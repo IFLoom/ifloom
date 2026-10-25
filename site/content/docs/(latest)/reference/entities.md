@@ -28,18 +28,15 @@ import {
   entityOf,
   entityTags,
   entityTrait,
-  everyEntity,
   give,
   heldBy,
   heldCount,
-  heldTotal,
   holderOf,
   holdersOf,
   holding,
   isUnique,
   kindById,
   move,
-  ownerOf,
   parseRef,
   protagonist,
   resolveHolder,
@@ -779,14 +776,6 @@ heldCount(state, game, 'food:apple')                   // 2
 heldCount(state, game, 'food:apple', 'place:larder')   // 6
 ```
 
-### heldTotal
-
-```ts
-function heldTotal(state: GameState, game: Game | undefined, ref: EntityRef): number
-```
-
-How many of a thing are held, by everyone together.
-
 ### heldBy
 
 ```ts
@@ -810,7 +799,7 @@ Who holds a thing. `holderOf` gives one holder, which for a unique thing is the 
 function canHold(state: GameState, game: Game | undefined, holder: Holder): boolean
 ```
 
-Whether a holder can hold things now: `'player'` always, a unique entity while it's in the game. Pass a real holder: `'you'` isn't resolved here, so use [`resolveHolder`](#protagonist-resolveholder-and-ownerof) first.
+Whether a holder can hold things now: `'player'` always, a unique entity while it's in the game. Pass a real holder: `'you'` isn't resolved here, so use [`resolveHolder`](#protagonist-and-resolveholder) first.
 
 ### isUnique
 
@@ -820,15 +809,14 @@ function isUnique(game: Pick<Game, 'kinds' | 'plugins'> | undefined, ref: Entity
 
 Whether an entity's kind is [`unique`](#kinddef): each one is one particular thing, which holds things and is held one at a time. A plugin asks it to treat a person or a coat differently from a stack of apples, as the [shop](/docs/plugins/shop) does when it sells a unique thing only from the vendor's stock.
 
-### protagonist, resolveHolder and ownerOf
+### protagonist and resolveHolder
 
 ```ts
 function protagonist(state: GameState): Holder
 function resolveHolder(state: GameState, holder: Holder): Holder
-function ownerOf(state: GameState, of: string | undefined): EntityRef | undefined
 ```
 
-How `'you'` is read. `protagonist` is who's played now: [`state.you`](/docs/reference/state#you), or `'player'`. `resolveHolder` turns `'you'` into that and leaves any other holder alone. `ownerOf` reads an `of` the way stats and kv do: `undefined` for the player (no `of`, `'player'`, or `'you'` with nobody played), and an entity's reference otherwise.
+How `'you'` is read. `protagonist` is who's played now: [`state.you`](/docs/reference/state#you), or `'player'`. `resolveHolder` turns `'you'` into that and leaves any other holder alone.
 
 ### give, take, move and holding
 
@@ -840,14 +828,6 @@ function holding(ref: EntityRef, n?: number): Condition
 ```
 
 Helpers that write the holding effects and condition for you. `give` and `take` change what you hold by `n`, 1 if left out. `move` writes a [`move`](/docs/reference/effects#move) effect. `holding` asks whether you hold at least `n`. See [Holding things](#holding-things).
-
-### everyEntity
-
-```ts
-function everyEntity(state: GameState, game: Game | undefined): EntityRef[]
-```
-
-Every entity in the game, of every kind: the declared ones as your content lists them, leaving out any removed, then those created in play, kind by kind.
 
 ## Gotchas
 

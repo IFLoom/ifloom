@@ -5,7 +5,7 @@ description: "Notices: news shown beside the story as a toast or a badge, raised
 A notice is something the game tells the player outside a scene, such as a note under the door or the rent going out. The [`notify`](/docs/reference/effects#notify) effect raises one. The UI reads [`view.notices`](/docs/reference/view#notices) to show it as a toast or count it on a badge, and the [`dismiss`](/docs/reference/commands#dismiss) command marks it seen.
 
 ```ts
-import { NOTICES_KEPT, dismiss, notify, type Notice } from '@ifloom/engine'
+import { dismiss, notify, type Notice } from '@ifloom/engine'
 ```
 
 ## A worked example
@@ -86,7 +86,7 @@ Returns the state with a notice raised. It goes in as the newest, unseen, and st
 
 - **With an `id`** that an earlier notice has, the earlier one is taken out and this one goes in as the newest and unseen, even if the earlier one had been dismissed. Use a fixed id for anything that repeats, such as a reminder or a running count.
 - **Without an `id`**, one is made from the turn: `notice.<turn>.<n>`, with the first `n` not already in the list.
-- **Only the newest [`NOTICES_KEPT`](#notices_kept) are kept.** The oldest go first, seen or not.
+- **Only the newest 50 are kept.** When a 51st is raised, the oldest goes, seen or not.
 
 ```ts
 const next = notify(state, { title: 'A parcel at the post office', tag: 'post' })
@@ -102,20 +102,10 @@ function dismiss(state: GameState, id?: string): GameState
 
 Returns the state with the notice `id` marked seen, or every notice if you leave `id` out. Seen notices stay in the state, but they're no longer in `view.notices.unseen`. It returns the same state when there's nothing unseen to mark. The [`dismiss`](/docs/reference/commands#dismiss) command calls this.
 
-## NOTICES_KEPT
-
-```ts
-import { NOTICES_KEPT } from '@ifloom/engine'
-
-const NOTICES_KEPT = 50
-```
-
-How many notices the state keeps. When a 51st is raised, the oldest goes, whether it was seen or not.
-
 ## Gotchas
 
 - **`text` is a prose key, not words.** The [content checker](/docs/reference/checks) reports one with no prose (`no prose for "…"`) wherever the effect is. `title` is the opposite. It's written out and never looked up.
-- **Notices are capped at `NOTICES_KEPT`.** They're for news, not records. Give the player anything they must be able to find again as a [thing they hold](/docs/reference/entities#notes-photos-and-other-things-made-in-play), such as a note.
+- **Notices are capped at 50.** They're for news, not records. Give the player anything they must be able to find again as a [thing they hold](/docs/reference/entities#notes-photos-and-other-things-made-in-play), such as a note.
 - **Give a notice an `id` if it can be raised more than once.** Without one, a notice raised every turn adds a copy each time. With one, it replaces itself.
 - **A made-up id is only unique among the notices kept.** It's `notice.<turn>.<n>`, the first one not in the list, so once an old notice has gone its id can be handed out again. If you want to replace or dismiss a notice by id later, name it yourself.
 - **Notices don't stop anything.** They aren't prose in a scene. A notice raised while a scene is open waits in `view.notices` for the UI to show it.

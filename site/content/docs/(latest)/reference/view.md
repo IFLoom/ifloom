@@ -543,7 +543,7 @@ type StatView = {
 }
 ```
 
-One stat as the UI shows it. `min` is the stat's declared `min`, or 0, so a UI can draw a bar from `min` to `max`. `ui` is the stat's [presentation hints](/docs/reference/ui-hints) as written, such as the React UI's [`display`](/docs/react/hints#display), and is left out when it has none. `value` is [`statValue`](/docs/reference/stats#statvalue), so a [derived stat](/docs/reference/stats#derived-stats) is already worked out, and a stat the save doesn't have yet shows its `start`. `max` is [`statMax`](/docs/reference/stats#statmax) right now, so a ceiling that names a custom value is already worked out. `text` is the value through the stat's [`format`](/docs/reference/stats#formatstat), such as `'12 coins'`.
+One stat as the UI shows it. `min` is the stat's declared `min`, or 0, so a UI can draw a bar from `min` to `max`. `ui` is the stat's [presentation hints](/docs/reference/ui-hints) as written, such as the React UI's [`display`](/docs/react/hints#display), and is left out when it has none. `value` is [`statValue`](/docs/reference/stats#statvalue), so a [derived stat](/docs/reference/stats#derived-stats) is already worked out, and a stat the save doesn't have yet shows its `start`. `max` is the stat's [`max`](/docs/reference/stats#statdef) worked out right now, so a ceiling that names a custom value is already worked out. `text` is the value through the stat's [`format`](/docs/reference/stats#formatstat), such as `'12 coins'`.
 
 `level` is only there for a stat that declares [`levels`](/docs/reference/stats#levels). It's what [`statLevel`](/docs/reference/stats#statlevel) gives:
 

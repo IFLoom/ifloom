@@ -337,7 +337,7 @@ Only a [lock](/docs/reference/locks) can refuse `feed/seen`. A UI usually sends 
 | `{{v:feed/unread}}` | Other people's posts the player hasn't looked at, in every feed. |
 | `{{v:feed/unread feed=social}}` | Other people's posts the player hasn't looked at in that feed. |
 
-The player's own posts are never counted, since they aren't news to the player. The value works as a badge too, with the feed as its argument: a devices app's `badge: { value: 'feed/unread', with: { feed: 'social' } }`. Code can read it with [`customValue`](/docs/reference/custom#looking-them-up).
+The player's own posts are never counted, since they aren't news to the player. The value works as a badge too, with the feed as its argument: a devices app's `badge: { value: 'feed/unread', with: { feed: 'social' } }`. Code can read it with [`amountOf`](/docs/reference/amounts#amountof)`(state, game, { value: 'feed/unread', with: { feed: 'social' } })`.
 
 ## Strings
 

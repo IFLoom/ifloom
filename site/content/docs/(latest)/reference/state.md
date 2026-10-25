@@ -198,7 +198,7 @@ The engine writes some keys here itself, so don't use these prefixes for your ow
 notices: Notice[]
 ```
 
-What the game has told the player outside scenes, oldest first, whether seen or not. It holds at most [`NOTICES_KEPT`](/docs/reference/notices#notices_kept). The [`notify`](/docs/reference/effects#notify) effect raises one and the [`dismiss`](/docs/reference/commands#dismiss) command marks one seen. See [Notices](/docs/reference/notices).
+What the game has told the player outside scenes, oldest first, whether seen or not. It holds at most the last 50. The [`notify`](/docs/reference/effects#notify) effect raises one and the [`dismiss`](/docs/reference/commands#dismiss) command marks one seen. See [Notices](/docs/reference/notices).
 
 ### fired
 

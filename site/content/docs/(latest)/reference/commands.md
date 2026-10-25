@@ -175,7 +175,7 @@ When a choice sends it, the run ends there: the choice isn't counted in [`chosen
 
 Does the [action](/docs/reference/actions) with this id: one of the content's `actions`, or a plugin's with its id in front, found among its buttons or by its [`action`](/docs/reference/plugins#action) provider. It sends the action's `command` first, if it has one, then pays its cost and applies its effects. An action with `once` is counted in [`chosen`](/docs/reference/state#chosen) under its id before anything runs.
 
-It's refused with `There is no such thing to do.` if there's no such action. After that comes the first reason from [`actionBlocked`](/docs/reference/actions#actionblocked): a scene is open, its `when` doesn't hold, a lock, a `blocked` entry (such as the places plugin's [`onlyAt`](/docs/plugins/places#helpers)), it's been done this turn with `once`, too little of a stat the cost spends, or why its command can't be sent. Last comes a guard's [warning](/docs/reference/actions#warningof).
+It's refused with `There is no such thing to do.` if there's no such action. After that comes the first reason [an action is refused](/docs/reference/actions#why-an-action-is-refused) for: a scene is open, its `when` doesn't hold, a lock, a `blocked` entry (such as the places plugin's [`onlyAt`](/docs/plugins/places#helpers)), it's been done this turn with `once`, too little of a stat the cost spends, or why its command can't be sent. Last comes a guard's [warning](/docs/reference/actions#warningof).
 
 A command log from before schema 20 sent `{ type: 'activity', id }`. [`replay`](/docs/reference/runner#replay) reads it as `action`.
 
@@ -217,7 +217,7 @@ Marks one [notice](/docs/reference/notices), or every notice, as seen. It has no
 
 Writes what the player typed or picked to the [input](/docs/reference/inputs)'s kv key (its `key`, or the input's id), with text trimmed. A button can carry the command without `to` so the UI asks for one, but if it's sent without a value, it's refused. It takes no time and works with a scene open.
 
-After a lock, it's refused with the line from [`inputRefusal`](/docs/reference/inputs#inputrefusal): `There is no such thing to fill in.`, `Not now.`, `Enter something first.`, `Keep it to <n> characters.`, `Enter a number.`, `Between <min> and <max>.`, `At least <min>.`, `At most <max>.`, `That is not one of the options.`
+After a lock, it's refused with [why the value can't be entered](/docs/reference/inputs#why-a-value-is-refused): `There is no such thing to fill in.`, `Not now.`, `Enter something first.`, `Keep it to <n> characters.`, `Enter a number.`, `Between <min> and <max>.`, `At least <min>.`, `At most <max>.`, `That is not one of the options.`
 
 ### setting
 

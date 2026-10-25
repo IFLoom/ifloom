@@ -65,7 +65,7 @@ type Game = {
 | `scenes` | Every scene, as [data scenes](/docs/reference/scenes#datascene). |
 | `introScene` | The scene on screen on the first frame. It counts as seen once, at turn 0, before any command runs. Leave it out and the game opens on its idle screen (see [below](#game)) with nothing seen. |
 | `storylines` | The storylines. None if left out. See [`StorylineDef`](#storylinedef). |
-| `prose` | The words data scenes draw on. See [`ProseStore`](#prosestore). [`loadGame`](/docs/reference/loader#loadgame) sets it. If you build a game by hand, make it with [`proseStore`](/docs/reference/prose#prosestore-1). |
+| `prose` | The words data scenes draw on. See [`ProseStore`](#prosestore). [`loadGame`](/docs/reference/loader#loadgame) sets it. If you build a game by hand, give it an object with these functions. |
 | `strings` | Your game's wording for what the engine and its plugins say to the player, by key: `{ finishFirst: 'Not yet.', 'quests/notDoing': 'Not on your list.' }`. Any key you leave out keeps its English. `loadGame` sets it from the content's and the packs' `strings`, with later ones winning. See [Strings](/docs/reference/strings). |
 | `stats` | Every stat the game keeps. The engine has none of its own. See [Stats](/docs/reference/stats). |
 | `kv` | The [kv store](/docs/reference/state#kv) a new game starts with, such as `{ phase: 'arrival', lives: 3 }`. [`startingState`](/docs/reference/commands#startingstate)'s `kv` goes over it. |
@@ -176,7 +176,7 @@ type ProseStore = {
 
 The words a data scene draws on. `line` gives the text for a key, filled in for this save. `variants` gives the member keys of a named set of variants, in order. `weight` gives a member's [weight](/docs/reference/prose#variantmember) in a set, 1 if it has none, and every member weighs 1 if it's left out. `keys` lists every key the store has words for, so the [content checker](/docs/reference/checks) can read the markup in all of them. Without it, the checker reads only the keys content names. Data scenes read it as they're [drawn](/docs/reference/scenes#running-data-scenes). See [Prose and markup](/docs/reference/prose).
 
-**Gotcha.** A game with data scenes and no `prose` renders them empty, because every line counts as unwritten. [`loadGame`](/docs/reference/loader#loadgame) sets it. A game built by hand sets it with [`proseStore`](/docs/reference/prose#prosestore-1).
+**Gotcha.** A game with data scenes and no `prose` renders them empty, because every line counts as unwritten. [`loadGame`](/docs/reference/loader#loadgame) sets it. A game built by hand sets it itself.
 
 ## Ids and separators
 

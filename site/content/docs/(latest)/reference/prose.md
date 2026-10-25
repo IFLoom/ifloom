@@ -17,7 +17,7 @@ A prose key is a plain string. The engine only gives meaning to the label patter
 
 Keep `/` out of your keys. It names a plugin everywhere else, as in `quests/done`. See [Ids and separators](/docs/reference/game#ids-and-separators).
 
-Variants are named lists of keys, and one of them is drawn each time. The [loader](/docs/reference/loader) and [`proseStore`](#prosestore-1) take them as explicit lists (`Pack.variants`), where a member can carry a [weight](#variantmember). A store you build by hand can find them however it likes, for example by key prefix.
+Variants are named lists of keys, and one of them is drawn each time. The [loader](/docs/reference/loader) takes them as explicit lists (`Pack.variants`), where a member can carry a [weight](#variantmember). A store you build by hand can find them however it likes, for example by key prefix.
 
 ## ProseStore
 
@@ -33,36 +33,11 @@ type ProseStore = {
 
 The game's `prose` field, where data scenes read their words. `line` returns the words for a key, filled in for this save, or `undefined` if nobody has written them. `variants` returns the member keys of a named set of variants, in declaration order. `weight` returns a member's weight in a set, 1 if it has none. Leave `weight` out and every member weighs 1.
 
-You rarely write one by hand. [`loadGame`](/docs/reference/loader#loadgame) sets `game.prose` from the content's and packs' prose and variants, and [`proseStore`](#prosestore-1) builds one from two plain records.
+You rarely write one by hand. [`loadGame`](/docs/reference/loader#loadgame) sets `game.prose` from the content's and packs' prose and variants.
 
 **Gotcha.** `line` is sometimes called without a state, when the scene renderer only wants to know whether a key is written. Return the raw text in that case.
 
-## proseStore
-
-```ts
-function proseStore(
-  game: Game,
-  lines: Record<string, string>,
-  variants?: Record<string, readonly VariantMember[]>,
-): ProseStore
-```
-
-Builds a prose store from lines by key and variants by name. `line(key, state)` fills in the [tokens](#tokens) for that save with [`fillTokens`](#filltokens), and without a state it returns the line as written. `variants(name)` returns the member keys as given, or `[]`, and `weight(name, key)` returns the weight a member was given, or 1. The `variants` argument defaults to `{}`.
-
-```ts
-import { proseStore, type Game } from '@ifloom/engine'
-
-const town: Game = { /* ... */ }
-town.prose = proseStore(town, {
-  'ava.hi': 'Ava looks up from the till. "Morning, {{playerName}}."',
-  'street.weather.drizzle': 'A fine drizzle that never quite becomes rain.',
-  'street.weather.sun': 'Sun on the shopfronts.',
-}, {
-  'street.weather': ['street.weather.drizzle', 'street.weather.sun'],
-})
-```
-
-### VariantMember
+## VariantMember
 
 ```ts
 import type { VariantMember } from '@ifloom/engine'
@@ -70,7 +45,7 @@ import type { VariantMember } from '@ifloom/engine'
 type VariantMember = string | { text: string; weight?: number }
 ```
 
-One member of a variants list, in your [content](/docs/reference/loader#content)'s `variants` or `proseStore`'s: a prose key, or `{ text, weight }` for a key that should come up more or less often than the rest. A plain key weighs 1, and so does `{ text }` with no weight.
+One member of a variants list, in your [content](/docs/reference/loader#content)'s `variants`: a prose key, or `{ text, weight }` for a key that should come up more or less often than the rest. A plain key weighs 1, and so does `{ text }` with no weight.
 
 ```ts
 variants: {
@@ -121,7 +96,7 @@ The engine has no player name of its own. A game that wants one sets a kv key, w
 function fillTokens(text: string, state: GameState, game: Game): string
 ```
 
-Fills in the [tokens](#tokens) in one string. `proseStore` calls it on every line. Call it yourself for text that doesn't come from the store, such as an action's label, a phone message or a panel of your own.
+Fills in the [tokens](#tokens) in one string. The prose store calls it on every line. Call it yourself for text that doesn't come from the store, such as an action's label, a phone message or a panel of your own.
 
 ```ts
 import { fillTokens } from '@ifloom/engine'

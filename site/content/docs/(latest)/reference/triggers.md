@@ -5,7 +5,7 @@ description: "Effects that run by themselves after a command once a condition ho
 A trigger is a list of effects that happens by itself. The first time its condition holds after a command, its effects apply, without the player pressing anything. Use one for a note under the door the first time the player steps out, a bill that comes due, or a scene that interrupts the walk home.
 
 ```ts
-import { fireTriggers, type TriggerDef } from '@ifloom/engine'
+import { type TriggerDef } from '@ifloom/engine'
 ```
 
 ## A worked example
@@ -79,24 +79,6 @@ After every command that took, inside [`apply`](/docs/reference/commands#what-ha
 4. Plugins' `onCommand` hooks run, and see what the triggers did.
 
 There's one pass per command. A trigger that an earlier trigger makes true fires in the same pass, because it's tested later. One that a later trigger makes true waits for the next command.
-
-## fireTriggers
-
-```ts
-function fireTriggers(
-  state: GameState,
-  game: Game,
-  apply: (state: GameState, effects: Effect[]) => GameState,
-): GameState
-```
-
-Runs the pass described above on `state` and returns the result. `apply` applies a trigger's effects once [`buildEffects`](/docs/reference/custom#buildeffects) has left out any call nobody declares. [`applyEffects`](/docs/reference/effects#applyeffects) is the usual choice. The reducer calls `fireTriggers` for you. Only call it yourself from a tool, a test, or a plugin command that has moved the state in a way triggers should see before the command ends.
-
-```ts
-import { applyEffects, fireTriggers } from '@ifloom/engine'
-
-const next = fireTriggers(state, game, (state, effects) => applyEffects(state, game, effects))
-```
 
 ## Gotchas
 

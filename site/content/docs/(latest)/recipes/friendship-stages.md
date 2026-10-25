@@ -2,7 +2,7 @@
 title: "A friendship in stages"
 description: "Pace a storyline over turns: a choice that pays once a turn, a counter on the storyline, greetings that change with visits, and stages that come in order with days between them, through quests or plain conditions."
 ---
-A friendship, a rivalry or a romance usually grows in stages. The player meets someone, gets to know them, and some days later something happens that couldn't have happened on the first afternoon. This recipe builds that with content alone: a choice that pays once a turn, a counter, greetings that change as you visit, and stages in order with days between them.
+A friendship or a rivalry usually grows in stages. The player meets someone, gets to know them, and some days later something happens that couldn't have happened on the first afternoon. This recipe builds that with content alone: a choice that pays once a turn, a counter, greetings that change as you visit, and stages in order with days between them.
 
 The running example is Ava, who runs the café in Small Town. Her storyline is `ava`, and the friendship is a stat on her, `friendship`, declared on the kind `character`.
 

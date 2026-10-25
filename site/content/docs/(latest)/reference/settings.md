@@ -77,21 +77,6 @@ Content reads a play setting with the [`{ setting }`](/docs/reference/conditions
 
 A UI reads every setting, play and ui alike, from [`view.settings`](/docs/reference/view#settings). That's enough to draw the whole settings screen. A `ui` setting's `value` there is `null`, so read it from the profile.
 
-### settingValue
-
-```ts
-function settingValue(game: Game, stored: Record<string, unknown> | undefined, id: string): KvValue | undefined
-```
-
-`settingValue` reads a setting from the player's stored settings, which are the profile's `core:settings`. It gives the stored value if the setting can still take it, and the setting's `default` otherwise. A stored value is checked the same way the `setting` command checks one, so a number outside the range or off the `step`, or an option you've since removed, falls back to the default. It returns `undefined` for an id the game doesn't declare.
-
-```ts
-const stored = await runner.profile?.get<Record<string, unknown>>('core:settings')
-const size = settingValue(runner.game, stored, 'textSize')
-```
-
-With a runner you rarely need it: [`runner.settings()`](/docs/reference/runner#settings) reads every setting this way, `ui` settings from the profile and play settings from the game in play, and React's [`useSetting`](/docs/react/components#usesetting) and the [audio player](/docs/browser/audio-player#volume-and-mute) read that. Use `settingValue` when you hold stored settings without a runner.
-
 ## Changing a setting
 
 Change either kind with [`runner.setSetting`](/docs/reference/runner#setsetting). It checks the value against the declaration, and refuses an unknown id or a value the setting can't take.

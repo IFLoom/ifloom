@@ -22,9 +22,8 @@ export type {
   StoryletFields,
 } from './game.ts'
 export { sceneById } from './game.ts'
-export { settingValue } from './features/settings.ts'
 export type { Formula, StatDef, StatLevels, StatRound, StatWords } from './stats.ts'
-export { clampStat, formatStat, lackingLine, levelAt, startingStats, statDef, statLevel, statMax, statValue } from './stats.ts'
+export { clampStat, formatStat, lackingLine, statDef, statLevel, statValue } from './stats.ts'
 export type { CommandRef, CustomCondition, CustomContext, TurnContext, CustomEffect, CustomValue, EffectRef, PluginCall, Query, ValueRef } from './custom.ts'
 // The registries a plugin (or the game) augments to type its calls by name, its queries and its view
 export type {
@@ -38,7 +37,7 @@ export type {
   ViewsIn,
   QueryRegistry,
 } from './custom.ts'
-export { buildEffects, callOf, commandOf, customCondition, customEffect, customValue, hasCustomEffect, previewEffects } from './custom.ts'
+export { buildEffects, callOf, commandOf } from './custom.ts'
 
 // Plugins: systems added to the engine, chosen when the game is built
 export type {
@@ -59,7 +58,7 @@ export type {
   StageDef,
   StatModifier,
 } from './plugin.ts'
-export { definePlugin, pluginById, pluginQuery } from './plugin.ts'
+export { definePlugin, pluginQuery } from './plugin.ts'
 export type { SpeakerView } from './speakers.ts'
 export { speakerOf } from './speakers.ts'
 
@@ -68,7 +67,7 @@ export type { Block, Choice, DataScene, FlowChoice } from './scene.ts'
 export type { BlockExtras } from './flow.ts'
 export { choice, decide, fold, image, jump, minigame, panel, point, say, text, when } from './flow.ts'
 export type { VariantMember } from './prose.ts'
-export { entityDesc, entityName, fillTokens, proseStore } from './prose.ts'
+export { entityDesc, entityName, fillTokens } from './prose.ts'
 export type { InlinePart, InlineSpan, SceneBeat, VideoFlags, VideoView } from './sceneBody.ts'
 export { artSrc, inlineMarkup, mediaType, parseBeats, styledBeats } from './sceneBody.ts'
 
@@ -77,11 +76,10 @@ export type { GameMedia, HotspotDef, HotspotView, MediaStage, MediaState, PoolFi
 
 // Presentation hints: carried to the view as written, given meaning by a UI package
 export type { BlockUi, ChoiceUi, EntityUi, GameUi, InlineUi, InlineUiArgs, SceneUi, StatUi, Ui } from './features/ui.ts'
-export { uiProblems } from './features/ui.ts'
 
 // Audio
 export type { AudioChannelView, AudioCue, AudioState, AudioView, ChannelDef, GameAudio, PlaylistDef, TrackDef } from './features/audio.ts'
-export { audioChannels, audioSrc } from './features/audio.ts'
+export { audioSrc } from './features/audio.ts'
 
 // The state
 export type { Command, Effect, KvValue, GameState, StatKey, Stats, StorylineState } from './types.ts'
@@ -110,10 +108,10 @@ export { explain, explainText } from './explain.ts'
 
 // Actions and locks
 export type { ActionCost } from './action.ts'
-export { actionBlocked, actionById, actionReferences, need, payCost } from './action.ts'
+export { actionById, actionReferences, need } from './action.ts'
 export { effectsOf, warningOf, whyNot } from './availability.ts'
 export type { Lock, LockTarget } from './locks.ts'
-export { lockOn, lockedBy, lockedOut } from './locks.ts'
+export { lockOn, lockedOut } from './locks.ts'
 
 // Entities, holdings, notices, triggers and input
 export type { EntityDef, EntityRef, EntityState, Holder, KindDef, Placement, TraitData, TraitDef, TraitRegistry, TraitTable, TraitTools } from './entities.ts'
@@ -129,10 +127,8 @@ export {
   entityTags,
   entityTrait,
   entityUi,
-  everyEntity,
   isUnique,
   kindById,
-  ownerOf,
   parseRef,
   protagonist,
   resolveHolder,
@@ -144,12 +140,11 @@ export {
 } from './entities.ts'
 export type { CreatedEntity, Select } from './features/entities.ts'
 export type { HeldView } from './features/holdings.ts'
-export { canHold, give, heldBy, heldCount, heldTotal, holderOf, holdersOf, holding, move, take } from './holdings.ts'
+export { canHold, give, heldBy, heldCount, holderOf, holdersOf, holding, move, take } from './holdings.ts'
 export type { Notice } from './notices.ts'
-export { NOTICES_KEPT, dismiss, notify } from './notices.ts'
-export type { TriggerDef } from './triggers.ts'
-export { fireTriggers } from './triggers.ts'
-export type { InputDef } from './inputs.ts'
+export { dismiss, notify } from './notices.ts'
+export type { TriggerDef } from './features/triggers.ts'
+export type { InputDef } from './features/inputs.ts'
 
 // Minigames
 export type {
@@ -161,21 +156,17 @@ export type {
   MinigameTransition,
   MinigameView,
 } from './features/minigames.ts'
-export { minigameDef } from './features/minigames.ts'
 
 // Timers
 export type { RunningTimer, TimerDef, TimerView } from './features/timers.ts'
-export { timerDef } from './features/timers.ts'
 
 // Panels
 export type { OpenPanel, ScenePanel } from './features/panels.ts'
 export type { SavingView } from './features/saving.ts'
 export type { Dice, Roll, RollsState } from './features/rolls.ts'
-export { readDice } from './features/rolls.ts'
-export { inputById, inputRefusal, inputValue } from './inputs.ts'
 
 // Storylines
-export { emptyStoryline, storylineOf, storylineOpen } from './storylines.ts'
+export { storylineOf, storylineOpen } from './storylines.ts'
 
 // Randomness
 export { chance, draw, drawOne, hash, weighted } from './random.ts'

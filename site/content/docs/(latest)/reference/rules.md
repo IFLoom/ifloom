@@ -287,7 +287,7 @@ A curfew isn't a rule here, because the engine keeps no time of day. It's the [c
 
 ## The player
 
-A stat's ceiling is part of its declaration, not a rule. A ceiling that moves is a stat whose [`max`](/docs/reference/stats#statmax) names a value of the game's own, `{ value: 'game/ceiling' }`.
+A stat's ceiling is part of its declaration, not a rule. A ceiling that moves is a stat whose [`max`](/docs/reference/stats#statdef) names a value of the game's own, `{ value: 'game/ceiling' }`.
 
 ### onStat
 

@@ -105,16 +105,6 @@ function entityUi(state: GameState, game: Game | undefined, ref: EntityRef): Ui<
 
 An entity's hints as the view gives them: its kind's, then the one it was made `like`, then its own declaration's, each laid over the one before. Undefined when none has any. A plugin uses it to pass someone's hints on in its own view, as the cast does for a [speaker](/docs/reference/view#speakerview).
 
-## uiProblems
-
-```ts
-import { uiProblems } from '@ifloom/engine'
-
-function uiProblems(ui: unknown): string[]
-```
-
-What the [content checker](/docs/reference/checks) says about one `ui` field: nothing for one left out, `ui must be an object of hints` when it isn't an object, and a line for anything inside it that isn't data, such as a function or a `Date`. A hint is what a JSON file could hold: objects, arrays, text, numbers, true/false and null.
-
 ## What the engine does with them
 
 Nothing else, and the same goes for [UI pieces](/docs/reference/prose#ui-pieces) in prose. It doesn't read a hint, give one a default, merge a scene's with the game's, or check a hint's name or value against any list. That's all the UI's job. The checker only makes sure each `ui` is data, so a pack or a mod with hints can be saved and loaded as JSON.

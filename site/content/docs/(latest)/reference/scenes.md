@@ -336,7 +336,7 @@ A game lists its scenes in `game.scenes` and the engine runs them. The first tim
 
 A data scene reads:
 
-- **words** from `game.prose` (set by [`loadGame`](/docs/reference/loader#loadgame), or by you with [`proseStore`](/docs/reference/prose#prosestore-1)), with tokens filled in for the save
+- **words** from `game.prose` (set by [`loadGame`](/docs/reference/loader#loadgame)), with tokens filled in for the save
 - **variants** drawn as described below
 - **`once: { per: 'turn' }`** from the choice's record in [`chosen`](/docs/reference/state#chosen): spent while it was last picked this turn
 - **conditions and the game's own effects** from the game

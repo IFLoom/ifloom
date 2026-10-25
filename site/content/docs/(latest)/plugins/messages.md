@@ -405,7 +405,7 @@ Both are commands like any other, so triggers run after them, and so does every 
 | `{{v:messages/unread}}` | Unread messages in every channel. |
 | `{{v:messages/unread channel=texts}}` | Unread messages in that channel. |
 
-The value works as a badge too, with the channel as its argument: a devices app's `badge: { value: 'messages/unread', with: { channel: 'texts' } }`. Code can read it with [`customValue`](/docs/reference/custom#looking-them-up), or the game's own code with its context's `value('messages/unread', { channel: 'texts' })`.
+The value works as a badge too, with the channel as its argument: a devices app's `badge: { value: 'messages/unread', with: { channel: 'texts' } }`. Code can read it with [`amountOf`](/docs/reference/amounts#amountof)`(state, game, { value: 'messages/unread', with: { channel: 'texts' } })`, or the game's own code with its context's `value('messages/unread', { channel: 'texts' })`.
 
 ## Strings
 

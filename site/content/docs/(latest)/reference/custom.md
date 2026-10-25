@@ -113,7 +113,7 @@ effects: [{ stat: 'coins', by: 4 }, { 'game/double': true }, { 'game/double': tr
 ```
 
 **Gotchas.**
-- A button's price, and what a plugin's [guard](/docs/reference/plugins#guards-prices-and-labels) or a [lock](/docs/reference/locks) sees, is worked out before the button is pressed. For those, the game's effect is called with the state on screen, as [`previewEffects`](#previeweffects) does. When the effects run, it's called again in its turn, so it can return something different if the effects before it changed what it reads.
+- A button's price, and what a plugin's [guard](/docs/reference/plugins#guards-prices-and-labels) or a [lock](/docs/reference/locks) sees, is worked out before the button is pressed. For those, the game's effect is called with the state on screen. When the effects run, it's called again in its turn, so it can return something different if the effects before it changed what it reads.
 - Inside an [`each`](/docs/reference/effects#each), the function runs once per entity, on the state the entities before it left.
 - One of the game's effects that returns another runs that one in its turn too. This stops at 10 deep, so an effect that names itself does nothing past that rather than hanging.
 
@@ -204,38 +204,16 @@ Prose writes `A loaf is {{v:game/breadPrice}} today.`, with any arguments after 
 
 **Gotcha.** An unknown name in prose is left on screen as `{{v:game/breadPrice}}`, so you can see what's missing. An unknown stat ceiling quietly gives 100, but the [content checker](/docs/reference/checks) reports it as `no custom value named "…"`.
 
-## Looking them up
+## Reading them in code
+
+To ask one of these from your own code, such as a tool or a test, go through the functions content goes through. [`holds`](/docs/reference/conditions#holds) asks a condition, [`amountOf`](/docs/reference/amounts#amountof) works out a value, and [`applyEffects`](/docs/reference/effects#applyeffects) runs effects:
 
 ```ts
-function customCondition(game: Game | undefined, name: string): ((state: GameState, args?: PluginArgs) => boolean) | undefined
-function customEffect(game: Game | undefined, name: string): ((state: GameState, args?: PluginArgs) => EffectRef[]) | undefined
-function customValue(game: Game | undefined, name: string): ((state: GameState, args?: PluginArgs) => string | number) | undefined
-```
+import { amountOf, holds } from '@ifloom/engine'
 
-Each returns the function by its full name, ready to call with the state and its arguments (`{}` if left out), or `undefined`. The context is filled in for you. Use them in a tool, a custom runtime or a check of your own.
-
-`customCondition` and `customValue` find the game's own (`game/marketDay`) and a plugin's (`quests/done`). `customEffect` only finds the game's own. A plugin's effect returns a state rather than a list of effects, so ask [`hasCustomEffect`](#hascustomeffect) whether one exists.
-
-```ts
-import { customValue } from '@ifloom/engine'
-
-const price = customValue(town, 'game/breadPrice')?.(state) ?? '?'
-const unread = customValue(town, 'messages/unread')?.(state, { channel: 'texts' }) ?? 0
-```
-
-## hasCustomEffect
-
-```ts
-function hasCustomEffect(game: Game | undefined, name: string): boolean
-```
-
-Whether the game or one of its [plugins](/docs/reference/plugins) has an effect by this full name. The loader checks effect names with it.
-
-```ts
-import { hasCustomEffect } from '@ifloom/engine'
-
-hasCustomEffect(town, 'game/tip')      // the game's own
-hasCustomEffect(town, 'quests/start')  // a plugin's
+holds(state, { 'game/marketDay': true }, town)                                  // true on market day
+amountOf(state, town, { value: 'game/breadPrice' })                             // 4
+amountOf(state, town, { value: 'messages/unread', with: { channel: 'texts' } }) // 2
 ```
 
 ## buildEffects
@@ -251,21 +229,6 @@ import { buildEffects } from '@ifloom/engine'
 
 buildEffects(state, town, [{ 'game/tip': { by: 2 } }, { 'game/typo': true }])
 // [{ 'game/tip': { by: 2 } }]
-```
-
-## previewEffects
-
-```ts
-function previewEffects(state: GameState, game: Game, effects: readonly Effect[]): Effect[]
-```
-
-The effects with each of the game's own replaced by what it returns for `state`, all the way down (10 deep at most). A plugin's effect stays as it is. This is what a button would do as it looks before it's pressed, and it's what prices, guards and locks are shown: [`effectsOf`](/docs/reference/actions#effectsof) and the view call it for you. It reads every effect against the same `state`, so when the effects run for real, one after a change can return something else.
-
-```ts
-import { previewEffects } from '@ifloom/engine'
-
-previewEffects(state, town, [{ 'game/tip': { by: 2 } }])
-// [{ stat: 'coins', by: -2 }]
 ```
 
 ## See it in an example

@@ -5,7 +5,7 @@ description: "Inputs the player types or picks, such as a name, checked against 
 An input is something the player types or picks, which the engine writes to a key in the [kv store](/docs/reference/state#kv). It might be a name for the cat, the hour the alarm goes off, or their usual order at the café. The game declares each input with what it accepts, and the [`input`](/docs/reference/commands#input) command writes it. The engine checks the value against the declaration, so a UI can't put anything else in.
 
 ```ts
-import { inputById, inputRefusal, inputValue, type InputDef } from '@ifloom/engine'
+import type { InputDef } from '@ifloom/engine'
 ```
 
 ## A worked example
@@ -76,13 +76,9 @@ type InputDef = {
 
 Declare inputs in your [content](/docs/reference/loader#content)'s `inputs`, which [`loadGame`](/docs/reference/loader#loadgame) gathers into [`Game.inputs`](/docs/reference/game#game). They merge by id, so a pack's input replaces one with the same id.
 
-## inputRefusal
+## Why a value is refused
 
-```ts
-function inputRefusal(state: GameState, game: Game, id: string, value: KvValue | undefined): string | undefined
-```
-
-Why this value can't be entered, as the player reads it, or `undefined` if it can. [`whyNot`](/docs/reference/actions#whynot) gives this line for an `input` command, after the [locks](/docs/reference/locks) and any hard plugin [guard](/docs/reference/plugins#guards) have had their say. A guard's soft warning still refuses the command when it runs. A game that handles `input` itself in [`rules.commands`](/docs/reference/rules#commands) skips it. These are the lines, in the order they're checked:
+An `input` command whose value can't be entered is refused with one line, as the player reads it. [`whyNot`](/docs/reference/actions#whynot) gives this line for an `input` command, after the [locks](/docs/reference/locks) and any hard plugin [guard](/docs/reference/plugins#guards) have had their say. A guard's soft warning still refuses the command when it runs. A game that handles `input` itself in [`rules.commands`](/docs/reference/rules#commands) skips it. These are the lines, in the order they're checked:
 
 | Line | When |
 |---|---|
@@ -98,24 +94,10 @@ Why this value can't be entered, as the player reads it, or `undefined` if it ca
 Each line is the engine's English from the [strings table](/docs/reference/strings#input) (`noSuchInput`, `notNow`, `enterSomething`, `tooLong`, `enterNumber`, `between`, `atLeast`, `atMost`, `notAnOption`), and a game can reword it.
 
 ```ts
-inputRefusal(state, game, 'alarm', 11)  // 'Between 5 and 10.'
+whyNot(state, game, { type: 'input', id: 'alarm', to: 11 })  // 'Between 5 and 10.'
 ```
 
-## inputValue
-
-```ts
-function inputValue(input: InputDef, value: KvValue): KvValue
-```
-
-The value as it will be written. Text is trimmed, and anything else is left as it is.
-
-## inputById
-
-```ts
-function inputById(game: Game, id: string): InputDef | undefined
-```
-
-The declaration with that id, or `undefined`.
+A text value is trimmed before it's checked and before it's written to the kv store, so `'  Sam '` is kept as `'Sam'`.
 
 ## Gotchas
 

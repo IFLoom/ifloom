@@ -190,7 +190,7 @@ On a new game the same command is refused with `Your card is not full yet.`, and
 
 ```ts
 import {
-  definePlugin, pluginById, pluginQuery, speakerOf,
+  definePlugin, pluginQuery, speakerOf,
   type Plugin, type DefinedPlugin, type PluginContext, type PluginArgs,
   type PluginCommand, type PluginEntry, type PluginProblem, type PluginSlice,
   type Asked, type Refusal, type StageDef, type SpeakerView, type CheckTools,
@@ -379,7 +379,7 @@ commands: {
 }
 ```
 
-[`lockOn`](/docs/reference/locks#lockon) and [`lockedBy`](/docs/reference/locks#lockedby) don't look at `ignoresLocks`, so they still say which lock matches the command. Only `whyNot`, and so the reducer and the view, lets it through.
+[`lockOn`](/docs/reference/locks#lockon) doesn't look at `ignoresLocks`, so it still says which lock matches the command. Only `whyNot`, and so the reducer and the view, lets it through.
 
 ## Naming
 
@@ -1518,20 +1518,6 @@ loyalty.viewIn(runner.view())?.stamps                       // a number, typed, 
 ```
 
 A plugin is a plain object, so `definePlugin` is optional, but it types `S` and `V` throughout and gives you `read`, `write` and `viewIn`. A plugin package usually exports a factory that returns one, such as [`quests()`](/docs/plugins/quests#quests).
-
-## pluginById
-
-```ts
-import { pluginById } from '@ifloom/engine'
-
-function pluginById(game: Game | undefined, id: string): Plugin | undefined
-```
-
-The plugin with this id, if the game has it. Use it in a tool or a UI that needs to know whether a game has a plugin before it draws that plugin's panel.
-
-```ts
-if (pluginById(game, 'loyalty')) drawCard(view(state, game).plugins.loyalty)
-```
 
 ## Gotchas
 

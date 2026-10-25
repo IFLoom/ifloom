@@ -221,13 +221,13 @@ export function wardrobe(): DefinedPlugin<WardrobeState, WardrobeView> {
     },
     references: {
       // The thing a condition or `wear` names, and the slot a condition or `takeOff` names.
-      calls: (kind, name, args) => {
-        const entity = kind === 'commands' ? (name === 'wear' ? args.id : undefined) : args.entity
-        const slot = kind === 'commands' ? (name === 'takeOff' ? args.id : undefined) : args.slot
+      calls: (table, name, args) => {
+        const entity = table === 'commands' ? (name === 'wear' ? args.id : undefined) : args.entity
+        const slot = table === 'commands' ? (name === 'takeOff' ? args.id : undefined) : args.slot
         return [
           ...(entity === undefined ? [] : [{ entity: String(entity) }]),
           ...(slot === undefined ? [] : [{ entry: String(slot), plugin: ID, list: 'slots', noun: 'slot' }]),
-          ...(kind === 'conditions' && args.at !== undefined ? [{ holder: String(args.at) }] : []),
+          ...(table === 'conditions' && args.at !== undefined ? [{ holder: String(args.at) }] : []),
         ]
       },
       content: (game) =>

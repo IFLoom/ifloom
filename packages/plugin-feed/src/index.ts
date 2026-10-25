@@ -290,9 +290,9 @@ export function feed(): DefinedPlugin<FeedState, FeedsView> {
       return { feeds, unread: feeds.reduce((sum, entry) => sum + entry.unread, 0) }
     },
     references: {
-      calls: (kind, name, args) => {
-        if (kind === 'conditions' && name === 'appeared') return [{ entry: String(args.post), plugin: 'feed', list: 'posts', noun: 'post' }]
-        if (kind !== 'effects') return []
+      calls: (table, name, args) => {
+        if (table === 'conditions' && name === 'appeared') return [{ entry: String(args.post), plugin: 'feed', list: 'posts', noun: 'post' }]
+        if (table !== 'effects') return []
         // What the player posts or comments: its words, and its picture or video as a path from the page.
         const refs: Reference[] = []
         if (args.text !== undefined) refs.push({ prose: String(args.text) })

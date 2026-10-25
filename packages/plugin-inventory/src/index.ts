@@ -245,7 +245,7 @@ export function inventory(): DefinedPlugin<null, InventoryView> {
           if (held) return held
           return usableOf(state, game, ref) ? undefined : say(game, 'inventory/doesNothing', { thing: nameOf(state, game, ref) })
         },
-        // Its effects read the state as it was before one was spent, as an activity's do before its cost.
+        // Its effects read the state as it was before one was spent, as an action's do before its cost.
         effectsOf: (state, args, { game }) => useEffects(state, game, idOf(args)),
         run: (state, args, { game, apply }) => apply(useEffects(state, game, idOf(args)), state),
       },

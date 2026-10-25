@@ -360,8 +360,8 @@ export function unlocks(): DefinedPlugin<UnlocksState, UnlocksView> {
       return { unlocks: list, unlocked: list.filter((entry) => entry.unlocked).length, total: list.length }
     },
     references: {
-      calls: (kind, _name, args) => {
-        const id = kind === 'commands' ? args.id : args.unlock
+      calls: (table, _name, args) => {
+        const id = table === 'commands' ? args.id : args.unlock
         return id === undefined ? [] : [{ entry: String(id), plugin: ID, list: 'unlocks', noun: 'unlock' }]
       },
     },

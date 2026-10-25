@@ -1,6 +1,6 @@
 /**
- * Small Town, put together: its content, with a base that says how the game
- * runs, with where it starts, its rules and its plugins. This file only
+ * Small Town, put together: its content, with a base that says what the game
+ * is and holds its code, its plugins and its rules. This file only
  * assembles. What the whole town shares is in `world/`, one file per kind,
  * and the story is in `story/`, one file per place or arc, its prose beside
  * it. The game's own code is in `rules.ts`.

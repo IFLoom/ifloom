@@ -207,8 +207,8 @@ export function generators(): DefinedPlugin<null> {
         return next
       },
     },
-    argProblems: (kind, name, args) => {
-      if (kind !== 'effects' || name !== 'generate' || args.count === undefined) return []
+    argProblems: (table, name, args) => {
+      if (table !== 'effects' || name !== 'generate' || args.count === undefined) return []
       const count = Number(args.count)
       return Number.isInteger(count) && count >= 1 ? [] : ['count must be a whole number, 1 or more']
     },

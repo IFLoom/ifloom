@@ -43,7 +43,7 @@ import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations 
 
 /** What working one shift takes. */
 export type ShiftDef = {
-  /** Stats it spends, by id: `{ energy: 30 }`. Checked before the shift, like an activity's cost. */
+  /** Stats it spends, by id: `{ energy: 30 }`. Checked before the shift, like an action's cost. */
   cost?: Record<string, number>
   /** How many of the calendar's periods it takes. None if left out, or without the calendar. */
   passes?: number
@@ -461,7 +461,7 @@ export function jobs(): DefinedPlugin<JobsState, JobsView> {
     onCommand: review,
     view: (state, context) => jobsView(state, context),
     references: {
-      calls: (kind, _name, args) => jobRef(kind === 'commands' ? args.id : args.job),
+      calls: (table, _name, args) => jobRef(table === 'commands' ? args.id : args.job),
       content: (game) =>
         jobDefs(game).map((job) => ({
           list: 'jobs',

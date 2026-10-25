@@ -87,10 +87,10 @@ export type Asked = { command: Command; effects: readonly Effect[] }
  * named functions (`conditions`, `effects`, `commands`, `queries`, `values`)
  * are plural nouns. Nothing is nested: there is no `hooks: {}`.
  *
- * Content calls a plugin by name with its id in front — `{ custom: 'quests/done',
- * with: { quest: 'bakery' } }` as a condition or effect, `{ type: 'custom', name:
- * 'quests/track', with: { quest: 'bakery' } }` as a command — the same way it
- * calls the game's own named code, so games and mods learn one form. A plugin
+ * Content calls a plugin by name with its id in front, `{ 'quests/done':
+ * { quest: 'bakery' } }`, as a condition, an effect or a command, the same way
+ * it calls the game's own code (`{ 'game/tired': true }`), so games and mods
+ * learn one form. A plugin
  * usually exports typed helpers that write those for authors working in code.
  *
  * Plugins are chosen when the game is built (`game.plugins`), never loaded while
@@ -387,7 +387,7 @@ export type PluginCommand<S = any> = {
   /** The effects running it would apply, for guards, prices and locks to see. None if left out. */
   effectsOf?: (state: GameState, args: PluginArgs, context: PluginContext<S>) => Effect[]
   /**
-   * The stats it spends, by id, for its button's price, as an activity's
+   * The stats it spends, by id, for its button's price, as an action's
    * `cost.stats` gives them: `{ coins: 4 }`. Only the price shows it; `run`
    * does the spending, and `whyNot` says when there isn't enough. None if left out.
    */

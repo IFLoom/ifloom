@@ -67,7 +67,7 @@ export type RenderedChoice = {
 
 /** A choice or a button on a screen: as the view shows it, and what pressing it would apply. */
 export type ScreenChoice = RenderedChoice & {
-  /** What it would apply, as `effectsOf` says: a choice's effects, an activity's cost and effects. */
+  /** What it would apply, as `effectsOf` says: a choice's effects, an action's cost and effects. */
   effects: Effect[]
 }
 

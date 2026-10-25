@@ -341,14 +341,14 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
     },
     references: {
       // The places a call names: `places/at` and `places/within`, `places/move` and `places/go`; the thing `places/pickUp` names.
-      calls: (kind, name, args) => {
-        if (kind === 'commands' && name === 'pickUp') return args.id === undefined ? [] : [{ entity: String(args.id) }]
+      calls: (table, name, args) => {
+        if (table === 'commands' && name === 'pickUp') return args.id === undefined ? [] : [{ entity: String(args.id) }]
         const named =
-          kind === 'conditions'
+          table === 'conditions'
             ? name === 'at' || name === 'within'
               ? ids(args.location)
               : []
-            : kind === 'effects'
+            : table === 'effects'
               ? name === 'move'
                 ? ids(args.location)
                 : []

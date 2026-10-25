@@ -3,7 +3,7 @@
  * particular thing, worn by the wardrobe; food and the newspaper stack, and
  * the inventory uses them. Their prices are the shop's, from their traits.
  * Notes are things too, read in the phone's Notes app; photos are the
- * phone's `photo` kind, made by the camera in `activities.ts`.
+ * phone's `photo` kind, made by the camera app in `phone.ts`.
  */
 import type { Content } from '@ifloom/engine'
 import { usable } from '@ifloom/plugin-inventory'

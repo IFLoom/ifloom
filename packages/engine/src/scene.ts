@@ -80,7 +80,7 @@ export type Choice = {
   /** Words the UI can style or filter the choice by. The engine gives them no meaning. */
   tags?: string[]
   irreversible?: string
-  /** Literal effects, or `{ custom: name }` for the few that are computed. */
+  /** Literal effects, or a call in short (`{ 'game/name': args }`) for the few that are computed. */
   effects: EffectRef[]
   /**
    * A command to send as well, such as a plugin's:

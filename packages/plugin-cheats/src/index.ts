@@ -188,7 +188,7 @@ export function cheats(): DefinedPlugin<CheatsState, CheatsView> {
     },
     view: (state, context) => cheatsView(state, context),
     references: {
-      calls: (kind, _name, args) => cheatRef(kind === 'commands' ? args.id : args.cheat),
+      calls: (table, _name, args) => cheatRef(table === 'commands' ? args.id : args.cheat),
       content: (game) =>
         cheatDefs(game).map((cheat) => ({
           list: 'cheats',

@@ -21,7 +21,7 @@ import { ch3 } from './story/ch3.ts'
 /** The game's content: what every chapter shares, then the chapters. */
 export const content: Content[] = [stats, ch1, ch2, ch3]
 
-/** The game: its content, with a base that says what it is and how its saves are named and carried forward. */
+/** The game: its content, with a base that says what it is, and rules that name its saves and carry old ones forward. */
 export function theLetter(): { game: Game; problems: string[] } {
   const { game, problems } = loadGame(content, {
     id: 'the-letter',

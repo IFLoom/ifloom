@@ -386,7 +386,7 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
     },
     references: {
       // The people a call names: a condition's `character`, a command's `id`. `'$'` and `'character:*'` (what it is checked as) name nobody in particular.
-      calls: (kindOf, _name, args) => (kindOf === 'conditions' ? who(args.character) : who(args.id)).map((entity): Reference => ({ entity })),
+      calls: (table, _name, args) => (table === 'conditions' ? who(args.character) : who(args.id)).map((entity): Reference => ({ entity })),
     },
     check: (game) => {
       const problems: PluginProblem[] = []

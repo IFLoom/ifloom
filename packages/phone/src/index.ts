@@ -10,7 +10,7 @@
  *
  * ```ts
  * const kit = phone({ sidebar: true })
- * loadGame([...content, kit.content], { id, title, plugins: [...kit.plugins, quests()] })
+ * loadGame([kit.content, ...content], { id, title, plugins: [...kit.plugins, quests()] })
  * ```
  *
  * A photo is made in play with `create`:

@@ -398,7 +398,7 @@ describe('Small Town', () => {
     expect(effects()).toEqual([])
   })
 
-  it('sells a sandwich at the café as a plain activity too, beside the counter', () => {
+  it('sells a sandwich at the café as a plain action too, beside the counter', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
     state = run(on(state, 1, 'morning'), go('high-street'), go('cafe'))
     const labels = view(state, game).actions.map((action) => action.label)

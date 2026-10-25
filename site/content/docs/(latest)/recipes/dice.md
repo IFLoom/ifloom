@@ -24,9 +24,9 @@ export const park: Content = {
       name: 'Riverside Park',
       exits: ['high-street'],
       body: [
-        { text: 'place.park' },
+        { prose: 'place.park' },
         // 2. The link, in the line.
-        { text: 'place.park.stones' },
+        { prose: 'place.park.stones' },
         // 3. A block for each outcome, read from the roll.
         skimmed({ roll: 'skim', critical: 'max' }, 'park.skim.best'),
         skimmed({ roll: 'skim', passed: true, critical: false }, 'park.skim.passed'),

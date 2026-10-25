@@ -48,9 +48,9 @@ describe('the runner', () => {
 
     const vow: Game = {
       ...fixture(),
-      scenes: [{ id: 'vow', body: [{ text: 'vow' }], choices: [{ id: 'swear', irreversible: 'For good.', effects: [{ scene: null }] }] }],
+      scenes: [{ id: 'vow', body: [{ prose: 'vow' }], choices: [{ id: 'swear', label: 'Swear it', irreversible: 'For good.', effects: [{ scene: null }] }] }],
     }
-    vow.prose = proseStore(vow, { vow: 'Will you?', 'vow#swear': 'Swear it' })
+    vow.prose = proseStore(vow, { vow: 'Will you?' })
     const sworn = createRunner(vow, begin(vow, { sceneId: 'vow' }), { history: true })
     sworn.apply({ type: 'choose', id: 'swear' })
     expect(sworn.canUndo).toBe(false)
@@ -229,10 +229,14 @@ describe('starting over from content', () => {
       ...fixture(),
       scenes: [
         ...fixture().scenes,
-        { id: 'end', body: [{ text: 'end' }], choices: [{ id: 'again', command: { type: 'newGame' }, effects: [{ kv: 'after', to: true }] }] },
+        {
+          id: 'end',
+          body: [{ prose: 'end' }],
+          choices: [{ id: 'again', label: 'Play again', command: { type: 'newGame' }, effects: [{ kv: 'after', to: true }] }],
+        },
       ],
     }
-    game.prose = proseStore(game, { end: 'The end.', 'end#again': 'Play again' })
+    game.prose = proseStore(game, { end: 'The end.' })
     return game
   }
 

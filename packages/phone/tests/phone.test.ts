@@ -34,7 +34,7 @@ const kit = phone({
       id: 'studio',
       name: 'Fans · post',
       icon: 'star',
-      sections: [{ prose: [{ text: 'studio.stats' }] }, { actions: [{ id: 'post', label: 'Post a photo', command: { type: 'action', id: 'post' } }] }],
+      sections: [{ prose: [{ prose: 'studio.stats' }] }, { actions: [{ id: 'post', label: 'Post a photo', command: { type: 'action', id: 'post' } }] }],
     },
   ],
 })
@@ -47,8 +47,8 @@ const town: Content = {
   ],
   storylines: [{ id: 'ava', name: 'Ava' }],
   scenes: [
-    { id: 'ava.hi', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ scene: null }] }] },
-    { id: 'ava.call', body: [{ text: 'ava.call' }], choices: [{ id: 'bye', effects: [{ scene: null }] }] },
+    { id: 'ava.hi', body: [{ prose: 'ava.hi' }], choices: [{ id: 'bye', label: 'Bye', effects: [{ scene: null }] }] },
+    { id: 'ava.call', body: [{ prose: 'ava.call' }], choices: [{ id: 'bye', label: 'Hang up', effects: [{ scene: null }] }] },
   ],
   actions: [
     {
@@ -65,7 +65,7 @@ const town: Content = {
       ],
       effects: [
         pass(1),
-        postTo('fans', 'fans.ava-cafe', { text: 'fans.ava-cafe', image: 'art/ava-cafe.jpg' }),
+        postTo('fans', 'fans.ava-cafe', { text: 'Coffee with a friend.', image: 'art/ava-cafe.jpg' }),
         { kv: 'postedToday', to: true },
         { 'game/fanReaction': true },
       ],
@@ -76,19 +76,14 @@ const town: Content = {
     'place.cafe': 'Coffee.',
     'place.work': 'Desks.',
     'ava.hi': 'Hi.',
-    'ava.hi#bye': 'Bye',
     'ava.call': '"Hey you."',
-    'ava.call#bye': 'Hang up',
     'ava.hey': 'Good seeing you today.',
-    'ava.hey#reply': 'You too!',
     'studio.stats': '{{v:game/subscribersLine}}',
-    'fans.ava-cafe': 'Coffee with a friend.',
-    'fans.nice': 'Love this',
   },
   entities: [
-    location({ id: 'house', name: 'House', desc: 'Home', exits: ['cafe', 'work'], body: [{ text: 'place.house' }] }),
-    location({ id: 'cafe', name: 'Café', desc: 'Café', exits: ['house'], body: [{ text: 'place.cafe' }] }),
-    location({ id: 'work', name: 'Work', desc: 'Work', exits: ['house'], body: [{ text: 'place.work' }] }),
+    location({ id: 'house', name: 'House', desc: 'Home', exits: ['cafe', 'work'], body: [{ prose: 'place.house' }] }),
+    location({ id: 'cafe', name: 'Café', desc: 'Café', exits: ['house'], body: [{ prose: 'place.cafe' }] }),
+    location({ id: 'work', name: 'Work', desc: 'Work', exits: ['house'], body: [{ prose: 'place.work' }] }),
     person({
       id: 'ava',
       name: 'Ava',
@@ -109,8 +104,8 @@ const town: Content = {
           channel: 'texts',
           from: 'ava',
           when: { all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] },
-          body: [{ text: 'ava.hey' }],
-          replies: [{ id: 'reply' }],
+          body: [{ prose: 'ava.hey' }],
+          replies: [{ id: 'reply', label: 'You too!' }],
         },
       ],
     },
@@ -121,7 +116,7 @@ const town: Content = {
 const rules: GameRules = {
   values: { subscribersLine: (state) => `${state.stats.subscribers ?? 0} subscribers` },
   // How a post did: the game's own roll, here a fixed one.
-  effects: { fanReaction: () => [{ stat: 'subscribers', by: 5 }, react('fans.ava-cafe', { likes: 12, from: 'ava', text: 'fans.nice' })] },
+  effects: { fanReaction: () => [{ stat: 'subscribers', by: 5 }, react('fans.ava-cafe', { likes: 12, from: 'ava', text: 'Love this' })] },
 }
 
 function game(): Game {

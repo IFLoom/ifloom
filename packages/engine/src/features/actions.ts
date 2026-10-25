@@ -222,11 +222,13 @@ export const actions = defineFeature<ActionsShape>({
 
 /**
  * What an action names, for the content checker: its conditions, effects,
- * command and hints. For a plugin whose content holds actions (a place's, an
- * app's) to hand to its `references`.
+ * command and hints, and its words. For a plugin whose content holds actions
+ * (a place's, an app's) to hand to its `references`.
  */
 export function actionReferences(action: ActionDef): Reference[] {
   return [
+    { words: action.label, field: 'label' },
+    ...(action.labels ?? []).flatMap((entry) => [{ words: entry.label, field: 'label' }, { when: entry.when }]),
     { when: action.when },
     ...(action.blocked ?? []).map((entry) => ({ when: entry.when })),
     { effects: action.effects },

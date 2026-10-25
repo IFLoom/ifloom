@@ -49,18 +49,18 @@ describe('media in places, messages and posts', () => {
               name: 'The flat',
               desc: 'Home',
               exits: ['street'],
-              body: [{ text: 'place.flat' }],
+              body: [{ prose: 'place.flat' }],
               stage: {
                 layers: [{ id: 'room', src: 'flat/room.svg' }],
                 hotspots: [{ id: 'out', rect: [80, 10, 15, 80], label: 'The front door', command: go('street') }],
               },
             }),
-            location({ id: 'street', name: 'High Street', desc: 'Out', exits: ['flat'], body: [{ text: 'place.street' }] }),
+            location({ id: 'street', name: 'High Street', desc: 'Out', exits: ['flat'], body: [{ prose: 'place.street' }] }),
           ],
           data: {
-            messages: { messages: [{ id: 'mum.hi', channel: 'texts', from: 'Mum', when: at('flat'), body: [{ text: 'mum.hi' }] }] },
+            messages: { messages: [{ id: 'mum.hi', channel: 'texts', from: 'Mum', when: at('flat'), body: [{ prose: 'mum.hi' }] }] },
             feed: {
-              posts: [{ id: 'post.cafe', feed: 'town', from: 'The Café', when: at('flat'), body: [{ text: 'post.cafe' }], video: 'art/clips/steam.mp4' }],
+              posts: [{ id: 'post.cafe', feed: 'town', from: 'The Café', when: at('flat'), body: [{ prose: 'post.cafe' }], video: 'art/clips/steam.mp4' }],
             },
           },
         },

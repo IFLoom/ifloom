@@ -142,13 +142,15 @@ function isDataScene(scene: Scene | DataScene): scene is DataScene {
 export function blockReferences(blocks: readonly Block[] | undefined): Reference[] {
   const out: Reference[] = []
   for (const block of blocks ?? []) {
-    if ('text' in block) out.push({ prose: block.text })
+    if ('prose' in block) out.push({ prose: block.prose })
     if ('variants' in block) {
       out.push({ variants: block.variants })
       for (const art of Object.values(block.art ?? {})) out.push({ variants: art })
     }
     if ('media' in block) out.push({ media: block.media })
-    if ('words' in block) out.push({ markup: block.words })
+    if ('text' in block) out.push({ markup: block.text }, { words: block.text, field: 'block' })
+    // Before schema 25, words written in place were `{ words }`.
+    if ('words' in block) out.push({ outdated: '`{ words }` is `{ text }` now: a block of words written in place is `{ text: "…" }`' })
     if ('say' in block) out.push({ markup: block.say }, { speaker: block.speaker })
     if ('blocks' in block) out.push({ blocks: block.blocks })
     if ('decide' in block)
@@ -162,24 +164,23 @@ export function blockReferences(blocks: readonly Block[] | undefined): Reference
   return out
 }
 
-/** What one choice names: its command, its label's prose key when it reads as one, its conditions, effects (not its jump: the flow's checks read that) and hints. */
-function choiceReferences(choice: Choice, defaultKey?: string): Reference[] {
+/**
+ * What one choice names: its command, its conditions, effects (not its jump:
+ * the flow's checks read that) and hints, and its words, which the checker
+ * reads for a prose key written where words go now. `oldKey` is the prose key
+ * a choice with no label read before schema 25.
+ */
+function choiceReferences(choice: Choice, oldKey?: string): Reference[] {
   const out: Reference[] = []
   if (choice.command) out.push({ command: choice.command })
-  // A label is words, or a prose key: one that reads as a key (no spaces, a `.` or `#`) must have its prose.
-  if (choice.label === undefined) {
-    if (defaultKey !== undefined) out.push({ prose: defaultKey })
-  } else if (readsAsKey(choice.label)) out.push({ prose: choice.label })
-  for (const entry of choice.labels ?? []) out.push(...(readsAsKey(entry.label) ? [{ prose: entry.label }] : []), { when: entry.when })
+  out.push({ words: choice.label, field: 'label', ...(choice.label === undefined && oldKey !== undefined ? { oldKey } : {}) })
+  for (const entry of choice.labels ?? []) out.push({ words: entry.label, field: 'label' }, { when: entry.when })
   out.push({ when: choice.when })
   for (const entry of choice.blocked ?? []) out.push({ when: entry.when })
   out.push({ effects: withoutJump(choice.effects) })
   if (choice.ui !== undefined) out.push({ ui: choice.ui })
   return out
 }
-
-/** Does a button's label read as a prose key rather than words: no spaces, and a `.` or `#` in it? */
-const readsAsKey = (label: string) => !/\s/.test(label) && /[.#]/.test(label)
 
 /** What a data scene names: its body, its choices' labels, conditions and effects, its audio, panel and stage. */
 export function dataSceneReferences(scene: DataScene): Reference[] {
@@ -251,9 +252,9 @@ function inlineActionProblems(game: Game, body: readonly Block[] | string | unde
     // A block in a section or a branch shows only with it, so it counts as gated.
     for (const { block, address, top } of everyBlock(body)) {
       const gated = block.when !== undefined || !top
-      if ('words' in block) lines.push({ text: block.words, block: address, gated })
+      if ('text' in block) lines.push({ text: block.text, block: address, gated })
       if ('say' in block) lines.push({ text: block.say, block: address, gated })
-      const keys = 'text' in block ? [block.text] : 'variants' in block ? (game.prose?.variants(block.variants) ?? []) : []
+      const keys = 'prose' in block ? [block.prose] : 'variants' in block ? (game.prose?.variants(block.variants) ?? []) : []
       for (const key of keys) {
         const text = game.prose?.line(key)
         if (text !== undefined) lines.push({ text, block: address, gated })

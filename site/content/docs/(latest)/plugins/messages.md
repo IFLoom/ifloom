@@ -159,7 +159,7 @@ const text: MessageDef = {
   channel: 'texts',
   from: 'ava',
   when: { all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] },
-  body: [{ text: 'ava.text' }],
+  body: [{ prose: 'ava.text' }],
   replies: [
     { id: 'yes', effects: [{ stat: 'friendship', by: 5, of: character('ava') }] },
     { id: 'later' },
@@ -187,7 +187,7 @@ const smallTalk: MessageDef[] = ['rain', 'beans', 'river'].map((topic) => ({
   from: 'ava',
   drawnFrom: ['ava.chat'],
   when: rested(`ava.chat.${topic}`),
-  body: [{ text: `ava.chat.${topic}` }],
+  body: [{ prose: `ava.chat.${topic}` }],
 }))
 
 // Once a day, after she's had a reply to her first text.
@@ -214,7 +214,7 @@ import { cast, character, person } from '@ifloom/plugin-cast'
 import { messageReplied, messages } from '@ifloom/plugin-messages'
 
 const place = (id: string, name: string, exits: string[]): PlaceDef =>
-  ({ id, name, desc: 'Small Town', exits, body: [{ text: `place.${id}` }] })
+  ({ id, name, desc: 'Small Town', exits, body: [{ prose: `place.${id}` }] })
 
 const ava = person({
   id: 'ava',
@@ -244,7 +244,7 @@ const town: Content = {
   actions: [{ id: 'wait', effects: [pass(1)] }],
   entities: [ava, ...map],
   scenes: [
-    { id: 'ava.hi', title: 'Ava', speaker: 'ava', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ scene: null }] }] },
+    { id: 'ava.hi', title: 'Ava', speaker: 'ava', body: [{ prose: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ scene: null }] }] },
   ],
   prose: {
     'place.flat': 'Boxes, mostly.',
@@ -269,7 +269,7 @@ const town: Content = {
           channel: 'texts',
           from: 'ava',
           when: { all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] },
-          body: [{ text: 'ava.text' }],
+          body: [{ prose: 'ava.text' }],
           replies: [{ id: 'yes', effects: [{ stat: 'friendship', by: 5, of: character('ava') }] }, { id: 'later' }],
         },
         {
@@ -277,14 +277,14 @@ const town: Content = {
           channel: 'texts',
           from: 'ava',
           when: messageReplied('ava.text', 'yes'),
-          body: [{ text: 'ava.beans' }],
+          body: [{ prose: 'ava.beans' }],
         },
         {
           id: 'council.bins',
           channel: 'letters',
           from: 'Town council',
           when: { all: [day({ gte: 1 }), period('afternoon')] },
-          body: [{ text: 'council.bins' }],
+          body: [{ prose: 'council.bins' }],
         },
       ],
     },
@@ -368,7 +368,7 @@ You can use them anywhere a condition goes, such as another message's `when`, a 
 ```ts
 import { messageReplied } from '@ifloom/plugin-messages'
 
-const block = { text: 'place.cafe.ava-coffee', when: messageReplied('ava.text', 'yes') }
+const block = { prose: 'place.cafe.ava-coffee', when: messageReplied('ava.text', 'yes') }
 ```
 
 An unknown message is false.
@@ -514,7 +514,7 @@ A message has no picture field of its own. Put pictures and videos in its body, 
 
 ```ts
 // prose 'ava.ducks': 'Look who turned up at the pond!\n\n[[video:clips/ducks|Two ducks on the pond]]'
-{ id: 'ava.ducks', channel: 'texts', from: 'ava', when: { kv: 'parkVisit' }, body: [{ text: 'ava.ducks' }] }
+{ id: 'ava.ducks', channel: 'texts', from: 'ava', when: { kv: 'parkVisit' }, body: [{ prose: 'ava.ducks' }] }
 ```
 
 The React UI's [`MessagesSection`](#messagessection) draws each message's beats with [`Beat`](/docs/react/components#beat), videos included, so a picture in a message can be clicked to see it large.

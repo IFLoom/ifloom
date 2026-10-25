@@ -74,7 +74,7 @@ import type { Content } from '@ifloom/engine'
 
 export const ch1: Content = {
   inputs: [{ id: 'playerName', label: 'Your name', type: 'text', maxLength: 20, when: { not: { kv: 'playerName' } } }],
-  scenes: [{ id: 'ch1.mat', title: 'Chapter one: the mat', body: [{ text: 'ch1.mat' }], choices: [] }],
+  scenes: [{ id: 'ch1.mat', title: 'Chapter one: the mat', body: [{ prose: 'ch1.mat' }], choices: [] }],
   prose: { 'ch1.mat': 'The flat still smells of someone else’s cooking. On the mat is a letter with a name on it that isn’t yours.' },
 }
 ```

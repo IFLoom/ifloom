@@ -3,7 +3,7 @@ import { apply, loadGame, startingState, view, whyNot, type Game, type GameState
 import { appOpen, devices, openApp, type AppDef, type DevicesView } from '../src/index.ts'
 
 const apps: AppDef[] = [
-  { id: 'notes', name: 'Notes', icon: 'notes', on: 'laptop', sections: [{ prose: [{ text: 'notes.intro' }] }] },
+  { id: 'notes', name: 'Notes', icon: 'notes', on: 'laptop', sections: [{ prose: [{ prose: 'notes.intro' }] }] },
   { id: 'bank', name: 'Bank', icon: 'bank', on: 'laptop', blocked: [{ when: { not: { kv: 'bankAccount' } }, reason: 'You have no account.' }], sections: [] },
   {
     id: 'mail',
@@ -89,7 +89,7 @@ describe('devices', () => {
         icon: 'x',
         on: 'watch',
         badge: { value: 'nope/value' },
-        sections: [{ things: { of: 'album' } }, { plugin: 'radio' }, { panel: 'nothing' }, { prose: [{ text: 'x.none' }] }],
+        sections: [{ things: { of: 'album' } }, { plugin: 'radio' }, { panel: 'nothing' }, { prose: [{ prose: 'x.none' }] }],
       },
     ]
     const loaded = loadGame([{ name: 'base', data: { devices: { devices: [{ id: 'laptop', name: 'Laptop' }], apps: bad } } }], {

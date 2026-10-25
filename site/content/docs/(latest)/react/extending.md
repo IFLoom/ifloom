@@ -29,7 +29,7 @@ const stall: DataScene = {
   id: 'market.stall',
   title: 'The stall',
   panel: { panel: 'StallPanel', with: { loaf: 4 } },
-  body: [{ text: 'stall' }],
+  body: [{ prose: 'stall' }],
   choices: [
     { id: 'buy', effects: [{ stat: 'coins', by: -4 }, { scene: null }] },
     { id: 'leave', effects: [{ scene: null }] },

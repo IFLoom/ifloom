@@ -35,19 +35,19 @@ function cafe(audio = true): Game {
           {
             id: 'door',
             title: 'The door',
-            body: [{ text: 'door' }],
+            body: [{ prose: 'door' }],
             choices: [
               {
                 id: 'in',
+                label: 'Go in',
                 effects: [{ sound: 'bell' }, { scene: 'counter' }],
               },
             ],
           },
-          { id: 'counter', title: 'The counter', body: [{ text: 'counter' }], choices: [] },
+          { id: 'counter', title: 'The counter', body: [{ prose: 'counter' }], choices: [] },
         ],
         prose: {
           door: 'The café door.',
-          'door#in': 'Go in',
           counter: '[[sound:bell]]\n\nAva: "Morning!" [[voice:ava.morning]]',
         },
         ...(audio ? { audio: { tracks: { bell: { src: 'bell.ogg' }, 'ava.morning': { src: 'voice/ava-morning.ogg', channel: 'voice' } } } } : {}),

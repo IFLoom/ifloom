@@ -301,7 +301,7 @@ Some things shouldn't be on screen at all until the story asks for them, such as
 ```ts
 const flat = location({
   id: 'flat', name: 'Your flat', desc: 'Home', exits: ['high-street'],
-  body: [{ text: 'place.flat' }],
+  body: [{ prose: 'place.flat' }],
   actions: [{ id: 'wardrobe', label: 'Open the wardrobe', effects: [{ panel: 'wardrobe' }] }],
 })
 ```

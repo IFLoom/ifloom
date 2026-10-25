@@ -78,10 +78,6 @@ function town(scenes: DataScene[], extra: Partial<Content> = {}) {
       'flat.kettle': 'The kettle clicks off.',
       'flat.door': 'Someone is at the door.\n\n[[img:@door|red,night|The front door]]',
       'flat.out': 'Out you go.',
-      'flat#leave': 'Leave',
-      'flat#phone': 'Answer the phone',
-      'flat#tea': 'Make tea',
-      'doorstep#leave': 'Leave',
     },
     actions: [{ id: 'nap' }, { id: 'jog', blocked: [{ when: { not: { kv: 'rested' } }, reason: 'Too tired.' }] }],
     scenes,
@@ -104,13 +100,13 @@ describe('media in a data scene’s body', () => {
     id: 'flat',
     body: [
       { media: { src: 'flat/morning', at: 'lead' } },
-      { text: 'flat.wake' },
+      { prose: 'flat.wake' },
       { media: { src: 'flat/kettle.mp4', alt: 'The kettle', size: 'wide' } },
-      { text: 'flat.kettle' },
+      { prose: 'flat.kettle' },
       { media: { src: 'flat/mug', at: 'end' } },
       { media: { src: 'flat/cat' }, when: { kv: 'cat' } },
     ],
-    choices: [{ id: 'leave', effects: [{ scene: null }] }],
+    choices: [{ id: 'leave', label: 'Leave', effects: [{ scene: null }] }],
   }
 
   it('sits where it is written, with a lead still first and an end one last', () => {
@@ -155,8 +151,8 @@ describe('media in a data scene’s body', () => {
 describe('pools', () => {
   const doorstep: DataScene = {
     id: 'doorstep',
-    body: [{ text: 'flat.door' }, { media: { pool: 'door', tags: ['blue', 'red'] } }, { media: { pool: 'window', at: 'lead' } }],
-    choices: [{ id: 'leave', effects: [{ scene: null }] }],
+    body: [{ prose: 'flat.door' }, { media: { pool: 'door', tags: ['blue', 'red'] } }, { media: { pool: 'window', at: 'lead' } }],
+    choices: [{ id: 'leave', label: 'Leave', effects: [{ scene: null }] }],
   }
 
   it('prefer the files with every tag, then drop tags from the end of the request', () => {
@@ -244,11 +240,11 @@ describe('the stage', () => {
         { id: 'nap', rect: [0, 90, 10, 10], label: 'Nap', command: { type: 'action', id: 'nap' }, when: { kv: 'tired' } },
       ],
     },
-    body: [{ text: 'flat.wake' }],
+    body: [{ prose: 'flat.wake' }],
     choices: [
       { id: 'leave', blocked: [{ when: { not: { kv: 'dressed' } }, reason: 'Get dressed first.' }], effects: [{ scene: null }] },
-      { id: 'tea', when: { kv: 'kettle' }, effects: [] },
-      { id: 'phone', effects: [] },
+      { id: 'tea', label: 'Make tea', when: { kv: 'kettle' }, effects: [] },
+      { id: 'phone', label: 'Answer the phone', effects: [] },
     ],
   }
 
@@ -284,7 +280,7 @@ describe('the stage', () => {
   })
 
   it('is null for a scene without one, and while no scene is open', () => {
-    const g = game([flat, { id: 'bare', body: [{ text: 'flat.out' }], choices: [] }])
+    const g = game([flat, { id: 'bare', body: [{ prose: 'flat.out' }], choices: [] }])
     expect(view(open(g, 'bare'), g).scene.stage).toBeNull()
     expect(view({ ...startingState(g), sceneId: null }, g).scene.stage).toBeNull()
   })
@@ -370,7 +366,7 @@ describe('media checks', () => {
       [
         {
           id: 'flat',
-          body: [{ text: 'flat.bad' }, { media: { pool: 'cupboard' } }],
+          body: [{ prose: 'flat.bad' }, { media: { pool: 'cupboard' } }],
           stage: { layers: [], hotspots: [{ id: 'x', rect: [0, 0, 10, 10], label: 'X', choice: 'nope' }] },
           choices: [],
         },

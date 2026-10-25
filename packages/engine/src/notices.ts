@@ -12,7 +12,7 @@ export type Notice = {
   id: string
   /** A short line, as written. */
   title: string
-  /** A prose key for more words, if there are any. */
+  /** More words, as written, if there are any. Tokens are filled as the view shows it. */
   text?: string
   image?: string
   /** What it is about, for badges: `'messages'`, `'quests'`. */

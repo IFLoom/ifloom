@@ -26,7 +26,7 @@ export const flat: Content = {
     {
       id: 'phone',
       title: 'The phone',
-      body: [{ text: 'phone' }],
+      body: [{ prose: 'phone' }],
       choices: [
         // Answering stops the timer, so the missed call never comes.
         { id: 'answer', effects: [{ timer: 'phone', to: null }, { scene: 'ava.call' }] },

@@ -31,14 +31,14 @@ function letter(): Game {
           {
             id: 'mat',
             title: 'The mat',
-            body: [{ text: 'mat' }, { when: { kv: 'readBefore' }, text: 'again' }],
+            body: [{ prose: 'mat' }, { when: { kv: 'readBefore' }, prose: 'again' }],
             choices: [
-              { id: 'open', effects: [{ kv: 'readBefore', to: true }] },
-              { id: 'leave', effects: [{ scene: null }] },
+              { id: 'open', label: 'Open it', effects: [{ kv: 'readBefore', to: true }] },
+              { id: 'leave', label: 'Leave it', effects: [{ scene: null }] },
             ],
           },
         ],
-        prose: { mat: 'A letter on the mat.', again: 'You have read it before.', 'mat#open': 'Open it', 'mat#leave': 'Leave it' },
+        prose: { mat: 'A letter on the mat.', again: 'You have read it before.' },
       },
     ],
     { id: 'letter', title: 'The Letter' },

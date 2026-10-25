@@ -15,12 +15,16 @@ const stall = definePlugin<{ open: boolean }>({
   conditions: { sells: (_state, args) => ['bread', 'eggs'].includes(String(args.item)) },
   commands: { haggle: { run: (state) => state } },
   stage: (_state, { slice }) =>
-    slice.open ? { id: 'market', title: 'The market stall', body: [{ text: 'stall.open' }, { variants: 'stall.cries' }] } : undefined,
+    slice.open ? { id: 'market', title: 'The market stall', body: [{ prose: 'stall.open' }, { variants: 'stall.cries' }] } : undefined,
   buttons: () => [{ id: 'haggle', label: 'Haggle', command: { type: 'custom', name: 'stall/haggle' } }],
   argProblems: (kind, name, args) =>
     kind === 'conditions' && name === 'sells' && !['bread', 'eggs', 'cheese'].includes(String(args.item)) ? [`nobody sells "${String(args.item)}"`] : [],
   check: (game, { problems }) =>
-    problems([{ blocks: [{ text: 'stall.sign' }] }, { command: { type: 'scene', id: 'stall.closing' } }]).map((what) => ({ list: 'stall', id: game.id, what })),
+    problems([{ blocks: [{ prose: 'stall.sign' }] }, { command: { type: 'scene', id: 'stall.closing' } }]).map((what) => ({
+      list: 'stall',
+      id: game.id,
+      what,
+    })),
 })
 
 const market: Content = {

@@ -32,7 +32,7 @@ The [Transitions recipe](/docs/recipes/transitions) walks through transitions an
   id: 'ava.river',
   title: 'By the river',
   ui: { transition: { in: 'fade', out: 'fade', ms: 600 } },
-  body: [{ text: 'ava.river' }],
+  body: [{ prose: 'ava.river' }],
   choices: [/* ... */],
 }
 ```
@@ -119,9 +119,9 @@ function Heading() {
 
 ```ts
 body: [
-  { text: 'intro' },
-  { text: 'intro.tonight', ui: { reveal: { delay: 1200 } } },
-  { text: 'intro.cat', ui: { reveal: { delay: 1500, as: 'slide-up' } } },
+  { prose: 'intro' },
+  { prose: 'intro.tonight', ui: { reveal: { delay: 1200 } } },
+  { prose: 'intro.cat', ui: { reveal: { delay: 1500, as: 'slide-up' } } },
 ]
 ```
 
@@ -155,9 +155,9 @@ With `rolled`, the rolls being shown as they land, a beat whose [`dice`](#dice) 
 
 ```ts
 body: [
-  { text: 'place.park.stones' },   // 'Flat stones lie along the water’s edge. [[act:skim|Try to skim a stone]].'
-  { text: 'park.skim.passed', when: { roll: 'skim', passed: true }, ui: { dice: 'skim' } },
-  { text: 'park.skim.failed', when: { roll: 'skim', passed: false }, ui: { dice: 'skim' } },
+  { prose: 'place.park.stones' },   // 'Flat stones lie along the water’s edge. [[act:skim|Try to skim a stone]].'
+  { prose: 'park.skim.passed', when: { roll: 'skim', passed: true }, ui: { dice: 'skim' } },
+  { prose: 'park.skim.failed', when: { roll: 'skim', passed: false }, ui: { dice: 'skim' } },
 ]
 ```
 
@@ -181,7 +181,7 @@ The roll a beat's `dice` hint names among `rolls`, such as [`view.rolls`](/docs/
 
 ```ts
 body: [
-  { text: 'flat.ring', ui: { timer: 'flat.ring' } },   // 'Your phone is ringing on the sill. Ava. Answer before it stops.'
+  { prose: 'flat.ring', ui: { timer: 'flat.ring' } },   // 'Your phone is ringing on the sill. Ava. Answer before it stops.'
 ]
 ```
 
@@ -194,7 +194,7 @@ The [Timed choices and countdowns](/docs/recipes/timers) recipe builds a whole t
 ## tilt
 
 ```ts
-body: [{ text: 'flat.photo', ui: { tilt: true } }]   // '[[img:photo/ava.svg|Ava at the café]]'
+body: [{ prose: 'flat.photo', ui: { tilt: true } }]   // '[[img:photo/ava.svg|Ava at the café]]'
 ```
 
 On a [block](/docs/reference/scenes#block): `true` sets the block's picture at a slight angle, like a photo dropped on a table. The engine's picture markup has no flag for it, since how a picture sits is the UI's.
@@ -205,7 +205,7 @@ On a [block](/docs/reference/scenes#block): `true` sets the block's picture at a
 import { fold, text } from '@ifloom/engine'
 
 fold('Read the postcard', [text(`Wish you were here. The sea is cold and the chips are good. J.`)])
-// { blocks: [{ words: '…' }], ui: { fold: 'Read the postcard' } }
+// { blocks: [{ text: '…' }], ui: { fold: 'Read the postcard' } }
 ```
 
 On a section, `{ blocks }`: the words the fold opens by. The engine carries a section's hints on every beat it makes, as the beat's `section`, and `SceneStage` draws the beats together in a `<details>` with these words as its summary, shut to begin with. A fold is presentation only and keeps no state. See [Flowing scenes](/docs/reference/flows).

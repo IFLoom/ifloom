@@ -6,4 +6,4 @@
 import { location, type PlaceDef } from '@ifloom/plugin-places'
 
 export const place = (def: Omit<PlaceDef, 'body'> & { body?: PlaceDef['body'] }) =>
-  location({ desc: 'Small Town', body: [{ text: `place.${def.id}` }], ...def })
+  location({ desc: 'Small Town', body: [{ prose: `place.${def.id}` }], ...def })

@@ -20,20 +20,17 @@ function house(): Game {
           {
             id: 'hall',
             title: 'The hall',
-            body: [{ text: 'hall' }],
+            body: [{ prose: 'hall' }],
             choices: [
-              { id: 'answer', effects: [{ kv: 'answered', to: true }] },
-              { id: 'knock', blocked: [{ when: { kv: 'shy' }, reason: 'You feel too shy.' }], effects: [] },
-              { id: 'leave', effects: [{ scene: null }] },
+              { id: 'answer', label: 'Answer', effects: [{ kv: 'answered', to: true }] },
+              { id: 'knock', label: 'Knock', blocked: [{ when: { kv: 'shy' }, reason: 'You feel too shy.' }], effects: [] },
+              { id: 'leave', label: 'Leave', effects: [{ scene: null }] },
             ],
           },
         ],
         prose: {
           hall: 'The phone rings. [[act:answer|Pick it up]], or [[act:knock|knock]] on the door. The [[tip:hall.caller|caller]] waits.\n\nIt is **very** loud, and *still* ringing.',
           'hall.caller': 'Ava, from the café.',
-          'hall#answer': 'Answer',
-          'hall#knock': 'Knock',
-          'hall#leave': 'Leave',
         },
       },
     ],
@@ -141,11 +138,10 @@ function hallway(): Game {
       { name: 'base', introScene: 'hall' },
       {
         name: 'hallway',
-        scenes: [{ id: 'hall', title: 'The hall', body: [{ text: 'hall' }], choices: [{ id: 'leave', effects: [{ scene: null }] }] }],
+        scenes: [{ id: 'hall', title: 'The hall', body: [{ prose: 'hall' }], choices: [{ id: 'leave', label: 'Leave', effects: [{ scene: null }] }] }],
         prose: {
           hall: 'A [[ui:modal|note|hall.note|From Sam]] is under the door, beside [[ui:image|a photo|photo/ava.svg|Ava by the river]]. The [[ui:stamp|stamp|blue]] is smudged, and the [[ui:sticker|sticker]] peels.',
           'hall.note': 'Welcome to the building, {{name}}!\n\nBins go out **Thursday**.',
-          'hall#leave': 'Leave',
         },
       },
     ],

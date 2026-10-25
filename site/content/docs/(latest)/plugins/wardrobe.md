@@ -102,7 +102,7 @@ import { location, type PlaceDef } from '@ifloom/plugin-places'
 import { wearable, wearing } from '@ifloom/plugin-wardrobe'
 
 const place = (id: string, name: string, exits: string[]): PlaceDef =>
-  ({ id, name, desc: 'Small Town', exits, body: [{ text: `place.${id}` }] })
+  ({ id, name, desc: 'Small Town', exits, body: [{ prose: `place.${id}` }] })
 
 const map = [
   {
@@ -111,7 +111,7 @@ const map = [
   },
   {
     ...place('cafe', 'The Corner Café', ['high-street']),
-    body: [{ text: 'place.cafe' }, { text: 'place.cafe.raincoat', when: wearing('clothing:raincoat') }],
+    body: [{ prose: 'place.cafe' }, { prose: 'place.cafe.raincoat', when: wearing('clothing:raincoat') }],
   },
   {
     ...place('park', 'Riverside Park', ['high-street']),

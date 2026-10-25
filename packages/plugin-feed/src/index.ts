@@ -10,6 +10,7 @@
  */
 import {
   definePlugin,
+  fillTokens,
   holds,
   parseBeats,
   styledBeats,
@@ -46,7 +47,7 @@ export type PostDef = {
   likes?: number
 }
 
-/** A comment on a post. `text` is a prose key. */
+/** A comment on a post. `text` is its words, as written. */
 export type Comment = { from: string; text: string }
 
 /** A post the player made, as the state keeps it. */
@@ -55,7 +56,7 @@ export type OwnPost = {
   feed: string
   /** The turn it was posted. */
   turn: number
-  /** A prose key. */
+  /** Its words, as written; tokens are filled as it is shown. */
   text?: string
   image?: string
   video?: string
@@ -166,7 +167,7 @@ export function feed(): DefinedPlugin<FeedState, FeedsView> {
 
   return definePlugin<FeedState, FeedsView>({
     id: ID,
-    version: 2,
+    version: 3,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
     commandVersion: COMMAND_VERSION,
@@ -178,6 +179,19 @@ export function feed(): DefinedPlugin<FeedState, FeedsView> {
       1: (state) => {
         const old = state as { own: (Omit<OwnPost, 'turn'> & { day: number })[] }
         return { ...old, own: (old.own ?? []).map(({ day, ...post }) => ({ ...post, turn: day })) }
+      },
+      // 2 → 3: a post's and a comment's `text` is its words, as content writes them now, not a prose key:
+      // a key the game's prose has becomes those words.
+      2: (state, { game }) => {
+        const old = state as FeedState
+        const words = <T extends { text?: string }>(entry: T): T =>
+          entry.text === undefined ? entry : { ...entry, text: game.prose?.line(entry.text) ?? entry.text }
+        const comments = (list: Comment[] | undefined) => (list ?? []).map(words)
+        return {
+          ...old,
+          own: (old.own ?? []).map((post) => ({ ...words(post), comments: comments(post.comments) })),
+          reactions: Object.fromEntries(Object.entries(old.reactions ?? {}).map(([id, entry]) => [id, { ...entry, comments: comments(entry.comments) }])),
+        }
       },
     },
     strings: {
@@ -269,7 +283,7 @@ export function feed(): DefinedPlugin<FeedState, FeedsView> {
       return appeared === slice.appeared ? after : set({ ...slice, appeared })
     },
     view: (state, { slice, game, beats }): FeedsView => {
-      const words = (key: string | undefined) => (key ? (game.prose?.line(key, state) ?? '') : '')
+      const words = (text: string | undefined) => (text ? fillTokens(text, state, game) : '')
       const comments = (list: Comment[]) =>
         list.map((comment) => ({ from: comment.from, name: personOf(game, state, comment.from).name, text: words(comment.text) }))
       const feeds = feedsOf(game).map((entry): FeedView => {
@@ -316,7 +330,7 @@ export function feed(): DefinedPlugin<FeedState, FeedsView> {
         if (table !== 'effects') return []
         // What the player posts or comments: its words, and its picture or video as a path from the page.
         const refs: Reference[] = []
-        if (args.text !== undefined) refs.push({ prose: String(args.text) })
+        if (args.text !== undefined) refs.push({ words: String(args.text), field: name === 'post' ? 'post' : 'comment' })
         if (name === 'post' && args.image !== undefined) refs.push({ picture: String(args.image), asWritten: true })
         if (name === 'post' && args.video !== undefined) refs.push({ video: String(args.video), asWritten: true })
         return refs

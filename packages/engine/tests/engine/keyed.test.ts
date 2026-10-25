@@ -72,7 +72,7 @@ describe('effects from before schema 21', () => {
       entities: [
         { id: 'apple', of: 'food', name: 'Apple', traits: { 'inventory/usable': { label: 'Eat', effects: [{ kind: 'stat', stat: 'energy', by: 5 }] } } },
       ],
-      scenes: [{ id: 's', body: [{ text: 's' }], choices: [] }],
+      scenes: [{ id: 's', body: [{ prose: 's' }], choices: [] }],
     }
     const upgraded = upgradePack(v20, [])
     expect(upgraded.ok && upgraded.value).toMatchObject({
@@ -100,7 +100,7 @@ describe('effects from before schema 21', () => {
       data: { cheats: { cheats: [{ id: 'rich', label: 'Rich', effects: [{ stat: 'coins', to: 999 }] }] } },
       entities: [{ id: 'apple', traits: { 'inventory/usable': { label: 'Eat', effects: [{ stat: 'energy', by: 5 }] } } }],
       // A scene's blocks are left as they are: a `{ text }` block isn't an effect.
-      scenes: [{ id: 's', body: [{ text: 's' }], choices: [] }],
+      scenes: [{ id: 's', body: [{ prose: 's' }], choices: [] }],
     })
   })
 })

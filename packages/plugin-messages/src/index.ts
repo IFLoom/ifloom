@@ -15,6 +15,7 @@ import {
   buildEffects,
   commandOf,
   definePlugin,
+  fillTokens,
   holds,
   inRange,
   notify,
@@ -40,9 +41,11 @@ import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations 
 /** Where messages go: texts, email, the doormat. */
 export type Channel = { id: string; name: string }
 
-/** A reply the player can send. Its label is the prose key `<message id>#<reply id>`. */
+/** A reply the player can send. */
 export type ReplyDef = {
   id: string
+  /** Its words, as written, with tokens filled: "On my way". Its id if left out. */
+  label?: string
   /** Only on offer while this holds. */
   when?: Condition
   effects?: EffectRef[]
@@ -385,7 +388,10 @@ export function messages(): DefinedPlugin<MessagesState, MessagesView> {
           .forEach(({ arrival, message }, order) => {
             const thread = threadOf(message)
             const sent = slice.replied[arrival.key]
-            const label = (reply: string) => game.prose?.line(`${message.id}#${reply}`, state) ?? reply
+            const label = (reply: string) => {
+              const written = message.replies?.find((entry) => entry.id === reply)?.label
+              return written === undefined ? reply : fillTokens(written, state, game)
+            }
             const words = beats(message.body, message.id)
             const shown: MessageView = {
               id: message.id,
@@ -434,7 +440,7 @@ export function messages(): DefinedPlugin<MessagesState, MessagesView> {
             { when: message.when },
             { blocks: message.body },
             ...(message.replies ?? []).flatMap((reply) => [
-              { prose: `${message.id}#${reply.id}` },
+              { words: reply.label, field: 'label', ...(reply.label === undefined ? { oldKey: `${message.id}#${reply.id}` } : {}) },
               { within: `reply ${reply.id}`, refs: [{ when: reply.when }, { effects: reply.effects }] },
             ]),
           ],

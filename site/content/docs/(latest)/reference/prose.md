@@ -264,7 +264,7 @@ A choice can send any command as well as its effects, with its [`command`](/docs
 ```ts
 const kitchen: DataScene = {
   id: 'kitchen.phone',
-  body: [{ text: 'kitchen.phone' }],
+  body: [{ prose: 'kitchen.phone' }],
   choices: [
     { id: 'answer', command: openApp('texts'), effects: [{ kv: 'answered', to: true }] },
     { id: 'ignore', effects: [{ scene: null }] },

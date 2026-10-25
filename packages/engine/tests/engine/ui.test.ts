@@ -20,14 +20,14 @@ const porch: DataScene = {
   id: 'porch',
   ui: { mood: 'calm', backdrop: 'dusk' },
   body: [
-    { text: 'porch.text' },
-    { text: 'porch.more', ui: { reveal: { delay: 1200 } } },
-    { text: 'porch.never', when: { kv: 'never' }, ui: { lost: true } },
-    { text: 'porch.last', ui: { style: 'whisper' } },
+    { prose: 'porch.text' },
+    { prose: 'porch.more', ui: { reveal: { delay: 1200 } } },
+    { prose: 'porch.never', when: { kv: 'never' }, ui: { lost: true } },
+    { prose: 'porch.last', ui: { style: 'whisper' } },
   ],
   choices: [
-    { id: 'in', ui: { transition: 'zoom' }, effects: [{ scene: null }] },
-    { id: 'wait', effects: [] },
+    { id: 'in', label: 'Go in', ui: { transition: 'zoom' }, effects: [{ scene: null }] },
+    { id: 'wait', label: 'Wait', effects: [] },
   ],
 }
 
@@ -36,8 +36,6 @@ const prose = {
   'porch.more': 'A swing creaks.\n\nThen it stops.',
   'porch.never': 'Never shown.',
   'porch.last': 'Somebody hums.',
-  'porch#in': 'Go in',
-  'porch#wait': 'Wait',
 }
 
 function make(extra: Partial<Content> = {}, base: Partial<Game> = {}) {
@@ -119,7 +117,7 @@ describe('ui hints', () => {
     const odd: DataScene = {
       ...porch,
       ui: { mood: 'calm', onShow: () => 1 } as unknown as DataScene['ui'],
-      body: [{ text: 'porch.text', ui: 'fade' as unknown as DataScene['ui'] }],
+      body: [{ prose: 'porch.text', ui: 'fade' as unknown as DataScene['ui'] }],
       choices: [{ id: 'in', ui: { list: [1, new Date(0)] }, effects: [] }],
     }
     const problems = make({ scenes: [odd], ui: { fine: true } }).problems.map(describeProblem)

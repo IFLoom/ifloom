@@ -45,7 +45,7 @@ describe('the loader', () => {
     )
   })
 
-  it('checks triggers, inputs, calls and the kinds and prose their effects name', () => {
+  it('checks triggers, inputs, calls and the kinds and scenes their effects name', () => {
     const pack: Content = {
       name: 'post',
       kinds: [{ id: 'letter', label: 'Letter' }],
@@ -71,7 +71,6 @@ describe('the loader', () => {
       expect.arrayContaining([
         'post · trigger parcel · unknown kind "parcel"',
         'post · trigger parcel · unknown kind "drawer"',
-        'post · trigger parcel · no prose for "post.unwritten"',
         'post · trigger parcel · goes to unknown scene "nowhere"',
         'post · trigger parcel · no custom effect named "game/shred"',
         'post · input colour · a choice with no options',
@@ -89,7 +88,7 @@ describe('one thing declared twice across the content', () => {
       .problems.map(describeProblem)
       .filter((line) => line.includes('declared twice'))
   const named = (name: string, rest: Content): Content => ({ name, ...rest })
-  const scene = (id: string) => ({ id, body: [{ text: 'cafe.counter' }], choices: [] })
+  const scene = (id: string) => ({ id, body: [{ prose: 'cafe.counter' }], choices: [] })
   const stat = (id: string) => ({ id, label: id, min: 0, max: 10, start: 0 })
 
   // Each kind of key content declares, written twice.
@@ -124,7 +123,7 @@ describe('one thing declared twice across the content', () => {
 })
 
 describe('packs over the content', () => {
-  const scene = (id: string, text: string) => ({ id, body: [{ text }], choices: [] })
+  const scene = (id: string, prose: string) => ({ id, body: [{ prose }], choices: [] })
   const content: Content[] = [{ scenes: [scene('cafe.counter', 'cafe.counter')], prose: { 'cafe.counter': 'The counter.' } }]
 
   it('replace what the content declares, and each other, last one winning, without a word', () => {
@@ -132,7 +131,7 @@ describe('packs over the content', () => {
     const late: Pack = { id: 'mod:late', schema: SCHEMA, prose: { 'cafe.counter': 'Late.' }, scenes: [scene('cafe.counter', 'cafe.late')] }
     const { game, prose, problems } = loadWhole(content, baseOf(), { packs: [evening, late] })
     expect(prose['cafe.counter']).toBe('Late.')
-    expect(game.scenes.find((one) => one.id === 'cafe.counter')).toMatchObject({ body: [{ text: 'cafe.late' }] })
+    expect(game.scenes.find((one) => one.id === 'cafe.counter')).toMatchObject({ body: [{ prose: 'cafe.late' }] })
     expect(problems.filter((problem) => problem.what.includes('twice'))).toEqual([])
   })
 
@@ -173,8 +172,8 @@ describe('content given what only a pack has', () => {
 
 describe('what a mod can reach', () => {
   const scenes: Content['scenes'] = [
-    { id: 'door', body: [], choices: [{ id: 'in', effects: [{ scene: null }] }] },
-    { id: 'gate', body: [], choices: [{ id: 'in', effects: [{ scene: null }] }] },
+    { id: 'door', body: [], choices: [{ id: 'in', label: 'In', effects: [{ scene: null }] }] },
+    { id: 'gate', body: [], choices: [{ id: 'in', label: 'In', effects: [{ scene: null }] }] },
   ]
   const base = { id: 'yard', title: 'The Yard' }
   const own: Content = {
@@ -191,7 +190,7 @@ describe('what a mod can reach', () => {
     finished: { seen: 'gate' },
     carryOver: { kv: ['swept'] },
     ui: { mood: 'calm' },
-    prose: { 'door#in': 'In', 'gate#in': 'In' },
+    prose: {},
   }
 
   it('is content: actions, locks, resets, saveable, finished, carryOver, startPhase, introScene and ui', () => {

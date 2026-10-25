@@ -84,8 +84,8 @@ Opening the letter and telling the truth each pay `{ stat: 'courage', by: 1 }`. 
 The engine counts every choice taken, by `scene#choice`, so a later chapter can ask about an earlier one with [`{ chose }`](/docs/reference/conditions#chose). Nobody has to set a kv key for it:
 
 ```ts
-{ text: 'ch2.stairs.opened', when: { chose: 'ch1.mat#open' } },
-{ text: 'ch2.stairs.shelved', when: { chose: 'ch1.mat#shelf' } },
+{ prose: 'ch2.stairs.opened', when: { chose: 'ch1.mat#open' } },
+{ prose: 'ch2.stairs.shelved', when: { chose: 'ch1.mat#shelf' } },
 ```
 
 The same condition can hide a choice. `blame` ("Only something that came open in the post.") is only there for a reader who opened the letter.
@@ -95,9 +95,9 @@ The same condition can hide a choice. `blame` ("Only something that came open in
 Each lie adds to a kv key with `{ kv: 'fibs', by: 1 }` (`blame` adds 2), and the last chapter reads the count back as a range:
 
 ```ts
-{ text: 'ch3.door.honest', when: { kv: 'fibs', lt: 1 } },
-{ text: 'ch3.door.fib', when: { kv: 'fibs', is: 1 } },
-{ text: 'ch3.door.tangle', when: { kv: 'fibs', gte: 2 } },
+{ prose: 'ch3.door.honest', when: { kv: 'fibs', lt: 1 } },
+{ prose: 'ch3.door.fib', when: { kv: 'fibs', is: 1 } },
+{ prose: 'ch3.door.tangle', when: { kv: 'fibs', gte: 2 } },
 ```
 
 A kv key that was never set counts as 0, so the honest reader's line needs nothing written first.

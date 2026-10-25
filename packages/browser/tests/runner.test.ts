@@ -8,8 +8,8 @@ function game(extra: Partial<Game> = {}): Game {
     [
       { introScene: 'porch' },
       {
-        scenes: [{ id: 'porch', title: 'The porch', body: [{ text: 'porch' }], choices: [{ id: 'wait', effects: [{ turn: true }] }] }],
-        prose: { porch: 'A cat naps on the step.', 'porch#wait': 'Wait' },
+        scenes: [{ id: 'porch', title: 'The porch', body: [{ prose: 'porch' }], choices: [{ id: 'wait', label: 'Wait', effects: [{ turn: true }] }] }],
+        prose: { porch: 'A cat naps on the step.' },
       },
     ],
     { id: 'porch', title: 'The porch' },

@@ -345,11 +345,12 @@ export function loadGame(content: readonly Content[], base: GameBase, { packs = 
   })
 
   // Then the packs over it, each over the ones before. An old pack's steps may read the entities
-  // declared under it and the game's word for the player, as its schema 22 speech does.
+  // declared under it and the game's word for the player, as its schema 22 speech does, and the
+  // prose under it, as its schema 24 labels do.
   const declared: unknown[] = [...(base.plugins ?? []).flatMap((plugin) => plugin.content?.entities ?? []), ...content.flatMap((piece) => piece.entities ?? [])]
   for (const written of packs) {
     // An older pack is carried forward to this schema; one that can't be is skipped whole.
-    const upgraded = upgradePack(written, base.plugins ?? [], { entities: declared, you: strings.you !== undefined ? [strings.you] : [] })
+    const upgraded = upgradePack(written, base.plugins ?? [], { entities: declared, you: strings.you !== undefined ? [strings.you] : [], prose })
     if (upgraded.ok) declared.push(...(upgraded.value.entities ?? []))
     if (!upgraded.ok) {
       problems.push({ pack: written.id, where: 'pack', what: upgraded.reason })

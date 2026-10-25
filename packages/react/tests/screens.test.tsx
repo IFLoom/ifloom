@@ -13,7 +13,7 @@ function game(): Game {
       {
         name: 'town',
         actions: [{ id: 'wait', label: 'Wait a while', effects: [{ kv: 'waited', by: 1 }] }],
-        scenes: [{ id: 'intro', title: 'Hello', body: [{ text: 'intro' }], choices: [{ id: 'go', effects: [{ scene: null }] }] }],
+        scenes: [{ id: 'intro', title: 'Hello', body: [{ prose: 'intro' }], choices: [{ id: 'go', label: 'Go in', effects: [{ scene: null }] }] }],
         inputs: [
           { id: 'catName', label: 'Name the cat', type: 'text', maxLength: 8 },
           {
@@ -26,7 +26,7 @@ function game(): Game {
             ],
           },
         ],
-        prose: { intro: 'Hi.', 'intro#go': 'Go in' },
+        prose: { intro: 'Hi.' },
       },
     ],
     {

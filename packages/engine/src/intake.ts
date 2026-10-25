@@ -277,6 +277,18 @@ const STEPS: Record<number, (state: Saved, game: Game) => Saved> = {
     const { vars, ...rest } = running
     return { ...state, minigame: { ...rest, kv: vars } }
   },
+  // 20 → 21: a notice's `text` is its words, as content writes them now, not a prose key: a key the
+  // game's prose has becomes those words.
+  20: (state, game) => {
+    const notices = state.notices as { text?: unknown }[] | undefined
+    if (!Array.isArray(notices)) return state
+    return {
+      ...state,
+      notices: notices.map((notice) =>
+        notice && typeof notice.text === 'string' ? { ...notice, text: game.prose?.line(notice.text) ?? notice.text } : notice,
+      ),
+    }
+  },
 }
 
 /** A data scene's choice, as far as the version 18 step reads it. */

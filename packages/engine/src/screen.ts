@@ -373,12 +373,11 @@ const asAction = (state: GameState, game: Game, action: ActionDef, owner?: strin
 
 /**
  * A button's words as its `labels` and `label` give them: the first label
- * whose `when` holds, else `label`, each the prose line when it is a key the
- * game's prose has, else the words as written, tokens filled. Undefined with neither.
+ * whose `when` holds, else `label`, as written with tokens filled. Undefined with neither.
  */
 function buttonWords(state: GameState, game: Game, button: Pick<ActionDef, 'label' | 'labels'>): string | undefined {
   const label = button.labels?.find((entry) => holds(state, entry.when, game))?.label ?? button.label
-  return label === undefined ? undefined : (game.prose?.line(label, state) ?? featureContext().fillTokens(label, state, game))
+  return label === undefined ? undefined : featureContext().fillTokens(label, state, game)
 }
 
 /** `renderAction`, asking `rendered` for the open scene. `effects`, when the caller has worked them out. */

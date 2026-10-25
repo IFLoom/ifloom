@@ -10,8 +10,4 @@ export const actions: Content = {
   actions: [{ id: 'wait', label: 'Wait a while', effects: [pass(1)] }],
   // One post a day: each new day (a turn, here) resets it.
   resets: { postedToday: false },
-  prose: {
-    'post.photo': 'New town, new faces.',
-    'comment.nice': 'Lovely!',
-  },
 }

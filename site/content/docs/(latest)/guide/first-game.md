@@ -61,14 +61,14 @@ const locations = [
     name: 'Your house',
     desc: 'Home',
     exits: ['high-street'],
-    body: [{ text: 'house' }],
+    body: [{ prose: 'house' }],
   }),
   location({
     id: 'high-street',
     name: 'The high street',
     desc: 'Town',
     exits: ['house', 'cafe'],
-    body: [{ text: 'high-street' }],
+    body: [{ prose: 'high-street' }],
   }),
   location({
     id: 'cafe',
@@ -77,9 +77,9 @@ const locations = [
     exits: ['high-street'],
     blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
     body: [
-      { text: 'cafe' },
-      { text: 'cafe.ruth', when: here('ruth') },
-      { text: 'cafe.empty', when: { not: here('ruth') } },
+      { prose: 'cafe' },
+      { prose: 'cafe.ruth', when: here('ruth') },
+      { prose: 'cafe.empty', when: { not: here('ruth') } },
     ],
     actions: [
       { id: 'coffee', label: 'Buy a coffee', cost: { stats: { coins: 3 } }, effects: [pass(1), { stat: 'energy', by: 20 }] },
@@ -177,7 +177,7 @@ import type { DataScene } from '@ifloom/engine'
 const intro: DataScene = {
   id: 'intro',
   title: 'Moving day',
-  body: [{ text: 'intro' }],
+  body: [{ prose: 'intro' }],
   choices: [{ id: 'bed', effects: [{ scene: null }] }],
 }
 ```
@@ -193,8 +193,8 @@ const ruthTalk: DataScene = {
   id: 'ruth.talk',
   speaker: 'ruth',
   body: [
-    { text: 'ruth.talk.hello' },
-    { text: 'ruth.talk.regular', when: { stat: 'friendship', of: character('ruth'), gte: 5 } },
+    { prose: 'ruth.talk.hello' },
+    { prose: 'ruth.talk.regular', when: { stat: 'friendship', of: character('ruth'), gte: 5 } },
   ],
   choices: [
     {
@@ -618,14 +618,14 @@ const locations = [
     name: 'Your house',
     desc: 'Home',
     exits: ['high-street'],
-    body: [{ text: 'house' }],
+    body: [{ prose: 'house' }],
   }),
   location({
     id: 'high-street',
     name: 'The high street',
     desc: 'Town',
     exits: ['house', 'cafe'],
-    body: [{ text: 'high-street' }],
+    body: [{ prose: 'high-street' }],
   }),
   location({
     id: 'cafe',
@@ -634,9 +634,9 @@ const locations = [
     exits: ['high-street'],
     blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
     body: [
-      { text: 'cafe' },
-      { text: 'cafe.ruth', when: here('ruth') },
-      { text: 'cafe.empty', when: { not: here('ruth') } },
+      { prose: 'cafe' },
+      { prose: 'cafe.ruth', when: here('ruth') },
+      { prose: 'cafe.empty', when: { not: here('ruth') } },
     ],
     actions: [
       { id: 'coffee', label: 'Buy a coffee', cost: { stats: { coins: 3 } }, effects: [pass(1), { stat: 'energy', by: 20 }] },
@@ -679,7 +679,7 @@ const actions: ActionDef[] = [
 const intro: DataScene = {
   id: 'intro',
   title: 'Moving day',
-  body: [{ text: 'intro' }],
+  body: [{ prose: 'intro' }],
   choices: [{ id: 'bed', effects: [{ scene: null }] }],
 }
 
@@ -687,8 +687,8 @@ const ruthTalk: DataScene = {
   id: 'ruth.talk',
   speaker: 'ruth',
   body: [
-    { text: 'ruth.talk.hello' },
-    { text: 'ruth.talk.regular', when: { stat: 'friendship', of: character('ruth'), gte: 5 } },
+    { prose: 'ruth.talk.hello' },
+    { prose: 'ruth.talk.regular', when: { stat: 'friendship', of: character('ruth'), gte: 5 } },
   ],
   choices: [
     {

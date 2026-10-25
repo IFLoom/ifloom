@@ -10,8 +10,8 @@ const loaded = () =>
       { name: 'base', introScene: 'mat' },
       {
         name: 'letter',
-        scenes: [{ id: 'mat', title: 'The mat', body: [{ text: 'mat' }], choices: [{ id: 'open', effects: [{ scene: null }] }] }],
-        prose: { mat: 'A letter on the mat.', 'mat#open': 'Open it' },
+        scenes: [{ id: 'mat', title: 'The mat', body: [{ prose: 'mat' }], choices: [{ id: 'open', label: 'Open it', effects: [{ scene: null }] }] }],
+        prose: { mat: 'A letter on the mat.' },
       },
     ],
     { id: 'letter', title: 'The Letter' },

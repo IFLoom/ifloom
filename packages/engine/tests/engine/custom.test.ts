@@ -131,7 +131,7 @@ describe('custom functions belong to their game', () => {
   })
 
   it('runs one data scene with each game’s own functions', () => {
-    const scene = { id: 'sky', body: [{ text: 'sky', when: { 'game/fine': true as const } }], choices: [] }
+    const scene = { id: 'sky', body: [{ prose: 'sky', when: { 'game/fine': true as const } }], choices: [] }
     const prose = (game: Game) => proseStore(game, { sky: 'Blue sky.' })
     const sunnyGame: Game = { ...sunny, scenes: [scene], introScene: 'sky' }
     const rainyGame: Game = { ...rainy, scenes: [scene], introScene: 'sky' }

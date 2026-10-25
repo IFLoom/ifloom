@@ -13,7 +13,7 @@ const windowSeat: DataScene = {
   drawnFrom: ['cafe'],
   weight: 3,
   when: { not: { seen: 'cafe.window', gte: 2 } },
-  body: [{ text: 'cafe.window' }],
+  body: [{ prose: 'cafe.window' }],
   choices: [{ id: 'leave', effects: [{ scene: null }] }],
 }
 
@@ -108,7 +108,7 @@ const samAtTheCafe: DataScene = {
   id: 'cafe.sam',
   drawnFrom: ['cafe'],
   when: { 'game/cooledDown': { key: 'cafe.sam.last', turns: 3 } },
-  body: [{ text: 'cafe.sam' }],
+  body: [{ prose: 'cafe.sam' }],
   choices: [{ id: 'leave', effects: [{ 'game/stamp': { key: 'cafe.sam.last' } }, { scene: null }] }],
 }
 ```
@@ -148,7 +148,7 @@ export const rainyDays: Pack = {
     {
       id: 'cafe.umbrella',
       drawnFrom: ['cafe'],
-      body: [{ text: 'cafe.umbrella' }],
+      body: [{ prose: 'cafe.umbrella' }],
       choices: [{ id: 'leave', effects: [{ scene: null }] }],
     },
   ],
@@ -174,7 +174,7 @@ Three scenes are drawn from `'cafe'`, and a fourth is the quiet table for when n
   drawnFrom: ['cafe'],
   weight: 3,
   when: { not: { seen: 'cafe.window', gte: 2 } },
-  body: [{ text: 'cafe.window' }],
+  body: [{ prose: 'cafe.window' }],
   choices: [{ id: 'leave', effects: [{ scene: null }] }],
 },
 {
@@ -182,7 +182,7 @@ Three scenes are drawn from `'cafe'`, and a fourth is the quiet table for when n
   title: 'Seven down',
   drawnFrom: ['cafe'],
   when: { not: { seen: 'cafe.crossword' } },
-  body: [{ text: 'cafe.crossword' }],
+  body: [{ prose: 'cafe.crossword' }],
   choices: [{ id: 'leave', effects: [{ stat: 'charm', by: 1 }, { scene: null }] }],
 },
 {
@@ -192,14 +192,14 @@ Three scenes are drawn from `'cafe'`, and a fourth is the quiet table for when n
   drawnFrom: ['cafe'],
   weight: 2,
   when: here('ava'),
-  body: [{ text: 'cafe.break' }],
+  body: [{ prose: 'cafe.break' }],
   choices: [{ id: 'leave', effects: [{ stat: 'friendship', by: 2, of: character('ava') }, { scene: null }] }],
 },
 // When none of them can happen.
 {
   id: 'cafe.quiet',
   title: 'A quiet table',
-  body: [{ text: 'cafe.quiet' }],
+  body: [{ prose: 'cafe.quiet' }],
   choices: [{ id: 'leave', effects: [{ scene: null }] }],
 },
 ```

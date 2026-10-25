@@ -24,64 +24,69 @@ import { lineSpeakers } from './speakers.ts'
  * adding a conditional line is adding a block rather than multiplying the
  * key space.
  */
-export type Block = (
-  | { text: string; when?: Condition }
-  | {
-      variants: string
-      when?: Condition
-      /**
-       * Conditions on individual members, by key. A line whose gate fails is
-       * left out of the draw — so a variants can hold something she only says once
-       * she has posted a photo, without splitting the variants in two.
-       */
-      gate?: Record<string, Condition>
-      /**
-       * A picture that belongs with a particular line, given as the variants to
-       * draw it from — so a rotating line keeps its paired, rotating still.
-       */
-      art?: Record<string, string>
-    }
-  /**
-   * A picture or a video. Left without `at`, it sits here in the body, in
-   * order with the prose, exactly as its markup would.
-   */
-  | { media: SceneMedia; when?: Condition }
+export type Block =
   /**
    * Words as written, one paragraph or several, read as prose is (spoken
-   * lines, pictures, inline markup, tokens): what `text()` writes.
+   * lines, pictures, inline markup, tokens): what `text()` writes. `id`
+   * names it for a translation's `words` table, `scene.<scene>.text.<id>`;
+   * without one, it is named by a short hash of its words.
    */
-  | { words: string; when?: Condition }
-  /**
-   * A spoken line as written, under who says it, by id as `@id: "…"` in
-   * prose names them: an entity, by reference or bare id as a scene's
-   * `speaker` is, `'you'` for whoever the player is playing, or `'player'`.
-   * What `say()` writes. `voice` is the track of it read aloud.
-   */
-  | { say: string; speaker: string; voice?: string; when?: Condition }
-  /**
-   * A section: blocks shown together while `when` holds. Its `ui` hints are
-   * carried on every beat it makes, as `section`, so a UI can draw it as one,
-   * as the React UI draws `fold()` as a part that opens and shuts.
-   */
-  | { blocks: Block[]; when?: Condition }
-  /**
-   * A decision: the flow waits here until the player picks one of `choices`.
-   * The pick's `then` comes next, then the blocks after the decision.
-   */
-  | { decide: string; choices: FlowChoice[]; when?: Condition }
-  /** A place in the flow that a choice's `{ point }` effect jumps to: anywhere in the body, a section or a choice's `then` included. */
-  | { point: string; when?: undefined }
-  /** A minigame played where it stands: the flow waits until it ends. */
-  | { minigame: string; when?: Condition }
-  /** A panel opened where it stands, with what it needs: the flow waits until it is closed. */
-  | { panel: string; with?: PluginArgs; when?: Condition }
-) & {
-  /**
-   * Presentation hints for the UI, carried on the first beat the block makes
-   * (on every beat, for a section) and given no meaning by the engine. See `BlockUi`.
-   */
-  ui?: Ui<BlockUi>
-}
+  (
+    | { text: string; id?: string; when?: Condition }
+    /** Words by key, from the game's `prose` table: for a line shared between scenes, or kept apart from the scene. */
+    | { prose: string; when?: Condition }
+    | {
+        variants: string
+        when?: Condition
+        /**
+         * Conditions on individual members, by key. A line whose gate fails is
+         * left out of the draw — so a variants can hold something she only says once
+         * she has posted a photo, without splitting the variants in two.
+         */
+        gate?: Record<string, Condition>
+        /**
+         * A picture that belongs with a particular line, given as the variants to
+         * draw it from — so a rotating line keeps its paired, rotating still.
+         */
+        art?: Record<string, string>
+      }
+    /**
+     * A picture or a video. Left without `at`, it sits here in the body, in
+     * order with the prose, exactly as its markup would.
+     */
+    | { media: SceneMedia; when?: Condition }
+    /**
+     * A spoken line as written, under who says it, by id as `@id: "…"` in
+     * prose names them: an entity, by reference or bare id as a scene's
+     * `speaker` is, `'you'` for whoever the player is playing, or `'player'`.
+     * What `say()` writes. `voice` is the track of it read aloud. `id` names
+     * it for a translation's `words` table, as a `{ text }` block's does.
+     */
+    | { say: string; speaker: string; voice?: string; id?: string; when?: Condition }
+    /**
+     * A section: blocks shown together while `when` holds. Its `ui` hints are
+     * carried on every beat it makes, as `section`, so a UI can draw it as one,
+     * as the React UI draws `fold()` as a part that opens and shuts.
+     */
+    | { blocks: Block[]; when?: Condition }
+    /**
+     * A decision: the flow waits here until the player picks one of `choices`.
+     * The pick's `then` comes next, then the blocks after the decision.
+     */
+    | { decide: string; choices: FlowChoice[]; when?: Condition }
+    /** A place in the flow that a choice's `{ point }` effect jumps to: anywhere in the body, a section or a choice's `then` included. */
+    | { point: string; when?: undefined }
+    /** A minigame played where it stands: the flow waits until it ends. */
+    | { minigame: string; when?: Condition }
+    /** A panel opened where it stands, with what it needs: the flow waits until it is closed. */
+    | { panel: string; with?: PluginArgs; when?: Condition }
+  ) & {
+    /**
+     * Presentation hints for the UI, carried on the first beat the block makes
+     * (on every beat, for a section) and given no meaning by the engine. See `BlockUi`.
+     */
+    ui?: Ui<BlockUi>
+  }
 
 /**
  * A choice in a scene: a `ButtonDef`, sent as `{ type: 'choose', id }`. Its
@@ -167,7 +172,7 @@ export type SceneRuntime = {
  * of dialogue. Anything the same scene declares as its own block is not a draw.
  */
 export function variantMembers(scene: DataScene, variants: string, runtime: SceneRuntime): string[] {
-  const declared = new Set(everyBlock(scene.body).flatMap(({ block }) => ('text' in block ? [block.text] : [])))
+  const declared = new Set(everyBlock(scene.body).flatMap(({ block }) => ('prose' in block ? [block.prose] : [])))
   return runtime.prose
     .variants(variants)
     .filter((key) => !declared.has(key))
@@ -188,10 +193,10 @@ function blockText(
   drawn?: string
 } {
   if ('media' in block) return { media: block.media }
-  if ('text' in block) {
-    return { text: runtime.prose.line(block.text, state), drawn: block.text }
+  if ('prose' in block) {
+    return { text: runtime.prose.line(block.prose, state), drawn: block.prose }
   }
-  if ('words' in block) return { text: fillTokens(block.words, state, runtime.game) }
+  if ('text' in block) return { text: fillTokens(block.text, state, runtime.game) }
   if (!('variants' in block)) return {}
   const members = variantMembers(scene, block.variants, runtime).filter((key) => holds(state, block.gate?.[key], runtime.game))
   if (members.length === 0) return {}
@@ -270,7 +275,7 @@ export function renderScene(scene: DataScene, state: GameState, runtime: SceneRu
       fresh = parts.length
     },
     chose: (choice, at) => {
-      const label = choiceLabel(scene, choice, drawn, state, runtime)
+      const label = choiceLabel(choice, drawn, state, runtime)
       picked[choice.id] = label
       parts.push({ beat: { type: 'chose', label, ...(at.section ? { section: at.section } : {}) } })
     },
@@ -284,7 +289,7 @@ export function renderScene(scene: DataScene, state: GameState, runtime: SceneRu
     const blocked = choice.blocked?.find((entry) => holds(state, entry.when, game))
     choices.push({
       id: choice.id,
-      label: choiceLabel(scene, choice, drawn, state, runtime),
+      label: choiceLabel(choice, drawn, state, runtime),
       visible,
       disabled: blocked?.reason ?? (already ? choice.once?.reason : undefined),
       tags: choice.tags,
@@ -319,19 +324,19 @@ export function renderScene(scene: DataScene, state: GameState, runtime: SceneRu
 
 /**
  * A choice's words. A reply written to answer the line she actually gave
- * beats a generic one: any block may carry its own `### Choices`; if one
- * that rendered has a label for this choice, the last of them wins. Then the
- * first `labels` entry whose `when` holds, then `label`, then the prose key
- * `<scene>#<id>`, then the id.
+ * beats a generic one: a prose block or a variants line drawn here may have
+ * a line of its own for the choice, under `<key>#<choice>`; if one that
+ * rendered has, the last of them wins. Then the first `labels` entry whose
+ * `when` holds, then `label`, as written with tokens filled, then the id.
  */
-function choiceLabel(scene: DataScene, choice: Choice, drawn: readonly string[], state: GameState, runtime: SceneRuntime): string {
+function choiceLabel(choice: Choice, drawn: readonly string[], state: GameState, runtime: SceneRuntime): string {
   const matched = drawn
     .map((key) => runtime.prose.line(`${key}#${choice.id}`, state))
     .filter((line): line is string => line !== undefined)
     .at(-1)
   if (matched !== undefined) return matched
   const named = choice.labels?.find((entry) => holds(state, entry.when, runtime.game))?.label ?? choice.label
-  return named !== undefined ? wordsOf(named, state, runtime) : (runtime.prose.line(`${scene.id}#${choice.id}`, state) ?? choice.id)
+  return named !== undefined ? fillTokens(named, state, runtime.game) : choice.id
 }
 
 /** A `say` block as its beat: whose line it is, as a scene's speaker is read, and its words filled in. */
@@ -345,11 +350,6 @@ function spokenBeat(block: Extract<Block, { say: string }>, state: GameState, ga
     text: fillTokens(block.say, state, game),
     ...(block.voice !== undefined ? { voice: block.voice } : {}),
   }
-}
-
-/** A button's words: the prose line when `label` is a prose key the game has, else the words as written, tokens filled. */
-function wordsOf(label: string, state: GameState, runtime: SceneRuntime): string {
-  return runtime.prose.line(label, state) ?? fillTokens(label, state, runtime.game)
 }
 
 /** A part as the body's text has it: its markup, or a spoken line's words. A past pick isn't in the body. */

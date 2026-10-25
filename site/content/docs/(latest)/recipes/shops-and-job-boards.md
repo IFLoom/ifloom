@@ -27,7 +27,7 @@ import { openShop } from '@ifloom/plugin-shop'
 
 const cafe = location({
   id: 'cafe', name: 'The Corner Café', desc: 'Café', exits: ['high-street'],
-  body: [{ text: 'place.cafe' }],
+  body: [{ prose: 'place.cafe' }],
   actions: [{ id: 'counter', label: 'Go to the counter', effects: [openShop('counter')] }],
 })
 ```
@@ -44,7 +44,7 @@ import { openJobs } from '@ifloom/plugin-jobs'
 const avaHi = {
   id: 'ava.hi',
   speaker: 'ava',
-  body: [{ text: 'ava.hi' }],
+  body: [{ prose: 'ava.hi' }],
   choices: [
     { id: 'work', effects: [{ scene: null }, openJobs()] },   // "Ask about weekend work"
     { id: 'bye', effects: [{ scene: null }] },

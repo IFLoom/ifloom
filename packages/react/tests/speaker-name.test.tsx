@@ -19,7 +19,7 @@ function show(rules?: GameRules) {
         name: 'cafe',
         kinds: [{ id: 'character', label: 'Person', unique: true }],
         entities: [{ id: 'ava', of: 'character', name: 'Ava' }],
-        scenes: [{ id: 'counter', title: 'The counter', body: [{ text: 'counter' }], choices: [] }],
+        scenes: [{ id: 'counter', title: 'The counter', body: [{ prose: 'counter' }], choices: [] }],
         prose: { counter: '@ava: "Morning. The usual?"\n\n"Please."\n\nRain runs down the window.\n\n@you: "And a flapjack."' },
       },
     ],

@@ -27,7 +27,7 @@ const river: DataScene = {
 }
 ```
 
-Keyed prose blocks, `{ text: 'ava.river' }`, still work beside these, so you can move a scene over a block at a time.
+Keyed prose blocks, `{ prose: 'ava.river' }`, still work beside these, so you can move a scene over a block at a time.
 
 ## Stop for a decision
 

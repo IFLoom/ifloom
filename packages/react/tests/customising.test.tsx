@@ -20,10 +20,10 @@ function letter(): Game {
           {
             id: 'mat',
             title: 'The mat',
-            body: [{ text: 'mat' }, { text: 'mat/ava' }],
+            body: [{ prose: 'mat' }, { prose: 'mat/ava' }],
             choices: [
-              { id: 'open', effects: [{ scene: null }] },
-              { id: 'shelf', effects: [{ notify: 'Hello', text: 'hello' }] },
+              { id: 'open', label: 'Open it', effects: [{ scene: null }] },
+              { id: 'shelf', label: 'Put it on the shelf', effects: [{ notify: 'Hello', text: 'hello' }] },
             ],
           },
         ],
@@ -31,8 +31,6 @@ function letter(): Game {
           mat: 'A letter on the mat.',
           'mat/ava': 'Ava: "Is that for me?"',
           hello: 'A notice.',
-          'mat#open': 'Open it',
-          'mat#shelf': 'Put it on the shelf',
         },
       },
     ],

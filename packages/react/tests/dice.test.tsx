@@ -24,14 +24,14 @@ function river(): Game {
             id: 'bank',
             title: 'The bank',
             body: [
-              { text: 'bank' },
-              { text: 'bank.skipped', when: { roll: 'skim', passed: true }, ui: { dice: 'skim' } },
-              { text: 'bank.sank', when: { roll: 'skim', passed: false }, ui: { dice: 'skim' } },
+              { prose: 'bank' },
+              { prose: 'bank.skipped', when: { roll: 'skim', passed: true }, ui: { dice: 'skim' } },
+              { prose: 'bank.sank', when: { roll: 'skim', passed: false }, ui: { dice: 'skim' } },
             ],
             choices: [
-              { id: 'skim', effects: [{ roll: 'skim', dice: '2d6', against: 8 }] },
-              { id: 'ducks', effects: [{ roll: 'ducks', dice: '1d6+2' }] },
-              { id: 'wait', effects: [] },
+              { id: 'skim', label: 'Skim a stone', effects: [{ roll: 'skim', dice: '2d6', against: 8 }] },
+              { id: 'ducks', label: 'Count the ducks', effects: [{ roll: 'ducks', dice: '1d6+2' }] },
+              { id: 'wait', label: 'Wait', effects: [] },
             ],
           },
         ],
@@ -39,9 +39,6 @@ function river(): Game {
           bank: 'Flat stones along the bank.',
           'bank.skipped': 'It skips to the far side.',
           'bank.sank': 'Plop.',
-          'bank#skim': 'Skim a stone',
-          'bank#ducks': 'Count the ducks',
-          'bank#wait': 'Wait',
         },
       },
     ],
@@ -150,7 +147,7 @@ describe('checkUiHints and dice', () => {
   it('accepts a roll key, and reports anything else', () => {
     expect(checkUiHints(river())).toEqual([])
     const game = river()
-    const bad = { ...game, scenes: [{ id: 'x', title: 'X', body: [{ text: 'bank', ui: { dice: 3 } }], choices: [] }] } as unknown as Game
+    const bad = { ...game, scenes: [{ id: 'x', title: 'X', body: [{ prose: 'bank', ui: { dice: 3 } }], choices: [] }] } as unknown as Game
     expect(checkUiHints(bad)).toEqual(["scene x block 1: ui.dice names a roll's key: letters, digits and _"])
   })
 })

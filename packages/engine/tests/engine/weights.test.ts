@@ -54,9 +54,9 @@ describe('weights in content', () => {
   it('make a heavier variants member come up more often', () => {
     const pack: Content = {
       name: 'street',
-      prose: { 'weather.sun': 'The sun is out.', 'weather.rain': 'It drizzles.', 'street#leave': 'Leave' },
+      prose: { 'weather.sun': 'The sun is out.', 'weather.rain': 'It drizzles.' },
       variants: { 'street.weather': [{ text: 'weather.sun', weight: 9 }, 'weather.rain'] },
-      scenes: [{ id: 'street', body: [{ variants: 'street.weather' }], choices: [{ id: 'leave', effects: [{ scene: null }] }] }],
+      scenes: [{ id: 'street', body: [{ variants: 'street.weather' }], choices: [{ id: 'leave', label: 'Leave', effects: [{ scene: null }] }] }],
     }
     const { game, problems } = loadGame([pack], { id: 'weather', title: 'Weather' })
     expect(problems).toEqual([])

@@ -90,7 +90,7 @@ const cafe: Content = {
   scenes: [
     {
       id: 'counter',
-      body: [{ text: 'counter' }],
+      body: [{ prose: 'counter' }],
       choices: [
         // Only offered once the card is full.
         { id: 'free-coffee', when: { 'loyalty/full': true }, effects: [{ scene: null }] },
@@ -1097,7 +1097,7 @@ const stall = definePlugin<{ open: boolean }>({
   commands: { haggle: { run: (state) => state } },
   stage: (_state, { slice }) =>
     slice.open
-      ? { id: 'market', title: 'The market stall', body: [{ text: 'stall.open' }, { variants: 'stall.cries' }] }
+      ? { id: 'market', title: 'The market stall', body: [{ prose: 'stall.open' }, { variants: 'stall.cries' }] }
       : undefined,
   buttons: () => [{ id: 'haggle', label: 'Haggle', command: { 'stall/haggle': true } }],
 })

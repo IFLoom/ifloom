@@ -8,9 +8,17 @@ import { place } from '../place.ts'
 /** The four arrows of quick feet, in the order the minigame's `arrow` variable numbers them from 1. */
 const ARROWS = ['up', 'down', 'left', 'right'] as const
 
+/** What the girl with the whistle does for each arrow. */
+const POINTS: Record<(typeof ARROWS)[number], string> = {
+  up: 'The girl with the whistle points at the sky. Up!',
+  down: 'She points at her shoes. Down!',
+  left: 'She points at the river. Left!',
+  right: 'She points at the swings. Right!',
+}
+
 /** One arrow on screen: 1.5 seconds to press it. The right one scores; a wrong one or the time running out doesn't. */
 const showArrow = (arrow: (typeof ARROWS)[number]): MinigameStateDef => ({
-  label: `arrows.${arrow}`,
+  label: POINTS[arrow],
   after: { ms: 1500, go: 'round' },
   on: ARROWS.map((input) => ({ input, go: 'round', ...(input === arrow ? { effects: [{ kv: 'score', of: 'minigame', by: 1 }] } : {}) })),
 })
@@ -57,7 +65,7 @@ const quickFeet: MinigameDef = {
  * draws the dice before the line that shows (`ui.dice`), and holds the line
  * back until they settle.
  */
-const skimmed = (when: Condition, text: string): Block => ({ text, when: { all: [{ kv: 'skimmed' }, when] }, ui: { dice: 'skim' } })
+const skimmed = (when: Condition, prose: string): Block => ({ prose, when: { all: [{ kv: 'skimmed' }, when] }, ui: { dice: 'skim' } })
 
 export const park: Content = {
   // One skimmed stone a day: each new day resets it.
@@ -67,14 +75,14 @@ export const park: Content = {
     {
       id: 'park.arrows-won',
       title: 'Quick feet',
-      body: [{ text: 'park.arrows-won' }],
-      choices: [{ id: 'leave', effects: [{ scene: null }] }],
+      body: [{ prose: 'park.arrows-won' }],
+      choices: [{ id: 'leave', label: 'Bow', effects: [{ scene: null }] }],
     },
     {
       id: 'park.arrows-lost',
       title: 'Quick feet',
-      body: [{ text: 'park.arrows-lost' }],
-      choices: [{ id: 'leave', effects: [{ scene: null }] }],
+      body: [{ prose: 'park.arrows-lost' }],
+      choices: [{ id: 'leave', label: 'Retire with dignity', effects: [{ scene: null }] }],
     },
   ],
   minigames: [quickFeet],
@@ -99,10 +107,10 @@ export const park: Content = {
       exits: ['high-street'],
       // The river, the ducks, a line while the day's visitors are about, then the stones, with how today's skim went.
       body: [
-        { text: 'place.park' },
-        { text: 'place.park.ducks', when: { roll: 'ducks' } },
-        { text: 'place.park.visitors', when: { count: 'visitor', gte: 1 } },
-        { text: 'place.park.stones' },
+        { prose: 'place.park' },
+        { prose: 'place.park.ducks', when: { roll: 'ducks' } },
+        { prose: 'place.park.visitors', when: { count: 'visitor', gte: 1 } },
+        { prose: 'place.park.stones' },
         skimmed({ roll: 'skim', critical: 'max' }, 'park.skim.best'),
         skimmed({ roll: 'skim', passed: true, critical: false }, 'park.skim.passed'),
         skimmed({ roll: 'skim', passed: false }, 'park.skim.failed'),
@@ -163,13 +171,7 @@ export const park: Content = {
     'park.skim.best': 'Skip after skip, clean to the far bank. An old man on the bench gives you a slow round of applause.',
     'park.skim.passed': 'The stone skips once, twice, again, and sinks most of the way across. The ducks look impressed despite themselves.',
     'park.skim.failed': 'Plop. It goes straight in, and the ducks look delighted.',
-    'arrows.up': 'The girl with the whistle points at the sky. Up!',
-    'arrows.down': 'She points at her shoes. Down!',
-    'arrows.left': 'She points at the river. Left!',
-    'arrows.right': 'She points at the swings. Right!',
     'park.arrows-won': 'The kids count it up on their fingers and agree, grudgingly, that you win. Five coins change hands from a jam jar.',
-    'park.arrows-won#leave': 'Bow',
     'park.arrows-lost': '"Too slow!" They are already picking a new grown-up to beat.',
-    'park.arrows-lost#leave': 'Retire with dignity',
   },
 }

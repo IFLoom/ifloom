@@ -212,7 +212,7 @@ import { hasJob, workedToday } from '@ifloom/plugin-jobs'
 import { weekday } from '@ifloom/plugin-calendar'
 
 // a line in a place's body
-{ text: 'warn.work', when: { all: [hasJob('weekend'), weekday(5), { not: workedToday('weekend') }] } }
+{ prose: 'warn.work', when: { all: [hasJob('weekend'), weekday(5), { not: workedToday('weekend') }] } }
 ```
 
 A day is the calendar's day, or a turn in a game without the calendar. `shiftsWorked` counts every shift instead.

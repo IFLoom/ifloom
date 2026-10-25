@@ -13,7 +13,7 @@ For a walkthrough, see [Your first story](/docs/guide/first-story). For what hap
 A scene's `speaker` says who is talking, and the view draws them as [`view.scene.speaker`](/docs/reference/view#speakerview): their name, picture and [hints](/docs/reference/ui-hints). People are [entities](/docs/reference/entities), so the engine reads these from the entity itself, with no plugin to ask.
 
 ```ts
-{ id: 'cafe.counter', speaker: 'ava', body: [{ text: 'cafe.counter' }], choices: [] }
+{ id: 'cafe.counter', speaker: 'ava', body: [{ prose: 'cafe.counter' }], choices: [] }
 ```
 
 - A reference names the entity as written: `'character:ava'`, or `'you'` for whoever the player is [playing](/docs/reference/entities#protagonists-you-and-player).
@@ -97,9 +97,9 @@ const hello: DataScene = {
   title: 'Ava',
   speaker: 'ava',
   body: [
-    { text: 'ava.hi' },
+    { prose: 'ava.hi' },
     { variants: 'ava.smalltalk' },
-    { text: 'ava.hi.regular', when: { seen: 'ava.hi', gte: 3 } },
+    { prose: 'ava.hi.regular', when: { seen: 'ava.hi', gte: 3 } },
   ],
   choices: [
     { id: 'chat', once: { per: 'turn', reason: 'She has a queue.' }, effects: [{ stat: 'friendship', by: 5, of: character('ava') }] },
@@ -116,7 +116,7 @@ Its prose lives under the keys `ava.hi` and `ava.hi.regular`, the members of the
 A data scene's `audio` names what plays on [background channels](/docs/reference/audio#channels) while it's open. Here the flat goes quiet for a letter:
 
 ```ts
-{ id: 'flat.letter', audio: { music: null, ambience: 'rain' }, body: [{ text: 'flat.letter' }], choices: [/* ... */] }
+{ id: 'flat.letter', audio: { music: null, ambience: 'rain' }, body: [{ prose: 'flat.letter' }], choices: [/* ... */] }
 ```
 
 A channel the scene doesn't name keeps playing whatever an effect, the place or the default says. For one-shot sounds, use `[[sound:id]]` in the [prose](/docs/reference/prose#sound-and-voice). The loader reports an unknown track or channel, and a sound effect's track put on a background channel.
@@ -147,7 +147,7 @@ Blocks render in order, and a block whose `when` fails is dropped. Rendered bloc
   - **`gate`** puts conditions on individual members, by key. A member whose gate fails is left out of the draw, so one set of variants can hold a line that only makes sense later.
   - **`art`** names, for a member, another set of variants to draw a picture from. The drawn picture's prose (usually a single image line) goes in front of the drawn member.
 - **`media`** renders a picture or a video, [`SceneMedia`](#scenemedia), with no prose key. Without `at`, it's drawn right there in the body, between the blocks around it.
-- **`ui`**, on any block, holds [presentation hints](/docs/reference/ui-hints) for the UI, and the view puts them on the first [beat](/docs/reference/prose#scenebeat) the block makes. The React UI's [`reveal`](/docs/react/hints#reveal) makes the block wait before it appears: `{ text: 'intro.tonight', ui: { reveal: { delay: 1200 } } }`. A block that isn't shown takes its hints with it.
+- **`ui`**, on any block, holds [presentation hints](/docs/reference/ui-hints) for the UI, and the view puts them on the first [beat](/docs/reference/prose#scenebeat) the block makes. The React UI's [`reveal`](/docs/react/hints#reveal) makes the block wait before it appears: `{ prose: 'intro.tonight', ui: { reveal: { delay: 1200 } } }`. A block that isn't shown takes its hints with it.
 
 **Gotchas.**
 - If every member of a set of variants is gated out, the block renders nothing and there's no error.
@@ -172,7 +172,7 @@ const flat: DataScene = {
       { id: 'lamp', rect: [10, 10, 12, 30], label: 'The lamp', command: { type: 'action', id: 'read' }, layer: 'lamp' },
     ],
   },
-  body: [{ text: 'flat.morning' }],
+  body: [{ prose: 'flat.morning' }],
   choices: [{ id: 'leave', effects: [{ scene: null }] }],
 }
 ```
@@ -252,7 +252,7 @@ Otherwise `choose` runs the choice's `command`, if it has one, then applies its 
 ### panel
 
 ```ts
-{ id: 'market.stall', title: 'The stall', panel: { panel: 'prices', with: { stall: 'bread' } }, body: [{ text: 'market.stall' }], choices: [] }
+{ id: 'market.stall', title: 'The stall', panel: { panel: 'prices', with: { stall: 'bread' } }, body: [{ prose: 'market.stall' }], choices: [] }
 ```
 
 A [`ScenePanel`](/docs/reference/panels#a-scenes-panel), `{ panel, with }`, holds that panel open for as long as the scene is on screen, as [`view.panel`](/docs/reference/view#panel) with the scene's id in `scene`. A UI usually draws it in place of the scene's choices. A panel that needs numbers worked out reads them from the view or a [value](/docs/reference/custom#values). See [A scene's panel](/docs/reference/panels#a-scenes-panel).
@@ -265,7 +265,7 @@ An ending is a scene the story doesn't move on from. Give it a choice that start
 {
   id: 'end.posted',
   title: 'The end',
-  body: [{ text: 'end.posted' }],
+  body: [{ prose: 'end.posted' }],
   // prose: 'end.posted#again': 'Read it again'
   choices: [{ id: 'again', command: { type: 'newGame' }, effects: [] }],
 }
@@ -321,7 +321,7 @@ const avasBreak: DataScene = {
   drawnFrom: ['cafe'],
   weight: 2,
   when: here('ava'),
-  body: [{ text: 'cafe.break' }],
+  body: [{ prose: 'cafe.break' }],
   choices: [{ id: 'leave', effects: [{ stat: 'friendship', by: 2, of: character('ava') }, { scene: null }] }],
 }
 ```

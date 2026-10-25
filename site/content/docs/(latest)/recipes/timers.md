@@ -36,8 +36,8 @@ export const flat: Content = {
       title: 'The phone',
       body: [
         // The React UI draws the countdown under this block.
-        { text: 'phone', ui: { timer: 'phone' } },
-        { text: 'phone.hurry', when: { timer: 'phone', lte: 3000 } },
+        { prose: 'phone', ui: { timer: 'phone' } },
+        { prose: 'phone.hurry', when: { timer: 'phone', lte: 3000 } },
       ],
       choices: [
         { id: 'answer', effects: [{ timer: 'phone', to: null }, { scene: 'ava.call' }] },

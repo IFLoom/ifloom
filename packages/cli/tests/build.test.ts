@@ -77,10 +77,10 @@ describe('checkGame', () => {
       storylines: [],
       scenes: [{ id: 'intro', body: [], choices: [{ id: 'go', effects: [{ scene: 'nowhere' }] }] }],
     }
-    expect(checkGame({ default: game })).toEqual(['game · scene intro · no prose for "intro#go"', 'game · scene intro · goes to unknown scene "nowhere"'])
+    expect(checkGame({ default: game })).toEqual(['game · scene intro · goes to unknown scene "nowhere"'])
     // A loaded game's problems come from its loader, and aren't found a second time.
     const loaded = loadGame([{ name: 'town', scenes: game.scenes }], { id: 'town', title: 'Town' })
-    expect(checkGame({ default: loaded })).toEqual(['town · scene intro · no prose for "intro#go"', 'town · scene intro · goes to unknown scene "nowhere"'])
+    expect(checkGame({ default: loaded })).toEqual(['town · scene intro · goes to unknown scene "nowhere"'])
   })
 })
 
@@ -119,19 +119,18 @@ describe('the files a game names', () => {
                 layers: [{ id: 'hall', src: 'flat/hall' }, { id: 'rain', src: 'flat/rain', video: true, poster: 'flat/rain-still' }, { pool: 'door' }],
                 hotspots: [{ id: 'door', rect: [60, 10, 25, 85], label: 'The front door', choice: 'answer' }],
               },
-              body: [{ text: 'knock' }, { media: { src: 'flat/letter.png' } }, { media: { pool: 'door', tags: ['red'] } }],
-              choices: [{ id: 'answer', effects: [{ scene: null }] }],
+              body: [{ prose: 'knock' }, { media: { src: 'flat/letter.png' } }, { media: { pool: 'door', tags: ['red'] } }],
+              choices: [{ id: 'answer', label: 'Answer it', effects: [{ scene: null }] }],
             },
           ],
           prose: {
             knock: 'Someone knocks.\n\n[[img:flat/cup.svg|A cup]]\n\n[[widevideo:flat/kettle|once|poster=flat/kettle.jpg]]\n\n[[img:@door|blue]]',
-            'knock#answer': 'Answer it',
             'post.cafe': 'Cakes.\n\n[[wide:cafe/cakes]]',
           },
           data: {
             feed: {
               feeds: [{ id: 'town', name: 'Town' }],
-              posts: [{ id: 'post.cafe', feed: 'town', from: 'The Café', body: [{ text: 'post.cafe' }], video: 'art/cafe/steam.mp4' }],
+              posts: [{ id: 'post.cafe', feed: 'town', from: 'The Café', body: [{ prose: 'post.cafe' }], video: 'art/cafe/steam.mp4' }],
             },
           },
         },

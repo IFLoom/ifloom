@@ -29,12 +29,12 @@ const phone = definePlugin<{ open: boolean }>({
 
 const hall: DataScene = {
   id: 'hall',
-  body: [{ text: 'hall.ring' }, { text: 'hall.door' }],
+  body: [{ prose: 'hall.ring' }, { prose: 'hall.door' }],
   choices: [
-    { id: 'answer', command: { type: 'custom', name: 'phone/open' }, effects: [{ kv: 'answered', to: true }] },
-    { id: 'knock', effects: [{ stat: 'coins', by: -2 }], blocked: [{ when: { kv: 'shy' }, reason: 'You feel too shy.' }] },
-    { id: 'hidden', blocked: [{ when: { not: { kv: 'never' } }, reason: 'No.', hide: true }], effects: [] },
-    { id: 'leave', effects: [{ scene: null }] },
+    { id: 'answer', label: 'Answer', command: { type: 'custom', name: 'phone/open' }, effects: [{ kv: 'answered', to: true }] },
+    { id: 'knock', label: 'Knock', effects: [{ stat: 'coins', by: -2 }], blocked: [{ when: { kv: 'shy' }, reason: 'You feel too shy.' }] },
+    { id: 'hidden', label: 'Hidden', blocked: [{ when: { not: { kv: 'never' } }, reason: 'No.', hide: true }], effects: [] },
+    { id: 'leave', label: 'Leave', effects: [{ scene: null }] },
   ],
 }
 
@@ -42,10 +42,6 @@ const prose = {
   'hall.ring': 'Your phone is ringing. [[act:answer|Pick it up]], or let it ring. The [[tip:hall.tip|caller]] waits.',
   'hall.door': 'Somebody is at the door. [[act:knock]] back? [[act:hidden|A secret.]]',
   'hall.tip': 'An old friend, {{friend}}.',
-  'hall#answer': 'Answer',
-  'hall#knock': 'Knock',
-  'hall#hidden': 'Hidden',
-  'hall#leave': 'Leave',
 }
 
 function make(extra: Partial<Content> = {}, base: Partial<Game> = {}) {
@@ -156,7 +152,7 @@ describe('inline actions and tooltips', () => {
     const room = definePlugin({
       id: 'room',
       version: 1,
-      stage: () => ({ id: 'kitchen', title: 'Kitchen', body: [{ text: 'kitchen.text' }] }),
+      stage: () => ({ id: 'kitchen', title: 'Kitchen', body: [{ prose: 'kitchen.text' }] }),
       buttons: () => [{ id: 'kettle', label: 'Put the kettle on', command: { type: 'custom', name: 'phone/open' } }],
     })
     const { game } = make({ prose: { ...prose, 'kitchen.text': 'The [[act:kettle|kettle]] is cold.' } }, { plugins: [phone, room], introScene: undefined })
@@ -168,19 +164,16 @@ describe('inline actions and tooltips', () => {
   it('are checked: unknown ids, twice, tooltips with no words, malformed markup, a choice that sends a choice', () => {
     const bad: DataScene = {
       id: 'bad',
-      body: [{ text: 'bad.one' }, { text: 'bad.two' }],
+      body: [{ prose: 'bad.one' }, { prose: 'bad.two' }],
       choices: [
-        { id: 'go', effects: [] },
-        { id: 'loop', command: { type: 'choose', id: 'go' }, effects: [] },
-        { id: 'call', command: { type: 'custom', name: 'phone/dial' }, effects: [] },
+        { id: 'go', label: 'Go', effects: [] },
+        { id: 'loop', label: 'Loop', command: { type: 'choose', id: 'go' }, effects: [] },
+        { id: 'call', label: 'Call', command: { type: 'custom', name: 'phone/dial' }, effects: [] },
       ],
     }
     const lines = {
       'bad.one': 'A [[act:nope]] and [[act:go]] then [[act:go]]. [[tip:missing|who]] [[tip:hall.tip]] [[act:go|]] [[act:broken',
       'bad.two': 'Again [[act:go]].',
-      'bad#go': 'Go',
-      'bad#loop': 'Loop',
-      'bad#call': 'Call',
     }
     const { game } = make({ scenes: [hall, bad], prose: { ...prose, ...lines } })
     const problems = checkGame(game).problems.map(describeProblem)
@@ -269,7 +262,7 @@ describe('bold and italics', () => {
       'hall.door': '*A **nested** one* and **[[act:knock]]**. Five * three is fine.',
       'hall.post': '[[ui:mono|A *mono line is shown as written.]]',
     }
-    const { game } = make({ prose: lines, scenes: [{ ...hall, body: [...(hall.body as { text: string }[]), { text: 'hall.post' }] }] })
+    const { game } = make({ prose: lines, scenes: [{ ...hall, body: [...(hall.body as { prose: string }[]), { prose: 'hall.post' }] }] })
     const problems = checkGame(game).problems.map(describeProblem)
     expect(problems).toEqual(
       expect.arrayContaining([

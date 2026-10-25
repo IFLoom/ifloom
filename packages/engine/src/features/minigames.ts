@@ -36,7 +36,7 @@ export type MinigameTransition = {
 
 /** One state of a minigame. */
 export type MinigameStateDef = {
-  /** A prose key: what the player reads while the minigame is in this state. */
+  /** What the player reads while the minigame is in this state, tokens filled. */
   label?: string
   /**
    * A timer. Once `ms` milliseconds of ticks have passed in this state, the
@@ -319,7 +319,7 @@ function checkMinigame(minigame: MinigameDef, declaredAnywhere: ReadonlySet<stri
       ...(state.always ?? []).map((entry, index) => [`always ${index + 1}`, entry] as [string, MinigameTransition & { when?: Condition }]),
     ]
     const targets: string[] = []
-    if (state.label !== undefined) tools.check(source, at, [{ prose: state.label }])
+    if (state.label !== undefined) tools.check(source, at, [{ words: state.label, field: 'label' }])
     if (state.after && !(Number.isFinite(state.after.ms) && state.after.ms > 0)) tools.problem(source, at, 'a timer needs ms above 0')
     if (state.final && transitions.length) tools.problem(source, at, 'a final state ends the minigame, so its after, on and always never run')
     for (const entry of state.on ?? []) inputs.add(entry.input)
@@ -441,7 +441,7 @@ export const minigames = defineFeature<MinigamesShape>({
         id: running.id,
         title: def.label ?? null,
         state: running.state,
-        label: current?.label !== undefined ? (game.prose?.line(current.label, state) ?? null) : null,
+        label: current?.label !== undefined ? cx.fillTokens(current.label, state, game) : null,
         timeLeft: timer ? Math.max(0, timer.ms - running.elapsed) : null,
         timeTotal: timer ? timer.ms : null,
         inputs: [...new Set((current?.on ?? []).filter((entry) => cx.holds(state, entry.when, game)).map((entry) => entry.input))],

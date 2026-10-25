@@ -27,15 +27,17 @@ export const flat: Content = {
       title: 'The phone',
       speaker: 'ava',
       // The React UI draws the timer's countdown under this block, from its `ui.timer` hint.
-      body: [{ text: 'flat.ring', ui: { timer: 'flat.ring' } }],
+      body: [{ prose: 'flat.ring', ui: { timer: 'flat.ring' } }],
       choices: [
         // Answering stops the timer, so the missed call never comes.
         {
           id: 'answer',
+          label: 'Answer it',
           effects: [{ timer: 'flat.ring', to: null }, { scene: 'ava.call' }],
         },
         {
           id: 'leave',
+          label: 'Let it ring',
           effects: [{ timer: 'flat.ring', to: null }, { scene: null }],
         },
       ],
@@ -66,7 +68,7 @@ export const flat: Content = {
       desc: 'Home',
       exits: ['high-street'],
       // Once Ava's text has come and until it's read, the room's prose holds a link that opens the phone.
-      body: [{ text: 'place.flat' }, { text: 'place.flat.text', when: textWaiting }],
+      body: [{ prose: 'place.flat' }, { prose: 'place.flat.text', when: textWaiting }],
       actions: [
         { id: 'bed', label: 'Go to bed', command: sleep() },
         // The wardrobe opens in a panel by its name; the layout also shows what you're wearing only at home.
@@ -83,7 +85,5 @@ export const flat: Content = {
     // `[[act:read-text|…]]` draws the flat's "Read your messages" action here, in the line.
     'place.flat.text': 'Your phone buzzes on the sill: a message. [[act:read-text|Check it]].',
     'flat.ring': 'Your phone is ringing on the sill. Ava. Answer before it stops.',
-    'flat.ring#answer': 'Answer it',
-    'flat.ring#leave': 'Let it ring',
   },
 }

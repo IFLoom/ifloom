@@ -261,7 +261,7 @@ describe('plugins that bring entities and speakers', () => {
     name: 'hall',
     stats: [{ id: 'voice', label: 'Voice', of: 'singer', start: 3 }],
     entities: [{ id: 'bea', of: 'singer', name: 'Bea the soloist', stats: { voice: 9 } }],
-    scenes: [{ id: 'hymn', speaker: 'ann', body: [{ text: 'hymn' }], choices: [] }],
+    scenes: [{ id: 'hymn', speaker: 'ann', body: [{ prose: 'hymn' }], choices: [] }],
     prose: { hymn: 'A long note.' },
   }
 

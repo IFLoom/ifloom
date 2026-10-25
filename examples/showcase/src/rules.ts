@@ -41,9 +41,9 @@ export const rules: GameRules = {
       const id = `post.photo.${parseRef(latest)!.id}`
       const likes = 2 + roll(10, 'likes') + (state.stats.charm ?? 0)
       return [
-        postTo('social', id, { text: 'post.photo', ...(image ? { image: artSrc(image) } : {}) }),
+        postTo('social', id, { text: 'New town, new faces.', ...(image ? { image: artSrc(image) } : {}) }),
         { stat: 'charm', by: 1 },
-        react(id, { likes, from: 'ava', text: 'comment.nice' }),
+        react(id, { likes, from: 'ava', text: 'Lovely!' }),
       ]
     },
   },

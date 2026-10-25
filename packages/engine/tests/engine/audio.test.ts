@@ -46,27 +46,22 @@ const house: Content = {
   name: 'house',
   prose: {
     'door.knock': 'Someone is at the door.\n\n[[sound:knock]]\n\nAva: "Morning!" [[voice:ava.morning]]\n\n"Morning."',
-    'door#open': 'Open it',
-    'door#again': 'Listen again',
-    'door#leave': 'Leave it',
     'storm.text': 'Rain on the window.',
-    'storm#leave': 'Leave',
     'quiet.text': 'Nothing at all.',
-    'quiet#leave': 'Leave',
   },
   scenes: [
     {
       id: 'door',
       audio: { music: 'tense' },
-      body: [{ text: 'door.knock' }],
+      body: [{ prose: 'door.knock' }],
       choices: [
-        { id: 'open', effects: [{ scene: null }] },
-        { id: 'again', effects: [{ sound: 'buzz' }] },
-        { id: 'leave', effects: [{ scene: null }] },
+        { id: 'open', label: 'Open it', effects: [{ scene: null }] },
+        { id: 'again', label: 'Listen again', effects: [{ sound: 'buzz' }] },
+        { id: 'leave', label: 'Leave it', effects: [{ scene: null }] },
       ],
     },
-    { id: 'storm', audio: { ambience: 'rain' }, body: [{ text: 'storm.text' }], choices: [{ id: 'leave', effects: [{ scene: null }] }] },
-    { id: 'quiet', audio: { music: null }, body: [{ text: 'quiet.text' }], choices: [{ id: 'leave', effects: [{ scene: null }] }] },
+    { id: 'storm', audio: { ambience: 'rain' }, body: [{ prose: 'storm.text' }], choices: [{ id: 'leave', label: 'Leave', effects: [{ scene: null }] }] },
+    { id: 'quiet', audio: { music: null }, body: [{ prose: 'quiet.text' }], choices: [{ id: 'leave', label: 'Leave', effects: [{ scene: null }] }] },
   ],
   actions: [
     { id: 'radio', effects: [{ audio: 'music', to: 'radio' }] },
@@ -272,13 +267,13 @@ describe('audio', () => {
   describe('checks', () => {
     const broken: Content = {
       name: 'broken',
-      prose: { 'bad.text': 'Hush.\n\n[[sound:calm]]\n\n"Hi." [[voice:nobody]]', 'bad#go': 'Go' },
+      prose: { 'bad.text': 'Hush.\n\n[[sound:calm]]\n\n"Hi." [[voice:nobody]]' },
       scenes: [
         {
           id: 'bad',
           audio: { music: 'knock', sfx: 'calm', stereo: 'calm' },
-          body: [{ text: 'bad.text' }],
-          choices: [{ id: 'go', effects: [{ sound: 'radio' }] }],
+          body: [{ prose: 'bad.text' }],
+          choices: [{ id: 'go', label: 'Go', effects: [{ sound: 'radio' }] }],
         },
       ],
       actions: [

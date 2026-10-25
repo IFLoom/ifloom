@@ -23,19 +23,17 @@ function hallway(): Game {
           {
             id: 'hall',
             title: 'The hall',
-            body: [{ text: 'hall' }, { text: 'hall.ring', when: { timer: 'phone' }, ui: { timer: 'phone' } }],
+            body: [{ prose: 'hall' }, { prose: 'hall.ring', when: { timer: 'phone' }, ui: { timer: 'phone' } }],
             choices: [
-              { id: 'ring', when: { not: { timer: 'phone' } }, effects: [{ timer: 'phone' }] },
-              { id: 'answer', when: { timer: 'phone' }, effects: [{ timer: 'phone', to: null }] },
+              { id: 'ring', label: 'Wait by the phone', when: { not: { timer: 'phone' } }, effects: [{ timer: 'phone' }] },
+              { id: 'answer', label: 'Answer it', when: { timer: 'phone' }, effects: [{ timer: 'phone', to: null }] },
             ],
           },
-          { id: 'missed', title: 'Missed', body: [{ text: 'missed' }], choices: [] },
+          { id: 'missed', title: 'Missed', body: [{ prose: 'missed' }], choices: [] },
         ],
         prose: {
           hall: 'Coats on hooks.',
           'hall.ring': 'The phone is ringing.',
-          'hall#ring': 'Wait by the phone',
-          'hall#answer': 'Answer it',
           missed: 'It stops.',
         },
       },
@@ -145,7 +143,7 @@ describe('checkUiHints and timers', () => {
   it('accepts a declared timer, and reports anything else', () => {
     expect(checkUiHints(hallway())).toEqual([])
     const game = hallway()
-    const bad = { ...game, scenes: [{ id: 'x', title: 'X', body: [{ text: 'hall', ui: { timer: 'kettle' } }], choices: [] }] } as unknown as Game
+    const bad = { ...game, scenes: [{ id: 'x', title: 'X', body: [{ prose: 'hall', ui: { timer: 'kettle' } }], choices: [] }] } as unknown as Game
     expect(checkUiHints(bad)).toEqual(['scene x block 1: ui.timer "kettle" is not a timer the game has'])
   })
 })

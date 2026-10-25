@@ -12,7 +12,7 @@ Write `[[act:id|words]]` where the link should go. `id` is one of the scene's ch
 const hall: DataScene = {
   id: 'hall.phone',
   title: 'The hall',
-  body: [{ text: 'hall.phone' }],
+  body: [{ prose: 'hall.phone' }],
   choices: [
     { id: 'answer', effects: [{ kv: 'answered', to: true }, { scene: 'ava.call' }] },
     { id: 'leave', effects: [{ scene: null }] },
@@ -43,7 +43,7 @@ In a room, with no scene open, `[[act:id]]` names one of the room's buttons: a p
 ```ts
 {
   id: 'flat',
-  body: [{ text: 'place.flat' }, { text: 'place.flat.text', when: textWaiting }],
+  body: [{ prose: 'place.flat' }, { prose: 'place.flat.text', when: textWaiting }],
   actions: [
     { id: 'bed', label: 'Go to bed', command: sleep() },
     { id: 'read-text', label: 'Read your messages', when: textWaiting, command: openApp('texts') },

@@ -3,7 +3,7 @@ import { unlocks } from '@ifloom/plugin-unlocks'
 
 /** The code is FIXTURE-CODE-1234, from .env; this is its hash, with few rounds for a quick test. */
 const town: Content = {
-  scenes: [{ id: 'intro', title: 'The square', body: [{ text: 'intro' }], choices: [] }],
+  scenes: [{ id: 'intro', title: 'The square', body: [{ prose: 'intro' }], choices: [] }],
   prose: { intro: 'A small square with a fountain.' },
   data: {
     unlocks: {

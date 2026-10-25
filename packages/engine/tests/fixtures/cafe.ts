@@ -14,22 +14,21 @@ export const cafe: Content = {
     {
       id: 'cafe.counter',
       title: 'The counter',
-      body: [{ text: 'cafe.counter' }, { variants: 'cafe.weather' }, { text: 'cafe.counter/regular', when: { 'game/isRegular': true } }],
+      body: [{ prose: 'cafe.counter' }, { variants: 'cafe.weather' }, { prose: 'cafe.counter/regular', when: { 'game/isRegular': true } }],
       choices: [
         {
           id: 'chat',
+          label: 'Talk about the weather',
           once: { per: 'turn', reason: 'She has heard enough from you today.' },
           effects: [{ stat: 'luck', by: 1 }],
         },
-        { id: 'leave', effects: [{ scene: null }] },
+        { id: 'leave', label: 'Leave', effects: [{ scene: null }] },
       ],
     },
   ],
   prose: {
     'cafe.counter': 'Rosa wipes the counter. "Morning, {{playerFirst}}."',
     'cafe.counter/regular': 'She has your cup out before you ask.',
-    'cafe.counter#chat': 'Talk about the weather',
-    'cafe.counter#leave': 'Leave',
     'cafe.weather/rain': 'Rain on the window.',
     'cafe.weather/sun': 'Sun on the tables.',
     'cafe.weather/fog': 'Fog in the street.',

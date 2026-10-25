@@ -197,7 +197,7 @@ A field on a [scene](/docs/reference/scenes). The minigame starts when the scene
   id: 'fair.coconut',
   title: 'The coconut shy',
   minigame: 'coconut',
-  body: [{ text: 'fair.coconut' }],
+  body: [{ prose: 'fair.coconut' }],
   choices: [{ id: 'leave', effects: [{ scene: null }] }],
 }
 ```

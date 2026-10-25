@@ -35,7 +35,7 @@ const ava = person({
 })
 const sam = person({ id: 'sam', name: 'Sam', home: 'park', talk: 'sam.hi', stats: { friendship: 5 } })
 
-const scene = (id: string) => ({ id, body: [{ text: id }], choices: [{ id: 'bye', effects: [{ scene: null }] }] })
+const scene = (id: string) => ({ id, body: [{ prose: id }], choices: [{ id: 'bye', label: 'Bye', effects: [{ scene: null }] }] })
 
 const town: Content = {
   name: 'town',
@@ -48,10 +48,6 @@ const town: Content = {
     'ava.river': 'Ducks.',
     'ava.call': 'Hello?',
     'sam.hi': 'Hey.',
-    'ava.hi#bye': 'Bye',
-    'ava.river#bye': 'Bye',
-    'ava.call#bye': 'Bye',
-    'sam.hi#bye': 'Bye',
   },
 }
 

@@ -128,7 +128,7 @@ const supporter: Pack = {
       drawnFrom: ['cafe'],
       weight: 5,
       when: { all: [hasUnlock('supporter'), { not: { seen: 'cafe.back-room' } }] },
-      body: [{ text: 'cafe.back-room' }],
+      body: [{ prose: 'cafe.back-room' }],
       choices: [{ id: 'leave', effects: [{ scene: null }] }],
     },
   ],

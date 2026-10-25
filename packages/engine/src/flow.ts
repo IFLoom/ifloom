@@ -35,10 +35,11 @@ export type BlockExtras = { when?: Condition; ui?: Ui<BlockUi> }
  * blank lines at the start and the end go. A blank line between lines
  * starts a new paragraph. The words are read as prose is: `@ava: "…"` is a
  * spoken line, `[[img:…]]` a picture, `{{key}}` a token, and inline markup
- * works.
+ * works. Give it an `id` to name it for a translation's `words` table,
+ * `scene.<scene>.text.<id>`; without one it is named by a hash of its words.
  */
-export function text(words: string, extras: BlockExtras = {}): Block {
-  return { words: dedent(words), ...extras }
+export function text(words: string, extras: BlockExtras & { id?: string } = {}): Block {
+  return { text: dedent(words), ...extras }
 }
 
 /** `words` without the indentation its lines share, and without blank lines at either end. */
@@ -57,7 +58,7 @@ function dedent(words: string): string {
  * `character:ava`), `'you'` for whoever the player is playing, or `'player'`.
  * Its beat is a `say` with that `speaker` and their name.
  */
-export function say(who: string, words: string, extras: BlockExtras & { voice?: string } = {}): Block {
+export function say(who: string, words: string, extras: BlockExtras & { id?: string; voice?: string } = {}): Block {
   return { say: dedent(words), speaker: who, ...extras }
 }
 

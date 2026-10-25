@@ -38,10 +38,10 @@ A ladder is a run of lines, one for each stretch of the count. Write each as a b
 
 ```ts
 body: [
-  { text: 'ava.nod', when: { seen: 'ava.hi', lt: 2 } },
-  { text: 'ava.hello', when: { seen: 'ava.hi', gte: 2, lt: 5 } },
-  { text: 'ava.usual', when: { seen: 'ava.hi', gte: 5, lt: 10 } },
-  { text: 'ava.friend', when: { seen: 'ava.hi', gte: 10 } },
+  { prose: 'ava.nod', when: { seen: 'ava.hi', lt: 2 } },
+  { prose: 'ava.hello', when: { seen: 'ava.hi', gte: 2, lt: 5 } },
+  { prose: 'ava.usual', when: { seen: 'ava.hi', gte: 5, lt: 10 } },
+  { prose: 'ava.friend', when: { seen: 'ava.hi', gte: 10 } },
 ]
 ```
 

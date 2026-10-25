@@ -123,8 +123,8 @@ export const town: Pack = {
   minigames: [quickFeet],
   // and in the park's location: actions: [{ id: 'arrows', label: 'Play quick feet with the kids', effects: [{ minigame: 'arrows' }] }]
   scenes: [
-    { id: 'park.arrows-won', title: 'Quick feet', body: [{ text: 'park.arrows-won' }], choices: [{ id: 'leave', effects: [{ scene: null }] }] },
-    { id: 'park.arrows-lost', title: 'Quick feet', body: [{ text: 'park.arrows-lost' }], choices: [{ id: 'leave', effects: [{ scene: null }] }] },
+    { id: 'park.arrows-won', title: 'Quick feet', body: [{ prose: 'park.arrows-won' }], choices: [{ id: 'leave', effects: [{ scene: null }] }] },
+    { id: 'park.arrows-lost', title: 'Quick feet', body: [{ prose: 'park.arrows-lost' }], choices: [{ id: 'leave', effects: [{ scene: null }] }] },
   ],
 }
 ```

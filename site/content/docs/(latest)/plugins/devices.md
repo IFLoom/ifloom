@@ -169,7 +169,7 @@ import type { AppDef } from '@ifloom/plugin-devices'
 const bank: AppDef = {
   id: 'bank', name: 'Bank', icon: 'bank', on: 'laptop',
   blocked: [{ when: { not: { kv: 'bankAccount' } }, reason: 'You have no account yet.' }],
-  sections: [{ prose: [{ text: 'bank.balance' }] }],   // 'You have {{v:game/balance}}.'
+  sections: [{ prose: [{ prose: 'bank.balance' }] }],   // 'You have {{v:game/balance}}.'
 }
 
 const mail: AppDef = {
@@ -212,7 +212,7 @@ import { at, location, places } from '@ifloom/plugin-places'
 const apps: AppDef[] = [
   {
     id: 'notes', name: 'Notes', icon: 'notes', on: 'laptop',
-    sections: [{ prose: [{ text: 'notes.top' }] }, { things: { of: 'note' } }],
+    sections: [{ prose: [{ prose: 'notes.top' }] }, { things: { of: 'note' } }],
   },
   {
     id: 'shop', name: 'Corner Café', icon: 'basket', on: 'laptop',
@@ -232,7 +232,7 @@ const apps: AppDef[] = [
   {
     id: 'bank', name: 'Bank', icon: 'bank', on: 'laptop',
     blocked: [{ when: { not: { kv: 'bankAccount' } }, reason: 'You have no account yet.' }],
-    sections: [{ prose: [{ text: 'bank.balance' }] }],
+    sections: [{ prose: [{ prose: 'bank.balance' }] }],
   },
   {
     id: 'mail', name: 'Mail', icon: 'mail', on: 'laptop',
@@ -243,8 +243,8 @@ const apps: AppDef[] = [
 ]
 
 const locations = [
-  location({ id: 'flat', name: 'Your flat', desc: 'Home', exits: ['high-street'], body: [{ text: 'place.flat' }] }),
-  location({ id: 'high-street', name: 'High Street', desc: 'Small Town', exits: ['flat'], body: [{ text: 'place.high-street' }] }),
+  location({ id: 'flat', name: 'Your flat', desc: 'Home', exits: ['high-street'], body: [{ prose: 'place.flat' }] }),
+  location({ id: 'high-street', name: 'High Street', desc: 'Small Town', exits: ['flat'], body: [{ prose: 'place.high-street' }] }),
 ]
 
 const town: Content = {
@@ -343,10 +343,10 @@ import type { Block } from '@ifloom/engine'
 import { appOpen } from '@ifloom/plugin-devices'
 
 const body: Block[] = [
-  { text: 'place.cafe' },
+  { prose: 'place.cafe' },
   // Ava looks up when you're on your phone at the counter.
-  { text: 'place.cafe.ava-looks-up', when: { 'devices/open': { device: 'phone' } } },
-  { text: 'place.cafe.camera', when: appOpen('camera') },
+  { prose: 'place.cafe.ava-looks-up', when: { 'devices/open': { device: 'phone' } } },
+  { prose: 'place.cafe.camera', when: appOpen('camera') },
 ]
 ```
 

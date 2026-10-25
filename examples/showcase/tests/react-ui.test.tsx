@@ -40,21 +40,23 @@ function game(strings: Record<string, string> = {}): Game {
           { id: 'wait', label: 'Wait a while', effects: [pass(1)] },
           { id: 'cake', label: 'Buy a cake', cost: { stats: { coins: 10 } } },
         ],
-        scenes: [{ id: 'intro', title: 'Morning', body: [{ text: 'intro' }], choices: [{ id: 'up', effects: [{ scene: null }] }] }],
+        scenes: [{ id: 'intro', title: 'Morning', body: [{ prose: 'intro' }], choices: [{ id: 'up', label: 'Get up', effects: [{ scene: null }] }] }],
         prose: {
           'place.house': 'Quiet.',
           'place.street': 'Busy.',
           intro: 'The alarm goes.',
-          'intro#up': 'Get up',
           'mum.hi': 'Did you eat?',
-          'mum.hi#yes': 'Yes, Mum',
         },
         entities: [
-          location({ id: 'house', name: 'House', desc: 'Home', exits: ['street'], body: [{ text: 'place.house' }] }),
-          location({ id: 'street', name: 'High Street', desc: 'Out', exits: ['house'], body: [{ text: 'place.street' }] }),
+          location({ id: 'house', name: 'House', desc: 'Home', exits: ['street'], body: [{ prose: 'place.house' }] }),
+          location({ id: 'street', name: 'High Street', desc: 'Out', exits: ['house'], body: [{ prose: 'place.street' }] }),
         ],
         data: {
-          messages: { messages: [{ id: 'mum.hi', channel: 'texts', from: 'Mum', when: at('street'), body: [{ text: 'mum.hi' }], replies: [{ id: 'yes' }] }] },
+          messages: {
+            messages: [
+              { id: 'mum.hi', channel: 'texts', from: 'Mum', when: at('street'), body: [{ prose: 'mum.hi' }], replies: [{ id: 'yes', label: 'Yes, Mum' }] },
+            ],
+          },
           quests: { quests: [{ id: 'out', title: 'Get out of the house', starts: { kv: 'never' }, stages: [] }] },
         },
       },

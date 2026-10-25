@@ -9,7 +9,7 @@ import { defineFeature } from './feature.ts'
 export type NoticeView = {
   id: string
   title: string
-  /** The notice's prose, filled in; empty if it has none. */
+  /** The notice's words, tokens filled in; empty if it has none. */
   text: string
   image: string | null
   tag: string | null
@@ -31,7 +31,7 @@ export type NoticesShape = {
     notices: Notice[]
   }
   effects: {
-    /** Tell the player something outside a scene: `{ notify: 'A note under your door', text: 'notice.welcome' }`. `text` is a prose key. */
+    /** Tell the player something outside a scene: `{ notify: 'A note under your door', text: 'It says the bins go out on Tuesday.' }`. Tokens in `text` are filled as it is shown. */
     notify: { notify: string; text?: string; image?: string; tag?: string; id?: string }
   }
   commands: {
@@ -55,7 +55,7 @@ export const notices = defineFeature<NoticesShape>({
         return notify(state, { ...notice, title })
       },
       references: (effect) => [
-        ...(effect.text !== undefined ? [{ prose: effect.text }] : []),
+        { words: effect.text, field: 'notice text' },
         ...(effect.image !== undefined ? [{ picture: effect.image, asWritten: true }] : []),
       ],
     },
@@ -67,7 +67,7 @@ export const notices = defineFeature<NoticesShape>({
       references: () => [],
     },
   },
-  view: (state, game) => {
+  view: (state, game, _shown, cx) => {
     const unseen = (state.notices ?? []).filter((notice) => !notice.seen).reverse()
     const byTag: Record<string, number> = {}
     for (const notice of unseen) byTag[notice.tag ?? ''] = (byTag[notice.tag ?? ''] ?? 0) + 1
@@ -76,7 +76,7 @@ export const notices = defineFeature<NoticesShape>({
         unseen: unseen.map((notice) => ({
           id: notice.id,
           title: notice.title,
-          text: notice.text ? (game.prose?.line(notice.text, state) ?? '') : '',
+          text: notice.text ? cx.fillTokens(notice.text, state, game) : '',
           image: notice.image ?? null,
           tag: notice.tag ?? null,
           turn: notice.turn,

@@ -173,6 +173,24 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
     return [...resolve(plugin.references?.calls?.(table, parts.name, args, game) ?? [], where), ...pluginArgProblems(game, table, name, args)]
   }
 
+  /**
+   * Words written in place that are a prose key the game has, as content
+   * wrote them before schema 25, and a choice with no label whose old prose
+   * key has words: how to write them now.
+   */
+  const oldWords = (words: string | undefined, field: string, oldKey: string | undefined): string[] => {
+    if (words === undefined)
+      return oldKey !== undefined && game.prose?.line(oldKey) !== undefined
+        ? [`no ${field}: its words are no longer read from the prose "${oldKey}" (schema 25), so give it ${field}: "${game.prose.line(oldKey)}"`]
+        : []
+    if (/\s/.test(words) || game.prose?.line(words) === undefined) return []
+    if (field === 'block')
+      return [
+        `{ text: "${words}" } names the prose "${words}", but a { text } block is words written in place now (schema 25): write the words, or { prose: "${words}" } to read that prose`,
+      ]
+    return [`${field} "${words}" names the prose "${words}", but a ${field} is words written in place now (schema 25): write the words`]
+  }
+
   const one = (ref: Reference, where: string): string[] => {
     if ('within' in ref) {
       return resolve(ref.refs, where).map((what) => (ref.within.startsWith('in each ') && what.startsWith('in each ') ? what : `${ref.within}: ${what}`))
@@ -188,6 +206,8 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
       const have = game.data?.[ref.plugin]?.[ref.list] ?? []
       return have.some((entry) => entry.id === ref.entry) ? [] : [`unknown ${ref.noun} "${ref.entry}"`]
     }
+    if ('words' in ref) return oldWords(ref.words, ref.field, ref.oldKey)
+    if ('outdated' in ref) return [ref.outdated]
     if ('prose' in ref) {
       proseNamed.add(ref.prose)
       return game.prose?.line(ref.prose) === undefined ? [`no prose for "${ref.prose}"`] : []

@@ -40,8 +40,8 @@ describe('checkGame', () => {
     // A thing can be made in play, so only its kind is known ahead.
     const pack: Content = {
       name: 'town',
-      prose: { 'shop#buy': 'Buy one.' },
-      scenes: [{ id: 'shop', body: [], choices: [{ id: 'buy', when: { entity: 'thing:missing', at: 'you' }, effects: [] }] }],
+      prose: {},
+      scenes: [{ id: 'shop', body: [], choices: [{ id: 'buy', label: 'Buy one.', when: { entity: 'thing:missing', at: 'you' }, effects: [] }] }],
     }
     expect(loadWhole([pack], base()).problems.map(describeProblem)).toEqual(['town · scene shop · unknown kind "thing"'])
     expect(
@@ -78,12 +78,12 @@ describe('checkGame', () => {
   it('reports the same problems for a game whether it is loaded or checked again', () => {
     const pack: Content = {
       name: 'town',
-      prose: { 'shop#buy': 'Buy one.' },
+      prose: {},
       scenes: [
         {
           id: 'shop',
-          body: [{ text: 'shop.none' }],
-          choices: [{ id: 'buy', when: { stat: 'grit' }, effects: [{ entity: 'thing:roll', by: 1 }] }],
+          body: [{ prose: 'shop.none' }],
+          choices: [{ id: 'buy', label: 'Buy one.', when: { stat: 'grit' }, effects: [{ entity: 'thing:roll', by: 1 }] }],
         },
       ],
     }
@@ -128,8 +128,8 @@ describe('a cooperating partner the game does not have', () => {
   it('is excused everywhere, in a loaded game and a hand-built one: conditions, effects in either form, and commands', () => {
     const pack: Content = {
       name: 'shore',
-      prose: { 'shore#wade': 'Wade in.' },
-      scenes: [{ id: 'shore', body: [], choices: [{ id: 'wade', when: named.when, effects: [named.short, named.long] }] }],
+      prose: {},
+      scenes: [{ id: 'shore', body: [], choices: [{ id: 'wade', label: 'Wade in.', when: named.when, effects: [named.short, named.long] }] }],
       actions: [{ id: 'paddle', blocked: [{ when: { not: named.when }, reason: 'Not now.' }], effects: [named.short, named.long] }],
     }
     const loaded = loadWhole([pack], base({ plugins: [beach], actions: [{ id: 'look', label: 'Look', command: named.command }] }))
@@ -166,12 +166,12 @@ describe('the files a game names', () => {
         ...fixture().scenes,
         {
           id: 'flat',
-          body: [{ text: 'flat.in' }, { media: { src: 'clip', video: true, poster: 'clip-still' } }, { media: { pool: 'door', tags: ['day'] } }],
+          body: [{ prose: 'flat.in' }, { media: { src: 'clip', video: true, poster: 'clip-still' } }, { media: { pool: 'door', tags: ['day'] } }],
           stage: { layers: [{ src: 'room.png' }] },
           choices: [
             {
               id: 'snap',
-              label: 'flat.in',
+              label: 'Snap',
               effects: [
                 { create: 'photo', with: { id: 'flat', image: 'photo/flat.png' }, at: 'player' },
                 { notify: 'Snap', image: 'https://example.com/x.png' },

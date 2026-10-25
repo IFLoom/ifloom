@@ -1,10 +1,29 @@
 import { describe, expect, it } from 'vitest'
-import { apply, createRunner, holds, loadGame, loadState, replay, startingState, view, whyNot, type Game, type GameState, type Content } from '@ifloom/engine'
+import {
+  apply,
+  createRunner,
+  holds,
+  loadGame,
+  loadState,
+  replay,
+  startingState,
+  upgradePack,
+  view,
+  whyNot,
+  type Game,
+  type GameState,
+  type Content,
+} from '@ifloom/engine'
 import { cast, person } from '@ifloom/plugin-cast'
 import { drawMessage, messageArrived, messageReplied, messageSince, messages, readThread, replyTo, type MessagesView } from '../src/index.ts'
 import { calendar, pass, period } from '@ifloom/plugin-calendar'
 
 const clock = calendar()
+
+const unwrap = <T>(result: { ok: true; value: T } | { ok: false; reason: string }): T => {
+  if (!result.ok) throw new Error(result.reason)
+  return result.value
+}
 
 const plugin = messages()
 /** The channels, as the base game's content. */
@@ -21,7 +40,7 @@ function game(extra: Partial<Content> = {}): Game {
   const pack: Content = {
     name: 'town',
     storylines: [{ id: 'ava', name: 'Ava' }],
-    scenes: [{ id: 'ava.hi', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ scene: null }] }] }],
+    scenes: [{ id: 'ava.hi', body: [{ prose: 'ava.hi' }], choices: [{ id: 'bye', label: 'Bye', effects: [{ scene: null }] }] }],
     // Going out is all a message waits for here: no map needed.
     actions: [
       { id: 'wait', effects: [pass(1)] },
@@ -29,10 +48,7 @@ function game(extra: Partial<Content> = {}): Game {
     ],
     prose: {
       'ava.hi': 'Hi.',
-      'ava.hi#bye': 'Bye',
       'msg.hey': 'Hey {{playerFirst}}, was that you on the street?',
-      'msg.hey#yes': 'Yes!',
-      'msg.hey#no': 'No…',
       'msg.later': 'Coffee tomorrow?',
       'msg.bill': 'The water bill. You owe 12.',
     },
@@ -46,11 +62,14 @@ function game(extra: Partial<Content> = {}): Game {
             channel: 'texts',
             from: 'ava',
             when: { kv: 'out' },
-            body: [{ text: 'msg.hey' }],
-            replies: [{ id: 'yes', effects: [{ kv: 'saidYes', to: true }] }, { id: 'no' }],
+            body: [{ prose: 'msg.hey' }],
+            replies: [
+              { id: 'yes', label: 'Yes!', effects: [{ kv: 'saidYes', to: true }] },
+              { id: 'no', label: 'No…' },
+            ],
           },
-          { id: 'msg.later', channel: 'texts', from: 'ava', when: { kv: 'saidYes' }, body: [{ text: 'msg.later' }] },
-          { id: 'msg.bill', channel: 'post', from: 'Water Board', when: period('afternoon'), body: [{ text: 'msg.bill' }] },
+          { id: 'msg.later', channel: 'texts', from: 'ava', when: { kv: 'saidYes' }, body: [{ prose: 'msg.later' }] },
+          { id: 'msg.bill', channel: 'post', from: 'Water Board', when: period('afternoon'), body: [{ prose: 'msg.bill' }] },
         ],
       },
     },
@@ -119,6 +138,19 @@ describe('messages', () => {
     expect(shown(state, g).unread).toBe(0)
   })
 
+  it('give a schema 24 reply the words of its prose `<message>#<reply>` as its label', () => {
+    const old = {
+      id: 'mod:texts',
+      schema: 24,
+      prose: { 'm#yes': 'Yes!' },
+      data: { messages: { messages: [{ id: 'm', channel: 'texts', from: 'ava', body: [{ text: 'm' }], replies: [{ id: 'yes' }, { id: 'no' }] }] } },
+    }
+    const upgraded = unwrap(upgradePack(old, [plugin]))
+    expect(upgraded.data?.messages?.messages).toEqual([
+      { id: 'm', channel: 'texts', from: 'ava', body: [{ prose: 'm' }], replies: [{ id: 'yes', label: 'Yes!' }, { id: 'no' }] },
+    ])
+  })
+
   it('report messages with no channel, no prose, or a bad condition', () => {
     const loaded = loadGame(
       [
@@ -127,7 +159,9 @@ describe('messages', () => {
           name: 'mod',
           data: {
             messages: {
-              messages: [{ id: 'm', channel: 'fax', from: 'x', when: { storyline: 'ghost' }, body: [{ text: 'm.none' }], replies: [{ id: 'r' }, { id: 'r' }] }],
+              messages: [
+                { id: 'm', channel: 'fax', from: 'x', when: { storyline: 'ghost' }, body: [{ prose: 'm.none' }], replies: [{ id: 'r' }, { id: 'r' }] },
+              ],
             },
           },
         },
@@ -140,7 +174,6 @@ describe('messages', () => {
         { pack: 'mod', where: 'messages m', what: 'unknown storyline "ghost"' },
         { pack: 'mod', where: 'messages m', what: 'no prose for "m.none"' },
         { pack: 'mod', where: 'messages m', what: 'two replies are called "r"' },
-        { pack: 'mod', where: 'messages m', what: 'no prose for "m#r"' },
       ]),
     )
   })
@@ -164,7 +197,7 @@ describe('pictures and videos in a message', () => {
               channel: 'texts',
               from: 'ava',
               when: { kv: 'out' },
-              body: [{ text: 'msg.ducks' }, { media: { pool: 'pond', tags: ['morning'] } }],
+              body: [{ prose: 'msg.ducks' }, { media: { pool: 'pond', tags: ['morning'] } }],
             },
           ],
         },
@@ -193,7 +226,6 @@ describe('pools', () => {
         'ava.hi': 'Hi.',
         'ava.hi#bye': 'Bye',
         'chat.rain': 'Rain later.',
-        'chat.rain#ok': 'Noted',
         'chat.beans': 'New beans.',
       },
       entities: [person({ id: 'ava', name: 'Ava', desc: 'Neighbour', ui: { hue: 200 }, talk: 'ava.hi', storyline: 'ava' })],
@@ -206,10 +238,10 @@ describe('pools', () => {
               from: 'ava',
               drawnFrom: ['chat'],
               when: rested('chat.rain'),
-              body: [{ text: 'chat.rain' }],
-              replies: [{ id: 'ok' }],
+              body: [{ prose: 'chat.rain' }],
+              replies: [{ id: 'ok', label: 'Noted' }],
             },
-            { id: 'chat.beans', channel: 'texts', from: 'ava', drawnFrom: ['chat'], weight: 2, when: rested('chat.beans'), body: [{ text: 'chat.beans' }] },
+            { id: 'chat.beans', channel: 'texts', from: 'ava', drawnFrom: ['chat'], weight: 2, when: rested('chat.beans'), body: [{ prose: 'chat.beans' }] },
           ],
         },
       },
@@ -287,7 +319,7 @@ describe('pools', () => {
           name: 'mod',
           prose: { m: 'Hi.' },
           actions: [{ id: 'chat', effects: [drawMessage('nobody')] }],
-          data: { messages: { messages: [{ id: 'm', channel: 'texts', from: 'x', drawnFrom: ['chat'], weight: -1, body: [{ text: 'm' }] }] } },
+          data: { messages: { messages: [{ id: 'm', channel: 'texts', from: 'x', drawnFrom: ['chat'], weight: -1, body: [{ prose: 'm' }] }] } },
         },
       ],
       { id: 'g', title: 'g', plugins: [plugin] },

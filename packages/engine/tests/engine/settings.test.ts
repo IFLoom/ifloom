@@ -50,14 +50,13 @@ function loaded(scene?: Content['scenes']) {
   const pack: Content = {
     name: 'core',
     settings: SETTINGS,
-    prose: { 'bakery#hint': 'Ask about the rye.', 'bakery#leave': 'Leave.' },
     scenes: scene ?? [
       {
         id: 'bakery',
         body: [],
         choices: [
-          { id: 'hint', label: 'bakery#hint', when: { setting: 'hints' }, effects: [] },
-          { id: 'leave', label: 'bakery#leave', when: { setting: 'difficulty', is: 'hard' }, effects: [{ scene: null }] },
+          { id: 'hint', label: 'Ask about the rye.', when: { setting: 'hints' }, effects: [] },
+          { id: 'leave', label: 'Leave.', when: { setting: 'difficulty', is: 'hard' }, effects: [{ scene: null }] },
         ],
       },
     ],
@@ -228,10 +227,10 @@ describe('the loader’s settings checks', () => {
     const { problems } = loaded([
       {
         id: 'bakery',
-        body: [{ text: 'bakery#hint', when: { setting: 'volume' } }],
+        body: [{ text: 'The rye is good today.', when: { setting: 'volume' } }],
         choices: [
-          { id: 'hint', label: 'bakery#hint', when: { setting: 'textSize', is: 'large' }, effects: [] },
-          { id: 'leave', label: 'bakery#leave', when: { setting: 'difficulty', is: 'impossible' }, effects: [] },
+          { id: 'hint', label: 'Ask about the rye.', when: { setting: 'textSize', is: 'large' }, effects: [] },
+          { id: 'leave', label: 'Leave.', when: { setting: 'difficulty', is: 'impossible' }, effects: [] },
         ],
       },
     ])

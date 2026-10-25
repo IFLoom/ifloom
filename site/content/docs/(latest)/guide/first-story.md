@@ -67,7 +67,7 @@ export const opening: Content = {
     {
       id: 'ch1.stop',
       title: 'Chapter one: the stop',
-      body: [{ text: 'ch1.stop' }],
+      body: [{ prose: 'ch1.stop' }],
       choices: [],
     },
   ],
@@ -88,7 +88,7 @@ import { opening } from './story/opening.ts'
 export default loadGame([stats, opening], { id: 'last-bus', title: 'The Last Bus' })
 ```
 
-The scene is a [data scene](/docs/reference/scenes#datascene). Its `body` is a list of blocks, and `{ text: 'ch1.stop' }` shows the prose stored under the key `ch1.stop`. Keeping the words apart from the structure means the loader can check that every key has words, and a translation can replace them.
+The scene is a [data scene](/docs/reference/scenes#datascene). Its `body` is a list of blocks, and `{ prose: 'ch1.stop' }` shows the prose stored under the key `ch1.stop`. Keeping the words apart from the structure means the loader can check that every key has words, and a translation can replace them.
 
 Prose is plain text, with `**bold**` and `*italic*` as in Markdown (see [Prose](/docs/reference/prose#bold-and-italics)).
 
@@ -107,7 +107,7 @@ scenes: [
   {
     id: 'ch1.stop',
     title: 'Chapter one: the stop',
-    body: [{ text: 'ch1.stop' }],
+    body: [{ prose: 'ch1.stop' }],
     choices: [
       { id: 'share', effects: [{ scene: 'ch2.bus' }] },
       { id: 'keep', effects: [{ scene: 'ch2.bus' }] },
@@ -116,7 +116,7 @@ scenes: [
   {
     id: 'ch2.bus',
     title: 'Chapter two: the bus',
-    body: [{ text: 'ch2.bus' }],
+    body: [{ prose: 'ch2.bus' }],
     choices: [],
   },
 ],
@@ -163,9 +163,9 @@ Give the second chapter a line for each choice at the stop. A block with a `when
 
 ```ts
 body: [
-  { text: 'ch2.bus' },
-  { text: 'ch2.bus.shared', when: { chose: 'ch1.stop#share' } },
-  { text: 'ch2.bus.kept', when: { chose: 'ch1.stop#keep' } },
+  { prose: 'ch2.bus' },
+  { prose: 'ch2.bus.shared', when: { chose: 'ch1.stop#share' } },
+  { prose: 'ch2.bus.kept', when: { chose: 'ch1.stop#keep' } },
 ],
 ```
 
@@ -199,18 +199,18 @@ The third chapter reads the count back with a range. `lt`, `is` and `gte` are th
   id: 'ch3.home',
   title: 'Chapter three: home',
   body: [
-    { text: 'ch3.home' },
-    { text: 'ch3.home.none', when: { kv: 'excuses', lt: 1 } },
-    { text: 'ch3.home.one', when: { kv: 'excuses', is: 1 } },
-    { text: 'ch3.home.more', when: { kv: 'excuses', gte: 2 } },
+    { prose: 'ch3.home' },
+    { prose: 'ch3.home.none', when: { kv: 'excuses', lt: 1 } },
+    { prose: 'ch3.home.one', when: { kv: 'excuses', is: 1 } },
+    { prose: 'ch3.home.more', when: { kv: 'excuses', gte: 2 } },
   ],
   choices: [
     { id: 'wave', when: { stat: 'warmth', gte: 2 }, effects: [{ scene: 'end.wave' }] },
     { id: 'door', effects: [{ scene: 'end.door' }] },
   ],
 },
-{ id: 'end.wave', title: 'The end', body: [{ text: 'end.wave' }], choices: [] },
-{ id: 'end.door', title: 'The end', body: [{ text: 'end.door' }], choices: [] },
+{ id: 'end.wave', title: 'The end', body: [{ prose: 'end.wave' }], choices: [] },
+{ id: 'end.door', title: 'The end', body: [{ prose: 'end.door' }], choices: [] },
 ```
 
 A key that was never set counts as 0, so the honest player's line needs nothing written first. The `wave` ending uses the stat. Only a player who shared the umbrella and paid the fare has a warmth of 2.
@@ -232,7 +232,7 @@ inputs: [{ id: 'playerName', label: 'Your name', type: 'text', maxLength: 20, wh
 Show that line, and hold the first chapter's choices back, until the name is in:
 
 ```ts
-body: [{ text: 'ch1.stop' }, { text: 'ch1.stop.named', when: { kv: 'playerName' } }],
+body: [{ prose: 'ch1.stop' }, { prose: 'ch1.stop.named', when: { kv: 'playerName' } }],
 choices: [
   { id: 'share', when: { kv: 'playerName' }, effects: [/* … */] },
   { id: 'keep', when: { kv: 'playerName' }, effects: [/* … */] },
@@ -424,7 +424,7 @@ export const opening: Content = {
     {
       id: 'ch1.stop',
       title: 'Chapter one: the stop',
-      body: [{ text: 'ch1.stop' }, { text: 'ch1.stop.named', when: { kv: 'playerName' } }],
+      body: [{ prose: 'ch1.stop' }, { prose: 'ch1.stop.named', when: { kv: 'playerName' } }],
       choices: [
         {
           id: 'share',
@@ -438,9 +438,9 @@ export const opening: Content = {
       id: 'ch2.bus',
       title: 'Chapter two: the bus',
       body: [
-        { text: 'ch2.bus' },
-        { text: 'ch2.bus.shared', when: { chose: 'ch1.stop#share' } },
-        { text: 'ch2.bus.kept', when: { chose: 'ch1.stop#keep' } },
+        { prose: 'ch2.bus' },
+        { prose: 'ch2.bus.shared', when: { chose: 'ch1.stop#share' } },
+        { prose: 'ch2.bus.kept', when: { chose: 'ch1.stop#keep' } },
       ],
       choices: [
         { id: 'pay', effects: [{ stat: 'warmth', by: 1 }, { turn: true }, { scene: 'ch3.home' }] },
@@ -456,18 +456,18 @@ export const opening: Content = {
       id: 'ch3.home',
       title: 'Chapter three: home',
       body: [
-        { text: 'ch3.home' },
-        { text: 'ch3.home.none', when: { kv: 'excuses', lt: 1 } },
-        { text: 'ch3.home.one', when: { kv: 'excuses', is: 1 } },
-        { text: 'ch3.home.more', when: { kv: 'excuses', gte: 2 } },
+        { prose: 'ch3.home' },
+        { prose: 'ch3.home.none', when: { kv: 'excuses', lt: 1 } },
+        { prose: 'ch3.home.one', when: { kv: 'excuses', is: 1 } },
+        { prose: 'ch3.home.more', when: { kv: 'excuses', gte: 2 } },
       ],
       choices: [
         { id: 'wave', when: { stat: 'warmth', gte: 2 }, effects: [{ scene: 'end.wave' }] },
         { id: 'door', effects: [{ scene: 'end.door' }] },
       ],
     },
-    { id: 'end.wave', title: 'The end', body: [{ text: 'end.wave' }], choices: [] },
-    { id: 'end.door', title: 'The end', body: [{ text: 'end.door' }], choices: [] },
+    { id: 'end.wave', title: 'The end', body: [{ prose: 'end.wave' }], choices: [] },
+    { id: 'end.door', title: 'The end', body: [{ prose: 'end.door' }], choices: [] },
   ],
   prose: {
     'ch1.stop': 'Rain, and the last bus is late. A man in a thin jacket shelters beside you under half an umbrella.',

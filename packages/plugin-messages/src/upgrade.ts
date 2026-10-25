@@ -16,7 +16,7 @@ const renamed = (args: unknown, names: Record<string, string>): unknown =>
 const COMMANDS_6: Record<string, Record<string, string>> = { 'messages/read': { thread: 'id' } }
 
 /** The version of what content writes for this plugin. */
-export const CONTENT_VERSION = 21
+export const CONTENT_VERSION = 25
 
 export const contentMigrations: Record<number, ContentStep> = {
   // 5 → 6: a command's one target is `id`.
@@ -31,6 +31,23 @@ export const contentMigrations: Record<number, ContentStep> = {
   // 20 → 21: effects are told apart by their key, as conditions are: `{ stat: 'coins', by: -2 }`, never
   // `{ kind: 'stat', … }`. This plugin's content holds effects, so they are keyed here as well as by the engine.
   20: (pack, tools) => tools.effects(pack),
+  // 24 → 25: a reply's words are its `label`, written in place, not the prose `<message>#<reply>`. Each
+  // reply with no label gets that prose's words, the pack's own or the game's under it; one neither has keeps none.
+  24: (pack, tools) => {
+    const data = isRecord(pack.data) ? pack.data : undefined
+    const messages = data && isRecord(data.messages) ? data.messages : undefined
+    if (!data || !messages || !Array.isArray(messages.messages)) return pack
+    const list = messages.messages.map((message) => {
+      if (!isRecord(message) || !Array.isArray(message.replies)) return message
+      const replies = message.replies.map((reply) => {
+        if (!isRecord(reply) || reply.label !== undefined) return reply
+        const words = tools.prose(`${String(message.id)}#${String(reply.id)}`)
+        return words === undefined ? reply : { ...reply, label: words }
+      })
+      return { ...message, replies }
+    })
+    return { ...pack, data: { ...data, messages: { ...messages, messages: list } } }
+  },
 }
 
 /** The version of this plugin's commands. */

@@ -178,8 +178,8 @@ describe('the inventory with the cast', () => {
   const town: Content = {
     name: 'town',
     stats: [{ id: 'friendship', label: 'Friendship', of: 'character' }],
-    scenes: [{ id: 'ava.hi', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ scene: null }] }] }],
-    prose: { 'ava.hi': 'Hi.', 'ava.hi#bye': 'Bye' },
+    scenes: [{ id: 'ava.hi', body: [{ prose: 'ava.hi' }], choices: [{ id: 'bye', label: 'Bye', effects: [{ scene: null }] }] }],
+    prose: { 'ava.hi': 'Hi.' },
     entities: [person({ id: 'ava', name: 'Ava', talk: 'ava.hi' })],
   }
 

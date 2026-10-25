@@ -43,7 +43,7 @@ const place = (id: string, exits: string[], extra: Partial<PlaceDef> = {}) =>
     desc: 'Town',
     exits,
     image: `place/${id}`,
-    body: [{ text: `place.${id}` }],
+    body: [{ prose: `place.${id}` }],
     ...extra,
   })
 
@@ -223,7 +223,7 @@ describe('places', () => {
     const broken: Content = {
       name: 'broken',
       actions: [{ id: 'swim', blocked: [{ when: { not: at('lido') }, reason: 'No.' }], effects: [moveTo('pier')] }],
-      entities: [place('yard', ['lane'], { parent: 'yard', body: [{ text: 'place.yard' }], actions: [{ id: 'dig', label: 'Dig', command: go('moon') }] })],
+      entities: [place('yard', ['lane'], { parent: 'yard', body: [{ prose: 'place.yard' }], actions: [{ id: 'dig', label: 'Dig', command: go('moon') }] })],
     }
     const { problems } = loadGame([broken], { id: 'b', title: 'B', plugins: [places({ start: 'nowhere' })] })
     expect(problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
@@ -448,7 +448,7 @@ describe('places', () => {
         desc: 'Town',
         image: 'place/cafe',
         tags: ['indoors'],
-        traits: { 'places/location': { exits: ['street'], body: [{ text: 'place.cafe' }], ui: { transition: 'fade' } } },
+        traits: { 'places/location': { exits: ['street'], body: [{ prose: 'place.cafe' }], ui: { transition: 'fade' } } },
       })
       const { game: g } = game()
       expect(locationsOf(g)).toEqual(['location:house', 'location:street', 'location:cafe', 'location:back', 'location:park'])
@@ -484,7 +484,7 @@ describe('places', () => {
         id: 'mod:shortcut',
         schema: SCHEMA,
         // A row replaces the trait: the house gets a door straight to the park.
-        traits: { 'places/location': { 'location:house': { exits: ['street', 'park'], body: [{ text: 'place.house' }] } } },
+        traits: { 'places/location': { 'location:house': { exits: ['street', 'park'], body: [{ prose: 'place.house' }] } } },
         // An entity of the same reference replaces the game's: the park gets a new name.
         entities: [place('park', ['street', 'house'], { name: 'The Green' })],
       }
@@ -519,7 +519,7 @@ describe('places', () => {
       id: 'mod:old',
       schema: 23,
       prose: { 'place.shed': 'The {{v:places/tag}} shed.' },
-      data: { places: { locations: [{ id: 'shed', name: 'Shed', tag: 'Garden', art: 'place/shed', exits: ['house'], body: [{ text: 'place.shed' }] }] } },
+      data: { places: { locations: [{ id: 'shed', name: 'Shed', tag: 'Garden', art: 'place/shed', exits: ['house'], body: [{ prose: 'place.shed' }] }] } },
     } as unknown as Pack
     const { game: g, problems } = loadGame([town], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'house' })] }, { packs: [old] })
     expect(problems).toEqual([])
@@ -529,7 +529,7 @@ describe('places', () => {
       name: 'Shed',
       desc: 'Garden',
       image: 'place/shed',
-      traits: { 'places/location': { exits: ['house'], body: [{ text: 'place.shed' }] } },
+      traits: { 'places/location': { exits: ['house'], body: [{ prose: 'place.shed' }] } },
     })
     expect(g.data?.places).toBeUndefined()
     const shed = applyEffects(startingState(g), g, [moveTo('shed')])

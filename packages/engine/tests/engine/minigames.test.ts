@@ -37,7 +37,7 @@ const arrows: MinigameDef = {
       ],
     },
     show: {
-      label: 'arrows.show',
+      label: 'Quick!',
       after: { ms: 1500, go: 'round' },
       on: [
         { input: 'up', when: { kv: 'arrow', of: 'minigame', lte: 1 }, go: 'round', effects: [{ kv: 'score', of: 'minigame', by: 1 }] },
@@ -74,10 +74,10 @@ function withMinigames(extra: Partial<Game> = {}): Game {
     ...base,
     minigames: [arrows, toss],
     actions: [...(base.actions ?? []), { id: 'play', effects: [{ minigame: 'arrows' }] }, { id: 'flip', effects: [{ minigame: 'toss' }] }],
-    scenes: [...base.scenes, { id: 'yard', body: [{ text: 'yard' }], minigame: 'toss', choices: [{ id: 'go', effects: [{ scene: null }] }] }],
+    scenes: [...base.scenes, { id: 'yard', body: [{ prose: 'yard' }], minigame: 'toss', choices: [{ id: 'go', label: 'Go', effects: [{ scene: null }] }] }],
     ...extra,
   }
-  game.prose = proseStore(game, { 'arrows.show': 'Quick!', yard: 'A coin on the step.', 'yard#go': 'Go' })
+  game.prose = proseStore(game, { yard: 'A coin on the step.' })
   return game
 }
 

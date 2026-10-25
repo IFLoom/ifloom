@@ -47,7 +47,7 @@ async function def(extra: Partial<UnlockDef> = {}): Promise<UnlockDef> {
 const supporterPack: Pack = {
   id: 'supporter',
   schema: SCHEMA,
-  scenes: [{ id: 'supporter.lounge', title: 'The back room', body: [{ text: 'supporter.lounge' }], choices: [] }],
+  scenes: [{ id: 'supporter.lounge', title: 'The back room', body: [{ prose: 'supporter.lounge' }], choices: [] }],
   prose: { 'supporter.lounge': 'Behind the bakery a narrow door opens on a room that smells of cinnamon.' },
 }
 

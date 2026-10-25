@@ -72,6 +72,15 @@ export type Reference =
   | { timer: string; to?: unknown; by?: unknown }
   /** A prose key that needs words. */
   | { prose: string }
+  /**
+   * Words written in place, as a label, a line of text or a notice's text:
+   * reported when they are a prose key the game has, as content wrote them
+   * before schema 25. `oldKey` is where a choice with no label read its
+   * words then, reported when the game's prose has it.
+   */
+  | { words: string | undefined; field: string; oldKey?: string }
+  /** Something content writes the way an older schema did, with how to write it now. */
+  | { outdated: string }
   /** A variants list that needs lines. */
   | { variants: string }
   /** A custom value. */

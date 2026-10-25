@@ -15,7 +15,7 @@ const cafe: Content = {
   scenes: [
     {
       id: 'counter',
-      body: [{ text: 'counter' }],
+      body: [{ prose: 'counter' }],
       choices: [
         {
           id: 'cake',
@@ -23,7 +23,7 @@ const cafe: Content = {
           cost: { stats: { coins: 2 }, reasons: { coins: 'Cake is two coins.' } },
           effects: [{ kv: 'cake', to: true }],
         },
-        { id: 'usual', labels: [{ when: { kv: 'regular' }, label: 'The usual, please' }], label: 'counter.usual', effects: [] },
+        { id: 'usual', labels: [{ when: { kv: 'regular' }, label: 'The usual, please' }], label: 'Something warm', effects: [] },
         { id: 'leave', label: 'Leave', tags: ['exit'], irreversible: 'The café shuts behind you.', effects: [{ scene: null }] },
       ],
     },
@@ -39,7 +39,7 @@ const cafe: Content = {
       effects: [{ kv: 'tipped', to: true }],
     },
   ],
-  prose: { counter: 'The cake looks good.', 'counter.usual': 'Something warm' },
+  prose: { counter: 'The cake looks good.' },
 }
 
 const load = () => loadGame([cafe], { id: 'cafe', title: 'Café' })
@@ -58,7 +58,7 @@ describe('buttons', () => {
     expect(apply(after, game, { type: 'choose', id: 'cake' })).toMatchObject({ ok: false, reason: 'Cake is two coins.' })
   })
 
-  it('read a label as words, or as a prose key the game has, and labels by state, for choices and actions alike', () => {
+  it('read a label as written, and labels by state, for choices and actions alike', () => {
     const { game } = load()
     const at = { ...startingState(game), sceneId: 'counter' }
     expect(view(at, game).scene.choices.map((choice) => [choice.id, choice.label])).toEqual([
@@ -73,10 +73,17 @@ describe('buttons', () => {
     expect(view(at, game).scene.choices[2]).toMatchObject({ tags: ['exit'], irreversible: 'The café shuts behind you.' })
   })
 
-  it('report a label that reads as a prose key with no prose', () => {
-    const typo: Content = { ...cafe, scenes: [{ id: 'counter', body: [{ text: 'counter' }], choices: [{ id: 'usual', label: 'counter#usaul' }] }] }
-    const { problems } = loadGame([typo], { id: 'cafe', title: 'Café' })
-    expect(problems.map(describeProblem)).toContain('cafe · scene counter · no prose for "counter#usaul"')
+  it('report a label written as a prose key the game has, as content wrote one before schema 25', () => {
+    const old: Content = {
+      ...cafe,
+      prose: { ...cafe.prose, 'counter.usual': 'Something warm', 'counter#leave': 'Leave' },
+      scenes: [{ id: 'counter', body: [{ prose: 'counter' }], choices: [{ id: 'usual', label: 'counter.usual' }, { id: 'leave' }] }],
+    }
+    const { problems } = loadGame([old], { id: 'cafe', title: 'Café' })
+    expect(problems.map(describeProblem)).toEqual([
+      'cafe · scene counter · label "counter.usual" names the prose "counter.usual", but a label is words written in place now (schema 25): write the words',
+      'cafe · scene counter · no label: its words are no longer read from the prose "counter#leave" (schema 25), so give it label: "Leave"',
+    ])
   })
 
   it('call a minigame’s numbers its kv, from schema 22', () => {

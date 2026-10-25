@@ -21,9 +21,11 @@ const smallTalk: MessageDef[] = ['rain', 'beans', 'river', 'ducks'].map((topic) 
   from: 'ava',
   drawnFrom: ['ava.chat'],
   when: { not: messageSince(`ava.chat.${topic}`, { lt: 3 }) },
-  body: [{ text: `ava.chat.${topic}` }],
+  body: [{ prose: `ava.chat.${topic}` }],
   // The beans want an answer, every time she asks.
-  ...(topic === 'beans' ? { replies: [{ id: 'taste', effects: [{ stat: 'friendship', by: 2, of: character('ava') }] }] } : {}),
+  ...(topic === 'beans'
+    ? { replies: [{ id: 'taste', label: 'I’ll come and taste them', effects: [{ stat: 'friendship', by: 2, of: character('ava') }] }] }
+    : {}),
 }))
 
 export const ava: Content = {
@@ -36,38 +38,46 @@ export const ava: Content = {
       title: 'Ava',
       speaker: 'ava',
       body: [
-        { text: 'ava.hi' },
+        { prose: 'ava.hi' },
         { variants: 'ava.smalltalk' },
-        { text: 'ava.hi.regular', when: { seen: 'ava.hi', gte: 3 } },
+        { prose: 'ava.hi.regular', when: { seen: 'ava.hi', gte: 3 } },
         // Things are held: once the shell is Ava's, it sits by her till.
-        { text: 'ava.hi.shell', when: { entity: 'keepsake:shell', at: character('ava') } },
+        { prose: 'ava.hi.shell', when: { entity: 'keepsake:shell', at: character('ava') } },
       ],
       choices: [
         // Shown while you hold the shell from the river: giving it moves it to her.
         {
           id: 'shell',
+          label: 'Give her the shell from the river',
           when: holding('keepsake:shell'),
           effects: [move('keepsake:shell', character('ava')), { stat: 'friendship', by: 5, of: character('ava') }],
         },
-        { id: 'chat', once: { per: 'turn', reason: 'She has a queue.' }, effects: [{ stat: 'friendship', by: 5, of: character('ava') }] },
+        {
+          id: 'chat',
+          label: 'Chat for a minute',
+          once: { per: 'turn', reason: 'She has a queue.' },
+          effects: [{ stat: 'friendship', by: 5, of: character('ava') }],
+        },
         {
           id: 'compliment',
+          label: 'Tell her the café is the best thing in town',
           when: { stat: 'charm', gte: 3 },
           effects: [{ stat: 'friendship', by: 10, of: character('ava') }, { scene: null }],
         },
         // She points you at the job board by the till: the scene closes and the board opens over the room.
-        { id: 'work', effects: [{ scene: null }, openJobs()] },
-        { id: 'bye', effects: [{ scene: null }] },
+        { id: 'work', label: 'Ask about weekend work', effects: [{ scene: null }, openJobs()] },
+        { id: 'bye', label: 'Leave her to it', effects: [{ scene: null }] },
       ],
     },
     {
       id: 'ava.call',
       title: 'Ava, on the phone',
       speaker: 'ava',
-      body: [{ text: 'ava.call' }],
+      body: [{ prose: 'ava.call' }],
       choices: [
         {
           id: 'bye',
+          label: 'Say goodnight',
           effects: [{ stat: 'friendship', by: 3, of: character('ava') }, { scene: null }],
         },
       ],
@@ -79,9 +89,9 @@ export const ava: Content = {
       ui: { transition: { in: 'fade', out: 'fade', ms: 600 } },
       speaker: 'ava',
       body: [
-        { text: 'ava.river' },
+        { prose: 'ava.river' },
         // Her line comes a moment after the ducks: a block of its own, revealed by the React UI.
-        { text: 'ava.river.2', ui: { reveal: { delay: 1500, as: 'slide-up' } } },
+        { prose: 'ava.river.2', ui: { reveal: { delay: 1500, as: 'slide-up' } } },
         // Each pick but the last jumps back here, so you can do both before you sit.
         point('bench'),
         decide('evening', [
@@ -146,14 +156,17 @@ export const ava: Content = {
           channel: 'texts',
           from: 'ava',
           when: { all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] },
-          body: [{ text: 'ava.text' }],
-          replies: [{ id: 'yes', effects: [{ stat: 'friendship', by: 5, of: character('ava') }] }, { id: 'later' }],
+          body: [{ prose: 'ava.text' }],
+          replies: [
+            { id: 'yes', label: 'Deal!', effects: [{ stat: 'friendship', by: 5, of: character('ava') }] },
+            { id: 'later', label: 'Maybe later in the week' },
+          ],
         },
         ...smallTalk,
       ],
     },
     feed: {
-      posts: [{ id: 'ava.cake', feed: 'social', from: 'ava', when: day({ gte: 1 }), body: [{ text: 'feed.ava-cake' }], likes: 14 }],
+      posts: [{ id: 'ava.cake', feed: 'social', from: 'ava', when: day({ gte: 1 }), body: [{ prose: 'feed.ava-cake' }], likes: 14 }],
     },
   },
   prose,

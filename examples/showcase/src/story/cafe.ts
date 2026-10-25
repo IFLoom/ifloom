@@ -22,18 +22,19 @@ export const cafe: Content = {
       drawnFrom: ['cafe'],
       weight: 3,
       when: { not: { seen: 'cafe.window', gte: 2 } },
-      body: [{ text: 'cafe.window' }],
-      choices: [{ id: 'leave', effects: [{ scene: null }] }],
+      body: [{ prose: 'cafe.window' }],
+      choices: [{ id: 'leave', label: 'Finish your cup', effects: [{ scene: null }] }],
     },
     {
       id: 'cafe.crossword',
       title: 'Seven down',
       drawnFrom: ['cafe'],
       when: { not: { seen: 'cafe.crossword' } },
-      body: [{ text: 'cafe.crossword' }],
+      body: [{ prose: 'cafe.crossword' }],
       choices: [
         {
           id: 'leave',
+          label: 'Leave him to it',
           effects: [{ stat: 'charm', by: 1 }, { scene: null }],
         },
       ],
@@ -45,10 +46,11 @@ export const cafe: Content = {
       drawnFrom: ['cafe'],
       weight: 2,
       when: here('ava'),
-      body: [{ text: 'cafe.break' }],
+      body: [{ prose: 'cafe.break' }],
       choices: [
         {
           id: 'leave',
+          label: 'Keep her secret',
           effects: [{ stat: 'friendship', by: 2, of: character('ava') }, { scene: null }],
         },
       ],
@@ -57,8 +59,8 @@ export const cafe: Content = {
     {
       id: 'cafe.quiet',
       title: 'A quiet table',
-      body: [{ text: 'cafe.quiet' }],
-      choices: [{ id: 'leave', effects: [{ scene: null }] }],
+      body: [{ prose: 'cafe.quiet' }],
+      choices: [{ id: 'leave', label: 'Get up', effects: [{ scene: null }] }],
     },
   ],
   entities: [
@@ -96,10 +98,10 @@ export const cafe: Content = {
         hotspots: [{ id: 'ava', rect: [36, 22, 28, 44], label: 'Talk to Ava', command: talk('ava'), layer: 'counter' }],
       },
       body: [
-        { text: 'place.cafe' },
-        { text: 'place.cafe.ava', when: here('ava') },
-        { text: 'place.cafe.raincoat', when: wearing('clothing:raincoat') },
-        { text: 'place.cafe.caffeinated', when: statusActive('caffeinated') },
+        { prose: 'place.cafe' },
+        { prose: 'place.cafe.ava', when: here('ava') },
+        { prose: 'place.cafe.raincoat', when: wearing('clothing:raincoat') },
+        { prose: 'place.cafe.caffeinated', when: statusActive('caffeinated') },
       ],
     }),
     vendor({

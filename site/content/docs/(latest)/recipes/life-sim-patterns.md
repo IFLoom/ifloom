@@ -43,7 +43,7 @@ const crossword: DataScene = {
   id: 'cafe.crossword',
   drawnFrom: ['cafe'],
   when: { not: { since: 'cafe.crossword', last: true, lt: 3 } },
-  body: [{ text: 'cafe.crossword' }],
+  body: [{ prose: 'cafe.crossword' }],
   choices: [{ id: 'leave', effects: [{ scene: null }] }],
 }
 ```
@@ -220,14 +220,14 @@ import type { Block } from '@ifloom/engine'
 import { location } from '@ifloom/plugin-places'
 
 const header: Block[] = [
-  { text: 'header.rent-due', when: { kv: 'rentDue' } },
-  { text: 'header.rain', when: { kv: 'weather', is: 'drizzle' } },
+  { prose: 'header.rent-due', when: { kv: 'rentDue' } },
+  { prose: 'header.rain', when: { kv: 'weather', is: 'drizzle' } },
 ]
 
 // In the content's entities.
 const locations = [
-  location({ id: 'high-street', name: 'High Street', desc: 'Small Town', exits: ['cafe'], body: [...header, { text: 'place.high-street' }] }),
-  location({ id: 'cafe', name: 'The Café', desc: 'Small Town', exits: ['high-street'], body: [...header, { text: 'place.cafe' }] }),
+  location({ id: 'high-street', name: 'High Street', desc: 'Small Town', exits: ['cafe'], body: [...header, { prose: 'place.high-street' }] }),
+  location({ id: 'cafe', name: 'The Café', desc: 'Small Town', exits: ['high-street'], body: [...header, { prose: 'place.cafe' }] }),
 ]
 ```
 

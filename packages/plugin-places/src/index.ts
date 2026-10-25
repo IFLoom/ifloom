@@ -530,7 +530,7 @@ const LOCATION_FIELDS = ['parent', 'exits', 'stage', 'blocked', 'body', 'actions
  * the trait's written side by side.
  *
  * ```ts
- * entities: [location({ id: 'cafe', name: 'The Corner Café', desc: 'Café', exits: ['street'], body: [{ text: 'place.cafe' }] })]
+ * entities: [location({ id: 'cafe', name: 'The Corner Café', desc: 'Café', exits: ['street'], body: [{ prose: 'place.cafe' }] })]
  * ```
  */
 export function location(def: PlaceDef): EntityDef {

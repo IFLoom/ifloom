@@ -175,7 +175,7 @@ describe('content migrations', () => {
           id: 'cafe.evening',
           body: [
             {
-              text: 'cafe.evening/back',
+              prose: 'cafe.evening/back',
               when: {
                 all: [
                   { kv: 'visits', gte: 3 },
@@ -382,7 +382,7 @@ describe('content migrations', () => {
       scenes: [
         {
           id: 'cafe',
-          body: [{ text: 'cafe', when: { 'cast/at': { character: 'ava', at: ['cafe'] } } }],
+          body: [{ prose: 'cafe', when: { 'cast/at': { character: 'ava', at: ['cafe'] } } }],
           choices: [{ id: 'sit', when: { 'statuses/active': { status: 'tired' } }, effects: [] }],
         },
       ],
@@ -546,7 +546,7 @@ describe('content migrations', () => {
       scenes: [
         {
           id: 'ch2.stairs',
-          body: [{ text: 'ch2.stairs/opened', when: { all: [{ chose: 'ch1.mat#open' }, { not: { chose: 'ch1.mat#shelf', gte: 2 } }] } }],
+          body: [{ prose: 'ch2.stairs/opened', when: { all: [{ chose: 'ch1.mat#open' }, { not: { chose: 'ch1.mat#shelf', gte: 2 } }] } }],
           choices: [],
         },
       ],
@@ -731,7 +731,7 @@ describe('content migrations', () => {
         pipe: 'Two | three',
         blot: '[[img:scene/blot|A blot]]',
       },
-      scenes: [{ id: 'desk', body: [{ text: 'letter' }, { text: 'blot', ui: { tilt: true, reveal: { delay: 200 } } }], choices: [] }],
+      scenes: [{ id: 'desk', body: [{ prose: 'letter' }, { prose: 'blot', ui: { tilt: true, reveal: { delay: 200 } } }], choices: [] }],
     })
   })
 
@@ -764,7 +764,7 @@ describe('content migrations', () => {
         // Ava is a character, so her bare id; Jo's id is two kinds', so in full; two Sams and a Ruth nobody declares stay as written.
         cafe: 'Ava looks up.\n\n@ava: "Morning."\n\n@you: "Hi." [[voice:you.hi]]\n\n@you: "Hola."\n\n@dev: "Busy?"\n\n@staff:jo: "Mm."\n\nSam: "Two Sams."\n\nRuth: "Who?"\n\nNote: the sign says "Closed" today.',
       },
-      scenes: [{ id: 'counter', body: [{ words: '@ava: "Tea?"\n\n"Please."' }], choices: [] }],
+      scenes: [{ id: 'counter', body: [{ text: '@ava: "Tea?"\n\n"Please."' }], choices: [] }],
     })
     // loadGame gives the step the entities under the pack.
     const { prose } = loadGame(
@@ -773,6 +773,71 @@ describe('content migrations', () => {
       { packs: [{ id: 'old', schema: 22, prose: { hi: 'Ava: "Hi."' } } as Pack] },
     )
     expect(prose.hi).toBe('@ava: "Hi."')
+  })
+
+  it('write words in place at schema 25: blocks, labels, notices and a minigame’s states, from the pack’s prose or the game’s', () => {
+    const v24 = {
+      id: 'mod:tea',
+      schema: 24,
+      prose: {
+        'cafe.counter': 'The counter.',
+        'cafe.counter#tea': 'A tea, please',
+        'cafe.usual': 'The usual',
+        'notice.tea': 'Tea is up.',
+        'darts.aim': 'Aim!',
+      },
+      scenes: [
+        {
+          id: 'cafe.counter',
+          body: [{ text: 'cafe.counter', when: { kv: 'open' } }, { words: 'Ava waves.' }, { decide: 'ask', choices: [{ id: 'beans' }] }],
+          choices: [
+            { id: 'tea', effects: [{ notify: 'Tea', text: 'notice.tea' }] },
+            { id: 'usual', label: 'cafe.usual', labels: [{ when: { kv: 'regular' }, label: 'cafe.usual' }] },
+            // Neither the pack nor the game has words for these: they stay as they are.
+            { id: 'go' },
+            { id: 'odd', label: 'cafe.unwritten' },
+          ],
+        },
+      ],
+      actions: [{ id: 'wait', label: 'cafe.usual' }],
+      minigames: [{ id: 'darts', start: 'aim', states: { aim: { label: 'darts.aim' }, done: { label: 'Done', final: {} } } }],
+      patches: [{ scene: 'cafe.counter', addChoice: { id: 'wave' } }],
+    }
+    // The game's prose under the pack, as loadGame gives it.
+    const context = { prose: { 'cafe.counter#wave': 'Wave', 'cafe.counter#beans': 'Ask about the beans' } }
+    expect(unwrap(upgradePack(v24, [], context))).toEqual({
+      ...v24,
+      schema: SCHEMA,
+      scenes: [
+        {
+          id: 'cafe.counter',
+          body: [
+            { prose: 'cafe.counter', when: { kv: 'open' } },
+            { text: 'Ava waves.' },
+            { decide: 'ask', choices: [{ id: 'beans', label: 'Ask about the beans' }] },
+          ],
+          choices: [
+            { id: 'tea', label: 'A tea, please', effects: [{ notify: 'Tea', text: 'Tea is up.' }] },
+            { id: 'usual', label: 'The usual', labels: [{ when: { kv: 'regular' }, label: 'The usual' }] },
+            { id: 'go' },
+            { id: 'odd', label: 'cafe.unwritten' },
+          ],
+        },
+      ],
+      actions: [{ id: 'wait', label: 'The usual' }],
+      minigames: [{ id: 'darts', start: 'aim', states: { aim: { label: 'Aim!' }, done: { label: 'Done', final: {} } } }],
+      patches: [{ scene: 'cafe.counter', addChoice: { id: 'wave', label: 'Wave' } }],
+    })
+    // loadGame gives the step the prose under the pack, the content's.
+    const { game, problems } = loadGame(
+      [{ prose: { 'hall#knock': 'Knock' }, scenes: [{ id: 'hall', body: [], choices: [] }] }],
+      { id: 'house', title: 'House', plugins: [] },
+      {
+        packs: [{ id: 'old', schema: 24, scenes: [{ id: 'hall', body: [{ words: 'A door.' }], choices: [{ id: 'knock', effects: [] }] }] } as unknown as Pack],
+      },
+    )
+    expect(problems).toEqual([])
+    expect(game.scenes[0]).toMatchObject({ body: [{ text: 'A door.' }], choices: [{ id: 'knock', label: 'Knock' }] })
   })
 
   it('read every kv store the one way at schema 19, with whose in of, and the phase as a kv key', () => {
@@ -814,7 +879,7 @@ describe('content migrations', () => {
       scenes: [
         {
           id: 'rosa',
-          body: [{ text: 'rosa', when: { kv: 'visits', of: 'storyline:rosa', gte: 2 } }],
+          body: [{ prose: 'rosa', when: { kv: 'visits', of: 'storyline:rosa', gte: 2 } }],
           choices: [
             {
               id: 'hi',
@@ -958,10 +1023,10 @@ describe('content migrations', () => {
           ui: { transition: { in: 'fade', ms: 500 } },
           body: [
             // The prose split at its reveals: each later part a key and a block of its own, under the same `when`.
-            { text: 'porch', when: { kv: 'dusk' } },
-            { text: 'porch.2', when: { kv: 'dusk' }, ui: { reveal: { delay: 1500, as: 'slide-up' } } },
-            { text: 'porch.3', when: { kv: 'dusk' }, ui: { reveal: {} } },
-            { text: 'porch.more', ui: { reveal: { delay: 1200 } } },
+            { prose: 'porch', when: { kv: 'dusk' } },
+            { prose: 'porch.2', when: { kv: 'dusk' }, ui: { reveal: { delay: 1500, as: 'slide-up' } } },
+            { prose: 'porch.3', when: { kv: 'dusk' }, ui: { reveal: {} } },
+            { prose: 'porch.more', ui: { reveal: { delay: 1200 } } },
             { variants: 'porch.birds', ui: { reveal: {} } },
           ],
           choices: [
@@ -990,7 +1055,7 @@ describe('content migrations', () => {
           id: 'garden',
           of: 'location',
           name: 'Garden',
-          traits: { 'places/location': { ui: { transition: 'slide-left' }, body: [{ text: 'garden', ui: { reveal: { as: 'zoom' } } }] } },
+          traits: { 'places/location': { ui: { transition: 'slide-left' }, body: [{ prose: 'garden', ui: { reveal: { as: 'zoom' } } }] } },
         },
       ],
       // A row's hue goes to the pack's own entity; Ann isn't one, so hers is dropped.
@@ -1034,7 +1099,7 @@ describe('content migrations', () => {
       scenes: [
         {
           id: 'shop',
-          body: [{ text: 'shop', when: { 'wardrobe/wearing': { item: 'scarf' } } }],
+          body: [{ prose: 'shop', when: { 'wardrobe/wearing': { item: 'scarf' } } }],
           choices: [
             { id: 'drink', command: { type: 'use', id: 'tea' }, effects: [] },
             {
@@ -1104,7 +1169,7 @@ describe('content migrations', () => {
       scenes: [
         {
           id: 'shop',
-          body: [{ text: 'shop', when: { 'wardrobe/wearing': { entity: 'item:scarf' } } }],
+          body: [{ prose: 'shop', when: { 'wardrobe/wearing': { entity: 'item:scarf' } } }],
           choices: [
             { id: 'drink', command: { 'inventory/use': { id: 'item:tea' } }, effects: [] },
             {

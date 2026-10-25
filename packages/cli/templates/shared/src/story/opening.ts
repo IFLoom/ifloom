@@ -12,30 +12,28 @@ export const opening: Content = {
     {
       id: 'start',
       title: 'The door',
-      body: [{ text: 'start' }],
+      body: [{ prose: 'start' }],
       choices: [
         {
           id: 'knock',
+          label: 'Knock',
           effects: [{ stat: 'courage', by: 1 }, { scene: 'inside' }],
         },
-        { id: 'wait', effects: [{ scene: 'inside' }] },
+        { id: 'wait', label: 'Wait for someone to open it', effects: [{ scene: 'inside' }] },
       ],
     },
     {
       id: 'inside',
       title: 'Inside',
       // The engine remembers every choice, so a later scene can ask about one.
-      body: [{ text: 'inside' }, { text: 'inside.knocked', when: { chose: 'start#knock' } }],
+      body: [{ prose: 'inside' }, { prose: 'inside.knocked', when: { chose: 'start#knock' } }],
       // An ending's way back: `newGame` starts the story over, keeping the player's settings.
-      choices: [{ id: 'again', command: { type: 'newGame' }, effects: [] }],
+      choices: [{ id: 'again', label: 'Start again', command: { type: 'newGame' }, effects: [] }],
     },
   ],
   prose: {
     start: 'A door you have never noticed before stands at the end of the hall.',
-    'start#knock': 'Knock',
-    'start#wait': 'Wait for someone to open it',
     inside: 'It opens onto a quiet room with a kettle just coming to the boil.',
     'inside.knocked': 'Someone calls out that they will be with you in a minute.',
-    'inside#again': 'Start again',
   },
 }

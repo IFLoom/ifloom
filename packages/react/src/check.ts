@@ -33,7 +33,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> => typeof va
  * a block's `dice` that isn't a roll's key, a block's `timer` that isn't a
  * timer the game declares, and a `tilt` that isn't true or false.
  *
- * It also reads the prose for inline pieces, `[[ui:name|…]]`: a name that is
+ * It also reads the prose, and the words blocks write in place, for inline pieces, `[[ui:name|…]]`: a name that is
  * neither built in (`modal`, `image`, `mail`, `prop`, `mono`) nor one of the game's own `inline`
  * components (pass the same object you give `mountGame` or the
  * `GameProvider`), which would show only its words; a `modal` with no prose
@@ -96,11 +96,15 @@ export function checkUiHints(game: Game, options: { allow?: readonly string[]; i
     }
   }
 
+  /** Words written in place in blocks, with where, for the inline pieces in them. */
+  const written: { where: string; text: string }[] = []
   // Sections, decisions and what their choices bring, as deep as a flow goes.
   const blocks = (where: string, body: readonly Block[] | undefined, at = '') =>
     (body ?? []).forEach((block, index) => {
       const here = `${at}${index + 1}`
       hints('block', `${where} block ${here}`, block.ui)
+      if ('text' in block) written.push({ where: `${where} block ${here}`, text: block.text })
+      if ('say' in block) written.push({ where: `${where} block ${here}`, text: block.say })
       if ('blocks' in block) blocks(where, block.blocks, `${here}.`)
       if ('decide' in block)
         for (const choice of block.choices) {
@@ -108,6 +112,31 @@ export function checkUiHints(game: Game, options: { allow?: readonly string[]; i
           blocks(where, choice.then, `${here}.${choice.id}.`)
         }
     })
+
+  const inline = new Set([...INLINE, ...Object.keys(options.inline ?? {})])
+  /** The inline pieces in one line of prose, as written. */
+  function pieces(at: string, text: string) {
+    for (const part of inlineMarkup(text) ?? []) {
+      if (part.type !== 'ui') continue
+      const where = `${at}: [[ui:${part.name}|${part.text}]]`
+      if (!inline.has(part.name) && !allowed.has(part.name)) {
+        out.push(`${where} is not an inline piece the React UI draws, so it shows only its words; add it to inline`)
+        continue
+      }
+      // A game's own component of a built-in name reads its arguments its own way.
+      if (options.inline?.[part.name]) continue
+      const [first] = part.args
+      if (part.name === 'modal') {
+        if (!first) out.push(`${where} needs a prose key: [[ui:modal|words|key]]`)
+        else if (game.prose?.line(first) === undefined) out.push(`${where}: no prose for "${first}"`)
+      }
+      if (part.name === 'image' && !first) out.push(`${where} needs a picture's path: [[ui:image|words|path]]`)
+      if ((part.name === 'modal' || part.name === 'image') && part.args.length > 2) out.push(`${where} takes two arguments at most`)
+      if (part.name === 'prop' && (part.args.length > 1 || (first !== undefined && !['sticky', 'clip', 'diary'].includes(first))))
+        out.push(`${where} takes one face: sticky, clip or diary`)
+      if (part.name === 'mono' && part.args.length) out.push(`${where} takes no arguments`)
+    }
+  }
 
   hints('game', 'game', game.ui)
   for (const scene of game.scenes) {
@@ -133,29 +162,8 @@ export function checkUiHints(game: Game, options: { allow?: readonly string[]; i
     hints('scene', where, place?.ui)
     blocks(where, place?.body)
   }
-  // Inline pieces in the prose: every line the store lists, as written.
-  const inline = new Set([...INLINE, ...Object.keys(options.inline ?? {})])
-  for (const key of game.prose?.keys?.() ?? []) {
-    for (const part of inlineMarkup(game.prose?.line(key) ?? '') ?? []) {
-      if (part.type !== 'ui') continue
-      const where = `prose ${key}: [[ui:${part.name}|${part.text}]]`
-      if (!inline.has(part.name) && !allowed.has(part.name)) {
-        out.push(`${where} is not an inline piece the React UI draws, so it shows only its words; add it to inline`)
-        continue
-      }
-      // A game's own component of a built-in name reads its arguments its own way.
-      if (options.inline?.[part.name]) continue
-      const [first] = part.args
-      if (part.name === 'modal') {
-        if (!first) out.push(`${where} needs a prose key: [[ui:modal|words|key]]`)
-        else if (game.prose?.line(first) === undefined) out.push(`${where}: no prose for "${first}"`)
-      }
-      if (part.name === 'image' && !first) out.push(`${where} needs a picture's path: [[ui:image|words|path]]`)
-      if ((part.name === 'modal' || part.name === 'image') && part.args.length > 2) out.push(`${where} takes two arguments at most`)
-      if (part.name === 'prop' && (part.args.length > 1 || (first !== undefined && !['sticky', 'clip', 'diary'].includes(first))))
-        out.push(`${where} takes one face: sticky, clip or diary`)
-      if (part.name === 'mono' && part.args.length) out.push(`${where} takes no arguments`)
-    }
-  }
+  // Inline pieces in the prose: every line the store lists, and every block of words written in place, as written.
+  for (const key of game.prose?.keys?.() ?? []) pieces(`prose ${key}`, game.prose?.line(key) ?? '')
+  for (const { where, text } of written) pieces(where, text)
   return out
 }

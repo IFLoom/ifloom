@@ -81,7 +81,7 @@ const town: Content = {
 // A button for a location's actions, or anywhere else a button goes.
 const button = { id: 'flapjack', label: 'Buy a flapjack', command: buy('counter', 'food:flapjack') }
 // And a line that changes once you have one.
-const line = { text: 'cafe.full', when: holding('food:sandwich') }
+const line = { prose: 'cafe.full', when: holding('food:sandwich') }
 ```
 
 The kind is unlisted (`listed: false`) because what the player holds already reaches the view as [`view.held`](/docs/reference/view#held), and a list of every food in the game would give the menu away.

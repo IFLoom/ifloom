@@ -36,7 +36,7 @@ const cafe: Content = {
     {
       id: 'cafe',
       title: 'The Corner Café',
-      body: [{ text: 'cafe' }, { text: 'cafe.broke', when: { stat: 'coins', lt: 3 } }],
+      body: [{ prose: 'cafe' }, { prose: 'cafe.broke', when: { stat: 'coins', lt: 3 } }],
       choices: [
         {
           id: 'coffee',
@@ -46,7 +46,7 @@ const cafe: Content = {
         { id: 'leave', effects: [{ scene: 'street' }] },
       ],
     },
-    { id: 'street', title: 'The high street', body: [{ text: 'street' }], choices: [] },
+    { id: 'street', title: 'The high street', body: [{ prose: 'street' }], choices: [] },
   ],
   prose: {
     cafe: 'Ava looks up from the till. "The usual?"',
@@ -114,18 +114,18 @@ A scene's body is a list of blocks, and each block can have a `when`. A block wh
 
 ```ts
 body: [
-  { text: 'cafe' },
-  { text: 'cafe.regular', when: { kv: 'visits', gte: 3 } },
-  { text: 'cafe.new', when: { kv: 'visits', lt: 3 } },
+  { prose: 'cafe' },
+  { prose: 'cafe.regular', when: { kv: 'visits', gte: 3 } },
+  { prose: 'cafe.new', when: { kv: 'visits', lt: 3 } },
 ],
 ```
 
 There's no `else`, so an `<<elseif>>` chain becomes blocks whose conditions don't overlap:
 
 ```ts
-{ text: 'cafe.rich', when: { stat: 'coins', gte: 20 } },
-{ text: 'cafe.ok', when: { stat: 'coins', gte: 5, lt: 20 } },
-{ text: 'cafe.broke', when: { stat: 'coins', lt: 5 } },
+{ prose: 'cafe.rich', when: { stat: 'coins', gte: 20 } },
+{ prose: 'cafe.ok', when: { stat: 'coins', gte: 5, lt: 20 } },
+{ prose: 'cafe.broke', when: { stat: 'coins', lt: 5 } },
 ```
 
 `and`, `or` and `not` are `all`, `any` and `not`:
@@ -174,7 +174,7 @@ A passage is a [scene](/docs/reference/scenes), and each link is a choice whose 
 ```ts
 {
   id: 'street',
-  body: [{ text: 'street' }],
+  body: [{ prose: 'street' }],
   choices: [
     { id: 'cafe', effects: [{ scene: 'cafe' }] },
     { id: 'park', effects: [{ scene: 'park' }] },
@@ -235,8 +235,8 @@ triggers: [{ id: 'broke', when: { stat: 'coins', lt: 1 }, effects: [{ scene: 'br
 `<<include>>` is a prose key used by more than one scene. A block names a key, and any number of scenes can name the same one:
 
 ```ts
-{ id: 'cafe.morning', body: [{ text: 'cafe.menu' }, { text: 'cafe.morning' }], choices: [] },
-{ id: 'cafe.evening', body: [{ text: 'cafe.menu' }, { text: 'cafe.evening' }], choices: [] },
+{ id: 'cafe.morning', body: [{ prose: 'cafe.menu' }, { prose: 'cafe.morning' }], choices: [] },
+{ id: 'cafe.evening', body: [{ prose: 'cafe.menu' }, { prose: 'cafe.evening' }], choices: [] },
 ```
 
 That covers shared words. A scene can't include another scene's choices, so a shared set of links is written on each scene that offers it, or offered once as actions.
@@ -463,7 +463,7 @@ settings: [
 ```
 
 ```ts
-{ text: 'cafe.hint', when: { setting: 'hints' } }
+{ prose: 'cafe.hint', when: { setting: 'hints' } }
 ```
 
 ### Old saves, `Config.saves` and `Save.onLoad`
@@ -529,7 +529,7 @@ audio: {
 ```
 
 ```ts
-{ id: 'cafe', audio: { ambience: 'cafe.murmur' }, body: [{ text: 'cafe' }], choices: [] }
+{ id: 'cafe', audio: { ambience: 'cafe.murmur' }, body: [{ prose: 'cafe' }], choices: [] }
 { sound: 'bell' }
 { audio: 'music', to: null }
 ```
@@ -566,7 +566,7 @@ IFLoom has no runtime randomness. Every draw is worked out from the save's seed 
 **A line that varies** is a set of variants. Each time the block shows, it draws a member, and it rotates so the player doesn't read the same line twice running:
 
 ```ts
-body: [{ text: 'cafe' }, { variants: 'cafe.chatter' }],
+body: [{ prose: 'cafe' }, { variants: 'cafe.chatter' }],
 // in the content
 variants: { 'cafe.chatter': ['cafe.chatter/rain', 'cafe.chatter/market', 'cafe.chatter/cat'] },
 ```
@@ -581,7 +581,7 @@ const windowSeat: DataScene = {
   drawnFrom: ['cafe'],
   weight: 3,
   when: { not: { seen: 'cafe.window' } },
-  body: [{ text: 'cafe.window' }],
+  body: [{ prose: 'cafe.window' }],
   choices: [{ id: 'leave', effects: [{ scene: null }] }],
 }
 
@@ -686,8 +686,8 @@ Hooks are the biggest difference. Harlowe changes parts of a passage in place. I
 {
   id: 'cafe',
   body: [
-    { text: 'cafe.waiting', when: { not: { kv: 'askedUsual' } } },
-    { text: 'cafe.usual', when: { kv: 'askedUsual' } },
+    { prose: 'cafe.waiting', when: { not: { kv: 'askedUsual' } } },
+    { prose: 'cafe.usual', when: { kv: 'askedUsual' } },
   ],
   choices: [{ id: 'usual', when: { not: { kv: 'askedUsual' } }, effects: [{ kv: 'askedUsual', to: true }] }],
 }

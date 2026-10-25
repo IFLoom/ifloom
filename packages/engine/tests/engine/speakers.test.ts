@@ -23,9 +23,9 @@ const lane: Content = {
     { id: 'tom', of: 'pet', name: 'Tom' },
   ],
   scenes: [
-    { id: 'fence', speaker: 'ava', body: [{ text: 'fence' }], choices: [] },
-    { id: 'garden', speaker: 'pet:tom', body: [{ text: 'garden' }], choices: [] },
-    { id: 'nobody', speaker: 'mystery', body: [{ text: 'fence' }], choices: [] },
+    { id: 'fence', speaker: 'ava', body: [{ prose: 'fence' }], choices: [] },
+    { id: 'garden', speaker: 'pet:tom', body: [{ prose: 'garden' }], choices: [] },
+    { id: 'nobody', speaker: 'mystery', body: [{ prose: 'fence' }], choices: [] },
   ],
   prose: {
     fence: '@ava: "Morning."\n\n@you: "Morning, Ava."\n\n@character:sam: "Is it?"\n\nRuth: "Who asked?"',
@@ -96,7 +96,7 @@ describe('speakers', () => {
       ...lane,
       kinds: [...lane.kinds!, { id: 'stray', label: 'Stray', unique: true }],
       entities: [...lane.entities!, { id: 'pip', of: 'pet', name: 'Pip' }, { id: 'pip', of: 'stray', name: 'Pip' }],
-      scenes: [{ id: 'garden', body: [{ text: 'garden' }, say('nobody', 'Hm.'), say('player', 'Hm?')], choices: [] }],
+      scenes: [{ id: 'garden', body: [{ prose: 'garden' }, say('nobody', 'Hm.'), say('player', 'Hm?')], choices: [] }],
       prose: { garden: '@nobody: "Hm."\n\n@pip: "Mew."\n\n@pet:tom: "Mrrp."\n\n@pet:rex: "Woof."\n\n@you: "Hi."' },
     }
     const { game } = loadWhole([{ name: 'base' }, content], { id: 'lane', title: 'Lane', plugins: [] })
@@ -117,7 +117,7 @@ describe('context.beats', () => {
     const board = definePlugin<null, SceneBeat[]>({
       id: 'board',
       version: 1,
-      view: (_state, context) => context.beats([{ text: 'board.note' }, { text: 'missing' }, { text: 'board.hidden', when: { kv: 'never' } }], 'board'),
+      view: (_state, context) => context.beats([{ prose: 'board.note' }, { prose: 'missing' }, { prose: 'board.hidden', when: { kv: 'never' } }], 'board'),
     })
     const content: Content = { ...lane, prose: { ...lane.prose, 'board.note': 'A **lost** cat.\n\n@ava: "Not mine."', 'board.hidden': 'Hidden.' } }
     const { game, state } = open('fence', content, [board as never])

@@ -130,7 +130,7 @@ const scarf: QuestDef = {
 }
 
 const place = (id: string, name: string, exits: string[]): PlaceDef =>
-  ({ id, name, desc: 'Small Town', exits, body: [{ text: `place.${id}` }] })
+  ({ id, name, desc: 'Small Town', exits, body: [{ prose: `place.${id}` }] })
 
 const map = [
   { ...place('flat', 'Your flat', ['high-street']), actions: [{ id: 'unpack', label: 'Unpack', effects: [{ kv: 'phase', to: 'open' }] }] },
@@ -222,7 +222,7 @@ You can use them anywhere a condition goes: a block's `when`, a choice, a lock o
 import { type Block } from '@ifloom/engine'
 import { questDone } from '@ifloom/plugin-quests'
 
-const block: Block = { text: 'place.cafe.regular', when: questDone('settle') }
+const block: Block = { prose: 'place.cafe.regular', when: questDone('settle') }
 ```
 
 An unknown quest or stage is false.

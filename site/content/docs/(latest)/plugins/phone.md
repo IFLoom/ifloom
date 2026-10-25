@@ -219,7 +219,7 @@ const text: MessageDef = {
   channel: 'texts',
   from: 'ava',
   when: { all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] },
-  body: [{ text: 'ava.text' }],
+  body: [{ prose: 'ava.text' }],
   replies: [{ id: 'yes', effects: [{ stat: 'friendship', by: 5, of: character('ava') }] }, { id: 'later' }],
 }
 ```

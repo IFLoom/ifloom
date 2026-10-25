@@ -16,10 +16,11 @@ export const movingDay: Content = {
       title: 'Moving day',
       // The React UI's hints: it fades in from the title page, and its second paragraph comes after a pause.
       ui: { transition: { in: 'fade', out: 'fade', ms: 500 } },
-      body: [{ text: 'intro' }, { text: 'intro.tonight', ui: { reveal: { delay: 1200 } } }],
+      body: [{ prose: 'intro' }, { prose: 'intro.tonight', ui: { reveal: { delay: 1200 } } }],
       choices: [
         {
           id: 'unpack',
+          label: 'Unpack',
           // The flat slides up into view once the boxes are in.
           ui: { transition: { in: 'slide-up', ms: 400 } },
           effects: [{ scene: null }, { kv: 'phase', to: 'open' }],
@@ -36,7 +37,7 @@ export const movingDay: Content = {
     {
       id: 'welcome',
       when: at('high-street'),
-      effects: [{ notify: 'A note under your door', text: 'notice.welcome', tag: 'post' }, give('note:welcome')],
+      effects: [{ notify: 'A note under your door', text: WELCOME, tag: 'post' }, give('note:welcome')],
     },
   ],
   data: {
@@ -64,7 +65,6 @@ export const movingDay: Content = {
     'intro.launderette': 'Sam from flat 2 runs it. Service washes, Monday to Saturday.',
     // Revealed after the line above: the scene's block says so with its `ui.reveal` hint.
     'intro.tonight': 'Tomorrow you start learning the town. Tonight you unpack, and the cat needs a name.',
-    'intro#unpack': 'Unpack',
     'notice.welcome': WELCOME,
   },
 }

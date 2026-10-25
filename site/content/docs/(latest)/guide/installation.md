@@ -114,7 +114,7 @@ import { loadGame, type Content } from '@ifloom/engine'
 
 const story: Content = {
   introScene: 'start',
-  scenes: [{ id: 'start', title: 'The door', body: [{ text: 'start' }], choices: [] }],
+  scenes: [{ id: 'start', title: 'The door', body: [{ prose: 'start' }], choices: [] }],
   prose: { start: 'A green door, half open. Someone inside is laughing.' },
 }
 

@@ -36,7 +36,7 @@ export const town: Content = {
   scenes: [
     {
       id: 'ava.hi',
-      body: [{ text: 'ava.hi' }],
+      body: [{ prose: 'ava.hi' }],
       choices: [
         // The scene closes and the board opens over the room, in one choice.
         { id: 'work', effects: [{ scene: null }, openJobs()] },
@@ -72,7 +72,7 @@ type ScenePanel = { panel: string; with?: Record<string, unknown> }
 A [data scene](/docs/reference/scenes#datascene) can hold a panel open for as long as it's on screen, with `panel`:
 
 ```ts
-{ id: 'market.stall', title: 'The stall', panel: { panel: 'prices', with: { stall: 'bread' } }, body: [{ text: 'market.stall' }], choices: [] }
+{ id: 'market.stall', title: 'The stall', panel: { panel: 'prices', with: { stall: 'bread' } }, body: [{ prose: 'market.stall' }], choices: [] }
 ```
 
 While that scene is open, `view.panel` is `{ panel: 'prices', with: { stall: 'bread' }, scene: 'market.stall' }`, unless the `panel` effect has opened another one, which comes first. `closePanel` doesn't close a scene's panel: it goes when the scene does. A panel that needs numbers worked out from the state reads them from the view, or from a value the game declares.

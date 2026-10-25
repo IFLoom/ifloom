@@ -73,8 +73,8 @@ export const rules: GameRules = {
 }
 
 // in a data scene
-{ text: 'ava.hi.regular', when: { 'game/isRegular': true } }
-{ text: 'ava.hi.usual', when: { 'game/visitedAtLeast': { times: 10 } } }
+{ prose: 'ava.hi.regular', when: { 'game/isRegular': true } }
+{ prose: 'ava.hi.usual', when: { 'game/visitedAtLeast': { times: 10 } } }
 ```
 
 **Gotcha.** A name the game doesn't declare is false rather than an error, so a broken mod hides content instead of crashing. The [content checker](/docs/reference/checks) reports it.
@@ -140,7 +140,7 @@ The value is always the arguments as an object, named as the [content naming rul
 
 ```ts
 // in a data scene: Ava thanks you once the bread quest is done
-{ text: 'ava.hi.thanks', when: { 'quests/done': { quest: 'bread' } } }
+{ prose: 'ava.hi.thanks', when: { 'quests/done': { quest: 'bread' } } }
 // a choice that starts it
 { id: 'offer-help', effects: [{ 'quests/start': { quest: 'bread' } }, { scene: null }] }
 ```

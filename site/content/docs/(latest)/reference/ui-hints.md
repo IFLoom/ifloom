@@ -11,8 +11,8 @@ Some things in a game are about how it looks, not how it plays: a scene that fad
   title: 'By the river',
   ui: { transition: 'fade' },
   body: [
-    { text: 'ava.river' },
-    { text: 'ava.river.shuffle', ui: { reveal: { delay: 1500, as: 'slide-up' } } },
+    { prose: 'ava.river' },
+    { prose: 'ava.river.shuffle', ui: { reveal: { delay: 1500, as: 'slide-up' } } },
   ],
   choices: [{ id: 'stay', ui: { transition: 'slide-up' }, effects: [{ scene: null }] }],
 }

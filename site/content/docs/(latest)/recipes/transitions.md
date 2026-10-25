@@ -15,7 +15,7 @@ Give a scene a `ui.transition`. A name on its own is used both ways:
   id: 'ava.river',
   title: 'By the river',
   ui: { transition: 'fade' },
-  body: [{ text: 'ava.river' }],
+  body: [{ prose: 'ava.river' }],
   choices: [{ id: 'stay', effects: [{ scene: null }] }],
 }
 ```
@@ -31,7 +31,7 @@ The built-in names are `fade`, `slide-up`, `slide-left`, `zoom` and `none`, list
 A place takes one too, for the room while no scene is open, so walking between places can slide:
 
 ```ts
-location({ id: 'high-street', name: 'High Street', desc: 'Town', exits: ['flat', 'cafe'], body: [{ text: 'place.high-street' }], ui: { transition: 'slide-left' } })
+location({ id: 'high-street', name: 'High Street', desc: 'Town', exits: ['flat', 'cafe'], body: [{ prose: 'place.high-street' }], ui: { transition: 'slide-left' } })
 ```
 
 For the whole game, set a default in the content's `ui`. Any scene or place that says nothing uses it, and one that sets only `in` takes `out` and `ms` from it:
@@ -55,9 +55,9 @@ Give a body block a `ui.reveal` and it waits before it appears. `delay` is in mi
 
 ```ts
 body: [
-  { text: 'intro' },
-  { text: 'intro.tonight', ui: { reveal: { delay: 1200 } } },
-  { text: 'intro.cat', ui: { reveal: { delay: 1500, as: 'slide-up' } } },
+  { prose: 'intro' },
+  { prose: 'intro.tonight', ui: { reveal: { delay: 1200 } } },
+  { prose: 'intro.cat', ui: { reveal: { delay: 1500, as: 'slide-up' } } },
 ]
 ```
 

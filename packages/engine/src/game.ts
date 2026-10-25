@@ -44,16 +44,15 @@ export type Blocked = {
 export type ButtonDef = {
   id: string
   /**
-   * Its words. A prose key works too: when the game's prose has a line for
-   * it, that line is shown. A scene's choice with none reads the prose key
-   * `<scene>#<id>`, else its id; an action with none is never drawn as a
+   * Its words, as written, with tokens filled: `'Order a tea'`. A scene's
+   * choice with none shows its id; an action with none is never drawn as a
    * button.
    */
   label?: string
   /**
    * Words that depend on state, "Not today" before you have bought it,
    * "Right." after. The first whose `when` holds wins; `label` is the
-   * fallback. Each `label` is words or a prose key, as `label` is.
+   * fallback.
    */
   labels?: { when?: Condition; label: string }[]
   /** Only offered, and only done, while this holds. */

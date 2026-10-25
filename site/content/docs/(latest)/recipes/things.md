@@ -55,7 +55,7 @@ import { vendor } from '@ifloom/plugin-shop'
 
 const market: Content = {
   entities: [
-    location({ id: 'park', name: 'Riverside Park', desc: 'Small Town', exits: ['high-street'], body: [{ text: 'place.park' }] }),
+    location({ id: 'park', name: 'Riverside Park', desc: 'Small Town', exits: ['high-street'], body: [{ prose: 'place.park' }] }),
     person({ id: 'ava', name: 'Ava', desc: 'Runs the café', home: 'park' }),
     vendor({ id: 'stall', name: 'The market stall', at: ['park'], buysBack: 0.5, goods: [{ entity: 'clothing:scarf', stock: 1 }] }),
   ],

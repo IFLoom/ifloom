@@ -136,8 +136,8 @@ import { day } from '@ifloom/plugin-calendar'
 import { type PostDef } from '@ifloom/plugin-feed'
 
 const posts: PostDef[] = [
-  { id: 'ava.cake', feed: 'social', from: 'ava', when: day({ gte: 1 }), body: [{ text: 'feed.ava-cake' }], likes: 14 },
-  { id: 'sam.river', feed: 'social', from: 'sam', when: day({ gte: 2 }), body: [{ text: 'feed.sam-river' }], likes: 3 },
+  { id: 'ava.cake', feed: 'social', from: 'ava', when: day({ gte: 1 }), body: [{ prose: 'feed.ava-cake' }], likes: 14 },
+  { id: 'sam.river', feed: 'social', from: 'sam', when: day({ gte: 2 }), body: [{ prose: 'feed.sam-river' }], likes: 3 },
 ]
 ```
 
@@ -183,7 +183,7 @@ import { cast, person } from '@ifloom/plugin-cast'
 import { feed, postTo, react, seeFeed } from '@ifloom/plugin-feed'
 
 const place = (id: string, name: string, exits: string[]): PlaceDef =>
-  ({ id, name, desc: 'Small Town', exits, body: [{ text: `place.${id}` }] })
+  ({ id, name, desc: 'Small Town', exits, body: [{ prose: `place.${id}` }] })
 
 const map = [
   { ...place('flat', 'Your flat', ['high-street']), actions: [{ id: 'bed', label: 'Go to bed', command: sleep() }] },
@@ -225,9 +225,9 @@ const town: Content = {
     feed: {
       feeds: [{ id: 'social', name: 'Social' }, { id: 'board', name: 'Notice board' }],
       posts: [
-        { id: 'ava.cake', feed: 'social', from: 'ava', when: day({ gte: 1 }), body: [{ text: 'feed.ava-cake' }], likes: 14 },
-        { id: 'sam.river', feed: 'social', from: 'sam', when: day({ gte: 2 }), body: [{ text: 'feed.sam-river' }], likes: 3 },
-        { id: 'bins', feed: 'board', from: 'Town council', when: day({ gte: 1 }), body: [{ text: 'board.bins' }] },
+        { id: 'ava.cake', feed: 'social', from: 'ava', when: day({ gte: 1 }), body: [{ prose: 'feed.ava-cake' }], likes: 14 },
+        { id: 'sam.river', feed: 'social', from: 'sam', when: day({ gte: 2 }), body: [{ prose: 'feed.sam-river' }], likes: 3 },
+        { id: 'bins', feed: 'board', from: 'Town council', when: day({ gte: 1 }), body: [{ prose: 'board.bins' }] },
       ],
     },
   },
@@ -308,7 +308,7 @@ feeds(state).unread     // 0
 Each is a call with the full name as the only key (see [plugin calls](/docs/reference/custom#plugincall)):
 
 ```ts
-const block = { text: 'place.cafe.ava-saw-it', when: { 'feed/likes': { post: 'river', gte: 10 } } }
+const block = { prose: 'place.cafe.ava-saw-it', when: { 'feed/likes': { post: 'river', gte: 10 } } }
 ```
 
 An unknown post is false for `feed/appeared`, and has 0 likes for `feed/likes`.

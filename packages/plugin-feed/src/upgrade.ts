@@ -19,7 +19,7 @@ const CALLS_6: Record<string, Record<string, string>> = { 'feed/post': { id: 'po
 const COMMANDS_6: Record<string, Record<string, string>> = { 'feed/seen': { feed: 'id' } }
 
 /** The version of what content writes for this plugin. */
-export const CONTENT_VERSION = 12
+export const CONTENT_VERSION = 25
 
 export const contentMigrations: Record<number, ContentStep> = {
   // 5 → 6: the naming rule. `feed/post` names its target `post`, and a command's one target is `id`.
@@ -40,6 +40,15 @@ export const contentMigrations: Record<number, ContentStep> = {
       tools.words(pack, (text) => text.replace(/\{\{v:feed\/unseen(?=[\s}])/g, '{{v:feed/unread')),
       (value) => (value.value === 'feed/unseen' ? { ...value, value: 'feed/unread' } : value),
     ),
+  // 24 → 25: what the player posts or comments (`feed/post` and `feed/react`'s `text`) is words written
+  // in place, not a prose key. A key the pack's prose or the game's has becomes those words; any other
+  // `text` is read as the words it already is.
+  24: (pack, tools) =>
+    tools.calls(pack, (call) => {
+      if ((call.name !== 'feed/post' && call.name !== 'feed/react') || !isRecord(call.with) || typeof call.with.text !== 'string') return call
+      const words = tools.prose(call.with.text)
+      return words === undefined ? call : { name: call.name, with: { ...call.with, text: words } }
+    }),
 }
 
 /** The version of this plugin's commands. */

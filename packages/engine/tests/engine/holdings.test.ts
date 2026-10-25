@@ -235,7 +235,7 @@ describe('holdings', () => {
       scenes: [
         {
           id: 'start',
-          body: [{ text: 'Hello.' }],
+          body: [{ prose: 'Hello.' }],
           choices: [
             {
               id: 'go',

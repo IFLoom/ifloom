@@ -91,6 +91,19 @@ describe('loadState', () => {
     expect(heldBy(loaded, game, 'player').map((entry) => entry.ref)).toEqual(['item:apple', 'clothing:scarf', 'photo:pier', 'letters:gran'])
   })
 
+  it('carries a version-20 save’s notices to their words, where their text was a prose key', () => {
+    const game = oldSavesGame()
+    game.prose = proseStore(game, { 'notice.rent': 'The rent is due on {{day}}.' })
+    const old = {
+      ...OLD_SAVES[20],
+      notices: [
+        { id: 'a', title: 'Rent', text: 'notice.rent', turn: 3, seen: false },
+        { id: 'b', title: 'Note', text: 'Back soon.', turn: 4, seen: false },
+      ],
+    }
+    expect(unwrap(loadState(old, game)).notices.map((notice) => notice.text)).toEqual(['The rent is due on {{day}}.', 'Back soon.'])
+  })
+
   it('starts a command log from an old save', () => {
     const game = oldSavesGame()
     const played = replay(game, { game: game.id, start: OLD_SAVES[9] as unknown as GameState, commands: [{ type: 'action', id: 'wait' }] })

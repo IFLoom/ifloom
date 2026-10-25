@@ -38,9 +38,11 @@ describe('the notice strip, with a phone', () => {
         { name: 'base', introScene: 'intro' },
         {
           name: 'home',
-          scenes: [{ id: 'intro', title: 'Home', body: [{ text: 'intro' }], choices: [{ id: 'wait', effects: [] }] }],
-          prose: { intro: 'The kettle is on.', 'intro#wait': 'Wait', 'mum.hi': 'Did you eat?', 'mum.hi#yes': 'Yes, Mum' },
-          data: { messages: { messages: [{ id: 'mum.hi', channel: 'texts', from: 'Mum', body: [{ text: 'mum.hi' }], replies: [{ id: 'yes' }] }] } },
+          scenes: [{ id: 'intro', title: 'Home', body: [{ prose: 'intro' }], choices: [{ id: 'wait', label: 'Wait', effects: [] }] }],
+          prose: { intro: 'The kettle is on.', 'mum.hi': 'Did you eat?' },
+          data: {
+            messages: { messages: [{ id: 'mum.hi', channel: 'texts', from: 'Mum', body: [{ prose: 'mum.hi' }], replies: [{ id: 'yes', label: 'Yes, Mum' }] }] },
+          },
         },
       ],
       { id: 'phone-test', title: 'Home', plugins: [...kit.plugins] },

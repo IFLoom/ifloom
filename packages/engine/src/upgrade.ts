@@ -16,18 +16,19 @@ import type { Pack } from './loader.ts'
 import type { Plugin } from './plugin.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
-export const SCHEMA = 24
+export const SCHEMA = 25
 
 /** A pack as it came in: some schema's shape, not necessarily this one. */
 export type RawPack = Record<string, unknown> & { schema: number }
 
 /**
  * What a step may need of the game a pack is laid over, besides the pack:
- * the entities content and the plugins declare, and the game's word for the
- * player (its string `you`). The loader gives it; a step that has none reads
- * only the pack.
+ * the entities content and the plugins declare, the game's word for the
+ * player (its string `you`), and the prose under the pack (the content's
+ * and the packs' before it). The loader gives it; a step that has none
+ * reads only the pack.
  */
-export type PackContext = { entities?: readonly unknown[]; you?: readonly string[] }
+export type PackContext = { entities?: readonly unknown[]; you?: readonly string[]; prose?: Readonly<Record<string, string>> }
 
 /**
  * The steps that reshape a pack, keyed by the schema each upgrades *from*.
@@ -132,6 +133,99 @@ export const PACK_STEPS: Record<number, (pack: RawPack, context: PackContext) =>
   // 23 → 24: the places plugin's locations and the shop's vendors are entities with the `places/location`
   // and `shop/vendor` traits, which those plugins' own steps move.
   23: (pack) => pack,
+  // 24 → 25: words are written in place. See `toSchema25`.
+  24: (pack, context) => toSchema25(pack, context),
+}
+
+/** Whether every key of an object is one of these. */
+const only = (value: Record<string, unknown>, keys: readonly string[]) => Object.keys(value).every((key) => keys.includes(key))
+
+/** A label as schema 24 might have written one: a prose key, which reads as one (no spaces, a `.` or `#`). */
+const readsAsKey = (label: string) => !/\s/.test(label) && /[.#]/.test(label)
+
+/**
+ * 24 → 25: player-facing words are written in place, never as prose keys.
+ * - A block of words written in place is `{ text }`, not `{ words }`, and a
+ *   block that reads the prose by key is `{ prose: key }`, not `{ text: key }`,
+ *   wherever a block can be: scenes, patches, plugin `data` and traits.
+ * - A label that is a prose key (a choice's, an action's, a `labels` entry's,
+ *   anywhere) becomes that prose's words. So does a scene's choice with no
+ *   label, from the prose `<scene>#<choice>` it read, a notice's `text`
+ *   (`{ notify, text }`) and a minigame state's `label`.
+ *
+ * The words come from the pack's own prose, else the prose under it in the
+ * game (`context.prose`). A key neither has is left as it is written, and
+ * now reads as those words; a choice with no label and no prose shows its id,
+ * as it did.
+ */
+function toSchema25(pack: RawPack, context: PackContext): RawPack {
+  const own = isRecord(pack.prose) ? pack.prose : {}
+  const line = (key: string): string | undefined => {
+    const found = Object.hasOwn(own, key) ? own[key] : context.prose && Object.hasOwn(context.prose, key) ? context.prose[key] : undefined
+    return typeof found === 'string' ? found : undefined
+  }
+  const inlined = (label: unknown) => (typeof label === 'string' && readsAsKey(label) ? (line(label) ?? label) : label)
+  const rewrite = (value: Record<string, unknown>): Record<string, unknown> => {
+    let out = value
+    if (typeof out.words === 'string' && only(out, ['words', 'when', 'ui'])) {
+      const { words, ...rest } = out
+      out = { text: words, ...rest }
+    } else if (typeof out.text === 'string' && only(out, ['text', 'when', 'ui'])) {
+      const { text, ...rest } = out
+      out = { prose: text, ...rest }
+    }
+    if (typeof out.notify === 'string' && typeof out.text === 'string') out = { ...out, text: line(out.text) ?? out.text }
+    if (typeof out.label === 'string' && inlined(out.label) !== out.label) out = { ...out, label: inlined(out.label) }
+    return out
+  }
+  /** A scene's choices, with no label, given the words of the prose they read: `<scene>#<choice>`. */
+  const labelled = (scene: string, choices: unknown): unknown =>
+    Array.isArray(choices)
+      ? choices.map((choice) => {
+          if (!isRecord(choice) || choice.label !== undefined || typeof choice.id !== 'string') return choice
+          const words = line(`${scene}#${choice.id}`)
+          return words === undefined ? choice : { ...choice, label: words }
+        })
+      : choices
+  /** The same for the choices of the decisions in a body, as deep as a flow goes. */
+  const decided = (scene: string, body: unknown): unknown =>
+    deep(body, (value) => (typeof value.decide === 'string' && Array.isArray(value.choices) ? { ...value, choices: labelled(scene, value.choices) } : value))
+  let out: RawPack = Object.fromEntries(Object.entries(pack).map(([key, value]) => [key, WORDS.has(key) ? value : deep(value, rewrite)])) as RawPack
+  if (Array.isArray(out.scenes))
+    out = {
+      ...out,
+      scenes: out.scenes.map((scene) =>
+        isRecord(scene) && typeof scene.id === 'string'
+          ? { ...scene, choices: labelled(scene.id, scene.choices), ...(scene.body !== undefined ? { body: decided(scene.id, scene.body) } : {}) }
+          : scene,
+      ),
+    }
+  if (Array.isArray(out.patches))
+    out = {
+      ...out,
+      patches: out.patches.map((patch) => {
+        if (!isRecord(patch) || typeof patch.scene !== 'string') return patch
+        const field = 'addChoice' in patch ? 'addChoice' : 'replaceChoice' in patch ? 'replaceChoice' : undefined
+        return field ? { ...patch, [field]: (labelled(patch.scene, [patch[field]]) as unknown[])[0] } : patch
+      }),
+    }
+  if (Array.isArray(out.minigames))
+    out = {
+      ...out,
+      minigames: out.minigames.map((game) =>
+        isRecord(game) && isRecord(game.states)
+          ? {
+              ...game,
+              states: Object.fromEntries(
+                Object.entries(game.states).map(([id, state]) =>
+                  isRecord(state) && typeof state.label === 'string' ? [id, { ...state, label: line(state.label) ?? state.label }] : [id, state],
+                ),
+              ),
+            }
+          : game,
+      ),
+    }
+  return out
 }
 
 /** A spoken line under a label, as prose wrote one before schema 23: `Ava: "…"`, maybe with its voice after. */
@@ -961,6 +1055,12 @@ export type ContentTools = {
   /** Every line of the pack's `prose` and `strings`, given with its key. */
   words: (pack: RawPack, rewrite: (text: string, key: string) => string) => RawPack
   /**
+   * A line of prose by key, as written: the pack's own, else the game's
+   * under it (its content's and the packs' before it). Undefined if neither
+   * has it. For a step that writes words in place that were a prose key.
+   */
+  prose: (key: string) => string | undefined
+  /**
    * Every effect the pack holds, in plugin `data` and traits too, in the form
    * this engine reads: one written while effects were told apart by `kind`
    * (`{ kind: 'stat', stat, by }`, before schema 21) in the keyed form
@@ -1014,8 +1114,8 @@ function callsIn(value: Record<string, unknown>, rewrite: (call: RawCall) => { n
   return out
 }
 
-/** The tools every plugin's content step is given. */
-const TOOLS: ContentTools = {
+/** The tools every plugin's content step is given, but `prose`, which reads the pack being upgraded. */
+const TOOLS: Omit<ContentTools, 'prose'> = {
   objects: (pack, rewrite) => Object.fromEntries(Object.entries(pack).map(([key, value]) => [key, WORDS.has(key) ? value : deep(value, rewrite)])) as RawPack,
   calls: (pack, rewrite) => TOOLS.objects(pack, (value) => callsIn(value, rewrite)),
   words: (pack, rewrite) =>
@@ -1137,9 +1237,17 @@ export function upgradePack(pack: { schema: number; plugins?: Record<string, num
   if (!versions.ok) return versions
   const at = versions.value
   const raw = { now: pack as RawPack }
+  const toolsFor = (value: RawPack): ContentTools => ({
+    ...TOOLS,
+    prose: (key) => {
+      const own = isRecord(value.prose) ? value.prose : {}
+      const found = Object.hasOwn(own, key) ? own[key] : context.prose && Object.hasOwn(context.prose, key) ? context.prose[key] : undefined
+      return typeof found === 'string' ? found : undefined
+    },
+  })
   const stepOf = (plugin: Plugin, version: number) => {
     const step = plugin.contentMigrations?.[version]
-    return step ? (value: RawPack): RawPack => ({ ...step(value, TOOLS), schema: value.schema }) : undefined
+    return step ? (value: RawPack): RawPack => ({ ...step(value, toolsFor(value)), schema: value.schema }) : undefined
   }
   let changed = false
   for (let version = from; version < SCHEMA; version += 1) {

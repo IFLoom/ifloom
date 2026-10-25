@@ -35,16 +35,16 @@ describe('choices the player made', () => {
           scenes: [
             {
               id: 'ch1.door',
-              body: [{ text: 'ch1.door' }],
+              body: [{ prose: 'ch1.door' }],
               choices: [
-                { id: 'knock', effects: [] },
-                { id: 'thanks', when: { chose: 'ch1.door#kick' }, effects: [] },
-                { id: 'later', when: { chose: 'ch9.end#leave' }, effects: [] },
-                { id: 'again', when: { since: 'ch1.door#shout', last: true, gte: 2 }, effects: [] },
+                { id: 'knock', label: 'Knock', effects: [] },
+                { id: 'thanks', label: 'Thanks', when: { chose: 'ch1.door#kick' }, effects: [] },
+                { id: 'later', label: 'Later', when: { chose: 'ch9.end#leave' }, effects: [] },
+                { id: 'again', label: 'Again', when: { since: 'ch1.door#shout', last: true, gte: 2 }, effects: [] },
               ],
             },
           ],
-          prose: { 'ch1.door': 'A door.', 'ch1.door#knock': 'Knock', 'ch1.door#thanks': 'Thanks', 'ch1.door#later': 'Later', 'ch1.door#again': 'Again' },
+          prose: { 'ch1.door': 'A door.' },
         },
       ],
       { id, title },

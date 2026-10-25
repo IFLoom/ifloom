@@ -104,9 +104,9 @@ Writes a place for your content's `entities`. You give it the entity's fields an
 ```ts
 import { location } from '@ifloom/plugin-places'
 
-location({ id: 'cafe', name: 'The Corner Café', desc: 'Café', exits: ['high-street'], body: [{ text: 'place.cafe' }] })
+location({ id: 'cafe', name: 'The Corner Café', desc: 'Café', exits: ['high-street'], body: [{ prose: 'place.cafe' }] })
 // { id: 'cafe', of: 'location', name: 'The Corner Café', desc: 'Café',
-//   traits: { 'places/location': { exits: ['high-street'], body: [{ text: 'place.cafe' }] } } }
+//   traits: { 'places/location': { exits: ['high-street'], body: [{ prose: 'place.cafe' }] } } }
 ```
 
 The entity's own fields are the place's:
@@ -185,21 +185,21 @@ export const town: Content = {
   entities: [
     location({
       id: 'flat', name: 'Your flat', desc: 'Home', exits: ['high-street'],
-      body: [{ text: 'place.flat' }],
+      body: [{ prose: 'place.flat' }],
       actions: [{ id: 'bed', label: 'Go to bed', command: sleep() }],
     }),
     location({
       id: 'high-street', name: 'High Street', desc: 'Small Town', tags: ['outdoors'], exits: ['flat', 'cafe', 'park', 'office'],
-      body: [{ text: 'place.high-street' }],
+      body: [{ prose: 'place.high-street' }],
     }),
     location({
       id: 'cafe', name: 'The Corner Café', desc: 'Café', exits: ['high-street'],
       blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
-      body: [{ text: 'place.cafe' }],
+      body: [{ prose: 'place.cafe' }],
       actions: [{ id: 'coffee', label: 'Buy a coffee', effects: [{ kv: 'hadCoffee', to: true }] }],
     }),
-    location({ id: 'park', name: 'Riverside Park', desc: 'Small Town', exits: ['high-street'], body: [{ text: 'place.park' }] }),
-    location({ id: 'office', name: 'The Office', desc: 'Work', exits: ['high-street'], body: [{ text: 'place.office' }] }),
+    location({ id: 'park', name: 'Riverside Park', desc: 'Small Town', exits: ['high-street'], body: [{ prose: 'place.park' }] }),
+    location({ id: 'office', name: 'The Office', desc: 'Work', exits: ['high-street'], body: [{ prose: 'place.office' }] }),
   ],
   prose: {
     'place.flat': 'Boxes, mostly. The radiator knocks when it feels like it.',
@@ -219,7 +219,7 @@ import { SCHEMA, type Pack } from '@ifloom/engine'
 const shortcut: Pack = {
   id: 'mod:shortcut',
   schema: SCHEMA,
-  traits: { 'places/location': { 'location:flat': { exits: ['high-street', 'park'], body: [{ text: 'place.flat' }] } } },
+  traits: { 'places/location': { 'location:flat': { exits: ['high-street', 'park'], body: [{ prose: 'place.flat' }] } } },
 }
 ```
 
@@ -235,7 +235,7 @@ import { location } from '@ifloom/plugin-places'
 const backRoom = location({
   id: 'cafe.back', name: 'The back room', desc: 'Café', parent: 'cafe', exits: ['cafe'],
   blocked: [{ when: { not: { kv: 'staff' } }, reason: 'Staff only.', hide: true }],
-  body: [{ text: 'place.cafe.back' }],
+  body: [{ prose: 'place.cafe.back' }],
 })
 ```
 
@@ -256,7 +256,7 @@ const office = location({
     { when: { all: [weekday(4), { not: period('morning', 'afternoon') }] }, reason: 'Closed. Back on Monday.' },
     { when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' },
   ],
-  body: [{ text: 'place.office' }],
+  body: [{ prose: 'place.office' }],
 })
 ```
 
@@ -275,8 +275,8 @@ import { location, type PlaceDef } from '@ifloom/plugin-places'
 
 // Shown under every place's own words while they hold.
 const warnings: Block[] = [
-  { text: 'warn.rent', when: weekday(5) },
-  { text: 'warn.tired', when: { stat: 'energy', lt: 10 } },
+  { prose: 'warn.rent', when: weekday(5) },
+  { prose: 'warn.tired', when: { stat: 'energy', lt: 10 } },
 ]
 
 const place = (def: Omit<PlaceDef, 'body'>, text: string) => location({ ...def, body: [{ text }, ...warnings] })
@@ -293,9 +293,9 @@ import { isAt } from '@ifloom/plugin-cast'
 
 // On the high street: a line for each place Ava might be.
 body: [
-  { text: 'place.high-street' },
-  { text: 'where.ava.cafe', when: isAt('ava', 'cafe') },
-  { text: 'where.ava.park', when: isAt('ava', 'park') },
+  { prose: 'place.high-street' },
+  { prose: 'where.ava.cafe', when: isAt('ava', 'cafe') },
+  { prose: 'where.ava.park', when: isAt('ava', 'park') },
 ]
 ```
 
@@ -507,7 +507,7 @@ location({
       { id: 'back', rect: [85, 30, 15, 70], label: 'The back door', command: go('cafe.back') },
     ],
   },
-  body: [{ text: 'place.cafe' }],
+  body: [{ prose: 'place.cafe' }],
 })
 ```
 
@@ -531,7 +531,7 @@ The place's `name`, which the view joins into [`view.when`](/docs/reference/view
 The place the player is at supplies its `audio` through the plugin's [`audio` provider](/docs/reference/plugins#audio). Here a café has its own murmur, and the music carries on from the game's default:
 
 ```ts
-location({ id: 'cafe', name: 'The Corner Café', desc: 'Café', exits: ['high-street'], body: [{ text: 'place.cafe' }], audio: { ambience: 'cafe.murmur' } })
+location({ id: 'cafe', name: 'The Corner Café', desc: 'Café', exits: ['high-street'], body: [{ prose: 'place.cafe' }], audio: { ambience: 'cafe.murmur' } })
 ```
 
 Walk back out to the high street and the ambience stops, because the street names none. A place's audio is the third of [four levels](/docs/reference/audio#what-plays-on-a-background-channel). An open scene's `audio` and an [`audio` effect](/docs/reference/effects#audio) both win over it, and it wins over the game's default. A room inside another doesn't take its parent's audio, so give the back room its own if it should sound the same. Nothing plays while the player is nowhere.

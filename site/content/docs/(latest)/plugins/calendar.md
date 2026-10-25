@@ -170,7 +170,7 @@ import { calendar, pass, period, sleep, weekday } from '@ifloom/plugin-calendar'
 import { go, places, location, type PlaceDef } from '@ifloom/plugin-places'
 
 const place = (id: string, name: string, exits: string[]): PlaceDef =>
-  ({ id, name, desc: 'Small Town', exits, body: [{ text: `place.${id}` }] })
+  ({ id, name, desc: 'Small Town', exits, body: [{ prose: `place.${id}` }] })
 
 const town: Content = {
   stats: [{ id: 'coins', label: 'Coins', start: 12 }],

@@ -149,7 +149,7 @@ export const lease: Content = {
 }
 
 // The flat's location gains the line and the button it links to:
-// body: [{ text: 'place.flat' }, { text: 'place.flat.lease', when: { not: { kv: 'signed' } } }],
+// body: [{ prose: 'place.flat' }, { prose: 'place.flat.lease', when: { not: { kv: 'signed' } } }],
 // actions: [{ id: 'lease', label: 'Read the lease', effects: [{ panel: 'lease', with: { title: 'The lease' } }] }],
 ```
 

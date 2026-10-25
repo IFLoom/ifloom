@@ -13,7 +13,7 @@ export const highStreet: Content = {
       tags: ['outdoors'],
       exits: ['flat', 'cafe', 'park', 'office'],
       // The street, then a line about the weather, drawn afresh each day.
-      body: [{ text: 'place.high-street' }, { variants: 'street.weather' }, { text: 'place.high-street.hint', when: { setting: 'hints' } }],
+      body: [{ prose: 'place.high-street' }, { variants: 'street.weather' }, { prose: 'place.high-street.hint', when: { setting: 'hints' } }],
       actions: [
         {
           id: 'scarf',

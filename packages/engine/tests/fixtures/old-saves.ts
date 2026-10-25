@@ -176,6 +176,9 @@ const v19 = {
 // A running minigame's numbers are its kv store. A flowing scene's visit came in this version too, from its load default.
 const v20 = { ...v19, version: 20, minigame: { id: 'darts', state: 'throw', elapsed: 200, kv: { score: 2 }, steps: 3 }, flow: null }
 
+// A notice's text is its words, not a prose key: this one has none, so it reads the same.
+const v21 = { ...v20, version: 21 }
+
 /** Each version's save state, by version. */
 export const OLD_SAVES: Record<number, Record<string, unknown>> = {
   1: v1,
@@ -198,4 +201,5 @@ export const OLD_SAVES: Record<number, Record<string, unknown>> = {
   18: v18,
   19: v19,
   20: v20,
+  21: v21,
 }

@@ -8,22 +8,17 @@ import type { DataScene } from '../../src/scene.ts'
 import { problemsOf } from '../fixtures/checked.ts'
 import { unwrap } from '../fixtures/result.ts'
 
-const leave = [{ id: 'leave', effects: [{ scene: null }] }]
+const leave = [{ id: 'leave', label: 'Leave', effects: [{ scene: null }] }]
 
 /** A café with things that might happen while you sit there. */
 function scene(id: string, extra: Partial<DataScene> = {}): DataScene {
-  return { id, body: [{ text: `${id}.text` }], choices: leave, ...extra }
+  return { id, body: [{ prose: `${id}.text` }], choices: leave, ...extra }
 }
 
 function cafe(scenes: DataScene[], extra: Partial<Content> = {}) {
   const pack: Content = {
     name: 'cafe',
-    prose: Object.fromEntries(
-      scenes.flatMap((entry) => [
-        [`${entry.id}.text`, entry.id],
-        [`${entry.id}#leave`, 'Leave'],
-      ]),
-    ),
+    prose: Object.fromEntries(scenes.map((entry) => [`${entry.id}.text`, entry.id])),
     scenes,
     actions: [
       { id: 'sit', effects: [{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }] },

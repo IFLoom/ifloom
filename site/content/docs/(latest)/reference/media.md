@@ -54,7 +54,7 @@ const knock: DataScene = {
     ],
     hotspots: [{ id: 'door', rect: [60, 10, 25, 85], label: 'The front door', choice: 'answer' }],
   },
-  body: [{ text: 'flat.knock' }, { media: { pool: 'door', tags: ['red', 'night'], alt: 'The front door' } }],
+  body: [{ prose: 'flat.knock' }, { media: { pool: 'door', tags: ['red', 'night'], alt: 'The front door' } }],
   choices: [
     { id: 'answer', effects: [{ scene: 'flat.visitor' }] },
     { id: 'ignore', effects: [{ scene: null }] },

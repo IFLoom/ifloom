@@ -4,7 +4,7 @@ import { apply } from './reduce.ts'
 import { loadState, startingState, type StartOptions } from './intake.ts'
 import { pluginContext, pluginView } from './plugin.ts'
 import type { Profile } from './profile.ts'
-import { settingAffects, settingById, settingRefusal, settingValue } from './features/settings.ts'
+import { settingAffects, settingOf, settingRefusal, settingValue } from './features/settings.ts'
 import { runnerHooks } from './features/registry.ts'
 import { savingIn } from './features/saving.ts'
 import { fail, ok, type Result } from './result.ts'
@@ -295,7 +295,7 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
       if (choice?.irreversible) return true
     }
     if (history.stopAtNewTurn && after.turn !== before.turn) return true
-    if (history.stopWhen && holds(after, history.stopWhen, game)) return true
+    if (history.stopWhen && holds(after, game, history.stopWhen)) return true
     return false
   }
 
@@ -374,7 +374,7 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     if (!options.profile) return
     // The features' first: a play setting changed is written for the next game.
     for (const hooks of runnerHooks) hooks.afterCommand?.(command, remember)
-    if (game.finished && !finishedRecorded && holds(after, game.finished, game)) {
+    if (game.finished && !finishedRecorded && holds(after, game, game.finished)) {
       finishedRecorded = true
       const at = now()
       remember((profile) => profile.update('core:finished', (stored) => stored ?? { at }))
@@ -578,7 +578,7 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     profile: options.profile,
     settings: settingsNow,
     setSetting(id: string, to: KvValue): Result<KvValue> {
-      const setting = settingById(game, id)
+      const setting = settingOf(game, id)
       if (!setting) return fail(stringOf(game, 'noSuchSetting'))
       if (settingAffects(setting) === 'play') {
         const applied = run({ type: 'setting', id, to })

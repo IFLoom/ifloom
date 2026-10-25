@@ -56,7 +56,7 @@ Why a [command](/docs/reference/commands) can't be done.
 | `finishFirst` | `Finish this first.` | |
 | `notSupported` | `This game does not do that.` | |
 | `noSuchAction` | `There is no such thing to do.` | |
-| `notEnough` | `Not enough {stat}.` | `{stat}` is the stat's label in lower case, and `{n}` the amount it costs. [`lackingLine`](/docs/reference/stats#lackingline) says it, in the game's words when you pass the game. |
+| `notEnough` | `Not enough {stat}.` | `{stat}` is the stat's label in lower case, and `{n}` the amount it costs. [`lackingLine`](/docs/reference/stats#lackingline) says it, in the game's words. |
 | `noSuchScene` | `There is no such scene.` | |
 | `nothingToChoose` | `There is nothing to choose.` | |
 | `notOnOffer` | `That is not on offer.` | |
@@ -244,7 +244,7 @@ stringOf(game, 'tooLong', { n: 12 })           // 'Keep it to 12 characters.'
 stringOf(undefined, 'finishFirst')             // 'Finish this first.' (no game, so the engine's English)
 ```
 
-Use it in your own UI for the words it shares with the engine, and in a plugin for the plugin's own lines. Engine functions that print a refusal, such as [`lackingLine`](/docs/reference/stats#lackingline), take an optional game for the same reason. Without it they use the engine's English.
+Use it in your own UI for the words it shares with the engine, and in a plugin for the plugin's own lines. Engine functions that print a refusal, such as [`lackingLine`](/docs/reference/stats#lackingline), take the game for the same reason.
 
 **Gotchas.**
 - **A missing key shows itself.** A key nobody wrote comes back as the key, such as `'kites/noWind'`, so it's easy to spot on screen.

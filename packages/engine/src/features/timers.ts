@@ -105,7 +105,7 @@ export type TimersShape = {
 const MOST_STEPS = 1000
 
 /** A declared timer, by id. */
-export function timerDef(game: Game, id: string): TimerDef | undefined {
+export function timerOf(game: Game, id: string): TimerDef | undefined {
   return game.timers?.find((entry) => entry.id === id)
 }
 
@@ -133,8 +133,8 @@ function firstDone(timers: Record<string, RunningTimer>): string | undefined {
 function runOut(state: GameState, game: Game, id: string, cx: FeatureContext): GameState {
   const { [id]: _done, ...rest } = state.timers
   const stopped: GameState = { ...state, timers: rest }
-  const effects = timerDef(game, id)?.effects ?? []
-  return effects.length ? cx.runEffects(stopped, game, cx.buildEffects(stopped, game, effects), false) : stopped
+  const effects = timerOf(game, id)?.effects ?? []
+  return effects.length ? cx.runEffects(stopped, game, cx.buildEffects(game, effects), false) : stopped
 }
 
 /**
@@ -218,7 +218,7 @@ export const timers = defineFeature<TimersShape>({
           const { [effect.timer]: _stopped, ...rest } = state.timers
           return { ...state, timers: rest }
         }
-        const def = timerDef(game, effect.timer)
+        const def = timerOf(game, effect.timer)
         // A timer the game doesn't declare has nothing to run out into. The content checker reports it.
         if (!def) return state
         const ms = length(effect.to ?? def.ms)
@@ -266,7 +266,7 @@ export const timers = defineFeature<TimersShape>({
   view: (state, game) => ({
     timers: Object.entries(state.timers).map(([id, running]) => ({
       id,
-      label: timerDef(game, id)?.label ?? null,
+      label: timerOf(game, id)?.label ?? null,
       left: running.left,
       total: running.total,
     })),

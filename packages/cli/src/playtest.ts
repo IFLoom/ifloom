@@ -1,5 +1,5 @@
 import {
-  actionById,
+  actionOf,
   callOf,
   apply,
   buildEffects,
@@ -7,7 +7,7 @@ import {
   commandOf,
   inlineChoices,
   pluginQuery,
-  statDef,
+  statOf,
   view,
   type Command,
   type CommandRef,
@@ -166,7 +166,7 @@ export function explorer(): Policy {
       if (endsTurn(game, state, entry.command)) return false
       if (entry.command.type !== 'action') return true
       // An action that only lets time pass is waiting, not doing; its cost does not count.
-      const effects = buildEffects(state, game, actionById(state, game, entry.command.id)?.effects ?? [])
+      const effects = buildEffects(game, actionOf(state, game, entry.command.id)?.effects ?? [])
       return effects.some((effect) => callOf(effect)?.name !== 'calendar/pass')
     })
     if (action) {
@@ -200,7 +200,7 @@ export function playtest(game: Game, start: GameState, policy: Policy = explorer
     // The player's stats, then how many there are of each kind of entity the game lists. A kind that's never
     // listed, such as the places' `location` or the shop's `vendor`, is the plugin's bookkeeping, not a number to watch.
     const stats = Object.fromEntries([
-      ...(game.stats ?? []).filter((stat) => !stat.of).map((stat) => [stat.id, state.stats[stat.id] ?? statDef(game, stat.id)?.start ?? 0]),
+      ...(game.stats ?? []).filter((stat) => !stat.of).map((stat) => [stat.id, state.stats[stat.id] ?? statOf(game, stat.id)?.start ?? 0]),
       ...(game.kinds ?? []).filter((kind) => kind.listed !== false).map((kind) => [kind.id, entitiesOf(state, game, kind.id).length]),
     ])
     metrics.push({ turn: turn + 1, stats, scenes, refused })

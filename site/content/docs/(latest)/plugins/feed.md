@@ -10,7 +10,7 @@ Other people's posts are content, and each appears the first time its [condition
 
 ```ts
 import {
-  feed, feedsOf, postDefs, postTo, react, seeFeed, hasPosted,
+  feed, feedsOf, postsOf, postTo, react, seeFeed, hasPosted,
   type FeedDef, type PostDef, type OwnPost, type Comment, type FeedState,
   type FeedsView, type FeedView, type PostView,
 } from '@ifloom/plugin-feed'
@@ -275,8 +275,8 @@ feeds(state).feeds[0].posts
 // [{ id: 'river', mine: true, from: '', name: 'You', portrait: null, text: 'The river at dusk.',
 //    image: 'art/photo/river.svg', turn: 0, likes: 3 to 12, comments: [{ from: 'ava', name: 'Ava', text: 'Lovely!' }] }]
 feeds(state).unread                                                          // 0: your own posts aren't news
-holds(state, hasPosted(), game)                                              // true
-holds(state, { 'feed/likes': { post: 'river', gte: 3 } }, game)   // true
+holds(state, game, hasPosted())                                              // true
+holds(state, game, { 'feed/likes': { post: 'river', gte: 3 } })   // true
 
 // Home, and to bed in the evening
 state = apply(state, game, go('high-street')).state
@@ -529,10 +529,10 @@ const seeFeed: (feedId?: string) => CommandRef
 const hasPosted: (gte?: number, feedId?: string) => Condition
 ```
 
-### postDefs
+### postsOf
 
 ```ts
-function postDefs(game: Game): PostDef[]
+function postsOf(game: Game): PostDef[]
 ```
 
 The game's posts, merged from its content and packs: `game.data.feed.posts`.

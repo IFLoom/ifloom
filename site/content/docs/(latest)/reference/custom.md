@@ -211,7 +211,7 @@ To ask one of these from your own code, such as a tool or a test, go through the
 ```ts
 import { amountOf, holds } from '@ifloom/engine'
 
-holds(state, { 'game/marketDay': true }, town)                                  // true on market day
+holds(state, town, { 'game/marketDay': true })                                  // true on market day
 amountOf(state, town, { value: 'game/breadPrice' })                             // 4
 amountOf(state, town, { value: 'messages/unread', with: { channel: 'texts' } }) // 2
 ```
@@ -219,15 +219,15 @@ amountOf(state, town, { value: 'messages/unread', with: { channel: 'texts' } }) 
 ## buildEffects
 
 ```ts
-function buildEffects(state: GameState, game: Game, refs: readonly EffectRef[]): Effect[]
+function buildEffects(game: Game, refs: readonly EffectRef[]): Effect[]
 ```
 
-The effects the reducer would run: a call to an effect that neither the game nor its plugins declare is left out, since it would do nothing, and everything else is kept as written. Nothing is worked out yet, so `state` is only there for symmetry with the rest of the API.
+The effects the reducer would run: a call to an effect that neither the game nor its plugins declare is left out, since it would do nothing, and everything else is kept as written. Nothing is worked out yet, so it needs no state.
 
 ```ts
 import { buildEffects } from '@ifloom/engine'
 
-buildEffects(state, town, [{ 'game/tip': { by: 2 } }, { 'game/typo': true }])
+buildEffects(town, [{ 'game/tip': { by: 2 } }, { 'game/typo': true }])
 // [{ 'game/tip': { by: 2 } }]
 ```
 

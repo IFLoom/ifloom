@@ -26,7 +26,7 @@ const LISTS = ['sum', 'product', 'min', 'max'] as const
 const finite = (value: unknown): number => (typeof value === 'number' && Number.isFinite(value) ? value : 0)
 
 /** An amount worked out with the core's helpers in `cx`. Anything that doesn't read as a finite number is 0. */
-export function amountIn(state: GameState, game: Game | undefined, amount: Amount, cx: FeatureContext): number {
+export function amountIn(state: GameState, game: Game, amount: Amount, cx: FeatureContext): number {
   if (typeof amount === 'number') return finite(amount)
   const stat = (id: string, of?: string) => (game ? statValue(state, game, id, of, cx) : finite(state.stats[id]))
   if (typeof amount === 'string') return stat(amount)
@@ -64,18 +64,20 @@ export function amountIn(state: GameState, game: Game | undefined, amount: Amoun
  * formula of them. Anything that doesn't read as a finite number is 0, as an
  * owner that isn't there is.
  */
-export function amountOf(state: GameState, game: Game | undefined, amount: Amount): number {
+export function amountOf(state: GameState, game: Game, amount: Amount): number {
   return amountIn(state, game, amount, featureContext())
 }
 
 /**
- * Is the number in the range? Without a state and a game, only bounds
- * written as numbers count, and a bound that is an `Amount` fails. With them,
- * each bound is worked out first, so `{ gte: { stat: 'rent' } }` reads the
- * rent. A range with no bounds asks whether the number is above 0.
+ * Is the number in the range? Each bound is worked out in the state first,
+ * so `{ gte: { stat: 'rent' } }` reads the rent. A range with no bounds asks
+ * whether the number is above 0.
  */
-export function inRange(value: number, range: Range, state?: GameState, game?: Game): boolean {
-  return inRangeOf(value, state ? rangeWith(range, (amount) => amountOf(state, game, amount)) : range)
+export function inRange(state: GameState, game: Game, value: number, range: Range): boolean {
+  return inRangeOf(
+    value,
+    rangeWith(range, (amount) => amountOf(state, game, amount)),
+  )
 }
 
 /**
@@ -83,7 +85,7 @@ export function inRange(value: number, range: Range, state?: GameState, game?: G
  * condition's own or a call's (`{ 'jobs/shifts': { job, gte: { kv: 'target' } } }`),
  * so its kind reads numbers. The same object when there's nothing to work out.
  */
-export function withAmounts(state: GameState, condition: Condition, game: Game | undefined): Condition {
+export function withAmounts(state: GameState, condition: Condition, game: Game): Condition {
   const read = (amount: Amount) => amountOf(state, game, amount)
   if (hasAmountBound(condition)) return rangeWith(condition, read)
   const call = customCall(condition)

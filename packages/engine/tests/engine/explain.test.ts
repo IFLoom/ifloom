@@ -20,8 +20,8 @@ describe('explain', () => {
   }
 
   it('agrees with holds, and marks every part true or false', () => {
-    const answer = explain(state, condition, game)
-    expect(answer.holds).toBe(holds(state, condition, game))
+    const answer = explain(state, game, condition)
+    expect(answer.holds).toBe(holds(state, game, condition))
     expect(answer.holds).toBe(false)
     expect(answer.parts?.map((part) => part.holds)).toEqual([true, true, false])
     expect(answer.parts?.[1].parts?.map((part) => part.holds)).toEqual([false, true])
@@ -30,21 +30,21 @@ describe('explain', () => {
   it('holds nowhere for a condition with two kinds, rather than picking one, and says why', () => {
     // Before core features registered, `flag` (now `kv`) was asked first here and the condition held.
     const two = { kv: 'metRosa', turn: { gte: 0 } } as never
-    expect(holds(state, two, game)).toBe(false)
-    expect(explain(state, two, game)).toEqual({ holds: false, why: 'a condition with 2 keys (kv, turn); wants one' })
+    expect(holds(state, game, two)).toBe(false)
+    expect(explain(state, game, two)).toEqual({ holds: false, why: 'a condition with 2 keys (kv, turn); wants one' })
     const both = { all: [{ kv: 'metRosa' }], not: { kv: 'metRosa' } } as never
-    expect(explain(state, both, game)).toEqual({ holds: false, why: 'a condition with 2 keys (all, not); wants one' })
+    expect(explain(state, game, both)).toEqual({ holds: false, why: 'a condition with 2 keys (all, not); wants one' })
   })
 
   it('says what each leaf read and what it wanted', () => {
-    const [, either, notOpen] = explain(state, condition, game).parts ?? []
+    const [, either, notOpen] = explain(state, game, condition).parts ?? []
     expect(either.parts?.[0].why).toBe('stat coins is 3; wants 5 or more')
     expect(either.parts?.[1].why).toBe('stat intelligence is at level 1; wants 1 or more')
     expect(notOpen.parts?.[0].why).toBe('kv phase is "open"; wants one of "open"')
   })
 
   it('prints as an indented tree for a log or a debug panel', () => {
-    const text = explainText(explain(state, condition, game))
+    const text = explainText(explain(state, game, condition))
     expect(text.split('\n')[0]).toBe('✗ all of 3: 1 fail')
     expect(text).toContain('    ✗ stat coins is 3; wants 5 or more')
   })

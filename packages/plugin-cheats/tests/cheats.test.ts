@@ -16,7 +16,7 @@ import {
   type Content,
   type Plugin,
 } from '@ifloom/engine'
-import { cheatDefs, cheatUsed, cheats, runCheat, type CheatDef, type CheatsView } from '../src/index.ts'
+import { cheatsOf, cheatUsed, cheats, runCheat, type CheatDef, type CheatsView } from '../src/index.ts'
 
 const supporter = { not: { 'unlocks/has': { unlock: 'supporter' } } }
 
@@ -102,9 +102,9 @@ describe('cheats', () => {
       { cheat: 'coins', turn: 0 },
       { cheat: 'coins', turn: 1 },
     ])
-    expect(holds(state, cheatUsed(), g)).toBe(true)
-    expect(holds(state, cheatUsed('coins'), g)).toBe(true)
-    expect(holds(state, cheatUsed('map'), g)).toBe(false)
+    expect(holds(state, g, cheatUsed())).toBe(true)
+    expect(holds(state, g, cheatUsed('coins'))).toBe(true)
+    expect(holds(state, g, cheatUsed('map'))).toBe(false)
     state = run(state, g, runCheat('map'))
     expect(shown(g, state).used).toBe(3)
     expect(shown(g, state).cheats.map((cheat) => [cheat.id, cheat.used])).toEqual([
@@ -112,7 +112,7 @@ describe('cheats', () => {
       ['map', 1],
       ['gold', 0],
     ])
-    expect(holds(fresh(g), cheatUsed(), g)).toBe(false)
+    expect(holds(fresh(g), g, cheatUsed())).toBe(false)
   })
 
   it('shows each cheat as a button, with its group, and refuses a once cheat used', () => {
@@ -187,7 +187,7 @@ describe('cheats', () => {
 
   it('reads its cheats from every pack, merged by id', () => {
     const g = game()
-    expect(cheatDefs(g).map((cheat) => cheat.id)).toEqual(['coins', 'map', 'gold', 'secret'])
+    expect(cheatsOf(g).map((cheat) => cheat.id)).toEqual(['coins', 'map', 'gold', 'secret'])
   })
 })
 

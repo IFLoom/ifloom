@@ -65,11 +65,11 @@ describe('entities', () => {
     expect(state.entities.staff.ben).toEqual({ stats: { skill: 10 }, kv: { shifts: 2 } })
     expect(state.entities.staff.ana).toEqual({ stats: { morale: 80 } })
     expect(entityKv(state, g, 'staff:ana')).toEqual({ role: 'cook' })
-    expect(holds(state, { stat: 'morale', of: 'staff:ana', gte: 75 }, g)).toBe(true)
-    expect(holds(state, { kv: 'shifts', of: 'staff:ben', gte: 2 }, g)).toBe(true)
-    expect(holds(state, { kv: 'role', of: 'staff:ana', is: 'cook' }, g)).toBe(true)
-    expect(holds(state, { stat: 'skill', of: 'staff:cleo', lt: 100 }, g)).toBe(false)
-    expect(explain(state, { stat: 'morale', of: 'staff:ana', gte: 90 }, g).why).toBe('staff:ana stat morale is 80; wants 90 or more')
+    expect(holds(state, g, { stat: 'morale', of: 'staff:ana', gte: 75 })).toBe(true)
+    expect(holds(state, g, { kv: 'shifts', of: 'staff:ben', gte: 2 })).toBe(true)
+    expect(holds(state, g, { kv: 'role', of: 'staff:ana', is: 'cook' })).toBe(true)
+    expect(holds(state, g, { stat: 'skill', of: 'staff:cleo', lt: 100 })).toBe(false)
+    expect(explain(state, g, { stat: 'morale', of: 'staff:ana', gte: 90 }).why).toBe('staff:ana stat morale is 80; wants 90 or more')
   })
 
   it('are created with the next free number, or a given id, and removed', () => {
@@ -86,8 +86,8 @@ describe('entities', () => {
     state = applyEffects(state, g, [{ remove: 'staff:#1' }, { create: 'staff', with: { name: 'Eve' } }])
     // Numbers are never reused, so a removed one's id never comes back as someone else.
     expect(entitiesOf(state, g, 'staff')).toEqual(['staff:ana', 'staff:ben', 'staff:#2', 'staff:#3'])
-    expect(holds(state, { entity: 'staff:#1' }, g)).toBe(false)
-    expect(holds(state, { entity: 'staff:#3' }, g)).toBe(true)
+    expect(holds(state, g, { entity: 'staff:#1' })).toBe(false)
+    expect(holds(state, g, { entity: 'staff:#3' })).toBe(true)
   })
 
   it('run `each` for every one, with `$` as the one each time, only where `where` holds', () => {
@@ -114,10 +114,10 @@ describe('entities', () => {
   it('are counted, with a `where` of their own inside an `each`', () => {
     const g = game()
     const state = startingState(g)
-    expect(holds(state, { count: 'staff' }, g)).toBe(true)
-    expect(holds(state, { count: 'staff', gte: 3 }, g)).toBe(false)
-    expect(holds(state, { count: 'staff', where: { stat: 'skill', of: '$', gte: 3 }, lte: 1 }, g)).toBe(true)
-    expect(explain(state, { count: 'staff', where: { stat: 'skill', of: '$', gte: 3 } }, g).why).toBe('1 staff where it holds; wants more than 0')
+    expect(holds(state, g, { count: 'staff' })).toBe(true)
+    expect(holds(state, g, { count: 'staff', gte: 3 })).toBe(false)
+    expect(holds(state, g, { count: 'staff', where: { stat: 'skill', of: '$', gte: 3 }, lte: 1 })).toBe(true)
+    expect(explain(state, g, { count: 'staff', where: { stat: 'skill', of: '$', gte: 3 } }).why).toBe('1 staff where it holds; wants more than 0')
     // For each member of staff, a bonus if someone *else* is more skilled: the inner `$` is the inner one's.
     const after = applyEffects(state, g, [
       { each: 'staff', where: { count: 'staff', where: { stat: 'skill', of: '$', gte: 4 } }, effects: [{ kv: 'learning', to: true, of: '$' }] },
@@ -143,8 +143,8 @@ describe('entities', () => {
   it('read a missing one’s kv key as no answer at all, and do not create one numbered like the rest', () => {
     const g = game()
     const state = startingState(g)
-    expect(holds(state, { kv: 'role', of: 'staff:ghost', lt: 1 }, g)).toBe(false)
-    expect(holds(state, { not: { kv: 'role', of: 'staff:ghost' } }, g)).toBe(true)
+    expect(holds(state, g, { kv: 'role', of: 'staff:ghost', lt: 1 })).toBe(false)
+    expect(holds(state, g, { not: { kv: 'role', of: 'staff:ghost' } })).toBe(true)
     expect(applyEffects(state, g, [{ create: 'staff', with: { id: '7', name: 'Seven' } }]).entities).toEqual({})
     // `'$'` stands for the one in hand wherever an entity is named.
     const kept = applyEffects(state, g, [{ each: 'staff', where: { entity: '$' }, effects: [{ kv: 'seen', to: true, of: '$' }] }])

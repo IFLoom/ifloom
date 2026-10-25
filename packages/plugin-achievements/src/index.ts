@@ -108,13 +108,13 @@ function emptyState(): AchievementsState {
 }
 
 /** The game's achievements: `data.achievements.achievements`, from its packs. */
-export function achievementDefs(game: Game): AchievementDef[] {
+export function achievementsOf(game: Game): AchievementDef[] {
   return (game.data?.[ID]?.achievements ?? []) as AchievementDef[]
 }
 
 /** Has this achievement's condition, or its progress, been met in this state? */
 function met(def: AchievementDef, state: GameState, game: Game): boolean {
-  if (def.when) return holds(state, def.when, game)
+  if (def.when) return holds(state, game, def.when)
   if (def.progress) return amountOf(state, game, def.progress.value) >= def.progress.target
   return false
 }
@@ -132,7 +132,7 @@ function earn(
   let next = state
   for (const id of ids) {
     earned[id] = state.turn
-    const title = achievementDefs(game).find((def) => def.id === id)?.title ?? id
+    const title = achievementsOf(game).find((def) => def.id === id)?.title ?? id
     next = notify(next, { id: `achievement.${id}`, title: stringOf(game, 'achievements/earned', { title }), tag: 'achievements' })
   }
   return set({ earned }, next)
@@ -164,7 +164,7 @@ function entry(def: AchievementDef, earnedOn: number | null, earned: boolean, st
  */
 export function achievementsView(record: AchievementsState, state: GameState, game: Game, stored?: unknown): AchievementsView {
   const ever = new Set(profileIds(stored))
-  const achievements = achievementDefs(game).map((def) => {
+  const achievements = achievementsOf(game).map((def) => {
     const on = record.earned[def.id]
     return entry(def, on ?? null, on !== undefined || ever.has(def.id), state, game)
   })
@@ -198,7 +198,7 @@ export function achievements(): DefinedPlugin<AchievementsState, AchievementsVie
       /** `{ 'achievements/grant': { achievement } }`: earn it now, if it isn't earned. */
       grant: (state, args, { slice, set, game }) => {
         const id = String(args.achievement ?? '')
-        if (slice.earned[id] !== undefined || !achievementDefs(game).some((def) => def.id === id)) return state
+        if (slice.earned[id] !== undefined || !achievementsOf(game).some((def) => def.id === id)) return state
         return earn(state, [id], game, set, slice)
       },
     },
@@ -207,7 +207,7 @@ export function achievements(): DefinedPlugin<AchievementsState, AchievementsVie
       earned: (_state, _args, { slice }) => Object.keys(slice.earned).length,
     },
     onCommand: (_before, after, { slice, set, game }) => {
-      const ids = achievementDefs(game)
+      const ids = achievementsOf(game)
         .filter((def) => slice.earned[def.id] === undefined && met(def, after, game))
         .map((def) => def.id)
       return earn(after, ids, game, set, slice)
@@ -224,7 +224,7 @@ export function achievements(): DefinedPlugin<AchievementsState, AchievementsVie
       calls: (_kind, _name, args) =>
         args.achievement === undefined ? [] : [{ entry: String(args.achievement), plugin: ID, list: 'achievements', noun: 'achievement' }],
       content: (game) =>
-        achievementDefs(game).map((def) => ({
+        achievementsOf(game).map((def) => ({
           list: 'achievements',
           id: def.id,
           refs: [
@@ -236,7 +236,7 @@ export function achievements(): DefinedPlugin<AchievementsState, AchievementsVie
     },
     check: (game) => {
       const problems: PluginProblem[] = []
-      for (const def of achievementDefs(game)) {
+      for (const def of achievementsOf(game)) {
         if (def.progress && !(def.progress.target > 0)) problems.push({ list: 'achievements', id: def.id, what: 'progress target must be more than 0' })
       }
       return problems

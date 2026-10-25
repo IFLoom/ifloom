@@ -23,7 +23,7 @@ import {
   entityImage,
   entityName,
   entityOf,
-  entityTrait,
+  traitOf,
   entityUi,
   fillTokens,
   holds,
@@ -161,17 +161,16 @@ const KIND = 'character'
 export const OFFSTAGE = 'offstage'
 
 /**
- * Everyone the game has with the `cast/person` trait, as references. Given
- * only the game, the people content declares, in its order; given a state
- * too, everyone in the game now, those made in play included.
+ * Everyone in the game now with the `cast/person` trait, as references: the
+ * people content declares, in its order, then those made in play.
  */
-export function peopleOf(game: Game, state?: GameState): EntityRef[] {
-  return withTrait(game, PERSON, state)
+export function peopleOf(state: GameState, game: Game): EntityRef[] {
+  return withTrait(state, game, PERSON)
 }
 
 /** The `cast/person` trait of someone in the game, read through what they were made `like`; undefined for anyone else. */
 export function personOf(state: GameState, game: Game, ref: EntityRef): Person | undefined {
-  return entityOf(state, game, ref) ? entityTrait(state, game, ref, PERSON) : undefined
+  return entityOf(state, game, ref) ? traitOf(state, game, ref, PERSON) : undefined
 }
 
 /** Someone's presentation hints, as a view's `ui` field: left out with none. */
@@ -203,18 +202,18 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
     const person = ref === undefined ? undefined : personOf(state, game, ref)
     return person && ref !== undefined ? { ref, person } : undefined
   }
-  const everyone = (state: GameState, game: Game): One[] => peopleOf(game, state).flatMap((ref) => one(state, game, ref) ?? [])
+  const everyone = (state: GameState, game: Game): One[] => peopleOf(state, game).flatMap((ref) => one(state, game, ref) ?? [])
 
-  const holdsFor = (state: GameState, game: Game, them: One, when: Condition | undefined) => holds(state, bindCurrent(when, them.ref), game)
+  const holdsFor = (state: GameState, game: Game, them: One, when: Condition | undefined) => holds(state, game, bindCurrent(when, them.ref))
 
-  function locationOf(state: GameState, game: Game, them: One): string {
+  function placeOf(state: GameState, game: Game, them: One): string {
     for (const block of them.person.schedule ?? []) if (holdsFor(state, game, them, block.when)) return block.location
     return them.person.home ?? OFFSTAGE
   }
   const playerAt = (context: PluginContext<null>) => context.query<string | null>('places/here') ?? null
   const isHere = (state: GameState, context: PluginContext<null>, them: One) => {
     const at = playerAt(context)
-    return at !== null && locationOf(state, context.game, them) === at
+    return at !== null && placeOf(state, context.game, them) === at
   }
   const talkOption = (state: GameState, game: Game, them: One) => talkOptions(them.person).find((option) => holdsFor(state, game, them, option.when))
   const closed = (state: GameState, them: One) => them.person.storyline !== undefined && !storylineOpen(state, them.person.storyline)
@@ -229,7 +228,7 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
   /** A name as this save shows it: its tokens filled, so `'{{partnerName}}'` is what the player typed. */
   const nameOf = (state: GameState, game: Game, them: One) => entityName(state, game, them.ref)
   const fullNameOf = (state: GameState, game: Game, them: One) =>
-    them.person.fullName !== undefined ? fillTokens(them.person.fullName, state, game) : nameOf(state, game, them)
+    them.person.fullName !== undefined ? fillTokens(state, game, them.person.fullName) : nameOf(state, game, them)
   /** Their entity's `desc`, tokens filled: "Runs the café". */
   const descOf = (state: GameState, game: Game, them: One) => entityDesc(state, game, them.ref) ?? null
 
@@ -340,7 +339,7 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
       /** `{ 'cast/at': { character: 'ava', at: ['park'] } }`: where someone is, whoever else is there. */
       at: (state, args, { game }) => {
         const them = one(state, game, who(args.character)[0])
-        return them ? ids(args.at).includes(locationOf(state, game, them)) : false
+        return them ? ids(args.at).includes(placeOf(state, game, them)) : false
       },
       /** `{ 'cast/met': { character: 'ava' } }`: the player has met them; with a list, any of them. */
       met: (state, args, { game }) =>
@@ -376,7 +375,7 @@ export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
       /** Where someone is (`{ character }`). */
       where: (state, args, { game }) => {
         const them = one(state, game, who(args.character)[0])
-        return them ? locationOf(state, game, them) : undefined
+        return them ? placeOf(state, game, them) : undefined
       },
       /** Everyone met who can be called, each with the call command and why it can't go through now. */
       contacts: (state, _args, { game }) =>

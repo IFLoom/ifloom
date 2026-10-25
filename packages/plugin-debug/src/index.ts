@@ -21,8 +21,8 @@ import {
   YOU,
   parseRef,
   stringOf,
-  sceneById,
-  statDef,
+  sceneOf,
+  statOf,
   writeEntity,
   type CommandRef,
   type DefinedPlugin,
@@ -99,7 +99,7 @@ export function debug(): DefinedPlugin<null, DebugView> {
       /** `{ name: 'debug/stat', with: { stat, to, of? } }`: put a stat at a value, held to its range; with `of`, an entity's. */
       stat: free({
         whyNot: (state, args, { game }) => {
-          const def = statDef(game, String(args.stat))
+          const def = statOf(game, String(args.stat))
           if (!def) return sayDebug(game, 'noSuchStat', String(args.stat))
           if (args.of !== undefined && !entityOf(state, game, String(args.of))) return sayDebug(game, 'noSuchEntity', String(args.of))
           // The stat must be the owner's: the player's with no `of`, its kind's with one.
@@ -138,7 +138,7 @@ export function debug(): DefinedPlugin<null, DebugView> {
       /** `{ name: 'debug/scene', with: { id } }`: put the scene `id` on screen; leave `id` out to close it. */
       scene: free({
         whyNot: (_state, args, { game }) =>
-          args.id === undefined || sceneById(game, String(args.id)) ? undefined : sayDebug(game, 'noSuchScene', String(args.id)),
+          args.id === undefined || sceneOf(game, String(args.id)) ? undefined : sayDebug(game, 'noSuchScene', String(args.id)),
         run: (state, args) => ({ ...state, sceneId: args.id === undefined ? null : String(args.id) }),
       }),
       /**
@@ -183,7 +183,7 @@ export function debug(): DefinedPlugin<null, DebugView> {
       }),
     },
     view: (state, { game }): DebugView => ({
-      locks: (game.locks ?? []).filter((lock) => holds(state, lock.when, game)).map((lock) => ({ reason: lock.reason, deny: [...lock.deny] })),
+      locks: (game.locks ?? []).filter((lock) => holds(state, game, lock.when)).map((lock) => ({ reason: lock.reason, deny: [...lock.deny] })),
       fired: { ...state.fired },
       seed: state.seed,
     }),

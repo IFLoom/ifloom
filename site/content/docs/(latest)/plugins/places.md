@@ -223,7 +223,7 @@ const shortcut: Pack = {
 }
 ```
 
-The game's places are [`locationsOf(game)`](#helpers).
+The game's places are [`locationsOf(state, game)`](#helpers).
 
 ### Rooms inside rooms
 
@@ -760,8 +760,8 @@ The plugin's lines go in the [strings table](/docs/reference/strings#plugins-str
 ### Helpers
 
 ```ts
-function locationsOf(game: Game, state?: GameState): EntityRef[]
-function locationOf(game: Game, id: string | null | undefined, state?: GameState): Place | undefined
+function locationsOf(state: GameState, game: Game): EntityRef[]
+function locationOf(state: GameState, game: Game, ref: string | null | undefined): Place | undefined
 function where(state: GameState): string | null
 
 const go: (to: string) => CommandRef
@@ -776,8 +776,8 @@ const onlyAt: (places: string[], reason?: string) => Blocked
 
 | Helper | Returns |
 |---|---|
-| `locationsOf` | Every entity with the `places/location` trait, as references. Given only the game, the places content declares, in its order. Given a state too, every place in the game now, those made in play included. |
-| `locationOf` | The [`Place`](#the-location-trait) trait of the place with this id or reference, or `undefined`. Without a state, only the places content declares. With one, a place made in play too. `undefined` for `null`. |
+| `locationsOf` | Every entity in the game now with the `places/location` trait, as references: the places content declares, in its order, then those made in play. |
+| `locationOf` | The [`Place`](#the-location-trait) trait of the place with this id or reference, one content declares or one made in play, or `undefined`. `undefined` for `null`. |
 | `where` | Where the player is, read straight from the state with no game needed: the place's id, or `null`. |
 | `go` | The [`places/go`](#commands) command. |
 | `pickUp` | The [`places/pickUp`](#commands) command. |
@@ -787,7 +787,7 @@ const onlyAt: (places: string[], reason?: string) => Blocked
 | `moveTo` | The [`places/move`](#effects) effect. |
 | `onlyAt` | A [`blocked`](/docs/reference/actions#blocked) entry for an action: `{ when: { not: at(...places) }, reason }`, which refuses it anywhere else. The reason is `Not here.` if left out. |
 
-Without a state, `locationOf` and `locationsOf` read the game's content, so they work on any state. `where` reads the state alone.
+`where` reads the state alone.
 
 ## Checks
 

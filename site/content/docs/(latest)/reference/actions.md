@@ -7,7 +7,7 @@ An action is something the player can do, offered as a button: buying a coffee, 
 Your game's own actions go in your content's `actions`, and each one with a `label` is a button in every room while no scene is open. Plugins offer theirs too, such as the [places plugin](/docs/plugins/places#the-buttons)'s room actions and a [device](/docs/plugins/devices#section)'s app buttons.
 
 ```ts
-import { actionById, actionReferences, effectsOf, need, warningOf, whyNot, type ActionCost, type ActionDef, type Blocked } from '@ifloom/engine'
+import { actionOf, actionReferences, effectsOf, need, warningOf, whyNot, type ActionCost, type ActionDef, type Blocked } from '@ifloom/engine'
 ```
 
 ## ButtonDef
@@ -164,10 +164,10 @@ blocked: [need('You need a scarf for this.', { entity: 'clothing:scarf', at: 'yo
 
 For a test worked out from several values, use a [condition of your game's own](/docs/reference/rules#gamerules): `{ when: { 'game/marketDay': true }, reason: 'Not on market day.' }`.
 
-## actionById
+## actionOf
 
 ```ts
-function actionById(state: GameState, game: Game, id: string): ActionDef | undefined
+function actionOf(state: GameState, game: Game, id: string): ActionDef | undefined
 ```
 
 The action `{ type: 'action', id }` does, in this state, or `undefined`. An id with no plugin in front is one of the game's `actions`. One with a plugin's id in front, `'places/coffee'`, is that plugin's: what its [`action`](/docs/reference/plugins#action) answers, else the button of that id it offers now.

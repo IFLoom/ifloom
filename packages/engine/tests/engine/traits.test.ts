@@ -1,6 +1,6 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import { describeProblem } from '../../src/check.ts'
-import { setTraitState, traitOf, traitState, withTrait, type TraitDef } from '../../src/entities.ts'
+import { setTraitState, declaredTrait, declaredWithTrait, traitState, type TraitDef } from '../../src/entities.ts'
 import { startingState, loadState } from '../../src/intake.ts'
 import { loadGame, type Content, type Pack } from '../../src/loader.ts'
 import { definePlugin } from '../../src/plugin.ts'
@@ -43,38 +43,38 @@ describe('traits', () => {
     const { game, problems } = loadGame([clothes, extra], base)
     expect(problems.map(describeProblem)).toEqual([])
     // The kind's default is laid under the entity's own, field by field.
-    expect(traitOf(game, 'clothing:scarf', 'closet/hangs')).toEqual({ slot: 'neck', layer: 1 })
-    expect(traitOf(game, 'clothing:coat', 'closet/hangs')).toEqual({ slot: 'body', layer: 2 })
-    expect(traitOf(game, 'clothing:hat', 'closet/hangs')).toEqual({ slot: 'neck', layer: 1 })
+    expect(declaredTrait(game, 'clothing:scarf', 'closet/hangs')).toEqual({ slot: 'neck', layer: 1 })
+    expect(declaredTrait(game, 'clothing:coat', 'closet/hangs')).toEqual({ slot: 'body', layer: 2 })
+    expect(declaredTrait(game, 'clothing:hat', 'closet/hangs')).toEqual({ slot: 'neck', layer: 1 })
     // A value that isn't an object is replaced whole; a game's own trait has no `/`.
-    expect(traitOf(game, 'clothing:coat', 'cosy')).toBe(false)
-    expect(traitOf(game, 'clothing:scarf', 'cosy')).toBe(true)
+    expect(declaredTrait(game, 'clothing:coat', 'cosy')).toBe(false)
+    expect(declaredTrait(game, 'clothing:scarf', 'cosy')).toBe(true)
     // One created in play has its kind's.
-    expect(traitOf(game, 'clothing:#1', 'closet/hangs')).toEqual({ layer: 1 })
-    expect(traitOf(game, 'clothing:scarf', 'nothing')).toBeUndefined()
-    expect(withTrait(game, 'closet/hangs')).toEqual(['clothing:scarf', 'clothing:coat', 'clothing:hat'])
+    expect(declaredTrait(game, 'clothing:#1', 'closet/hangs')).toEqual({ layer: 1 })
+    expect(declaredTrait(game, 'clothing:scarf', 'nothing')).toBeUndefined()
+    expect(declaredWithTrait(game, 'closet/hangs')).toEqual(['clothing:scarf', 'clothing:coat', 'clothing:hat'])
     // The loaded game holds the worked-out table, as plain data.
     expect(game.traits?.['closet/hangs']?.['clothing:hat']).toEqual({ slot: 'neck', layer: 1 })
     expect(JSON.parse(JSON.stringify(game.traits))).toEqual(game.traits)
-    expectTypeOf(traitOf(game, 'clothing:scarf', 'closet/hangs')).toEqualTypeOf<{ slot: string; layer?: number } | undefined>()
-    expectTypeOf(traitOf(game, 'clothing:scarf', 'cosy')).toBeUnknown()
+    expectTypeOf(declaredTrait(game, 'clothing:scarf', 'closet/hangs')).toEqualTypeOf<{ slot: string; layer?: number } | undefined>()
+    expectTypeOf(declaredTrait(game, 'clothing:scarf', 'cosy')).toBeUnknown()
   })
 
   it('replace an entity’s own with a table row, whole, over the kind’s', () => {
     const row: Content = { traits: { 'closet/hangs': { 'clothing:coat': { slot: 'neck' } } } }
     const { game } = loadGame([clothes, row], base)
-    expect(traitOf(game, 'clothing:coat', 'closet/hangs')).toEqual({ slot: 'neck', layer: 1 })
+    expect(declaredTrait(game, 'clothing:coat', 'closet/hangs')).toEqual({ slot: 'neck', layer: 1 })
   })
 
   it('read the same from a hand-built game', () => {
     const game = { id: 'town', title: 'Town', scenes: [], plugins: [closet], kinds: clothes.kinds, entities: clothes.entities }
-    expect(traitOf(game, 'clothing:scarf', 'closet/hangs')).toEqual({ slot: 'neck', layer: 1 })
-    expect(withTrait(game, 'cosy')).toEqual(['clothing:scarf', 'clothing:coat', 'clothing:hat'])
+    expect(declaredTrait(game, 'clothing:scarf', 'closet/hangs')).toEqual({ slot: 'neck', layer: 1 })
+    expect(declaredWithTrait(game, 'cosy')).toEqual(['clothing:scarf', 'clothing:coat', 'clothing:hat'])
   })
 
   it('let a pack give a trait over the content’s, and report a row the content gives twice', () => {
     const mod: Pack = { id: 'mod:warm', schema: SCHEMA, traits: { 'closet/hangs': { 'clothing:scarf': { slot: 'body' } } } }
-    expect(traitOf(loadGame([clothes], base, { packs: [mod] }).game, 'clothing:scarf', 'closet/hangs')).toEqual({ slot: 'body', layer: 1 })
+    expect(declaredTrait(loadGame([clothes], base, { packs: [mod] }).game, 'clothing:scarf', 'closet/hangs')).toEqual({ slot: 'body', layer: 1 })
     const once: Content = { name: 'once', traits: { 'closet/hangs': { 'clothing:hat': { slot: 'head' } } } }
     const twice: Content = { name: 'twice', traits: { 'closet/hangs': { 'clothing:hat': { slot: 'neck' } } } }
     expect(loadGame([clothes, once, twice], base).problems.map(describeProblem)).toEqual([

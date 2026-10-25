@@ -10,7 +10,7 @@ A message is like a scene that arrives instead of one the player walks into. It 
 
 ```ts
 import {
-  messages, messageDefs, channelsOf, replyTo, readThread, messageArrived, messageReplied,
+  messages, messagesOf, channelsOf, replyTo, readThread, messageArrived, messageReplied,
   messageSince, drawMessage,
   type Channel, type MessageDef, type ReplyDef, type MessagesState, type Arrival,
   type MessagesView, type ChannelView, type ThreadView, type MessageView,
@@ -610,10 +610,10 @@ const messageSince: (message: string, range: Range) => Condition
 const drawMessage: (pool: string) => EffectRef
 ```
 
-### messageDefs
+### messagesOf
 
 ```ts
-function messageDefs(game: Game): MessageDef[]
+function messagesOf(game: Game): MessageDef[]
 ```
 
 The game's messages, merged from its content and packs: `game.data.messages.messages`.

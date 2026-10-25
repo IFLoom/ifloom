@@ -6,7 +6,7 @@ import { loadGame, type Content } from '../../src/loader.ts'
 import { applyEffects } from '../../src/reduce.ts'
 import { loadState, startingState } from '../../src/intake.ts'
 import { view } from '../../src/view.ts'
-import { entityKv, entityTags, entityTrait, withTrait } from '../../src/entities.ts'
+import { entityKv, entityTags, traitOf, withTrait } from '../../src/entities.ts'
 import { entityName } from '../../src/prose.ts'
 import { statValue } from '../../src/stats.ts'
 import { give, heldBy, heldCount, holderOf, holding, move, take } from '../../src/holdings.ts'
@@ -63,13 +63,13 @@ describe('holdings', () => {
       { ref: 'food:apple', count: 2 },
       { ref: 'gift:scarf', count: 1 },
     ])
-    expect(holds(state, { entity: 'food:apple', at: 'you' }, g)).toBe(true)
-    expect(holds(state, { entity: 'food:bread', at: 'player' }, g)).toBe(false)
-    expect(holds(state, { entity: 'food:apple', gte: 8 }, g)).toBe(true)
-    expect(holds(state, holding('food:apple', 3), g)).toBe(false)
+    expect(holds(state, g, { entity: 'food:apple', at: 'you' })).toBe(true)
+    expect(holds(state, g, { entity: 'food:bread', at: 'player' })).toBe(false)
+    expect(holds(state, g, { entity: 'food:apple', gte: 8 })).toBe(true)
+    expect(holds(state, g, holding('food:apple', 3))).toBe(false)
     // Bare and with no `at`, it still asks only whether the entity is there.
-    expect(holds(state, { entity: 'gift:box' }, g)).toBe(true)
-    expect(explain(state, { entity: 'food:apple', at: 'you', gte: 3 }, g).why).toBe('food:apple: 2 held by you; wants 3 or more')
+    expect(holds(state, g, { entity: 'gift:box' })).toBe(true)
+    expect(explain(state, g, { entity: 'food:apple', at: 'you', gte: 3 }).why).toBe('food:apple: 2 held by you; wants 3 or more')
   })
 
   it('change by and to, never below 0, keeping a count once written', () => {
@@ -137,7 +137,7 @@ describe('holdings', () => {
     expect(heldCount(state, g, 'gift:box')).toBe(0)
     // Removing the larder, which nobody holds, takes what it held with it.
     state = run(state, g, [{ remove: 'place:larder' }])
-    expect(holds(state, { entity: 'food:apple', gte: 4 }, g)).toBe(false)
+    expect(holds(state, g, { entity: 'food:apple', gte: 4 })).toBe(false)
   })
 
   it('switch who you are, and what `you` and `of: you` read', () => {
@@ -148,7 +148,7 @@ describe('holdings', () => {
     state = run(state, g, [{ you: 'person:ava' }, { stat: 'energy', by: -20, of: 'you' }, give('food:apple')])
     expect(state.you).toBe('person:ava')
     expect(statValue(state, g, 'energy', 'person:ava')).toBe(50)
-    expect(holds(state, { stat: 'energy', of: 'you', lt: 60 }, g)).toBe(true)
+    expect(holds(state, g, { stat: 'energy', of: 'you', lt: 60 })).toBe(true)
     expect(heldCount(state, g, 'food:apple', 'person:ava')).toBe(1)
     expect(heldCount(state, g, 'food:apple', 'player')).toBe(2)
     // What you hold: Ava's apple, then the player's own things.
@@ -177,15 +177,15 @@ describe('holdings', () => {
   it('count distinct things, or units, by kind, holder, tag, trait and where', () => {
     const g = game()
     const state = run(startingState(g), g, [give('food:bread', 3)])
-    expect(holds(state, { count: { at: 'you' }, gte: 3, lte: 3 }, g)).toBe(true)
-    expect(holds(state, { count: { at: 'you', of: 'food' }, units: true, gte: 5, lte: 5 }, g)).toBe(true)
-    expect(holds(state, { count: { at: 'you', tag: 'fruit' }, lte: 1, gte: 1 }, g)).toBe(true)
-    expect(holds(state, { count: { of: 'food' }, units: true, gte: 12, lte: 12 }, g)).toBe(true)
-    expect(holds(state, { count: { trait: 'washable-no' }, gte: 1, lte: 1 }, g)).toBe(true)
-    expect(holds(state, { count: { at: 'you', where: { stat: 'fresh', of: '$', gte: 6 } }, gte: 1, lte: 1 }, g)).toBe(true)
-    expect(explain(state, { count: { at: 'you', tag: 'fruit' }, gte: 2 }, g).why).toBe('1 entities held by you tagged fruit; wants 2 or more')
+    expect(holds(state, g, { count: { at: 'you' }, gte: 3, lte: 3 })).toBe(true)
+    expect(holds(state, g, { count: { at: 'you', of: 'food' }, units: true, gte: 5, lte: 5 })).toBe(true)
+    expect(holds(state, g, { count: { at: 'you', tag: 'fruit' }, lte: 1, gte: 1 })).toBe(true)
+    expect(holds(state, g, { count: { of: 'food' }, units: true, gte: 12, lte: 12 })).toBe(true)
+    expect(holds(state, g, { count: { trait: 'washable-no' }, gte: 1, lte: 1 })).toBe(true)
+    expect(holds(state, g, { count: { at: 'you', where: { stat: 'fresh', of: '$', gte: 6 } }, gte: 1, lte: 1 })).toBe(true)
+    expect(explain(state, g, { count: { at: 'you', tag: 'fruit' }, gte: 2 }).why).toBe('1 entities held by you tagged fruit; wants 2 or more')
     // The kind's string form still reads as it did.
-    expect(holds(state, { count: 'person' }, g)).toBe(true)
+    expect(holds(state, g, { count: 'person' })).toBe(true)
   })
 
   it('run each over what a holder holds', () => {
@@ -209,9 +209,9 @@ describe('holdings', () => {
     expect(entityTags(state, g, 'food:#1')).toEqual(['food', 'fruit', 'bruised'])
     expect(statValue(state, g, 'fresh', 'food:#1')).toBe(3)
     expect(entityKv(state, g, 'food:loaf')).toEqual({ sliced: true })
-    expect(entityTrait(state, g, 'food:loaf', 'washable-no')).toBe(false)
-    expect(entityTrait(state, g, 'food:#1', 'washable-no')).toBeUndefined()
-    expect(withTrait(g, 'washable-no', state)).toEqual(['food:bread', 'food:loaf'])
+    expect(traitOf(state, g, 'food:loaf', 'washable-no')).toBe(false)
+    expect(traitOf(state, g, 'food:#1', 'washable-no')).toBeUndefined()
+    expect(withTrait(state, g, 'washable-no')).toEqual(['food:bread', 'food:loaf'])
     expect(heldCount(state, g, 'food:#1')).toBe(1)
     expect(heldCount(state, g, 'food:loaf', 'place:larder')).toBe(2)
     // It keeps what it was made like through a load.

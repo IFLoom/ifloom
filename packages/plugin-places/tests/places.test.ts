@@ -159,11 +159,11 @@ describe('places', () => {
   it('answer `at` and `within`, following a place’s parent', () => {
     const { game: g } = game()
     const back = walk(g, { ...startingState(g), kv: { staff: true } }, 'street', 'cafe', 'back')
-    expect(holds(back, at('back'), g)).toBe(true)
-    expect(holds(back, at('cafe'), g)).toBe(false)
-    expect(holds(back, within('cafe'), g)).toBe(true)
-    expect(holds(back, within('street'), g)).toBe(false)
-    expect(holds(back, within('street', 'cafe'), g)).toBe(true)
+    expect(holds(back, g, at('back'))).toBe(true)
+    expect(holds(back, g, at('cafe'))).toBe(false)
+    expect(holds(back, g, within('cafe'))).toBe(true)
+    expect(holds(back, g, within('street'))).toBe(false)
+    expect(holds(back, g, within('street', 'cafe'))).toBe(true)
   })
 
   it('move the player at once by effect, closing any scene, with no exit needed', () => {
@@ -411,7 +411,7 @@ describe('places', () => {
       const state = startingState(g)
       expect(view(state, g).entities.location).toBeUndefined()
       expect(pluginQuery(g, 'places/holder')!(state)).toBe(locationRef('house'))
-      expect(holds(state, { entity: 'item:paper', at: 'location:street', gte: 2 }, g)).toBe(true)
+      expect(holds(state, g, { entity: 'item:paper', at: 'location:street', gte: 2 })).toBe(true)
     })
 
     it('are shown in the place, but those not visible, with a button that picks one up', () => {
@@ -451,10 +451,11 @@ describe('places', () => {
         traits: { 'places/location': { exits: ['street'], body: [{ prose: 'place.cafe' }], ui: { transition: 'fade' } } },
       })
       const { game: g } = game()
-      expect(locationsOf(g)).toEqual(['location:house', 'location:street', 'location:cafe', 'location:back', 'location:park'])
-      expect(locationOf(g, 'back')?.parent).toBe('cafe')
-      expect(locationOf(g, 'location:back')?.parent).toBe('cafe')
-      expect(locationOf(g, 'moon')).toBeUndefined()
+      const state = startingState(g)
+      expect(locationsOf(state, g)).toEqual(['location:house', 'location:street', 'location:cafe', 'location:back', 'location:park'])
+      expect(locationOf(state, g, 'back')?.parent).toBe('cafe')
+      expect(locationOf(state, g, 'location:back')?.parent).toBe('cafe')
+      expect(locationOf(state, g, 'moon')).toBeUndefined()
     })
 
     it('has its picture checked as a file, as any entity’s is', () => {

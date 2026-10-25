@@ -136,7 +136,7 @@ export function hasCustomEffect(game: Game | undefined, name: string): boolean {
  * by name. Every other effect is kept as written, and a call runs in its
  * turn, on the state the effects before it left.
  */
-export function buildEffects(_state: GameState, game: Game, refs: readonly EffectRef[]): Effect[] {
+export function buildEffects(game: Game, refs: readonly EffectRef[]): Effect[] {
   return refs.filter((entry) => {
     const call = customCall(entry)
     return !call || hasCustomEffect(game, call.custom)
@@ -156,7 +156,7 @@ export function previewEffects(state: GameState, game: Game, effects: readonly E
     const fn = call && !pluginEffect(game, call.custom) ? customEffect(game, call.custom) : undefined
     if (!fn) out.push(effect)
     // An effect of the game's can name others; ten deep is a loop, not a design.
-    else if (depth < 10) out.push(...previewEffects(state, game, buildEffects(state, game, fn(state, call!.with ?? {})), depth + 1))
+    else if (depth < 10) out.push(...previewEffects(state, game, buildEffects(game, fn(state, call!.with ?? {})), depth + 1))
   }
   return out
 }

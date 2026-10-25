@@ -76,7 +76,7 @@ export const notices = defineFeature<NoticesShape>({
         unseen: unseen.map((notice) => ({
           id: notice.id,
           title: notice.title,
-          text: notice.text ? cx.fillTokens(notice.text, state, game) : '',
+          text: notice.text ? cx.fillTokens(state, game, notice.text) : '',
           image: notice.image ?? null,
           tag: notice.tag ?? null,
           turn: notice.turn,

@@ -16,14 +16,14 @@ import {
   entityKv,
   entityTags,
   entityText,
-  entityTrait,
+  traitOf,
   everyEntity,
   hasEntity,
   ofKind,
   parseRef,
   resolveTraits,
   traitDef,
-  traitOf,
+  declaredTrait,
   writeEntity,
   type CreatedFields,
   type EntityDef,
@@ -41,7 +41,7 @@ import type { Condition, KvValue, GameState, Range } from '../types.ts'
 import { withUi, type EntityUi, type Ui } from './ui.ts'
 import { defineFeature, type FeatureCheckTools, type FeatureContext, type PackMerge } from './feature.ts'
 import { bounded, inRange, wanted } from '../range.ts'
-import { statDef, statView, type StatView } from './stats.ts'
+import { statOf, statView, type StatView } from './stats.ts'
 import { artSrc, spokenIds } from '../sceneBody.ts'
 
 /** One entity as the UI draws it. */
@@ -182,7 +182,7 @@ export type EntitiesShape = {
     /**
      * Traits by id and then entity. Given to `loadGame`, rows over what
      * entities declare; on the game it returns, every entity's traits,
-     * worked out. Read them with `traitOf`.
+     * worked out. Read them with `declaredTrait`.
      */
     traits?: TraitTable
   }
@@ -210,7 +210,7 @@ export type EntitiesShape = {
 }
 
 /** The entities a selection picks, in the game's order of its entities, or a holder's order of what it holds. */
-function selected(state: GameState, game: Game | undefined, select: Select, cx: FeatureContext): EntityRef[] {
+function selected(state: GameState, game: Game, select: Select, cx: FeatureContext): EntityRef[] {
   const refs =
     select.at !== undefined
       ? heldBy(state, game, select.at).map((entry) => entry.ref)
@@ -221,8 +221,8 @@ function selected(state: GameState, game: Game | undefined, select: Select, cx: 
     (ref) =>
       (select.of === undefined || parseRef(ref)?.kind === select.of) &&
       (select.tag === undefined || (game !== undefined && entityTags(state, game, ref).includes(select.tag))) &&
-      (select.trait === undefined || entityTrait(state, game, ref, select.trait) !== undefined) &&
-      (select.where === undefined || cx.holds(state, bindCurrent(select.where, ref), game)),
+      (select.trait === undefined || traitOf(state, game, ref, select.trait) !== undefined) &&
+      (select.where === undefined || cx.holds(state, game, bindCurrent(select.where, ref))),
   )
 }
 
@@ -234,7 +234,7 @@ export function countSelect(condition: EntitiesShape['conditions']['count']): Se
 }
 
 /** How many a `count` condition counts: distinct things, or with `units`, how many of each are held. */
-export function counting(state: GameState, condition: EntitiesShape['conditions']['count'], game: Game | undefined, cx: FeatureContext): number {
+export function counting(state: GameState, condition: EntitiesShape['conditions']['count'], game: Game, cx: FeatureContext): number {
   const select = countSelect(condition)
   const refs = selected(state, game, select, cx)
   if (!condition.units) return refs.length
@@ -271,7 +271,7 @@ function eachLabel(effect: Select): string {
 }
 
 /** How many an `entity` condition reads: held by a holder, or by everyone; undefined when it only asks whether the entity is there. */
-function entityCount(state: GameState, condition: EntitiesShape['conditions']['entity'], game: Game | undefined): number | undefined {
+function entityCount(state: GameState, condition: EntitiesShape['conditions']['entity'], game: Game): number | undefined {
   if (condition.at !== undefined) return heldCount(state, game, condition.entity, condition.at)
   return bounded(condition) ? heldTotal(state, game, condition.entity) : undefined
 }
@@ -454,8 +454,8 @@ export const entities = defineFeature<EntitiesShape>({
         const select = eachSelect(effect)
         for (const ref of selected(state, game, { ...select, where: undefined }, cx)) {
           if (!hasEntity(next, game, ref)) continue
-          if (select.where && !cx.holds(next, bindCurrent(select.where, ref), game)) continue
-          next = cx.runEffects(next, game, cx.buildEffects(next, game, bindCurrent(effect.effects, ref)), cx.ending)
+          if (select.where && !cx.holds(next, game, bindCurrent(select.where, ref))) continue
+          next = cx.runEffects(next, game, cx.buildEffects(game, bindCurrent(effect.effects, ref)), cx.ending)
         }
         return next
       },
@@ -519,7 +519,7 @@ export const entities = defineFeature<EntitiesShape>({
         if (!kinds.has(parts.kind)) return [`unknown kind "${parts.kind}"`]
         if (parts.id === '*') return []
         if (!entityDef(game, ref.entity)) return [`unknown entity "${ref.entity}"`]
-        return ref.carrying === undefined || traitOf(game, ref.entity, ref.carrying) !== undefined ? [] : [`"${ref.entity}" has no ${ref.carrying} trait`]
+        return ref.carrying === undefined || declaredTrait(game, ref.entity, ref.carrying) !== undefined ? [] : [`"${ref.entity}" has no ${ref.carrying} trait`]
       },
       // Who a spoken line is under: a reference, or a bare id read as `character:<id>`, else the one entity with that id.
       speaker: (ref) => {
@@ -547,7 +547,7 @@ export const entities = defineFeature<EntitiesShape>({
         .filter((kind) => kind.listed !== false)
         .map((kind) => {
           const stats = (game.stats ?? []).filter((stat) => stat.of === kind.id && stat.listed !== false)
-          const holdsFor = (when: Condition | undefined, ref: EntityRef) => cx.holds(state, bindCurrent(when, ref), game)
+          const holdsFor = (when: Condition | undefined, ref: EntityRef) => cx.holds(state, game, bindCurrent(when, ref))
           const listed = (ref: EntityRef) => (typeof kind.listed === 'object' ? holdsFor(kind.listed, ref) : true)
           const entries = entitiesOf(state, game, kind.id)
             .filter((ref) => listed(ref) && holdsFor(entityDef(game, ref)?.visible, ref))
@@ -558,8 +558,8 @@ export const entities = defineFeature<EntitiesShape>({
               return {
                 id,
                 ref,
-                name: cx.fillTokens(entityText(state, game, ref, 'name') ?? id, state, game),
-                desc: desc === undefined ? null : cx.fillTokens(desc, state, game),
+                name: cx.fillTokens(state, game, entityText(state, game, ref, 'name') ?? id),
+                desc: desc === undefined ? null : cx.fillTokens(state, game, desc),
                 image: image === undefined ? null : artSrc(image),
                 tags: entityTags(state, game, ref),
                 flags: Object.fromEntries(Object.entries(kind.flags ?? {}).map(([name, when]) => [name, holdsFor(when, ref)])),
@@ -637,7 +637,7 @@ function tidiedRecord(record: EntityState, def: EntityDef | undefined, kind: str
   const stats = Object.entries(record.stats ?? {}).filter(([id, value]) => {
     // One made like another reads what it lacks from that one, not from the stat's start: keep it all.
     if (record.like !== undefined) return true
-    const stat = statDef(game, id)
+    const stat = statOf(game, id)
     if (!stat || stat.of !== kind || stat.derive !== undefined) return true
     return value !== (def?.stats?.[id] ?? stat.start ?? 0)
   })

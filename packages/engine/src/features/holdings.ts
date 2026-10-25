@@ -91,14 +91,14 @@ export type HoldingsShape = {
 /** One holder's things as the view draws them. */
 function heldView(state: GameState, game: Game, holder: Holder, cx: FeatureContext): HeldView[] {
   return heldBy(state, game, holder)
-    .filter(({ ref }) => cx.holds(state, bindCurrent(entityDef(game, ref)?.visible, ref), game))
+    .filter(({ ref }) => cx.holds(state, game, bindCurrent(entityDef(game, ref)?.visible, ref)))
     .map(({ ref, count }) => {
       const desc = entityText(state, game, ref, 'desc')
       const image = entityImage(state, game, ref)
       return {
         ref,
-        name: cx.fillTokens(entityText(state, game, ref, 'name') ?? parseRef(ref)?.id ?? ref, state, game),
-        desc: desc === undefined ? null : cx.fillTokens(desc, state, game),
+        name: cx.fillTokens(state, game, entityText(state, game, ref, 'name') ?? parseRef(ref)?.id ?? ref),
+        desc: desc === undefined ? null : cx.fillTokens(state, game, desc),
         image: image === undefined ? null : artSrc(image),
         tags: entityTags(state, game, ref),
         count,

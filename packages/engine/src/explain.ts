@@ -20,7 +20,7 @@ export type Explanation = {
 }
 
 /** One leaf's line, from its kind's entry; a condition with no kind key, or several, says so. */
-function leaf(state: GameState, condition: Condition, game: Game | undefined): string {
+function leaf(state: GameState, condition: Condition, game: Game): string {
   const entry = conditionEntry(condition)
   if (entry) return entry.explain(state, withAmounts(state, condition, game), game, featureContext())
   const kinds = conditionKeys(condition)
@@ -28,13 +28,13 @@ function leaf(state: GameState, condition: Condition, game: Game | undefined): s
 }
 
 /** Explain a condition against a state, part by part. No condition always holds. */
-export function explain(state: GameState, condition: Condition | undefined, game?: Game): Explanation {
+export function explain(state: GameState, game: Game, condition: Condition | undefined): Explanation {
   if (!condition) return { holds: true, why: 'no condition' }
   // `all`, `any` and `not` are explained part by part. A condition with another kind key besides is a leaf, and holds nowhere.
   const kinds = conditionKeys(condition)
   const kind = kinds.length === 1 ? kinds[0] : undefined
   if (kind === 'all' && 'all' in condition) {
-    const parts = condition.all.map((entry) => explain(state, entry, game))
+    const parts = condition.all.map((entry) => explain(state, game, entry))
     const failing = parts.filter((part) => !part.holds).length
     return {
       holds: failing === 0,
@@ -43,7 +43,7 @@ export function explain(state: GameState, condition: Condition | undefined, game
     }
   }
   if (kind === 'any' && 'any' in condition) {
-    const parts = condition.any.map((entry) => explain(state, entry, game))
+    const parts = condition.any.map((entry) => explain(state, game, entry))
     const passing = parts.filter((part) => part.holds).length
     return {
       holds: passing > 0,
@@ -52,10 +52,10 @@ export function explain(state: GameState, condition: Condition | undefined, game
     }
   }
   if (kind === 'not' && 'not' in condition) {
-    const inner = explain(state, condition.not, game)
+    const inner = explain(state, game, condition.not)
     return { holds: !inner.holds, why: `not: the part below ${inner.holds ? 'holds' : 'fails'}`, parts: [inner] }
   }
-  return { holds: holds(state, condition, game), why: leaf(state, condition, game) }
+  return { holds: holds(state, game, condition), why: leaf(state, condition, game) }
 }
 
 /** An explanation as indented lines, ✓ or ✗ on each: for a log or a debug panel. */

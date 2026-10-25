@@ -8,7 +8,7 @@ The plugin knows nothing about people or anything else. A pool is any list of va
 
 ```ts
 import {
-  generators, generate, drawEntity, poolDefs, templateDefs,
+  generators, generate, drawEntity, poolsOf, templatesOf,
   type PoolDef, type PoolEntry, type TemplateDef, type FieldDef, type GeneratedEntity,
 } from '@ifloom/plugin-generators'
 ```
@@ -179,7 +179,7 @@ const generate: (template: string, count?: number) => EffectRef
 ### drawEntity
 
 ```ts
-function drawEntity(template: TemplateDef, state: GameState, game: Game, n: number): GeneratedEntity
+function drawEntity(state: GameState, game: Game, template: TemplateDef, n: number): GeneratedEntity
 type GeneratedEntity = { name?: string; desc?: string; image?: string; stats: Record<string, number>; kv: Record<string, KvValue> }
 ```
 
@@ -193,11 +193,11 @@ function templateKind(template: TemplateDef): string | undefined
 
 The kind a template makes: its `of`, else its `like`'s kind. Undefined for a template with neither, which the checks report.
 
-### poolDefs and templateDefs
+### poolsOf and templatesOf
 
 ```ts
-function poolDefs(game: Game): PoolDef[]
-function templateDefs(game: Game): TemplateDef[]
+function poolsOf(game: Game): PoolDef[]
+function templatesOf(game: Game): TemplateDef[]
 ```
 
 The game's pools and templates, merged from its content and packs.

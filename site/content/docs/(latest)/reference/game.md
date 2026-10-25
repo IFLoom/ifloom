@@ -194,17 +194,19 @@ So keep `/`, `#` and `:` out of your own ids and prose keys. A name with a `/` i
 ## Looking things up
 
 ```ts
-function sceneById(game: Game, id: string): DataScene | undefined
+function sceneOf(game: Game, id: string): DataScene | undefined
 ```
 
-Returns the scene with that id, as your content declares it, or `undefined`. To look up an entity, use [`entityOf`](/docs/reference/entities#entityof) or [`kindById`](/docs/reference/entities#kindbyid).
+Returns the scene with that id, as your content declares it, or `undefined`. To look up an entity, use [`entityOf`](/docs/reference/entities#entityof) or [`kindOf`](/docs/reference/entities#kindof).
 
-### sceneById
+Every lookup is named the same way. One definition by id is `xOf(game, id)`: `sceneOf`, [`kindOf`](/docs/reference/entities#kindof), [`statOf`](/docs/reference/stats#statof), [`actionOf`](/docs/reference/actions#actionof), and in the plugins `questOf` or `jobOf`. A list is `xsOf(game)`, such as the quests plugin's `questsOf`. What an entity is in play takes the state too, `xOf(state, game, ref)`, such as the cast's `personOf`. Any function that reads the game in play takes the state first and the game second.
+
+### sceneOf
 
 ```ts
-import { sceneById } from '@ifloom/engine'
+import { sceneOf } from '@ifloom/engine'
 
-sceneById(game, 'ava.hi')?.title // 'Ava'
+sceneOf(game, 'ava.hi')?.title // 'Ava'
 ```
 
 What a scene shows for a state is in the [view](/docs/reference/view#the-scene), so a tool that previews a scene opens it in a state and reads `view(state, game).scene`.

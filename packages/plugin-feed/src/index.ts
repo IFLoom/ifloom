@@ -126,12 +126,12 @@ declare module '@ifloom/engine' {
 const ID = 'feed'
 
 /** The game's posts: `data.feed.posts`, from its packs. */
-export function postDefs(game: Game): PostDef[] {
+export function postsOf(game: Game): PostDef[] {
   return (game.data?.[ID]?.posts ?? []) as PostDef[]
 }
 
 /** Who posted, as their entity is (`speakerOf`): a name and a face, or the name as written. */
-function personOf(game: Game, state: GameState, from: string): { name: string; portrait: string | null } {
+function senderOf(state: GameState, game: Game, from: string): { name: string; portrait: string | null } {
   const known = from ? speakerOf(state, game, from) : null
   return known ? { name: known.name, portrait: known.image } : { name: from, portrait: null }
 }
@@ -162,7 +162,7 @@ export function feed(): DefinedPlugin<FeedState, FeedsView> {
 
   /** Other people's posts that have appeared in a feed: what "unseen" counts. The player's own are never news. */
   function count(record: FeedState, game: Game, id: string): number {
-    return postDefs(game).filter((post) => post.feed === id && record.appeared[post.id] !== undefined).length
+    return postsOf(game).filter((post) => post.feed === id && record.appeared[post.id] !== undefined).length
   }
 
   return definePlugin<FeedState, FeedsView>({
@@ -210,7 +210,7 @@ export function feed(): DefinedPlugin<FeedState, FeedsView> {
       likes: (_state, args, { slice, game }) => {
         const id = String(args.post)
         const own = slice.own.find((post) => post.id === id)
-        const base = own ? own.likes : (postDefs(game).find((post) => post.id === id)?.likes ?? 0)
+        const base = own ? own.likes : (postsOf(game).find((post) => post.id === id)?.likes ?? 0)
         return base + (slice.reactions[id]?.likes ?? 0) >= Number(args.gte ?? 1)
       },
     },
@@ -278,24 +278,24 @@ export function feed(): DefinedPlugin<FeedState, FeedsView> {
     },
     onCommand: (_before, after, { slice, set, game }) => {
       let appeared = slice.appeared
-      for (const post of postDefs(game)) {
-        if (appeared[post.id] !== undefined || !holds(after, post.when, game)) continue
+      for (const post of postsOf(game)) {
+        if (appeared[post.id] !== undefined || !holds(after, game, post.when)) continue
         appeared = { ...appeared, [post.id]: after.turn }
       }
       return appeared === slice.appeared ? after : set({ ...slice, appeared })
     },
     view: (state, { slice, game, beats }): FeedsView => {
-      const words = (text: string | undefined) => (text ? fillTokens(text, state, game) : '')
+      const words = (text: string | undefined) => (text ? fillTokens(state, game, text) : '')
       const comments = (list: Comment[]) =>
-        list.map((comment) => ({ from: comment.from, name: personOf(game, state, comment.from).name, text: words(comment.text) }))
+        list.map((comment) => ({ from: comment.from, name: senderOf(state, game, comment.from).name, text: words(comment.text) }))
       const feeds = feedsOf(game).map((entry): FeedView => {
-        const theirs = postDefs(game)
+        const theirs = postsOf(game)
           .filter((post) => post.feed === entry.id && slice.appeared[post.id] !== undefined)
           .map((post, order): PostView & { order: number } => ({
             id: post.id,
             from: post.from,
-            name: personOf(game, state, post.from).name,
-            portrait: personOf(game, state, post.from).portrait,
+            name: senderOf(state, game, post.from).name,
+            portrait: senderOf(state, game, post.from).portrait,
             ...drawn(beats(post.body, post.id)),
             image: post.image ?? null,
             video: post.video ?? null,
@@ -338,7 +338,7 @@ export function feed(): DefinedPlugin<FeedState, FeedsView> {
         return refs
       },
       content: (game) =>
-        postDefs(game).map((post) => ({
+        postsOf(game).map((post) => ({
           list: 'posts',
           id: post.id,
           refs: [

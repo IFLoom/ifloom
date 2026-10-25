@@ -167,7 +167,7 @@ async function unlockHash(unlock: string | undefined, entry?: string): Promise<n
       console.error(`Give the code in ${name} (in the environment or .env.local), or pipe it in. It is never printed.`)
       return 1
     }
-    const def = plugin.unlockDefs(game).find((entry) => entry.id === unlock) ?? { id: unlock }
+    const def = plugin.unlocksOf(game).find((entry) => entry.id === unlock) ?? { id: unlock }
     const hash = await plugin.unlockHash(code, game.id, def)
     console.log(`The hash of ${name} for unlock "${unlock}" in ${game.id}:\n`)
     console.log(`  hash: '${hash}',`)

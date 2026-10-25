@@ -143,7 +143,7 @@ export function calendar(options: CalendarOptions = {}): DefinedPlugin<CalendarS
   const unit = (n: number) => (turn === 'period' ? n : turn === 'day' ? Math.floor(n / P) : Math.floor((Math.floor(n / P) - startDay) / week))
   const weekdayIndex = (day: number) => ((day % week) + week) % week
   const curfewBinds = (state: GameState, context: PluginContext<CalendarState>) =>
-    curfew === false ? false : curfew === undefined ? true : holds(state, curfew, context.game)
+    curfew === false ? false : curfew === undefined ? true : holds(state, context.game, curfew)
 
   /** Move the clock on by n periods, ending a turn at every boundary crossed. */
   function pass(state: GameState, n: number, context: PluginContext<CalendarState>): GameState {
@@ -190,7 +190,7 @@ export function calendar(options: CalendarOptions = {}): DefinedPlugin<CalendarS
       /** `{ 'calendar/weekend': true }`. */
       weekend: (_state, _args, { slice }) => weekend.includes(weekdayIndex(slice.day)),
       /** `{ 'calendar/day': { gte: 6 } }`: the day, from 0, in a range. */
-      day: (_state, args, { slice }) => inRange(slice.day, args as Range),
+      day: (state, args, { slice, game }) => inRange(state, game, slice.day, args as Range),
       /** `{ 'calendar/curfew': true }`: the curfew binds right now. */
       curfew: (state, _args, context) => curfewBinds(state, context),
     },

@@ -84,8 +84,8 @@ describe('plugins', () => {
     const after = apply(begin(game), game, { type: 'action', id: 'beachcomb' })
     expect(after.ok).toBe(true)
     expect(shells.read(after.state, game).found).toEqual(['whelk'])
-    expect(holds(after.state, { 'shells/has': { shell: 'whelk' } }, game)).toBe(true)
-    expect(holds(after.state, { 'shells/has': { shell: 'conch' } }, game)).toBe(false)
+    expect(holds(after.state, game, { 'shells/has': { shell: 'whelk' } })).toBe(true)
+    expect(holds(after.state, game, { 'shells/has': { shell: 'conch' } })).toBe(false)
   })
 
   it('apply their effects in order, each on the state the one before left', () => {
@@ -127,7 +127,7 @@ describe('plugins', () => {
   it('print their values in prose by full name', () => {
     const game = withShells()
     const found = apply(begin(game), game, { type: 'action', id: 'beachcomb' }).state
-    expect(fillTokens('Shells: {{v:shells/count}}.', found, game)).toBe('Shells: 1.')
+    expect(fillTokens(found, game, 'Shells: {{v:shells/count}}.')).toBe('Shells: 1.')
   })
 
   it('run their hooks after the game’s own, and show in the view', () => {
@@ -221,11 +221,11 @@ describe('plugins working together', () => {
     const { game, problems } = loadWhole([pack], { id, title, plugins: [tides, beach] })
     expect(problems).toEqual([])
     const state = startingState(game)
-    expect(holds(state, { 'tides/high': true }, game)).toBe(false)
+    expect(holds(state, game, { 'tides/high': true })).toBe(false)
     expect(view(state, game).plugins.beach).toEqual({ next: 'high tide' })
     const swum = apply({ ...state, sceneId: null }, game, { type: 'action', id: 'swim' }).state
-    expect(holds(swum, { 'tides/high': true }, game)).toBe(true)
-    expect(holds(swum, { 'tides/high': true }, game)).toBe(true)
+    expect(holds(swum, game, { 'tides/high': true })).toBe(true)
+    expect(holds(swum, game, { 'tides/high': true })).toBe(true)
   })
 
   it('let content name a partner the game does not have: the loader passes it, and it is not there', () => {
@@ -233,7 +233,7 @@ describe('plugins working together', () => {
     expect(problems).toEqual([])
     const state = { ...startingState(game), sceneId: null }
     expect(view(state, game).plugins.beach).toEqual({ next: 'no tides here' })
-    expect(holds(state, { 'tides/high': true }, game)).toBe(false)
+    expect(holds(state, game, { 'tides/high': true })).toBe(false)
     expect(apply(state, game, { type: 'action', id: 'swim' }).state.plugins).toEqual(state.plugins)
   })
 

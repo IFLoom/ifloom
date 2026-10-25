@@ -70,14 +70,14 @@ describe('the first and last time', () => {
       seen: { 'rosa.hello': { n: 2, first: 2, last: 5 } },
       chosen: { 'rosa.hello#bye': { n: 2, first: 2, last: 5 } },
     })
-    expect(holds(state, { since: 'rosa.hello', gte: 4 }, game)).toBe(true)
-    expect(holds(state, { since: 'rosa.hello', last: true, gte: 2 }, game)).toBe(false)
-    expect(holds(state, { since: 'rosa.hello', last: true, lt: 2 }, game)).toBe(true)
-    expect(holds(state, { since: 'rosa.hello#bye', gte: 4 }, game)).toBe(true)
-    expect(holds(state, { since: 'rosa.hello#bye', last: true, gte: 2 }, game)).toBe(false)
+    expect(holds(state, game, { since: 'rosa.hello', gte: 4 })).toBe(true)
+    expect(holds(state, game, { since: 'rosa.hello', last: true, gte: 2 })).toBe(false)
+    expect(holds(state, game, { since: 'rosa.hello', last: true, lt: 2 })).toBe(true)
+    expect(holds(state, game, { since: 'rosa.hello#bye', gte: 4 })).toBe(true)
+    expect(holds(state, game, { since: 'rosa.hello#bye', last: true, gte: 2 })).toBe(false)
     // Never picked fails every range, `lt` included.
-    expect(holds(state, { since: 'rosa.hello#stay', last: true, lt: 99 }, game)).toBe(false)
-    expect(explain(state, { since: 'rosa.hello', last: true, gte: 2 }, game).why).toContain('scene rosa.hello last seen 1 turns ago')
+    expect(holds(state, game, { since: 'rosa.hello#stay', last: true, lt: 99 })).toBe(false)
+    expect(explain(state, game, { since: 'rosa.hello', last: true, gte: 2 }).why).toContain('scene rosa.hello last seen 1 turns ago')
   })
 
   it('reads the first time when a save from before kept no latest one', () => {
@@ -85,6 +85,6 @@ describe('the first and last time', () => {
     const old = { ...begin(game), version: 17, turn: 9, seen: { 'rosa.hello': 1 }, seenOn: { 'rosa.hello': 4 }, lastSeenOn: {} }
     const loaded = unwrap(loadState(old, game))
     expect(loaded.seen['rosa.hello']).toEqual({ n: 1, first: 4, last: 4 })
-    expect(holds(loaded, { since: 'rosa.hello', last: true, gte: 5 }, game)).toBe(true)
+    expect(holds(loaded, game, { since: 'rosa.hello', last: true, gte: 5 })).toBe(true)
   })
 })

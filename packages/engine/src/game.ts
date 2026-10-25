@@ -382,7 +382,7 @@ type CoreGame = {
 export type Game = Flat<CoreGame & FeatureGame>
 
 /** The scene with this id, as content declares it, or undefined. */
-export function sceneById(game: Game, id: string): DataScene | undefined {
+export function sceneOf(game: Game, id: string): DataScene | undefined {
   return game.scenes.find((scene) => scene.id === id)
 }
 

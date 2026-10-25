@@ -49,8 +49,8 @@ export function fireTriggers(state: GameState, game: Game, apply: (state: GameSt
   for (const trigger of game.triggers ?? []) {
     const last = next.fired?.[trigger.id]
     if (last !== undefined && (trigger.once !== 'turn' || last === next.turn)) continue
-    if (!cx.holds(next, trigger.when, game)) continue
-    const effects = cx.buildEffects(next, game, trigger.effects)
+    if (!cx.holds(next, game, trigger.when)) continue
+    const effects = cx.buildEffects(game, trigger.effects)
     next = apply({ ...next, fired: { ...next.fired, [trigger.id]: next.turn } }, effects)
   }
   return next

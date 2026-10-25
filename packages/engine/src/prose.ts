@@ -18,7 +18,7 @@ import type { KvValue } from './types.ts'
  * missing name shows on screen instead of vanishing. The content checker
  * doesn't look at tokens.
  */
-export function fillTokens(text: string, state: GameState, game: Game): string {
+export function fillTokens(state: GameState, game: Game, text: string): string {
   return (
     text
       .replace(KV_TOKEN, (match, key: string, args: string | undefined) => {
@@ -43,13 +43,13 @@ export function fillTokens(text: string, state: GameState, game: Game): string {
  * its declaration's, with prose tokens filled. Its id when it has neither.
  */
 export function entityName(state: GameState, game: Game, ref: string): string {
-  return fillTokens(entityText(state, game, ref, 'name') ?? parseRef(ref)?.id ?? ref, state, game)
+  return fillTokens(state, game, entityText(state, game, ref, 'name') ?? parseRef(ref)?.id ?? ref)
 }
 
 /** An entity's description, filled like its name; undefined when it has none. */
 export function entityDesc(state: GameState, game: Game, ref: string): string | undefined {
   const desc = entityText(state, game, ref, 'desc')
-  return desc === undefined ? undefined : fillTokens(desc, state, game)
+  return desc === undefined ? undefined : fillTokens(state, game, desc)
 }
 
 /** A value token: `{{v:game/name}}`, or `{{v:game/name key=value …}}` with arguments. */
@@ -109,7 +109,7 @@ export function proseStore(game: Game, lines: Record<string, string>, variants: 
     line: (key, state) => {
       const text = lines[key]
       if (text === undefined) return undefined
-      return state ? fillTokens(text, state, game) : text
+      return state ? fillTokens(state, game, text) : text
     },
     variants: (name) => keys[name] ?? [],
     keys: () => Object.keys(lines),

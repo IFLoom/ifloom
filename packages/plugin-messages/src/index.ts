@@ -177,7 +177,7 @@ declare module '@ifloom/engine' {
 const ID = 'messages'
 
 /** The game's messages: `data.messages.messages`, from its packs. */
-export function messageDefs(game: Game): MessageDef[] {
+export function messagesOf(game: Game): MessageDef[] {
   return (game.data?.[ID]?.messages ?? []) as MessageDef[]
 }
 
@@ -186,7 +186,7 @@ function threadOf(message: MessageDef): string {
 }
 
 /** Who a message is from, as their entity is (`speakerOf`): a name and a face, or the name as written. */
-function personOf(game: Game, state: GameState, from: string): { name: string; portrait: string | null } {
+function senderOf(state: GameState, game: Game, from: string): { name: string; portrait: string | null } {
   const known = speakerOf(state, game, from)
   return known ? { name: known.name, portrait: known.image } : { name: from, portrait: null }
 }
@@ -194,7 +194,7 @@ function personOf(game: Game, state: GameState, from: string): { name: string; p
 /** The replies on offer for an arrival now: none once one is sent. */
 function offered(state: GameState, game: Game, record: MessagesState, message: MessageDef, key: string): ReplyDef[] {
   if (record.replied[key] !== undefined) return []
-  return (message.replies ?? []).filter((reply) => holds(state, reply.when, game))
+  return (message.replies ?? []).filter((reply) => holds(state, game, reply.when))
 }
 
 /** The day: the calendar's, or the turn without one. */
@@ -217,7 +217,7 @@ function deliver(state: GameState, message: MessageDef, context: PluginContext<M
   const count = slice.arrived.filter((arrival) => arrival.message === message.id).length
   const key = count === 0 ? message.id : `${message.id}~${count + 1}`
   const arrival: Arrival = { key, message: message.id, turn: state.turn, day: dayOf(state, context.game) }
-  const next = notify(state, { id: `messages.${key}`, title: personOf(context.game, state, message.from).name, tag: message.channel })
+  const next = notify(state, { id: `messages.${key}`, title: senderOf(state, context.game, message.from).name, tag: message.channel })
   return context.set({ ...slice, arrived: [...slice.arrived, arrival] }, next)
 }
 
@@ -238,7 +238,7 @@ export function channelsOf(game: Game): Channel[] {
  */
 export function messages(): DefinedPlugin<MessagesState, MessagesView> {
   function unreadIn(record: MessagesState, game: Game, channel?: string): number {
-    const channelOf = new Map(messageDefs(game).map((message) => [message.id, message.channel]))
+    const channelOf = new Map(messagesOf(game).map((message) => [message.id, message.channel]))
     return record.arrived.filter(
       (arrival) => channelOf.has(arrival.message) && (channel === undefined || channelOf.get(arrival.message) === channel) && !record.read[arrival.key],
     ).length
@@ -284,7 +284,7 @@ export function messages(): DefinedPlugin<MessagesState, MessagesView> {
        */
       since: (state, args, { slice, game }) => {
         const last = latest(slice, String(args.message))
-        return last !== undefined && inRange(dayOf(state, game) - last.day, args as Range)
+        return last !== undefined && inRange(state, game, dayOf(state, game) - last.day, args as Range)
       },
       /** `{ 'messages/replied': { message, reply? } }`: its latest arrival got any reply, or that one. */
       replied: (_state, args, { slice }) => {
@@ -308,7 +308,7 @@ export function messages(): DefinedPlugin<MessagesState, MessagesView> {
       draw: (state, args, context) => {
         const pool = String(args.pool ?? '')
         const slice = sliceOf(state)
-        const eligible = messageDefs(context.game).filter((message) => message.drawnFrom?.includes(pool) && holds(state, message.when, context.game))
+        const eligible = messagesOf(context.game).filter((message) => message.drawnFrom?.includes(pool) && holds(state, context.game, message.when))
         const drawn = weighted(eligible, (message) => message.weight, 'messages/draw', pool, state.seed, state.turn, slice.arrived.length)
         return drawn ? deliver(state, drawn, context, slice) : state
       },
@@ -321,14 +321,14 @@ export function messages(): DefinedPlugin<MessagesState, MessagesView> {
       reply: {
         whyNot: (state, args, { slice, game }) => {
           const arrival = slice.arrived.find((entry) => entry.key === args.message)
-          const message = arrival && messageDefs(game).find((entry) => entry.id === arrival.message)
+          const message = arrival && messagesOf(game).find((entry) => entry.id === arrival.message)
           if (!arrival || !message) return stringOf(game, 'messages/noSuchMessage')
           if (slice.replied[arrival.key] !== undefined) return stringOf(game, 'messages/alreadyReplied')
           return offered(state, game, slice, message, arrival.key).some((reply) => reply.id === args.reply) ? undefined : stringOf(game, 'messages/notOnOffer')
         },
         run: (_state, args, { slice, set, game }) => {
           const arrival = slice.arrived.find((entry) => entry.key === args.message)!
-          const message = messageDefs(game).find((entry) => entry.id === arrival.message)!
+          const message = messagesOf(game).find((entry) => entry.id === arrival.message)!
           const reply = message.replies!.find((entry) => entry.id === args.reply)!
           const next = set({
             ...slice,
@@ -342,7 +342,7 @@ export function messages(): DefinedPlugin<MessagesState, MessagesView> {
       read: {
         run: (_state, args, { slice, set, game }) => {
           const read = { ...slice.read }
-          const defs = new Map(messageDefs(game).map((message) => [message.id, message]))
+          const defs = new Map(messagesOf(game).map((message) => [message.id, message]))
           for (const arrival of slice.arrived) {
             const message = defs.get(arrival.message)
             if (!message) continue
@@ -365,10 +365,10 @@ export function messages(): DefinedPlugin<MessagesState, MessagesView> {
     // Deliver what the story has brought due, once each, and say so. Pool messages wait to be drawn.
     onCommand: (_before, after, context) => {
       let next = after
-      for (const message of messageDefs(context.game)) {
+      for (const message of messagesOf(context.game)) {
         if (message.drawnFrom?.length) continue
         const slice = sliceOf(next)
-        if (latest(slice, message.id) !== undefined || !holds(after, message.when, context.game)) continue
+        if (latest(slice, message.id) !== undefined || !holds(after, context.game, message.when)) continue
         next = deliver(next, message, context, slice)
       }
       return next
@@ -378,7 +378,7 @@ export function messages(): DefinedPlugin<MessagesState, MessagesView> {
         const threads = new Map<string, MessageView[]>()
         const latest = new Map<string, number>()
         const defs = new Map(
-          messageDefs(game)
+          messagesOf(game)
             .filter((message) => message.channel === channel.id)
             .map((message) => [message.id, message]),
         )
@@ -392,14 +392,14 @@ export function messages(): DefinedPlugin<MessagesState, MessagesView> {
             const sent = slice.replied[arrival.key]
             const label = (reply: string) => {
               const written = message.replies?.find((entry) => entry.id === reply)?.label
-              return written === undefined ? reply : fillTokens(written, state, game)
+              return written === undefined ? reply : fillTokens(state, game, written)
             }
             const words = beats(message.body, message.id)
             const shown: MessageView = {
               id: message.id,
               key: arrival.key,
               from: message.from,
-              name: personOf(game, state, message.from).name,
+              name: senderOf(state, game, message.from).name,
               text: words.flatMap((beat) => ('text' in beat ? [beat.text] : [])).join('\n\n'),
               beats: words,
               turn: arrival.turn,
@@ -415,7 +415,7 @@ export function messages(): DefinedPlugin<MessagesState, MessagesView> {
             latest.set(thread, order)
           })
         const list = [...threads].map(([id, shown]): ThreadView => {
-          const sender = personOf(game, state, id)
+          const sender = senderOf(state, game, id)
           return {
             id,
             name: sender.name,
@@ -434,7 +434,7 @@ export function messages(): DefinedPlugin<MessagesState, MessagesView> {
       calls: (_kind, _name, args) =>
         args.message === undefined ? [] : [{ entry: messageOfKey(String(args.message)), plugin: 'messages', list: 'messages', noun: 'message' }],
       content: (game) =>
-        messageDefs(game).map((message) => ({
+        messagesOf(game).map((message) => ({
           list: 'messages',
           id: message.id,
           refs: [
@@ -450,7 +450,7 @@ export function messages(): DefinedPlugin<MessagesState, MessagesView> {
     },
     check: (game) => {
       const problems: PluginProblem[] = []
-      for (const message of messageDefs(game)) {
+      for (const message of messagesOf(game)) {
         const say = (what: string) => problems.push({ list: 'messages', id: message.id, what })
         if (message.weight !== undefined && !(message.weight >= 0)) say('weight must be 0 or more')
         const ids = new Set<string>()
@@ -465,7 +465,7 @@ export function messages(): DefinedPlugin<MessagesState, MessagesView> {
     argProblems: (table, name, args, game) => {
       if (table !== 'effects' || name !== 'draw') return []
       const pool = String(args.pool ?? '')
-      return messageDefs(game).some((message) => message.drawnFrom?.includes(pool)) ? [] : [`draws from "${pool}", but no message is drawn from it`]
+      return messagesOf(game).some((message) => message.drawnFrom?.includes(pool)) ? [] : [`draws from "${pool}", but no message is drawn from it`]
     },
   })
   return plugin
@@ -473,7 +473,7 @@ export function messages(): DefinedPlugin<MessagesState, MessagesView> {
 
 /** Apply effect refs the way the engine does: each in its turn. */
 function applyRefs(state: GameState, game: Game, refs: readonly EffectRef[]): GameState {
-  return applyEffects(state, game, buildEffects(state, game, refs))
+  return applyEffects(state, game, buildEffects(game, refs))
 }
 
 /** A command: send this reply to this message: its id for its first arrival, or an arrival's key. */

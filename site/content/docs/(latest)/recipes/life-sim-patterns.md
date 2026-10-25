@@ -79,7 +79,7 @@ const rules: GameRules = {
   // On Friday, pay out what's owed. Weekday 4 is Friday when the week starts on a Monday.
   onTurnDone: (state, { apply, game }) => {
     const owed = state.stats.owed ?? 0
-    if (owed <= 0 || !holds(state, weekday(4), game)) return state
+    if (owed <= 0 || !holds(state, game, weekday(4))) return state
     return apply([
       { stat: 'coins', by: owed },
       { stat: 'owed', to: 0 },

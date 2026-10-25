@@ -3,7 +3,7 @@ import { holds } from '../../src/condition.ts'
 import type { Game } from '../../src/game.ts'
 import { apply } from '../../src/reduce.ts'
 import { startingState } from '../../src/intake.ts'
-import { formatStat, lackingLine, statDef, statLevel, statMax } from '../../src/stats.ts'
+import { formatStat, lackingLine, statOf, statLevel, statMax } from '../../src/stats.ts'
 import { problemsOf } from '../fixtures/checked.ts'
 import { view } from '../../src/view.ts'
 import { begin, fixture } from '../fixtures/town.ts'
@@ -32,9 +32,9 @@ describe('stats', () => {
   it('answers level conditions from hidden levels, never showing them', () => {
     const game = fixture()
     const sharp = begin(game, { stats: { intelligence: 12, coins: 0, luck: 0 } })
-    expect(holds(sharp, { level: 'intelligence', gte: 1 }, game)).toBe(true)
-    expect(holds(sharp, { level: 'intelligence', gte: 2 }, game)).toBe(false)
-    expect(holds(sharp, { level: 'coins', gte: 1 }, game)).toBe(false)
+    expect(holds(sharp, game, { level: 'intelligence', gte: 1 })).toBe(true)
+    expect(holds(sharp, game, { level: 'intelligence', gte: 2 })).toBe(false)
+    expect(holds(sharp, game, { level: 'coins', gte: 1 })).toBe(false)
     expect(statLevel(sharp, game, 'intelligence')).toEqual({ level: 1, next: 20, progress: 0.2 })
     expect(view(sharp, game).statsById.intelligence?.level).toBeUndefined()
   })
@@ -48,14 +48,15 @@ describe('stats', () => {
 
   it('writes a value through the stat’s format', () => {
     const game = fixture()
-    expect(formatStat(statDef(game, 'coins'), 12)).toBe('12c')
-    expect(formatStat(statDef(game, 'intelligence'), 12)).toBe('12')
+    expect(formatStat(statOf(game, 'coins'), 12)).toBe('12c')
+    expect(formatStat(statOf(game, 'intelligence'), 12)).toBe('12')
   })
 
   it('writes 1 and any other number in their own words, when the stat gives both', () => {
     const coins = { id: 'coins', label: 'Coins', format: { one: '{n} coin', other: '{n} coins' }, lacking: { one: 'Need {n} coin.', other: 'Need {n} coins.' } }
     expect([0, 1, 2].map((n) => formatStat(coins, n))).toEqual(['0 coins', '1 coin', '2 coins'])
-    expect([1, 3].map((n) => lackingLine(coins, 'coins', n))).toEqual(['Need 1 coin.', 'Need 3 coins.'])
+    const game: Game = { ...fixture(), stats: [coins] }
+    expect([1, 3].map((n) => lackingLine(game, 'coins', n))).toEqual(['Need 1 coin.', 'Need 3 coins.'])
   })
 
   it('reports an effect on a stat the game never declared', () => {

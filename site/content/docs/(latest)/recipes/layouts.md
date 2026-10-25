@@ -174,7 +174,7 @@ import { holds } from '@ifloom/engine'
 import { at } from '@ifloom/plugin-places'
 
 // In draw(), after the stats:
-if (holds(runner.state, at('flat'), runner.game)) {
+if (holds(runner.state, runner.game, at('flat'))) {
   const worn = section(sidebar, 'wardrobe', 'Wearing')
   // …what the player has on, from view.plugins.wardrobe
 }

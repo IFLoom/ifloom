@@ -24,7 +24,7 @@ import {
   entityImage,
   entityName,
   entityOf,
-  entityTrait,
+  traitOf,
   formatStat,
   hash,
   heldCount,
@@ -35,9 +35,10 @@ import {
   parseRef,
   renderAction,
   stringOf,
-  statDef,
+  statOf,
   statValue,
-  traitOf,
+  declaredTrait,
+  declaredWithTrait,
   withTrait,
   artSrc,
   YOU,
@@ -247,27 +248,35 @@ function usable(vendor: Vendor): Vendor {
 }
 
 /**
- * Every vendor in the game, as references: every entity with the
- * `shop/vendor` trait. Given only the game, the vendors content declares,
- * in its order; given a state too, every vendor in the game now, those made
- * in play included.
+ * Every vendor in the game now, as references: every entity with the
+ * `shop/vendor` trait, the ones content declares in its order, then those
+ * made in play.
  */
-export function vendorsOf(game: Game, state?: GameState): EntityRef[] {
-  return withTrait(game, VENDOR, state)
+export function vendorsOf(state: GameState, game: Game): EntityRef[] {
+  return withTrait(state, game, VENDOR)
 }
 
 /**
  * The `shop/vendor` trait of a vendor, named by its id (`'counter'`) or its
- * reference, with any good that names no thing left out. Without a state,
- * only the vendors content declares; with one, a vendor made in play too.
- * Undefined for anything else.
+ * reference, with any good that names no thing left out: one content
+ * declares, or one made in play. Undefined for anything else.
  */
-export function vendorOf(game: Game, id: string | null | undefined, state?: GameState): Vendor | undefined {
+export function vendorOf(state: GameState, game: Game, ref: string | null | undefined): Vendor | undefined {
+  return vendorIn(state, game, ref)
+}
+
+/** `vendorsOf`, or with no state (for a check), the vendors content declares. */
+function vendorsIn(state: GameState | undefined, game: Game): EntityRef[] {
+  return state ? withTrait(state, game, VENDOR) : declaredWithTrait(game, VENDOR)
+}
+
+/** `vendorOf`, or with no state (for a check), only the vendors content declares. */
+function vendorIn(state: GameState | undefined, game: Game, id: string | null | undefined): Vendor | undefined {
   if (id === null || id === undefined || id === '') return undefined
   const ref = vendorRef(id)
   let data: Vendor | undefined
-  if (state) data = entityOf(state, game, ref) ? entityTrait(state, game, ref, VENDOR) : undefined
-  else data = withTrait(game, VENDOR).includes(ref) ? traitOf(game, ref, VENDOR) : undefined
+  if (state) data = entityOf(state, game, ref) ? traitOf(state, game, ref, VENDOR) : undefined
+  else data = declaredWithTrait(game, VENDOR).includes(ref) ? declaredTrait(game, ref, VENDOR) : undefined
   return data ? usable(data) : undefined
 }
 
@@ -280,19 +289,19 @@ type Ctx = Pick<PluginContext<ShopState>, 'game' | 'query'>
 function oneOf(state: GameState | undefined, game: Game, id: unknown): One | undefined {
   if (typeof id !== 'string' || id === '') return undefined
   const ref = vendorRef(id)
-  const vendor = vendorOf(game, ref, state)
+  const vendor = vendorIn(state, game, ref)
   return vendor ? { id: short(ref), ref, vendor } : undefined
 }
 
 /** Every vendor in the game now, or, with no state, every one content declares. */
 function everyVendor(state: GameState | undefined, game: Game): One[] {
-  return vendorsOf(game, state).flatMap((ref) => oneOf(state, game, ref) ?? [])
+  return vendorsIn(state, game).flatMap((ref) => oneOf(state, game, ref) ?? [])
 }
 
 /** The good, if the vendor offers it right now. */
 function goodOf(state: GameState, game: Game, one: One, entity: unknown): GoodDef | undefined {
   const good = one.vendor.goods.find((entry) => entry.entity === String(entity ?? ''))
-  return good && (!good.when || holds(state, good.when, game)) ? good : undefined
+  return good && (!good.when || holds(state, game, good.when)) ? good : undefined
 }
 
 /** The day: the calendar's, or the turn without one. */
@@ -347,7 +356,7 @@ function offToday(state: GameState, one: One, good: GoodDef, cx: Ctx): number {
 
 /** What a thing is worth, by stat, when nobody says otherwise: its `shop/sellable` trait's price. */
 export function sellableOf(state: GameState, game: Game, ref: EntityRef): Sellable | undefined {
-  return entityTrait(state, game, ref, SELLABLE)
+  return traitOf(state, game, ref, SELLABLE)
 }
 
 /** A good's full price, by stat: its own, else the thing's `shop/sellable` price. */
@@ -374,7 +383,7 @@ function times(price: Record<string, number>, count: number): Record<string, num
 function priceView(game: Game, price: Record<string, number>): Price | null {
   const stats = Object.entries(price)
     .filter(([, amount]) => amount > 0)
-    .map(([id, amount]) => ({ id, amount, text: formatStat(statDef(game, id), amount) }))
+    .map(([id, amount]) => ({ id, amount, text: formatStat(statOf(game, id), amount) }))
   return stats.length ? { stats } : null
 }
 
@@ -393,7 +402,7 @@ function closedReason(state: GameState, one: One, cx: Ctx): string | undefined {
     const period = cx.query<{ period: string }>('calendar/now')?.period
     if (period !== undefined && !vendor.hours.includes(period)) return reason()
   }
-  if (vendor.open && !holds(state, vendor.open, cx.game)) return reason()
+  if (vendor.open && !holds(state, cx.game, vendor.open)) return reason()
   return undefined
 }
 
@@ -415,7 +424,7 @@ function cantBuy(state: GameState, args: PluginArgs, slice: ShopState, cx: Ctx):
   const left = stockLeft(state, slice, one, good, cx)
   if (left !== null && left < count) return stringOf(game, 'shop/soldOut')
   for (const [stat, amount] of Object.entries(times(priceToday(state, one, good, cx), count))) {
-    if (amount > 0 && statValue(state, game, stat) < amount) return lackingLine(statDef(game, stat), stat, amount, game)
+    if (amount > 0 && statValue(state, game, stat) < amount) return lackingLine(game, stat, amount)
   }
   return undefined
 }
@@ -498,7 +507,7 @@ export function shopView(state: GameState, slice: ShopState, cx: Ctx): ShopView 
     const closed = closedReason(state, one, cx) ?? null
     const sellable = one.vendor.buysBack !== undefined
     const goods = one.vendor.goods
-      .filter((good) => (!good.when || holds(state, good.when, game)) && entityOf(state, game, good.entity))
+      .filter((good) => (!good.when || holds(state, game, good.when)) && entityOf(state, game, good.entity))
       .map((good): GoodView => {
         const off = offToday(state, one, good, cx)
         const name = entityName(state, game, good.entity)
@@ -568,10 +577,10 @@ function vendorProblems(vendor: Vendor | undefined, game: Game): string[] {
     if (good.stock !== undefined && !(good.stock >= 0)) problems.push(`${where}: stock must be 0 or more`)
     if (good.stock !== undefined && good.stock > 1 && isUnique(game, good.entity)) problems.push(`${where}: a unique thing has a stock of 1 at most`)
     if (good.restock !== undefined && good.stock === undefined) problems.push(`${where}: restock needs a stock`)
-    if (good.price === undefined && !traitOf(game, good.entity, SELLABLE))
+    if (good.price === undefined && !declaredTrait(game, good.entity, SELLABLE))
       problems.push(`${where}: no price: give the good a price, or the thing a ${SELLABLE} trait`)
     for (const [stat, amount] of Object.entries(good.price ?? {})) {
-      const def = statDef(game, stat)
+      const def = statOf(game, stat)
       if (def && !def.spendable) problems.push(`${where}: price in stat "${stat}", which is not spendable`)
       if (def?.derive !== undefined) problems.push(`${where}: price in stat "${stat}", which is derived and never written`)
       if (!(amount >= 0)) problems.push(`${where}: price must be 0 or more`)

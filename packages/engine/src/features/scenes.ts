@@ -346,7 +346,7 @@ function oneMore(times: Times | undefined, turn: number): Times {
 function drawStorylet(state: GameState, game: Game, from: string, otherwise: string | undefined, cx: FeatureContext): GameState {
   const key = `storylet:${from}`
   const used = typeof state.kv[key] === 'number' ? (state.kv[key] as number) : 0
-  const eligible = game.scenes.filter((scene) => scene.drawnFrom?.includes(from) && cx.holds(state, scene.when, game))
+  const eligible = game.scenes.filter((scene) => scene.drawnFrom?.includes(from) && cx.holds(state, game, scene.when))
   const drawn = cx.weighted(eligible, (scene) => scene.weight, 'storylet', from, state.seed, state.turn, used)
   const counted = { ...state, kv: { ...state.kv, [key]: used + 1 } }
   if (drawn) return { ...counted, sceneId: drawn.id }
@@ -545,18 +545,18 @@ export const scenes = defineFeature<ScenesShape>({
   },
   // Scenes as gates, as places to go and to open, the choices in them, the draws, and prose blocks.
   resolve: (game, tools) => {
-    const sceneOf = new Map(game.scenes.map((scene) => [scene.id, scene]))
+    const scenesById = new Map(game.scenes.map((scene) => [scene.id, scene]))
     const drawnFrom = new Set(game.scenes.flatMap((scene) => scene.drawnFrom ?? []))
     return {
       scene: (ref) => {
-        if (sceneOf.has(ref.scene)) return []
+        if (scenesById.has(ref.scene)) return []
         if (ref.as === 'gate') return [`gated on unknown scene "${ref.scene}"`]
         if (ref.as === 'open') return [`opens unknown scene "${ref.scene}"`]
         return [`goes to unknown scene "${ref.scene}"`]
       },
       choice: (ref) => {
         const cut = ref.choice.lastIndexOf('#')
-        const scene = cut > 0 ? sceneOf.get(ref.choice.slice(0, cut)) : undefined
+        const scene = cut > 0 ? scenesById.get(ref.choice.slice(0, cut)) : undefined
         if (!scene) return [`gated on a choice in unknown scene "${ref.choice}"`]
         // Only a data scene's choices are known before it runs; a hand-built one is taken at its word.
         if (isDataScene(scene) && !sceneChoices(scene).some((choice) => choice.id === ref.choice.slice(cut + 1)))

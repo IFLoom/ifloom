@@ -133,11 +133,11 @@ describe('the setting condition', () => {
   it('reads a play setting bare, with is, or with a range', () => {
     const g = game()
     const state = startingState(g, { settings: { patience: 6 } })
-    expect(holds(state, { setting: 'hints' }, g)).toBe(true)
-    expect(holds(state, { setting: 'difficulty', is: 'usual' }, g)).toBe(true)
-    expect(holds(state, { setting: 'difficulty', is: 'hard' }, g)).toBe(false)
-    expect(holds(state, { setting: 'patience', gte: 6 }, g)).toBe(true)
-    expect(explain(state, { setting: 'difficulty', is: 'hard' }, g).why).toBe('setting difficulty is "usual"; wants = "hard"')
+    expect(holds(state, g, { setting: 'hints' })).toBe(true)
+    expect(holds(state, g, { setting: 'difficulty', is: 'usual' })).toBe(true)
+    expect(holds(state, g, { setting: 'difficulty', is: 'hard' })).toBe(false)
+    expect(holds(state, g, { setting: 'patience', gte: 6 })).toBe(true)
+    expect(explain(state, g, { setting: 'difficulty', is: 'hard' }).why).toBe('setting difficulty is "usual"; wants = "hard"')
   })
 
   it('works in a choice’s when', () => {

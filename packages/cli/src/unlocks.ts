@@ -25,7 +25,7 @@ const EXTENSIONS = new Set(['.ts', '.mts', '.js', '.mjs', '.json'])
 
 /** What the CLI uses of `@ifloom/plugin-unlocks`, typed here because the CLI doesn't depend on it. */
 export type UnlocksModule = {
-  unlockDefs(game: Game): UnlockDefLike[]
+  unlocksOf(game: Game): UnlockDefLike[]
   envName(unlock: string): string
   normaliseCode(code: string): string
   unlockHash(code: string, game: string, def: { id: string; salt?: string; iterations?: number }): Promise<string>
@@ -98,7 +98,7 @@ export async function lockedScript(options: {
   if (!files.length) return out
   const plugin = await unlocksModule(root, load)
   const { game } = gameFrom(await load(resolve(root, 'src/game.ts')))
-  const defs = plugin.unlockDefs(game)
+  const defs = plugin.unlocksOf(game)
   const codes = codesFrom(root, mode)
   const locked: { unlock: string }[] = []
   for (const { unlock, file } of files) {
@@ -181,7 +181,7 @@ export async function checkUnlocks(options: {
   const files = lockedFiles(root)
   if (!files.length) return out
   const plugin = await unlocksModule(root, load)
-  const defs = plugin.unlockDefs(game)
+  const defs = plugin.unlocksOf(game)
   const codes = codesFrom(root, mode)
   for (const { unlock, file } of files) {
     const where = `${UNLOCKS_DIR}/${basename(file)}`

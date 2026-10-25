@@ -108,7 +108,7 @@ The engine has no player name of its own. A game that wants one sets a kv key, w
 ## fillTokens
 
 ```ts
-function fillTokens(text: string, state: GameState, game: Game): string
+function fillTokens(state: GameState, game: Game, text: string): string
 ```
 
 Fills in the [tokens](#tokens) in one string. The engine calls it on every block of words, label and line it shows. Call it yourself for text of your own, such as a panel's.
@@ -116,7 +116,7 @@ Fills in the [tokens](#tokens) in one string. The engine calls it on every block
 ```ts
 import { fillTokens } from '@ifloom/engine'
 
-fillTokens('{{playerName}} has been here {{kv:visits of=storyline:ava}} times.', state, game)
+fillTokens(state, game, '{{playerName}} has been here {{kv:visits of=storyline:ava}} times.')
 // 'Sam has been here 4 times.'
 ```
 

@@ -482,14 +482,14 @@ const sellable: (price: Record<string, number>) => { 'shop/sellable': Sellable }
 ### vendorsOf, vendorOf and vendorRef
 
 ```ts
-function vendorsOf(game: Game, state?: GameState): EntityRef[]
-function vendorOf(game: Game, id: string | null | undefined, state?: GameState): Vendor | undefined
+function vendorsOf(state: GameState, game: Game): EntityRef[]
+function vendorOf(state: GameState, game: Game, ref: string | null | undefined): Vendor | undefined
 function vendorRef(vendor: string): EntityRef
 ```
 
-`vendorsOf` is every entity with the `shop/vendor` trait, as references. Given only the game, it's the vendors content declares, in their order. Given a state too, it's every vendor in the game now, those made in play included.
+`vendorsOf` is every entity in the game now with the `shop/vendor` trait, as references: the vendors content declares, in their order, then those made in play.
 
-`vendorOf` is the [`Vendor`](#the-vendor-trait) trait of the vendor with this id or reference, with any good that names no entity left out (the checker reports it). Without a state it reads only the vendors content declares.
+`vendorOf` is the [`Vendor`](#the-vendor-trait) trait of the vendor with this id or reference, with any good that names no entity left out (the checker reports it).
 
 `vendorRef` is the entity a vendor is, `vendorRef('counter')` is `'vendor:counter'`, for a condition or an effect on what it holds. A reference is returned as written.
 

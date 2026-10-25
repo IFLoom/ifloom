@@ -106,13 +106,19 @@ export type CheatsView = {
 }
 
 /** The game's cheats: `data.cheats.cheats`, from its packs. */
-export function cheatDefs(game: Game): CheatDef[] {
+export function cheatsOf(game: Game): CheatDef[] {
   return (game.data?.[ID]?.cheats ?? []) as CheatDef[]
 }
 
-function cheatOf(game: Game, id: unknown): CheatDef | undefined {
+/** One of the game's cheats, by id. */
+export function cheatOf(game: Game, id: string): CheatDef | undefined {
+  return cheatIn(game, id)
+}
+
+/** `cheatOf` for an id a call names, which may be anything. */
+function cheatIn(game: Game, id: unknown): CheatDef | undefined {
   const wanted = String(id ?? '')
-  return cheatDefs(game).find((cheat) => cheat.id === wanted)
+  return cheatsOf(game).find((cheat) => cheat.id === wanted)
 }
 
 function sliceOf(state: GameState): CheatsState {
@@ -125,13 +131,13 @@ function timesUsed(slice: CheatsState, cheat?: string): number {
 
 /** The first `blocked` entry that holds now, or undefined. */
 function blockedBy(cheat: CheatDef, state: GameState, game: Game): Blocked | undefined {
-  return (cheat.blocked ?? []).find((entry) => holds(state, entry.when, game))
+  return (cheat.blocked ?? []).find((entry) => holds(state, game, entry.when))
 }
 
 /** Why the player can't use the cheat now, or undefined. */
 function cantUse(state: GameState, args: PluginArgs, context: PluginContext<CheatsState>): string | undefined {
   const { game, slice } = context
-  const cheat = cheatOf(game, args.id)
+  const cheat = cheatIn(game, args.id)
   if (!cheat) return stringOf(game, 'cheats/unknown')
   const blocked = blockedBy(cheat, state, game)
   if (blocked) return blocked.reason
@@ -142,7 +148,7 @@ function cantUse(state: GameState, args: PluginArgs, context: PluginContext<Chea
 /** Everything the UI needs for a cheat panel. */
 export function cheatsView(state: GameState, context: PluginContext<CheatsState>): CheatsView {
   const { game, slice } = context
-  const shown = cheatDefs(game).filter((cheat) => !blockedBy(cheat, state, game)?.hide)
+  const shown = cheatsOf(game).filter((cheat) => !blockedBy(cheat, state, game)?.hide)
   return {
     cheats: shown.map((cheat): CheatView => ({
       id: cheat.id,
@@ -197,7 +203,7 @@ export function cheats(): DefinedPlugin<CheatsState, CheatsView> {
         ignoresLocks: true,
         whyNot: cantUse,
         run: (state, args, context) => {
-          const cheat = cheatOf(context.game, args.id)!
+          const cheat = cheatIn(context.game, args.id)!
           const next = context.apply(cheat.effects ?? [], state)
           const slice = sliceOf(next)
           return context.set({ used: [...slice.used, { cheat: cheat.id, turn: state.turn }] }, next)
@@ -208,7 +214,7 @@ export function cheats(): DefinedPlugin<CheatsState, CheatsView> {
     references: {
       calls: (table, _name, args) => cheatRef(table === 'commands' ? args.id : args.cheat),
       content: (game) =>
-        cheatDefs(game).map((cheat) => ({
+        cheatsOf(game).map((cheat) => ({
           list: 'cheats',
           id: cheat.id,
           refs: [{ effects: cheat.effects }, ...(cheat.blocked ?? []).map((entry): Reference => ({ within: 'blocked', refs: [{ when: entry.when }] }))],
@@ -217,7 +223,7 @@ export function cheats(): DefinedPlugin<CheatsState, CheatsView> {
     check: (game) => {
       const problems: PluginProblem[] = []
       const seen = new Set<string>()
-      for (const cheat of cheatDefs(game)) {
+      for (const cheat of cheatsOf(game)) {
         const problem = (what: string) => problems.push({ list: 'cheats', id: cheat.id, what })
         if (seen.has(cheat.id)) problem('two cheats share this id')
         seen.add(cheat.id)

@@ -100,7 +100,7 @@ The engine never reads `InlineUi`. A `ui` [span](/docs/reference/prose#inlinespa
 ```ts
 import { entityUi } from '@ifloom/engine'
 
-function entityUi(state: GameState, game: Game | undefined, ref: EntityRef): Ui<EntityUi> | undefined
+function entityUi(state: GameState, game: Game, ref: EntityRef): Ui<EntityUi> | undefined
 ```
 
 An entity's hints as the view gives them: its kind's, then the one it was made `like`, then its own declaration's, each laid over the one before. Undefined when none has any. A plugin uses it to pass someone's hints on in its own view, as the cast does for a [speaker](/docs/reference/view#speakerview).

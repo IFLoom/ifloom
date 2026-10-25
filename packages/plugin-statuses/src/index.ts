@@ -112,7 +112,8 @@ export function statusesOf(game: Game): StatusDef[] {
   return (game.data?.[ID]?.statuses ?? []) as StatusDef[]
 }
 
-function defOf(game: Game, id: string): StatusDef | undefined {
+/** One of the game's statuses, by id. */
+export function statusOf(game: Game, id: string): StatusDef | undefined {
   return statusesOf(game).find((def) => def.id === id)
 }
 
@@ -125,7 +126,7 @@ function sliceOf(state: GameState): StatusesState {
 function combined(game: Game, active: readonly ActiveRecord[]): StatModifier[] {
   const byStat = new Map<string, { add: number; multiply: number }>()
   for (const record of active) {
-    const def = defOf(game, record.id)
+    const def = statusOf(game, record.id)
     for (let n = 0; n < record.left.length; n += 1) {
       for (const modifier of def?.modifiers ?? []) {
         const sum = byStat.get(modifier.stat) ?? { add: 0, multiply: 1 }
@@ -146,7 +147,7 @@ function combined(game: Game, active: readonly ActiveRecord[]): StatModifier[] {
 export function statusesView(record: StatusesState, game: Game): StatusesView {
   const active: ActiveStatus[] = []
   for (const entry of record.active) {
-    const def = defOf(game, entry.id)
+    const def = statusOf(game, entry.id)
     if (!def || !entry.left.length) continue
     active.push({
       id: def.id,
@@ -162,7 +163,7 @@ export function statusesView(record: StatusesState, game: Game): StatusesView {
 
 /** The state with the status applied: started, refreshed or stacked. Unknown statuses do nothing. */
 function applyTo(state: GameState, id: string, context: PluginContext<StatusesState>): GameState {
-  const def = defOf(context.game, id)
+  const def = statusOf(context.game, id)
   if (!def) return state
   const slice = sliceOf(state)
   const turns = Math.max(1, Math.floor(def.turns))
@@ -190,7 +191,7 @@ function removeFrom(state: GameState, id: string, runEnd: boolean, context: Plug
   const current = slice.active.find((entry) => entry.id === id)
   if (!current) return state
   let next = context.set({ active: slice.active.filter((entry) => entry !== current) }, state)
-  const onEnd = runEnd ? defOf(context.game, id)?.onEnd : undefined
+  const onEnd = runEnd ? statusOf(context.game, id)?.onEnd : undefined
   if (onEnd?.length) for (let n = 0; n < current.left.length; n += 1) next = context.apply(onEnd, next)
   return next
 }
@@ -200,7 +201,7 @@ function endTurn(state: GameState, context: PluginContext<StatusesState>): GameS
   const { game } = context
   let next = state
   for (const record of sliceOf(state).active) {
-    const eachTurn = defOf(game, record.id)?.eachTurn
+    const eachTurn = statusOf(game, record.id)?.eachTurn
     if (eachTurn?.length) for (let n = 0; n < record.left.length; n += 1) next = context.apply(eachTurn, next)
   }
   // `eachTurn` may have applied or removed statuses: count down what is active now.
@@ -214,7 +215,7 @@ function endTurn(state: GameState, context: PluginContext<StatusesState>): GameS
   }
   next = context.set({ active }, next)
   for (const id of ended) {
-    const onEnd = defOf(game, id)?.onEnd
+    const onEnd = statusOf(game, id)?.onEnd
     if (onEnd?.length) next = context.apply(onEnd, next)
   }
   return next
@@ -251,7 +252,7 @@ export function statuses(): DefinedPlugin<StatusesState, StatusesView> {
         const record = slice.active.find((entry) => entry.id === idOf(args))
         if (!record) return false
         const stacks = stacksOf(args)
-        return stacks ? inRange(record.left.length, stacks, state, game) : true
+        return stacks ? inRange(state, game, record.left.length, stacks) : true
       },
     },
     effects: {
@@ -263,7 +264,7 @@ export function statuses(): DefinedPlugin<StatusesState, StatusesView> {
     commands: {
       /** `{ 'statuses/apply': { id } }`. */
       apply: {
-        whyNot: (_state, args, { game }) => (defOf(game, idOf(args)) ? undefined : stringOf(game, 'statuses/unknown')),
+        whyNot: (_state, args, { game }) => (statusOf(game, idOf(args)) ? undefined : stringOf(game, 'statuses/unknown')),
         run: (state, args, context) => applyTo(state, idOf(args), context),
         effectsOf: (_state, args) => [{ 'statuses/apply': { status: idOf(args) } }],
       },

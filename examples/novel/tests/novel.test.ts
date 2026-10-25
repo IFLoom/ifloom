@@ -37,7 +37,7 @@ describe('The Letter', () => {
   it('remembers an early choice and branches on it two chapters on', () => {
     const named = read(startingState(game), { type: 'input', id: 'playerName', to: 'Robin' })
     const opened = read(named, choose('open'))
-    expect(holds(opened, { chose: 'ch1.mat#open' }, game)).toBe(true)
+    expect(holds(opened, game, { chose: 'ch1.mat#open' })).toBe(true)
     expect(view(opened, game).scene.body).toContain('the postcard tucked inside')
     expect(view(opened, game).scene.choices.map((choice) => choice.id)).toEqual(['truth', 'deny', 'blame'])
     const shelved = read(named, choose('shelf'))
@@ -85,8 +85,8 @@ describe('The Letter', () => {
   it('counts as finished at either ending, and a New Game+ remembers the first read', () => {
     const named = read(startingState(game), { type: 'input', id: 'playerName', to: 'Robin' })
     const ended = read(named, choose('shelf'), choose('deny'), choose('saturday'), choose('post'))
-    expect(holds(ended, game.finished!, game)).toBe(true)
-    expect(holds(named, game.finished!, game)).toBe(false)
+    expect(holds(ended, game, game.finished!)).toBe(true)
+    expect(holds(named, game, game.finished!)).toBe(false)
     expect(view(named, game).scene.body).not.toContain('stood here before')
     const again = startingState(game, { carry: ended })
     expect(again.kv.readBefore).toBe(true)

@@ -17,7 +17,7 @@ import {
   definePlugin,
   entityName,
   entityOf,
-  entityTrait,
+  traitOf,
   heldBy,
   heldCount,
   parseRef,
@@ -25,8 +25,8 @@ import {
   protagonist,
   resolveHolder,
   stringOf,
-  traitOf,
-  withTrait,
+  declaredTrait,
+  declaredWithTrait,
   YOU,
   type CommandRef,
   type Condition,
@@ -99,7 +99,7 @@ export function slotsOf(game: Game): WardrobeSlot[] {
 
 /** The slot a thing is worn in, if it can be worn: its `wardrobe/wearable` trait, read through what it was made `like`. */
 export function wearableOf(state: GameState, game: Game, ref: string): Wearable | undefined {
-  return entityTrait(state, game, ref, WEARABLE)
+  return traitOf(state, game, ref, WEARABLE)
 }
 
 function nameOf(state: GameState, game: Game, ref: string): string {
@@ -115,7 +115,7 @@ const wearableTrait: TraitDef<'wardrobe/wearable'> = {
 /** Version 1 kept item ids in the slots; an item's id is the id of the wearable entity that took its place. */
 function fromItems(old: unknown, game: Game): { worn: Record<string, EntityRef | null> } {
   const worn = ((old as { worn?: Record<string, string | null> } | undefined)?.worn ?? {}) as Record<string, string | null>
-  const wearables = withTrait(game, WEARABLE)
+  const wearables = declaredWithTrait(game, WEARABLE)
   const refOf = (item: string | null): EntityRef | null => {
     if (item === null) return null
     if (wearables.includes(item as EntityRef)) return item as EntityRef
@@ -268,7 +268,7 @@ export function wardrobe(): DefinedPlugin<WardrobeState, WardrobeView> {
         if (ref === undefined) continue
         const def = game.entities?.find((entity) => `${entity.of}:${entity.id}` === ref)
         if (!def) continue
-        if (traitOf(game, ref, WEARABLE)?.slot !== slot.id) {
+        if (declaredTrait(game, ref, WEARABLE)?.slot !== slot.id) {
           problems.push({ list: 'slots', id: slot.id, what: `starts with "${ref}", which is not worn in this slot` })
         } else if (!(def.at === 'player' || (typeof def.at === 'object' && (def.at.player ?? 0) > 0))) {
           problems.push({ list: 'slots', id: slot.id, what: `starts with "${ref}", which the player does not start holding` })

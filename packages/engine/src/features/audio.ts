@@ -8,7 +8,7 @@ import type { Game } from '../game.ts'
 import type { SceneBeat } from '../sceneBody.ts'
 import type { GameState } from '../types.ts'
 import { defineFeature, type FeatureContext } from './feature.ts'
-import { settingAffects, settingById } from './settings.ts'
+import { settingAffects, settingOf } from './settings.ts'
 
 /** A sound file the game ships, by id in `game.audio.tracks`. */
 export type TrackDef = {
@@ -436,7 +436,7 @@ export function manifestProblems(game: Game): { where: string; what: string }[] 
   const out: { where: string; what: string }[] = []
   const channels = audioChannels(game)
   const settingIs = (where: string, id: string, type: 'range' | 'toggle') => {
-    const setting = settingById(game, id)
+    const setting = settingOf(game, id)
     if (!setting) out.push({ where, what: `unknown setting "${id}"` })
     else if (setting.type !== type || settingAffects(setting) !== 'ui') out.push({ where, what: `setting "${id}" is not a ui ${type} setting` })
   }

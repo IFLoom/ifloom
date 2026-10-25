@@ -7,7 +7,7 @@ description: "Jobs with hiring requirements, shifts that cost stats and time and
 ```ts
 import {
   jobs, applyFor, work, quit, hire, fire, hasJob, wasFired, shiftsWorked, workedToday,
-  jobDefs, jobsView,
+  jobsOf, jobOf, jobsView,
   type JobDef, type ShiftDef, type RankDef, type FireDef,
   type JobsState, type HeldJob, type JobsView, type JobView, type RankView,
 } from '@ifloom/plugin-jobs'
@@ -431,13 +431,14 @@ const openJobs: (jobs?: string[]) => Effect
 
 `openJobs` opens the job board in the `jobs` panel, with only `jobs` on it if given. See [Opening the job board](#opening-the-job-board).
 
-### jobDefs
+### jobsOf and jobOf
 
 ```ts
-function jobDefs(game: Game): JobDef[]
+function jobsOf(game: Game): JobDef[]
+function jobOf(game: Game, id: string): JobDef | undefined
 ```
 
-The game's jobs, merged from its content and packs: `game.data.jobs.jobs`.
+The game's jobs, merged from its content and packs: `game.data.jobs.jobs`. `jobOf` is the one with this id, or `undefined`.
 
 ### jobsView
 

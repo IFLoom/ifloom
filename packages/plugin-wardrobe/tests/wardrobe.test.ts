@@ -70,8 +70,8 @@ describe('the wardrobe, on its own', () => {
         { entity: 'clothing:sandals', name: 'sandals', slot: 'feet' },
       ],
     })
-    expect(holds(begin(g), wearing('clothing:boots'), g)).toBe(true)
-    expect(holds(begin(g), slotFilled('coat'), g)).toBe(false)
+    expect(holds(begin(g), g, wearing('clothing:boots'))).toBe(true)
+    expect(holds(begin(g), g, slotFilled('coat'))).toBe(false)
   })
 
   it('puts clothes on in place of whatever was in the slot, without changing what you hold', () => {
@@ -79,15 +79,15 @@ describe('the wardrobe, on its own', () => {
     const out = apply(begin(g), g, wear('clothing:sandals'))
     expect(out.ok).toBe(true)
     expect([heldCount(out.state, g, 'clothing:sandals'), heldCount(out.state, g, 'clothing:boots')]).toEqual([1, 1])
-    expect(holds(out.state, wearing('clothing:sandals', 'feet'), g)).toBe(true)
-    expect(holds(out.state, wearing('clothing:boots'), g)).toBe(false)
+    expect(holds(out.state, g, wearing('clothing:sandals', 'feet'))).toBe(true)
+    expect(holds(out.state, g, wearing('clothing:boots'))).toBe(false)
   })
 
   it('takes clothes off', () => {
     const g = game()
     const out = apply(begin(g), g, takeOff('feet'))
     expect(heldCount(out.state, g, 'clothing:boots')).toBe(1)
-    expect(holds(out.state, slotFilled('feet'), g)).toBe(false)
+    expect(holds(out.state, g, slotFilled('feet'))).toBe(false)
   })
 
   it('ignores a slot the game no longer has', () => {
@@ -96,14 +96,14 @@ describe('the wardrobe, on its own', () => {
       ...begin(g),
       plugins: { wardrobe: { version: 3, state: { worn: { player: { coat: null, feet: 'clothing:boots', hat: 'clothing:raincoat' } } } } },
     }
-    expect(holds(old, wearing('clothing:raincoat'), g)).toBe(false)
+    expect(holds(old, g, wearing('clothing:raincoat'))).toBe(false)
   })
 
   it('takes off what you no longer hold: lost, or given to someone', () => {
     const g = game()
-    expect(holds(apply(begin(g), g, { type: 'action', id: 'loseBoots' }).state, slotFilled('feet'), g)).toBe(false)
+    expect(holds(apply(begin(g), g, { type: 'action', id: 'loseBoots' }).state, g, slotFilled('feet'))).toBe(false)
     const lent = apply(begin(g), g, { type: 'action', id: 'lendBoots' }).state
-    expect(holds(lent, slotFilled('feet'), g)).toBe(false)
+    expect(holds(lent, g, slotFilled('feet'))).toBe(false)
     expect(heldCount(lent, g, 'clothing:boots', 'friend:kim')).toBe(1)
   })
 
@@ -135,7 +135,7 @@ describe('the wardrobe, on its own', () => {
     ])
     const sewn = apply(begin(g), g, { type: 'action', id: 'sew' }).state
     expect(shown(sewn, g).spare).toContainEqual({ entity: 'clothing:cape', name: 'cape', slot: 'coat' })
-    expect(holds(apply(sewn, g, wear('clothing:cape')).state, wearing('clothing:cape', 'coat'), g)).toBe(true)
+    expect(holds(apply(sewn, g, wear('clothing:cape')).state, g, wearing('clothing:cape', 'coat'))).toBe(true)
   })
 
   it('carries an older save’s item ids into references', () => {
@@ -207,7 +207,7 @@ describe('the wardrobe with a protagonist', () => {
     ])
     const kim = apply(begin(g), g, { type: 'action', id: 'beKim' }).state
     // Kim has nothing on yet; the raincoat is Kim's now, to wear.
-    expect(holds(kim, slotFilled('feet'), g)).toBe(false)
+    expect(holds(kim, g, slotFilled('feet'))).toBe(false)
     expect(shown(kim, g).spare).toEqual([{ entity: 'clothing:raincoat', name: 'raincoat', slot: 'coat' }])
     const dressed = apply(kim, g, wear('clothing:raincoat')).state
     expect(shown(dressed, g).slots.map((slot) => slot.entity)).toEqual(['clothing:raincoat', null])
@@ -227,8 +227,8 @@ describe('the wardrobe with a protagonist', () => {
     const kim = apply(apply(begin(g), g, { type: 'action', id: 'beKim' }).state, g, wear('clothing:raincoat')).state
     const me = apply(kim, g, { type: 'action', id: 'beMe' }).state
     expect(shown(me, g).slots.map((slot) => slot.entity)).toEqual([null, 'clothing:boots'])
-    expect(holds(me, wearing('clothing:raincoat'), g)).toBe(false)
-    expect(holds(me, { 'wardrobe/wearing': { entity: 'clothing:raincoat', at: 'friend:kim' } }, g)).toBe(true)
+    expect(holds(me, g, wearing('clothing:raincoat'))).toBe(false)
+    expect(holds(me, g, { 'wardrobe/wearing': { entity: 'clothing:raincoat', at: 'friend:kim' } })).toBe(true)
   })
 
   it('carries a version 2 save’s slots over to whoever was played', () => {

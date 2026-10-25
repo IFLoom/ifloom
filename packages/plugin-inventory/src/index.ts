@@ -19,7 +19,7 @@ import {
   entityDesc,
   entityImage,
   entityName,
-  entityTrait,
+  traitOf,
   heldBy,
   heldCount,
   holds,
@@ -115,14 +115,14 @@ declare module '@ifloom/engine' {
 const ID = 'inventory'
 const USABLE = 'inventory/usable'
 
-/** The plugin's content: `data.inventory`, from the game's content and packs. */
-export function inventoryData(game: Game): InventoryData {
-  return (game.data?.[ID] ?? {}) as InventoryData
+/** The kinds the inventory shows, from `data.inventory.kinds` in the game's content and packs; undefined for every kind. */
+export function inventoryKindsOf(game: Game): { id: string }[] | undefined {
+  return ((game.data?.[ID] ?? {}) as InventoryData).kinds
 }
 
 /** What makes a thing usable, when it is: its `inventory/usable` trait, read through what it was made `like`. */
 export function usableOf(state: GameState, game: Game, ref: EntityRef): Usable | undefined {
-  return entityTrait(state, game, ref, USABLE)
+  return traitOf(state, game, ref, USABLE)
 }
 
 const usableTrait: TraitDef<'inventory/usable'> = {
@@ -139,7 +139,7 @@ type Ctx = Pick<PluginContext<unknown>, 'game' | 'query'>
 
 /** Whether the inventory shows things of this one's kind. */
 function shows(game: Game, ref: EntityRef): boolean {
-  const kinds = inventoryData(game).kinds
+  const kinds = inventoryKindsOf(game)
   const kind = parseRef(ref)?.kind
   return !kinds || kinds.some((entry) => entry.id === kind)
 }
@@ -179,7 +179,7 @@ function useEffects(state: GameState, game: Game, ref: EntityRef): Effect[] {
   const from = takenFrom(state, game, ref)
   if (!usable || from === undefined) return []
   const spent: Effect[] = usable.keep ? [] : [{ entity: ref, at: from, by: -1 }]
-  return [...spent, ...buildEffects(state, game, usable.effects)]
+  return [...spent, ...buildEffects(game, usable.effects)]
 }
 
 /** Where a dropped thing goes: the holder places names for where you are, if it names one that can hold; nowhere otherwise. */
@@ -205,7 +205,7 @@ function giveEffects(state: GameState, game: Game, args: PluginArgs): Effect[] {
 function thingsOf(state: GameState, game: Game, holder: Holder): InventoryThing[] {
   return heldBy(state, game, holder)
     .filter(
-      ({ ref }) => shows(game, ref) && holds(state, bindCurrent(game.entities?.find((entity) => `${entity.of}:${entity.id}` === ref)?.visible, ref), game),
+      ({ ref }) => shows(game, ref) && holds(state, game, bindCurrent(game.entities?.find((entity) => `${entity.of}:${entity.id}` === ref)?.visible, ref)),
     )
     .map(({ ref, count }) => {
       const usable = usableOf(state, game, ref)
@@ -294,7 +294,7 @@ export function inventory(): DefinedPlugin<null, InventoryView> {
       ],
     },
     check: (game, tools) =>
-      (inventoryData(game).kinds ?? []).flatMap((kind) => tools.problems([{ kind: kind.id }]).map((what) => ({ list: 'kinds', id: kind.id, what }))),
+      (inventoryKindsOf(game) ?? []).flatMap((kind) => tools.problems([{ kind: kind.id }]).map((what) => ({ list: 'kinds', id: kind.id, what }))),
   })
 }
 

@@ -17,13 +17,13 @@ describe('choices the player made', () => {
   it('are remembered by scene and choice, and `{ chose }` reads them', () => {
     const { game } = withCafe()
     const at = { ...begin(game), sceneId: 'cafe.counter' }
-    expect(holds(at, { chose: 'cafe.counter#chat' }, game)).toBe(false)
+    expect(holds(at, game, { chose: 'cafe.counter#chat' })).toBe(false)
     const after = apply(at, game, { type: 'choose', id: 'chat' }).state
     expect(after.chosen).toEqual({ 'cafe.counter#chat': { n: 1, first: at.turn, last: at.turn } })
-    expect(holds(after, { chose: 'cafe.counter#chat' }, game)).toBe(true)
-    expect(holds(after, { chose: 'cafe.counter#chat', gte: 2 }, game)).toBe(false)
-    expect(holds(after, { chose: 'cafe.counter#leave' }, game)).toBe(false)
-    expect(explain(after, { chose: 'cafe.counter#chat', gt: 1 }, game).why).toBe('choice cafe.counter#chat picked 1 times; wants more than 1')
+    expect(holds(after, game, { chose: 'cafe.counter#chat' })).toBe(true)
+    expect(holds(after, game, { chose: 'cafe.counter#chat', gte: 2 })).toBe(false)
+    expect(holds(after, game, { chose: 'cafe.counter#leave' })).toBe(false)
+    expect(explain(after, game, { chose: 'cafe.counter#chat', gt: 1 }).why).toBe('choice cafe.counter#chat picked 1 times; wants more than 1')
   })
 
   it('a choice that names a scene or choice the game does not have is reported', () => {
@@ -63,15 +63,15 @@ describe('kv keys as counters', () => {
     let state = applyEffects(begin(game), game, [{ kv: 'lies', by: 1 }])
     state = applyEffects(state, game, [{ kv: 'lies', by: 2 }])
     expect(state.kv.lies).toBe(3)
-    expect(holds(state, { kv: 'lies', gte: 3 }, game)).toBe(true)
-    expect(holds(state, { kv: 'lies', gt: 3 }, game)).toBe(false)
-    expect(holds(state, { kv: 'lies', lte: 3 }, game)).toBe(true)
-    expect(holds(state, { kv: 'lies', lt: 3 }, game)).toBe(false)
-    expect(explain(state, { kv: 'lies', gte: 1, lte: 2 }, game).why).toBe('kv lies is 3; wants 1 or more and 2 or less')
+    expect(holds(state, game, { kv: 'lies', gte: 3 })).toBe(true)
+    expect(holds(state, game, { kv: 'lies', gt: 3 })).toBe(false)
+    expect(holds(state, game, { kv: 'lies', lte: 3 })).toBe(true)
+    expect(holds(state, game, { kv: 'lies', lt: 3 })).toBe(false)
+    expect(explain(state, game, { kv: 'lies', gte: 1, lte: 2 }).why).toBe('kv lies is 3; wants 1 or more and 2 or less')
     // A value that is not a number counts as 0 in a range.
     const named = applyEffects(state, game, [{ kv: 'pet', to: 'Biscuit' }])
-    expect(holds(named, { kv: 'pet', lte: 0 }, game)).toBe(true)
-    expect(holds(named, { kv: 'pet' }, game)).toBe(true)
+    expect(holds(named, game, { kv: 'pet', lte: 0 })).toBe(true)
+    expect(holds(named, game, { kv: 'pet' })).toBe(true)
   })
 })
 
@@ -188,13 +188,13 @@ describe('storylines', () => {
   it('are open, or closed until a turn, and `{ storyline }` asks which', () => {
     const game = fixture()
     const state = begin(game)
-    expect(holds(state, { storyline: 'rosa' }, game)).toBe(true)
-    expect(holds(state, { storyline: 'rosa', open: false }, game)).toBe(false)
+    expect(holds(state, game, { storyline: 'rosa' })).toBe(true)
+    expect(holds(state, game, { storyline: 'rosa', open: false })).toBe(false)
     const closed = applyEffects(state, game, [{ closeStoryline: 'rosa', turns: 3 }])
-    expect(holds(closed, { storyline: 'rosa' }, game)).toBe(false)
-    expect(holds(closed, { storyline: 'rosa', open: false }, game)).toBe(true)
-    expect(holds({ ...closed, turn: closed.turn + 3 }, { storyline: 'rosa' }, game)).toBe(true)
-    expect(explain(closed, { storyline: 'rosa' }, game).why).toBe('storyline rosa is closed; wants it open')
+    expect(holds(closed, game, { storyline: 'rosa' })).toBe(false)
+    expect(holds(closed, game, { storyline: 'rosa', open: false })).toBe(true)
+    expect(holds({ ...closed, turn: closed.turn + 3 }, game, { storyline: 'rosa' })).toBe(true)
+    expect(explain(closed, game, { storyline: 'rosa' }).why).toBe('storyline rosa is closed; wants it open')
   })
 })
 

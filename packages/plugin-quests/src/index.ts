@@ -122,8 +122,13 @@ function emptyState(): QuestsState {
 }
 
 /** The game's quests: `data.quests.quests`, from its packs. */
-export function questDefs(game: Game): QuestDef[] {
+export function questsOf(game: Game): QuestDef[] {
   return (game.data?.[ID]?.quests ?? []) as QuestDef[]
+}
+
+/** One of the game's quests, by id. */
+export function questOf(game: Game, id: string): QuestDef | undefined {
+  return questsOf(game).find((quest) => quest.id === id)
 }
 
 /**
@@ -150,17 +155,17 @@ function advanceOnce(record: QuestsState, state: GameState, game: Game): QuestsS
   let next = record
   working = next
   const turn = state.turn
-  for (const quest of questDefs(game)) {
+  for (const quest of questsOf(game)) {
     let started = next.started[quest.id]
     if (started === undefined) {
-      if (!quest.starts || !holds(state, quest.starts, game)) continue
+      if (!quest.starts || !holds(state, game, quest.starts)) continue
       started = turn
       next = { ...next, started: { ...next.started, [quest.id]: turn } }
       working = next
     }
     if (next.done[quest.id] !== undefined) continue
     let reached = next.reached[quest.id] ?? 0
-    while (reached < quest.stages.length && holds(state, quest.stages[reached].done, game)) reached += 1
+    while (reached < quest.stages.length && holds(state, game, quest.stages[reached].done)) reached += 1
     if (reached !== (next.reached[quest.id] ?? 0)) {
       next = { ...next, reached: { ...next.reached, [quest.id]: reached } }
       working = next
@@ -208,7 +213,7 @@ function entry(quest: QuestDef, record: QuestsState): QuestEntry {
 
 /** Everything the UI needs to draw the quest list. */
 export function questsView(record: QuestsState, game: Game): QuestsView {
-  const defs = questDefs(game)
+  const defs = questsOf(game)
   const started = defs.filter((quest) => record.started[quest.id] !== undefined)
   const active = started
     .filter((quest) => record.done[quest.id] === undefined)
@@ -258,7 +263,7 @@ export function quests(): DefinedPlugin<QuestsState, QuestsView> {
       done: (state, args, { slice, game }) => advance(slice, state, game).done[questId(args)] !== undefined,
       /** `{ 'quests/reached': { quest, stage } }`: that stage is done. */
       reached: (state, args, { slice, game }) => {
-        const quest = questDefs(game).find((entry) => entry.id === questId(args))
+        const quest = questsOf(game).find((entry) => entry.id === questId(args))
         const at = quest?.stages.findIndex((stage) => stage.id === args.stage) ?? -1
         return at >= 0 && (advance(slice, state, game).reached[quest!.id] ?? 0) > at
       },
@@ -267,7 +272,7 @@ export function quests(): DefinedPlugin<QuestsState, QuestsView> {
       /** `{ 'quests/start': { quest } }`: start it now, if it has not started. */
       start: (state, args, { slice, set, game }) => {
         const id = questId(args)
-        if (slice.started[id] !== undefined || !questDefs(game).some((quest) => quest.id === id)) return state
+        if (slice.started[id] !== undefined || !questsOf(game).some((quest) => quest.id === id)) return state
         return set(advance({ ...slice, started: { ...slice.started, [id]: state.turn } }, state, game))
       },
     },
@@ -307,7 +312,7 @@ export function quests(): DefinedPlugin<QuestsState, QuestsView> {
       // The quest a condition, effect or command names. Tracking or looking with none is fine.
       calls: (_kind, _name, args) => (questId(args) === '' ? [] : [{ entry: questId(args), plugin: 'quests', list: 'quests', noun: 'quest' }]),
       content: (game) =>
-        questDefs(game).map((quest) => ({
+        questsOf(game).map((quest) => ({
           list: 'quests',
           id: quest.id,
           refs: [
@@ -319,7 +324,7 @@ export function quests(): DefinedPlugin<QuestsState, QuestsView> {
     },
     check: (game) => {
       const problems: PluginProblem[] = []
-      for (const quest of questDefs(game)) {
+      for (const quest of questsOf(game)) {
         const say = (what: string) => problems.push({ list: 'quests', id: quest.id, what })
         if (!quest.stages?.length) say('has no stages')
         const ids = new Set<string>()

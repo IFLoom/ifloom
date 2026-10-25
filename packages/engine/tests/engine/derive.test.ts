@@ -57,10 +57,10 @@ describe('derived stats', () => {
     const game = derived({ sum: ['baking', 'patience'] })
     const state = begin(game)
     expect(state.stats.skill).toBeUndefined()
-    expect(holds(state, { stat: 'skill', gte: 10 }, game)).toBe(true)
-    expect(holds(state, { stat: 'skill', gt: 10 }, game)).toBe(false)
+    expect(holds(state, game, { stat: 'skill', gte: 10 })).toBe(true)
+    expect(holds(state, game, { stat: 'skill', gt: 10 })).toBe(false)
     expect(view(state, game).statsById.skill).toMatchObject({ value: 10, text: '10' })
-    expect(explainText(explain(state, { stat: 'skill', gte: 11 }, game))).toContain('stat skill is 10')
+    expect(explainText(explain(state, game, { stat: 'skill', gte: 11 }))).toContain('stat skill is 10')
     const baked = apply(state, game, { type: 'action', id: 'bake' }).state
     expect(view(baked, game).statsById.skill.value).toBe(15)
   })
@@ -111,7 +111,7 @@ describe('derived stats', () => {
     expect(state.entities.staff?.ana?.stats?.service).toBeUndefined()
     expect(statValue(state, game, 'service', 'staff:ana')).toBe(9)
     expect(statValue(state, game, 'service', 'staff:ben')).toBe(5)
-    expect(holds(state, { count: 'staff', where: { stat: 'service', of: '$', gte: 8 } }, game)).toBe(true)
+    expect(holds(state, game, { count: 'staff', where: { stat: 'service', of: '$', gte: 8 } })).toBe(true)
     expect(view(state, game).entities.staff.entries.map((entry) => entry.stats.find((stat) => stat.key === 'service')?.value)).toEqual([9, 5])
   })
 
@@ -155,11 +155,11 @@ describe('levels', () => {
   it('answer the level condition', () => {
     const game = levelled({ at: [10, 30] })
     const state = begin(game, { stats: { ...startingState(game).stats, cooking: 12 } })
-    expect(holds(state, { level: 'cooking' }, game)).toBe(true)
-    expect(holds(state, { level: 'cooking', gte: 2 }, game)).toBe(false)
+    expect(holds(state, game, { level: 'cooking' })).toBe(true)
+    expect(holds(state, game, { level: 'cooking', gte: 2 })).toBe(false)
     // A stat without levels is always level 0.
-    expect(holds(state, { level: 'baking', lt: 1 }, game)).toBe(true)
-    expect(explainText(explain(state, { level: 'cooking', gte: 2 }, game))).toContain('stat cooking is at level 1')
+    expect(holds(state, game, { level: 'baking', lt: 1 })).toBe(true)
+    expect(explainText(explain(state, game, { level: 'cooking', gte: 2 }))).toContain('stat cooking is at level 1')
   })
 
   it('show in the view only on a stat that has them', () => {

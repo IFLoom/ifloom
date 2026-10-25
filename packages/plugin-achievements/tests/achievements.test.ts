@@ -85,7 +85,7 @@ describe('achievements', () => {
   it('are earned the first time their condition holds after a command, with a notice', () => {
     const g = game()
     const state = run(fresh(g), g, 'dusk')
-    expect(holds(state, achievementEarned('river'), g)).toBe(true)
+    expect(holds(state, g, achievementEarned('river'))).toBe(true)
     expect(shown(state, g).achievements[2]).toMatchObject({ title: 'Dusk by the river', description: 'Sit by the river at dusk.', earned: true, earnedOn: 0 })
     expect(view(state, g).notices.unseen.map((notice) => notice.title)).toEqual(['Achievement: Dusk by the river'])
     // Earned once: the condition holding again changes nothing.
@@ -133,7 +133,7 @@ describe('achievements', () => {
     // A new game has earned nothing in its save, but the runner's view shows what the profile remembers.
     await runner.newGame()
     await runner.settled()
-    expect(holds(runner.state, achievementEarned('river'), g)).toBe(false)
+    expect(holds(runner.state, g, achievementEarned('river'))).toBe(false)
     const ever = runner.view().plugins.achievements as AchievementsView
     expect(ever.earned).toBe(2)
     expect(ever.achievements[2]).toMatchObject({ title: 'Dusk by the river', earned: true, earnedOn: null })

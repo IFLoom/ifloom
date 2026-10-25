@@ -11,7 +11,7 @@ import { commandOf } from '../calls.ts'
 import type { Reference } from '../references.ts'
 import { defineFeature, mergedById, type CommandContext, type FeatureContext } from './feature.ts'
 import { lockedBy } from './locks.ts'
-import { clampStat, lackingLine, statDef, statValue } from './stats.ts'
+import { clampStat, lackingLine, statOf, statValue } from './stats.ts'
 
 /** What an action costs. */
 export type ActionCost = {
@@ -84,11 +84,11 @@ export function actionBlocked(
   id = action.id,
 ): string | undefined {
   if (state.sceneId) return stringOf(game, 'finishFirst')
-  if (!cx.holds(state, action.when, game)) return stringOf(game, 'notOnOffer')
+  if (!cx.holds(state, game, action.when)) return stringOf(game, 'notOnOffer')
   const locked = lockedBy(state, game, { type: 'action', id }, cx)
   if (locked) return locked
   for (const entry of action.blocked ?? []) {
-    if (cx.holds(state, entry.when, game)) return entry.reason
+    if (cx.holds(state, game, entry.when)) return entry.reason
   }
   if (action.once && doneThisTurn(state, id)) return action.once.reason
   const short = costRefusal(state, game, action.cost, cx)
@@ -102,7 +102,7 @@ export function actionBlocked(
 export function costRefusal(state: GameState, game: Game, cost: ActionCost | undefined, cx: FeatureContext): string | undefined {
   for (const [stat, amount] of Object.entries(cost?.stats ?? {})) {
     if (amount > 0 && statValue(state, game, stat, undefined, cx) < amount) {
-      return cost?.reasons?.[stat] ?? lackingLine(statDef(game, stat), stat, amount, game)
+      return cost?.reasons?.[stat] ?? lackingLine(game, stat, amount)
     }
   }
   return undefined
@@ -113,7 +113,7 @@ export function payCost(state: GameState, game: Game, cost: ActionCost, cx: Feat
   let next = state
   for (const [id, amount] of Object.entries(cost.stats ?? {})) {
     // A derived stat is never written; the loader reports one spent.
-    if (!amount || statDef(game, id)?.derive !== undefined) continue
+    if (!amount || statOf(game, id)?.derive !== undefined) continue
     const value = clampStat(next, game, id, (next.stats[id] ?? 0) - amount, cx)
     next = { ...next, stats: { ...next.stats, [id]: value } }
   }
@@ -165,7 +165,7 @@ export const actions = defineFeature<ActionsShape>({
         const sends = sent(action, command.id)
         const ran = sends ? deeper(() => cx.runCommand(counted, game, sends)) : counted
         const paid = payCost(ran, game, action.cost ?? {}, cx)
-        return cx.runEffects(paid, game, cx.buildEffects(ran, game, action.effects ?? []), false)
+        return cx.runEffects(paid, game, cx.buildEffects(game, action.effects ?? []), false)
       },
       effectsOf: (state, command, game, cx) => {
         const action = cx.actionOf(state, game, command.id)
@@ -174,7 +174,7 @@ export const actions = defineFeature<ActionsShape>({
         return [
           ...(sends ? deeper(() => cx.effectsOfCommand(state, game, sends)) : []),
           ...costEffects(action.cost),
-          ...cx.buildEffects(state, game, action.effects ?? []),
+          ...cx.buildEffects(game, action.effects ?? []),
         ]
       },
       spends: (command, game, state, cx) => cx.actionOf(state, game, command.id)?.cost?.stats,
@@ -197,13 +197,13 @@ export const actions = defineFeature<ActionsShape>({
       'actions',
       (game.actions ?? []).map((entry) => entry.id),
     )
-    const statOf = new Map((game.stats ?? []).map((stat) => [stat.id, stat]))
+    const statsById = new Map((game.stats ?? []).map((stat) => [stat.id, stat]))
     for (const action of game.actions ?? []) {
       const source = { list: 'action', id: action.id }
       const where = `action ${action.id}`
       tools.check(source, where, actionReferences(action))
       for (const id of Object.keys(action.cost?.stats ?? {})) {
-        const def = statOf.get(id)
+        const def = statsById.get(id)
         if (!def) tools.problem(source, where, `spends unknown stat "${id}"`)
         else if (def.derive !== undefined) tools.problem(source, where, `spends stat "${id}", which is derived and never written`)
       }

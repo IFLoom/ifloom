@@ -92,9 +92,9 @@ describe('the game’s own code, as a plugin’s', () => {
       },
     })
     const state = begin(game)
-    expect(holds(state, { 'game/tired': true }, game)).toBe(true)
-    expect(applyEffects(state, game, buildEffects(state, game, [{ 'game/tip': { by: 4 } }])).stats.coins).toBe(7)
-    expect(fillTokens('{{v:game/purse}}', state, game)).toBe('3 coins')
+    expect(holds(state, game, { 'game/tired': true })).toBe(true)
+    expect(applyEffects(state, game, buildEffects(game, [{ 'game/tip': { by: 4 } }])).stats.coins).toBe(7)
+    expect(fillTokens(state, game, '{{v:game/purse}}')).toBe('3 coins')
     const napped = apply(state, game, { 'game/nap': true })
     expect(napped.ok && napped.state.kv.napped).toBe(true)
     expect(whyNot({ ...state, stats: { ...state.stats, coins: 20 } }, game, { type: 'custom', name: 'game/nap' })).toBe('Too rich to sleep.')

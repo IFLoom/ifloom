@@ -8,7 +8,7 @@ A cheat can be free for everyone, or refused with a reason (or hidden) while a c
 
 ```ts
 import {
-  cheats, runCheat, cheatUsed, cheatDefs, cheatsView,
+  cheats, runCheat, cheatUsed, cheatsOf, cheatsView,
   type CheatDef, type CheatUse, type CheatsState, type CheatsView, type CheatView,
 } from '@ifloom/plugin-cheats'
 ```
@@ -414,13 +414,14 @@ const runCheat: (cheat: string) => CommandRef
 const cheatUsed: (cheat?: string) => Condition
 ```
 
-### cheatDefs
+### cheatsOf and cheatOf
 
 ```ts
-function cheatDefs(game: Game): CheatDef[]
+function cheatsOf(game: Game): CheatDef[]
+function cheatOf(game: Game, id: string): CheatDef | undefined
 ```
 
-The game's cheats, merged from its content and packs: `game.data.cheats.cheats`.
+The game's cheats, merged from its content and packs: `game.data.cheats.cheats`. `cheatOf` is the one with this id, or `undefined`.
 
 ### cheatsView
 

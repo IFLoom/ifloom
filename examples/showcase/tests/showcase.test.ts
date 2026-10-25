@@ -41,7 +41,7 @@ import { sleep } from '@ifloom/plugin-calendar'
 import { go, pickUp, type PlacesState, type PlacesView } from '@ifloom/plugin-places'
 import { call, talk, type CastView } from '@ifloom/plugin-cast'
 import { cheatUsed, runCheat, type CheatsView } from '@ifloom/plugin-cheats'
-import { hasUnlock, lockContent, recordUnlock, startUnlocks, unlockDefs, unlockedPacks } from '@ifloom/plugin-unlocks'
+import { hasUnlock, lockContent, recordUnlock, startUnlocks, unlocksOf, unlockedPacks } from '@ifloom/plugin-unlocks'
 import { checkUiHints } from '@ifloom/react'
 import { readFileSync } from 'node:fs'
 import { clock, openCamera, smallTown } from '../src/game.ts'
@@ -102,7 +102,7 @@ describe('Small Town', () => {
     state = run(state, go('cafe'))
     expect(view(state, game).scene.body).toContain('Ava is behind the counter')
     expect(view(state, game).scene.body).toContain('very yellow')
-    expect(holds(state, wearing('clothing:raincoat'), game)).toBe(true)
+    expect(holds(state, game, wearing('clothing:raincoat'))).toBe(true)
 
     // The café's stage: the counter while Ava is on shift, and a hotspot on her that talks to her.
     const cafe = (view(state, game).plugins.places as PlacesView).location!
@@ -251,7 +251,7 @@ describe('Small Town', () => {
     state = run(state, { type: 'choose', id: 'stay' }, { type: 'choose', id: 'home' })
     // The next morning at the café she takes it, and keeps it by the till.
     state = run(on(state, 7, 'morning'), go('high-street'), go('cafe'), talk('ava'), { type: 'choose', id: 'shell' })
-    expect(holds(state, { entity: 'keepsake:shell', at: 'character:ava' }, game)).toBe(true)
+    expect(holds(state, game, { entity: 'keepsake:shell', at: 'character:ava' })).toBe(true)
     expect(held()).toEqual(['clothing:raincoat', 'item:paper', 'note:welcome'])
     expect(statValue(state, game, 'friendship', 'character:ava')).toBeGreaterThanOrEqual(35)
   })
@@ -261,7 +261,7 @@ describe('Small Town', () => {
     const lying = () => (view(state, game).plugins.places as PlacesView).things.map((thing) => [thing.ref, thing.name, thing.count])
     state = run(state, dropThing('item:paper'))
     expect(heldCount(state, game, 'item:paper')).toBe(0)
-    expect(holds(state, { entity: 'item:paper', at: 'location:flat' }, game)).toBe(true)
+    expect(holds(state, game, { entity: 'item:paper', at: 'location:flat' })).toBe(true)
     expect(lying()).toEqual([['item:paper', 'newspaper', 1]])
     // Out on the high street it isn't there; back in the flat, it is.
     state = run(state, go('high-street'))
@@ -299,7 +299,7 @@ describe('Small Town', () => {
     state = run(state, runCheat('coins'))
     expect(state.stats.coins).toBe(coins + 20)
     expect(state.turn).toBe(0)
-    expect(holds(state, cheatUsed('coins'), game)).toBe(true)
+    expect(holds(state, game, cheatUsed('coins'))).toBe(true)
     const shown = (s: GameState) => view(s, game).plugins.cheats as CheatsView
     expect(shown(state).cheats.map((cheat) => [cheat.id, cheat.button.disabled ?? null])).toEqual([
       ['coins', null],
@@ -313,7 +313,7 @@ describe('Small Town', () => {
   it('unlocks the supporter edition with the code in .env: the cheat at once, and the café scene once the game is built again', async () => {
     // The showcase's code is public on purpose, so anyone can try it; a real game keeps its codes out of the repo.
     const code = /IFLOOM_UNLOCK_SUPPORTER=(.+)/.exec(readFileSync(new URL('../.env', import.meta.url), 'utf8'))![1].trim()
-    const supporter = unlockDefs(game).find((entry) => entry.id === 'supporter')!
+    const supporter = unlocksOf(game).find((entry) => entry.id === 'supporter')!
     const content = { supporter: await lockContent(code, game.id, supporter, [supporterPack]) }
     const driver = memoryDriver()
     const runner = createRunner(game, startingState(game, { seed: 4 }), { history: true, profile: profile(game, driver) })
@@ -321,7 +321,7 @@ describe('Small Town', () => {
     expect(await codes.enter('SMALL-TOWN-FAN')).toEqual({ ok: false, reason: 'That code doesn’t unlock anything.' })
     const entered = await codes.enter(code.toLowerCase())
     expect(entered).toEqual({ ok: true, value: { unlock: 'supporter', label: 'Supporter edition', already: false, restart: true } })
-    expect(holds(runner.state, hasUnlock('supporter'), game)).toBe(true)
+    expect(holds(runner.state, game, hasUnlock('supporter'))).toBe(true)
     expect(runner.apply(runCheat('energy')).ok).toBe(true)
     // Replayed, the unlock and the cheat play the same.
     const replayed = replay(game, runner.log())
@@ -457,7 +457,7 @@ describe('Small Town', () => {
     if (!loaded.ok) throw new Error(loaded.reason)
     expect(loaded.value.plugins.shop.state).toEqual({ stocked: { counter: { 'item:flapjack': { at: 1, left: 1 } } } })
     expect(loaded.value.plugins.wardrobe.state).toEqual({ worn: { player: { coat: 'clothing:raincoat', neck: null } } })
-    expect(holds(loaded.value, wearing('clothing:raincoat'), game)).toBe(true)
+    expect(holds(loaded.value, game, wearing('clothing:raincoat'))).toBe(true)
     const flapjack = (view(loaded.value, game).plugins.shop as ShopView).vendors[0].goods.find((good) => good.entity === 'item:flapjack')!
     expect(flapjack.stock).toBe(1)
   })

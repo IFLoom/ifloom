@@ -1,7 +1,7 @@
 import { stringOf } from './strings.ts'
 import type { SaveDriver } from './drivers.ts'
 import type { Game } from './game.ts'
-import { pluginById, pluginLabel } from './plugin.ts'
+import { pluginOf, pluginLabel } from './plugin.ts'
 import type { GameState } from './types.ts'
 import { loadState } from './intake.ts'
 import { fail, ok, type Result } from './result.ts'
@@ -142,7 +142,7 @@ export function saves(game: Game, driver: SaveDriver): Saves {
     // Only mods, which the player adds and can add back. An unlocked pack comes back with its code, and a save
     // from before content and packs were split also lists the game's own files, which the player can't fix.
     const missingPacks = (data.meta.packs ?? []).filter((id) => id.startsWith('mod:') && !(game.packs ?? []).includes(id))
-    const missingPlugins = Object.keys(data.meta.plugins ?? {}).filter((id) => !pluginById(game, id))
+    const missingPlugins = Object.keys(data.meta.plugins ?? {}).filter((id) => !pluginOf(game, id))
     // A save from before game versions says nothing of one: it was version 1.
     const recorded = (data.state as { gameVersion?: number }).gameVersion
     // A save from before version 18 called the player's name `player`.

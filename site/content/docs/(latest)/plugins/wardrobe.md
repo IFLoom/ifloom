@@ -182,7 +182,7 @@ whyNot(state, game, wear('clothing:scarf'))      // 'You have no scarf.'
 whyNot(state, game, wear('food:sandwich'))       // 'The sandwich is not something you wear.'
 state = apply(state, game, { type: 'action', id: 'places/buyScarf' }).state
 state = apply(state, game, wear('clothing:scarf')).state
-holds(state, slotFilled('neck'), game)           // true
+holds(state, game, slotFilled('neck'))           // true
 apply(state, game, wear('clothing:scarf')).reason  // 'You are already wearing the scarf.'
 
 state = apply(state, game, go('park')).state
@@ -362,10 +362,10 @@ declare const state: GameState   // the player in the raincoat; Sam holds a scar
 
 const asSam = applyEffects(state, game, [{ you: 'character:sam' }])
 const dressed = apply(asSam, game, wear('clothing:scarf')).state
-holds(dressed, wearing('clothing:raincoat'), game)   // false: Sam isn't wearing it
+holds(dressed, game, wearing('clothing:raincoat'))   // false: Sam isn't wearing it
 const back = applyEffects(dressed, game, [{ you: 'player' }])
-holds(back, wearing('clothing:raincoat'), game)      // true: the player still is
-holds(back, { 'wardrobe/wearing': { entity: 'clothing:scarf', at: 'character:sam' } }, game)   // true
+holds(back, game, wearing('clothing:raincoat'))      // true: the player still is
+holds(back, game, { 'wardrobe/wearing': { entity: 'clothing:scarf', at: 'character:sam' } })   // true
 ```
 
 ## For code

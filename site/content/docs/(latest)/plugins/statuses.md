@@ -9,7 +9,7 @@ While a status lasts, it can change what the player's stats read, and it can run
 ```ts
 import {
   statuses, applyStatus, removeStatus, statusActive,
-  statusesOf, statusesView,
+  statusesOf, statusOf, statusesView,
   type StatusDef, type StatusModifier, type Reapply,
   type StatusesState, type ActiveRecord, type StatusesView, type ActiveStatus,
 } from '@ifloom/plugin-statuses'
@@ -308,13 +308,14 @@ const applyStatus: (id: string) => EffectRef
 const removeStatus: (id: string, runEnd?: boolean) => EffectRef
 ```
 
-### statusesOf
+### statusesOf and statusOf
 
 ```ts
 function statusesOf(game: Game): StatusDef[]
+function statusOf(game: Game, id: string): StatusDef | undefined
 ```
 
-The game's statuses, merged from its content and packs: `game.data.statuses.statuses`.
+The game's statuses, merged from its content and packs: `game.data.statuses.statuses`. `statusOf` is the one with this id, or `undefined`.
 
 ### statusesView
 

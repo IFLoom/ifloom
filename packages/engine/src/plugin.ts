@@ -255,7 +255,7 @@ export type Plugin<S = any, V = unknown> = {
   /**
    * Traits this plugin gives meaning to: named data entities carry, written
    * on a kind, an entity or content's `traits` table, which the plugin reads
-   * with `traitOf`. Each id is the plugin's id, `/` and a name. Data only:
+   * with `declaredTrait`. Each id is the plugin's id, `/` and a name. Data only:
    * what a trait does is the plugin's code.
    */
   traits?: readonly TraitDef<any, any>[]
@@ -430,7 +430,7 @@ export function pluginContext<S>(plugin: Plugin<S>, state: GameState, game: Game
     ...customContext(state, game),
     slice: readSlice(plugin, state, game),
     set: (next, on = state) => writeSlice(plugin, on, next),
-    apply: (effects, on = state) => runEffects(on, game, buildEffects(on, game, effects), options.ending ?? false),
+    apply: (effects, on = state) => runEffects(on, game, buildEffects(game, effects), options.ending ?? false),
     beats: (blocks, id) => styledBeats(blockBeats(state, game, blocks, id, options.picks)),
   }
   if (options.picks) context.picks = options.picks
@@ -456,7 +456,7 @@ export function pluginQuery(game: Game | undefined, name: string) {
  */
 export function absentPartner(game: Game | undefined, name: string): boolean {
   const parts = pluginName(name)
-  if (!parts || pluginById(game, parts.plugin)) return false
+  if (!parts || pluginOf(game, parts.plugin)) return false
   return (game?.plugins ?? []).some((plugin) => plugin.cooperates?.includes(parts.plugin))
 }
 
@@ -512,7 +512,7 @@ export function pluginsOf(game: Game | undefined): readonly Plugin[] {
 }
 
 /** The plugin with this id, if the game has it; `game` is the game's own rules. */
-export function pluginById(game: Game | undefined, id: string): Plugin | undefined {
+export function pluginOf(game: Game | undefined, id: string): Plugin | undefined {
   if (id === GAME_ID) return rulesPlugin(game)
   return game?.plugins?.find((plugin) => plugin.id === id)
 }
@@ -531,7 +531,7 @@ function member<K extends CallTable | 'values' | 'queries'>(
 ): { plugin: Plugin; fn: NonNullable<Plugin[K]>[string] } | undefined {
   const parts = pluginName(full)
   if (!parts) return undefined
-  const plugin = pluginById(game, parts.plugin)
+  const plugin = pluginOf(game, parts.plugin)
   const table = plugin?.[which] as Record<string, NonNullable<Plugin[K]>[string]> | undefined
   if (!plugin || !table || !Object.hasOwn(table, parts.name)) return undefined
   return { plugin, fn: table[parts.name] }
@@ -658,7 +658,7 @@ export function pluginButtons(game: Game, state: GameState): { action: ActionDef
 export function pluginArgProblems(game: Game, table: CallTable, full: string, args: PluginArgs): string[] {
   const parts = pluginName(full)
   if (!parts) return []
-  return pluginById(game, parts.plugin)?.argProblems?.(table, parts.name, args, game) ?? []
+  return pluginOf(game, parts.plugin)?.argProblems?.(table, parts.name, args, game) ?? []
 }
 
 /** Does any plugin guard or price commands? If none does, nothing needs to know a command's effects. */

@@ -30,7 +30,7 @@ describe('__id__', () => {
     expect(shown(g, fresh).entries.map((entry) => entry.marked)).toEqual([false, false])
     const shopped = apply(fresh, g, { type: 'action', id: 'shop' })
     expect(shopped.reason).toBeUndefined()
-    expect(holds(shopped.state, __camel__Marked('bread'), g)).toBe(true)
+    expect(holds(shopped.state, g, __camel__Marked('bread'))).toBe(true)
     const milk = apply(shopped.state, g, mark__Pascal__Command('milk'))
     expect(shown(g, milk.state).entries.map((entry) => entry.marked)).toEqual([true, true])
   })

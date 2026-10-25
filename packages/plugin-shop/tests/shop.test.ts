@@ -121,7 +121,7 @@ describe('the shop, on its own', () => {
     const g = game()
     let state = run(fresh(g), g, buy('counter', 'food:biscuit', 2), buy('counter', 'food:biscuit'))
     expect(whyNot(state, g, buy('counter', 'food:biscuit'))).toBe('Sold out.')
-    expect(holds(state, inStock('counter', 'food:biscuit'), g)).toBe(false)
+    expect(holds(state, g, inStock('counter', 'food:biscuit'))).toBe(false)
     expect(goods(state, g).find((good) => good.entity === 'food:biscuit')).toMatchObject({ stock: 0, buy: { disabled: 'Sold out.' } })
     // Without the calendar, a day is a turn.
     state = run(state, g, { type: 'action', id: 'sleep' })
@@ -176,7 +176,7 @@ describe('the shop, on its own', () => {
 
   it('is open everywhere and always without the calendar and places', () => {
     const g = game()
-    expect(holds(fresh(g), vendorOpen('counter'), g)).toBe(true)
+    expect(holds(fresh(g), g, vendorOpen('counter'))).toBe(true)
     expect(shown(fresh(g), g).vendors[0]).toMatchObject({ here: true, closed: null })
   })
 
@@ -345,9 +345,10 @@ describe('a vendor is an entity with the vendor trait', () => {
       traits: { 'shop/vendor': { discounts: { off: 0.5 }, goods: ['apple', 'pear', 'plum', 'fig'].map((id) => ({ entity: `fruit:${id}` })) } },
     })
     const g = game()
-    expect(vendorsOf(g)).toEqual(['vendor:counter', 'vendor:stall'])
-    expect(vendorOf(g, 'counter')?.goods.map((good) => good.entity)).toContain('food:biscuit')
-    expect(vendorOf(g, 'kiosk')).toBeUndefined()
+    const state = startingState(g)
+    expect(vendorsOf(state, g)).toEqual(['vendor:counter', 'vendor:stall'])
+    expect(vendorOf(state, g, 'counter')?.goods.map((good) => good.entity)).toContain('food:biscuit')
+    expect(vendorOf(state, g, 'kiosk')).toBeUndefined()
   })
 
   it('can be of any kind that carries the trait: a person who sells', () => {
@@ -457,7 +458,7 @@ describe('the shop with the calendar', () => {
     const clock = calendar({ turn: 'period' })
     const g = game(clock)
     let state = run(fresh(g), g, buy('counter', 'food:biscuit', 3))
-    expect(holds(state, vendorOpen('counter'), g)).toBe(true)
+    expect(holds(state, g, vendorOpen('counter'))).toBe(true)
     // An afternoon is a new turn but the same day: no new biscuits.
     state = run(state, g, { type: 'action', id: 'wait' })
     expect(goods(state, g).find((good) => good.entity === 'food:biscuit')!.stock).toBe(0)

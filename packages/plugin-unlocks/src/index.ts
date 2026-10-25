@@ -125,7 +125,7 @@ export type UnlockCodes = {
 }
 
 /** The game's unlocks: `data.unlocks.unlocks`, from its packs. */
-export function unlockDefs(game: Game): UnlockDef[] {
+export function unlocksOf(game: Game): UnlockDef[] {
   return (game.data?.[ID]?.unlocks ?? []) as UnlockDef[]
 }
 
@@ -270,7 +270,7 @@ function sliceOf(state: { plugins?: Record<string, { state: unknown } | undefine
 export function startUnlocks(runner: Runner, options: { content?: Readonly<Record<string, LockedContent>> } = {}): UnlockCodes {
   const game = runner.game
   const content = options.content ?? lockedContent()
-  const defs = () => unlockDefs(game)
+  const defs = () => unlocksOf(game)
   // The unlocks this player has, checked against this release's hashes.
   const known = new Set<string>()
   let recording = false
@@ -362,14 +362,14 @@ export function unlocks(): DefinedPlugin<UnlocksState, UnlocksView> {
         ignoresLocks: true,
         whyNot: (_state, args, { game, slice }) => {
           const id = String(args.id ?? '')
-          if (!unlockDefs(game).some((def) => def.id === id)) return stringOf(game, 'unlocks/unknown')
+          if (!unlocksOf(game).some((def) => def.id === id)) return stringOf(game, 'unlocks/unknown')
           return slice.unlocked.includes(id) ? stringOf(game, 'unlocks/already') : undefined
         },
         run: (_state, args, { slice, set }) => set({ unlocked: [...slice.unlocked, String(args.id)] }),
       },
     },
     view: (_state, { slice, game }): UnlocksView => {
-      const list = unlockDefs(game).map((def) => ({
+      const list = unlocksOf(game).map((def) => ({
         id: def.id,
         label: def.label,
         description: def.description ?? '',
@@ -386,7 +386,7 @@ export function unlocks(): DefinedPlugin<UnlocksState, UnlocksView> {
     check: (game) => {
       const problems: PluginProblem[] = []
       const seen = new Set<string>()
-      for (const def of unlockDefs(game)) {
+      for (const def of unlocksOf(game)) {
         const problem = (what: string) => problems.push({ list: 'unlocks', id: def.id, what })
         if (seen.has(def.id)) problem('two unlocks share this id')
         seen.add(def.id)

@@ -26,7 +26,7 @@ import type { Amount, Command, Condition, Effect, GameState, StartOptions } from
 /** The core's helpers a feature can call. The core hands one to every hook that needs it. */
 export type FeatureContext = {
   /** Whether a condition holds, as `holds` says. */
-  holds: (state: GameState, condition: Condition | undefined, game?: Game) => boolean
+  holds: (state: GameState, game: Game, condition: Condition | undefined) => boolean
   /** Apply effects; while `ending` is true, a `turn` effect does nothing. */
   runEffects: (state: GameState, game: Game, effects: readonly Effect[], ending: boolean) => GameState
   /** Every plugin's `onTurn` hook, as a turn ends. */
@@ -39,8 +39,8 @@ export type FeatureContext = {
   turnContext: (state: GameState, game: Game, before: GameState) => TurnContext
   /** What a command would apply, worked out before it runs, as `effectsOf` says. */
   effectsOf: (state: GameState, game: Game, command: Command) => Effect[]
-  /** Effects as content writes them (custom calls among them) as the effects they stand for, read against `state`. */
-  buildEffects: (state: GameState, game: Game, refs: readonly EffectRef[]) => Effect[]
+  /** Effects as content writes them (custom calls among them) as the effects they stand for. */
+  buildEffects: (game: Game, refs: readonly EffectRef[]) => Effect[]
   /** One of `items` drawn by weight, seeded by `parts`; undefined when there are none. See `weighted`. */
   weighted: <T>(items: readonly T[], weightOf: (item: T) => number | undefined, ...parts: (string | number)[]) => T | undefined
   /** A whole number from 0 to `max - 1`, seeded by `parts`. See `draw`. */
@@ -48,9 +48,9 @@ export type FeatureContext = {
   /** A custom value by name, the game's or a plugin's. */
   customValue: (game: Game | undefined, name: string) => ((state: GameState, args?: Record<string, unknown>) => string | number) | undefined
   /** An `Amount` worked out in this state, as `amountOf` does. */
-  amount: (state: GameState, game: Game | undefined, amount: Amount) => number
+  amount: (state: GameState, game: Game, amount: Amount) => number
   /** A line with its prose tokens filled in for this save, as `fillTokens` does. */
-  fillTokens: (text: string, state: GameState, game: Game) => string
+  fillTokens: (state: GameState, game: Game, text: string) => string
   /** What the plugins' `statModifiers` change about the player's stats right now. */
   statModifiers: (state: GameState, game: Game) => readonly StatModifier[]
   /** What the plugins put on background channels, by channel. */
@@ -104,9 +104,9 @@ export type StateField<T> = {
 
 /** A kind of condition: whether it holds, why, and what it names. */
 export type ConditionEntry<C> = {
-  holds: (state: GameState, condition: C, game: Game | undefined, cx: FeatureContext) => boolean
+  holds: (state: GameState, condition: C, game: Game, cx: FeatureContext) => boolean
   /** One line for `explain`: what it read, what it wanted. */
-  explain: (state: GameState, condition: C, game: Game | undefined, cx: FeatureContext) => string
+  explain: (state: GameState, condition: C, game: Game, cx: FeatureContext) => string
   /** What it names, for the content checker. Nested conditions come back as `{ when }`. */
   references: (condition: C) => Reference[]
 }

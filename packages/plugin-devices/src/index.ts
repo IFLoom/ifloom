@@ -187,18 +187,18 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
 
   function refusal(state: GameState, game: Game, app: AppDef | undefined): string | undefined {
     if (!app) return stringOf(game, 'devices/noSuchApp')
-    if (!holds(state, app.when, game)) return stringOf(game, 'devices/notInstalled')
-    return app.blocked?.find((entry) => holds(state, entry.when, game))?.reason
+    if (!holds(state, game, app.when)) return stringOf(game, 'devices/notInstalled')
+    return app.blocked?.find((entry) => holds(state, game, entry.when))?.reason
   }
 
   /** Is something left off the screen by one of its `blocked` entries that hides? */
   function hides(state: GameState, game: Game, blocked: readonly Blocked[] | undefined): boolean {
-    return Boolean(blocked?.some((entry) => entry.hide && holds(state, entry.when, game)))
+    return Boolean(blocked?.some((entry) => entry.hide && holds(state, game, entry.when)))
   }
 
   function badgeOf(state: GameState, game: Game, app: AppDef): number | boolean {
     if (app.badge === undefined) return 0
-    if (typeof app.badge === 'object' && 'when' in app.badge) return holds(state, app.badge.when, game)
+    if (typeof app.badge === 'object' && 'when' in app.badge) return holds(state, game, app.badge.when)
     return amountOf(state, game, app.badge)
   }
 
@@ -212,7 +212,7 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
       return {
         type: 'actions',
         actions: section.actions
-          .filter((action) => holds(state, action.when, game) && !hides(state, game, action.blocked))
+          .filter((action) => holds(state, game, action.when) && !hides(state, game, action.blocked))
           .map((action) => renderAction(state, game, action, ID)),
       }
     }
@@ -315,7 +315,7 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
     view: (state, context): DevicesView => ({
       devices: devicesOf(context.game).map((device): DeviceView => {
         const { slice, game } = context
-        const installed = apps(game).filter((app) => app.on === device.id && holds(state, app.when, game) && !hides(state, game, app.blocked))
+        const installed = apps(game).filter((app) => app.on === device.id && holds(state, game, app.when) && !hides(state, game, app.blocked))
         const shown = installed.map((app) => appView(state, context, app, false))
         const openId = slice.open[device.id] ?? null
         const openApp = installed.find((app) => app.id === openId)

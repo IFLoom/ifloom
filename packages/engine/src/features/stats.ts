@@ -188,7 +188,7 @@ export type StatsShape = {
   fill: 'stats'
 }
 
-export function statDef(game: Game, id: string): StatDef | undefined {
+export function statOf(game: Game, id: string): StatDef | undefined {
   return game.stats?.find((stat) => stat.id === id)
 }
 
@@ -231,7 +231,7 @@ export function statValue(state: GameState, game: Game, id: string, whose: strin
   // The plugins' modifiers change what the player's stats read, never what is kept.
   const modifiers = of === undefined ? cx.statModifiers(state, game) : []
   const read = (key: string, depth: number): number => {
-    const def = statDef(game, key)
+    const def = statOf(game, key)
     let value: number
     if (def?.derive === undefined) value = kept(key) ?? def?.start ?? 0
     else if (depth > DEPTH) return 0
@@ -293,7 +293,7 @@ export function statLevel(
   of: string | undefined,
   cx: FeatureContext,
 ): { level: number; next: number | null; progress: number } | undefined {
-  const def = statDef(game, id)
+  const def = statOf(game, id)
   if (!def?.levels) return undefined
   const at = def.levels.at
   const value = statValue(state, game, id, of, cx)
@@ -379,7 +379,7 @@ const working = new Set<string>()
 
 /** A stat's bound worked out: as written for a number, else its `Amount` read now, with `fallback` while it is already being read. */
 function bound(state: GameState, game: Game, id: string, which: 'min' | 'max', fallback: number, cx: FeatureContext): number {
-  const amount = statDef(game, id)?.[which]
+  const amount = statOf(game, id)?.[which]
   if (amount === undefined) return fallback
   if (typeof amount === 'number') return amount
   // A value nobody declares, as from a plugin the game no longer has, leaves the default.
@@ -411,7 +411,8 @@ export function clampStat(state: GameState, game: Game, id: string, value: numbe
 }
 
 /** The refusal for a cost the player cannot cover. */
-export function lackingLine(def: StatDef | undefined, id: string, amount: number, game?: Game): string {
+export function lackingLine(game: Game, id: string, amount: number): string {
+  const def = statOf(game, id)
   if (def?.lacking) return counted(def.lacking, amount)
   return stringOf(game, 'notEnough', { stat: (def?.label ?? id).toLowerCase(), n: amount })
 }
@@ -468,11 +469,11 @@ function levelUps(before: GameState, after: GameState, game: Game, cx: FeatureCo
 function writeStat(state: GameState, game: Game, key: StatKey, of: string | undefined, to: (was: number) => number, cx: FeatureContext): GameState {
   // Written with `of` already made real: `'you'` and `'player'` are read by `ownerOf` first.
   // A derived stat is worked out, never written: the loader reports the effect.
-  if (statDef(game, key)?.derive !== undefined) return state
+  if (statOf(game, key)?.derive !== undefined) return state
   if (of !== undefined) {
     const entity = entityOf(state, game, of)
     if (!entity) return state
-    const value = clampStat(state, game, key, to(entityStat(state, game, of, key) ?? statDef(game, key)?.start ?? 0), cx)
+    const value = clampStat(state, game, key, to(entityStat(state, game, of, key) ?? statOf(game, key)?.start ?? 0), cx)
     return writeEntity(state, of, { ...entity, stats: { ...entity.stats, [key]: value } })
   }
   const was = state.stats[key] ?? 0
@@ -568,9 +569,9 @@ export const stats = defineFeature<StatsShape>({
       return { stats }
     },
     check: (game, tools) => {
-      const statOf = new Map((game.stats ?? []).map((stat) => [stat.id, stat]))
+      const statsById = new Map((game.stats ?? []).map((stat) => [stat.id, stat]))
       for (const id of game.carryOver?.stats ?? []) {
-        const def = statOf.get(id)
+        const def = statsById.get(id)
         if (!def) tools.problem({ list: 'carryOver' }, 'carryOver', `unknown stat "${id}"`)
         else if (def.of !== undefined) tools.problem({ list: 'carryOver' }, 'carryOver', `stat "${id}" belongs to ${def.of}, not the player`)
       }
@@ -598,10 +599,10 @@ export const stats = defineFeature<StatsShape>({
     for (const { where, what } of statProblems(game)) tools.problem({ list: 'stat', id: where.slice('stat '.length) }, where, what)
   },
   resolve: (game) => {
-    const statOf = new Map((game.stats ?? []).map((stat) => [stat.id, stat]))
+    const statsById = new Map((game.stats ?? []).map((stat) => [stat.id, stat]))
     return {
       stat: (ref) => {
-        const def = statOf.get(ref.stat)
+        const def = statsById.get(ref.stat)
         if ('starts' in ref) {
           if (def?.of !== ref.starts) return [`no ${ref.starts} stat named "${ref.stat}"`]
           return def.derive !== undefined ? [`stat "${ref.stat}" is derived: it is worked out, never written`] : []
@@ -618,7 +619,7 @@ export const stats = defineFeature<StatsShape>({
   view: (state, game, _shown, cx) => ({
     // The listed stats the player can see right now, in the order the game declared them.
     stats: (game.stats ?? [])
-      .filter((stat) => !stat.of && stat.listed !== false && cx.holds(state, stat.visible, game))
+      .filter((stat) => !stat.of && stat.listed !== false && cx.holds(state, game, stat.visible))
       .map((stat) => statView(state, game, stat, undefined, cx)),
     statsById: Object.fromEntries((game.stats ?? []).filter((stat) => !stat.of).map((stat) => [stat.id, statView(state, game, stat, undefined, cx)])),
   }),

@@ -98,7 +98,7 @@ describe('messages', () => {
       }),
     ])
     expect(view(state, g).notices.byTag).toEqual({ texts: 1 })
-    expect(holds(state, messageArrived('msg.hey'), g)).toBe(true)
+    expect(holds(state, g, messageArrived('msg.hey'))).toBe(true)
   })
 
   it('offer replies as choices: one, once, with effects that can bring the next message', () => {
@@ -107,7 +107,7 @@ describe('messages', () => {
     expect(shown(state, g).channels[0].threads[0].messages[0].replies.map((reply) => reply.label)).toEqual(['Yes!', 'No…'])
     state = apply(state, g, replyTo('msg.hey', 'yes')).state
     expect(whyNot(state, g, replyTo('msg.hey', 'no'))).toBe('You have already replied.')
-    expect(holds(state, messageReplied('msg.hey', 'yes'), g)).toBe(true)
+    expect(holds(state, g, messageReplied('msg.hey', 'yes'))).toBe(true)
     const thread = shown(state, g).channels[0].threads[0]
     expect(thread.messages.map((message) => [message.id, message.replied])).toEqual([
       ['msg.hey', 'Yes!'],
@@ -260,7 +260,7 @@ describe('pools', () => {
     const [first] = keys(state, g)
     expect(['chat.rain', 'chat.beans']).toContain(first)
     expect(view(state, g).notices.byTag).toEqual({ texts: 1 })
-    expect(holds(state, messageArrived(first), g)).toBe(true)
+    expect(holds(state, g, messageArrived(first))).toBe(true)
     expect(shown(state, g).unread).toBe(1)
     expect(replay(g, runner.log())).toEqual({ ok: true, value: runner.state })
   })
@@ -275,7 +275,7 @@ describe('pools', () => {
     expect(apply(state, g, chat).state.plugins).toEqual(state.plugins)
     // Two days on, both can come again.
     state = clock.write(state, { day: 3, period: 'morning' })
-    expect(holds(state, messageSince('chat.rain', { gte: 2 }), g)).toBe(true)
+    expect(holds(state, g, messageSince('chat.rain', { gte: 2 }))).toBe(true)
     state = apply(state, g, chat).state
     state = apply(state, g, chat).state
     const all = keys(state, g)
@@ -290,7 +290,7 @@ describe('pools', () => {
     state = apply(state, g, replyTo('chat.rain~2', 'ok')).state
     expect(whyNot(state, g, replyTo('chat.rain~2', 'ok'))).toBe('You have already replied.')
     expect(whyNot(state, g, replyTo('chat.rain', 'ok'))).toBeUndefined()
-    expect(holds(state, messageReplied('chat.rain', 'ok'), g)).toBe(true)
+    expect(holds(state, g, messageReplied('chat.rain', 'ok'))).toBe(true)
     expect(shown(state, g).unread).toBe(3)
   })
 
@@ -307,7 +307,7 @@ describe('pools', () => {
       version: 2,
       state: { arrived: [{ key: 'msg.hey', message: 'msg.hey', turn: 3, day: 3 }], replied: { 'msg.hey': 'yes' }, read: { 'msg.hey': true } },
     })
-    expect(holds(loaded.value, messageReplied('msg.hey', 'yes'), g)).toBe(true)
+    expect(holds(loaded.value, g, messageReplied('msg.hey', 'yes'))).toBe(true)
     expect(shown(loaded.value, g).channels[0].threads[0].messages[0]).toMatchObject({ key: 'msg.hey', replied: 'Yes!', read: true })
   })
 

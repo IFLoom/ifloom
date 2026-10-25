@@ -11,7 +11,7 @@ A quest is a list of stages, and each stage is done by a [condition](/docs/refer
 ```ts
 import {
   quests, questActive, questDone, questReached, startQuest, trackQuest, seeQuests,
-  advance, questDefs, questsView,
+  advance, questsOf, questsView,
   type QuestDef, type QuestStage, type QuestsState, type QuestsView, type QuestEntry,
 } from '@ifloom/plugin-quests'
 ```
@@ -203,7 +203,7 @@ journal(state).toFind                            // 0
 
 state = apply(state, game, go('cafe')).state
 state = run(state, 'coffee')
-holds(state, questDone('settle'), game)          // true
+holds(state, game, questDone('settle'))          // true
 ```
 
 The showcase's own quests are in `examples/showcase/src/story/moving-day.ts` and `story/ava.ts`. [Small Town](/docs/guide/showcase#quests) has a quest that starts another, and a stage done by the feed's condition.
@@ -419,13 +419,14 @@ const trackQuest: (quest?: string) => CommandRef
 const seeQuests: (quest?: string) => CommandRef
 ```
 
-### questDefs
+### questsOf and questOf
 
 ```ts
-function questDefs(game: Game): QuestDef[]
+function questsOf(game: Game): QuestDef[]
+function questOf(game: Game, id: string): QuestDef | undefined
 ```
 
-The game's quests, merged from its content and packs: `game.data.quests.quests`.
+The game's quests, merged from its content and packs: `game.data.quests.quests`. `questOf` is the one with this id, or `undefined`.
 
 ### advance
 

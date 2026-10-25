@@ -28,7 +28,7 @@ import {
   entityName,
   entityOf,
   entityTags,
-  entityTrait,
+  traitOf,
   heldBy,
   heldCount,
   holds,
@@ -38,7 +38,8 @@ import {
   stringOf,
   renderAction,
   stageView,
-  traitOf,
+  declaredTrait,
+  declaredWithTrait,
   withTrait,
   type ActionDef,
   type Blocked,
@@ -244,8 +245,8 @@ function declared(game: Game): Map<EntityRef, Place> {
   let found = declaredCache.get(game)
   if (!found) {
     found = new Map()
-    for (const ref of withTrait(game, TRAIT)) {
-      const data = traitOf(game, ref, TRAIT)
+    for (const ref of declaredWithTrait(game, TRAIT)) {
+      const data = declaredTrait(game, ref, TRAIT)
       if (data) found.set(ref, data)
     }
     declaredCache.set(game, found)
@@ -254,28 +255,29 @@ function declared(game: Game): Map<EntityRef, Place> {
 }
 
 /**
- * Every place in the game, as references: every entity with the
- * `places/location` trait. Given only the game, the places content declares,
- * in its order; given a state too, every place in the game now, those made
- * in play included.
+ * Every place in the game now, as references: every entity with the
+ * `places/location` trait, the ones content declares in its order, then
+ * those made in play.
  */
-export function locationsOf(game: Game, state?: GameState): EntityRef[] {
-  return withTrait(game, TRAIT, state)
+export function locationsOf(state: GameState, game: Game): EntityRef[] {
+  return withTrait(state, game, TRAIT)
 }
 
 /**
  * The `places/location` trait of a place, named by its id (`'park'`) or its
- * reference. Without a state, only the places content declares; with one, a
- * place made in play too, read through what it was made `like`. Undefined
- * for anything else.
+ * reference: one content declares, or one made in play, read through what
+ * it was made `like`. Undefined for anything else.
  */
-export function locationOf(game: Game, id: string | null | undefined, state?: GameState): Place | undefined {
-  if (id === null || id === undefined) return undefined
-  const ref = locationRef(id)
-  const own = declared(game).get(ref)
+export function locationOf(state: GameState, game: Game, ref: string | null | undefined): Place | undefined {
+  if (ref === null || ref === undefined) return undefined
+  const full = locationRef(ref)
+  const own = declared(game).get(full)
   if (own) return own
-  return state && entityOf(state, game, ref) ? entityTrait(state, game, ref, TRAIT) : undefined
+  return entityOf(state, game, full) ? traitOf(state, game, full, TRAIT) : undefined
 }
+
+/** A place content declares, by id or reference, for a check, which has no state. */
+const declaredLocation = (game: Game, id: string): Place | undefined => declared(game).get(locationRef(id))
 
 /** Where the player is, read straight from the state: no game needed. */
 export function where(state: GameState): string | null {
@@ -296,7 +298,7 @@ const placeIds = (value: unknown): string[] => ids(value).map((id) => short(loca
 /** What lies in a place that the player can see: what its entity holds, but things whose `visible` doesn't hold. */
 function lyingIn(state: GameState, game: Game, at: string): { ref: EntityRef; count: number }[] {
   return heldBy(state, game, locationRef(at)).filter(({ ref }) =>
-    holds(state, bindCurrent(game.entities?.find((entity) => `${entity.of}:${entity.id}` === ref)?.visible, ref), game),
+    holds(state, game, bindCurrent(game.entities?.find((entity) => `${entity.of}:${entity.id}` === ref)?.visible, ref)),
   )
 }
 
@@ -306,10 +308,10 @@ function pictureOf(state: GameState, game: Game, ref: EntityRef): string | null 
   return image === undefined ? null : artSrc(image)
 }
 
-/** The places this one is inside, nearest first, as far as they go without looping. */
-function ancestors(game: Game, id: string, state?: GameState): string[] {
+/** The places this one is inside, nearest first, as far as they go without looping, each read with `place`. */
+function ancestors(place: (id: string) => Place | undefined, id: string): string[] {
   const out: string[] = []
-  for (let at = locationOf(game, id, state)?.parent; at && !out.includes(at); at = locationOf(game, at, state)?.parent) out.push(at)
+  for (let at = place(id)?.parent; at && !out.includes(at); at = place(at)?.parent) out.push(at)
   return out
 }
 
@@ -318,12 +320,12 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
   /** Why the player cannot go there now, or undefined. */
   function goBlocked(state: GameState, game: Game, at: string | null, to: string): string | undefined {
     if (state.sceneId) return stringOf(game, 'finishFirst')
-    const place = locationOf(game, to, state)
+    const place = locationOf(state, game, to)
     if (!place) return stringOf(game, `${ID}/noSuchPlace`)
     if (to === at) return stringOf(game, `${ID}/alreadyHere`)
-    const blocked = place.blocked?.find((entry) => holds(state, entry.when, game))
+    const blocked = place.blocked?.find((entry) => holds(state, game, entry.when))
     if (blocked) return blocked.reason
-    if (at === null || !placeIds(locationOf(game, at, state)?.exits).includes(to)) return stringOf(game, `${ID}/cannotGetThere`)
+    if (at === null || !placeIds(locationOf(state, game, at)?.exits).includes(to)) return stringOf(game, `${ID}/cannotGetThere`)
     return undefined
   }
 
@@ -345,10 +347,10 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
       const problems: string[] = []
       if (!Array.isArray(data?.exits)) problems.push('a place needs its exits: exits: [] for none')
       if (!Array.isArray(data?.body)) problems.push('a place needs a body: body: [{ text: "..." }]')
-      for (const exit of Array.isArray(data?.exits) ? data.exits : []) if (!locationOf(game, exit)) problems.push(`exit to unknown location "${exit}"`)
+      for (const exit of Array.isArray(data?.exits) ? data.exits : []) if (!declaredLocation(game, exit)) problems.push(`exit to unknown location "${exit}"`)
       if (data?.parent !== undefined) {
-        if (!locationOf(game, data.parent)) problems.push(`inside unknown location "${data.parent}"`)
-        else if (ancestors(game, short(ref)).includes(short(ref))) problems.push('is inside itself')
+        if (!declaredLocation(game, data.parent)) problems.push(`inside unknown location "${data.parent}"`)
+        else if (ancestors((id) => declaredLocation(game, id), short(ref)).includes(short(ref))) problems.push('is inside itself')
       }
       return problems
     },
@@ -389,7 +391,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
       /** `{ 'places/within': { location: 'office' } }`: the player is there, or somewhere inside it; with a list, any of them. */
       within: (state, args, { slice, game }) => {
         if (slice.at === null) return false
-        const around = [slice.at, ...ancestors(game, slice.at, state)]
+        const around = [slice.at, ...ancestors((id) => locationOf(state, game, id), slice.at)]
         return placeIds(args.location).some((id) => around.includes(id))
       },
     },
@@ -397,7 +399,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
       /** `{ 'places/move': { location: 'park' } }`: be somewhere else at once, closing any scene. No exit needed, and nothing on arrival. */
       move: (state, args, { set, game }) => {
         const to = placeIds(args.location)[0]
-        if (!locationOf(game, to, state)) return state
+        if (!locationOf(state, game, to)) return state
         return set({ at: to }, { ...state, sceneId: null })
       },
     },
@@ -408,8 +410,8 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
         run: (state, args, { set, apply, game }) => {
           const to = placeIds(args.id)[0]
           const arrived = set({ at: to })
-          const arrive = locationOf(game, to, state)?.arrive
-          return arrive && holds(arrived, arrive.when, game) ? apply(arrive.effects, arrived) : arrived
+          const arrive = locationOf(state, game, to)?.arrive
+          return arrive && holds(arrived, game, arrive.when) ? apply(arrive.effects, arrived) : arrived
         },
       },
       /** `{ 'places/pickUp': { id } }`: pick up one of the thing `id` lying where the player is, for whoever they are playing. */
@@ -422,40 +424,40 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
     queries: {
       here: (_state, _args, { slice }) => slice.at,
       /** The entity of where the player is, which holds what is put down there (`'location:park'`); null when nowhere. */
-      holder: (state, _args, { slice, game }) => (slice.at !== null && locationOf(game, slice.at, state) ? locationRef(slice.at) : null),
+      holder: (state, _args, { slice, game }) => (slice.at !== null && locationOf(state, game, slice.at) ? locationRef(slice.at) : null),
       /** Every place, each its trait with its `id` and `ref`. */
       all: (state, _args, { game }) =>
-        locationsOf(game, state).flatMap((ref) => {
-          const place = locationOf(game, ref, state)
+        locationsOf(state, game).flatMap((ref) => {
+          const place = locationOf(state, game, ref)
           return place ? [{ ...place, id: short(ref), ref }] : []
         }),
-      known: (state, args, { game }) => Boolean(locationOf(game, ids(args.location)[0], state)),
-      exits: (state, _args, { slice, game }) => (locationOf(game, slice.at, state)?.exits ?? []).filter((id) => locationOf(game, id, state)),
+      known: (state, args, { game }) => Boolean(locationOf(state, game, ids(args.location)[0])),
+      exits: (state, _args, { slice, game }) => (locationOf(state, game, slice.at)?.exits ?? []).filter((id) => locationOf(state, game, id)),
     },
     values: {
-      name: (state, _args, { slice, game }) => (slice.at !== null && locationOf(game, slice.at, state) ? entityName(state, game, locationRef(slice.at)) : ''),
+      name: (state, _args, { slice, game }) => (slice.at !== null && locationOf(state, game, slice.at) ? entityName(state, game, locationRef(slice.at)) : ''),
       desc: (state, _args, { slice, game }) =>
-        slice.at !== null && locationOf(game, slice.at, state) ? (entityDesc(state, game, locationRef(slice.at)) ?? '') : '',
+        slice.at !== null && locationOf(state, game, slice.at) ? (entityDesc(state, game, locationRef(slice.at)) ?? '') : '',
     },
-    label: (state, { slice, game }) => (slice.at !== null && locationOf(game, slice.at, state) ? entityName(state, game, locationRef(slice.at)) : undefined),
+    label: (state, { slice, game }) => (slice.at !== null && locationOf(state, game, slice.at) ? entityName(state, game, locationRef(slice.at)) : undefined),
     stage: (state, { slice, game }) => {
-      const place = locationOf(game, slice.at, state)
+      const place = locationOf(state, game, slice.at)
       if (!place || slice.at === null) return undefined
       return { id: slice.at, title: entityName(state, game, locationRef(slice.at)), body: place.body, ...(place.ui !== undefined ? { ui: place.ui } : {}) }
     },
-    buttons: (state, { slice, game }) => locationOf(game, slice.at, state)?.actions,
-    audio: (state, { slice, game }) => locationOf(game, slice.at, state)?.audio,
+    buttons: (state, { slice, game }) => locationOf(state, game, slice.at)?.actions,
+    audio: (state, { slice, game }) => locationOf(state, game, slice.at)?.audio,
     view: (state, { slice, game, picks }): PlacesView => {
-      const here = locationOf(game, slice.at, state)
+      const here = locationOf(state, game, slice.at)
       const at = here ? slice.at : null
       const idle = !state.sceneId && !lockedOut(state, game)
       const exits: ExitView[] = []
       for (const id of idle && here ? here.exits : []) {
-        const dest = locationOf(game, id, state)
+        const dest = locationOf(state, game, id)
         if (!dest) continue
         const command = commandOf(go(id))
         if (lockOn(state, game, command)?.hide) continue
-        if (dest.blocked?.some((entry) => entry.hide && holds(state, entry.when, game))) continue
+        if (dest.blocked?.some((entry) => entry.hide && holds(state, game, entry.when))) continue
         const ref = locationRef(id)
         exits.push({
           ...renderAction(state, game, { id, label: entityName(state, game, ref), command }),

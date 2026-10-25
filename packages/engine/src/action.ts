@@ -6,7 +6,7 @@ import type { ActionDef, Game } from './game.ts'
 import { commandContext, featureContext } from './core.ts'
 import { rendering } from './availability.ts'
 import * as actions from './features/actions.ts'
-import { pluginById, pluginContext, pluginName } from './plugin.ts'
+import { pluginOf, pluginContext, pluginName } from './plugin.ts'
 import type { GameState } from './types.ts'
 
 export type { ActionCost } from './features/actions.ts'
@@ -17,10 +17,10 @@ export { actionReferences, need } from './features/actions.ts'
  * content `actions` by its id, or a plugin's by `'<plugin>/<id>'`, as its
  * `action` answers, else among its buttons now. Undefined when there is none.
  */
-export function actionById(state: GameState, game: Game, id: string): ActionDef | undefined {
+export function actionOf(state: GameState, game: Game, id: string): ActionDef | undefined {
   const parts = pluginName(id)
   if (!parts) return game.actions?.find((action) => action.id === id)
-  const plugin = pluginById(game, parts.plugin)
+  const plugin = pluginOf(game, parts.plugin)
   if (!plugin) return undefined
   const context = pluginContext(plugin, state, game)
   return plugin.action?.(state, parts.name, context) ?? plugin.buttons?.(state, context)?.find((action) => action.id === parts.name)

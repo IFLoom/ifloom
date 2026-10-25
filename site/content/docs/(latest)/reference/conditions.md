@@ -217,7 +217,7 @@ Before the first visit, `since` fails every range, so the `blocked` entry doesn'
 
 Tests a [stat](/docs/reference/state#stats) against a range. Coins, energy and every other number the player has are [declared stats](/docs/reference/stats), so this is the condition for all of them.
 
-It reads the stat with [`statValue`](/docs/reference/stats#statvalue), so a [derived stat](/docs/reference/stats#derived-stats) is worked out from its formula, and a stat the save doesn't have yet reads as its `start`. [`holds`](#holds) called without a game can't do either, and reads `state.stats` as it is, with a missing stat as 0.
+It reads the stat with [`statValue`](/docs/reference/stats#statvalue), so a [derived stat](/docs/reference/stats#derived-stats) is worked out from its formula, and a stat the save doesn't have yet reads as its `start`.
 
 With `of`, it tests an [entity](/docs/reference/entities)'s stat. `of` is an [entity reference](/docs/reference/entities#entityref), or `'$'` inside an [`each`](/docs/reference/effects#each) or a [`count`](#count)'s `where`. `of: 'you'` is the [protagonist](/docs/reference/entities#protagonists-you-and-player) being played, or the player when there's none, and `of: 'player'` is the player.
 
@@ -285,7 +285,6 @@ With `of`, it reads an [entity](/docs/reference/entities)'s level, as [`{ stat }
 
 **Gotchas.**
 - A stat with no `levels` is always at level 0, so `{ level: 'charm' }` on it never holds and `lt` always does. The loader checks that the stat is declared and named on the right owner, but not that it has levels.
-- It needs the game to find the levels. [`holds`](#holds) without a game reads every level as 0.
 
 [`explain`](#explain) says `stat cooking is at level 1; wants 2 or more`, or `staff:ana stat skill is at level 2; wants 2 or more` with an `of`.
 
@@ -386,12 +385,11 @@ export const rules: GameRules = {
 
 **Gotchas.**
 - A name that neither the game nor its plugins declare is false rather than an error, so a broken mod hides content instead of crashing. The [content checker](/docs/reference/checks) reports it, and for a name with no `/`, says to put `game/` in front.
-- Without a `game`, every call is false.
 
 ## holds
 
 ```ts
-function holds(state: GameState, condition: Condition | undefined, game?: Game): boolean
+function holds(state: GameState, game: Game, condition: Condition | undefined): boolean
 ```
 
 Evaluates a condition. `undefined` is true, so a `when` you leave out always applies.
@@ -401,38 +399,38 @@ import { holds } from '@ifloom/engine'
 import { at } from '@ifloom/plugin-places'
 import { here } from '@ifloom/plugin-cast'
 
-holds(state, { kv: 'metAva' })                // true once you've met Ava
-holds(state, at('cafe'), town)                // a plugin's condition needs the game
-holds(state, here('ava'), town)               // so does the cast's
+holds(state, town, { kv: 'metAva' })          // true once you've met Ava
+holds(state, town, at('cafe'))                // a plugin's condition
+holds(state, town, here('ava'))               // the cast's
 ```
 
-**Gotcha.** A call to the game's own condition or a plugin's needs `game`. Without it, they're false, and `level` reads every level as 0. A `count`'s `where` is tested with the same `game`, or without one.
+The state comes first and the game second, as in every function that reads the game in play. A `count`'s `where` is tested with the same game.
 
 ## inRange
 
 ```ts
-function inRange(value: number, range: Range, state?: GameState, game?: Game): boolean
+function inRange(state: GameState, game: Game, value: number, range: Range): boolean
 ```
 
 Whether a number is in a [`Range`](#range), tested the way every built-in condition tests one. Every bound given must hold, and a range with no bounds at all asks whether the number is above 0. Use it in a [plugin](/docs/reference/plugins)'s condition that takes a range in its `with`, so it reads the way the built-in ones do.
 
-The engine works out the bounds at the top of a call's arguments before it asks the plugin, so `args` there already holds numbers. For a range deeper in, such as `{ stacks: { gte: 2 } }`, pass the state and the game, and a bound that is an [`Amount`](/docs/reference/amounts#amount) is worked out. Without them, such a bound fails.
+The engine works out the bounds at the top of a call's arguments before it asks the plugin, so `args` there already holds numbers. A range deeper in, such as `{ stacks: { gte: 2 } }`, is worked out by `inRange` itself: a bound that is an [`Amount`](/docs/reference/amounts#amount) is read in the state and the game you pass.
 
 ```ts
 import { inRange, type Range } from '@ifloom/engine'
 
 // A plugin condition: { 'dishes/dirty': { gte: 3 } }, or { 'dishes/dirty': true } for "any at all".
 conditions: {
-  dirty: (_state, args, { slice }) => inRange(slice.dirty, args as Range),
+  dirty: (state, args, { slice, game }) => inRange(state, game, slice.dirty, args as Range),
 },
 ```
 
 ```ts
-inRange(4, { gte: 3 })   // true
-inRange(0, {})           // false: no bounds asks for above 0
+inRange(state, game, 4, { gte: 3 })   // true
+inRange(state, game, 0, {})           // false: no bounds asks for above 0
 ```
 
-**Gotcha.** `with` is unchecked content. Without a state and a game, a bound that isn't a number fails. With them, one that isn't an amount reads as 0. Check them first if a mod might pass anything.
+**Gotcha.** `with` is unchecked content. A bound that isn't an amount reads as 0. Check them first if a mod might pass anything.
 
 ## Why does it hold?
 
@@ -441,7 +439,7 @@ inRange(0, {})           // false: no bounds asks for above 0
 ### explain
 
 ```ts
-function explain(state: GameState, condition: Condition | undefined, game?: Game): Explanation
+function explain(state: GameState, game: Game, condition: Condition | undefined): Explanation
 ```
 
 Walks the whole condition against the state. Every part of an `all`, `any` or `not` is marked as holding or not, and every leaf says what it read and what it wanted. The top-level `holds` always agrees with [`holds`](#holds).
@@ -450,13 +448,13 @@ Walks the whole condition against the state. Every part of an `all`, `any` or `n
 import { explain } from '@ifloom/engine'
 import { at } from '@ifloom/plugin-places'
 
-const why = explain(state, {
+const why = explain(state, town, {
   all: [
     { kv: 'metAva' },
     { any: [{ stat: 'coins', gte: 5 }, { level: 'charm', gte: 1 }] },
     { not: at('cafe') },
   ],
-}, town)
+})
 
 why.holds                        // false
 why.parts?.[2].holds             // false: the player is in the café

@@ -15,7 +15,7 @@ import {
   type GameState,
   type Content,
 } from '@ifloom/engine'
-import { drawEntity, generate, generators, templateDefs, type PoolDef, type TemplateDef } from '../src/index.ts'
+import { drawEntity, generate, generators, templatesOf, type PoolDef, type TemplateDef } from '../src/index.ts'
 
 const pools: PoolDef[] = [
   { id: 'first', values: ['Ana', 'Ben', 'Cleo', 'Dev', 'Esme', 'Finn'] },
@@ -89,7 +89,7 @@ describe('generators', () => {
       expect(['none', 'dog', 'parrot']).toContain(made.kv.company)
       expect(made.kv.local).toBe(true)
     }
-    expect(holds(state, { count: 'visitor', gte: 3 }, g)).toBe(true)
+    expect(holds(state, g, { count: 'visitor', gte: 3 })).toBe(true)
   })
 
   it('draw each one differently, and the same again from the same save', () => {
@@ -106,8 +106,8 @@ describe('generators', () => {
 
   it('pick from a pool by weight', () => {
     const g = game()
-    const template = templateDefs(g)[0]
-    const company = Array.from({ length: 400 }, (_, n) => drawEntity(template, fresh(g), g, n + 1).kv.company)
+    const template = templatesOf(g)[0]
+    const company = Array.from({ length: 400 }, (_, n) => drawEntity(fresh(g), g, template, n + 1).kv.company)
     const dogs = company.filter((value) => value === 'dog').length
     const nobody = company.filter((value) => value === 'none').length
     expect(nobody).toBeGreaterThan(dogs)

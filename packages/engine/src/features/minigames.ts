@@ -156,7 +156,7 @@ export type MinigameSceneFields = {
 /** The most transitions one command takes, so a timer of a tiny `ms` or `always` going round in a circle can't hang the game. */
 const MOST_STEPS = 1000
 
-export function minigameDef(game: Game, id: string): MinigameDef | undefined {
+export function minigameOf(game: Game, id: string): MinigameDef | undefined {
   return game.minigames?.find((entry) => entry.id === id)
 }
 
@@ -193,7 +193,7 @@ function drawTarget(state: GameState, to: readonly MinigameTarget[], cx: Feature
 
 /** Start a minigame. Unknown ids do nothing; the content checker reports them. */
 export function startMinigame(state: GameState, game: Game, id: string, cx: FeatureContext): GameState {
-  const def = minigameDef(game, id)
+  const def = minigameOf(game, id)
   if (!def) return state
   const started: GameState = {
     ...state,
@@ -206,7 +206,7 @@ export function startMinigame(state: GameState, game: Game, id: string, cx: Feat
 /** Enter a state of the running minigame: a final state ends it, an `always` moves on. */
 function enter(state: GameState, game: Game, target: string, cx: FeatureContext, depth: number): GameState {
   const running = state.minigame!
-  const def = minigameDef(game, running.id)
+  const def = minigameOf(game, running.id)
   const entered = def?.states[target]
   // A state the minigame doesn't have ends it. The content checker reports it.
   if (!entered) return { ...state, minigame: null }
@@ -214,9 +214,9 @@ function enter(state: GameState, game: Game, target: string, cx: FeatureContext,
   if (entered.final) {
     const copied = Object.entries(entered.final.copy ?? {}).map(([key, into]) => [into, running.kv[key] ?? 0])
     const closed: GameState = { ...next, minigame: null, kv: { ...next.kv, ...Object.fromEntries(copied) } }
-    return cx.runEffects(closed, game, cx.buildEffects(closed, game, entered.final.effects ?? []), false)
+    return cx.runEffects(closed, game, cx.buildEffects(game, entered.final.effects ?? []), false)
   }
-  const moving = entered.always?.find((entry) => cx.holds(next, entry.when, game))
+  const moving = entered.always?.find((entry) => cx.holds(next, game, entry.when))
   if (!moving || depth >= MOST_STEPS) return next
   return take(next, game, moving, 'always', cx, depth + 1)
 }
@@ -227,7 +227,7 @@ function take(state: GameState, game: Game, transition: MinigameTransition, from
   const play = plays(state, running.id)
   // Drawn before the effects, so they can't change the draw.
   const drawn = transition.go ?? (transition.to?.length ? drawTarget(state, transition.to, cx) : undefined)
-  const done = cx.runEffects(state, game, cx.buildEffects(state, game, transition.effects ?? []), false)
+  const done = cx.runEffects(state, game, cx.buildEffects(game, transition.effects ?? []), false)
   // The effects ended the minigame, or started one again: nothing more to do here.
   if (!samePlay(done, running.id, play)) return done
   const next: GameState = { ...done, minigame: { ...done.minigame!, steps: done.minigame!.steps + 1 } }
@@ -239,13 +239,13 @@ function take(state: GameState, game: Game, transition: MinigameTransition, from
 function liveOn(state: GameState, game: Game, input: string, cx: FeatureContext) {
   const running = state.minigame
   if (!running) return undefined
-  return minigameDef(game, running.id)?.states[running.state]?.on?.find((entry) => entry.input === input && cx.holds(state, entry.when, game))
+  return minigameOf(game, running.id)?.states[running.state]?.on?.find((entry) => entry.input === input && cx.holds(state, game, entry.when))
 }
 
 /** The running state's timer, if it has one. */
-function timerOf(state: GameState, game: Game) {
+function clockOf(state: GameState, game: Game) {
   const running = state.minigame
-  return running ? minigameDef(game, running.id)?.states[running.state]?.after : undefined
+  return running ? minigameOf(game, running.id)?.states[running.state]?.after : undefined
 }
 
 /**
@@ -255,7 +255,7 @@ function timerOf(state: GameState, game: Game) {
  */
 export function minigameDue(state: GameState, game: Game): number | undefined {
   const running = state.minigame
-  const timer = timerOf(state, game)
+  const timer = clockOf(state, game)
   return running && timer ? Math.max(timer.ms - running.elapsed, 0) : undefined
 }
 
@@ -268,7 +268,7 @@ export function minigameAdvanced(state: GameState, ms: number): GameState {
 /** The running state's timer run out: its transition taken, as a tick that reaches it takes it. */
 export function minigameTimedOut(state: GameState, game: Game, cx: FeatureContext): GameState {
   const running = state.minigame
-  const timer = timerOf(state, game)
+  const timer = clockOf(state, game)
   if (!running || !timer) return state
   return take({ ...state, minigame: { ...running, elapsed: timer.ms } }, game, timer, 'after', cx, 0)
 }
@@ -432,7 +432,7 @@ export const minigames = defineFeature<MinigamesShape>({
   },
   view: (state, game, _shown, cx) => {
     const running = state.minigame
-    const def = running ? minigameDef(game, running.id) : undefined
+    const def = running ? minigameOf(game, running.id) : undefined
     if (!running || !def) return { minigame: null }
     const current = def.states[running.state]
     const timer = current?.after
@@ -441,10 +441,10 @@ export const minigames = defineFeature<MinigamesShape>({
         id: running.id,
         title: def.label ?? null,
         state: running.state,
-        label: current?.label !== undefined ? cx.fillTokens(current.label, state, game) : null,
+        label: current?.label !== undefined ? cx.fillTokens(state, game, current.label) : null,
         timeLeft: timer ? Math.max(0, timer.ms - running.elapsed) : null,
         timeTotal: timer ? timer.ms : null,
-        inputs: [...new Set((current?.on ?? []).filter((entry) => cx.holds(state, entry.when, game)).map((entry) => entry.input))],
+        inputs: [...new Set((current?.on ?? []).filter((entry) => cx.holds(state, game, entry.when)).map((entry) => entry.input))],
         kv: { ...running.kv },
         keys: def.keys ?? {},
       },

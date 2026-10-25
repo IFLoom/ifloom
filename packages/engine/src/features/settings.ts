@@ -78,7 +78,7 @@ export type SettingsShape = {
 }
 
 /** The setting with this id, if the game declares it. */
-export function settingById(game: Game, id: string): SettingDef | undefined {
+export function settingOf(game: Game, id: string): SettingDef | undefined {
   return game.settings?.find((setting) => setting.id === id)
 }
 
@@ -112,7 +112,7 @@ export function settingFault(setting: SettingDef, value: unknown): 'toggle' | 'n
  * setting's default. Undefined for a setting the game doesn't declare.
  */
 export function settingValue(game: Game, stored: Record<string, unknown> | undefined, id: string): KvValue | undefined {
-  const setting = settingById(game, id)
+  const setting = settingOf(game, id)
   if (!setting) return undefined
   const value = stored && Object.hasOwn(stored, id) ? stored[id] : undefined
   return value !== undefined && !settingFault(setting, value) ? (value as KvValue) : setting.default
@@ -124,7 +124,7 @@ export function settingValue(game: Game, stored: Record<string, unknown> | undef
  * `play` setting can be set; `runner.setSetting` (`'runner'`) sets either.
  */
 export function settingRefusal(game: Game, id: string, value: unknown, through: 'command' | 'runner' = 'command'): string | undefined {
-  const setting = settingById(game, id)
+  const setting = settingOf(game, id)
   if (!setting) return stringOf(game, 'noSuchSetting')
   if (through === 'command' && settingAffects(setting) !== 'play') return stringOf(game, 'notAGameSetting')
   switch (settingFault(setting, value)) {
@@ -175,7 +175,7 @@ export function settingProblems(setting: SettingDef): string[] {
 
 /** What is wrong with a `{ setting }` condition, in the loader's words. */
 export function settingConditionProblems(game: Game, id: string, is: KvValue | undefined): string[] {
-  const setting = settingById(game, id)
+  const setting = settingOf(game, id)
   if (!setting) return [`unknown setting "${id}"`]
   if (settingAffects(setting) === 'ui') return [`setting "${id}" is a ui setting; conditions read only play settings`]
   const fault = is === undefined ? undefined : settingFault(setting, is)

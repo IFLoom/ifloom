@@ -51,12 +51,12 @@ describe('stat modifiers', () => {
     const on = wearing(g)
     expect(statValue(off, g, 'intelligence')).toBe(5)
     expect(statValue(on, g, 'intelligence')).toBe(9)
-    expect(holds(on, { stat: 'intelligence', gte: 9 }, g)).toBe(true)
-    expect(holds(off, { stat: 'intelligence', gte: 9 }, g)).toBe(false)
+    expect(holds(on, g, { stat: 'intelligence', gte: 9 })).toBe(true)
+    expect(holds(off, g, { stat: 'intelligence', gte: 9 })).toBe(false)
     expect(view(on, g).statsById.intelligence).toMatchObject({ value: 9 })
     // Bands read the changed value too: 10 and up is band 1.
     const sharper = game([{ stat: 'intelligence', add: 5 }])
-    expect(holds(wearing(sharper), { level: 'intelligence', gte: 1 }, sharper)).toBe(true)
+    expect(holds(wearing(sharper), sharper, { level: 'intelligence', gte: 1 })).toBe(true)
   })
 
   it('are never written: effects change the kept value underneath', () => {

@@ -11,7 +11,7 @@ export type { Condition, Range } from './types.ts'
  * or two, holds nowhere, and the content checker reports it. A range bound
  * that is an `Amount` is worked out first, so the kind reads a number.
  */
-export function holds(state: GameState, condition: Condition | undefined, game?: Game): boolean {
+export function holds(state: GameState, game: Game, condition: Condition | undefined): boolean {
   if (!condition) return true
   const entry = conditionEntry(condition)
   return entry ? entry.holds(state, withAmounts(state, condition, game), game, featureContext()) : false

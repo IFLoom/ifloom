@@ -17,9 +17,9 @@ describe('custom functions belong to their game', () => {
   const rainy = { ...fixture(), rules: { conditions: { fine: () => false } } }
 
   it('answers a custom condition from the game it is asked about', () => {
-    expect(holds(begin(sunny), { 'game/fine': true }, sunny)).toBe(true)
-    expect(holds(begin(rainy), { 'game/fine': true }, rainy)).toBe(false)
-    expect(holds(begin(sunny), { 'game/fine': true }, fixture())).toBe(false)
+    expect(holds(begin(sunny), sunny, { 'game/fine': true })).toBe(true)
+    expect(holds(begin(rainy), rainy, { 'game/fine': true })).toBe(false)
+    expect(holds(begin(sunny), fixture(), { 'game/fine': true })).toBe(false)
   })
 
   it('runs a custom effect by name, and drops one the game does not have', () => {
@@ -27,9 +27,9 @@ describe('custom functions belong to their game', () => {
       ...fixture(),
       rules: { effects: { tip: (_state: unknown, args: Record<string, unknown>) => [{ stat: 'coins', by: Number(args.by) }] } },
     }
-    expect(buildEffects(begin(game), game, [{ 'game/tip': { by: 2 } }])).toEqual([{ 'game/tip': { by: 2 } }])
-    expect(buildEffects(begin(game), game, [{ 'game/nothing': true }])).toEqual([])
-    expect(applyEffects(begin(game), game, buildEffects(begin(game), game, [{ 'game/tip': { by: 2 } }])).stats.coins).toBe(5)
+    expect(buildEffects(game, [{ 'game/tip': { by: 2 } }])).toEqual([{ 'game/tip': { by: 2 } }])
+    expect(buildEffects(game, [{ 'game/nothing': true }])).toEqual([])
+    expect(applyEffects(begin(game), game, buildEffects(game, [{ 'game/tip': { by: 2 } }])).stats.coins).toBe(5)
     // What a button would do, before it runs: worked out against the state now.
     expect(previewEffects(begin(game), game, [{ 'game/tip': { by: 2 } }])).toEqual([{ stat: 'coins', by: 2 }])
   })
@@ -38,7 +38,7 @@ describe('custom functions belong to their game', () => {
     // Doubles the coins the player has when it runs.
     const double: CustomEffect = (state) => [{ stat: 'coins', by: state.stats.coins }]
     const game = { ...fixture(), rules: { effects: { double } } }
-    const state = applyEffects(begin(game), game, buildEffects(begin(game), game, [{ stat: 'coins', by: 4 }, { 'game/double': true }, { 'game/double': true }]))
+    const state = applyEffects(begin(game), game, buildEffects(game, [{ stat: 'coins', by: 4 }, { 'game/double': true }, { 'game/double': true }]))
     // 3 + 4 = 7, doubled to 14, doubled to 28.
     expect(state.stats.coins).toBe(28)
   })
@@ -67,11 +67,11 @@ describe('custom functions belong to their game', () => {
       },
     }
     game.prose = proseStore(game, {})
-    expect(holds(begin(game), { 'game/highTide': true }, game)).toBe(true)
-    expect(applyEffects(begin(game), game, buildEffects(begin(game), game, [{ 'game/wade': true }])).stats.coins).toBe(9)
+    expect(holds(begin(game), game, { 'game/highTide': true })).toBe(true)
+    expect(applyEffects(begin(game), game, buildEffects(game, [{ 'game/wade': true }])).stats.coins).toBe(9)
     expect(seen[0]).toBe('fixture')
     expect(seen[1]).toBe(seen[2])
-    expect(fillTokens('{{v:game/tide unit=feet}} and {{v:tides/height times=2}}', begin(game), game)).toBe('3 feet and 6')
+    expect(fillTokens(begin(game), game, '{{v:game/tide unit=feet}} and {{v:tides/height times=2}}')).toBe('3 feet and 6')
   })
 
   it('takes a plugin’s command in short, as content and the runner write it', () => {
@@ -106,7 +106,7 @@ describe('custom functions belong to their game', () => {
     expect(problemsOf(game)).toEqual([
       'action wade: "tides/high" takes its arguments as an object, such as { "tides/high": { … } }, or true for none; this one has ["noon"]',
     ])
-    expect(holds(begin(game), { 'tides/high': ['noon'] } as never, game)).toBe(true)
+    expect(holds(begin(game), game, { 'tides/high': ['noon'] } as never)).toBe(true)
   })
 
   it("reports a key content can't hold, rather than dropping it quietly", () => {
@@ -127,7 +127,7 @@ describe('custom functions belong to their game', () => {
     const base = { ...fixture(), rules: { conditions: { fine: () => true } } }
     const { scenes: _s, storylines, actions, stats, ...rest } = base
     const { game } = loadWhole([{ name: 'town', storylines, actions, stats }], rest)
-    expect(holds(begin(game), { 'game/fine': true }, game)).toBe(true)
+    expect(holds(begin(game), game, { 'game/fine': true })).toBe(true)
   })
 
   it('runs one data scene with each game’s own functions', () => {

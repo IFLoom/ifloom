@@ -74,8 +74,8 @@ describe('feeds', () => {
       likes: 12,
       comments: [{ from: 'Ava', name: 'Ava', text: 'Wow' }],
     })
-    expect(holds(state, hasPosted(), g)).toBe(true)
-    expect(holds(state, { 'feed/likes': { post: 'sunset', gte: 10 } }, g)).toBe(true)
+    expect(holds(state, g, hasPosted())).toBe(true)
+    expect(holds(state, g, { 'feed/likes': { post: 'sunset', gte: 10 } })).toBe(true)
   })
 
   it('add reactions to other people’s posts', () => {

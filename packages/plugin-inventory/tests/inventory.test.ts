@@ -224,13 +224,13 @@ describe('the inventory with the shop and the wardrobe', () => {
     const g = game([market], [inventory(), shop(), wardrobe()])
     let state = run(begin(g), g, buy('stall', 'clothing:scarf'), buy('stall', 'food:pie'), wear('clothing:scarf'))
     expect(state.stats.coins).toBe(9)
-    expect(holds(state, wearing('clothing:scarf'), g)).toBe(true)
+    expect(holds(state, g, wearing('clothing:scarf'))).toBe(true)
     expect(shown(g, state).things.find((thing) => thing.ref === 'food:pie')?.use?.label).toBe('Eat the pie')
     state = run(state, g, useThing('food:pie'))
     expect(statValue(state, g, 'energy')).toBe(30)
     // Given away, it comes off; the stall sells what it holds, and the scarf isn't there.
     state = run(state, g, giveThing('clothing:scarf', 'vendor:stall'))
-    expect(holds(state, wearing('clothing:scarf'), g)).toBe(false)
+    expect(holds(state, g, wearing('clothing:scarf'))).toBe(false)
     expect((view(state, g).plugins.shop as ShopView).vendors[0].goods[0].stock).toBe(1)
   })
 

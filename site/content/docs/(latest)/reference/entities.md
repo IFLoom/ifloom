@@ -27,7 +27,6 @@ import {
   entityName,
   entityOf,
   entityTags,
-  entityTrait,
   give,
   heldBy,
   heldCount,
@@ -35,7 +34,7 @@ import {
   holdersOf,
   holding,
   isUnique,
-  kindById,
+  kindOf,
   move,
   parseRef,
   protagonist,
@@ -198,7 +197,7 @@ Reads fall back in this order:
 - **The name:** the record's `name` (one created in play), then the `like`'s, then the declaration's, always with its tokens filled. See [`entityName`](#entityname).
 - **The description and picture:** the record's (one created in play), then the `like`'s, then the declaration's. See [`entityDesc`](#entitydesc) and [`entityImage`](#entityimage).
 - **Tags:** the kind's, the `like`'s, the declaration's and the record's, each once.
-- **A trait's data:** the record's `traitData` laid over the `like`'s, else over the kind's default. See [`entityTrait`](#entitytrait).
+- **A trait's data:** the record's `traitData` laid over the `like`'s, else over the kind's default. See [`traitOf`](#traitof).
 - **A trait's state:** the record's `traits`, for the rare [trait](#traits) that keeps state, then where the trait says it starts. See [`traitState`](#traitstate).
 
 Definitions never go into a save. That's why a fix to a name or a starting value reaches old saves, and why a save stays small however many entities the game declares.
@@ -257,10 +256,10 @@ export const clothes: Content = {
 ```ts
 import { traitOf, withTrait } from '@ifloom/engine'
 
-traitOf(game, 'clothing:scarf', 'laundry/washable')   // { temp: 40, gentle: true }
-traitOf(game, 'clothing:hat', 'laundry/washable')     // { temp: 30, gentle: true }
-traitOf(game, 'clothing:coat', 'cosy')                // false
-withTrait(game, 'laundry/washable')                   // ['clothing:scarf', 'clothing:coat', 'clothing:hat']
+traitOf(state, game, 'clothing:scarf', 'laundry/washable')   // { temp: 40, gentle: true }
+traitOf(state, game, 'clothing:hat', 'laundry/washable')     // { temp: 30, gentle: true }
+traitOf(state, game, 'clothing:coat', 'cosy')                // false
+withTrait(state, game, 'laundry/washable')                   // ['clothing:scarf', 'clothing:coat', 'clothing:hat']
 ```
 
 **Which one wins.** A row in the `traits` table wins over the entity's own, and either is laid over the kind's default. When both the default and the entity's value are objects, they're merged field by field, so the scarf keeps the kind's `temp`. Anything else, such as `true` or a list, is replaced whole. A row replaces the entity's own value whole too, though it still gets the kind's default under it.
@@ -516,7 +515,7 @@ The effects, conditions and view use these. The game's own [functions](/docs/ref
 ### entitiesOf
 
 ```ts
-function entitiesOf(state: GameState, game: Game | undefined, kind: string): EntityRef[]
+function entitiesOf(state: GameState, game: Game, kind: string): EntityRef[]
 ```
 
 Every entity of a kind in the game, as references: the declared ones in the order your content lists them, leaving out any removed, then the ones created in play, in the order they came. It's `[]` for a kind with none, or a kind the game has never heard of.
@@ -543,7 +542,7 @@ wages: (state, _args, { game }) => [{ stat: 'coins', by: -total(state, game, 'st
 ### entityOf
 
 ```ts
-function entityOf(state: GameState, game: Game | undefined, ref: EntityRef): EntityState | undefined
+function entityOf(state: GameState, game: Game, ref: EntityRef): EntityState | undefined
 ```
 
 What play has changed about the entity a reference names: its record in the save, or `{}` for a declared entity nothing has changed yet. It's `undefined` if the entity isn't in the game (removed, never created, or not declared), or if `ref` isn't `kind:id` at all, `'$'` included. Use it to ask whether an entity is there, and with [`writeEntity`](#writeentity) to change its record. To read a value, use `statValue`, `entityKv` or `entityName`, which fall back to your content.
@@ -554,8 +553,6 @@ import { entityOf } from '@ifloom/engine'
 entityOf(state, game, 'staff:ana')    // {} on a new game
 entityOf(state, game, 'staff:cleo')   // undefined: nobody called Cleo works here
 ```
-
-`game` can be `undefined` in code that has no game to hand, and then only entities with a record in the save are found.
 
 ### entityName
 
@@ -583,7 +580,7 @@ An entity's description, with its tokens filled, or `undefined` if it has none. 
 ### entityKv
 
 ```ts
-function entityKv(state: GameState, game: Game | undefined, ref: EntityRef): Record<string, KvValue>
+function entityKv(state: GameState, game: Game, ref: EntityRef): Record<string, KvValue>
 ```
 
 An entity's kv store as it reads: the keys of the entity it was made `like`, then its declaration's `kv`, with every key play has set laid over them. It's `{}` for an entity with none.
@@ -605,15 +602,15 @@ An entity's tags: its kind's, then those of the entity it was made `like`, then 
 ### entityImage
 
 ```ts
-function entityImage(state: GameState, game: Game | undefined, ref: EntityRef): string | undefined
+function entityImage(state: GameState, game: Game, ref: EntityRef): string | undefined
 ```
 
 An entity's picture as written, before [`artSrc`](/docs/reference/prose#artsrc): the one it was created with, its declaration's, or else that of the entity it was made `like`.
 
-### kindById
+### kindOf
 
 ```ts
-function kindById(game: Game, id: string): KindDef | undefined
+function kindOf(game: Game, id: string): KindDef | undefined
 ```
 
 The declaration of a kind, or `undefined` if the game declares none by that id.
@@ -653,36 +650,43 @@ writeEntity(state, 'staff:ana', { ...ana, name: 'Ana, head cook' })
 ### traitOf
 
 ```ts
-function traitOf<K extends string>(game: Game | undefined, ref: EntityRef, id: K): TraitData<K> | undefined
+function traitOf<K extends string>(state: GameState, game: Game, ref: EntityRef, id: K): TraitData<K> | undefined
 ```
 
-One trait's data on one entity, worked out as [Traits](#traits) says: a table row, else the entity's own, over its kind's default. `undefined` when it doesn't have the trait. An entity [created](/docs/reference/effects#create) in play has its kind's default.
+One trait's data on one entity as play reads it, worked out as [Traits](#traits) says: a table row, else the entity's own, over its kind's default. For one [created](/docs/reference/effects#create) in play, it's the trait data the `create` gave, laid over the trait of the entity it was made `like`, or over its kind's default. `undefined` when it doesn't have the trait.
 
 ```ts
-traitOf(game, 'clothing:coat', 'laundry/washable')?.temp   // 30
+import { traitOf } from '@ifloom/engine'
+
+traitOf(state, game, 'clothing:coat', 'laundry/washable')?.temp   // 30
+traitOf(state, game, 'clothing:#1', 'laundry/washable')           // the scarf's, for a copy made like it
 ```
 
-**Gotcha.** It reads content only, so it doesn't know whether the entity is still in the game, nor what a thing created in play was given. Ask [`entityTrait`](#entitytrait) for that.
-
-### entityTrait
+### declaredTrait
 
 ```ts
-function entityTrait<K extends string>(state: GameState, game: Game | undefined, ref: EntityRef, id: K): TraitData<K> | undefined
+function declaredTrait<K extends string>(game: Game, ref: EntityRef, id: K): TraitData<K> | undefined
 ```
 
-One trait's data on one entity as play reads it. For a declared entity it's `traitOf`. For one [created](/docs/reference/effects#create) in play, it's the trait data the `create` gave, laid over the trait of the entity it was made `like`, or over its kind's default.
+The same trait as content declares it, for code with no state to hand, such as a plugin's [`check`](/docs/reference/plugins#check) or a trait's own. An entity created in play has its kind's default here.
 
-```ts
-entityTrait(state, game, 'clothing:#1', 'laundry/washable')   // the scarf's, for a copy made like it
-```
+**Gotcha.** It reads content only, so it doesn't know whether the entity is still in the game, nor what a thing created in play was given. Ask [`traitOf`](#traitof) for that.
 
 ### withTrait
 
 ```ts
-function withTrait(game: Game | undefined, id: string, state?: GameState): EntityRef[]
+function withTrait(state: GameState, game: Game, id: string): EntityRef[]
 ```
 
-Every declared entity that has the trait, in the order your content lists them. Pass a state too, and it's every entity in the game that has it as play reads it: declared ones not removed, then those created in play, through [`entityTrait`](#entitytrait).
+Every entity in the game that has the trait as play reads it: declared ones not removed, in the order your content lists them, then those created in play, through [`traitOf`](#traitof).
+
+### declaredWithTrait
+
+```ts
+function declaredWithTrait(game: Game, id: string): EntityRef[]
+```
+
+Every declared entity that has the trait, in the order your content lists them, for code with no state, as [`declaredTrait`](#declaredtrait) reads.
 
 ### traitState
 
@@ -738,7 +742,7 @@ Returns a copy of a condition or of effects, with every `of`, `entity`, `at` and
 ```ts
 import { bindCurrent, holds } from '@ifloom/engine'
 
-holds(state, bindCurrent({ stat: 'morale', of: '$', gte: 75 }, 'staff:ana'), game)   // is Ana happy?
+holds(state, game, bindCurrent({ stat: 'morale', of: '$', gte: 75 }, 'staff:ana'))   // is Ana happy?
 ```
 
 Anything else is copied as it is, `undefined` included. A nested `each`'s `effects` and a nested `count`'s `where` (its own or its `Select`'s) are left alone, since their `'$'` is their own.
@@ -766,7 +770,7 @@ A holder is `'player'`, `'you'` or a unique entity's reference. A placement says
 ### heldCount
 
 ```ts
-function heldCount(state: GameState, game: Game | undefined, ref: EntityRef, at?: Holder): number
+function heldCount(state: GameState, game: Game, ref: EntityRef, at?: Holder): number
 ```
 
 How many of a thing a holder holds, `'you'` if `at` is left out. It's 0 for a thing held elsewhere or not in the game, and for a holder that can't hold.
@@ -781,7 +785,7 @@ heldCount(state, game, 'food:apple', 'place:larder')   // 6
 ### heldBy
 
 ```ts
-function heldBy(state: GameState, game: Game | undefined, at?: Holder): { ref: EntityRef; count: number }[]
+function heldBy(state: GameState, game: Game, at?: Holder): { ref: EntityRef; count: number }[]
 ```
 
 Everything a holder holds (`'you'` if left out), with how many of each, in the game's order of its entities. Things it has none of aren't listed.
@@ -789,8 +793,8 @@ Everything a holder holds (`'you'` if left out), with how many of each, in the g
 ### holderOf and holdersOf
 
 ```ts
-function holderOf(state: GameState, game: Game | undefined, ref: EntityRef): Holder | undefined
-function holdersOf(state: GameState, game: Game | undefined, ref: EntityRef): { holder: Holder; count: number }[]
+function holderOf(state: GameState, game: Game, ref: EntityRef): Holder | undefined
+function holdersOf(state: GameState, game: Game, ref: EntityRef): { holder: Holder; count: number }[]
 ```
 
 Who holds a thing. `holderOf` gives one holder, which for a unique thing is the only one, and `undefined` when nobody does. `holdersOf` gives every holder with its count, in no particular order. Both read the same reverse index, worked out once for each state and never saved.
@@ -798,7 +802,7 @@ Who holds a thing. `holderOf` gives one holder, which for a unique thing is the 
 ### canHold
 
 ```ts
-function canHold(state: GameState, game: Game | undefined, holder: Holder): boolean
+function canHold(state: GameState, game: Game, holder: Holder): boolean
 ```
 
 Whether a holder can hold things now: `'player'` always, a unique entity while it's in the game. Pass a real holder: `'you'` isn't resolved here, so use [`resolveHolder`](#protagonist-and-resolveholder) first.
@@ -806,7 +810,7 @@ Whether a holder can hold things now: `'player'` always, a unique entity while i
 ### isUnique
 
 ```ts
-function isUnique(game: Pick<Game, 'kinds' | 'plugins'> | undefined, ref: EntityRef): boolean
+function isUnique(game: Game, ref: EntityRef): boolean
 ```
 
 Whether an entity's kind is [`unique`](#kinddef): each one is one particular thing, which holds things and is held one at a time. A plugin asks it to treat a person or a coat differently from a stack of apples, as the [shop](/docs/plugins/shop) does when it sells a unique thing only from the vendor's stock.

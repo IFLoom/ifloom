@@ -5,7 +5,7 @@
  * panel; or draw them yourself from `useStatuses`.
  */
 import type { ComponentProps } from 'react'
-import { statDef } from '@ifloom/engine'
+import { statOf } from '@ifloom/engine'
 import type { StatusesView } from '../index.ts'
 import { overridable, type Override, type PluginUi, useGame, useKitPart, usePart, useWords } from '@ifloom/react'
 
@@ -54,7 +54,7 @@ function StatusListImpl({ className, title }: { className?: string; title?: stri
   const modifiers = usePart('status-modifiers', 'text-xs')
   const data = useStatuses()
   if (!data?.active.length) return null
-  const statLabel = (stat: string) => statDef(runner.game, stat)?.label ?? stat
+  const statLabel = (stat: string) => statOf(runner.game, stat)?.label ?? stat
   const signed = (n: number) => (n > 0 ? `+${n}` : String(n))
   return (
     <section {...section} data-statuses>

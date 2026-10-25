@@ -9,7 +9,7 @@ import { featureContext } from './core.ts'
 import * as stats from './features/stats.ts'
 
 export type { Formula, StatDef, StatLevels, StatRound, StatView, StatWords } from './features/stats.ts'
-export { formatStat, lackingLine, levelAt, startingStats, statDef } from './features/stats.ts'
+export { formatStat, lackingLine, levelAt, startingStats, statOf } from './features/stats.ts'
 
 /**
  * A stat's value as everything reads it: the player's, or with `of`, an

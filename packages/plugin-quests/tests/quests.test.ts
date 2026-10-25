@@ -66,7 +66,7 @@ describe('quests', () => {
     expect(shown(fresh, g)).toMatchObject({ active: [], done: [], toFind: 2, updates: 0 })
     const hungry = run(fresh, g, act('getHungry'))
     expect(shown(hungry, g).active).toEqual([expect.objectContaining({ id: 'bread', hint: 'Go out to the street.', stage: 0, stages: 2, updated: true })])
-    expect(holds(hungry, questActive('bread'), g)).toBe(true)
+    expect(holds(hungry, g, questActive('bread'))).toBe(true)
   })
 
   it('move on through each stage in order, and finish', () => {
@@ -76,8 +76,8 @@ describe('quests', () => {
     expect(shown(state, g).active[0]).toMatchObject({ stage: 0, hint: 'Go out to the street.' })
     state = run(state, g, { type: 'action', id: 'goOut' })
     expect(shown(state, g).done).toEqual([expect.objectContaining({ id: 'bread', hint: '', doneOn: state.turn })])
-    expect(holds(state, questDone('bread'), g)).toBe(true)
-    expect(holds(state, questReached('bread', 'out'), g)).toBe(true)
+    expect(holds(state, g, questDone('bread'))).toBe(true)
+    expect(holds(state, g, questReached('bread', 'out'))).toBe(true)
   })
 
   it('keep progress once it is made', () => {
@@ -87,7 +87,7 @@ describe('quests', () => {
     // Back in the house, the street stage stays done.
     expect(shown(state, g).active[0]).toMatchObject({ stage: 1, hint: 'Buy a loaf.' })
     state = run(state, g, act('buyLoaf'), act('eat'))
-    expect(holds(state, questDone('bread'), g)).toBe(true)
+    expect(holds(state, g, questDone('bread'))).toBe(true)
   })
 
   it('start by effect when they have no condition', () => {

@@ -83,7 +83,7 @@ function covers(lock: Lock, command: Command): boolean {
 export function lockIn(state: GameState, game: Game, command: Command, effects: () => readonly Effect[], cx: FeatureContext): Lock | undefined {
   for (const lock of game.locks ?? []) {
     if (!covers(lock, command)) continue
-    if (!cx.holds(state, lock.when, game)) continue
+    if (!cx.holds(state, game, lock.when)) continue
     if (lock.effect !== undefined) {
       const effect = lock.effect
       // An effect's key names it, as a call's one key is its name.
@@ -102,7 +102,7 @@ export function lockedBy(state: GameState, game: Game, command: Command, cx: Fea
 
 /** Is a lock on that stops everything? */
 export function lockedOut(state: GameState, game: Game, cx: FeatureContext): boolean {
-  return (game.locks ?? []).some((lock) => lock.deny.includes('*') && cx.holds(state, lock.when, game))
+  return (game.locks ?? []).some((lock) => lock.deny.includes('*') && cx.holds(state, game, lock.when))
 }
 
 export const locks = defineFeature<LocksShape>({

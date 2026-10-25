@@ -38,7 +38,7 @@ describe('The Corner Café', () => {
     expect(entitiesOf(state, game, 'staff')).toEqual(['staff:ana', 'staff:#1', 'staff:#2'])
     // Ana is declared, so the save keeps only what changed about her; Dev was hired in play, with his own numbers.
     expect(state.entities.staff['#1']).toEqual({ name: 'Dev', stats: { skill: 2, morale: 80, wage: 8 } })
-    expect(holds(state, { count: 'staff', gte: 3 }, game)).toBe(true)
+    expect(holds(state, game, { count: 'staff', gte: 3 })).toBe(true)
     state = play(state, act('hire'), { type: 'choose', id: 'dev' })
     expect(apply(state, game, act('hire')).reason).toBe('There is no room behind the counter.')
   })

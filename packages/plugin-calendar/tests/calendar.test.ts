@@ -54,7 +54,7 @@ function house(
 }
 
 /** Apply effects as content writes them, short forms and all. */
-const applyEffects = (state: GameState, game: Game, refs: Parameters<typeof buildEffects>[2]) => applyBuilt(state, game, buildEffects(state, game, refs))
+const applyEffects = (state: GameState, game: Game, refs: Parameters<typeof buildEffects>[1]) => applyBuilt(state, game, buildEffects(game, refs))
 const act = (id: string) => ({ type: 'action' as const, id })
 function run(game: Game, state: GameState, ...commands: Parameters<typeof apply>[2][]): GameState {
   for (const command of commands) {
@@ -181,13 +181,13 @@ describe('the calendar', () => {
   it('answers conditions on the period, the weekday, the weekend and the day', () => {
     const { game, clock } = house()
     const saturday = clock.write(startingState(game), { day: 5, period: 'evening' })
-    expect(holds(saturday, period('evening', 'night'), game)).toBe(true)
-    expect(holds(saturday, period('morning'), game)).toBe(false)
-    expect(holds(saturday, weekday(5), game)).toBe(true)
-    expect(holds(saturday, weekend(), game)).toBe(true)
-    expect(holds(clock.write(saturday, { day: 2, period: 'evening' }), weekend(), game)).toBe(false)
-    expect(holds(saturday, day({ gte: 5 }), game)).toBe(true)
-    expect(holds(saturday, day({ lt: 5 }), game)).toBe(false)
+    expect(holds(saturday, game, period('evening', 'night'))).toBe(true)
+    expect(holds(saturday, game, period('morning'))).toBe(false)
+    expect(holds(saturday, game, weekday(5))).toBe(true)
+    expect(holds(saturday, game, weekend())).toBe(true)
+    expect(holds(clock.write(saturday, { day: 2, period: 'evening' }), game, weekend())).toBe(false)
+    expect(holds(saturday, game, day({ gte: 5 }))).toBe(true)
+    expect(holds(saturday, game, day({ lt: 5 }))).toBe(false)
   })
 
   it('has no bed when it has no sleep, and sets only a period it has', () => {

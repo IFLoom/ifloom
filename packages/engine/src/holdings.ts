@@ -21,7 +21,7 @@ export function placementCounts(at: Placement | undefined): Record<string, numbe
 const startsCache = new WeakMap<object, Map<string, Map<string, number>>>()
 const NO_STARTS = new Map<string, Map<string, number>>()
 
-function starts(game: Game | undefined): Map<string, Map<string, number>> {
+function starts(game: Game): Map<string, Map<string, number>> {
   const list = game?.entities
   if (!list) return NO_STARTS
   let found = startsCache.get(list)
@@ -43,20 +43,20 @@ function starts(game: Game | undefined): Map<string, Map<string, number>> {
 /** Who holds what, both ways, as the state reads it: only counts above 0, of things and holders in the game. */
 type Holdings = { byHolder: Map<string, Map<string, number>>; byThing: Map<string, Map<string, number>> }
 
-type Cached = { game: Game | undefined; removed: unknown; entities: unknown; holdings: Holdings }
+type Cached = { game: Game; removed: unknown; entities: unknown; holdings: Holdings }
 const holdingsCache = new WeakMap<object, Cached>()
 const NOTHING_HELD = {}
 
 /** Whether a holder is there to hold: the player always, a unique entity while it is in the game. */
-export function canHold(state: GameState, game: Game | undefined, holder: string): holder is Holder {
+export function canHold(state: GameState, game: Game, holder: string): holder is Holder {
   if (holder === PLAYER) return true
   return isUnique(game, holder) && hasEntity(state, game, holder)
 }
 
-function holdings(state: GameState, game: Game | undefined): Holdings {
+function holdings(state: GameState, game: Game): Holdings {
   const held = state.held ?? NOTHING_HELD
   const cached = holdingsCache.get(held)
-  if (cached && cached.game === game && cached.removed === state.removed && cached.entities === state.entities) return cached.holdings
+  if (cached?.game === game && cached.removed === state.removed && cached.entities === state.entities) return cached.holdings
   const out: Holdings = { byHolder: new Map(), byThing: new Map() }
   const counts = new Map<string, Map<string, number>>()
   for (const [holder, things] of starts(game)) counts.set(holder, new Map(things))
@@ -86,24 +86,24 @@ function holdings(state: GameState, game: Game | undefined): Holdings {
 }
 
 /** How many of a thing a holder holds (`'you'` by default): 0 for anything not held there, or not in the game. */
-export function heldCount(state: GameState, game: Game | undefined, ref: string, at: string = YOU): number {
+export function heldCount(state: GameState, game: Game, ref: string, at: string = YOU): number {
   return holdings(state, game).byHolder.get(resolveHolder(state, at))?.get(ref) ?? 0
 }
 
 /** How many of a thing are held, by everyone together. */
-export function heldTotal(state: GameState, game: Game | undefined, ref: string): number {
+export function heldTotal(state: GameState, game: Game, ref: string): number {
   let total = 0
   for (const count of holdings(state, game).byThing.get(ref)?.values() ?? []) total += count
   return total
 }
 
 /** Who holds a thing, and how many each: the holders in no particular order. Empty when nobody does. */
-export function holdersOf(state: GameState, game: Game | undefined, ref: string): { holder: Holder; count: number }[] {
+export function holdersOf(state: GameState, game: Game, ref: string): { holder: Holder; count: number }[] {
   return [...(holdings(state, game).byThing.get(ref) ?? [])].map(([holder, count]) => ({ holder: holder as Holder, count }))
 }
 
 /** Who holds a thing, when one holder does (always so for a unique thing); undefined when nobody does. */
-export function holderOf(state: GameState, game: Game | undefined, ref: string): Holder | undefined {
+export function holderOf(state: GameState, game: Game, ref: string): Holder | undefined {
   return holdings(state, game).byThing.get(ref)?.keys().next().value as Holder | undefined
 }
 
@@ -112,7 +112,7 @@ export function holderOf(state: GameState, game: Game | undefined, ref: string):
  * order the game has its entities: declared ones in content order, then
  * those created in play.
  */
-export function heldBy(state: GameState, game: Game | undefined, at: string = YOU): { ref: EntityRef; count: number }[] {
+export function heldBy(state: GameState, game: Game, at: string = YOU): { ref: EntityRef; count: number }[] {
   const things = holdings(state, game).byHolder.get(resolveHolder(state, at))
   if (!things?.size) return []
   return everyEntity(state, game)
@@ -121,7 +121,7 @@ export function heldBy(state: GameState, game: Game | undefined, at: string = YO
 }
 
 /** Whether putting a thing with a holder would have something hold itself, however far round: the box in the bag in the box. */
-export function wouldHoldItself(state: GameState, game: Game | undefined, ref: string, holder: string): boolean {
+export function wouldHoldItself(state: GameState, game: Game, ref: string, holder: string): boolean {
   const seen = new Set<string>()
   for (let at: string | undefined = holder; at !== undefined && at !== PLAYER; at = holderOf(state, game, resolveHolder(state, at))) {
     if (at === ref) return true
@@ -142,7 +142,7 @@ function written(state: GameState, holder: string, ref: string, count: number): 
  * other. Left as it is for a holder that can't hold, a thing not in the
  * game, or a thing that would end up holding itself.
  */
-export function setHeld(state: GameState, game: Game | undefined, ref: string, at: string, count: number): GameState {
+export function setHeld(state: GameState, game: Game, ref: string, at: string, count: number): GameState {
   const holder = resolveHolder(state, at)
   if (!hasEntity(state, game, ref) || !canHold(state, game, holder)) return state
   const unique = isUnique(game, ref)
@@ -163,7 +163,7 @@ export function setHeld(state: GameState, game: Game | undefined, ref: string, a
  * is when either can't hold, they are the same, or the thing would end up
  * holding itself.
  */
-export function moveHeld(state: GameState, game: Game | undefined, ref: string, from: string, to: string, by?: number): GameState {
+export function moveHeld(state: GameState, game: Game, ref: string, from: string, to: string, by?: number): GameState {
   const source = resolveHolder(state, from)
   const target = resolveHolder(state, to)
   if (source === target || !canHold(state, game, target) || wouldHoldItself(state, game, ref, target)) return state
@@ -179,7 +179,7 @@ export function moveHeld(state: GameState, game: Game | undefined, ref: string, 
  * held by nobody, and what it held goes to whoever held it, or with it when
  * nobody did.
  */
-export function releaseHeld(state: GameState, game: Game | undefined, ref: string): GameState {
+export function releaseHeld(state: GameState, game: Game, ref: string): GameState {
   const owner = holderOf(state, game, ref)
   let next = state
   for (const { ref: thing, count } of heldBy(state, game, ref)) {

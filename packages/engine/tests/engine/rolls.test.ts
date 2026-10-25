@@ -78,7 +78,7 @@ describe('the roll effect', () => {
     expect(state.kv.skim).toBe(roll.total)
     expect(state.rolls.latest.skim).toEqual(roll)
     expect(state.rolls.made).toBe(1)
-    expect(fillTokens('You scored {{skim}}.', state, game)).toBe(`You scored ${roll.total}.`)
+    expect(fillTokens(state, game, 'You scored {{skim}}.')).toBe(`You scored ${roll.total}.`)
   })
 
   it('adds the notation’s own number and a stat’s value', () => {
@@ -171,20 +171,20 @@ describe('the roll condition', () => {
   it('asks whether a roll was made, passed or failed, and critical', () => {
     const game = withDice()
     const state = begin(game)
-    expect(holds(state, { roll: 'skim' }, game)).toBe(false)
+    expect(holds(state, game, { roll: 'skim' })).toBe(false)
     const pass = { key: 'skim', dice: '2d6', faces: [6, 6], plus: 0, total: 12, against: 8, passed: true, critical: 'max' as const }
     const passed = { ...state, rolls: { made: 1, last: [], latest: { skim: pass } } }
-    expect(holds(passed, { roll: 'skim' }, game)).toBe(true)
-    expect(holds(passed, { roll: 'skim', passed: true }, game)).toBe(true)
-    expect(holds(passed, { roll: 'skim', passed: false }, game)).toBe(false)
-    expect(holds(passed, { roll: 'skim', critical: true }, game)).toBe(true)
-    expect(holds(passed, { roll: 'skim', critical: 'max' }, game)).toBe(true)
-    expect(holds(passed, { roll: 'skim', critical: 'min' }, game)).toBe(false)
-    expect(holds(passed, { roll: 'skim', critical: false }, game)).toBe(false)
+    expect(holds(passed, game, { roll: 'skim' })).toBe(true)
+    expect(holds(passed, game, { roll: 'skim', passed: true })).toBe(true)
+    expect(holds(passed, game, { roll: 'skim', passed: false })).toBe(false)
+    expect(holds(passed, game, { roll: 'skim', critical: true })).toBe(true)
+    expect(holds(passed, game, { roll: 'skim', critical: 'max' })).toBe(true)
+    expect(holds(passed, game, { roll: 'skim', critical: 'min' })).toBe(false)
+    expect(holds(passed, game, { roll: 'skim', critical: false })).toBe(false)
     const plain = { ...pass, faces: [3, 2], total: 5, passed: false, critical: undefined }
     const failed = { ...state, rolls: { made: 1, last: [], latest: { skim: plain } } }
-    expect(holds(failed, { roll: 'skim', passed: false, critical: false }, game)).toBe(true)
-    expect(explain(failed, { roll: 'skim', passed: true }, game).why).toBe('roll skim is 5 on 2d6, failed; wants passed')
+    expect(holds(failed, game, { roll: 'skim', passed: false, critical: false })).toBe(true)
+    expect(explain(failed, game, { roll: 'skim', passed: true }).why).toBe('roll skim is 5 on 2d6, failed; wants passed')
   })
 })
 

@@ -14,11 +14,11 @@ import { defaultRuntime, renderScene, type RenderedScene } from './scene.ts'
 import { blockBeats } from './beats.ts'
 import { lineSpeakers, speakerOf, type SpeakerView } from './speakers.ts'
 import { effectsIn, rendering, warningIn, whyNotIn, type Rendering } from './availability.ts'
-import { formatStat, statDef } from './features/stats.ts'
+import { formatStat, statOf } from './features/stats.ts'
 import { holds } from './condition.ts'
 import { lockIn, lockedOut } from './locks.ts'
 import { bakedScene, type ActionDef, type Blocked, type Game, type SceneMedia } from './game.ts'
-import { actionById } from './action.ts'
+import { actionOf } from './action.ts'
 import { costEffects, runsAsAction } from './features/actions.ts'
 import { artSrc, beatsOfParts, inlineMarkup, mediaType, parseBeats, videoView, type BodyPart, type InlineSpan, type SceneBeat } from './sceneBody.ts'
 import {
@@ -32,7 +32,7 @@ import {
   type StageView,
 } from './features/media.ts'
 import { audioTracks, audioView, type AudioView } from './features/audio.ts'
-import { minigameDef } from './features/minigames.ts'
+import { minigameOf } from './features/minigames.ts'
 import { withUi, type BlockUi, type ChoiceUi, type SceneUi, type Ui } from './features/ui.ts'
 import { commandEntry, featureContext } from './core.ts'
 import type { Command, Effect, GameState } from './types.ts'
@@ -201,7 +201,7 @@ function standing(state: GameState, game: Game, stage: ReturnType<typeof pluginS
  */
 function playingScene(state: GameState, game: Game, under: ScreenScene, drawing: Drawing): ScreenScene | null {
   const running = state.minigame
-  const def = running ? minigameDef(game, running.id) : undefined
+  const def = running ? minigameOf(game, running.id) : undefined
   if (!running || !def) return null
   const owner = `minigame.${def.id}`
   const label = def.states[running.state]?.label
@@ -279,7 +279,7 @@ function drawStage(
   if (!stage) return null
   const layers: StageLayerView[] = []
   stage.layers.forEach((layer, index) => {
-    if (!holds(state, layer.when, game)) return
+    if (!holds(state, game, layer.when)) return
     const src =
       layer.pool !== undefined
         ? poolPick(state, game, { pool: layer.pool, tags: layer.tags, owner, slot: `stage:${index}` }, featureContext(), drawing.picks)
@@ -295,7 +295,7 @@ function drawStage(
   const shown = new Set(layers.map((layer) => layer.id))
   const hotspots: HotspotView[] = []
   for (const hotspot of stage.hotspots ?? []) {
-    if (!holds(state, hotspot.when, game)) continue
+    if (!holds(state, game, hotspot.when)) continue
     if (hotspot.layer !== undefined && !shown.has(hotspot.layer)) continue
     let button: Pick<RenderedChoice, 'command' | 'disabled' | 'warning'> | undefined
     if (hotspot.choice !== undefined) button = choices?.find((choice) => choice.id === hotspot.choice)
@@ -322,10 +322,10 @@ function drawStage(
  * by the action's its command does, or by a lock that hides (never on one that ignores locks).
  */
 function hidden(state: GameState, game: Game, action: Action, rendered: Rendering): boolean {
-  const hides = (entries: readonly Blocked[] | undefined) => Boolean(entries?.some((entry) => entry.hide && holds(state, entry.when, game)))
+  const hides = (entries: readonly Blocked[] | undefined) => Boolean(entries?.some((entry) => entry.hide && holds(state, game, entry.when)))
   const command = action.command
   if (hides(action.blocked)) return true
-  if (command.type === 'action' && hides(actionById(state, game, command.id)?.blocked)) return true
+  if (command.type === 'action' && hides(actionOf(state, game, command.id)?.blocked)) return true
   if (command.type === 'custom' && pluginCommand(game, command.name)?.ignoresLocks) return false
   return Boolean(lockIn(state, game, command, () => effectsIn(rendered, state, game, command))?.hide)
 }
@@ -338,7 +338,7 @@ function idleActions(state: GameState, game: Game, drawing: Drawing): ScreenChoi
   // The game's own actions with a label are its buttons; one with none is done only by a command.
   const own = (game.actions ?? []).filter((action) => action.label !== undefined).map((action) => asAction(state, game, action))
   return [...pluginButtons(game, state).map(({ action, owner }) => asAction(state, game, action, owner)), ...own]
-    .filter((action) => holds(state, action.when, game) && !hidden(state, game, action, drawing.rendered))
+    .filter((action) => holds(state, game, action.when) && !hidden(state, game, action, drawing.rendered))
     .map((action) => {
       const effects = effectsIn(drawing.rendered, state, game, action.command)
       return { ...actionButton(state, game, action, drawing.rendered, effects), effects }
@@ -376,8 +376,8 @@ const asAction = (state: GameState, game: Game, action: ActionDef, owner?: strin
  * whose `when` holds, else `label`, as written with tokens filled. Undefined with neither.
  */
 function buttonWords(state: GameState, game: Game, button: Pick<ActionDef, 'label' | 'labels'>): string | undefined {
-  const label = button.labels?.find((entry) => holds(state, entry.when, game))?.label ?? button.label
-  return label === undefined ? undefined : featureContext().fillTokens(label, state, game)
+  const label = button.labels?.find((entry) => holds(state, game, entry.when))?.label ?? button.label
+  return label === undefined ? undefined : featureContext().fillTokens(state, game, label)
 }
 
 /** `renderAction`, asking `rendered` for the open scene. `effects`, when the caller has worked them out. */
@@ -389,7 +389,7 @@ function actionButton(state: GameState, game: Game, action: Action, rendered: Re
     id: action.id,
     label: action.label,
     price: priced(state, game, { stats: commandEntry(action.command)?.spends?.(action.command, game, state, featureContext()) }, watched ? effects : []),
-    disabled: action.blocked?.find((entry) => holds(state, entry.when, game))?.reason ?? whyNotIn(rendered, state, game, action.command, effects),
+    disabled: action.blocked?.find((entry) => holds(state, game, entry.when))?.reason ?? whyNotIn(rendered, state, game, action.command, effects),
     ...(action.tags ? { tags: action.tags } : {}),
     ...(action.irreversible !== undefined ? { irreversible: action.irreversible } : {}),
     command: action.command,
@@ -404,7 +404,7 @@ function priced(state: GameState, game: Game, cost: { stats?: Record<string, num
   const out: Price = {}
   const spent = Object.entries(cost.stats ?? {})
     .filter(([, amount]) => amount > 0)
-    .map(([id, amount]) => ({ id, amount, text: formatStat(statDef(game, id), amount) }))
+    .map(([id, amount]) => ({ id, amount, text: formatStat(statOf(game, id), amount) }))
   if (spent.length) out.stats = spent
   const notes = effects.length ? pluginPrices(game, state, effects) : []
   if (notes.length) out.notes = notes
@@ -418,7 +418,7 @@ function priced(state: GameState, game: Game, cost: { stats?: Record<string, num
 function priceOfEffects(state: GameState, game: Game, effects: readonly Effect[], spends: Record<string, number> = {}): Price | undefined {
   const spent: Record<string, number> = { ...spends }
   for (const effect of effects) {
-    if (!('stat' in effect && 'by' in effect && effect.of === undefined && statDef(game, effect.stat)?.spendable)) continue
+    if (!('stat' in effect && 'by' in effect && effect.of === undefined && statOf(game, effect.stat)?.spendable)) continue
     const by = amountOf(state, game, effect.by)
     if (by < 0) spent[effect.stat] = (spent[effect.stat] ?? 0) - by
   }

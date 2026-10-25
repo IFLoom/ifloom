@@ -8,7 +8,7 @@ The game never contains a code. It has a slow hash of each one, which can check 
 
 ```ts
 import {
-  unlocks, startUnlocks, unlockedPacks, hasUnlock, recordUnlock, unlockDefs,
+  unlocks, startUnlocks, unlockedPacks, hasUnlock, recordUnlock, unlocksOf,
   unlockHash, codeFits, normaliseCode, envName, lockContent, contentScript, lockedContent, ITERATIONS,
   type UnlockDef, type UnlocksState, type UnlocksProfile, type UnlocksView, type UnlockView,
   type UnlockCodes, type Entered, type LockedContent,
@@ -625,7 +625,7 @@ function codeFits(code: string, game: string, def: UnlockDef): Promise<boolean>
 function lockContent(code: string, game: string, def: UnlockDef, packs: readonly Pack[]): Promise<LockedContent>
 function contentScript(locked: readonly LockedContent[]): string
 function lockedContent(): Readonly<Record<string, LockedContent>>
-function unlockDefs(game: Game): UnlockDef[]
+function unlocksOf(game: Game): UnlockDef[]
 ```
 
 | Function | What it does |
@@ -636,7 +636,7 @@ function unlockDefs(game: Game): UnlockDef[]
 | `lockContent` | Encrypts packs under a code. Throws if the code isn't the unlock's, or a pack has a function in it. |
 | `contentScript` | The `<script>` the build puts in the page's head, setting `window.__ifloomUnlocks`. |
 | `lockedContent` | What that script set, by unlock, or `{}` in a page without it. |
-| `unlockDefs` | The game's unlocks, merged from its content and packs: `game.data.unlocks.unlocks`. |
+| `unlocksOf` | The game's unlocks, merged from its content and packs: `game.data.unlocks.unlocks`. |
 
 ### LockedContent
 

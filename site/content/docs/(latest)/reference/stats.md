@@ -156,10 +156,10 @@ const rules: GameRules = {
 
 The `stat` effect's `to` asks for more than any ceiling, so it's held to `energyCeiling` as it stands that morning. A button that costs `{ stats: { coins: 3, energy: 10 } }` shows `3c` and `10`, and a player with 2 coins reads *Not enough on you.*
 
-## statDef
+## statOf
 
 ```ts
-function statDef(game: Game, id: string): StatDef | undefined
+function statOf(game: Game, id: string): StatDef | undefined
 ```
 
 The declaration for a stat, or `undefined` if the game declares none by that id.
@@ -177,18 +177,18 @@ Returns `value` held between the stat's declared `min` and its `max`, each worke
 ## lackingLine
 
 ```ts
-function lackingLine(def: StatDef | undefined, id: string, amount: number, game?: Game): string
+function lackingLine(game: Game, id: string, amount: number): string
 ```
 
-The refusal for a cost of `amount` that the player can't cover. It's the declaration's `lacking` with `{n}` replaced by `amount`. Without a `lacking`, it's the [`notEnough`](/docs/reference/strings#refusals) line, `Not enough {stat}.`, with the label in lower case (or the id, if the stat isn't declared).
+The refusal for a cost of `amount` of the stat `id` that the player can't cover. It's the stat's `lacking` with `{n}` replaced by `amount`. Without a `lacking`, it's the [`notEnough`](/docs/reference/strings#refusals) line, `Not enough {stat}.`, with the label in lower case (or the id, if the stat isn't declared).
 
-Pass the game to get its own wording of `notEnough`. Without it you get the engine's English. A stat's `lacking` always wins over `notEnough`. [An action's refusal](/docs/reference/actions#why-an-action-is-refused) uses this unless the action's `cost.reasons` has a line for that stat.
+The `notEnough` line is the game's wording, if it rewords it. A stat's `lacking` always wins over `notEnough`. [An action's refusal](/docs/reference/actions#why-an-action-is-refused) uses this unless the action's `cost.reasons` has a line for that stat.
 
 ```ts
-import { lackingLine, statDef } from '@ifloom/engine'
+import { lackingLine } from '@ifloom/engine'
 
-lackingLine(statDef(game, 'energy'), 'energy', 10) // 'Need 10 energy.'
-lackingLine(statDef(game, 'charm'), 'charm', 5)    // 'Not enough charm.'
+lackingLine(game, 'energy', 10) // 'Need 10 energy.'
+lackingLine(game, 'charm', 5)   // 'Not enough charm.'
 ```
 
 `{n}` is the amount the cost asks for, not how far short the player is.
@@ -202,9 +202,9 @@ function formatStat(def: StatDef | undefined, value: number): string
 A value as the player reads it, through the declaration's `format`. With no format, or no declaration, it's the plain number.
 
 ```ts
-import { formatStat, statDef } from '@ifloom/engine'
+import { formatStat, statOf } from '@ifloom/engine'
 
-formatStat(statDef(game, 'coins'), 12) // '12c'
+formatStat(statOf(game, 'coins'), 12) // '12c'
 ```
 
 ## StatWords

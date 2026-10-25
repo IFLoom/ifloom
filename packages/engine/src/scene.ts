@@ -196,9 +196,9 @@ function blockText(
   if ('prose' in block) {
     return { text: runtime.prose.line(block.prose, state), drawn: block.prose }
   }
-  if ('text' in block) return { text: fillTokens(block.text, state, runtime.game) }
+  if ('text' in block) return { text: fillTokens(state, runtime.game, block.text) }
   if (!('variants' in block)) return {}
-  const members = variantMembers(scene, block.variants, runtime).filter((key) => holds(state, block.gate?.[key], runtime.game))
+  const members = variantMembers(scene, block.variants, runtime).filter((key) => holds(state, runtime.game, block.gate?.[key]))
   if (members.length === 0) return {}
   const drawn = runtime.prose.draw(state, block.variants, members)
   const line = runtime.prose.line(drawn.id, state)
@@ -269,7 +269,7 @@ export function renderScene(scene: DataScene, state: GameState, runtime: SceneRu
     if (resolved.drawn) drawn.push(resolved.drawn)
     if (pieces.length) parts.push({ text: pieces.join('\n\n'), ...(block.ui ? { ui: block.ui } : {}), ...withSection })
   }
-  const stop = walkFlow(scene, path, (condition) => holds(state, condition, game), {
+  const stop = walkFlow(scene, path, (condition) => holds(state, game, condition), {
     content,
     caughtUp: () => {
       fresh = parts.length
@@ -284,9 +284,9 @@ export function renderScene(scene: DataScene, state: GameState, runtime: SceneRu
   const offered: readonly Choice[] = stop.at === 'decide' ? stop.choices : stop.at === 'end' ? scene.choices : []
   const choices: SceneChoice[] = []
   for (const choice of offered) {
-    const visible = holds(state, choice.when, game) && !choice.blocked?.some((entry) => entry.hide && holds(state, entry.when, game))
+    const visible = holds(state, game, choice.when) && !choice.blocked?.some((entry) => entry.hide && holds(state, game, entry.when))
     const already = choice.once !== undefined && runtime.spent(state, scene.id, choice.id)
-    const blocked = choice.blocked?.find((entry) => holds(state, entry.when, game))
+    const blocked = choice.blocked?.find((entry) => holds(state, game, entry.when))
     choices.push({
       id: choice.id,
       label: choiceLabel(choice, drawn, state, runtime),
@@ -301,8 +301,8 @@ export function renderScene(scene: DataScene, state: GameState, runtime: SceneRu
       // the choice stay on screen: capping the payout stops a farm without
       // taking the line away, and it pays again next turn.
       effects: already
-        ? buildEffects(state, game, choice.effects ?? []).filter((effect) => 'scene' in effect)
-        : [...buildEffects(state, game, choice.effects ?? []), ...(choice.once ? runtime.spend(state, scene.id, choice.id) : []), ...remember],
+        ? buildEffects(game, choice.effects ?? []).filter((effect) => 'scene' in effect)
+        : [...buildEffects(game, choice.effects ?? []), ...(choice.once ? runtime.spend(state, scene.id, choice.id) : []), ...remember],
     })
   }
 
@@ -335,8 +335,8 @@ function choiceLabel(choice: Choice, drawn: readonly string[], state: GameState,
     .filter((line): line is string => line !== undefined)
     .at(-1)
   if (matched !== undefined) return matched
-  const named = choice.labels?.find((entry) => holds(state, entry.when, runtime.game))?.label ?? choice.label
-  return named !== undefined ? fillTokens(named, state, runtime.game) : choice.id
+  const named = choice.labels?.find((entry) => holds(state, runtime.game, entry.when))?.label ?? choice.label
+  return named !== undefined ? fillTokens(state, runtime.game, named) : choice.id
 }
 
 /** A `say` block as its beat: whose line it is, as a scene's speaker is read, and its words filled in. */
@@ -347,7 +347,7 @@ function spokenBeat(block: Extract<Block, { say: string }>, state: GameState, ga
     who: found.who,
     ...(found.speaker !== undefined ? { speaker: found.speaker } : {}),
     name: found.name,
-    text: fillTokens(block.say, state, game),
+    text: fillTokens(state, game, block.say),
     ...(block.voice !== undefined ? { voice: block.voice } : {}),
   }
 }

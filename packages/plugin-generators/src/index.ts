@@ -13,7 +13,7 @@ import {
   definePlugin,
   parseRef,
   draw,
-  statDef,
+  statOf,
   statValue,
   weighted,
   type DefinedPlugin,
@@ -85,12 +85,12 @@ declare module '@ifloom/engine' {
 const ID = 'generators'
 
 /** The game's pools: `data.generators.pools`, from its packs. */
-export function poolDefs(game: Game): PoolDef[] {
+export function poolsOf(game: Game): PoolDef[] {
   return (game.data?.[ID]?.pools ?? []) as PoolDef[]
 }
 
 /** The game's templates: `data.generators.templates`, from its packs. */
-export function templateDefs(game: Game): TemplateDef[] {
+export function templatesOf(game: Game): TemplateDef[] {
   return (game.data?.[ID]?.templates ?? []) as TemplateDef[]
 }
 
@@ -106,7 +106,7 @@ function entryWeight(entry: PoolEntry): number | undefined {
 function drawField(field: FieldDef, game: Game, parts: (string | number)[]): KvValue {
   if (typeof field !== 'object' || field === null) return field
   if ('pool' in field) {
-    const pool = poolDefs(game).find((entry) => entry.id === field.pool)
+    const pool = poolsOf(game).find((entry) => entry.id === field.pool)
     const picked = pool && weighted(pool.values, entryWeight, ...parts)
     return picked === undefined ? '' : entryValue(picked)
   }
@@ -124,7 +124,7 @@ function drawField(field: FieldDef, game: Game, parts: (string | number)[]): KvV
  * this save. The plugin's effect passes the number the next one will get, so
  * each is different and the same on every replay.
  */
-export function drawEntity(template: TemplateDef, state: GameState, game: Game, n: number): GeneratedEntity {
+export function drawEntity(state: GameState, game: Game, template: TemplateDef, n: number): GeneratedEntity {
   const parts = (field: string) => [ID, state.seed, template.id, n, field]
   const text = (field: FieldDef | undefined, name: string) => (field === undefined ? {} : { [name]: String(drawField(field, game, parts(name))) })
   const stats: Record<string, number> = {}
@@ -149,8 +149,8 @@ export function templateKind(template: TemplateDef): string | undefined {
  * `start`) is left out, so the save keeps only what differs.
  */
 function created(template: TemplateDef, state: GameState, game: Game, kind: string, n: number): Effect {
-  const drawn = drawEntity(template, state, game, n)
-  const anyway = (id: string) => (template.like !== undefined ? statValue(state, game, id, template.like) : (statDef(game, id)?.start ?? 0))
+  const drawn = drawEntity(state, game, template, n)
+  const anyway = (id: string) => (template.like !== undefined ? statValue(state, game, id, template.like) : (statOf(game, id)?.start ?? 0))
   const stats = Object.fromEntries(Object.entries(drawn.stats).filter(([id, value]) => value !== anyway(id)))
   return {
     create: kind,
@@ -204,7 +204,7 @@ export function generators(): DefinedPlugin<null> {
     effects: {
       /** `{ 'generators/generate': { template, count? } }`: make `count` (1 if left out) entities from the template. */
       generate: (state, args, { game, apply }) => {
-        const template = templateDefs(game).find((entry) => entry.id === String(args.template ?? ''))
+        const template = templatesOf(game).find((entry) => entry.id === String(args.template ?? ''))
         const kind = template && templateKind(template)
         if (!template || kind === undefined) return state
         const count = Math.max(0, Math.floor(Number(args.count ?? 1)) || 0)
@@ -225,7 +225,7 @@ export function generators(): DefinedPlugin<null> {
     references: {
       calls: (_kind, _name, args) => (args.template === undefined ? [] : [{ entry: String(args.template), plugin: ID, list: 'templates', noun: 'template' }]),
       content: (game) => [
-        ...templateDefs(game).map((template) => ({
+        ...templatesOf(game).map((template) => ({
           list: 'templates',
           id: template.id,
           refs: [
@@ -246,14 +246,14 @@ export function generators(): DefinedPlugin<null> {
     },
     check: (game) => {
       const problems: PluginProblem[] = []
-      for (const pool of poolDefs(game)) {
+      for (const pool of poolsOf(game)) {
         const live = (pool.values ?? []).filter((entry) => {
           const weight = entryWeight(entry) ?? 1
           return Number.isFinite(weight) && weight > 0
         })
         if (!live.length) problems.push({ list: 'pools', id: pool.id, what: 'has nothing to pick: no values, or every weight is 0' })
       }
-      for (const template of templateDefs(game)) {
+      for (const template of templatesOf(game)) {
         if (templateKind(template) === undefined) problems.push({ list: 'templates', id: template.id, what: 'makes nothing: give it an of or a like' })
         else if (template.name === undefined && template.like === undefined)
           problems.push({ list: 'templates', id: template.id, what: 'needs a name, or a like to read it from' })

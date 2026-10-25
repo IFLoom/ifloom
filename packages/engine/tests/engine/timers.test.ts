@@ -135,11 +135,11 @@ describe('timers', () => {
   it('answer the timer condition: running, and how long is left', () => {
     const game = withTimers()
     const state = run(begin(game), game, act('ring'), tick(7500))
-    expect(holds(state, { timer: 'phone' }, game)).toBe(true)
-    expect(holds(state, { timer: 'phone', lte: 3000 }, game)).toBe(true)
-    expect(holds(state, { timer: 'phone', gt: 3000 }, game)).toBe(false)
-    expect(holds(state, { timer: 'kettle' }, game)).toBe(false)
-    expect(holds(state, { timer: 'kettle', lte: 3000 }, game)).toBe(false)
+    expect(holds(state, game, { timer: 'phone' })).toBe(true)
+    expect(holds(state, game, { timer: 'phone', lte: 3000 })).toBe(true)
+    expect(holds(state, game, { timer: 'phone', gt: 3000 })).toBe(false)
+    expect(holds(state, game, { timer: 'kettle' })).toBe(false)
+    expect(holds(state, game, { timer: 'kettle', lte: 3000 })).toBe(false)
   })
 
   it('refuse a tick with nothing counting down, and one of no length', () => {

@@ -433,7 +433,7 @@ whyNot(state, game, talk('ava'))         // 'Ava is not here.'
 whyNot(state, game, call('ava'))         // 'She’s busy at the counter. Try her this evening.'
 
 state = apply(state, game, go('cafe')).state
-holds(state, here('ava'), game)          // true
+holds(state, game, here('ava'))          // true
 state = apply(state, game, talk('ava')).state
 state.sceneId                            // 'ava.hi'
 state = apply(state, game, { type: 'choose', id: 'bye' }).state
@@ -441,7 +441,7 @@ statValue(state, game, 'friendship', character('ava'))   // 10
 
 // That evening, Ava has gone to the park.
 state = clock.write(state, { day: 0, period: 'evening' })
-holds(state, isAt('ava', 'park'), game)  // true
+holds(state, game, isAt('ava', 'park'))  // true
 state = apply(state, game, go('high-street')).state
 state = apply(state, game, go('park')).state
 apply(state, game, talk('ava')).state.sceneId   // 'ava.hi': not friends yet
@@ -449,7 +449,7 @@ apply(state, game, call('ava')).state.sceneId   // 'ava.call'
 
 // A few more chats later, as a test would fake them.
 const friends = applyEffects(state, game, [{ stat: 'friendship', by: 20, of: 'character:ava' }])
-holds(friends, { stat: 'friendship', of: 'character:ava', gte: 25 }, game)   // true
+holds(friends, game, { stat: 'friendship', of: 'character:ava', gte: 25 })   // true
 apply(friends, game, talk('ava')).state.sceneId                           // 'ava.river'
 ```
 
@@ -676,7 +676,7 @@ The [cast](/docs/plugins/cast) plugin's view: `present`, who is here with their 
 ### Helpers
 
 ```ts
-function peopleOf(game: Game, state?: GameState): EntityRef[]
+function peopleOf(state: GameState, game: Game): EntityRef[]
 function personOf(state: GameState, game: Game, ref: EntityRef): Person | undefined
 
 const talk: (who: string) => CommandRef
@@ -689,7 +689,7 @@ const character: (who: string, kind?: string) => EntityRef
 
 | Helper | Returns |
 |---|---|
-| `peopleOf` | Everyone with the `cast/person` trait, as references. Given only the game, the ones content declares, in its order; given a state too, everyone in the game now, those made in play included. |
+| `peopleOf` | Everyone in the game now with the `cast/person` trait, as references: the ones content declares, in its order, then those made in play. |
 | `personOf` | Someone's `cast/person` trait as play reads it (through what they were made `like`), or `undefined` for anyone not in the game or without it. |
 | `talk`, `call` | The [commands](#commands). |
 | `here`, `isAt`, `hasMet` | The [conditions](#conditions). |

@@ -15,7 +15,7 @@ import { stringOf } from './strings.ts'
 import { holds } from './condition.ts'
 import { buildEffects, customCall, customCondition, customContext, customEffect, customValue } from './custom.ts'
 import { bakedScene } from './game.ts'
-import { actionById } from './action.ts'
+import { actionOf } from './action.ts'
 import { sceneContext } from './context.ts'
 import { fillTokens } from './prose.ts'
 import { amountOf } from './amount.ts'
@@ -45,9 +45,9 @@ export function featureContext(): FeatureContext {
     turnContext: (state, game, before) => ({
       ...customContext(state, game),
       before,
-      apply: (effects, on = state) => runEffects(on, game, buildEffects(on, game, effects), true),
+      apply: (effects, on = state) => runEffects(on, game, buildEffects(game, effects), true),
     }),
-    buildEffects: (state, game, refs) => buildEffects(state, game, refs),
+    buildEffects: (game, refs) => buildEffects(game, refs),
     effectsOf: (state, game, command) => effectsOf(state, game, command),
     weighted,
     draw,
@@ -57,7 +57,7 @@ export function featureContext(): FeatureContext {
     pluginAudio,
     statModifiers: (state, game) => pluginStatModifiers(game, state),
     bakedScene,
-    actionOf: (state, game, id) => actionById(state, game, id),
+    actionOf: (state, game, id) => actionOf(state, game, id),
     sceneView: (state, game) => (state.sceneId ? bakedScene(game, state.sceneId)?.render(state, sceneContext(state, game)) : undefined),
   })
 }
@@ -89,17 +89,17 @@ const none = (): Reference[] => []
 /** The core's conditions. `all`, `any` and `not` are asked part by part in `holds` and `explain` too. */
 const conditions: { [K in keyof CoreConditions]: ConditionEntry<CoreConditions[K]> } = {
   all: {
-    holds: (state, condition, game, cx) => condition.all.every((entry) => cx.holds(state, entry, game)),
+    holds: (state, condition, game, cx) => condition.all.every((entry) => cx.holds(state, game, entry)),
     explain: (_state, condition) => `all of ${condition.all.length}`,
     references: (condition) => condition.all.map((when) => ({ when })),
   },
   any: {
-    holds: (state, condition, game, cx) => condition.any.some((entry) => cx.holds(state, entry, game)),
+    holds: (state, condition, game, cx) => condition.any.some((entry) => cx.holds(state, game, entry)),
     explain: (_state, condition) => `any of ${condition.any.length}`,
     references: (condition) => condition.any.map((when) => ({ when })),
   },
   not: {
-    holds: (state, condition, game, cx) => !cx.holds(state, condition.not, game),
+    holds: (state, condition, game, cx) => !cx.holds(state, game, condition.not),
     explain: () => 'not',
     references: (condition) => [{ when: condition.not }],
   },
@@ -150,7 +150,7 @@ const callEffect: EffectEntry<Effect> = {
     if (!fn || customDepth >= 10) return state
     customDepth += 1
     try {
-      return cx.runEffects(state, game, buildEffects(state, game, fn(state, call.with ?? {})), cx.ending)
+      return cx.runEffects(state, game, buildEffects(game, fn(state, call.with ?? {})), cx.ending)
     } finally {
       customDepth -= 1
     }

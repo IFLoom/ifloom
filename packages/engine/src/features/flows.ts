@@ -17,7 +17,7 @@ import type { Reference } from '../references.ts'
 import type { PluginArgs } from '../plugin.ts'
 import type { BlockUi, Ui } from './ui.ts'
 import { defineFeature, type FeatureCheckTools, type FeatureContext } from './feature.ts'
-import { minigameDef, startMinigame } from './minigames.ts'
+import { minigameOf, startMinigame } from './minigames.ts'
 
 /**
  * One step of a visit's path, in the order they came: a pick at a decision
@@ -289,7 +289,7 @@ function keptUp(state: GameState, game: Game, cx: FeatureContext): GameState {
     const scene = waitingScene(next, game)
     if (!scene) return next
     const at = next
-    const stop = walkFlow(scene, at.flow?.path ?? [], (condition) => cx.holds(at, condition, game))
+    const stop = walkFlow(scene, at.flow?.path ?? [], (condition) => cx.holds(at, game, condition))
     if (stop.at !== 'minigame' && stop.at !== 'panel') return next
     const waiting = at.flow?.waiting
     const flow: FlowState = at.flow ?? { scene: scene.id, path: [], waiting: null }
@@ -298,7 +298,7 @@ function keptUp(state: GameState, game: Game, cx: FeatureContext): GameState {
       // Still being played: the flow waits.
       if (started && at.minigame?.id === stop.minigame) return next
       // Done with, or one the game doesn't have (the checker reports it): the flow carries on past it.
-      if (started || !minigameDef(game, stop.minigame)) {
+      if (started || !minigameOf(game, stop.minigame)) {
         next = { ...at, flow: { ...flow, path: [...flow.path, { minigame: stop.minigame }], waiting: null } }
         continue
       }

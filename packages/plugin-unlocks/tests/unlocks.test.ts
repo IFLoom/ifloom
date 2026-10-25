@@ -25,7 +25,7 @@ import {
   normaliseCode,
   recordUnlock,
   startUnlocks,
-  unlockDefs,
+  unlocksOf,
   unlockHash,
   unlockedPacks,
   unlocks,
@@ -51,11 +51,11 @@ const supporterPack: Pack = {
   prose: { 'supporter.lounge': 'Behind the bakery a narrow door opens on a room that smells of cinnamon.' },
 }
 
-function build(unlockDefs: UnlockDef[], packs: Pack[] = []): Game {
+function build(unlocksOf: UnlockDef[], packs: Pack[] = []): Game {
   const town: Content = {
     scenes: [{ id: 'intro', body: [], choices: [] }],
     actions: [{ id: 'rest', effects: [{ turn: true }] }],
-    data: { unlocks: { unlocks: unlockDefs } },
+    data: { unlocks: { unlocks: unlocksOf } },
   }
   const loaded = loadGame([town], { id: GAME, title: 'Unlocks town', plugins: [unlocks()] }, { packs })
   expect(loaded.problems).toEqual([])
@@ -101,10 +101,10 @@ describe('the plugin', () => {
   it('records an unlock through its command, and unlocks/has reads the save', async () => {
     const g = build([await def()])
     const fresh = { ...startingState(g), sceneId: null }
-    expect(holds(fresh, hasUnlock('supporter'), g)).toBe(false)
+    expect(holds(fresh, g, hasUnlock('supporter'))).toBe(false)
     const recorded = apply(fresh, g, recordUnlock('supporter'))
     expect(recorded.reason).toBeUndefined()
-    expect(holds(recorded.state, hasUnlock('supporter'), g)).toBe(true)
+    expect(holds(recorded.state, g, hasUnlock('supporter'))).toBe(true)
     expect(unlocks().viewIn(view(recorded.state, g))).toEqual({
       unlocks: [{ id: 'supporter', label: 'Supporter edition', description: '', unlocked: true }],
       unlocked: 1,
@@ -141,7 +141,7 @@ describe('the plugin', () => {
       'its hash isn’t one ifloom unlock-hash printed (64 hex digits)',
       'iterations must be a whole number above 0',
     ])
-    expect(unlockDefs(loaded.game).map((entry) => entry.id)).toEqual(['supporter', 'bad'])
+    expect(unlocksOf(loaded.game).map((entry) => entry.id)).toEqual(['supporter', 'bad'])
   })
 })
 
@@ -154,7 +154,7 @@ describe('entering a code', () => {
     await codes.ready
     expect(await codes.enter('BREAD-2027-KEY')).toEqual({ ok: false, reason: 'That code doesn’t unlock anything.' })
     expect(await codes.enter('  -  ')).toEqual({ ok: false, reason: 'Type a code first.' })
-    expect(holds(runner.state, hasUnlock('supporter'), g)).toBe(false)
+    expect(holds(runner.state, g, hasUnlock('supporter'))).toBe(false)
     expect(await runner.profile!.get('unlocks')).toBeUndefined()
   })
 
@@ -165,7 +165,7 @@ describe('entering a code', () => {
     const codes = startUnlocks(runner, { content: {} })
     const entered = await codes.enter('bread 2026 key')
     expect(entered).toEqual({ ok: true, value: { unlock: 'supporter', label: 'Supporter edition', already: false, restart: false } })
-    expect(holds(runner.state, hasUnlock('supporter'), g)).toBe(true)
+    expect(holds(runner.state, g, hasUnlock('supporter'))).toBe(true)
     await runner.settled()
     const stored = (await driver.get(`${GAME}.profile`))!
     expect(stored).toMatch(/"proof":"[0-9a-f]{64}"/)
@@ -196,14 +196,14 @@ describe('entering a code', () => {
     // The next launch: a new runner on the same profile records it as soon as the profile is read.
     const next = runnerFor(g, driver)
     const codes = startUnlocks(next, { content: {} })
-    expect(holds(next.state, hasUnlock('supporter'), g)).toBe(false)
+    expect(holds(next.state, g, hasUnlock('supporter'))).toBe(false)
     await codes.ready
-    expect(holds(next.state, hasUnlock('supporter'), g)).toBe(true)
+    expect(holds(next.state, g, hasUnlock('supporter'))).toBe(true)
     await next.newGame({ seed: 2 })
-    expect(holds(next.state, hasUnlock('supporter'), g)).toBe(true)
+    expect(holds(next.state, g, hasUnlock('supporter'))).toBe(true)
     codes.stop()
     await next.newGame({ seed: 3 })
-    expect(holds(next.state, hasUnlock('supporter'), g)).toBe(false)
+    expect(holds(next.state, g, hasUnlock('supporter'))).toBe(false)
   })
 
   it('forgets a remembered unlock once its code has changed: a new release, new codes', async () => {
@@ -214,7 +214,7 @@ describe('entering a code', () => {
     const rotated = build([await def({ salt: 'release-2' })])
     const next = runnerFor(rotated, driver)
     await startUnlocks(next, { content: {} }).ready
-    expect(holds(next.state, hasUnlock('supporter'), rotated)).toBe(false)
+    expect(holds(next.state, rotated, hasUnlock('supporter'))).toBe(false)
   })
 
   it('needs a profile to remember the code', async () => {

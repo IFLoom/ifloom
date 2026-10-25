@@ -32,18 +32,18 @@ describe('one kv vocabulary, with whose store in `of`', () => {
     expect(state.kv.visits).toBe(2)
     expect(state.storylines.rosa.kv.visits).toBe(1)
     expect(state.minigame?.kv.score).toBe(3)
-    expect(holds(state, { kv: 'role', of: 'staff:ana', is: 'waiter' }, game)).toBe(true)
-    expect(holds(state, { kv: 'visits', of: 'storyline:rosa', gte: 1 }, game)).toBe(true)
-    expect(holds(state, { kv: 'score', of: 'minigame', gte: 3 }, game)).toBe(true)
+    expect(holds(state, game, { kv: 'role', of: 'staff:ana', is: 'waiter' })).toBe(true)
+    expect(holds(state, game, { kv: 'visits', of: 'storyline:rosa', gte: 1 })).toBe(true)
+    expect(holds(state, game, { kv: 'score', of: 'minigame', gte: 3 })).toBe(true)
     // With no minigame running, its keys aren't there to read or write.
-    expect(holds({ ...state, minigame: null }, { kv: 'score', of: 'minigame' }, game)).toBe(false)
+    expect(holds({ ...state, minigame: null }, game, { kv: 'score', of: 'minigame' })).toBe(false)
   })
 
   it('takes a list in `is`, for any one of them', () => {
     const game = town()
     const state = begin(game, { kv: { phase: 'open' } })
-    expect(holds(state, { kv: 'phase', is: ['arrival', 'open'] }, game)).toBe(true)
-    expect(holds(state, { kv: 'phase', is: ['arrival'] }, game)).toBe(false)
+    expect(holds(state, game, { kv: 'phase', is: ['arrival', 'open'] })).toBe(true)
+    expect(holds(state, game, { kv: 'phase', is: ['arrival'] })).toBe(false)
   })
 
   it('draws a whole number from `random`, seeded by the save, the same on every replay', () => {
@@ -58,7 +58,7 @@ describe('one kv vocabulary, with whose store in `of`', () => {
   it('prints a key with {{kv:key}}, someone else’s with of', () => {
     const game = town()
     const state = { ...begin(game, { kv: { visits: 4 } }), storylines: { ...begin(game).storylines, rosa: { closedUntil: null, kv: { visits: 2 } } } }
-    expect(fillTokens('{{visits}}, {{kv:visits}}, {{kv:visits of=storyline:rosa}} and {{kv:role of=staff:ana}}', state, game)).toBe('4, 4, 2 and cook')
+    expect(fillTokens(state, game, '{{visits}}, {{kv:visits}}, {{kv:visits of=storyline:rosa}} and {{kv:role of=staff:ana}}')).toBe('4, 4, 2 and cook')
   })
 
   it('starts a new game with the content’s kv, under what startingState is given', () => {

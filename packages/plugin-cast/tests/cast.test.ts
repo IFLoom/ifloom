@@ -101,7 +101,7 @@ describe('the cast', () => {
     expect(sam).toEqual({ id: 'sam', name: 'Sam', of: 'character', stats: { friendship: 5 }, traits: { 'cast/person': { home: 'park', talk: 'sam.hi' } } })
     const { game: g } = game()
     const state = startingState(g)
-    expect(peopleOf(g)).toEqual(['character:ava', 'character:sam'])
+    expect(peopleOf(state, g)).toEqual(['character:ava', 'character:sam'])
     expect(personOf(state, g, 'character:sam')).toEqual({ home: 'park', talk: 'sam.hi' })
     // Their desc is the line under their name, their image their portrait.
     const cafe = run(g, state, go('cafe'))
@@ -112,19 +112,19 @@ describe('the cast', () => {
     const { game: g } = game()
     const next = run(g, startingState(g), go('park'))
     const created = { ...next, entities: { ...next.entities, character: { '#1': { name: 'Rook', like: 'character:sam' as const } } } }
-    expect(peopleOf(g, created)).toEqual(['character:ava', 'character:sam', 'character:#1'])
+    expect(peopleOf(created, g)).toEqual(['character:ava', 'character:sam', 'character:#1'])
     expect(shown(created, g).present.map((one) => one.name)).toEqual(['Sam', 'Rook'])
-    expect(holds(created, here('character:#1'), g)).toBe(true)
+    expect(holds(created, g, here('character:#1'))).toBe(true)
   })
 
   it('are where their schedule puts them, and in the room when that is where the player is', () => {
     const { game: g, clock } = game()
     const cafe = run(g, startingState(g), go('cafe'))
     expect(shown(cafe, g).present.map((person) => person.id)).toEqual(['ava'])
-    expect(holds(cafe, here('ava'), g)).toBe(true)
-    expect(holds(cafe, here('sam'), g)).toBe(false)
+    expect(holds(cafe, g, here('ava'))).toBe(true)
+    expect(holds(cafe, g, here('sam'))).toBe(false)
     const evening = clock.write(cafe, { day: 0, period: 'evening' })
-    expect(holds(evening, isAt('ava', 'park'), g)).toBe(true)
+    expect(holds(evening, g, isAt('ava', 'park'))).toBe(true)
     expect(shown(evening, g).present).toEqual([])
   })
 
@@ -135,7 +135,7 @@ describe('the cast', () => {
     const friends = writeEntity(park, character('ava'), { stats: { friendship: 30 } })
     expect(shown(friends, g).present.find((person) => person.id === 'ava')?.actions[0].label).toBe('Walk with Ava')
     expect(run(g, friends, talk('ava')).sceneId).toBe('ava.river')
-    expect(holds(friends, { stat: 'friendship', of: character('ava'), gte: 25 }, g)).toBe(true)
+    expect(holds(friends, g, { stat: 'friendship', of: character('ava'), gte: 25 })).toBe(true)
   })
 
   it('say why a conversation cannot start', () => {
@@ -162,9 +162,9 @@ describe('the cast', () => {
   it('are met by seeing their scenes, and listed as contacts once met', () => {
     const { game: g, clock } = game()
     const state = startingState(g)
-    expect(holds(state, hasMet('ava'), g)).toBe(false)
+    expect(holds(state, g, hasMet('ava'))).toBe(false)
     const met = run(g, state, go('cafe'), talk('ava'), { type: 'choose', id: 'bye' })
-    expect(holds(met, hasMet('ava'), g)).toBe(true)
+    expect(holds(met, g, hasMet('ava'))).toBe(true)
     expect(shown(met, g).people.map((person) => person.id)).toEqual(['ava'])
     expect(view(clock.write(met, { day: 0, period: 'evening' }), g).plugins.cast).toBeDefined()
   })

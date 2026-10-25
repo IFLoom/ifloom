@@ -9,7 +9,7 @@ What you hold is the engine's: things are [entities](/docs/reference/entities), 
 ```ts
 import {
   inventory, usable, useThing, dropThing, giveThing,
-  usableOf, inventoryData, inventoryView,
+  usableOf, inventoryKindsOf, inventoryView,
   type Usable, type InventoryData, type InventoryThing, type InventoryView,
 } from '@ifloom/plugin-inventory'
 ```
@@ -276,14 +276,14 @@ function usableOf(state: GameState, game: Game, ref: EntityRef): Usable | undefi
 
 The thing's `inventory/usable` trait, read through what it was made `like`, or undefined when it does nothing.
 
-### inventoryData and inventoryView
+### inventoryKindsOf and inventoryView
 
 ```ts
-function inventoryData(game: Game): InventoryData
+function inventoryKindsOf(game: Game): { id: string }[] | undefined
 function inventoryView(state: GameState, game: Game): InventoryView
 ```
 
-`inventoryData` is the game's `data.inventory`, merged from its content and packs. `inventoryView` is the plugin's view for a state.
+`inventoryKindsOf` is the game's `data.inventory.kinds`, merged from its content and packs, or `undefined` when it lists none, for every kind. `inventoryView` is the plugin's view for a state.
 
 ## Strings
 

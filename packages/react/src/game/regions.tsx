@@ -249,7 +249,7 @@ export const Overlay = overridable('Overlay', OverlayImpl)
  */
 export function useHolds(condition: Condition | undefined): boolean {
   const { runner } = useGame()
-  return holds(runner.state, condition, runner.game)
+  return holds(runner.state, runner.game, condition)
 }
 
 function WhenImpl({ condition, children }: { condition: Condition; children?: ReactNode }) {

@@ -7,7 +7,7 @@
 import { amountProblems, amountReferences } from './amount.ts'
 import { commandOf, customCall, customValue, hasCustomEffect, customCondition, shortFormProblem, type CommandRef, type EffectRef } from './custom.ts'
 import type { Game } from './game.ts'
-import { absentPartner, pluginArgProblems, pluginById, pluginCommand, pluginName, type CallTable, type Plugin } from './plugin.ts'
+import { absentPartner, pluginArgProblems, pluginOf, pluginCommand, pluginName, type CallTable, type Plugin } from './plugin.ts'
 import { commandReferences, conditionReferences, effectReferences, type Reference } from './references.ts'
 import { wordClashes } from './words.ts'
 import { artSrc } from './sceneBody.ts'
@@ -169,7 +169,7 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
       return [`no ${noun} named "${name}"${unprefixed(name)}`]
     }
     const parts = pluginName(name)
-    const plugin = parts && pluginById(game, parts.plugin)
+    const plugin = parts && pluginOf(game, parts.plugin)
     if (!plugin || !parts) return []
     return [...resolve(plugin.references?.calls?.(table, parts.name, args, game) ?? [], where), ...pluginArgProblems(game, table, name, args)]
   }
@@ -203,7 +203,7 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
     if ('markup' in ref) return markup(ref.markup, where)
     if ('call' in ref) return call(ref.call, ref.name, ref.with ?? {}, where)
     if ('entry' in ref) {
-      if (!pluginById(game, ref.plugin)) return []
+      if (!pluginOf(game, ref.plugin)) return []
       const have = game.data?.[ref.plugin]?.[ref.list] ?? []
       return have.some((entry) => entry.id === ref.entry) ? [] : [`unknown ${ref.noun} "${ref.entry}"`]
     }

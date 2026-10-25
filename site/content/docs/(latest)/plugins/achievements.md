@@ -9,7 +9,7 @@ What a save has earned is kept in the save. Everything earned in any save is als
 ```ts
 import {
   achievements, achievementEarned, grantAchievement,
-  achievementDefs, achievementsView,
+  achievementsOf, achievementsView,
   type AchievementDef, type ProgressDef,
   type AchievementsState, type AchievementsProfile,
   type AchievementsView, type AchievementEntry,
@@ -317,10 +317,10 @@ const achievementEarned: (id: string) => Condition
 const grantAchievement: (id: string) => EffectRef
 ```
 
-### achievementDefs
+### achievementsOf
 
 ```ts
-function achievementDefs(game: Game): AchievementDef[]
+function achievementsOf(game: Game): AchievementDef[]
 ```
 
 The game's achievements, merged from its content and packs: `game.data.achievements.achievements`.

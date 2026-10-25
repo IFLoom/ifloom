@@ -79,10 +79,10 @@ An amount is worked out when it's read: as an effect applies, as a condition is 
 ## amountOf
 
 ```ts
-function amountOf(state: GameState, game: Game | undefined, amount: Amount): number
+function amountOf(state: GameState, game: Game, amount: Amount): number
 ```
 
-An amount worked out in this state, as the engine reads one. Without a game, a stat reads the save's number and a value or a count reads 0. Use it in a plugin's code for a field of its own that takes an amount, and hand the field to the [content checker](/docs/reference/checks) as `{ amount }` in its [references](/docs/reference/plugins#references).
+An amount worked out in this state, as the engine reads one. Use it in a plugin's code for a field of its own that takes an amount, and hand the field to the [content checker](/docs/reference/checks) as `{ amount }` in its [references](/docs/reference/plugins#references).
 
 ```ts
 import { amountOf } from '@ifloom/engine'

@@ -43,8 +43,8 @@ export type SavingShape = {
 const ALLOWED: SavingView = Object.freeze({ allowed: true, reason: null, visible: true })
 
 /** Whether the player can save in this state, by the game's `saveable`. */
-export function savingIn(state: GameState, game: Game, holds: (state: GameState, condition: Condition | undefined, game?: Game) => boolean): SavingView {
-  const entry = game.saveable?.find((blocked) => holds(state, blocked.when, game))
+export function savingIn(state: GameState, game: Game, holds: (state: GameState, game: Game, condition: Condition | undefined) => boolean): SavingView {
+  const entry = game.saveable?.find((blocked) => holds(state, game, blocked.when))
   return entry ? { allowed: false, reason: entry.reason, visible: !entry.hide } : ALLOWED
 }
 

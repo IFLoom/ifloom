@@ -63,7 +63,7 @@ export type InputsShape = {
   lists: 'input'
 }
 
-export function inputById(game: Game, id: string): InputDef | undefined {
+export function inputOf(game: Game, id: string): InputDef | undefined {
   return game.inputs?.find((entry) => entry.id === id)
 }
 
@@ -74,9 +74,9 @@ export function inputValue(input: InputDef, value: KvValue): KvValue {
 
 /** Why this value can't be entered, as the player reads it; undefined if it can. */
 export function inputRefusal(state: GameState, game: Game, id: string, value: KvValue | undefined, cx: FeatureContext): string | undefined {
-  const input = inputById(game, id)
+  const input = inputOf(game, id)
   if (!input) return stringOf(game, 'noSuchInput')
-  if (!cx.holds(state, input.when, game)) return stringOf(game, 'notNow')
+  if (!cx.holds(state, game, input.when)) return stringOf(game, 'notNow')
   if (value === undefined) return stringOf(game, 'enterSomething')
   switch (input.type) {
     case 'text': {
@@ -103,7 +103,7 @@ export const inputs = defineFeature<InputsShape>({
     input: {
       whyNot: (state, command, game, cx) => inputRefusal(state, game, command.id, command.to, cx),
       run: (state, command, game) => {
-        const input = inputById(game, command.id)!
+        const input = inputOf(game, command.id)!
         const key = input.key ?? input.id
         return { ...state, kv: { ...state.kv, [key]: inputValue(input, command.to!) } }
       },
@@ -135,7 +135,7 @@ export const inputs = defineFeature<InputsShape>({
   view: (state, game, _shown, cx) => ({
     inputs: Object.fromEntries(
       (game.inputs ?? [])
-        .filter((input) => cx.holds(state, input.when, game))
+        .filter((input) => cx.holds(state, game, input.when))
         .map((input) => [
           input.id,
           {

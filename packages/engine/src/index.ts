@@ -21,9 +21,9 @@ export type {
   StorylineDef,
   StoryletFields,
 } from './game.ts'
-export { sceneById } from './game.ts'
+export { sceneOf } from './game.ts'
 export type { Formula, StatDef, StatLevels, StatRound, StatWords } from './stats.ts'
-export { clampStat, formatStat, lackingLine, statDef, statLevel, statValue } from './stats.ts'
+export { clampStat, formatStat, lackingLine, statOf, statLevel, statValue } from './stats.ts'
 export type { CommandRef, CustomCondition, CustomContext, TurnContext, CustomEffect, CustomValue, EffectRef, PluginCall, Query, ValueRef } from './custom.ts'
 // The registries a plugin (or the game) augments to type its calls by name, its queries and its view
 export type {
@@ -108,7 +108,7 @@ export { explain, explainText } from './explain.ts'
 
 // Actions and locks
 export type { ActionCost } from './action.ts'
-export { actionById, actionReferences, need } from './action.ts'
+export { actionOf, actionReferences, need } from './action.ts'
 export { effectsOf, warningOf, whyNot } from './availability.ts'
 export type { Lock, LockTarget } from './locks.ts'
 export { lockOn, lockedOut } from './locks.ts'
@@ -125,15 +125,16 @@ export {
   entityKv,
   entityOf,
   entityTags,
-  entityTrait,
+  traitOf,
   entityUi,
   isUnique,
-  kindById,
+  kindOf,
   parseRef,
   protagonist,
   resolveHolder,
   setTraitState,
-  traitOf,
+  declaredTrait,
+  declaredWithTrait,
   traitState,
   withTrait,
   writeEntity,

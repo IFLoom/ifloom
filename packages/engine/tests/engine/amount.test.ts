@@ -79,29 +79,29 @@ describe('an amount as a range bound', () => {
     const g = game()
     const state = startingState(g)
     const canPay = { stat: 'coins', gte: { stat: 'rent' } } as const
-    expect(holds(state, canPay, g)).toBe(true)
+    expect(holds(state, g, canPay)).toBe(true)
     const short = run(state, g, [{ stat: 'rent', by: 5 }])
-    expect(holds(short, canPay, g)).toBe(false)
-    expect(explain(short, canPay, g).why).toBe('stat coins is 12; wants 15 or more')
+    expect(holds(short, g, canPay)).toBe(false)
+    expect(explain(short, g, canPay).why).toBe('stat coins is 12; wants 15 or more')
   })
 
   it('works out bounds in every kind of condition, a call’s included', () => {
     const g = game()
     const state = startingState(g)
-    expect(holds(state, { kv: 'tips', lt: { stat: 'rent' } }, g)).toBe(true)
-    expect(holds(state, { turn: { lt: { kv: 'tips' } } }, g)).toBe(true)
-    expect(holds(state, { count: 'staff', gte: { kv: 'floor' } }, g)).toBe(true)
+    expect(holds(state, g, { kv: 'tips', lt: { stat: 'rent' } })).toBe(true)
+    expect(holds(state, g, { turn: { lt: { kv: 'tips' } } })).toBe(true)
+    expect(holds(state, g, { count: 'staff', gte: { kv: 'floor' } })).toBe(true)
     // A call's own bounds are worked out before it is asked.
-    expect(holds(state, { 'game/over': { n: 11, gte: { stat: 'rent' } } }, g)).toBe(true)
-    expect(holds(state, { 'game/over': { n: 9, gte: { stat: 'rent' } } }, g)).toBe(false)
+    expect(holds(state, g, { 'game/over': { n: 11, gte: { stat: 'rent' } } })).toBe(true)
+    expect(holds(state, g, { 'game/over': { n: 9, gte: { stat: 'rent' } } })).toBe(false)
   })
 
-  it('reads amounts in inRange only when it is given the state and the game', () => {
+  it('reads amounts in inRange in the state it is given', () => {
     const g = game()
     const state = startingState(g)
-    expect(inRange(12, { gte: { stat: 'rent' } }, state, g)).toBe(true)
-    expect(inRange(12, { gte: { stat: 'rent' } })).toBe(false)
-    expect(inRange(12, { gte: 10 })).toBe(true)
+    expect(inRange(state, g, 12, { gte: { stat: 'rent' } })).toBe(true)
+    expect(inRange(state, g, 9, { gte: { stat: 'rent' } })).toBe(false)
+    expect(inRange(state, g, 12, { gte: 10 })).toBe(true)
   })
 })
 

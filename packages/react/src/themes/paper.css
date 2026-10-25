@@ -76,6 +76,16 @@
   font-style: italic;
 }
 
+/* Who says it, upright in small capitals over the italic line, as a play's text names a speaker. */
+[data-part="speaker-name"] {
+  font-style: normal;
+  font-variant: small-caps;
+  font-size: 0.95em;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: lowercase;
+}
+
 [data-part="choices"],
 [data-part="actions"] {
   margin-top: 1rem;

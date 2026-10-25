@@ -80,6 +80,7 @@ function ImageBeat({ beat, attrs }: { beat: Extract<SceneBeat, { type: 'image' }
 function BeatImpl({ beat }: { beat: SceneBeat }) {
   const text = usePart('beat', 'leading-prose')
   const say = usePart('beat', beat.type === 'say' && beat.who === 'player' ? 'leading-prose pl-6 text-player-speech' : 'leading-prose text-speech')
+  const speaker = usePart('speaker-name', 'block text-xs font-semibold tracking-wide uppercase opacity-75')
   const chose = usePart('beat', 'leading-prose pl-6 text-sm text-muted-foreground italic')
   const image = usePart(
     'beat',
@@ -95,6 +96,8 @@ function BeatImpl({ beat }: { beat: SceneBeat }) {
     case 'say':
       return (
         <p {...say} data-beat="say" data-who={beat.who}>
+          {/* Who says it, over the words. A quote that answers the line before names no one, and shows no name. */}
+          {beat.name ? <span {...speaker}>{beat.name}</span> : null}
           {beat.spans ? <InlineSpans spans={beat.spans} /> : beat.text}
           {beat.voice ? <VoiceReplay voice={beat.voice} /> : null}
         </p>

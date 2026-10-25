@@ -8,7 +8,10 @@ defineProps<{ beat: SceneBeat }>()
 
 <template>
   <p v-if="beat.type === 'text'"><Line :text="beat.text" :spans="beat.spans" /></p>
-  <p v-else-if="beat.type === 'say'" class="beat-say" :data-who="beat.who"><Line :text="beat.text" :spans="beat.spans" /></p>
+  <p v-else-if="beat.type === 'say'" class="beat-say" :data-who="beat.who">
+    <span v-if="beat.name" class="speaker-name">{{ beat.name }}</span>
+    <Line :text="beat.text" :spans="beat.spans" />
+  </p>
   <p v-else-if="beat.type === 'chose'" class="beat-chose">{{ beat.label }}</p>
   <img v-else-if="beat.type === 'image'" class="beat-image" :src="beat.src" :alt="beat.alt ?? ''" />
   <video

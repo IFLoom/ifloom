@@ -75,6 +75,7 @@ export const PART_KEYS = [
   'stage-image',
   'beats',
   'beat',
+  'speaker-name',
   'reveal',
   'inline-mail',
   'mail-header',

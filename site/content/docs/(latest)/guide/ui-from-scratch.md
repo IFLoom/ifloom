@@ -122,16 +122,18 @@ function drawBeat(beat: SceneBeat): void {
     case 'text':
       drawLine(add(root, 'p'), beat.text, beat.spans)
       break
-    case 'mono':
-      add(root, 'p', beat.text, 'beat-mono')
+    case 'say': {
+      const line = add(root, 'p', '', 'beat-say')
+      line.dataset.who = beat.who
+      // Who says it, over the words: a name the engine worked out from the speaker's entity, or the player's.
+      if (beat.name) add(line, 'span', beat.name, 'speaker-name')
+      drawLine(add(line, 'span'), beat.text, beat.spans)
       break
-    case 'say':
-      drawLine(add(root, 'p', '', 'beat-say'), beat.text, beat.spans).dataset.who = beat.who
-      break
+    }
     case 'image':
       Object.assign(add(root, 'img', '', 'beat-image'), { src: beat.src, alt: beat.alt ?? '' })
       break
-    // 'video', 'mail' and 'prop' in the template
+    // 'video' and 'chose' in the template
   }
 }
 ```

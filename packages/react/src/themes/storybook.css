@@ -55,6 +55,15 @@
   box-shadow: var(--shadow-card);
 }
 
+/* Who says it, at the top of the bubble, as a chat names the sender. */
+[data-part="speaker-name"] {
+  margin-bottom: 0.15rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
 [data-part="beat"][data-beat="say"][data-who="player"] {
   align-self: flex-end;
   padding-left: 1rem;

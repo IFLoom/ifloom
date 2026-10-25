@@ -9,7 +9,10 @@
 {#if beat.type === 'text'}
   <p><Line text={beat.text} spans={beat.spans} /></p>
 {:else if beat.type === 'say'}
-  <p class="beat-say" data-who={beat.who}><Line text={beat.text} spans={beat.spans} /></p>
+  <p class="beat-say" data-who={beat.who}>
+    {#if beat.name}<span class="speaker-name">{beat.name}</span>{/if}
+    <Line text={beat.text} spans={beat.spans} />
+  </p>
 {:else if beat.type === 'chose'}
   <p class="beat-chose">{beat.label}</p>
 {:else if beat.type === 'image'}

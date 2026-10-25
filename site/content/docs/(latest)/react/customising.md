@@ -145,6 +145,11 @@ Every element the UI draws carries a `data-part` attribute naming what it is: `s
   font-style: italic;
 }
 
+/* No names over spoken lines */
+[data-part="speaker-name"] {
+  display: none;
+}
+
 /* Ava's name in the café's colour */
 [data-part="person"][data-person="ava"] [data-part="person-name"] {
   color: oklch(0.5 0.12 40);
@@ -540,6 +545,7 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `stage-image` | The picture on the stage, above the text. |
 | `beats` | The scene's text, holding every beat. |
 | `beat` | One beat. Carries `data-beat` with its kind, and a `say` beat carries `data-who`. |
+| `speaker-name` | The name over a spoken line: the speaker's, or the player's on their own lines. Not drawn on a line that names no one. Each preset styles it, and `display: none` hides it. |
 | `reveal` | The beats from a block with a [`reveal`](/docs/react/hints#reveal) hint, which wait for it. Carries `data-reveal` with its transition. The choices waiting for the last reveal are one too, with `data-reveal-choices`. |
 | `fold` | A section with a [`fold`](/docs/react/hints#fold) hint, as a `<details>`. |
 | `fold-summary` | The words a fold opens by. |

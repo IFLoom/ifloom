@@ -411,9 +411,14 @@ function drawBeat(beat: SceneBeat): void {
     case 'text':
       add(root, 'p', beat.text)
       break
-    case 'say':
-      add(root, 'p', beat.text, 'beat-say').dataset.who = beat.who
+    case 'say': {
+      const line = add(root, 'p', '', 'beat-say')
+      line.dataset.who = beat.who
+      // Who says it, over the words. A quote that answers the line before names no one.
+      if (beat.name) add(line, 'span', beat.name, 'speaker-name')
+      add(line, 'span', beat.text)
       break
+    }
     case 'chose':
       // A pick made earlier in a flowing scene, where the decision was.
       add(root, 'p', beat.label, 'beat-chose')
@@ -448,6 +453,7 @@ export function Beat({ beat }: { beat: SceneBeat }) {
     case 'say':
       return (
         <p className="beat-say" data-who={beat.who}>
+          {beat.name ? <span className="speaker-name">{beat.name}</span> : null}
           {beat.text}
         </p>
       )
@@ -485,7 +491,10 @@ defineProps<{ beat: SceneBeat }>()
 
 <template>
   <p v-if="beat.type === 'text'">{{ beat.text }}</p>
-  <p v-else-if="beat.type === 'say'" class="beat-say" :data-who="beat.who">{{ beat.text }}</p>
+  <p v-else-if="beat.type === 'say'" class="beat-say" :data-who="beat.who">
+    <span v-if="beat.name" class="speaker-name">{{ beat.name }}</span>
+    {{ beat.text }}
+  </p>
   <p v-else-if="beat.type === 'chose'" class="beat-chose">{{ beat.label }}</p>
   <img v-else-if="beat.type === 'image'" class="beat-image" :src="beat.src" :alt="beat.alt ?? ''" />
   <video
@@ -514,7 +523,10 @@ defineProps<{ beat: SceneBeat }>()
 {#if beat.type === 'text'}
   <p>{beat.text}</p>
 {:else if beat.type === 'say'}
-  <p class="beat-say" data-who={beat.who}>{beat.text}</p>
+  <p class="beat-say" data-who={beat.who}>
+    {#if beat.name}<span class="speaker-name">{beat.name}</span>{/if}
+    {beat.text}
+  </p>
 {:else if beat.type === 'chose'}
   <p class="beat-chose">{beat.label}</p>
 {:else if beat.type === 'image'}
@@ -533,7 +545,7 @@ defineProps<{ beat: SceneBeat }>()
 {/if}
 ```
 
-A spoken line's `who` is `'character'` or `'player'`, which the stylesheet uses to set the player's lines apart. The scene's speaker is `view.scene.speaker`, with their name and picture, and the big picture is `view.scene.image`. A spoken line's `speaker` names the entity it's written under, when there is one. A sound beat draws nothing, because the audio player plays it.
+A spoken line's `who` is `'character'` or `'player'`, which the stylesheet uses to set the player's lines apart. The scene's speaker is `view.scene.speaker`, with their name and picture, and the big picture is `view.scene.image`. A spoken line's `speaker` names the entity it's written under, when there is one, and its `name` is the name to show: the entity's, or on the player's own lines the name the save is listed under (`rules.saveName`), else the string `you`. The templates show it over the words as a small `speaker-name` label, which `display: none` in `src/styles.css` hides. A quote that answers the line before names no one, so it has no `name` and no label. A sound beat draws nothing, because the audio player plays it.
 
 ## Inputs
 

@@ -586,7 +586,7 @@ One beat of a scene's body, drawn by its type:
 | Kind | Drawn as |
 |---|---|
 | `text` | A paragraph. Its `spans`, when it has them, are drawn in the line: an inline action as an [`InlineAction`](#inlineaction) and a tooltip as a [`Tip`](#tip). |
-| `say` | A paragraph in `--speech`. The player's own line is in `--player-speech` and indented. A line with a `voice` ends with a button that plays it again, while the [audio player](/docs/react#sound) is running. Its `spans` are drawn as a `text` beat's are. |
+| `say` | A paragraph in `--speech`, with the speaker's `name` over the words in a small label, the `speaker-name` part. The player's own line is in `--player-speech` and indented, under the player's name (`rules.saveName`, else the string `you`). A quote that answers the line before names no one, so it has no label. A line with a `voice` ends with a button that plays it again, while the [audio player](/docs/react#sound) is running. Its `spans` are drawn as a `text` beat's are. |
 | `image` | A [`Picture`](#picture). It's full width, or at most `max-w-sm` for `size: 'inline'`, and tilted a little when its block has the [`tilt`](/docs/react/hints#tilt) hint. Clicking it opens the [`MediaViewer`](#mediaviewer). |
 | `video` | A [`Video`](#video), sized as a picture is. Clicking it opens the `MediaViewer`, unless the clip has controls, which have a full-screen button of their own. |
 | `sound` | Nothing. The audio player plays it. |
@@ -595,14 +595,16 @@ One beat of a scene's body, drawn by its type:
 ```tsx
 import { Beat } from '@ifloom/react'
 
-<Beat beat={{ type: 'say', who: 'character', text: '“Morning. What can I get you?”' }} />
+<Beat beat={{ type: 'say', who: 'character', speaker: 'character:ava', name: 'Ava', text: '“Morning. What can I get you?”' }} />
 ```
 
 The [`Backlog`](#backlog), [`MessagesSection`](/docs/plugins/messages#messagessection) and [`FeedSection`](/docs/plugins/feed#feedsection) draw their beats with `Beat` too, so a replacement `Beat` changes them all.
 
 While the viewer is on, a picture or a clip sits inside a `viewer-open` button whose `aria-label` is `ui.zoom` ("Enlarge"), followed by the beat's alt text when it has some. A picture whose file is missing draws nothing, button included.
 
-Replaceable as `Beat` in [`components`](#components). Parts: `beat` (with `data-beat`, and `data-who` on a spoken line), `voice-replay` and `viewer-open`. A letter, a note or a sign is an [inline piece](/docs/react/hints#inline-pieces) inside a paragraph: see [`InlineMail`](#inlinemail), [`InlineProp`](#inlineprop) and [`InlineMono`](#inlinemono). A video beat is a `video` part, with `data-beat="video"`.
+To hide the names, hide the part: `[data-part="speaker-name"] { display: none }`.
+
+Replaceable as `Beat` in [`components`](#components). Parts: `beat` (with `data-beat`, and `data-who` on a spoken line), `speaker-name`, `voice-replay` and `viewer-open`. A letter, a note or a sign is an [inline piece](/docs/react/hints#inline-pieces) inside a paragraph: see [`InlineMail`](#inlinemail), [`InlineProp`](#inlineprop) and [`InlineMono`](#inlinemono). A video beat is a `video` part, with `data-beat="video"`.
 
 **Folds.** In `SceneStage`, the beats of a section with a [`fold`](/docs/react/hints#fold) hint (what `fold()` writes) are drawn together in a `fold` part, a `<details>` the player opens and shuts, shut to begin with. Its summary is the hint's words, in a `fold-summary` part, and the beats are in a `fold-beats` part.
 

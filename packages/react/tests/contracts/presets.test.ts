@@ -60,6 +60,10 @@ describe('the presets', () => {
     }
   })
 
+  it('name who says a spoken line in their own style', () => {
+    for (const { name, css } of PRESETS) expect(css, name).toContain('[data-part="speaker-name"]')
+  })
+
   it('leave the page fluid: no --width-page cap', () => {
     for (const { name, css } of PRESETS) expect(css, name).not.toContain('--width-page')
   })

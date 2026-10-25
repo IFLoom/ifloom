@@ -122,9 +122,14 @@ function drawBeat(parent: HTMLElement, beat: SceneBeat): void {
     case 'text':
       drawLine(add(parent, 'p'), beat.text, beat.spans)
       break
-    case 'say':
-      drawLine(add(parent, 'p', '', 'beat-say'), beat.text, beat.spans).dataset.who = beat.who
+    case 'say': {
+      const line = add(parent, 'p', '', 'beat-say')
+      line.dataset.who = beat.who
+      // Who says it, over the words. A quote that answers the line before names no one.
+      if (beat.name) add(line, 'span', beat.name, 'speaker-name')
+      drawLine(add(line, 'span'), beat.text, beat.spans)
       break
+    }
     case 'chose':
       // A pick made earlier in a flowing scene, where the decision was.
       add(parent, 'p', beat.label, 'beat-chose')

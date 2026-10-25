@@ -74,6 +74,23 @@ body {
   content: "”";
 }
 
+/* Who says it, on the line in front of the quote: AVA: “…” */
+[data-part="speaker-name"] {
+  display: inline;
+  font-size: inherit;
+  letter-spacing: 0.04em;
+  opacity: 1;
+}
+
+[data-part="speaker-name"]::after {
+  content: ": “";
+  font-weight: 400;
+}
+
+[data-part="beat"][data-beat="say"]:has(> [data-part="speaker-name"])::before {
+  content: none;
+}
+
 [data-part="choices"],
 [data-part="actions"] {
   counter-reset: choice;

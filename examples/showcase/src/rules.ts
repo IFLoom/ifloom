@@ -7,6 +7,17 @@ import { artSrc, entityImage, heldBy, parseRef, PLAYER, roll, type GameRules } f
 import { postTo, react } from '@ifloom/plugin-feed'
 
 /**
+ * The game's own calls, declared as a plugin declares its own, so content
+ * written in code is checked: `{ 'game/postLatest': true }` compiles, and a
+ * call with arguments it doesn't take doesn't.
+ */
+declare module '@ifloom/engine' {
+  interface EffectCalls {
+    'game/postLatest': true
+  }
+}
+
+/**
  * How the town runs: energy back overnight, the cat's name, and one effect
  * worked out from the state. What's locked when, and what each day resets,
  * are content, in the story.

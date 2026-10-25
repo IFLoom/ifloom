@@ -34,7 +34,6 @@ import {
   type EntityRef,
   type Game,
   type GameState,
-  type Holder,
   type PluginProblem,
   type TraitDef,
 } from '@ifloom/engine'
@@ -64,13 +63,30 @@ export type WardrobeSlot = {
  * What the plugin keeps in a save: what each body has on, by who wears it
  * (`'player'`, or a protagonist such as `'character:sam'`), then by slot.
  */
-export type WardrobeState = { worn: Record<Holder, Record<string, EntityRef | null>> }
+export type WardrobeState = { worn: Record<string, Record<string, EntityRef | null>> }
 
 export type WardrobeView = {
   /** Every slot, in order, with what is in it on whoever the player is playing now. */
   slots: { id: string; label: string; entity: EntityRef | null; name: string | null }[]
   /** Wearable things you hold and aren't wearing, in the game's order of its entities. */
   spare: { entity: EntityRef; name: string; slot: string }[]
+}
+
+/**
+ * What content writes for each of the plugin's calls, its queries' answers
+ * and its view, so a call with a misspelled argument fails to compile.
+ */
+declare module '@ifloom/engine' {
+  interface ConditionCalls {
+    'wardrobe/wearing': { entity?: EntityRef; slot?: string; at?: string }
+  }
+  interface CommandCalls {
+    'wardrobe/wear': { id: EntityRef }
+    'wardrobe/takeOff': { id: string }
+  }
+  interface PluginViews {
+    wardrobe: WardrobeView
+  }
 }
 
 const ID = 'wardrobe'
@@ -82,11 +98,11 @@ export function slotsOf(game: Game): WardrobeSlot[] {
 }
 
 /** The slot a thing is worn in, if it can be worn: its `wardrobe/wearable` trait, read through what it was made `like`. */
-export function wearableOf(state: GameState, game: Game, ref: EntityRef): Wearable | undefined {
+export function wearableOf(state: GameState, game: Game, ref: string): Wearable | undefined {
   return entityTrait(state, game, ref, WEARABLE)
 }
 
-function nameOf(state: GameState, game: Game, ref: EntityRef): string {
+function nameOf(state: GameState, game: Game, ref: string): string {
   return entityOf(state, game, ref) ? entityName(state, game, ref) : (parseRef(ref)?.id ?? ref)
 }
 
@@ -102,25 +118,25 @@ function fromItems(old: unknown, game: Game): { worn: Record<string, EntityRef |
   const wearables = withTrait(game, WEARABLE)
   const refOf = (item: string | null): EntityRef | null => {
     if (item === null) return null
-    if (wearables.includes(item)) return item
+    if (wearables.includes(item as EntityRef)) return item as EntityRef
     return wearables.find((ref) => parseRef(ref)?.id === item) ?? null
   }
   return { worn: Object.fromEntries(Object.entries(worn).map(([slot, item]) => [slot, refOf(item)])) }
 }
 
 /** Version 2 kept one set of slots, worn by whoever was played: now it is theirs, among each body's own. */
-function perBody(old: unknown, you: Holder): WardrobeState {
+function perBody(old: unknown, you: string): WardrobeState {
   const worn = (old as { worn?: Record<string, EntityRef | null> } | undefined)?.worn ?? {}
   return { worn: { [you]: worn } }
 }
 
 /** What one body has on, slot by slot: nothing in a slot it never filled. */
-function wornBy(slice: WardrobeState, holder: Holder): Record<string, EntityRef | null> {
+function wornBy(slice: WardrobeState, holder: string): Record<string, EntityRef | null> {
   return slice.worn[holder] ?? {}
 }
 
 /** The slice with one body's slots changed. */
-function dressed(slice: WardrobeState, holder: Holder, slots: Record<string, EntityRef | null>): WardrobeState {
+function dressed(slice: WardrobeState, holder: string, slots: Record<string, EntityRef | null>): WardrobeState {
   return { worn: { ...slice.worn, [holder]: { ...wornBy(slice, holder), ...slots } } }
 }
 
@@ -184,7 +200,7 @@ export function wardrobe(): DefinedPlugin<WardrobeState, WardrobeView> {
           return undefined
         },
         run: (state, args, { slice, set, game }) => {
-          const ref = String(args.id)
+          const ref = String(args.id) as EntityRef
           const { slot } = wearableOf(state, game, ref)!
           return set(dressed(slice, protagonist(state), { [slot]: ref }))
         },

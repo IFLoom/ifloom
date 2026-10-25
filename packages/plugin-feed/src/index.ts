@@ -100,6 +100,28 @@ export type FeedView = { id: string; name: string; posts: PostView[]; unread: nu
 
 export type FeedsView = { feeds: FeedView[]; unread: number }
 
+/**
+ * What content writes for each of the plugin's calls, its queries' answers
+ * and its view, so a call with a misspelled argument fails to compile.
+ */
+declare module '@ifloom/engine' {
+  interface ConditionCalls {
+    'feed/appeared': { post: string }
+    'feed/posted': { feed?: string; gte?: number } | true
+    'feed/likes': { post: string; gte?: number }
+  }
+  interface EffectCalls {
+    'feed/post': { feed: string; post: string; text?: string; image?: string; video?: string; likes?: number }
+    'feed/react': { post: string; likes?: number; from?: string; text?: string }
+  }
+  interface CommandCalls {
+    'feed/seen': { id?: string } | true
+  }
+  interface PluginViews {
+    feed: FeedsView
+  }
+}
+
 const ID = 'feed'
 
 /** The game's posts: `data.feed.posts`, from its packs. */

@@ -96,7 +96,7 @@ type Screen = {
   choices: ScreenChoice[]
   actions: ScreenChoice[]
   stage: StageView | null
-  plugins: Record<string, unknown>
+  plugins: PluginViewsIn
   picks: Record<string, string>
   audio: AudioView & { tracks: Record<string, string | null> }
 }
@@ -415,16 +415,18 @@ The vanilla, Vue and Svelte templates have a Save and a Load button like these i
 
 | Field | Type | Meaning |
 |---|---|---|
-| `plugins` | `Record<string, unknown>` | What each [plugin](/docs/reference/plugins#the-view) gives the UI, by plugin id, and what the game's own [`rules.view`](/docs/reference/rules#gamerules) gives, under `game`. A plugin without a `view` has no entry. |
+| `plugins` | [`PluginViewsIn`](/docs/reference/plugins#pluginviewsin) | What each [plugin](/docs/reference/plugins#the-view) gives the UI, by plugin id, and what the game's own [`rules.view`](/docs/reference/rules#gamerules) gives, under `game`. A plugin without a `view` has no entry. |
 
-The engine doesn't look inside a slice, so give it its type where you read it. A plugin package exports the type:
+The engine doesn't look inside a slice. A plugin that [declares its view](/docs/reference/plugins#typed-calls-queries-and-views) has it typed for you once you import the plugin's package, and every first-party plugin does:
 
 ```ts
-import type { QuestsView } from '@ifloom/plugin-quests'
+import '@ifloom/plugin-quests'
 
-const journal = shown.plugins.quests as QuestsView
-badge.textContent = String(journal.updates)
+const journal = shown.plugins.quests // QuestsView | undefined
+badge.textContent = String(journal?.updates ?? 0)
 ```
+
+A slice nobody declares is `unknown`, so give it its type where you read it.
 
 Buttons for a plugin's commands are ordinary [actions](/docs/reference/actions#actiondef) whose `command` is the call, so the button carries `{ type: 'custom', name }`. They're greyed out with the plugin's `whyNot` line, like any other. A plugin can offer them itself while no scene is open, with [`buttons`](/docs/reference/plugins#buttons).
 

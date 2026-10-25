@@ -97,6 +97,21 @@ export type InventoryView = {
   things: InventoryThing[]
 }
 
+/**
+ * What content writes for each of the plugin's calls, its queries' answers
+ * and its view, so a call with a misspelled argument fails to compile.
+ */
+declare module '@ifloom/engine' {
+  interface CommandCalls {
+    'inventory/use': { id: EntityRef }
+    'inventory/drop': { id: EntityRef }
+    'inventory/give': { id: EntityRef; to: Holder }
+  }
+  interface PluginViews {
+    inventory: InventoryView
+  }
+}
+
 const ID = 'inventory'
 const USABLE = 'inventory/usable'
 
@@ -129,16 +144,16 @@ function shows(game: Game, ref: EntityRef): boolean {
 }
 
 function idOf(args: PluginArgs): EntityRef {
-  return String(args.id ?? '')
+  return String(args.id ?? '') as EntityRef
 }
 
 /** Whether the thing is in the game now. */
-function inGame(state: GameState, game: Game, ref: EntityRef): boolean {
+function inGame(state: GameState, game: Game, ref: string): boolean {
   return entityOf(state, game, ref) !== undefined
 }
 
 /** The name the refusals say: the thing's, or what content wrote. */
-function nameOf(state: GameState, game: Game, ref: EntityRef): string {
+function nameOf(state: GameState, game: Game, ref: string): string {
   return inGame(state, game, ref) ? entityName(state, game, ref) : ref
 }
 

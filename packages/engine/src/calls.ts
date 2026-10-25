@@ -15,7 +15,82 @@ import type { Command, Effect } from './types.ts'
  * true }`. Anything else (a list, a string, a number) is a problem the content
  * checker reports, and the call is asked with no arguments.
  */
-export type PluginCall = { [name: `${string}/${string}`]: PluginArgs | true }
+export type PluginCall = { [name: CallName]: PluginArgs | true }
+
+/** A call's full name: a plugin's id (or `game`), a `/`, and the name: `'quests/done'`. */
+export type CallName = `${string}/${string}`
+
+/*
+ * The registries: what each call by name takes, keyed by its full name. A
+ * plugin declares its own by augmenting them, as it declares its `Traits`,
+ * and the game can declare its `game/…` calls the same way. A call whose
+ * name is declared is checked against it, so a misspelled argument fails to
+ * compile; a call whose name nobody declares takes any arguments
+ * (`PluginArgs`), so a plugin that declares nothing still compiles. Empty in
+ * the engine: it knows no plugin.
+ */
+/**
+ * The conditions plugins and the game add, by full name, with what content
+ * writes as each one's value: its arguments, or `true` for none.
+ *
+ * ```ts
+ * declare module '@ifloom/engine' {
+ *   interface ConditionCalls {
+ *     'quests/done': { quest: string }
+ *     'calendar/weekend': true
+ *   }
+ * }
+ * ```
+ */
+export interface ConditionCalls {}
+
+/** The effects plugins and the game add, by full name, with what content writes as each one's value. As `ConditionCalls`. */
+export interface EffectCalls {}
+
+/** The commands plugins and the game add, by full name, with what content writes as each one's value. As `ConditionCalls`. */
+export interface CommandCalls {}
+
+/**
+ * The queries plugins and the game answer, by full name, each as a function
+ * from its arguments to its answer, which `context.query` reads:
+ * `'places/here': (args?: {}) => string | null`.
+ */
+export interface QueryCalls {}
+
+/**
+ * What each plugin puts in the view, by its id, which `view.plugins` reads:
+ * `shop: ShopView`. The game's own `rules.view` is `game`.
+ */
+export interface PluginViews {}
+
+/** One call in short per declared name: `{ 'quests/done': { quest: string } }`. */
+type DeclaredCall<R> = { [K in keyof R & CallName]: { [P in K]: R[K] } }[keyof R & CallName]
+
+/** A call to a name nobody declares: any arguments, so long as the name isn't a declared one. */
+type UndeclaredCall<R> = PluginCall & { [K in keyof R & CallName]?: never }
+
+/** A call in short, checked against a registry when its name is declared there, and loose otherwise. */
+export type CallIn<R> = DeclaredCall<R> | UndeclaredCall<R>
+
+/** A condition by name, a plugin's or the game's own, in short: checked against `ConditionCalls`. */
+export type ConditionCall = CallIn<ConditionCalls>
+
+/** An effect by name, a plugin's or the game's own, in short: checked against `EffectCalls`. */
+export type EffectCall = CallIn<EffectCalls>
+
+/** A command by name, a plugin's or the game's own, in short: checked against `CommandCalls`. */
+export type CommandCall = CallIn<CommandCalls>
+
+/** What a query takes and answers: its declared arguments and answer, or anything for a name nobody declares. */
+export type QueryArgs<K extends PropertyKey> = K extends keyof QueryCalls
+  ? QueryCalls[K] extends (...args: infer A) => unknown
+    ? A
+    : [PluginArgs?]
+  : [PluginArgs?]
+export type QueryAnswer<K extends PropertyKey> = K extends keyof QueryCalls ? (QueryCalls[K] extends (...args: never[]) => infer R ? R : unknown) : unknown
+
+/** What the plugins put in the view, by plugin id: typed for each plugin that declares its view in `PluginViews`. */
+export type PluginViewsIn = { readonly [K in keyof PluginViews]?: PluginViews[K] } & Readonly<Record<string, unknown>>
 
 /**
  * A value named by content, with what it is asked: a stat's ceiling, an
@@ -30,8 +105,8 @@ export type CustomCall = { custom: string; with?: Record<string, unknown> }
 /** An effect as content writes it: one of the engine's, or a plugin's or the game's own in short. The same as `Effect`. */
 export type EffectRef = Effect
 
-/** A command as content writes it: a plain command, or a plugin's in short (`{ 'places/go': { id: 'cafe' } }`). */
-export type CommandRef = Command | PluginCall
+/** A command as content writes it: a plain command, or a plugin's in short (`{ 'places/go': { id: 'cafe' } }`), checked against `CommandCalls`. */
+export type CommandRef = Command | CommandCall
 
 const isArgs = (value: unknown): value is Record<string, unknown> => value !== null && typeof value === 'object' && !Array.isArray(value)
 

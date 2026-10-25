@@ -144,6 +144,31 @@ export type JobsView = {
   jobs: JobView[]
 }
 
+/**
+ * What content writes for each of the plugin's calls, its queries' answers
+ * and its view, so a call with a misspelled argument fails to compile.
+ */
+declare module '@ifloom/engine' {
+  interface ConditionCalls {
+    'jobs/hired': { job: string; rank?: string }
+    'jobs/fired': { job: string }
+    'jobs/worked': { job: string } | true
+    'jobs/shifts': { job: string } & Range
+  }
+  interface EffectCalls {
+    'jobs/hire': { job: string }
+    'jobs/fire': { job: string }
+  }
+  interface CommandCalls {
+    'jobs/apply': { id: string }
+    'jobs/work': { id: string }
+    'jobs/quit': { id: string }
+  }
+  interface PluginViews {
+    jobs: JobsView
+  }
+}
+
 const ID = 'jobs'
 /** The panel a UI draws the job board in. */
 const PANEL = 'jobs'

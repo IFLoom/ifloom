@@ -193,6 +193,34 @@ export type PlacesView = {
   things: LyingView[]
 }
 
+/**
+ * What content writes for each of the plugin's calls, its queries' answers
+ * and its view, so a call with a misspelled argument fails to compile.
+ */
+declare module '@ifloom/engine' {
+  interface ConditionCalls {
+    'places/at': { location: string | readonly string[] }
+    'places/within': { location: string | readonly string[] }
+  }
+  interface EffectCalls {
+    'places/move': { location: string }
+  }
+  interface CommandCalls {
+    'places/go': { id: string }
+    'places/pickUp': { id: EntityRef }
+  }
+  interface QueryCalls {
+    'places/here': () => string | null
+    'places/holder': () => EntityRef | null
+    'places/all': () => (Place & { id: string; ref: EntityRef })[]
+    'places/known': (args: { location: string }) => boolean
+    'places/exits': () => string[]
+  }
+  interface PluginViews {
+    places: PlacesView
+  }
+}
+
 const ID = 'places'
 const TRAIT = 'places/location'
 
@@ -204,7 +232,7 @@ export const LOCATION = 'location'
  * one of the plugin's kind (`locationRef('park')` is `'location:park'`), and
  * a reference is as written.
  */
-export const locationRef = (id: string): EntityRef => (id.includes(':') ? id : `${LOCATION}:${id}`)
+export const locationRef = (id: string): EntityRef => (id.includes(':') ? id : `${LOCATION}:${id}`) as EntityRef
 
 /** How the plugin names a place back: its id for one of its kind, else the whole reference. */
 const short = (ref: EntityRef): string => (parseRef(ref)?.kind === LOCATION ? parseRef(ref)!.id : ref)
@@ -300,14 +328,14 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
   }
 
   /** Why the player can't pick this up now, or undefined. */
-  function pickUpBlocked(state: GameState, game: Game, at: string | null, ref: EntityRef): string | undefined {
+  function pickUpBlocked(state: GameState, game: Game, at: string | null, ref: string): string | undefined {
     if (state.sceneId) return stringOf(game, 'finishFirst')
     if (!entityOf(state, game, ref)) return stringOf(game, 'noSuchThing')
     if (at === null || heldCount(state, game, ref, locationRef(at)) <= 0) return stringOf(game, `${ID}/notLyingHere`, { thing: entityName(state, game, ref) })
     return undefined
   }
   /** Picking one up: from the place to whoever the player is playing. */
-  const pickUpEffects = (at: string | null, ref: EntityRef): Effect[] => (at === null ? [] : [{ move: ref, from: locationRef(at), to: YOU, by: 1 }])
+  const pickUpEffects = (at: string | null, ref: string): Effect[] => (at === null ? [] : [{ move: ref, from: locationRef(at), to: YOU, by: 1 }])
 
   const locationTrait: TraitDef<'places/location'> = {
     id: TRAIT,
@@ -385,8 +413,8 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
       /** `{ 'places/pickUp': { id } }`: pick up one of the thing `id` lying where the player is, for whoever they are playing. */
       pickUp: {
         whyNot: (state, args, { slice, game }) => pickUpBlocked(state, game, slice.at, String(args.id ?? '')),
-        effectsOf: (_state, args, { slice }) => pickUpEffects(slice.at, String(args.id ?? '')),
-        run: (state, args, { slice, apply }) => apply(pickUpEffects(slice.at, String(args.id ?? '')), state),
+        effectsOf: (_state, args, { slice }) => pickUpEffects(slice.at, String(args.id ?? '') as EntityRef),
+        run: (state, args, { slice, apply }) => apply(pickUpEffects(slice.at, String(args.id ?? '') as EntityRef), state),
       },
     },
     queries: {

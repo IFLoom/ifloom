@@ -35,6 +35,22 @@ import {
 } from '@ifloom/engine'
 import { CONTENT_VERSION, contentMigrations } from './upgrade.ts'
 
+/**
+ * What content writes for each of the plugin's calls, its queries' answers
+ * and its view, so a call with a misspelled argument fails to compile.
+ */
+declare module '@ifloom/engine' {
+  interface ConditionCalls {
+    'cheats/used': { cheat?: string } | true
+  }
+  interface CommandCalls {
+    'cheats/use': { id: string }
+  }
+  interface PluginViews {
+    cheats: CheatsView
+  }
+}
+
 const ID = 'cheats'
 
 /** A cheat, as content declares it in a pack's `data.cheats.cheats`. */

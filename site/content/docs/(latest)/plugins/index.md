@@ -39,6 +39,7 @@ Plugins other people have written are listed on [Community plugins](/docs/plugin
 - **Each is its own package.** A game that doesn't use one doesn't ship it.
 - **The engine is a peer dependency.** A plugin uses the game's own copy of `@ifloom/engine`, so a game only ever has one engine. Every `@ifloom` package names another it uses the same way, by the range `^` and its version.
 - **They only use the engine's public API.** A first-party plugin imports nothing but `@ifloom/engine`, the same API your own plugins use, so anything one of them does, a plugin of yours can do too.
+- **Their calls are typed.** Each declares what its conditions, effects and commands take, what its queries answer and what its view holds (see [Typed calls, queries and views](/docs/reference/plugins#typed-calls-queries-and-views)). Once your game imports a plugin, a call to it with a misspelled argument fails to compile, and `view.plugins.<id>` has the plugin's view type.
 - **None needs another.** You can add any of them, in any combination. A plugin that works with others lists them in its `cooperates`, and uses them only when the game has them:
   - The cast cooperates with places and the calendar. It asks places where the player is, and its schedules usually use the calendar's conditions. Without places, nobody is ever in the room, but calls still work.
   - The shop cooperates with the calendar and places. A vendor keeps the calendar's hours and stands at a place on the map.

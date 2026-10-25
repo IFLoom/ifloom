@@ -148,6 +148,29 @@ export type ChannelView = {
 
 export type MessagesView = { channels: ChannelView[]; unread: number }
 
+/**
+ * What content writes for each of the plugin's calls, its queries' answers
+ * and its view, so a call with a misspelled argument fails to compile.
+ */
+declare module '@ifloom/engine' {
+  interface ConditionCalls {
+    'messages/arrived': { message: string }
+    'messages/since': { message: string } & Range
+    'messages/replied': { message: string; reply?: string }
+    'messages/read': { message: string }
+  }
+  interface EffectCalls {
+    'messages/draw': { pool: string }
+  }
+  interface CommandCalls {
+    'messages/reply': { message: string; reply: string }
+    'messages/read': { id?: string; channel?: string } | true
+  }
+  interface PluginViews {
+    messages: MessagesView
+  }
+}
+
 const ID = 'messages'
 
 /** The game's messages: `data.messages.messages`, from its packs. */

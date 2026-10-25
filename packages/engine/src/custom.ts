@@ -2,7 +2,7 @@ import type { Game } from './game.ts'
 import { GAME_ID, pluginCondition, pluginEffect, pluginName, pluginQuery, pluginValue, type PluginArgs } from './plugin.ts'
 import { roll } from './random.ts'
 import type { Effect, GameState } from './types.ts'
-import { customCall, type EffectRef } from './calls.ts'
+import { customCall, type EffectRef, type QueryAnswer, type QueryArgs, type QueryCalls } from './calls.ts'
 
 /**
  * The game's own code, by name, in `rules`.
@@ -39,7 +39,7 @@ export type CustomContext = {
    * Ask a plugin something by its full name: `query('places/here')`.
    * Undefined when the game does not have that plugin.
    */
-  query: <T = unknown>(name: string, args?: PluginArgs) => T | undefined
+  query: Query
   /**
    * A value by name, a plugin's (`messages/unread`) or the game's own, asked
    * with `args`. Undefined when nobody has it.
@@ -50,6 +50,17 @@ export type CustomContext = {
    * and `name`: the same save and turn always draw the same.
    */
   roll: (max: number, name: string) => number
+}
+
+/**
+ * Ask a plugin or the game something by full name. A name declared in
+ * `QueryCalls` takes its arguments and answers its type; any other takes any
+ * arguments, with the answer's type given: `query<string | null>('places/here')`.
+ * Undefined when the game does not have it.
+ */
+export type Query = {
+  <K extends keyof QueryCalls>(name: K, ...args: QueryArgs<K>): QueryAnswer<K> | undefined
+  <T = unknown>(name: string, args?: PluginArgs): T | undefined
 }
 
 /**
@@ -69,13 +80,32 @@ export type TurnContext = CustomContext & {
 export function customContext(state: GameState, game: Game): CustomContext {
   return {
     game,
-    query: <T>(name: string, args: PluginArgs = {}) => pluginQuery(game, name)?.(state, args) as T | undefined,
+    query: ((name: string, args: PluginArgs = {}) => pluginQuery(game, name)?.(state, args)) as Query,
     value: (name, args = {}) => customValue(game, name)?.(state, args),
     roll: (max, name) => roll(max, name, state.seed, state.turn),
   }
 }
 
-export { callOf, commandOf, customCall, shortFormProblem, type CommandRef, type CustomCall, type EffectRef, type PluginCall, type ValueRef } from './calls.ts'
+export {
+  callOf,
+  commandOf,
+  customCall,
+  shortFormProblem,
+  type CommandCall,
+  type CommandCalls,
+  type CommandRef,
+  type ConditionCall,
+  type ConditionCalls,
+  type CustomCall,
+  type EffectCall,
+  type EffectCalls,
+  type EffectRef,
+  type PluginCall,
+  type PluginViews,
+  type PluginViewsIn,
+  type QueryCalls,
+  type ValueRef,
+} from './calls.ts'
 
 /** A condition by full name, a plugin's or the game's own (`game/…`), ready to ask. */
 export function customCondition(game: Game | undefined, name: string): ((state: GameState, args?: PluginArgs) => boolean) | undefined {

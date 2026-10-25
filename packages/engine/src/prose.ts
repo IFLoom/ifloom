@@ -2,7 +2,7 @@ import { customValue } from './custom.ts'
 import type { Game, ProseStore } from './game.ts'
 import { storylineOf } from './storylines.ts'
 import type { GameState } from './types.ts'
-import { entityKv, entityText, hasEntity, ownerOf, parseRef, type EntityRef } from './entities.ts'
+import { entityKv, entityText, hasEntity, ownerOf, parseRef } from './entities.ts'
 import type { KvValue } from './types.ts'
 
 /**
@@ -42,12 +42,12 @@ export function fillTokens(text: string, state: GameState, game: Game): string {
  * An entity's name as the player reads it: the name it was created with, or
  * its declaration's, with prose tokens filled. Its id when it has neither.
  */
-export function entityName(state: GameState, game: Game, ref: EntityRef): string {
+export function entityName(state: GameState, game: Game, ref: string): string {
   return fillTokens(entityText(state, game, ref, 'name') ?? parseRef(ref)?.id ?? ref, state, game)
 }
 
 /** An entity's description, filled like its name; undefined when it has none. */
-export function entityDesc(state: GameState, game: Game, ref: EntityRef): string | undefined {
+export function entityDesc(state: GameState, game: Game, ref: string): string | undefined {
   const desc = entityText(state, game, ref, 'desc')
   return desc === undefined ? undefined : fillTokens(desc, state, game)
 }

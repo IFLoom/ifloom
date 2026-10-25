@@ -52,6 +52,25 @@ function isKvValue(value: unknown): value is KvValue {
 }
 
 /** The plugin. Add it to `game.plugins` in development builds only. */
+/**
+ * What content writes for each of the plugin's calls, its queries' answers
+ * and its view, so a call with a misspelled argument fails to compile.
+ */
+declare module '@ifloom/engine' {
+  interface CommandCalls {
+    'debug/stat': { stat: string; to: number; of?: string }
+    'debug/kv': { key: string; to: KvValue }
+    'debug/held': { entity: string; to: number; at?: string }
+    'debug/scene': { id?: string } | true
+    'debug/time': { day?: number; period?: string }
+    'debug/turn': { to: number }
+    'debug/go': { id: string }
+  }
+  interface PluginViews {
+    debug: DebugView
+  }
+}
+
 export function debug(): DefinedPlugin<null, DebugView> {
   return definePlugin<null, DebugView>({
     id: 'debug',

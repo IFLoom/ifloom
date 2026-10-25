@@ -69,10 +69,14 @@
  * effect, `GameState.flow`, and `view.scene.fresh`. One `Amount` (API pass
  * P5): range bounds, the `stat` effect's `by` and `to`, the `kv` effect's
  * `by` and `random`, the `entity` effect's `by` and `to`, `move`'s `by`, and
- * a roll's `plus` and `against` each take an `Amount`.
+ * a roll's `plus` and `against` each take an `Amount`. Typed registries
+ * (P5): a call in short is a `ConditionCall` or `EffectCall`, checked against
+ * the registries a plugin augments, and `GameState.you` is an `EntityRef`,
+ * now `${string}:${string}`.
  */
 import type {
   Amount,
+  EntityRef,
   ActionDef,
   AudioState,
   AudioView,
@@ -113,7 +117,8 @@ import type {
   NoticesView,
   Patch,
   Plugin,
-  PluginCall,
+  ConditionCall,
+  EffectCall,
   PluginEntry,
   PluginSlice,
   ProseStore,
@@ -206,8 +211,8 @@ export type FrozenCondition =
   | ({ timer: string } & FrozenRange)
   /** The latest roll under a key: made, passed or failed, critical. */
   | { roll: string; passed?: boolean; critical?: boolean | 'max' | 'min' }
-  /** A plugin's condition in short: `{ 'quests/done': { quest: 'bakery' } }`. See `PluginCall`. */
-  | PluginCall
+  /** A plugin's condition in short: `{ 'quests/done': { quest: 'bakery' } }`. See `ConditionCall`. */
+  | ConditionCall
 
 /** The whole save. Each field's new-game value and load default are declared in `FIELDS`, intake.ts. */
 export type FrozenGameState = {
@@ -240,7 +245,7 @@ export type FrozenGameState = {
   /** What play changed about who holds what, by holder and then thing. */
   held: Record<string, Record<string, number>>
   /** The protagonist being played, or null for the player. */
-  you: string | null
+  you: EntityRef | null
   storylines: Record<string, StorylineState>
   kv: Record<string, KvValue>
   /** What the game has told the player outside scenes, oldest first. */
@@ -344,7 +349,7 @@ export type FrozenEffect =
   /** In a choice of a flowing scene: carry the flow on from this point. */
   | { point: string }
   /** A plugin's effect or the game's own, in short. */
-  | PluginCall
+  | EffectCall
 
 /** The keys that tell one effect from another. */
 export type FrozenEffectKey =

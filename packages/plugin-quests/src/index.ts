@@ -93,6 +93,28 @@ export type QuestsView = {
   updates: number
 }
 
+/**
+ * What content writes for each of the plugin's calls, its queries' answers
+ * and its view, so a call with a misspelled argument fails to compile.
+ */
+declare module '@ifloom/engine' {
+  interface ConditionCalls {
+    'quests/active': { quest: string }
+    'quests/done': { quest: string }
+    'quests/reached': { quest: string; stage: string }
+  }
+  interface EffectCalls {
+    'quests/start': { quest: string }
+  }
+  interface CommandCalls {
+    'quests/track': { id?: string } | true
+    'quests/seen': { id?: string } | true
+  }
+  interface PluginViews {
+    quests: QuestsView
+  }
+}
+
 const ID = 'quests'
 
 function emptyState(): QuestsState {

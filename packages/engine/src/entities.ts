@@ -162,20 +162,22 @@ export type EntityState = {
 }
 
 /**
- * Which entity, as content names it: `'staff:ana'`, its kind and its id. Inside
- * an `each` or a `count`'s `where`, `'$'` is the one being looked at.
+ * Which entity, as content names it: `'staff:ana'`, its kind and its id, so
+ * a bare id or a typo with no `:` fails to compile where a reference is
+ * wanted. Inside an `each` or a `count`'s `where`, content writes `'$'` for
+ * the one being looked at, in fields typed as plain strings.
  */
-export type EntityRef = string
+export type EntityRef = `${string}:${string}`
 
 /**
  * Who holds things: `'player'`, a unique entity (`'character:ava'`), or
  * `'you'`, whoever the player is playing now (the player, unless a `you`
  * effect switched to a protagonist).
  */
-export type Holder = string
+export type Holder = EntityRef | typeof PLAYER | typeof YOU
 
 /** Where a thing is placed: one holder for one of it, or how many each holder has. */
-export type Placement = Holder | Record<Holder, number>
+export type Placement = Holder | Partial<Record<Holder, number>>
 
 /** The player as a holder: what is theirs whoever they are playing. */
 export const PLAYER = 'player'
@@ -186,8 +188,8 @@ export const YOU = 'you'
 /** The current entity inside `each` and `where`. */
 export const CURRENT = '$'
 
-/** Split `'staff:ana'` into its kind and id; undefined if it is not one. */
-export function parseRef(ref: EntityRef): { kind: string; id: string } | undefined {
+/** Split `'staff:ana'` into its kind and id; undefined if it is not one. Takes any string, as content writes them. */
+export function parseRef(ref: string): { kind: string; id: string } | undefined {
   const at = ref.indexOf(':')
   if (at <= 0 || at === ref.length - 1) return undefined
   return { kind: ref.slice(0, at), id: ref.slice(at + 1) }
@@ -203,7 +205,7 @@ export function kindOf(game: Pick<Game, 'kinds' | 'plugins'> | undefined, id: st
 }
 
 /** Whether an entity's kind is `unique`: each one is one particular thing, which can hold others. */
-export function isUnique(game: Pick<Game, 'kinds' | 'plugins'> | undefined, ref: EntityRef): boolean {
+export function isUnique(game: Pick<Game, 'kinds' | 'plugins'> | undefined, ref: string): boolean {
   const kind = parseRef(ref)?.kind
   return kind !== undefined && kindOf(game, kind)?.unique === true
 }
@@ -214,7 +216,7 @@ export function protagonist(state: GameState): Holder {
 }
 
 /** A holder as content writes it, made real: `'you'` is the protagonist, or the player. */
-export function resolveHolder(state: GameState, holder: Holder): Holder {
+export function resolveHolder(state: GameState, holder: string): string {
   return holder === YOU ? protagonist(state) : holder
 }
 
@@ -224,8 +226,8 @@ export function resolveHolder(state: GameState, holder: Holder): Holder {
  * none; `'player'` is the player.
  */
 export function ownerOf(state: GameState, of: string | undefined): EntityRef | undefined {
-  const who = of === undefined ? PLAYER : resolveHolder(state, of)
-  return who === PLAYER ? undefined : who
+  const who = of === undefined ? PLAYER : of === YOU ? protagonist(state) : of
+  return who === PLAYER ? undefined : (who as EntityRef)
 }
 
 /** The declared entities, by reference and by kind in content order, worked out once per list. */
@@ -249,12 +251,12 @@ function declared(game: Game | undefined): Declared {
 }
 
 /** The declaration of an entity the game has, if it declares it. */
-export function entityDef(game: Game | undefined, ref: EntityRef): EntityDef | undefined {
+export function entityDef(game: Game | undefined, ref: string): EntityDef | undefined {
   return declared(game).byRef.get(ref)
 }
 
 /** The record the save keeps for an entity, if any. */
-function recordOf(state: GameState, ref: EntityRef): EntityState | undefined {
+function recordOf(state: GameState, ref: string): EntityState | undefined {
   const parts = parseRef(ref)
   return parts ? state.entities?.[parts.kind]?.[parts.id] : undefined
 }
@@ -263,7 +265,7 @@ function recordOf(state: GameState, ref: EntityRef): EntityState | undefined {
  * Whether an entity is in the game: one created in play while the save keeps
  * its record, one declared unless it was removed.
  */
-export function hasEntity(state: GameState, game: Game | undefined, ref: EntityRef): boolean {
+export function hasEntity(state: GameState, game: Game | undefined, ref: string): boolean {
   if (recordOf(state, ref)) return true
   return entityDef(game, ref) !== undefined && !(state.removed ?? []).includes(ref)
 }
@@ -272,7 +274,7 @@ export function hasEntity(state: GameState, game: Game | undefined, ref: EntityR
  * What play has changed about an entity: the save's record of it, `{}` for
  * a declared one nothing has changed. Undefined when it isn't in the game.
  */
-export function entityOf(state: GameState, game: Game | undefined, ref: EntityRef): EntityState | undefined {
+export function entityOf(state: GameState, game: Game | undefined, ref: string): EntityState | undefined {
   if (!hasEntity(state, game, ref)) return undefined
   return recordOf(state, ref) ?? {}
 }
@@ -285,10 +287,10 @@ export function entityOf(state: GameState, game: Game | undefined, ref: EntityRe
 export function entitiesOf(state: GameState, game: Game | undefined, kind: string): EntityRef[] {
   const removed = state.removed ?? []
   const own = declared(game).byKind.get(kind) ?? []
-  const first = own.map((entity) => `${kind}:${entity.id}`).filter((ref) => !removed.includes(ref))
+  const first = own.map((entity) => `${kind}:${entity.id}` as EntityRef).filter((ref) => !removed.includes(ref))
   const shown = new Set(first)
   const created = Object.keys(state.entities?.[kind] ?? {})
-    .map((id) => `${kind}:${id}`)
+    .map((id) => `${kind}:${id}` as EntityRef)
     .filter((ref) => !shown.has(ref) && !entityDef(game, ref))
   return [...first, ...created]
 }
@@ -297,7 +299,7 @@ export function entitiesOf(state: GameState, game: Game | undefined, kind: strin
 const LIKE_DEPTH = 16
 
 /** The entity one was created like, if it was, while the chain is short enough to follow. */
-function likeOf(state: GameState, ref: EntityRef, depth: number): EntityRef | undefined {
+function likeOf(state: GameState, ref: string, depth: number): EntityRef | undefined {
   return depth < LIKE_DEPTH ? recordOf(state, ref)?.like : undefined
 }
 
@@ -306,11 +308,11 @@ function likeOf(state: GameState, ref: EntityRef, depth: number): EntityRef | un
  * `like` reads it, else as its declaration starts it. Undefined when none has
  * it: the stat's `start` then.
  */
-export function entityStat(state: GameState, game: Game | undefined, ref: EntityRef, stat: string): number | undefined {
+export function entityStat(state: GameState, game: Game | undefined, ref: string, stat: string): number | undefined {
   return entityStatThrough(state, game, ref, stat, 0)
 }
 
-function entityStatThrough(state: GameState, game: Game | undefined, ref: EntityRef, stat: string, depth: number): number | undefined {
+function entityStatThrough(state: GameState, game: Game | undefined, ref: string, stat: string, depth: number): number | undefined {
   const own = recordOf(state, ref)?.stats?.[stat]
   if (own !== undefined) return own
   const like = likeOf(state, ref, depth)
@@ -321,21 +323,21 @@ function entityStatThrough(state: GameState, game: Game | undefined, ref: Entity
  * An entity's kv store as it reads: the keys of the one it was created
  * `like`, then its declaration's, with what play set laid over them.
  */
-export function entityKv(state: GameState, game: Game | undefined, ref: EntityRef): Record<string, KvValue> {
+export function entityKv(state: GameState, game: Game | undefined, ref: string): Record<string, KvValue> {
   return entityKvThrough(state, game, ref, 0)
 }
 
-function entityKvThrough(state: GameState, game: Game | undefined, ref: EntityRef, depth: number): Record<string, KvValue> {
+function entityKvThrough(state: GameState, game: Game | undefined, ref: string, depth: number): Record<string, KvValue> {
   const like = likeOf(state, ref, depth)
   return { ...(like !== undefined ? entityKvThrough(state, game, like, depth + 1) : undefined), ...entityDef(game, ref)?.kv, ...recordOf(state, ref)?.kv }
 }
 
 /** An entity's tags: its kind's, then those of the one it was created `like`, then its own, each once. */
-export function entityTags(state: GameState, game: Game, ref: EntityRef): string[] {
+export function entityTags(state: GameState, game: Game, ref: string): string[] {
   return entityTagsThrough(state, game, ref, 0)
 }
 
-function entityTagsThrough(state: GameState, game: Game, ref: EntityRef, depth: number): string[] {
+function entityTagsThrough(state: GameState, game: Game, ref: string, depth: number): string[] {
   const kind = parseRef(ref)?.kind
   const like = likeOf(state, ref, depth)
   const own = [
@@ -352,11 +354,11 @@ function entityTagsThrough(state: GameState, game: Game, ref: EntityRef, depth: 
  * what it was created with, then what the one it was created `like`
  * has, then its declaration's. `entityName` and `entityDesc` fill them.
  */
-export function entityText(state: GameState, game: Game | undefined, ref: EntityRef, field: 'name' | 'desc'): string | undefined {
+export function entityText(state: GameState, game: Game | undefined, ref: string, field: 'name' | 'desc'): string | undefined {
   return textThrough(state, game, ref, field, 0)
 }
 
-function textThrough(state: GameState, game: Game | undefined, ref: EntityRef, field: 'name' | 'desc', depth: number): string | undefined {
+function textThrough(state: GameState, game: Game | undefined, ref: string, field: 'name' | 'desc', depth: number): string | undefined {
   const given = recordOf(state, ref)?.[field]
   if (given !== undefined) return given
   const like = likeOf(state, ref, depth)
@@ -364,11 +366,11 @@ function textThrough(state: GameState, game: Game | undefined, ref: EntityRef, f
 }
 
 /** An entity's picture as written (before `artSrc`): the one it was created with, its declaration's, else that of the one it was created `like`. */
-export function entityImage(state: GameState, game: Game | undefined, ref: EntityRef): string | undefined {
+export function entityImage(state: GameState, game: Game | undefined, ref: string): string | undefined {
   return entityImageThrough(state, game, ref, 0)
 }
 
-function entityImageThrough(state: GameState, game: Game | undefined, ref: EntityRef, depth: number): string | undefined {
+function entityImageThrough(state: GameState, game: Game | undefined, ref: string, depth: number): string | undefined {
   const like = likeOf(state, ref, depth)
   return recordOf(state, ref)?.image ?? entityDef(game, ref)?.image ?? (like !== undefined ? entityImageThrough(state, game, like, depth + 1) : undefined)
 }
@@ -378,14 +380,14 @@ function entityImageThrough(state: GameState, game: Game | undefined, ref: Entit
  * created `like` over them, then its own declaration's, field by field.
  * Undefined when none has any. The engine carries them to the view as written.
  */
-export function entityUi(state: GameState, game: Game | undefined, ref: EntityRef): Ui<EntityUi> | undefined {
+export function entityUi(state: GameState, game: Game | undefined, ref: string): Ui<EntityUi> | undefined {
   const kind = parseRef(ref)?.kind
   const fromKind = kind !== undefined ? kindOf(game, kind)?.ui : undefined
   const own = entityUiThrough(state, game, ref, 0)
   return fromKind && own ? { ...fromKind, ...own } : (own ?? fromKind)
 }
 
-function entityUiThrough(state: GameState, game: Game | undefined, ref: EntityRef, depth: number): Ui<EntityUi> | undefined {
+function entityUiThrough(state: GameState, game: Game | undefined, ref: string, depth: number): Ui<EntityUi> | undefined {
   const like = likeOf(state, ref, depth)
   const under = like !== undefined ? entityUiThrough(state, game, like, depth + 1) : undefined
   const own = entityDef(game, ref)?.ui
@@ -419,7 +421,7 @@ export function createdRecord(given: CreatedFields): EntityState {
 }
 
 /** The state with one entity's record replaced. A record for an entity not there adds it, after the rest of its kind. */
-export function writeEntity(state: GameState, ref: EntityRef, next: EntityState): GameState {
+export function writeEntity(state: GameState, ref: string, next: EntityState): GameState {
   const parts = parseRef(ref)
   if (!parts) return state
   return {
@@ -429,7 +431,7 @@ export function writeEntity(state: GameState, ref: EntityRef, next: EntityState)
 }
 
 /** The state without the record of one entity. */
-export function dropRecord(state: GameState, ref: EntityRef): GameState {
+export function dropRecord(state: GameState, ref: string): GameState {
   const parts = parseRef(ref)
   if (!parts || !state.entities?.[parts.kind]?.[parts.id]) return state
   const { [parts.id]: _gone, ...rest } = state.entities[parts.kind]
@@ -519,7 +521,7 @@ function layTrait(under: unknown, over: unknown): unknown {
 type TraitSource = Pick<Game, 'kinds' | 'entities' | 'traits'>
 
 /** A kind's default for a trait, for an entity of that kind. */
-function kindTrait(game: TraitSource, ref: EntityRef, id: string): unknown {
+function kindTrait(game: TraitSource, ref: string, id: string): unknown {
   const kind = parseRef(ref)?.kind
   return kind === undefined ? undefined : game.kinds?.find((entry) => entry.id === kind)?.traits?.[id]
 }
@@ -544,7 +546,7 @@ export function resolveTraits(game: TraitSource): Record<string, Record<EntityRe
   }
   const rowFor = (id: string, ref: EntityRef) => (rows[id] && Object.hasOwn(rows[id], ref) ? rows[id][ref] : undefined)
   for (const entity of game.entities ?? []) {
-    const ref = `${entity.of}:${entity.id}`
+    const ref = `${entity.of}:${entity.id}` as EntityRef
     const kind = game.kinds?.find((entry) => entry.id === entity.of)
     const ids = new Set([
       ...Object.keys(kind?.traits ?? {}),
@@ -555,7 +557,7 @@ export function resolveTraits(game: TraitSource): Record<string, Record<EntityRe
   }
   for (const [id, byRef] of Object.entries(rows)) {
     for (const [ref, value] of Object.entries(byRef ?? {})) {
-      if (!out[id] || !Object.hasOwn(out[id], ref)) put(id, ref, layTrait(kindTrait(game, ref, id), value))
+      if (!out[id] || !Object.hasOwn(out[id], ref)) put(id, ref as EntityRef, layTrait(kindTrait(game, ref as EntityRef, id), value))
     }
   }
   traitCache.set(game, out)
@@ -570,10 +572,10 @@ export function resolveTraits(game: TraitSource): Record<string, Record<EntityRe
  * has its kind's here, and `entityTrait` adds what it was created with. It
  * doesn't ask whether the entity is still in the game.
  */
-export function traitOf<K extends string>(game: TraitSource | undefined, ref: EntityRef, id: K): TraitData<K> | undefined {
+export function traitOf<K extends string>(game: TraitSource | undefined, ref: string, id: K): TraitData<K> | undefined {
   if (!game) return undefined
   const table = resolveTraits(game)[id]
-  if (table && Object.hasOwn(table, ref)) return table[ref] as TraitData<K>
+  if (table && Object.hasOwn(table, ref)) return (table as Record<string, unknown>)[ref] as TraitData<K>
   return kindTrait(game, ref, id) as TraitData<K> | undefined
 }
 
@@ -583,11 +585,11 @@ export function traitOf<K extends string>(game: TraitSource | undefined, ref: En
  * with laid over that of the one it was created `like` (or else its kind's
  * default). Undefined when it doesn't have the trait.
  */
-export function entityTrait<K extends string>(state: GameState, game: Game | undefined, ref: EntityRef, id: K): TraitData<K> | undefined {
+export function entityTrait<K extends string>(state: GameState, game: Game | undefined, ref: string, id: K): TraitData<K> | undefined {
   return traitThrough(state, game, ref, id, 0) as TraitData<K> | undefined
 }
 
-function traitThrough(state: GameState, game: Game | undefined, ref: EntityRef, id: string, depth: number): unknown {
+function traitThrough(state: GameState, game: Game | undefined, ref: string, id: string, depth: number): unknown {
   if (!game) return undefined
   const record = recordOf(state, ref)
   if (!record || entityDef(game, ref)) return traitOf(game, ref, id)
@@ -605,7 +607,7 @@ function traitThrough(state: GameState, game: Game | undefined, ref: EntityRef, 
 export function withTrait(game: TraitSource | undefined, id: string, state?: GameState): EntityRef[] {
   if (!game) return []
   const declaredRefs = declared(game as Game).byRef
-  const own = Object.keys(resolveTraits(game)[id] ?? {}).filter((ref) => declaredRefs.has(ref))
+  const own = Object.keys(resolveTraits(game)[id] ?? {}).filter((ref) => declaredRefs.has(ref)) as EntityRef[]
   if (!state) return own
   return everyEntity(state, game as Game).filter((ref) => (declaredRefs.has(ref) ? own.includes(ref) : entityTrait(state, game as Game, ref, id) !== undefined))
 }
@@ -617,10 +619,10 @@ export function withTrait(game: TraitSource | undefined, id: string, state?: Gam
  */
 export function everyEntity(state: GameState, game: Game | undefined): EntityRef[] {
   const removed = new Set(state.removed ?? [])
-  const first = (game?.entities ?? []).map((entity) => `${entity.of}:${entity.id}`).filter((ref) => !removed.has(ref))
+  const first = (game?.entities ?? []).map((entity) => `${entity.of}:${entity.id}` as EntityRef).filter((ref) => !removed.has(ref))
   const created = Object.entries(state.entities ?? {}).flatMap(([kind, byId]) =>
     Object.keys(byId ?? {})
-      .map((id) => `${kind}:${id}`)
+      .map((id) => `${kind}:${id}` as EntityRef)
       .filter((ref) => !entityDef(game, ref)),
   )
   return [...first, ...created]
@@ -639,7 +641,7 @@ export function traitDef(game: Pick<Game, 'plugins'> | undefined, id: string): T
  * or else where the trait's `state.start` says it starts. Undefined when the
  * entity isn't in the game, lacks the trait, or the trait keeps no state.
  */
-export function traitState<S = unknown>(state: GameState, game: Game, ref: EntityRef, id: string): S | undefined {
+export function traitState<S = unknown>(state: GameState, game: Game, ref: string, id: string): S | undefined {
   if (!hasEntity(state, game, ref)) return undefined
   const kept = recordOf(state, ref)?.traits
   if (kept && Object.hasOwn(kept, id)) return kept[id] as S
@@ -649,7 +651,7 @@ export function traitState<S = unknown>(state: GameState, game: Game, ref: Entit
 }
 
 /** The state with one entity's state for one trait replaced. An entity not in the game is left alone. */
-export function setTraitState(state: GameState, game: Game, ref: EntityRef, id: string, next: unknown): GameState {
+export function setTraitState(state: GameState, game: Game, ref: string, id: string, next: unknown): GameState {
   if (!hasEntity(state, game, ref)) return state
   const record = recordOf(state, ref) ?? {}
   return writeEntity(state, ref, { ...record, traits: { ...record.traits, [id]: next } })

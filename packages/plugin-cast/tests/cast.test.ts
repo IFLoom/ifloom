@@ -115,7 +115,7 @@ describe('the cast', () => {
   it('include anyone with the trait, of any kind or made in play, named by reference', () => {
     const { game: g } = game()
     const next = run(g, startingState(g), go('park'))
-    const created = { ...next, entities: { ...next.entities, character: { '#1': { name: 'Rook', like: 'character:sam' } } } }
+    const created = { ...next, entities: { ...next.entities, character: { '#1': { name: 'Rook', like: 'character:sam' as const } } } }
     expect(peopleOf(g, created)).toEqual(['character:ava', 'character:sam', 'character:#1'])
     expect(shown(created, g).present.map((one) => one.name)).toEqual(['Sam', 'Rook'])
     expect(holds(created, here('character:#1'), g)).toBe(true)

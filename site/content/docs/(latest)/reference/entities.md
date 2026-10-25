@@ -209,10 +209,13 @@ Definitions never go into a save. That's why a fix to a name or a starting value
 ## EntityRef
 
 ```ts
-type EntityRef = string
+type EntityRef = `${string}:${string}`
+type Holder = EntityRef | 'player' | 'you'
 ```
 
-Names an entity in content, as its kind, a colon and its id: `'staff:ana'` or `'staff:#2'`.
+Names an entity in content, as its kind, a colon and its id: `'staff:ana'` or `'staff:#2'`. The type says so, so in code a bare id where a reference is wanted fails to compile: `const ava: EntityRef = 'ava'` is an error. A `Holder` is anyone who can hold things: `'player'`, `'you'` or a unique entity.
+
+What the engine hands back is typed `EntityRef`, such as [`entitiesOf`](#entitiesof)'s list. The functions that read an entity, such as [`entityName`](#entityname) and [`entityOf`](#entityof), take any string, since content names references as plain strings, and answer for one that names nothing as they would for a missing entity. Content's own fields that name an entity are plain strings too, because they can also hold `'$'`.
 
 **`'$'` is the current one.** Inside an [`each`](/docs/reference/effects#each) effect's `where` and `effects`, and inside a [`{ count }`](/docs/reference/conditions#count) condition's `where`, `of: '$'` means the entity being looked at, one after another. The same goes for a kind's `listed` and `flags`, an entity's `visible` and the `visible` of a stat declared `of` a kind, which the [view](/docs/reference/view#entitiesview-and-entityview) asks for each entity. Anywhere else, `'$'` names nothing, so an effect with it does nothing and a `{ stat }` condition with it fails.
 

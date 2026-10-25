@@ -114,7 +114,7 @@ const { game } = loadGame([cafe], {
 
 After five coffees, `loyalty.read(state, game)` is `{ stamps: 5 }`, the counter says `Your card has 5 stamps.`, and Claim a free coffee is on offer.
 
-That's a working plugin. The engine saves its state with the game, and the [content checker](/docs/reference/checks) reports a call to a name the plugin doesn't have, such as `content · action coffee · no custom effect named "loyalty/stomp"`. The rest of this page builds on the same card: a command the player can press, a migration for when the state changes shape, and the hooks, guards and view a bigger system needs.
+That's a working plugin. The engine saves its state with the game, and the [content checker](/docs/reference/checks) reports a call to a name the plugin doesn't have, such as `content · action coffee · no custom effect named "loyalty/stomp"`. To have a typo caught as you type rather than when the game loads, declare what each call takes, as [Typed calls, queries and views](#typed-calls-queries-and-views) shows. The rest of this page builds on the same card: a command the player can press, a migration for when the state changes shape, and the hooks, guards and view a bigger system needs.
 
 ## A worked example
 
@@ -197,9 +197,11 @@ import {
   type PluginReferences, type ContentReferences, type StatModifier,
   type TraitDef, type TraitTools, type ContentStep, type ContentTools,
   type CommandStep, type RawPack, type RawCommand,
+  type ConditionCalls, type EffectCalls, type CommandCalls, type QueryCalls, type PluginViews,
+  type ConditionCall, type EffectCall, type CommandCall, type Query, type PluginViewsIn,
 } from '@ifloom/engine'
 
-type Plugin<S = any> = {
+type Plugin<S = any, V = unknown> = {
   id: string
   version: number
   start?: (game: Game) => S
@@ -229,7 +231,7 @@ type Plugin<S = any> = {
   content?: Content
   traits?: readonly TraitDef[]
   audio?: (state: GameState, context: PluginContext<S>) => Record<string, string | null> | undefined
-  view?: (state: GameState, context: PluginContext<S>) => unknown
+  view?: (state: GameState, context: PluginContext<S>) => V
   profile?: (state: GameState, previous: GameState, stored: unknown, context: PluginContext<S>) => unknown
   references?: PluginReferences
   check?: (game: Game, tools: CheckTools) => PluginProblem[]
@@ -401,6 +403,106 @@ A plugin usually exports small typed helpers that write these objects for author
 - Don't put an id in a value's name, such as `loyalty/stamps-gold`. Take it as an argument, so one value serves every card and a mod's new card needs no code.
 - A name nobody has fails quietly in play. A condition is false, an effect does nothing, a value is left on screen, and a command is refused with `There is no such thing to do.` The [content checker](/docs/reference/checks) reports most of them when the game loads.
 
+## Typed calls, queries and views
+
+A plugin can say what each of its calls takes, what its queries answer and what its view holds, so content written in code is checked as it's typed. Declare them in the plugin's main entry by adding to the engine's registries, the way a plugin types its [traits](#traits):
+
+```ts
+import { definePlugin, type DefinedPlugin } from '@ifloom/engine'
+
+export type LoyaltyView = { stamps: number; free: number }
+
+declare module '@ifloom/engine' {
+  interface ConditionCalls {
+    'loyalty/stamps': { gte?: number }
+  }
+  interface EffectCalls {
+    'loyalty/stamp': { by?: number } | true
+  }
+  interface CommandCalls {
+    'loyalty/redeem': { card: string }
+  }
+  interface QueryCalls {
+    'loyalty/stampsLeft': () => number
+  }
+  interface PluginViews {
+    loyalty: LoyaltyView
+  }
+}
+```
+
+Each registry is keyed by the call's full name, and each entry is what content writes as the call's value: its arguments, or `true` for none, or both as a union when the arguments are all optional. A query's entry is a function from its arguments to its answer. `PluginViews` is keyed by the plugin's id.
+
+Once a game imports the plugin's package, those calls are checked wherever a [`Condition`](/docs/reference/conditions#condition), an [`Effect`](/docs/reference/effects#effect) or a [`CommandRef`](/docs/reference/custom#commandref) goes:
+
+```ts
+const full: Condition = { 'loyalty/stamps': { gte: 5 } }
+const typo: Condition = { 'loyalty/stamps': { gtee: 5 } }   // fails to compile
+const left = context.query('loyalty/stampsLeft')           // number | undefined
+const card = view.plugins.loyalty                          // LoyaltyView | undefined
+```
+
+A call whose name nobody declares takes any arguments, as a [`PluginCall`](/docs/reference/custom#plugincall), so a plugin that declares nothing still compiles, and so does content naming a partner the game doesn't have. A query nobody declares answers whatever type you name, `query<number>('loyalty/stampsLeft')`. Every first-party plugin declares all of its calls, queries and its view.
+
+### The game's own calls
+
+The game's own code is called the same way, with `game` in front, and the game can declare its calls in the same registries. Put the declarations beside [`rules`](/docs/reference/rules), in `src/rules.ts`:
+
+```ts
+import type { GameRules } from '@ifloom/engine'
+
+declare module '@ifloom/engine' {
+  interface EffectCalls {
+    'game/payRent': { by?: number } | true
+  }
+  interface ConditionCalls {
+    'game/tired': true
+  }
+}
+
+export const rules: GameRules = {
+  conditions: { tired: (state) => (state.stats.energy ?? 0) < 20 },
+  effects: { payRent: (_state, args) => [{ stat: 'coins', by: -Number(args.by ?? 10) }] },
+}
+```
+
+Small Town declares its `game/postLatest` this way, and the café its `game/takings` and `game/wages`.
+
+**Gotchas.**
+- The registries type content written in TypeScript. A pack loaded from JSON, or a mod, isn't compiled, so the [content checker](/docs/reference/checks) is still what reports a bad call there, through [`argProblems`](#checking-calls) and the plugin's `references`.
+- A plugin's own functions still get their arguments as [`PluginArgs`](#pluginargs), since a mod can pass them anything. Read each one as you would unchecked data.
+- A plugin sees only the declarations of the packages it imports. It can't rely on a partner's, since it never imports the partner, so its calls to a partner are loose in its own code and checked in a game that has both.
+- Keep each entry true to what the plugin reads. A game that imports the plugin is checked against it, so a field you forget to declare fails to compile there.
+
+### ConditionCall, EffectCall and CommandCall
+
+```ts
+type ConditionCall = CallIn<ConditionCalls>
+type EffectCall = CallIn<EffectCalls>
+type CommandCall = CallIn<CommandCalls>
+```
+
+A call in short, checked against its registry when its name is declared there, and loose otherwise. [`Condition`](/docs/reference/conditions#condition) and [`Effect`](/docs/reference/effects#effect) end in a `ConditionCall` and an `EffectCall`, and a [`CommandRef`](/docs/reference/custom#commandref) is a command or a `CommandCall`. The registries themselves are the interfaces `ConditionCalls`, `EffectCalls`, `CommandCalls`, `QueryCalls` and `PluginViews`, empty in the engine, which knows no plugin.
+
+### Query
+
+```ts
+type Query = {
+  <K extends keyof QueryCalls>(name: K, ...args: QueryArgs<K>): QueryAnswer<K> | undefined
+  <T = unknown>(name: string, args?: PluginArgs): T | undefined
+}
+```
+
+What a context's `query` is: a declared query takes its arguments and answers its type, and any other name answers the type you give it.
+
+### PluginViewsIn
+
+```ts
+type PluginViewsIn = { readonly [K in keyof PluginViews]?: PluginViews[K] } & Readonly<Record<string, unknown>>
+```
+
+The type of [`view.plugins`](/docs/reference/view#plugins): each plugin's slice typed as it declares it in `PluginViews`, and `unknown` for a plugin that doesn't.
+
 ## Queries
 
 ```ts
@@ -420,6 +522,8 @@ view: (_state, { query }) => ({
   footer: query<number>('loyalty/stampsLeft') ?? null,
 }),
 ```
+
+The asker names the answer's type, since it doesn't import the loyalty plugin. Code that does import it, such as the game's, gets the type the plugin [declares](#typed-calls-queries-and-views).
 
 **Gotchas.**
 - `query` returns `undefined` when the game lacks the plugin or the query, so always give a fallback. Name the partner in [`cooperates`](#cooperates) if content should be able to call its conditions and effects too.
@@ -919,12 +1023,12 @@ wash: (_state, _args, { set, apply }) => apply([{ turn: true }], set({ dirty: 0 
 
 ## The view
 
-`view(state, context)` returns whatever the plugin's UI needs, whether that's your own code or a React UI the plugin ships in its `/react` subpath (see [Plugin UIs and the kit](/docs/react/kit)). The engine's [`view()`](/docs/reference/view#plugins) collects each one at `plugins[id]`, and a plugin without `view` has no entry. The engine never looks inside it, so type it where you read it:
+`view(state, context)` returns whatever the plugin's UI needs, whether that's your own code or a React UI the plugin ships in its `/react` subpath (see [Plugin UIs and the kit](/docs/react/kit)). The engine's [`view()`](/docs/reference/view#plugins) collects each one at `plugins[id]`, and a plugin without `view` has no entry. The engine never looks inside it. Declare its type in [`PluginViews`](#typed-calls-queries-and-views) and code that imports your package reads it typed:
 
 ```ts
 import { view } from '@ifloom/engine'
 
-const card = view(state, game).plugins.loyalty as { stamps: number; free: number } | undefined
+const card = view(state, game).plugins.loyalty // LoyaltyView | undefined, once the plugin declares it
 ```
 
 If your view draws pictures from a [pool](/docs/reference/media#pools), pass the context's `picks` to [`stageView`](/docs/reference/view#stageview). Words drawn with [`beats`](#beats) record their own. Each new pick is written there, and the reducer records them after the command, so the same picture shows on every visit. The places plugin does this for a room's stage:
@@ -1266,6 +1370,8 @@ references: {
 // town · action buy · unknown card "bakery"
 ```
 
+A field of the plugin's own that takes an [`Amount`](/docs/reference/amounts), such as a badge or a target, is named as `{ amount: field }`: the checker reads its shape and what it names, as it does an effect's `by`. Read it in play with [`amountOf`](/docs/reference/amounts#amountof).
+
 A `{ within: 'action dig', refs }` reference puts `action dig: ` in front of the problems inside, so a list of buttons reads as the places plugin's do: `locations yard · action dig · unknown location "moon"`. A file a reference names, such as a post's picture, goes into the checker's [`files`](/docs/reference/checks#fileref).
 
 **Gotchas.**
@@ -1395,7 +1501,7 @@ function definePlugin<S, V = unknown>(plugin: Plugin<S, V>): DefinedPlugin<S, V>
 type DefinedPlugin<S, V = unknown> = Plugin<S, V> & {
   read(state: GameState, game: Game): S
   write(state: GameState, next: S): GameState
-  viewIn(view: { plugins: Record<string, unknown> }): V | undefined
+  viewIn(view: { readonly plugins: Readonly<Record<string, unknown>> }): V | undefined
 }
 ```
 

@@ -120,7 +120,7 @@ npm test
 | File | What's in it |
 |---|---|
 | `package.json` | `@ifloom/engine` as a caret peer dependency, and as a dev dependency for the tests, with Vitest and TypeScript. The scripts are `test` (`vitest run`) and `typecheck` (`tsc --noEmit`). |
-| `src/index.ts` | The plugin, made with [`definePlugin`](/docs/reference/plugins#defineplugin): a declared state and view, content in your content's `data.weather.entries`, the condition `weather/marked`, the effect `weather/mark` and the command `weather/mark`, a view, a reference for the [content checker](/docs/reference/checks) and a check. Each has a typed helper, such as `markWeather('bread')`. |
+| `src/index.ts` | The plugin, made with [`definePlugin`](/docs/reference/plugins#defineplugin): a declared state and view, content in your content's `data.weather.entries`, the condition `weather/marked`, the effect `weather/mark` and the command `weather/mark`, a view, a reference for the [content checker](/docs/reference/checks) and a check. Each has a typed helper, such as `markWeather('bread')`, and the calls and the view are [declared](/docs/reference/plugins#typed-calls-queries-and-views) so a game's calls to them are checked. |
 | `tests/weather.test.ts` | Vitest tests that play the plugin in a small game: the effect, the command and its refusal, the view, and the checker's problems. |
 | `tsconfig.json` | Complete, extending nothing. |
 | `README.md` | How a game uses the plugin, how to work on it, and what [Community plugins](/docs/plugins/community) needs before it lists it. |

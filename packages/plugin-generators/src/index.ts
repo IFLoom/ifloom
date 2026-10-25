@@ -72,6 +72,16 @@ export type TemplateDef = {
 /** What a template draws for one entity: the fields of the engine's `create` effect that come from pools and ranges. */
 export type GeneratedEntity = { name?: string; desc?: string; image?: string; stats: Record<string, number>; kv: Record<string, KvValue> }
 
+/**
+ * What content writes for each of the plugin's calls, its queries' answers
+ * and its view, so a call with a misspelled argument fails to compile.
+ */
+declare module '@ifloom/engine' {
+  interface EffectCalls {
+    'generators/generate': { template: string; count?: number }
+  }
+}
+
 const ID = 'generators'
 
 /** The game's pools: `data.generators.pools`, from its packs. */

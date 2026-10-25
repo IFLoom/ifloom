@@ -59,7 +59,7 @@ export type HoldingsShape = {
      * `held.player['food:apple']`. A count is kept once written, 0 included;
      * anything else reads where content's `at` starts it.
      */
-    held: Record<Holder, Record<EntityRef, number>>
+    held: Record<string, Record<string, number>>
     /** The protagonist the player is playing, as `'you'` reads: null for the player themselves. */
     you: EntityRef | null
   }
@@ -109,7 +109,7 @@ function heldView(state: GameState, game: Game, holder: Holder, cx: FeatureConte
 }
 
 /** Where a `move` takes a thing from when it doesn't say: wherever a unique thing is, else you. */
-function moveSource(state: GameState, game: Game, ref: EntityRef, from: string | undefined): Holder | undefined {
+function moveSource(state: GameState, game: Game, ref: string, from: string | undefined): string | undefined {
   if (from !== undefined) return from
   return isUnique(game, ref) ? holderOf(state, game, ref) : YOU
 }
@@ -121,7 +121,7 @@ function moveSource(state: GameState, game: Game, ref: EntityRef, from: string |
  * would hold themselves.
  */
 function checkStarts(game: Game, tools: FeatureCheckTools): void {
-  const startHolder = new Map<EntityRef, Holder>()
+  const startHolder = new Map<string, string>()
   for (const entity of game.entities ?? []) {
     if (entity.at === undefined) continue
     const ref = `${entity.of}:${entity.id}`
@@ -146,8 +146,8 @@ function checkStarts(game: Game, tools: FeatureCheckTools): void {
   // A unique thing starting inside what it holds, however far round.
   const reported = new Set<string>()
   for (const start of startHolder.keys()) {
-    const path: EntityRef[] = []
-    for (let at: Holder | undefined = start; at !== undefined; at = startHolder.get(at)) {
+    const path: string[] = []
+    for (let at: string | undefined = start; at !== undefined; at = startHolder.get(at)) {
       const loop = path.indexOf(at)
       if (loop >= 0) {
         const cycle = path.slice(loop)
@@ -206,7 +206,7 @@ export const holdings = defineFeature<HoldingsShape>({
         const to = effect.you
         if (to === null || to === PLAYER) return state.you === null ? state : { ...state, you: null }
         if (to === YOU || !canHold(state, game, to)) return state
-        return state.you === to ? state : { ...state, you: to }
+        return state.you === to ? state : { ...state, you: to as EntityRef }
       },
       references: (effect) => (effect.you === null ? [] : [{ holder: effect.you, protagonist: true }]),
     },

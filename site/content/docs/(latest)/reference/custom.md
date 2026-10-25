@@ -43,14 +43,14 @@ const tips: CustomEffect = (state, args, { query }) => {
 ```ts
 type CustomContext = {
   game: Game
-  query: <T = unknown>(name: string, args?: PluginArgs) => T | undefined
+  query: Query
   value: (name: string, args?: PluginArgs) => string | number | undefined
   roll: (max: number, name: string) => number
 }
 ```
 
 - `game` is the game the function was called for, so it can call [`holds`](/docs/reference/conditions#holds) or [`statValue`](/docs/reference/stats#statvalue) with it.
-- `query` asks a plugin's [query](/docs/reference/plugins#queries) by its full name, and gives `undefined` when the game doesn't have that plugin.
+- `query` asks a plugin's [query](/docs/reference/plugins#queries) by its full name, and gives `undefined` when the game doesn't have that plugin. A query the plugin [declares](/docs/reference/plugins#typed-calls-queries-and-views) takes its arguments and answers its type: `query('calendar/now')` is a `CalendarState`. For any other, name the type yourself: `query<number>('loyalty/stamps')`.
 - `value` reads a [value](#values) by its full name, a plugin's (`messages/unread`) or the game's own (`game/breadPrice`), asked with `args`. It's `undefined` when nobody has one by that name.
 - `roll(max, name)` draws a whole number from 0 to `max - 1`, from the save's seed, the turn and `name`. The same save on the same turn always draws the same number, so a replay plays the same. Use a different `name` for each draw.
 
@@ -127,6 +127,8 @@ type PluginCall = { [name: `${string}/${string}`]: PluginArgs | true }
 
 A call by name: a plugin's condition, effect or command, or the game's own, with its full name as the only key and its arguments as the value. It works anywhere a [condition](/docs/reference/conditions), an [effect](/docs/reference/effects) or a [`CommandRef`](#commandref) goes, and the [content checker](/docs/reference/checks) checks the name. Plugins' helpers, such as `questDone('bread')`, write this form.
 
+In code, a call whose name a plugin or the game [declares](/docs/reference/plugins#typed-calls-queries-and-views) is checked against what it declares, so `{ 'quests/done': { qeust: 'bread' } }` fails to compile. A call nobody declares takes any arguments, as `PluginCall` says. `Condition`, `Effect` and `CommandRef` hold these as a [`ConditionCall`](/docs/reference/plugins#conditioncall-effectcall-and-commandcall), an `EffectCall` and a `CommandCall`.
+
 The value is always the arguments as an object, named as the [content naming rule](/docs/reference/effects#effect) names them. A call that takes none is written `true`:
 
 | Written | Asked with |
@@ -160,7 +162,7 @@ The name and arguments of a call, or `undefined` for one of the engine's own eff
 ## CommandRef
 
 ```ts
-type CommandRef = Command | PluginCall
+type CommandRef = Command | CommandCall
 ```
 
 A command as content and code write it: any [command](/docs/reference/commands), or a call by name. `{ 'places/go': { id: 'cafe' } }` is `{ type: 'custom', name: 'places/go', with: { id: 'cafe' } }`. An [action](/docs/reference/actions#actiondef)'s and a choice's `command` take one, and so do [`apply`](/docs/reference/commands#apply), [`whyNot`](/docs/reference/actions#whynot), [`effectsOf`](/docs/reference/actions#effectsof) and the runner's `apply`. The [view](/docs/reference/view) always shows the long form, so a UI that reads `command.type` still can.

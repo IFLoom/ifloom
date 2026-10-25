@@ -373,7 +373,7 @@ describe('a vendor is an entity with the vendor trait', () => {
     const mod = {
       id: 'mod:cheap',
       schema: SCHEMA,
-      traits: { 'shop/vendor': { 'vendor:counter': { goods: [{ entity: 'food:coffee', price: { coins: 1 } }] } } },
+      traits: { 'shop/vendor': { 'vendor:counter': { goods: [{ entity: 'food:coffee' as const, price: { coins: 1 } }] } } },
     }
     const loaded = loadGame(
       [{ name: 'town', stats: [{ id: 'coins', label: 'Coins', start: 20, spendable: true }], ...things, entities: [...things.entities!, counter] }],

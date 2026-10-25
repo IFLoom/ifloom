@@ -143,6 +143,23 @@ export type DeviceView = {
 
 export type DevicesView = { devices: DeviceView[] }
 
+/**
+ * What content writes for each of the plugin's calls, its queries' answers
+ * and its view, so a call with a misspelled argument fails to compile.
+ */
+declare module '@ifloom/engine' {
+  interface ConditionCalls {
+    'devices/open': { app: string } | { device: string }
+  }
+  interface CommandCalls {
+    'devices/open': { id: string }
+    'devices/close': { id: string }
+  }
+  interface PluginViews {
+    devices: DevicesView
+  }
+}
+
 const ID = 'devices'
 
 /** The game's devices: `data.devices.devices`, from its packs. */

@@ -4,6 +4,14 @@
  */
 import { entitiesOf, statValue, type EffectRef, type Game, type GameRules, type GameState } from '@ifloom/engine'
 
+/** The café's calls, declared so content written in code is checked against them. */
+declare module '@ifloom/engine' {
+  interface EffectCalls {
+    'game/takings': true
+    'game/wages': true
+  }
+}
+
 /** The sum of one stat over every entity of a kind. */
 function total(state: GameState, game: Game, kind: string, stat: string): number {
   return entitiesOf(state, game, kind).reduce((sum, ref) => sum + statValue(state, game, stat, ref), 0)

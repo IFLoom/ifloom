@@ -129,6 +129,30 @@ export type CastView = {
   people: PersonView[]
 }
 
+/**
+ * What content writes for each of the plugin's calls, its queries' answers
+ * and its view, so a call with a misspelled argument fails to compile.
+ */
+declare module '@ifloom/engine' {
+  interface ConditionCalls {
+    'cast/here': { character: string | readonly string[] }
+    'cast/at': { character: string; at: string | readonly string[] }
+    'cast/met': { character: string | readonly string[] }
+  }
+  interface CommandCalls {
+    'cast/talk': { id: string }
+    'cast/call': { id: string }
+  }
+  interface QueryCalls {
+    'cast/present': () => string[]
+    'cast/where': (args: { character: string }) => string | undefined
+    'cast/contacts': () => { id: string; name: string; desc: string | null; portrait: string | null; command: CommandRef; disabled: string | undefined }[]
+  }
+  interface PluginViews {
+    cast: CastView
+  }
+}
+
 const ID = 'cast'
 const PERSON = 'cast/person'
 const KIND = 'character'
@@ -169,7 +193,7 @@ const talkOptions = (person: Person): TalkOption[] => (typeof person.talk === 's
 export function cast(options: CastOptions = {}): DefinedPlugin<null, CastView> {
   const kind = options.kind ?? KIND
   /** Who a call names: a bare id is one of the cast's kind, a reference (what `'$'` becomes) is as written. */
-  const refOf = (id: string): EntityRef => (id.includes(':') || id === '$' ? id : `${kind}:${id}`)
+  const refOf = (id: string): EntityRef => (id.includes(':') || id === '$' ? id : `${kind}:${id}`) as EntityRef
   const who = (value: unknown) => ids(value).map(refOf)
   /** How the plugin names someone back: their id for one of its kind, else the whole reference. */
   const short = (ref: EntityRef) => (parseRef(ref)?.kind === kind ? parseRef(ref)!.id : ref)

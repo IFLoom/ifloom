@@ -80,6 +80,27 @@ export type StatusesView = {
   active: ActiveStatus[]
 }
 
+/**
+ * What content writes for each of the plugin's calls, its queries' answers
+ * and its view, so a call with a misspelled argument fails to compile.
+ */
+declare module '@ifloom/engine' {
+  interface ConditionCalls {
+    'statuses/active': { status: string; stacks?: Range }
+  }
+  interface EffectCalls {
+    'statuses/apply': { status: string }
+    'statuses/remove': { status: string; runEnd?: boolean }
+  }
+  interface CommandCalls {
+    'statuses/apply': { id: string }
+    'statuses/remove': { id: string; runEnd?: boolean }
+  }
+  interface PluginViews {
+    statuses: StatusesView
+  }
+}
+
 const ID = 'statuses'
 
 function emptyState(): StatusesState {

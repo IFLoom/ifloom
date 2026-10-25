@@ -398,7 +398,7 @@ export const entities = defineFeature<EntitiesShape>({
       apply: (state, effect, game) => {
         const kind = createdKind(effect)
         if (kind === undefined) return state
-        const given: CreatedFields = { ...effect.with, like: effect.like }
+        const given: CreatedFields = { ...effect.with, like: effect.like as EntityRef | undefined }
         // Made, then given to whoever `at` names.
         const made = (from: GameState, id: string) => {
           const ref = `${kind}:${id}`
@@ -547,8 +547,8 @@ export const entities = defineFeature<EntitiesShape>({
         .filter((kind) => kind.listed !== false)
         .map((kind) => {
           const stats = (game.stats ?? []).filter((stat) => stat.of === kind.id && stat.listed !== false)
-          const holdsFor = (when: Condition | undefined, ref: string) => cx.holds(state, bindCurrent(when, ref), game)
-          const listed = (ref: string) => (typeof kind.listed === 'object' ? holdsFor(kind.listed, ref) : true)
+          const holdsFor = (when: Condition | undefined, ref: EntityRef) => cx.holds(state, bindCurrent(when, ref), game)
+          const listed = (ref: EntityRef) => (typeof kind.listed === 'object' ? holdsFor(kind.listed, ref) : true)
           const entries = entitiesOf(state, game, kind.id)
             .filter((ref) => listed(ref) && holdsFor(entityDef(game, ref)?.visible, ref))
             .map((ref): EntityView => {
@@ -607,7 +607,8 @@ function checkTraits(game: Game, tools: FeatureCheckTools): void {
   }
   for (const [id, byRef] of Object.entries(table)) {
     const trait = traitDef(game, id)
-    for (const [ref, data] of Object.entries(byRef)) {
+    for (const [key, data] of Object.entries(byRef)) {
+      const ref = key as EntityRef
       const source = { list: 'trait', id: `${id} ${ref}` }
       const where = `trait ${id} on ${ref}`
       if (!entityDef(game, ref)) {

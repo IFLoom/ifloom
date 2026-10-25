@@ -30,6 +30,22 @@ import { ITERATIONS, fromHex, hashOfProof, normaliseCode, proofOf, saltOf, seal,
 
 export { ITERATIONS, normaliseCode } from './crypto.ts'
 
+/**
+ * What content writes for each of the plugin's calls, its queries' answers
+ * and its view, so a call with a misspelled argument fails to compile.
+ */
+declare module '@ifloom/engine' {
+  interface ConditionCalls {
+    'unlocks/has': { unlock: string }
+  }
+  interface CommandCalls {
+    'unlocks/record': { id: string }
+  }
+  interface PluginViews {
+    unlocks: UnlocksView
+  }
+}
+
 const ID = 'unlocks'
 
 /** Where the page keeps the encrypted content `ifloom build` puts in it. */

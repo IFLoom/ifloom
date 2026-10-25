@@ -37,14 +37,14 @@ const SPEAKER_KIND = 'character'
 export function speakerRef(state: GameState, game: Game, id: string): EntityRef | undefined {
   if (id === YOU) {
     const who = protagonist(state)
-    return who === PLAYER ? undefined : who
+    return who === PLAYER ? undefined : (who as EntityRef)
   }
-  if (id.includes(':')) return hasEntity(state, game, id) ? id : undefined
-  const ref = `${SPEAKER_KIND}:${id}`
+  if (id.includes(':')) return hasEntity(state, game, id) ? (id as EntityRef) : undefined
+  const ref = `${SPEAKER_KIND}:${id}` as EntityRef
   if (hasEntity(state, game, ref)) return ref
   const named = (game.entities ?? []).filter((entity) => entity.id === id)
   if (named.length !== 1) return undefined
-  const only = `${named[0].of}:${id}`
+  const only = `${named[0].of}:${id}` as EntityRef
   return hasEntity(state, game, only) ? only : undefined
 }
 

@@ -30,6 +30,26 @@ export type __Pascal__View = {
   entries: { id: string; label: string; marked: boolean }[]
 }
 
+/**
+ * What content writes for each call, and what the view holds, so a game that
+ * imports the plugin has its calls checked: `{ '__id__/marked': { entyr } }`
+ * fails to compile. Keep each entry true to what the plugin reads.
+ */
+declare module '@ifloom/engine' {
+  interface ConditionCalls {
+    '__id__/marked': { entry: string }
+  }
+  interface EffectCalls {
+    '__id__/mark': { entry: string }
+  }
+  interface CommandCalls {
+    '__id__/mark': { id: string }
+  }
+  interface PluginViews {
+    '__id__': __Pascal__View
+  }
+}
+
 /** The game's entries: `data.__id__.entries`, from its content and packs. */
 export function __camel__Entries(game: Game): __Pascal__Entry[] {
   return (game.data?.[ID]?.entries ?? []) as __Pascal__Entry[]

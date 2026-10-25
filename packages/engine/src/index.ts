@@ -29,7 +29,9 @@ export { sceneById } from './game.ts'
 export { settingValue } from './features/settings.ts'
 export type { Formula, StatDef, StatLevels, StatRound, StatWords } from './stats.ts'
 export { clampStat, formatStat, lackingLine, levelAt, startingStats, statDef, statLevel, statMax, statValue } from './stats.ts'
-export type { CommandRef, CustomCondition, CustomContext, TurnContext, CustomEffect, CustomValue, EffectRef, PluginCall, ValueRef } from './custom.ts'
+export type { CommandRef, CustomCondition, CustomContext, TurnContext, CustomEffect, CustomValue, EffectRef, PluginCall, Query, ValueRef } from './custom.ts'
+// The registries a plugin (or the game) augments to type its calls by name, its queries and its view
+export type { CommandCall, CommandCalls, ConditionCall, ConditionCalls, EffectCall, EffectCalls, PluginViews, PluginViewsIn, QueryCalls } from './custom.ts'
 export { buildEffects, callOf, commandOf, customCondition, customEffect, customValue, hasCustomEffect, previewEffects } from './custom.ts'
 
 // Plugins: systems added to the engine, chosen when the game is built

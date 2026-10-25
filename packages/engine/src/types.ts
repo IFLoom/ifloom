@@ -1,4 +1,4 @@
-import type { PluginCall, ValueRef } from './calls.ts'
+import type { ConditionCall, EffectCall, ValueRef } from './calls.ts'
 import type { Select } from './features/entities.ts'
 import type { PluginSlice } from './plugin.ts'
 import type { FeatureCommands, FeatureConditions, FeatureEffects, FeatureState } from './features/registry.ts'
@@ -127,9 +127,10 @@ export type ConditionOf<K extends ConditionKey> = ConditionMap[K]
 
 /**
  * A condition: one of the kinds in `ConditionMap`, told apart by its one kind
- * key, or a plugin's condition in short: `{ 'quests/done': { quest: 'bakery' } }`. See `PluginCall`.
+ * key, or a plugin's condition in short: `{ 'quests/done': { quest: 'bakery' } }`,
+ * checked against `ConditionCalls` when the plugin declares its calls. See `PluginCall`.
  */
-export type Condition = ConditionMap[ConditionKey] | PluginCall
+export type Condition = ConditionMap[ConditionKey] | ConditionCall
 
 /**
  * The effects the core keeps itself, by the key that tells each apart. The
@@ -151,7 +152,7 @@ export type EffectKey = keyof EffectMap
  * `{ 'game/payRent': {} }`. It runs in its turn, on the state the effects
  * before it left. See `PluginCall`.
  */
-export type Effect = EffectMap[EffectKey] | PluginCall
+export type Effect = EffectMap[EffectKey] | EffectCall
 
 /** The commands the core keeps itself, by type. The features' are in `features/`. */
 export type CoreCommands = {

@@ -75,6 +75,35 @@ export type CalendarView = {
   curfew: boolean
 }
 
+/**
+ * What content writes for each of the plugin's calls, its queries' answers
+ * and its view, so a call with a misspelled argument fails to compile.
+ */
+declare module '@ifloom/engine' {
+  interface ConditionCalls {
+    'calendar/period': { period: string | readonly string[] }
+    'calendar/weekday': { day: number | readonly number[] }
+    'calendar/weekend': true
+    'calendar/day': Range | true
+    'calendar/curfew': true
+  }
+  interface EffectCalls {
+    'calendar/pass': { by?: number } | true
+    'calendar/set': { day?: number; period?: string }
+  }
+  interface CommandCalls {
+    'calendar/sleep': true
+  }
+  interface QueryCalls {
+    'calendar/now': () => CalendarState
+    'calendar/periods': () => string[]
+    'calendar/bedtime': () => boolean
+  }
+  interface PluginViews {
+    calendar: CalendarView
+  }
+}
+
 const ID = 'calendar'
 const DEFAULT_PERIODS: PeriodDef[] = [{ id: 'morning' }, { id: 'afternoon' }, { id: 'evening' }, { id: 'night' }, { id: 'late' }]
 const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']

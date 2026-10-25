@@ -193,6 +193,24 @@ export type ShopView = {
   vendors: VendorView[]
 }
 
+/**
+ * What content writes for each of the plugin's calls, its queries' answers
+ * and its view, so a call with a misspelled argument fails to compile.
+ */
+declare module '@ifloom/engine' {
+  interface ConditionCalls {
+    'shop/open': { vendor: string }
+    'shop/inStock': { vendor: string; entity: EntityRef }
+  }
+  interface CommandCalls {
+    'shop/buy': { vendor: string; entity: EntityRef; count?: number }
+    'shop/sell': { vendor: string; entity: EntityRef; count?: number }
+  }
+  interface PluginViews {
+    shop: ShopView
+  }
+}
+
 const ID = 'shop'
 /** The kind of entity vendors are, unless one says otherwise. */
 const KIND = 'vendor'
@@ -210,7 +228,7 @@ function emptyState(): ShopState {
  * `'vendor:counter'`. A reference is as written, for a vendor of another kind.
  */
 export function vendorRef(vendor: string): EntityRef {
-  return vendor.includes(':') ? vendor : `${KIND}:${vendor}`
+  return (vendor.includes(':') ? vendor : `${KIND}:${vendor}`) as EntityRef
 }
 
 /** How the plugin names a vendor back: its id for one of its kind, else the whole reference. */

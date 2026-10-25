@@ -85,6 +85,22 @@ export type AchievementsView = {
   total: number
 }
 
+/**
+ * What content writes for each of the plugin's calls, its queries' answers
+ * and its view, so a call with a misspelled argument fails to compile.
+ */
+declare module '@ifloom/engine' {
+  interface ConditionCalls {
+    'achievements/earned': { achievement: string }
+  }
+  interface EffectCalls {
+    'achievements/grant': { achievement: string }
+  }
+  interface PluginViews {
+    achievements: AchievementsView
+  }
+}
+
 const ID = 'achievements'
 
 function emptyState(): AchievementsState {

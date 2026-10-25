@@ -1,8 +1,8 @@
 ---
 title: "The CLI"
-description: "The ifloom command: new, dev, build, check, playtest, snapshot and unlock-hash, the game module it reads, the Vite preset, and the functions behind them for scripts."
+description: "The ifloom command: new, dev, build, check, playtest, snapshot, words and unlock-hash, the game module it reads, the Vite preset, and the functions behind them for scripts."
 ---
-`@ifloom/cli` starts new games, runs your game while you write it, and builds it into a folder that opens from disk. It can also check the game for problems the loader finds, play it with no one at the keyboard, and record how every scene reads. It has seven commands and a Vite preset:
+`@ifloom/cli` starts new games, runs your game while you write it, and builds it into a folder that opens from disk. It can also check the game for problems the loader finds, play it with no one at the keyboard, record how every scene reads, and list the words a translation gives. It has eight commands and a Vite preset:
 
 | Command | Does |
 |---|---|
@@ -12,13 +12,14 @@ description: "The ifloom command: new, dev, build, check, playtest, snapshot and
 | `ifloom check [module]` | Loads the game and lists every problem the [content checker](/docs/reference/checks) finds, once, and every sound, picture and video file missing from `public/`. |
 | `ifloom playtest [module] [--turns n] [--out file]` | Plays the game for some turns with no one at the keyboard, and writes down every screen and each turn's numbers. |
 | `ifloom snapshot [module] [--out file] [--update]` | Renders every scene and every place in a few chosen states, and compares the result with the last run. |
+| `ifloom words [module] [--out file]` | Lists every field a player reads, by its key in a translation's [words table](/docs/reference/words#keys), or writes them to a file as a table to translate from. |
 | `ifloom unlock-hash <unlock> [module]` | Prints the hash of an unlock's code, for the [unlocks plugin](/docs/plugins/unlocks), without printing the code. |
 
 Start a game with `npm create ifloom`, which runs `ifloom new`, and run the others from the game's folder. They use the `vite.config.ts` there, which is where the [preset](#the-vite-preset) goes. [Small Town](/docs/guide/showcase) is built with them.
 
-`check`, `playtest`, `snapshot` and `unlock-hash` read the game from its [game module](#the-game-module), `src/game.ts`, whose default export is made with `defineGame`.
+`check`, `playtest`, `snapshot`, `words` and `unlock-hash` read the game from its [game module](#the-game-module), `src/game.ts`, whose default export is made with `defineGame`.
 
-`check`, `playtest` and `snapshot` load the game module with the CLI's own Vite and need no `vite.config.ts`, so they work the same in a game built with [Next.js](/docs/recipes/next), [webpack](/docs/recipes/webpack) or [esbuild](/docs/recipes/esbuild). `dev` and `build` are the parts those tools replace.
+`check`, `playtest`, `snapshot` and `words` load the game module with the CLI's own Vite and need no `vite.config.ts`, so they work the same in a game built with [Next.js](/docs/recipes/next), [webpack](/docs/recipes/webpack) or [esbuild](/docs/recipes/esbuild). `dev` and `build` are the parts those tools replace.
 
 ## Install
 
@@ -509,6 +510,42 @@ function probes(game: Game): Probe[] {
 
 - **Each scene is rendered as if it were open in the probe's state**, wherever the probe's player stands. A scene that only makes sense in one place is rendered in all of them. That's deliberate, because it shows what its conditions do, but keep it in mind when you read the file.
 - **A probe is only as real as its steps.** Nothing checks that a player could reach it, and effects skip the locks a command would meet. Play commands where you can, and end turns with the `turn` effect, so the calendar's day and the turn count agree.
+
+## ifloom words
+
+```sh
+ifloom words                       # every field a player reads, one per line
+ifloom words --out words.en.json   # the same, as a words table to translate from
+ifloom words src/release.ts        # another module
+```
+
+Lists every field of the game a player reads and a [translation](/docs/recipes/translating) can give other words for, from [`translatableFields`](/docs/reference/words#translatablefields). It loads the [game module](#the-game-module) as `check` does and builds the game with no unlocked packs, so the words are the ones your content is written in.
+
+Each line is a field's key in a pack's [`words` table](/docs/reference/words#keys), its words as JSON, and where it is, then a count:
+
+```
+scene.intro.title: "Moving day"  (scene intro)
+scene.intro.text.tonight: "Tomorrow you start learning the town. Tonight you unpack, and the cat needs a name."  (scene intro)
+scene.intro.choice.unpack.label: "Unpack"  (scene intro)
+action.wait.label: "Wait a while"  (action wait)
+229 fields to translate.
+```
+
+With `--out`, it writes the fields to that file instead, as a JSON object from each key to its words, and says how many it wrote. Any folders in the path are created for you. Copy the file, translate its values and put them in a pack's `words`:
+
+```json
+{
+  "scene.intro.title": "Moving day",
+  "scene.intro.text.tonight": "Tomorrow you start learning the town. Tonight you unpack, and the cat needs a name.",
+  "scene.intro.choice.unpack.label": "Unpack",
+  "action.wait.label": "Wait a while"
+}
+```
+
+**Gotchas.**
+
+- **List the words before a translation is in.** A block with no `id` is keyed by a hash of its words, so a game built with a translation pack lists that pack's words under keys of their own. If `build` loads packs of its own, `words` names them on stderr. Keep translations out of `build`, and load them in the page.
+- **Locked content isn't listed.** The game is built with no `unlocked` packs, so the words of [locked content](#locked-content) aren't in the list.
 
 ## ifloom unlock-hash
 

@@ -1,6 +1,6 @@
 ---
 title: "Translating a game"
-description: "Make a translation of your game as one pack: list every field a player reads with translatableFields, fill in a words table, translate the prose and strings, and load it."
+description: "Make a translation of your game as one pack: list every field a player reads with ifloom words, fill in a words table, translate the prose and strings, and load it."
 ---
 A translation is one [pack](/docs/reference/loader#pack). Its `words` table gives other words to every label, name and line your content writes in place, its `prose` translates the lines read by key, and its `strings` the engine's and plugins' own words. This recipe makes a French translation of a small café game and loads it.
 
@@ -8,15 +8,22 @@ The words in your content stay where you wrote them. The pack only lays other wo
 
 ## 1. List what to translate
 
-[`translatableFields(game)`](/docs/reference/words#translatablefields) lists every field a player reads, each with its key, its words and where it is. Write it out as a table to start the translation from:
+[`ifloom words`](/docs/cli#ifloom-words) lists every field a player reads, each with its key, its words and where it is. Write them out as a table to start the translation from:
+
+```sh
+npx ifloom words --out words.en.json
+```
+
+The command builds the game from its [game module](/docs/cli#the-game-module), with no translation loaded, and asks the engine's [`translatableFields(game)`](/docs/reference/words#translatablefields) for the fields. A script can do the same:
 
 ```ts
 // scripts/words.ts: run with `node scripts/words.ts`
 import { writeFileSync } from 'node:fs'
 import { translatableFields } from '@ifloom/engine'
-import loaded from '../src/game.ts'
+import module from '../src/game.ts'
 
-const table = Object.fromEntries(translatableFields(loaded.game).map((field) => [field.key, field.text]))
+const { game } = module.build()
+const table = Object.fromEntries(translatableFields(game).map((field) => [field.key, field.text]))
 writeFileSync('words.en.json', JSON.stringify(table, null, 2) + '\n')
 ```
 
@@ -108,7 +115,7 @@ A save records the packs it was made with, so a save made in French names `lang:
 lang:fr · words scene.cafe.counter.text.4c1f0a · names no field the game has (translatableFields lists every key)
 ```
 
-That's a typo in a key, or a line whose words changed since it was translated, so its hash key moved on. List the fields again (step 1) and translate the new line.
+That's a typo in a key, or a line whose words changed since it was translated, so its hash key moved on. List the fields again with `ifloom words` (step 1) and translate the new line.
 
 ## Gotchas
 

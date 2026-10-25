@@ -16,6 +16,8 @@
  *                            play it day by day; every screen to a transcript, the numbers to .metrics
  *   ifloom snapshot [module] [--out snapshots/scenes.txt] [--update]
  *                            every scene in every probe state, compared with the last run
+ *   ifloom words [module] [--out words.en.json]
+ *                            every field a player reads, for a translation's words table; --out writes it as JSON
  *   ifloom unlock-hash <unlock> [module]
  *                            the hash of an unlock's code, from IFLOOM_UNLOCK_<UNLOCK> or piped in,
  *                            to put in the unlock; the code itself is never printed
@@ -34,13 +36,14 @@
  */
 import { mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { basename, dirname, relative, resolve } from 'node:path'
-import { startingState, type FileRef, type Game, type GameState } from '@ifloom/engine'
+import { startingState, translatableFields, type FileRef, type Game, type GameState } from '@ifloom/engine'
 import { build, createServer } from 'vite'
 import { buildFiles, checkBuild, inlineAssets } from './build.ts'
 import { GameModuleError, checkFiles, gameFrom, gameModule } from './check.ts'
 import { checkUnlocks, codesFrom, leaks, linesOf, lockedFiles, packsOf, unlocksModule } from './unlocks.ts'
 import { explorer, metricsText, playtest } from './playtest.ts'
 import { snapshot } from './snapshot.ts'
+import { wordsJson, wordsText } from './words.ts'
 import { configLoader, sourcePlugin } from './source.ts'
 import { TEMPLATES, THEMES, inCheckout, newGame, type TemplateName, type ThemeName } from './new.ts'
 
@@ -194,6 +197,25 @@ async function play(entry?: string): Promise<number> {
   })
 }
 
+/** Every field a player reads: listed, or written as a words table to translate from. */
+async function words(entry?: string): Promise<number> {
+  return withModule(entry, (module) => {
+    // Built with no unlocked packs: the game in the language it's written in, as long as build adds no translation itself.
+    const { game } = gameFrom(module)
+    if (game.packs?.length)
+      console.error(`The game was built with the packs ${game.packs.join(', ')}. A translation among them would put its own words in the list.`)
+    const out = flag('out')
+    if (!out) {
+      console.log(wordsText(game))
+      return 0
+    }
+    write(out, wordsJson(game))
+    const count = translatableFields(game).length
+    console.log(`Wrote ${count} field${count === 1 ? '' : 's'} to ${out}.`)
+    return 0
+  })
+}
+
 async function snap(entry?: string): Promise<number> {
   return withModule(entry, (module) => {
     const { game } = gameFrom(module)
@@ -281,6 +303,8 @@ async function main(): Promise<number> {
       return play(positional())
     case 'snapshot':
       return snap(positional())
+    case 'words':
+      return words(positional())
     case 'new':
       return create(positional(), flag('template'), flag('theme'))
     case 'unlock-hash': {
@@ -289,7 +313,7 @@ async function main(): Promise<number> {
     }
     default:
       console.log(
-        `ifloom new <name> [--template ${TEMPLATES.join('|')}] [--theme ${THEMES.join('|')}|none] | dev | build [--out dir] [--inline-assets] | check [module] | playtest [module] [--turns n] [--out file] | snapshot [module] [--out file] [--update] | unlock-hash <unlock> [module]`,
+        `ifloom new <name> [--template ${TEMPLATES.join('|')}] [--theme ${THEMES.join('|')}|none] | dev | build [--out dir] [--inline-assets] | check [module] | playtest [module] [--turns n] [--out file] | snapshot [module] [--out file] [--update] | words [module] [--out file] | unlock-hash <unlock> [module]`,
       )
       return command === 'help' ? 0 : 1
   }

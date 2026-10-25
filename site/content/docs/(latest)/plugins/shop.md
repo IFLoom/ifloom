@@ -8,7 +8,7 @@ description: "Vendors that sell things for any spendable stat, with stock the ve
 import { shop, vendorsOf, vendorOf, sellableOf, type Vendor, type VendorDef, type GoodDef, type DiscountDef, type Restock, type Sellable, type ShopState, type StockRecord, type ShopView, type VendorView, type GoodView } from '@ifloom/plugin-shop'
 ```
 
-The plugin's engine side draws nothing: its React UI is a [subpath of its own](#the-react-ui), and any UI can draw it. You can put its `buy` commands on any button, such as a location's actions, and the button shows the price and greys out with the reason as any action's does. For a shop screen, its view lists every vendor and their goods, and [Building UI for plugins](/docs/recipes/plugin-ui#a-shop-counter) builds one.
+The plugin's engine side draws nothing: its React UI is a [subpath of its own](#drawing-it), and any UI can draw it. You can put its `buy` commands on any button, such as a location's actions, and the button shows the price and greys out with the reason as any action's does. For a shop screen, its view lists every vendor and their goods, and [Building UI for plugins](/docs/recipes/plugin-ui#a-shop-counter) builds one.
 
 ## Install
 
@@ -302,7 +302,7 @@ An unknown vendor or thing is false.
 
 `view(state, game).plugins.shop` is a `ShopView`. Each good carries ready-made buttons, built with the engine's [`renderAction`](/docs/reference/view#renderaction), so a UI draws them like any other button.
 
-Its [React UI](#the-react-ui) draws the `shop` panel as a [`ShopCounter`](#shopcounter) in a dialog, through [`PanelHost`](/docs/react/components#panelhost). [`useShop`](#useshop) gives the same data and the buy and sell commands with no markup, for a counter you place yourself.
+Its [React UI](#drawing-it) draws the `shop` panel as a [`ShopCounter`](#shopcounter) in a dialog, through [`PanelHost`](/docs/react/components#panelhost). [`useShop`](#useshop) gives the same data and the buy and sell commands with no markup, for a counter you place yourself.
 
 ### ShopView
 
@@ -367,18 +367,19 @@ type GoodView = {
 | `sell` | The button that sells one back, or `null` for a vendor that takes nothing back. |
 | `sellFor` | What selling one back pays, or `null`. |
 
-## The React UI
+## Drawing it
 
-`@ifloom/plugin-shop/react` draws a vendor's counter, for a game drawn with [`@ifloom/react`](/docs/react). List `shopUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the `shop` panel, which [`shop.open`](#opening-a-counter) opens, is drawn as that vendor's [`ShopCounter`](#shopcounter), titled with its name.
+Nothing about a vendor is drawn until content opens its counter with [`shop.open`](#opening-a-counter). Then `view.panel` is `{ panel: 'shop', with: { vendor: 'counter' } }`, and the vendor is the one in [`view.plugins.shop`](#the-view) with that id. Each good's `buy` and `sell` are ready-made buttons with today's price and the reason one can't be pressed, so you draw them like any other button and send their `command`.
 
-It's yours to leave out. Draw the plugin yourself from `view.plugins.shop`, or from [`useShop`](#useshop) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+With the React UI, list `shopUi` in `plugins` and the panel is drawn for you as a [`ShopCounter`](#shopcounter) in a dialog. In plain JS or Vue, draw the vendor when the open panel is `shop`. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-```tsx
-import { mountGame } from '@ifloom/react'
-import { shopUi } from '@ifloom/plugin-shop/react'
+::include[../../../../snippets/plain/shop.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-mountGame(game, { plugins: [shopUi] })
-```
+::include[../../../../snippets/react/mount-shop.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/vue/ShopCounter.vue]{meta='tab="Vue" tab-group="framework"'}
+
+The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.shop`, or from [`useShop`](#useshop) with your own markup, and nothing of ours is drawn. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads `@ifloom/plugin-shop/react`.
 
 ### shopUi
 
@@ -409,21 +410,7 @@ type ShopDialogProps = { vendorId: string | null; onClose: () => void }
 
 The vendor with this id in a [`Dialog`](/docs/react/components#dialog), titled with its name and drawn as a [`ShopCounter`](#shopcounter). It's closed while `vendorId` is `null` or names no vendor. It sends no command and keeps nothing in the state, so content usually opens a counter with [`shop.open`](/docs/plugins/shop#opening-a-counter) instead. Use it for a button that is only UI:
 
-```tsx
-import { useState } from 'react'
-import { Button } from '@ifloom/react'
-import { ShopDialog } from '@ifloom/plugin-shop/react'
-
-function StallButton() {
-  const [open, setOpen] = useState<string | null>(null)
-  return (
-    <>
-      <Button variant="outline" onClick={() => setOpen('stall')}>The fruit stall</Button>
-      <ShopDialog vendorId={open} onClose={() => setOpen(null)} />
-    </>
-  )
-}
-```
+::include[../../../../snippets/react/shop-dialog.tsx]
 
 Replaceable as `ShopDialog` in [`components`](/docs/react/components#components). Parts: `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close`.
 
@@ -458,16 +445,7 @@ type ShopControls = ShopView & {
 
 The shop plugin's view ([`ShopView`](/docs/plugins/shop#shopview): `vendors`), the vendors at the player's location as `here`, and its commands, or `null` in a game without the plugin. `buy` and `sell` send `shop/buy` and `shop/sell`, one if `count` is left out. [`ShopDialog`](#shopdialog), [`ShopCounter`](#shopcounter) and the `shop` panel are drawn from it. `here` is what a layout of your own can show where the player is.
 
-```tsx
-import { useShop } from '@ifloom/plugin-shop/react'
-
-function QuickCoffee() {
-  const shop = useShop()
-  const coffee = shop?.here[0]?.goods.find((good) => good.entity === 'food:coffee')
-  if (!shop || !coffee) return null
-  return <button disabled={Boolean(coffee.buy.disabled)} onClick={() => shop.buy(shop.here[0].id, 'food:coffee')}>Coffee to go</button>
-}
-```
+::include[../../../../snippets/react/use-shop.tsx]
 
 ## The state
 

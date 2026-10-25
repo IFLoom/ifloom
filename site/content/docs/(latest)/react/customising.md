@@ -848,7 +848,7 @@ From [`@ifloom/plugin-unlocks/react`](/docs/plugins/unlocks#the-react-ui).
 
 #### Shop
 
-From [`@ifloom/plugin-shop/react`](/docs/plugins/shop#the-react-ui).
+From [`@ifloom/plugin-shop/react`](/docs/plugins/shop#drawing-it).
 
 | Part | What it is |
 |---|---|

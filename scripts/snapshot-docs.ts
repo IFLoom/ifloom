@@ -8,7 +8,8 @@
 // <version>, so it shows in the docs' version dropdown next to the latest.
 import { cpSync, existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+import { codeOf, includesOf } from '../site/lib/snippets.ts'
 
 const version = process.argv[2]
 if (!version || !/^\d+\.\d+\.\d+(-[\w.]+)?$/.test(version)) {
@@ -45,8 +46,24 @@ function walk(dir: string): string[] {
     e.isDirectory() ? walk(join(dir, e.name)) : /\.(md|mdx|json)$/.test(e.name) ? [join(dir, e.name)] : [],
   )
 }
+// The snippets a page includes from site/snippets/ go on changing with the
+// latest docs, so the copy gets them written into the page as they are now.
+const snippets = join(docs, '..', '..', 'snippets')
+function inlineSnippets(text: string, file: string): string {
+  const lines = text.split('\n')
+  for (const include of includesOf(text)) {
+    const at = fileURLToPath(new URL(include.path, pathToFileURL(file)))
+    if (!at.startsWith(snippets)) continue
+    const code = codeOf(include, existsSync(at) ? readFileSync(at, 'utf8') : undefined)
+    if (!code.ok) throw new Error(`${relative(process.cwd(), file)}:${include.line}: ${code.reason}`)
+    let fence = '```'
+    while (code.code.includes(fence)) fence += '`'
+    lines[include.line - 1] = `${fence}${include.lang}${include.meta ? ` ${include.meta}` : ''}\n${code.code}\n${fence}`
+  }
+  return lines.join('\n')
+}
 for (const file of walk(target)) {
-  const text = readFileSync(file, 'utf8')
+  const text = file.endsWith('.json') ? readFileSync(file, 'utf8') : inlineSnippets(readFileSync(file, 'utf8'), file)
   writeFileSync(file, text.replace(/\]\(\/docs\/(?!changelog\b)/g, `](/docs/${version}/`))
 }
 

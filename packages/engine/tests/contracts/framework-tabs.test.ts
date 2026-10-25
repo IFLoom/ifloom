@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { codeOf, includesOf } from '../../../../site/lib/snippets.ts'
 
 /**
  * The engine is framework-neutral, so the docs are too. A code block that
@@ -12,13 +13,39 @@ import { describe, expect, it } from 'vitest'
  * - makes or finds an element: `document.createElement`, `document.querySelector`, `document.getElementById`, or
  * - is a `vue` or `svelte` block.
  *
- * Pages under `react/` document the optional React UI, so they stay React,
- * and so does a plugin page's `## The React UI` section, which documents the
- * plugin's `/react` subpath.
+ * A block can be written in the page or included from a file with
+ * `::include[path]{meta='tab="React" tab-group="framework"'}` (see
+ * `site/lib/snippets.ts`); an include counts as the code block it becomes.
+ *
+ * Every feature that puts something in front of the player has a
+ * `## Drawing it` section: at least one full group of tabs, and every UI
+ * block in it included from `site/snippets/`, which is type-checked and
+ * tested, never pasted. Its React-only blocks document the React UI's
+ * default for the feature (a plugin's `/react` subpath, say), so they may
+ * stand outside a group.
+ *
+ * Pages under `react/` document the optional React UI, so they stay React.
  * Two more pages are about one framework by design: the guide's worked
  * example of a UI in plain JS (`guide/ui-from-scratch`), whose other
  * frameworks are on `guide/frameworks`, and the Next.js recipe, since Next is React.
  */
+/** What a page can include: the snippets, by their URL. */
+const SNIPPET_FILES = import.meta.glob('../../../../site/snippets/**/*.{ts,tsx,vue}', { query: '?raw', import: 'default', eager: true }) as Record<
+  string,
+  string
+>
+const SNIPPETS = '../../../../site/snippets/'
+
+/** `path` relative to the file `from`, both as the globs write them (this test has no URL or path module). */
+function beside(from: string, path: string): string {
+  const parts = from.split('/').slice(0, -1)
+  for (const part of path.split('/')) {
+    if (part === '..' && parts.length && parts.at(-1) !== '..') parts.pop()
+    else if (part !== '.') parts.push(part)
+  }
+  return parts.join('/')
+}
+
 const PAGES = import.meta.glob('../../../../site/content/docs/**/*.{md,mdx}', {
   query: '?raw',
   import: 'default',
@@ -33,6 +60,8 @@ const PAGES = import.meta.glob('../../../../site/content/docs/**/*.{md,mdx}', {
 const TABS = ['Plain JS', 'React', 'Vue', 'Svelte']
 const REQUIRED = ['Plain JS', 'React', 'Vue']
 const GROUP = 'framework'
+/** The sections whose React-only blocks document the React UI's default. `The React UI` goes once every plugin page has a `Drawing it`. */
+const DRAWING = ['Drawing it', 'The React UI']
 
 /** Pages that may show a UI snippet in one framework only. */
 const ALLOWED = [/\/react\//, /\/guide\/ui-from-scratch\.md$/, /\/recipes\/next\.md$/]
@@ -49,12 +78,15 @@ type Block = {
   end: number
   /** Only blank lines between it and the next block. */
   adjacentToNext: boolean
-  /** Under a `## The React UI` heading: the plugin's React subpath, React by design. */
-  reactSection: boolean
+  /** Under a `## Drawing it` heading, whose React-only blocks document the React UI's default. */
+  drawing: boolean
+  /** Included from a file rather than written in the page. */
+  included: string | null
 }
 
-/** The fenced code blocks of a page, with each block's tab and tab group from its meta. */
-function blocksOf(source: string): Block[] {
+/** The fenced code blocks of a page, and its includes, with each block's tab and tab group from its meta. */
+function blocksOf(source: string, page: string): Block[] {
+  // `page` is the page's path as the glob writes it, which an include's path is relative to.
   const lines = source.split('\n')
   const blocks: Block[] = []
   // The `##` heading each line is under, outside code.
@@ -66,7 +98,27 @@ function blocksOf(source: string): Block[] {
     else if (!fenced && line.startsWith('## ')) heading = line.slice(3).trim()
     section.push(heading)
   }
+  const includes = new Map(includesOf(source).map((include) => [include.line - 1, include]))
   for (let at = 0; at < lines.length; at++) {
+    const include = includes.get(at)
+    // An included Markdown file, such as the changelog, is part of the page, not a code block.
+    if (include?.markdown) continue
+    if (include) {
+      const file = beside(page, include.path)
+      const code = codeOf(include, SNIPPET_FILES[file])
+      blocks.push({
+        line: at + 1,
+        lang: include.lang,
+        tab: /\btab="([^"]*)"/.exec(include.meta)?.[1] ?? null,
+        group: /\btab-group="([^"]*)"/.exec(include.meta)?.[1] ?? null,
+        code: code.ok ? code.code : '',
+        end: at,
+        adjacentToNext: false,
+        drawing: DRAWING.includes(section[at]),
+        included: file,
+      })
+      continue
+    }
     const open = /^ {0,3}(`{3,})(\S*)(.*)$/.exec(lines[at])
     if (!open) continue
     const fence = open[1]
@@ -81,7 +133,8 @@ function blocksOf(source: string): Block[] {
       code: lines.slice(at + 1, end).join('\n'),
       end,
       adjacentToNext: false,
-      reactSection: section[at] === 'The React UI',
+      drawing: DRAWING.includes(section[at]),
+      included: null,
     })
     at = end
   }
@@ -135,7 +188,9 @@ function groupProblem(group: Block[]): string | null {
 const short = (path: string) => path.replace(/^.*site\/content\/docs\//, '')
 
 describe('the docs', () => {
-  const pages = Object.entries(PAGES).map(([path, source]) => ({ path: short(path), blocks: blocksOf(source) }))
+  const pages = Object.entries(PAGES).map(([path, source]) => {
+    return { path: short(path), file: path, source, blocks: blocksOf(source, path) }
+  })
 
   it('are all read', () => {
     expect(pages.length).toBeGreaterThan(50)
@@ -165,9 +220,38 @@ describe('the docs', () => {
           .flat(),
       )
       for (const block of page.blocks) {
-        if (isUi(block) && !tabbed.has(block) && !block.reactSection) untabbed.push(`${page.path}:${block.line}: ${block.code.split('\n')[0]}`)
+        if (isUi(block) && !tabbed.has(block) && !block.drawing) untabbed.push(`${page.path}:${block.line}: ${block.code.split('\n')[0]}`)
       }
     }
     expect(untabbed).toEqual([])
+  })
+
+  it('include only snippets, files and regions that are there', () => {
+    const missing = pages.flatMap((page) =>
+      includesOf(page.source)
+        .filter((include) => !include.markdown)
+        .flatMap((include) => {
+          const code = codeOf(include, SNIPPET_FILES[beside(page.file, include.path)])
+          return code.ok ? [] : [`${page.path}:${include.line}: ${code.reason} under site/snippets/`]
+        }),
+    )
+    expect(missing).toEqual([])
+  })
+
+  it('draw each feature in a "Drawing it" section: a full group of tabs, every UI block from site/snippets/', () => {
+    const problems: string[] = []
+    let sections = 0
+    for (const page of pages) {
+      const drawing = page.blocks.filter((block) => block.drawing)
+      if (!/(^|\/)(reference|plugins)\//.test(page.path) || !page.source.includes('\n## Drawing it\n')) continue
+      sections++
+      if (!groupsOf(drawing).some((group) => !groupProblem(group))) problems.push(`${page.path}: no full group of framework tabs`)
+      for (const block of drawing) {
+        if ((isUi(block) || TABS.includes(block.tab ?? '')) && !block.included?.startsWith(SNIPPETS))
+          problems.push(`${page.path}:${block.line}: written in the page, not included from site/snippets/`)
+      }
+    }
+    expect(sections).toBeGreaterThan(0)
+    expect(problems).toEqual([])
   })
 })

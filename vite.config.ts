@@ -59,6 +59,8 @@ tasks['typecheck:site'] = {
   cwd: 'site',
   cache: { input: [{ auto: true }, '!site/.next/**', '!site/.source/**', '!site/next-env.d.ts', '!site/**/*.tsbuildinfo'], output: [] },
 }
+// The docs' snippets, with vue-tsc, which checks their .vue files as well as the .ts and .tsx (site/snippets/).
+tasks['typecheck:snippets'] = { command: 'vue-tsc --noEmit -p site/snippets', cache: { input: [{ auto: true }, '!**/dist/**'], output: [] } }
 tasks['typecheck:all'] = { command: 'echo "Every project type-checks."', dependsOn: Object.keys(tasks).filter((name) => name.startsWith('typecheck:')) }
 
 // The docs site: the link check, then `next build`. Both are cached by the files the site can read, listed by hand

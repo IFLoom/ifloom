@@ -1,0 +1,38 @@
+{
+  "name": "@ifloom/docs-snippets",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "description": "The code the docs' \"Drawing it\" sections show, as real files: type-checked with vue-tsc and rendered by the tests in tests/. Pages include them with ::include.",
+  "type": "module",
+  "dependencies": {
+    "@ifloom/browser": "^0.0.0",
+    "@ifloom/engine": "^0.0.0",
+    "@ifloom/plugin-achievements": "^0.0.0",
+    "@ifloom/plugin-calendar": "^0.0.0",
+    "@ifloom/plugin-cast": "^0.0.0",
+    "@ifloom/plugin-cheats": "^0.0.0",
+    "@ifloom/plugin-debug": "^0.0.0",
+    "@ifloom/plugin-devices": "^0.0.0",
+    "@ifloom/plugin-feed": "^0.0.0",
+    "@ifloom/plugin-inventory": "^0.0.0",
+    "@ifloom/plugin-jobs": "^0.0.0",
+    "@ifloom/plugin-messages": "^0.0.0",
+    "@ifloom/plugin-places": "^0.0.0",
+    "@ifloom/plugin-quests": "^0.0.0",
+    "@ifloom/plugin-shop": "^0.0.0",
+    "@ifloom/plugin-statuses": "^0.0.0",
+    "@ifloom/plugin-unlocks": "^0.0.0",
+    "@ifloom/plugin-wardrobe": "^0.0.0",
+    "@ifloom/react": "^0.0.0",
+    "@ifloom/showcase": "^0.0.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "vue": "3.5.44"
+  },
+  "devDependencies": {
+    "@ifloom/cli": "^0.0.0",
+    "typescript": "~6.0.2",
+    "vue-tsc": "3.3.13"
+  }
+}

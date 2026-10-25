@@ -10,6 +10,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- Docs: each feature that puts something in front of the player has a "Drawing it" section on its page: what the view hands a UI, then how to draw it in plain JS, with the React UI's ready-made default, and in Vue, as tabs. The code in them comes from files that are type-checked and tested, so it runs as shown.
+
 - A translation's words table reaches words written inside effects: what a `create` effect names the thing it makes (`action.sketch.create.<hash>.name`), and a plugin effect's word arguments as its new `callWords` declare them, such as a feed post's and a comment's `text` (`action.snap.feed/post.<hash>.text`).
 
 - Your game's `rules` can keep a state of its own, as a plugin does: `start: () => ({ entries: [] })` begins it, saves keep it at `state.plugins.game`, and its hooks, commands and providers read `context.slice` and write `context.set(next)`. Type it as `GameRules<Diary>`. See [The game's own state](/docs/reference/rules#the-games-own-state).

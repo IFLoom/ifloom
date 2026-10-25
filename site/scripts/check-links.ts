@@ -1,7 +1,11 @@
 // Fails on a link in the docs that points at no page, or at no heading on a
-// page. Run by `npm run docs:links`, and before every `npm run docs:build`.
+// page, and on an `::include` whose file or region isn't there. Run by
+// `npm run docs:links`, and before every `npm run docs:build`.
 import { register } from 'fumadocs-mdx/node'
 import { type FileObject, printErrors, scanURLs, validateFiles } from 'next-validate-link'
+import { existsSync, readFileSync } from 'node:fs'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+import { codeOf, includesOf } from '../lib/snippets.ts'
 
 register()
 const { source } = await import('../lib/source.ts')
@@ -28,4 +32,17 @@ const files = await Promise.all(
 )
 
 printErrors(await validateFiles(files, { scanned, checkRelativePaths: 'as-url' }), true)
-console.log(`Checked the links on ${files.length} pages.`)
+
+// Each included snippet must be there, so a page never shows an empty block.
+const missing = files.flatMap((file) =>
+  includesOf(file.content).flatMap((include) => {
+    const at = fileURLToPath(new URL(include.path, pathToFileURL(file.path)))
+    const code = codeOf(include, existsSync(at) ? readFileSync(at, 'utf8') : undefined)
+    return code.ok ? [] : [`${file.path}:${include.line}: ${code.reason}`]
+  }),
+)
+if (missing.length) {
+  console.error(`Includes that show nothing:\n${missing.join('\n')}`)
+  process.exit(1)
+}
+console.log(`Checked the links and includes on ${files.length} pages.`)

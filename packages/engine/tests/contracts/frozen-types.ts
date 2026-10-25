@@ -77,6 +77,8 @@
  * Words (P7): `Pack.words` (and so `Content.words`), a translation's table.
  * The rest of the API pass (P9b): `View.inputs` and `View.entities` are
  * arrays in order (each kind with its `id`), and `View.inScene` is gone.
+ * Naming (P10): `view.scene.stage` is `view.scene.picture`, "stage" being
+ * only a quest's.
  */
 import type {
   Amount,
@@ -133,7 +135,7 @@ import type {
   SettingView,
   SpeakerView,
   FlowState,
-  StageView,
+  PictureView,
   StatDef,
   StatKey,
   StatView,
@@ -551,7 +553,7 @@ export type FrozenView = {
   when: string | null
   scene: {
     id: string | null
-    /** Which screen this is: `scene:<id>`, `minigame:<id>`, `room:<stage id>` or `room`. */
+    /** Which screen this is: `scene:<id>`, `minigame:<id>`, `room:<id>` or `room`. */
     key: string
     title: string
     body: string
@@ -561,8 +563,8 @@ export type FrozenView = {
     tags: string[]
     speaker: SpeakerView | null
     image: string | null
-    /** The scene's layered picture and its hotspots, or null when it has none. See `stageView`. */
-    stage: StageView | null
+    /** The scene's layered picture and its hotspots, or null when it has none. See `pictureView`. */
+    picture: PictureView | null
     choices: RenderedChoice[]
     /** The scene's presentation hints, as written. */
     ui?: Ui<SceneUi>

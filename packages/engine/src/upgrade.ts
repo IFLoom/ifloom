@@ -16,7 +16,7 @@ import type { Pack } from './loader.ts'
 import type { Plugin } from './plugin.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
-export const SCHEMA = 27
+export const SCHEMA = 28
 
 /** A pack as it came in: some schema's shape, not necessarily this one. */
 export type RawPack = Record<string, unknown> & { schema: number }
@@ -139,12 +139,31 @@ export const PACK_STEPS: Record<number, (pack: RawPack, context: PackContext) =>
   25: (pack) => toSchema26(pack),
   // 26 → 27: pictures are `image`, gating is `blocked` and `once` has one shape. See `toSchema27`.
   26: (pack) => toSchema27(pack),
+  // 27 → 28: a scene's layered picture with hotspots is its `picture`, not its `stage`. See `toSchema28`.
+  27: (pack) => toSchema28(pack),
 }
 
 /** Keys of a pack's `words` table renamed, the words kept. */
 function wordKeys(pack: RawPack, rename: (key: string) => string): RawPack {
   if (!isRecord(pack.words)) return pack
   return { ...pack, words: Object.fromEntries(Object.entries(pack.words).map(([key, text]) => [rename(key), text])) }
+}
+
+/**
+ * 27 → 28: "stage" means only a quest's stage, so a scene's layered picture
+ * with hotspots is its `picture`: `stage: { layers, hotspots }` is
+ * `picture: { layers, hotspots }`, and a hotspot's words are keyed under it,
+ * `scene.<id>.picture.hotspots.<hotspot>.label`. A place's is the places
+ * plugin's to move.
+ */
+function toSchema28(pack: RawPack): RawPack {
+  const out: RawPack = Array.isArray(pack.scenes)
+    ? {
+        ...pack,
+        scenes: pack.scenes.map((scene) => (isRecord(scene) && 'stage' in scene && !('picture' in scene) ? renamed(scene, { stage: 'picture' }) : scene)),
+      }
+    : pack
+  return wordKeys(out, (key) => (key.startsWith('scene.') ? key.replace(/\.stage\.hotspots\./, '.picture.hotspots.') : key))
 }
 
 /**

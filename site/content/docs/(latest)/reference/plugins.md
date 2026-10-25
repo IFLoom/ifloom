@@ -191,7 +191,7 @@ import {
   definePlugin, pluginQuery, speakerOf,
   type Plugin, type DefinedPlugin, type PluginContext, type PluginArgs,
   type PluginCommand, type PluginEntry, type PluginProblem, type PluginSlice,
-  type Asked, type Refusal, type StageDef, type SpeakerView, type CheckTools,
+  type Asked, type Refusal, type RoomScene, type SpeakerView, type CheckTools,
   type PluginReferences, type ContentReferences, type StatModifier,
   type TraitDef, type TraitTools, type ContentStep, type ContentTools, type WordShape,
   type CommandStep, type RawPack, type RawCommand,
@@ -223,7 +223,7 @@ type Plugin<S = any, V = unknown> = {
   guard?: (state: GameState, asked: Asked, context: PluginContext<S>) => Refusal | undefined
   price?: (state: GameState, effects: readonly Effect[], context: PluginContext<S>) => string[] | undefined
   label?: (state: GameState, context: PluginContext<S>) => string | undefined
-  stage?: (state: GameState, context: PluginContext<S>) => StageDef | undefined
+  scene?: (state: GameState, context: PluginContext<S>) => RoomScene | undefined
   actions?: (state: GameState, context: PluginContext<S>) => readonly ActionDef[] | undefined
   action?: (state: GameState, id: string, context: PluginContext<S>) => ActionDef | undefined
   content?: Content
@@ -265,7 +265,7 @@ type Plugin<S = any, V = unknown> = {
 | `guard` | Whether a command may go ahead, given the effects it would apply. Returns a refusal, a warning or `undefined`. See [Guards](#guards). |
 | `price` | What a button costs that the engine can't say, in the plugin's words. See [Prices](#prices). |
 | `label` | Where the game is, in a few words, for [`view.when`](/docs/reference/view#the-clock-and-the-player). See [Labels](#labels). |
-| `stage` | What the screen shows while no scene is open: a title and prose blocks. See [Stage](#stage). |
+| `scene` | What the screen shows while no scene is open: a title and prose blocks. See [Scene](#scene). |
 | `actions` | Actions offered as buttons while no scene is open, before the content's `actions`. See [Actions](#actions). |
 | `action` | One of its actions that isn't among its `actions` right now, by id, for `{ type: 'action', id: '<plugin>/<id>' }`. See [Actions](#actions). |
 | `content` | [Content](/docs/reference/loader#content) the plugin brings, such as its kinds of entity, merged under the game's. See [Kinds and entities](#kinds-and-entities). |
@@ -365,7 +365,7 @@ The reducer refuses with that reason, and the view greys out the button with it.
 
 `ignoresLocks: true` takes a command out of the [locks](/docs/reference/locks). No lock stops it, whatever its `deny` says, and the view never greys out its button for one. No plugin's [guard](#guards) is asked about it either. Everything else still applies: the command's own `whyNot` still refuses, and `run` goes through [`apply`](/docs/reference/commands#apply) as usual, with triggers and every plugin's `onCommand` hook.
 
-It's for tools that stand outside the story and must work at any point in it. The [debug plugin](/docs/plugins/debug), for example, sets a stat by hand in the middle of an intro that only moves through its scenes. Never use it for something the player does in the story. A lock is how a game says "not now", and a player command that slips past it breaks the game's stages.
+It's for tools that stand outside the story and must work at any point in it. The [debug plugin](/docs/plugins/debug), for example, sets a stat by hand in the middle of an intro that only moves through its scenes. Never use it for something the player does in the story. A lock is how a game says "not now", and a player command that slips past it breaks the order the story is told in.
 
 ```ts
 commands: {
@@ -736,7 +736,7 @@ A step of `commandMigrations` is given every command in an older log, the engine
 A plugin's members follow one naming rule, as the game's [rules](/docs/reference/rules) do:
 
 - **A hook** runs at an event and returns the next state. It's named `on` and the event: `onTurn`, `onTurnDone`, `onStat`, `onCommand`.
-- **A provider** answers a question and never changes the state. It's named by the noun it gives: `guard`, `price`, `label`, `stage`, `actions`, `action`, `audio`, `statModifiers`, `view`, `profile`.
+- **A provider** answers a question and never changes the state. It's named by the noun it gives: `guard`, `price`, `label`, `scene`, `actions`, `action`, `audio`, `statModifiers`, `view`, `profile`.
 - **A table** of named functions content calls is a plural noun: `conditions`, `effects`, `commands`, `queries`, `values`.
 - **Data** is named by its noun too: `content`, `traits`, `strings`.
 
@@ -1035,12 +1035,12 @@ import { view } from '@ifloom/engine'
 const card = view(state, game).plugins.loyalty // LoyaltyView | undefined, once the plugin declares it
 ```
 
-If your view draws pictures from a [pool](/docs/reference/media#pools), pass the context's `picks` to [`stageView`](/docs/reference/view#stageview). Words drawn with [`beats`](#beats) record their own. Each new pick is written there, and the reducer records them after the command, so the same picture shows on every visit. The places plugin does this for a room's stage:
+If your view draws pictures from a [pool](/docs/reference/media#pools), pass the context's `picks` to [`pictureView`](/docs/reference/view#pictureview). Words drawn with [`beats`](#beats) record their own. Each new pick is written there, and the reducer records them after the command, so the same picture shows on every visit. The places plugin does this for a room's layered picture:
 
 ```ts
 view: (state, { game, slice, picks }) => {
   const place = locationOf(state, game, slice.at)
-  return { stage: place && slice.at ? stageView(state, game, place.stage, slice.at, null, picks) : null }
+  return { picture: place && slice.at ? pictureView(state, game, place.picture, slice.at, null, picks) : null }
 },
 ```
 
@@ -1065,12 +1065,12 @@ view: (state, { beats, game }) => ({
 
 Inline actions and tooltips stay in the words as written, because only a scene offers choices. In `view`, the pool picks it makes are recorded with the rest.
 
-## Stage
+## Scene
 
 ```ts
-stage?: (state: GameState, context: PluginContext<S>) => StageDef | undefined
+scene?: (state: GameState, context: PluginContext<S>) => RoomScene | undefined
 
-type StageDef = {
+type RoomScene = {
   title: string
   body?: readonly Block[]
   id?: string
@@ -1078,16 +1078,16 @@ type StageDef = {
 }
 ```
 
-What the screen shows while no scene is open, such as a room's description, a shop front or a heading over a dashboard. The view asks the game's own `rules.stage`, then each plugin in the order `game.plugins` lists them, and the first that returns a `StageDef` fills [`view.scene`](/docs/reference/view#the-scene). `title` becomes the title, and `body` is rendered as a data scene's body would be (its words, lines by key, variants and conditions), with `id: null` and no choices. Return `undefined` to let the next plugin answer.
+What the screen shows while no scene is open, such as a room's description, a shop front or a heading over a dashboard. The view asks the game's own `rules.scene`, then each plugin in the order `game.plugins` lists them, and the first that returns a `RoomScene` fills [`view.scene`](/docs/reference/view#the-scene). `title` becomes the title, and `body` is rendered as a data scene's body would be (its words, lines by key, variants and conditions), with `id: null` and no choices. Return `undefined` to let the next plugin answer.
 
 | Field | What it is |
 |---|---|
 | `title` | The heading, such as a room's name. |
 | `body` | What's written there, as [blocks](/docs/reference/scenes#block). Left out, the body is empty. |
-| `id` | The id its blocks are drawn under. A [`variants`](/docs/reference/scenes#block) block rotates per id, so a plugin that stages several places gives each its own id to keep its lines separate. The plugin's id if left out. It's also in the room's [`view.scene.key`](/docs/reference/view#the-scene), `room:<id>`. |
+| `id` | The id its blocks are drawn under. A [`variants`](/docs/reference/scenes#block) block rotates per id, so a plugin that shows several places gives each its own id to keep its lines separate. The plugin's id if left out. It's also in the room's [`view.scene.key`](/docs/reference/view#the-scene), `room:<id>`. |
 | `ui` | [Presentation hints](/docs/reference/ui-hints) for the room, carried to `view.scene.ui` as a scene's are. Name it in [`references`](#references) as `{ ui }` so the checker sees it's data. |
 
-With no plugin answering, the screen is the game's `title` and an empty body. The [places plugin](/docs/plugins/places#the-stage)'s stage is the room the player is in, with its name and its `body`.
+With no plugin answering, the screen is the game's `title` and an empty body. The [places plugin](/docs/plugins/places#the-room-scene)'s room scene is the room the player is in, with its name and its `body`.
 
 A market stall on the high street fills the screen while it's open:
 
@@ -1099,7 +1099,7 @@ const stall = definePlugin<{ open: boolean }>({
   version: 1,
   start: () => ({ open: true }),
   commands: { haggle: { run: (state) => state } },
-  stage: (_state, { slice }) =>
+  scene: (_state, { slice }) =>
     slice.open
       ? { id: 'market', title: 'The market stall', body: [{ prose: 'stall.open' }, { variants: 'stall.cries' }] }
       : undefined,
@@ -1116,14 +1116,14 @@ view(state, game).scene
 // { id: null, key: 'room:market', title: 'The market stall',
 //   body: 'Crates of eggs and a heap of loaves.\n\n“Fresh bread!”', choices: [], ... }
 
-view(stall.write(state, { open: false }), game).scene.title // the next plugin's stage title, or the game's title
+view(stall.write(state, { open: false }), game).scene.title // the next plugin's room scene title, or the game's title
 ```
 
 **Gotchas.**
-- The first answer wins, so a plugin listed earlier in `game.plugins` hides a later one's stage. Only answer when the stage is yours. The stall's is `undefined` once it's packed up.
-- A scene with no title of its own takes the stage's title, then the game's. The stall's scenes are headed The market stall while it's open.
+- The first answer wins, so a plugin listed earlier in `game.plugins` hides a later one's room scene. Only answer when the room is yours. The stall's is `undefined` once it's packed up.
+- A scene with no title of its own takes the room scene's title, then the game's. The stall's scenes are headed The market stall while it's open.
 - Only `view.scene` changes. In a game with the [places plugin](/docs/plugins/places) listed after the stall, the stall covers the room's description, but `view.plugins.places` still says where the player is and the exits are still drawn.
-- The content checker doesn't see a stage's blocks, because they're worked out in play. Say what they name in [`references`](#references), as `{ blocks }`.
+- The content checker doesn't see a room scene's blocks, because they're worked out in play. Say what they name in [`references`](#references), as `{ blocks }`.
 
 ## Actions
 
@@ -1391,7 +1391,7 @@ What the plugin's calls, panels and content name, so the [content checker](/docs
 - **`panels`** says what opening one of the [panels](/docs/reference/panels) the plugin's UI draws names, from what it's opened with: a [`panel` effect](/docs/reference/effects#panel)'s `with`, or a scene's `panel`. The checker asks every plugin about every panel it finds, so answer `[]` for a name that isn't yours. A name no plugin answers for is allowed, because the UI decides what it draws.
 - **`content`** says what each entry of the plugin's content names, as `{ list, id, refs }`. A problem is reported as `<list> <id>`, pinned on the content or pack that entry came from.
 
-Each returns a list of [`Reference`](/docs/reference/checks#plugin-references)s: ids by what they are (`{ scene }`, `{ entity }`, `{ storyline }`), content to look inside (`{ when }`, `{ effects }`, `{ blocks }`, `{ command }`, `{ stage }`), files (`{ picture }`, `{ video }`), and an entry in a plugin's own content (`{ entry, plugin, list, noun }`). [Plugin references](/docs/reference/checks#plugin-references) lists them all.
+Each returns a list of [`Reference`](/docs/reference/checks#plugin-references)s: ids by what they are (`{ scene }`, `{ entity }`, `{ storyline }`), content to look inside (`{ when }`, `{ effects }`, `{ blocks }`, `{ command }`, `{ layered }`), files (`{ picture }`, `{ video }`), and an entry in a plugin's own content (`{ entry, plugin, list, noun }`). [Plugin references](/docs/reference/checks#plugin-references) lists them all.
 
 The loyalty plugin's cards each have a condition, and its `stamp` effect names a card:
 

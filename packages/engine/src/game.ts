@@ -1,8 +1,8 @@
-import type { Asked, CheckTools, Plugin, PluginArgs, PluginEntry, PluginProblem, PluginReferences, Refusal, StageDef, StatModifier } from './plugin.ts'
+import type { Asked, CheckTools, Plugin, PluginArgs, PluginEntry, PluginProblem, PluginReferences, Refusal, RoomScene, StatModifier } from './plugin.ts'
 import type { Condition } from './condition.ts'
 import type { CustomCondition, CustomContext, CustomEffect, CustomValue, EffectRef, TurnContext } from './custom.ts'
 import type { CommandRef } from './calls.ts'
-import type { MediaStage } from './features/media.ts'
+import type { PictureDef } from './features/media.ts'
 import type { ActionCost } from './features/actions.ts'
 import type { ScenePanel } from './features/panels.ts'
 import type { StoryletFields } from './features/scenes.ts'
@@ -169,8 +169,8 @@ export type SceneView = {
   /** The scene's prose, with its markup. Left out, the scene has no body text. */
   body?: string
   media?: SceneMedia[]
-  /** A layered picture with hotspots, drawn as the scene's stage. See `view.scene.stage`. */
-  stage?: MediaStage
+  /** A layered picture with hotspots, drawn over the scene. See `view.scene.picture`. */
+  picture?: PictureDef
   /** What plays on background channels while the scene is open, by channel. Null silences one. */
   audio?: Record<string, string | null>
   /**
@@ -222,7 +222,7 @@ export type ProseStore = {
   keys?: () => string[]
 }
 
-/** A thread of the story, followed by its stages and kv, and closed for a while if need be. */
+/** A thread of the story, followed by its kv, and closed for a while if need be. */
 export type StorylineDef = {
   id: string
   name: string
@@ -301,8 +301,8 @@ export type GameRules<S = any> = {
   price?: (state: GameState, effects: readonly Effect[], context: RulesContext<S>) => string[] | undefined
   /** Where the game is, in a few words for a header or a save, before the plugins'. As a plugin's `label`. */
   label?: (state: GameState, context: RulesContext<S>) => string | undefined
-  /** What the screen shows while no scene is open, before any plugin's. As a plugin's `stage`. */
-  stage?: (state: GameState, context: RulesContext<S>) => StageDef | undefined
+  /** What the screen shows while no scene is open, before any plugin's. As a plugin's `scene`. */
+  scene?: (state: GameState, context: RulesContext<S>) => RoomScene | undefined
   /** Actions offered while no scene is open, before the plugins'. As a plugin's `actions`. */
   actions?: (state: GameState, context: RulesContext<S>) => readonly ActionDef[] | undefined
   /** One of the game's actions that isn't in content, by id: `{ type: 'action', id: 'game/<id>' }` does it. As a plugin's `action`. */

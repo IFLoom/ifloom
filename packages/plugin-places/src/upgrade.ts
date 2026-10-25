@@ -131,8 +131,15 @@ function locationsToEntities(pack: RawPack): RawPack {
   } as RawPack
 }
 
+/** The places plugin's trait, as content writes it. */
+const TRAIT = 'places/location'
+
+/** A place's trait with its `stage` named `picture`. */
+const pictured = (place: Record<string, unknown>): Record<string, unknown> =>
+  'stage' in place && !('picture' in place) ? (renamed(place, { stage: 'picture' }) as Record<string, unknown>) : place
+
 /** The version of what content writes for this plugin. */
-export const CONTENT_VERSION = 26
+export const CONTENT_VERSION = 28
 
 export const contentMigrations: Record<number, ContentStep> = {
   // 5 → 6: a command's one target is `id`.
@@ -175,6 +182,23 @@ export const contentMigrations: Record<number, ContentStep> = {
     if (typeof out.words === 'object' && out.words !== null && !Array.isArray(out.words))
       out = { ...out, words: Object.fromEntries(Object.entries(out.words).map(([key, text]) => [key, typeof text === 'string' ? token(text) : text])) }
     return out
+  },
+  // 27 → 28: "stage" means only a quest's stage, so a place's layered picture with hotspots is its `picture`,
+  // wherever the trait is written, and its hotspots' words are keyed under `picture`.
+  27: (pack, tools) => {
+    const out = tools.objects(pack, (value) => {
+      const place = value[TRAIT]
+      if (!isRecord(place)) return value
+      // On an entity or a kind, the trait's data; in a `traits` table, its rows by reference.
+      const rows = Object.keys(place).every((key) => key.includes(':'))
+      const next = rows ? Object.fromEntries(Object.entries(place).map(([ref, row]) => [ref, isRecord(row) ? pictured(row) : row])) : pictured(place)
+      return { ...value, [TRAIT]: next }
+    })
+    if (!isRecord(out.words)) return out
+    const words = Object.fromEntries(
+      Object.entries(out.words).map(([key, text]) => [key.replace(`.traits.${TRAIT}.stage.`, `.traits.${TRAIT}.picture.`), text]),
+    )
+    return { ...out, words }
   },
 }
 

@@ -157,7 +157,7 @@
 }
 
 /* Pictures and clips: cards, with a ring on the hotspots like the focus ring. */
-[data-part="stage-picture"],
+[data-part="picture"],
 /* Who says it, a quiet tracked label over the line. */
 [data-part="speaker-name"] {
   margin-bottom: 0.1rem;

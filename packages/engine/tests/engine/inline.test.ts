@@ -152,7 +152,7 @@ describe('inline actions and tooltips', () => {
     const room = definePlugin({
       id: 'room',
       version: 1,
-      stage: () => ({ id: 'kitchen', title: 'Kitchen', body: [{ prose: 'kitchen.text' }] }),
+      scene: () => ({ id: 'kitchen', title: 'Kitchen', body: [{ prose: 'kitchen.text' }] }),
       actions: () => [{ id: 'kettle', label: 'Put the kettle on', command: { type: 'custom', name: 'phone/open' } }],
     })
     const { game } = make({ prose: { ...prose, 'kitchen.text': 'The [[act:kettle|kettle]] is cold.' } }, { plugins: [phone, room], introScene: undefined })

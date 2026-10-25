@@ -58,7 +58,7 @@ describe('picture and video markup', () => {
   })
 })
 
-/** The flat, the high street and a café, with a pool of front doors and a layered stage. */
+/** The flat, the high street and a café, with a pool of front doors and a layered picture. */
 const pools = {
   door: [
     { src: 'door/blue-day.jpg', tags: ['blue', 'day'] },
@@ -222,10 +222,10 @@ describe('pools', () => {
   })
 })
 
-describe('the stage', () => {
+describe('the picture', () => {
   const flat: DataScene = {
     id: 'flat',
-    stage: {
+    picture: {
       aspect: '4/3',
       layers: [
         { id: 'room', src: 'flat/room' },
@@ -250,7 +250,7 @@ describe('the stage', () => {
 
   it('draws the layers whose conditions hold, and only the hotspots it can', () => {
     const g = game([flat])
-    expect(view(open(g, 'flat'), g).scene.stage).toEqual({
+    expect(view(open(g, 'flat'), g).scene.picture).toEqual({
       aspect: '4/3',
       layers: [{ id: 'room', src: 'art/flat/room.jpg' }],
       hotspots: [
@@ -265,13 +265,13 @@ describe('the stage', () => {
   it('shows a layer and the hotspot tied to it once both can be', () => {
     const g = game([flat])
     const state = { ...open(g, 'flat'), kv: { raining: true, ringing: true, kettle: true, dressed: true } }
-    const stage = view(state, g).scene.stage!
-    expect(stage.layers).toEqual([
+    const picture = view(state, g).scene.picture!
+    expect(picture.layers).toEqual([
       { id: 'room', src: 'art/flat/room.jpg' },
       { id: 'rain', src: 'art/flat/window-rain.mp4', video },
       { id: 'phone', src: 'art/flat/phone.png' },
     ])
-    expect(stage.hotspots.map((hotspot) => [hotspot.id, hotspot.disabled ?? null, hotspot.layer ?? null])).toEqual([
+    expect(picture.hotspots.map((hotspot) => [hotspot.id, hotspot.disabled ?? null, hotspot.layer ?? null])).toEqual([
       ['door', null, null],
       ['kettle', null, null],
       ['phone', null, 'phone'],
@@ -281,8 +281,8 @@ describe('the stage', () => {
 
   it('is null for a scene without one, and while no scene is open', () => {
     const g = game([flat, { id: 'bare', body: [{ prose: 'flat.out' }], choices: [] }])
-    expect(view(open(g, 'bare'), g).scene.stage).toBeNull()
-    expect(view({ ...startingState(g), sceneId: null }, g).scene.stage).toBeNull()
+    expect(view(open(g, 'bare'), g).scene.picture).toBeNull()
+    expect(view({ ...startingState(g), sceneId: null }, g).scene.picture).toBeNull()
   })
 })
 
@@ -325,11 +325,11 @@ describe('media checks', () => {
     expect(what(loaded)).toEqual(['scene flat: media: video flag "sound" on a picture'])
   })
 
-  it('report what is wrong with a stage’s hotspots and layers', () => {
+  it('report what is wrong with a picture’s hotspots and layers', () => {
     const loaded = town([
       {
         id: 'flat',
-        stage: {
+        picture: {
           layers: [
             { id: 'room', src: 'flat/room' },
             { id: 'room', pool: 'door', tags: ['green'] },
@@ -347,11 +347,11 @@ describe('media checks', () => {
       },
     ])
     expect(what(loaded)).toEqual([
-      'scene flat: stage layer room: two layers share this id',
-      'scene flat: stage layer room: no file in pool "door" is tagged "green"',
-      'scene flat: stage layer 2: video flag "once" on a picture',
+      'scene flat: picture layer room: two layers share this id',
+      'scene flat: picture layer room: no file in pool "door" is tagged "green"',
+      'scene flat: picture layer 2: video flag "once" on a picture',
       'scene flat: hotspot door: needs exactly one of command and choice',
-      'scene flat: hotspot door: rect runs off the stage: x + width and y + height must be 100 or less',
+      'scene flat: hotspot door: rect runs off the picture: x + width and y + height must be 100 or less',
       'scene flat: hotspot door: two hotspots share this id',
       'scene flat: hotspot door: no choice "sing" in this scene',
       'scene flat: hotspot rug: needs exactly one of command and choice',
@@ -367,7 +367,7 @@ describe('media checks', () => {
         {
           id: 'flat',
           body: [{ prose: 'flat.bad' }, { media: { pool: 'cupboard' } }],
-          stage: { layers: [], hotspots: [{ id: 'x', rect: [0, 0, 10, 10], label: 'X', choice: 'nope' }] },
+          picture: { layers: [], hotspots: [{ id: 'x', rect: [0, 0, 10, 10], label: 'X', choice: 'nope' }] },
           choices: [],
         },
       ],

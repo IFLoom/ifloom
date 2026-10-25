@@ -35,7 +35,7 @@ type GameRules<S = any> = {
   guard?: (state: GameState, asked: Asked, context: RulesContext<S>) => Refusal | undefined
   price?: (state: GameState, effects: readonly Effect[], context: RulesContext<S>) => string[] | undefined
   label?: (state: GameState, context: RulesContext<S>) => string | undefined
-  stage?: (state: GameState, context: RulesContext<S>) => StageDef | undefined
+  scene?: (state: GameState, context: RulesContext<S>) => RoomScene | undefined
   actions?: (state: GameState, context: RulesContext<S>) => readonly ActionDef[] | undefined
   action?: (state: GameState, id: string, context: RulesContext<S>) => ActionDef | undefined
   statModifiers?: (state: GameState, context: RulesContext<S>) => readonly StatModifier[] | undefined
@@ -60,7 +60,7 @@ type GameRules<S = any> = {
 | `queries` | Answers code can ask with `context.query('game/name')`, as a plugin's [queries](/docs/reference/plugins#queries). |
 | `commands` | Commands of the game's own, sent as `{ 'game/rest': true }`. See [`commands`](#commands). |
 | `guard`, `price`, `label` | As a plugin's: whether a command may go ahead, what a button costs in the game's words, and where the game is in a few words. See [Guards, prices and labels](/docs/reference/plugins#guards-prices-and-labels). |
-| `stage` | What the screen shows while no scene is open. See [Stage](/docs/reference/plugins#stage). |
+| `scene` | What the screen shows while no scene is open. See [Scene](/docs/reference/plugins#scene). |
 | `actions`, `action` | Actions offered as buttons while no scene is open, and an action that isn't in content, by id, done with `{ type: 'action', id: 'game/<id>' }`. See [Actions](/docs/reference/plugins#actions). |
 | `statModifiers` | Changes to what the player's stats read right now. See [Stat modifiers](/docs/reference/plugins#stat-modifiers). |
 | `audio` | What plays on background channels. See [Audio](/docs/reference/plugins#audio). |

@@ -21,7 +21,7 @@
 import { INLINE_MARKUP, UI_NAME, uiParts } from '../sceneBody.ts'
 import { defineFeature, mergedByKey } from './feature.ts'
 
-/** Hints on a scene, and on a room's stage (a place), for the UI that draws it. Empty here; a UI package augments it. */
+/** Hints on a scene, and on a room scene (a place's), for the UI that draws it. Empty here; a UI package augments it. */
 export interface SceneUi {}
 /** Hints on a choice or a room's button. Empty here; a UI package augments it. */
 export interface ChoiceUi {}

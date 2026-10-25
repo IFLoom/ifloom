@@ -3,7 +3,7 @@ import type { ButtonDef, Game, MinigameSceneFields, Once, Scene, SceneChoice, Sc
 import { onceSpent } from './features/actions.ts'
 import { reasonOf } from './strings.ts'
 import { draw, weighted } from './random.ts'
-import { mediaMarkup, resolveMedia, resolvePoolMarkup, type MediaStage } from './features/media.ts'
+import { mediaMarkup, resolveMedia, resolvePoolMarkup, type PictureDef } from './features/media.ts'
 import { featureContext } from './core.ts'
 import type { BlockUi, SceneUi, Ui } from './features/ui.ts'
 import { buildEffects } from './custom.ts'
@@ -133,8 +133,8 @@ export type DataScene = StoryletFields &
     panel?: ScenePanel
     /** What plays on background channels while the scene is open, by channel: `{ ambience: 'rain' }`. Null silences one. */
     audio?: Record<string, string | null>
-    /** A layered picture with hotspots, drawn as the scene's stage. See `view.scene.stage`. */
-    stage?: MediaStage
+    /** A layered picture with hotspots, drawn over the scene. See `view.scene.picture`. */
+    picture?: PictureDef
     /** Presentation hints for the UI, carried to `view.scene.ui` as written. See `SceneUi`. */
     ui?: Ui<SceneUi>
     body: Block[]
@@ -309,7 +309,7 @@ export function renderScene(scene: DataScene, state: GameState, runtime: SceneRu
     fresh,
     picked,
     media: media.length ? media : undefined,
-    ...(scene.stage ? { stage: scene.stage } : {}),
+    ...(scene.picture ? { picture: scene.picture } : {}),
     ...(scene.audio ? { audio: scene.audio } : {}),
     choices,
   }

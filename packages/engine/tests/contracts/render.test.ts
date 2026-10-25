@@ -6,7 +6,7 @@ import { apply } from '../../src/reduce.ts'
 import { createRunner } from '../../src/runner.ts'
 import { memoryDriver } from '../../src/drivers.ts'
 import { profile } from '../../src/profile.ts'
-import { screen, stageView } from '../../src/screen.ts'
+import { screen, pictureView } from '../../src/screen.ts'
 import type { GameState } from '../../src/types.ts'
 import { baked } from '../fixtures/baked.ts'
 import { begin, fixture } from '../fixtures/town.ts'
@@ -17,7 +17,7 @@ import { begin, fixture } from '../fixtures/town.ts'
  * `render`, keyed by the state object it was handed.
  */
 
-/** The tide: guards and prices every command, so each choice's effects are asked for, and draws a pool on its own stage. */
+/** The tide: guards and prices every command, so each choice's effects are asked for, and draws a pool on its own picture. */
 const tide = definePlugin<{ height: number }>({
   id: 'tide',
   version: 1,
@@ -26,7 +26,7 @@ const tide = definePlugin<{ height: number }>({
   guard: (_state, { effects }) => (effects.length > 3 ? 'Too much at once.' : undefined),
   price: (_state, effects) => (effects.some((effect) => callOf(effect) !== undefined) ? ['the tide rises'] : undefined),
   view: (state, { game, picks, profile }) => ({
-    stage: stageView(state, game, { layers: [{ pool: 'sea' }] }, 'tide', null, picks),
+    picture: pictureView(state, game, { layers: [{ pool: 'sea' }] }, 'tide', null, picks),
     remembered: profile ?? null,
   }),
 })
@@ -89,7 +89,7 @@ describe('one render per state', () => {
       ['wade', 1, ['the tide rises']],
       ['in', 1, []],
     ])
-    expect(shown.picks).toEqual({ 'door|red|porch|body.0': 'door/red.jpg', 'sea||tide|stage:0': 'sea/calm.jpg' })
+    expect(shown.picks).toEqual({ 'door|red|porch|body.0': 'door/red.jpg', 'sea||tide|picture:0': 'sea/calm.jpg' })
     expect(shown.audio.tracks).toEqual({ music: 'calm', ambience: null })
   })
 
@@ -105,8 +105,8 @@ describe('one render per state', () => {
       expect(renders.get(state)).toBe(1)
       state = result.state
     }
-    // What the screens showed was recorded, the plugin's stage included.
-    expect(state.media.picks).toEqual({ 'door|red|porch|body.0': 'door/red.jpg', 'sea||tide|stage:0': 'sea/calm.jpg' })
+    // What the screens showed was recorded, the plugin's picture included.
+    expect(state.media.picks).toEqual({ 'door|red|porch|body.0': 'door/red.jpg', 'sea||tide|picture:0': 'sea/calm.jpg' })
     expect(state.audio.started.music).toEqual({ track: 'calm', turn: state.turn })
   })
 

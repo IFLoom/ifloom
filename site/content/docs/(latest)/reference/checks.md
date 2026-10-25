@@ -84,7 +84,7 @@ The list covers:
 
 - every track in `game.audio.tracks` (a playlist names tracks, not files)
 - every file in a [pool](/docs/reference/media#pools)
-- a `{ media }` block's `src` and `poster`, and a stage layer's
+- a `{ media }` block's `src` and `poster`, and a picture layer's
 - the files in picture and video markup in any prose, posters included
 - the `image` of a `notify` effect and of an entity, declared or made by a `create` effect, through `artSrc` (a URL is left out), so a character's picture is listed with them
 - whatever a plugin's [references](#plugin-references) name, such as a post's picture.
@@ -218,7 +218,7 @@ A condition, effect or command named after a plugin the game wasn't built with i
 
 | `where` | Checked |
 |---|---|
-| `scene <id>` | For a [data scene](/docs/reference/scenes#datascene): `no prose for "…"` for its `text` blocks, each choice's label key (its `label`, or the default `scene#choice`) and every `labels` key. `variants "…" has no lines` for its `variants` blocks and the variants their `image` names. The conditions on its blocks, a `variants` block's `gate`, and each choice's `when`, `blocked` and `labels`. Each choice's `effects`. `two choices share the id "…"`, among its decisions' choices and its ending choices together. For a scene that [flows](/docs/reference/flows#the-checks): what its sections, decisions (each choice, and what its `then` names) and minigame and panel blocks name, and the flow's own checks. Its `audio` as a placement (see [Audio](#audio)), its `{ media }` blocks and its `stage` (see [Media](#media)), and, for its `panel`, what each plugin's [`references.panels`](/docs/reference/plugins#references) says its `with` names. For every scene, `unknown minigame "…"` for its `minigame` field, and its storylet fields: `weight must be above 0`, `has a weight but no drawnFrom, so it is never drawn`, `has a when but no drawnFrom; when only gates draws`, and its `when`. |
+| `scene <id>` | For a [data scene](/docs/reference/scenes#datascene): `no prose for "…"` for its `text` blocks, each choice's label key (its `label`, or the default `scene#choice`) and every `labels` key. `variants "…" has no lines` for its `variants` blocks and the variants their `image` names. The conditions on its blocks, a `variants` block's `gate`, and each choice's `when`, `blocked` and `labels`. Each choice's `effects`. `two choices share the id "…"`, among its decisions' choices and its ending choices together. For a scene that [flows](/docs/reference/flows#the-checks): what its sections, decisions (each choice, and what its `then` names) and minigame and panel blocks name, and the flow's own checks. Its `audio` as a placement (see [Audio](#audio)), its `{ media }` blocks and its `picture` (see [Media](#media)), and, for its `panel`, what each plugin's [`references.panels`](/docs/reference/plugins#references) says its `with` names. For every scene, `unknown minigame "…"` for its `minigame` field, and its storylet fields: `weight must be above 0`, `has a weight but no drawnFrom, so it is never drawn`, `has a when but no drawnFrom; when only gates draws`, and its `when`. |
 | `action <id>` | The content's [`actions`](/docs/reference/actions#actiondef): each one's `when`, `blocked`, `effects` and `command`. For each stat its `cost` spends: `spends unknown stat "…"`, or `spends stat "…", which is derived and never written`. `an action's command can't be a choice`, and `an action's command can't be the action itself; give it the effects`. |
 | `trigger <id>` | Its `when` and its `effects`. |
 | `input <id>` | Its `when`, `a choice with no options`, and `min is above max`. |
@@ -284,32 +284,32 @@ Wherever content names [audio](/docs/reference/audio), it's checked against `gam
 
 ## Media
 
-Wherever content asks for a picture or a video, it's checked against `game.media`. That's the picture and video [markup](/docs/reference/prose#videos) in every line of prose, a data scene's `{ media }` blocks and `stage`, and a place's `stage`.
+Wherever content asks for a picture or a video, it's checked against `game.media`. That's the picture and video [markup](/docs/reference/prose#videos) in every line of prose, a data scene's `{ media }` blocks and `picture`, and a place's `picture`.
 
 | Problem | When |
 |---|---|
-| `unknown pool "…"` | Markup (`[[img:@door]]`), a `{ media }` block or a stage layer names a pool `game.media.pools` doesn't have. |
+| `unknown pool "…"` | Markup (`[[img:@door]]`), a `{ media }` block or a picture layer names a pool `game.media.pools` doesn't have. |
 | `no file in pool "…" is tagged "…"` | A request asks for a tag no file in the pool has. The pick would still fall back to other files, but a tag nothing has is usually a typo. |
 | `a pool with no files` | A pool is empty. Reported as `pool <id>`. |
 | `file <n> has no src` | A file in a pool has no `src`. Reported as `pool <id>`. |
 | `file <n> has a weight of …; a weight must be above 0` | A file's `weight` is 0 or less. Reported as `pool <id>`. |
 | `unknown flag "…" in …` | Markup has a `name=value` part whose name isn't a flag, such as `speed=2`. |
 | `"…" and "…" can't all be alt text in …; is one a misspelt flag?` | Markup has more than one part that isn't a flag. |
-| `video flag "…" on a picture` | `controls`, `once`, `sound` or `poster` on a picture: `[[img:]]` markup, a `{ media }` block or a stage layer whose file isn't a video. A pool with a video in it may take them. |
+| `video flag "…" on a picture` | `controls`, `once`, `sound` or `poster` on a picture: `[[img:]]` markup, a `{ media }` block or a picture layer whose file isn't a video. A pool with a video in it may take them. |
 | `flag "rot" turns a picture, not a video, in …` | `rot` on video markup. |
-| `media: needs a src or a pool`, `media: has both a src and a pool` | A `{ media }` block. A stage layer gets the same, after `stage layer <id>:`. |
-| `stage layer <id>: two layers share this id` | Two layers of one stage have the same `id`. A layer with no `id` is named by its index. |
+| `media: needs a src or a pool`, `media: has both a src and a pool` | A `{ media }` block. A picture layer gets the same, after `picture layer <id>:`. |
+| `picture layer <id>: two layers share this id` | Two layers of one picture have the same `id`. A layer with no `id` is named by its index. |
 | `hotspot <id>: needs exactly one of command and choice` | A hotspot has both, or neither. |
 | `hotspot <id>: no choice "…" in this scene` | A hotspot's `choice` isn't one of the scene's choices. |
 | `hotspot <id>: names choice "…", but only a scene has choices` | A place's hotspot has a `choice`. |
 | `hotspot <id>: rect must be four numbers: [x, y, width, height]` | A hotspot's `rect` isn't four numbers. |
 | `hotspot <id>: rect is outside 0 to 100` | A number in the rect is below 0 or above 100. |
 | `hotspot <id>: rect has no width or height` | The width or the height is 0. |
-| `hotspot <id>: rect runs off the stage: x + width and y + height must be 100 or less` | The rect goes past the right or bottom edge. |
-| `hotspot <id>: two hotspots share this id` | Two hotspots of one stage have the same `id`. |
-| `hotspot <id>: unknown layer "…"` | A hotspot's `layer` names no layer of its stage. |
+| `hotspot <id>: rect runs off the picture: x + width and y + height must be 100 or less` | The rect goes past the right or bottom edge. |
+| `hotspot <id>: two hotspots share this id` | Two hotspots of one picture have the same `id`. |
+| `hotspot <id>: unknown layer "…"` | A hotspot's `layer` names no layer of its picture. |
 
-A hotspot's `command` and `when`, and a layer's `when`, are checked as any command and condition are, with `hotspot <id>:` or `stage layer <id>:` in front.
+A hotspot's `command` and `when`, and a layer's `when`, are checked as any command and condition are, with `hotspot <id>:` or `picture layer <id>:` in front.
 
 ## Presentation hints
 
@@ -418,7 +418,7 @@ type Reference =
   | { blocks: readonly Block[] | undefined }
   | { actionsIn: readonly Block[] | string | undefined; offers: readonly string[] }
   | { media: SceneMedia }
-  | { stage: MediaStage | undefined; choices: readonly string[] | null }
+  | { layered: PictureDef | undefined; choices: readonly string[] | null }
   | { within: string; refs: readonly Reference[] }
 ```
 
@@ -447,7 +447,7 @@ type Reference =
 | `{ problem }` | A plugin's own rule, broken: its words are reported as they are. |
 | `{ markup }` | Prose with markup in it. |
 | `{ actionsIn, offers }` | The `[[act:]]` links in a body or a line of prose, each naming one of `offers`, the choices on offer. |
-| `{ when }`, `{ effects }`, `{ command }`, `{ blocks }`, `{ media }`, `{ stage }` | Content to look inside, checked as the engine's own is. A stage with `choices: null` has no scene, such as a place's. |
+| `{ when }`, `{ effects }`, `{ command }`, `{ blocks }`, `{ media }`, `{ layered }` | Content to look inside, checked as the engine's own is. A layered picture with `choices: null` has no scene, such as a place's. |
 | `{ within, refs }` | More references, whose problems read `<within>: <what>`, such as `action dig: unknown location "moon"`. |
 
 This is how a loyalty-card plugin says what its calls and its cards name, with `cardsOf(game)` its list of `data.loyalty.cards`. [`actionReferences`](/docs/reference/actions#actionreferences) gives what an action names:
@@ -462,7 +462,7 @@ references: {
       id: card.id,
       refs: [
         { blocks: card.body },
-        { stage: card.stage, choices: null },
+        { layered: card.picture, choices: null },
         // Each of its actions, checked as the game's own are.
         ...(card.actions ?? []).map((action) => ({ within: `action ${action.id}`, refs: actionReferences(action) })),
       ],

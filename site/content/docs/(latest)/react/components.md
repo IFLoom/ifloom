@@ -13,7 +13,7 @@ import {
   // the game
   GameShell, GameProvider, useGame, Icon, WithPages,
   DefaultLayout, Game, Sidebar, Story, Overlay, Section, When, useHolds, Title, RoomActions, Plugins, usePluginUis,
-  SceneStage, Beat, InlineAction, Tip, InlineTrigger, InlineModal, InlineImage, InlineMail, InlineProp, InlineMono, BUILT_IN_INLINE, Picture, Video, Stage, Hotspot, MediaViewer, assetUrl, ChoiceButton, ChoiceList, PriceTag, usePriceText,
+  SceneStage, Beat, InlineAction, Tip, InlineTrigger, InlineModal, InlineImage, InlineMail, InlineProp, InlineMono, BUILT_IN_INLINE, Picture, Video, LayeredPicture, Hotspot, MediaViewer, assetUrl, ChoiceButton, ChoiceList, PriceTag, usePriceText,
   Clock, StatList, StatGauge, EntityTable, Inventory, useClock,
   InputField, InputFields,
   GameMenu, SavesMenu, Backlog, ModManager, useSaves, useBacklog, useMods,
@@ -416,7 +416,7 @@ interface OverridableComponents {
 }
 ```
 
-Your own components in place of built-in ones, by name. Each replacement is drawn everywhere the UI draws that component, with the same props plus `Default`, the built-in one. The names are `Game`, `Sidebar`, `Story`, `Overlay`, `Section`, `When`, `Title`, `Clock`, `StatList`, `RoomActions`, `SceneStage`, `Beat`, `InlineAction`, `Tip`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `NoticeStrip`, `MinigameCard`, `DiceRoll`, `DiceOverlay`, `Countdown`, `Timers`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `PanelHost`, `Inventory`, `EntityTable`, `InputFields`, `InputField`, `Picture`, `Video`, `Stage`, `Hotspot`, `MediaViewer`, `Icon`, `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` and `GatePage`. A plugin's UI adds its own to [`OverridableComponents`](/docs/react/kit#overridablecomponents-and-partnames), such as `ShopCounter` and `QuestLog`, so `components` takes them typed once you import the plugin's `/react`.
+Your own components in place of built-in ones, by name. Each replacement is drawn everywhere the UI draws that component, with the same props plus `Default`, the built-in one. The names are `Game`, `Sidebar`, `Story`, `Overlay`, `Section`, `When`, `Title`, `Clock`, `StatList`, `RoomActions`, `SceneStage`, `Beat`, `InlineAction`, `Tip`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `NoticeStrip`, `MinigameCard`, `DiceRoll`, `DiceOverlay`, `Countdown`, `Timers`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `PanelHost`, `Inventory`, `EntityTable`, `InputFields`, `InputField`, `Picture`, `Video`, `LayeredPicture`, `Hotspot`, `MediaViewer`, `Icon`, `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` and `GatePage`. A plugin's UI adds its own to [`OverridableComponents`](/docs/react/kit#overridablecomponents-and-partnames), such as `ShopCounter` and `QuestLog`, so `components` takes them typed once you import the plugin's `/react`.
 
 ```tsx
 import type { Components } from '@ifloom/react'
@@ -528,13 +528,13 @@ One of the UI's icons, by what it's for: `close` on dialogs and notices, `back` 
 function SceneStage(props: { className?: string }): JSX.Element
 ```
 
-The main column. It shows the scene on screen, or the room when no scene is open. The room is a plugin's [stage](/docs/reference/plugins#stage), such as the [places](/docs/plugins/places) plugin's. Without one, the room is the game's title and an empty body.
+The main column. It shows the scene on screen, or the room when no scene is open. The room is a plugin's [room scene](/docs/reference/plugins#scene), such as the [places](/docs/plugins/places) plugin's. Without one, the room is the game's title and an empty body.
 
 From top to bottom, it draws:
 
 - the speaker's portrait, unless [`view.scene.speaker`](/docs/reference/view#speakerview) or its `portrait` is `null`
 - the title
-- the scene's [`Stage`](#stage) when [`view.scene.stage`](/docs/reference/view#the-scene) has layers, or else its stage picture, centred, at most `max-h-80` tall and never wider than the stage, keeping its shape
+- the scene's [`LayeredPicture`](#layeredpicture) when [`view.scene.picture`](/docs/reference/view#the-scene) has layers, or else its `image`, centred, at most `max-h-80` tall and never wider than the column, keeping its shape
 - each [`Beat`](#beat) of the body, with the beats from each block with a [`reveal`](/docs/react/hints#reveal) hint in a `reveal` part that waits for it
 - the game's panel for the scene, if the scene names one and `panels` has it, or else the scene's choices as a [`ChoiceList`](#choicelist). With reveals to come, these wait for the last one, in a `reveal` part with `data-reveal-choices`. They can't be pressed or read out until then.
 
@@ -554,7 +554,7 @@ With [`motion`](#uioptions) off, or the player asking for reduced motion, none o
 
 **Gotcha.** If a scene names a `panel` that the game has no component for, it shows its choices instead, with no warning.
 
-Replaceable as `SceneStage` in [`components`](#components). Parts: `scene-transition`, `scene` (with `data-scene`), `scene-header`, `scene-portrait`, `scene-title`, `stage-image`, `beats`, `reveal`, `fold`, `fold-summary` and `fold-beats`.
+Replaceable as `SceneStage` in [`components`](#components). Parts: `scene-transition`, `scene` (with `data-scene`), `scene-header`, `scene-portrait`, `scene-title`, `scene-image`, `beats`, `reveal`, `fold`, `fold-summary` and `fold-beats`.
 
 ### useMotion
 
@@ -743,7 +743,7 @@ type VideoProps = Omit<ComponentProps<'video'>, 'src' | 'poster' | 'autoPlay' | 
 }
 ```
 
-A video clip. [`Beat`](#beat) draws `video` beats with it, [`Stage`](#stage) draws video layers with it, and [`FeedSection`](/docs/plugins/feed#feedsection) draws a post's `video`. The flags are the ones on a [`video` beat](/docs/reference/prose#videos) or a [`VideoView`](/docs/reference/media#videoview), so you can spread either in. It's a `<video playsinline>`, and `alt` becomes its `aria-label`.
+A video clip. [`Beat`](#beat) draws `video` beats with it, [`LayeredPicture`](#layeredpicture) draws video layers with it, and [`FeedSection`](/docs/plugins/feed#feedsection) draws a post's `video`. The flags are the ones on a [`video` beat](/docs/reference/prose#videos) or a [`VideoView`](/docs/reference/media#videoview), so you can spread either in. It's a `<video playsinline>`, and `alt` becomes its `aria-label`.
 
 ```tsx
 import { Video } from '@ifloom/react'
@@ -765,28 +765,28 @@ The values are read with [`useSetting`](#usesetting), so a change on the setting
 
 Its `src` and `poster` go through [`assetUrl`](#asseturl). Replaceable as `Video` in [`components`](#components). Parts: `video`.
 
-### Stage
+### LayeredPicture
 
 ```tsx
-function Stage(props: { stage: StageView; className?: string }): JSX.Element
+function LayeredPicture(props: { picture: PictureView; className?: string }): JSX.Element
 ```
 
-A layered picture with hotspots, from a [`StageView`](/docs/reference/media#stageview). [`SceneStage`](#scenestage) draws `view.scene.stage` with it, and [`LocationCard`](/docs/plugins/places#locationcard) draws a place's `location.stage`.
+A layered picture with hotspots, from a [`PictureView`](/docs/reference/media#pictureview). [`SceneStage`](#scenestage) draws `view.scene.picture` with it, and [`LocationCard`](/docs/plugins/places#locationcard) draws a place's `location.picture`.
 
 ```tsx
-import { Stage, useGame } from '@ifloom/react'
+import { LayeredPicture, useGame } from '@ifloom/react'
 
 function Room() {
   const { view } = useGame()
-  return view.scene.stage ? <Stage stage={view.scene.stage} className="max-w-2xl" /> : null
+  return view.scene.picture ? <LayeredPicture picture={view.scene.picture} className="max-w-2xl" /> : null
 }
 ```
 
-It draws a box with the stage's `aspect` as its `aspect-ratio`. With no `aspect`, it takes the first layer's own shape once that has loaded, and `16/9` until then. The layers are stacked inside it, bottom first, each filling the box with `object-fit: cover`. A picture layer is a [`Picture`](#picture) and a video layer is a [`Video`](#video), each with `data-layer` set to the layer's id. The [`Hotspot`](#hotspot)s go on top.
+It draws a box with the picture's `aspect` as its `aspect-ratio`. With no `aspect`, it takes the first layer's own shape once that has loaded, and `16/9` until then. The layers are stacked inside it, bottom first, each filling the box with `object-fit: cover`. A picture layer is a [`Picture`](#picture) and a video layer is a [`Video`](#video), each with `data-layer` set to the layer's id. The [`Hotspot`](#hotspot)s go on top.
 
 **Gotcha.** Every layer fills the whole box, so a layer above the first needs transparent areas (a PNG, a WebP or an SVG) for the ones below to show through.
 
-Replaceable as `Stage` in [`components`](#components). Parts: `stage-picture` (the box) and `stage-layer`.
+Replaceable as `LayeredPicture` in [`components`](#components). Parts: `picture` (the box) and `picture-layer`.
 
 ### Hotspot
 
@@ -794,7 +794,7 @@ Replaceable as `Stage` in [`components`](#components). Parts: `stage-picture` (t
 function Hotspot(props: { hotspot: HotspotView }): JSX.Element
 ```
 
-One hotspot on a [`Stage`](#stage), from a [`HotspotView`](/docs/reference/media#hotspotview). It's a `<button>` placed over the picture by its `rect`, in percent, with `data-hotspot` set to its id. Clicking it sends its `command`.
+One hotspot on a [`LayeredPicture`](#layeredpicture), from a [`HotspotView`](/docs/reference/media#hotspotview). It's a `<button>` placed over the picture by its `rect`, in percent, with `data-hotspot` set to its id. Clicking it sends its `command`.
 
 - **Label.** Its `aria-label` is the hotspot's `label`, which is also its tooltip.
 - **Look.** It's invisible until the player points at it, which shows a faint outline, or tabs to it, which shows the focus ring.
@@ -812,7 +812,7 @@ type MediaViewerProps = { media: ViewerMedia; open: boolean; onOpenChange: (open
 type ViewerMedia = Extract<SceneBeat, { type: 'image' } | { type: 'video' }>
 ```
 
-A picture or a clip from the story, shown large over the page. [`Beat`](#beat) opens it when the player clicks an `image` or a `video` beat, in a scene, the [backlog](#backlog), a message or a post. Stage layers don't open it. It's a [`Dialog`](#dialog), so Escape, a click outside and its close button (`ui.closeViewer`) all close it, and focus goes back to the picture.
+A picture or a clip from the story, shown large over the page. [`Beat`](#beat) opens it when the player clicks an `image` or a `video` beat, in a scene, the [backlog](#backlog), a message or a post. A layered picture's layers don't open it. It's a [`Dialog`](#dialog), so Escape, a click outside and its close button (`ui.closeViewer`) all close it, and focus goes back to the picture.
 
 Turn it off for the whole game with `viewer: false` in [`UiOptions`](#uioptions):
 

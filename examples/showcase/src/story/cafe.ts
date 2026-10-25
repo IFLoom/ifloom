@@ -95,7 +95,7 @@ export const cafe: Content = {
         { id: 'sit', label: 'Sit a while', effects: [{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }] },
       ],
       // A picture of the counter while Ava is on shift, with a hotspot on her that talks to her.
-      stage: {
+      picture: {
         aspect: '16/10',
         layers: [{ id: 'counter', src: 'photo/ava.svg', when: cast.here('ava') }],
         hotspots: [{ id: 'ava', rect: [36, 22, 28, 44], label: 'Talk to Ava', command: cast.talk('ava'), layer: 'counter' }],

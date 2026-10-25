@@ -8,7 +8,7 @@ import { useGame } from './context.tsx'
 import { Icon } from './icon.tsx'
 import { overridable, usePart, useViewerOn } from './overrides.tsx'
 import { Picture } from './picture.tsx'
-import { Stage } from './stage.tsx'
+import { LayeredPicture } from './layered.tsx'
 import { Video } from './video.tsx'
 import { MediaViewer, type ViewerMedia } from './viewer.tsx'
 import { MinigameCard, useMinigame } from './minigame.tsx'
@@ -268,7 +268,7 @@ function SceneArticle({ className, motion, transition, rolls }: { className?: st
   const header = usePart('scene-header', cn(PROSE, 'flex items-center gap-3'))
   const portrait = usePart('scene-portrait', 'size-12 rounded-full object-cover')
   const title = usePart('scene-title', 'font-heading text-scene-title font-semibold')
-  const image = usePart('stage-image', 'mx-auto max-h-80 w-auto max-w-full rounded-xl object-contain')
+  const image = usePart('scene-image', 'mx-auto max-h-80 w-auto max-w-full rounded-xl object-contain')
   const choicesGroup = usePart('reveal', '')
   // Reveals wait until the player clicks the scene or presses a key, or they have all come in.
   const last = view.minigame ? 0 : lastReveal(scene.beats, motion ? rolls.fresh : [])
@@ -311,7 +311,7 @@ function SceneArticle({ className, motion, transition, rolls }: { className?: st
         {scene.speaker?.image ? <Picture {...portrait} src={scene.speaker.image} alt="" /> : null}
         <h2 {...title}>{scene.title}</h2>
       </header>
-      {scene.stage?.layers.length ? <Stage stage={scene.stage} /> : scene.image ? <Picture {...image} src={scene.image} alt="" /> : null}
+      {scene.picture?.layers.length ? <LayeredPicture picture={scene.picture} /> : scene.image ? <Picture {...image} src={scene.image} alt="" /> : null}
       <Beats beats={scene.beats} motion={motion} rolls={rolls} skipped={revealed} />
       {/* With reveals to come, the choices come with the last of them: not pressable, or read out, until then. */}
       {last > 0 && motion ? (
@@ -373,8 +373,8 @@ function SceneStageImpl({ className }: { className?: string }) {
 }
 
 /**
- * The main column: the scene on screen, or the room when none is. Its stage (the
- * layered `Stage` when the scene has one, else its `image`), its body, then
+ * The main column: the scene on screen, or the room when none is. Its picture (the
+ * `LayeredPicture` when the scene has one, else its `image`), its body, then
  * either the game's own panel for it or its choices. While a minigame runs, it
  * draws that instead: the game's panel named by the minigame's id, else
  * `MinigameCard`.

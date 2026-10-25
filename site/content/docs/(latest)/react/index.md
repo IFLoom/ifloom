@@ -26,7 +26,7 @@ Nothing in the engine depends on this package. The UI only reads the [view](/doc
 
 The default layout, [`DefaultLayout`](#layouts), puts these on the page. A section shows only when the game has something for it. What comes from a plugin shows when the game lists that plugin's UI in [`plugins`](#plugins).
 
-- **The story.** The main column. The scene on screen, or the room when no scene is open (a plugin's [stage](/docs/reference/plugins#stage), such as the [places](/docs/plugins/places) plugin's), with its pictures, spoken lines and choices. The prose, choices and the rest of the text keep to a readable measure (`--width-prose`), centred on a wide screen.
+- **The story.** The main column. The scene on screen, or the room when no scene is open (a plugin's [room scene](/docs/reference/plugins#scene), such as the [places](/docs/plugins/places) plugin's), with its pictures, spoken lines and choices. The prose, choices and the rest of the text keep to a readable measure (`--width-prose`), centred on a wide screen.
 - **The bottom of the story.** With the [places](/docs/plugins/places) plugin, where the player is and the exits. Then the room's and the game's actions, and who is here with what you can do with them (the [cast](/docs/plugins/cast)).
 - **Inputs**, under the scene, when the game asks for one: a name to type, a number, or options to pick from.
 - **The side column.** The game's title and the clock, when a plugin such as the [calendar](/docs/plugins/calendar) says what time it is, then the player's menu. Under them come its sections:
@@ -393,7 +393,7 @@ It returns the [player](/docs/browser/audio-player#audioplayer) once it has star
 The UI draws every picture and clip the engine puts in the view, with no setup:
 
 - `image` and `video` [beats](/docs/reference/prose#images) in a scene, a message or a post, through [`Beat`](/docs/react/components#beat)
-- a scene's or a place's [stage](/docs/reference/media#the-stage), a layered picture with hotspots, through [`Stage`](/docs/react/components#stage)
+- a scene's or a place's [layered picture](/docs/reference/media#layered-pictures) with hotspots, through [`LayeredPicture`](/docs/react/components#layeredpicture)
 - a post's `video`, through [`Video`](/docs/react/components#video)
 
 Clips play like GIFs unless their flags say otherwise. They load and start only when they scroll into view, and pause when they scroll out. A clip with sound follows the game's mute and volume settings, as the [`Video`](/docs/react/components#video) entry explains. Pictures load lazily too.

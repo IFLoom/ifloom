@@ -313,6 +313,14 @@ const STEPS: Record<number, (state: Saved, game: Game) => Saved> = {
     ])
     return { ...state, entities: Object.fromEntries(kinds) }
   },
+  // 22 → 23: a layered picture is a `picture`, not a stage, so a pool pick made for one of its layers is kept
+  // under the slot `picture:<layer>`, not `stage:<layer>`, and a reload shows the file it showed before.
+  22: (state) => {
+    const media = state.media as { picks?: Record<string, unknown> } | undefined
+    if (!media || typeof media !== 'object' || !media.picks || typeof media.picks !== 'object') return state
+    const picks = Object.fromEntries(Object.entries(media.picks).map(([key, file]) => [key.replace(/\|stage:(\d+)$/, '|picture:$1'), file]))
+    return { ...state, media: { ...media, picks } }
+  },
 }
 
 /** A data scene's choice, as far as the version 18 step reads it. */

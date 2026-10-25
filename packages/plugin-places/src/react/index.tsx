@@ -7,7 +7,7 @@
 import type { ComponentProps } from 'react'
 import type { GameState, Result } from '@ifloom/engine'
 import type { ExitView, PlacesView } from '../index.ts'
-import { buttonVariants, cn, overridable, type Override, type PluginUi, PROSE, Stage, useGame, usePart } from '@ifloom/react'
+import { buttonVariants, cn, overridable, type Override, type PluginUi, PROSE, LayeredPicture, useGame, usePart } from '@ifloom/react'
 
 declare module '@ifloom/react' {
   interface OverridableComponents {
@@ -68,7 +68,7 @@ function LocationCardImpl() {
   const things = places.things ?? []
   return (
     <section {...section}>
-      {location.stage?.layers.length ? <Stage stage={location.stage} /> : null}
+      {location.picture?.layers.length ? <LayeredPicture picture={location.picture} /> : null}
       <div className={PROSE}>
         <h3 {...name}>{location.name}</h3>
         {location.description ? <p {...tag}>{location.description}</p> : null}
@@ -93,7 +93,7 @@ function LocationCardImpl() {
 }
 
 /**
- * Where the player is: the place's name and the line under it (its `description`), with its stage above them,
+ * Where the player is: the place's name and the line under it (its `description`), with its layered picture above them,
  * hotspots and all, and what lies there with a button to pick each up. The
  * exits are `Exits`. A thin default on `usePlaces`.
  */

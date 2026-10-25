@@ -105,7 +105,7 @@ function draw(view: View): void {
 
 It draws, in order:
 
-- **The game's title and the scene's.** With no scene open, `view.scene` is the stage, such as the room the player is in.
+- **The game's title and the scene's.** With no scene open, `view.scene` is the room the player is in, when a plugin such as places has one.
 - **The beats**, the scene's paragraphs (step 4).
 - **The minigame**, if one is running (step 7).
 - **The inputs**, any values the game is asking for, such as a name (step 6).

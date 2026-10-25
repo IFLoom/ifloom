@@ -1,7 +1,7 @@
 /**
  * One state as the player would see it: the open scene rendered once (or the
  * room, when none is open), its choices with what each would apply, the
- * stage, every plugin's view, and the pool picks and audio all of that implies.
+ * picture, every plugin's view, and the pool picks and audio all of that implies.
  *
  * `view` is built from it, and the reducer records picks and audio from it, so
  * a scene is rendered once per screen rather than once per question asked
@@ -9,7 +9,7 @@
  */
 import { amountOf } from './amount.ts'
 import { reasonOf, stringOf } from './strings.ts'
-import { pluginActions, pluginCommand, pluginPrices, pluginStage, pluginsWatch, pluginViews } from './plugin.ts'
+import { pluginActions, pluginCommand, pluginPrices, pluginScene, pluginsWatch, pluginViews } from './plugin.ts'
 import { defaultRuntime, renderScene, type RenderedScene } from './scene.ts'
 import { blockBeats } from './beats.ts'
 import { lineSpeakers, speakerOf, type SpeakerView } from './speakers.ts'
@@ -27,9 +27,9 @@ import {
   resolveMedia,
   resolvePoolMarkup,
   type HotspotView,
-  type MediaStage,
-  type StageLayerView,
-  type StageView,
+  type PictureDef,
+  type PictureLayerView,
+  type PictureView,
 } from './features/media.ts'
 import { audioTracks, audioView, type AudioView } from './features/audio.ts'
 import { minigameOf } from './features/minigames.ts'
@@ -74,14 +74,14 @@ export type ScreenChoice = RenderedChoice & {
   effects: Effect[]
 }
 
-/** The scene on a screen, or the room when none is open, without its choices and stage. */
+/** The scene on a screen, or the room when none is open, without its choices and picture. */
 export type ScreenScene = {
   /** The open scene's id, or null for the room. */
   id: string | null
   /**
    * Which screen this is: `scene:<id>` while a scene is open, `minigame:<id>`
-   * while a minigame is played, `room:<stage id>` for a plugin's stage (a
-   * place), and `room` with none. It changes when the screen does, and only then.
+   * while a minigame is played, `room:<id>` for a plugin's room scene (a
+   * place, by its id), and `room` with none. It changes when the screen does, and only then.
    */
   key: string
   title: string
@@ -99,7 +99,7 @@ export type ScreenScene = {
   speaker: SpeakerView | null
   /** The big picture to draw with the scene: the speaker's, else null. */
   image: string | null
-  /** The scene's presentation hints (the room's stage's, when no scene is open), as written; left out with none. See `SceneUi`. */
+  /** The scene's presentation hints (the room scene's, when no scene is open), as written; left out with none. See `SceneUi`. */
   ui?: Ui<SceneUi>
 }
 
@@ -112,7 +112,7 @@ export type Screen = {
   /** The room's buttons while no scene is open and no lock stops everything: plugins' first, then the game's. */
   actions: ScreenChoice[]
   /** The open scene's layered picture and its hotspots, or null. */
-  stage: StageView | null
+  picture: PictureView | null
   /** Every plugin's view, by plugin id. */
   plugins: Record<string, unknown>
   /** The pool picks this screen made that the save doesn't hold yet, by pick key. The reducer records them. */
@@ -144,7 +144,7 @@ type Drawing = { rendered: Rendering; picks: Record<string, string> }
 
 /**
  * One state, drawn once: the open scene (or the room), its choices with their
- * effects, availability and price, the room's buttons, the stage, the plugins'
+ * effects, availability and price, the room's buttons, the picture, the plugins'
  * views, and the pool picks and audio they imply. The open scene is rendered
  * once, and every choice's availability and effects come from that one render.
  *
@@ -156,9 +156,9 @@ export function screen(state: GameState, game: Game, options: ViewOptions = {}):
   const drawing: Drawing = { rendered: rendering(state, game, picks), picks }
   const idle = !lockedOut(state, game) && !state.sceneId && !state.minigame
   const dialogue = renderDialogue(state, game, drawing)
-  // The room's stage, a plugin's (a place), when no scene is open.
-  const roomStage = dialogue ? undefined : pluginStage(game, state)
-  const room = dialogue ? null : standing(state, game, roomStage, drawing)
+  // The room's scene, a plugin's (a place), when no scene is open.
+  const roomScene = dialogue ? undefined : pluginScene(game, state)
+  const room = dialogue ? null : standing(state, game, roomScene, drawing)
   const offered = idle ? idleActions(state, game, drawing) : []
   // A room's prose can hold its buttons inline, as a scene's holds its choices: those leave the list.
   const inRoom = room ? inlineBeats(room.beats, offered, () => undefined, state, game) : null
@@ -174,7 +174,7 @@ export function screen(state: GameState, game: Game, options: ViewOptions = {}):
     scene: playing ?? dialogue?.scene ?? room!,
     choices: playing ? [] : (dialogue?.choices ?? []),
     actions,
-    stage: playing ? null : (dialogue?.stage ?? null),
+    picture: playing ? null : (dialogue?.picture ?? null),
     plugins,
     picks,
     audio: { ...audioView(state, game, tracks, beats, cx), tracks },
@@ -182,21 +182,21 @@ export function screen(state: GameState, game: Game, options: ViewOptions = {}):
 }
 
 /** The room itself, when no scene is playing over it. */
-function standing(state: GameState, game: Game, stage: ReturnType<typeof pluginStage>, drawing: Drawing): ScreenScene {
-  // A plugin's stage; with none, there is nothing to read but the buttons.
-  const rendered = stage?.body ? renderScene({ id: stage.id, body: [...stage.body], choices: [] }, state, defaultRuntime(game), drawing.picks) : undefined
+function standing(state: GameState, game: Game, scene: ReturnType<typeof pluginScene>, drawing: Drawing): ScreenScene {
+  // A plugin's room scene; with none, there is nothing to read but the buttons.
+  const rendered = scene?.body ? renderScene({ id: scene.id, body: [...scene.body], choices: [] }, state, defaultRuntime(game), drawing.picks) : undefined
   const body = rendered?.body ?? ''
   return {
     id: null,
-    key: stage ? `room:${stage.id}` : 'room',
-    title: stage?.title ?? game.title,
+    key: scene ? `room:${scene.id}` : 'room',
+    title: scene?.title ?? game.title,
     body,
-    beats: beatsOf(state, game, stage?.id ?? '', rendered ?? { parts: [] }, rendered?.media, drawing.picks).beats,
+    beats: beatsOf(state, game, scene?.id ?? '', rendered ?? { parts: [] }, rendered?.media, drawing.picks).beats,
     fresh: 0,
     tags: [],
     speaker: null,
     image: null,
-    ...withUi(stage?.ui),
+    ...withUi(scene?.ui),
   }
 }
 
@@ -254,41 +254,41 @@ function beatsOf(
 }
 
 /**
- * A stage as the UI draws it: the layers whose `when` holds, each with its
- * file (a pool's pick, kept per owner and layer as `stage:<index>`), and the
+ * A picture as the UI draws it: the layers whose `when` holds, each with its
+ * file (a pool's pick, kept per owner and layer as `picture:<index>`), and the
  * hotspots on them. A hotspot tied to a layer that isn't shown is left out. A
  * `choice` hotspot takes that choice's command and availability from
  * `choices`, the scene's rendered choices, and is left out when the choice is
  * not on offer; a `command` hotspot is worked out as any action's button is.
- * Exported for plugins that draw a stage of their own: a place's. A plugin's
+ * Exported for plugins that draw a picture of their own: a place's. A plugin's
  * `view` passes its context's `picks`, so the reducer records the layers' picks.
  */
-export function stageView(
+export function pictureView(
   state: GameState,
   game: Game,
-  stage: MediaStage | undefined,
+  picture: PictureDef | undefined,
   owner: string,
   choices: readonly RenderedChoice[] | null = null,
   picks?: Record<string, string>,
-): StageView | null {
-  return drawStage(state, game, stage, owner, choices, { rendered: rendering(state, game, picks), picks: picks ?? {} })
+): PictureView | null {
+  return drawPicture(state, game, picture, owner, choices, { rendered: rendering(state, game, picks), picks: picks ?? {} })
 }
 
-function drawStage(
+function drawPicture(
   state: GameState,
   game: Game,
-  stage: MediaStage | undefined,
+  picture: PictureDef | undefined,
   owner: string,
   choices: readonly RenderedChoice[] | null,
   drawing: Drawing,
-): StageView | null {
-  if (!stage) return null
-  const layers: StageLayerView[] = []
-  stage.layers.forEach((layer, index) => {
+): PictureView | null {
+  if (!picture) return null
+  const layers: PictureLayerView[] = []
+  picture.layers.forEach((layer, index) => {
     if (!holds(state, game, layer.when)) return
     const src =
       layer.pool !== undefined
-        ? poolPick(state, game, { pool: layer.pool, tags: layer.tags, owner, slot: `stage:${index}` }, featureContext(), drawing.picks)
+        ? poolPick(state, game, { pool: layer.pool, tags: layer.tags, owner, slot: `picture:${index}` }, featureContext(), drawing.picks)
         : (layer.src ?? null)
     if (!src) return
     const video = Boolean(layer.video) || mediaType(src) === 'video'
@@ -300,7 +300,7 @@ function drawStage(
   })
   const shown = new Set(layers.map((layer) => layer.id))
   const hotspots: HotspotView[] = []
-  for (const hotspot of stage.hotspots ?? []) {
+  for (const hotspot of picture.hotspots ?? []) {
     if (!holds(state, game, hotspot.when)) continue
     if (hotspot.layer !== undefined && !shown.has(hotspot.layer)) continue
     let button: Pick<RenderedChoice, 'command' | 'disabled' | 'warning'> | undefined
@@ -320,7 +320,7 @@ function drawStage(
       ...(hotspot.layer !== undefined ? { layer: hotspot.layer } : {}),
     })
   }
-  return { aspect: stage.aspect ?? null, layers, hotspots }
+  return { aspect: picture.aspect ?? null, layers, hotspots }
 }
 
 /**
@@ -438,7 +438,7 @@ function priceOfEffects(state: GameState, game: Game, effects: readonly Effect[]
 type Dialogue = {
   scene: ScreenScene
   choices: ScreenChoice[]
-  stage: StageView | null
+  picture: PictureView | null
   audio?: Record<string, string | null>
 }
 
@@ -451,7 +451,7 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
       scene: {
         id: state.sceneId,
         key: `scene:${state.sceneId}`,
-        title: pluginStage(game, state)?.title ?? game.title,
+        title: pluginScene(game, state)?.title ?? game.title,
         body: stringOf(game, 'momentPassed'),
         beats: parseBeats(stringOf(game, 'momentPassed')),
         fresh: 0,
@@ -460,7 +460,7 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
         image: null,
       },
       choices: [{ id: 'leave', label: stringOf(game, 'lookAround'), command: { type: 'leave' }, effects: [] }],
-      stage: null,
+      picture: null,
     }
   }
   // Markdown is laid over legacy scenes by `bake` in the content pack. Doing it
@@ -506,7 +506,7 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
         effects,
       }
     })
-  // Choices the prose holds inline are drawn there, and leave the list. A stage's hotspot may still name one.
+  // Choices the prose holds inline are drawn there, and leave the list. A picture's hotspot may still name one.
   // A choice picked earlier in the visit is named by its words, as the flow showed it.
   const labels = new Map([
     ...Object.entries((rendered as Partial<RenderedScene>).picked ?? {}),
@@ -520,7 +520,7 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
     scene: {
       id: state.sceneId,
       key: `scene:${state.sceneId}`,
-      title: rendered.title ?? scene.title ?? pluginStage(game, state)?.title ?? game.title,
+      title: rendered.title ?? scene.title ?? pluginScene(game, state)?.title ?? game.title,
       body,
       beats: inline.beats,
       fresh: drawn.fresh,
@@ -530,7 +530,7 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
       ...withUi(scene.ui),
     },
     choices: inline.offered,
-    stage: drawStage(state, game, rendered.stage, state.sceneId, choices, drawing),
+    picture: drawPicture(state, game, rendered.picture, state.sceneId, choices, drawing),
   }
 }
 

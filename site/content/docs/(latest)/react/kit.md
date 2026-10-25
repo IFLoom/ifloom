@@ -157,7 +157,7 @@ A plugin's React UI is built from `@ifloom/react`'s own exports, the same ones a
 | Dialogs | [`PartDialog`](/docs/react/components#partdialog), [`useDialogParts`](#usedialogparts), [`DIALOG_CLASSES`](#usedialogparts), [`Dialog`](/docs/react/components#dialog) |
 | The page | [`Section`](/docs/react/components#section), [`PROSE`](#prose), [`ENTRY_CLASSES`](#entry_classes), [`StatGauge`](#statgauge), [`PageHeading`](#pageheading-and-backbutton), [`BackButton`](#pageheading-and-backbutton), [`usePageParts`](#pageheading-and-backbutton) |
 | Parts and overrides | [`usePart`](/docs/react/components#usepart), [`useKitPart`](#usekitpart), [`KIT_PARTS`](#kit_parts), [`overridable`](/docs/react/components#overridable), `Override`, [`OverridableComponents`](#overridablecomponents-and-partnames), [`PartNames`](#overridablecomponents-and-partnames) |
-| Pictures and prose | [`Picture`](/docs/react/components#picture), [`Video`](/docs/react/components#video), [`Icon`](/docs/react/components#icon), [`Beat`](/docs/react/components#beat), [`Stage`](/docs/react/components#stage), [`assetUrl`](/docs/react/components#asseturl) |
+| Pictures and prose | [`Picture`](/docs/react/components#picture), [`Video`](/docs/react/components#video), [`Icon`](/docs/react/components#icon), [`Beat`](/docs/react/components#beat), [`LayeredPicture`](/docs/react/components#layeredpicture), [`assetUrl`](/docs/react/components#asseturl) |
 
 ## Writing a plugin's UI
 

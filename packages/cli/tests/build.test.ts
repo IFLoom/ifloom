@@ -137,7 +137,7 @@ describe('the files a game names', () => {
           scenes: [
             {
               id: 'knock',
-              stage: {
+              picture: {
                 layers: [{ id: 'hall', src: 'flat/hall' }, { id: 'rain', src: 'flat/rain', video: true, poster: 'flat/rain-still' }, { pool: 'door' }],
                 hotspots: [{ id: 'door', rect: [60, 10, 25, 85], label: 'The front door', choice: 'answer' }],
               },

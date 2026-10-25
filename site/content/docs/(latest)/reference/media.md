@@ -1,22 +1,22 @@
 ---
 title: "Media"
-description: "Pools of pictures and videos picked by tags, and the stage: layered pictures with hotspots on a scene or a place."
+description: "Pools of pictures and videos picked by tags, and layered pictures with hotspots on a scene or a place."
 ---
-Pictures and videos reach the screen in three ways. You write them into prose as [markup](/docs/reference/prose#images), put them in a data scene's body as [`{ media }` blocks](/docs/reference/scenes#scenemedia), or build a [stage](/docs/reference/scenes#the-stage), a layered picture with hotspots on it. All three can name a file, or ask a pool for one by tags. This page covers pools, the stage's types and the rules for video. The engine draws nothing itself. It puts beats in [`view.scene.beats`](/docs/reference/view#the-scene) and the stage in `view.scene.stage`, and the [React UI](/docs/react#pictures-and-video) draws them: beats with [`Beat`](/docs/react/components#beat) and [`Video`](/docs/react/components#video), the stage with [`Stage`](/docs/react/components#stage) and its [`Hotspot`](/docs/react/components#hotspot)s, and a click on a picture opens the [`MediaViewer`](/docs/react/components#mediaviewer).
+Pictures and videos reach the screen in three ways. You write them into prose as [markup](/docs/reference/prose#images), put them in a data scene's body as [`{ media }` blocks](/docs/reference/scenes#scenemedia), or build a [layered picture](/docs/reference/scenes#the-picture) with hotspots on it. All three can name a file, or ask a pool for one by tags. This page covers pools, the picture's types and the rules for video. The engine draws nothing itself. It puts beats in [`view.scene.beats`](/docs/reference/view#the-scene) and the picture in `view.scene.picture`, and the [React UI](/docs/react#pictures-and-video) draws them: beats with [`Beat`](/docs/react/components#beat) and [`Video`](/docs/react/components#video), the picture with [`Picture`](/docs/react/components#layeredpicture) and its [`Hotspot`](/docs/react/components#hotspot)s, and a click on a picture opens the [`MediaViewer`](/docs/react/components#mediaviewer).
 
 ```ts
 import {
   mediaType,
-  stageView,
+  pictureView,
   type GameMedia,
   type HotspotDef,
   type HotspotView,
-  type MediaStage,
+  type PictureDef,
   type MediaState,
   type PoolFile,
-  type StageLayer,
-  type StageLayerView,
-  type StageView,
+  type PictureLayer,
+  type PictureLayerView,
+  type PictureView,
   type VideoFlags,
   type VideoView,
 } from '@ifloom/engine'
@@ -46,7 +46,7 @@ const game: Game = {
 
 const knock: DataScene = {
   id: 'flat.knock',
-  stage: {
+  picture: {
     aspect: '16/9',
     layers: [
       { id: 'hall', src: 'flat/hall' },
@@ -70,10 +70,10 @@ Someone knocks, three times, not loud.
 [[img:@door|red,night|The front door]]
 ```
 
-With the scene open, the view has the picked door among the beats and the stage resolved:
+With the scene open, the view has the picked door among the beats and the picture resolved:
 
 ```ts
-view(state, game).scene.stage
+view(state, game).scene.picture
 // {
 //   aspect: '16/9',
 //   layers: [
@@ -127,7 +127,7 @@ You ask a pool for a file in three places:
 
 - markup, as `[[img:@door|red,night]]`, `[[wide:@door]]` or `[[video:@window|rain]]`
 - a `{ media }` block, as `{ pool: 'door', tags: ['red', 'night'] }`
-- a stage layer, as `{ pool: 'window', tags: ['rain'] }`
+- a picture layer, as `{ pool: 'window', tags: ['rain'] }`
 
 The engine picks a file in three steps.
 
@@ -155,14 +155,14 @@ door|red,night|flat.knock|1
 |---|---|---|
 | A data scene's `{ media }` block | the scene's id | the block's index in `body`, such as `1` |
 | Markup in a data scene's block | the scene's id | the block's index and the request's place in that block's text, such as `0.0` |
-| A place's body (and any plugin [stage](/docs/reference/plugins#stage)'s body) | the place's id | as for a data scene |
+| A place's body (and any plugin [room scene](/docs/reference/plugins#scene)'s body) | the place's id | as for a data scene |
 | A message's or a post's body | the message's or post's id | as for a data scene |
-| A stage layer | the scene's or place's id | `stage:0`, `stage:1`, ... by the layer's index |
+| A picture layer | the scene's or place's id | `picture:0`, `picture:1`, ... by the layer's index |
 
 The visit isn't part of the key. A scene shows the same door every time it opens, and that's on purpose: a picture that changes each time you look reads as a mistake.
 
 **Gotchas.**
-- Reordering a scene's blocks, or a stage's layers, changes their slots, so they're drawn again.
+- Reordering a scene's blocks, or a picture's layers, changes their slots, so they're drawn again.
 - A pool with nothing to give (an unknown or empty pool) leaves its markup, block or layer out. The loader reports both.
 - Tags that no file in the pool has are reported, even though the pick would fall back. A tag nothing has is usually a typo.
 
@@ -174,24 +174,24 @@ type MediaState = { picks: Record<string, string> }
 
 What a save keeps at `state.media`: the file (as its pool's `src`) each pick key was given. A new game starts with `{ picks: {} }`, and a save from before version 11 [loads](/docs/reference/saves#loadstate) with that.
 
-## The stage
+## Layered pictures
 
-### MediaStage
+### PictureDef
 
 ```ts
-type MediaStage = {
-  layers: StageLayer[]
+type PictureDef = {
+  layers: PictureLayer[]
   hotspots?: HotspotDef[]
   aspect?: string
 }
 ```
 
-A layered picture with hotspots. A [data scene](/docs/reference/scenes#the-stage) and a [place](/docs/plugins/places#the-picture-stage) can each have one. `layers` are drawn bottom first. `aspect` is the width over the height as CSS writes it, such as `'16/9'`. Leave it out and the UI picks one.
+A layered picture with hotspots. A [data scene](/docs/reference/scenes#the-picture) and a [place](/docs/plugins/places#the-picture) can each have one. `layers` are drawn bottom first. `aspect` is the width over the height as CSS writes it, such as `'16/9'`. Leave it out and the UI picks one.
 
-### StageLayer
+### PictureLayer
 
 ```ts
-type StageLayer = {
+type PictureLayer = {
   id?: string
   src?: string
   pool?: string
@@ -221,29 +221,29 @@ type HotspotDef = {
 }
 ```
 
-A clickable area. `rect` is `[x, y, width, height]` in percent of the stage, from the top left, so `[0, 0, 100, 100]` is the whole picture. `label` is what a screen reader reads and the tooltip shows. Give exactly one of:
+A clickable area. `rect` is `[x, y, width, height]` in percent of the picture, from the top left, so `[0, 0, 100, 100]` is the whole picture. `label` is what a screen reader reads and the tooltip shows. Give exactly one of:
 
 - **`command`**, any [command](/docs/reference/commands), greyed out by the same rules as an [action's button](/docs/reference/view#renderaction).
 - **`choice`**, a choice of the open scene by id, which takes that choice's command, `disabled` and `warning`.
 
 It's left out while its `when` fails, and while its `layer` isn't shown.
 
-### StageView
+### PictureView
 
 ```ts
-type StageView = {
+type PictureView = {
   aspect: string | null
-  layers: StageLayerView[]
+  layers: PictureLayerView[]
   hotspots: HotspotView[]
 }
 ```
 
-A stage as the UI draws it, from [`stageView`](/docs/reference/view#stageview). It's in [`view.scene.stage`](/docs/reference/view#the-scene) for the open scene, and in a place's `location.stage` in [`PlacesView`](/docs/plugins/places#placesview). `layers` has only the layers shown now, bottom first. `hotspots` has only the ones that can be shown, each resolved to a button.
+A picture as the UI draws it, from [`pictureView`](/docs/reference/view#pictureview). It's in [`view.scene.picture`](/docs/reference/view#the-scene) for the open scene, and in a place's `location.picture` in [`PlacesView`](/docs/plugins/places#placesview). `layers` has only the layers shown now, bottom first. `hotspots` has only the ones that can be shown, each resolved to a button.
 
-### StageLayerView
+### PictureLayerView
 
 ```ts
-type StageLayerView = {
+type PictureLayerView = {
   id: string | null
   src: string
   video?: VideoView
@@ -281,7 +281,7 @@ type VideoFlags = {
 }
 ```
 
-The flags a video can carry, on a `{ media }` block or a stage layer. They're the same as the [markup flags](/docs/reference/prose#videos): `controls` shows the player's controls, `once` plays once, `sound` plays with sound, and `poster` is a still shown before it plays.
+The flags a video can carry, on a `{ media }` block or a picture layer. They're the same as the [markup flags](/docs/reference/prose#videos): `controls` shows the player's controls, `once` plays once, `sound` plays with sound, and `poster` is a still shown before it plays.
 
 ### VideoView
 
@@ -303,8 +303,8 @@ How a video layer plays, with the defaults filled in. A `video` [beat](/docs/ref
 
 ## Checks
 
-The [content checker](/docs/reference/checks) reports unknown pools, tags no file has, empty pools, unknown markup flags, video flags on a picture, and everything wrong with a stage's hotspots and layers. The full list is under [Media](/docs/reference/checks#media). It also lists every picture and video file the game names, in [`files`](/docs/reference/checks#fileref).
+The [content checker](/docs/reference/checks) reports unknown pools, tags no file has, empty pools, unknown markup flags, video flags on a picture, and everything wrong with a picture's hotspots and layers. The full list is under [Media](/docs/reference/checks#media). It also lists every picture and video file the game names, in [`files`](/docs/reference/checks#fileref).
 
 ## See it in an example
 
-Small Town: the café's `stage` in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts) has one layer, Ava's photo, shown while she's there, and a hotspot on her that sends `cast.talk('ava')`. No example uses picture pools or video yet.
+Small Town: the café's `picture` in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts) has one layer, Ava's photo, shown while she's there, and a hotspot on her that sends `cast.talk('ava')`. No example uses picture pools or video yet.

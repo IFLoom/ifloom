@@ -50,7 +50,7 @@ describe('media in places, messages and posts', () => {
               description: 'Home',
               exits: ['street'],
               body: [{ prose: 'place.flat' }],
-              stage: {
+              picture: {
                 layers: [{ id: 'room', src: 'flat/room.svg' }],
                 hotspots: [{ id: 'out', rect: [80, 10, 15, 80], label: 'The front door', command: places.go('street') }],
               },
@@ -71,11 +71,11 @@ describe('media in places, messages and posts', () => {
     ).game
   }
 
-  it('draws the place’s stage in the location panel, with its hotspots', () => {
+  it('draws the place’s picture in the location panel, with its hotspots', () => {
     const runner = createRunner(town(), startingState(town()))
     render(<GameShell plugins={UIS} runner={runner} layout={storyOf(<LocationCard />)} />)
     const panel = document.querySelector('[data-part="location"]') as HTMLElement
-    expect(panel.querySelector('[data-part="stage-layer"]')?.getAttribute('src')).toBe('art/flat/room.svg')
+    expect(panel.querySelector('[data-part="picture-layer"]')?.getAttribute('src')).toBe('art/flat/room.svg')
     act(() => void fireEvent.click(screen.getByRole('button', { name: 'The front door' })))
     expect(runner.view().plugins.places).toMatchObject({ location: { id: 'street' } })
   })

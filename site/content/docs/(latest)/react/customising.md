@@ -172,7 +172,7 @@ Some parts carry a second attribute that says more:
 | `data-has-sidebar` | The `page` | Present when the layout has a side column. |
 | `data-frame` | A device's `dialog` | The device's frame: `phone`, `laptop`, or a name of the game's own. |
 | `data-icon` | Every `app-icon` | The app's icon name, for a stylesheet to map to a picture. |
-| `data-layer` | Every `stage-layer` | The layer's id, when it has one. |
+| `data-layer` | Every `picture-layer` | The layer's id, when it has one. |
 | `data-hotspot` | Every `hotspot` | The hotspot's id. |
 | `data-transition-in` | The `scene` | How it comes in: a [transition name](/docs/react/hints#transitionname). Not set with motion off. |
 | `data-transition-out`, `data-leaving` | The copy of the scene before | How it goes out. |
@@ -542,7 +542,7 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `scene-header` | The row with the speaker's portrait and the title. |
 | `scene-portrait` | The speaker's portrait. |
 | `scene-title` | The scene's title. |
-| `stage-image` | The picture on the stage, above the text. |
+| `scene-image` | The scene's `image`, above the text, when it has no layered picture. |
 | `beats` | The scene's text, holding every beat. |
 | `beat` | One beat. Carries `data-beat` with its kind, and a `say` beat carries `data-who`. |
 | `speaker-name` | The name over a spoken line: the speaker's, or the player's on their own lines. Not drawn on a line that names no one. Each preset styles it, and `display: none` hides it. |
@@ -564,14 +564,14 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `bold` | Words in [bold](/docs/reference/prose#bold-and-italics) in the prose, a `<strong>`. The presets give it their own weight or colour, and the terminal preset makes it glow. |
 | `italic` | Words in [italics](/docs/reference/prose#bold-and-italics) in the prose, an `<em>`. |
 
-### Pictures, videos and the stage
+### Pictures, videos and layered pictures
 
 | Part | What it is |
 |---|---|
 | `video` | A video clip, drawn by [`Video`](/docs/react/components#video). A video beat's carries `data-beat="video"`. |
-| `stage-picture` | A layered [`Stage`](/docs/react/components#stage)'s box, with the stage's `aspect-ratio`. |
-| `stage-layer` | One layer in it, a picture or a video. Carries `data-layer` with the layer's id. |
-| `hotspot` | A hotspot button over the stage. Carries `data-hotspot`, and `aria-disabled` when it's greyed out. |
+| `picture` | A [`LayeredPicture`](/docs/react/components#layeredpicture)'s box, with the picture's `aspect-ratio`. |
+| `picture-layer` | One layer in it, a picture or a video. Carries `data-layer` with the layer's id. |
+| `hotspot` | A hotspot button over the picture. Carries `data-hotspot`, and `aria-disabled` when it's greyed out. |
 | `hotspot-warning` | The warning icon in a hotspot's corner. |
 | `viewer-open` | The button around a picture or a clip in the story that opens the viewer. |
 | `viewer` | The [`MediaViewer`](/docs/react/components#mediaviewer) dialog, holding the picture or the clip. |

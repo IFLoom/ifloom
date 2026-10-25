@@ -14,7 +14,7 @@ import type { Game, Overlay, Section, Sidebar, Story, When } from './regions.tsx
 import type { Clock, StatList } from './sidebar.tsx'
 import type { Beat, SceneStage } from './scene.tsx'
 import type { InlineAction, Tip } from './inline.tsx'
-import type { Hotspot, Stage } from './stage.tsx'
+import type { Hotspot, LayeredPicture } from './layered.tsx'
 import type { Video } from './video.tsx'
 import type { MediaViewer } from './viewer.tsx'
 import type { ChoiceButton, ChoiceList, PriceTag } from './choices.tsx'
@@ -72,7 +72,7 @@ export const PART_KEYS = [
   'scene-header',
   'scene-portrait',
   'scene-title',
-  'stage-image',
+  'scene-image',
   'beats',
   'beat',
   'speaker-name',
@@ -94,10 +94,10 @@ export const PART_KEYS = [
   'inline-modal',
   'bold',
   'italic',
-  // Pictures, videos, the stage and the viewer
+  // Pictures, videos, layered pictures and the viewer
   'video',
-  'stage-picture',
-  'stage-layer',
+  'picture',
+  'picture-layer',
   'hotspot',
   'hotspot-warning',
   'viewer-open',
@@ -310,7 +310,7 @@ export interface OverridableComponents {
   InputField: Override<PropsOf<typeof InputField>>
   Picture: Override<PropsOf<typeof Picture>>
   Video: Override<PropsOf<typeof Video>>
-  Stage: Override<PropsOf<typeof Stage>>
+  LayeredPicture: Override<PropsOf<typeof LayeredPicture>>
   Hotspot: Override<PropsOf<typeof Hotspot>>
   MediaViewer: Override<PropsOf<typeof MediaViewer>>
   Icon: Override<PropsOf<typeof Icon>>

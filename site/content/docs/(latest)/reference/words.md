@@ -40,7 +40,7 @@ A key is the path to the field, as your content writes it, with each list entry 
 | A choice in a scene, anywhere in it | `scene.cafe.counter.choice.tea.label` |
 | A block of words in a scene | `scene.cafe.counter.text.intro`, or `scene.cafe.counter.text.<hash>` |
 | A picture's `alt`, a fold's label | `scene.cafe.counter.alt.<hash>`, `scene.cafe.counter.fold.<hash>` |
-| A hotspot on a scene's stage | `scene.flat.stage.hotspots.door.label` |
+| A hotspot on a scene's picture | `scene.flat.picture.hotspots.door.label` |
 | A notice an effect raises | `action.wait.notify.<id or hash>.title` and `.text` |
 | What a `create` effect names the thing it makes | `action.sketch.create.<hash>.name` and `.description` |
 | Words in a plugin's effect, as its [`callWords`](/docs/reference/plugins#words) declare | `action.snap.feed/post.<hash>.text` |

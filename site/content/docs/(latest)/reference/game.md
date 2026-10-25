@@ -91,7 +91,7 @@ type Game = {
 
 A new game starts at turn 0 with `introScene` open and the content's `kv` in its kv store. Each plugin also gets its own start, so the places plugin's `start` puts the player in a room. See [`startingState`](/docs/reference/commands#startingstate).
 
-**The idle screen.** When no scene is open, the screen shows the [`stage`](/docs/reference/plugins#stage) of the first plugin that has one at the moment, the game's own `rules.stage` first. With the places plugin, that's the room the player is in. With no stage, it shows a scene titled with `game.title` and an empty body. Under it come the game's and the plugins' buttons and then the content's `actions`, unless a lock denying `'*'` is on. See [The idle screen](/docs/reference/view#the-idle-screen).
+**The idle screen.** When no scene is open, the screen shows the room [`scene`](/docs/reference/plugins#scene) of the first plugin that has one at the moment, the game's own `rules.scene` first. With the places plugin, that's the room the player is in. With none, it shows a scene titled with `game.title` and an empty body. Under it come the game's and the plugins' buttons and then the content's `actions`, unless a lock denying `'*'` is on. See [The idle screen](/docs/reference/view#the-idle-screen).
 
 ### saveName
 
@@ -152,7 +152,7 @@ The town's locations and its people are entities, in `entities`, written with th
 type StorylineDef = { id: string; name: string }
 ```
 
-A storyline is a thread of the story. It's followed by its kv store and stages, and can be closed for a while if need be. Each declared storyline gets a [`StorylineState`](/docs/reference/state#storylines) in a new game, and an older save that lacks one gets an empty one the next time a command runs on it. A [cast](/docs/plugins/cast#person-1) character can belong to one through their `storyline` field, but a storyline doesn't need a character. See [Storylines](/docs/reference/storylines).
+A storyline is a thread of the story. It's followed by its kv store, and can be closed for a while if need be. Each declared storyline gets a [`StorylineState`](/docs/reference/state#storylines) in a new game, and an older save that lacks one gets an empty one the next time a command runs on it. A [cast](/docs/plugins/cast#person-1) character can belong to one through their `storyline` field, but a storyline doesn't need a character. See [Storylines](/docs/reference/storylines).
 
 ```ts
 storylines: [

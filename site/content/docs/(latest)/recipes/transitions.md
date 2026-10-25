@@ -176,7 +176,7 @@ export function withReveals(beats: readonly SceneBeat[]): { beat: SceneBeat; rev
 Then the scene, in each framework. Each draws the title and the words. Add your choices and pictures as your UI already does.
 
 ```ts tab="Plain JS" tab-group="framework"
-// src/scene.ts: call drawScene(stage, view) from draw(), with a <div> that stays in the page.
+// src/scene.ts: call drawScene(box, view) from draw(), with a <div> that stays in the page.
 import type { View } from '@ifloom/engine'
 import { transitionOf, withReveals } from './hints.ts'
 
@@ -204,11 +204,11 @@ function article(view: View, entering: boolean): HTMLElement {
   return scene
 }
 
-export function drawScene(stage: HTMLElement, view: View): void {
+export function drawScene(box: HTMLElement, view: View): void {
   const before = shown
   shown = view
   clearTimeout(timer)
-  const old = stage.querySelector<HTMLElement>('article')
+  const old = box.querySelector<HTMLElement>('article')
   const going = before && transitionOf(before)
   const changed = going !== null && going.key !== view.scene.key
   if (going && changed && old && !reduced.matches && going.out !== 'none') {
@@ -217,10 +217,10 @@ export function drawScene(stage: HTMLElement, view: View): void {
     old.style.setProperty('--ms', `${going.ms}ms`)
     old.setAttribute('aria-hidden', 'true')
     old.inert = true
-    timer = setTimeout(() => stage.replaceChildren(article(view, true)), going.ms)
+    timer = setTimeout(() => box.replaceChildren(article(view, true)), going.ms)
     return
   }
-  stage.replaceChildren(article(view, before === null || changed))
+  box.replaceChildren(article(view, before === null || changed))
 }
 ```
 

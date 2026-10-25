@@ -95,7 +95,7 @@ type Screen = {
   scene: ScreenScene
   choices: ScreenChoice[]
   actions: ScreenChoice[]
-  stage: StageView | null
+  picture: PictureView | null
   plugins: ViewsIn
   picks: Record<string, string>
   audio: AudioView & { tracks: Record<string, string | null> }
@@ -118,10 +118,10 @@ type ScreenScene = {
 
 | Field | Meaning |
 |---|---|
-| `scene` | The open scene as rendered, or the room when none is open. The same fields as [`view.scene`](#the-scene) without `stage` and `choices`. While a [minigame](#minigame) runs, it's drawn over either. |
+| `scene` | The open scene as rendered, or the room when none is open. The same fields as [`view.scene`](#the-scene) without `picture` and `choices`. While a [minigame](#minigame) runs, it's drawn over either. |
 | `choices` | The open scene's visible choices, except those its prose draws inline. Each is a [`RenderedChoice`](#renderedchoice) with `effects`: what choosing it would apply. Empty for the room, and while a minigame runs. |
 | `actions` | The room's buttons while no scene or minigame is open, except those its prose draws inline, as [`view.actions`](#the-idle-screen), each with the effects its command would apply (see [`effectsOf`](/docs/reference/actions#effectsof)). |
-| `stage` | The open scene's stage, resolved as [`stageView`](#stageview) does. `null` for the room, and while a minigame runs. |
+| `picture` | The open scene's picture, resolved as [`pictureView`](#pictureview) does. `null` for the room, and while a minigame runs. |
 | `plugins` | Every plugin's view, by plugin id, as [`view.plugins`](#plugins). |
 | `picks` | The [pool picks](/docs/reference/media#remembered-picks) this state shows that `state.media.picks` doesn't hold yet, by pick key. The reducer records them. Empty once they're recorded. |
 | `audio` | [`view.audio`](#audio), plus `tracks`: the track each background channel resolves to, or `null` for silence. The reducer records a channel's track as started when it changes. |
@@ -148,7 +148,7 @@ The view has no player name, because the engine doesn't keep one. A game that as
 
 ### The idle screen
 
-While no scene is open, the screen is the idle screen. It shows the [stage](#the-scene) in `scene`, and the buttons here.
+While no scene is open, the screen is the idle screen. It shows the room in `scene`, and the buttons here.
 
 | Field | Type | Meaning |
 |---|---|---|
@@ -160,7 +160,7 @@ A button the room's prose draws inline with `[[act:id]]` is left out of `actions
 
 Otherwise `actions` is the game's own [`rules.actions`](/docs/reference/rules#gamerules), then every plugin's [`actions`](/docs/reference/plugins#actions), in the order `game.plugins` lists them, then the content's [`actions`](/docs/reference/actions#actiondef) that have a `label`. A button is left out while its `when` doesn't hold, or while a [lock](/docs/reference/locks) with `hide: true` stops its command. All of them are drawn alike, with [`renderAction`](#renderaction). The engine adds none of its own, so the showcase declares its Wait a while button in its content's `actions`.
 
-The engine keeps no places, so the view has no location or exits of its own. With the [places plugin](/docs/plugins/places), the room is at `view.plugins.places`, a [`PlacesView`](/docs/plugins/places#placesview), with its `location` and its `exits`. Each exit is an [`ExitView`](/docs/plugins/places#exitview) carrying the command that takes it. The room's own actions are the plugin's buttons, so they come first in `actions`. Its name is in `when`, and its description is the stage.
+The engine keeps no places, so the view has no location or exits of its own. With the [places plugin](/docs/plugins/places), the room is at `view.plugins.places`, a [`PlacesView`](/docs/plugins/places#placesview), with its `location` and its `exits`. Each exit is an [`ExitView`](/docs/plugins/places#exitview) carrying the command that takes it. The room's own actions are the plugin's buttons, so they come first in `actions`. Its name is in `when`, and its description is the picture.
 
 ```ts
 import type { PlacesView } from '@ifloom/plugin-places'
@@ -180,26 +180,26 @@ for (const person of people) for (const talk of person.actions) addButton(`${per
 
 ### The scene
 
-`scene` is what fills the main column. With a scene open, it's that scene's render. Without one, it's the stage: `id: null`, no choices, and a title and body from the first plugin whose [`stage`](/docs/reference/plugins#stage) answers. The stage's `body` blocks are drawn as a data scene's are, with the game's prose. The [places plugin](/docs/plugins/places#the-stage)'s stage is the room the player is in, with its name as the title. With no plugin answering, the title is the game's `title` and the body is empty.
+`scene` is what fills the main column. With a scene open, it's that scene's render. Without one, it's the room: `id: null`, no choices, and a title and body from the first plugin whose room [`scene`](/docs/reference/plugins#scene) answers. Its `body` blocks are drawn as a data scene's are, with the game's prose. The [places plugin](/docs/plugins/places#the-room-scene)'s room scene is the room the player is in, with its name as the title. With no plugin answering, the title is the game's `title` and the body is empty.
 
 | Field | Type | Meaning |
 |---|---|---|
-| `id` | `string \| null` | The scene, or `null` for the stage. |
-| `key` | `string` | Which screen this is: `scene:<id>` while a scene is open, `minigame:<id>` while a [minigame](#minigame) runs, `room:<id>` for a plugin's stage (a place, with the places plugin), and `room` with none. It changes when the screen does, and only then, so a UI keys an animation or moves focus by it. A choice that keeps the same scene open keeps the key. |
-| `title` | `string` | The scene's own title, else the title of a plugin's [stage](/docs/reference/plugins#stage) (the room's name, with the places plugin), else the game's `title`. |
+| `id` | `string \| null` | The scene, or `null` for the room. |
+| `key` | `string` | Which screen this is: `scene:<id>` while a scene is open, `minigame:<id>` while a [minigame](#minigame) runs, `room:<id>` for a plugin's room scene (a place, with the places plugin), and `room` with none. It changes when the screen does, and only then, so a UI keys an animation or moves focus by it. A choice that keeps the same scene open keeps the key. |
+| `title` | `string` | The scene's own title, else the title of a plugin's [room scene](/docs/reference/plugins#scene) (the room's name, with the places plugin), else the game's `title`. |
 | `body` | `string` | The raw prose, with its markup. In-place `{ media }` blocks are in it as markup, and `@pool` markup is already resolved to files. |
 | `beats` | [`SceneBeat[]`](/docs/reference/prose#scenebeat) | The prose parsed, with the scene's pictures and videos in place and pool markup resolved to files. Draw these, not `body`. In a [flowing scene](/docs/reference/flows#in-the-view), everything up to where the flow stops, with a `chose` beat at each past pick. |
 | `fresh` | `number` | The index of the first beat the flow's last step brought (a pick, from its `chose` beat on, a jump, or a minigame or panel done with), so a UI can animate only those. `0` before the visit has taken a step, for a scene with no decisions, and for the room. |
-| `tags` | `string[]` | The render's `tags`, else the scene's, else `[]`. The engine gives them no meaning, so style the scene by them. The stage has none. |
+| `tags` | `string[]` | The render's `tags`, else the scene's, else `[]`. The engine gives them no meaning, so style the scene by them. The room has none. |
 | `speaker` | [`SpeakerView`](#speakerview) ` \| null` | Who's talking: the render's `speaker`, else the scene's, as their [entity](/docs/reference/scenes#speakers) is. `null` when there's none, or the id names no entity. Never guessed from the scene's id. |
 | `image` | `string \| null` | The big picture: the render's `image`, else the speaker's, else `null`. |
-| `stage` | [`StageView`](/docs/reference/media#stageview) ` \| null` | The scene's [layered picture and hotspots](/docs/reference/scenes#the-stage), resolved by [`stageView`](#stageview). `null` when the scene has none, and on the idle screen (a place's stage is in its [plugin view](/docs/plugins/places#placesview)). |
+| `picture` | [`PictureView`](/docs/reference/media#pictureview) ` \| null` | The scene's [layered picture and hotspots](/docs/reference/scenes#the-picture), resolved by [`pictureView`](#pictureview). `null` when the scene has none, and on the idle screen (a place's picture is in its [plugin view](/docs/plugins/places#placesview)). |
 | `choices` | [`RenderedChoice[]`](#renderedchoice) | The visible choices: in a flowing scene, those of the decision the flow stopped at, or the ending choices once it's done. Hidden ones (`visible: false`) are left out, and disabled ones stay. So are the ones the prose draws inline with `[[act:id]]`: those are in `beats`, as `action` [spans](/docs/reference/prose#inlinespan). |
 | `ui` | `Ui<SceneUi>`, optional | The scene's [presentation hints](/docs/reference/ui-hints) as written, or the room's (a place's) while no scene is open. Left out when there are none, and while a minigame runs. The engine gives them no meaning. |
 
-If `state.sceneId` names a scene the game doesn't have, the scene reads "The moment has passed." under the stage's title (else the game's), with one choice, Look around, which sends `leave`. Both lines are in the [strings table](/docs/reference/strings#buttons-and-labels), as `momentPassed` and `lookAround`.
+If `state.sceneId` names a scene the game doesn't have, the scene reads "The moment has passed." under the room's title (else the game's), with one choice, Look around, which sends `leave`. Both lines are in the [strings table](/docs/reference/strings#buttons-and-labels), as `momentPassed` and `lookAround`.
 
-While a [minigame](#minigame) runs, `scene` is drawn over: its `title` is the minigame's `label` (else the scene's or the stage's title), its `body` and `beats` are the running state's `label` rendered as prose. Its `id` and the rest stay those of the scene or the stage underneath. `choices` is empty and `stage` is `null`.
+While a [minigame](#minigame) runs, `scene` is drawn over: its `title` is the minigame's `label` (else the scene's or the room's title), its `body` and `beats` are the running state's `label` rendered as prose. Its `id` and the rest stay those of the scene or the room underneath. `choices` is empty and `picture` is `null`.
 
 ### The player's numbers and things
 
@@ -494,39 +494,39 @@ button.disabled  // 'You cannot get there from here.'
 
 **Gotcha.** It doesn't test the action's `when`. Leave out the actions whose `when` doesn't hold before rendering them, as the view does.
 
-## stageView
+## pictureView
 
 ```ts
-import { stageView } from '@ifloom/engine'
+import { pictureView } from '@ifloom/engine'
 
-function stageView(
+function pictureView(
   state: GameState,
   game: Game,
-  stage: MediaStage | undefined,
+  picture: PictureDef | undefined,
   owner: string,
   choices?: readonly RenderedChoice[] | null,
   picks?: Record<string, string>,
-): StageView | null
+): PictureView | null
 ```
 
-Resolves a [stage](/docs/reference/scenes#the-stage) into what a UI draws, as the view does for `view.scene.stage`. Use it in a plugin that has a stage of its own, as the [places plugin](/docs/plugins/places#placesview) does for a room.
+Resolves a [picture](/docs/reference/scenes#the-picture) into what a UI draws, as the view does for `view.scene.picture`. Use it in a plugin that has a picture of its own, as the [places plugin](/docs/plugins/places#placesview) does for a room.
 
-- **Layers** whose `when` fails are left out. A pool layer gets its file from the [pool pick](/docs/reference/media#pools) for `owner` and the slot `stage:<index>`, and one whose pool has nothing is left out too.
+- **Layers** whose `when` fails are left out. A pool layer gets its file from the [pool pick](/docs/reference/media#pools) for `owner` and the slot `picture:<index>`, and one whose pool has nothing is left out too.
 - **A `choice` hotspot** takes the command, `disabled` and `warning` of the choice with that id in `choices`, and is left out when there's no such choice. Pass the scene's rendered choices. With none (`null`, the default), every choice hotspot is left out.
 - **A `command` hotspot** is a button made by [`renderAction`](#renderaction). It's left out while a lock with `hide: true` stops its command.
 - **Any hotspot** is left out while its `when` fails or its `layer` isn't shown.
 
-It returns `null` when `stage` is undefined.
+It returns `null` when `picture` is undefined.
 
 ```ts
-import { stageView } from '@ifloom/engine'
+import { pictureView } from '@ifloom/engine'
 
-// The café's stage, as the places plugin draws it in its view:
-const stage = stageView(state, game, cafe.stage, 'cafe', null, context.picks)
-stage?.hotspots.find((hotspot) => hotspot.id === 'door')?.disabled  // 'Staff only.'
+// The café's picture, as the places plugin draws it in its view:
+const picture = pictureView(state, game, cafe.picture, 'cafe', null, context.picks)
+picture?.hotspots.find((hotspot) => hotspot.id === 'door')?.disabled  // 'Staff only.'
 ```
 
-**Gotcha.** It never writes the state. A new pick is written into `picks` when you pass it, and the reducer records what's there after each command (see [Media](/docs/reference/media#remembered-picks)). In a plugin's [`view`](/docs/reference/plugins#the-view), pass your context's `picks`, or the stage's pool picks won't be kept.
+**Gotcha.** It never writes the state. A new pick is written into `picks` when you pass it, and the reducer records what's there after each command (see [Media](/docs/reference/media#remembered-picks)). In a plugin's [`view`](/docs/reference/plugins#the-view), pass your context's `picks`, or the picture's pool picks won't be kept.
 
 ## StatView
 

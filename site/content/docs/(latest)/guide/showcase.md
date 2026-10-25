@@ -135,19 +135,19 @@ The office's list is checked in order, so the most particular reason comes first
 
 Any kind of location can be locked this way.
 
-### A stage with a hotspot
+### A picture with a hotspot
 
-`story/cafe.ts`, the `cafe` location's `stage`. While Ava is on shift, the café shows her photo, `art/photo/ava.svg`, as a [stage](/docs/plugins/places#the-picture-stage) layer, with a hotspot on her that sends the cast's `cast.talk('ava')`:
+`story/cafe.ts`, the `cafe` location's `picture`. While Ava is on shift, the café shows her photo, `art/photo/ava.svg`, as a [layered picture](/docs/plugins/places#the-picture)'s layer, with a hotspot on her that sends the cast's `cast.talk('ava')`:
 
 ```ts
-stage: {
+picture: {
   aspect: '16/10',
   layers: [{ id: 'counter', src: 'photo/ava.svg', when: cast.here('ava') }],
   hotspots: [{ id: 'ava', rect: [36, 22, 28, 44], label: 'Talk to Ava', command: cast.talk('ava'), layer: 'counter' }],
 },
 ```
 
-The layer has a `when`, and the hotspot names the layer, so both go when Ava does. With no layer left the café has no stage, and the [`LocationCard`](/docs/plugins/places#locationcard) draws none. While a scene is open the hotspot is left out, so the player finishes the scene first.
+The layer has a `when`, and the hotspot names the layer, so both go when Ava does. With no layer left the café has no picture, and the [`LocationCard`](/docs/plugins/places#locationcard) draws none. While a scene is open the hotspot is left out, so the player finishes the scene first.
 
 ### People and schedules
 
@@ -341,6 +341,6 @@ The game module's `build` returns the release build, `smallTown({ unlocked })`, 
 
 ## What it doesn't show yet
 
-- **Pictures of places.** Each place names its art, `place/<id>`, and the places plugin's [view](/docs/plugins/places#the-view) passes it on as `location.art`. But there's no `art/place/` yet, and the React UI doesn't draw a place's art. The café's [stage](#a-stage-with-a-hotspot) is the one picture of a place, drawn from a photo the town already has.
-- **Video and layers.** Small Town has no video and no picture with transparent parts, so its one stage has a single layer. [Media](/docs/reference/media) shows a stage with a clip layered over a picture.
+- **Pictures of places.** Each place names its art, `place/<id>`, and the places plugin's [view](/docs/plugins/places#the-view) passes it on as `location.art`. But there's no `art/place/` yet, and the React UI doesn't draw a place's art. The café's [layered picture](#a-picture-with-a-hotspot) is the one picture of a place, drawn from a photo the town already has.
+- **Video and layers.** Small Town has no video and no picture with transparent parts, so its one layered picture has a single layer. [Media](/docs/reference/media) shows one with a clip layered over a picture.
 - **A patch.** The example mods add prose, variants and words, but no mod patches a choice into one of the town's scenes. See [Patches](/docs/reference/loader#patches).

@@ -14,7 +14,7 @@ const stall = definePlugin<{ open: boolean }>({
   start: () => ({ open: true }),
   conditions: { sells: (_state, args) => ['bread', 'eggs'].includes(String(args.item)) },
   commands: { haggle: { run: (state) => state } },
-  stage: (_state, { slice }) =>
+  scene: (_state, { slice }) =>
     slice.open ? { id: 'market', title: 'The market stall', body: [{ prose: 'stall.open' }, { variants: 'stall.cries' }] } : undefined,
   actions: () => [{ id: 'haggle', label: 'Haggle', command: { type: 'custom', name: 'stall/haggle' } }],
   references: {
@@ -49,7 +49,7 @@ function game(locks: Content['locks'] = []) {
   })
 }
 
-describe('a plugin’s stage', () => {
+describe('a plugin’s room scene', () => {
   it('fills the screen while no scene is open, its blocks drawn under its own id', () => {
     const { game: g } = game()
     const shown = view(startingState(g), g)

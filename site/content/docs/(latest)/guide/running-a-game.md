@@ -110,7 +110,7 @@ The [view](/docs/reference/view) is one plain object. These are the parts most s
 |---|---|
 | `title` | The game's title. |
 | `when` | Where the game is in time and place, in the plugins' words, such as `'Day 2 · Tuesday morning · The corner café'`. `null` without a plugin that says. |
-| `scene.title`, `scene.beats` | The open scene's title and its paragraphs, already parsed into [beats](/docs/reference/prose#scenebeat): narration, a spoken line, a picture, a letter. With no scene open, it's the stage, such as the room the player is in. |
+| `scene.title`, `scene.beats` | The open scene's title and its paragraphs, already parsed into [beats](/docs/reference/prose#scenebeat): narration, a spoken line, a picture, a letter. With no scene open, it's the room the player is in, when a plugin such as places shows one. |
 | `scene.choices` | The scene's choices, each with its `label`, `command`, and `disabled` reason when it can't be picked. |
 | `actions` | The buttons on the idle screen, with no scene open: the plugins' and the game's own, each with its `price`. |
 | `stats`, `statsById` | The player's stats, as text ready to show, such as `'5c'`. `stats` lists the visible ones in order, and `statsById` has every one by id. |

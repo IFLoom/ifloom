@@ -4,7 +4,7 @@
  *
  * The engine knows no places. This plugin keeps the player's location in its
  * own state, fills the screen with the room's description while no scene is
- * open (`stage`), offers the room's actions as buttons, and hands the UI the
+ * open (`scene`), offers the room's actions as buttons, and hands the UI the
  * exits. A location is an entity that carries the `places/location` trait,
  * written with `places.location({ ... })` in content's `entities`: its name, `description`
  * and `image` are the entity's, and its exits, body and actions are the
@@ -38,7 +38,7 @@ import {
   reasonOf,
   stringOf,
   renderAction,
-  stageView,
+  pictureView,
   declaredTrait,
   declaredWithTrait,
   withTrait,
@@ -55,11 +55,11 @@ import {
   type EntityRef,
   type Game,
   type GameState,
-  type MediaStage,
+  type PictureDef,
   type PluginProblem,
   type RenderedChoice,
   type Reference,
-  type StageView,
+  type PictureView,
   type SceneUi,
   type TraitDef,
   type Ui,
@@ -81,7 +81,7 @@ export type Place = {
    * A layered picture with hotspots, drawn where the UI draws the room. A
    * hotspot here sends a `command`; a place has no choices.
    */
-  stage?: MediaStage
+  picture?: PictureDef
   /**
    * Travel here is refused while one of these holds, with its reason: a door
    * shut for the night, a gate shut until a quest is done. With `hide`, the
@@ -179,11 +179,11 @@ export type PlaceView = {
   /** Its picture's path, its entity's `image` through `artSrc`; null with none. */
   image: string | null
   /**
-   * The place's stage as the engine's `stageView` draws it, or null when it
+   * The place's picture as the engine's `pictureView` draws it, or null when it
    * has none. Its hotspots are left out while a scene is open or a lock holds
    * everything, as the exits are.
    */
-  stage: StageView | null
+  picture: PictureView | null
 }
 
 /** What the UI reads at `view.plugins.places`. */
@@ -344,7 +344,7 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
   const locationTrait: TraitDef<'places/location'> = {
     id: TRAIT,
     // The words a player reads: why an exit is refused, the room's text, its buttons, its hotspots and what happens on arriving.
-    words: { blocked: [{ reason: true }], body: 'blocks', actions: ['button'], stage: { hotspots: [{ label: true }] }, arrive: { effects: 'effects' } },
+    words: { blocked: [{ reason: true }], body: 'blocks', actions: ['button'], picture: { hotspots: [{ label: true }] }, arrive: { effects: 'effects' } },
     check: (data, { game, ref }) => {
       const problems: string[] = []
       if (!Array.isArray(data?.exits)) problems.push('a place needs its exits: exits: [] for none')
@@ -361,7 +361,7 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
       // Its prose can hold its own actions and the game's inline: `[[act:id]]`.
       { actionsIn: place?.body, offers: [...(place?.actions ?? []), ...(game.actions ?? [])].map((action) => action.id) },
       { within: 'audio', refs: Object.entries(place?.audio ?? {}).map(([channel, track]) => ({ channel, track })) },
-      { stage: place?.stage, choices: null },
+      { layered: place?.picture, choices: null },
       { ui: place?.ui },
       ...(place?.blocked ?? []).flatMap((entry): Reference[] => [{ when: entry.when }, { reason: entry.reason }]),
       ...(place?.arrive ? [{ within: 'arrive', refs: [{ when: place.arrive.when }, { effects: place.arrive.effects }] }] : []),
@@ -443,7 +443,7 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
         slice.at !== null && locationOf(state, game, slice.at) ? (entityDescription(state, game, locationRef(slice.at)) ?? '') : '',
     },
     label: (state, { slice, game }) => (slice.at !== null && locationOf(state, game, slice.at) ? entityName(state, game, locationRef(slice.at)) : undefined),
-    stage: (state, { slice, game }) => {
+    scene: (state, { slice, game }) => {
       const place = locationOf(state, game, slice.at)
       if (!place || slice.at === null) return undefined
       return { id: slice.at, title: entityName(state, game, locationRef(slice.at)), body: place.body, ...(place.ui !== undefined ? { ui: place.ui } : {}) }
@@ -479,7 +479,7 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
       }))
       if (!here || at === null) return { location: null, exits, things }
       const ref = locationRef(at)
-      const stage = stageView(state, game, here.stage, at, null, picks)
+      const picture = pictureView(state, game, here.picture, at, null, picks)
       return {
         location: {
           id: at,
@@ -488,7 +488,7 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
           description: entityDescription(state, game, ref) ?? null,
           tags: entityTags(state, game, ref),
           image: pictureOf(state, game, ref),
-          stage: stage && !idle ? { ...stage, hotspots: [] } : stage,
+          picture: picture && !idle ? { ...picture, hotspots: [] } : picture,
         },
         exits,
         things,
@@ -529,7 +529,7 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
   })
 }
 
-const LOCATION_FIELDS = ['parent', 'exits', 'stage', 'blocked', 'body', 'actions', 'audio', 'ui', 'arrive'] as const
+const LOCATION_FIELDS = ['parent', 'exits', 'picture', 'blocked', 'body', 'actions', 'audio', 'ui', 'arrive'] as const
 
 /**
  * A place, for content's `entities`: an entity of the kind `location` (or

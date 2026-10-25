@@ -73,7 +73,7 @@ type DataScene = {
   tags?: string[]
   panel?: ScenePanel      // a panel held open while the scene is: { panel, with }
   audio?: Record<string, string | null>   // background audio by channel while it's open
-  stage?: MediaStage      // a layered picture with hotspots
+  picture?: PictureDef    // a layered picture with hotspots
   drawnFrom?: string[]    // the storylet sets it can be drawn from
   weight?: number         // how often a draw picks it, 1 if left out
   when?: Condition        // only drawn while this holds
@@ -158,16 +158,16 @@ Blocks render in order, and a block whose `when` fails is dropped. Rendered bloc
 **Gotchas.**
 - A `{ text }` block that names prose, as content wrote one before schema 25 (`{ text: 'cafe.counter' }` with that key in the prose), is reported, because it would show the key itself: write the words, or `{ prose: 'cafe.counter' }`. So is a `{ words }` block, which is `{ text }` now. A pack of an older schema is rewritten when it loads.
 - If every member of a set of variants is gated out, the block renders nothing and there's no error.
-- In a [place's body](/docs/plugins/places#the-stage), or any plugin's [stage](/docs/reference/plugins#stage), a `variants` block has no choice to record its draw, so the count never moves. The member is picked by the save's seed and the [turn](/docs/reference/state#turn). A room deals a fresh line each turn and the same line every time the player looks in that turn, and it can deal the same line two turns running.
+- In a [place's body](/docs/plugins/places#the-room-scene), or any plugin's [room scene](/docs/reference/plugins#scene), a `variants` block has no choice to record its draw, so the count never moves. The member is picked by the save's seed and the [turn](/docs/reference/state#turn). A room deals a fresh line each turn and the same line every time the player looks in that turn, and it can deal the same line two turns running.
 
-### The stage
+### The picture
 
-A scene can have a stage: a picture made of layers, with hotspots on it that the player can click. The flat in the showcase has a room, a lamp that only shows in the evening, and the front door as a hotspot that takes the scene's `leave` choice.
+A scene can have a layered picture: a picture made of layers, with hotspots on it that the player can click. The flat in the showcase has a room, a lamp that only shows in the evening, and the front door as a hotspot that takes the scene's `leave` choice.
 
 ```ts
 const flat: DataScene = {
   id: 'flat.morning',
-  stage: {
+  picture: {
     aspect: '16/9',
     layers: [
       { id: 'room', src: 'scene/flat' },
@@ -186,18 +186,18 @@ const flat: DataScene = {
 
 Layers are drawn bottom first. Each one is a file (`src`) or a pick from a [pool](/docs/reference/media#pools) (`pool` and `tags`), shown while its `when` holds. A layer is a video when `video` is `true` or its file is a `.mp4` or `.webm`, and it takes the same video flags as a [`SceneMedia`](#scenemedia).
 
-A hotspot is a rectangle, `[x, y, width, height]` in percent of the stage from the top left. It does exactly one of two things:
+A hotspot is a rectangle, `[x, y, width, height]` in percent of the picture from the top left. It does exactly one of two things:
 
 - **`choice`** takes a choice of this scene, by id. It's greyed out exactly when the choice's button is, with the same reason, and it's left out while the choice is hidden.
 - **`command`** sends any [command](/docs/reference/commands), and is greyed out by the same rules as an [action's button](/docs/reference/view#renderaction).
 
 A hotspot with a `when` that fails is left out, and so is one whose `layer` isn't shown. `label` is what a screen reader reads.
 
-The view resolves the stage into [`view.scene.stage`](/docs/reference/view#the-scene), and the [React UI](/docs/react) draws it with [`Stage`](/docs/react/components#stage), with its hotspots as buttons over the picture. See [Media](/docs/reference/media#the-stage) for the types.
+The view resolves the picture into [`view.scene.picture`](/docs/reference/view#the-scene), and the [React UI](/docs/react) draws it with [`LayeredPicture`](/docs/react/components#layeredpicture), with its hotspots as buttons over the picture. See [Media](/docs/reference/media#layered-pictures) for the types.
 
 **Gotchas.**
 - The loader reports a hotspot with both or neither of `command` and `choice`, a `choice` the scene doesn't have, a rect outside 0 to 100 or running off the edge, two hotspots with one id, a `layer` no layer has, and an unknown pool or tag.
-- `view.scene.image` is still set as before, next to `stage`. A UI decides which to draw.
+- `view.scene.image` is still set as before, next to `picture`. A UI decides which to draw.
 
 ### Choice
 

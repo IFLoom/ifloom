@@ -111,7 +111,7 @@ function VideoImpl({ src, poster, alt, autoplay, loop, muted, controls, classNam
 }
 
 /**
- * A video clip, from a `video` beat, a stage layer or a post. It plays inline
+ * A video clip, from a `video` beat, a layered picture's layer or a post. It plays inline
  * and, by default, like a GIF: by itself, looping and muted. It loads nothing
  * until it scrolls into view (`preload="none"`), starts when it does, and
  * pauses when it scrolls out again. A clip with sound follows the game's audio

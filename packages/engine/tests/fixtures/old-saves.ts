@@ -180,7 +180,11 @@ const v20 = { ...v19, version: 20, minigame: { id: 'darts', state: 'throw', elap
 const v21 = { ...v20, version: 21 }
 
 // A thing's line is its `description`: no entity here was made in play with one, so it reads the same.
-const v22 = { ...v21, version: 22 }
+// A pick for a layered picture's first layer, under the slot it had then, `stage:0`.
+const v22 = { ...v21, version: 22, media: { picks: { 'door||start|0': 'door/red.jpg', 'sea||start|stage:0': 'sea/calm.jpg' } } }
+
+// A layered picture is a `picture`: the layer's pick is kept under `picture:0`.
+const v23 = { ...v22, version: 23, media: { picks: { 'door||start|0': 'door/red.jpg', 'sea||start|picture:0': 'sea/calm.jpg' } } }
 
 /** Each version's save state, by version. */
 export const OLD_SAVES: Record<number, Record<string, unknown>> = {
@@ -206,4 +210,5 @@ export const OLD_SAVES: Record<number, Record<string, unknown>> = {
   20: v20,
   21: v21,
   22: v22,
+  23: v23,
 }

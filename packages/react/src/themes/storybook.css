@@ -168,7 +168,7 @@
 }
 
 /* Pictures and clips: rounded cards with the soft drop the buttons have. */
-[data-part="stage-picture"],
+[data-part="picture"],
 [data-part="video"][data-beat],
 [data-part="viewer-open"] img {
   border-radius: var(--radius);

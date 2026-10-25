@@ -94,7 +94,7 @@ describe('places', () => {
     expect(screen.scene).toMatchObject({ title: 'House', body: 'Your house.', key: 'room:house' })
     expect(screen.when).toBe('Day 1 · Monday morning · House')
     expect(shown(state, g)).toEqual({
-      location: { id: 'house', ref: 'location:house', name: 'House', description: 'Town', tags: [], image: 'art/place/house.jpg', stage: null },
+      location: { id: 'house', ref: 'location:house', name: 'House', description: 'Town', tags: [], image: 'art/place/house.jpg', picture: null },
       exits: [
         {
           id: 'street',
@@ -287,9 +287,9 @@ describe('places', () => {
     })
   })
 
-  describe('a place’s stage', () => {
+  describe('a place’s picture', () => {
     /** The café with a layered picture: the room, a lamp in the evening, and hotspots on them. */
-    function withStage(stage: PlaceDef['stage']) {
+    function withPicture(picture: PlaceDef['picture']) {
       const pictures: Pack = {
         id: 'pictures',
         schema: SCHEMA,
@@ -301,13 +301,13 @@ describe('places', () => {
             ],
           },
         },
-        entities: [place('cafe', ['street', 'back'], { stage })],
+        entities: [place('cafe', ['street', 'back'], { picture })],
       }
       const { game: g, problems } = loadGame([town], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'cafe' })] }, { packs: [pictures] })
       return { g, problems }
     }
 
-    const stage: PlaceDef['stage'] = {
+    const picture: PlaceDef['picture'] = {
       aspect: '16/9',
       layers: [
         { id: 'room', src: 'cafe/room' },
@@ -322,11 +322,11 @@ describe('places', () => {
     }
 
     it('draws its shown layers and their hotspots in the view slice, beside the picture', () => {
-      const { g, problems } = withStage(stage)
+      const { g, problems } = withPicture(picture)
       expect(problems).toEqual([])
       const location = shown(startingState(g), g).location!
       expect(location.image).toBe('art/place/cafe.jpg')
-      expect(location.stage).toEqual({
+      expect(location.picture).toEqual({
         aspect: '16/9',
         layers: [
           { id: 'room', src: 'art/cafe/room.jpg' },
@@ -341,27 +341,27 @@ describe('places', () => {
     })
 
     it('shows a layer and its hotspot once the layer’s condition holds', () => {
-      const { g } = withStage(stage)
+      const { g } = withPicture(picture)
       const evening = { ...startingState(g), kv: { evening: true } }
       const location = shown(evening, g).location!
-      expect(location.stage!.layers.map((layer) => layer.id)).toEqual(['room', 'counter', 'lamp'])
-      expect(location.stage!.hotspots.map((hotspot) => hotspot.id)).toEqual(['menu', 'lamp', 'door'])
+      expect(location.picture!.layers.map((layer) => layer.id)).toEqual(['room', 'counter', 'lamp'])
+      expect(location.picture!.hotspots.map((hotspot) => hotspot.id)).toEqual(['menu', 'lamp', 'door'])
     })
 
     it('keeps the picture but drops the hotspots while a scene is open, as the exits go', () => {
-      const { g } = withStage(stage)
+      const { g } = withPicture(picture)
       const busy = { ...startingState(g), sceneId: 'anything' }
-      expect(shown(busy, g).location!.stage).toMatchObject({ layers: [{ id: 'room' }, { id: 'counter' }], hotspots: [] })
+      expect(shown(busy, g).location!.picture).toMatchObject({ layers: [{ id: 'room' }, { id: 'counter' }], hotspots: [] })
     })
 
     it('records the pool’s pick after a command, under the place', () => {
-      const { g } = withStage(stage)
+      const { g } = withPicture(picture)
       const after = apply(startingState(g), g, { type: 'action', id: 'nap' }).state
-      expect(after.media.picks).toEqual({ 'counter|day|cafe|stage:1': 'cafe/counter-day.jpg' })
+      expect(after.media.picks).toEqual({ 'counter|day|cafe|picture:1': 'cafe/counter-day.jpg' })
     })
 
     it('reports a choice hotspot, an unknown pool, a bad rect and an unknown layer', () => {
-      const { problems } = withStage({
+      const { problems } = withPicture({
         layers: [{ id: 'room', pool: 'shelves' }],
         hotspots: [
           { id: 'menu', rect: [90, 0, 20, 10], label: 'Menu', choice: 'order' },
@@ -369,9 +369,9 @@ describe('places', () => {
         ],
       })
       expect(problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
-        'trait places/location on location:cafe: stage layer room: unknown pool "shelves"',
+        'trait places/location on location:cafe: picture layer room: unknown pool "shelves"',
         'trait places/location on location:cafe: hotspot menu: names choice "order", but only a scene has choices',
-        'trait places/location on location:cafe: hotspot menu: rect runs off the stage: x + width and y + height must be 100 or less',
+        'trait places/location on location:cafe: hotspot menu: rect runs off the picture: x + width and y + height must be 100 or less',
         'trait places/location on location:cafe: hotspot lamp: unknown layer "lamp"',
         'trait places/location on location:cafe: hotspot lamp: unknown action "dance"',
       ])

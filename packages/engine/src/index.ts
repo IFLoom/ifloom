@@ -57,7 +57,7 @@ export type {
   PluginReferences,
   PluginSlice,
   Refusal,
-  StageDef,
+  RoomScene,
   StatModifier,
 } from './plugin.ts'
 export { definePlugin, pluginQuery } from './plugin.ts'
@@ -73,8 +73,8 @@ export { entityDescription, entityName, fillTokens } from './prose.ts'
 export type { InlinePart, InlineSpan, SceneBeat, VideoFlags, VideoView } from './sceneBody.ts'
 export { artSrc, inlineMarkup, mediaType, parseBeats, styledBeats } from './sceneBody.ts'
 
-// Media: pools, and the stage
-export type { GameMedia, HotspotDef, HotspotView, MediaStage, MediaState, PoolFile, StageLayer, StageLayerView, StageView } from './features/media.ts'
+// Media: pools, and the picture
+export type { GameMedia, HotspotDef, HotspotView, PictureDef, MediaState, PoolFile, PictureLayer, PictureLayerView, PictureView } from './features/media.ts'
 
 // Presentation hints: carried to the view as written, given meaning by a UI package
 export type { BlockUi, ChoiceUi, EntityUi, GameUi, InlineUi, InlineUiArgs, SceneUi, StatUi, Ui } from './features/ui.ts'
@@ -200,6 +200,6 @@ export { createRunner, replay } from './runner.ts'
 // The view a UI draws, and the screen it is built from
 export type { Price, RenderedChoice, Screen, ScreenChoice, ScreenScene, ViewOptions } from './screen.ts'
 export { inlineChoices } from './screen.ts'
-export { renderAction, screen, stageView } from './screen.ts'
+export { renderAction, screen, pictureView } from './screen.ts'
 export type { StatView, View, EntitiesView, EntityView, InputView, NoticeView, NoticesView, SettingView } from './view.ts'
 export { view } from './view.ts'

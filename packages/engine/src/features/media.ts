@@ -1,6 +1,6 @@
 /**
  * Media: pools of pictures and videos, the picks made from them, and the
- * stage, a layered picture with hotspots on it (ADR 0004).
+ * layered picture with hotspots on it (ADR 0004).
  *
  * A pool is a named list of files, each with tags. Content asks for a pool and
  * some tags, and gets one file that fits. The pick is drawn from the save's
@@ -31,8 +31,8 @@ export type MediaState = {
   picks: Record<string, string>
 }
 
-/** One layer of a stage: a file, or a pick from a pool, shown while `when` holds. */
-export type StageLayer = {
+/** One layer of a picture: a file, or a pick from a pool, shown while `when` holds. */
+export type PictureLayer = {
   /** What hotspots name to go with this layer. */
   id?: string
   src?: string
@@ -44,12 +44,12 @@ export type StageLayer = {
 } & VideoFlags
 
 /**
- * A clickable area on a stage, drawn by the UI as a button. It does one of two
+ * A clickable area on a picture, drawn by the UI as a button. It does one of two
  * things: sends `command`, or takes the scene's choice `choice`.
  */
 export type HotspotDef = {
   id: string
-  /** Where it sits, in percent of the stage: `[x, y, width, height]` from the top left. */
+  /** Where it sits, in percent of the picture: `[x, y, width, height]` from the top left. */
   rect: [number, number, number, number]
   /** What a screen reader reads, and the tooltip. */
   label: string
@@ -63,16 +63,16 @@ export type HotspotDef = {
 }
 
 /** A layered picture with hotspots, on a scene or a place. */
-export type MediaStage = {
+export type PictureDef = {
   /** Bottom first. */
-  layers: StageLayer[]
+  layers: PictureLayer[]
   hotspots?: HotspotDef[]
   /** Width over height, as CSS writes it: `'16/9'`. The UI's own if left out. */
   aspect?: string
 }
 
-/** A stage layer as the UI draws it. */
-export type StageLayerView = {
+/** A picture layer as the UI draws it. */
+export type PictureLayerView = {
   id: string | null
   src: string
   /** How it plays, when it is a video. */
@@ -92,10 +92,10 @@ export type HotspotView = {
   layer?: string
 }
 
-/** A stage as the UI draws it: the layers shown now, bottom first, and the hotspots on them. */
-export type StageView = {
+/** A picture as the UI draws it: the layers shown now, bottom first, and the hotspots on them. */
+export type PictureView = {
   aspect: string | null
-  layers: StageLayerView[]
+  layers: PictureLayerView[]
   hotspots: HotspotView[]
 }
 
@@ -127,7 +127,7 @@ export type PoolRequest = {
   tags?: readonly string[]
   /** The scene, place, message or post that asks: its id. */
   owner: string
-  /** Where in it: a body block's index, `'stage:0'` for a stage layer. */
+  /** Where in it: a body block's index, `'picture:0'` for a picture layer. */
   slot: string
 }
 
@@ -290,7 +290,7 @@ export function mediaMarkupProblems(game: Game, text: string): string[] {
   return out
 }
 
-/** What is wrong with a `{ media }` block or a stage layer: where its file comes from, and its flags. */
+/** What is wrong with a `{ media }` block or a picture layer: where its file comes from, and its flags. */
 function sourceProblems(game: Game, media: { src?: string; pool?: string; tags?: string[]; video?: boolean } & VideoFlags): string[] {
   const out: string[] = []
   if (media.src === undefined && media.pool === undefined) out.push('needs a src or a pool')
@@ -308,16 +308,16 @@ export function sceneMediaProblems(game: Game, media: SceneMedia): string[] {
 }
 
 /**
- * What is wrong with a stage, apart from the conditions and commands it names
+ * What is wrong with a picture, apart from the conditions and commands it names
  * (the loader checks those as it checks any). `choices` are the scene's choice
- * ids; null for a stage with no scene, such as a place's.
+ * ids; null for a picture with no scene, such as a place's.
  */
-export function stageProblems(game: Game, stage: MediaStage, choices: readonly string[] | null): string[] {
+export function pictureProblems(game: Game, picture: PictureDef, choices: readonly string[] | null): string[] {
   const out: string[] = []
   const layerIds = new Set<string>()
-  if (!Array.isArray(stage.layers)) return ['stage: layers must be a list']
-  stage.layers.forEach((layer, index) => {
-    const where = `stage layer ${layer.id ?? index}`
+  if (!Array.isArray(picture.layers)) return ['picture: layers must be a list']
+  picture.layers.forEach((layer, index) => {
+    const where = `picture layer ${layer.id ?? index}`
     if (layer.id !== undefined) {
       if (layerIds.has(layer.id)) out.push(`${where}: two layers share this id`)
       layerIds.add(layer.id)
@@ -325,7 +325,7 @@ export function stageProblems(game: Game, stage: MediaStage, choices: readonly s
     for (const what of sourceProblems(game, layer)) out.push(`${where}: ${what}`)
   })
   const hotspotIds = new Set<string>()
-  for (const hotspot of stage.hotspots ?? []) {
+  for (const hotspot of picture.hotspots ?? []) {
     const where = `hotspot ${hotspot.id}`
     if (hotspotIds.has(hotspot.id)) out.push(`${where}: two hotspots share this id`)
     hotspotIds.add(hotspot.id)
@@ -348,7 +348,7 @@ function rectProblems(rect: unknown): string[] {
   const [x, y, w, h] = rect as number[]
   if ([x, y, w, h].some((n) => n < 0 || n > 100)) return ['rect is outside 0 to 100']
   if (w <= 0 || h <= 0) return ['rect has no width or height']
-  if (x + w > 100 || y + h > 100) return ['rect runs off the stage: x + width and y + height must be 100 or less']
+  if (x + w > 100 || y + h > 100) return ['rect runs off the picture: x + width and y + height must be 100 or less']
   return []
 }
 
@@ -412,20 +412,20 @@ export const media = defineFeature<MediaShape>({
       }
     }
   },
-  // A `{ media }` block and a stage: their files, and what they ask of the pools.
+  // A `{ media }` block and a picture: their files, and what they ask of the pools.
   resolve: (game, tools) => ({
     media: (ref, where) => {
       mediaFiles(where, ref.media, tools)
       return sceneMediaProblems(game, ref.media)
     },
-    stage: (ref, where) => {
-      const value = ref.stage
+    layered: (ref, where) => {
+      const value = ref.layered
       if (!value) return []
       for (const layer of Array.isArray(value.layers) ? value.layers : []) mediaFiles(where, layer, tools)
       return [
-        ...stageProblems(game, value, ref.choices),
+        ...pictureProblems(game, value, ref.choices),
         ...(Array.isArray(value.layers) ? value.layers : []).flatMap((layer, index) =>
-          tools.resolve([{ when: layer.when }], where).map((what) => `stage layer ${layer.id ?? index}: ${what}`),
+          tools.resolve([{ when: layer.when }], where).map((what) => `picture layer ${layer.id ?? index}: ${what}`),
         ),
         ...(value.hotspots ?? []).flatMap((hotspot) =>
           tools.resolve([{ when: hotspot.when }, { command: hotspot.command }], where).map((what) => `hotspot ${hotspot.id}: ${what}`),

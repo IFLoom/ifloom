@@ -176,7 +176,7 @@ index.html  440.6 kB
 
 **Gotchas.**
 
-- **Only pictures the base UI draws are looked up.** That covers a [`Picture`](/docs/react/components#picture) (and so every portrait, stage picture and image in the prose) and a device's wallpaper. A component of your own that sets an `<img src>` or a CSS `url()` from a path must pass it through [`assetUrl`](/docs/react/components#asseturl). Otherwise it points at a file that's no longer there.
+- **Only pictures the base UI draws are looked up.** That covers a [`Picture`](/docs/react/components#picture) (and so every portrait, layered picture and image in the prose) and a device's wallpaper. A component of your own that sets an `<img src>` or a CSS `url()` from a path must pass it through [`assetUrl`](/docs/react/components#asseturl). Otherwise it points at a file that's no longer there.
 - **Sound is never inlined.** The `audio/` folder stays beside `index.html`, and the command says so. Music and voices run to megabytes, and the page would have to read all of it before the game first draws. A game with sound ships as a folder, so `--inline-assets` gives a page with the pictures inside and `audio/` beside it.
 - **Videos are never inlined either.** A `.mp4` or `.webm` file stays in `art/`, and the command says how many it left. [`Video`](/docs/react/components#video) asks [`assetUrl`](/docs/react/components#asseturl) too, finds nothing in the page, and plays the file beside it. An animated `.gif` or `.webp` is a picture, so it does go in.
 - **Inline only a small game.** Every picture goes in the page, a third bigger than the file because of base64, and is read before the game first draws. A game with a few hundred kilobytes of art is fine as one file. One with megabytes of art is better as a folder.
@@ -334,7 +334,7 @@ It exits with `1` if there are any problems. Run it in CI beside your tests.
 It also looks for every file the game names in its `public/` folder, where Vite copies them from into the build. The content checker lists those files as it walks the game (see [The files a game names](/docs/reference/checks#fileref)), so the CLI doesn't guess where a game keeps them.
 
 - **Sound.** A track's `src` goes through [`audioSrc`](/docs/reference/audio#audiosrc) as the page would, so `{ src: 'music/calm' }` must be at `public/audio/music/calm.ogg`.
-- **Pictures and video.** The files in [pools](/docs/reference/media#pools), stage layers, `{ media }` blocks and their posters, picture and video markup in prose, and the files plugins' content names, such as a post's `video` or a character's portrait. These go through [`artSrc`](/docs/reference/prose#artsrc), so `[[video:cafe/steam]]` must be at `public/art/cafe/steam.mp4`.
+- **Pictures and video.** The files in [pools](/docs/reference/media#pools), picture layers, `{ media }` blocks and their posters, picture and video markup in prose, and the files plugins' content names, such as a post's `video` or a character's portrait. These go through [`artSrc`](/docs/reference/prose#artsrc), so `[[video:cafe/steam]]` must be at `public/art/cafe/steam.mp4`.
 
 A missing file is reported with where it's named:
 

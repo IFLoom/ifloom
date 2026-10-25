@@ -227,7 +227,7 @@
 }
 
 /* Pictures and clips: plates in a book, with a thin rule round them. */
-[data-part="stage-picture"],
+[data-part="picture"],
 [data-part="video"][data-beat],
 [data-part="beat"][data-beat="image"] {
   border-radius: 0;
@@ -236,7 +236,7 @@
   background: var(--card);
 }
 
-[data-part="stage-picture"] {
+[data-part="picture"] {
   padding: 0;
 }
 
@@ -456,7 +456,7 @@
 [data-part="story"] > *,
 [data-part="story"] [data-part="beats"],
 [data-part="story"] [data-part="choices"],
-[data-part="story"] [data-part="stage-picture"] {
+[data-part="story"] [data-part="picture"] {
   width: 100%;
   max-width: var(--width-prose);
   margin-inline: var(--margin-prose);

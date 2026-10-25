@@ -1,6 +1,6 @@
 import { pluginLabel } from './plugin.ts'
 import type { Game } from './game.ts'
-import type { StageView } from './features/media.ts'
+import type { PictureView } from './features/media.ts'
 import type { SpeakerView } from './speakers.ts'
 import type { SceneBeat } from './sceneBody.ts'
 import type { SceneUi, Ui } from './features/ui.ts'
@@ -24,7 +24,7 @@ type ViewBase = {
   when: string | null
   scene: {
     id: string | null
-    /** Which screen this is: `scene:<id>`, `minigame:<id>`, `room:<stage id>` or `room`. It changes when the screen does, and only then. */
+    /** Which screen this is: `scene:<id>`, `minigame:<id>`, `room:<id>` (a plugin's room scene) or `room`. It changes when the screen does, and only then. */
     key: string
     title: string
     body: string
@@ -37,10 +37,10 @@ type ViewBase = {
     speaker: SpeakerView | null
     /** The big picture to draw with the scene: the speaker's, else null. */
     image: string | null
-    /** The scene's layered picture and its hotspots, or null when it has none. See `stageView`. */
-    stage: StageView | null
+    /** The scene's layered picture and its hotspots, or null when it has none. See `pictureView`. */
+    picture: PictureView | null
     choices: RenderedChoice[]
-    /** The scene's presentation hints (the room's stage's, when no scene is open), as written; left out with none. See `SceneUi`. */
+    /** The scene's presentation hints (the room scene's, when no scene is open), as written; left out with none. See `SceneUi`. */
     ui?: Ui<SceneUi>
   }
   actions: RenderedChoice[]
@@ -72,7 +72,7 @@ function viewOf(shown: Screen, state: GameState, game: Game): View {
   const base: ViewBase = {
     title: game.title,
     when: pluginLabel(game, state),
-    scene: { ...shown.scene, stage: shown.stage, choices: shown.choices.map(renderedChoice) },
+    scene: { ...shown.scene, picture: shown.picture, choices: shown.choices.map(renderedChoice) },
     actions: shown.actions.map(renderedChoice),
     plugins: shown.plugins,
   }

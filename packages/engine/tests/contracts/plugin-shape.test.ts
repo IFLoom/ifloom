@@ -42,7 +42,7 @@ const MEMBERS = {
   // Hooks: at an event, the next state.
   hooks: ['onTurn', 'onTurnDone', 'onStat', 'onCommand'],
   // Providers: answers, never a change to the state.
-  providers: ['guard', 'price', 'label', 'stage', 'actions', 'action', 'audio', 'statModifiers', 'view', 'profile'],
+  providers: ['guard', 'price', 'label', 'scene', 'actions', 'action', 'audio', 'statModifiers', 'view', 'profile'],
   // What entities carry that it gives meaning to: data, each named `<id>/<name>`; the content it brings, under the game's;
   // and which fields of its content are words a translation can replace.
   declares: ['traits', 'content', 'words', 'callWords'],
@@ -152,7 +152,7 @@ describe('the plugin shape (ADR 0009)', () => {
       guard: 'provider',
       price: 'provider',
       label: 'provider',
-      stage: 'provider',
+      scene: 'provider',
       actions: 'provider',
       action: 'provider',
       statModifiers: 'provider',

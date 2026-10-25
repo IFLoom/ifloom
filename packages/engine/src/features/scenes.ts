@@ -180,7 +180,7 @@ function choiceReferences(choice: Choice, oldKey?: string): Reference[] {
   return out
 }
 
-/** What a data scene names: its body, its choices' labels, conditions and effects, its audio, panel and stage. */
+/** What a data scene names: its body, its choices' labels, conditions and effects, its audio, panel and picture. */
 export function dataSceneReferences(scene: DataScene): Reference[] {
   const out: Reference[] = [{ blocks: scene.body }]
   out.push({ actionsIn: scene.body, offers: sceneChoices(scene).map((choice) => choice.id) })
@@ -193,7 +193,7 @@ export function dataSceneReferences(scene: DataScene): Reference[] {
   }
   for (const [channel, track] of Object.entries(scene.audio ?? {})) out.push({ channel, track })
   if (scene.panel !== undefined) out.push({ openPanel: scene.panel.panel, with: scene.panel.with ?? {} })
-  out.push({ stage: scene.stage, choices: sceneChoices(scene).map((choice) => choice.id) })
+  out.push({ layered: scene.picture, choices: sceneChoices(scene).map((choice) => choice.id) })
   return out
 }
 

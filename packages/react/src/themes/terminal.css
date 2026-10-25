@@ -130,7 +130,7 @@ body {
 
 /*
  * The status line is part of the page, not over it: the first row of the
- * grid, across every column, so it pushes the stage down instead of covering
+ * grid, across every column, so it pushes the story down instead of covering
  * the scene title, the notice strip or a minigame. On wide screens it sticks
  * to the top as the page scrolls. With nothing unseen it takes no room.
  */
@@ -296,15 +296,15 @@ body {
   border-radius: 0;
 }
 
-/* Pictures and clips: a framed screen, scanlines on the stage. */
-[data-part="stage-picture"],
+/* Pictures and clips: a framed screen, scanlines on a layered picture. */
+[data-part="picture"],
 [data-part="video"][data-beat],
 [data-part="beat"][data-beat="image"] {
   border-radius: 0;
   border: 1px solid var(--border);
 }
 
-[data-part="stage-picture"]::after {
+[data-part="picture"]::after {
   content: "";
   position: absolute;
   inset: 0;

@@ -1,5 +1,5 @@
 import { useId, useState } from 'react'
-import type { HotspotView, StageView } from '@ifloom/engine'
+import type { HotspotView, PictureView } from '@ifloom/engine'
 import { useGame } from './context.tsx'
 import { Icon } from './icon.tsx'
 import { overridable, usePart } from './overrides.tsx'
@@ -50,24 +50,24 @@ function HotspotImpl({ hotspot }: { hotspot: HotspotView }) {
 }
 
 /**
- * One hotspot on a stage: a button over the picture, placed by its `rect` in
+ * One hotspot on a layered picture: a button over it, placed by its `rect` in
  * percent. Its `aria-label` is the hotspot's label. A greyed-out one stays in
  * the tab order with `aria-disabled`, gives its reason in `title` and to a
  * screen reader, and sends nothing. One with a warning shows the warning icon.
  */
 export const Hotspot = overridable('Hotspot', HotspotImpl)
 
-function StageImpl({ stage, className }: { stage: StageView; className?: string }) {
-  const box = usePart('stage-picture', 'relative w-full overflow-hidden rounded-xl bg-muted', className)
-  const layer = usePart('stage-layer', 'absolute inset-0 size-full object-cover')
-  // The first layer's own shape, once it has loaded, when the stage gives none.
+function LayeredPictureImpl({ picture, className }: { picture: PictureView; className?: string }) {
+  const box = usePart('picture', 'relative w-full overflow-hidden rounded-xl bg-muted', className)
+  const layer = usePart('picture-layer', 'absolute inset-0 size-full object-cover')
+  // The first layer's own shape, once it has loaded, when the picture gives none.
   const [natural, setNatural] = useState<string | null>(null)
-  const aspect = stage.aspect ?? natural ?? '16/9'
+  const aspect = picture.aspect ?? natural ?? '16/9'
   return (
     <div {...box} style={{ aspectRatio: aspect }}>
-      {stage.layers.map((entry, index) => {
+      {picture.layers.map((entry, index) => {
         const key = `${index}:${entry.src}`
-        const measure = index === 0 && !stage.aspect
+        const measure = index === 0 && !picture.aspect
         if (entry.video) {
           return (
             <Video
@@ -105,7 +105,7 @@ function StageImpl({ stage, className }: { stage: StageView; className?: string 
           />
         )
       })}
-      {stage.hotspots.map((hotspot) => (
+      {picture.hotspots.map((hotspot) => (
         <Hotspot key={hotspot.id} hotspot={hotspot} />
       ))}
     </div>
@@ -113,9 +113,9 @@ function StageImpl({ stage, className }: { stage: StageView; className?: string 
 }
 
 /**
- * A layered picture with hotspots: `view.scene.stage`, or a place's
- * `location.stage`. The layers are stacked bottom first, each filling a box
- * whose shape is the stage's `aspect`, else the first layer's own, else 16/9.
+ * A layered picture with hotspots: `view.scene.picture`, or a place's
+ * `location.picture`. The layers are stacked bottom first, each filling a box
+ * whose shape is the picture's `aspect`, else the first layer's own, else 16/9.
  * Pictures go through `Picture` and videos through `Video`.
  */
-export const Stage = overridable('Stage', StageImpl)
+export const LayeredPicture = overridable('LayeredPicture', LayeredPictureImpl)

@@ -210,7 +210,7 @@ function entryName(item: unknown, part: WordPart, index: number): string {
   return words.length ? hashed(words.join('\n')) : String(index)
 }
 
-/** A scene's words: its title, body, choices and stage's hotspots. */
+/** A scene's words: its title, body, choices and picture's hotspots. */
 function sceneWords(walk: Walk, scene: DataScene, index: number) {
   const entry = `scene.${scene.id}`
   const where = `scene ${scene.id}`
@@ -219,7 +219,7 @@ function sceneWords(walk: Walk, scene: DataScene, index: number) {
   walk.field(`${entry}.title`, scene.title, [...at, 'title'], where)
   walk.blocks(scene.body, entry, [...at, 'body'], where)
   scene.choices?.forEach((choice, n) => walk.choice(choice, entry, [...at, 'choices', n], where))
-  walk.part({ hotspots: [{ label: true }] }, scene.stage, entry, `${entry}.stage`, [...at, 'stage'], where)
+  walk.part({ hotspots: [{ label: true }] }, scene.picture, entry, `${entry}.picture`, [...at, 'picture'], where)
 }
 
 /** The shapes of the traits the game's plugins declare words for, by trait id. */

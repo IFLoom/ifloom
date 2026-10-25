@@ -9,7 +9,7 @@
  */
 import { commandOf, type CommandRef, type EffectRef } from './calls.ts'
 import type { SceneMedia } from './game.ts'
-import type { MediaStage } from './features/media.ts'
+import type { PictureDef } from './features/media.ts'
 import type { CallTable, PluginArgs } from './plugin.ts'
 import type { Block } from './scene.ts'
 import type { Condition, KvValue } from './types.ts'
@@ -19,7 +19,7 @@ import { boundReferences } from './amount.ts'
 /**
  * One thing a piece of content names, for the content checker to resolve.
  * Ids by what they are, files by kind, and content that names more (a
- * condition, effects, a command, blocks, a stage) to be looked inside.
+ * condition, effects, a command, blocks, a picture) to be looked inside.
  */
 export type Reference =
   /** A scene, as a gate (`{ seen }`), as somewhere an effect goes, or as a button opens it. */
@@ -134,8 +134,8 @@ export type Reference =
   | { actionsIn: readonly Block[] | string | undefined; offers: readonly string[] }
   /** A `{ media }` block. */
   | { media: SceneMedia }
-  /** A stage. `choices` are its scene's choice ids, or null for a stage with no scene. */
-  | { stage: MediaStage | undefined; choices: readonly string[] | null }
+  /** A layered picture with hotspots. `choices` are its scene's choice ids, or null for a picture with no scene. */
+  | { layered: PictureDef | undefined; choices: readonly string[] | null }
   /** More references, whose problems are worded as `label: what`. */
   | { within: string; refs: readonly Reference[] }
 

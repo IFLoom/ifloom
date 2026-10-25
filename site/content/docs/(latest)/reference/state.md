@@ -328,7 +328,7 @@ The [content checker](/docs/reference/checks) reports a stat in `carryOver` that
 ### SAVE_VERSION
 
 ```ts
-const SAVE_VERSION = 21
+const SAVE_VERSION = 23
 ```
 
 The save format this engine writes. [`loadState`](/docs/reference/saves#loadstate) carries older ones forward. The version goes up only when a field older saves already have changes shape. A new field doesn't bump it: a save that lacks the field gets its load default when it loads, as [`minigame`](#minigame) does. See [SAVE_VERSION](/docs/reference/saves#save_version) for the rule.
@@ -355,6 +355,10 @@ The versions so far:
 | 17 | Took out `transition`, which a `transition` effect set. How a screen comes in is the UI's now, from [presentation hints](/docs/reference/ui-hints). |
 | 18 | Made [`seen`](#seen) and [`chosen`](#chosen) one [`Times`](#times) record per id, in place of `seenOn`, `lastSeenOn`, `chosenOn` and `lastChosenOn`, and dropped the `turn:` kv keys that capped a choice's `once`. |
 | 19 | Moved `phase` into the [kv store](#kv), as the key `phase`. |
+| 20 | Renamed a running [minigame](#minigame)'s `vars` to `kv`. |
+| 21 | Made a [notice](#notices)'s `text` its words, not a prose key. |
+| 22 | Renamed what an entity made in play was given as `desc` to `description`. |
+| 23 | Kept a [pool pick](/docs/reference/media#remembered-picks) for a layered picture's layer under the slot `picture:<index>`, not `stage:<index>`. |
 
 The versions that only added a field (4, 7, 9, 10 and 11) are from before the rule above. A field added now gets a load default and no new version.
 

@@ -1027,6 +1027,45 @@ describe('content migrations', () => {
     expect(Object.keys(out.words as Record<string, string>)[0]).toMatch(/^entity\.vendor:counter\.traits\.shop\/vendor\.blocked\.[0-9a-f]{6}\.reason$/)
   })
 
+  it('carry schema 27 content to 28: a layered picture is a picture, on a scene and a place, and its hotspots’ words follow', () => {
+    const hotspots = [{ id: 'door', rect: [0, 0, 10, 10], label: 'Door', command: { type: 'action', id: 'wait' } }]
+    const v27 = {
+      id: 'mod:p10',
+      schema: 27,
+      scenes: [{ id: 'hall', body: [], choices: [], stage: { layers: [{ src: 'hall.png' }], hotspots } }],
+      kinds: [{ id: 'room', label: 'Room', traits: { 'places/location': { exits: [], body: [], stage: { layers: [{ src: 'room.png' }] } } } }],
+      entities: [
+        {
+          of: 'location',
+          id: 'flat',
+          name: 'Flat',
+          traits: { 'places/location': { exits: [], body: [], stage: { layers: [{ src: 'flat.png' }], hotspots } } },
+        },
+      ],
+      traits: { 'places/location': { 'location:park': { exits: [], body: [], stage: { layers: [{ src: 'park.png' }] } } } },
+      words: {
+        'scene.hall.stage.hotspots.door.label': 'Porte',
+        'entity.location:flat.traits.places/location.stage.hotspots.door.label': 'Porte',
+        'scene.hall.title': 'Entrée',
+      },
+    }
+    const out = unwrap(upgradePack(v27, [places()] as Plugin[])) as unknown as Record<string, unknown>
+    expect(out).toMatchObject({
+      schema: SCHEMA,
+      scenes: [{ id: 'hall', picture: { layers: [{ src: 'hall.png' }], hotspots } }],
+      kinds: [{ id: 'room', traits: { 'places/location': { picture: { layers: [{ src: 'room.png' }] } } } }],
+      entities: [{ id: 'flat', traits: { 'places/location': { picture: { layers: [{ src: 'flat.png' }], hotspots } } } }],
+      traits: { 'places/location': { 'location:park': { picture: { layers: [{ src: 'park.png' }] } } } },
+      words: {
+        'scene.hall.picture.hotspots.door.label': 'Porte',
+        'entity.location:flat.traits.places/location.picture.hotspots.door.label': 'Porte',
+        'scene.hall.title': 'Entrée',
+      },
+    })
+    expect(JSON.stringify(out)).not.toContain('"stage"')
+    expect(JSON.stringify(out)).not.toContain('.stage.')
+  })
+
   it('read every kv store the one way at schema 19, with whose in of, and the phase as a kv key', () => {
     const v18 = {
       id: 'baker',

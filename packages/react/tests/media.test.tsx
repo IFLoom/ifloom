@@ -17,7 +17,7 @@ beforeEach(() => {
   vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {})
 })
 
-/** The flat in the evening: a picture and a clip in the scene, and a layered stage with two hotspots. */
+/** The flat in the evening: a picture and a clip in the scene, and a layered picture with two hotspots. */
 function flat(extra: Partial<Content> = {}): Game {
   return loadGame(
     [
@@ -29,7 +29,7 @@ function flat(extra: Partial<Content> = {}): Game {
           {
             id: 'evening',
             title: 'Evening',
-            stage: {
+            picture: {
               aspect: '4/3',
               layers: [
                 { id: 'room', src: 'flat/room.svg' },
@@ -150,18 +150,18 @@ describe('Video', () => {
   })
 })
 
-describe('Stage', () => {
-  it('stacks the layers in order in a box of the stage’s shape', () => {
+describe('LayeredPicture', () => {
+  it('stacks the layers in order in a box of the picture’s shape', () => {
     play(flat())
-    const box = document.querySelector('[data-part="stage-picture"]') as HTMLElement
+    const box = document.querySelector('[data-part="picture"]') as HTMLElement
     expect(box.style.aspectRatio.replace(/ /g, '')).toBe('4/3')
-    const layers = [...box.querySelectorAll('[data-part="stage-layer"]')]
+    const layers = [...box.querySelectorAll('[data-part="picture-layer"]')]
     expect(layers.map((layer) => [layer.tagName, layer.getAttribute('data-layer'), layer.getAttribute('src')])).toEqual([
       ['IMG', 'room', 'art/flat/room.svg'],
       ['VIDEO', 'rain', 'art/flat/rain.mp4'],
     ])
-    // A stage replaces the old single picture.
-    expect(document.querySelector('[data-part="stage-image"]')).toBeNull()
+    // A layered picture replaces the scene’s single image.
+    expect(document.querySelector('[data-part="scene-image"]')).toBeNull()
   })
 
   it('sends a hotspot’s command when it is clicked', () => {
@@ -177,7 +177,7 @@ describe('Stage', () => {
     const runner = play(flat())
     const door = screen.getByRole('button', { name: 'The front door' })
     expect(door.getAttribute('aria-disabled')).toBe('true')
-    const reason = runner.view().scene.stage!.hotspots.find((spot) => spot.id === 'door')!.disabled!
+    const reason = runner.view().scene.picture!.hotspots.find((spot) => spot.id === 'door')!.disabled!
     // An activity waits until the scene is over.
     expect(reason).toBe('Finish this first.')
     expect(door.title).toContain(reason)

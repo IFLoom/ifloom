@@ -43,7 +43,7 @@ export type PluginContext<S> = CustomContext & {
   apply: (effects: readonly EffectRef[], on?: GameState) => GameState
   /**
    * Only in `view`: where the pool picks the view makes are written, for the
-   * reducer to record. Pass it to `stageView` so a stage's pick stays the
+   * reducer to record. Pass it to `pictureView` so a picture's pick stays the
    * same on every visit (`beats` records its own). Undefined elsewhere.
    */
   picks?: Record<string, string>
@@ -95,7 +95,7 @@ export type Asked = { command: Command; effects: readonly Effect[] }
  * Its members follow one naming rule (ADR 0009). A hook runs at an event and
  * returns the next state, and is named `on` and the event: `onTurn`,
  * `onCommand`. A provider answers a question and never changes the state, and
- * is named by the noun it gives: `guard`, `price`, `label`, `stage`,
+ * is named by the noun it gives: `guard`, `price`, `label`, `scene`,
  * `buttons`, `audio`, `statModifiers`, `view`, `profile`. Tables of
  * named functions (`conditions`, `effects`, `commands`, `queries`, `values`)
  * are plural nouns. Nothing is nested: there is no `hooks: {}`.
@@ -231,7 +231,7 @@ export type Plugin<S = any, V = unknown> = {
    * shop front, a dashboard's heading. The first plugin that answers fills it;
    * with none, the screen is the game's title and its buttons.
    */
-  stage?: (state: GameState, context: PluginContext<S>) => StageDef | undefined
+  scene?: (state: GameState, context: PluginContext<S>) => RoomScene | undefined
   /**
    * Actions offered while no scene is open, drawn as buttons before the
    * game's own `actions` and exactly like them: a room's things to do, say.
@@ -318,8 +318,8 @@ export type StatModifier = {
   multiply?: number
 }
 
-/** What the screen shows while no scene is open, from a plugin's `stage`. */
-export type StageDef = {
+/** What the screen shows while no scene is open, from a plugin's `scene`. */
+export type RoomScene = {
   /** The heading: a room's name. */
   title: string
   /** What is written there, as a scene's blocks: prose keys, variants, conditions. */
@@ -655,11 +655,11 @@ export function pluginLabel(game: Game, state: GameState): string | null {
   return parts.length ? parts.join(' · ') : null
 }
 
-/** The first plugin's stage, with the id its blocks are drawn under, or undefined if none answers. */
-export function pluginStage(game: Game, state: GameState): (StageDef & { id: string }) | undefined {
+/** The first plugin's room scene, with the id its blocks are drawn under, or undefined if none answers. */
+export function pluginScene(game: Game, state: GameState): (RoomScene & { id: string }) | undefined {
   for (const plugin of pluginsOf(game)) {
-    const stage = plugin.stage?.(state, pluginContext(plugin, state, game))
-    if (stage) return { ...stage, id: stage.id ?? plugin.id }
+    const scene = plugin.scene?.(state, pluginContext(plugin, state, game))
+    if (scene) return { ...scene, id: scene.id ?? plugin.id }
   }
   return undefined
 }

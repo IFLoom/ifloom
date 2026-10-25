@@ -250,7 +250,7 @@ The open scene's sound and voice beats are in [`view.audio.cues`](/docs/referenc
 
 **Gotchas:**
 - `[[voice:id]]` only counts at the end of a [spoken line](#speech). Anywhere else it stays in the text, brackets included.
-- In a place's body (the [stage](/docs/reference/plugins#stage)), `[[sound:id]]` becomes a beat but isn't cued, because no scene is open.
+- In a place's body (its [room scene](/docs/reference/plugins#scene)), `[[sound:id]]` becomes a beat but isn't cued, because no scene is open.
 - The loader reports an unknown track, a playlist, and a track on a background channel such as `music`.
 
 ### Paragraphs that wait

@@ -167,7 +167,7 @@ describe('the files a game names', () => {
         {
           id: 'flat',
           body: [{ prose: 'flat.in' }, { media: { src: 'clip', video: true, poster: 'clip-still' } }, { media: { pool: 'door', tags: ['day'] } }],
-          stage: { layers: [{ src: 'room.png' }] },
+          picture: { layers: [{ src: 'room.png' }] },
           choices: [
             {
               id: 'snap',

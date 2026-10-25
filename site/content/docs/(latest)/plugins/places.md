@@ -1,6 +1,6 @@
 ---
 title: "Places"
-description: "Locations with exits, walking between them, where the player is, opening hours, room actions and the picture stage."
+description: "Locations with exits, walking between them, where the player is, opening hours, room actions and the layered picture."
 ---
 `@ifloom/plugin-places` gives a game a map. You declare locations with exits between them and things to do in each, and the plugin keeps track of where the player is and lets them walk from one place to the next.
 
@@ -125,7 +125,7 @@ Every other entity field (`at`, `visible`, `stats`, `kv`, `traits`) works as on 
 type Place = {
   parent?: string
   exits: readonly string[]
-  stage?: MediaStage
+  picture?: PictureDef
   blocked?: Blocked[]
   body: Block[]
   actions?: ActionDef[]
@@ -141,7 +141,7 @@ What the `places/location` trait holds. Any entity that carries it is a place th
 |---|---|
 | `parent` | The place it's inside, such as a room's building. [`places/within`](#conditions) follows it. |
 | `exits` | The places one step away, by id. Exits are one-way, so list the way back on the other place too. |
-| `stage` | A layered picture with hotspots, as a [scene's stage](/docs/reference/scenes#the-stage). Its hotspots send a `command`, because a place has no choices. See [The picture stage](#the-picture-stage). |
+| `picture` | A layered picture with hotspots, as a [scene's picture](/docs/reference/scenes#the-picture). Its hotspots send a `command`, because a place has no choices. See [The picture](#the-picture). |
 | `blocked` | Walking in here is refused while one of these [conditions](/docs/reference/conditions) holds. The first that holds gives the `reason`, which is both the refusal and the exit's `disabled` text. With `hide: true`, the exit is left off the screen while it holds, instead of greyed out. |
 | `body` | What the player reads here while no scene is open. These are [prose blocks](/docs/reference/scenes#block), exactly as in a data scene's body, so pictures and videos sit in it in order, from markup or `{ media }` blocks. |
 | `actions` | What there is to do here, as [`ActionDef`](/docs/reference/actions#actiondef) buttons. They're drawn before the game's own `actions`. |
@@ -476,24 +476,24 @@ const prose = { postcard: 'Greetings from the {{v:places/name}}.' }
 // 'Greetings from the High Street.'
 ```
 
-## The stage, the buttons and the label
+## The room, the buttons and the label
 
-### The stage
+### The room scene
 
-While no scene is open, the room fills the screen. Its plugin [`stage`](/docs/reference/plugins#stage) has the place's `name` as the title and its `body` as the text. `view.scene` is then `{ key: 'room:cafe', title: 'The Corner Café', body: 'Six tables, one of them wobbly.', ... }`.
+While no scene is open, the room fills the screen. Its plugin [`scene`](/docs/reference/plugins#scene) has the place's `name` as the title and its `body` as the text. `view.scene` is then `{ key: 'room:cafe', title: 'The Corner Café', body: 'Six tables, one of them wobbly.', ... }`.
 
 The body is drawn under the place's own id, not the plugin's. A [`variants`](/docs/reference/scenes#block) block rotates per id, so each place keeps its own rotation, and the café's lines don't move on because the high street was drawn.
 
-The first plugin that has a stage fills the screen. While the player is nowhere, places has no stage, and the screen shows the game's title with an empty body.
+The first plugin that has a room scene fills the screen. While the player is nowhere, places has none, and the screen shows the game's title with an empty body.
 
-### The picture stage
+### The picture
 
-A place can give a `stage` as well as its `image`: layers of pictures or videos with hotspots on them. This café has the room, the counter from a pool, and a lamp that comes on in the evening. Small Town's own café stage is simpler, with one layer, Ava's photo, and a hotspot on her.
+A place can give a `picture` as well as its `image`: layers of pictures or videos with hotspots on them. This café has the room, the counter from a pool, and a lamp that comes on in the evening. Small Town's own café picture is simpler, with one layer, Ava's photo, and a hotspot on her.
 
 ```ts
 places.location({
   id: 'cafe', name: 'The Corner Café', description: 'Café', exits: ['high-street', 'cafe.back'],
-  stage: {
+  picture: {
     aspect: '16/9',
     layers: [
       { id: 'room', src: 'place/cafe' },
@@ -509,12 +509,12 @@ places.location({
 })
 ```
 
-The plugin draws it into its view as `location.stage`, next to `image`, with the engine's [`stageView`](/docs/reference/view#stageview). A hotspot is greyed out with the same reason as the button for its command, so the back door reads `Staff only.` until the player works there. A pool's pick is kept under the place's id, so the counter looks the same every time the player comes in. The React UI's [`LocationCard`](#locationcard) draws the stage above the place's name with [`Stage`](/docs/react/components#stage).
+The plugin draws it into its view as `location.picture`, next to `image`, with the engine's [`pictureView`](/docs/reference/view#pictureview). A hotspot is greyed out with the same reason as the button for its command, so the back door reads `Staff only.` until the player works there. A pool's pick is kept under the place's id, so the counter looks the same every time the player comes in. The React UI's [`LocationCard`](#locationcard) draws the picture above the place's name with [`LayeredPicture`](/docs/react/components#layeredpicture).
 
 **Gotchas.**
 - The hotspots are left out while a scene is open, or while a lock stops everything, as the exits are. The layers stay.
 - A hotspot with a `choice` is reported, because a place has no choices.
-- The idle screen's [`view.scene.stage`](/docs/reference/view#the-scene) stays `null`. A place's stage is only in `view.plugins.places`.
+- The idle screen's [`view.scene.picture`](/docs/reference/view#the-scene) stays `null`. A place's picture is only in `view.plugins.places`.
 
 ### The buttons
 
@@ -574,7 +574,7 @@ type PlaceView = {
   description: string | null
   tags: string[]
   image: string | null
-  stage: StageView | null
+  picture: PictureView | null
 }
 ```
 
@@ -588,7 +588,7 @@ Where the player is.
 | `description` | Its entity's `description`, tokens filled, or `null` with none. |
 | `tags` | Its entity's tags, `[]` with none. |
 | `image` | Its entity's `image` through [`artSrc`](/docs/reference/prose#artsrc), or `null` with none. |
-| `stage` | The place's [picture stage](#the-picture-stage) as a [`StageView`](/docs/reference/media#stageview), or `null` when it has none. |
+| `picture` | The place's [layered picture](#the-picture) as a [`PictureView`](/docs/reference/media#pictureview), or `null` when it has none. |
 
 ### ExitView
 
@@ -617,7 +617,7 @@ On a new game in the flat:
 
 ```ts
 {
-  location: { id: 'flat', ref: 'location:flat', name: 'Your flat', description: 'Home', tags: [], image: null, stage: null },
+  location: { id: 'flat', ref: 'location:flat', name: 'Your flat', description: 'Home', tags: [], image: null, picture: null },
   exits: [
     { id: 'high-street', label: 'High Street', ref: 'location:high-street', description: 'Small Town', tags: ['outdoors'], image: null, command: places.go('high-street') },
   ],
@@ -676,7 +676,7 @@ function LocationCard(): JSX.Element | null
 
 Where the player is: the place's name and the line under it (its `description`), and what lies there, each with a small **Pick up** button that sends the thing's [`pickUp`](/docs/plugins/places#things-lying-in-a-place) command. It reads the [places](/docs/plugins/places) plugin's view at [`view.plugins.places`](/docs/plugins/places#the-view), typed with the plugin's `PlacesView` but without importing the plugin's code.
 
-A place with a [stage](/docs/plugins/places#the-picture-stage) shows it above the name as a [`Stage`](/docs/react/components#stage), with its hotspots. The places plugin leaves the hotspots out while a scene is open, so the room can't be used from behind a scene.
+A place with a [picture](/docs/plugins/places#the-picture) shows it above the name as a [`LayeredPicture`](/docs/react/components#layeredpicture), with its hotspots. The places plugin leaves the hotspots out while a scene is open, so the room can't be used from behind a scene.
 
 It draws nothing in a game without the places plugin, or while the plugin's `location` is `null` (the player is nowhere). The exits are [`Exits`](#exits).
 
@@ -815,9 +815,9 @@ A place named by something that isn't one is reported as `"item:paper" has no pl
 - Anything an action's `when`, `blocked` conditions or `command` names that the game doesn't have, prefixed with the action (`action dig: unknown entity "location:moon"`).
 - A track or channel in `audio` that the game doesn't have, a cue channel such as `sfx`, or a sound effect's track, prefixed with `audio:` (`audio: unknown track "rain"`). See [Audio](/docs/reference/checks#audio).
 - A `ui` that isn't data (`ui must be an object of hints`).
-- Anything wrong with the `stage`: an unknown pool or tag, a video flag on a picture, a hotspot's rect, id, layer or command, a hotspot with a `choice`, and the conditions on layers and hotspots (`hotspot back: unknown layer "door"`). See [Media](/docs/reference/checks#media).
+- Anything wrong with the `picture`: an unknown pool or tag, a video flag on a picture, a hotspot's rect, id, layer or command, a hotspot with a `choice`, and the conditions on layers and hotspots (`hotspot back: unknown layer "door"`). See [Media](/docs/reference/checks#media).
 
-A place's `image`, as any entity's, and a stage layer's file are listed in the checker's [`files`](/docs/reference/checks#fileref).
+A place's `image`, as any entity's, and a picture layer's file are listed in the checker's [`files`](/docs/reference/checks#fileref).
 
 Places still written as a list in `data.places.locations`, as content did before schema 24, are reported one by one (`locations yard · locations are entities now: …`). A pack written then is [carried forward](#older-content) for you.
 
@@ -835,6 +835,8 @@ town · trait places/location on location:cafe · hotspot menu: names choice "or
 
 A pack written for schema 23 or older kept its places in `data.places.locations`. [`upgradePack`](/docs/reference/loader#upgradepack) carries it forward: each place becomes an entity of the kind `location`, with its `name` and `tags`, its old `tag` as the `desc` and its old `art` as the `image` (an empty `art` is dropped), and the rest in the `places/location` trait. Prose and strings that print `{{v:places/tag}}` print `{{v:places/desc}}` instead. Saves need nothing, because a place's entity was `location:<id>` before too.
 
+A pack written for schema 27 or older gave a place's layered picture as `stage`. Its step (content version 28) names it `picture`, on an entity, on a kind or in a `traits` row, and moves the `words` keys for its hotspots from `…traits.places/location.stage.hotspots…` to `…traits.places/location.picture.hotspots…`.
+
 ## Gotchas
 
 - **`arrive` runs on `places/go` only.** A `places/move` puts the player somewhere with nothing on the doorstep. The engine has no arrival rule or hook of its own, so a place's `arrive` is the only doorstep there is. For something that should happen however the player got there, use a [trigger](/docs/reference/triggers) on `places.at(...)`.
@@ -847,4 +849,4 @@ A pack written for schema 23 or older kept its places in `data.places.locations`
 
 ## See it in an example
 
-Small Town: the places are the town, one in each place's file in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story), with `blocked` opening hours on the café and the office, a `stage` in the café, and each place's own `actions`. [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) adds `places({ start: 'flat' })`.
+Small Town: the places are the town, one in each place's file in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story), with `blocked` opening hours on the café and the office, a `picture` in the café, and each place's own `actions`. [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) adds `places({ start: 'flat' })`.

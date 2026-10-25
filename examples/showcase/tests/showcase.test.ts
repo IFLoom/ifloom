@@ -104,9 +104,9 @@ describe('Small Town', () => {
     expect(view(state, game).scene.body).toContain('very yellow')
     expect(holds(state, game, wardrobe.wearing('clothing:raincoat'))).toBe(true)
 
-    // The café's stage: the counter while Ava is on shift, and a hotspot on her that talks to her.
+    // The café's picture: the counter while Ava is on shift, and a hotspot on her that talks to her.
     const cafe = (view(state, game).plugins.places as PlacesView).location!
-    expect(cafe.stage).toEqual({
+    expect(cafe.picture).toEqual({
       aspect: '16/10',
       layers: [{ id: 'counter', src: 'art/photo/ava.svg' }],
       hotspots: [{ id: 'ava', rect: [36, 22, 28, 44], label: 'Talk to Ava', command: commandOf(cast.talk('ava')), layer: 'counter' }],

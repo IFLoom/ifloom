@@ -10,7 +10,7 @@ import { closeApp, openApp, type DevicesView } from '@ifloom/plugin-devices'
 import { postTo, react, type FeedsView } from '@ifloom/plugin-feed'
 import { replyTo, type MessagesView } from '@ifloom/plugin-messages'
 import { calendar, pass, period, sleep } from '@ifloom/plugin-calendar'
-import { at, go, places, where } from '@ifloom/plugin-places'
+import { at, go, location, places, where } from '@ifloom/plugin-places'
 import { call, cast, here, person, talk } from '@ifloom/plugin-cast'
 import { phone } from '../src/index.ts'
 
@@ -86,6 +86,9 @@ const town: Content = {
     'fans.nice': 'Love this',
   },
   entities: [
+    location({ id: 'house', name: 'House', desc: 'Home', exits: ['cafe', 'work'], body: [{ text: 'place.house' }] }),
+    location({ id: 'cafe', name: 'Café', desc: 'Café', exits: ['house'], body: [{ text: 'place.cafe' }] }),
+    location({ id: 'work', name: 'Work', desc: 'Work', exits: ['house'], body: [{ text: 'place.work' }] }),
     person({
       id: 'ava',
       name: 'Ava',
@@ -98,13 +101,6 @@ const town: Content = {
     }),
   ],
   data: {
-    places: {
-      locations: [
-        { id: 'house', name: 'House', tag: 'Home', exits: ['cafe', 'work'], art: '', body: [{ text: 'place.house' }] },
-        { id: 'cafe', name: 'Café', tag: 'Café', exits: ['house'], art: '', body: [{ text: 'place.cafe' }] },
-        { id: 'work', name: 'Work', tag: 'Work', exits: ['house'], art: '', body: [{ text: 'place.work' }] },
-      ],
-    },
     messages: {
       messages: [
         // A text that arrives the day after the café.

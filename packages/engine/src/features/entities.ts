@@ -23,6 +23,7 @@ import {
   parseRef,
   resolveTraits,
   traitDef,
+  traitOf,
   writeEntity,
   type CreatedFields,
   type EntityDef,
@@ -341,13 +342,6 @@ function merge(): PackMerge<EntitiesShape['game'], EntitiesShape['pack']> {
         const theirs = plugged.get(value.id)
         return theirs && theirs !== value ? { ...theirs, ...value } : value
       })
-      // A plugin's entities, from its content; one the game declares itself wins.
-      for (const plugin of game.plugins ?? []) {
-        for (const entity of plugin.entities?.(game) ?? []) {
-          const ref = `${entity.of}:${entity.id}`
-          if (!entities.has(ref)) entities.set(ref, { value: entity, from: plugin.id })
-        }
-      }
       game.entities = [...entities.values()].map((entry) => entry.value)
       // Every entity's traits worked out once, from the rows over what the entities and kinds declare.
       const table = Object.fromEntries([...rows].map(([id, byRef]) => [id, Object.fromEntries([...byRef].map(([ref, row]) => [ref, row.value]))]))
@@ -523,7 +517,9 @@ export const entities = defineFeature<EntitiesShape>({
         const parts = parseRef(ref.entity)
         if (!parts) return [`unknown entity "${ref.entity}": name one as "kind:id"`]
         if (!kinds.has(parts.kind)) return [`unknown kind "${parts.kind}"`]
-        return parts.id === '*' || entityDef(game, ref.entity) ? [] : [`unknown entity "${ref.entity}"`]
+        if (parts.id === '*') return []
+        if (!entityDef(game, ref.entity)) return [`unknown entity "${ref.entity}"`]
+        return ref.carrying === undefined || traitOf(game, ref.entity, ref.carrying) !== undefined ? [] : [`"${ref.entity}" has no ${ref.carrying} trait`]
       },
       // Who a spoken line is under: a reference, or a bare id read as `character:<id>`, else the one entity with that id.
       speaker: (ref) => {

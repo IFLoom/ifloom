@@ -97,7 +97,7 @@ A block with a `when` only shows while its [condition](/docs/reference/condition
 
 `actions` is the list of buttons the room offers. Each is an [action](/docs/reference/actions): an id, the label on its button, what it costs and its effects. The coffee costs 3 coins, passes a period of time with the calendar's `pass(1)`, and gives 20 energy. Step 3 declares the coins and the energy. The engine charges the cost before the effects apply, and refuses the action, with the stat's `lacking` line, when the player can't pay. `{ not: … }` turns the calendar's condition round, so the door is locked for the rest of the day.
 
-The locations are content. In step 5 they go into the game's content, under `data.places.locations`. There's more in [Places](/docs/plugins/places#locationdef) and the calendar's [conditions](/docs/plugins/calendar#conditions).
+The locations are content. In step 5 they go into the game's content, under `data.places.locations`. There's more in [Places](/docs/plugins/places#the-location-trait) and the calendar's [conditions](/docs/plugins/calendar#conditions).
 
 ## 2. A character with a schedule
 

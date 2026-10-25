@@ -245,13 +245,17 @@ describe('plugins working together', () => {
 })
 
 describe('plugins that bring entities and speakers', () => {
-  // A choir: its singers are entities of a kind it brings, made from its own content, so a scene can name one as its speaker.
+  // A choir: its singers are entities of a kind it brings, in its own content, so a scene can name one as its speaker.
   const choir = definePlugin<null>({
     id: 'choir',
     version: 1,
-    content: { kinds: [{ id: 'singer', label: 'Singer', plural: 'Choir', listed: true, ui: { hue: 280 } }] },
-    entities: (game) =>
-      ((game.data?.choir?.singers ?? []) as unknown as { id: string; name: string }[]).map((singer) => ({ id: singer.id, of: 'singer', name: singer.name })),
+    content: {
+      kinds: [{ id: 'singer', label: 'Singer', plural: 'Choir', listed: true, ui: { hue: 280 } }],
+      entities: [
+        { id: 'ann', of: 'singer', name: 'Ann' },
+        { id: 'bea', of: 'singer', name: 'Bea' },
+      ],
+    },
   })
   const hall: Content = {
     name: 'hall',
@@ -259,14 +263,6 @@ describe('plugins that bring entities and speakers', () => {
     entities: [{ id: 'bea', of: 'singer', name: 'Bea the soloist', stats: { voice: 9 } }],
     scenes: [{ id: 'hymn', speaker: 'ann', body: [{ text: 'hymn' }], choices: [] }],
     prose: { hymn: 'A long note.' },
-    data: {
-      choir: {
-        singers: [
-          { id: 'ann', name: 'Ann' },
-          { id: 'bea', name: 'Bea' },
-        ],
-      },
-    },
   }
 
   it('start with the plugin’s kinds and entities, a game’s own declaration winning', () => {
@@ -277,8 +273,8 @@ describe('plugins that bring entities and speakers', () => {
     const singers = view(state, game).entities.singer
     expect(singers.plural).toBe('Choir')
     expect(singers.entries.map((entry) => [entry.ref, entry.name, entry.stats.map((stat) => stat.value)])).toEqual([
-      ['singer:bea', 'Bea the soloist', [9]],
       ['singer:ann', 'Ann', [3]],
+      ['singer:bea', 'Bea the soloist', [9]],
     ])
   })
 

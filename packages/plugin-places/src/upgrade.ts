@@ -94,8 +94,45 @@ function presentationToUi(pack: RawPack): RawPack {
   return isRecord(pack.prose) ? { ...out, prose } : out
 }
 
+/** What a location's fields became at schema 24: the entity's, as named here; the rest is the `places/location` trait's. */
+const ENTITY_FIELDS: Record<string, string> = { id: 'id', name: 'name', tag: 'desc', art: 'image', tags: 'tags' }
+
+/**
+ * A location in `data.places.locations` as an entity of the kind `location`
+ * carrying the `places/location` trait. Its `name` and `tags` are the
+ * entity's, its `tag` the entity's `desc` and its `art` the entity's `image`
+ * (an empty one is left out, as it named no picture); the rest (exits, body,
+ * actions and so on) is the trait. The locations follow the pack's own
+ * entities, and `data.places` goes when nothing else is left in it.
+ */
+function locationsToEntities(pack: RawPack): RawPack {
+  const data = isRecord(pack.data) ? pack.data : undefined
+  const placesData = data && isRecord(data.places) ? data.places : undefined
+  if (!data || !placesData || !Array.isArray(placesData.locations)) return pack
+  const entities = placesData.locations.filter(isRecord).map((location) => {
+    const entity: Record<string, unknown> = { of: 'location' }
+    const trait: Record<string, unknown> = {}
+    for (const [field, value] of Object.entries(location)) {
+      if (value === undefined) continue
+      if (field in ENTITY_FIELDS) {
+        if (value !== '') entity[ENTITY_FIELDS[field]] = value
+      } else trait[field] = value
+    }
+    return { ...entity, traits: { 'places/location': trait } }
+  })
+  const { locations: _moved, ...restPlaces } = placesData
+  const { places: _places, ...restData } = data
+  const nextData = Object.keys(restPlaces).length ? { ...restData, places: restPlaces } : restData
+  const { data: _data, ...rest } = pack
+  return {
+    ...rest,
+    entities: [...(Array.isArray(pack.entities) ? pack.entities : []), ...entities],
+    ...(Object.keys(nextData).length ? { data: nextData } : {}),
+  } as RawPack
+}
+
 /** The version of what content writes for this plugin. */
-export const CONTENT_VERSION = 21
+export const CONTENT_VERSION = 24
 
 export const contentMigrations: Record<number, ContentStep> = {
   // 5 → 6: a command's one target is `id`.
@@ -119,6 +156,13 @@ export const contentMigrations: Record<number, ContentStep> = {
   // 20 → 21: effects are told apart by their key, as conditions are: `{ stat: 'coins', by: -2 }`, never
   // `{ kind: 'stat', … }`. This plugin's content holds effects, so they are keyed here as well as by the engine.
   20: (pack, tools) => tools.effects(pack),
+  // 23 → 24: a location is an entity with the `places/location` trait, its `tag` the entity's `desc` and its
+  // `art` its `image`; so the value `places/tag` is `places/desc`, in a value's name and in prose and strings tokens.
+  23: (pack, tools) =>
+    tools.objects(
+      tools.words(locationsToEntities(pack), (text) => text.replace(/\{\{v:places\/tag(?=[\s}])/g, '{{v:places/desc')),
+      (value) => (value.value === 'places/tag' ? { ...value, value: 'places/desc' } : value),
+    ),
 }
 
 /** The version of this plugin's commands. */

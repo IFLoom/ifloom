@@ -52,7 +52,7 @@ export const sound: Content = {
 }
 ```
 
-The café names its ambience in its [location](/docs/plugins/places#locationdef):
+The café names its ambience in its [location](/docs/plugins/places#the-location-trait):
 
 ```ts
 { id: 'cafe', name: 'The Corner Café', /* ... */ audio: { ambience: 'cafe.murmur' } }

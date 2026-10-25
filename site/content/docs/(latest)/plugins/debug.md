@@ -100,7 +100,7 @@ The commands set the state and nothing else, so you can get to the state you wan
 
 - **No cost.** Nothing is paid, and no time passes except what `debug/time` and `debug/turn` set.
 - **No locks.** A [lock](/docs/reference/locks) never stops them, even one that denies `'*'`.
-- **No exit for `debug/go`.** It ignores a place's [`blocked`](/docs/plugins/places#locationdef) entries, opening hours included, and runs nothing on arrival. It's a [`places/move`](/docs/plugins/places#effects), so the place's [`arrive`](/docs/plugins/places#arrival) doesn't run.
+- **No exit for `debug/go`.** It ignores a place's [`blocked`](/docs/plugins/places#the-location-trait) entries, opening hours included, and runs nothing on arrival. It's a [`places/move`](/docs/plugins/places#effects), so the place's [`arrive`](/docs/plugins/places#arrival) doesn't run.
 - **No turn ends.** `debug/time` moves the calendar's clock and leaves [`state.turn`](/docs/reference/state#turn) alone. `debug/turn` changes the counter and leaves the calendar's clock alone. Neither runs [`rules.onTurn`](/docs/reference/rules#onturn) or any plugin's `onTurn` [hook](/docs/reference/plugins#hooks-and-providers), and neither puts the [`resets`](/docs/reference/rules#resets) kv keys back. To test a night, use the calendar's real [`sleep()`](/docs/plugins/calendar#commands) or a [`turn`](/docs/reference/effects#turn) effect.
 - **`debug/scene` replaces any open scene.** The [`scene`](/docs/reference/commands#scene) command refuses while a scene is open, but this one doesn't.
 

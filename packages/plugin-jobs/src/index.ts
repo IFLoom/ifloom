@@ -467,7 +467,11 @@ export function jobs(): DefinedPlugin<JobsState, JobsView> {
           list: 'jobs',
           id: job.id,
           refs: [
-            ...(job.at ?? []).map((location): Reference => ({ entry: location, plugin: 'places', list: 'locations', noun: 'location' })),
+            // Where a job is worked is the places plugin's to know, by name; without it there is no map to check against.
+            ...(game.plugins?.some((plugin) => plugin.id === 'places') ? (job.at ?? []) : []).map((location): Reference => ({
+              entity: location.includes(':') ? location : `location:${location}`,
+              carrying: 'places/location',
+            })),
             ...(job.blocked ?? []).map((entry): Reference => ({ within: 'blocked', refs: [{ when: entry.when }] })),
             {
               within: 'shift',

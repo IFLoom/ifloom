@@ -127,7 +127,7 @@ type Blocked = {
 }
 ```
 
-Why something the player could do is refused for now. Everything that can be refused takes a `blocked` list of these: an action, a scene's [choice](/docs/reference/scenes#choice), a [place](/docs/plugins/places#locationdef), a device's [app](/docs/plugins/devices#appdef) and a [job](/docs/plugins/jobs#jobdef). The entries are checked in order, and the first whose `when` [holds](/docs/reference/conditions) refuses it. Its `reason` is both the refusal and the button's disabled text.
+Why something the player could do is refused for now. Everything that can be refused takes a `blocked` list of these: an action, a scene's [choice](/docs/reference/scenes#choice), a [place](/docs/plugins/places#the-location-trait), a device's [app](/docs/plugins/devices#appdef) and a [job](/docs/plugins/jobs#jobdef). The entries are checked in order, and the first whose `when` [holds](/docs/reference/conditions) refuses it. Its `reason` is both the refusal and the button's disabled text.
 
 | Field | What it does |
 |---|---|

@@ -5,13 +5,17 @@
  * The engine knows no places. This plugin keeps the player's location in its
  * own state, fills the screen with the room's description while no scene is
  * open (`stage`), offers the room's actions as buttons, and hands the UI the
- * exits. Locations are content — `data.places.locations` in a pack — so a mod
- * can add a room or change one.
+ * exits. A location is an entity that carries the `places/location` trait,
+ * written with `location({ ... })` in content's `entities`: its name, `desc`
+ * and `image` are the entity's, and its exits, body and actions are the
+ * trait's. So a mod adds a room as it adds any entity, and changes one with
+ * a `traits` row or by replacing the entity.
  *
- * Each location is also a unique entity of the kind `location`, so it holds
- * things: what lies there, shown in the view with a button to pick it up. The
- * `places/holder` query names where the player is as that entity, so another
- * plugin (the inventory's drop) can put something down there by name.
+ * The plugin brings the kind `location`, which `location()` uses. Each place
+ * is unique, so it holds things: what lies there, shown in the view with a
+ * button to pick it up. The `places/holder` query names where the player is
+ * as that entity, so another plugin (the inventory's drop) can put something
+ * down there by name.
  */
 import {
   actionReferences,
@@ -19,17 +23,23 @@ import {
   bindCurrent,
   commandOf,
   definePlugin,
+  entityDesc,
   entityImage,
   entityName,
   entityOf,
+  entityTags,
+  entityTrait,
   heldBy,
   heldCount,
   holds,
   lockOn,
   lockedOut,
+  parseRef,
   stringOf,
   renderAction,
   stageView,
+  traitOf,
+  withTrait,
   type ActionDef,
   type Blocked,
   type Block,
@@ -38,6 +48,7 @@ import {
   type DefinedPlugin,
   type Effect,
   type EffectRef,
+  type EntityDef,
   type EntityRef,
   type Game,
   type GameState,
@@ -47,27 +58,25 @@ import {
   type Reference,
   type StageView,
   type SceneUi,
+  type TraitDef,
   type Ui,
   YOU,
 } from '@ifloom/engine'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
-/** A place, as content declares it in `data.places.locations`. */
-export type LocationDef = {
-  id: string
-  name: string
-  /** A word or two under the name: "Home", "Café". */
-  tag: string
-  /** Words the UI can style or filter places by: `['outdoors']`. The plugin gives them no meaning. */
-  tags?: string[]
+/**
+ * What the `places/location` trait holds: what makes an entity a place the
+ * player can be in. The place's name, its `desc` (a word or two under the
+ * name: "Home", "Café"), its `image` and its `tags` are the entity's.
+ */
+export type Location = {
   /** The place it is inside: a room's building. `places/within` follows it. */
   parent?: string
   /** The places one step away. */
   exits: readonly string[]
-  art: string
   /**
-   * A layered picture with hotspots, drawn in place of `art` when the UI
-   * supports it. A hotspot here sends a `command`; a place has no choices.
+   * A layered picture with hotspots, drawn where the UI draws the room. A
+   * hotspot here sends a `command`; a place has no choices.
    */
   stage?: MediaStage
   /**
@@ -99,6 +108,20 @@ export type LocationDef = {
   arrive?: Arrival
 }
 
+declare module '@ifloom/engine' {
+  interface Traits {
+    'places/location': Location
+  }
+}
+
+/**
+ * What `location()` takes: an entity's fields (its `of` is `'location'` if
+ * left out; its `desc` is the line under the place's name, its `image` its
+ * picture) and the `places/location` trait's, side by side. `ui` is the
+ * trait's: the room's hints, as a scene's.
+ */
+export type LocationDef = Omit<EntityDef, 'of' | 'ui'> & Location & { of?: string }
+
 /** What happens as the player walks into a place: effects, while `when` holds. */
 export type Arrival = { when?: Condition; effects: EffectRef[] }
 
@@ -107,7 +130,7 @@ export type PlacesOptions = {
   start?: string
 }
 
-/** The plugin's state: where the player is, or null. */
+/** The plugin's state: where the player is, by the place's id (its whole reference for a place of another kind), or null. */
 export type PlacesState = { at: string | null }
 
 /**
@@ -117,12 +140,14 @@ export type PlacesState = { at: string | null }
  * going costs. Send `command` to take it. The rest describes where it leads.
  */
 export type ExitView = RenderedChoice & {
-  /** The place's line under its name. */
-  tag: string
-  /** The place's tags. */
+  /** The place's entity: `'location:park'`. */
+  ref: EntityRef
+  /** The place's line under its name, its entity's `desc`; null with none. */
+  desc: string | null
+  /** The place's tags, its entity's. */
   tags: string[]
-  /** The place's picture. */
-  art: string
+  /** The place's picture's path, its entity's `image` through `artSrc`; null with none. */
+  image: string | null
 }
 
 /** A thing lying where the player is, as the UI draws it. */
@@ -138,14 +163,30 @@ export type LyingView = {
   pickUp: RenderedChoice
 }
 
+/** Where the player is, as the UI draws it. */
+export type LocationView = {
+  /** The place's id, as `go` names it. */
+  id: string
+  /** Its entity: `'location:park'`. */
+  ref: EntityRef
+  name: string
+  /** The line under its name, its entity's `desc`; null with none. */
+  desc: string | null
+  tags: string[]
+  /** Its picture's path, its entity's `image` through `artSrc`; null with none. */
+  image: string | null
+  /**
+   * The place's stage as the engine's `stageView` draws it, or null when it
+   * has none. Its hotspots are left out while a scene is open or a lock holds
+   * everything, as the exits are.
+   */
+  stage: StageView | null
+}
+
 /** What the UI reads at `view.plugins.places`. */
 export type PlacesView = {
-  /**
-   * Where the player is; null when nowhere. `stage` is the place's stage as the
-   * engine's `stageView` draws it, or null when it has none. Its hotspots are
-   * left out while a scene is open or a lock holds everything, as the exits are.
-   */
-  location: { id: string; name: string; tag: string; tags: string[]; art: string; stage: StageView | null } | null
+  /** Where the player is; null when nowhere. */
+  location: LocationView | null
   /** The exits, in the order the place lists them; none while a scene is open or a lock holds everything. */
   exits: ExitView[]
   /** What lies here, held by the place's entity: a thing the player dropped, say. None while a scene is open or a lock holds everything. */
@@ -153,19 +194,59 @@ export type PlacesView = {
 }
 
 const ID = 'places'
+const TRAIT = 'places/location'
 
-/** The kind each location is as an entity, so it can hold things: `'location:park'`. */
+/** The kind the plugin brings for its places, so each can hold things: `'location:park'`. */
 export const LOCATION = 'location'
 
-/** The game's locations: its packs' `data.places.locations`. */
-export function locationsOf(game: Game): LocationDef[] {
-  return (game.data?.[ID]?.locations ?? []) as unknown as LocationDef[]
+/**
+ * How content names a place's entity, for `at` and `entity`: a bare id is
+ * one of the plugin's kind (`locationRef('park')` is `'location:park'`), and
+ * a reference is as written.
+ */
+export const locationRef = (id: string): EntityRef => (id.includes(':') ? id : `${LOCATION}:${id}`)
+
+/** How the plugin names a place back: its id for one of its kind, else the whole reference. */
+const short = (ref: EntityRef): string => (parseRef(ref)?.kind === LOCATION ? parseRef(ref)!.id : ref)
+
+const declaredCache = new WeakMap<object, Map<EntityRef, Location>>()
+
+/** The places content declares, by reference, with their traits. */
+function declared(game: Game): Map<EntityRef, Location> {
+  let found = declaredCache.get(game)
+  if (!found) {
+    found = new Map()
+    for (const ref of withTrait(game, TRAIT)) {
+      const data = traitOf(game, ref, TRAIT)
+      if (data) found.set(ref, data)
+    }
+    declaredCache.set(game, found)
+  }
+  return found
 }
 
-/** The location with this id, if the game has it. */
-export function locationById(game: Game, id: string | null | undefined): LocationDef | undefined {
+/**
+ * Every place in the game, as references: every entity with the
+ * `places/location` trait. Given only the game, the places content declares,
+ * in its order; given a state too, every place in the game now, those made
+ * in play included.
+ */
+export function locationsOf(game: Game, state?: GameState): EntityRef[] {
+  return withTrait(game, TRAIT, state)
+}
+
+/**
+ * The `places/location` trait of a place, named by its id (`'park'`) or its
+ * reference. Without a state, only the places content declares; with one, a
+ * place made in play too, read through what it was made `like`. Undefined
+ * for anything else.
+ */
+export function locationOf(game: Game, id: string | null | undefined, state?: GameState): Location | undefined {
   if (id === null || id === undefined) return undefined
-  return locationsOf(game).find((location) => location.id === id)
+  const ref = locationRef(id)
+  const own = declared(game).get(ref)
+  if (own) return own
+  return state && entityOf(state, game, ref) ? entityTrait(state, game, ref, TRAIT) : undefined
 }
 
 /** Where the player is, read straight from the state: no game needed. */
@@ -173,41 +254,48 @@ export function where(state: GameState): string | null {
   return (state.plugins?.[ID]?.state as PlacesState | undefined)?.at ?? null
 }
 
-/** A location's entity, which holds what lies there: `location('park')` is `'location:park'`. */
-export const location = (id: string): EntityRef => `${LOCATION}:${id}`
-
-/** A reference to one of the game's locations. */
-const locationEntry = (id: string): Reference => ({ entry: id, plugin: ID, list: 'locations', noun: 'location' })
+/** A reference to one of the game's places, which must carry the trait. */
+const placeEntry = (id: string): Reference => ({ entity: locationRef(id), carrying: TRAIT })
 
 /** One location or several, as a list: `location: 'cafe'` or `location: ['cafe', 'park']`. */
 function ids(value: unknown): string[] {
   return (Array.isArray(value) ? value : value === undefined ? [] : [value]).map(String)
 }
 
+/** Places as the plugin keeps them: `'park'` and `'location:park'` are both `'park'`. */
+const placeIds = (value: unknown): string[] => ids(value).map((id) => short(locationRef(id)))
+
 /** What lies in a place that the player can see: what its entity holds, but things whose `visible` doesn't hold. */
 function lyingIn(state: GameState, game: Game, at: string): { ref: EntityRef; count: number }[] {
-  return heldBy(state, game, location(at)).filter(({ ref }) =>
+  return heldBy(state, game, locationRef(at)).filter(({ ref }) =>
     holds(state, bindCurrent(game.entities?.find((entity) => `${entity.of}:${entity.id}` === ref)?.visible, ref), game),
   )
 }
 
+/** An entity's picture's path, through `artSrc`, or null with none. */
+function pictureOf(state: GameState, game: Game, ref: EntityRef): string | null {
+  const image = entityImage(state, game, ref)
+  return image === undefined ? null : artSrc(image)
+}
+
+/** The places this one is inside, nearest first, as far as they go without looping. */
+function ancestors(game: Game, id: string, state?: GameState): string[] {
+  const out: string[] = []
+  for (let at = locationOf(game, id, state)?.parent; at && !out.includes(at); at = locationOf(game, at, state)?.parent) out.push(at)
+  return out
+}
+
 /** Build the plugin. */
 export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, PlacesView> {
-  const ancestors = (game: Game, id: string): string[] => {
-    const out: string[] = []
-    for (let at = locationById(game, id)?.parent; at && !out.includes(at); at = locationById(game, at)?.parent) out.push(at)
-    return out
-  }
-
   /** Why the player cannot go there now, or undefined. */
   function goBlocked(state: GameState, game: Game, at: string | null, to: string): string | undefined {
     if (state.sceneId) return stringOf(game, 'finishFirst')
-    const place = locationById(game, to)
+    const place = locationOf(game, to, state)
     if (!place) return stringOf(game, `${ID}/noSuchPlace`)
     if (to === at) return stringOf(game, `${ID}/alreadyHere`)
     const blocked = place.blocked?.find((entry) => holds(state, entry.when, game))
     if (blocked) return blocked.reason
-    if (at === null || !locationById(game, at)?.exits.includes(to)) return stringOf(game, `${ID}/cannotGetThere`)
+    if (at === null || !placeIds(locationOf(game, at, state)?.exits).includes(to)) return stringOf(game, `${ID}/cannotGetThere`)
     return undefined
   }
 
@@ -215,11 +303,37 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
   function pickUpBlocked(state: GameState, game: Game, at: string | null, ref: EntityRef): string | undefined {
     if (state.sceneId) return stringOf(game, 'finishFirst')
     if (!entityOf(state, game, ref)) return stringOf(game, 'noSuchThing')
-    if (at === null || heldCount(state, game, ref, location(at)) <= 0) return stringOf(game, `${ID}/notLyingHere`, { thing: entityName(state, game, ref) })
+    if (at === null || heldCount(state, game, ref, locationRef(at)) <= 0) return stringOf(game, `${ID}/notLyingHere`, { thing: entityName(state, game, ref) })
     return undefined
   }
   /** Picking one up: from the place to whoever the player is playing. */
-  const pickUpEffects = (at: string | null, ref: EntityRef): Effect[] => (at === null ? [] : [{ move: ref, from: location(at), to: YOU, by: 1 }])
+  const pickUpEffects = (at: string | null, ref: EntityRef): Effect[] => (at === null ? [] : [{ move: ref, from: locationRef(at), to: YOU, by: 1 }])
+
+  const locationTrait: TraitDef<'places/location'> = {
+    id: TRAIT,
+    check: (data, { game, ref }) => {
+      const problems: string[] = []
+      if (!Array.isArray(data?.exits)) problems.push('a place needs its exits: exits: [] for none')
+      if (!Array.isArray(data?.body)) problems.push('a place needs a body: body: [{ text: "..." }]')
+      for (const exit of Array.isArray(data?.exits) ? data.exits : []) if (!locationOf(game, exit)) problems.push(`exit to unknown location "${exit}"`)
+      if (data?.parent !== undefined) {
+        if (!locationOf(game, data.parent)) problems.push(`inside unknown location "${data.parent}"`)
+        else if (ancestors(game, short(ref)).includes(short(ref))) problems.push('is inside itself')
+      }
+      return problems
+    },
+    references: (place, { game }) => [
+      { blocks: place?.body },
+      // Its prose can hold its own actions and the game's inline: `[[act:id]]`.
+      { actionsIn: place?.body, offers: [...(place?.actions ?? []), ...(game.actions ?? [])].map((action) => action.id) },
+      { within: 'audio', refs: Object.entries(place?.audio ?? {}).map(([channel, track]) => ({ channel, track })) },
+      { stage: place?.stage, choices: null },
+      { ui: place?.ui },
+      ...(place?.blocked ?? []).map((entry) => ({ when: entry.when })),
+      ...(place?.arrive ? [{ within: 'arrive', refs: [{ when: place.arrive.when }, { effects: place.arrive.effects }] }] : []),
+      ...(place?.actions ?? []).map((action) => ({ within: `action ${action.id}`, refs: actionReferences(action) })),
+    ],
+  }
 
   return definePlugin<PlacesState, PlacesView>({
     id: ID,
@@ -228,6 +342,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
     contentMigrations,
     commandVersion: COMMAND_VERSION,
     commandMigrations,
+    traits: [locationTrait],
     strings: {
       noSuchPlace: 'There is no such place.',
       alreadyHere: 'You are already here.',
@@ -237,41 +352,33 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
     },
     // Each location is a unique entity, so it can hold things: what lies there. Not listed: the places are the plugin's to show.
     content: { kinds: [{ id: LOCATION, label: 'Place', plural: 'Places', unique: true, listed: false }] },
-    entities: (game) =>
-      locationsOf(game).map((def) => ({
-        id: def.id,
-        of: LOCATION,
-        name: def.name,
-        ...(def.tag ? { desc: def.tag } : {}),
-        ...(def.tags?.length ? { tags: def.tags } : {}),
-      })),
     start: () => ({ at: options.start ?? null }),
     conditions: {
       /** `{ 'places/at': { location: ['cafe', 'park'] } }`: the player is in one of these. */
-      at: (_state, args, { slice }) => slice.at !== null && ids(args.location).includes(slice.at),
+      at: (_state, args, { slice }) => slice.at !== null && placeIds(args.location).includes(slice.at),
       /** `{ 'places/within': { location: 'office' } }`: the player is there, or somewhere inside it; with a list, any of them. */
-      within: (_state, args, { slice, game }) => {
+      within: (state, args, { slice, game }) => {
         if (slice.at === null) return false
-        const around = [slice.at, ...ancestors(game, slice.at)]
-        return ids(args.location).some((id) => around.includes(id))
+        const around = [slice.at, ...ancestors(game, slice.at, state)]
+        return placeIds(args.location).some((id) => around.includes(id))
       },
     },
     effects: {
       /** `{ 'places/move': { location: 'park' } }`: be somewhere else at once, closing any scene. No exit needed, and nothing on arrival. */
       move: (state, args, { set, game }) => {
-        const to = ids(args.location)[0]
-        if (!locationById(game, to)) return state
+        const to = placeIds(args.location)[0]
+        if (!locationOf(game, to, state)) return state
         return set({ at: to }, { ...state, sceneId: null })
       },
     },
     commands: {
       /** `{ 'places/go': { id } }`: walk through an exit to the place `id`, then its `arrive`. */
       go: {
-        whyNot: (state, args, { slice, game }) => goBlocked(state, game, slice.at, ids(args.id)[0]),
-        run: (_state, args, { set, apply, game }) => {
-          const to = ids(args.id)[0]
+        whyNot: (state, args, { slice, game }) => goBlocked(state, game, slice.at, placeIds(args.id)[0]),
+        run: (state, args, { set, apply, game }) => {
+          const to = placeIds(args.id)[0]
           const arrived = set({ at: to })
-          const arrive = locationById(game, to)?.arrive
+          const arrive = locationOf(game, to, state)?.arrive
           return arrive && holds(arrived, arrive.when, game) ? apply(arrive.effects, arrived) : arrived
         },
       },
@@ -285,56 +392,69 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
     queries: {
       here: (_state, _args, { slice }) => slice.at,
       /** The entity of where the player is, which holds what is put down there (`'location:park'`); null when nowhere. */
-      holder: (_state, _args, { slice, game }) => (slice.at !== null && locationById(game, slice.at) ? location(slice.at) : null),
-      all: (_state, _args, { game }) => locationsOf(game),
-      known: (_state, args, { game }) => Boolean(locationById(game, ids(args.location)[0])),
-      exits: (_state, _args, { slice, game }) => (locationById(game, slice.at)?.exits ?? []).filter((id) => locationById(game, id)),
+      holder: (state, _args, { slice, game }) => (slice.at !== null && locationOf(game, slice.at, state) ? locationRef(slice.at) : null),
+      /** Every place, each its trait with its `id` and `ref`. */
+      all: (state, _args, { game }) =>
+        locationsOf(game, state).flatMap((ref) => {
+          const place = locationOf(game, ref, state)
+          return place ? [{ ...place, id: short(ref), ref }] : []
+        }),
+      known: (state, args, { game }) => Boolean(locationOf(game, ids(args.location)[0], state)),
+      exits: (state, _args, { slice, game }) => (locationOf(game, slice.at, state)?.exits ?? []).filter((id) => locationOf(game, id, state)),
     },
     values: {
-      name: (_state, _args, { slice, game }) => locationById(game, slice.at)?.name ?? '',
-      tag: (_state, _args, { slice, game }) => locationById(game, slice.at)?.tag ?? '',
+      name: (state, _args, { slice, game }) => (slice.at !== null && locationOf(game, slice.at, state) ? entityName(state, game, locationRef(slice.at)) : ''),
+      desc: (state, _args, { slice, game }) =>
+        slice.at !== null && locationOf(game, slice.at, state) ? (entityDesc(state, game, locationRef(slice.at)) ?? '') : '',
     },
-    label: (_state, { slice, game }) => locationById(game, slice.at)?.name,
-    stage: (_state, { slice, game }) => {
-      const place = locationById(game, slice.at)
-      return place ? { id: place.id, title: place.name, body: place.body, ...(place.ui !== undefined ? { ui: place.ui } : {}) } : undefined
+    label: (state, { slice, game }) => (slice.at !== null && locationOf(game, slice.at, state) ? entityName(state, game, locationRef(slice.at)) : undefined),
+    stage: (state, { slice, game }) => {
+      const place = locationOf(game, slice.at, state)
+      if (!place || slice.at === null) return undefined
+      return { id: slice.at, title: entityName(state, game, locationRef(slice.at)), body: place.body, ...(place.ui !== undefined ? { ui: place.ui } : {}) }
     },
-    buttons: (_state, { slice, game }) => locationById(game, slice.at)?.actions,
-    audio: (_state, { slice, game }) => locationById(game, slice.at)?.audio,
+    buttons: (state, { slice, game }) => locationOf(game, slice.at, state)?.actions,
+    audio: (state, { slice, game }) => locationOf(game, slice.at, state)?.audio,
     view: (state, { slice, game, picks }): PlacesView => {
-      const here = locationById(game, slice.at)
+      const here = locationOf(game, slice.at, state)
+      const at = here ? slice.at : null
       const idle = !state.sceneId && !lockedOut(state, game)
       const exits: ExitView[] = []
       for (const id of idle && here ? here.exits : []) {
-        const dest = locationById(game, id)
+        const dest = locationOf(game, id, state)
         if (!dest) continue
         const command = commandOf(go(id))
         if (lockOn(state, game, command)?.hide) continue
         if (dest.blocked?.some((entry) => entry.hide && holds(state, entry.when, game))) continue
-        exits.push({ ...renderAction(state, game, { id, label: dest.name, command }), tag: dest.tag, tags: dest.tags ?? [], art: dest.art })
+        const ref = locationRef(id)
+        exits.push({
+          ...renderAction(state, game, { id, label: entityName(state, game, ref), command }),
+          ref,
+          desc: entityDesc(state, game, ref) ?? null,
+          tags: entityTags(state, game, ref),
+          image: pictureOf(state, game, ref),
+        })
       }
-      const stage = here ? stageView(state, game, here.stage, here.id, null, picks) : null
-      const things: LyingView[] = (idle && here ? lyingIn(state, game, here.id) : []).map(({ ref, count }) => {
-        const image = entityImage(state, game, ref)
-        return {
+      const things: LyingView[] = (idle && at !== null ? lyingIn(state, game, at) : []).map(({ ref, count }) => ({
+        ref,
+        name: entityName(state, game, ref),
+        image: pictureOf(state, game, ref),
+        count,
+        pickUp: renderAction(state, game, { id: `pickUp.${ref}`, label: stringOf(game, `${ID}/pickUp`), command: pickUp(ref) }),
+      }))
+      if (!here || at === null) return { location: null, exits, things }
+      const ref = locationRef(at)
+      const stage = stageView(state, game, here.stage, at, null, picks)
+      return {
+        location: {
+          id: at,
           ref,
           name: entityName(state, game, ref),
-          image: image === undefined ? null : artSrc(image),
-          count,
-          pickUp: renderAction(state, game, { id: `pickUp.${ref}`, label: stringOf(game, `${ID}/pickUp`), command: pickUp(ref) }),
-        }
-      })
-      return {
-        location: here
-          ? {
-              id: here.id,
-              name: here.name,
-              tag: here.tag,
-              tags: here.tags ?? [],
-              art: here.art,
-              stage: stage && !idle ? { ...stage, hotspots: [] } : stage,
-            }
-          : null,
+          desc: entityDesc(state, game, ref) ?? null,
+          tags: entityTags(state, game, ref),
+          image: pictureOf(state, game, ref),
+          stage: stage && !idle ? { ...stage, hotspots: [] } : stage,
+        },
         exits,
         things,
       }
@@ -355,41 +475,46 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
               : name === 'go'
                 ? ids(args.id)
                 : []
-        return named.map(locationEntry)
+        return named.map(placeEntry)
       },
-      content: (game) => [
-        ...(options.start !== undefined ? [{ list: 'options', id: 'start', refs: [locationEntry(options.start)] }] : []),
-        ...locationsOf(game).map((place) => ({
-          list: 'locations',
-          id: place.id,
-          refs: [
-            { blocks: place.body },
-            // Its prose can hold its own actions and the game's inline: `[[act:id]]`.
-            { actionsIn: place.body, offers: [...(place.actions ?? []), ...(game.actions ?? [])].map((action) => action.id) },
-            { within: 'audio', refs: Object.entries(place.audio ?? {}).map(([channel, track]) => ({ channel, track })) },
-            // A place's `art` isn't a file to look for: no UI draws it, so many games have none.
-            { stage: place.stage, choices: null },
-            { ui: place.ui },
-            ...(place.blocked ?? []).map((entry) => ({ when: entry.when })),
-            ...(place.arrive ? [{ within: 'arrive', refs: [{ when: place.arrive.when }, { effects: place.arrive.effects }] }] : []),
-            ...(place.actions ?? []).map((action) => ({ within: `action ${action.id}`, refs: actionReferences(action) })),
-          ],
-        })),
-      ],
+      content: () => (options.start !== undefined ? [{ list: 'options', id: 'start', refs: [placeEntry(options.start)] }] : []),
     },
     check: (game) => {
       const problems: PluginProblem[] = []
-      const say = (id: string, what: string) => problems.push({ list: 'locations', id, what })
-      for (const place of locationsOf(game)) {
-        for (const exit of place.exits) if (!locationById(game, exit)) say(place.id, `exit to unknown location "${exit}"`)
-        if (place.parent !== undefined) {
-          if (!locationById(game, place.parent)) say(place.id, `inside unknown location "${place.parent}"`)
-          else if (ancestors(game, place.id).includes(place.id)) say(place.id, 'is inside itself')
-        }
+      // Locations were a list in the plugin's content; now each is an entity with the location trait.
+      for (const entry of (game.data?.[ID] as { locations?: { id?: string }[] } | undefined)?.locations ?? []) {
+        problems.push({
+          list: 'locations',
+          id: String(entry?.id ?? ''),
+          what: 'locations are entities now: write them in entities with location({ id, name, exits, body, ... })',
+        })
       }
       return problems
     },
   })
+}
+
+const LOCATION_FIELDS = ['parent', 'exits', 'stage', 'blocked', 'body', 'actions', 'audio', 'ui', 'arrive'] as const
+
+/**
+ * A place, for content's `entities`: an entity of the kind `location` (or
+ * `of`) carrying the `places/location` trait, with the entity's fields and
+ * the trait's written side by side.
+ *
+ * ```ts
+ * entities: [location({ id: 'cafe', name: 'The Corner Café', desc: 'Café', exits: ['street'], body: [{ text: 'place.cafe' }] })]
+ * ```
+ */
+export function location(def: LocationDef): EntityDef {
+  const { of, traits, ...rest } = def
+  const entity: Record<string, unknown> = {}
+  const trait: Record<string, unknown> = {}
+  for (const [field, value] of Object.entries(rest)) {
+    if (value === undefined) continue
+    if ((LOCATION_FIELDS as readonly string[]).includes(field)) trait[field] = value
+    else entity[field] = value
+  }
+  return { ...(entity as Omit<EntityDef, 'of'>), of: of ?? LOCATION, traits: { ...traits, [TRAIT]: trait as Location } }
 }
 
 /** The command that picks up one of a thing lying where the player is. */

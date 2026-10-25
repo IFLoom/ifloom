@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { applyEffects, loadGame, startingState, view, type Game } from '@ifloom/engine'
 import { calendar, pass, sleep } from '@ifloom/plugin-calendar'
-import { go, places } from '@ifloom/plugin-places'
+import { go, location, places } from '@ifloom/plugin-places'
 import { explorer, metricsText, playtest, snapshot } from '../src/index.ts'
 
 const clock = calendar()
@@ -19,31 +19,25 @@ function game(): Game {
           { id: 'wait', label: 'Wait', effects: [pass(1)] },
         ],
         scenes: [{ id: 'wake', title: 'Morning', body: [{ text: 'wake' }], choices: [{ id: 'up', effects: [{ scene: null }] }] }],
-        data: {
-          places: {
-            locations: [
-              {
-                id: 'bedroom',
-                name: 'Bedroom',
-                tag: 'Home',
-                exits: ['hall'],
-                art: '',
-                body: [{ text: 'bedroom' }],
-                actions: [{ id: 'bed', label: 'Sleep', command: sleep() }],
-              },
-              { id: 'hall', name: 'Hall', tag: 'Home', exits: ['bedroom', 'garden'], art: '', body: [{ text: 'hall' }] },
-              {
-                id: 'garden',
-                name: 'Garden',
-                tag: 'Out',
-                exits: ['hall'],
-                art: '',
-                body: [{ text: 'garden' }],
-                actions: [{ id: 'dig', label: 'Dig', command: { type: 'action', id: 'dig' } }],
-              },
-            ],
-          },
-        },
+        entities: [
+          location({
+            id: 'bedroom',
+            name: 'Bedroom',
+            desc: 'Home',
+            exits: ['hall'],
+            body: [{ text: 'bedroom' }],
+            actions: [{ id: 'bed', label: 'Sleep', command: sleep() }],
+          }),
+          location({ id: 'hall', name: 'Hall', desc: 'Home', exits: ['bedroom', 'garden'], body: [{ text: 'hall' }] }),
+          location({
+            id: 'garden',
+            name: 'Garden',
+            desc: 'Out',
+            exits: ['hall'],
+            body: [{ text: 'garden' }],
+            actions: [{ id: 'dig', label: 'Dig', command: { type: 'action', id: 'dig' } }],
+          }),
+        ],
         prose: { bedroom: 'A bed.', hall: 'A hall.', garden: 'Soil.', wake: 'You wake.', 'wake#up': 'Get up' },
       },
     ],

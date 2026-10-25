@@ -91,38 +91,39 @@ export const park: Content = {
     // And the ducks come to see what you brought: a roll no line of prose hints, so the React UI shows it over the scene.
     { id: 'ducks', once: 'turn', when: at('park'), effects: [{ roll: 'ducks', dice: '1d6+2' }] },
   ],
-  data: {
-    places: {
-      locations: [
+  entities: [
+    place({
+      id: 'park',
+      name: 'Riverside Park',
+      tags: ['outdoors'],
+      exits: ['high-street'],
+      // The river, the ducks, a line while the day's visitors are about, then the stones, with how today's skim went.
+      body: [
+        { text: 'place.park' },
+        { text: 'place.park.ducks', when: { roll: 'ducks' } },
+        { text: 'place.park.visitors', when: { count: 'visitor', gte: 1 } },
+        { text: 'place.park.stones' },
+        skimmed({ roll: 'skim', critical: 'max' }, 'park.skim.best'),
+        skimmed({ roll: 'skim', passed: true, critical: false }, 'park.skim.passed'),
+        skimmed({ roll: 'skim', passed: false }, 'park.skim.failed'),
+      ],
+      actions: [
+        { id: 'jog', label: 'Go for a jog', cost: { stats: { energy: 15 } }, effects: [pass(1), { stat: 'charm', by: 1 }] },
+        { id: 'arrows', label: 'Play quick feet with the kids', effects: [{ minigame: 'arrows' }] },
+        // Two dice against 8: the total goes in the kv store as `skim`, and the roll is kept for `{ roll: 'skim' }`.
+        // Drawn inline by `[[act:skim|…]]` in the stones line, so it isn't a button as well.
         {
-          ...place({ id: 'park', name: 'Riverside Park', tags: ['outdoors'], exits: ['high-street'] }),
-          // The river, the ducks, a line while the day's visitors are about, then the stones, with how today's skim went.
-          body: [
-            { text: 'place.park' },
-            { text: 'place.park.ducks', when: { roll: 'ducks' } },
-            { text: 'place.park.visitors', when: { count: 'visitor', gte: 1 } },
-            { text: 'place.park.stones' },
-            skimmed({ roll: 'skim', critical: 'max' }, 'park.skim.best'),
-            skimmed({ roll: 'skim', passed: true, critical: false }, 'park.skim.passed'),
-            skimmed({ roll: 'skim', passed: false }, 'park.skim.failed'),
-          ],
-          actions: [
-            { id: 'jog', label: 'Go for a jog', cost: { stats: { energy: 15 } }, effects: [pass(1), { stat: 'charm', by: 1 }] },
-            { id: 'arrows', label: 'Play quick feet with the kids', effects: [{ minigame: 'arrows' }] },
-            // Two dice against 8: the total goes in the kv store as `skim`, and the roll is kept for `{ roll: 'skim' }`.
-            // Drawn inline by `[[act:skim|…]]` in the stones line, so it isn't a button as well.
-            {
-              id: 'skim',
-              label: 'Skim a stone',
-              effects: [
-                { kv: 'skimmed', to: true },
-                { roll: 'skim', dice: '2d6', against: 8 },
-              ],
-            },
+          id: 'skim',
+          label: 'Skim a stone',
+          effects: [
+            { kv: 'skimmed', to: true },
+            { roll: 'skim', dice: '2d6', against: 8 },
           ],
         },
       ],
-    },
+    }),
+  ],
+  data: {
     jobs: {
       jobs: [
         {

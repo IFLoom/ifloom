@@ -5,7 +5,7 @@ import { buildEffects, customContext, type CustomContext, type EffectRef } from 
 import { runEffects } from './reduce.ts'
 import type { Block } from './scene.ts'
 import type { ActionDef, GameRules } from './game.ts'
-import type { EntityDef, TraitDef } from './entities.ts'
+import type { TraitDef } from './entities.ts'
 import type { Content } from './loader.ts'
 import type { Reference } from './references.ts'
 import type { SceneUi, Ui } from './features/ui.ts'
@@ -251,11 +251,6 @@ export type Plugin<S = any, V = unknown> = {
    * prose, actions or `data` it ships with.
    */
   content?: Content
-  /**
-   * Entities there at the start, made from the plugin's content when the game
-   * is loaded. One the game declares itself, with the same kind and id, wins.
-   */
-  entities?: (game: Game) => readonly EntityDef[]
   /**
    * Traits this plugin gives meaning to: named data entities carry, written
    * on a kind, an entity or content's `traits` table, which the plugin reads

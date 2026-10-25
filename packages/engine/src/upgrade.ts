@@ -16,7 +16,7 @@ import type { Pack } from './loader.ts'
 import type { Plugin } from './plugin.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
-export const SCHEMA = 23
+export const SCHEMA = 24
 
 /** A pack as it came in: some schema's shape, not necessarily this one. */
 export type RawPack = Record<string, unknown> & { schema: number }
@@ -129,6 +129,9 @@ export const PACK_STEPS: Record<number, (pack: RawPack, context: PackContext) =>
   21: (pack) => toSchema22(pack),
   // 22 → 23: speech is written under an id, `@ava: "…"`, not a name. See `toSchema23`.
   22: (pack, context) => toSchema23(pack, context),
+  // 23 → 24: the places plugin's locations and the shop's vendors are entities with the `places/location`
+  // and `shop/vendor` traits, which those plugins' own steps move.
+  23: (pack) => pack,
 }
 
 /** A spoken line under a label, as prose wrote one before schema 23: `Ava: "…"`, maybe with its voice after. */

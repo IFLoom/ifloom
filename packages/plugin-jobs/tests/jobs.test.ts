@@ -17,7 +17,7 @@ import {
   type CommandRef,
 } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
-import { go, places, type LocationDef } from '@ifloom/plugin-places'
+import { go, location, places } from '@ifloom/plugin-places'
 import { applyFor, fire, hasJob, hire, jobs, openJobs, quit, shiftsWorked, wasFired, work, workedToday, type JobDef, type JobsView } from '../src/index.ts'
 
 /**
@@ -42,7 +42,7 @@ const cafe: JobDef = {
   fire: { missed: 2, when: { stat: 'manner', lt: 1 } },
 }
 
-const place = (id: string, exits: string[]): LocationDef => ({ id, name: id, tag: '', art: '', exits, body: [] })
+const place = (id: string, exits: string[]) => location({ id, name: id, exits, body: [] })
 
 function game(...partners: Plugin[]): Game {
   const town: Content = {
@@ -62,10 +62,8 @@ function game(...partners: Plugin[]): Game {
       // A week goes by, with the calendar's five periods a day.
       { id: 'week', effects: [{ 'calendar/pass': { by: 35 } }] },
     ],
-    data: {
-      jobs: { jobs: [cafe] },
-      ...(partners.some((plugin) => plugin.id === 'places') ? { places: { locations: [place('street', ['cafe']), place('cafe', ['street'])] } } : {}),
-    },
+    data: { jobs: { jobs: [cafe] } },
+    entities: partners.some((plugin) => plugin.id === 'places') ? [place('street', ['cafe']), place('cafe', ['street'])] : [],
   }
   const loaded = loadGame([town], { id: 'g', title: 'g', plugins: [...partners, jobs()] })
   expect(loaded.problems).toEqual([])

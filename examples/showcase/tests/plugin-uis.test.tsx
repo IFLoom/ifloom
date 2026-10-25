@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 import { createRunner, heldCount, holding, loadGame, startingState, type Game, type Runner } from '@ifloom/engine'
 import { achievements } from '@ifloom/plugin-achievements'
 import { jobs, openJobs } from '@ifloom/plugin-jobs'
-import { openShop, shop, type ShopView } from '@ifloom/plugin-shop'
+import { openShop, shop, vendor, type ShopView } from '@ifloom/plugin-shop'
 import { applyStatus, statuses } from '@ifloom/plugin-statuses'
 import { inventory, usable } from '@ifloom/plugin-inventory'
 import { GameProvider, GameShell, Inventory, PanelHost, RoomActions, SceneStage, type Components, Game as GamePage, Story } from '@ifloom/react'
@@ -60,6 +60,21 @@ function game(withPlugins = true): Game {
           },
           { id: 'flapjack', of: 'food', name: 'Flapjack' },
           { id: 'cake', of: 'food', name: 'Cake' },
+          // The counter is the shop's: a vendor only when the game has the plugin.
+          ...(withPlugins
+            ? [
+                vendor({
+                  id: 'counter',
+                  name: 'The counter',
+                  buysBack: 0.5,
+                  goods: [
+                    { entity: 'food:sandwich', price: { coins: 4 } },
+                    { entity: 'food:flapjack', price: { coins: 2 }, stock: 1 },
+                    { entity: 'food:cake', price: { coins: 10 } },
+                  ],
+                }),
+              ]
+            : []),
         ],
         actions: [
           { id: 'coffee', label: 'Have a coffee', effects: [applyStatus('buzz')] },
@@ -71,20 +86,6 @@ function game(withPlugins = true): Game {
           { id: 'pockets', label: 'Check your pockets', effects: [{ panel: 'pockets', with: { title: 'Your pockets' } }] },
         ],
         data: {
-          shop: {
-            vendors: [
-              {
-                id: 'counter',
-                name: 'The counter',
-                buysBack: 0.5,
-                goods: [
-                  { entity: 'food:sandwich', price: { coins: 4 } },
-                  { entity: 'food:flapjack', price: { coins: 2 }, stock: 1 },
-                  { entity: 'food:cake', price: { coins: 10 } },
-                ],
-              },
-            ],
-          },
           jobs: {
             jobs: [
               {

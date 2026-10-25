@@ -16,7 +16,7 @@ import {
   type CommandRef,
 } from '@ifloom/engine'
 import { calendar, period } from '@ifloom/plugin-calendar'
-import { go, places } from '@ifloom/plugin-places'
+import { go, location, places } from '@ifloom/plugin-places'
 import { call, cast, character, hasMet, here, isAt, peopleOf, person, personOf, talk, type CastView } from '../src/index.ts'
 
 const ava = person({
@@ -53,22 +53,22 @@ const town: Content = {
     'ava.call#bye': 'Bye',
     'sam.hi#bye': 'Bye',
   },
-  data: {
-    places: {
-      locations: [
-        { id: 'street', name: 'Street', tag: 'Town', exits: ['cafe', 'park'], art: '', body: [] },
-        { id: 'cafe', name: 'Café', tag: 'Town', exits: ['street'], art: '', body: [] },
-        { id: 'park', name: 'Park', tag: 'Town', exits: ['street'], art: '', body: [] },
-      ],
-    },
-  },
+}
+
+/** The town's map, for the places plugin. */
+const map: Content = {
+  name: 'map',
+  entities: [
+    location({ id: 'street', name: 'Street', desc: 'Town', exits: ['cafe', 'park'], body: [] }),
+    location({ id: 'cafe', name: 'Café', desc: 'Town', exits: ['street'], body: [] }),
+    location({ id: 'park', name: 'Park', desc: 'Town', exits: ['street'], body: [] }),
+  ],
 }
 
 function game(withPlaces = true): { game: Game; clock: ReturnType<typeof calendar> } {
   const clock = calendar()
   // Without places, the town's map goes too: nobody is anywhere the player can be.
-  const pack = withPlaces ? town : { ...town, data: {} }
-  const { game, problems } = loadGame([pack], {
+  const { game, problems } = loadGame(withPlaces ? [town, map] : [town], {
     id: 'town',
     title: 'Town',
     plugins: [clock, ...(withPlaces ? [places({ start: 'street' })] : []), cast()],
@@ -195,7 +195,7 @@ describe('the cast', () => {
       ...town,
       entities: [ava, person({ id: 'sam', name: '{{friendName}}', fullName: '{{friendName}} Reed', home: 'park', talk: 'sam.hi' })],
     }
-    const { game: g, problems } = loadGame([named], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'park' }), cast()] })
+    const { game: g, problems } = loadGame([named, map], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'park' }), cast()] })
     expect(problems).toEqual([])
     const withSpeaker = { ...g, scenes: g.scenes.map((entry) => (entry.id === 'sam.hi' ? { ...entry, speaker: 'sam' } : entry)) }
     const start = startingState(withSpeaker)
@@ -229,9 +229,9 @@ describe('the cast', () => {
           storyline: 'tunnels',
           schedule: [{ location: 'yard', when: { stat: 'trust', of: '$', gte: 2 } }],
         }),
+        location({ id: 'yard', name: 'Yard', exits: [], body: [] }),
       ],
       data: {
-        places: { locations: [{ id: 'yard', name: 'Yard', tag: '', exits: [], art: '', body: [] }] },
         cast: { characters: [{ id: 'old', name: 'Old' }] },
       },
     }

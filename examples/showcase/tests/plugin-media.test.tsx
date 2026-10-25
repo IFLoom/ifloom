@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { createRunner, loadGame, startingState, type Game } from '@ifloom/engine'
 import { phone } from '@ifloom/phone'
-import { at, go, places } from '@ifloom/plugin-places'
+import { at, go, location, places } from '@ifloom/plugin-places'
 import { GameShell, Game as GamePage, Story } from '@ifloom/react'
 import { LocationCard } from '@ifloom/plugin-places/react'
 import { devicesUi } from '@ifloom/plugin-devices/react'
@@ -43,24 +43,21 @@ describe('media in places, messages and posts', () => {
             'mum.hi': 'Look what I found.\n\n[[img:photo/cat.svg|The cat]]\n\n[[video:clips/cat]]',
             'post.cafe': 'New cakes today.\n\n[[img:photo/cake.svg|A cake]]',
           },
+          entities: [
+            location({
+              id: 'flat',
+              name: 'The flat',
+              desc: 'Home',
+              exits: ['street'],
+              body: [{ text: 'place.flat' }],
+              stage: {
+                layers: [{ id: 'room', src: 'flat/room.svg' }],
+                hotspots: [{ id: 'out', rect: [80, 10, 15, 80], label: 'The front door', command: go('street') }],
+              },
+            }),
+            location({ id: 'street', name: 'High Street', desc: 'Out', exits: ['flat'], body: [{ text: 'place.street' }] }),
+          ],
           data: {
-            places: {
-              locations: [
-                {
-                  id: 'flat',
-                  name: 'The flat',
-                  tag: 'Home',
-                  exits: ['street'],
-                  art: '',
-                  body: [{ text: 'place.flat' }],
-                  stage: {
-                    layers: [{ id: 'room', src: 'flat/room.svg' }],
-                    hotspots: [{ id: 'out', rect: [80, 10, 15, 80], label: 'The front door', command: go('street') }],
-                  },
-                },
-                { id: 'street', name: 'High Street', tag: 'Out', exits: ['flat'], art: '', body: [{ text: 'place.street' }] },
-              ],
-            },
             messages: { messages: [{ id: 'mum.hi', channel: 'texts', from: 'Mum', when: at('flat'), body: [{ text: 'mum.hi' }] }] },
             feed: {
               posts: [{ id: 'post.cafe', feed: 'town', from: 'The Café', when: at('flat'), body: [{ text: 'post.cafe' }], video: 'art/clips/steam.mp4' }],

@@ -228,7 +228,6 @@ type Plugin<S = any> = {
   action?: (state: GameState, id: string, context: PluginContext<S>) => ActionDef | undefined
   speaker?: (id: string, state: GameState, context: PluginContext<S>) => SpeakerView | undefined
   content?: Content
-  entities?: (game: Game) => readonly EntityDef[]
   traits?: readonly TraitDef[]
   audio?: (state: GameState, context: PluginContext<S>) => Record<string, string | null> | undefined
   view?: (state: GameState, context: PluginContext<S>) => unknown
@@ -271,7 +270,6 @@ type Plugin<S = any> = {
 | `buttons` | Buttons offered while no scene is open, before the content's `actions`. See [Buttons](#buttons). |
 | `action` | One of its actions that isn't among its buttons right now, by id, for `{ type: 'action', id: '<plugin>/<id>' }`. See [Buttons](#buttons). |
 | `content` | [Content](/docs/reference/loader#content) the plugin brings, such as its kinds of entity, merged under the game's. See [Kinds and entities](#kinds-and-entities). |
-| `entities` | [Entities](/docs/reference/entities#entitydef) there at the start, made from the plugin's content when the game is loaded. See [Kinds and entities](#kinds-and-entities). |
 | `traits` | [Traits](/docs/reference/entities#traits) the plugin gives meaning to: named data that entities carry. See [Traits](#traits). |
 | `audio` | What plays on background audio channels, such as a place's ambience. See [Audio](#audio). |
 | `view` | What the UI needs from the plugin, at [`view.plugins[id]`](/docs/reference/view#plugins). See [The view](#the-view). |
@@ -631,7 +629,7 @@ A step of `commandMigrations` is given every command in an older log, the engine
 A plugin's members follow one naming rule, as the game's [rules](/docs/reference/rules) do:
 
 - **A hook** runs at an event and returns the next state. It's named `on` and the event: `onTurn`, `onTurnDone`, `onStat`, `onCommand`.
-- **A provider** answers a question and never changes the state. It's named by the noun it gives: `guard`, `price`, `label`, `stage`, `buttons`, `action`, `audio`, `statModifiers`, `view`, `profile`, `entities`.
+- **A provider** answers a question and never changes the state. It's named by the noun it gives: `guard`, `price`, `label`, `stage`, `buttons`, `action`, `audio`, `statModifiers`, `view`, `profile`.
 - **A table** of named functions content calls is a plural noun: `conditions`, `effects`, `commands`, `queries`, `values`.
 - **Data** is named by its noun too: `content`, `traits`, `strings`.
 
@@ -808,7 +806,7 @@ export const dishes = definePlugin<Sink>({
 })
 ```
 
-The flat offers the buttons, as a location of the [places plugin](/docs/plugins/places#locationdef):
+The flat offers the buttons, as a location of the [places plugin](/docs/plugins/places#the-location-trait):
 
 ```ts
 // on the flat, in data.places.locations
@@ -1073,7 +1071,7 @@ It comes third of [four levels](/docs/reference/audio#what-plays-on-a-background
 
 ## Who someone is
 
-A plugin doesn't say who a scene's speaker is. People are [entities](/docs/reference/entities), so the engine reads their name, picture and hints from the entity itself (see [Speakers](/docs/reference/scenes#speakers)). A plugin that brings people gives them as entities, in its [`content`](#kinds-and-entities) or its `entities`, and a scene names one as its `speaker`.
+A plugin doesn't say who a scene's speaker is. People are [entities](/docs/reference/entities), so the engine reads their name, picture and hints from the entity itself (see [Speakers](/docs/reference/scenes#speakers)). A plugin that brings people gives them as entities, in its [`content`](#kinds-and-entities), and a scene names one as its `speaker`.
 
 A plugin that shows who sent something, as the messages and feed plugins do, asks the same way with [`speakerOf`](#speakerof).
 
@@ -1096,13 +1094,12 @@ speakerOf(state, game, 'Council')  // null: show the name as written
 
 ```ts
 content?: Content
-entities?: (game: Game) => readonly EntityDef[]
 ```
 
-A plugin can bring the [kinds](/docs/reference/entities#kinddef) of thing it keeps, and the [entities](/docs/reference/entities#entitydef) of those kinds there at the start. Each entity then has stats and a kv store that content works on with `of`, `each` and `count`, like any the game declares. The cast does this: each character is an entity of the kind `character`, which is how the showcase's `friendship` stat belongs to Ava and Sam.
+A plugin can bring the [kinds](/docs/reference/entities#kinddef) of thing it keeps, and the [entities](/docs/reference/entities#entitydef) of those kinds there at the start, in its `content`. Each entity then has stats and a kv store that content works on with `of`, `each` and `count`, like any the game declares. The cast does this: each character is an entity of the kind `character`, which is how the showcase's `friendship` stat belongs to Ava and Sam.
 
 - **`content`** is a [`Content`](/docs/reference/loader#content) the plugin brings, merged by the [loader](/docs/reference/loader#loadgame) first, plugin by plugin in the order `game.plugins` lists them, under the game's content and packs. It can hold anything content can: kinds, entities, scenes, prose, actions or `data`. A plugin's kind isn't [listed](/docs/reference/entities#listing) in the view unless it sets `listed`, so its entities don't show before the plugin says. A kind the game's content declares with the same id replaces the plugin's, and keeps the plugin's fields it leaves out. That's how a game renames one. A pack can replace anything in it by id. A plugin with options builds it in its factory, from those options.
-- **`entities(game)`** is called once the game is loaded, with the content and every pack merged, so a plugin makes its entities from its own `data`, a mod's entries included. An entity the game declares itself with the same kind and id wins, whole. The rest join [`game.entities`](/docs/reference/game#game) and are [checked](/docs/reference/checks) like any declared entity, against the plugin's id.
+- **An entity the game writes** is the way to give a plugin something per entity, such as a place or a vendor: the plugin declares a [trait](#traits), content writes the entity with it (often through a helper of the plugin's, as the places plugin's [`location()`](/docs/plugins/places#location) is), and the plugin finds them with [`withTrait`](/docs/reference/entities#withtrait). A mod then adds one as it adds any entity.
 
 The [phone](/docs/plugins/phone) bundle, which is no plugin, returns its content the same way, as `{ plugins, content }`, for the game to load beside its own.
 
@@ -1113,16 +1110,18 @@ const regulars = definePlugin<null>({
   id: 'regulars',
   version: 1,
   // Listed in the view: everyone at the bar is known to the player.
-  content: { kinds: [{ id: 'regular', label: 'Regular', plural: 'Regulars', listed: true }] },
-  entities: (game) =>
-    ((game.data?.regulars?.people ?? []) as readonly Regular[]).map((person) => ({ id: person.id, of: 'regular', name: person.name })),
-  // speaker as above
+  content: {
+    kinds: [{ id: 'regular', label: 'Regular', plural: 'Regulars', listed: true }],
+    entities: [
+      { id: 'mo', of: 'regular', name: 'Mo' },
+      { id: 'sal', of: 'regular', name: 'Sal' },
+    ],
+  },
 })
 
 // in your content
 stats: [{ id: 'fondness', label: 'Fondness', of: 'regular', start: 3 }],
 entities: [{ id: 'mo', of: 'regular', name: 'Mo from next door', stats: { fondness: 8 } }],
-data: { regulars: { people: [{ id: 'mo', name: 'Mo' }, { id: 'sal', name: 'Sal' }] } },
 ```
 
 ```ts
@@ -1131,12 +1130,11 @@ view(state, game).entities.regular.entries.map((entry) => [entry.name, entry.sta
 // [['Mo from next door', 8], ['Sal', 3]]
 ```
 
-The content's own Mo wins over the plugin's. Sal comes from the plugin, after the declared ones.
+The content's own Mo replaces the plugin's, in the plugin's place in the list.
 
 **Gotchas.**
 - **Only through `loadGame`.** A game built by hand, without the [loader](/docs/reference/loader#loadgame), gets neither. List the kinds in `game.kinds` and the entities in `game.entities` yourself.
 - **A plugin's content isn't counted as declared by yours.** Your content can redeclare one of its kinds without a [`declared twice`](/docs/reference/loader#one-key-declared-twice) problem.
-- **`entities` runs before the prose is ready.** `game.prose` isn't set yet when it's called, so read only `game.data` and the other content lists.
 - **A save carries them in.** A declared entity a save doesn't have, such as one a new entry in the plugin's content makes, joins the save when it loads, unless it was removed in play. See [Entities in old saves](/docs/reference/entities#entities-in-old-saves).
 
 ## Traits

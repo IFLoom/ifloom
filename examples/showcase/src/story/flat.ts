@@ -59,24 +59,23 @@ export const flat: Content = {
       ],
     },
   ],
-  data: {
-    places: {
-      locations: [
-        {
-          ...place({ id: 'flat', name: 'Your flat', tag: 'Home', exits: ['high-street'] }),
-          // Once Ava's text has come and until it's read, the room's prose holds a link that opens the phone.
-          body: [{ text: 'place.flat' }, { text: 'place.flat.text', when: textWaiting }],
-          actions: [
-            { id: 'bed', label: 'Go to bed', command: sleep() },
-            // The wardrobe opens in a panel by its name; the layout also shows what you're wearing only at home.
-            { id: 'wardrobe', label: 'Open the wardrobe', effects: [{ panel: 'wardrobe' }] },
-            // Drawn inline by `[[act:read-text|…]]` in the line above, so it isn't a button as well.
-            { id: 'read-text', label: 'Read your messages', when: textWaiting, command: openApp('texts') },
-          ],
-        },
+  entities: [
+    place({
+      id: 'flat',
+      name: 'Your flat',
+      desc: 'Home',
+      exits: ['high-street'],
+      // Once Ava's text has come and until it's read, the room's prose holds a link that opens the phone.
+      body: [{ text: 'place.flat' }, { text: 'place.flat.text', when: textWaiting }],
+      actions: [
+        { id: 'bed', label: 'Go to bed', command: sleep() },
+        // The wardrobe opens in a panel by its name; the layout also shows what you're wearing only at home.
+        { id: 'wardrobe', label: 'Open the wardrobe', effects: [{ panel: 'wardrobe' }] },
+        // Drawn inline by `[[act:read-text|…]]` in the line above, so it isn't a button as well.
+        { id: 'read-text', label: 'Read your messages', when: textWaiting, command: openApp('texts') },
       ],
-    },
-  },
+    }),
+  ],
   prose: {
     // `[[ui:modal|…]]` is the React UI's: "the radiator knocks" opens Sam's welcome note in a dialog.
     'place.flat':

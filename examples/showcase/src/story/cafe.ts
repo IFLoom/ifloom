@@ -7,7 +7,7 @@ import { applyStatus, statusActive } from '@ifloom/plugin-statuses'
 import { wearing } from '@ifloom/plugin-wardrobe'
 import { period } from '@ifloom/plugin-calendar'
 import { character, here, talk } from '@ifloom/plugin-cast'
-import { openShop } from '@ifloom/plugin-shop'
+import { openShop, vendor } from '@ifloom/plugin-shop'
 import { place } from '../place.ts'
 import { prose } from './cafe.prose.ts'
 
@@ -61,69 +61,66 @@ export const cafe: Content = {
       choices: [{ id: 'leave', effects: [{ scene: null }] }],
     },
   ],
+  entities: [
+    place({
+      id: 'cafe',
+      name: 'The Corner Café',
+      desc: 'Café',
+      exits: ['high-street'],
+      // Open in the day; the door says when it opens again.
+      blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
+      actions: [
+        {
+          id: 'coffee',
+          label: 'Buy a coffee',
+          cost: { stats: { coins: 3 } },
+          blocked: [{ when: { kv: 'hadCoffee' }, reason: 'One is enough for today.' }],
+          effects: [
+            { stat: 'energy', by: 15 },
+            { kv: 'hadCoffee', to: true },
+            // And a lift that lasts till tomorrow is out: 10 more energy, never written.
+            applyStatus('caffeinated'),
+          ],
+        },
+        // The counter, the shop plugin's vendor, opens in a panel: nothing about a shop is drawn by itself.
+        { id: 'counter', label: 'Go to the counter', effects: [openShop('counter')] },
+        // A sandwich as a plain action: a cost, a place and a thing given, with no plugin. Always 4 coins, never sold out.
+        { id: 'buy-sandwich', label: 'Buy a sandwich', cost: { stats: { coins: 4 } }, effects: [give('item:sandwich')] },
+        // Something small happens while you sit: one of the café's storylets, drawn at random.
+        { id: 'sit', label: 'Sit a while', effects: [{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }] },
+      ],
+      // A picture of the counter while Ava is on shift, with a hotspot on her that talks to her.
+      stage: {
+        aspect: '16/10',
+        layers: [{ id: 'counter', src: 'photo/ava.svg', when: here('ava') }],
+        hotspots: [{ id: 'ava', rect: [36, 22, 28, 44], label: 'Talk to Ava', command: talk('ava'), layer: 'counter' }],
+      },
+      body: [
+        { text: 'place.cafe' },
+        { text: 'place.cafe.ava', when: here('ava') },
+        { text: 'place.cafe.raincoat', when: wearing('clothing:raincoat') },
+        { text: 'place.cafe.caffeinated', when: statusActive('caffeinated') },
+      ],
+    }),
+    vendor({
+      id: 'counter',
+      name: 'The counter',
+      at: ['cafe'],
+      hours: ['morning', 'afternoon'],
+      // Ava will take an unopened sandwich back for half.
+      buysBack: 0.5,
+      // One thing on the board is half price each day.
+      discounts: { off: 0.5 },
+      goods: [
+        // Prices from each thing's sellable trait. A sandwich is always there.
+        { entity: 'item:sandwich' },
+        // Two a day, baked each morning: the counter holds them.
+        { entity: 'item:flapjack', stock: 2, restock: 'day' },
+        { entity: 'item:paper' },
+      ],
+    }),
+  ],
   data: {
-    places: {
-      locations: [
-        {
-          ...place({ id: 'cafe', name: 'The Corner Café', tag: 'Café', exits: ['high-street'] }),
-          // Open in the day; the door says when it opens again.
-          blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
-          actions: [
-            {
-              id: 'coffee',
-              label: 'Buy a coffee',
-              cost: { stats: { coins: 3 } },
-              blocked: [{ when: { kv: 'hadCoffee' }, reason: 'One is enough for today.' }],
-              effects: [
-                { stat: 'energy', by: 15 },
-                { kv: 'hadCoffee', to: true },
-                // And a lift that lasts till tomorrow is out: 10 more energy, never written.
-                applyStatus('caffeinated'),
-              ],
-            },
-            // The counter, the shop plugin's vendor, opens in a panel: nothing about a shop is drawn by itself.
-            { id: 'counter', label: 'Go to the counter', effects: [openShop('counter')] },
-            // A sandwich as a plain action: a cost, a place and a thing given, with no plugin. Always 4 coins, never sold out.
-            { id: 'buy-sandwich', label: 'Buy a sandwich', cost: { stats: { coins: 4 } }, effects: [give('item:sandwich')] },
-            // Something small happens while you sit: one of the café's storylets, drawn at random.
-            { id: 'sit', label: 'Sit a while', effects: [{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }] },
-          ],
-          // A picture of the counter while Ava is on shift, with a hotspot on her that talks to her.
-          stage: {
-            aspect: '16/10',
-            layers: [{ id: 'counter', src: 'photo/ava.svg', when: here('ava') }],
-            hotspots: [{ id: 'ava', rect: [36, 22, 28, 44], label: 'Talk to Ava', command: talk('ava'), layer: 'counter' }],
-          },
-          body: [
-            { text: 'place.cafe' },
-            { text: 'place.cafe.ava', when: here('ava') },
-            { text: 'place.cafe.raincoat', when: wearing('clothing:raincoat') },
-            { text: 'place.cafe.caffeinated', when: statusActive('caffeinated') },
-          ],
-        },
-      ],
-    },
-    shop: {
-      vendors: [
-        {
-          id: 'counter',
-          name: 'The counter',
-          at: ['cafe'],
-          hours: ['morning', 'afternoon'],
-          // Ava will take an unopened sandwich back for half.
-          buysBack: 0.5,
-          // One thing on the board is half price each day.
-          discounts: { off: 0.5 },
-          goods: [
-            // Prices from each thing's sellable trait. A sandwich is always there.
-            { entity: 'item:sandwich' },
-            // Two a day, baked each morning: the counter holds them.
-            { entity: 'item:flapjack', stock: 2, restock: 'day' },
-            { entity: 'item:paper' },
-          ],
-        },
-      ],
-    },
     jobs: {
       jobs: [
         {

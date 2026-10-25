@@ -331,6 +331,21 @@ describe('content migrations', () => {
           tags: ['stuff'],
           traits: { 'inventory/usable': { label: 'Drink', effects: [{ stat: 'energy', to: 100, of: 'staff:ana' }] } },
         },
+        // Locations are entities since schema 24, with the rest of a place the places plugin's trait.
+        {
+          id: 'cafe',
+          of: 'location',
+          traits: {
+            'places/location': {
+              actions: [
+                { id: 'talk', label: 'Talk', command: { type: 'custom', name: 'cast/talk', with: { id: 'ava' } } },
+                { id: 'drink', label: 'Drink', command: { 'inventory/use': { id: 'item:tea' } } },
+                { id: 'quiet', label: 'Quiet', command: { type: 'setting', id: 'volume', to: 0 } },
+              ],
+              blocked: [{ when: { kv: 'phase', is: ['night'] }, reason: 'Shut.', hide: true }],
+            },
+          },
+        },
       ],
       triggers: [
         {
@@ -372,19 +387,6 @@ describe('content migrations', () => {
         },
       ],
       data: {
-        places: {
-          locations: [
-            {
-              id: 'cafe',
-              actions: [
-                { id: 'talk', label: 'Talk', command: { type: 'custom', name: 'cast/talk', with: { id: 'ava' } } },
-                { id: 'drink', label: 'Drink', command: { 'inventory/use': { id: 'item:tea' } } },
-                { id: 'quiet', label: 'Quiet', command: { type: 'setting', id: 'volume', to: 0 } },
-              ],
-              blocked: [{ when: { kv: 'phase', is: ['night'] }, reason: 'Shut.', hide: true }],
-            },
-          ],
-        },
         jobs: {
           jobs: [
             { id: 'barista', ranks: [{ id: 'a' }, { id: 'b', requires: { shifts: 3 } }], blocked: [{ when: { not: { kv: 'metAva' } }, reason: 'Not yet.' }] },
@@ -518,8 +520,9 @@ describe('content migrations', () => {
         { id: 'umbrella', of: 'item', name: 'Umbrella', desc: '', tags: ['gear'], at: { player: 1 } },
         { id: 'coat', of: 'item', name: 'Coat', desc: '', tags: ['clothes', 'gear'] },
         { id: 'bun', of: 'item', name: 'Bun', desc: '', tags: ['stuff'] },
+        // And at schema 24 the place is an entity: its tag the entity's desc, and an empty picture none.
+        { id: 'park', of: 'location', name: 'Park', desc: 'Town', tags: ['street'], traits: { 'places/location': { exits: [], body: [] } } },
       ],
-      data: { places: { locations: [{ id: 'park', name: 'Park', tag: 'Town', exits: [], art: '', body: [], tags: ['street'] }] } },
     })
   })
 
@@ -681,7 +684,6 @@ describe('content migrations', () => {
         },
         { id: 'tom', of: 'character', name: 'Tom', traits: { 'cast/person': {} } },
       ],
-      data: { places: { locations: [] } },
     })
     // A pack with no characters is left as it was.
     const plain: RawPack = { id: 'x', schema: 13, prose: { a: 'A' } }
@@ -983,12 +985,16 @@ describe('content migrations', () => {
       entities: [
         { id: 'rosa', of: 'character', name: 'Rosa', traits: { 'cast/person': { home: 'garden' } }, ui: { hue: 120 } },
         { id: 'tom', of: 'character', name: 'Tom', ui: { hue: 300 } },
+        // A place's room hints stay the room's, in its trait, since schema 24.
+        {
+          id: 'garden',
+          of: 'location',
+          name: 'Garden',
+          traits: { 'places/location': { ui: { transition: 'slide-left' }, body: [{ text: 'garden', ui: { reveal: { as: 'zoom' } } }] } },
+        },
       ],
       // A row's hue goes to the pack's own entity; Ann isn't one, so hers is dropped.
       traits: { 'cast/person': { 'character:tom': { home: 'shop' }, 'character:ann': {} } },
-      data: {
-        places: { locations: [{ id: 'garden', name: 'Garden', ui: { transition: 'slide-left' }, body: [{ text: 'garden', ui: { reveal: { as: 'zoom' } } }] }] },
-      },
     })
   })
 
@@ -1065,6 +1071,13 @@ describe('content migrations', () => {
           traits: { 'inventory/usable': { label: 'Drink', effects: [{ stat: 'energy', by: 5 }] } },
         },
         { id: 'scarf', of: 'item', name: 'Scarf', desc: 'Wool.' },
+        // And at schema 24 the vendor is an entity with the shop's trait.
+        {
+          id: 'kiosk',
+          of: 'vendor',
+          name: 'Kiosk',
+          traits: { 'shop/vendor': { goods: [{ entity: 'item:tea', price: { coins: 2 } }, { entity: 'food:bun' }] } },
+        },
       ],
       traits: { 'wardrobe/wearable': { 'item:scarf': { slot: 'neck' } } },
       actions: [
@@ -1104,7 +1117,6 @@ describe('content migrations', () => {
         },
       ],
       data: {
-        shop: { vendors: [{ id: 'kiosk', name: 'Kiosk', goods: [{ entity: 'item:tea', price: { coins: 2 } }, { entity: 'food:bun' }] }] },
         wardrobe: { slots: [{ id: 'neck', label: 'Neck', start: 'item:scarf' }] },
       },
       strings: { 'inventory/haveNone': 'No {thing} on you.', 'wardrobe/haveNone': 'Not in your bag.', 'inventory/doesNothing': 'The {thing} just sits there.' },
@@ -1209,11 +1221,14 @@ describe('plugin-owned migrations', () => {
     // From before plugins kept versions: the first-party plugins' versions follow the schema.
     const v12 = { id: 'mod:old', schema: 12, data: { shop: { vendors: [{ id: 'kiosk', goods: [{ item: 'paper', price: 1 }] }] } } }
     const upgraded = unwrap(upgradePack(v12, [shop(), wardrobe()]))
-    expect(upgraded.plugins).toEqual({ shop: 13, wardrobe: 13 })
-    expect(upgraded.data).toEqual({ shop: { vendors: [{ id: 'kiosk', goods: [{ entity: 'item:paper', price: 1 }] }] } })
-    // A schema 13 pack is past the shop's step, so a good it names the old way stays as written.
+    expect(upgraded.plugins).toEqual({ shop: 24, wardrobe: 13 })
+    // And at schema 24 the vendor is an entity with the shop's trait.
+    const kiosk = (goods: unknown[]) => [{ of: 'vendor', id: 'kiosk', traits: { 'shop/vendor': { goods } } }]
+    expect(upgraded.entities).toEqual(kiosk([{ entity: 'item:paper', price: 1 }]))
+    expect(upgraded.data).toBeUndefined()
+    // A schema 13 pack is past the shop's step for items, so a good it names the old way stays as written.
     const v13 = { ...v12, schema: 13 }
-    expect(unwrap(upgradePack(v13, [shop()])).data).toEqual(v13.data)
+    expect(unwrap(upgradePack(v13, [shop()])).entities).toEqual(kiosk([{ item: 'paper', price: 1 }]))
   })
 
   it('refuse a pack written for a newer version of a plugin than the game has', () => {

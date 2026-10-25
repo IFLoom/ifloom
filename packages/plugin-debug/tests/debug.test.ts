@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { apply, startingState, view, whyNot, type Game, type GameState, type CommandRef } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
-import { places, where } from '@ifloom/plugin-places'
+import { location, places, where } from '@ifloom/plugin-places'
 import { debug, debugGo, debugScene, debugHeld, debugStat, debugTime, debugTurn, debugKv, type DebugView } from '../src/index.ts'
 
 const clock = calendar()
@@ -12,16 +12,12 @@ function game(): Game {
     title: 'G',
     introScene: 'intro',
     actions: [],
-    data: {
-      places: {
-        locations: [
-          { id: 'house', name: 'House', tag: 'Home', exits: [], art: '', body: [] },
-          { id: 'island', name: 'Island', tag: 'Far', exits: [], art: '', body: [] },
-        ],
-      },
-    },
     kinds: [{ id: 'thing', label: 'Thing' }],
-    entities: [{ id: 'key', of: 'thing', name: 'key' }],
+    entities: [
+      { id: 'key', of: 'thing', name: 'key' },
+      location({ id: 'house', name: 'House', desc: 'Home', exits: [], body: [] }),
+      location({ id: 'island', name: 'Island', desc: 'Far', exits: [], body: [] }),
+    ],
     scenes: [
       { id: 'intro', body: [], choices: [] },
       { id: 'ending', body: [], choices: [] },

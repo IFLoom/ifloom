@@ -16,8 +16,8 @@ import {
   type Plugin,
 } from '@ifloom/engine'
 import { cast, character, person } from '@ifloom/plugin-cast'
-import { go, location, pickUp, places, type PlacesView } from '@ifloom/plugin-places'
-import { buy, sellable, shop, type ShopView } from '@ifloom/plugin-shop'
+import { go, location, locationRef, pickUp, places, type PlacesView } from '@ifloom/plugin-places'
+import { buy, sellable, shop, vendor, type ShopView } from '@ifloom/plugin-shop'
 import { wear, wearable, wardrobe, wearing } from '@ifloom/plugin-wardrobe'
 import { dropThing, giveThing, inventory, usable, useThing } from '../src/index.ts'
 
@@ -153,21 +153,17 @@ describe('the inventory alone', () => {
 describe('the inventory with places', () => {
   const park: Content = {
     name: 'park',
-    data: {
-      places: {
-        locations: [
-          { id: 'lawn', name: 'Lawn', tag: 'Park', exits: ['pond'], art: '', body: [] },
-          { id: 'pond', name: 'Pond', tag: 'Park', exits: ['lawn'], art: '', body: [] },
-        ],
-      },
-    },
+    entities: [
+      location({ id: 'lawn', name: 'Lawn', desc: 'Park', exits: ['pond'], body: [] }),
+      location({ id: 'pond', name: 'Pond', desc: 'Park', exits: ['lawn'], body: [] }),
+    ],
   }
 
   it('drops a thing where you are, where it lies until it is picked up again', () => {
     const g = game([park], [inventory(), places({ start: 'lawn' })])
     const dropped = run(begin(g), g, dropThing('gear:stone'))
     expect(heldCount(dropped, g, 'gear:stone')).toBe(0)
-    expect(heldCount(dropped, g, 'gear:stone', location('lawn'))).toBe(1)
+    expect(heldCount(dropped, g, 'gear:stone', locationRef('lawn'))).toBe(1)
     const lying = (state: GameState) => (view(state, g).plugins.places as PlacesView).things.map((thing) => thing.ref)
     expect(lying(dropped)).toEqual(['gear:stone'])
     // Somewhere else it isn't there; back on the lawn, it is.
@@ -217,9 +213,9 @@ describe('the inventory with the shop and the wardrobe', () => {
     entities: [
       { id: 'scarf', of: 'clothing', name: 'scarf', traits: { ...wearable('neck'), ...sellable({ coins: 8 }) } },
       { id: 'pie', of: 'food', name: 'pie', traits: { ...usable('Eat the pie', [{ stat: 'energy', by: 20 }]), ...sellable({ coins: 3 }) } },
+      vendor({ id: 'stall', name: 'Stall', buysBack: 0.5, goods: [{ entity: 'clothing:scarf', stock: 1 }, { entity: 'food:pie' }] }),
     ],
     data: {
-      shop: { vendors: [{ id: 'stall', name: 'Stall', buysBack: 0.5, goods: [{ entity: 'clothing:scarf', stock: 1 }, { entity: 'food:pie' }] }] },
       wardrobe: { slots: [{ id: 'neck', label: 'Neck' }] },
     },
   }
@@ -242,7 +238,10 @@ describe('the inventory with the shop and the wardrobe', () => {
     for (const plugins of [[shop()], [wardrobe()], [inventory()], [shop(), wardrobe()]] as Plugin[][]) {
       // Each one's data only where the game has it; the traits of the ones it lacks ride along unread.
       const data = Object.fromEntries(Object.entries(market.data ?? {}).filter(([id]) => plugins.some((plugin) => plugin.id === id)))
-      const loaded = loadGame([picnic, { ...market, data }], { id: 'picnic', title: 'Picnic', plugins })
+      // The stall is the shop's: its kind comes with the shop.
+      const has = (id: string) => plugins.some((plugin) => plugin.id === id)
+      const entities = (market.entities ?? []).filter((entity) => entity.of !== 'vendor' || has('shop'))
+      const loaded = loadGame([picnic, { ...market, data, entities }], { id: 'picnic', title: 'Picnic', plugins })
       expect(loaded.problems, plugins.map((plugin) => plugin.id).join()).toEqual([])
     }
   })

@@ -6,9 +6,9 @@ description: "Vendors that sell things for any spendable stat, with stock the ve
 
 ```ts
 import {
-  shop, buy, sell, vendorOpen, inStock, openShop, sellable,
-  vendorDefs, vendorRef, sellableOf, shopView,
-  type VendorDef, type GoodDef, type DiscountDef, type Restock, type Sellable,
+  shop, vendor, buy, sell, vendorOpen, inStock, openShop, sellable,
+  vendorsOf, vendorOf, vendorRef, sellableOf, shopView,
+  type Vendor, type VendorDef, type GoodDef, type DiscountDef, type Restock, type Sellable,
   type ShopState, type StockRecord, type ShopView, type VendorView, type GoodView,
 } from '@ifloom/plugin-shop'
 ```
@@ -43,17 +43,17 @@ Without the calendar, a vendor with `hours` is always open and a day is a turn. 
 function shop(): DefinedPlugin<ShopState, ShopView>
 ```
 
-Builds the plugin, with the id `shop`. It brings the `vendor` [kind](/docs/reference/entities#kinddef): unique and unlisted, one entity for each vendor, `'vendor:<id>'`, named as the vendor is. That entity holds the vendor's stock.
+Builds the plugin, with the id `shop`. It brings the `vendor` [kind](/docs/reference/entities#kinddef), unique and unlisted, which [`vendor()`](#vendor) uses. A vendor is any entity that carries the plugin's `shop/vendor` trait, and that entity holds the vendor's stock.
 
 ## Writing vendors
 
-Vendors are content. They go in your content's [`data`](/docs/reference/loader#content) under `shop.vendors`, and are merged by id, so a mod can add a vendor or replace one. The things they sell are entities of your own kinds. This is a shop on its own, with no other plugin, the showcase's café counter:
+A vendor is an entity, written with [`vendor()`](#vendor) in your content's [`entities`](/docs/reference/loader#content). Entities merge by reference, so a mod can add a vendor or replace one, and a [`traits`](/docs/reference/entities#traits) row changes what one sells. The things they sell are entities of your own kinds. This is a shop on its own, with no other plugin, the showcase's café counter:
 
 ```ts
 import { holding, type Content } from '@ifloom/engine'
-import { buy, sellable, type VendorDef } from '@ifloom/plugin-shop'
+import { buy, sellable, vendor } from '@ifloom/plugin-shop'
 
-const counter: VendorDef = {
+const counter = vendor({
   id: 'counter',
   name: 'The counter',
   at: ['cafe'],
@@ -66,7 +66,7 @@ const counter: VendorDef = {
     // Two a day: the counter holds them, and gets two again each morning.
     { entity: 'food:flapjack', price: { coins: 2 }, stock: 2, restock: 'day' },
   ],
-}
+})
 
 const town: Content = {
   stats: [{ id: 'coins', label: 'Coins', start: 12, max: 999, spendable: true, format: '{n} coins' }],
@@ -74,8 +74,8 @@ const town: Content = {
   entities: [
     { id: 'sandwich', of: 'food', name: 'sandwich', desc: 'Cheese and pickle.', traits: { ...sellable({ coins: 4 }) } },
     { id: 'flapjack', of: 'food', name: 'flapjack', desc: 'Oats and syrup.' },
+    counter,
   ],
-  data: { shop: { vendors: [counter] } },
 }
 
 // A button for a location's actions, or anywhere else a button goes.
@@ -86,12 +86,33 @@ const line = { text: 'cafe.full', when: holding('food:sandwich') }
 
 The kind is unlisted (`listed: false`) because what the player holds already reaches the view as [`view.held`](/docs/reference/view#held), and a list of every food in the game would give the menu away.
 
-### VendorDef
+### vendor
 
 ```ts
-type VendorDef = {
-  id: string
-  name: string
+function vendor(def: VendorDef): EntityDef
+
+type VendorDef = Omit<EntityDef, 'of' | 'at'> & Vendor & { of?: string }
+```
+
+Writes a vendor for your content's `entities`. You give it the entity's fields and the `shop/vendor` trait's fields side by side, and it returns an [`EntityDef`](/docs/reference/entities#entitydef) of the kind `vendor` with the trait's fields in `traits['shop/vendor']`.
+
+```ts
+vendor({ id: 'kiosk', name: 'The kiosk', goods: [{ entity: 'food:paper', price: { coins: 1 } }] })
+// { id: 'kiosk', of: 'vendor', name: 'The kiosk', traits: { 'shop/vendor': { goods: [{ entity: 'food:paper', price: { coins: 1 } }] } } }
+```
+
+| Field | What it is |
+|---|---|
+| `id` | Unique among the entities of its kind. Commands name a vendor of the `vendor` kind by it, and its entity is `'vendor:<id>'`. |
+| `name` | What the player reads, such as "The counter". It's the entity's name, so prose tokens in it are filled in. |
+| `of` | Another kind for the vendor, such as `'character'` for a person who sells. Commands then name it by its whole reference, `buy('character:ava', 'food:bun')`. `'vendor'` if left out. |
+
+The entity's other fields work as on any entity. `at` is left out because a vendor's `at` is the trait's, where on the map it stands.
+
+### The vendor trait
+
+```ts
+type Vendor = {
   at?: string[]
   hours?: string[]
   open?: Condition
@@ -102,10 +123,10 @@ type VendorDef = {
 }
 ```
 
+What the `shop/vendor` trait holds. The plugin declares the trait and types it, so `traitOf(game, 'vendor:counter', 'shop/vendor')` reads a `Vendor`.
+
 | Field | What it is |
 |---|---|
-| `id` | Unique among vendors. Commands name the vendor by it, and its entity is `'vendor:<id>'`. |
-| `name` | What the player reads, such as "The counter". Its entity's name too, so prose tokens in it are filled in. |
 | `at` | The [places](/docs/plugins/places) locations it stands at. Checked when the game has places. Everywhere if left out. |
 | `hours` | The [calendar](/docs/plugins/calendar)'s periods it's open in, such as `['morning', 'afternoon']`. Always open if left out. |
 | `open` | A [condition](/docs/reference/conditions) it's only open while, on top of `hours`, such as `weekday(0, 1, 2, 3, 4)`. |
@@ -229,7 +250,7 @@ Opening a counter doesn't move the player. A vendor with `at` still sells only t
 
 ```ts
 // An online shop: no `at`, so it sells wherever the player is.
-const webshop: VendorDef = { id: 'webshop', name: 'Pinecone Online', goods: [{ entity: 'clothing:scarf', price: { coins: 10 } }] }
+const webshop = vendor({ id: 'webshop', name: 'Pinecone Online', goods: [{ entity: 'clothing:scarf', price: { coins: 10 } }] })
 // A laptop app's actions section has a button that opens it.
 const app: AppDef = {
   id: 'pinecone', name: 'Pinecone', icon: 'basket', on: 'laptop',
@@ -237,7 +258,7 @@ const app: AppDef = {
 }
 ```
 
-The checker reports an `openShop` for a vendor the game doesn't have (`unknown vendor "kiosk"`), and a `shop` panel opened with no `vendor`.
+The checker reports an `openShop` for a vendor the game doesn't have (`unknown entity "vendor:kiosk"`), and a `shop` panel opened with no `vendor`.
 
 ## Conditions
 
@@ -289,7 +310,9 @@ type VendorView = {
 
 | Field | What it is |
 |---|---|
-| `ref` | Its entity, `'vendor:<id>'`, which holds its stock. |
+| `id` | How commands name it: its id for one of the `vendor` kind, else its whole reference. |
+| `ref` | Its entity, such as `'vendor:counter'`, which holds its stock. |
+| `name` | Its entity's name, tokens filled. |
 | `here` | The player is at one of its `at`, or it has none, or the game has no places plugin. |
 | `closed` | Why it's closed, in the words `shop/buy` would be refused with, or `null` while it's open. |
 | `buysBack` | It takes things back. |
@@ -456,14 +479,19 @@ const sellable: (price: Record<string, number>) => { 'shop/sellable': Sellable }
 
 `openShop` opens the vendor's counter in the `shop` panel. See [Opening a counter](#opening-a-counter).
 
-### vendorDefs and vendorRef
+### vendorsOf, vendorOf and vendorRef
 
 ```ts
-function vendorDefs(game: Game): VendorDef[]
+function vendorsOf(game: Game, state?: GameState): EntityRef[]
+function vendorOf(game: Game, id: string | null | undefined, state?: GameState): Vendor | undefined
 function vendorRef(vendor: string): EntityRef
 ```
 
-`vendorDefs` is the game's vendors, merged from its content and packs: `game.data.shop.vendors`. A good that names no entity is left out, and the checker reports it. `vendorRef` is the entity a vendor is, `'vendor:counter'`, for a condition or an effect on what it holds.
+`vendorsOf` is every entity with the `shop/vendor` trait, as references. Given only the game, it's the vendors content declares, in their order. Given a state too, it's every vendor in the game now, those made in play included.
+
+`vendorOf` is the [`Vendor`](#the-vendor-trait) trait of the vendor with this id or reference, with any good that names no entity left out (the checker reports it). Without a state it reads only the vendors content declares.
+
+`vendorRef` is the entity a vendor is, `vendorRef('counter')` is `'vendor:counter'`, for a condition or an effect on what it holds. A reference is returned as written.
 
 ### sellableOf
 
@@ -483,7 +511,7 @@ The `ShopView` for a state. The plugin's view is `shopView(state, slice, context
 
 ## Checks
 
-When the game loads, the plugin reports these problems against the content or pack each vendor came from, with `where` as `vendors <id>`:
+When the game loads, the plugin checks the `shop/vendor` trait on each vendor, and reports these problems against the content or pack each one came from, with `where` as `trait shop/vendor on <ref>`:
 
 - A good that names no thing, such as one in your own content still written as `{ item: 'sandwich' }`. A pack written that way is [upgraded](/docs/reference/loader#upgradepack) as it loads.
 - An unknown thing (`good food:pear: unknown entity "food:pear"`), or a price in an unknown stat.
@@ -493,13 +521,16 @@ When the game loads, the plugin reports these problems against the content or pa
 - The same thing twice (`sells "…" twice`).
 - `buysBack` outside 0 to 1, or a `discounts.off` that isn't more than 0 and at most 1.
 - Anything `open` or a good's `when` names that the game doesn't have.
-- An unknown location in `at`, when the game has places.
+- An unknown location in `at`, when the game has places (`unknown entity "location:moon"`).
 
-A command that names a vendor or thing the game doesn't have gives `unknown vendor "…"` or `unknown entity "…"` where it's written. The trait's price is checked on each entity that has it.
+A command that names a vendor or thing the game doesn't have gives `unknown entity "vendor:…"` or `unknown entity "…"` where it's written, and one that names an entity that isn't a vendor gives `"…" has no shop/vendor trait`. The `shop/sellable` trait's price is checked on each entity that has it.
+
+Vendors still written as a list in `data.shop.vendors`, as content did before schema 24, are reported one by one (`vendors kiosk · vendors are entities now: …`). A pack written then is carried forward by [`upgradePack`](/docs/reference/loader#upgradepack): each vendor becomes an entity of the kind `vendor`, with its `id` and `name`, and the rest in the `shop/vendor` trait. Saves need nothing, because a vendor's entity was `vendor:<id>` before too.
 
 ## Gotchas
 
-- **The calendar's `hours` and the places map's opening hours are separate.** A location's [`blocked`](/docs/plugins/places#locationdef) stops the player getting in, and a vendor's `hours` stops it selling. The showcase sets both, so the café and its counter close together.
+- **A traits row replaces the whole trait.** A mod that changes a vendor's goods with a `traits` row gives every field the vendor needs, its `at` and `hours` included.
+- **The calendar's `hours` and the places map's opening hours are separate.** A location's [`blocked`](/docs/plugins/places#the-location-trait) stops the player getting in, and a vendor's `hours` stops it selling. The showcase sets both, so the café and its counter close together.
 - **A vendor's `hours` are asked of the calendar.** They're period ids, not a condition. For days of the week, add `open: weekday(…)`.
 - **The price on a button is today's.** A discount drawn for today changes the price on the button, and tomorrow it may be back to full.
 - **Selling back pays from the full price,** not today's discounted one.

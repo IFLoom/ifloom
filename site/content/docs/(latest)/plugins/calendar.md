@@ -12,7 +12,7 @@ These are the parts of a game that deal with time, and where each one comes from
 
 - **Time passing** is the [`calendar/pass`](#effects) effect, on an action or a choice.
 - **Bed** is the [`sleep()`](#commands) command, usually on a room's action.
-- **Opening hours** are a [place](/docs/plugins/places)'s [`blocked`](/docs/plugins/places#locationdef) entries, written with the calendar's [conditions](#conditions), such as `{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }`.
+- **Opening hours** are a [place](/docs/plugins/places)'s [`blocked`](/docs/plugins/places#the-location-trait) entries, written with the calendar's [conditions](#conditions), such as `{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }`.
 - **Schedules** are a [cast](/docs/plugins/cast) character's [`schedule`](/docs/plugins/cast#where-people-are) entries, with the calendar's conditions as their `when`, such as `{ location: 'cafe', when: period('morning', 'afternoon') }`.
 - **The header** is the calendar's [label](#the-label), at `view.when`.
 

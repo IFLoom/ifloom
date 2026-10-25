@@ -42,7 +42,7 @@ const MEMBERS = {
   // Hooks: at an event, the next state.
   hooks: ['onTurn', 'onTurnDone', 'onStat', 'onCommand'],
   // Providers: answers, never a change to the state.
-  providers: ['guard', 'price', 'label', 'stage', 'buttons', 'action', 'speaker', 'audio', 'statModifiers', 'view', 'profile', 'entities'],
+  providers: ['guard', 'price', 'label', 'stage', 'buttons', 'action', 'speaker', 'audio', 'statModifiers', 'view', 'profile'],
   // What entities carry that it gives meaning to: data, each named `<id>/<name>`; and the content it brings, under the game's.
   declares: ['traits', 'content'],
   // What the content checker asks.

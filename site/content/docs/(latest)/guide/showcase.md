@@ -123,7 +123,7 @@ Buying a coffee or a sandwich takes no time. A button that passes time carries t
 
 ### Opening hours
 
-`story/cafe.ts` and `story/office.ts`, the `cafe` and `office` locations. Each keeps its hours with a [`blocked`](/docs/plugins/places#locationdef) list, using the calendar's conditions and its own words. The café is locked with `{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }`.
+`story/cafe.ts` and `story/office.ts`, the `cafe` and `office` locations. Each keeps its hours with a [`blocked`](/docs/plugins/places#the-location-trait) list, using the calendar's conditions and its own words. The café is locked with `{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }`.
 
 The office's list is checked in order, so the most particular reason comes first:
 

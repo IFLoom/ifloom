@@ -6,7 +6,7 @@ import { quests } from '@ifloom/plugin-quests'
 import { debug } from '@ifloom/plugin-debug'
 import { phone } from '@ifloom/phone'
 import { calendar, pass } from '@ifloom/plugin-calendar'
-import { at, places } from '@ifloom/plugin-places'
+import { at, location, places } from '@ifloom/plugin-places'
 import { GameShell } from '@ifloom/react'
 import { calendarUi } from '@ifloom/plugin-calendar/react'
 import { debugUi } from '@ifloom/plugin-debug/react'
@@ -49,13 +49,11 @@ function game(strings: Record<string, string> = {}): Game {
           'mum.hi': 'Did you eat?',
           'mum.hi#yes': 'Yes, Mum',
         },
+        entities: [
+          location({ id: 'house', name: 'House', desc: 'Home', exits: ['street'], body: [{ text: 'place.house' }] }),
+          location({ id: 'street', name: 'High Street', desc: 'Out', exits: ['house'], body: [{ text: 'place.street' }] }),
+        ],
         data: {
-          places: {
-            locations: [
-              { id: 'house', name: 'House', tag: 'Home', exits: ['street'], art: '', body: [{ text: 'place.house' }] },
-              { id: 'street', name: 'High Street', tag: 'Out', exits: ['house'], art: '', body: [{ text: 'place.street' }] },
-            ],
-          },
           messages: { messages: [{ id: 'mum.hi', channel: 'texts', from: 'Mum', when: at('street'), body: [{ text: 'mum.hi' }], replies: [{ id: 'yes' }] }] },
           quests: { quests: [{ id: 'out', title: 'Get out of the house', starts: { kv: 'never' }, stages: [] }] },
         },

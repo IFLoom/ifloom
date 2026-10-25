@@ -125,11 +125,12 @@ export function checkUiHints(game: Game, options: { allow?: readonly string[]; i
   }
   for (const kind of game.kinds ?? []) hints('entity', `kind ${kind.id}`, kind.ui)
   for (const entity of game.entities ?? []) hints('entity', `entity ${entity.of}:${entity.id}`, entity.ui)
-  // A place is a plugin's, read by name as the rest of the UI reads plugins: its room's hints and its body's.
-  for (const place of (game.data?.places?.locations ?? []) as readonly { id?: unknown; ui?: unknown; body?: readonly Block[] }[]) {
-    const where = `place ${String(place.id)}`
-    hints('scene', where, place.ui)
-    blocks(where, place.body)
+  // A place is a plugin's, read by name as the rest of the UI reads plugins: the `places/location` trait's room hints and its body's.
+  const places = (game.traits?.['places/location'] ?? {}) as Record<string, { ui?: unknown; body?: readonly Block[] } | undefined>
+  for (const [ref, place] of Object.entries(places)) {
+    const where = `place ${ref}`
+    hints('scene', where, place?.ui)
+    blocks(where, place?.body)
   }
   // Inline pieces in the prose: every line the store lists, as written.
   const inline = new Set([...INLINE, ...Object.keys(options.inline ?? {})])

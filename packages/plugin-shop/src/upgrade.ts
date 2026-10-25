@@ -40,12 +40,39 @@ function goodsToThings(pack: RawPack): RawPack {
   return { ...pack, data: { ...data, shop: { ...data.shop, vendors } } }
 }
 
+/**
+ * A vendor in `data.shop.vendors` as an entity of the kind `vendor`
+ * carrying the `shop/vendor` trait: its `id` and `name` are the entity's,
+ * the rest (where, hours, goods and so on) is the trait. The vendors follow
+ * the pack's own entities, and `data.shop` goes when nothing else is left in it.
+ */
+function vendorsToEntities(pack: RawPack): RawPack {
+  const data = isRecord(pack.data) ? pack.data : undefined
+  const shopData = data && isRecord(data.shop) ? data.shop : undefined
+  if (!data || !shopData || !Array.isArray(shopData.vendors)) return pack
+  const entities = shopData.vendors.filter(isRecord).map((vendor) => {
+    const { id, name, ...trait } = vendor
+    return { of: 'vendor', id, ...(name !== undefined ? { name } : {}), traits: { 'shop/vendor': trait } }
+  })
+  const { vendors: _moved, ...restShop } = shopData
+  const { shop: _shop, ...restData } = data
+  const nextData = Object.keys(restShop).length ? { ...restData, shop: restShop } : restData
+  const { data: _data, ...rest } = pack
+  return {
+    ...rest,
+    entities: [...(Array.isArray(pack.entities) ? pack.entities : []), ...entities],
+    ...(Object.keys(nextData).length ? { data: nextData } : {}),
+  } as RawPack
+}
+
 /** The version of what content writes for this plugin. */
-export const CONTENT_VERSION = 13
+export const CONTENT_VERSION = 24
 
 export const contentMigrations: Record<number, ContentStep> = {
   // 12 → 13: items leave the engine; what a vendor sells is an entity, and the shop's calls name it.
   12: (pack, tools) => tools.calls(goodsToThings(pack), (call) => (ITEM_CALLS.has(call.name) ? { name: call.name, with: itemArgs(call.with) } : call)),
+  // 23 → 24: a vendor is an entity with the `shop/vendor` trait, its name the entity's.
+  23: (pack) => vendorsToEntities(pack),
 }
 
 /** The version of this plugin's commands. */

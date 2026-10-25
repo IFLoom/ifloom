@@ -39,8 +39,13 @@ export type Reference =
   | { setting: string; is?: KvValue }
   /** A kind of entity. */
   | { kind: string }
-  /** An entity content declares (or a plugin's `entities` makes), by reference: `'food:apple'`. `'$'` and `'food:*'` pass. */
-  | { entity: string }
+  /**
+   * An entity content declares, by reference: `'food:apple'`. `'$'` and
+   * `'food:*'` pass. With `carrying`, it must also carry that trait: a
+   * place the places plugin can take the player to, `{ entity:
+   * 'location:cafe', carrying: 'places/location' }`.
+   */
+  | { entity: string; carrying?: string }
   /**
    * Who holds a thing: `'player'`, `'you'` or a unique entity. `holds` is the
    * thing given to it, which can't be the holder itself; `protagonist` for a
@@ -85,8 +90,8 @@ export type Reference =
   /** A call to a plugin's condition, effect or command by name, or the game's own (`game/…`). */
   | { call: CallTable; name: string; with?: PluginArgs }
   /**
-   * An entry in a plugin's content, such as a location: `{ entry: 'cafe',
-   * plugin: 'places', list: 'locations', noun: 'location' }`. Not checked when
+   * An entry in a plugin's content, such as a quest: `{ entry: 'bread',
+   * plugin: 'quests', list: 'quests', noun: 'quest' }`. Not checked when
    * the game doesn't have that plugin.
    */
   | { entry: string; plugin: string; list: string; noun: string }

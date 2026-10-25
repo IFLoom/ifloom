@@ -169,6 +169,10 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Changed
 
+- **Breaking:** a place is an [entity](/docs/reference/entities) with the `places/location` trait, written in your content's `entities` with [`location({ ... })`](/docs/plugins/places#location), as a person is written with `person()`: `location({ id: 'cafe', name: 'The Corner Café', desc: 'Café', exits: ['high-street'], body: [{ text: 'place.cafe' }] })`. A place's old `tag` is its entity's `desc` and its `art` its `image`, which the checker now lists as a file to look for. The exits, body, actions and the rest are the trait's, so a mod changes a place with a `traits` row or replaces it as any entity. Any entity carrying the trait is a place, of any kind. `data.places.locations` is reported, and a pack written for an older schema is carried forward. The old reference helper `location('park')` is [`locationRef('park')`](/docs/plugins/places#helpers), `locationById` is [`locationOf`](/docs/plugins/places#helpers) and `locationsOf` gives references. The places view's `tag` and `art` are `desc` and `image` (a path through `artSrc`, or `null`), with the place's `ref` beside them, and the value `{{v:places/tag}}` is `{{v:places/desc}}`.
+- **Breaking:** a vendor is an entity with the `shop/vendor` trait, written in `entities` with [`vendor({ ... })`](/docs/plugins/shop#vendor), its name the entity's. Any entity carrying the trait sells, so a person can keep a stall: `buy('character:ava', 'food:bun')`. `data.shop.vendors` is reported, and an older pack is carried forward. `vendorDefs` is [`vendorsOf`](/docs/plugins/shop#vendorsof-vendorof-and-vendorref), which gives references, and [`vendorOf`](/docs/plugins/shop#vendorsof-vendorof-and-vendorref) reads one.
+- The checker reports a place or vendor content names that the game lacks as `unknown entity "location:moon"`, and one that names an entity without the trait as `"item:paper" has no places/location trait`. A place's and a vendor's own problems are at `trait places/location on location:cafe`.
+
 - **Breaking:** a spoken line under a name, `Ava: "…"`, is a line under that label with no speaker: the engine no longer matches names against entities, and `You: "…"` is no longer the player's. Write `@ava:` and `@you:` (see [Speech](/docs/reference/prose#speech)). A pack written for schema 22 is rewritten when it loads: a line under exactly one entity's name gets that entity's id, `You:` (or the game's string `you`) becomes `@you:`, and a name nobody has, or two share, stays a labelled line.
 
 - **Breaking:** the strings lookup is `stringOf(game, key, vars)` (was `say`), so `say` is only the flowing-scene builder for a spoken line. A plugin's refusals read `stringOf(game, 'loyalty/notFull')`. See [`stringOf`](/docs/reference/strings#stringof).
@@ -317,6 +321,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Removed
 
+- **Breaking:** a plugin's `entities` provider. A plugin brings entities in its [`content`](/docs/reference/plugins#kinds-and-entities), and the places and shop plugins read theirs from their traits.
 - **Breaking:** the `mono`, `mail` and `prop` beats, an image beat's `rotate`, `MailHeader`, `PropFace` and the React UI's `ui.mailHeader` word.
 - **Breaking:** a plugin's `speaker` provider, `pluginSpeaker` and the cast's `cast/person` query. A scene's speaker is its entity.
 - **Breaking:** `renderScene`, `defaultRuntime`, `SceneRuntime`, `Prose` and `drawVariant` aren't exported. A plugin draws blocks with `context.beats`.

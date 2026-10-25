@@ -37,7 +37,7 @@ The [Transitions recipe](/docs/recipes/transitions) walks through transitions an
 }
 ```
 
-How a screen comes on (`in`) and goes off (`out`), over `ms` milliseconds each. A name on its own means the same both ways, so `ui: { transition: 'fade' }` is `{ in: 'fade', out: 'fade' }`. On a [scene](/docs/reference/scenes#datascene) it's that scene's. On a [place](/docs/plugins/places#locationdef) it's the room's while no scene is open, so walking between places can slide. In the content's `ui`, the game's own hints, it's the default for every screen that says nothing, part by part: a scene that sets only `in` takes `out` and `ms` from the game's.
+How a screen comes on (`in`) and goes off (`out`), over `ms` milliseconds each. A name on its own means the same both ways, so `ui: { transition: 'fade' }` is `{ in: 'fade', out: 'fade' }`. On a [scene](/docs/reference/scenes#datascene) it's that scene's. On a [place](/docs/plugins/places#the-location-trait) it's the room's while no scene is open, so walking between places can slide. In the content's `ui`, the game's own hints, it's the default for every screen that says nothing, part by part: a scene that sets only `in` takes `out` and `ms` from the game's.
 
 ```ts
 export const town: Content = {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  SCHEMA,
   commandOf,
   apply,
   createRunner,
@@ -18,11 +19,11 @@ import {
   type CommandRef,
 } from '@ifloom/engine'
 import { calendar, pass } from '@ifloom/plugin-calendar'
-import { go, places, type LocationDef } from '@ifloom/plugin-places'
-import { buy, inStock, openShop, sell, sellable, shop, vendorOpen, vendorRef, type ShopView, type VendorDef } from '../src/index.ts'
+import { go, location, places } from '@ifloom/plugin-places'
+import { buy, inStock, openShop, sell, sellable, shop, vendor, vendorOf, vendorOpen, vendorRef, vendorsOf, type ShopView } from '../src/index.ts'
 
 /** The café counter: coffee for coins, three biscuits a day, and half back on a sandwich. */
-const counter: VendorDef = {
+const counter = vendor({
   id: 'counter',
   name: 'The counter',
   at: ['cafe'],
@@ -35,14 +36,14 @@ const counter: VendorDef = {
     { entity: 'food:sandwich', price: { coins: 5, energy: 1 } },
     { entity: 'food:cake', price: { coins: 6 }, when: { kv: 'birthday' } },
   ],
-}
+})
 /** A market stall marking one thing a day down by half. */
-const stall: VendorDef = {
+const stall = vendor({
   id: 'stall',
   name: 'Fruit stall',
   discounts: { off: 0.5 },
   goods: ['apple', 'pear', 'plum', 'fig'].map((id) => ({ entity: `fruit:${id}` })),
-}
+})
 
 /** Food the counter prices itself; fruit priced by its \`shop/sellable\` trait, on the kind. */
 const things: Content = {
@@ -56,7 +57,7 @@ const things: Content = {
   ],
 }
 
-const place = (id: string, exits: string[]): LocationDef => ({ id, name: id, tag: '', art: '', exits, body: [] })
+const place = (id: string, exits: string[]) => location({ id, name: id, exits, body: [] })
 
 function game(...partners: Plugin[]): Game {
   const town: Content = {
@@ -66,14 +67,16 @@ function game(...partners: Plugin[]): Game {
       { id: 'energy', label: 'Energy', start: 50, spendable: true },
     ],
     ...things,
+    entities: [
+      ...things.entities!,
+      counter,
+      stall,
+      ...(partners.some((plugin) => plugin.id === 'places') ? [place('street', ['cafe']), place('cafe', ['street'])] : []),
+    ],
     actions: [
       { id: 'wait', effects: [pass(1)] },
       { id: 'sleep', effects: [{ turn: true }] },
     ],
-    data: {
-      shop: { vendors: [counter, stall] },
-      ...(partners.some((plugin) => plugin.id === 'places') ? { places: { locations: [place('street', ['cafe']), place('cafe', ['street'])] } } : {}),
-    },
   }
   const loaded = loadGame([town], { id: 'g', title: 'g', plugins: [...partners, shop()] })
   expect(loaded.problems).toEqual([])
@@ -204,41 +207,37 @@ describe('the shop, on its own', () => {
           name: 'mod',
           stats: [{ id: 'charm', label: 'Charm' }],
           kinds: [{ id: 'gem', label: 'Gem', unique: true }],
-          data: {
-            shop: {
-              vendors: [
-                {
-                  id: 'bad',
-                  name: 'Bad',
-                  at: ['moon'],
-                  buysBack: 2,
-                  goods: [
-                    { entity: 'stone:moon', price: { charm: 1 } },
-                    { entity: 'stone:moon', price: { gold: 1 }, restock: 'day' },
-                    { entity: 'gem:ruby', stock: 2 },
-                  ],
-                },
+          entities: [
+            vendor({
+              id: 'bad',
+              name: 'Bad',
+              at: ['moon'],
+              buysBack: 2,
+              goods: [
+                { entity: 'stone:moon', price: { charm: 1 } },
+                { entity: 'stone:moon', price: { gold: 1 }, restock: 'day' },
+                { entity: 'gem:ruby', stock: 2 },
               ],
-            },
-          },
+            }),
+          ],
         },
       ],
       { id: 'g', title: 'g', plugins: [shop()] },
     )
     // A location on the places map is only checked when the game has places.
     expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
-      'action y: unknown vendor "kiosk"',
+      'action y: unknown entity "vendor:kiosk"',
       'action y: unknown kind "fruit"',
-      'vendors bad: good stone:moon: unknown kind "stone"',
-      'vendors bad: good stone:moon: unknown kind "stone"',
-      'vendors bad: good stone:moon: unknown stat "gold"',
-      'vendors bad: good gem:ruby: unknown entity "gem:ruby"',
-      'vendors bad: buysBack must be between 0 and 1',
-      'vendors bad: good stone:moon: price in stat "charm", which is not spendable',
-      'vendors bad: sells "stone:moon" twice',
-      'vendors bad: good stone:moon: restock needs a stock',
-      'vendors bad: good gem:ruby: a unique thing has a stock of 1 at most',
-      'vendors bad: good gem:ruby: no price: give the good a price, or the thing a shop/sellable trait',
+      'trait shop/vendor on vendor:bad: buysBack must be between 0 and 1',
+      'trait shop/vendor on vendor:bad: good stone:moon: price in stat "charm", which is not spendable',
+      'trait shop/vendor on vendor:bad: sells "stone:moon" twice',
+      'trait shop/vendor on vendor:bad: good stone:moon: restock needs a stock',
+      'trait shop/vendor on vendor:bad: good gem:ruby: a unique thing has a stock of 1 at most',
+      'trait shop/vendor on vendor:bad: good gem:ruby: no price: give the good a price, or the thing a shop/sellable trait',
+      'trait shop/vendor on vendor:bad: good stone:moon: unknown kind "stone"',
+      'trait shop/vendor on vendor:bad: good stone:moon: unknown kind "stone"',
+      'trait shop/vendor on vendor:bad: good stone:moon: unknown stat "gold"',
+      'trait shop/vendor on vendor:bad: good gem:ruby: unknown entity "gem:ruby"',
     ])
   })
 })
@@ -268,8 +267,10 @@ describe('the shop’s stock, held by the vendor', () => {
           name: 'town',
           stats: [{ id: 'coins', label: 'Coins', start: 20, spendable: true }],
           kinds: [{ id: 'jar', label: 'Jar', listed: false }],
-          entities: [{ id: 'honey', of: 'jar', name: 'honey', at: { 'vendor:market': 2 } }],
-          data: { shop: { vendors: [{ id: 'market', name: 'Market', goods: [{ entity: 'jar:honey', price: { coins: 1 }, stock: 0 }] }] } },
+          entities: [
+            { id: 'honey', of: 'jar', name: 'honey', at: { 'vendor:market': 2 } },
+            vendor({ id: 'market', name: 'Market', goods: [{ entity: 'jar:honey', price: { coins: 1 }, stock: 0 }] }),
+          ],
         },
       ],
       { id: 'g', title: 'g', plugins: [shop()] },
@@ -297,9 +298,11 @@ describe('the shop’s stock, held by the vendor', () => {
           name: 'town',
           stats: [{ id: 'coins', label: 'Coins', start: 20, spendable: true }],
           kinds: [{ id: 'hat', label: 'Hat', unique: true, listed: false }],
-          entities: [{ id: 'bowler', of: 'hat', name: 'bowler', traits: { ...sellable({ coins: 6 }) } }],
+          entities: [
+            { id: 'bowler', of: 'hat', name: 'bowler', traits: { ...sellable({ coins: 6 }) } },
+            vendor({ id: 'milliner', name: 'Milliner', buysBack: 0.5, goods: [{ entity: 'hat:bowler', stock: 1, restock: 'day' }] }),
+          ],
           actions: [{ id: 'sleep', effects: [{ turn: true }] }],
-          data: { shop: { vendors: [{ id: 'milliner', name: 'Milliner', buysBack: 0.5, goods: [{ entity: 'hat:bowler', stock: 1, restock: 'day' }] }] } },
         },
       ],
       { id: 'g', title: 'g', plugins: [shop()] },
@@ -333,6 +336,103 @@ describe('the shop’s stock, held by the vendor', () => {
   })
 })
 
+describe('a vendor is an entity with the vendor trait', () => {
+  it('is written with vendor(): the entity has the name, and the trait the rest', () => {
+    expect(stall).toEqual({
+      id: 'stall',
+      of: 'vendor',
+      name: 'Fruit stall',
+      traits: { 'shop/vendor': { discounts: { off: 0.5 }, goods: ['apple', 'pear', 'plum', 'fig'].map((id) => ({ entity: `fruit:${id}` })) } },
+    })
+    const g = game()
+    expect(vendorsOf(g)).toEqual(['vendor:counter', 'vendor:stall'])
+    expect(vendorOf(g, 'counter')?.goods.map((good) => good.entity)).toContain('food:biscuit')
+    expect(vendorOf(g, 'kiosk')).toBeUndefined()
+  })
+
+  it('can be of any kind that carries the trait: a person who sells', () => {
+    const loaded = loadGame(
+      [
+        {
+          name: 'town',
+          ...things,
+          stats: [{ id: 'coins', label: 'Coins', start: 20, spendable: true }],
+          kinds: [...things.kinds!, { id: 'character', label: 'Person', unique: true }],
+          entities: [...things.entities!, vendor({ id: 'ava', of: 'character', name: 'Ava', goods: [{ entity: 'food:coffee', price: { coins: 2 } }] })],
+        },
+      ],
+      { id: 'g', title: 'g', plugins: [shop()] },
+    )
+    expect(loaded.problems).toEqual([])
+    const g = loaded.game
+    expect(shown(fresh(g), g).vendors).toMatchObject([{ id: 'character:ava', ref: 'character:ava', name: 'Ava' }])
+    expect(run(fresh(g), g, buy('character:ava', 'food:coffee')).stats.coins).toBe(18)
+  })
+
+  it('has its goods changed by a mod with a traits row', () => {
+    const mod = {
+      id: 'mod:cheap',
+      schema: SCHEMA,
+      traits: { 'shop/vendor': { 'vendor:counter': { goods: [{ entity: 'food:coffee', price: { coins: 1 } }] } } },
+    }
+    const loaded = loadGame(
+      [{ name: 'town', stats: [{ id: 'coins', label: 'Coins', start: 20, spendable: true }], ...things, entities: [...things.entities!, counter] }],
+      { id: 'g', title: 'g', plugins: [shop()] },
+      { packs: [mod] },
+    )
+    expect(loaded.problems).toEqual([])
+    const g = loaded.game
+    expect(goods(fresh(g), g).map((good) => good.entity)).toEqual(['food:coffee'])
+    expect(run(fresh(g), g, buy('counter', 'food:coffee')).stats.coins).toBe(19)
+    // The rest of the vendor is the entity's, still: its name.
+    expect(shown(fresh(g), g).vendors[0].name).toBe('The counter')
+  })
+
+  it('checks where it stands against the places map, when the game has places', () => {
+    const loaded = loadGame(
+      [
+        {
+          name: 'town',
+          ...things,
+          stats: [{ id: 'coins', label: 'Coins', spendable: true }],
+          entities: [...things.entities!, vendor({ id: 'van', name: 'Van', at: ['moon'], goods: [] }), place('street', [])],
+        },
+      ],
+      { id: 'g', title: 'g', plugins: [places({ start: 'street' }), shop()] },
+    )
+    expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual(['trait shop/vendor on vendor:van: unknown entity "location:moon"'])
+  })
+
+  it('carries an older pack’s vendors forward into entities', () => {
+    const old = {
+      id: 'mod:old',
+      schema: 23,
+      data: { shop: { vendors: [{ id: 'kiosk', name: 'Kiosk', hours: ['morning'], goods: [{ entity: 'food:coffee', price: { coins: 2 } }] }] } },
+    }
+    const loaded = loadGame(
+      [{ name: 'town', ...things, stats: [{ id: 'coins', label: 'Coins', spendable: true }] }],
+      { id: 'g', title: 'g', plugins: [shop()] },
+      { packs: [old] },
+    )
+    expect(loaded.problems).toEqual([])
+    expect(loaded.game.entities?.find((entity) => entity.id === 'kiosk')).toEqual({
+      of: 'vendor',
+      id: 'kiosk',
+      name: 'Kiosk',
+      traits: { 'shop/vendor': { hours: ['morning'], goods: [{ entity: 'food:coffee', price: { coins: 2 } }] } },
+    })
+    expect(loaded.game.data?.shop).toBeUndefined()
+  })
+
+  it('reports vendors still written in data', () => {
+    const old = { name: 'old', data: { shop: { vendors: [{ id: 'kiosk' }] } } } as unknown as Content
+    const { problems } = loadGame([old], { id: 'g', title: 'g', plugins: [shop()] })
+    expect(problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
+      'vendors kiosk: vendors are entities now: write them in entities with vendor({ id, name, goods, ... })',
+    ])
+  })
+})
+
 describe('the shop with content written for items', () => {
   it('reports a good that names an item, and leaves it out rather than failing', () => {
     const loaded = loadGame(
@@ -340,13 +440,13 @@ describe('the shop with content written for items', () => {
         {
           name: 'old',
           stats: [{ id: 'coins', label: 'Coins', spendable: true }],
-          data: { shop: { vendors: [{ id: 'kiosk', name: 'Kiosk', goods: [{ item: 'paper', price: { coins: 1 } }] }] } },
+          entities: [vendor({ id: 'kiosk', name: 'Kiosk', goods: [{ item: 'paper', price: { coins: 1 } } as never] })],
         },
       ],
       { id: 'g', title: 'g', plugins: [shop()] },
     )
     expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
-      'vendors kiosk: a good names no thing: write { entity: "kind:id" }, where an item was',
+      'trait shop/vendor on vendor:kiosk: a good names no thing: write { entity: "kind:id" }, where an item was',
     ])
     expect((view(fresh(loaded.game), loaded.game).plugins.shop as ShopView).vendors[0].goods).toEqual([])
   })
@@ -408,8 +508,8 @@ describe('the shop panel', () => {
       [
         {
           name: 'town',
-          data: { shop: { vendors: [stall] } },
           ...things,
+          entities: [...things.entities!, stall],
           stats: [{ id: 'coins', label: 'Coins', spendable: true }],
           actions: [
             { id: 'a', effects: [openShop('stall')] },
@@ -422,7 +522,7 @@ describe('the shop panel', () => {
       { id: 'g', title: 'g', plugins: [shop()] },
     )
     expect(loaded.problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
-      'action b: unknown vendor "kiosk"',
+      'action b: unknown entity "vendor:kiosk"',
       'action c: the shop panel needs a vendor: { vendor: "<id>" }',
     ])
   })

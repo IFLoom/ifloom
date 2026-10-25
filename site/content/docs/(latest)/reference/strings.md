@@ -13,7 +13,7 @@ Lines your game writes itself aren't in the table, because they're already your 
 - a [lock](/docs/reference/locks)'s `reason`
 - an [action](/docs/reference/actions#blocked)'s `blocked` `reason` and a cost's `reasons`
 - a stat's [`lacking`](/docs/reference/stats#lackingline)
-- a [place](/docs/plugins/places#locationdef)'s `blocked` `reason`
+- a [place](/docs/plugins/places#the-location-trait)'s `blocked` `reason`
 - a [cast](/docs/plugins/cast#calls) character's `call.busy` and a [talk option](/docs/plugins/cast#talkoption)'s `label`
 
 ## A worked example

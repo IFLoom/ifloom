@@ -61,7 +61,7 @@ export const KV_TOKEN = /\{\{kv:([A-Za-z_][A-Za-z0-9_.:-]*)((?:\s+[A-Za-z_][A-Za
 /** A key in the kv store `of` names, as a kv token reads it: the player's, a storyline's, the running minigame's or an entity's. */
 function readKv(state: GameState, game: Game, key: string, of: string | undefined): KvValue | undefined {
   if (of === undefined || of === 'player') return state.kv[key]
-  if (of === 'minigame') return state.minigame?.vars[key]
+  if (of === 'minigame') return state.minigame?.kv[key]
   if (of.startsWith('storyline:')) return storylineOf(state, of.slice('storyline:'.length)).kv[key]
   const owner = ownerOf(state, of)
   if (owner === undefined) return state.kv[key]

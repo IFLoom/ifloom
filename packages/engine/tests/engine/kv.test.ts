@@ -15,14 +15,14 @@ function town(): Game {
     ...base,
     kinds: [{ id: 'staff', label: 'Staff' }],
     entities: [{ id: 'ana', of: 'staff', name: 'Ana', kv: { role: 'cook' } }],
-    minigames: [{ id: 'count', start: 'go', vars: { score: 0 }, states: { go: { final: {} } } }],
+    minigames: [{ id: 'count', start: 'go', kv: { score: 0 }, states: { go: { final: {} } } }],
   }
 }
 
 describe('one kv vocabulary, with whose store in `of`', () => {
   it('reads and writes the player’s, an entity’s, a storyline’s and the running minigame’s keys', () => {
     const game = town()
-    const playing = { ...begin(game), minigame: { id: 'count', state: 'go', elapsed: 0, vars: { score: 0 }, steps: 0 } }
+    const playing = { ...begin(game), minigame: { id: 'count', state: 'go', elapsed: 0, kv: { score: 0 }, steps: 0 } }
     const state = applyEffects(playing, game, [
       { kv: 'visits', by: 2 },
       { kv: 'role', of: 'staff:ana', to: 'waiter' },
@@ -31,7 +31,7 @@ describe('one kv vocabulary, with whose store in `of`', () => {
     ])
     expect(state.kv.visits).toBe(2)
     expect(state.storylines.rosa.kv.visits).toBe(1)
-    expect(state.minigame?.vars.score).toBe(3)
+    expect(state.minigame?.kv.score).toBe(3)
     expect(holds(state, { kv: 'role', of: 'staff:ana', is: 'waiter' }, game)).toBe(true)
     expect(holds(state, { kv: 'visits', of: 'storyline:rosa', gte: 1 }, game)).toBe(true)
     expect(holds(state, { kv: 'score', of: 'minigame', gte: 3 }, game)).toBe(true)
@@ -85,6 +85,6 @@ describe('one kv vocabulary, with whose store in `of`', () => {
       ],
     }
     const problems = checkGame(game).problems.map((problem) => problem.what)
-    expect(problems).toEqual(expect.arrayContaining(['unknown storyline "nobody"', 'minigame key "lives" is not in any minigame\'s vars']))
+    expect(problems).toEqual(expect.arrayContaining(['unknown storyline "nobody"', 'minigame key "lives" is not in any minigame\'s kv']))
   })
 })

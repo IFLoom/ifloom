@@ -59,7 +59,7 @@ const quickFeet: MinigameDef = {
   id: 'arrows',
   label: 'Quick feet',
   start: 'round',
-  vars: { round: 0, arrow: 0, score: 0 },
+  kv: { round: 0, arrow: 0, score: 0 },
   keys: { up: ['ArrowUp', 'w'], down: ['ArrowDown', 's'], left: ['ArrowLeft', 'a'], right: ['ArrowRight', 'd'] },
   states: {
     // A new round draws an arrow, or after the fifth, the score is counted.
@@ -86,7 +86,7 @@ const quickFeet: MinigameDef = {
 
 Reading it from the top:
 
-- **`vars`** are the minigame's own numbers: the round, the arrow drawn for it, and the score. They start at 0 and are gone when it ends.
+- **`kv`** is the minigame's own kv store: the round, the arrow drawn for it, and the score. They start at 0 and are gone when it ends.
 - **`keys`** adds W, A, S and D beside the arrow keys. Leave it out and the React UI uses the arrow keys alone.
 - **`round`** has `always` entries, which are taken as soon as the state is entered. After five rounds it goes to `tally`. Otherwise it counts the round, draws an arrow from 1 to 4 and goes to `pick`.
 - **`pick`** turns the number into one of the arrow states.
@@ -155,7 +155,7 @@ const GLYPHS: Record<string, string> = { up: '↑', down: '↓', left: '←', ri
 export function quickFeet(minigame: MinigameView, runner: Runner): HTMLElement {
   const section = document.createElement('section')
   section.className = 'quick-feet'
-  section.appendChild(document.createElement('p')).textContent = `Round ${minigame.vars.round} of 5 · ${minigame.vars.score} right`
+  section.appendChild(document.createElement('p')).textContent = `Round ${minigame.kv.round} of 5 · ${minigame.kv.score} right`
   // The arrow states are named after their arrow, so the state says which to draw.
   const arrow = section.appendChild(document.createElement('p'))
   arrow.className = 'arrow'
@@ -191,7 +191,7 @@ export const QuickFeet: PanelComponent = () => {
   return (
     <section className="flex flex-col items-center gap-4 text-center">
       <p className="text-sm text-muted-foreground">
-        Round {minigame.vars.round} of 5 · {minigame.vars.score} right
+        Round {minigame.kv.round} of 5 · {minigame.kv.score} right
       </p>
       <p className="text-8xl" aria-live="polite" aria-label={minigame.label ?? undefined}>
         {arrow}
@@ -221,7 +221,7 @@ const GLYPHS: Record<string, string> = { up: '↑', down: '↓', left: '←', ri
 
 <template>
   <section v-if="view.minigame" class="quick-feet">
-    <p>Round {{ view.minigame.vars.round }} of 5 · {{ view.minigame.vars.score }} right</p>
+    <p>Round {{ view.minigame.kv.round }} of 5 · {{ view.minigame.kv.score }} right</p>
     <!-- The arrow states are named after their arrow, so the state says which to draw. -->
     <p class="arrow" aria-live="polite" :aria-label="view.minigame.label ?? undefined">{{ GLYPHS[view.minigame.state] }}</p>
     <div v-if="view.minigame.timeLeft !== null && view.minigame.timeTotal" class="timer">
@@ -245,7 +245,7 @@ const GLYPHS: Record<string, string> = { up: '↑', down: '↓', left: '←', ri
 {#if $view.minigame}
   {@const minigame = $view.minigame}
   <section class="quick-feet">
-    <p>Round {minigame.vars.round} of 5 · {minigame.vars.score} right</p>
+    <p>Round {minigame.kv.round} of 5 · {minigame.kv.score} right</p>
     <!-- The arrow states are named after their arrow, so the state says which to draw. -->
     <p class="arrow" aria-live="polite" aria-label={minigame.label ?? undefined}>{GLYPHS[minigame.state]}</p>
     {#if minigame.timeLeft !== null && minigame.timeTotal}
@@ -288,7 +288,7 @@ mountGame(game, { panels: { arrows: QuickFeet } })
 
 What the panels use:
 
-- **`view.minigame`** is a [`MinigameView`](/docs/reference/minigames#minigameview): the running state, its words, `timeLeft` and `timeTotal` in milliseconds, the live `inputs` and the minigame's `vars`.
+- **`view.minigame`** is a [`MinigameView`](/docs/reference/minigames#minigameview): the running state, its words, `timeLeft` and `timeTotal` in milliseconds, the live `inputs` and the minigame's `kv`.
 - **`{ type: 'minigame', input }`** presses an input. `useMinigame`'s `send(input)` sends it for you.
 - **`keys: true`** in `useMinigame` maps the keyboard to the inputs as the built-in panel does, from the minigame's `keys` or the arrow keys. In the other templates, `startKeys` from `@ifloom/browser` does that whatever panel is drawn.
 
@@ -307,7 +307,7 @@ let state = apply(atThePark, game, { type: 'action', id: 'places/arrows' }).stat
 const arrow = state.minigame!.state                                        // 'left', say
 state = apply(state, game, { type: 'tick', ms: 400 }).state                 // a moment's thought
 state = apply(state, game, { type: 'minigame', input: arrow }).state       // the right arrow
-view(state, game).minigame?.vars.score                                      // 1
+view(state, game).minigame?.kv.score                                      // 1
 ```
 
 One long tick runs out every timer in its way, so `{ type: 'tick', ms: 10_000 }` plays out all five rounds with no presses. Small Town's `tests/showcase.test.ts` plays quick feet this way, and `tests/quick-feet.test.tsx` plays it in the React UI with fake timers and the arrow keys.

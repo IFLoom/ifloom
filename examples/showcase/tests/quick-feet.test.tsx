@@ -53,7 +53,7 @@ describe('quick feet, in the browser', () => {
       act(() => void vi.advanceTimersByTime(500))
       expect(Number(screen.getByRole('progressbar').getAttribute('aria-valuenow'))).toBe(1000)
       act(() => void fireEvent.keyDown(window, { key: KEYS[arrow] }))
-      expect(runner.state.minigame?.vars).toMatchObject({ round: round + 1, score: round })
+      expect(runner.state.minigame?.kv).toMatchObject({ round: round + 1, score: round })
     }
     // The last two rounds run out on the clock.
     act(() => void vi.advanceTimersByTime(3000))

@@ -181,12 +181,12 @@ A pack written before this split may still have `overrides: true`, which told th
 ## SCHEMA
 
 ```ts
-const SCHEMA = 21
+const SCHEMA = 22
 ```
 
 The format of packs this engine reads. Write `schema: SCHEMA` in a pack you write in TypeScript so it always matches. Your content has no schema.
 
-A pack written for an older schema still loads. [`loadGame`](#loadgame) upgrades it first with [`upgradePack`](#upgradepack), mods included, so a mod file made for an earlier version of your game keeps working after you update the engine or a plugin. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 22, this engine reads 21`, and a mod like that is refused when the player adds it.
+A pack written for an older schema still loads. [`loadGame`](#loadgame) upgrades it first with [`upgradePack`](#upgradepack), mods included, so a mod file made for an earlier version of your game keeps working after you update the engine or a plugin. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 23, this engine reads 22`, and a mod like that is refused when the player adds it.
 
 ## upgradePack
 
@@ -217,7 +217,7 @@ What a plugin reads (its `data`, its calls' arguments, its strings and its trait
 | 18 to 19 | One kv vocabulary, with whose store in `of` (see [`kv`](/docs/reference/conditions#kv)). `{ storylineKv: { storyline: 'baker', key: 'visits' }, gte: 3 }` becomes `{ kv: 'visits', of: 'storyline:baker', gte: 3 }`, and the `storylineKv` effect a `kv` effect with that `of`. `{ minigameVar: 'score' }` becomes `{ kv: 'score', of: 'minigame' }`, and so does its effect. The phase is the kv key `phase`: `{ phase: ['open'] }` becomes `{ kv: 'phase', is: ['open'] }`, the `phase` effect a `kv` effect on `phase`, and `startPhase: 'arrival'` the starting kv `kv: { phase: 'arrival' }`. In prose and strings, `{{n:baker.visits}}` becomes `{{kv:visits of=storyline:baker}}`. |
 | 19 to 20 | One kind of button (see [`ActionDef`](/docs/reference/actions#actiondef)). Each of `activities` becomes an action with no label, its `cost`, `blocked` and `effects` as they were. An action the pack declares with the same id, whose command did that activity, takes them in place of its command. `{ type: 'activity', id }` becomes `{ type: 'action', id }` wherever a command is, and a lock's `deny` and `except` name `'action'` for `'activity'`. |
 | 20 to 21 | Effects are told apart by their key, as conditions are (see [Effects](/docs/reference/effects#effect)). `{ kind: 'stat', stat, by }` becomes `{ stat, by }`, `{ kind: 'kv', key: 'met', to }` becomes `{ kv: 'met', to }`, `{ kind: 'scene', scene }` becomes `{ scene }`, `{ kind: 'scene', from, otherwise }` becomes `{ scene: { from, otherwise } }`, and `{ kind: 'turn' }` becomes `{ turn: true }` (with `by`, `{ turn: { by } }`). `remove`, `move` and `you` name their entity in their key, `closeStoryline` its storyline, `notify` its title, `audio` its channel, `sound` its track and `roll` its key. `create`'s `of` becomes its key and its `entity` becomes `with`, and `each`'s `of` becomes its key, or with `at`, `tag` or `trait` a [`Select`](/docs/reference/entities#select). A call, `{ kind: 'custom', name, with }`, becomes its short form. An input's and a setting's `kind` becomes `type`. The plugins whose content holds effects (statuses, devices, inventory, jobs, places, messages and cheats) rewrite theirs too, and so do the effects in entities' traits. |
-| 21 to 22 | The engine's [beats](/docs/reference/prose#scenebeat) are text, speech, pictures, video and sound, and how a letter or a sign looks is the UI's. In prose and strings, `[[mail]] … [[/mail]]` becomes the React UI's [piece](/docs/reference/prose#letters-notes-and-signs) `[[ui:mail|body|From: …|Subject: …]]`, `[[sticky]]`, `[[clip]]` and `[[diary]]` become `[[ui:prop|words|sticky]]` (and so on), and a paragraph starting `> ` becomes `[[ui:mono|words]]`, each a paragraph of its own. Words a piece can't hold (a `|` or a `]`) stay as plain paragraphs. A picture's `rot` flag goes, and a scene's `{ text }` block whose line had one gets the React UI's block hint `ui: { tilt: true }`. A choice's `labels` entries name their words `label` (was `key`), as every [button](/docs/reference/actions#buttondef)'s do. |
+| 21 to 22 | The engine's [beats](/docs/reference/prose#scenebeat) are text, speech, pictures, video and sound, and how a letter or a sign looks is the UI's. In prose and strings, `[[mail]] … [[/mail]]` becomes the React UI's [piece](/docs/reference/prose#letters-notes-and-signs) `[[ui:mail|body|From: …|Subject: …]]`, `[[sticky]]`, `[[clip]]` and `[[diary]]` become `[[ui:prop|words|sticky]]` (and so on), and a paragraph starting `> ` becomes `[[ui:mono|words]]`, each a paragraph of its own. Words a piece can't hold (a `|` or a `]`) stay as plain paragraphs. A picture's `rot` flag goes, and a scene's `{ text }` block whose line had one gets the React UI's block hint `ui: { tilt: true }`. A choice's `labels` entries name their words `label` (was `key`), as every [button](/docs/reference/actions#buttondef)'s do. A minigame's `vars` are its `kv`, the store `{ kv, of: 'minigame' }` reads. |
 
 Schema 4 is the oldest a pack can be.
 
@@ -225,7 +225,7 @@ It returns the pack at `SCHEMA`, with `plugins` recording each plugin's version,
 
 | When | Returns |
 |---|---|
-| `schema` is newer than `SCHEMA` | `written for schema 22, this engine reads 21` |
+| `schema` is newer than `SCHEMA` | `written for schema 23, this engine reads 22` |
 | `schema` is older than the oldest schema there's a step from | `written for schema 3, too old for this engine to read (it reads 21)` |
 | `plugins` gives a newer version of a plugin's content than the game has | `written for version 14 of the shop plugin's content, this game's reads 13` |
 

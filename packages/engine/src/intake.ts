@@ -269,6 +269,14 @@ const STEPS: Record<number, (state: Saved, game: Game) => Saved> = {
     if (typeof phase === 'string' && phase !== '' && kv.phase === undefined) kv.phase = phase
     return { ...state, kv }
   },
+  // 19 → 20: a running minigame keeps its numbers as its kv store, `kv`, not `vars`. (A flowing scene's
+  // visit, `flow`, came in this version too, from its load default.)
+  19: (state) => {
+    const running = state.minigame as Record<string, unknown> | null | undefined
+    if (!running || typeof running !== 'object' || !('vars' in running) || 'kv' in running) return state
+    const { vars, ...rest } = running
+    return { ...state, minigame: { ...rest, kv: vars } }
+  },
 }
 
 /** A data scene's choice, as far as the version 18 step reads it. */

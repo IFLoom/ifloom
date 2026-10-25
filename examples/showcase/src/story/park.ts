@@ -23,7 +23,7 @@ const quickFeet: MinigameDef = {
   id: 'arrows',
   label: 'Quick feet',
   start: 'round',
-  vars: { round: 0, arrow: 0, score: 0 },
+  kv: { round: 0, arrow: 0, score: 0 },
   keys: { up: ['ArrowUp', 'w'], down: ['ArrowDown', 's'], left: ['ArrowLeft', 'a'], right: ['ArrowRight', 'd'] },
   states: {
     // A new round draws an arrow, or after the fifth, the score is counted.

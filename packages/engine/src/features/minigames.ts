@@ -4,9 +4,9 @@
  *
  * A minigame has states. Each state can wait (`after`, a timer the `tick`
  * command runs down, beside the named timers of `timers.ts`), listen (`on`, the inputs the `minigame` command sends),
- * move on by itself (`always`), or end the game (`final`). It keeps its own
- * number variables, which transitions set and conditions read, and they are
- * gone when it ends unless `final.copy` writes them out. Every random pick
+ * move on by itself (`always`), or end the game (`final`). It keeps a kv
+ * store of its own, numbers its transitions set and conditions read with
+ * `of: 'minigame'`, gone when it ends unless `final.copy` writes them out. Every random pick
  * is drawn from the save's seed, so a command log plays back exactly.
  */
 import { say } from '../strings.ts'
@@ -56,22 +56,26 @@ export type MinigameStateDef = {
    */
   always?: ({ when?: Condition } & MinigameTransition)[]
   /**
-   * Entering this state ends the minigame. `copy` writes minigame variables
-   * to the game's variables (`{ score: 'arrows.best' }`); then the minigame
-   * closes and `effects` apply.
+   * Entering this state ends the minigame. `copy` writes keys of the
+   * minigame's kv to the player's (`{ score: 'arrows.best' }`); then the
+   * minigame closes and `effects` apply.
    */
   final?: { effects?: EffectRef[]; copy?: Record<string, string> }
 }
 
-/** A minigame: its states, the one it starts in, its variables and the keys a UI maps to its inputs. */
+/** A minigame: its states, the one it starts in, its kv store and the keys a UI maps to its inputs. */
 export type MinigameDef = {
   id: string
   /** What the UI calls it. */
   label?: string
   /** The state it starts in. */
   start: string
-  /** Its variables and their starting values. A variable it uses must be declared here. */
-  vars?: Record<string, number>
+  /**
+   * Its kv store and where each key starts, numbers all: `{ score: 0 }`.
+   * Content reads and writes them with `of: 'minigame'`, and a key it uses
+   * must be declared here.
+   */
+  kv?: Record<string, number>
   /**
    * The keys a UI maps to each input, by input name: `{ up: ['ArrowUp', 'w'] }`.
    * Key names as `KeyboardEvent.key` gives them. A UI picks its own if left out.
@@ -87,8 +91,8 @@ export type MinigameState = {
   state: string
   /** Milliseconds of ticks since it entered that state. */
   elapsed: number
-  /** Its variables. */
-  vars: Record<string, number>
+  /** Its kv store, as play has left it. */
+  kv: Record<string, number>
   /** How many transitions it has taken, for its random draws. */
   steps: number
 }
@@ -108,7 +112,8 @@ export type MinigameView = {
   timeTotal: number | null
   /** The inputs that do something now, in the order the state lists them. */
   inputs: string[]
-  vars: Record<string, number>
+  /** Its kv store now. */
+  kv: Record<string, number>
   /** The keys the game maps to each input, by input name. Empty if it maps none. */
   keys: Record<string, string[]>
 }
@@ -193,7 +198,7 @@ export function startMinigame(state: GameState, game: Game, id: string, cx: Feat
   const started: GameState = {
     ...state,
     kv: { ...state.kv, [playsKey(id)]: plays(state, id) + 1 },
-    minigame: { id, state: def.start, elapsed: 0, vars: { ...def.vars }, steps: 0 },
+    minigame: { id, state: def.start, elapsed: 0, kv: { ...def.kv }, steps: 0 },
   }
   return enter(started, game, def.start, cx, 0)
 }
@@ -207,7 +212,7 @@ function enter(state: GameState, game: Game, target: string, cx: FeatureContext,
   if (!entered) return { ...state, minigame: null }
   const next: GameState = { ...state, minigame: { ...running, state: target, elapsed: 0 } }
   if (entered.final) {
-    const copied = Object.entries(entered.final.copy ?? {}).map(([key, into]) => [into, running.vars[key] ?? 0])
+    const copied = Object.entries(entered.final.copy ?? {}).map(([key, into]) => [into, running.kv[key] ?? 0])
     const closed: GameState = { ...next, minigame: null, kv: { ...next.kv, ...Object.fromEntries(copied) } }
     return cx.runEffects(closed, game, cx.buildEffects(closed, game, entered.final.effects ?? []), false)
   }
@@ -302,7 +307,7 @@ function checkMinigame(minigame: MinigameDef, declaredAnywhere: ReadonlySet<stri
   const states = minigame.states ?? {}
   const known = (id: string) => Object.hasOwn(states, id)
   if (!known(minigame.start)) tools.problem(source, where, `starts in unknown state "${minigame.start}"`)
-  const declared = new Set(Object.keys(minigame.vars ?? {}))
+  const declared = new Set(Object.keys(minigame.kv ?? {}))
   const used = new Set<string>()
   const inputs = new Set<string>()
   const edges = new Map<string, string[]>()
@@ -342,13 +347,13 @@ function checkMinigame(minigame: MinigameDef, declaredAnywhere: ReadonlySet<stri
     }
     edges.set(id, targets)
   }
-  // Variables it uses but doesn't declare. One in a condition or effect that no minigame declares is reported where it is named; see `resolve`.
+  // Keys it uses but doesn't declare. One in a condition or effect that no minigame declares is reported where it is named; see `resolve`.
   for (const key of used) {
-    if (!declared.has(key) && declaredAnywhere.has(key)) tools.problem(source, where, `uses variable "${key}", which is not in its vars`)
+    if (!declared.has(key) && declaredAnywhere.has(key)) tools.problem(source, where, `uses key "${key}", which is not in its kv`)
   }
   for (const state of Object.values(states)) {
     for (const key of Object.keys(state.final?.copy ?? {})) {
-      if (!declared.has(key) && !declaredAnywhere.has(key)) tools.problem(source, where, `copies variable "${key}", which is not in its vars`)
+      if (!declared.has(key) && !declaredAnywhere.has(key)) tools.problem(source, where, `copies key "${key}", which is not in its kv`)
     }
   }
   for (const input of Object.keys(minigame.keys ?? {})) {
@@ -411,7 +416,7 @@ export const minigames = defineFeature<MinigamesShape>({
       'minigames',
       list.map((entry) => entry.id),
     )
-    const declaredAnywhere = new Set(list.flatMap((entry) => Object.keys(entry.vars ?? {})))
+    const declaredAnywhere = new Set(list.flatMap((entry) => Object.keys(entry.kv ?? {})))
     for (const minigame of list) checkMinigame(minigame, declaredAnywhere, tools)
     for (const scene of game.scenes) {
       if (scene.minigame !== undefined) tools.check({ list: 'scene', id: scene.id }, `scene ${scene.id}`, [{ minigame: scene.minigame }])
@@ -419,10 +424,10 @@ export const minigames = defineFeature<MinigamesShape>({
   },
   resolve: (game) => {
     const ids = new Set((game.minigames ?? []).map((entry) => entry.id))
-    const vars = new Set((game.minigames ?? []).flatMap((entry) => Object.keys(entry.vars ?? {})))
+    const keys = new Set((game.minigames ?? []).flatMap((entry) => Object.keys(entry.kv ?? {})))
     return {
       minigame: (ref) => (ids.has(ref.minigame) ? [] : [`unknown minigame "${ref.minigame}"`]),
-      minigameKv: (ref) => (vars.has(ref.minigameKv) ? [] : [`minigame key "${ref.minigameKv}" is not in any minigame's vars`]),
+      minigameKv: (ref) => (keys.has(ref.minigameKv) ? [] : [`minigame key "${ref.minigameKv}" is not in any minigame's kv`]),
     }
   },
   view: (state, game, _shown, cx) => {
@@ -440,7 +445,7 @@ export const minigames = defineFeature<MinigamesShape>({
         timeLeft: timer ? Math.max(0, timer.ms - running.elapsed) : null,
         timeTotal: timer ? timer.ms : null,
         inputs: [...new Set((current?.on ?? []).filter((entry) => cx.holds(state, entry.when, game)).map((entry) => entry.input))],
-        vars: { ...running.vars },
+        kv: { ...running.kv },
         keys: def.keys ?? {},
       },
     }

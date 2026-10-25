@@ -165,7 +165,16 @@ const v18 = { ...undated, version: 18, seen: { start: { n: 1, first: 0, last: 0 
 
 // The stretch of the game is the kv key `phase`.
 const { phase: v18Phase, ...phaseless } = v18
-const v19 = { ...phaseless, version: 19, kv: { ...(v18.kv as Record<string, unknown>), phase: v18Phase } }
+const v19 = {
+  ...phaseless,
+  version: 19,
+  kv: { ...(v18.kv as Record<string, unknown>), phase: v18Phase },
+  // A minigame being played, its numbers in `vars`.
+  minigame: { id: 'darts', state: 'throw', elapsed: 200, vars: { score: 2 }, steps: 3 },
+}
+
+// A running minigame's numbers are its kv store. A flowing scene's visit came in this version too, from its load default.
+const v20 = { ...v19, version: 20, minigame: { id: 'darts', state: 'throw', elapsed: 200, kv: { score: 2 }, steps: 3 }, flow: null }
 
 /** Each version's save state, by version. */
 export const OLD_SAVES: Record<number, Record<string, unknown>> = {
@@ -188,4 +197,5 @@ export const OLD_SAVES: Record<number, Record<string, unknown>> = {
   17: v17,
   18: v18,
   19: v19,
+  20: v20,
 }

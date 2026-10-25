@@ -154,7 +154,7 @@ Without `of`, the key is the player's. `of` names another kv store, the same way
 
 - **An [entity](/docs/reference/entities)**, as in `of: 'staff:ana'`, or `of: '$'` inside an [`each`](#each). If the entity isn't there, the effect does nothing.
 - **A [storyline](/docs/reference/storylines)**, as in `of: 'storyline:ava'`, its own kv store. A storyline doesn't keep score of how well someone likes the player. Keep that as a stat on the [cast](/docs/plugins/cast#each-one-is-an-entity)'s characters: `{ stat: 'friendship', by: 5, of: character('ava') }`.
-- **The [minigame](/docs/reference/minigames#its-variables) being played**, `of: 'minigame'`, one of its variables. With no minigame running, it does nothing. The checker reports a variable that no minigame declares in its `vars`, and one a minigame uses but doesn't declare itself.
+- **The [minigame](/docs/reference/minigames#its-kv-store) being played**, `of: 'minigame'`, a key of its kv. With no minigame running, it does nothing. The checker reports a key that no minigame declares in its `kv`, and one a minigame uses but doesn't declare itself.
 
 #### The phase
 

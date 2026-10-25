@@ -21,7 +21,7 @@ const arrows: MinigameDef = {
   id: 'arrows',
   label: 'Quick feet',
   start: 'round',
-  vars: { arrow: 0, round: 0, score: 0 },
+  kv: { arrow: 0, round: 0, score: 0 },
   keys: { up: ['ArrowUp', 'w'], down: ['ArrowDown', 's'] },
   states: {
     round: {
@@ -91,14 +91,14 @@ function run(state: GameState, game: Game, ...commands: Command[]): GameState {
 }
 
 /** The input that matches the arrow on screen, or the one that doesn't. */
-const right = (state: GameState): Command => ({ type: 'minigame', input: state.minigame!.vars.arrow === 1 ? 'up' : 'down' })
-const wrong = (state: GameState): Command => ({ type: 'minigame', input: state.minigame!.vars.arrow === 1 ? 'down' : 'up' })
+const right = (state: GameState): Command => ({ type: 'minigame', input: state.minigame!.kv.arrow === 1 ? 'up' : 'down' })
+const wrong = (state: GameState): Command => ({ type: 'minigame', input: state.minigame!.kv.arrow === 1 ? 'down' : 'up' })
 
 describe('minigames', () => {
   it('start from an effect, and show over the room with its own inputs, timer and keys', () => {
     const game = withMinigames()
     const state = run(begin(game), game, { type: 'action', id: 'play' })
-    expect(state.minigame).toMatchObject({ id: 'arrows', state: 'show', elapsed: 0, vars: { round: 1, score: 0 } })
+    expect(state.minigame).toMatchObject({ id: 'arrows', state: 'show', elapsed: 0, kv: { round: 1, score: 0 } })
     expect(state.kv['minigame:arrows']).toBe(1)
     const shown = view(state, game)
     expect(shown.minigame).toEqual({
@@ -109,8 +109,8 @@ describe('minigames', () => {
       timeLeft: 1500,
       timeTotal: 1500,
       // Both arrows are live: one scores, the other doesn't.
-      inputs: state.minigame!.vars.arrow === 1 ? ['up', 'down'] : ['down', 'up'],
-      vars: state.minigame!.vars,
+      inputs: state.minigame!.kv.arrow === 1 ? ['up', 'down'] : ['down', 'up'],
+      kv: state.minigame!.kv,
       keys: { up: ['ArrowUp', 'w'], down: ['ArrowDown', 's'] },
     })
     expect(shown.scene).toMatchObject({ title: 'Quick feet', body: 'Quick!', choices: [] })
@@ -137,19 +137,19 @@ describe('minigames', () => {
     expect(whyNot(state, game, { type: 'minigame', input: 'left' })).toBe('That does nothing now.')
     expect(whyNot(begin(game), game, { type: 'minigame', input: 'up' })).toBe('Nothing is being played.')
     state = run(state, game, right(state))
-    expect(state.minigame).toMatchObject({ state: 'show', vars: { round: 2, score: 1 } })
+    expect(state.minigame).toMatchObject({ state: 'show', kv: { round: 2, score: 1 } })
     state = run(state, game, wrong(state))
-    expect(state.minigame).toMatchObject({ state: 'show', vars: { round: 3, score: 1 } })
+    expect(state.minigame).toMatchObject({ state: 'show', kv: { round: 3, score: 1 } })
   })
 
   it('run timers down with ticks, carrying what is left into the next state', () => {
     const game = withMinigames()
     let state = run(begin(game), game, { type: 'action', id: 'play' })
     state = run(state, game, { type: 'tick', ms: 1000 })
-    expect(state.minigame).toMatchObject({ state: 'show', elapsed: 1000, vars: { round: 1 } })
+    expect(state.minigame).toMatchObject({ state: 'show', elapsed: 1000, kv: { round: 1 } })
     expect(view(state, game).minigame?.timeLeft).toBe(500)
     state = run(state, game, { type: 'tick', ms: 600 })
-    expect(state.minigame).toMatchObject({ state: 'show', elapsed: 100, vars: { round: 2 } })
+    expect(state.minigame).toMatchObject({ state: 'show', elapsed: 100, kv: { round: 2 } })
     // One long tick runs every timer left in turn: rounds 2 and 3 time out, and the game is lost.
     const turn = state.turn
     state = run(state, game, { type: 'tick', ms: 60_000 })
@@ -197,7 +197,7 @@ describe('minigames', () => {
       let state = run(startingState(game, { seed }), game, { type: 'leave' }, { type: 'action', id: 'play' })
       const seen: number[] = []
       while (state.minigame) {
-        seen.push(state.minigame.vars.arrow)
+        seen.push(state.minigame.kv.arrow)
         state = run(state, game, right(state))
       }
       return seen.join('')
@@ -258,14 +258,14 @@ describe('the runner, with a minigame', () => {
     runner.apply({ type: 'tick', ms: 200 })
     expect(runner.undo()).toBe(true)
     // Back to before the input: the tick before it stays.
-    expect(runner.state.minigame).toMatchObject({ elapsed: 300, vars: { round: 1 } })
+    expect(runner.state.minigame).toMatchObject({ elapsed: 300, kv: { round: 1 } })
     expect(runner.log().commands.map((command) => command.type)).toEqual(['action', 'tick'])
     expect(runner.undo()).toBe(true)
     expect(runner.canUndo).toBe(false)
     expect(runner.state).toBe(before)
     // Redo goes forward to where the first undo started from: the tick before the input with it.
     expect(runner.redo()).toBe(true)
-    expect(runner.state.minigame).toMatchObject({ elapsed: 300, vars: { round: 1 } })
+    expect(runner.state.minigame).toMatchObject({ elapsed: 300, kv: { round: 1 } })
   })
 
   it('adds nothing to the backlog for a tick, or for the minigame over a scene', () => {
@@ -349,9 +349,9 @@ describe('the minigame checks', () => {
         },
       }),
     ).toEqual([
-      'minigame bad state a on go · minigame key "lives" is not in any minigame\'s vars',
-      'minigame bad · uses variable "score", which is not in its vars',
-      'minigame bad · copies variable "streak", which is not in its vars',
+      'minigame bad state a on go · minigame key "lives" is not in any minigame\'s kv',
+      'minigame bad · uses key "score", which is not in its kv',
+      'minigame bad · copies key "streak", which is not in its kv',
     ])
     const good = withMinigames()
     const game: Game = {

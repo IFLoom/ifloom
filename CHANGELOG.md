@@ -170,6 +170,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Changed
 
+- **Breaking:** a minigame's numbers are its kv store, as `{ kv: 'score', of: 'minigame' }` already read them: `MinigameDef.kv` (was `vars`), and `kv` on the running `MinigameState` and on `view.minigame`. The checker says "key" for "variable". Old packs (schema 22) and saves (version 20) are carried forward.
+
 - **Breaking:** a choice's `labels` entries name their words `label`, as an action's do: `{ when, label }` (was `key`). A pack of an older schema is rewritten when it loads. A choice's `effects` can be left out.
 
 - **Breaking:** who a scene's speaker is comes from their entity, with no plugin to ask. A scene's `speaker` names an entity, by reference (`'character:ava'`) or a bare id (`'ava'` is `character:ava`, else the one entity with that id), and the view shows its name, picture and hints. A message's and a post's `from` work the same way, so any entity can send one. The speaker's picture is their entity's `image`: the `art/character/<id>.jpg` the cast used to guess is gone, so give each speaker an `image`.

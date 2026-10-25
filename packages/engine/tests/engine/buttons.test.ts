@@ -79,6 +79,11 @@ describe('buttons', () => {
     expect(problems.map(describeProblem)).toContain('cafe · scene counter · no prose for "counter#usaul"')
   })
 
+  it('call a minigame’s numbers its kv, from schema 22', () => {
+    const old = { id: 'mod', schema: 21, minigames: [{ id: 'darts', start: 'throw', vars: { score: 0 }, states: { throw: { final: {} } } }] }
+    expect(unwrap(upgradePack(old, [])).minigames).toEqual([{ id: 'darts', start: 'throw', kv: { score: 0 }, states: { throw: { final: {} } } }])
+  })
+
   it('name a labels entry’s words label, from schema 22', () => {
     const old = {
       id: 'mod',

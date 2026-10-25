@@ -245,7 +245,7 @@ The file each [pool](/docs/reference/media#pools) request was given, by pick key
 ### minigame
 
 ```ts
-minigame: MinigameState | null   // { id, state, elapsed, vars, steps }
+minigame: MinigameState | null   // { id, state, elapsed, kv, steps }
 ```
 
 The [minigame](/docs/reference/minigames) being played, or `null`. See [`MinigameState`](/docs/reference/minigames#minigamestate). A save from before minigames loads with `null`. The field was added with a load default and no new save version, because nothing a save already has changes shape.
@@ -328,7 +328,7 @@ The [content checker](/docs/reference/checks) reports a stat in `carryOver` that
 ### SAVE_VERSION
 
 ```ts
-const SAVE_VERSION = 19
+const SAVE_VERSION = 20
 ```
 
 The save format this engine writes. [`loadState`](/docs/reference/saves#loadstate) carries older ones forward. The version goes up only when a field older saves already have changes shape. A new field doesn't bump it: a save that lacks the field gets its load default when it loads, as [`minigame`](#minigame) does. See [SAVE_VERSION](/docs/reference/saves#save_version) for the rule.

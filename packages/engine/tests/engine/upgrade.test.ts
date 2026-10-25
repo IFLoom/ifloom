@@ -788,7 +788,7 @@ describe('content migrations', () => {
         {
           id: 'count',
           start: 'go',
-          vars: { score: 0 },
+          kv: { score: 0 },
           states: {
             go: {
               on: [{ input: 'up', when: { kv: 'score', of: 'minigame', lt: 3 }, effects: [{ kv: 'score', of: 'minigame', random: [1, 3] }] }],

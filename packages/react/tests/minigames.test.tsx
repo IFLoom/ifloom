@@ -10,7 +10,7 @@ const catchBall: MinigameDef = {
   id: 'catch',
   label: 'Catch the ball',
   start: 'ready',
-  vars: { tries: 0 },
+  kv: { tries: 0 },
   states: {
     ready: { label: 'catch.ready', on: [{ input: 'space', go: 'throw' }] },
     throw: {

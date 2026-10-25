@@ -341,6 +341,7 @@ These are the changes to the save format so far, with what loading a save from b
 - **16 → 17** drops `transition`, which a `transition` effect set. How a screen comes in is the UI's now, from a choice's [hints](/docs/reference/ui-hints).
 - **17 → 18** folds what the player has seen and chosen into one record per id, `{ n, first, last }`, in [`seen`](/docs/reference/state#seen) and [`chosen`](/docs/reference/state#chosen). The count comes from the old `seen` or `chosen`, `first` from `seenOn` or `chosenOn`, and `last` from `lastSeenOn` or `lastChosenOn`, falling back to `first`. A record a save kept no turn for, from before the turns were kept, is dated the turn the save is at. A choice's `once` now reads `chosen`, so the `turn:<scene>#<choice>` kv keys that capped the game's choices go (and `turn:<key>` for a choice with a [`once.key`](/docs/reference/scenes#choice)). One that still caps the save's turn makes that choice's `last` the turn, so the cap holds. Other `turn:` keys, such as [`oncePerTurn`](/docs/reference/progress#onceperturn)'s, are kept.
 - **18 → 19** moves the phase into the kv store. The stretch of the game the player is in is the kv key `phase` now, not a field of the state, so the save's `phase` becomes `kv.phase`. A save in no phase (`''`) gets no key, and one that already has a `phase` key keeps its own.
+- **19 → 20** calls a running minigame's numbers its kv store: `minigame.vars` becomes `minigame.kv`. A flowing scene's visit, [`flow`](/docs/reference/state#flow), came in this version too, from its load default of `null`.
 
 A save from version 0 doesn't load.
 
@@ -349,7 +350,7 @@ A save from version 0 doesn't load.
 ## SAVE_VERSION
 
 ```ts
-const SAVE_VERSION: 19
+const SAVE_VERSION: 20
 ```
 
 The current save format. Every new state carries it in `state.version`.

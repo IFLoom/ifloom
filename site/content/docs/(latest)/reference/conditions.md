@@ -125,7 +125,7 @@ With `of`, it tests a key in another kv store. The same three tests apply.
 
 - **An [entity](/docs/reference/entities)**, as in `of: 'staff:ana'`, or `of: '$'` inside an [`each`](/docs/reference/effects#each) or a [`count`](#count)'s `where`.
 - **A [storyline](/docs/reference/storylines)**, as in `of: 'storyline:ava'`. A key that's missing reads as unset.
-- **The [minigame](/docs/reference/minigames#its-variables) being played**, `of: 'minigame'`, one of its variables. It's false with no minigame running, whatever you ask. A variable the running minigame doesn't have reads as unset. Use it in a minigame's `on` and `always` entries to branch on a score or a round. The [content checker](/docs/reference/checks) reports a variable that no minigame declares.
+- **The [minigame](/docs/reference/minigames#its-kv-store) being played**, `of: 'minigame'`, a key of its kv. It's false with no minigame running, whatever you ask. A key the running minigame doesn't have reads as unset. Use it in a minigame's `on` and `always` entries to branch on a score or a round. The [content checker](/docs/reference/checks) reports a key that no minigame declares.
 
 #### The phase
 

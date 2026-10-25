@@ -205,10 +205,17 @@ const unturned = (text: string) =>
  * - a picture's `rot` flag goes, and a scene's `{ text }` block naming a line
  *   that had one gets the React UI's block hint `ui: { tilt: true }`;
  * - a choice's `labels` name their words `label`, as every button's do:
- *   `{ when, key: 'cafe.order#late' }` is `{ when, label: 'cafe.order#late' }`.
+ *   `{ when, key: 'cafe.order#late' }` is `{ when, label: 'cafe.order#late' }`;
+ * - a minigame's `vars` are its `kv`, the store `{ kv, of: 'minigame' }` reads.
  */
 function toSchema22(pack: RawPack): RawPack {
   const tilted = new Set<string>()
+  // A minigame's numbers are its kv store.
+  if (Array.isArray(pack.minigames))
+    pack = {
+      ...pack,
+      minigames: pack.minigames.map((entry) => (isRecord(entry) && 'vars' in entry && !('kv' in entry) ? renamed(entry, { vars: 'kv' }) : entry)),
+    }
   const labelled = (value: unknown) => deep(value, (entry) => (Array.isArray(entry.labels) ? { ...entry, labels: entry.labels.map(keyToLabel) } : entry))
   const relabelled = {
     ...pack,

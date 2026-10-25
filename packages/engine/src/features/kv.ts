@@ -71,9 +71,9 @@ function storeOf(state: GameState, game: Game | undefined, of: string | undefine
     const running = state.minigame
     if (!running) return undefined
     return {
-      read: running.vars,
+      read: running.kv,
       // A minigame keeps numbers: anything else counts as 0.
-      write: (on, key, value) => (on.minigame ? { ...on, minigame: { ...on.minigame, vars: { ...on.minigame.vars, [key]: asCount(value) } } } : on),
+      write: (on, key, value) => (on.minigame ? { ...on, minigame: { ...on.minigame, kv: { ...on.minigame.kv, [key]: asCount(value) } } } : on),
     }
   }
   if (of.startsWith(STORYLINE_KV)) {

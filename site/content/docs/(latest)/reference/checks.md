@@ -119,7 +119,7 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | `gated on unknown choice "…"` | A `chose` or `since` key whose data scene has no such choice. A hand-written scene's choices aren't known in advance. |
 | `no custom condition named "…"` | A [call](/docs/reference/custom#plugincall) to a condition that neither the game's `rules` nor a plugin declares. A name with no `/` adds `; the game's own code is called with "game/" in front, as "game/…"`. |
 | A stat owner problem | See [Stat owners](#stat-owners). |
-| `minigame key "…" is not in any minigame's vars` | A `kv` condition with `of: 'minigame'` naming a key no [minigame](/docs/reference/minigames) declares. |
+| `minigame key "…" is not in any minigame's kv` | A `kv` condition with `of: 'minigame'` naming a key no [minigame](/docs/reference/minigames) declares. |
 | `unknown timer "…"` | A `timer` condition naming a timer the game doesn't declare in `timers`. |
 | `unknown setting "…"` | A `setting` the game doesn't declare. |
 | `setting "…" is a ui setting; conditions read only play settings` | A `ui` [setting](/docs/reference/settings), which isn't in the state. |
@@ -149,7 +149,7 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | `draws from "…", but no scene is drawn from it` | A storylet draw, `{ scene: { from } }`, names a set no scene's `drawnFrom` includes. |
 | An audio problem | An `audio` effect's channel or track, or a `sound` effect's track. See [Audio](#audio). |
 | `unknown minigame "…"` | A `minigame` effect. |
-| `minigame key "…" is not in any minigame's vars` | A `kv` effect with `of: 'minigame'`. |
+| `minigame key "…" is not in any minigame's kv` | A `kv` effect with `of: 'minigame'`. |
 | `dice "…" is not dice notation such as "2d6+1", "1d20" or "d100"` | A [`roll`](/docs/reference/effects#roll) effect's `dice` that isn't notation. The effect rolls nothing. |
 | `dice have … sides; a die needs at least 2`, `… dice; a roll throws 1 to 100` | A `roll` effect's dice, in notation or as `{ count, sides }`. |
 | `roll key "…" must be letters, digits and _, not starting with a digit, so {{key}} can show it` | The kv key a `roll` effect names. |
@@ -211,7 +211,7 @@ A condition, effect or command named after a plugin the game wasn't built with i
 | `action <id>` | The content's [`actions`](/docs/reference/actions#actiondef): each one's `when`, `blocked`, `effects` and `command`. For each stat its `cost` spends: `spends unknown stat "…"`, or `spends stat "…", which is derived and never written`. `an action's command can't be a choice`, and `an action's command can't be the action itself; give it the effects`. |
 | `trigger <id>` | Its `when` and its `effects`. |
 | `input <id>` | Its `when`, `a choice with no options`, and `min is above max`. |
-| `minigame <id>` | `starts in unknown state "…"`, `no final state can be reached from its start, so it never ends`, `keys maps input "…", which no state's on uses`, `uses variable "…", which is not in its vars` (one another minigame declares), and `copies variable "…", which is not in its vars`. See [Minigames](/docs/reference/minigames#the-checks). |
+| `minigame <id>` | `starts in unknown state "…"`, `no final state can be reached from its start, so it never ends`, `keys maps input "…", which no state's on uses`, `uses key "…", which is not in its kv` (one another minigame declares), and `copies key "…", which is not in its kv`. See [Minigames](/docs/reference/minigames#the-checks). |
 | `minigame <id> state <state>` | Its `label`'s prose, `a timer needs ms above 0`, `a final state ends the minigame, so its after, on and always never run`, and for each transition (`after`, `on <input>`, `always <n>`): `goes to unknown state "…"`, `to lists no states`, and `the weight of "…" must be above 0`. Each transition's `when` and `effects` are checked under `minigame <id> state <state> <transition>`, and a final state's effects under `… final`. |
 | `timer <id>` | `a timer needs ms above 0`, `two timers share this id`, and its `effects`. See [Timers](/docs/reference/timers#the-checks). |
 | `setting <id>` | `a choice with no options`, `min is above max`, `step must be above 0`, and a `default` the setting can't take, such as `default 9 is not between 0 and 5`. |
@@ -393,7 +393,7 @@ type Reference =
 | `{ storyline }`, `{ kind }`, `{ trait }`, `{ action }`, `{ input }`, `{ minigame }`, `{ timer }` | An id that has to be declared. A plugin's action, with a `/`, isn't checked. A timer's `to` and `by` have to be milliseconds. |
 | `{ holder, holds, protagonist }` | Something that can hold things. See [Holders](#holders). |
 | `{ like, of }` | An entity a `create` makes a thing like, of the kind it makes. |
-| `{ minigameKv }` | A key some minigame declares in its `vars`. |
+| `{ minigameKv }` | A key some minigame declares in its `kv`. |
 | `{ entity }` | An entity by reference, `'food:apple'`, that content (or a plugin's `entities`) declares: `unknown entity "food:pear"`. `'$'` and `'food:*'` pass, once the kind is there. A shop's goods and the wardrobe's slots name their things this way. |
 | `{ setting, is }` | A play setting, and a value it has to be able to take. |
 | `{ prose }`, `{ variants }` | A prose key that needs words, a variants list that needs lines. |

@@ -80,6 +80,7 @@ function ImageBeat({ beat, attrs }: { beat: Extract<SceneBeat, { type: 'image' }
 function BeatImpl({ beat }: { beat: SceneBeat }) {
   const text = usePart('beat', 'leading-prose')
   const say = usePart('beat', beat.type === 'say' && beat.who === 'player' ? 'leading-prose pl-6 text-player-speech' : 'leading-prose text-speech')
+  const chose = usePart('beat', 'leading-prose pl-6 text-sm text-muted-foreground italic')
   const image = usePart(
     'beat',
     cn('w-full rounded-lg', beat.type === 'image' && beat.size === 'inline' && 'max-w-sm', beat.type === 'image' && beat.ui?.tilt === true && 'rotate-1'),
@@ -119,11 +120,51 @@ function BeatImpl({ beat }: { beat: SceneBeat }) {
     case 'sound':
       // Heard, not seen: the audio player plays it.
       return null
+    case 'chose':
+      return (
+        <p {...chose} data-beat="chose">
+          <span aria-hidden="true">› </span>
+          {beat.label}
+        </p>
+      )
   }
 }
 
 /**
- * One beat of a scene's body: narration, a spoken line, a picture, a video.
+ * Beats in runs, each beat of a section with a `ui.fold` hint gathered with
+ * the ones after it from the same section, so a fold draws them as one.
+ */
+function folded(
+  beats: readonly { beat: SceneBeat; index: number }[],
+): ({ fold: string; beats: { beat: SceneBeat; index: number }[] } | { beat: SceneBeat; index: number })[] {
+  const out: ({ fold: string; beats: { beat: SceneBeat; index: number }[] } | { beat: SceneBeat; index: number })[] = []
+  for (const entry of beats) {
+    const fold = entry.beat.section?.fold
+    const last = out.at(-1)
+    if (typeof fold !== 'string') out.push(entry)
+    else if (last && 'fold' in last && last.beats.at(-1)?.beat.section === entry.beat.section) last.beats.push(entry)
+    else out.push({ fold, beats: [entry] })
+  }
+  return out
+}
+
+/** A section with a `ui.fold` hint: its beats in a `fold` part the player opens and shuts, under the hint's words in a `fold-summary` part. Shut to begin with. */
+function Fold({ label, children }: { label: string; children: ReactNode }) {
+  const fold = usePart('fold', 'rounded-lg border px-4 py-2 [&[open]>summary]:mb-2')
+  const summary = usePart('fold-summary', 'cursor-pointer font-medium')
+  const inner = usePart('fold-beats', 'flex flex-col gap-(--gap-beats)')
+  return (
+    <details {...fold}>
+      <summary {...summary}>{label}</summary>
+      <div {...inner}>{children}</div>
+    </details>
+  )
+}
+
+/**
+ * One beat of a scene's body: narration, a spoken line, a picture, a video,
+ * or a pick the player made earlier in a flowing scene (`chose`, its label,
+ * small and set in).
  * Letters, notes and signs are inline pieces in a line (`InlineMail`,
  * `InlineProp`, `InlineMono`). A picture whose block has `ui.tilt` sits at a
  * slight angle. A sound beat draws nothing, and a spoken line with a voice
@@ -178,6 +219,17 @@ function Beats({ beats, motion, rolls, skipped }: { beats: SceneBeat[]; motion: 
       <Beat key={index} beat={entry} />
     )
   }
+  // A group's beats, a fold's gathered into one. The first may wait for dice of its own.
+  const runs = (beats: { beat: SceneBeat; index: number }[], diced: boolean) =>
+    folded(beats).map((run, n) =>
+      'fold' in run ? (
+        <Fold key={`fold-${run.beats[0].index}`} label={run.fold}>
+          {run.beats.map(({ beat: inner, index }, m) => beat(inner, index, diced && n === 0 && m === 0))}
+        </Fold>
+      ) : (
+        beat(run.beat, run.index, diced && n === 0)
+      ),
+    )
   return (
     <div {...list}>
       {revealGroups(beats, motion ? rolls.fresh : []).map((entry, at) =>
@@ -185,11 +237,11 @@ function Beats({ beats, motion, rolls, skipped }: { beats: SceneBeat[]; motion: 
           <Fragment key={`reveal-${at}-${entry.dice ? rolls.at : 0}`}>
             {entry.dice ? <DiceRoll roll={entry.dice} animate={animate} /> : null}
             <div {...group} data-reveal={motion ? entry.reveal.as : undefined} style={motion ? revealStyle(entry.reveal.at) : undefined}>
-              {entry.beats.map(({ beat: inner, index }, n) => beat(inner, index, n === 0 && entry.dice !== undefined))}
+              {runs(entry.beats, entry.dice !== undefined)}
             </div>
           </Fragment>
         ) : (
-          entry.beats.map(({ beat: inner, index }) => beat(inner, index, false))
+          runs(entry.beats, false)
         ),
       )}
     </div>
@@ -339,5 +391,8 @@ function SceneStageImpl({ className }: { className?: string }) {
  *
  * Timers: a block with a `ui.timer` hint gets a `Countdown` of that timer
  * after it, while it runs.
+ *
+ * Folds: the beats of a section with a `ui.fold` hint (what `fold()` writes)
+ * are drawn as one `fold` part, a `<details>` the player opens and shuts.
  */
 export const SceneStage = overridable('SceneStage', SceneStageImpl)

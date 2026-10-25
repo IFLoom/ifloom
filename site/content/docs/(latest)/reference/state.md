@@ -33,6 +33,7 @@ type GameState = {
   audio: AudioState
   media: MediaState
   minigame: MinigameState | null
+  flow: FlowState | null
   panel: OpenPanel | null
   rolls: RollsState
   timers: Record<string, RunningTimer>
@@ -249,6 +250,14 @@ minigame: MinigameState | null   // { id, state, elapsed, vars, steps }
 
 The [minigame](/docs/reference/minigames) being played, or `null`. See [`MinigameState`](/docs/reference/minigames#minigamestate). A save from before minigames loads with `null`. The field was added with a load default and no new save version, because nothing a save already has changes shape.
 
+
+### flow
+
+```ts
+flow: FlowState | null   // { scene, path, waiting }
+```
+
+The open scene's visit of its [flow](/docs/reference/flows): each pick, jump and minigame or panel passed, in order, and what the flow is waiting on. It's `null` with no scene open, and for a visit with nothing to keep, such as one of a scene with no decisions. Entering a scene sets it back to `null`. See [`FlowState`](/docs/reference/flows#stateflow). A save from before flowing scenes loads with `null`. Like `minigame`, the field came with a load default and nothing a save had changed shape for it.
 ### panel
 
 ```ts

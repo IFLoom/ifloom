@@ -18,6 +18,7 @@ import { locks, type LocksShape } from './locks.ts'
 import type { ConditionEntry, CommandEntry, EffectEntry, Feature, FeatureShape, FieldsOf, RunnerHooks } from './feature.ts'
 import { media, type MediaShape } from './media.ts'
 import { minigames, type MinigamesShape } from './minigames.ts'
+import { flowsFeature, type FlowsShape } from './flows.ts'
 import { notices, type NoticesShape } from './notices.ts'
 import { panels, type PanelsShape } from './panels.ts'
 import { saving, type SavingShape } from './saving.ts'
@@ -47,6 +48,7 @@ type Shapes =
   | StatsShape
   | ScenesShape
   | MinigamesShape
+  | FlowsShape
   | TimersShape
   | AudioShape
   | MediaShape
@@ -62,7 +64,9 @@ type Shapes =
  * scenes and audio, so a scene a trigger opens is counted as seen in the same
  * command; minigames straight after scenes, so a scene with a minigame starts
  * it in the command that opens it; timers after minigames, whose clock
- * their `tick` runs; settings before audio, which requires it; stats before entities,
+ * their `tick` runs; flows after them, so a scene's own minigame starts
+ * before its flow's, and a flow sees a minigame it waits on end in the
+ * same command; settings before audio, which requires it; stats before entities,
  * so a loaded save's entities are filled after their stats;
  * panels after the plugins' hooks too, so a turn or scene a hook moves on
  * closes the panel the command found open; holdings anywhere, since it only
@@ -80,6 +84,7 @@ export const FEATURES = [
   scenes,
   minigames,
   timers,
+  flowsFeature,
   actions,
   inputs,
   settings,

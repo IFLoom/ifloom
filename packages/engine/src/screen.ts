@@ -86,6 +86,12 @@ export type ScreenScene = {
   title: string
   body: string
   beats: SceneBeat[]
+  /**
+   * The first of `beats` the flow's last step brought, from its `chose` on:
+   * what a pick, a jump or a minigame or panel done with added, so a UI can
+   * animate only that. 0 when the visit has taken no step, and for the room.
+   */
+  fresh: number
   /** The scene's tags, for the UI to style it by. */
   tags: string[]
   /** Who is speaking: the scene's `speaker`, as their entity is. Null with none, or one that names no entity. */
@@ -178,7 +184,8 @@ function standing(state: GameState, game: Game, stage: ReturnType<typeof pluginS
     key: stage ? `room:${stage.id}` : 'room',
     title: stage?.title ?? game.title,
     body,
-    beats: beatsOf(state, game, stage?.id ?? '', rendered ?? { parts: [] }, rendered?.media, drawing.picks),
+    beats: beatsOf(state, game, stage?.id ?? '', rendered ?? { parts: [] }, rendered?.media, drawing.picks).beats,
+    fresh: 0,
     tags: [],
     speaker: null,
     image: null,
@@ -205,6 +212,7 @@ function playingScene(state: GameState, game: Game, under: ScreenScene, drawing:
     title: def.label ?? under.title,
     body: beats.flatMap((beat) => ('text' in beat ? [beat.text] : [])).join('\n\n'),
     beats,
+    fresh: 0,
   }
 }
 
@@ -219,20 +227,23 @@ function beatsOf(
   state: GameState,
   game: Game,
   owner: string,
-  body: { parts: readonly BodyPart[] } | { text: string; hints?: readonly { at: number; ui: Ui<BlockUi> }[] },
+  body: { parts: readonly BodyPart[]; fresh?: number } | { text: string; hints?: readonly { at: number; ui: Ui<BlockUi> }[] },
   media: readonly SceneMedia[] | undefined,
   picks: Record<string, string>,
-): SceneBeat[] {
+): { beats: SceneBeat[]; fresh: number } {
   const placed = (media ?? []).flatMap((item, index) => {
     const shown = resolveMedia(item, state, game, owner, `media.${index}`, featureContext(), picks)
     return shown ? [{ at: shown.at ?? 'end', beats: parseBeats(mediaMarkup(shown)) }] : []
   })
   const find = lineSpeakers(state, game)
-  return [
-    ...placed.filter((item) => item.at === 'lead').flatMap((item) => item.beats),
-    ...('parts' in body ? beatsOfParts(body.parts, find).beats : parseBeats(body.text, body.hints, find)),
-    ...placed.filter((item) => item.at !== 'lead').flatMap((item) => item.beats),
-  ]
+  const lead = placed.filter((item) => item.at === 'lead').flatMap((item) => item.beats)
+  const made = 'parts' in body ? beatsOfParts(body.parts, find) : { beats: parseBeats(body.text, body.hints, find), starts: [] }
+  // Where the part the flow's last step brought first starts among the beats, after the lead media.
+  const from = 'parts' in body && body.fresh ? (made.starts[body.fresh] ?? made.beats.length) : 0
+  return {
+    beats: [...lead, ...made.beats, ...placed.filter((item) => item.at !== 'lead').flatMap((item) => item.beats)],
+    fresh: from ? lead.length + from : 0,
+  }
 }
 
 /**
@@ -437,6 +448,7 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
         title: pluginStage(game, state)?.title ?? game.title,
         body: say(game, 'momentPassed'),
         beats: parseBeats(say(game, 'momentPassed')),
+        fresh: 0,
         tags: [],
         speaker: null,
         image: null,
@@ -449,18 +461,19 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
   // again here would overwrite a declarative scene's composed body with
   // whatever single block happens to share the scene's id.
   const rendered = drawing.rendered.scene()!
-  const parts = (rendered as Partial<RenderedScene>).parts
+  const { parts, fresh } = rendered as Partial<RenderedScene>
   // A hand-built scene's body may still ask pools for files; a data scene's has had them filled in.
   const body = parts ? (rendered.body ?? '') : resolvePoolMarkup(rendered.body ?? '', state, game, state.sceneId, 'body', featureContext(), drawing.picks)
   // A block's hints say where it starts in the body; a hand-built body whose pools were just filled has none.
-  const beats = beatsOf(
+  const drawn = beatsOf(
     state,
     game,
     state.sceneId,
-    parts ? { parts } : { text: body, hints: body === rendered.body ? rendered.blockUi : undefined },
+    parts ? { parts, fresh } : { text: body, hints: body === rendered.body ? rendered.blockUi : undefined },
     rendered.media,
     drawing.picks,
   )
+  const beats = drawn.beats
   const choices: ScreenChoice[] = rendered.choices
     .filter((choice) => choice.visible !== false)
     .map((choice) => {
@@ -488,7 +501,11 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
       }
     })
   // Choices the prose holds inline are drawn there, and leave the list. A stage's hotspot may still name one.
-  const labels = new Map(rendered.choices.map((choice) => [choice.id, choice.label]))
+  // A choice picked earlier in the visit is named by its words, as the flow showed it.
+  const labels = new Map([
+    ...Object.entries((rendered as Partial<RenderedScene>).picked ?? {}),
+    ...rendered.choices.map((choice) => [choice.id, choice.label] as const),
+  ])
   const inline = inlineBeats(beats, choices, (id) => labels.get(id), state, game)
   const named = rendered.speaker ?? scene.speaker
   const speaker = named ? speakerOf(state, game, named) : null
@@ -500,6 +517,7 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
       title: rendered.title ?? scene.title ?? pluginStage(game, state)?.title ?? game.title,
       body,
       beats: inline.beats,
+      fresh: drawn.fresh,
       tags: rendered.tags ?? scene.tags ?? [],
       speaker,
       image: rendered.image ?? speaker?.image ?? null,

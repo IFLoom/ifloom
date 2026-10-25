@@ -245,7 +245,10 @@ describe('Small Town', () => {
     ])
     expect(view(state, game).held[3]).toMatchObject({ ref: 'keepsake:shell', name: 'A river shell', count: 1, at: 'player' })
     expect(view(state, game).entities.keepsake).toBeUndefined()
-    state = run(state, { type: 'choose', id: 'stay' })
+    // The evening reads on: the shell's line, the question again, then sitting with her, then home.
+    expect(view(state, game).scene.beats.some((beat) => beat.type === 'chose' && beat.label === 'Pocket a smooth shell from the bank')).toBe(true)
+    expect(view(state, game).scene.choices.map((choice) => choice.id)).toEqual(['ducks', 'stay'])
+    state = run(state, { type: 'choose', id: 'stay' }, { type: 'choose', id: 'home' })
     // The next morning at the café she takes it, and keeps it by the till.
     state = run(on(state, 7, 'morning'), go('high-street'), go('cafe'), talk('ava'), { type: 'choose', id: 'shell' })
     expect(holds(state, { entity: 'keepsake:shell', at: 'character:ava' }, game)).toBe(true)

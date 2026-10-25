@@ -62,6 +62,8 @@ const TARGETS = [
   'level',
   'turn',
   'panel',
+  // a place in a flowing scene, which a choice's jump names
+  'point',
   // the latest roll under a key, for the roll condition
   'roll',
   'timer',

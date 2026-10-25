@@ -10,6 +10,11 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- [Flowing scenes](/docs/reference/flows): a scene's body can stop partway through at a decision, `decide('order', [choice('tea', 'A pot of tea', { then: [...] }), ...])`, and once the player picks, the pick's `then` comes next and the scene reads on after it, the earlier text still on the page with a `chose` beat where the pick was. A `point()` marks a place a choice can come back to with `jump()`, so questions can be asked in any order. Sections show under a `when()`, a minigame or a panel is played where it stands and the flow waits for it, and `fold()` makes a part the player opens and shuts. Words go in place with `text()`, which takes off shared indentation, and `say(who, words)`. The builders are in `@ifloom/engine/flow` and return plain data. The save keeps the visit's path in `state.flow` (older saves load with none), every pick is a logged `choose`, so replay, undo and the backlog are exact, and the checker reports duplicate ids, a jump to nowhere, a decision that can get stuck and text that can't be reached. See [Writing a flowing scene](/docs/recipes/flowing-scenes).
+- `view.scene.fresh` is the first beat the last pick brought, so a UI can animate only the new text. A beat in a section with hints carries them as `section`.
+- The React UI draws a past pick small and set in, and a `fold()` as a part that opens and shuts (the [`fold`](/docs/react/hints#fold) hint). The templates draw a past pick too.
+- Small Town's evening by the river is a flowing scene: pocket a shell and ask about the ducks before you sit with Ava. The Letter's second chapter reads on from the answer you give Mrs Okafor.
+
 - A scene's choice can have a `cost`, `{ stats: { coins: 2 } }`, as an action can: shown as its price, checked when it's chosen, and paid after its command. An action can have `labels`, `tags` and `irreversible`, as a choice can. Both are a [`ButtonDef`](/docs/reference/actions#buttondef).
 - A choice's `label` can be the words themselves, `label: 'Buy a slice of cake'`. A prose key still works when the game's prose has it, and so for an action's.
 

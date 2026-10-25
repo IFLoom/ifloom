@@ -68,6 +68,7 @@ type Effect =
   | { timer: string; by: number }
   | { roll: string; dice: Dice; plus?: number | { stat: string }; against?: number }
   | { panel: string | null; with?: Record<string, unknown> }
+  | { point: string }
   | PluginCall
 ```
 
@@ -80,7 +81,7 @@ Conditions use the same keys, so `{ stat: 'coins', gte: 4 }` asks about what `{ 
 ```ts
 import type { EffectKey } from '@ifloom/engine'
 
-type EffectKey = 'stat' | 'kv' | 'create' | 'remove' | 'each' | 'entity' | 'move' | 'you' | 'scene' | 'closeStoryline' | 'turn' | 'notify' | 'audio' | 'sound' | 'minigame' | 'timer' | 'roll' | 'panel'
+type EffectKey = 'stat' | 'kv' | 'create' | 'remove' | 'each' | 'entity' | 'move' | 'you' | 'scene' | 'closeStoryline' | 'turn' | 'notify' | 'audio' | 'sound' | 'minigame' | 'timer' | 'roll' | 'panel' | 'point'
 ```
 
 The keys that tell the engine's effects apart. Narrow an `Effect` by one with `in`: inside `if ('stat' in effect)`, `effect.stat` is the stat's key.
@@ -410,6 +411,14 @@ The panel stays open while the player uses it, and closes when a later command e
 
 The checker allows any name. A plugin that knows a panel checks its `with`, so the shop reports an unknown vendor. See [Checking a panel](/docs/reference/panels#checking-a-panel).
 
+
+### point
+
+```ts
+{ point: 'questions' }   // jump('questions') from @ifloom/engine/flow
+```
+
+In a choice of a [flowing scene](/docs/reference/flows): once the choice's `then` is done, the flow carries on from the point `{ point: 'questions' }` marks, instead of after the decision. It's only a choice's effect, in the scene that has the point, so a flow loops only through a pick. Anywhere else it does nothing, and the loader reports it.
 ### roll
 
 ```ts

@@ -16,6 +16,8 @@
  *   block, while it runs.
  * - `ui.tilt` on a block: its picture sits at a slight angle, like a photo
  *   dropped on a table.
+ * - `ui.fold` on a section: its beats are drawn as one part that opens and
+ *   shuts, under the words given. `fold()` from `@ifloom/engine/flow` writes it.
  *
  * It also declares the inline pieces it draws in prose by default, by
  * augmenting `InlineUi`: `[[ui:modal|words|key|title]]`,
@@ -57,6 +59,8 @@ declare module '@ifloom/engine' {
     timer?: string
     /** Set the block's picture at a slight angle, like a photo dropped on a table: `ui: { tilt: true }`. */
     tilt?: boolean
+    /** On a section (`fold()` writes it): draw its beats as one part the player opens and shuts, under these words. */
+    fold?: string
   }
   interface StatUi {
     /** How the sidebar draws it. `'number'` if left out; pips suit a range of 20 or less. */

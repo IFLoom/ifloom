@@ -116,7 +116,7 @@ function drawChoices(parent: HTMLElement, choices: RenderedChoice[]): void {
   }
 }
 
-/** One paragraph of a scene: narration, a spoken line, a picture, a clip. A sound beat is heard, not drawn. */
+/** One paragraph of a scene: narration, a spoken line, a picture, a clip, a pick made earlier. A sound beat is heard, not drawn. */
 function drawBeat(parent: HTMLElement, beat: SceneBeat): void {
   switch (beat.type) {
     case 'text':
@@ -124,6 +124,10 @@ function drawBeat(parent: HTMLElement, beat: SceneBeat): void {
       break
     case 'say':
       drawLine(add(parent, 'p', '', 'beat-say'), beat.text, beat.spans).dataset.who = beat.who
+      break
+    case 'chose':
+      // A pick made earlier in a flowing scene, where the decision was.
+      add(parent, 'p', beat.label, 'beat-chose')
       break
     case 'image':
       Object.assign(add(parent, 'img', '', 'beat-image'), { src: beat.src, alt: beat.alt ?? '' })

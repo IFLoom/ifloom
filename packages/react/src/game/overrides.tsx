@@ -82,6 +82,9 @@ export const PART_KEYS = [
   'inline-prop',
   'inline-mono',
   'voice-replay',
+  'fold',
+  'fold-summary',
+  'fold-beats',
   // Inline actions, tooltips, inline pieces, bold and italics in the prose
   'inline-action',
   'tip',

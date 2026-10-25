@@ -14,6 +14,7 @@ How a game looks and moves is the UI's business, not the engine's. Content says 
 | [`dice`](#dice) | A block | The roll under that key is drawn above the block, which waits for the dice to settle. |
 | [`timer`](#timer) | A block | The running timer by that id counts down under the block. |
 | [`tilt`](#tilt) | A block | Its picture sits at a slight angle. |
+| [`fold`](#fold) | A section | Its beats are one part the player opens and shuts. |
 | [`display`](#display) | A stat | A number, a bar or pips in the sidebar. |
 | [`hue`](#hue) | An entity or a kind | The colour of their spoken lines. |
 | [`transitionNames`](#your-own-transition-names) | The game | Transition names of the game's own. |
@@ -197,6 +198,17 @@ body: [{ text: 'flat.photo', ui: { tilt: true } }]   // '[[img:photo/ava.svg|Ava
 ```
 
 On a [block](/docs/reference/scenes#block): `true` sets the block's picture at a slight angle, like a photo dropped on a table. The engine's picture markup has no flag for it, since how a picture sits is the UI's.
+
+## fold
+
+```ts
+import { fold, text } from '@ifloom/engine/flow'
+
+fold('Read the postcard', [text(`Wish you were here. The sea is cold and the chips are good. J.`)])
+// { blocks: [{ words: '…' }], ui: { fold: 'Read the postcard' } }
+```
+
+On a section, `{ blocks }`: the words the fold opens by. The engine carries a section's hints on every beat it makes, as the beat's `section`, and `SceneStage` draws the beats together in a `<details>` with these words as its summary, shut to begin with. A fold is presentation only and keeps no state. See [Flowing scenes](/docs/reference/flows).
 
 ## display
 

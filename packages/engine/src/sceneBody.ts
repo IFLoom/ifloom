@@ -72,9 +72,21 @@ export type SceneBeat =
       }
     /** A sound played once when the scene is shown, from `[[sound:id]]` on a line of its own. Nothing to draw. */
     | { type: 'sound'; track: string }
+    /**
+     * A pick the player made earlier in this visit of a flowing scene, where
+     * the decision was: `label` is the choice's words. What follows is what
+     * the pick brought. A UI may draw it, restyle it or leave it out.
+     */
+    | { type: 'chose'; label: string }
   ) & {
     /** The hints of the block this beat starts, as written; left out with none. See `BlockUi`. */
     ui?: Ui<BlockUi>
+    /**
+     * The hints of the section this beat sits in (a `{ blocks }` block with
+     * `ui`, such as `fold()` writes), on every beat it makes, so a UI can draw
+     * the section as one. Left out outside one.
+     */
+    section?: Ui<BlockUi>
   }
 
 /**
@@ -461,7 +473,7 @@ function paragraphsOf(body: string): string[] {
  * the block that wrote it, or a beat already made, such as a spoken line a
  * `say` block wrote. Internal: how a data scene's render hands its body to the screen.
  */
-export type BodyPart = { text: string; ui?: Ui<BlockUi> } | { beat: SceneBeat }
+export type BodyPart = { text: string; ui?: Ui<BlockUi>; section?: Ui<BlockUi> } | { beat: SceneBeat }
 
 /** The beats of one paragraph. `last` is who spoke the paragraph before, for a bare quote to answer. */
 function beatsOfParagraph(block: string, last: { say: 'character' | 'player' | null }, find: SpeakerFinder): SceneBeat[] {
@@ -507,7 +519,7 @@ export function beatsOfParts(parts: readonly BodyPart[], find: SpeakerFinder = b
     }
     const made = paragraphsOf(part.text).flatMap((paragraph) => beatsOfParagraph(paragraph, last, find))
     if (part.ui && made.length) made[0] = { ...made[0], ui: part.ui }
-    beats.push(...made)
+    beats.push(...(part.section ? made.map((beat) => ({ ...beat, section: part.section })) : made))
   }
   return { beats, starts }
 }

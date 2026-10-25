@@ -45,29 +45,46 @@ describe('The Letter', () => {
     expect(view(shelved, game).scene.choices.map((choice) => choice.id)).toEqual(['truth', 'deny'])
   })
 
+  it('reads chapter two on from the answer you give, then to Saturday', () => {
+    const named = read(startingState(game), { type: 'input', id: 'playerName', to: 'Robin' })
+    const blamed = read(named, choose('open'), choose('blame'))
+    const scene = view(blamed, game).scene
+    // The answer stays on the page where you gave it, then her reply, then the week.
+    const words = scene.beats.map((beat) => (beat.type === 'chose' ? `> ${beat.label}` : 'text' in beat ? beat.text : beat.type))
+    expect(words.slice(2)).toEqual([
+      '> “Only something that came open in the post.”',
+      'Her eyebrows go up, and stay up all the way down the stairs.',
+      'The rest of the week goes quietly. The letter stays where you left it.',
+      "Then it's Saturday.",
+    ])
+    expect(scene.fresh).toBe(2)
+    expect(scene.choices.map((choice) => choice.id)).toEqual(['saturday'])
+    expect(blamed.turn).toBe(1)
+  })
+
   it('counts fibs and reads the count back as a range, with a chapter as a turn', () => {
     const named = read(startingState(game), { type: 'input', id: 'playerName', to: 'Robin' })
-    const tangled = read(named, choose('open'), choose('blame'))
+    const tangled = read(named, choose('open'), choose('blame'), choose('saturday'))
     expect(tangled.kv.fibs).toBe(2)
     expect(tangled.turn).toBe(2)
     expect(view(tangled, game).scene.body).toContain('she has clearly been talking')
-    const honest = read(named, choose('open'), choose('truth'))
+    const honest = read(named, choose('open'), choose('truth'), choose('saturday'))
     expect(view(honest, game).scene.body).toContain('she smiles before you speak')
   })
 
   it('opens the braver ending only to a reader with the courage for it', () => {
     const named = read(startingState(game), { type: 'input', id: 'playerName', to: 'Robin' })
-    const brave = read(named, choose('open'), choose('truth'))
+    const brave = read(named, choose('open'), choose('truth'), choose('saturday'))
     expect(brave.stats.courage).toBe(3)
     expect(read(brave, choose('hand')).sceneId).toBe('end.kept')
-    const timid = read(named, choose('shelf'), choose('deny'))
+    const timid = read(named, choose('shelf'), choose('deny'), choose('saturday'))
     expect(view(timid, game).scene.choices.map((choice) => choice.id)).toEqual(['post'])
     expect(read(timid, choose('post')).sceneId).toBe('end.posted')
   })
 
   it('counts as finished at either ending, and a New Game+ remembers the first read', () => {
     const named = read(startingState(game), { type: 'input', id: 'playerName', to: 'Robin' })
-    const ended = read(named, choose('shelf'), choose('deny'), choose('post'))
+    const ended = read(named, choose('shelf'), choose('deny'), choose('saturday'), choose('post'))
     expect(holds(ended, game.finished!, game)).toBe(true)
     expect(holds(named, game.finished!, game)).toBe(false)
     expect(view(named, game).scene.body).not.toContain('stood here before')
@@ -82,7 +99,7 @@ describe('The Letter', () => {
     expect(view(fresh, game).saving).toEqual({ allowed: false, reason: 'Type your name first.', visible: true })
     const named = read(fresh, { type: 'input', id: 'playerName', to: 'Robin' })
     expect(view(named, game).saving.allowed).toBe(true)
-    const ended = read(named, choose('shelf'), choose('deny'), choose('post'))
+    const ended = read(named, choose('shelf'), choose('deny'), choose('saturday'), choose('post'))
     const again = apply(ended, game, choose('again'))
     expect(again).toMatchObject({ ok: true, newGame: true, state: { sceneId: 'ch1.mat', turn: 0 } })
     expect(again.state.kv.playerName).toBeUndefined()

@@ -9,7 +9,11 @@ import type { ScenePanel } from './features/panels.ts'
 import type { Effect, GameState } from './types.ts'
 import { commandOf } from './calls.ts'
 import { fillTokens } from './prose.ts'
-import type { BodyPart } from './sceneBody.ts'
+import type { BodyPart, SceneBeat } from './sceneBody.ts'
+import type { PluginArgs } from './plugin.ts'
+import { everyBlock, walkFlow, type FlowContent, type FlowStop } from './features/flows.ts'
+import { PLAYER, YOU, protagonist } from './entities.ts'
+import { speakerRef } from './speakers.ts'
 
 /**
  * A scene, as data.
@@ -43,10 +47,38 @@ export type Block = (
    * order with the prose, exactly as its markup would.
    */
   | { media: SceneMedia; when?: Condition }
+  /**
+   * Words as written, one paragraph or several, read as prose is (spoken
+   * lines, pictures, inline markup, tokens): what `text()` writes.
+   */
+  | { words: string; when?: Condition }
+  /**
+   * A spoken line as written, under who says it: an entity, by reference or
+   * bare id as a scene's `speaker` is, or `'you'` for the player. What
+   * `say()` writes. `voice` is the track of it read aloud.
+   */
+  | { say: string; speaker: string; voice?: string; when?: Condition }
+  /**
+   * A section: blocks shown together while `when` holds. Its `ui` hints are
+   * carried on every beat it makes, as `section`, so a UI can draw it as one,
+   * as the React UI draws `fold()` as a part that opens and shuts.
+   */
+  | { blocks: Block[]; when?: Condition }
+  /**
+   * A decision: the flow waits here until the player picks one of `choices`.
+   * The pick's `then` comes next, then the blocks after the decision.
+   */
+  | { decide: string; choices: FlowChoice[]; when?: Condition }
+  /** A place in the flow that a choice's `{ point }` effect jumps back to. At the top of a scene's body. */
+  | { point: string; when?: undefined }
+  /** A minigame played where it stands: the flow waits until it ends. */
+  | { minigame: string; when?: Condition }
+  /** A panel opened where it stands, with what it needs: the flow waits until it is closed. */
+  | { panel: string; with?: PluginArgs; when?: Condition }
 ) & {
   /**
    * Presentation hints for the UI, carried on the first beat the block makes
-   * and given no meaning by the engine. See `BlockUi`.
+   * (on every beat, for a section) and given no meaning by the engine. See `BlockUi`.
    */
   ui?: Ui<BlockUi>
 }
@@ -71,6 +103,12 @@ export type Choice = ButtonDef & {
      */
     key?: string
   }
+}
+
+/** A choice at a decision: a `Choice`, and what the flow shows once it is picked, before carrying on. */
+export type FlowChoice = Choice & {
+  /** Shown once it is picked, then the flow carries on after the decision, or from the point its `{ point }` effect names. */
+  then?: Block[]
 }
 
 export type DataScene = StoryletFields &
@@ -129,7 +167,7 @@ export type SceneRuntime = {
  * of dialogue. Anything the same scene declares as its own block is not a draw.
  */
 export function variantMembers(scene: DataScene, variants: string, runtime: SceneRuntime): string[] {
-  const declared = new Set(scene.body.flatMap((entry) => ('text' in entry ? [entry.text] : [])))
+  const declared = new Set(everyBlock(scene.body).flatMap(({ block }) => ('text' in block ? [block.text] : [])))
   return runtime.prose
     .variants(variants)
     .filter((key) => !declared.has(key))
@@ -153,6 +191,8 @@ function blockText(
   if ('text' in block) {
     return { text: runtime.prose.line(block.text, state), drawn: block.text }
   }
+  if ('words' in block) return { text: fillTokens(block.words, state, runtime.game) }
+  if (!('variants' in block)) return {}
   const members = variantMembers(scene, block.variants, runtime).filter((key) => holds(state, block.gate?.[key], runtime.game))
   if (members.length === 0) return {}
   const drawn = runtime.prose.draw(state, block.variants, members)
@@ -172,14 +212,25 @@ function blockText(
   }
 }
 
-/** A data scene as its render gives it: its view, and its body as parts, for the screen to cut into beats. Internal. */
-export type RenderedScene = SceneView & { parts: BodyPart[] }
+/** A data scene as its render gives it: its view, its body as parts, and where its flow stands, for the screen. Internal. */
+export type RenderedScene = SceneView & {
+  parts: BodyPart[]
+  /** Where the flow stopped: at a decision (its choices are offered), waiting on a minigame or a panel, or at the end (the ending choices). */
+  stop: FlowStop['at']
+  /** The part the flow's last step brought first, from the pick's `chose` on; 0 when the visit has taken none. */
+  fresh: number
+  /** The words of every choice picked on the way, for inline markup that names one. */
+  picked: Record<string, string>
+}
 
 /**
- * Turn a scene and a state into what the player sees. Blocks that do not
- * apply are dropped; the rest are kept in declaration order, as parts of the
- * body. New pool picks are written into `picks` when it is given. Internal:
- * plugins draw blocks with `context.beats`.
+ * Turn a scene and a state into what the player sees: its body walked as a
+ * flow along the visit's path (`state.flow`), each block whose `when` holds
+ * kept in order as a part of the body, a `chose` beat at each past pick, up
+ * to the first decision with no pick for it yet. The choices are that
+ * decision's, or the ending choices once the flow is done. New pool picks
+ * are written into `picks` when it is given. Internal: plugins draw blocks
+ * with `context.beats`.
  */
 export function renderScene(scene: DataScene, state: GameState, runtime: SceneRuntime, picks?: Record<string, string>): RenderedScene {
   const parts: BodyPart[] = []
@@ -187,43 +238,53 @@ export function renderScene(scene: DataScene, state: GameState, runtime: SceneRu
   const remember: Effect[] = []
   /** Every block this render used, in order. Later ones win a label. */
   const drawn: string[] = []
+  const picked: Record<string, string> = {}
+  let fresh = 0
+  const game = runtime.game
+  const path = state.flow?.scene === scene.id ? state.flow.path : []
 
-  scene.body.forEach((block, index) => {
-    if (!holds(state, block.when, runtime.game)) return
+  const content = ({ block, address, section }: FlowContent) => {
+    const withSection = section ? { section } : {}
+    if ('say' in block) {
+      parts.push({ beat: { ...spokenBeat(block, state, game), ...(block.ui ? { ui: block.ui } : {}), ...withSection } })
+      return
+    }
     const resolved = blockText(scene, block, state, runtime)
     // A pool's pick is kept per scene and block, so the same block shows the same file every visit.
-    const shown = resolved.media && resolveMedia(resolved.media, state, runtime.game, scene.id, String(index), featureContext(), picks)
+    const shown = resolved.media && resolveMedia(resolved.media, state, game, scene.id, address, featureContext(), picks)
     const pieces: string[] = []
     if (shown) {
       // In place unless it says otherwise: written as its markup, so it lands among the prose's beats.
       if (shown.at) media.push(shown)
       else pieces.push(mediaMarkup(shown))
     }
-    if (resolved.text) pieces.push(resolvePoolMarkup(resolved.text, state, runtime.game, scene.id, String(index), featureContext(), picks))
+    if (resolved.text) pieces.push(resolvePoolMarkup(resolved.text, state, game, scene.id, address, featureContext(), picks))
     if (resolved.remember) remember.push(resolved.remember)
     if (resolved.also) remember.push(resolved.also)
     if (resolved.drawn) drawn.push(resolved.drawn)
-    if (pieces.length) parts.push({ text: pieces.join('\n\n'), ...(block.ui ? { ui: block.ui } : {}) })
+    if (pieces.length) parts.push({ text: pieces.join('\n\n'), ...(block.ui ? { ui: block.ui } : {}), ...withSection })
+  }
+  const stop = walkFlow(scene, path, (condition) => holds(state, condition, game), {
+    content,
+    caughtUp: () => {
+      fresh = parts.length
+    },
+    chose: (choice, at) => {
+      const label = choiceLabel(scene, choice, drawn, state, runtime)
+      picked[choice.id] = label
+      parts.push({ beat: { type: 'chose', label, ...(at.section ? { section: at.section } : {}) } })
+    },
   })
 
+  const offered: readonly Choice[] = stop.at === 'decide' ? stop.choices : stop.at === 'end' ? scene.choices : []
   const choices: SceneChoice[] = []
-  for (const choice of scene.choices) {
-    const visible = holds(state, choice.when, runtime.game) && !choice.blocked?.some((entry) => entry.hide && holds(state, entry.when, runtime.game))
+  for (const choice of offered) {
+    const visible = holds(state, choice.when, game) && !choice.blocked?.some((entry) => entry.hide && holds(state, entry.when, game))
     const already = choice.once !== undefined && runtime.spent(state, scene.id, choice.id)
-    const blocked = choice.blocked?.find((entry) => holds(state, entry.when, runtime.game))
-    const labelled = choice.labels?.find((entry) => holds(state, entry.when, runtime.game))
-    // A reply written to answer the line she actually gave beats a generic
-    // one. Any block may carry its own `### Choices`; if one that rendered has
-    // a label for this choice, the last of them wins.
-    const matched = drawn
-      .map((key) => runtime.prose.line(`${key}#${choice.id}`, state))
-      .filter((line): line is string => line !== undefined)
-      .at(-1)
-    const named = labelled?.label ?? choice.label
-    const label = matched ?? (named !== undefined ? wordsOf(named, state, runtime) : (runtime.prose.line(`${scene.id}#${choice.id}`, state) ?? choice.id))
+    const blocked = choice.blocked?.find((entry) => holds(state, entry.when, game))
     choices.push({
       id: choice.id,
-      label,
+      label: choiceLabel(scene, choice, drawn, state, runtime),
       visible,
       disabled: blocked?.reason ?? (already ? choice.once?.reason : undefined),
       tags: choice.tags,
@@ -234,8 +295,8 @@ export function renderScene(scene: DataScene, state: GameState, runtime: SceneRu
       // A once-a-day line pays nothing the second time, but the prose and
       // the choice stay on screen — see `oncePerTurn()` for why that reads better.
       effects: already
-        ? buildEffects(state, runtime.game, choice.effects ?? []).filter((effect) => 'scene' in effect)
-        : [...buildEffects(state, runtime.game, choice.effects ?? []), ...(choice.once ? runtime.spend(state, scene.id, choice.id) : []), ...remember],
+        ? buildEffects(state, game, choice.effects ?? []).filter((effect) => 'scene' in effect)
+        : [...buildEffects(state, game, choice.effects ?? []), ...(choice.once ? runtime.spend(state, scene.id, choice.id) : []), ...remember],
     })
   }
 
@@ -243,12 +304,47 @@ export function renderScene(scene: DataScene, state: GameState, runtime: SceneRu
     title: scene.title,
     speaker: scene.speaker,
     tags: scene.tags,
-    body: parts.map(partText).join('\n\n'),
+    body: parts.map(partText).filter(Boolean).join('\n\n'),
     parts,
+    stop: stop.at,
+    fresh,
+    picked,
     media: media.length ? media : undefined,
     ...(scene.stage ? { stage: scene.stage } : {}),
     ...(scene.audio ? { audio: scene.audio } : {}),
     choices,
+  }
+}
+
+/**
+ * A choice's words. A reply written to answer the line she actually gave
+ * beats a generic one: any block may carry its own `### Choices`; if one
+ * that rendered has a label for this choice, the last of them wins. Then the
+ * first `labels` entry whose `when` holds, then `label`, then the prose key
+ * `<scene>#<id>`, then the id.
+ */
+function choiceLabel(scene: DataScene, choice: Choice, drawn: readonly string[], state: GameState, runtime: SceneRuntime): string {
+  const matched = drawn
+    .map((key) => runtime.prose.line(`${key}#${choice.id}`, state))
+    .filter((line): line is string => line !== undefined)
+    .at(-1)
+  if (matched !== undefined) return matched
+  const named = choice.labels?.find((entry) => holds(state, entry.when, runtime.game))?.label ?? choice.label
+  return named !== undefined ? wordsOf(named, state, runtime) : (runtime.prose.line(`${scene.id}#${choice.id}`, state) ?? choice.id)
+}
+
+/** A `say` block as its beat: whose line it is, as a scene's speaker is read, and its words filled in. */
+function spokenBeat(block: Extract<Block, { say: string }>, state: GameState, game: Game): Extract<SceneBeat, { type: 'say' }> {
+  const ref = block.speaker === YOU || block.speaker === PLAYER ? undefined : speakerRef(state, game, block.speaker)
+  const playing = protagonist(state)
+  const player = block.speaker === YOU || block.speaker === PLAYER || (ref !== undefined && ref === playing)
+  const speaker = block.speaker === YOU && playing !== PLAYER ? playing : ref
+  return {
+    type: 'say',
+    who: player ? 'player' : 'character',
+    ...(speaker !== undefined ? { speaker } : {}),
+    text: fillTokens(block.say, state, game),
+    ...(block.voice !== undefined ? { voice: block.voice } : {}),
   }
 }
 
@@ -257,10 +353,10 @@ function wordsOf(label: string, state: GameState, runtime: SceneRuntime): string
   return runtime.prose.line(label, state) ?? fillTokens(label, state, runtime.game)
 }
 
-/** A part as the body's text has it: its markup, or a beat's words. */
+/** A part as the body's text has it: its markup, or a spoken line's words. A past pick isn't in the body. */
 function partText(part: BodyPart): string {
   if ('text' in part) return part.text
-  return 'text' in part.beat ? part.beat.text : ''
+  return part.beat.type === 'say' ? part.beat.text : ''
 }
 
 /**

@@ -14,7 +14,7 @@ const INLINE = ['modal', 'image', 'mail', 'prop', 'mono']
 const KNOWN = {
   scene: ['transition'],
   choice: ['transition'],
-  block: ['reveal', 'dice', 'timer', 'tilt'],
+  block: ['reveal', 'dice', 'timer', 'tilt', 'fold'],
   stat: ['display'],
   entity: ['hue'],
   game: ['transition', 'transitionNames'],
@@ -87,6 +87,7 @@ export function checkUiHints(game: Game, options: { allow?: readonly string[]; i
     if (ui.timer !== undefined && !(typeof ui.timer === 'string' && timers.has(ui.timer)))
       out.push(`${where}: ui.timer "${String(ui.timer)}" is not a timer the game has`)
     if (ui.tilt !== undefined && typeof ui.tilt !== 'boolean') out.push(`${where}: ui.tilt is true or false`)
+    if (ui.fold !== undefined && !(typeof ui.fold === 'string' && ui.fold.trim())) out.push(`${where}: ui.fold is the words the fold is opened by`)
     if (ui.hue !== undefined && !(typeof ui.hue === 'number' && ui.hue >= 0 && ui.hue <= 360)) out.push(`${where}: ui.hue is a number from 0 to 360`)
     if (ui.transitionNames !== undefined) {
       const list = ui.transitionNames
@@ -95,8 +96,18 @@ export function checkUiHints(game: Game, options: { allow?: readonly string[]; i
     }
   }
 
-  const blocks = (where: string, body: readonly Block[] | undefined) =>
-    (body ?? []).forEach((block, index) => hints('block', `${where} block ${index + 1}`, block.ui))
+  // Sections, decisions and what their choices bring, as deep as a flow goes.
+  const blocks = (where: string, body: readonly Block[] | undefined, at = '') =>
+    (body ?? []).forEach((block, index) => {
+      const here = `${at}${index + 1}`
+      hints('block', `${where} block ${here}`, block.ui)
+      if ('blocks' in block) blocks(where, block.blocks, `${here}.`)
+      if ('decide' in block)
+        for (const choice of block.choices) {
+          hints('choice', `${where} choice ${choice.id}`, choice.ui)
+          blocks(where, choice.then, `${here}.${choice.id}.`)
+        }
+    })
 
   hints('game', 'game', game.ui)
   for (const scene of game.scenes) {

@@ -296,10 +296,19 @@ type Block = (
   | { text: string; when?: Condition }
   | { variants: string; when?: Condition; gate?: Record<string, Condition>; art?: Record<string, string> }
   | { media: SceneMedia; when?: Condition }
+  // and, for a scene that flows: words written in place, a spoken line, a section,
+  // a decision, a point, a minigame and a panel where they stand
+  | { words: string; when?: Condition }
+  | { say: string; speaker: string; voice?: string; when?: Condition }
+  | { blocks: Block[]; when?: Condition }
+  | { decide: string; choices: FlowChoice[]; when?: Condition }
+  | { point: string }
+  | { minigame: string; when?: Condition }
+  | { panel: string; with?: PluginArgs; when?: Condition }
 ) & { ui?: Ui<BlockUi> }
 ```
 
-Blocks render in order, and a block whose `when` fails is dropped. Rendered blocks are joined with a blank line between them.
+Blocks render in order, and a block whose `when` fails is dropped. Rendered blocks are joined with a blank line between them. The kinds after `media` let a scene read on as the player chooses, with decisions partway through: see [Flowing scenes](/docs/reference/flows).
 
 - **`text`** renders the prose at that key. An unwritten key renders nothing.
 - **`variants`** renders one member of a named set of variants, drawn as [How variants are drawn](#how-variants-are-drawn) says. What the draw needs to remember, so the variants rotate, is added to the effects of every choice. The members are `game.prose.variants(name)`, minus any key the same scene uses as a `text` block and any key with no prose. So a scene's own fixed block named `ava.smalltalk/closing` is never dealt as a random line.

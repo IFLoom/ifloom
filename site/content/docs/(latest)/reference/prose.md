@@ -371,10 +371,11 @@ type SceneBeat = (
       controls: boolean
     }
   | { type: 'sound'; track: string }
-) & { ui?: Ui<BlockUi> }
+  | { type: 'chose'; label: string }
+) & { ui?: Ui<BlockUi>; section?: Ui<BlockUi> }
 ```
 
-One piece of a scene. A UI switches on `type`, and draws nothing for `sound`. A `say` beat's `who` says whether it's the player's line, and `speaker` is the entity it's written under, when it's one's (see [Speech](#speech)). `ui` is there on the first beat of a [block](/docs/reference/scenes#block) that has [presentation hints](/docs/reference/ui-hints), as the block wrote them, so a UI knows where the block starts and what it asked for.
+One piece of a scene. A UI switches on `type`, and draws nothing for `sound`. A `chose` beat is a pick the player made earlier in a [flowing scene](/docs/reference/flows), with the choice's words as `label`, where the decision was: draw it, restyle it or leave it out. `section` is the hints of the section a beat sits in, on every beat of it, such as a fold's `{ fold: 'Read the postcard' }`. A `say` beat's `who` says whether it's the player's line, and `speaker` is the entity it's written under, when it's one's (see [Speech](#speech)). `ui` is there on the first beat of a [block](/docs/reference/scenes#block) that has [presentation hints](/docs/reference/ui-hints), as the block wrote them, so a UI knows where the block starts and what it asked for.
 
 A `text` or `say` beat has `spans` only when its paragraph holds an [inline action or a tooltip](#inline-actions-and-tooltips) that the view could draw, or [bold or italics](#bold-and-italics). Its `text` is the same words without the markup either way.
 

@@ -541,6 +541,9 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `beats` | The scene's text, holding every beat. |
 | `beat` | One beat. Carries `data-beat` with its kind, and a `say` beat carries `data-who`. |
 | `reveal` | The beats from a block with a [`reveal`](/docs/react/hints#reveal) hint, which wait for it. Carries `data-reveal` with its transition. The choices waiting for the last reveal are one too, with `data-reveal-choices`. |
+| `fold` | A section with a [`fold`](/docs/react/hints#fold) hint, as a `<details>`. |
+| `fold-summary` | The words a fold opens by. |
+| `fold-beats` | A fold's beats. |
 | `inline-mail` | A letter, from `[[ui:mail\|…]]`. |
 | `mail-header` | One header line of a letter. |
 | `mail-body` | A letter's body. |

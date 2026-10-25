@@ -401,11 +401,11 @@ The templates lay this out as a page in one file of its own: `src/Layout.vue`, `
 
 ## Beats
 
-A scene's prose comes as [beats](/docs/reference/prose#scenebeat): a paragraph, a spoken line, a picture or a video. A letter or a sticky note is a [UI piece](/docs/reference/prose#letters-notes-and-signs) inside a paragraph, which the templates show as its words. Draw `view.scene.beats` rather than `view.scene.body`, which is the raw prose with its markup.
+A scene's prose comes as [beats](/docs/reference/prose#scenebeat): a paragraph, a spoken line, a picture or a video, and in a [flowing scene](/docs/reference/flows), a pick made earlier (`chose`). A letter or a sticky note is a [UI piece](/docs/reference/prose#letters-notes-and-signs) inside a paragraph, which the templates show as its words. Draw `view.scene.beats` rather than `view.scene.body`, which is the raw prose with its markup.
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/main.ts
-/** One paragraph of a scene: narration, a spoken line, a picture, a clip. A sound beat is heard, not drawn. */
+/** One paragraph of a scene: narration, a spoken line, a picture, a clip, a pick made earlier. A sound beat is heard, not drawn. */
 function drawBeat(beat: SceneBeat): void {
   switch (beat.type) {
     case 'text':
@@ -413,6 +413,10 @@ function drawBeat(beat: SceneBeat): void {
       break
     case 'say':
       add(root, 'p', beat.text, 'beat-say').dataset.who = beat.who
+      break
+    case 'chose':
+      // A pick made earlier in a flowing scene, where the decision was.
+      add(root, 'p', beat.label, 'beat-chose')
       break
     case 'image':
       Object.assign(add(root, 'img', '', 'beat-image'), { src: beat.src, alt: beat.alt ?? '' })
@@ -436,7 +440,7 @@ function drawBeat(beat: SceneBeat): void {
 // src/Beat.tsx
 import type { SceneBeat } from '@ifloom/engine'
 
-/** One paragraph of a scene: narration, a spoken line, a picture, a clip. A sound beat is heard, not drawn. */
+/** One paragraph of a scene: narration, a spoken line, a picture, a clip, a pick made earlier. A sound beat is heard, not drawn. */
 export function Beat({ beat }: { beat: SceneBeat }) {
   switch (beat.type) {
     case 'text':
@@ -447,6 +451,8 @@ export function Beat({ beat }: { beat: SceneBeat }) {
           {beat.text}
         </p>
       )
+    case 'chose':
+      return <p className="beat-chose">{beat.label}</p>
     case 'image':
       return <img className="beat-image" src={beat.src} alt={beat.alt ?? ''} />
     case 'video':
@@ -473,13 +479,14 @@ export function Beat({ beat }: { beat: SceneBeat }) {
 <script setup lang="ts">
 import type { SceneBeat } from '@ifloom/engine'
 
-// One paragraph of a scene: narration, a spoken line, a picture, a clip. A sound beat is heard, not drawn.
+// One paragraph of a scene: narration, a spoken line, a picture, a clip, a pick made earlier. A sound beat is heard, not drawn.
 defineProps<{ beat: SceneBeat }>()
 </script>
 
 <template>
   <p v-if="beat.type === 'text'">{{ beat.text }}</p>
   <p v-else-if="beat.type === 'say'" class="beat-say" :data-who="beat.who">{{ beat.text }}</p>
+  <p v-else-if="beat.type === 'chose'" class="beat-chose">{{ beat.label }}</p>
   <img v-else-if="beat.type === 'image'" class="beat-image" :src="beat.src" :alt="beat.alt ?? ''" />
   <video
     v-else-if="beat.type === 'video'"
@@ -500,7 +507,7 @@ defineProps<{ beat: SceneBeat }>()
 <script lang="ts">
   import type { SceneBeat } from '@ifloom/engine'
 
-  // One paragraph of a scene: narration, a spoken line, a picture, a clip. A sound beat is heard, not drawn.
+  // One paragraph of a scene: narration, a spoken line, a picture, a clip, a pick made earlier. A sound beat is heard, not drawn.
   let { beat }: { beat: SceneBeat } = $props()
 </script>
 
@@ -508,6 +515,8 @@ defineProps<{ beat: SceneBeat }>()
   <p>{beat.text}</p>
 {:else if beat.type === 'say'}
   <p class="beat-say" data-who={beat.who}>{beat.text}</p>
+{:else if beat.type === 'chose'}
+  <p class="beat-chose">{beat.label}</p>
 {:else if beat.type === 'image'}
   <img class="beat-image" src={beat.src} alt={beat.alt ?? ''} />
 {:else if beat.type === 'video'}

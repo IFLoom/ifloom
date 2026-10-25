@@ -56,6 +56,8 @@ export type Reference =
   | { input: string }
   /** A minigame, by id. */
   | { minigame: string }
+  /** A jump to a point, `{ point }` as an effect: only a choice's, in the scene that has the point. */
+  | { jump: string }
   /** A key some minigame declares in its `vars`, as `{ kv, of: 'minigame' }` names it. */
   | { minigameKv: string }
   /** A timer, by id, with a `timer` effect's `to` and `by`, which must be milliseconds. */

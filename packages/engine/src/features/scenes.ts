@@ -7,13 +7,15 @@ import { say } from '../strings.ts'
 import { sceneContext } from '../context.ts'
 import type { Game, Scene } from '../game.ts'
 import type { Reference } from '../references.ts'
-import type { Block, DataScene } from '../scene.ts'
+import type { Block, Choice, DataScene, RenderedScene } from '../scene.ts'
+import type { SceneView } from '../game.ts'
 import type { Condition, GameState, Range } from '../types.ts'
 import { emphasis, INLINE_MARKUP, inlineMarkup } from '../sceneBody.ts'
 import { commandOf } from '../calls.ts'
 import { defineFeature, lastWins, together, type FeatureContext, type PackMerge, type ResolveTools } from './feature.ts'
 import { inRange, wanted } from '../range.ts'
 import { costEffects, costRefusal, payCost } from './actions.ts'
+import { everyBlock, flowBlockReferences, jumpOf, sceneChoices, stepped, withoutJump } from './flows.ts'
 
 /** A surgical change to a data scene an earlier pack declared: a choice added, dropped or replaced. */
 export type Patch =
@@ -131,7 +133,12 @@ function isDataScene(scene: Scene | DataScene): scene is DataScene {
   return 'body' in scene && Array.isArray((scene as DataScene).body)
 }
 
-/** What prose blocks name: prose keys, variants and their art, conditions, media, hints. */
+/**
+ * What prose blocks name: prose keys, variants and their art, conditions,
+ * media, hints, the markup in words written in place, a spoken line's
+ * markup, and inside sections, decisions (each choice as a scene's is, and
+ * what it brings) and the minigames and panels a flow plays.
+ */
 export function blockReferences(blocks: readonly Block[] | undefined): Reference[] {
   const out: Reference[] = []
   for (const block of blocks ?? []) {
@@ -141,10 +148,33 @@ export function blockReferences(blocks: readonly Block[] | undefined): Reference
       for (const art of Object.values(block.art ?? {})) out.push({ variants: art })
     }
     if ('media' in block) out.push({ media: block.media })
+    if ('words' in block) out.push({ markup: block.words })
+    if ('say' in block) out.push({ markup: block.say })
+    if ('blocks' in block) out.push({ blocks: block.blocks })
+    if ('decide' in block)
+      for (const choice of block.choices)
+        out.push({ within: `decision ${block.decide} choice ${choice.id}`, refs: [...choiceReferences(choice), { blocks: choice.then }] })
+    out.push(...flowBlockReferences(block))
     if (block.ui !== undefined) out.push({ ui: block.ui })
     out.push({ when: block.when })
     if ('variants' in block) for (const gate of Object.values(block.gate ?? {})) out.push({ when: gate })
   }
+  return out
+}
+
+/** What one choice names: its command, its label's prose key when it reads as one, its conditions, effects (not its jump: the flow's checks read that) and hints. */
+function choiceReferences(choice: Choice, defaultKey?: string): Reference[] {
+  const out: Reference[] = []
+  if (choice.command) out.push({ command: choice.command })
+  // A label is words, or a prose key: one that reads as a key (no spaces, a `.` or `#`) must have its prose.
+  if (choice.label === undefined) {
+    if (defaultKey !== undefined) out.push({ prose: defaultKey })
+  } else if (readsAsKey(choice.label)) out.push({ prose: choice.label })
+  for (const entry of choice.labels ?? []) out.push(...(readsAsKey(entry.label) ? [{ prose: entry.label }] : []), { when: entry.when })
+  out.push({ when: choice.when })
+  for (const entry of choice.blocked ?? []) out.push({ when: entry.when })
+  out.push({ effects: withoutJump(choice.effects) })
+  if (choice.ui !== undefined) out.push({ ui: choice.ui })
   return out
 }
 
@@ -154,21 +184,17 @@ const readsAsKey = (label: string) => !/\s/.test(label) && /[.#]/.test(label)
 /** What a data scene names: its body, its choices' labels, conditions and effects, its audio, panel and stage. */
 export function dataSceneReferences(scene: DataScene): Reference[] {
   const out: Reference[] = [{ blocks: scene.body }]
-  out.push({ actionsIn: scene.body, offers: scene.choices.map((choice) => choice.id) })
+  out.push({ actionsIn: scene.body, offers: sceneChoices(scene).map((choice) => choice.id) })
   for (const choice of scene.choices) {
-    if (choice.command) out.push({ within: `choice ${choice.id}`, refs: [{ command: choice.command }] })
-    // A label is words, or a prose key: one that reads as a key (no spaces, a `.` or `#`) must have its prose.
-    if (choice.label === undefined) out.push({ prose: `${scene.id}#${choice.id}` })
-    else if (readsAsKey(choice.label)) out.push({ prose: choice.label })
-    for (const entry of choice.labels ?? []) out.push(...(readsAsKey(entry.label) ? [{ prose: entry.label }] : []), { when: entry.when })
-    out.push({ when: choice.when })
-    for (const entry of choice.blocked ?? []) out.push({ when: entry.when })
-    out.push({ effects: choice.effects })
-    if (choice.ui !== undefined) out.push({ within: `choice ${choice.id}`, refs: [{ ui: choice.ui }] })
+    // Its command and hints are reported as the choice's own; the rest as the scene's.
+    const refs = choiceReferences(choice, `${scene.id}#${choice.id}`)
+    const own = refs.filter((ref) => 'command' in ref || 'ui' in ref)
+    if (own.length) out.push({ within: `choice ${choice.id}`, refs: own })
+    out.push(...refs.filter((ref) => !('command' in ref || 'ui' in ref)))
   }
   for (const [channel, track] of Object.entries(scene.audio ?? {})) out.push({ channel, track })
   if (scene.panel !== undefined) out.push({ openPanel: scene.panel.panel, with: scene.panel.with ?? {} })
-  out.push({ stage: scene.stage, choices: scene.choices.map((choice) => choice.id) })
+  out.push({ stage: scene.stage, choices: sceneChoices(scene).map((choice) => choice.id) })
   return out
 }
 
@@ -219,21 +245,24 @@ function merge(problem: (from: string, where: string, what: string) => void): Pa
  */
 function inlineActionProblems(game: Game, body: readonly Block[] | string | undefined, offers: readonly string[]): string[] {
   if (body === undefined) return []
-  const lines: { text: string; block: number; gated: boolean }[] = []
-  if (typeof body === 'string') lines.push({ text: body, block: 0, gated: false })
+  const lines: { text: string; block: string; gated: boolean }[] = []
+  if (typeof body === 'string') lines.push({ text: body, block: '0', gated: false })
   else {
-    body.forEach((block, index) => {
-      const gated = block.when !== undefined
+    // A block in a section or a branch shows only with it, so it counts as gated.
+    for (const { block, address, top } of everyBlock(body)) {
+      const gated = block.when !== undefined || !top
+      if ('words' in block) lines.push({ text: block.words, block: address, gated })
+      if ('say' in block) lines.push({ text: block.say, block: address, gated })
       const keys = 'text' in block ? [block.text] : 'variants' in block ? (game.prose?.variants(block.variants) ?? []) : []
       for (const key of keys) {
         const text = game.prose?.line(key)
-        if (text !== undefined) lines.push({ text, block: index, gated })
+        if (text !== undefined) lines.push({ text, block: address, gated })
       }
-    })
+    }
   }
   const out: string[] = []
   const known = new Set(offers)
-  const blocks = new Map<string, { block: number; gated: boolean }[]>()
+  const blocks = new Map<string, { block: string; gated: boolean }[]>()
   for (const line of lines) {
     const named = (inlineMarkup(line.text) ?? []).flatMap((part) => (part.type === 'act' ? [part.id] : []))
     const once = new Set<string>()
@@ -381,10 +410,11 @@ export const scenes = defineFeature<ScenesShape>({
   },
   effects: {
     scene: {
+      // Entering a scene starts its visit afresh, the one on screen included.
       apply: (state, effect, game, cx) => {
         const to = effect.scene
-        if (to !== null && typeof to === 'object') return drawStorylet(state, game, to.from, to.otherwise, cx)
-        return { ...state, sceneId: to }
+        if (to !== null && typeof to === 'object') return drawStorylet({ ...state, flow: null }, game, to.from, to.otherwise, cx)
+        return { ...state, sceneId: to, flow: null }
       },
       references: (effect) => {
         const to = effect.scene
@@ -400,7 +430,7 @@ export const scenes = defineFeature<ScenesShape>({
         if (state.sceneId) return say(game, 'finishFirst')
         return cx.sceneById(game, command.id) ? undefined : say(game, 'noSuchScene')
       },
-      run: (state, command) => ({ ...state, sceneId: command.id }),
+      run: (state, command) => ({ ...state, sceneId: command.id, flow: null }),
       references: (command) => [{ scene: command.id, as: 'open' }],
     },
     choose: {
@@ -421,10 +451,17 @@ export const scenes = defineFeature<ScenesShape>({
       run: (state, command, game, cx) => {
         const scene = cx.sceneById(game, state.sceneId!)
         if (!scene) return { ...state, sceneId: null }
-        const choice = cx.rendered.scene()!.choices.find((entry) => entry.id === command.id)!
+        const rendered = cx.rendered.scene()! as Partial<RenderedScene> & SceneView
+        const choice = rendered.choices.find((entry) => entry.id === command.id)!
         const key = `${scene.id}#${choice.id}`
         // Counted on the turn it was picked in, before its effects can end the turn.
-        const marked = { ...state, chosen: { ...state.chosen, [key]: oneMore(state.chosen?.[key], state.turn) } }
+        const counted = { ...state, chosen: { ...state.chosen, [key]: oneMore(state.chosen?.[key], state.turn) } }
+        // A pick at a decision goes on the visit's path, with the jump its effects make; so does an ending choice's that jumps.
+        const jump = jumpOf(choice.effects)
+        const marked =
+          rendered.stop === 'decide' || (rendered.stop === 'end' && jump !== undefined)
+            ? stepped(counted, scene.id, { chose: choice.id }, ...(jump !== undefined ? [{ point: jump }] : []))
+            : counted
         // The command it sends first, then its cost, then its effects.
         const sent = choice.command ? cx.runCommand(marked, game, commandOf(choice.command)) : marked
         const paid = choice.cost ? payCost(sent, game, choice.cost, cx) : sent
@@ -441,7 +478,7 @@ export const scenes = defineFeature<ScenesShape>({
     },
     leave: {
       whyNot: () => undefined,
-      run: (state) => ({ ...state, sceneId: null }),
+      run: (state) => ({ ...state, sceneId: null, flow: null }),
       references: () => [],
     },
   },
@@ -472,7 +509,7 @@ export const scenes = defineFeature<ScenesShape>({
       const where = `scene ${scene.id}`
       tools.check(source, where, dataSceneReferences(scene))
       const ids = new Set<string>()
-      for (const choice of scene.choices) {
+      for (const choice of sceneChoices(scene)) {
         if (ids.has(choice.id)) tools.problem(source, where, `two choices share the id "${choice.id}"`)
         ids.add(choice.id)
         if (choice.command && commandOf(choice.command).type === 'choose')
@@ -537,7 +574,8 @@ export const scenes = defineFeature<ScenesShape>({
         const scene = cut > 0 ? sceneOf.get(ref.choice.slice(0, cut)) : undefined
         if (!scene) return [`gated on a choice in unknown scene "${ref.choice}"`]
         // Only a data scene's choices are known before it runs; a hand-built one is taken at its word.
-        if (isDataScene(scene) && !scene.choices.some((choice) => choice.id === ref.choice.slice(cut + 1))) return [`gated on unknown choice "${ref.choice}"`]
+        if (isDataScene(scene) && !sceneChoices(scene).some((choice) => choice.id === ref.choice.slice(cut + 1)))
+          return [`gated on unknown choice "${ref.choice}"`]
         return []
       },
       drawnFrom: (ref) => (drawnFrom.has(ref.drawnFrom) ? [] : [`draws from "${ref.drawnFrom}", but no scene is drawn from it`]),

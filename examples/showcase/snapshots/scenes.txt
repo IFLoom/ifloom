@@ -48,6 +48,7 @@ Ava is on the bench with her shoes off, feeding the ducks the crusts of the day.
 
 "I told you it was the only quiet in town." She shuffles up to make room.
   [>] Pocket a smooth shell from the bank
+  [>] Ask about the ducks
   [>] Sit with her until the light goes
 
 === ava.river @ first-morning
@@ -55,6 +56,7 @@ Ava is on the bench with her shoes off, feeding the ducks the crusts of the day.
 
 "I told you it was the only quiet in town." She shuffles up to make room.
   [>] Pocket a smooth shell from the bank
+  [>] Ask about the ducks
   [>] Sit with her until the light goes
 
 === ava.river @ a-week-in
@@ -62,6 +64,7 @@ Ava is on the bench with her shoes off, feeding the ducks the crusts of the day.
 
 "I told you it was the only quiet in town." She shuffles up to make room.
   [>] Pocket a smooth shell from the bank
+  [>] Ask about the ducks
   [>] Sit with her until the light goes
 
 === cafe.break @ moving-day

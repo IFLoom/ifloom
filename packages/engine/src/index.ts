@@ -56,7 +56,7 @@ export type { SpeakerView } from './speakers.ts'
 export { speakerOf } from './speakers.ts'
 
 // Scenes and prose
-export type { Block, Choice, DataScene } from './scene.ts'
+export type { Block, Choice, DataScene, FlowChoice } from './scene.ts'
 export { bakeScene, isDataScene } from './scene.ts'
 export type { VariantMember } from './prose.ts'
 export { entityDesc, entityName, fillTokens, proseStore } from './prose.ts'
@@ -78,6 +78,7 @@ export { sceneContext } from './context.ts'
 // The state
 export type { Command, Effect, KvValue, GameState, StatKey, Stats, StorylineState } from './types.ts'
 export type { Times } from './features/scenes.ts'
+export type { FlowState, FlowStep } from './features/flows.ts'
 export { SAVE_VERSION } from './types.ts'
 
 // Player-facing words

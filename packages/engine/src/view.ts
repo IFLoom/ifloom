@@ -28,6 +28,8 @@ type ViewBase = {
     title: string
     body: string
     beats: SceneBeat[]
+    /** The first of `beats` the flow's last step brought (a pick, a jump, a minigame or panel done with), so a UI can animate only those; 0 with none. */
+    fresh: number
     /** The scene's tags, for the UI to style it by. */
     tags: string[]
     /** Who is speaking: the scene's `speaker`, as their entity is, or null. See `SpeakerView`. */

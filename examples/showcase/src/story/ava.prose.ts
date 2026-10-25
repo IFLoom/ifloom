@@ -19,8 +19,6 @@ export const prose: Record<string, string> = {
   'ava.call#bye': 'Say goodnight',
   'ava.river': 'Ava is on the bench with her shoes off, feeding the ducks the crusts of the day.',
   'ava.river.2': '"I told you it was the only quiet in town." She shuffles up to make room.',
-  'ava.river#shell': 'Pocket a smooth shell from the bank',
-  'ava.river#stay': 'Sit with her until the light goes',
   'ava.text': 'Good to meet you yesterday! Coffee’s on me next time 🙂',
   'ava.text#yes': 'Deal!',
   'ava.text#later': 'Maybe later in the week',

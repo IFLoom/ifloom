@@ -464,18 +464,26 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
       })
       const shown = fromView()
       let next = backlog
+      // A pick at a decision of a flowing scene is in the scene's own words from then on, as a `chose` beat:
+      // the visit's entry grows rather than closing with the choice.
+      const flowed = Boolean(
+        state.flow && state.flow.scene === shown.scene.id && state.flow.path.length > (before.flow?.scene === state.flow.scene ? before.flow.path.length : 0),
+      )
       // A minigame drawn over a scene is not the scene: it goes in neither before nor after.
       if (shown.scene.id && !shown.minigame) {
         const last = next.at(-1)
         const showing = last && last.sceneId === shown.scene.id && last.chose === undefined
+        // A flowing visit's entry is kept as the screen last read it, so what the flow added since (past a minigame, say) is there too.
         if (!showing) next = [...next, entry(shown)]
-        if (command.type === 'choose') {
+        else if (before.flow?.scene === shown.scene.id) next = [...next.slice(0, -1), entry(shown)]
+        if (command.type === 'choose' && !flowed) {
           const label = [...shown.scene.choices, ...inlineChoices(shown.scene.beats)].find((choice) => choice.id === command.id)?.label
           if (label) next = [...next.slice(0, -1), { ...next.at(-1)!, chose: label }]
         }
       }
       const after = viewOf(state)
-      if (after.scene.id && !after.minigame && (after.scene.id !== shown.scene.id || command.type === 'choose')) next = [...next, entry(after)]
+      if (after.scene.id && !after.minigame && flowed) next = [...next.slice(0, -1), entry(after)]
+      else if (after.scene.id && !after.minigame && (after.scene.id !== shown.scene.id || command.type === 'choose')) next = [...next, entry(after)]
       backlog = next.slice(-backlogLimit)
     }
     if (history) {

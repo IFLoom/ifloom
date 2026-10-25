@@ -3,6 +3,7 @@
  * river, and the friendship quest. Her words are in `ava.prose.ts`.
  */
 import { holding, move, give, type Content } from '@ifloom/engine'
+import { choice, decide, jump, point, say, text } from '@ifloom/engine/flow'
 import { questActive } from '@ifloom/plugin-quests'
 import { day } from '@ifloom/plugin-calendar'
 import { character } from '@ifloom/plugin-cast'
@@ -72,21 +73,38 @@ export const ava: Content = {
         },
       ],
     },
+    // A flowing scene: the evening reads on as you choose, and a question comes back round until you settle.
     {
       id: 'ava.river',
       title: 'By the river',
       ui: { transition: { in: 'fade', out: 'fade', ms: 600 } },
       speaker: 'ava',
-      // Her line comes a moment after the ducks: a block of its own, revealed by the React UI.
-      body: [{ text: 'ava.river' }, { text: 'ava.river.2', ui: { reveal: { delay: 1500, as: 'slide-up' } } }],
-      choices: [
-        // A thing to keep: the shell is an entity, and picking it up gives it to you.
-        { id: 'shell', when: { not: { entity: 'keepsake:shell', gte: 1 } }, effects: [give('keepsake:shell')] },
-        {
-          id: 'stay',
-          effects: [{ stat: 'friendship', by: 5, of: character('ava') }, { scene: null }],
-        },
+      body: [
+        { text: 'ava.river' },
+        // Her line comes a moment after the ducks: a block of its own, revealed by the React UI.
+        { text: 'ava.river.2', ui: { reveal: { delay: 1500, as: 'slide-up' } } },
+        // Each pick but the last jumps back here, so you can do both before you sit.
+        point('bench'),
+        decide('evening', [
+          // A thing to keep: the shell is an entity, and picking it up gives it to you.
+          choice('shell', 'Pocket a smooth shell from the bank', {
+            when: { not: { entity: 'keepsake:shell', gte: 1 } },
+            effects: [give('keepsake:shell'), jump('bench')],
+            then: [text(`It's cold, and fits your palm exactly.`)],
+          }),
+          choice('ducks', 'Ask about the ducks', {
+            blocked: [{ when: { chose: 'ava.river#ducks' }, reason: 'You asked.', hide: true }],
+            effects: [jump('bench')],
+            then: [say('ava', 'They know my name. I never asked theirs.')],
+          }),
+          choice('stay', 'Sit with her until the light goes', {
+            effects: [{ stat: 'friendship', by: 5, of: character('ava') }],
+            then: [text(`The water goes orange, then grey. Neither of you says much.`)],
+          }),
+        ]),
+        text(`You walk back along the river together, as far as the bridge.`),
       ],
+      choices: [{ id: 'home', label: 'Say goodnight', effects: [{ scene: null }] }],
     },
   ],
   triggers: [

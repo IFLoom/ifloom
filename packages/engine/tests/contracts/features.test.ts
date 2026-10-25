@@ -67,6 +67,7 @@ describe('core features are leaves', () => {
       'features/audio.ts',
       'features/entities.ts',
       'features/feature.ts',
+      'features/flows.ts',
       'features/holdings.ts',
       'features/inputs.ts',
       'features/kv.ts',
@@ -134,6 +135,7 @@ describe('the registry', () => {
       scenes: { conditions: ['chose', 'seen', 'since', 'scene'], effects: ['scene'], commands: ['scene', 'choose', 'leave'] },
       minigames: { conditions: [], effects: ['minigame'], commands: ['minigame'] },
       timers: { conditions: ['timer'], effects: ['timer'], commands: ['tick'] },
+      flows: { conditions: [], effects: ['point'], commands: [] },
       actions: { conditions: [], effects: [], commands: ['action'] },
       inputs: { conditions: [], effects: [], commands: ['input'] },
       settings: { conditions: ['setting'], effects: [], commands: ['setting'] },
@@ -165,7 +167,8 @@ describe('the registry', () => {
     // A scene's minigame starts once the scene is counted as seen, and before the plugins' hooks, so they see it running.
     // A panel closes after the hooks, so a turn or a scene a hook moves on closes it too.
     // The command's rolls are kept last, so they include any a trigger or a hook made.
-    expect(afterOrder).toEqual({ beforePlugins: ['triggers', 'scenes', 'minigames', 'audio'], afterPlugins: ['stats', 'panels', 'rolls'] })
+    // A flow starts the minigame or opens the panel it stands at once the scene's own minigame has started, and sees one it waits on end.
+    expect(afterOrder).toEqual({ beforePlugins: ['triggers', 'scenes', 'minigames', 'flows', 'audio'], afterPlugins: ['stats', 'panels', 'rolls'] })
   })
 
   it('refuses to build when a feature requires one that is missing or comes later', () => {

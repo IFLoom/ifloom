@@ -65,7 +65,8 @@
  * of button: `activities` fold into `actions` (an `ActionDef` with a cost,
  * effects and once), and the `activity` command is `action`. Scenes and
  * beats (API pass P3): `view.scene.image` for `stageImage`, and
- * `SpeakerView` read from the speaker's entity.
+ * `SpeakerView` read from the speaker's entity. Flowing scenes: the `point`
+ * effect, `GameState.flow`, and `view.scene.fresh`.
  */
 import type {
   ActionDef,
@@ -119,6 +120,7 @@ import type {
   SettingDef,
   SettingView,
   SpeakerView,
+  FlowState,
   StageView,
   StatDef,
   StatKey,
@@ -251,6 +253,8 @@ export type FrozenGameState = {
   media: MediaState
   /** The minigame being played, or null. */
   minigame: MinigameState | null
+  /** The open scene's visit of its flow: picks, jumps and waits passed, and what it waits on; or null. */
+  flow: FlowState | null
   /** The panel open over the story, or null. */
   panel: OpenPanel | null
   /** The rolls made: how many, the last command's, and the latest under each key. */
@@ -333,6 +337,8 @@ export type FrozenEffect =
   | { roll: string; dice: Dice; plus?: number | { stat: string }; against?: number }
   /** Open a panel by name, with what it needs; `panel: null` closes it. */
   | { panel: string | null; with?: Record<string, unknown> }
+  /** In a choice of a flowing scene: carry the flow on from this point. */
+  | { point: string }
   /** A plugin's effect or the game's own, in short. */
   | PluginCall
 
@@ -356,6 +362,7 @@ export type FrozenEffectKey =
   | 'timer'
   | 'roll'
   | 'panel'
+  | 'point'
 
 /** The screen this command leaves on comes in with `to`. */
 
@@ -535,6 +542,7 @@ export type FrozenView = {
     title: string
     body: string
     beats: SceneBeat[]
+    fresh: number
     /** The scene's tags, for the UI to style it by. */
     tags: string[]
     speaker: SpeakerView | null

@@ -590,6 +590,7 @@ One beat of a scene's body, drawn by its type:
 | `image` | A [`Picture`](#picture). It's full width, or at most `max-w-sm` for `size: 'inline'`, and tilted a little when its block has the [`tilt`](/docs/react/hints#tilt) hint. Clicking it opens the [`MediaViewer`](#mediaviewer). |
 | `video` | A [`Video`](#video), sized as a picture is. Clicking it opens the `MediaViewer`, unless the clip has controls, which have a full-screen button of their own. |
 | `sound` | Nothing. The audio player plays it. |
+| `chose` | A pick made earlier in a [flowing scene](/docs/reference/flows): its label, small, set in and in italics, after a `›`. |
 
 ```tsx
 import { Beat } from '@ifloom/react'
@@ -602,6 +603,8 @@ The [`Backlog`](#backlog), [`MessagesSection`](/docs/plugins/messages#messagesse
 While the viewer is on, a picture or a clip sits inside a `viewer-open` button whose `aria-label` is `ui.zoom` ("Enlarge"), followed by the beat's alt text when it has some. A picture whose file is missing draws nothing, button included.
 
 Replaceable as `Beat` in [`components`](#components). Parts: `beat` (with `data-beat`, and `data-who` on a spoken line), `voice-replay` and `viewer-open`. A letter, a note or a sign is an [inline piece](/docs/react/hints#inline-pieces) inside a paragraph: see [`InlineMail`](#inlinemail), [`InlineProp`](#inlineprop) and [`InlineMono`](#inlinemono). A video beat is a `video` part, with `data-beat="video"`.
+
+**Folds.** In `SceneStage`, the beats of a section with a [`fold`](/docs/react/hints#fold) hint (what `fold()` writes) are drawn together in a `fold` part, a `<details>` the player opens and shuts, shut to begin with. Its summary is the hint's words, in a `fold-summary` part, and the beats are in a `fold-beats` part.
 
 A paragraph's [bold and italics](/docs/reference/prose#bold-and-italics) are a `<strong>` with the part `bold` and an `<em>` with the part `italic`, inside the beat. Restyle them with [`classes`](#classes) or CSS on `[data-part="bold"]`.
 

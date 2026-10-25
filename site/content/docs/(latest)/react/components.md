@@ -554,7 +554,7 @@ With [`motion`](#uioptions) off, or the player asking for reduced motion, none o
 
 **Gotcha.** If a scene names a `panel` that the game has no component for, it shows its choices instead, with no warning.
 
-Replaceable as `SceneStage` in [`components`](#components). Parts: `scene-transition`, `scene` (with `data-scene`), `scene-header`, `scene-portrait`, `scene-title`, `stage-image`, `beats` and `reveal`.
+Replaceable as `SceneStage` in [`components`](#components). Parts: `scene-transition`, `scene` (with `data-scene`), `scene-header`, `scene-portrait`, `scene-title`, `stage-image`, `beats`, `reveal`, `fold`, `fold-summary` and `fold-beats`.
 
 ### useMotion
 

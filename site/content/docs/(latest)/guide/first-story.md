@@ -132,6 +132,8 @@ A choice's label is the prose under `scene#choice`, so `ch1.stop#share` labels t
 
 If you misspell a scene id or forget a label, `npm run check` says which scene and which key. The full list is under [the checks](/docs/reference/checks).
 
+A choice here moves the story to another scene. When you'd rather the scene carried on after the pick, with the player's answer and what it brings on the same page, write it as a [flowing scene](/docs/recipes/flowing-scenes): a decision partway through the body, with the words in place. The Letter's second chapter is one.
+
 ## 3. A stat
 
 A [stat](/docs/reference/stats) is a number the game keeps for the player. The engine doesn't define any, so you declare each one. A stat is used all through the story, so it goes in `src/world/stats.ts`, the file for what the whole game shares. This story keeps one, `warmth`, for how kind the player has been. Replace the template's stat with it:
@@ -496,4 +498,5 @@ Three chapters fit in one file. When a story grows, give each chapter a file of 
 - [Organising a game](/docs/guide/organising) explains the files: what goes in `world/` and `story/`, when to split one, and how the files combine.
 - [How the pieces fit](/docs/guide/how-it-fits) shows what you just used: the engine, the UI and the CLI.
 - [A game with a world](/docs/guide/first-game), the second tutorial, adds a calendar, places and a character with plugins.
+- [Writing a flowing scene](/docs/recipes/flowing-scenes) shows a scene that reads on as the player chooses.
 - [Scenes](/docs/reference/scenes), [Conditions](/docs/reference/conditions) and [Effects](/docs/reference/effects) list everything a scene can do.

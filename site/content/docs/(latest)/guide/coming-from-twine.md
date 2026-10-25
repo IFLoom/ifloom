@@ -184,6 +184,8 @@ A passage is a [scene](/docs/reference/scenes), and each link is a choice whose 
 
 The link text is the prose under `scene#choice`, so `'street#cafe': 'Go to the café'`. A scene with no choices is an ending. A setter link, `[[Buy a coffee|Cafe][$coins -= 3]]`, is a choice with more than one effect.
 
+
+A passage that carries on after a link, with the text the link brings below it, is a [flowing scene](/docs/reference/flows). A decision partway through the body waits for the pick, and the pick's `then` comes next, before the rest of the passage. A link back to an earlier part of the passage, such as a list of questions to ask, is a `point()` and a choice that `jump()`s to it. The logic stays in data, beside the words, rather than in the prose.
 ### `<<link>>` and `<<button>>`
 
 ```html

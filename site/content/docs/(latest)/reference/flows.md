@@ -77,7 +77,7 @@ type Block = (
 | `{ say, speaker }` | A spoken line, under who says it, by id as `@id: "…"` names them in [prose](/docs/reference/prose#speech): an entity (`'ava'`, `'character:ava'`), `'you'` for whoever the player is playing, or `'player'`. Its beat is a `say` with that `speaker` and their `name`. |
 | `{ blocks }` | A section: its blocks show together while `when` holds. A section can hold anything a body can, decisions included. Its `ui` hints go on every beat it makes, as the beat's `section`. |
 | `{ decide, choices }` | A decision. The flow waits here until the player picks one of `choices`, then shows the pick's `then` and carries on after the decision. Its id is unique within the scene. |
-| `{ point }` | A place a choice can jump back to. It goes at the top of the body, not inside a section or a branch. |
+| `{ point }` | A place a choice can jump to. It can go anywhere: at the top of the body, in a section, or in a choice's `then`. |
 | `{ minigame }` | A [minigame](/docs/reference/minigames) played where it stands. The flow starts it when it gets there, waits while it's played, and carries on once it ends. |
 | `{ panel, with }` | A [panel](/docs/reference/panels) opened where it stands, with what it needs. The flow waits until the player closes it (or the panel closes as a turn ends). |
 
@@ -94,7 +94,7 @@ A choice at a decision: a [`Choice`](/docs/reference/scenes#choice) with everyth
 ### How the flow goes
 
 - **A pick rejoins.** The pick's `then` comes first, then the blocks after its decision. A branch that shouldn't rejoin leaves the scene with an effect, `{ scene: 'cafe.door' }` or `{ scene: null }`.
-- **A jump loops back.** A choice with the effect [`{ point }`](/docs/reference/effects#point), written `jump('questions')`, carries on from that point once its `then` is done. A jump is only ever a choice's effect, so a flow goes round again only when the player picks. An ending choice can jump too.
+- **A jump loops back.** A choice with the effect [`{ point }`](/docs/reference/effects#point), written `jump('questions')`, carries on from that point once its `then` is done, wherever the point is. From there the flow reads on as if it had got to the point by itself: to the end of the list the point is in, then on after the section or the decision around it. A jump into a section shows the rest of the section, under its hints, even when the section's `when` doesn't hold. A jump is only ever a choice's effect, so a flow goes round again only when the player picks. An ending choice can jump too.
 - **The ending choices come last.** A scene's `choices` are offered once the flow reaches the end of the body.
 - **Each visit starts afresh.** Entering a scene, the same one included, starts its flow at the top.
 
@@ -160,12 +160,11 @@ A switch that matters to the story, such as a light the player turns on, is a ch
 The [content checker](/docs/reference/checks) reports, for each data scene:
 
 - two choices, two decisions or two points with one id
-- a point inside a section or a branch
 - a jump to a point the scene doesn't have, and a jump anywhere but a choice
 - a minigame or a panel the game doesn't have, as for any other
 - a decision with no choices, or whose every choice hides once it's picked, so the flow stops once all are taken
 - a `then` on a choice that leaves the scene, which is never shown
-- a decision whose every choice leaves or jumps, when something comes after it
+- a decision whose every choice leaves or jumps, when something comes after it and no point after it lets a jump land there
 - a `then` on an ending choice, which is never shown
 - a `variants` block in a scene that flows (see below)
 

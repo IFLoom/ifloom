@@ -70,6 +70,22 @@ body: [
 
 A jump is only ever a choice's effect, so the flow goes round again only when the player picks. Keep one choice that moves on: the checker reports a decision whose every choice hides once it's picked, because the flow would stop there with nothing left.
 
+## Skip ahead
+
+A point doesn't have to be behind you. Put one inside a section or a choice's `then`, and a jump goes straight there and reads on from it. Here the shortcut skips the climb and joins the walk at the gate:
+
+```ts
+body: [
+  decide('way', [
+    choice('hill', 'Over the hill', { then: [text(`It's steep. Your legs complain.`), point('gate'), text(`The gate is open.`)] }),
+    choice('lane', 'Down the lane', { then: [text(`The lane is muddy but flat.`)], effects: [jump('gate')] }),
+  ]),
+  text(`The farmhouse is just ahead.`),
+],
+```
+
+Taking the lane reads "The lane is muddy but flat.", "The gate is open." and then "The farmhouse is just ahead.": the rest of the hill's `then` after the point, then what comes after the decision.
+
 ## Play a minigame where it stands
 
 `minigame('skim')` starts the [minigame](/docs/reference/minigames) when the flow reaches it, and the flow waits until it ends. `panel('prices', { stall: 'bread' })` opens a [panel](/docs/reference/panels) the same way and waits until the player closes it. What comes after either reads on once it's done:

@@ -91,8 +91,11 @@ const isPanel = (block: Block): block is Extract<Block, { panel: string }> => 'p
  *
  * A pick at a decision runs its choice's `then`, then the blocks after the
  * decision. A jump after a pick carries on from that point instead, once
- * the `then` is done. A pick among the ending choices followed by a jump
- * carries on from the point too.
+ * the `then` is done, wherever the point is: at the top of the body, in a
+ * section or in a choice's `then`. From there the flow goes on as if it had
+ * read its way to the point: to the end of the list the point is in, then
+ * after the section or the decision around it. A pick among the ending
+ * choices followed by a jump carries on from the point too.
  */
 export function walkFlow(
   scene: Pick<DataScene, 'body' | 'choices'>,
@@ -106,9 +109,9 @@ export function walkFlow(
     if (step === path.length) visit.caughtUp?.()
   }
   const goto = (point: string): boolean => {
-    const at = scene.body.findIndex((block) => isPoint(block) && block.point === point)
-    if (at < 0) return false
-    frames = [{ list: scene.body, at: at + 1, prefix: '' }]
+    const found = framesTo(scene.body, point, '', undefined)
+    if (!found) return false
+    frames = found
     return true
   }
   /** The jump right after the step just passed, if the path has one there. */
@@ -185,6 +188,33 @@ export function walkFlow(
     visit.content?.({ block, address, ...(top.section ? { section: top.section } : {}) })
   }
   return { at: 'end' }
+}
+
+/**
+ * The frames a walk has once it has just passed the point `point`, from the
+ * body down to the list the point is in: each enclosing list stands after the
+ * section or the decision that holds the next, as reading down to the point
+ * would leave it. A section's hints carry down as a walk's do. Undefined when
+ * the point isn't there.
+ */
+function framesTo(list: readonly Block[], point: string, prefix: string, section: Ui<BlockUi> | undefined): Frame[] | undefined {
+  for (let index = 0; index < list.length; index += 1) {
+    const block = list[index]
+    const address = `${prefix}${index}`
+    const here: Frame = { list, at: index + 1, prefix, ...(section ? { section } : {}) }
+    if (isPoint(block) && block.point === point) return [here]
+    if (isSection(block)) {
+      const inner = framesTo(block.blocks, point, `${address}.`, block.ui ? { ...section, ...block.ui } : section)
+      if (inner) return [here, ...inner]
+    }
+    if (isDecide(block)) {
+      for (const choice of block.choices) {
+        const inner = framesTo(choice.then ?? [], point, `${address}.${choice.id}.`, section)
+        if (inner) return [here, ...inner]
+      }
+    }
+  }
+  return undefined
 }
 
 /** Every block in a body, sections, branches and all, with where each sits. */
@@ -306,7 +336,7 @@ function checkFlow(scene: DataScene, tools: FeatureCheckTools): void {
   const flowing = flows(scene.body)
   const decisions = new Set<string>()
   const points = new Set<string>()
-  for (const { block, address, top } of blocks) {
+  for (const { block, address } of blocks) {
     if (isDecide(block)) {
       if (decisions.has(block.decide)) tools.problem(source, where, `two decisions share the id "${block.decide}"`)
       decisions.add(block.decide)
@@ -314,7 +344,6 @@ function checkFlow(scene: DataScene, tools: FeatureCheckTools): void {
     if (isPoint(block)) {
       if (points.has(block.point)) tools.problem(source, where, `two points share the id "${block.point}"`)
       points.add(block.point)
-      if (!top) tools.problem(source, where, `point "${block.point}" is inside a section or a branch; a point goes at the top of the body`)
     }
     if (flowing && 'variants' in block) {
       tools.problem(
@@ -328,8 +357,8 @@ function checkFlow(scene: DataScene, tools: FeatureCheckTools): void {
     const point = jumpOf(choice.effects)
     if (point !== undefined && !points.has(point)) tools.problem(source, where, `${at}: jumps to point "${point}", which the scene doesn't have`)
   }
-  for (const { block } of blocks) {
-    if (!isDecide(block)) continue
+  blocks.forEach(({ block, address }, index) => {
+    if (!isDecide(block)) return
     const at = `decision ${block.decide}`
     if (!block.choices.length) tools.problem(source, where, `${at} has no choices, so the flow stops there`)
     else if (block.choices.every((choice) => hidesOncePicked(scene.id, choice)))
@@ -339,11 +368,13 @@ function checkFlow(scene: DataScene, tools: FeatureCheckTools): void {
       if (choice.then?.length && leaves(choice))
         tools.problem(source, where, `${at} choice ${choice.id}: its then is never shown, because the choice leaves the scene`)
     }
-    // Nothing after it can be reached when every choice leaves or jumps, unless nothing comes after it.
+    // Nothing after it can be reached when every choice leaves or jumps, unless nothing comes after it,
+    // or a point after it, outside its own branches, lets a jump land there.
     const lastThing = scene.body.at(-1) === block && !scene.choices.length
-    if (block.choices.length && !lastThing && block.choices.every((choice) => leaves(choice) || jumpOf(choice.effects) !== undefined))
+    const pointAfter = blocks.some((later, at) => at > index && isPoint(later.block) && !later.address.startsWith(`${address}.`))
+    if (block.choices.length && !lastThing && !pointAfter && block.choices.every((choice) => leaves(choice) || jumpOf(choice.effects) !== undefined))
       tools.problem(source, where, `${at}: every choice leaves or jumps, so what comes after it is never reached`)
-  }
+  })
   for (const choice of scene.choices) {
     jumps(choice, `choice ${choice.id}`)
     if ((choice as FlowChoice).then?.length)

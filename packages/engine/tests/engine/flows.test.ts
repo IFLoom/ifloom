@@ -130,6 +130,46 @@ describe('flowing scenes', () => {
     expect(play(done, game, choose('leave')).flow).toBeNull()
   })
 
+  it('jump to a point in a section or in a choice’s then, and read on from there to the end of the scene', () => {
+    // A walk home: the bridge is a point inside a section, and the bench one inside a pick's then.
+    const walk: DataScene = {
+      id: 'walk.home',
+      body: [
+        text(`You leave the café.`),
+        decide('way', [
+          choice('river', 'By the river', {
+            then: [text(`The river is high.`), point('bench'), text(`You sit on the bench.`), decide('rest', [choice('up', 'Get up')])],
+          }),
+          choice('road', 'By the road', { then: [text(`Cars hiss past.`)], effects: [jump('bridge')] }),
+          choice('rest', 'Rest first', { then: [text(`You need a sit.`)], effects: [jump('bench')] }),
+        ]),
+        text(`Not seen on the road.`),
+        fold('The bridge', [text(`Not seen either.`), point('bridge'), text(`The bridge creaks.`)]),
+        text(`You are home.`),
+      ],
+      choices: [{ id: 'in', label: 'Go in', effects: [{ scene: null }] }],
+    }
+    const { game, problems } = loadGame([{ ...cafe, scenes: [walk] }], { id: 'cafe', title: 'Café' })
+    expect(problems.map(describeProblem)).toEqual([])
+    const start = play(startingState(game), game, { type: 'scene', id: 'walk.home' })
+
+    // Into a section: what comes before the point is skipped, the rest of the section is read with its hint, then what follows it.
+    const road = play(start, game, choose('road'))
+    const shown = view(road, game).scene
+    expect(read(shown.beats)).toEqual(['You leave the café.', '> By the road', 'Cars hiss past.', 'The bridge creaks.', 'You are home.'])
+    expect(shown.beats[3]).toMatchObject({ section: { fold: 'The bridge' } })
+    expect(shown.choices.map((entry) => entry.id)).toEqual(['in'])
+    expect(road.flow?.path).toEqual([{ chose: 'road' }, { point: 'bridge' }])
+
+    // Into another pick's then: on to the decision there, then after the decision that holds it.
+    const rest = play(start, game, choose('rest'))
+    expect(read(view(rest, game).scene.beats)).toEqual(['You leave the café.', '> Rest first', 'You need a sit.', 'You sit on the bench.'])
+    expect(view(rest, game).scene.choices.map((entry) => entry.id)).toEqual(['up'])
+    const up = play(rest, game, choose('up'))
+    expect(read(view(up, game).scene.beats).slice(-5)).toEqual(['> Get up', 'Not seen on the road.', 'Not seen either.', 'The bridge creaks.', 'You are home.'])
+    expect(view(up, game).scene.choices.map((entry) => entry.id)).toEqual(['in'])
+  })
+
   it('refuse a choice of a decision that is past, and an ending choice before the flow is done', () => {
     const { game } = load()
     const at = play(startingState(game), game, { type: 'scene', id: 'cafe.counter' })
@@ -217,7 +257,6 @@ describe('the flow checks', () => {
         decide('d', [choice('x', 'X', { then: [text('Never.')], effects: [{ scene: null }] }), choice('y', 'Y', { effects: [{ scene: null }] })]),
         decide('stuck', [choice('s', 'S', { blocked: [{ when: { chose: 'broken#s' }, reason: 'Done.', hide: true }] })]),
         minigame('darts'),
-        when({ kv: 'x' }, [point('inside')]),
       ],
       choices: [{ id: 'end', label: 'End', then: [text('Nope.')] } as DataScene['choices'][number]],
     }
@@ -230,7 +269,6 @@ describe('the flow checks', () => {
         'two choices share the id "a"',
         'two decisions share the id "d"',
         'two points share the id "top"',
-        'point "inside" is inside a section or a branch; a point goes at the top of the body',
         "block 2: variants aren't drawn in a scene that flows, since a pick would draw again what the player read; use a when",
         'decision d choice a: jumps to point "nowhere", which the scene doesn\'t have',
         'decision d choice x: its then is never shown, because the choice leaves the scene',

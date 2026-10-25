@@ -69,7 +69,7 @@ export type Block = (
    * The pick's `then` comes next, then the blocks after the decision.
    */
   | { decide: string; choices: FlowChoice[]; when?: Condition }
-  /** A place in the flow that a choice's `{ point }` effect jumps back to. At the top of a scene's body. */
+  /** A place in the flow that a choice's `{ point }` effect jumps to: anywhere in the body, a section or a choice's `then` included. */
   | { point: string; when?: undefined }
   /** A minigame played where it stands: the flow waits until it ends. */
   | { minigame: string; when?: Condition }

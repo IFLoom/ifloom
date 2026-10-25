@@ -110,14 +110,15 @@ export function fold(label: string, blocks: Block[], extras: BlockExtras = {}): 
   return { blocks, ...extras, ui: { ...extras.ui, fold: label } }
 }
 
-/** A place in the flow a choice can jump back to, with `jump(id)`. At the top of a scene's body. */
+/** A place in the flow a choice can jump to, with `jump(id)`: at the top of a scene's body, in a section or in a choice's `then`. */
 export function point(id: string): Block {
   return { point: id }
 }
 
 /**
  * A choice's effect that carries the flow on from a point instead of after
- * its decision, once its `then` is done: `{ point: id }`. A flow loops only
+ * its decision, once its `then` is done: `{ point: id }`. The point can be
+ * anywhere in the scene, and the flow reads on from it. A flow loops only
  * this way, through a pick.
  */
 export function jump(id: string): { point: string } {

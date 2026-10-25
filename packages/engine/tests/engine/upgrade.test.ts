@@ -846,12 +846,22 @@ describe('content migrations', () => {
     expect(game.scenes[0]).toMatchObject({ body: [{ text: 'A door.' }], choices: [{ id: 'knock', label: 'Knock' }] })
   })
 
-  it('name a thing’s line its description at schema 26, with name for a thing and title for a heading, in the plugins’ content and the words table', () => {
+  it('name a thing’s line its description at schema 26, with name for a thing and title for a heading, in the plugins’ content and the words table, and someone nowhere away', () => {
     const v25 = {
       id: 'mod:words',
       schema: 25,
       prose: { 'place.flat': 'Home, {{v:places/desc}}.' },
-      entities: [{ id: 'flat', of: 'location', name: 'Flat', desc: 'Home' }],
+      entities: [
+        { id: 'flat', of: 'location', name: 'Flat', desc: 'Home' },
+        {
+          id: 'sam',
+          of: 'character',
+          name: 'Sam',
+          traits: { 'cast/person': { home: 'offstage', schedule: [{ location: 'offstage', when: { kv: 'away' } }] } },
+        },
+      ],
+      traits: { 'cast/person': { 'character:ava': { home: 'offstage' } } },
+      locks: [{ id: 'gone', when: { 'cast/at': { character: 'sam', at: ['offstage'] } }, deny: ['*'], reason: 'Sam is away.' }],
       actions: [{ id: 'snap', label: 'Snap', effects: [{ create: 'photo', with: { name: 'Pier', desc: 'Gulls.' } }] }],
       scenes: [{ id: 'hall', body: [{ text: 'You are {{v:places/desc}}.' }], choices: [{ id: 'go', label: 'Go', when: { value: 'places/desc' } }] }],
       minigames: [{ id: 'darts', label: 'Darts', start: 'aim', states: { aim: { label: 'Aim!' } } }],
@@ -891,12 +901,17 @@ describe('content migrations', () => {
         'unlocks/unlocks.supporter.label': 'Édition soutien',
       },
     }
-    const plugins = [places(), quests(), statuses(), achievements(), jobs(), cheats(), unlocks(), generators()] as Plugin[]
+    const plugins = [places(), cast(), quests(), statuses(), achievements(), jobs(), cheats(), unlocks(), generators()] as Plugin[]
     const out = unwrap(upgradePack(v25, plugins)) as unknown as Record<string, unknown>
     expect(out).toMatchObject({
       schema: SCHEMA,
       prose: { 'place.flat': 'Home, {{v:places/description}}.' },
-      entities: [{ id: 'flat', of: 'location', name: 'Flat', description: 'Home' }],
+      entities: [
+        { id: 'flat', of: 'location', name: 'Flat', description: 'Home' },
+        { id: 'sam', of: 'character', name: 'Sam', traits: { 'cast/person': { home: 'away', schedule: [{ location: 'away', when: { kv: 'away' } }] } } },
+      ],
+      traits: { 'cast/person': { 'character:ava': { home: 'away' } } },
+      locks: [{ id: 'gone', when: { 'cast/at': { character: 'sam', at: ['away'] } }, deny: ['*'], reason: 'Sam is away.' }],
       actions: [{ id: 'snap', label: 'Snap', effects: [{ create: 'photo', with: { name: 'Pier', description: 'Gulls.' } }] }],
       scenes: [
         { id: 'hall', body: [{ text: 'You are {{v:places/description}}.' }], choices: [{ id: 'go', label: 'Go', when: { value: 'places/description' } }] },

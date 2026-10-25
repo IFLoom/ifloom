@@ -52,7 +52,7 @@ These are the parts of a game that deal with people, and where each one comes fr
 - **"Only when Ava is here"** is the [`cast.here()`](#conditions) condition.
 
 ```ts
-import { cast, peopleOf, personOf, OFFSTAGE, type CastOptions, type Person, type PersonDef, type TalkOption, type CastView, type PersonView } from '@ifloom/plugin-cast'
+import { cast, peopleOf, personOf, AWAY, type CastOptions, type Person, type PersonDef, type TalkOption, type CastView, type PersonView } from '@ifloom/plugin-cast'
 ```
 
 ## Install
@@ -172,7 +172,7 @@ The `cast/person` trait: what makes an entity someone the player can meet, find 
 |---|---|---|
 | `fullName` | Their whole name, for the UI. Tokens are filled as in `name`. | `name` |
 | `pronouns` | For prose that needs them, such as `{ they: 'she', them: 'her' }`. The plugin gives them no meaning and doesn't pass them to the view. | None. |
-| `home` | Where they are when no `schedule` entry holds: a place id from the [places plugin](/docs/plugins/places#locations). | [`OFFSTAGE`](#offstage), meaning nowhere. |
+| `home` | Where they are when no `schedule` entry holds: a place id from the [places plugin](/docs/plugins/places#locations). | [`AWAY`](#away), meaning nowhere. |
 | `schedule` | Where they are while each `when` holds. See [Where people are](#where-people-are). | Always at `home`. |
 | `talk` | The scene that talking to them opens, or a list of [`TalkOption`](#talkoption)s, of which the first whose `when` holds is used. | They can't be talked to, and have no Talk button. |
 | `call` | Whether they can be reached from anywhere. See [Calls](#calls). | They can't be called. |
@@ -340,7 +340,7 @@ A character is somewhere at every moment, worked out fresh from the state:
 
 1. The `location` of the first `schedule` entry whose `when` holds. An entry with no `when` always holds.
 2. Otherwise, their `home`.
-3. Otherwise, [`OFFSTAGE`](#offstage).
+3. Otherwise, [`AWAY`](#away).
 
 A character is here when that place is the one the places plugin's [`places/here`](/docs/plugins/places#queries) query says the player is in. With the player nowhere, or with no places plugin, nobody is ever here.
 
@@ -348,21 +348,22 @@ With the [content above](#in-your-content), on a Monday morning Sam is on the hi
 
 Put exceptions above the rule they break, such as a Sunday entry above the every-day one. A person whose storyline is closed is still here. It's talking to them that's refused, and their Talk button says why.
 
-### OFFSTAGE
+### AWAY
 
 ```ts
-const OFFSTAGE = 'offstage'
+const AWAY = 'away'
 ```
 
 Where a character is when no schedule entry holds and they have no `home`. It's a place id that matches nothing on the map. You can use it as a schedule entry's `location` for when they're out of town:
 
 ```ts
 import { calendar } from '@ifloom/plugin-calendar'
-import { OFFSTAGE, type Person } from '@ifloom/plugin-cast'
+import { AWAY, type Person } from '@ifloom/plugin-cast'
 
-const schedule: Person['schedule'] = [{ location: OFFSTAGE, when: calendar.weekday(6) }]   // away on Sundays
+const schedule: Person['schedule'] = [{ location: AWAY, when: calendar.weekday(6) }]   // away on Sundays
 ```
- The [checks](#checks) accept it as a place.
+
+The [checks](#checks) accept it as a place. A pack written before schema 26 wrote it `'offstage'`, which loading rewrites.
 
 ## Calls
 
@@ -488,7 +489,7 @@ A [lock](/docs/reference/locks#lock) names them `cast/talk` and `cast/call`, or 
 
 Each is a call with the full name as the only key (see [plugin calls](/docs/reference/custom#plugincall)), which the helpers write for you. A single id works too, as in `{ 'cast/here': { character: 'ava' } }`, and so does a whole reference, `'character:ava'` or `'staff:ana'`, which is what `'$'` becomes. A character the game doesn't have never holds.
 
-`cast/at` reads the schedule alone, so it works without places, and you can ask it about someone the player can't see. `cast.at('ava', OFFSTAGE)` holds while she's out of town.
+`cast/at` reads the schedule alone, so it works without places, and you can ask it about someone the player can't see. `cast.at('ava', AWAY)` holds while she's out of town.
 
 ## Queries
 
@@ -497,7 +498,7 @@ These answer other plugins' code, through the context's [`query`](/docs/referenc
 | Query | Answers |
 |---|---|
 | `cast/present` | The ids of everyone in the room, in the game's order. Empty with no places plugin or with the player nowhere. |
-| `cast/where` | Where that character is: a place id or `OFFSTAGE`. `undefined` for one the game doesn't have. |
+| `cast/where` | Where that character is: a place id or `AWAY`. `undefined` for one the game doesn't have. |
 | `cast/contacts` | Everyone [met](#meeting-people) who has a `call`, each as `{ id, name, description, portrait, command, disabled }`. `description` is `null` when they have none, `command` is `cast.call(id)`, and `disabled` is the [refusal](#commands) the call would get now, or `undefined`. |
 
 For example, a contacts plugin of your own might list them in its view:
@@ -717,7 +718,7 @@ town · action wave · unknown entity "character:ghost"
 - A `call` with no `call.scene` and no `talk`, so a call would open nothing (`can be called, but a call opens no scene: give call a scene, or them a talk`).
 - A `storyline` the game doesn't have (`unknown storyline "…"`).
 - Anything a `schedule`, `talk` or `call` `when`, or `met`, names that the game doesn't have. `'$'` stands for any character here, so `{ stat: 'trust', of: '$' }` is checked against the stats declared `of: 'character'`.
-- With the places plugin, a `home` or schedule `location` it doesn't know (asked through [`places/known`](/docs/plugins/places#queries)). `OFFSTAGE` is accepted. Without places, these aren't checked.
+- With the places plugin, a `home` or schedule `location` it doesn't know (asked through [`places/known`](/docs/plugins/places#queries)). `AWAY` is accepted. Without places, these aren't checked.
 
 ```text
 town · trait cast/person on character:mole · unknown location "burrow"

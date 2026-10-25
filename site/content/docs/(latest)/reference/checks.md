@@ -443,27 +443,27 @@ type Reference =
 | `{ when }`, `{ effects }`, `{ command }`, `{ blocks }`, `{ media }`, `{ stage }` | Content to look inside, checked as the engine's own is. A stage with `choices: null` has no scene, such as a place's. |
 | `{ within, refs }` | More references, whose problems read `<within>: <what>`, such as `action dig: unknown location "moon"`. |
 
-This is how the [places plugin](/docs/plugins/places) says what a location names, trimmed. [`actionReferences`](/docs/reference/actions#actionreferences) gives what an action names:
+This is how a loyalty-card plugin says what its calls and its cards name, with `cardsOf(game)` its list of `data.loyalty.cards`. [`actionReferences`](/docs/reference/actions#actionreferences) gives what an action names:
 
 ```ts
 references: {
-  // A call to places/go names the location it goes to.
-  calls: (table, name, args) => (table === 'commands' && name === 'go' ? [places.location(String(args.id))] : []),
+  // A call to loyalty/stamp names the card it stamps.
+  calls: (_table, name, args) => (name === 'stamp' ? [{ entry: String(args.card), plugin: 'loyalty', list: 'cards', noun: 'card' }] : []),
   content: (game) =>
-    locationsOf(game).map((place) => ({
-      list: 'locations',
-      id: place.id,
+    cardsOf(game).map((card) => ({
+      list: 'cards',
+      id: card.id,
       refs: [
-        { blocks: place.body },
-        { stage: place.stage, choices: null },
+        { blocks: card.body },
+        { stage: card.stage, choices: null },
         // Each of its actions, checked as the game's own are.
-        ...(place.actions ?? []).map((action) => ({ within: `action ${action.id}`, refs: actionReferences(action) })),
+        ...(card.actions ?? []).map((action) => ({ within: `action ${action.id}`, refs: actionReferences(action) })),
       ],
     })),
 },
 ```
 
-A problem in an entry is reported as `<list> <id>`, against the content or pack the entry came from. A rule of the plugin's own that no reference can say, such as an exit to a place that isn't there, goes in its [`check`](/docs/reference/plugins#check).
+A problem in an entry is reported as `<list> <id>`, against the content or pack the entry came from. A rule of the plugin's own that no reference can say, such as two cards with one id, goes in its [`check`](/docs/reference/plugins#check).
 
 ## See it in an example
 

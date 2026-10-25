@@ -139,7 +139,7 @@ describe('startAudio', () => {
     t.root.dispatchEvent(new Event('keydown'))
     expect(t.playing()).toEqual(['audio/calm.ogg', 'audio/knock.ogg'])
     expect(t.lines).toContain('unlocked')
-    player.stop()
+    player()
   })
 
   it('unlocks on demand', () => {
@@ -147,7 +147,7 @@ describe('startAudio', () => {
     const player = startAudio(t.runner, t.options)
     player.unlock()
     expect(t.playing()).toEqual(['audio/calm.ogg'])
-    player.stop()
+    player()
   })
 
   it('crossfades when the file changes, and leaves it alone when it does not', () => {
@@ -176,7 +176,7 @@ describe('startAudio', () => {
     expect(calm.playing).toBe(false)
     expect(busy.volume).toBeCloseTo(0.5 * 0.8)
     expect(t.playing()).toContain('audio/cafe-murmur.ogg')
-    player.stop()
+    player()
   })
 
   it('plays a playlist in order, and wraps round unless it plays once', () => {
@@ -199,7 +199,7 @@ describe('startAudio', () => {
     expect(order().slice(4)).toEqual(['audio/a.ogg', 'audio/b.ogg'])
     expect(t.lines).toContain('music: playlist finished')
     expect(t.playing()).toEqual([])
-    player.stop()
+    player()
   })
 
   it('plays each cue once, and none of the old ones after a reload', () => {
@@ -211,14 +211,14 @@ describe('startAudio', () => {
     t.choose('knock')
     expect(t.made.filter((el) => el.src === 'audio/knock.ogg')).toHaveLength(2)
     expect(t.lines.filter((line) => line.startsWith('sfx: play cue:7:'))).toEqual(['sfx: play cue:7:1 knock', 'sfx: play cue:7:2 knock'])
-    player.stop()
+    player()
 
     // A new page on the same state: the same keys, already heard.
     const before = t.made.length
     const again = startAudio(t.runner, t.options)
     again.unlock()
     expect(t.made.slice(before).map((el) => el.src)).toEqual(['audio/calm.ogg'])
-    again.stop()
+    again()
   })
 
   it('plays nothing kept in a state it jumps to, such as an undo', () => {
@@ -230,7 +230,7 @@ describe('startAudio', () => {
     t.runner.undo()
     t.runner.redo()
     expect(t.made.filter((el) => el.src === 'audio/knock.ogg')).toHaveLength(1)
-    player.stop()
+    player()
   })
 
   it('queues voices, one after another, while sounds overlap', () => {
@@ -252,7 +252,7 @@ describe('startAudio', () => {
     expect(t.playing().filter((src) => src.includes('voice'))).toEqual(['audio/voice/ava-bye.ogg'])
     t.last('audio/voice/ava-bye.ogg').finish()
     expect(t.last('audio/voice/ava-hello.ogg').playing).toBe(true)
-    player.stop()
+    player()
   })
 
   it('sets volumes from the settings, the defaults, and mute', async () => {
@@ -272,14 +272,14 @@ describe('startAudio', () => {
     t.runner.setSetting('muted', false)
     await t.runner.settled()
     expect(calm.volume).toBeCloseTo(0.25)
-    player.stop()
+    player()
 
     // A new player reads what's stored.
     const again = startAudio(t.runner, t.options)
     again.unlock()
     await vi.advanceTimersByTimeAsync(1000)
     expect(t.last('audio/calm.ogg').volume).toBeCloseTo(0.25)
-    again.stop()
+    again()
   })
 
   it('plays at full volume with no profile and no settings', () => {
@@ -290,7 +290,7 @@ describe('startAudio', () => {
     player.unlock()
     vi.advanceTimersByTime(1000)
     expect(made[0].volume).toBe(1)
-    player.stop()
+    player()
   })
 
   it('ducks only a channel that asks to', () => {
@@ -302,7 +302,7 @@ describe('startAudio', () => {
     // Music doesn't duck under the voice unless it says so.
     expect(t.last('audio/busy.ogg').volume).toBeCloseTo(0.4)
     expect(t.lines.some((line) => line.includes('duck'))).toBe(false)
-    player.stop()
+    player()
 
     const d = setup(
       makeGame((game) => ({
@@ -320,7 +320,7 @@ describe('startAudio', () => {
     d.last('audio/voice/ava-bye.ogg').finish()
     vi.advanceTimersByTime(400)
     expect(d.last('audio/busy.ogg').volume).toBeCloseTo(0.4)
-    ducking.stop()
+    ducking()
   })
 
   it('notes a refused play quietly and carries on', async () => {
@@ -340,7 +340,7 @@ describe('startAudio', () => {
     expect(t.lines).toContain('music: play refused for audio/calm.ogg (NotAllowedError)')
     // The refused voice doesn't hold up the next one.
     expect(t.made.map((el) => el.src)).toContain('audio/voice/ava-bye.ogg')
-    player.stop()
+    player()
   })
 
   it('tries refused music again on the next click', async () => {
@@ -363,7 +363,7 @@ describe('startAudio', () => {
     t.click()
     expect(t.playing()).toEqual(['audio/calm.ogg'])
     expect(t.lines).toContain('music: try audio/calm.ogg again')
-    player.stop()
+    player()
   })
 
   it('stops listening and pauses everything on stop()', () => {
@@ -372,7 +372,7 @@ describe('startAudio', () => {
     t.click()
     t.choose('cafe')
     expect(t.playing().length).toBeGreaterThan(0)
-    player.stop()
+    player()
     expect(t.playing()).toEqual([])
     const count = t.made.length
     t.choose('leave')

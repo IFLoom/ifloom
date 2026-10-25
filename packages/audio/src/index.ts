@@ -4,7 +4,7 @@
  * playing; this only follows it.
  *
  *   import { startAudio } from '@ifloom/audio'
- *   const player = startAudio(runner)
+ *   const player = startAudio(runner)   // player() stops it; player.unlock(), player.play(src)
  */
 import type { AudioChannelView, AudioCue, AudioView, CommandLog, KvValue, Runner } from '@ifloom/engine'
 
@@ -29,9 +29,12 @@ export type AudioOptions = {
   root?: EventTarget
 }
 
-export type AudioPlayer = {
-  /** Stop listening to the runner and the profile, and pause everything. */
-  stop(): void
+/**
+ * What `startAudio` gives back: a function that stops the player, as every
+ * other `start*` gives, with what else a player can do on it. Calling it stops
+ * listening to the runner and the profile, and pauses everything.
+ */
+export type AudioPlayer = (() => void) & {
   /** Allow sound now, as the first click or key press does, and start whatever is due. */
   unlock(): void
   /** Play a file once on a channel, such as a voice line again. `'sfx'` and full volume if left out. */
@@ -78,7 +81,8 @@ function errorName(error: unknown): string {
 }
 
 /**
- * Play a runner's `view.audio` in the browser until `stop()`. Background
+ * Play a runner's `view.audio` in the browser until the function it returns
+ * is called, as `startClock`'s and `startKeys`' are. Background
  * channels crossfade when their file changes and step through playlists. Each
  * cue key plays once, and the keys already in the view when the player starts
  * count as heard, so loading a save replays nothing. Volumes and muting come
@@ -399,7 +403,23 @@ export function startAudio(runner: Runner, options: AudioOptions = {}): AudioPla
   root?.addEventListener('keydown', onGesture, true)
   log(`started, ${heard.size} cue${heard.size === 1 ? '' : 's'} already heard; waiting for a click or key press`)
 
-  return {
+  const stop = () => {
+    if (stopped) return
+    stopped = true
+    stopRunner()
+    root?.removeEventListener('pointerdown', onGesture, true)
+    root?.removeEventListener('keydown', onGesture, true)
+    if (timer !== undefined) clearTimeout(timer)
+    timer = undefined
+    for (const sound of everySound()) sound.el.pause()
+    refusedSounds.clear()
+    backgrounds.clear()
+    oneShots.clear()
+    voiceQueue.length = 0
+    voiceNow = null
+    log('stopped')
+  }
+  return Object.assign(stop, {
     unlock,
     play(src: string, channel = 'sfx', volume = 1) {
       if (stopped) return
@@ -408,21 +428,5 @@ export function startAudio(runner: Runner, options: AudioOptions = {}): AudioPla
       log(`${channel}: play ${src}`)
       oneShot(channel, src, volume)
     },
-    stop() {
-      if (stopped) return
-      stopped = true
-      stopRunner()
-      root?.removeEventListener('pointerdown', onGesture, true)
-      root?.removeEventListener('keydown', onGesture, true)
-      if (timer !== undefined) clearTimeout(timer)
-      timer = undefined
-      for (const sound of everySound()) sound.el.pause()
-      refusedSounds.clear()
-      backgrounds.clear()
-      oneShots.clear()
-      voiceQueue.length = 0
-      voiceNow = null
-      log('stopped')
-    },
-  }
+  })
 }

@@ -164,8 +164,8 @@ const ID = 'cast'
 const PERSON = 'cast/person'
 const KIND = 'character'
 
-/** Where they are when nowhere on the map. */
-export const OFFSTAGE = 'offstage'
+/** Where someone is when nowhere on the map: away. */
+export const AWAY = 'away'
 
 /**
  * Everyone in the game now with the `cast/person` trait, as references: the
@@ -215,7 +215,7 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
 
   function placeOf(state: GameState, game: Game, them: One): string {
     for (const block of them.person.schedule ?? []) if (holdsFor(state, game, them, block.when)) return block.location
-    return them.person.home ?? OFFSTAGE
+    return them.person.home ?? AWAY
   }
   const playerAt = (context: PluginContext<null>) => context.query<string | null>('places/here') ?? null
   const isHere = (state: GameState, context: PluginContext<null>, them: One) => {
@@ -294,7 +294,7 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
       if (askPlaces) {
         const blank = startingState(game)
         for (const place of [data?.home, ...(data?.schedule ?? []).map((block) => block.location)]) {
-          if (place !== undefined && place !== OFFSTAGE && !askPlaces(blank, { location: place })) problems.push(`unknown location "${place}"`)
+          if (place !== undefined && place !== AWAY && !askPlaces(blank, { location: place })) problems.push(`unknown location "${place}"`)
         }
       }
       return problems

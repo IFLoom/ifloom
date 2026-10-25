@@ -22,7 +22,7 @@ export function startPlayer(runner: Runner, options?: AudioOptions): () => void 
   players.set(runner, player)
   changed()
   return () => {
-    player.stop()
+    player()
     if (players.get(runner) === player) {
       players.delete(runner)
       changed()

@@ -103,7 +103,21 @@ function hueToUi(pack: RawPack): RawPack {
 }
 
 /** The version of what content writes for this plugin. */
-export const CONTENT_VERSION = 16
+/** Where someone nowhere on the map was, before schema 26, and is now. */
+const OLD_AWAY = 'offstage'
+const AWAY = 'away'
+
+/** A person's trait with `offstage` written as `away`, in its `home` and its schedule's locations. */
+function awayIn(person: Record<string, unknown>): Record<string, unknown> {
+  let out = person
+  if (out.home === OLD_AWAY) out = { ...out, home: AWAY }
+  if (Array.isArray(out.schedule))
+    out = { ...out, schedule: out.schedule.map((entry) => (isRecord(entry) && entry.location === OLD_AWAY ? { ...entry, location: AWAY } : entry)) }
+  return out
+}
+
+/** The version of what content writes for this plugin. */
+export const CONTENT_VERSION = 26
 
 export const contentMigrations: Record<number, ContentStep> = {
   // 5 → 6: the naming rule. `cast/at` names its target `character`, and a command's one target is `id`.
@@ -125,6 +139,25 @@ export const contentMigrations: Record<number, ContentStep> = {
   13: (pack) => charactersToEntities(pack),
   // 15 → 16: how a person looks is the UI's: their `hue` is a `ui` hint.
   15: (pack) => hueToUi(pack),
+  // 25 → 26: where someone is when nowhere on the map is `away` (the plugin's `AWAY`), not `offstage`: in a
+  // person's `home` and schedule, wherever the trait is written, and in what `cast/at` asks about.
+  25: (pack, tools) =>
+    tools.calls(
+      tools.objects(pack, (value) => {
+        const person = value['cast/person']
+        if (!isRecord(person)) return value
+        // On an entity or a kind, the trait's data; in a `traits` table, its rows by reference.
+        const rows = Object.keys(person).every((key) => key.includes(':'))
+        const next = rows ? Object.fromEntries(Object.entries(person).map(([ref, row]) => [ref, isRecord(row) ? awayIn(row) : row])) : awayIn(person)
+        return { ...value, 'cast/person': next }
+      }),
+      (call) => {
+        if (call.name !== 'cast/at' || call.form === 'command' || !isRecord(call.with)) return call
+        const at = call.with.at
+        const places = Array.isArray(at) ? at.map((id) => (id === OLD_AWAY ? AWAY : id)) : at === OLD_AWAY ? AWAY : at
+        return places === at ? call : { name: call.name, with: { ...call.with, at: places } }
+      },
+    ),
 }
 
 /** The version of this plugin's commands. */

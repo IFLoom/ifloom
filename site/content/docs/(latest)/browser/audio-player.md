@@ -28,7 +28,7 @@ Put your sound files in the game's `public/audio/` folder. A track's `src` is re
 function startAudio(runner: Runner, options?: AudioOptions): AudioPlayer
 ```
 
-Starts playing the runner's sound and keeps following it until you call `stop()`. It reads `runner.view().audio` once at the start and again after every change of state.
+Starts playing the runner's sound and keeps following it until you call the function it returns, as [`startClock`](/docs/browser#startclock) and [`startKeys`](/docs/browser#startkeys) do. It reads `runner.view().audio` once at the start and again after every change of state.
 
 What it does with each part of the view:
 
@@ -115,8 +115,7 @@ A `play refused` line is the browser saying no, usually before the first click. 
 ## AudioPlayer
 
 ```ts
-type AudioPlayer = {
-  stop(): void
+type AudioPlayer = (() => void) & {
   unlock(): void
   play(src: string, channel?: string, volume?: number): void
 }
@@ -124,7 +123,7 @@ type AudioPlayer = {
 
 | Method | What it does |
 |---|---|
-| `stop()` | Stops following the runner and the profile, and pauses everything. A stopped player can't start again, so call `startAudio` for a new one. |
+| `player()` | Stops following the runner and the profile, and pauses everything. A stopped player can't start again, so call `startAudio` for a new one. |
 | `unlock()` | Allows sound now, as the first click or key press would, and starts whatever is due. |
 | `play(src, channel?, volume?)` | Plays a file once on a channel, at a volume from 0 to 1. `'sfx'` and `1` if left out. On `'voice'` it waits its turn like any voice line. It unlocks sound first. |
 

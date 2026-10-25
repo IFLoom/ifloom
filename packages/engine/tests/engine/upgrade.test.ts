@@ -733,6 +733,46 @@ describe('content migrations', () => {
     })
   })
 
+  it('write speech under an id at schema 23, when its name is one entity’s or the player’s, and leave the rest a labelled line', () => {
+    const v22 = {
+      id: 'chat',
+      schema: 22,
+      strings: { you: 'Tú' },
+      entities: [
+        { id: 'dev', of: 'staff', name: 'Dev' },
+        { id: 'jo', of: 'staff', name: 'Jo' },
+        { id: 'jo', of: 'pet', name: 'Jojo' },
+      ],
+      prose: {
+        cafe: 'Ava looks up.\n\nAva: "Morning."\n\nYou: "Hi." [[voice:you.hi]]\n\nTú: "Hola."\n\nDev: "Busy?"\n\nJo: "Mm."\n\nSam: "Two Sams."\n\nRuth: "Who?"\n\nNote: the sign says "Closed" today.',
+      },
+      scenes: [{ id: 'counter', body: [{ words: 'Ava: "Tea?"\n\n"Please."' }], choices: [] }],
+    }
+    const context = {
+      entities: [
+        { id: 'ava', of: 'character', name: 'Ava' },
+        { id: 'sam', of: 'character', name: 'Sam' },
+        { id: 'sam2', of: 'character', name: 'Sam' },
+      ],
+    }
+    const upgraded = unwrap(upgradePack(v22, [], context))
+    expect(upgraded).toMatchObject({
+      schema: SCHEMA,
+      prose: {
+        // Ava is a character, so her bare id; Jo's id is two kinds', so in full; two Sams and a Ruth nobody declares stay as written.
+        cafe: 'Ava looks up.\n\n@ava: "Morning."\n\n@you: "Hi." [[voice:you.hi]]\n\n@you: "Hola."\n\n@dev: "Busy?"\n\n@staff:jo: "Mm."\n\nSam: "Two Sams."\n\nRuth: "Who?"\n\nNote: the sign says "Closed" today.',
+      },
+      scenes: [{ id: 'counter', body: [{ words: '@ava: "Tea?"\n\n"Please."' }], choices: [] }],
+    })
+    // loadGame gives the step the entities under the pack.
+    const { prose } = loadGame(
+      [{ kinds: [{ id: 'character', label: 'Character', unique: true }], entities: [{ id: 'ava', of: 'character', name: 'Ava' }] }],
+      { id: 'cafe', title: 'Café', plugins: [] },
+      { packs: [{ id: 'old', schema: 22, prose: { hi: 'Ava: "Hi."' } } as Pack] },
+    )
+    expect(prose.hi).toBe('@ava: "Hi."')
+  })
+
   it('read every kv store the one way at schema 19, with whose in of, and the phase as a kv key', () => {
     const v18 = {
       id: 'baker',

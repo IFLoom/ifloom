@@ -29,7 +29,7 @@ describe('scene body', () => {
         '"You\'ve got the face of someone who got the trust speech."',
         '"That obvious?"',
         '"Everyone gets that face after the trust speech."',
-        'You: "I\'ll keep that in mind."',
+        '@you: "I\'ll keep that in mind."',
       ].join('\n\n'),
     )
     expect(beats.map((beat) => beat.type)).toEqual(['text', 'say', 'say', 'say', 'say'])
@@ -39,11 +39,13 @@ describe('scene body', () => {
     expect(beats[4]).toMatchObject({ who: 'player' })
   })
 
-  it('treats Name: "line" as character speech', () => {
-    const beats = parseBeats(['She sits on the edge of the chair.', 'You: "Hi. Come in."', 'Rosa: "Hi. Rosa. Sorry."'].join('\n\n'))
-    expect(beats.map((beat) => beat.type)).toEqual(['text', 'say', 'say'])
-    expect(beats[1]).toMatchObject({ who: 'player', text: 'Hi. Come in.' })
-    expect(beats[2]).toMatchObject({ who: 'character', text: 'Hi. Rosa. Sorry.' })
+  it('reads @id: "line" as speech under that id, and Name: "line" as a labelled line with no speaker', () => {
+    const beats = parseBeats(['She sits on the edge of the chair.', '@you: "Hi. Come in."', '@rosa: "Hi. Rosa. Sorry."', 'You: "Sit anywhere."'].join('\n\n'))
+    expect(beats.map((beat) => beat.type)).toEqual(['text', 'say', 'say', 'say'])
+    expect(beats[1]).toEqual({ type: 'say', who: 'player', name: 'You', text: 'Hi. Come in.' })
+    expect(beats[2]).toEqual({ type: 'say', who: 'character', name: 'rosa', text: 'Hi. Rosa. Sorry.' })
+    // A label is shown as written and names nobody, the player included.
+    expect(beats[3]).toEqual({ type: 'say', who: 'character', name: 'You', text: 'Sit anywhere.' })
   })
 
   it('keeps a UI piece one paragraph, blank lines and all', () => {
@@ -52,13 +54,14 @@ describe('scene body', () => {
     expect(beats[1]).toEqual({ type: 'text', text: '[[ui:mail|Many thanks.\n\nKind regards,\nPat|From: Pat Ellery|Subject: Saturday]]' })
   })
 
-  it('reads a name in any alphabet, and asks who it is', () => {
-    const beats = parseBeats(['Zoë: "Hola."', 'Tú: "Hola, Zoë."'].join('\n\n'), undefined, (name) =>
-      name === 'Tú' ? { who: 'player' } : { who: 'character', speaker: 'character:zoe' },
+  it('reads a label in any alphabet, and asks who an id is', () => {
+    const beats = parseBeats(['Zoë: "Hola."', '@character:zoe: "Hola."', '@you: "Hola, Zoë."'].join('\n\n'), undefined, (id) =>
+      id === 'you' ? { who: 'player', name: 'Tú' } : { who: 'character', speaker: 'character:zoe', name: 'Zoë' },
     )
     expect(beats).toEqual([
-      { type: 'say', who: 'character', speaker: 'character:zoe', text: 'Hola.' },
-      { type: 'say', who: 'player', text: 'Hola, Zoë.' },
+      { type: 'say', who: 'character', name: 'Zoë', text: 'Hola.' },
+      { type: 'say', who: 'character', speaker: 'character:zoe', name: 'Zoë', text: 'Hola.' },
+      { type: 'say', who: 'player', name: 'Tú', text: 'Hola, Zoë.' },
     ])
   })
 

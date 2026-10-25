@@ -193,11 +193,11 @@ describe('audio', () => {
 
   describe('markup', () => {
     it('reads [[sound:id]] on its own line as a sound beat, and [[voice:id]] after a spoken line as its voice', () => {
-      const beats = parseBeats('The phone buzzes.\n\n[[sound:buzz]]\n\nAva: "Morning!" [[voice:ava.morning]]\n\n"Morning." [[voice:you.morning]]')
+      const beats = parseBeats('The phone buzzes.\n\n[[sound:buzz]]\n\n@ava: "Morning!" [[voice:ava.morning]]\n\n"Morning." [[voice:you.morning]]')
       expect(beats).toEqual([
         { type: 'text', text: 'The phone buzzes.' },
         { type: 'sound', track: 'buzz' },
-        { type: 'say', who: 'character', text: 'Morning!', voice: 'ava.morning' },
+        { type: 'say', who: 'character', name: 'ava', text: 'Morning!', voice: 'ava.morning' },
         { type: 'say', who: 'player', text: 'Morning.', voice: 'you.morning' },
       ])
     })

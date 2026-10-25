@@ -48,11 +48,14 @@ export type SceneBeat =
     /**
      * A spoken line. `who` is `'player'` for the player's own line and
      * `'character'` for anyone else's. `speaker` is the entity whose line it
-     * is, when the name it is written under is one's (left out when it isn't,
-     * and for a quote with no name). `voice` is the track of it read aloud,
-     * from `[[voice:id]]` at the end of the line. `spans` as a text beat has them.
+     * is, when it is written under an id that names one (`@ava: "…"`), and
+     * left out otherwise. `name` is who to show it under: the speaker's name
+     * as their entity has it, the player's name, or the label a `Name: "…"`
+     * line is written under; left out for a bare quote. `voice` is the track
+     * of it read aloud, from `[[voice:id]]` at the end of the line. `spans`
+     * as a text beat has them.
      */
-    | { type: 'say'; who: 'character' | 'player'; speaker?: EntityRef; text: string; voice?: string; spans?: InlineSpan[] }
+    | { type: 'say'; who: 'character' | 'player'; speaker?: EntityRef; name?: string; text: string; voice?: string; spans?: InlineSpan[] }
     | { type: 'image'; src: string; alt?: string; size: BeatSize }
     /**
      * A video clip, from `[[video:…]]` or `[[widevideo:…]]`. Like a GIF unless its
@@ -235,25 +238,41 @@ function quoteOnly(block: string): string | null {
 }
 
 /**
- * Who a named spoken line is: the player's own, or someone else's, and the
- * entity it is when the name is one's. Given the name the line is written
- * under. See `lineSpeakers` for the engine's.
+ * Who a spoken line under `@id` is: the player's own or someone else's, the
+ * entity it is when the id names one, and the name to show. Given the id as
+ * written. See `lineSpeakers` for the engine's.
  */
-export type SpeakerFinder = (name: string) => { who: 'character' | 'player'; speaker?: EntityRef }
+export type SpeakerFinder = (id: string) => { who: 'character' | 'player'; speaker?: EntityRef; name: string }
 
-/** The default finder, for beats read with no game: a line under the engine's word for the player (`You`) is the player's, any other a character's. */
-const byWord: SpeakerFinder = (name) => ({ who: name === STRINGS.you ? 'player' : 'character' })
+/** The default finder, for beats read with no game: `@you` and `@player` are the player's, under the engine's word for them, and any other id a character's, under the id. */
+const byId: SpeakerFinder = (id) => (id === 'you' || id === 'player' ? { who: 'player', name: STRINGS.you } : { who: 'character', name: id })
 
-/** A named spoken line: `Name: "…"`, the name letters (in any alphabet), spaces, `'` and `-`. */
+/**
+ * A spoken line under an id: `@ava: "…"`, `@character:ava: "…"`, `@you: "…"`.
+ * The id is letters, digits, `-`, `_` and `.`, with a kind and `:` in front if it's a full reference.
+ */
+const BY_ID = /^@([A-Za-z0-9_-][A-Za-z0-9_.-]*(?::[A-Za-z0-9_-][A-Za-z0-9_.-]*)?):\s*"([\s\S]+)"$/
+
+/** A spoken line under a label as written: `Name: "…"`, the label letters (in any alphabet), spaces, `'` and `-`. */
 const NAMED = /^(\p{L}[\p{L}\p{M}' -]*):\s*"([\s\S]+)"$/u
 
-/** A block as a spoken line, if it is one: `Name: "…"`, or a bare quote answering the line before. */
+/** The ids spoken lines in `text` are written under, `@ava: "…"`, in order: what the checker looks up. */
+export function spokenIds(text: string): string[] {
+  return paragraphsOf(text).flatMap((paragraph) => {
+    const line = paragraph.replace(/\s*\[\[voice:[^\]]+\]\]$/, '').match(BY_ID)
+    return line ? [line[1]] : []
+  })
+}
+
+/** A block as a spoken line, if it is one: `@id: "…"`, `Name: "…"`, or a bare quote answering the line before. */
 function spoken(block: string, lastSay: 'character' | 'player' | null, find: SpeakerFinder): Extract<SceneBeat, { type: 'say' }> | null {
-  const named = block.match(NAMED)
-  if (named) {
-    const found = find(named[1].trim())
-    return { type: 'say', who: found.who, ...(found.speaker !== undefined ? { speaker: found.speaker } : {}), text: named[2] }
+  const byIdLine = block.match(BY_ID)
+  if (byIdLine) {
+    const found = find(byIdLine[1])
+    return { type: 'say', who: found.who, ...(found.speaker !== undefined ? { speaker: found.speaker } : {}), name: found.name, text: byIdLine[2] }
   }
+  const named = block.match(NAMED)
+  if (named) return { type: 'say', who: 'character', name: named[1].trim(), text: named[2] }
   const quoted = quoteOnly(block)
   if (quoted !== null) return { type: 'say', who: lastSay === 'character' ? 'player' : 'character', text: quoted }
   return null
@@ -506,7 +525,7 @@ function beatsOfParagraph(block: string, last: { say: 'character' | 'player' | n
  * part as it is. A bare quote answers the spoken line before it, across
  * parts. Internal; `parseBeats` reads a whole body this way.
  */
-export function beatsOfParts(parts: readonly BodyPart[], find: SpeakerFinder = byWord): { beats: SceneBeat[]; starts: number[] } {
+export function beatsOfParts(parts: readonly BodyPart[], find: SpeakerFinder = byId): { beats: SceneBeat[]; starts: number[] } {
   const beats: SceneBeat[] = []
   const starts: number[] = []
   const last = { say: null as 'character' | 'player' | null }
@@ -528,7 +547,7 @@ export function beatsOfParts(parts: readonly BodyPart[], find: SpeakerFinder = b
  * A body's beats, in order. `hints` puts each block's `ui` on the first beat
  * that block made: `at` is where the block starts in `body`, by character, as
  * a hand-built scene's render gives it in `SceneView.blockUi`. `find` says
- * who a named spoken line is; left out, a line under `You` is the player's.
+ * who a line under `@id` is; left out, `@you` and `@player` are the player's.
  */
 export function parseBeats(body: string, hints?: readonly { at: number; ui: Ui<BlockUi> }[], find?: SpeakerFinder): SceneBeat[] {
   const sorted = [...(hints ?? [])].sort((a, b) => a.at - b.at)

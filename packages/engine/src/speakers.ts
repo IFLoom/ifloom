@@ -63,29 +63,29 @@ export function speakerOf(state: GameState, game: Game, id: string): SpeakerView
 }
 
 /**
- * Who a named spoken line in this game is: the player's own when it is
- * written under the game's word for the player (the string `you`, `You` in
- * English) or under the name of whoever the player is playing; else the
- * entity the game declares by that name, if one is; else a character's
- * line, with no entity.
+ * The name the player's own lines show: the name a save is listed under
+ * (`rules.saveName`, such as the name the player typed), else the game's
+ * string `you` (`You` in English).
+ */
+export function playerName(state: GameState, game: Game): string {
+  return game.rules?.saveName?.(state) ?? stringOf(game, 'you')
+}
+
+/**
+ * Who a spoken line under an id is, in this game. `'player'` is the player.
+ * `'you'` is whoever the player is playing: their entity, else the player.
+ * Any other id names an entity as a scene's `speaker` does (`'ava'` is
+ * `character:ava`, else the one entity with that id), and the line is the
+ * player's own when that entity is the one the player is playing. The name
+ * shown is the entity's or the player's. An id that names no entity is a
+ * character's line under the id, and the checker reports it.
  */
 export function lineSpeakers(state: GameState, game: Game): SpeakerFinder {
-  const word = stringOf(game, 'you')
   const playing = protagonist(state)
-  let byName: Map<string, EntityRef> | undefined
-  return (name) => {
-    if (name === word) return { who: 'player' }
-    if (playing !== PLAYER && entityName(state, game, playing) === name) return { who: 'player', speaker: playing }
-    if (!byName) {
-      byName = new Map()
-      for (const entity of game.entities ?? []) {
-        const ref = `${entity.of}:${entity.id}`
-        if (!hasEntity(state, game, ref)) continue
-        const shown = entityName(state, game, ref)
-        if (!byName.has(shown)) byName.set(shown, ref)
-      }
-    }
-    const speaker = byName.get(name)
-    return speaker !== undefined ? { who: 'character', speaker } : { who: 'character' }
+  return (id) => {
+    if (id === PLAYER || (id === YOU && playing === PLAYER)) return { who: 'player', name: playerName(state, game) }
+    const ref = speakerRef(state, game, id)
+    if (ref === undefined) return { who: 'character', name: id }
+    return { who: ref === playing ? 'player' : 'character', speaker: ref, name: entityName(state, game, ref) }
   }
 }

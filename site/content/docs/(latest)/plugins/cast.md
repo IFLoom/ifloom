@@ -523,7 +523,7 @@ A scene whose [`speaker`](/docs/reference/scenes#speakers) is a character's id i
 view(state, game).scene.speaker   // { id: 'ava', ref: 'character:ava', name: 'Ava', image: 'art/character/ava.svg', ui: { hue: 20 } }
 ```
 
-Talking to someone doesn't set the speaker, because a scene names its own. A spoken line written under their name, `Ava: "Morning."`, gets her reference as its beat's `speaker` too.
+Talking to someone doesn't set the speaker, because a scene names its own. A spoken line written under their id, `@ava: "Morning."`, gets her reference as its beat's `speaker` too, and her name as its `name`.
 
 A character with no `image` has no picture as a speaker. The cast's own view still guesses `art/<kind>/<id>.jpg` for their card, but the scene doesn't, so give everyone who speaks an `image`.
 

@@ -179,7 +179,7 @@ export { chance, hash, pick, roll, weighted } from './random.ts'
 // Loading, checking and saving
 export type { Content, GameBase, Loaded, LoadOptions, Pack, Patch } from './loader.ts'
 export { SCHEMA, loadGame } from './loader.ts'
-export type { CommandStep, ContentStep, ContentTools, RawCommand, RawPack } from './upgrade.ts'
+export type { CommandStep, ContentStep, ContentTools, PackContext, RawCommand, RawPack } from './upgrade.ts'
 export { upgradePack } from './upgrade.ts'
 export type { Checked, FileRef, Probe, Problem } from './check.ts'
 export { checkGame, describeProblem } from './check.ts'

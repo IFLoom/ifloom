@@ -16,10 +16,18 @@ import type { Pack } from './loader.ts'
 import type { Plugin } from './plugin.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
-export const SCHEMA = 22
+export const SCHEMA = 23
 
 /** A pack as it came in: some schema's shape, not necessarily this one. */
 export type RawPack = Record<string, unknown> & { schema: number }
+
+/**
+ * What a step may need of the game a pack is laid over, besides the pack:
+ * the entities content and the plugins declare, and the game's word for the
+ * player (its string `you`). The loader gives it; a step that has none reads
+ * only the pack.
+ */
+export type PackContext = { entities?: readonly unknown[]; you?: readonly string[] }
 
 /**
  * The steps that reshape a pack, keyed by the schema each upgrades *from*.
@@ -30,7 +38,7 @@ export type RawPack = Record<string, unknown> & { schema: number }
  * reshapes the previous schema in the same change. A step returns a new pack
  * and never changes the one it was given; the schema number is set for it.
  */
-export const PACK_STEPS: Record<number, (pack: RawPack) => RawPack> = {
+export const PACK_STEPS: Record<number, (pack: RawPack, context: PackContext) => RawPack> = {
   // 4 → 5: flags become the kv store, wherever content can hold them.
   // Words and code (prose, strings, variants, custom) are left as they are.
   4: (pack) =>
@@ -119,6 +127,70 @@ export const PACK_STEPS: Record<number, (pack: RawPack) => RawPack> = {
   // 21 → 22: the engine's beats are text, say, image, video and sound. Letters, notes and `> ` lines are
   // the React UI's inline pieces, and a turned picture its block hint. See `toSchema22`.
   21: (pack) => toSchema22(pack),
+  // 22 → 23: speech is written under an id, `@ava: "…"`, not a name. See `toSchema23`.
+  22: (pack, context) => toSchema23(pack, context),
+}
+
+/** A spoken line under a label, as prose wrote one before schema 23: `Ava: "…"`, maybe with its voice after. */
+const LABELLED = /^(\s*)(\p{L}[\p{L}\p{M}' -]*):(?=\s*"[\s\S]+"(?:\s*\[\[voice:[^\]]+\]\])?\s*$)/u
+
+/**
+ * 22 → 23: a spoken line names who says it by id, `@ava: "…"`, and the view
+ * shows their name from their entity, so a translated or a player-chosen
+ * name reads right. Before, prose wrote the name, `Ava: "…"`, and the engine
+ * matched it against entities' names. Each such line, in the pack's `prose`
+ * and in its scenes' `{ words }` blocks (and their patches), is rewritten
+ * when its name is unambiguous:
+ * - `You`, or the game's or the pack's string `you`, becomes `@you`;
+ * - the name of exactly one entity, in the game's content, its plugins' or
+ *   the pack's own, becomes that entity's id: bare (`@ava`) when the bare id
+ *   reads as it, as a `character` or the one entity with that id, else in
+ *   full (`@staff:dev`).
+ * A name no entity has, or that more than one entity has, is left as it is:
+ * it stays a line under that label, with no speaker, as the engine now reads
+ * any `Name: "…"`. So is the pack's `strings`, which holds no prose.
+ */
+function toSchema23(pack: RawPack, context: PackContext): RawPack {
+  const own = Array.isArray(pack.entities) ? pack.entities : []
+  const byName = new Map<string, Set<string>>()
+  const byId = new Map<string, Set<string>>()
+  const add = (map: Map<string, Set<string>>, key: string, ref: string) => map.set(key, (map.get(key) ?? new Set()).add(ref))
+  for (const entity of [...(context.entities ?? []), ...own]) {
+    if (!isRecord(entity) || typeof entity.id !== 'string' || typeof entity.of !== 'string') continue
+    const ref = `${entity.of}:${entity.id}`
+    add(byId, entity.id, ref)
+    if (typeof entity.name === 'string') add(byName, entity.name.trim(), ref)
+  }
+  const strings = isRecord(pack.strings) && typeof pack.strings.you === 'string' ? [pack.strings.you] : []
+  const you = new Set(['You', ...(context.you ?? []), ...strings].map((word) => word.trim()))
+  const idFor = (name: string): string | undefined => {
+    if (you.has(name)) return 'you'
+    const refs = byName.get(name)
+    if (refs?.size !== 1) return undefined
+    const ref = [...refs][0]
+    const at = ref.indexOf(':')
+    const id = ref.slice(at + 1)
+    return ref.slice(0, at) === 'character' || byId.get(id)?.size === 1 ? id : ref
+  }
+  const rewrite = (text: string) =>
+    text
+      .split(/(\n[ \t]*\n)/)
+      .map((piece, index) => {
+        if (index % 2) return piece
+        const line = piece.match(LABELLED)
+        const id = line ? idFor(line[2].trim()) : undefined
+        return line && id !== undefined ? `${line[1]}@${id}:${piece.slice(line[0].length)}` : piece
+      })
+      .join('')
+  const words = (value: unknown) => deep(value, (entry) => (typeof entry.words === 'string' ? { ...entry, words: rewrite(entry.words) } : entry))
+  return {
+    ...pack,
+    ...(isRecord(pack.prose)
+      ? { prose: Object.fromEntries(Object.entries(pack.prose).map(([key, text]) => [key, typeof text === 'string' ? rewrite(text) : text])) }
+      : {}),
+    ...(pack.scenes !== undefined ? { scenes: words(pack.scenes) } : {}),
+    ...(pack.patches !== undefined ? { patches: words(pack.patches) } : {}),
+  }
 }
 
 /** A letter or a note, as prose wrote it before schema 22: `[[mail]]…[[/mail]]`, `[[sticky]]…[[/sticky]]`. */
@@ -1047,8 +1119,10 @@ const commandVersion = (plugin: Plugin) => plugin.commandVersion ?? 1
  * no version for a plugin is read as written for its schema, or for the
  * plugin's own version if that is lower. The result records every plugin's
  * version in `plugins`. A pack with nothing to do comes back as it is.
+ * `context` is what a step needs of the game besides the pack (see
+ * `PackContext`); `loadGame` gives it.
  */
-export function upgradePack(pack: { schema: number; plugins?: Record<string, number> }, plugins: readonly Plugin[]): Result<Pack> {
+export function upgradePack(pack: { schema: number; plugins?: Record<string, number> }, plugins: readonly Plugin[], context: PackContext = {}): Result<Pack> {
   const from = pack.schema
   if (!Number.isInteger(from)) return fail(`has no schema number`)
   if (from > SCHEMA) return fail(`written for schema ${from}, this engine reads ${SCHEMA}`)
@@ -1067,7 +1141,7 @@ export function upgradePack(pack: { schema: number; plugins?: Record<string, num
   let changed = false
   for (let version = from; version < SCHEMA; version += 1) {
     catchUp(plugins, at, version + 1, contentVersion, stepOf, raw)
-    raw.now = { ...PACK_STEPS[version](raw.now), schema: version + 1 }
+    raw.now = { ...PACK_STEPS[version](raw.now, context), schema: version + 1 }
     changed = true
   }
   if (catchUp(plugins, at, Infinity, contentVersion, stepOf, raw)) changed = true

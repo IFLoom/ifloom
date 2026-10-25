@@ -45,7 +45,7 @@ export const STRINGS = {
   inSteps: 'In steps of {step}.',
   // Buttons and labels.
   lookAround: 'Look around',
-  /** The name the player's spoken lines are written under in prose: `You: "Hi."`. A game in another language sets its own. */
+  /** The name the player's spoken lines show (`@you: "Hi."`) when the game's `rules.saveName` gives none. A game in another language sets its own. */
   you: 'You',
   momentPassed: 'The moment has passed.',
   // Saves.

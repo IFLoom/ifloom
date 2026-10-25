@@ -14,7 +14,7 @@ const counter: DataScene = {
     text(`
       Ava looks up from the till.
 
-      Ava: "Morning! What can I get you?"
+      @ava: "Morning! What can I get you?"
     `),
     decide('order', [
       choice('tea', 'A pot of tea', { then: [say('ava', 'Good choice.')], effects: [{ kv: 'tea', to: true }] }),
@@ -41,12 +41,12 @@ After the player picks the tea and asks about the beans, the view reads:
 ```ts
 view(state, game).scene.beats
 // [{ type: 'text', text: 'Ava looks up from the till.' },
-//  { type: 'say', who: 'character', speaker: 'character:ava', text: 'Morning! What can I get you?' },
+//  { type: 'say', who: 'character', speaker: 'character:ava', name: 'Ava', text: 'Morning! What can I get you?' },
 //  { type: 'chose', label: 'A pot of tea' },
-//  { type: 'say', who: 'character', speaker: 'character:ava', text: 'Good choice.' },
+//  { type: 'say', who: 'character', speaker: 'character:ava', name: 'Ava', text: 'Good choice.' },
 //  { type: 'text', text: 'She sets your cup on the counter.' },
 //  { type: 'chose', label: 'Ask about the beans' },
-//  { type: 'say', who: 'character', speaker: 'character:ava', text: 'From a farm up the valley.' }]
+//  { type: 'say', who: 'character', speaker: 'character:ava', name: 'Ava', text: 'From a farm up the valley.' }]
 view(state, game).scene.fresh     // 5: the beans pick and her answer are what the last command brought
 view(state, game).scene.choices   // [{ id: 'done', label: 'Thank her', ... }]: the beans hide once asked
 state.flow                        // { scene: 'cafe.counter', path: [{ chose: 'tea' }, { chose: 'beans' }, { point: 'questions' }], waiting: null }
@@ -74,7 +74,7 @@ type Block = (
 | Block | What it does |
 |---|---|
 | `{ words }` | Words written in place, one paragraph or several, read as prose is: spoken lines, pictures, [inline markup](/docs/reference/prose#markup) and tokens. |
-| `{ say, speaker }` | A spoken line, under who says it: an entity, as a scene's [speaker](/docs/reference/scenes#speakers) is named, or `'you'` for the player. Its beat is a `say` with that `speaker`. |
+| `{ say, speaker }` | A spoken line, under who says it, by id as `@id: "…"` names them in [prose](/docs/reference/prose#speech): an entity (`'ava'`, `'character:ava'`), `'you'` for whoever the player is playing, or `'player'`. Its beat is a `say` with that `speaker` and their `name`. |
 | `{ blocks }` | A section: its blocks show together while `when` holds. A section can hold anything a body can, decisions included. Its `ui` hints go on every beat it makes, as the beat's `section`. |
 | `{ decide, choices }` | A decision. The flow waits here until the player picks one of `choices`, then shows the pick's `then` and carries on after the decision. Its id is unique within the scene. |
 | `{ point }` | A place a choice can jump back to. It goes at the top of the body, not inside a section or a branch. |
@@ -140,7 +140,7 @@ import { choice, decide, fold, image, jump, minigame, panel, point, say, text, w
 | Builder | Writes |
 |---|---|
 | `text(words, { when?, ui? })` | `{ words }`. The indentation every line shares is taken off, and blank lines at either end go, so the words can sit indented in your code. A blank line starts a new paragraph. |
-| `say(who, words, { when?, ui?, voice? })` | `{ say, speaker }`. |
+| `say(who, words, { when?, ui?, voice? })` | `{ say, speaker }`. `who` is an id: `'ava'`, `'character:ava'`, `'you'` or `'player'`. |
 | `when(condition, blocks, { ui? })` | `{ when, blocks }`: a section shown while `condition` holds. |
 | `decide(id, choices, { when?, ui? })` | `{ decide, choices }`. |
 | `choice(id, label, fields)` | `{ id, label, ...fields }`, a [`FlowChoice`](#flowchoice). `label` is the words. |
@@ -151,7 +151,7 @@ import { choice, decide, fold, image, jump, minigame, panel, point, say, text, w
 | `point(id)` | `{ point }`. |
 | `jump(id)` | `{ point }`, the effect. |
 
-The `{ when?, ui? }` most builders take last is `BlockExtras`: the condition the block shows under and its [presentation hints](/docs/reference/ui-hints). The module also re-exports the `Block`, `Choice` and `FlowChoice` types.
+The `{ when?, ui? }` most builders take last is `BlockExtras`: the condition the block shows under and its [presentation hints](/docs/reference/ui-hints). The builders write the [`Block`](/docs/reference/scenes#block), `Choice` and [`FlowChoice`](#flowchoice) types.
 
 A switch that matters to the story, such as a light the player turns on, is a choice or an [input](/docs/reference/inputs) that sets a kv key, not a fold, so it saves and replays.
 

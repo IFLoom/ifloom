@@ -175,7 +175,7 @@ Talking to Ava opens it, because it's the last of her [`talk`](/docs/plugins/cas
 
 Ava's greeting is two paragraphs in `story/ava.prose.ts`, the narration and then her line in quotes. A paragraph that starts and ends with a quote is drawn as [speech](/docs/reference/prose#speech), so the narration has to be a paragraph of its own.
 
-Her small talk comes straight after that line, so each of the three lines is a named line, such as `Ava: "Rain later. The ducks know before the forecast does."`. A bare quote after a character's line is read as the player's answer, so written that way, Ava's small talk would come out in the player's voice.
+Her small talk comes straight after that line, so each of the three lines is written under her id, such as `@ava: "Rain later. The ducks know before the forecast does."`. The view shows it under her name, from her entity. A bare quote after a character's line is read as the player's answer, so written that way, Ava's small talk would come out in the player's voice.
 
 ### Place variants
 

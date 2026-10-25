@@ -23,7 +23,7 @@ const counter: DataScene = {
     text(`
       Ava looks up from the till.
 
-      Ava: "Morning! What can I get you?"
+      @ava: "Morning! What can I get you?"
     `),
     decide('order', [
       choice('tea', 'A pot of tea', { then: [say('ava', 'Good choice.')], effects: [{ kv: 'tea', to: true }] }),

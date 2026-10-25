@@ -49,6 +49,8 @@ export type Reference =
   | { holder: string; holds?: string; protagonist?: boolean }
   /** The entity a `create` makes a thing like, and the kind it makes, if it says. */
   | { like: string; of?: string }
+  /** Who a spoken line is under, by id: `@ava: "…"` in prose, or a `say` block's `speaker`. `'you'` and `'player'` pass. */
+  | { speaker: string }
   /** A trait, by id. */
   | { trait: string }
   /** An action the `action` command does, by its id. */

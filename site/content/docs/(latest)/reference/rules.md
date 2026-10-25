@@ -318,7 +318,7 @@ The core has no characters, so it has no hooks for them. Which scene talking to 
 saveName?: (state: GameState) => string | null
 ```
 
-The name a save is listed under, usually the name the player typed. Each save records what it returns as [`SaveMeta.playerName`](/docs/reference/saves#savemeta), so a load screen can show whose save it is. Return `null` for no name. Leave `saveName` out and every save's `playerName` is `null`.
+The name a save is listed under, usually the name the player typed. Each save records what it returns as [`SaveMeta.playerName`](/docs/reference/saves#savemeta), so a load screen can show whose save it is. Return `null` for no name. Leave `saveName` out and every save's `playerName` is `null`. A spoken line under `@you` or `@player` shows this name too, or the string `you` when it returns `null` (see [Speech](/docs/reference/prose#speech)).
 
 ```ts
 export const rules: GameRules = {

@@ -199,6 +199,15 @@ Wherever content names a [holder](/docs/reference/entities#holding-things), it h
 
 Where things start, in each entity's [`at`](/docs/reference/entities#entitydef), is checked at `entity <kind>:<id>`: see [Where each check runs](#where-each-check-runs).
 
+### Speakers
+
+A spoken line written under an id, `@ava: "…"` in [prose](/docs/reference/prose#speech) or a [`say()`](/docs/reference/flows#the-builders) block's speaker, has to name an entity. `'you'` and `'player'` always pass.
+
+| Problem | Means |
+|---|---|
+| `a spoken line is under "…", which names no entity` | No entity has that id, or that reference. |
+| `a spoken line is under "…", which more than one kind has: name it as "kind:…"` | A bare id two kinds share, and neither is a `character`. Write the full reference, `@staff:jo`. |
+
 ### Absent partners
 
 A condition, effect or command named after a plugin the game wasn't built with isn't reported when one of the game's plugins lists that plugin in its [`cooperates`](/docs/reference/plugins#cooperates). That holds for a condition, an effect and a command. In play it isn't there: the condition is false, the effect does nothing and the command is refused. A plugin nobody cooperates with is still reported.

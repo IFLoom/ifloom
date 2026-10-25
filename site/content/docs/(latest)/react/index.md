@@ -366,7 +366,7 @@ mountGame(game, { audio: { log: console.debug } })
 
 `audio: false` leaves sound off, for a game that plays it some other way.
 
-A spoken line with a voice, `Ava: "Morning!" [[voice:ava.morning]]`, gets a small button after its words that plays the line again. The button is the part `voice-replay`, labelled with `ui.replayVoice`. It only shows while the player is running, so a game with `audio: false` doesn't get it. A sound beat, `[[sound:knock]]`, draws nothing.
+A spoken line with a voice, `@ava: "Morning!" [[voice:ava.morning]]`, gets a small button after its words that plays the line again. The button is the part `voice-replay`, labelled with `ui.replayVoice`. It only shows while the player is running, so a game with `audio: false` doesn't get it. A sound beat, `[[sound:knock]]`, draws nothing.
 
 ### useAudio
 

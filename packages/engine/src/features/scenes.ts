@@ -149,7 +149,7 @@ export function blockReferences(blocks: readonly Block[] | undefined): Reference
     }
     if ('media' in block) out.push({ media: block.media })
     if ('words' in block) out.push({ markup: block.words })
-    if ('say' in block) out.push({ markup: block.say })
+    if ('say' in block) out.push({ markup: block.say }, { speaker: block.speaker })
     if ('blocks' in block) out.push({ blocks: block.blocks })
     if ('decide' in block)
       for (const choice of block.choices)

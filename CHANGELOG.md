@@ -19,8 +19,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - A choice's `label` can be the words themselves, `label: 'Buy a slice of cake'`. A prose key still works when the game's prose has it, and so for an action's.
 
 - A plugin's context has [`beats(blocks, id)`](/docs/reference/plugins#beats), which draws a scene's kind of blocks as beats, as a scene's body is drawn: `when`s, tokens, variants, pool picks recorded, spoken lines with their speakers, and bold, italics and UI pieces. The game's own code gets it too. The messages, feed and devices plugins draw their words with it.
-- A spoken line's beat says whose it is: `Ava: "Morning."` gives `{ type: 'say', who: 'character', speaker: 'character:ava', text }` when Ava is an entity, so a UI can tell her lines from Sam's. The name can be in any alphabet.
-- The string [`you`](/docs/reference/strings#buttons-and-labels) is the name the player's spoken lines are written under, `You` in English. A game in another language sets its own, `strings: { you: 'Tú' }`, and a line under the name of whoever the player is playing is theirs too.
+- A spoken line names who says it by id, as a scene's speaker is named: `@ava: "Morning."` gives `{ type: 'say', who: 'character', speaker: 'character:ava', name: 'Ava', text }`, so a UI can tell her lines from Sam's. A full reference works too, `@staff:dev:`. `@you:` is whoever the player is playing, and `@player:` the player. The beat's `name` comes from the entity, so a renamed or translated character reads right everywhere, and the player's lines show the name their saves are listed under (`rules.saveName`), else the string [`you`](/docs/reference/strings#buttons-and-labels). The checker reports an id that names no entity. See [Speech](/docs/reference/prose#speech).
 - [`speakerOf(state, game, id)`](/docs/reference/plugins#speakerof) says who an id is, as a scene's speaker is shown: the entity's name, picture and hints, or `null`.
 - The React UI draws three more [inline pieces](/docs/react/hints#inline-pieces): `[[ui:mail|body|From: Ava|Subject: Hi]]` a letter, `[[ui:prop|words|sticky]]` a note (`sticky`, `clip` or `diary`) and `[[ui:mono|words]]` a sign in a monospace face, as [`InlineMail`](/docs/react/components#inlinemail), [`InlineProp`](/docs/react/components#inlineprop) and [`InlineMono`](/docs/react/components#inlinemono). A UI piece's words can run over blank lines.
 - The React UI's [`tilt`](/docs/react/hints#tilt) block hint sets a picture at a slight angle.
@@ -169,6 +168,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - A Life sim patterns recipe in the docs: work each new day with `rules.onTurnDone`, cooldowns with `since` and `last`, wages paid on a Friday, who's behind an exit, lines shared across places, a placeholder for missing art, and the order refusals come in, with how to put your own where you want them.
 
 ### Changed
+
+- **Breaking:** a spoken line under a name, `Ava: "…"`, is a line under that label with no speaker: the engine no longer matches names against entities, and `You: "…"` is no longer the player's. Write `@ava:` and `@you:` (see [Speech](/docs/reference/prose#speech)). A pack written for schema 22 is rewritten when it loads: a line under exactly one entity's name gets that entity's id, `You:` (or the game's string `you`) becomes `@you:`, and a name nobody has, or two share, stays a labelled line.
 
 - **Breaking:** the strings lookup is `stringOf(game, key, vars)` (was `say`), so `say` is only the flowing-scene builder for a spoken line. A plugin's refusals read `stringOf(game, 'loyalty/notFull')`. See [`stringOf`](/docs/reference/strings#stringof).
 

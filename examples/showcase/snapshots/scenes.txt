@@ -15,7 +15,7 @@
 
 "You’re the one above the launderette. Welcome to the worst-kept secret in town: me."
 
-Ava: "Walk the river at dusk sometime. It’s the only quiet in town."
+@ava: "Walk the river at dusk sometime. It’s the only quiet in town."
   [>] Chat for a minute
   [>] Ask about weekend work
   [>] Leave her to it
@@ -25,7 +25,7 @@ Ava: "Walk the river at dusk sometime. It’s the only quiet in town."
 
 "You’re the one above the launderette. Welcome to the worst-kept secret in town: me."
 
-Ava: "New beans this week. Tell me if they’re awful. Nobody else will."
+@ava: "New beans this week. Tell me if they’re awful. Nobody else will."
   [>] Chat for a minute
   [>] Ask about weekend work
   [>] Leave her to it
@@ -35,7 +35,7 @@ Ava: "New beans this week. Tell me if they’re awful. Nobody else will."
 
 "You’re the one above the launderette. Welcome to the worst-kept secret in town: me."
 
-Ava: "Rain later. The ducks know before the forecast does."
+@ava: "Rain later. The ducks know before the forecast does."
 
 She has your cup out before you ask.
   [>] Chat for a minute

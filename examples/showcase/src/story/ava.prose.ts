@@ -5,9 +5,9 @@ export const prose: Record<string, string> = {
   'ava.hi':
     '[[ui:image|Ava|photo/ava.svg|Ava at the café counter]] looks up from the till and grins.\n\n"You’re the one above the launderette. Welcome to the worst-kept secret in town: me."',
   // Named lines: they follow another of Ava's, and a bare quote there would read as the player's.
-  'ava.smalltalk.rain': 'Ava: "Rain later. The ducks know before the forecast does."',
-  'ava.smalltalk.beans': 'Ava: "New beans this week. Tell me if they’re awful. Nobody else will."',
-  'ava.smalltalk.river': 'Ava: "Walk the river at dusk sometime. It’s the only quiet in town."',
+  'ava.smalltalk.rain': '@ava: "Rain later. The ducks know before the forecast does."',
+  'ava.smalltalk.beans': '@ava: "New beans this week. Tell me if they’re awful. Nobody else will."',
+  'ava.smalltalk.river': '@ava: "Walk the river at dusk sometime. It’s the only quiet in town."',
   'ava.hi.regular': 'She has your cup out before you ask.',
   'ava.hi.shell': 'The river shell sits by the till, holding down the receipts.',
   'ava.hi#shell': 'Give her the shell from the river',

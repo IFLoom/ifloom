@@ -137,8 +137,9 @@ The text at a prose key is split into paragraphs on blank lines, and each paragr
 | Write | Beat |
 |---|---|
 | Plain paragraph | `{ type: 'text', text }` |
-| `Ava: "New beans this week."` | `{ type: 'say', who: 'character', speaker: 'character:ava', text }` |
-| `You: "Just a coffee, then."` | `{ type: 'say', who: 'player', text }` |
+| `@ava: "New beans this week."` | `{ type: 'say', who: 'character', speaker: 'character:ava', name: 'Ava', text }` |
+| `@you: "Just a coffee, then."` | `{ type: 'say', who: 'player', name, text }`, with the player's name |
+| `Stranger: "Lovely day."` | `{ type: 'say', who: 'character', name: 'Stranger', text }`, with no `speaker` |
 | `"Anything else?"` (a bare quote) | `say`, alternating (see below). |
 | `[[img:place/market]]` | `{ type: 'image', size: 'inline', src }` |
 | `[[wide:scene/market-morning\|The market at seven]]` | `{ type: 'image', size: 'wide', src, alt }` |
@@ -146,7 +147,7 @@ The text at a prose key is split into paragraphs on blank lines, and each paragr
 | `[[widevideo:clips/rain\|controls\|Rain on the window]]` | `{ type: 'video', size: 'wide', src, alt, ... }` |
 | `[[img:@door\|red,night]]` | `image`, with a file picked from the pool `door` |
 | `[[sound:knock]]` | `{ type: 'sound', track }`. Nothing to draw. |
-| `Ava: "Hi!" [[voice:ava.hello]]` | `say`, with `voice: 'ava.hello'` |
+| `@ava: "Hi!" [[voice:ava.hello]]` | `say`, with `voice: 'ava.hello'` |
 | `… [[act:answer\|Pick it up]] …` inside a paragraph | The paragraph's `text` or `say` beat gets `spans`, with an `action` span for the choice. See [Inline actions and tooltips](#inline-actions-and-tooltips). |
 | `… [[tip:cafe.menu\|the menu]] …` inside a paragraph | The same, with a `tip` span holding the prose line `cafe.menu`. |
 | `… [[ui:modal\|the note\|notice.welcome]] …` inside a paragraph | The same, with a `ui` span the engine carries as written, for your UI to draw. See [UI pieces](#ui-pieces). |
@@ -156,7 +157,14 @@ A paragraph can't carry a class. A line that should stand out, such as a warning
 
 ### Speech
 
-- **A named line** is a whole paragraph of the form `Name: "…"`, where the name is letters in any alphabet, spaces, `'` and `-`. It's the player's line (`who: 'player'`) when the name is the game's word for the player, the string `you` (`You` in English, so a game in Spanish sets `strings: { you: 'Tú' }`), or the name of whoever the player is [playing](/docs/reference/entities#protagonists-you-and-player). Any other name makes it a character's line. When the name is an entity's (its name as the player reads it, tokens filled), the beat's `speaker` is that entity's reference, so a UI can tell Ava's lines from Sam's.
+- **A line under an id** is a whole paragraph of the form `@id: "…"`. The id names who says it, the same way a scene's [speaker](/docs/reference/scenes#speakers) is named:
+  - a bare id, `@ava`, is `character:ava`, or else the one entity with that id;
+  - a full reference, `@character:ava` or `@staff:dev`, is that entity;
+  - `@you` is whoever the player is [playing](/docs/reference/entities#protagonists-you-and-player): the protagonist's entity, or the player when there's none;
+  - `@player` is the player.
+
+  The beat's `speaker` is the entity's reference, so a UI can tell Ava's lines from Sam's, and `name` is the name to show, read from the entity as the player reads it (tokens filled). Rename or translate an entity and every line under its id shows the new name. The player's own line has `who: 'player'`, and so has the line of the entity the player is playing. The player's name is the one their saves are listed under ([`rules.saveName`](/docs/reference/rules#savename), such as a name they typed), or the string `you` (`You` in English, so a game in Spanish sets `strings: { you: 'Tú' }`). The [checker](/docs/reference/checks#checkgame) reports an id that names no entity, or a bare id two kinds share.
+- **A labelled line** is a whole paragraph of the form `Name: "…"`, where the label is letters in any alphabet, spaces, `'` and `-`. It's a character's line shown under the label as written, with no `speaker`: use it for someone with no entity, such as a voice on the radio. A label is never matched against entities' names, so `You: "…"` is a stranger called You, not the player. Write `@you:` for the player.
 - **A bare quote** is a whole paragraph wrapped in `"…"` or `“…”`. After a character's line it's the player's. Anywhere else (after the player, after narration, or at the start) it's the character's.
 - **Any other paragraph** resets the alternation.
 
@@ -167,13 +175,14 @@ Ava wipes her hands on her apron.
 
 "Couldn't sleep."
 
-Ava: "Then you get the first cup."
+@ava: "Then you get the first cup."
 ```
 
 That's text, character, player, character.
 
 **Gotchas:**
-- A named line must use straight quotes and end with one. `Ava: “…”` is plain text.
+- A line under an id or a label must use straight quotes and end with one. `@ava: “…”` is plain text.
+- A pack written before schema 23 wrote speech under names, `Ava: "…"`. [`upgradePack`](/docs/reference/loader#upgradepack) rewrites a line whose name is exactly one entity's into `@ava:`, and `You:` (or the game's string `you`) into `@you:`. A name no entity has, or that two entities share, stays a labelled line.
 - A paragraph that starts and ends with a quote is all drawn as speech, even with narration in the middle. `"Morning," Ava says. "Beans are in."` is drawn as speech, `Ava says` included. Put the narration in a paragraph of its own:
 
 ```md
@@ -244,7 +253,7 @@ The phone buzzes on the table.
 
 [[sound:buzz]]
 
-Ava: "Are you coming to the café?" [[voice:ava.cafe]]
+@ava: "Are you coming to the café?" [[voice:ava.cafe]]
 ```
 
 The open scene's sound and voice beats are in [`view.audio.cues`](/docs/reference/audio#sounds-and-voices), in beat order, each with a key that changes only when the scene is entered again. Voices go to the `voice` channel. `@ifloom/audio` plays them, one voice after another.
@@ -322,7 +331,7 @@ Two stars around words make them bold, and one star makes them italic, as in Mar
 ```md
 The sign on the door says **Closed**, but the light is *still* on.
 
-Ava: "I said *one* croissant."
+@ava: "I said *one* croissant."
 ```
 
 The paragraph's beat gets `spans`, with a `bold` or `italic` span for the styled words. Its `text` is the words without the stars, so a screen reader, the backlog and the playtest read "The sign on the door says Closed, but the light is still on."
@@ -357,7 +366,7 @@ import type { SceneBeat } from '@ifloom/engine'
 
 type SceneBeat = (
   | { type: 'text'; text: string; spans?: InlineSpan[] }
-  | { type: 'say'; who: 'character' | 'player'; speaker?: EntityRef; text: string; voice?: string; spans?: InlineSpan[] }
+  | { type: 'say'; who: 'character' | 'player'; speaker?: EntityRef; name?: string; text: string; voice?: string; spans?: InlineSpan[] }
   | { type: 'image'; src: string; alt?: string; size: 'inline' | 'wide' }
   | {
       type: 'video'
@@ -375,7 +384,7 @@ type SceneBeat = (
 ) & { ui?: Ui<BlockUi>; section?: Ui<BlockUi> }
 ```
 
-One piece of a scene. A UI switches on `type`, and draws nothing for `sound`. A `chose` beat is a pick the player made earlier in a [flowing scene](/docs/reference/flows), with the choice's words as `label`, where the decision was: draw it, restyle it or leave it out. `section` is the hints of the section a beat sits in, on every beat of it, such as a fold's `{ fold: 'Read the postcard' }`. A `say` beat's `who` says whether it's the player's line, and `speaker` is the entity it's written under, when it's one's (see [Speech](#speech)). `ui` is there on the first beat of a [block](/docs/reference/scenes#block) that has [presentation hints](/docs/reference/ui-hints), as the block wrote them, so a UI knows where the block starts and what it asked for.
+One piece of a scene. A UI switches on `type`, and draws nothing for `sound`. A `chose` beat is a pick the player made earlier in a [flowing scene](/docs/reference/flows), with the choice's words as `label`, where the decision was: draw it, restyle it or leave it out. `section` is the hints of the section a beat sits in, on every beat of it, such as a fold's `{ fold: 'Read the postcard' }`. A `say` beat's `who` says whether it's the player's line, `speaker` is the entity it's written under, when it's one's, and `name` is who to show it under (see [Speech](#speech)). `ui` is there on the first beat of a [block](/docs/reference/scenes#block) that has [presentation hints](/docs/reference/ui-hints), as the block wrote them, so a UI knows where the block starts and what it asked for.
 
 A `text` or `say` beat has `spans` only when its paragraph holds an [inline action or a tooltip](#inline-actions-and-tooltips) that the view could draw, or [bold or italics](#bold-and-italics). Its `text` is the same words without the markup either way.
 
@@ -415,11 +424,11 @@ import { parseBeats } from '@ifloom/engine'
 function parseBeats(
   body: string,
   hints?: readonly { at: number; ui: Ui<BlockUi> }[],
-  find?: (name: string) => { who: 'character' | 'player'; speaker?: EntityRef },
+  find?: (id: string) => { who: 'character' | 'player'; speaker?: EntityRef; name: string },
 ): SceneBeat[]
 ```
 
-The parser described above. `hints` puts each block's `ui` on the first beat of the block that starts at its `at`, a character offset into `body`, as a hand-built scene's render gives them in [`SceneView.blockUi`](/docs/reference/scenes#sceneview). `find` says whose a named spoken line is. Left out, a line under `You` is the player's and any other is a character's, with no `speaker`. [`view`](/docs/reference/view) already calls it, so you only need it to parse text outside a scene. It leaves `[[act:]]`, `[[tip:]]`, `[[ui:]]` and the stars of bold and italics in the text: the view draws them, and only the view knows the choices and the prose.
+The parser described above. `hints` puts each block's `ui` on the first beat of the block that starts at its `at`, a character offset into `body`, as a hand-built scene's render gives them in [`SceneView.blockUi`](/docs/reference/scenes#sceneview). `find` says who a line under `@id` is, and the name to show. Left out, `@you` and `@player` are the player's, under `You`, and any other id is a character's under the id, with no `speaker`. [`view`](/docs/reference/view) already calls it, so you only need it to parse text outside a scene. It leaves `[[act:]]`, `[[tip:]]`, `[[ui:]]` and the stars of bold and italics in the text: the view draws them, and only the view knows the choices and the prose.
 
 ## styledBeats
 

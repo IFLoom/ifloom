@@ -877,7 +877,7 @@ Ava looks up from the till and grins.
 
 "You’re the one above the launderette. Welcome to the worst-kept secret in town: me."
 
-Ava: "Rain later. The ducks know before the forecast does."
+@ava: "Rain later. The ducks know before the forecast does."
 
 She has your cup out before you ask.
   [>] Chat for a minute

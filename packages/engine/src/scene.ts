@@ -12,8 +12,7 @@ import { fillTokens } from './prose.ts'
 import type { BodyPart, SceneBeat } from './sceneBody.ts'
 import type { PluginArgs } from './plugin.ts'
 import { everyBlock, walkFlow, type FlowContent, type FlowStop } from './features/flows.ts'
-import { PLAYER, YOU, protagonist } from './entities.ts'
-import { speakerRef } from './speakers.ts'
+import { lineSpeakers } from './speakers.ts'
 
 /**
  * A scene, as data.
@@ -53,9 +52,10 @@ export type Block = (
    */
   | { words: string; when?: Condition }
   /**
-   * A spoken line as written, under who says it: an entity, by reference or
-   * bare id as a scene's `speaker` is, or `'you'` for the player. What
-   * `say()` writes. `voice` is the track of it read aloud.
+   * A spoken line as written, under who says it, by id as `@id: "…"` in
+   * prose names them: an entity, by reference or bare id as a scene's
+   * `speaker` is, `'you'` for whoever the player is playing, or `'player'`.
+   * What `say()` writes. `voice` is the track of it read aloud.
    */
   | { say: string; speaker: string; voice?: string; when?: Condition }
   /**
@@ -335,14 +335,12 @@ function choiceLabel(scene: DataScene, choice: Choice, drawn: readonly string[],
 
 /** A `say` block as its beat: whose line it is, as a scene's speaker is read, and its words filled in. */
 function spokenBeat(block: Extract<Block, { say: string }>, state: GameState, game: Game): Extract<SceneBeat, { type: 'say' }> {
-  const ref = block.speaker === YOU || block.speaker === PLAYER ? undefined : speakerRef(state, game, block.speaker)
-  const playing = protagonist(state)
-  const player = block.speaker === YOU || block.speaker === PLAYER || (ref !== undefined && ref === playing)
-  const speaker = block.speaker === YOU && playing !== PLAYER ? playing : ref
+  const found = lineSpeakers(state, game)(block.speaker)
   return {
     type: 'say',
-    who: player ? 'player' : 'character',
-    ...(speaker !== undefined ? { speaker } : {}),
+    who: found.who,
+    ...(found.speaker !== undefined ? { speaker: found.speaker } : {}),
+    name: found.name,
     text: fillTokens(block.say, state, game),
     ...(block.voice !== undefined ? { voice: block.voice } : {}),
   }

@@ -257,7 +257,7 @@ describe('bold and italics', () => {
           { type: 'text', text: '. [[act:x|Knock]]' },
         ],
       },
-      { type: 'say', who: 'character', text: 'Again?', spans: [{ type: 'italic', text: 'Again?' }] },
+      { type: 'say', who: 'character', name: 'Ava', text: 'Again?', spans: [{ type: 'italic', text: 'Again?' }] },
       { type: 'text', text: 'Plain.' },
     ])
   })

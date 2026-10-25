@@ -105,6 +105,7 @@ A scene's `speaker` says who is talking, and the view draws them as [`view.scene
 - A reference names the entity as written: `'character:ava'`, or `'you'` for whoever the player is [playing](/docs/reference/entities#protagonists-you-and-player).
 - A bare id is `character:<id>` when the game has that entity (the [cast](/docs/plugins/cast)'s kind), else the one entity the game declares with that id. So `'ava'` finds `character:ava`, and `'tom'` finds `pet:tom` when Tom is the only entity called `tom`.
 - An id that names no entity gives no speaker, and the view's `speaker` is `null`.
+- A spoken line in the body names who says it with the same ids: `@ava: "Morning."` in [prose](/docs/reference/prose#speech), or `say('ava', 'Morning.')` in a [flowing scene](/docs/reference/flows#the-builders). `'player'` is the player there too.
 
 The speaker's picture is the entity's `image`. With none, there's no picture. The engine doesn't guess a file from the id.
 

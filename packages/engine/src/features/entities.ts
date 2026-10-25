@@ -41,7 +41,7 @@ import { withUi, type EntityUi, type Ui } from './ui.ts'
 import { defineFeature, type FeatureCheckTools, type FeatureContext, type PackMerge } from './feature.ts'
 import { bounded, inRange, wanted } from '../range.ts'
 import { statDef, statView, type StatView } from './stats.ts'
-import { artSrc } from '../sceneBody.ts'
+import { artSrc, spokenIds } from '../sceneBody.ts'
 
 /** One entity as the UI draws it. */
 export type EntityView = {
@@ -525,8 +525,25 @@ export const entities = defineFeature<EntitiesShape>({
         if (!kinds.has(parts.kind)) return [`unknown kind "${parts.kind}"`]
         return parts.id === '*' || entityDef(game, ref.entity) ? [] : [`unknown entity "${ref.entity}"`]
       },
+      // Who a spoken line is under: a reference, or a bare id read as `character:<id>`, else the one entity with that id.
+      speaker: (ref) => {
+        const id = ref.speaker
+        if (id === 'you' || id === 'player') return []
+        if (id.includes(':')) return entityDef(game, id) ? [] : [`a spoken line is under "${id}", which names no entity`]
+        if (entityDef(game, `character:${id}`)) return []
+        const named = (game.entities ?? []).filter((entity) => entity.id === id)
+        if (named.length === 1) return []
+        if (named.length > 1) return [`a spoken line is under "${id}", which more than one kind has: name it as "kind:${id}"`]
+        return [`a spoken line is under "${id}", which names no entity`]
+      },
     }
   },
+  // Spoken lines in prose under an id, `@ava: "…"`: each names an entity.
+  markup: (_game, text, where, tools) =>
+    tools.resolve(
+      spokenIds(text).map((speaker) => ({ speaker })),
+      where,
+    ),
   // Each listed kind's listed, visible entities, with the stats the player can see on each.
   view: (state, game, _shown, cx) => ({
     entities: Object.fromEntries(

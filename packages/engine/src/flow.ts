@@ -33,7 +33,7 @@ export type BlockExtras = { when?: Condition; ui?: Ui<BlockUi> }
  * Words as written: a paragraph, or several. The indentation every line
  * shares is taken off, so the words can sit indented in your code, and
  * blank lines at the start and the end go. A blank line between lines
- * starts a new paragraph. The words are read as prose is: `Name: "…"` is a
+ * starts a new paragraph. The words are read as prose is: `@ava: "…"` is a
  * spoken line, `[[img:…]]` a picture, `{{key}}` a token, and inline markup
  * works.
  */
@@ -52,9 +52,10 @@ function dedent(words: string): string {
 }
 
 /**
- * A spoken line, under who says it: an entity, by reference or by bare id as
- * a scene's `speaker` is (`'ava'` is `character:ava`), or `'you'` for the
- * player. Its beat is a `say` with that `speaker`, the player's own for `'you'`.
+ * A spoken line, under who says it, by id as `@id: "…"` in prose names them:
+ * an entity, by reference or by bare id as a scene's `speaker` is (`'ava'` is
+ * `character:ava`), `'you'` for whoever the player is playing, or `'player'`.
+ * Its beat is a `say` with that `speaker` and their name.
  */
 export function say(who: string, words: string, extras: BlockExtras & { voice?: string } = {}): Block {
   return { say: dedent(words), speaker: who, ...extras }

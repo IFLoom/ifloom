@@ -10,11 +10,10 @@ Saving has two parts:
 - **The save store**, [`saves(game, driver)`](#saves), handles slots, the details for a load screen, export and import, and carrying old saves forward.
 
 ```ts
+import { indexedDbDriver } from '@ifloom/browser'
 import {
-  saves, memoryDriver, localStorageDriver, indexedDbDriver,
-  loadState, SAVE_VERSION,
+  saves, memoryDriver, loadState, SAVE_VERSION,
   type Saves, type SaveDriver, type SaveFile, type SaveMeta, type LoadedSave, type SaveListing, type BrokenSave,
-  type StorageLike, type IndexedDbLike,
 } from '@ifloom/engine'
 
 const store = saves(game, indexedDbDriver())
@@ -25,13 +24,13 @@ Most games never call the store directly. They hand it to the [runner](/docs/ref
 
 ## Drivers
 
-The engine never picks where saves live. There's no default driver, so your game chooses one and hands it to `saves`.
+The engine never picks where saves live. There's no default driver, so your game chooses one and hands it to `saves`. The engine has the memory driver, and the browser's two are in [`@ifloom/browser`](/docs/browser#save-drivers).
 
 | Driver | Where | Room | Use it for |
 |---|---|---|---|
 | [`memoryDriver()`](#memorydriver) | A `Map`, gone with the page. | Memory. | Tests, previews. |
-| [`localStorageDriver()`](#localstoragedriver) | `localStorage`, or any Web Storage. | About 5MB per origin, shared. | Short games. It's the simplest driver that keeps saves. |
-| [`indexedDbDriver()`](#indexeddbdriver) | IndexedDB. | Large, up to the browser's own quota. | Long games, big backlogs, mod data. |
+| [`localStorageDriver()`](/docs/browser#localstoragedriver), from `@ifloom/browser` | `localStorage`, or any Web Storage. | About 5MB per origin, shared. | Short games. It's the simplest driver that keeps saves. |
+| [`indexedDbDriver()`](/docs/browser#indexeddbdriver), from `@ifloom/browser` | IndexedDB. | Large, up to the browser's own quota. | Long games, big backlogs, mod data. |
 | [Your own](#a-driver-of-your-own) | Anywhere: a desktop wrapper's file system, a sync service. | Whatever it has. | Games shipped outside a browser. |
 
 Every driver is asynchronous, even over storage that isn't, so you can swap one for another without changing the code that calls it.
@@ -61,58 +60,6 @@ Saves in memory, gone when the page is. Each call is a new, empty store.
 ```ts
 const store = saves(game, memoryDriver())
 ```
-
-### localStorageDriver
-
-```ts
-function localStorageDriver(storage?: StorageLike): SaveDriver
-```
-
-Saves in `globalThis.localStorage`, or in the Web Storage you pass. It works everywhere but it's small, around 5MB per origin. In Chromium every page opened from disk shares one origin, so every `file://` game the player has shares those 5MB.
-
-The driver looks for the storage when a save is first read or written, not when you make it. Where there's none (Node, a locked-down iframe), that read or write rejects with `localStorage is not available here`.
-
-### StorageLike
-
-```ts
-type StorageLike = {
-  getItem: (key: string) => string | null
-  setItem: (key: string, value: string) => void
-  removeItem: (key: string) => void
-  key: (index: number) => string | null
-  readonly length: number
-}
-```
-
-The parts of the Web Storage API the driver needs. `localStorage` and `sessionStorage` are both one.
-
-### indexedDbDriver
-
-```ts
-function indexedDbDriver(options?: {
-  database?: string
-  store?: string
-  indexedDB?: IndexedDbLike
-}): SaveDriver
-```
-
-Saves in IndexedDB, which has far more room. It opens one database, `database` (default `'ifloom'`), creating it if needed. That database holds one object store of strings by key, `store` (default `'saves'`). `indexedDB` defaults to `globalThis.indexedDB`. Pass another for tests, such as `fake-indexeddb`.
-
-```ts
-const store = saves(game, indexedDbDriver())
-```
-
-Every game can share the default database, because keys carry the game's id (see [Keys](#keys)).
-
-**Gotcha:** the database is opened at version 1, and the store is only created along with the database. If you open an existing database with a different `store` name, there's no such store and every call rejects. Give a new store a new `database` too. If IndexedDB isn't there at all, every call rejects with `IndexedDB is not available here`.
-
-### IndexedDbLike
-
-```ts
-type IndexedDbLike = { open: (name: string, version?: number) => OpenRequest }
-```
-
-The part of `indexedDB` the driver needs, typed by the engine because it carries no DOM types. The browser's `indexedDB` is one.
 
 ### A driver of your own
 

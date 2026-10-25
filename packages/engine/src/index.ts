@@ -199,8 +199,8 @@ export { checkGame, describeProblem } from './check.ts'
 export type { Reference } from './references.ts'
 export type { BrokenSave, LoadedSave, SaveExtra, SaveFile, SaveListing, SaveMeta, Saves } from './save.ts'
 export { saves } from './save.ts'
-export type { IndexedDbLike, SaveDriver, StorageLike } from './drivers.ts'
-export { indexedDbDriver, localStorageDriver, memoryDriver } from './drivers.ts'
+export type { SaveDriver } from './drivers.ts'
+export { memoryDriver } from './drivers.ts'
 export type { InstalledMod, ModFile, Mods } from './mods.ts'
 export { mods, readMod } from './mods.ts'
 export type { Profile } from './profile.ts'
@@ -208,7 +208,7 @@ export { profile } from './profile.ts'
 
 // The runner a UI drives
 export type { AutosaveOptions, BacklogEntry, BacklogOptions, CommandLog, HistoryOptions, Runner, RunnerOptions } from './runner.ts'
-export { browserRunner, createRunner, replay } from './runner.ts'
+export { createRunner, replay } from './runner.ts'
 
 // The view a UI draws, and the screen it is built from
 export type { Price, RenderedChoice, Screen, ScreenChoice, ScreenScene, ViewOptions } from './screen.ts'

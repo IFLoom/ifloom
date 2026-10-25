@@ -25,9 +25,9 @@ npm run dev
 ## 1. The runner and the helpers
 
 ```ts
-import { browserRunner, type InlineSpan, type InputView, type MinigameView, type SceneBeat, type View } from '@ifloom/engine'
+import { browserRunner, startClock, startKeys } from '@ifloom/browser'
+import type { InlineSpan, InputView, MinigameView, SceneBeat, View } from '@ifloom/engine'
 import { startAudio } from '@ifloom/audio'
-import { startClock, startKeys } from '@ifloom/browser'
 import loaded from './game.ts'
 import './styles.css'
 

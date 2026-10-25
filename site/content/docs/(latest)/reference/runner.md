@@ -1,20 +1,20 @@
 ---
 title: "The runner"
-description: "The runner: undo, backlog, command log, saving, loading, autosave, settings, new games, the Result it answers with, and browserRunner for the browser."
+description: "The runner: undo, backlog, command log, saving, loading, autosave, settings, new games, the Result it answers with, and where browserRunner fits."
 ---
 The runner is the one object your UI drives. It wraps [`apply`](/docs/reference/commands#apply) with the things every game's UI would otherwise build for itself: undo and redo, a backlog of what was shown, a command log, saving, loading and autosave. It also tells listeners when the state changes.
 
 ```ts
 import {
-  createRunner, browserRunner, replay,
-  type Runner, type RunnerOptions, type HistoryOptions, type BacklogOptions,
-  type AutosaveOptions, type BacklogEntry, type CommandLog, type StartOptions, type Result,
+  createRunner, replay,
+  type Runner, type RunnerOptions, type HistoryOptions, type BacklogOptions, type AutosaveOptions,
+  type BacklogEntry, type CommandLog, type StartOptions, type Result,
 } from '@ifloom/engine'
 ```
 
 Everything but the command log is off unless you turn it on, so a runner with no options is `apply` plus a subscription. For a walk-through, see [A game with a world](/docs/guide/first-game#10-drive-it-with-a-runner).
 
-If you use the React UI, you usually don't call `createRunner` yourself. [`mountGame`](/docs/react#mountgame) makes the runner with [`browserRunner`](#browserrunner), which sets up undo 50 deep, saves and a [profile](/docs/reference/profile) in `localStorage`, an autosave each turn and a random seed. It draws the game into the page and resolves to the runner. Its `runner` option is merged over those defaults. In a browser without React, call `browserRunner` yourself. Build the runner with `createRunner`, as below, when you want something different.
+If you use the React UI, you usually don't call `createRunner` yourself. [`mountGame`](/docs/react#mountgame) makes the runner with [`browserRunner`](/docs/browser#browserrunner) from `@ifloom/browser`, which sets up undo 50 deep, saves and a [profile](/docs/reference/profile) in `localStorage`, an autosave each turn and a random seed. It draws the game into the page and resolves to the runner. Its `runner` option is merged over those defaults. In a browser without React, call `browserRunner` yourself. Build the runner with `createRunner`, as below, when you want something different.
 
 ## createRunner
 
@@ -25,7 +25,8 @@ function createRunner(game: Game, start: GameState, options?: RunnerOptions): Ru
 Starts a runner on `start`, which is usually [`startingState`](/docs/reference/commands#startingstate) or a state from a save. A state from anywhere else goes through [`loadState`](/docs/reference/saves#loadstate) first, since the runner doesn't check its shape. This is how the showcase makes its runner:
 
 ```ts
-import { createRunner, localStorageDriver, saves, startingState } from '@ifloom/engine'
+import { localStorageDriver } from '@ifloom/browser'
+import { createRunner, saves, startingState } from '@ifloom/engine'
 import { go } from '@ifloom/plugin-places'
 
 const runner = createRunner(game, startingState(game, { seed: Math.floor(Math.random() * 2 ** 31) }), {
@@ -39,36 +40,9 @@ runner.subscribe(() => render(runner.view()))
 runner.apply(go('high-street'))
 ```
 
-## browserRunner
+## In a browser
 
-```ts
-function browserRunner(game: Game, options?: RunnerOptions & { start?: GameState }): Promise<Runner>
-```
-
-A runner with what most games in a browser want. It's `createRunner` with these defaults:
-
-| | Default |
-|---|---|
-| `start` | A new game, `startingState(game, { seed, settings })`, with a random seed so each playthrough draws its own variants, and the player's `play` [settings](/docs/reference/settings) from the profile. |
-| `history` | `{ depth: 50 }`, so undo goes 50 steps back. |
-| `saves` | `saves(game, localStorageDriver())`, saves in the browser's `localStorage` under keys that start with the game's id. |
-| `profile` | `profile(game, localStorageDriver())`, the [profile](/docs/reference/profile) at `<game id>.profile` in the same `localStorage`. |
-| `autosave` | `{ every: 'turn' }`, to the `auto` slot. |
-
-Pass `start` to begin from another state, and any [`RunnerOptions`](#runneroptions) to change the rest. They're merged over the defaults, one option at a time. [`mountGame`](/docs/react#mountgame) uses it, and so do the `vanilla`, `vue` and `svelte` templates:
-
-```ts
-import { browserRunner } from '@ifloom/engine'
-
-const runner = await browserRunner(game, { backlog: { limit: 200 } })
-
-runner.subscribe(() => draw(runner.view()))
-draw(runner.view())
-```
-
-It's async because it reads the profile before it starts. The new game gets the player's stored `play` settings, and [`runner.settings()`](#settings) has their `ui` settings from the first frame, so a text size or a volume is right before anything is drawn. A profile that can't be read starts the game with the defaults.
-
-**Gotcha.** Its saves and profile go to `localStorage`, which a test or a script in Node doesn't have. The runner still starts there, but every save, autosave and profile write fails with `localStorage is not available here`. Pass your own stores, such as `{ saves: saves(game, memoryDriver()), profile: profile(game, memoryDriver()) }` with [`memoryDriver`](/docs/reference/saves#memorydriver), or use `createRunner`.
+[`browserRunner`](/docs/browser#browserrunner) from `@ifloom/browser` is `createRunner` with what most games in a browser want: a random seed, undo 50 steps deep, saves and a profile in `localStorage`, and an autosave each turn. The React UI's `mountGame` and the templates use it.
 
 ## RunnerOptions
 
@@ -292,7 +266,7 @@ const { textSize, hints } = runner.settings()
 document.body.dataset.textSize = String(textSize)
 ```
 
-It hands back the same object until a value changes, so you can compare it, or read it in React's `useSyncExternalStore`. A runner from `createRunner` reads the profile in the background, and calls its listeners when a `ui` setting turns out to differ from its default. Await `settled()` to be sure it has. [`browserRunner`](#browserrunner) waits for that read before it returns.
+It hands back the same object until a value changes, so you can compare it, or read it in React's `useSyncExternalStore`. A runner from `createRunner` reads the profile in the background, and calls its listeners when a `ui` setting turns out to differ from its default. Await `settled()` to be sure it has. [`browserRunner`](/docs/browser#browserrunner) waits for that read before it returns.
 
 ### setSetting
 
@@ -331,7 +305,7 @@ A choice can start a new game itself by sending the [`newGame`](/docs/reference/
 { id: 'again', command: { type: 'newGame' }, effects: [] }
 ```
 
-`runner.apply` sees that the command asked for a new game and starts one in place, as `newGame()` would with no options: the player's play settings, a random seed, and a fresh history, backlog and log. The profile isn't touched, so settings, `core:finished`, unlocks and achievements carry on. The settings are the profile's as the runner last read them, because `apply` doesn't wait. A runner made by [`browserRunner`](#browserrunner) has read them before the first frame.
+`runner.apply` sees that the command asked for a new game and starts one in place, as `newGame()` would with no options: the player's play settings, a random seed, and a fresh history, backlog and log. The profile isn't touched, so settings, `core:finished`, unlocks and achievements carry on. The settings are the profile's as the runner last read them, because `apply` doesn't wait. A runner made by [`browserRunner`](/docs/browser#browserrunner) has read them before the first frame.
 
 - **The command log starts again.** The new log's `start` is the new game, and the `newGame` command isn't in either log. A bug report made after a restart replays the new run only.
 - **Nothing after it runs.** The choice's effects, triggers and plugins' hooks are for the run that ended, so they don't run, and the choice isn't counted in [`chosen`](/docs/reference/state#chosen).

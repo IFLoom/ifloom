@@ -106,7 +106,7 @@ interface Mods {
 }
 ```
 
-One game's installed mods, kept in a [save driver](/docs/reference/saves#drivers). In a browser, use [`indexedDbDriver()`](/docs/reference/saves#indexeddbdriver), so a mod survives a reload and needs no server.
+One game's installed mods, kept in a [save driver](/docs/reference/saves#drivers). In a browser, use [`indexedDbDriver()`](/docs/browser#indexeddbdriver), so a mod survives a reload and needs no server.
 
 | Member | What it does |
 |---|---|
@@ -145,7 +145,8 @@ A game builds itself once, when the page opens. It reads the mods that are on, l
 
 ```ts
 // src/runner.ts, or src/main.ts in the vanilla template
-import { browserRunner, indexedDbDriver, mods } from '@ifloom/engine'
+import { browserRunner, indexedDbDriver } from '@ifloom/browser'
+import { mods } from '@ifloom/engine'
 import { smallTown } from './game.ts'
 
 // The player's mods live in IndexedDB; they're loaded over the town at start-up.
@@ -219,7 +220,8 @@ export async function modManager(store: Mods, problems: string[]): Promise<HTMLE
 // src/main.tsx
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { createRunner, indexedDbDriver, localStorageDriver, mods, saves, startingState } from '@ifloom/engine'
+import { indexedDbDriver, localStorageDriver } from '@ifloom/browser'
+import { createRunner, mods, saves, startingState } from '@ifloom/engine'
 import { GameShell } from '@ifloom/react'
 import { smallTown } from './game.ts'
 import './styles.css'

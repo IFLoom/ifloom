@@ -10,10 +10,10 @@ You'll need a game to run. The one `ifloom new` makes is enough, or the one from
 
 A [runner](/docs/reference/runner) holds the game in play and is the one object your code talks to. There are two ways to make one.
 
-In a browser, use [`browserRunner`](/docs/reference/runner#browserrunner). It starts a new game with a random seed, keeps 50 steps of undo, saves to `localStorage` and autosaves each turn:
+In a browser, use [`browserRunner`](/docs/browser#browserrunner). It starts a new game with a random seed, keeps 50 steps of undo, saves to `localStorage` and autosaves each turn:
 
 ```ts
-import { browserRunner } from '@ifloom/engine'
+import { browserRunner } from '@ifloom/browser'
 import loaded from './game.ts'
 
 const runner = await browserRunner(loaded.game)

@@ -267,7 +267,8 @@ The engine has no UI of its own. Your template already has the code that draws t
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/main.ts in the vanilla template, cut down to the scene and its choices
-import { browserRunner, type View } from '@ifloom/engine'
+import { browserRunner } from '@ifloom/browser'
+import type { View } from '@ifloom/engine'
 import loaded from './game.ts'
 import './styles.css'
 
@@ -309,7 +310,7 @@ mountGame(game, { layout: Layout, pages: true })
 ```ts tab="Vue" tab-group="framework"
 // src/runner.ts
 import { shallowRef } from 'vue'
-import { browserRunner } from '@ifloom/engine'
+import { browserRunner } from '@ifloom/browser'
 import loaded from './game.ts'
 
 export const runner = await browserRunner(loaded.game)
@@ -331,7 +332,7 @@ createApp(App).mount('#root')
 ```ts tab="Svelte" tab-group="framework"
 // src/runner.ts
 import { readable } from 'svelte/store'
-import { browserRunner } from '@ifloom/engine'
+import { browserRunner } from '@ifloom/browser'
 import loaded from './game.ts'
 
 export const runner = await browserRunner(loaded.game)
@@ -347,7 +348,7 @@ import './styles.css'
 mount(App, { target: document.querySelector('#root')! })
 ```
 
-Every template starts the game with [`browserRunner`](/docs/reference/runner#browserrunner), which adds undo, saves and an autosave each chapter, and draws `runner.view()` again whenever the state changes ([Running a game](/docs/guide/running-a-game) goes through it). In the React template, `src/layout.tsx` is the page and `src/styles.css` its look, and [Make it your own](/docs/react/customising) covers both.
+Every template starts the game with [`browserRunner`](/docs/browser#browserrunner), which adds undo, saves and an autosave each chapter, and draws `runner.view()` again whenever the state changes ([Running a game](/docs/guide/running-a-game) goes through it). In the React template, `src/layout.tsx` is the page and `src/styles.css` its look, and [Make it your own](/docs/react/customising) covers both.
 
 ## 9. Check it and playtest it
 

@@ -39,7 +39,7 @@ What it does with each part of the view:
 - **Ducking** quietens a channel while another plays, but only on a channel whose `duck` you declared. See [`ChannelDef`](/docs/reference/audio#channeldef).
 
 ```ts
-import { browserRunner } from '@ifloom/engine'
+import { browserRunner } from '@ifloom/browser'
 import { startAudio } from '@ifloom/audio'
 import loaded from './game.ts'
 

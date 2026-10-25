@@ -84,9 +84,8 @@ The entry is the template's `src/main.ts`, unchanged. With the React UI, it's [`
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/main.ts: the vanilla template's, cut down
-import { browserRunner } from '@ifloom/engine'
+import { browserRunner, startClock, startKeys } from '@ifloom/browser'
 import { startAudio } from '@ifloom/audio'
-import { startClock, startKeys } from '@ifloom/browser'
 import loaded from './game.ts'
 import './styles.css'
 

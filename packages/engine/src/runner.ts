@@ -1,15 +1,14 @@
 import { holds, type Condition } from './condition.ts'
 import type { Game } from './game.ts'
-import { localStorageDriver } from './drivers.ts'
 import { apply } from './reduce.ts'
 import { loadState, startingState, type StartOptions } from './intake.ts'
 import { pluginContext, pluginView } from './plugin.ts'
-import { profile as makeProfile, type Profile } from './profile.ts'
+import type { Profile } from './profile.ts'
 import { settingAffects, settingById, settingRefusal, settingValue } from './features/settings.ts'
 import { runnerHooks } from './features/registry.ts'
 import { savingIn } from './features/saving.ts'
 import { fail, ok, type Result } from './result.ts'
-import { saves, type LoadedSave, type SaveMeta, type Saves } from './save.ts'
+import type { LoadedSave, SaveMeta, Saves } from './save.ts'
 import { stringOf } from './strings.ts'
 import type { SceneBeat } from './sceneBody.ts'
 import type { Command, KvValue, GameState } from './types.ts'
@@ -120,7 +119,7 @@ export function replay(game: Game, log: CommandLog): Result<GameState> {
 type Step = { state: GameState; backlog: BacklogEntry[]; commands: Command[] }
 
 /**
- * The one object a UI drives, as `createRunner` and `browserRunner` give it.
+ * The one object a UI drives, as `createRunner` (or `browserRunner` from `@ifloom/browser`) gives it.
  * Anything that can fail in a way a UI should expect (a refused command, an
  * empty slot, a setting with no profile to keep it) answers with a `Result`
  * and never throws.
@@ -619,34 +618,4 @@ function frozenCopy(value: unknown): unknown {
 
 function randomSeed(): number {
   return Math.floor(Math.random() * 2 ** 31)
-}
-
-/**
- * A runner with what most games in a browser want: a new game with a random
- * seed, undo 50 steps deep, saves and a profile in `localStorage`, and an
- * autosave each turn. It reads the profile before it starts, so the new
- * game has the player's play settings and `settings()` has their ui
- * settings from the first frame. Pass a `start` to begin elsewhere, and
- * runner options to change any default; they are merged over these. Any UI
- * can use it: the React UI's `mountGame` does, and so does the vanilla template.
- */
-export async function browserRunner(game: Game, options: RunnerOptions & { start?: GameState } = {}): Promise<Runner> {
-  const { start, ...runnerOptions } = options
-  const driver = localStorageDriver()
-  const merged: RunnerOptions = {
-    history: { depth: 50 },
-    saves: saves(game, driver),
-    profile: makeProfile(game, driver),
-    autosave: { every: 'turn' },
-    ...runnerOptions,
-  }
-  let first = start
-  if (!first) {
-    // A profile that can't be read starts the game with the defaults.
-    const settings = await merged.profile?.get<Record<string, unknown>>('core:settings').catch(() => undefined)
-    first = startingState(game, { seed: randomSeed(), settings })
-  }
-  const runner = createRunner(game, first, merged)
-  await runner.settled()
-  return runner
 }

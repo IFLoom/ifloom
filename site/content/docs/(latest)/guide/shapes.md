@@ -128,7 +128,8 @@ The example draws the story with the React UI. Its `src/main.ts` starts the game
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/main.ts
-import { browserRunner, type View } from '@ifloom/engine'
+import { browserRunner } from '@ifloom/browser'
+import type { View } from '@ifloom/engine'
 import { theLetter } from './game.ts'
 import './styles.css'
 
@@ -383,7 +384,8 @@ In a management game the player mostly looks at the things being managed. So the
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/main.ts
-import { browserRunner, type View } from '@ifloom/engine'
+import { browserRunner } from '@ifloom/browser'
+import type { View } from '@ifloom/engine'
 import { cornerCafe } from './game.ts'
 import './styles.css'
 

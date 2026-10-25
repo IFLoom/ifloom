@@ -1078,7 +1078,8 @@ Settings and Title screen switch to those [pages](#pages). Settings opened from 
 So you choose what the player sees when you make the runner:
 
 ```ts
-import { createRunner, localStorageDriver, saves, startingState } from '@ifloom/engine'
+import { localStorageDriver } from '@ifloom/browser'
+import { createRunner, saves, startingState } from '@ifloom/engine'
 
 const runner = createRunner(game, startingState(game), {
   history: { depth: 50 },                    // Undo and Redo

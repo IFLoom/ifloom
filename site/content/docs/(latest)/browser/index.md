@@ -1,18 +1,106 @@
 ---
 title: "Browser helpers"
-description: "@ifloom/browser: the clock for timers and minigames, keyboard shortcuts, the number for a new save slot and a key that shows held-back prose, as plain DOM for any framework."
+description: "@ifloom/browser: a runner with saves in the browser, the localStorage and IndexedDB save drivers, the clock for timers and minigames, keyboard shortcuts, the number for a new save slot and a key that shows held-back prose."
 ---
-The engine has no DOM, so a few things a game needs from the page live in `@ifloom/browser`: a clock for [timers](/docs/reference/timers) and minigames, keyboard shortcuts, the number for a new save slot, and a key press that shows prose a UI is holding back. They're plain DOM, so they work with Vue, Svelte, plain JS or React. The [React UI](/docs/react) uses them itself, and the `vanilla`, `vue` and `svelte` templates start the clock and the keys beside the runner.
+The engine has no DOM, so a few things a game needs from the page live in `@ifloom/browser`: a runner with saves and settings kept in the browser, the save drivers for `localStorage` and IndexedDB, a clock for [timers](/docs/reference/timers) and minigames, keyboard shortcuts, the number for a new save slot, and a key press that shows prose a UI is holding back. They're plain DOM, so they work with Vue, Svelte, plain JS or React. The [React UI](/docs/react) uses them itself, and the templates make their runner with `browserRunner` and start the clock and the keys beside it.
 
 ```ts
 import {
+  browserRunner, localStorageDriver, indexedDbDriver,
   startClock, startKeys, startMinigameKeys, startRevealSkip,
   nextSlot, numberedChoices, minigameInput, ignoredKey, dialogOpen,
-  type ClockOptions, type KeysOptions,
+  type ClockOptions, type KeysOptions, type StorageLike, type IndexedDbLike,
 } from '@ifloom/browser'
 ```
 
 Add `@ifloom/browser` beside the engine. It imports nothing but `@ifloom/engine`. Each `start…` function returns a function that stops it.
+
+## browserRunner
+
+```ts
+function browserRunner(game: Game, options?: RunnerOptions & { start?: GameState }): Promise<Runner>
+```
+
+A runner with what most games in a browser want. It's the engine's [`createRunner`](/docs/reference/runner#createrunner) with these defaults:
+
+| | Default |
+|---|---|
+| `start` | A new game, `startingState(game, { seed, settings })`, with a random seed so each playthrough draws its own variants, and the player's `play` [settings](/docs/reference/settings) from the profile. |
+| `history` | `{ depth: 50 }`, so undo goes 50 steps back. |
+| `saves` | `saves(game, localStorageDriver())`, saves in the browser's `localStorage` under keys that start with the game's id. |
+| `profile` | `profile(game, localStorageDriver())`, the [profile](/docs/reference/profile) at `<game id>.profile` in the same `localStorage`. |
+| `autosave` | `{ every: 'turn' }`, to the `auto` slot. |
+
+Pass `start` to begin from another state, and any [`RunnerOptions`](/docs/reference/runner#runneroptions) to change the rest. They're merged over the defaults, one option at a time. [`mountGame`](/docs/react#mountgame) uses it, and so do the `vanilla`, `vue`, `svelte` and `next` templates:
+
+```ts
+import { browserRunner } from '@ifloom/browser'
+
+const runner = await browserRunner(game, { backlog: { limit: 200 } })
+
+runner.subscribe(() => draw(runner.view()))
+draw(runner.view())
+```
+
+It's async because it reads the profile before it starts. The new game gets the player's stored `play` settings, and [`runner.settings()`](/docs/reference/runner#settings) has their `ui` settings from the first frame, so a text size or a volume is right before anything is drawn. A profile that can't be read starts the game with the defaults.
+
+**Gotcha.** Its saves and profile go to `localStorage`, which a test or a script in Node doesn't have. The runner still starts there, but every save, autosave and profile write fails with `localStorage is not available here`. Pass your own stores, such as `{ saves: saves(game, memoryDriver()), profile: profile(game, memoryDriver()) }` with [`memoryDriver`](/docs/reference/saves#memorydriver), or use [`createRunner`](/docs/reference/runner#createrunner).
+
+## Save drivers
+
+The engine's save store, [profile](/docs/reference/profile) and [mod store](/docs/reference/mods) keep their data through a [`SaveDriver`](/docs/reference/saves#savedriver). The engine has only the in-memory one, [`memoryDriver`](/docs/reference/saves#memorydriver), for tests. These two keep it in the browser.
+
+### localStorageDriver
+
+```ts
+function localStorageDriver(storage?: StorageLike): SaveDriver
+```
+
+Saves in `globalThis.localStorage`, or in the Web Storage you pass. It works everywhere but it's small, around 5MB per origin. In Chromium every page opened from disk shares one origin, so every `file://` game the player has shares those 5MB.
+
+The driver looks for the storage when a save is first read or written, not when you make it. Where there's none (Node, a locked-down iframe), that read or write rejects with `localStorage is not available here`.
+
+### StorageLike
+
+```ts
+type StorageLike = {
+  getItem: (key: string) => string | null
+  setItem: (key: string, value: string) => void
+  removeItem: (key: string) => void
+  key: (index: number) => string | null
+  readonly length: number
+}
+```
+
+The parts of the Web Storage API the driver needs. `localStorage` and `sessionStorage` are both one.
+
+### indexedDbDriver
+
+```ts
+function indexedDbDriver(options?: {
+  database?: string
+  store?: string
+  indexedDB?: IndexedDbLike
+}): SaveDriver
+```
+
+Saves in IndexedDB, which has far more room. It opens one database, `database` (default `'ifloom'`), creating it if needed. That database holds one object store of strings by key, `store` (default `'saves'`). `indexedDB` defaults to `globalThis.indexedDB`. Pass another for tests, such as `fake-indexeddb`.
+
+```ts
+const store = saves(game, indexedDbDriver())
+```
+
+Every game can share the default database, because keys carry the game's id (see [Keys](/docs/reference/saves#keys)).
+
+**Gotcha:** the database is opened at version 1, and the store is only created along with the database. If you open an existing database with a different `store` name, there's no such store and every call rejects. Give a new store a new `database` too. If IndexedDB isn't there at all, every call rejects with `IndexedDB is not available here`.
+
+### IndexedDbLike
+
+```ts
+type IndexedDbLike = { open: (name: string, version?: number) => OpenRequest }
+```
+
+The part of `indexedDB` the driver needs, typed here so a test can pass its own. The browser's `indexedDB` is one.
 
 ## startClock
 

@@ -129,7 +129,7 @@ A condition that holds only partway through a command, and not at its end, isn't
 
 ## The profile
 
-After every command, the plugin's [`profile`](/docs/reference/plugins#the-profile) provider adds anything newly earned to the player's profile, under the namespace `achievements`. Only a runner with a `profile` asks it, which the React UI's `mountGame` and [`browserRunner`](/docs/reference/runner#browserrunner) both have. [`apply`](/docs/reference/commands#apply) and [`replay`](/docs/reference/runner#replay) never write to it.
+After every command, the plugin's [`profile`](/docs/reference/plugins#the-profile) provider adds anything newly earned to the player's profile, under the namespace `achievements`. Only a runner with a `profile` asks it, which the React UI's `mountGame` and [`browserRunner`](/docs/browser#browserrunner) both have. [`apply`](/docs/reference/commands#apply) and [`replay`](/docs/reference/runner#replay) never write to it.
 
 ### AchievementsProfile
 

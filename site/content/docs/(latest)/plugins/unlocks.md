@@ -176,7 +176,8 @@ sequenceDiagram
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/main.ts
-import { browserRunner, localStorageDriver, profile } from '@ifloom/engine'
+import { browserRunner, localStorageDriver } from '@ifloom/browser'
+import { profile } from '@ifloom/engine'
 import { startUnlocks, unlockedPacks } from '@ifloom/plugin-unlocks'
 import { build } from './game.ts'
 
@@ -201,7 +202,8 @@ form.onsubmit = async (event) => {
 
 ```tsx tab="React" tab-group="framework"
 // src/main.tsx
-import { createRunner, localStorageDriver, profile, saves, startingState } from '@ifloom/engine'
+import { localStorageDriver } from '@ifloom/browser'
+import { createRunner, profile, saves, startingState } from '@ifloom/engine'
 import { GameShell } from '@ifloom/react'
 import { unlockedPacks } from '@ifloom/plugin-unlocks'
 import { unlocksUiWith } from '@ifloom/plugin-unlocks/react'

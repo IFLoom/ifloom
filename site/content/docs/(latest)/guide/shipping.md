@@ -78,7 +78,7 @@ Other bundlers can make the same single file. The [esbuild](/docs/recipes/esbuil
 
 ## Saves
 
-A game decides where its saves live by picking a driver. The engine has no default, because the right answer depends on how the game ships. [`browserRunner`](/docs/reference/runner#browserrunner), which every template uses (the React UI's [`mountGame`](/docs/react#mountgame) calls it), picks `localStorage` unless you pass another:
+A game decides where its saves live by picking a driver. The engine has no default, because the right answer depends on how the game ships. [`browserRunner`](/docs/browser#browserrunner), which every template uses (the React UI's [`mountGame`](/docs/react#mountgame) calls it), picks `localStorage` unless you pass another:
 
 | Shipped as | Driver |
 |---|---|
@@ -87,7 +87,8 @@ A game decides where its saves live by picking a driver. The engine has no defau
 | A desktop wrapper (Tauri, Electron) | One of your own over the wrapper's file system. |
 
 ```ts
-import { createRunner, indexedDbDriver, saves } from '@ifloom/engine'
+import { indexedDbDriver } from '@ifloom/browser'
+import { createRunner, saves } from '@ifloom/engine'
 
 const runner = createRunner(game, state, {
   saves: saves(game, indexedDbDriver()),
@@ -95,11 +96,12 @@ const runner = createRunner(game, state, {
 })
 ```
 
-The templates make their runner with [`browserRunner`](/docs/reference/runner#browserrunner), which takes the same options over its defaults. With the React UI's `mountGame`, pass them as `runner`:
+The templates make their runner with [`browserRunner`](/docs/browser#browserrunner), which takes the same options over its defaults. With the React UI's `mountGame`, pass them as `runner`:
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/main.ts
-import { browserRunner, indexedDbDriver, saves } from '@ifloom/engine'
+import { browserRunner, indexedDbDriver } from '@ifloom/browser'
+import { saves } from '@ifloom/engine'
 import loaded from './game.ts' // what loadGame returned: { game, problems }
 
 const runner = await browserRunner(loaded.game, { saves: saves(loaded.game, indexedDbDriver()) })
@@ -107,7 +109,8 @@ const runner = await browserRunner(loaded.game, { saves: saves(loaded.game, inde
 
 ```ts tab="React" tab-group="framework"
 // src/main.ts
-import { indexedDbDriver, saves } from '@ifloom/engine'
+import { indexedDbDriver } from '@ifloom/browser'
+import { saves } from '@ifloom/engine'
 import { mountGame } from '@ifloom/react'
 import loaded from './game.ts' // what loadGame returned: { game, problems }
 
@@ -117,7 +120,8 @@ mountGame(loaded, { runner: { saves: saves(loaded.game, indexedDbDriver()) } })
 ```ts tab="Vue" tab-group="framework"
 // src/runner.ts
 import { shallowRef } from 'vue'
-import { browserRunner, indexedDbDriver, saves } from '@ifloom/engine'
+import { browserRunner, indexedDbDriver } from '@ifloom/browser'
+import { saves } from '@ifloom/engine'
 import loaded from './game.ts' // what loadGame returned: { game, problems }
 
 export const runner = await browserRunner(loaded.game, { saves: saves(loaded.game, indexedDbDriver()) })
@@ -128,7 +132,8 @@ runner.subscribe(() => (view.value = runner.view()))
 ```ts tab="Svelte" tab-group="framework"
 // src/runner.ts
 import { readable } from 'svelte/store'
-import { browserRunner, indexedDbDriver, saves } from '@ifloom/engine'
+import { browserRunner, indexedDbDriver } from '@ifloom/browser'
+import { saves } from '@ifloom/engine'
 import loaded from './game.ts' // what loadGame returned: { game, problems }
 
 export const runner = await browserRunner(loaded.game, { saves: saves(loaded.game, indexedDbDriver()) })

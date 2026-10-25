@@ -3,9 +3,8 @@
  * and send commands with `runner.apply`; nothing else talks to the engine.
  */
 import { readable } from 'svelte/store'
-import { browserRunner } from '@ifloom/engine'
 import { startAudio } from '@ifloom/audio'
-import { startClock, startKeys } from '@ifloom/browser'
+import { browserRunner, startClock, startKeys } from '@ifloom/browser'
 import loaded from './game.ts'
 
 const { game, problems } = loaded

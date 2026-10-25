@@ -12,16 +12,17 @@ A save is the whole [game state](/docs/reference/state), written to a slot with 
 
   | Driver | Keeps saves in | Use it for |
   |---|---|---|
-  | [`localStorageDriver()`](/docs/reference/saves#localstoragedriver) | The browser's `localStorage`, about 5MB shared. | Short games. |
-  | [`indexedDbDriver()`](/docs/reference/saves#indexeddbdriver) | IndexedDB, with far more room. | Long games and big backlogs. |
+  | [`localStorageDriver()`](/docs/browser#localstoragedriver) | The browser's `localStorage`, about 5MB shared. | Short games. |
+  | [`indexedDbDriver()`](/docs/browser#indexeddbdriver) | IndexedDB, with far more room. | Long games and big backlogs. |
   | [`memoryDriver()`](/docs/reference/saves#memorydriver) | A `Map`, gone with the page or the process. | Tests and previews. |
 
 - **A save store**, [`saves(game, driver)`](/docs/reference/saves#saves), keeps one game's slots on that driver, and carries old saves forward when the game changes.
 
-[`browserRunner`](/docs/reference/runner#browserrunner) uses `localStorage` for you. To choose, pass the store to the runner:
+[`browserRunner`](/docs/browser#browserrunner) uses `localStorage` for you. To choose, pass the store to the runner:
 
 ```ts
-import { createRunner, indexedDbDriver, profile, saves, startingState } from '@ifloom/engine'
+import { indexedDbDriver } from '@ifloom/browser'
+import { createRunner, profile, saves, startingState } from '@ifloom/engine'
 
 const driver = indexedDbDriver()
 const runner = createRunner(game, startingState(game, { seed: Math.floor(Math.random() * 2 ** 31) }), {

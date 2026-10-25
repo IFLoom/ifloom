@@ -1,29 +1,11 @@
-import 'fake-indexeddb/auto'
 import { describe, expect, it } from 'vitest'
-import { indexedDbDriver, localStorageDriver, memoryDriver, type SaveDriver, type StorageLike } from '../../src/drivers.ts'
+import { memoryDriver, type SaveDriver } from '../../src/drivers.ts'
 import { startingState } from '../../src/intake.ts'
 import { saves } from '../../src/save.ts'
 import { SAVE_VERSION } from '../../src/types.ts'
 import { withCafe } from '../fixtures/cafe.ts'
 
-function webStorage(): StorageLike {
-  const store = new Map<string, string>()
-  return {
-    getItem: (key) => store.get(key) ?? null,
-    setItem: (key, value) => void store.set(key, value),
-    removeItem: (key) => void store.delete(key),
-    key: (index) => [...store.keys()][index] ?? null,
-    get length() {
-      return store.size
-    },
-  }
-}
-
-const drivers: [string, () => SaveDriver][] = [
-  ['memory', memoryDriver],
-  ['localStorage', () => localStorageDriver(webStorage())],
-  ['indexedDB', () => indexedDbDriver({ database: `test-${Math.random()}` })],
-]
+const drivers: [string, () => SaveDriver][] = [['memory', memoryDriver]]
 
 describe.each(drivers)('saves through the %s driver', (_name, driver) => {
   it('writes a snapshot with what it says about itself, and reads it back', async () => {

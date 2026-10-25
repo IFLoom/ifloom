@@ -5,14 +5,15 @@ description: "The player's profile: settings, a finished flag and other records 
 The profile holds what should outlive a save: the player's settings, whether they've finished the game, and whatever plugins keep across games, such as achievements. A new game, or a different save, still sees it.
 
 ```ts
-import { profile, localStorageDriver, type Profile } from '@ifloom/engine'
+import { localStorageDriver } from '@ifloom/browser'
+import { profile, type Profile } from '@ifloom/engine'
 
 const stored = profile(game, localStorageDriver())
 await stored.set('core:settings', { hints: false, textSize: 'large' })
 await stored.get('core:settings') // { hints: false, textSize: 'large' }
 ```
 
-[`browserRunner`](/docs/reference/runner#browserrunner) makes one for you in `localStorage`, and the runner exposes it as `runner.profile`.
+[`browserRunner`](/docs/browser#browserrunner) makes one for you in `localStorage`, and the runner exposes it as `runner.profile`.
 
 ## profile
 

@@ -5,7 +5,8 @@
  * loaded, and the server sends an empty spot for it.
  */
 import { useEffect, useState } from 'react'
-import { browserRunner, type Runner } from '@ifloom/engine'
+import { browserRunner } from '@ifloom/browser'
+import type { Runner } from '@ifloom/engine'
 import { GameShell, useAudio, type PluginUi } from '@ifloom/react'
 import loaded from '../src/game.ts'
 import { Layout } from '../src/layout.tsx'

@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { createRunner, indexedDbDriver, localStorageDriver, mods, profile, saves, startingState } from '@ifloom/engine'
+import { indexedDbDriver, localStorageDriver } from '@ifloom/browser'
+import { createRunner, mods, profile, saves, startingState } from '@ifloom/engine'
 import { GameShell, type PagesOptions } from '@ifloom/react'
 import { unlockedPacks } from '@ifloom/plugin-unlocks'
 import { smallTown } from './game.ts'

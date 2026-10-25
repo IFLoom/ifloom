@@ -105,7 +105,7 @@ A play setting goes through the [`setting`](/docs/reference/commands#setting) co
 
 ## A new game
 
-A new game takes the player's stored values for play settings. Pass them to [`startingState`](/docs/reference/commands#startingstate) as `settings`, or let [`runner.newGame`](/docs/reference/runner#newgame) or [`browserRunner`](/docs/reference/runner#browserrunner) read them from the profile. A setting with no stored value, or one it can't take any more, starts at its default.
+A new game takes the player's stored values for play settings. Pass them to [`startingState`](/docs/reference/commands#startingstate) as `settings`, or let [`runner.newGame`](/docs/reference/runner#newgame) or [`browserRunner`](/docs/browser#browserrunner) read them from the profile. A setting with no stored value, or one it can't take any more, starts at its default.
 
 A save keeps the play settings it was made with. Loading it doesn't apply the player's newer choices. A save from before settings existed, or one made before you added a setting, gets each missing setting's default when it loads.
 

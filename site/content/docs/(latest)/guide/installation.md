@@ -82,29 +82,29 @@ Your content goes in `src/world/` and `src/story/`. Each file there exports [`Co
 
 ## Add IFLoom to an existing project
 
-Install the engine, and the CLI for checking the game:
+Install the engine and the browser helpers, and the CLI for checking the game:
 
 ```sh tab="npm" tab-group="package-manager"
-npm install @ifloom/engine
+npm install @ifloom/engine @ifloom/browser
 npm install --save-dev @ifloom/cli
 ```
 
 ```sh tab="pnpm" tab-group="package-manager"
-pnpm add @ifloom/engine
+pnpm add @ifloom/engine @ifloom/browser
 pnpm add --save-dev @ifloom/cli
 ```
 
 ```sh tab="yarn" tab-group="package-manager"
-yarn add @ifloom/engine
+yarn add @ifloom/engine @ifloom/browser
 yarn add --dev @ifloom/cli
 ```
 
 ```sh tab="bun" tab-group="package-manager"
-bun add @ifloom/engine
+bun add @ifloom/engine @ifloom/browser
 bun add --dev @ifloom/cli
 ```
 
-In a React app, add `@ifloom/react` too if you want the ready-made [React UI](/docs/react). A plugin you install brings its React UI in the same package, as `@ifloom/plugin-<name>/react`, so there's nothing more to install for it: list it in [`plugins`](/docs/react/kit#the-plugins-option). With any other framework, or none, the engine is all you need, and [`@ifloom/browser`](/docs/browser) and [`@ifloom/audio`](/docs/browser/audio-player) are there when you want a minigame's clock, keyboard shortcuts or sound.
+In a React app, add `@ifloom/react` too if you want the ready-made [React UI](/docs/react). A plugin you install brings its React UI in the same package, as `@ifloom/plugin-<name>/react`, so there's nothing more to install for it: list it in [`plugins`](/docs/react/kit#the-plugins-option). With any other framework, or none, the engine and [`@ifloom/browser`](/docs/browser) are all you need: `@ifloom/browser` has the runner that keeps saves in the browser, a minigame's clock and keyboard shortcuts. Add [`@ifloom/audio`](/docs/browser/audio-player) for sound.
 
 A game is one module that exports what [`loadGame`](/docs/reference/loader#loadgame) returns:
 
@@ -125,7 +125,7 @@ Then draw it into an element on your page, here `<div id="game">`:
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/play.ts
-import { browserRunner } from '@ifloom/engine'
+import { browserRunner } from '@ifloom/browser'
 import loaded from './game.ts'
 
 const runner = await browserRunner(loaded.game)
@@ -158,7 +158,7 @@ mountGame(game, { root: '#game' })
 ```ts tab="Vue" tab-group="framework"
 // src/runner.ts
 import { shallowRef } from 'vue'
-import { browserRunner } from '@ifloom/engine'
+import { browserRunner } from '@ifloom/browser'
 import loaded from './game.ts'
 
 export const runner = await browserRunner(loaded.game)
@@ -187,7 +187,7 @@ import { runner, view } from './runner.ts'
 ```ts tab="Svelte" tab-group="framework"
 // src/runner.ts
 import { readable } from 'svelte/store'
-import { browserRunner } from '@ifloom/engine'
+import { browserRunner } from '@ifloom/browser'
 import loaded from './game.ts'
 
 export const runner = await browserRunner(loaded.game)
@@ -208,7 +208,7 @@ export const view = readable(runner.view(), (set) => runner.subscribe(() => set(
 {/each}
 ```
 
-[`browserRunner`](/docs/reference/runner#browserrunner) starts a new game with undo, saves in `localStorage` and an autosave each turn. The snippets import with `.ts` extensions, as the templates do. Drop them if your project's TypeScript settings don't allow it. To build with your project's own bundler, see the recipes for [Next.js](/docs/recipes/next), [webpack](/docs/recipes/webpack) and [esbuild](/docs/recipes/esbuild).
+[`browserRunner`](/docs/browser#browserrunner) starts a new game with undo, saves in `localStorage` and an autosave each turn. The snippets import with `.ts` extensions, as the templates do. Drop them if your project's TypeScript settings don't allow it. To build with your project's own bundler, see the recipes for [Next.js](/docs/recipes/next), [webpack](/docs/recipes/webpack) and [esbuild](/docs/recipes/esbuild).
 
 ## Check it works
 

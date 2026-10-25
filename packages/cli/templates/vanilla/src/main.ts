@@ -3,18 +3,9 @@
  * runner for the view, draw it, send a command when a button is pressed, and
  * draw again when the state changes. Any framework can do the same.
  */
-import {
-  browserRunner,
-  type InlineSpan,
-  type InputView,
-  type MinigameView,
-  type OpenPanel,
-  type RenderedChoice,
-  type SceneBeat,
-  type View,
-} from '@ifloom/engine'
+import type { InlineSpan, InputView, MinigameView, OpenPanel, RenderedChoice, SceneBeat, View } from '@ifloom/engine'
 import { startAudio } from '@ifloom/audio'
-import { startClock, startKeys } from '@ifloom/browser'
+import { browserRunner, startClock, startKeys } from '@ifloom/browser'
 import loaded from './game.ts'
 import { layout, section } from './layout.ts'
 import './styles.css'

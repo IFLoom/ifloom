@@ -12,6 +12,7 @@
     "playtest": "ifloom playtest --turns 5 --out playtest/run.txt"
   },
   "dependencies": {
+    "@ifloom/browser": "^0.0.0",
     "@ifloom/engine": "^0.0.0",
     "@ifloom/react": "^0.0.0",
     "next": "16.4.2",

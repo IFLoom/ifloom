@@ -166,7 +166,7 @@ type MountOptions = Omit<GameShellProps, 'runner'> & {
 }
 ```
 
-`mountGame` makes a runner for the game with the engine's [`browserRunner`](/docs/reference/runner#browserrunner) and draws [`GameShell`](#gameshell) into the page, or your own `app`, inside React's `StrictMode`. It's async because `browserRunner` reads the player's profile first, so the game starts with their settings. It resolves to the runner, so your own code can still send commands or read the state. Most games don't need it and call `mountGame` without waiting.
+`mountGame` makes a runner for the game with `@ifloom/browser`'s [`browserRunner`](/docs/browser#browserrunner) and draws [`GameShell`](#gameshell) into the page, or your own `app`, inside React's `StrictMode`. It's async because `browserRunner` reads the player's profile first, so the game starts with their settings. It resolves to the runner, so your own code can still send commands or read the state. Most games don't need it and call `mountGame` without waiting.
 
 It sets up what most games want:
 
@@ -197,12 +197,13 @@ const runner = await mountGame(game, {
 })
 ```
 
-When you need more control, build the runner yourself (with [`browserRunner`](/docs/reference/runner#browserrunner) or [`createRunner`](/docs/reference/runner#createrunner)) and render `GameShell` with React. [The Corner Café](/docs/guide/shapes) uses `mountGame`. [Small Town](/docs/guide/showcase#the-files)'s `src/main.tsx` does it by hand, because it loads the player's mods from IndexedDB before it makes the game:
+When you need more control, build the runner yourself (with [`browserRunner`](/docs/browser#browserrunner) or [`createRunner`](/docs/reference/runner#createrunner)) and render `GameShell` with React. [The Corner Café](/docs/guide/shapes) uses `mountGame`. [Small Town](/docs/guide/showcase#the-files)'s `src/main.tsx` does it by hand, because it loads the player's mods from IndexedDB before it makes the game:
 
 ```tsx
 // src/main.tsx
 import { createRoot } from 'react-dom/client'
-import { createRunner, localStorageDriver, profile, saves, startingState } from '@ifloom/engine'
+import { localStorageDriver } from '@ifloom/browser'
+import { createRunner, profile, saves, startingState } from '@ifloom/engine'
 import { GameShell } from '@ifloom/react'
 import loaded from './game.ts'
 import './styles.css'

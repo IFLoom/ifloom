@@ -29,7 +29,7 @@ The rest of this page goes through their code piece by piece, with a tab for eac
 A UI talks to the engine through a [runner](/docs/reference/runner). You need three things from it, and [Running a game](/docs/guide/running-a-game#the-loop) goes through them in full:
 
 ```ts
-import { browserRunner } from '@ifloom/engine'
+import { browserRunner } from '@ifloom/browser'
 
 const runner = await browserRunner(game)
 
@@ -46,9 +46,9 @@ Each template makes the runner once, in a module of its own, and turns the view 
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/main.ts
-import { browserRunner, type InputView, type MinigameView, type SceneBeat, type View } from '@ifloom/engine'
+import { browserRunner, startClock, startKeys } from '@ifloom/browser'
+import type { InputView, MinigameView, SceneBeat, View } from '@ifloom/engine'
 import { startAudio } from '@ifloom/audio'
-import { startClock, startKeys } from '@ifloom/browser'
 import loaded from './game.ts'
 import './styles.css'
 
@@ -73,9 +73,8 @@ draw(runner.view())
 ```ts tab="React" tab-group="framework"
 // src/runner.ts
 import { useSyncExternalStore } from 'react'
-import { browserRunner } from '@ifloom/engine'
+import { browserRunner, startClock, startKeys } from '@ifloom/browser'
 import { startAudio } from '@ifloom/audio'
-import { startClock, startKeys } from '@ifloom/browser'
 import loaded from './game.ts'
 
 export const runner = await browserRunner(loaded.game)
@@ -95,9 +94,8 @@ export const useView = () => useSyncExternalStore(runner.subscribe, runner.view)
  * send commands with `runner.apply`; nothing else talks to the engine.
  */
 import { shallowRef } from 'vue'
-import { browserRunner } from '@ifloom/engine'
+import { browserRunner, startClock, startKeys } from '@ifloom/browser'
 import { startAudio } from '@ifloom/audio'
-import { startClock, startKeys } from '@ifloom/browser'
 import loaded from './game.ts'
 
 const { game, problems } = loaded
@@ -128,9 +126,8 @@ startKeys(runner)
  * and send commands with `runner.apply`; nothing else talks to the engine.
  */
 import { readable } from 'svelte/store'
-import { browserRunner } from '@ifloom/engine'
+import { browserRunner, startClock, startKeys } from '@ifloom/browser'
 import { startAudio } from '@ifloom/audio'
-import { startClock, startKeys } from '@ifloom/browser'
 import loaded from './game.ts'
 
 const { game, problems } = loaded
@@ -151,7 +148,7 @@ startClock(runner)
 startKeys(runner)
 ```
 
-[`browserRunner`](/docs/reference/runner#browserrunner) gives the runner a random seed, undo 50 steps deep, saves in `localStorage` and an autosave each turn. Pass it any [`RunnerOptions`](/docs/reference/runner#runneroptions) to change those, such as `browserRunner(game, { backlog: true })`. `loadGame` returns the game and a list of problems, which `npm run check` also prints.
+[`browserRunner`](/docs/browser#browserrunner) gives the runner a random seed, undo 50 steps deep, saves in `localStorage` and an autosave each turn. Pass it any [`RunnerOptions`](/docs/reference/runner#runneroptions) to change those, such as `browserRunner(game, { backlog: true })`. `loadGame` returns the game and a list of problems, which `npm run check` also prints.
 
 - **Plain JS** draws the whole page again in its listener, which is fine for a page this small.
 - **React** reads it with `useSyncExternalStore`, which needs exactly what `runner.subscribe` and `runner.view` are.

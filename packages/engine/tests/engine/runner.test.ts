@@ -2,8 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { memoryDriver } from '../../src/drivers.ts'
 import type { Game } from '../../src/game.ts'
 import { proseStore } from '../../src/prose.ts'
-import { browserRunner, createRunner, replay } from '../../src/runner.ts'
-import { profile } from '../../src/profile.ts'
+import { createRunner, replay } from '../../src/runner.ts'
 import { saves } from '../../src/save.ts'
 import { withCafe } from '../fixtures/cafe.ts'
 import { begin, fixture } from '../fixtures/town.ts'
@@ -158,33 +157,6 @@ describe('the runner when saving goes wrong, or comes from elsewhere', () => {
     runner.restore(imported)
     expect(runner.state.kv.at).toBe('shop')
     expect(runner.played()).toBe(9000)
-  })
-
-  it('starts a browser game with undo, saves and an autosave each turn, any of which a game can change', async () => {
-    const game = fixture()
-    const store = saves(game, memoryDriver())
-    const runner = await browserRunner(game, { saves: store, profile: undefined })
-    expect(runner.offers.undo).toBe(true)
-    expect(runner.saves).toBe(store)
-    expect(typeof runner.state.seed).toBe('number')
-    const plain = await browserRunner(game, { history: false, saves: store, profile: undefined, start: { ...runner.state, seed: 7 } })
-    expect(plain.offers.undo).toBe(false)
-    expect(plain.state.seed).toBe(7)
-  })
-
-  it('starts a browser game with the settings in its profile', async () => {
-    const game: Game = {
-      ...fixture(),
-      settings: [
-        { id: 'hints', label: 'Hints', type: 'toggle', default: true },
-        { id: 'volume', label: 'Volume', type: 'range', min: 0, max: 10, affects: 'ui', default: 5 },
-      ],
-    }
-    const prof = profile(game, memoryDriver())
-    await prof.set('core:settings', { hints: false, volume: 2 })
-    const runner = await browserRunner(game, { saves: saves(game, memoryDriver()), profile: prof })
-    expect(runner.state.settings).toEqual({ hints: false })
-    expect(runner.settings()).toEqual({ hints: false, volume: 2 })
   })
 
   it('answers a save, a load and a missing store with a result, never a throw', async () => {

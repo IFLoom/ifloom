@@ -424,7 +424,8 @@ Calling `apply` and `view` by hand is how the engine works, and it's enough for 
 Saves need somewhere to live. A driver says where, and the engine has no default, so the game picks one. In a browser, `localStorageDriver()` is the simplest and `indexedDbDriver()` has more room. In a test, use `memoryDriver()`.
 
 ```ts
-import { createRunner, localStorageDriver, saves } from '@ifloom/engine'
+import { localStorageDriver } from '@ifloom/browser'
+import { createRunner, saves } from '@ifloom/engine'
 
 const runner = createRunner(game, startingState(game, { kv: { playerName: 'Sam' } }), {
   saves: saves(game, localStorageDriver()),
@@ -578,7 +579,7 @@ Then run `npm run dev`. In the Vue and Svelte templates, `src/main.ts` already m
 
 The people in the room, and the button to talk to each, are in `view.plugins.cast`. [Building UI for plugins](/docs/recipes/plugin-ui) draws them, and [Your own UI in any framework](/docs/guide/frameworks) draws the rest of the view.
 
-With React, [`mountGame`](/docs/react#mountgame) is a shortcut for all of this. `mountGame({ game, problems })` logs the loader's `problems` as warnings, makes a runner with [`browserRunner`](/docs/reference/runner#browserrunner) (50 steps of undo, saves in `localStorage`, an autosave each turn and a random seed), draws `GameShell` into `#root` and resolves to the runner. The other templates call `browserRunner` themselves.
+With React, [`mountGame`](/docs/react#mountgame) is a shortcut for all of this. `mountGame({ game, problems })` logs the loader's `problems` as warnings, makes a runner with [`browserRunner`](/docs/browser#browserrunner) (50 steps of undo, saves in `localStorage`, an autosave each turn and a random seed), draws `GameShell` into `#root` and resolves to the runner. The other templates call `browserRunner` themselves.
 
 Save to a slot of your own, and load it back. Slots are names you pick:
 

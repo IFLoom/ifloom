@@ -9,11 +9,11 @@
 
   function submit(event: SubmitEvent) {
     event.preventDefault()
-    runner.apply({ type: 'input', id: input.id, to: input.kind === 'number' ? Number(value) : value })
+    runner.apply({ type: 'input', id: input.id, to: input.type === 'number' ? Number(value) : value })
   }
 </script>
 
-{#if input.kind === 'choice'}
+{#if input.type === 'choice'}
   <div class="inputs" role="group" aria-label={input.label}>
     {#each input.options as option (option.value)}
       <button onclick={() => runner.apply({ type: 'input', id: input.id, to: option.value })}>{option.label}</button>
@@ -25,7 +25,7 @@
       {input.label}
       <input
         bind:value
-        type={input.kind === 'number' ? 'number' : 'text'}
+        type={input.type === 'number' ? 'number' : 'text'}
         maxlength={input.maxLength ?? undefined}
         min={input.min ?? undefined}
         max={input.max ?? undefined}

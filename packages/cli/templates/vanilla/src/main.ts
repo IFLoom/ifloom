@@ -118,7 +118,7 @@ function drawChoices(parent: HTMLElement, choices: RenderedChoice[]): void {
 
 /** One paragraph of a scene: narration, a spoken line, a picture, a letter. A sound beat is heard, not drawn. */
 function drawBeat(parent: HTMLElement, beat: SceneBeat): void {
-  switch (beat.kind) {
+  switch (beat.type) {
     case 'text':
       drawLine(add(parent, 'p'), beat.text, beat.spans)
       break
@@ -168,23 +168,23 @@ function drawLine(line: HTMLElement, text: string, spans: InlineSpan[] | undefin
     return line
   }
   for (const span of spans) {
-    if (span.kind === 'text') {
+    if (span.type === 'text') {
       line.append(span.text)
       continue
     }
-    if (span.kind === 'bold' || span.kind === 'italic') {
-      add(line, span.kind === 'bold' ? 'strong' : 'em', span.text)
+    if (span.type === 'bold' || span.type === 'italic') {
+      add(line, span.type === 'bold' ? 'strong' : 'em', span.text)
       continue
     }
-    if (span.kind === 'ui') {
+    if (span.type === 'ui') {
       // A UI piece (`[[ui:name|words]]`): this page has no components of its own, so it shows the words.
       line.append(span.text)
       continue
     }
-    const button = add(line, 'button', span.text, span.kind === 'tip' ? 'tip' : 'inline-action')
+    const button = add(line, 'button', span.text, span.type === 'tip' ? 'tip' : 'inline-action')
     button.type = 'button'
-    const note = span.kind === 'tip' ? span.tip : span.choice.disabled
-    if (span.kind === 'action') {
+    const note = span.type === 'tip' ? span.tip : span.choice.disabled
+    if (span.type === 'action') {
       // Greyed out but still focusable, so its reason can be read.
       if (span.choice.disabled) button.setAttribute('aria-disabled', 'true')
       else button.onclick = () => runner.apply(span.choice.command)
@@ -202,7 +202,7 @@ function drawLine(line: HTMLElement, text: string, spans: InlineSpan[] | undefin
 
 /** A value the game asks for, such as the player's name. What they enter goes back as an `input` command. */
 function drawInput(parent: HTMLElement, input: InputView): void {
-  if (input.kind === 'choice') {
+  if (input.type === 'choice') {
     for (const option of input.options) {
       add(parent, 'button', option.label).onclick = () => runner.apply({ type: 'input', id: input.id, to: option.value })
     }
@@ -211,7 +211,7 @@ function drawInput(parent: HTMLElement, input: InputView): void {
   const form = add(parent, 'form')
   const label = add(form, 'label', input.label)
   const field = add(label, 'input')
-  field.type = input.kind === 'number' ? 'number' : 'text'
+  field.type = input.type === 'number' ? 'number' : 'text'
   field.value = input.value === null ? '' : String(input.value)
   if (input.maxLength !== null) field.maxLength = input.maxLength
   if (input.min !== null) field.min = String(input.min)
@@ -219,7 +219,7 @@ function drawInput(parent: HTMLElement, input: InputView): void {
   add(form, 'button', 'OK').type = 'submit'
   form.onsubmit = (event) => {
     event.preventDefault()
-    runner.apply({ type: 'input', id: input.id, to: input.kind === 'number' ? Number(field.value) : field.value })
+    runner.apply({ type: 'input', id: input.id, to: input.type === 'number' ? Number(field.value) : field.value })
   }
 }
 
@@ -238,8 +238,8 @@ function drawMinigame(minigame: MinigameView): void {
 }
 
 /**
- * The panel content opened (`{ kind: 'panel', panel, with }`) over the story: a shop's counter, a job board.
- * Draw each one your game opens by its name, from what it was opened with; closing it sends `closePanel`.
+ * The panel open over the story, `view.panel`: a shop's counter, a job board. A `panel` effect opens one, and so does a scene's `panel` while it's open.
+ * Draw each one your game opens by its name, from what it was opened with. Closing it sends `closePanel`; a scene's own panel has no close button, since it stays while the scene is open.
  */
 function drawPanel(panel: OpenPanel): void {
   const dialog = add(root, 'section', '', 'panel')
@@ -250,7 +250,7 @@ function drawPanel(panel: OpenPanel): void {
   const box = add(dialog, 'div')
   add(box, 'h2', panel.panel)
   add(box, 'pre', JSON.stringify(panel.with, null, 2))
-  add(box, 'button', 'Close').onclick = () => runner.apply({ type: 'closePanel' })
+  if (!panel.scene) add(box, 'button', 'Close').onclick = () => runner.apply({ type: 'closePanel' })
 }
 
 runner.subscribe(() => draw(runner.view()))

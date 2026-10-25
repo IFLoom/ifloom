@@ -10,16 +10,16 @@
   let open: number | null = $state(null)
 
   function press(span: InlineSpan, at: number) {
-    if (span.kind === 'action' && !span.choice.disabled) runner.apply(span.choice.command)
+    if (span.type === 'action' && !span.choice.disabled) runner.apply(span.choice.command)
     else open = open === at ? null : at
   }
-  const note = (span: InlineSpan) => (span.kind === 'tip' ? span.tip : span.kind === 'action' ? span.choice.disabled : undefined)
+  const note = (span: InlineSpan) => (span.type === 'tip' ? span.tip : span.type === 'action' ? span.choice.disabled : undefined)
 </script>
 
-{#if !spans}{text}{:else}{#each spans as span, at (at)}{#if span.kind === 'text'}{span.text}{:else if span.kind === 'bold'}<strong>{span.text}</strong>{:else if span.kind === 'italic'}<em>{span.text}</em>{:else if span.kind === 'ui'}{span.text}{:else}<button
+{#if !spans}{text}{:else}{#each spans as span, at (at)}{#if span.type === 'text'}{span.text}{:else if span.type === 'bold'}<strong>{span.text}</strong>{:else if span.type === 'italic'}<em>{span.text}</em>{:else if span.type === 'ui'}{span.text}{:else}<button
         type="button"
-        class={span.kind === 'tip' ? 'tip' : 'inline-action'}
-        aria-disabled={span.kind === 'action' && span.choice.disabled ? 'true' : undefined}
+        class={span.type === 'tip' ? 'tip' : 'inline-action'}
+        aria-disabled={span.type === 'action' && span.choice.disabled ? 'true' : undefined}
         aria-describedby={note(span) ? `${id}-${at}` : undefined}
         aria-expanded={note(span) ? open === at : undefined}
         onclick={() => press(span, at)}>{span.text}</button

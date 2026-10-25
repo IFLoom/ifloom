@@ -77,7 +77,7 @@ export function __camel__(): DefinedPlugin<__Pascal__State, __Pascal__View> {
     }),
     references: {
       // The entry a condition, effect or command names, for the content checker.
-      calls: (_kind, _name, args) => (entryId(args) === '' ? [] : [{ entry: entryId(args), plugin: ID, list: 'entries', noun: 'entry' }]),
+      calls: (_table, _name, args) => (entryId(args) === '' ? [] : [{ entry: entryId(args), plugin: ID, list: 'entries', noun: 'entry' }]),
     },
     check: (game) => {
       const problems: PluginProblem[] = []

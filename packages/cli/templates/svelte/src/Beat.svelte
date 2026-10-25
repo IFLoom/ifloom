@@ -6,15 +6,15 @@
   let { beat }: { beat: SceneBeat } = $props()
 </script>
 
-{#if beat.kind === 'text'}
+{#if beat.type === 'text'}
   <p><Line text={beat.text} spans={beat.spans} /></p>
-{:else if beat.kind === 'mono'}
+{:else if beat.type === 'mono'}
   <p class="beat-mono">{beat.text}</p>
-{:else if beat.kind === 'say'}
+{:else if beat.type === 'say'}
   <p class="beat-say" data-who={beat.who}><Line text={beat.text} spans={beat.spans} /></p>
-{:else if beat.kind === 'image'}
+{:else if beat.type === 'image'}
   <img class="beat-image" src={beat.src} alt={beat.alt ?? ''} />
-{:else if beat.kind === 'video'}
+{:else if beat.type === 'video'}
   <video
     class="beat-image"
     src={beat.src}
@@ -25,11 +25,11 @@
     controls={beat.controls}
     playsinline
   ></video>
-{:else if beat.kind === 'mail'}
+{:else if beat.type === 'mail'}
   <div class="beat-prop">
     {#each beat.headers as line (line.key)}<p>{line.key}: {line.value}</p>{/each}
     <p>{beat.body}</p>
   </div>
-{:else if beat.kind === 'prop'}
+{:else if beat.type === 'prop'}
   <div class="beat-prop">{beat.text}</div>
 {/if}

@@ -11,24 +11,24 @@ const id = useId()
 const open = ref<number | null>(null)
 
 function press(span: InlineSpan, at: number) {
-  if (span.kind === 'action' && !span.choice.disabled) runner.apply(span.choice.command)
+  if (span.type === 'action' && !span.choice.disabled) runner.apply(span.choice.command)
   else open.value = open.value === at ? null : at
 }
-const note = (span: InlineSpan) => (span.kind === 'tip' ? span.tip : span.kind === 'action' ? span.choice.disabled : undefined)
+const note = (span: InlineSpan) => (span.type === 'tip' ? span.tip : span.type === 'action' ? span.choice.disabled : undefined)
 </script>
 
 <template>
   <template v-if="!spans">{{ text }}</template>
   <template v-for="(span, at) in spans" v-else :key="at">
-    <template v-if="span.kind === 'text'">{{ span.text }}</template>
-    <strong v-else-if="span.kind === 'bold'">{{ span.text }}</strong>
-    <em v-else-if="span.kind === 'italic'">{{ span.text }}</em>
-    <template v-else-if="span.kind === 'ui'">{{ span.text }}</template>
+    <template v-if="span.type === 'text'">{{ span.text }}</template>
+    <strong v-else-if="span.type === 'bold'">{{ span.text }}</strong>
+    <em v-else-if="span.type === 'italic'">{{ span.text }}</em>
+    <template v-else-if="span.type === 'ui'">{{ span.text }}</template>
     <template v-else>
       <button
         type="button"
-        :class="span.kind === 'tip' ? 'tip' : 'inline-action'"
-        :aria-disabled="span.kind === 'action' && span.choice.disabled ? 'true' : undefined"
+        :class="span.type === 'tip' ? 'tip' : 'inline-action'"
+        :aria-disabled="span.type === 'action' && span.choice.disabled ? 'true' : undefined"
         :aria-describedby="note(span) ? `${id}-${at}` : undefined"
         :aria-expanded="note(span) ? open === at : undefined"
         @click="press(span, at)"

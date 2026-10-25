@@ -20,7 +20,7 @@ Declare your storylines in your [content](/docs/reference/loader#content)'s `sto
 | Field | Meaning |
 |---|---|
 | `closedUntil` | A [turn](/docs/reference/state#turn). While `state.turn` is below it, the storyline is closed. [`{ closeStoryline: storyline, turns }`](/docs/reference/effects#closestoryline) sets it to the current turn plus `turns`. `null` means open. |
-| `kv` | The storyline's own kv store. Set its keys with the [`kv` effect](/docs/reference/effects#whose-key-it-is) and `of: 'storyline:<id>'`, as in `{ kv: 'visits', by: 1, of: 'storyline:ava' }`, read them with the [`kv` condition](/docs/reference/conditions#kv) and the same `of`, count them with [progress counters](/docs/reference/progress) and show them with the `{{kv:visits of=storyline:ava}}` token. |
+| `kv` | The storyline's own kv store. Set its keys with the [`kv` effect](/docs/reference/effects#whose-key-it-is) and `of: 'storyline:<id>'`, as in `{ kv: 'visits', by: 1, of: 'storyline:ava' }`, read them with the [`kv` condition](/docs/reference/conditions#kv) and the same `of`, add to them with the effect's `by`, and show them with the `{{kv:visits of=storyline:ava}}` token. |
 
 ```ts
 storylines: [{ id: 'ava', name: 'Ava' }]

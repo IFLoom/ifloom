@@ -292,8 +292,9 @@ export function renderScene(scene: DataScene, state: GameState, runtime: SceneRu
       ...(choice.cost ? { cost: choice.cost } : {}),
       ...(choice.command ? { command: commandOf(choice.command) } : {}),
       ...(choice.ui ? { ui: choice.ui } : {}),
-      // A once-a-day line pays nothing the second time, but the prose and
-      // the choice stay on screen — see `oncePerTurn()` for why that reads better.
+      // A once-a-turn line pays nothing the second time, but the prose and
+      // the choice stay on screen: capping the payout stops a farm without
+      // taking the line away, and it pays again next turn.
       effects: already
         ? buildEffects(state, game, choice.effects ?? []).filter((effect) => 'scene' in effect)
         : [...buildEffects(state, game, choice.effects ?? []), ...(choice.once ? runtime.spend(state, scene.id, choice.id) : []), ...remember],

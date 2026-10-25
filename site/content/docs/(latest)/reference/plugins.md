@@ -780,7 +780,7 @@ export const diary = definePlugin<Diary>({
 ```
 
 **Gotchas.**
-- `onCommand` only runs through [`apply`](/docs/reference/commands#apply) and `dispatch`, and only when the command took. It doesn't run on `start`, on a refused command, or under [`applyEffects`](/docs/reference/effects#applyeffects). A plugin whose view or conditions must be right on the first frame should work out what it needs from the state, as the [quests plugin](/docs/plugins/quests) does, rather than rely on `onCommand` having run.
+- `onCommand` only runs through [`apply`](/docs/reference/commands#apply), and only when the command took. It doesn't run on `start`, on a refused command, or under [`applyEffects`](/docs/reference/effects#applyeffects). A plugin whose view or conditions must be right on the first frame should work out what it needs from the state, as the [quests plugin](/docs/plugins/quests) does, rather than rely on `onCommand` having run.
 - Return the state you were given when nothing changes. Calling `set` with an equal slice still makes a new state object.
 
 ## The profile
@@ -814,7 +814,7 @@ view: (state, { profile }) => ({ reached: (profile as string[] | undefined) ?? [
 Only the view sees it, and only when a runner with a profile builds the view. The runner reads each plugin's namespace when it starts and follows every write after that, so `context.profile` is the value last read or written. When it changes, the runner's view becomes a new object, with that plugin's view built again, and the runner's listeners are told. See [The view cache](/docs/reference/runner#the-view-cache). Outside the runner, `view(state, game)` has no profile, and `context.profile` is `undefined`.
 
 **Gotchas.**
-- Only a runner with a `profile` asks it. [`apply`](/docs/reference/commands#apply), `dispatch` and [`replay`](/docs/reference/runner#replay) never do, so a replayed log doesn't award anything twice.
+- Only a runner with a `profile` asks it. [`apply`](/docs/reference/commands#apply) and [`replay`](/docs/reference/runner#replay) never do, so a replayed log doesn't award anything twice.
 - Conditions, effects, commands, hooks and the `profile` provider's own context never see `context.profile`. That's on purpose: a condition that read the profile could hold in one playthrough and not in a replay of it. Anything the story needs to branch on belongs in the plugin's state.
 - `context.profile` is frozen. Changing it throws in strict mode, and it would never reach the profile anyway. Return a new value from `profile` instead.
 - Right after a runner starts, before the profile has been read, the view has no profile yet. `await runner.settled()` waits for the first read.

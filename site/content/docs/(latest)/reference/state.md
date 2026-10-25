@@ -188,7 +188,7 @@ Save version 12 renamed it from `flags`, and an older save's flags load here.
 
 The engine writes some keys here itself, so don't use these prefixes for your own:
 
-- `turn:` keys, used by [`oncePerTurn()`](/docs/reference/progress#onceperturn) (a data-scene choice's `once` reads [`chosen`](#chosen) instead, since save version 18)
+- `turn:` keys, which a save from before version 18 used for a choice's `once` (it reads [`chosen`](#chosen) now, and loading such a save clears them)
 - `variants:<name>` keys, which count how often a set of [variants](/docs/reference/prose) has been drawn
 - `storylet:<name>` keys, which count how often a set of [storylets](/docs/reference/storylets) has been drawn from
 

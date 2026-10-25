@@ -16,8 +16,6 @@ See [Game state](/docs/reference/state).
 
 The player changes the game only through commands. The core has a few, such as `choose`, `action`, `leave`, `use` and `input`, and plugins add their own, such as the places plugin's `go('cafe')` and the cast's `talk('ava')`. `apply(state, game, command)` returns the next state, whether the command took (`ok`), and if not, why (`refused`). A refused command returns the state unchanged.
 
-`dispatch` is the same call, returning only the state. Use `apply` wherever the answer matters, because a refusal and a command that changed nothing leave identical states behind.
-
 See [Commands](/docs/reference/commands).
 
 ## Effects and conditions are data
@@ -115,7 +113,7 @@ A storyline is one thread of the story, such as a friendship with Ava. It has it
 
 The engine records which scenes the player has seen, and on which turn. That lets a storyline's stages come in order ("not until the scene before this one") and at a pace ("not until three turns after it").
 
-See [Storylines](/docs/reference/storylines) and [Progress and limits](/docs/reference/progress).
+See [Storylines](/docs/reference/storylines) and the recipe [A friendship in stages](/docs/recipes/friendship-stages).
 
 ## Notices, triggers and inputs
 

@@ -4,7 +4,7 @@ description: The second tutorial. Builds a small town game with a calendar, plac
 ---
 This is the second tutorial. [Your first story](/docs/guide/first-story) built a novel with no plugins. This one is for games with a calendar, places and people, and it builds a small one from nothing: a house, a high street, and a café that keeps hours. Ruth, the baker, works the café counter on weekdays. You can talk to her, and you can buy a coffee.
 
-The player carries a few coins and some energy, and the coffee spends one to buy the other. By the end you'll have a game, a starting state, a few commands played through `apply`, `dispatch` and `view`, and a runner driving it all with undo and autosave. The complete file is at the [bottom of the page](#the-whole-thing).
+The player carries a few coins and some energy, and the coffee spends one to buy the other. By the end you'll have a game, a starting state, a few commands played through `apply` and `view`, and a runner driving it all with undo and autosave. The complete file is at the [bottom of the page](#the-whole-thing).
 
 :::tip[Before you start]
 Follow [Installation](/docs/guide/installation) first. The game uses the engine, `@ifloom/engine`, and three plugins:
@@ -315,20 +315,20 @@ tried.reason // 'Finish this first.'
 
 A refused command leaves the state untouched, so `apply` is how you tell a refusal from a command that did nothing. `refused` is diagnostic text, because the button for that command in the view already carries the player-facing reason. `Finish this first.` is the engine's own line. A game can reword it, and every other line the engine says, in the [strings table](/docs/reference/strings).
 
-When you don't need to know, `dispatch` returns just the next state:
+When you don't need to know, take the next state from what `apply` returns:
 
 ```ts
-import { dispatch, statValue } from '@ifloom/engine'
+import { apply, statValue } from '@ifloom/engine'
 import { sleep } from '@ifloom/plugin-calendar'
 import { go } from '@ifloom/plugin-places'
 import { character, talk } from '@ifloom/plugin-cast'
 
-state = dispatch(state, game, { type: 'choose', id: 'bed' })
-state = dispatch(state, game, sleep())                       // Tuesday morning: turn 1
-state = dispatch(state, game, go('high-street'))
-state = dispatch(state, game, go('cafe'))
-state = dispatch(state, game, talk('ruth'))
-state = dispatch(state, game, { type: 'choose', id: 'chat' })
+state = apply(state, game, { type: 'choose', id: 'bed' }).state
+state = apply(state, game, sleep()).state                       // Tuesday morning: turn 1
+state = apply(state, game, go('high-street')).state
+state = apply(state, game, go('cafe')).state
+state = apply(state, game, talk('ruth')).state
+state = apply(state, game, { type: 'choose', id: 'chat' }).state
 
 statValue(state, game, 'friendship', character('ruth')) // 5
 ```
@@ -338,7 +338,7 @@ statValue(state, game, 'friendship', character('ruth')) // 5
 Try the same choice twice in one day and it is refused:
 
 ```ts
-state = dispatch(state, game, talk('ruth'))
+state = apply(state, game, talk('ruth')).state
 apply(state, game, { type: 'choose', id: 'chat' }).reason // 'She has a queue.'
 ```
 
@@ -366,14 +366,14 @@ screen.actions                // the room's buttons, then the game's, each with 
 screen.statsById.coins.text   // '5c'
 ```
 
-Every button in the view carries the `command` it sends. Your UI's whole loop is to render the view, and when a button is pressed, `dispatch` its command and render again.
+Every button in the view carries the `command` it sends. Your UI's whole loop is to render the view, and when a button is pressed, `apply` its command and render again.
 
 ```ts
 import type { Command } from '@ifloom/engine'
 
 // `render` is your UI: React, Svelte, plain DOM, a terminal.
 function press(choice: { command: Command }) {
-  state = dispatch(state, game, choice.command)
+  state = apply(state, game, choice.command).state
   render(view(state, game))
 }
 ```
@@ -385,7 +385,7 @@ The body arrives already split into `beats` (narration, spoken lines and picture
 Leave the counter and the room comes back. The places plugin puts its body on screen while no scene is open, with its buttons: the café's coffee, then the game's Wait a while and Go to bed. The coffee button carries its price, written for the player, before anything is spent:
 
 ```ts
-state = dispatch(state, game, { type: 'choose', id: 'bye' })
+state = apply(state, game, { type: 'choose', id: 'bye' }).state
 const room = view(state, game)
 room.scene.body                // 'Steam on the windows.\n\nRuth is behind the counter, flour to the elbows.'
 room.actions.map((a) => a.label) // ['Buy a coffee', 'Wait a while', 'Go to bed']
@@ -397,7 +397,7 @@ room.actions[2].disabled         // 'Too early.'
 The stats in the price are the engine's, and the note is the calendar's, which prices every button that passes time. Bed is greyed out with the calendar's reason until the evening. Buying a coffee costs three coins and a period, and five coins don't stretch to a second one. A button sends its action by id, and a room's action has the places plugin's id in front, `places/coffee`:
 
 ```ts
-state = dispatch(state, game, { type: 'action', id: 'places/coffee' }) // afternoon
+state = apply(state, game, { type: 'action', id: 'places/coffee' }).state // afternoon
 state.stats                                                           // { coins: 2, energy: 70 }
 apply(state, game, { type: 'action', id: 'places/coffee' }).reason   // 'Not enough on you.'
 ```
@@ -405,12 +405,12 @@ apply(state, game, { type: 'action', id: 'places/coffee' }).reason   // 'Not eno
 Wait another period and it's evening. Ruth has gone for the day and the café has shut.
 
 ```ts
-state = dispatch(state, game, { type: 'action', id: 'wait' })   // evening
+state = apply(state, game, { type: 'action', id: 'wait' }).state   // evening
 view(state, game).when       // 'Day 2 · Tuesday evening · The corner café'
 ;(view(state, game).plugins.cast as CastView).present // []
 view(state, game).scene.body // 'Steam on the windows.\n\nThe counter is empty.'
 
-state = dispatch(state, game, go('high-street'))
+state = apply(state, game, go('high-street')).state
 apply(state, game, go('cafe')).reason
 // 'Closed. Opens tomorrow morning.'
 ```
@@ -602,7 +602,6 @@ import {
   apply,
   createRunner,
   describeProblem,
-  dispatch,
   loadGame,
   memoryDriver,
   saves,
@@ -745,11 +744,11 @@ for (const problem of problems) console.warn(describeProblem(problem))
 console.assert(problems.length === 0)
 
 let state = startingState(game, { kv: { playerName: 'Sam' } })
-state = dispatch(state, game, { type: 'choose', id: 'bed' })
-state = dispatch(state, game, sleep())
-state = dispatch(state, game, go('high-street'))
-state = dispatch(state, game, go('cafe'))
-state = dispatch(state, game, talk('ruth'))
+state = apply(state, game, { type: 'choose', id: 'bed' }).state
+state = apply(state, game, sleep()).state
+state = apply(state, game, go('high-street')).state
+state = apply(state, game, go('cafe')).state
+state = apply(state, game, talk('ruth')).state
 
 const screen = view(state, game)
 console.log(screen.scene.choices.map((choice) => choice.label))
@@ -758,13 +757,13 @@ console.log(screen.scene.choices.map((choice) => choice.label))
 const chat = apply(state, game, { type: 'choose', id: 'chat' })
 console.log(chat.ok, statValue(chat.state, game, 'friendship', character('ruth'))) // true 5
 
-state = dispatch(chat.state, game, talk('ruth'))
-state = dispatch(state, game, { type: 'choose', id: 'bye' })
-state = dispatch(state, game, { type: 'action', id: 'places/coffee' })
+state = apply(chat.state, game, talk('ruth')).state
+state = apply(state, game, { type: 'choose', id: 'bye' }).state
+state = apply(state, game, { type: 'action', id: 'places/coffee' }).state
 console.log(state.stats) // { coins: 2, energy: 70 }
 console.log(apply(state, game, { type: 'action', id: 'places/coffee' }).reason) // 'Not enough on you.'
 
-// Now through a runner, as a UI would. In a browser, use localStorageDriver() or indexedDbDriver().
+// Now through a runner, as a UI would. In a browser, use localStorageDriver() or indexedDbDriver() from @ifloom/browser.
 const runner = createRunner(game, startingState(game, { kv: { playerName: 'Sam' } }), {
   saves: saves(game, memoryDriver()),
   history: { stopAtNewTurn: true },

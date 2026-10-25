@@ -334,6 +334,9 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Removed
 
+- **Breaking:** the storyline progress helpers are gone: `count`, `counted`, `bumped`, `stageAt`, `stageNext`, `stageOpen`, `stageDone`, `stagesDone`, `turnsSince` and the `Stages` and `Stage` types. Content already does all of it: a counter is the `kv` effect and condition with `of: 'storyline:<id>'`, a ladder is blocks with `when`, and stages in order come from the [quests plugin](/docs/plugins/quests) or `{ seen }` and `{ since }` conditions. The new recipe [A friendship in stages](/docs/recipes/friendship-stages) shows each, and the old Progress and limits page sends you there.
+- **Breaking:** `oncePerTurn`, `markUsed`, `usedBlock` and `usedThisTurn` are gone. Give a choice or an action `once: { per: 'turn', reason }` instead, which reads the save's `chosen` record and writes nothing to the kv store.
+- **Breaking:** `dispatch` is gone. Use [`apply`](/docs/reference/commands#apply)`(state, game, command).state` for the same thing.
 - The achievements plugin's `ProgressValue` type and `progressValue` function: a progress value is an [`Amount`](/docs/reference/amounts), read with `amountOf`.
 - **Breaking:** a plugin's `entities` provider. A plugin brings entities in its [`content`](/docs/reference/plugins#kinds-and-entities), and the places and shop plugins read theirs from their traits.
 - **Breaking:** the `mono`, `mail` and `prop` beats, an image beat's `rotate`, `MailHeader`, `PropFace` and the React UI's `ui.mailHeader` word.

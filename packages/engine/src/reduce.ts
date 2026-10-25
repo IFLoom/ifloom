@@ -66,8 +66,8 @@ function after(before: GameState, ran: GameState, game: Game): GameState {
 }
 
 /**
- * Run a command and say whether it took. Prefer this over `dispatch` anywhere
- * the answer matters — a refusal and a no-op look identical in the state alone.
+ * Run a command and say whether it took: the next state, and why it was
+ * refused when it was. A refusal leaves the state as it was.
  */
 export function apply(state: GameState | null, game: Game, ref: CommandRef): Applied {
   const command = commandOf(ref)
@@ -100,10 +100,6 @@ export function apply(state: GameState | null, game: Game, ref: CommandRef): App
  */
 function startedOver(current: GameState, game: Game): GameState {
   return startingState(game, { seed: roll(2 ** 31, 'newGame', current.seed, current.turn), settings: current.settings })
-}
-
-export function dispatch(state: GameState | null, game: Game, command: CommandRef): GameState {
-  return apply(state, game, command).state
 }
 
 function run(current: GameState, game: Game, command: Command): GameState {

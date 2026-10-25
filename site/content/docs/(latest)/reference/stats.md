@@ -417,7 +417,7 @@ When a command takes one of the player's stats up one or more levels, and the st
 - `{level}` is the level the stat ends the command at. A command that jumps two levels raises one notice, for the higher.
 - Only the player's stats raise notices. An entity stat's levels show in the view and in conditions, but a staff member going up a level says nothing. Write a [trigger](/docs/reference/triggers) on a `{ level, of }` condition if you want one.
 - Going down a level raises nothing.
-- It's raised when a command runs through [`apply`](/docs/reference/commands#apply) or `dispatch`. [`applyEffects`](/docs/reference/effects#applyeffects) on its own doesn't raise it.
+- It's raised when a command runs through [`apply`](/docs/reference/commands#apply). [`applyEffects`](/docs/reference/effects#applyeffects) on its own doesn't raise it.
 
 ### In the React UI
 

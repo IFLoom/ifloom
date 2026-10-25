@@ -13,6 +13,8 @@ const MOVED = {
   'guide/minigames': 'recipes/minigames',
   'guide/transitions': 'recipes/transitions',
   'guide/inline-actions': 'recipes/inline-actions',
+  // The progress helpers became a recipe.
+  'reference/progress': 'recipes/friendship-stages',
   // The browser packages left the engine's reference.
   'reference/browser': 'browser',
   'reference/audio-player': 'browser/audio-player',

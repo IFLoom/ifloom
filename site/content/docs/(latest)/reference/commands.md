@@ -1,11 +1,11 @@
 ---
 title: "Commands"
-description: "apply, dispatch and startingState, every command the player can send, and what each one refuses with."
+description: "apply and startingState, every command the player can send, and what each one refuses with."
 ---
 A command is one thing the player does, such as picking a choice, doing an action or a plugin's own, such as using a thing in the inventory. Your UI sends commands, and the engine returns the next [state](/docs/reference/state). Running a command is a pure function, so the same state, game and command always give the same result.
 
 ```ts
-import { apply, dispatch, startingState, type Command } from '@ifloom/engine'
+import { apply, startingState, type Command } from '@ifloom/engine'
 ```
 
 ## apply
@@ -64,14 +64,6 @@ flowchart LR
 ```
 
 Locks are checked before the game's own handler, so a lock can stop a command the game handles itself.
-
-## dispatch
-
-```ts
-function dispatch(state: GameState | null, game: Game, command: CommandRef): GameState
-```
-
-Returns `apply(...).state`. Use it where a refusal needs no handling, such as replaying a known-good list of commands in a test.
 
 ## startingState
 

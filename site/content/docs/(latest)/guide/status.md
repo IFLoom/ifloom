@@ -31,6 +31,6 @@ Everything else can still change, including function names, option names and the
 
 | Today | Planned |
 |---|---|
-| `oncePerTurn` and the once-per-turn helpers, and a choice's `once` | `once` and `cooldown` |
+| A choice's and an action's `once` | `once` and `cooldown` |
 
 The reference pages use the names exported today.

@@ -28,7 +28,6 @@ When a choice is greyed out or a line is missing and you can't see why, [`explai
 
 - [Data scenes](/docs/reference/scenes#datascene): a block's `when`, a choice's `when`, `blocked` and `labels`, and a `variants` block's `gate`.
 - [Actions](/docs/reference/actions#actiondef): `when` and `blocked`.
-- [Stages](/docs/reference/progress#stages): `needs`.
 - [Locks](/docs/reference/locks), [triggers](/docs/reference/triggers) and [inputs](/docs/reference/inputs): `when`.
 - A plugin's content. The [places plugin](/docs/plugins/places#the-location-trait) uses them for a room's `blocked`, a body block's `when` and `gate`, and each room action's `when` and `blocked`. The [cast](/docs/plugins/cast#person-1) uses them for a character's `schedule`, `talk`, `call` and `met`, with `'$'` standing for that character.
 

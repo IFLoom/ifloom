@@ -102,7 +102,7 @@ export { STRINGS, stringOf } from './strings.ts'
 // Running the game
 export type { Result } from './result.ts'
 export type { Applied } from './reduce.ts'
-export { apply, applyEffects, dispatch } from './reduce.ts'
+export { apply, applyEffects } from './reduce.ts'
 export type { FillPart, MigrationTools, StartOptions } from './intake.ts'
 export { loadState, startingState } from './intake.ts'
 
@@ -183,10 +183,7 @@ export { inputById, inputRefusal, inputValue } from './inputs.ts'
 // Storylines
 export { emptyStoryline, storylineOf, storylineOpen } from './storylines.ts'
 
-// Progress, limits, randomness
-export type { Stage, Stages } from './progress.ts'
-export { bumped, count, counted, turnsSince, stageAt, stageDone, stageNext, stageOpen, stagesDone } from './progress.ts'
-export { markUsed, oncePerTurn, usedBlock, usedThisTurn } from './once.ts'
+// Randomness
 export { chance, hash, pick, roll, weighted } from './random.ts'
 
 // Loading, checking and saving

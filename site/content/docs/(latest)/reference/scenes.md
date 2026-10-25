@@ -403,7 +403,7 @@ A choice is a [`ButtonDef`](/docs/reference/actions#buttondef), the same fields 
 
 **Gotchas.**
 - `per: 'turn'` reads the choice's `last` turn in [`chosen`](/docs/reference/state#chosen), which picking any choice records, so it writes nothing to the kv store. The turn ending clears it, through a [`turn`](/docs/reference/effects#turn) effect or the calendar's sleep. Leaving the scene doesn't. A choice that ends the turn is dated the turn it was picked in, so it's free again on the next.
-- For a once-a-turn limit outside a `DataScene`, see [`oncePerTurn`](/docs/reference/progress#onceperturn).
+- An [action](/docs/reference/actions#actiondef) takes the same `once`. For counters and stages paced over turns, see [A friendship in stages](/docs/recipes/friendship-stages).
 
 ### panel
 

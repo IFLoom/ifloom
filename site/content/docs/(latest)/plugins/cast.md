@@ -746,4 +746,4 @@ The places in `cast/at` aren't checked. An `image` the game gives is listed in t
 
 ## See it in an example
 
-Small Town: Ava and Sam are the `cast.person()` entities in [`examples/showcase/src/world/cast.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/cast.ts), with schedules, `talk` options and, for Ava, a `call`. The café's body and stage use `cast.here('ava')`.
+Small Town: Ava and Sam are the `cast.person()` entities in [`examples/showcase/src/world/cast.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/cast.ts), with schedules, `talk` options and, for Ava, a `call`. The café's body and layered picture use `cast.here('ava')`.

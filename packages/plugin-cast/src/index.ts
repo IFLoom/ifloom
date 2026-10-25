@@ -62,7 +62,7 @@ export type Person = {
   fullName?: string
   /** For prose that needs them: `{ they: 'she', them: 'her', … }`. The engine gives them no meaning. */
   pronouns?: Record<string, string>
-  /** Where they are when no schedule entry holds. Offstage — nowhere — if left out. */
+  /** Where they are when no schedule entry holds. Away (`AWAY`), which is nowhere on the map, if left out. */
   home?: string
   /** Where they are while each `when` holds; the first that holds wins. `'$'` is them. */
   schedule?: { location: string; when?: Condition }[]

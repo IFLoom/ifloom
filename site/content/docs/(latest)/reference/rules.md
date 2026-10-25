@@ -182,7 +182,7 @@ type TurnContext = CustomContext & {
 
 **Does:** returns the next state. `context.apply` applies effects as content would, in order, each on the state the one before it left, and returns the state they leave. It takes any [`EffectRef`](/docs/reference/custom#effects), so a plugin's effect in [short](/docs/reference/custom#plugincall) or one of the game's own, `{ 'game/payRent': {} }`, works too. `context.before` is the state the turn ended on, from before the counter moved on and before `resets` were written, so it can still read a once-a-day key such as `before.kv.hadCoffee` that `resets` has just put back. The rest of the context is a [called function's](/docs/reference/custom#customcontext): the game, `query`, `value` and a seeded `roll`.
 
-Ending a turn doesn't touch any stat by itself, so a game whose energy fills up overnight says so here with a [`stat`](/docs/reference/effects#setting-a-stat) effect that sets it `to` a value. It can also change what isn't an effect, such as a stage of the story ending, by returning a changed state.
+Ending a turn doesn't touch any stat by itself, so a game whose energy fills up overnight says so here with a [`stat`](/docs/reference/effects#setting-a-stat) effect that sets it `to` a value. It can also change what isn't an effect, such as a part of the story ending, by returning a changed state.
 
 **Without it:** nothing, and every stat stays as it was.
 

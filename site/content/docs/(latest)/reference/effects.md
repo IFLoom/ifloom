@@ -447,7 +447,7 @@ The [content checker](/docs/reference/checks#in-an-effect) reports dice it can't
 
 ## Computed effects
 
-Most effects are fixed data. When one has to be worked out from the state, such as "one more than the counter is now" or "the next stage of this ladder", declare an effect in the game's [`rules`](/docs/reference/rules) and call it with `game/` in front:
+Most effects are fixed data. When one has to be worked out from the state, such as "one more than the counter is now" or "the next rung of this ladder", declare an effect in the game's [`rules`](/docs/reference/rules) and call it with `game/` in front:
 
 ```ts
 type CustomEffect = (state: GameState, args: PluginArgs, context: CustomContext) => Effect[]

@@ -113,11 +113,12 @@ export type CreatedEntity = {
   kv?: Record<string, KvValue>
 }
 
-/** The fields `create` takes besides its kind or `like`. */
+/** The fields `create` takes besides its kind. */
 type CreateFields = {
-  kind: 'create'
-  /** What it is given. */
-  entity?: CreatedEntity
+  /** Another entity of the same kind it reads what it isn't given from. */
+  like?: string
+  /** What it is made with: its id, name, description, picture, tags, traits, stats and kv. */
+  with?: CreatedEntity
   /** Who holds it once made: a holder for one, or how many each holds. Nobody if left out. */
   at?: Placement
 }
@@ -155,20 +156,22 @@ export type EntitiesShape = {
   }
   effects: {
     /**
-     * A new entity of a kind, or `like` another, which it reads what it isn't
-     * given from (and whose kind it is, if `of` is left out). Its `id` is the
-     * next free number (`#1`, `#2`) if left out, never reused; an id already
-     * there is left as it is. `at` gives it to a holder.
+     * A new entity of a kind, made `with` what it is given, and `like`
+     * another of the kind, which it reads what it isn't given from. Its `id`
+     * is the next free number (`#1`, `#2`) if left out, never reused; an id
+     * already there is left as it is. `at` gives it to a holder:
+     * `{ create: 'photo', with: { name: 'Ava at work' }, at: 'player' }`.
      */
-    create: (CreateFields & { of: string; like?: string }) | (CreateFields & { of?: string; like: string })
-    /** Take an entity out of the game: `{ kind: 'remove', entity: 'staff:ana' }`. */
-    remove: { kind: 'remove'; entity: string }
+    create: { create: string } & CreateFields
+    /** Take an entity out of the game: `{ remove: 'staff:ana' }`. */
+    remove: { remove: string }
     /**
      * The same effects for every entity of a kind (where `where` holds), one
-     * after another, with `'$'` as the one each time: wages, upkeep, a bad week.
-     * `at`, `tag` and `trait` narrow it as a `Select` does: only what a holder holds.
+     * after another, with `'$'` as the one each time: wages, upkeep, a bad
+     * week. `{ each: 'staff', effects }`, or a `Select` for only what a holder
+     * holds, a tag or a trait: `{ each: { at: 'you', tag: 'fruit' }, effects }`.
      */
-    each: { kind: 'each'; effects: EffectRef[] } & Select
+    each: { each: string | Select; where?: Condition; effects: EffectRef[] }
   }
   game: {
     /** The kinds of thing the game keeps several of, each with its own stats. */
@@ -272,9 +275,15 @@ function entityCount(state: GameState, condition: EntitiesShape['conditions']['e
   return bounded(condition) ? heldTotal(state, game, condition.entity) : undefined
 }
 
-/** The kind a `create` makes: its `of`, else its `like`'s. */
+/** The kind a `create` makes. */
 function createdKind(effect: EntitiesShape['effects']['create']): string | undefined {
-  return effect.of ?? (effect.like !== undefined ? parseRef(effect.like)?.kind : undefined)
+  return typeof effect.create === 'string' ? effect.create : undefined
+}
+
+/** What an `each` runs over, as a `Select`, with its `where`. */
+function eachSelect(effect: EntitiesShape['effects']['each']): Select {
+  const select = typeof effect.each === 'string' ? { of: effect.each } : { ...effect.each }
+  return effect.where !== undefined ? { ...select, where: effect.where } : select
 }
 
 /** The kinds the game declares, with the ones its plugins bring. */
@@ -395,7 +404,7 @@ export const entities = defineFeature<EntitiesShape>({
       apply: (state, effect, game) => {
         const kind = createdKind(effect)
         if (kind === undefined) return state
-        const given: CreatedFields = { ...effect.entity, like: effect.like }
+        const given: CreatedFields = { ...effect.with, like: effect.like }
         // Made, then given to whoever `at` names.
         const made = (from: GameState, id: string) => {
           const ref = `${kind}:${id}`
@@ -405,7 +414,7 @@ export const entities = defineFeature<EntitiesShape>({
           return next
         }
         // A given id is used as it is, unless it is taken, or a whole number that would sort first.
-        const id = effect.entity?.id
+        const id = effect.with?.id
         if (id !== undefined) {
           const ref = `${kind}:${id}`
           if (hasEntity(state, game, ref) || /^\d+$/.test(id)) return state
@@ -424,45 +433,46 @@ export const entities = defineFeature<EntitiesShape>({
         const kind = createdKind(effect)
         return [
           ...(kind !== undefined ? [{ kind }] : []),
-          ...(effect.like !== undefined ? [{ like: effect.like, of: effect.of }] : []),
-          ...(kind !== undefined ? Object.keys(effect.entity?.stats ?? {}).map((stat) => ({ stat, starts: kind })) : []),
+          ...(effect.like !== undefined ? [{ like: effect.like, of: kind }] : []),
+          ...(kind !== undefined ? Object.keys(effect.with?.stats ?? {}).map((stat) => ({ stat, starts: kind })) : []),
           ...Object.keys(placementCounts(effect.at)).map((holder) => ({ holder })),
-          ...Object.keys(effect.entity?.traits ?? {}).map((trait) => ({ trait })),
-          ...(effect.entity?.image !== undefined ? [{ picture: effect.entity.image }] : []),
+          ...Object.keys(effect.with?.traits ?? {}).map((trait) => ({ trait })),
+          ...(effect.with?.image !== undefined ? [{ picture: effect.with.image }] : []),
         ]
       },
     },
     remove: {
       apply: (state, effect, game) => {
-        if (!hasEntity(state, game, effect.entity)) return state
+        const ref = effect.remove
+        if (!hasEntity(state, game, ref)) return state
         // What it held goes to whoever held it; nobody holds it any more. A protagonist removed is played no more.
-        const released = releaseHeld(state, game, effect.entity)
-        const gone = dropRecord(released.you === effect.entity ? { ...released, you: null } : released, effect.entity)
+        const released = releaseHeld(state, game, ref)
+        const gone = dropRecord(released.you === ref ? { ...released, you: null } : released, ref)
         // A declared one stays gone: nothing in the save says it was ever there otherwise.
-        return entityDef(game, effect.entity) && !(gone.removed ?? []).includes(effect.entity)
-          ? { ...gone, removed: [...(gone.removed ?? []), effect.entity] }
-          : gone
+        return entityDef(game, ref) && !(gone.removed ?? []).includes(ref) ? { ...gone, removed: [...(gone.removed ?? []), ref] } : gone
       },
-      references: (effect) => ofKind(effect.entity),
+      references: (effect) => ofKind(effect.remove),
     },
     each: {
       apply: (state, effect, game, cx) => {
         // Who it runs for is decided before it starts: one created on the way is not visited, one removed is skipped.
         let next = state
-        for (const ref of selected(state, game, { ...effect, where: undefined }, cx)) {
+        const select = eachSelect(effect)
+        for (const ref of selected(state, game, { ...select, where: undefined }, cx)) {
           if (!hasEntity(next, game, ref)) continue
-          if (effect.where && !cx.holds(next, bindCurrent(effect.where, ref), game)) continue
+          if (select.where && !cx.holds(next, bindCurrent(select.where, ref), game)) continue
           next = cx.runEffects(next, game, cx.buildEffects(next, game, bindCurrent(effect.effects, ref)), cx.ending)
         }
         return next
       },
       references: (effect) => {
         // Inside, `'$'` is one of the kind it runs over; left as `'$'` when it runs over more than one kind.
+        const select = eachSelect(effect)
         const bind = <T extends Condition | readonly EffectRef[] | undefined>(value: T): T =>
-          effect.of !== undefined ? bindCurrent(value, anyOf(effect.of)) : value
+          select.of !== undefined ? bindCurrent(value, anyOf(select.of)) : value
         return [
-          ...selectReferences({ ...effect, where: undefined }),
-          { within: `in each ${eachLabel(effect)}`, refs: [{ when: bind(effect.where) }, { effects: bind(effect.effects) }] },
+          ...selectReferences({ ...select, where: undefined }),
+          { within: `in each ${eachLabel(select)}`, refs: [{ when: bind(select.where) }, { effects: bind(effect.effects) }] },
         ]
       },
     },

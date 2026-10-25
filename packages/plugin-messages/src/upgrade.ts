@@ -16,7 +16,7 @@ const renamed = (args: unknown, names: Record<string, string>): unknown =>
 const COMMANDS_6: Record<string, Record<string, string>> = { 'messages/read': { thread: 'id' } }
 
 /** The version of what content writes for this plugin. */
-export const CONTENT_VERSION = 7
+export const CONTENT_VERSION = 21
 
 export const contentMigrations: Record<number, ContentStep> = {
   // 5 → 6: a command's one target is `id`.
@@ -28,6 +28,9 @@ export const contentMigrations: Record<number, ContentStep> = {
   // (An app's badge is the devices plugin's to rewrite.)
   6: (pack, tools) =>
     tools.words(pack, (text) => text.replace(/\{\{v:messages\/unread-([A-Za-z0-9_-]+)\}\}/g, (_match, id: string) => `{{v:messages/unread channel=${id}}}`)),
+  // 20 → 21: effects are told apart by their key, as conditions are: `{ stat: 'coins', by: -2 }`, never
+  // `{ kind: 'stat', … }`. This plugin's content holds effects, so they are keyed here as well as by the engine.
+  20: (pack, tools) => tools.effects(pack),
 }
 
 /** The version of this plugin's commands. */

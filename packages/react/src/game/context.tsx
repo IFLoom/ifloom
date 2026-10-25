@@ -7,7 +7,7 @@ import { useTicking } from './timers.tsx'
 
 /**
  * A game's own component for a scene panel, an app's panel section or a panel
- * content opens (`{ kind: 'panel' }`): it gets the data the game's custom panel
+ * content opens (`{ panel }`): it gets the data the game's custom panel
  * returned, or what the panel was opened with.
  */
 export type PanelComponent = ComponentType<{ data: unknown }>

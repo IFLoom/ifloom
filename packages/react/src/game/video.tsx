@@ -19,7 +19,7 @@ export type VideoProps = Omit<ComponentProps<'video'>, 'src' | 'poster' | 'autoP
 
 /** A range setting's value as 0 to 1 from its min to its max, as the audio player reads it. */
 function rangeGain(setting: SettingView | undefined, value: unknown): number {
-  if (setting?.kind !== 'range') return 1
+  if (setting?.type !== 'range') return 1
   const min = setting.min ?? 0
   const max = setting.max ?? 1
   const at = typeof value === 'number' ? value : Number(setting.default)

@@ -6,12 +6,12 @@
  */
 import { commandOf, customCall, customValue, hasCustomEffect, customCondition, shortFormProblem, type CommandRef, type EffectRef } from './custom.ts'
 import type { Game } from './game.ts'
-import { absentPartner, pluginArgProblems, pluginById, pluginCommand, pluginName, type Plugin } from './plugin.ts'
+import { absentPartner, pluginArgProblems, pluginById, pluginCommand, pluginName, type CallTable, type Plugin } from './plugin.ts'
 import { commandReferences, conditionReferences, effectReferences, type Reference } from './references.ts'
 import { artSrc } from './sceneBody.ts'
 import { carryChecks, featureChecks, markupChecks, probeChecks, resolverSteps, type FeatureList } from './features/registry.ts'
 import type { FeatureCheckTools, ResolveTools, Resolvers } from './features/feature.ts'
-import { COMMAND_KINDS, conditionKinds, EFFECT_KINDS, featureContext } from './core.ts'
+import { COMMAND_TYPES, conditionKeys, effectKeys, featureContext } from './core.ts'
 import type { Condition, GameState } from './types.ts'
 
 /** Something wrong with a game's content: the pack it came from (`game` for a hand-built game), where, and what. */
@@ -22,7 +22,7 @@ export type Problem = {
 }
 
 /** A file the game names, as the page asks for it (after `artSrc` or `audioSrc`), with where it is named. */
-export type FileRef = { path: string; kind: 'picture' | 'video' | 'audio'; where: string }
+export type FileRef = { path: string; type: 'picture' | 'video' | 'audio'; where: string }
 
 /** A state to render every scene against, named for the problems it finds. */
 export type Probe = { name: string; state: GameState }
@@ -62,16 +62,16 @@ export function checkGame(game: Game, options: { probes?: readonly Probe[] } = {
 function shapeProblems(condition: Condition): string[] {
   const short = shortFormProblem(condition)
   if (short) return [short]
-  const kinds = conditionKinds(condition)
+  const kinds = conditionKeys(condition)
   if (kinds.length === 1) return []
   const keys = Object.keys(condition)
   if (!kinds.length && customCall(condition)) return []
   if (!kinds.length && typeof (condition as { custom?: unknown }).custom === 'string') return [oldCustom((condition as { custom: string }).custom)]
   if (!kinds.length)
     return [
-      `a condition needs one kind, such as kv or stat; this one has ${keys.length ? `only ${keys.map((key) => `"${key}"`).join(', ')}` : 'nothing in it'}`,
+      `a condition needs one key that says what it asks, such as kv or stat, or a call by name; this one has ${keys.length ? `only ${keys.map((key) => `"${key}"`).join(', ')}` : 'nothing in it'}`,
     ]
-  return [`a condition has one kind, but this one has ${kinds.length}: ${kinds.join(', ')}`]
+  return [`a condition asks one thing, but this one has ${kinds.length} keys that each say what it asks: ${kinds.join(', ')}`]
 }
 
 /** How a call written `{ custom: name }`, as content did before schema 18, is written now. */
@@ -80,14 +80,27 @@ function oldCustom(name: string): string {
   return `{ custom: "${name}" } is written in short now, as { "${full}": { … } }, or true for no arguments`
 }
 
-/** What is wrong with an effect's kind: one the engine doesn't have does nothing. A custom call by name has none. */
-function kindProblem(effect: EffectRef): string[] {
+/**
+ * What is wrong with an effect's shape: it needs exactly one key that says
+ * what it does (`stat`, `kv`, `scene`…), or to be a call in short. One with
+ * none does nothing, and one with several does nothing either, since the
+ * engine wouldn't know which to do.
+ */
+function keyProblem(effect: EffectRef): string[] {
   const short = shortFormProblem(effect)
   if (short) return [short]
-  if (typeof (effect as { custom?: unknown }).custom === 'string') return [oldCustom((effect as { custom: string }).custom)]
+  const raw = effect as Record<string, unknown>
+  if (typeof raw.custom === 'string') return [oldCustom(raw.custom)]
+  // No effect has a `kind` field, so one is the old form, even where the rest happens to read.
+  if (typeof raw.kind === 'string') return [`effects are told apart by their key now, as { ${raw.kind}: … }, not { kind: "${raw.kind}" }`]
+  const keys = effectKeys(effect)
+  if (keys.length === 1) return []
+  if (keys.length > 1) return [`an effect does one thing, but this one has ${keys.length} keys that each say what it does: ${keys.join(', ')}`]
   if (customCall(effect)) return []
-  if (!('kind' in effect)) return ['an effect needs a kind, or a custom call by name']
-  return (EFFECT_KINDS as string[]).includes(effect.kind) ? [] : [`unknown effect kind "${String(effect.kind)}"`]
+  const given = Object.keys(raw)
+  return [
+    `an effect needs one key that says what it does, such as stat or kv, or a call by name; this one has ${given.length ? `only ${given.map((key) => `"${key}"`).join(', ')}` : 'nothing in it'}`,
+  ]
 }
 
 /** What is wrong with a command's type: one the engine doesn't have is refused. A plugin's short form is read as `custom`. */
@@ -96,7 +109,7 @@ function typeProblem(ref: CommandRef): string[] {
   if (short) return [short]
   const command = commandOf(ref)
   if (typeof command.type !== 'string') return ['a command needs a type, or a plugin command in short']
-  return (COMMAND_KINDS as string[]).includes(command.type) ? [] : [`unknown command type "${String(command.type)}"`]
+  return (COMMAND_TYPES as string[]).includes(command.type) ? [] : [`unknown command type "${String(command.type)}"`]
 }
 
 /** For a name with no plugin in front: how to call the game's own code by that name. */
@@ -116,12 +129,12 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
   const files: FileRef[] = []
   const fileSeen = new Set<string>()
   const say = (source: Source, where: string, what: string) => problems.push({ pack: packOf(source), where, what })
-  const file = (where: string, kind: FileRef['kind'], path: string | null) => {
+  const file = (where: string, type: FileRef['type'], path: string | null) => {
     if (!path) return
-    const key = `${kind} ${path} ${where}`
+    const key = `${type} ${path} ${where}`
     if (fileSeen.has(key)) return
     fileSeen.add(key)
-    files.push({ path, kind, where })
+    files.push({ path, type, where })
   }
 
   const plugins = game.plugins ?? []
@@ -144,19 +157,19 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
   // Prose with markup: what each feature reads in it (sounds, pools, files).
   const markup = (text: string, where: string): string[] => markupChecks.flatMap((check) => check(game, text, where, resolveTools))
 
-  const call = (kind: 'conditions' | 'effects' | 'commands', name: string, args: Record<string, unknown>, long: boolean, where: string): string[] => {
+  const call = (table: CallTable, name: string, args: Record<string, unknown>, where: string): string[] => {
     const known =
-      kind === 'conditions' ? Boolean(customCondition(game, name)) : kind === 'commands' ? Boolean(pluginCommand(game, name)) : hasCustomEffect(game, name)
+      table === 'conditions' ? Boolean(customCondition(game, name)) : table === 'commands' ? Boolean(pluginCommand(game, name)) : hasCustomEffect(game, name)
     if (!known) {
       // A cooperating partner the game doesn't have: content may name it, and it is simply not there.
       if (absentPartner(game, name)) return []
-      const noun = kind === 'conditions' ? 'custom condition' : kind === 'commands' ? 'plugin command' : long ? 'plugin effect' : 'custom effect'
+      const noun = table === 'conditions' ? 'custom condition' : table === 'commands' ? 'plugin command' : 'custom effect'
       return [`no ${noun} named "${name}"${unprefixed(name)}`]
     }
     const parts = pluginName(name)
     const plugin = parts && pluginById(game, parts.plugin)
     if (!plugin || !parts) return []
-    return [...resolve(plugin.references?.calls?.(kind, parts.name, args, game) ?? [], where), ...pluginArgProblems(game, kind, name, args)]
+    return [...resolve(plugin.references?.calls?.(table, parts.name, args, game) ?? [], where), ...pluginArgProblems(game, table, name, args)]
   }
 
   const one = (ref: Reference, where: string): string[] => {
@@ -164,10 +177,10 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
       return resolve(ref.refs, where).map((what) => (ref.within.startsWith('in each ') && what.startsWith('in each ') ? what : `${ref.within}: ${what}`))
     }
     if ('when' in ref) return ref.when ? [...shapeProblems(ref.when), ...resolve(conditionReferences(ref.when), where)] : []
-    if ('effects' in ref) return [...(ref.effects ?? []).flatMap(kindProblem), ...resolve((ref.effects ?? []).flatMap(effectReferences), where)]
+    if ('effects' in ref) return [...(ref.effects ?? []).flatMap(keyProblem), ...resolve((ref.effects ?? []).flatMap(effectReferences), where)]
     if ('command' in ref) return ref.command ? [...typeProblem(ref.command), ...resolve(commandReferences(ref.command), where)] : []
     if ('markup' in ref) return markup(ref.markup, where)
-    if ('call' in ref) return call(ref.call, ref.name, ref.with ?? {}, Boolean(ref.long), where)
+    if ('call' in ref) return call(ref.call, ref.name, ref.with ?? {}, where)
     if ('entry' in ref) {
       if (!pluginById(game, ref.plugin)) return []
       const have = game.data?.[ref.plugin]?.[ref.list] ?? []

@@ -17,7 +17,7 @@ function kitchen(strings: Record<string, string> = {}) {
           { id: 'cooking', label: 'Cooking', start: 15, levels: { at: [10, 30, 60] } },
           { id: 'coins', label: 'Coins', start: 5 },
         ],
-        actions: [{ id: 'cook', label: 'Cook', effects: [{ kind: 'stat', stat: 'cooking', by: 50 }] }],
+        actions: [{ id: 'cook', label: 'Cook', effects: [{ stat: 'cooking', by: 50 }] }],
       },
     ],
     { id: 'kitchen', title: 'The Kitchen' },

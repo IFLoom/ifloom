@@ -1,5 +1,5 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
-import { KINDS } from '../../src/core.ts'
+import { TABLES } from '../../src/core.ts'
 import {
   afterOrder,
   checkRequires,
@@ -119,11 +119,11 @@ describe('the registry', () => {
     for (const feature of FEATURES) {
       const kinds = featureKinds[feature.name]
       for (const kind of kinds.conditions)
-        expect(KINDS.conditions[kind as keyof typeof KINDS.conditions], `${feature.name}: condition ${kind}`).toBe(feature.conditions[kind as never])
+        expect(TABLES.conditions[kind as keyof typeof TABLES.conditions], `${feature.name}: condition ${kind}`).toBe(feature.conditions[kind as never])
       for (const kind of kinds.effects)
-        expect(KINDS.effects[kind as keyof typeof KINDS.effects], `${feature.name}: effect ${kind}`).toBe(feature.effects[kind as never])
+        expect(TABLES.effects[kind as keyof typeof TABLES.effects], `${feature.name}: effect ${kind}`).toBe(feature.effects[kind as never])
       for (const kind of kinds.commands)
-        expect(KINDS.commands[kind as keyof typeof KINDS.commands], `${feature.name}: command ${kind}`).toBe(feature.commands[kind as never])
+        expect(TABLES.commands[kind as keyof typeof TABLES.commands], `${feature.name}: command ${kind}`).toBe(feature.commands[kind as never])
     }
     expect(featureKinds).toEqual({
       turns: { conditions: ['turn'], effects: ['turn'], commands: [] },
@@ -150,13 +150,13 @@ describe('the registry', () => {
     })
     // The core keeps only what is no feature's: the conditions that hold by their parts, and the plugins' seam.
     const owned = new Set(Object.values(featureKinds).flatMap((kinds) => [...kinds.conditions, ...kinds.effects, ...kinds.commands]))
-    expect(Object.keys(KINDS.conditions).filter((kind) => !owned.has(kind))).toEqual(['all', 'any', 'not'])
-    expect(Object.keys(KINDS.effects).filter((kind) => !owned.has(kind))).toEqual(['custom'])
-    expect(Object.keys(KINDS.commands).filter((kind) => !owned.has(kind))).toEqual(['start', 'newGame', 'custom'])
+    expect(Object.keys(TABLES.conditions).filter((kind) => !owned.has(kind))).toEqual(['all', 'any', 'not'])
+    expect(Object.keys(TABLES.effects).filter((kind) => !owned.has(kind))).toEqual([])
+    expect(Object.keys(TABLES.commands).filter((kind) => !owned.has(kind))).toEqual(['start', 'newGame', 'custom'])
     // And the compiler holds the tables to the features' kinds: each is a key of the table the core reads.
-    expectTypeOf<keyof FeatureConditions>().toExtend<keyof typeof KINDS.conditions>()
-    expectTypeOf<keyof FeatureEffects>().toExtend<keyof typeof KINDS.effects>()
-    expectTypeOf<keyof FeatureCommands>().toExtend<keyof typeof KINDS.commands>()
+    expectTypeOf<keyof FeatureConditions>().toExtend<keyof typeof TABLES.conditions>()
+    expectTypeOf<keyof FeatureEffects>().toExtend<keyof typeof TABLES.effects>()
+    expectTypeOf<keyof FeatureCommands>().toExtend<keyof typeof TABLES.commands>()
   })
 
   it('runs the steps after a command in the order they always ran', () => {

@@ -35,9 +35,9 @@ function house(
         name: 'house',
         actions: [
           { id: 'nap', label: 'Nap', effects: [pass(1)] },
-          { id: 'outing', label: 'Go out', effects: [pass(2), { kind: 'kv', key: 'out', to: true }] },
+          { id: 'outing', label: 'Go out', effects: [pass(2), { kv: 'out', to: true }] },
           { id: 'walk', label: 'Long walk', effects: [pass(3)] },
-          { id: 'rest', effects: [{ kind: 'turn' }] },
+          { id: 'rest', effects: [{ turn: true }] },
         ],
         prose: { diary: 'Day {{v:calendar/day}}, a {{v:calendar/weekday}} {{v:calendar/period}}.' },
       },

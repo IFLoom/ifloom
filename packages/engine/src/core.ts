@@ -5,7 +5,7 @@
  * their parts, and the custom calls that are the plugins' seam (a custom
  * condition, effect and command), plus the `start` command. Every other kind
  * is a feature's. The shared code (`holds`, `explain`, `applyEffect`, `run`,
- * `whyNotIn`, `effectsIn`, the reference resolver) looks a kind up in `KINDS`
+ * `whyNotIn`, `effectsIn`, the reference resolver) looks a kind up in `TABLES`
  * and names no feature.
  *
  * Also the `FeatureContext` the core lends features: its helpers, built the
@@ -25,7 +25,7 @@ import { roll, weighted } from './random.ts'
 import type { Reference } from './references.ts'
 import { type CommandContext, type EffectContext, type FeatureContext, type Rendering } from './features/feature.ts'
 import { withCore, type FeatureCommands, type FeatureConditions, type FeatureEffects } from './features/registry.ts'
-import type { Command, Condition, ConditionKind, CoreCommands, CoreConditions, CoreEffects, Effect } from './types.ts'
+import type { Command, Condition, ConditionKey, CoreCommands, CoreConditions, CoreEffects, Effect, EffectKey } from './types.ts'
 import type { CommandEntry, ConditionEntry, EffectEntry } from './features/feature.ts'
 
 let context: FeatureContext | undefined
@@ -126,27 +126,36 @@ const callCondition: ConditionEntry<Condition> = {
   },
 }
 
-/** How deep the game's custom effects are running inside each other: ten deep is a loop, not a design. */
+/** How deep the game's own effects are running inside each other: ten deep is a loop, not a design. */
 let customDepth = 0
 
-/** The core's effects. */
-const effects: { [K in keyof CoreEffects]: EffectEntry<CoreEffects[K]> } = {
-  custom: {
-    // A plugin's effect, or the game's own worked out now, on the state the effects before it left.
-    apply: (state, effect, game, cx) => {
-      const fromPlugin = pluginEffect(game, effect.name, cx.ending)
-      if (fromPlugin) return fromPlugin(state, effect.with ?? {})
-      // A plugin the game no longer has does nothing, as an unknown custom effect does.
-      const fn = customEffect(game, effect.name)
-      if (!fn || customDepth >= 10) return state
-      customDepth += 1
-      try {
-        return cx.runEffects(state, game, buildEffects(state, game, fn(state, effect.with ?? {})), cx.ending)
-      } finally {
-        customDepth -= 1
-      }
-    },
-    references: (effect) => [{ call: 'effects', name: effect.name, with: effect.with, long: true }],
+/** The core's effects: none. A call by name is `callEffect`. */
+const effects: { [K in keyof CoreEffects]: EffectEntry<CoreEffects[K]> } = {}
+
+/**
+ * An effect in short: a plugin's, or the game's own worked out now, on the
+ * state the effects before it left. It has no key of the engine's; its one
+ * key is the name.
+ */
+const callEffect: EffectEntry<Effect> = {
+  apply: (state, effect, game, cx) => {
+    const call = customCall(effect)
+    if (!call) return state
+    const fromPlugin = pluginEffect(game, call.custom, cx.ending)
+    if (fromPlugin) return fromPlugin(state, call.with ?? {})
+    // A plugin the game no longer has does nothing, as an unknown effect of the game's does.
+    const fn = customEffect(game, call.custom)
+    if (!fn || customDepth >= 10) return state
+    customDepth += 1
+    try {
+      return cx.runEffects(state, game, buildEffects(state, game, fn(state, call.with ?? {})), cx.ending)
+    } finally {
+      customDepth -= 1
+    }
+  },
+  references: (effect) => {
+    const call = customCall(effect)
+    return call ? [{ call: 'effects', name: call.custom, with: call.with }] : []
   },
 }
 
@@ -199,7 +208,7 @@ const commands: { [K in keyof CoreCommands]: CommandEntry<CoreCommands[K]> } = {
  * Every kind of condition, effect and command, by its key: the core's and the
  * features'. Typed complete, so a kind with no entry fails to compile here.
  */
-export const KINDS = withCore<CoreConditions, CoreEffects, CoreCommands>({ conditions, effects, commands })
+export const TABLES = withCore<CoreConditions, CoreEffects, CoreCommands>({ conditions, effects, commands })
 
 // No kind is both the core's and a feature's. Each line is `true` only while that is so.
 // Each Extract is `never` while that holds, which is the point; the type-aware lint reads it as a redundant union.
@@ -214,34 +223,41 @@ export const coreAndFeaturesApart: [
 /* oxlint-enable typescript/no-redundant-type-constituents, typescript/no-duplicate-type-constituents */
 
 /** Every kind of condition, by the key that tells it apart. */
-export const CONDITION_KINDS = Object.keys(KINDS.conditions) as ConditionKind[]
-/** Every kind of effect. */
-export const EFFECT_KINDS = Object.keys(KINDS.effects) as Effect['kind'][]
+export const CONDITION_KEYS = Object.keys(TABLES.conditions) as ConditionKey[]
+/** Every key that tells an effect apart. */
+export const EFFECT_KEYS = Object.keys(TABLES.effects) as EffectKey[]
 /** Every type of command. */
-export const COMMAND_KINDS = Object.keys(KINDS.commands) as CoreCommandType[]
+export const COMMAND_TYPES = Object.keys(TABLES.commands) as CoreCommandType[]
 type CoreCommandType = keyof CoreCommands | keyof FeatureCommands
 
 /**
  * The kind keys a condition has: one for a well-formed one, none or several
  * for one the checker reports. A call in short (`{ 'quests/done': … }`) has none.
  */
-export function conditionKinds(condition: Condition): ConditionKind[] {
-  return Object.keys(condition).filter((key): key is ConditionKind => Object.hasOwn(KINDS.conditions, key))
+export function conditionKeys(condition: Condition): ConditionKey[] {
+  return Object.keys(condition).filter((key): key is ConditionKey => Object.hasOwn(TABLES.conditions, key))
 }
 
 /** The entry for a condition's one kind, or a call's, or undefined for a condition with neither or several kinds. */
 export function conditionEntry(condition: Condition): ConditionEntry<Condition> | undefined {
-  const kinds = conditionKinds(condition)
-  if (kinds.length === 1) return KINDS.conditions[kinds[0]] as ConditionEntry<Condition>
+  const kinds = conditionKeys(condition)
+  if (kinds.length === 1) return TABLES.conditions[kinds[0]] as ConditionEntry<Condition>
   return !kinds.length && customCall(condition) ? callCondition : undefined
 }
 
-/** The entry for an effect's kind, or undefined for a kind the engine doesn't have. */
+/** The keys an effect has that tell effects apart: one for a well-formed one, none for a call in short, several for one the checker reports. */
+export function effectKeys(effect: object): EffectKey[] {
+  return Object.keys(effect).filter((key): key is EffectKey => Object.hasOwn(TABLES.effects, key))
+}
+
+/** The entry for an effect's one key, or a call's, or undefined for an effect with neither or several keys. */
 export function effectEntry(effect: Effect): EffectEntry<Effect> | undefined {
-  return Object.hasOwn(KINDS.effects, effect.kind) ? (KINDS.effects[effect.kind] as EffectEntry<Effect>) : undefined
+  const keys = effectKeys(effect)
+  if (keys.length === 1) return TABLES.effects[keys[0]] as EffectEntry<Effect>
+  return !keys.length && customCall(effect) ? callEffect : undefined
 }
 
 /** The entry for a command's type, or undefined for a type the engine doesn't have. */
 export function commandEntry(command: { type: string }): CommandEntry<Command> | undefined {
-  return Object.hasOwn(KINDS.commands, command.type) ? (KINDS.commands[command.type as CoreCommandType] as CommandEntry<Command>) : undefined
+  return Object.hasOwn(TABLES.commands, command.type) ? (TABLES.commands[command.type as CoreCommandType] as CommandEntry<Command>) : undefined
 }

@@ -31,10 +31,10 @@ const hall: DataScene = {
   id: 'hall',
   body: [{ text: 'hall.ring' }, { text: 'hall.door' }],
   choices: [
-    { id: 'answer', command: { type: 'custom', name: 'phone/open' }, effects: [{ kind: 'kv', key: 'answered', to: true }] },
-    { id: 'knock', effects: [{ kind: 'stat', stat: 'coins', by: -2 }], blocked: [{ when: { kv: 'shy' }, reason: 'You feel too shy.' }] },
+    { id: 'answer', command: { type: 'custom', name: 'phone/open' }, effects: [{ kv: 'answered', to: true }] },
+    { id: 'knock', effects: [{ stat: 'coins', by: -2 }], blocked: [{ when: { kv: 'shy' }, reason: 'You feel too shy.' }] },
     { id: 'hidden', blocked: [{ when: { not: { kv: 'never' } }, reason: 'No.', hide: true }], effects: [] },
-    { id: 'leave', effects: [{ kind: 'scene', scene: null }] },
+    { id: 'leave', effects: [{ scene: null }] },
   ],
 }
 
@@ -69,13 +69,13 @@ describe('inline markup', () => {
   it('cuts a line at its actions and tooltips, and leaves malformed markup as written', () => {
     expect(inlineMarkup('No markup here.')).toBeNull()
     expect(inlineMarkup('Ring. [[act:answer|Pick up]] or [[act:wait]]. A [[tip:who|caller]].')).toEqual([
-      { kind: 'text', text: 'Ring. ' },
-      { kind: 'act', id: 'answer', text: 'Pick up', markup: '[[act:answer|Pick up]]' },
-      { kind: 'text', text: ' or ' },
-      { kind: 'act', id: 'wait', markup: '[[act:wait]]' },
-      { kind: 'text', text: '. A ' },
-      { kind: 'tip', key: 'who', text: 'caller', markup: '[[tip:who|caller]]' },
-      { kind: 'text', text: '.' },
+      { type: 'text', text: 'Ring. ' },
+      { type: 'act', id: 'answer', text: 'Pick up', markup: '[[act:answer|Pick up]]' },
+      { type: 'text', text: ' or ' },
+      { type: 'act', id: 'wait', markup: '[[act:wait]]' },
+      { type: 'text', text: '. A ' },
+      { type: 'tip', key: 'who', text: 'caller', markup: '[[tip:who|caller]]' },
+      { type: 'text', text: '.' },
     ])
     expect(inlineMarkup('A [[tip:who]] and [[act:|x]].')).toBeNull()
   })
@@ -89,12 +89,12 @@ describe('inline actions and tooltips', () => {
     expect(shown.scene.choices.map((choice) => choice.id)).toEqual(['leave'])
     const [ring, door] = shown.scene.beats
     expect(ring).toEqual({
-      kind: 'text',
+      type: 'text',
       text: 'Your phone is ringing. Pick it up, or let it ring. The caller waits.',
       spans: [
-        { kind: 'text', text: 'Your phone is ringing. ' },
+        { type: 'text', text: 'Your phone is ringing. ' },
         {
-          kind: 'action',
+          type: 'action',
           text: 'Pick it up',
           choice: {
             id: 'answer',
@@ -107,13 +107,13 @@ describe('inline actions and tooltips', () => {
             command: { type: 'choose', id: 'answer' },
           },
         },
-        { kind: 'text', text: ', or let it ring. The ' },
-        { kind: 'tip', text: 'caller', tip: 'An old friend, Ava.' },
-        { kind: 'text', text: ' waits.' },
+        { type: 'text', text: ', or let it ring. The ' },
+        { type: 'tip', text: 'caller', tip: 'An old friend, Ava.' },
+        { type: 'text', text: ' waits.' },
       ],
     })
     // The choice's own label when the markup gives none; a hidden one is just its words.
-    expect(door.kind === 'text' && door.spans?.map((span) => [span.kind, span.text])).toEqual([
+    expect(door.type === 'text' && door.spans?.map((span) => [span.type, span.text])).toEqual([
       ['text', 'Somebody is at the door. '],
       ['action', 'Knock'],
       ['text', ' back? A secret.'],
@@ -149,7 +149,7 @@ describe('inline actions and tooltips', () => {
     expect(runner.backlog().map((entry) => entry.chose)).toEqual(['Answer', 'Knock', undefined])
     const [entry] = runner.backlog()
     const ring = entry.beats[0]
-    expect(ring.kind === 'text' && ring.spans?.map((span) => span.kind)).toEqual(['text', 'tip', 'text'])
+    expect(ring.type === 'text' && ring.spans?.map((span) => span.type)).toEqual(['text', 'tip', 'text'])
   })
 
   it('work in a room, with its buttons', () => {
@@ -203,21 +203,21 @@ describe('inline actions and tooltips', () => {
 describe('bold and italics', () => {
   it('cut a line at its stars, read \\* as a star, and leave stray stars as written', () => {
     expect(inlineMarkup('A **loud** knock and a *soft* one.')).toEqual([
-      { kind: 'text', text: 'A ' },
-      { kind: 'bold', text: 'loud', markup: '**loud**' },
-      { kind: 'text', text: ' knock and a ' },
-      { kind: 'italic', text: 'soft', markup: '*soft*' },
-      { kind: 'text', text: ' one.' },
+      { type: 'text', text: 'A ' },
+      { type: 'bold', text: 'loud', markup: '**loud**' },
+      { type: 'text', text: ' knock and a ' },
+      { type: 'italic', text: 'soft', markup: '*soft*' },
+      { type: 'text', text: ' one.' },
     ])
-    expect(inlineMarkup('Five * three, and a \\*star\\*.')).toEqual([{ kind: 'text', text: 'Five * three, and a *star*.' }])
+    expect(inlineMarkup('Five * three, and a \\*star\\*.')).toEqual([{ type: 'text', text: 'Five * three, and a *star*.' }])
     expect(inlineMarkup('Five * three.')).toBeNull()
     expect(inlineMarkup('An *open line.')).toBeNull()
     expect(inlineMarkup('**Ring** [[act:answer|Pick up]] *now*')).toEqual([
-      { kind: 'bold', text: 'Ring', markup: '**Ring**' },
-      { kind: 'text', text: ' ' },
-      { kind: 'act', id: 'answer', text: 'Pick up', markup: '[[act:answer|Pick up]]' },
-      { kind: 'text', text: ' ' },
-      { kind: 'italic', text: 'now', markup: '*now*' },
+      { type: 'bold', text: 'Ring', markup: '**Ring**' },
+      { type: 'text', text: ' ' },
+      { type: 'act', id: 'answer', text: 'Pick up', markup: '[[act:answer|Pick up]]' },
+      { type: 'text', text: ' ' },
+      { type: 'italic', text: 'now', markup: '*now*' },
     ])
   })
 
@@ -227,38 +227,38 @@ describe('bold and italics', () => {
     expect(problems).toEqual([])
     const [ring, door] = view(start(game), game).scene.beats
     expect(ring).toMatchObject({
-      kind: 'text',
+      type: 'text',
       text: 'Your phone is ringing. Pick it up, quickly.',
       spans: [
-        { kind: 'text', text: 'Your phone is ' },
-        { kind: 'bold', text: 'ringing' },
-        { kind: 'text', text: '. ' },
-        { kind: 'action', text: 'Pick it up' },
-        { kind: 'text', text: ', ' },
-        { kind: 'italic', text: 'quickly' },
-        { kind: 'text', text: '.' },
+        { type: 'text', text: 'Your phone is ' },
+        { type: 'bold', text: 'ringing' },
+        { type: 'text', text: '. ' },
+        { type: 'action', text: 'Pick it up' },
+        { type: 'text', text: ', ' },
+        { type: 'italic', text: 'quickly' },
+        { type: 'text', text: '.' },
       ],
     })
-    expect(door).toEqual({ kind: 'text', text: 'A *star* on the door.' })
+    expect(door).toEqual({ type: 'text', text: 'A *star* on the door.' })
     const runner = createRunner(game, start(game), { backlog: { limit: 5 } })
     expect(runner.apply({ type: 'choose', id: 'leave' }).ok).toBe(true)
     const past = runner.backlog()[0].beats[0]
-    expect(past.kind === 'text' && past.spans?.map((span) => span.kind)).toEqual(['text', 'bold', 'text', 'italic', 'text'])
+    expect(past.type === 'text' && past.spans?.map((span) => span.type)).toEqual(['text', 'bold', 'text', 'italic', 'text'])
   })
 
   it('are drawn by styledBeats in beats that skip the view, leaving inline actions as written', () => {
     expect(styledBeats(parseBeats('The sign says **Closed**. [[act:x|Knock]]\n\nAva: "*Again?*"\n\nPlain.'))).toEqual([
       {
-        kind: 'text',
+        type: 'text',
         text: 'The sign says Closed. [[act:x|Knock]]',
         spans: [
-          { kind: 'text', text: 'The sign says ' },
-          { kind: 'bold', text: 'Closed' },
-          { kind: 'text', text: '. [[act:x|Knock]]' },
+          { type: 'text', text: 'The sign says ' },
+          { type: 'bold', text: 'Closed' },
+          { type: 'text', text: '. [[act:x|Knock]]' },
         ],
       },
-      { kind: 'say', who: 'character', text: 'Again?', spans: [{ kind: 'italic', text: 'Again?' }] },
-      { kind: 'text', text: 'Plain.' },
+      { type: 'say', who: 'character', text: 'Again?', spans: [{ type: 'italic', text: 'Again?' }] },
+      { type: 'text', text: 'Plain.' },
     ])
   })
 
@@ -286,14 +286,14 @@ describe('bold and italics', () => {
 describe('UI pieces', () => {
   it('cut a line at [[ui:name|words|arg|…]], and leave malformed markup as written', () => {
     expect(inlineMarkup('Read [[ui:modal|the note|notice.welcome]] and [[ui:shop/card|this]].')).toEqual([
-      { kind: 'text', text: 'Read ' },
-      { kind: 'ui', name: 'modal', text: 'the note', args: ['notice.welcome'], markup: '[[ui:modal|the note|notice.welcome]]' },
-      { kind: 'text', text: ' and ' },
-      { kind: 'ui', name: 'shop/card', text: 'this', args: [], markup: '[[ui:shop/card|this]]' },
-      { kind: 'text', text: '.' },
+      { type: 'text', text: 'Read ' },
+      { type: 'ui', name: 'modal', text: 'the note', args: ['notice.welcome'], markup: '[[ui:modal|the note|notice.welcome]]' },
+      { type: 'text', text: ' and ' },
+      { type: 'ui', name: 'shop/card', text: 'this', args: [], markup: '[[ui:shop/card|this]]' },
+      { type: 'text', text: '.' },
     ])
     expect(inlineMarkup('[[ui:image| her photo | photo/ava.svg | Ava ]]')).toEqual([
-      { kind: 'ui', name: 'image', text: 'her photo', args: ['photo/ava.svg', 'Ava'], markup: '[[ui:image| her photo | photo/ava.svg | Ava ]]' },
+      { type: 'ui', name: 'image', text: 'her photo', args: ['photo/ava.svg', 'Ava'], markup: '[[ui:image| her photo | photo/ava.svg | Ava ]]' },
     ])
     expect(inlineMarkup('A [[ui:modal]], [[ui:|x]], [[ui:no good|x]] and [[ui:modal|x||y]].')).toBeNull()
   })
@@ -308,34 +308,34 @@ describe('UI pieces', () => {
     expect(problems).toEqual([])
     const [ring, door] = view(start(game), game).scene.beats
     expect(ring).toEqual({
-      kind: 'text',
+      type: 'text',
       text: 'Your phone is ringing. The screen says Ava.',
       spans: [
-        { kind: 'text', text: 'Your phone is ringing. ' },
-        { kind: 'ui', name: 'modal', text: 'The screen', args: ['hall.tip', 'Caller'] },
-        { kind: 'text', text: ' says Ava.' },
+        { type: 'text', text: 'Your phone is ringing. ' },
+        { type: 'ui', name: 'modal', text: 'The screen', args: ['hall.tip', 'Caller'] },
+        { type: 'text', text: ' says Ava.' },
       ],
     })
     expect(door).toMatchObject({
-      kind: 'say',
+      type: 'say',
       text: 'Look at this!',
-      spans: [{ kind: 'text' }, { kind: 'ui', name: 'image', args: ['photo/ava.svg'] }, { kind: 'text' }],
+      spans: [{ type: 'text' }, { type: 'ui', name: 'image', args: ['photo/ava.svg'] }, { type: 'text' }],
     })
     const runner = createRunner(game, start(game), { backlog: { limit: 5 } })
     expect(runner.apply({ type: 'choose', id: 'leave' }).ok).toBe(true)
     const past = runner.backlog()[0].beats[0]
-    expect(past.kind === 'text' && past.spans?.map((span) => span.kind)).toEqual(['text', 'ui', 'text'])
+    expect(past.type === 'text' && past.spans?.map((span) => span.type)).toEqual(['text', 'ui', 'text'])
   })
 
   it('are drawn by styledBeats in beats that skip the view', () => {
     expect(styledBeats(parseBeats('See [[ui:image|the map|map.png]].'))).toEqual([
       {
-        kind: 'text',
+        type: 'text',
         text: 'See the map.',
         spans: [
-          { kind: 'text', text: 'See ' },
-          { kind: 'ui', name: 'image', text: 'the map', args: ['map.png'] },
-          { kind: 'text', text: '.' },
+          { type: 'text', text: 'See ' },
+          { type: 'ui', name: 'image', text: 'the map', args: ['map.png'] },
+          { type: 'text', text: '.' },
         ],
       },
     ])

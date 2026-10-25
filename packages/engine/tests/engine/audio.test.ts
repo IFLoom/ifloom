@@ -60,27 +60,27 @@ const house: Content = {
       audio: { music: 'tense' },
       body: [{ text: 'door.knock' }],
       choices: [
-        { id: 'open', effects: [{ kind: 'scene', scene: null }] },
-        { id: 'again', effects: [{ kind: 'sound', track: 'buzz' }] },
-        { id: 'leave', effects: [{ kind: 'scene', scene: null }] },
+        { id: 'open', effects: [{ scene: null }] },
+        { id: 'again', effects: [{ sound: 'buzz' }] },
+        { id: 'leave', effects: [{ scene: null }] },
       ],
     },
-    { id: 'storm', audio: { ambience: 'rain' }, body: [{ text: 'storm.text' }], choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }] },
-    { id: 'quiet', audio: { music: null }, body: [{ text: 'quiet.text' }], choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }] },
+    { id: 'storm', audio: { ambience: 'rain' }, body: [{ text: 'storm.text' }], choices: [{ id: 'leave', effects: [{ scene: null }] }] },
+    { id: 'quiet', audio: { music: null }, body: [{ text: 'quiet.text' }], choices: [{ id: 'leave', effects: [{ scene: null }] }] },
   ],
   actions: [
-    { id: 'radio', effects: [{ kind: 'audio', channel: 'music', to: 'radio' }] },
-    { id: 'silence', effects: [{ kind: 'audio', channel: 'music', to: null }] },
-    { id: 'default', effects: [{ kind: 'audio', channel: 'music' }] },
-    { id: 'buzz', effects: [{ kind: 'sound', track: 'buzz' }] },
-    { id: 'rest', effects: [{ kind: 'turn' }] },
+    { id: 'radio', effects: [{ audio: 'music', to: 'radio' }] },
+    { id: 'silence', effects: [{ audio: 'music', to: null }] },
+    { id: 'default', effects: [{ audio: 'music' }] },
+    { id: 'buzz', effects: [{ sound: 'buzz' }] },
+    { id: 'rest', effects: [{ turn: true }] },
   ],
   audio,
 }
 
 const settings = [
-  { id: 'musicVolume', label: 'Music', affects: 'ui' as const, kind: 'range' as const, min: 0, max: 100, default: 80 },
-  { id: 'muted', label: 'Mute', affects: 'ui' as const, kind: 'toggle' as const, default: false },
+  { id: 'musicVolume', label: 'Music', affects: 'ui' as const, type: 'range' as const, min: 0, max: 100, default: 80 },
+  { id: 'muted', label: 'Mute', affects: 'ui' as const, type: 'toggle' as const, default: false },
 ]
 
 function baseOf() {
@@ -195,15 +195,15 @@ describe('audio', () => {
     it('reads [[sound:id]] on its own line as a sound beat, and [[voice:id]] after a spoken line as its voice', () => {
       const beats = parseBeats('The phone buzzes.\n\n[[sound:buzz]]\n\nAva: "Morning!" [[voice:ava.morning]]\n\n"Morning." [[voice:you.morning]]')
       expect(beats).toEqual([
-        { kind: 'text', text: 'The phone buzzes.' },
-        { kind: 'sound', track: 'buzz' },
-        { kind: 'say', who: 'character', text: 'Morning!', voice: 'ava.morning' },
-        { kind: 'say', who: 'player', text: 'Morning.', voice: 'you.morning' },
+        { type: 'text', text: 'The phone buzzes.' },
+        { type: 'sound', track: 'buzz' },
+        { type: 'say', who: 'character', text: 'Morning!', voice: 'ava.morning' },
+        { type: 'say', who: 'player', text: 'Morning.', voice: 'you.morning' },
       ])
     })
 
     it('leaves [[voice:id]] that does not end a spoken line as it is', () => {
-      expect(parseBeats('The kettle clicks. [[voice:ava.morning]]')).toEqual([{ kind: 'text', text: 'The kettle clicks. [[voice:ava.morning]]' }])
+      expect(parseBeats('The kettle clicks. [[voice:ava.morning]]')).toEqual([{ type: 'text', text: 'The kettle clicks. [[voice:ava.morning]]' }])
     })
   })
 
@@ -278,16 +278,13 @@ describe('audio', () => {
           id: 'bad',
           audio: { music: 'knock', sfx: 'calm', stereo: 'calm' },
           body: [{ text: 'bad.text' }],
-          choices: [{ id: 'go', effects: [{ kind: 'sound', track: 'radio' }] }],
+          choices: [{ id: 'go', effects: [{ sound: 'radio' }] }],
         },
       ],
       actions: [
         {
           id: 'bang',
-          effects: [
-            { kind: 'sound', track: 'bang' },
-            { kind: 'audio', channel: 'music', to: 'gone' },
-          ],
+          effects: [{ sound: 'bang' }, { audio: 'music', to: 'gone' }],
         },
       ],
       audio: {

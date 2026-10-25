@@ -124,7 +124,7 @@ describe('traits', () => {
     // It survives a load, and goes with the entity.
     const loaded = unwrap(loadState(JSON.parse(JSON.stringify(worn)), game))
     expect(traitState(loaded, game, 'clothing:scarf', 'closet/hangs')).toEqual({ worn: 1 })
-    const gone = applyEffects(worn, game, [{ kind: 'remove', entity: 'clothing:scarf' }])
+    const gone = applyEffects(worn, game, [{ remove: 'clothing:scarf' }])
     expect(traitState(gone, game, 'clothing:scarf', 'closet/hangs')).toBeUndefined()
     expect(setTraitState(gone, game, 'clothing:scarf', 'closet/hangs', { worn: 2 })).toBe(gone)
   })

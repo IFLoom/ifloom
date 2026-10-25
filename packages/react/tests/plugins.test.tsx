@@ -66,7 +66,7 @@ function game(plugins = [garden, weather]): Game {
       { name: 'base', actions: [] },
       {
         stats: [{ id: 'coins', label: 'Coins', start: 3 }],
-        actions: [{ id: 'beds', label: 'Look at the beds', effects: [{ kind: 'panel', panel: 'beds', with: { rows: 2 } }] }],
+        actions: [{ id: 'beds', label: 'Look at the beds', effects: [{ panel: 'beds', with: { rows: 2 } }] }],
       },
     ],
     { id: 'plugins-test', title: 'Allotment', plugins },

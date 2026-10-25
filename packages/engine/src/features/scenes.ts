@@ -1,6 +1,6 @@
 /**
  * Scenes: which one is open, what the player has seen and chosen, opening
- * and leaving them, and storylets, the scenes a `{ kind: 'scene', from }`
+ * and leaving them, and storylets, the scenes a `{ scene: { from } }`
  * effect draws at random from a named set (ADR 0005).
  */
 import { say } from '../strings.ts'
@@ -22,12 +22,12 @@ export type Patch =
 
 /**
  * What makes a scene a storylet: the named draws it can be drawn from, how
- * often, and when. See the `{ kind: 'scene', from }` effect.
+ * often, and when. See the `{ scene: { from } }` effect.
  */
 export type StoryletFields = {
   /**
    * The draws this scene can come up in, by name: `['cafe']`. A
-   * `{ kind: 'scene', from: 'cafe' }` effect draws one of the scenes that name
+   * `{ scene: { from: 'cafe' } }` effect draws one of the scenes that name
    * `'cafe'` here. Separate from `tags`, which only style the scene.
    */
   drawnFrom?: string[]
@@ -93,15 +93,14 @@ export type ScenesShape = {
     scene: { scene: string[] }
   }
   effects: {
-    scene:
-      /** Open a scene, or close the one on screen with `scene: null`. */
-      | { kind: 'scene'; scene: string | null }
-      /**
-       * Open one scene drawn at random from the scenes whose `drawnFrom` names
-       * `from` and whose `when` holds, by their `weight`. With none to draw, open
-       * `otherwise` if given, else do nothing. A storylet draw: `{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }`.
-       */
-      | { kind: 'scene'; from: string; otherwise?: string }
+    /**
+     * Open a scene, `{ scene: 'cafe.counter' }`, or close the one on screen
+     * with `{ scene: null }`. With `{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }`,
+     * a storylet draw: open one scene drawn at random from the scenes whose
+     * `drawnFrom` names `from` and whose `when` holds, by their `weight`; with
+     * none to draw, `otherwise` if given, else nothing.
+     */
+    scene: { scene: string | null | { from: string; otherwise?: string } }
   }
   commands: {
     scene: { type: 'scene'; id: string }
@@ -230,7 +229,7 @@ function inlineActionProblems(game: Game, body: readonly Block[] | string | unde
   const known = new Set(offers)
   const blocks = new Map<string, { block: number; gated: boolean }[]>()
   for (const line of lines) {
-    const named = (inlineMarkup(line.text) ?? []).flatMap((part) => (part.kind === 'act' ? [part.id] : []))
+    const named = (inlineMarkup(line.text) ?? []).flatMap((part) => (part.type === 'act' ? [part.id] : []))
     const once = new Set<string>()
     for (const id of named) {
       if (once.has(id)) out.push(`[[act:${id}]] is in one line twice; only the first is drawn as an action`)
@@ -384,12 +383,15 @@ export const scenes = defineFeature<ScenesShape>({
   effects: {
     scene: {
       apply: (state, effect, game, cx) => {
-        if ('from' in effect) return drawStorylet(state, game, effect.from, effect.otherwise, cx)
-        return { ...state, sceneId: effect.scene }
+        const to = effect.scene
+        if (to !== null && typeof to === 'object') return drawStorylet(state, game, to.from, to.otherwise, cx)
+        return { ...state, sceneId: to }
       },
       references: (effect) => {
-        if ('from' in effect) return [{ drawnFrom: effect.from }, ...(effect.otherwise !== undefined ? [{ scene: effect.otherwise, as: 'go' as const }] : [])]
-        return effect.scene === null ? [] : [{ scene: effect.scene, as: 'go' }]
+        const to = effect.scene
+        if (to !== null && typeof to === 'object')
+          return [{ drawnFrom: to.from }, ...(to.otherwise !== undefined ? [{ scene: to.otherwise, as: 'go' as const }] : [])]
+        return to === null ? [] : [{ scene: to, as: 'go' }]
       },
     },
   },

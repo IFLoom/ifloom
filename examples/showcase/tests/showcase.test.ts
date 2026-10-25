@@ -124,9 +124,9 @@ describe('Small Town', () => {
     expect(quests(state).done.map((quest) => quest.id)).toEqual(['settle'])
     // The photo is a thing you keep, in the phone's gallery; Sam's note is in Notes.
     const app = (id: string) => (view(run(state, commandOf({ 'devices/open': { id } })), game).plugins.devices as DevicesView).devices[0].open?.sections[0]
-    expect(app('gallery')).toEqual({ kind: 'list', entries: [{ id: 'photo:ava', title: 'Ava at work', text: '', image: 'art/photo/ava.svg', actions: [] }] })
+    expect(app('gallery')).toEqual({ type: 'list', entries: [{ id: 'photo:ava', title: 'Ava at work', text: '', image: 'art/photo/ava.svg', actions: [] }] })
     expect(app('notes')).toMatchObject({
-      kind: 'list',
+      type: 'list',
       entries: [{ id: 'note:welcome', title: 'Welcome note', text: expect.stringContaining('Bins go out Thursday') }],
     })
   })
@@ -144,7 +144,7 @@ describe('Small Town', () => {
     expect(devices.badge).toBeGreaterThan(0)
     // The flat's prose says so, with a link in the line that opens the phone's messages.
     const flat = view(state, game)
-    expect(flat.scene.beats.at(-1)).toMatchObject({ kind: 'text', text: 'Your phone buzzes on the sill: a message. Check it.' })
+    expect(flat.scene.beats.at(-1)).toMatchObject({ type: 'text', text: 'Your phone buzzes on the sill: a message. Check it.' })
     const [check] = inlineChoices(flat.scene.beats)
     expect(check).toMatchObject({ id: 'read-text', command: { type: 'custom', name: 'devices/open', with: { id: 'texts' } } })
     expect(flat.actions.map((action) => action.id)).not.toContain('read-text')
@@ -498,9 +498,9 @@ describe('Small Town', () => {
   it("carries the React UI's inline pieces in the flat's prose as written, with the words in the text", () => {
     const state = run(startingState(game), { type: 'choose', id: 'unpack' })
     const [room] = view(state, game).scene.beats
-    expect(room.kind === 'text' && room.text).toContain('and the radiator knocks when it feels like it')
-    expect(room.kind === 'text' && room.spans?.find((span) => span.kind === 'ui')).toEqual({
-      kind: 'ui',
+    expect(room.type === 'text' && room.text).toContain('and the radiator knocks when it feels like it')
+    expect(room.type === 'text' && room.spans?.find((span) => span.type === 'ui')).toEqual({
+      type: 'ui',
       name: 'modal',
       text: 'the radiator knocks',
       args: ['notice.welcome', "Sam's note"],
@@ -516,7 +516,7 @@ describe('Small Town', () => {
     expect(view(state, game).scene.body).toContain(`${ducks.total} of them paddle over`)
     // The stones line holds the inline action that rolls.
     const inline = view(state, game).scene.beats.flatMap((beat) => ('spans' in beat && beat.spans ? beat.spans : []))
-    expect(inline.some((span) => span.kind === 'action' && span.text === 'Try to skim a stone' && span.choice.id === 'skim')).toBe(true)
+    expect(inline.some((span) => span.type === 'action' && span.text === 'Try to skim a stone' && span.choice.id === 'skim')).toBe(true)
     state = run(state, act('places/skim'))
     const [skim] = view(state, game).rolls
     expect(skim).toMatchObject({ key: 'skim', dice: '2d6', against: 8 })
@@ -525,7 +525,7 @@ describe('Small Town', () => {
     const line = skim.critical === 'max' ? 'Skip after skip' : skim.passed ? 'The stone skips once' : 'Plop.'
     expect(body).toContain(line)
     // The line under the dice carries the React UI's hint.
-    expect(view(state, game).scene.beats.find((beat) => beat.kind === 'text' && beat.text.startsWith(line))?.ui).toEqual({ dice: 'skim' })
+    expect(view(state, game).scene.beats.find((beat) => beat.type === 'text' && beat.text.startsWith(line))?.ui).toEqual({ dice: 'skim' })
     // A new day resets `skimmed`, and the outcome is gone until you skim again.
     expect(game.resets?.skimmed).toBe(false)
     expect(view({ ...state, kv: { ...state.kv, skimmed: false } }, game).scene.body).not.toContain(line)

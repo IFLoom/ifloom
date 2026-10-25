@@ -22,8 +22,8 @@ function letter(): Game {
             title: 'The mat',
             body: [{ text: 'mat' }, { text: 'mat/ava' }],
             choices: [
-              { id: 'open', effects: [{ kind: 'scene', scene: null }] },
-              { id: 'shelf', effects: [{ kind: 'notify', title: 'Hello', text: 'hello' }] },
+              { id: 'open', effects: [{ scene: null }] },
+              { id: 'shelf', effects: [{ notify: 'Hello', text: 'hello' }] },
             ],
           },
         ],
@@ -52,7 +52,7 @@ describe('replacing components', () => {
     const components: Components = {
       ChoiceButton: ({ choice }) => <a data-mine={choice.id}>{choice.label.toUpperCase()}</a>,
       Beat: ({ beat, Default }) =>
-        beat.kind === 'say' ? <blockquote data-said>{(beat as Extract<SceneBeat, { kind: 'say' }>).text}</blockquote> : <Default beat={beat} />,
+        beat.type === 'say' ? <blockquote data-said>{(beat as Extract<SceneBeat, { type: 'say' }>).text}</blockquote> : <Default beat={beat} />,
     }
     show({ components })
     expect(screen.getByText('OPEN IT').getAttribute('data-mine')).toBe('open')

@@ -26,14 +26,14 @@ function game(extra: QuestDef[] = []): Game {
   const town: Content = {
     name: 'town',
     actions: [
-      { id: 'getHungry', effects: [{ kind: 'kv', key: 'hungry', to: true }] },
+      { id: 'getHungry', effects: [{ kv: 'hungry', to: true }] },
       // Out and in again: all the quest asks of where the player is.
-      { id: 'goOut', effects: [{ kind: 'kv', key: 'out', to: true }] },
-      { id: 'goIn', effects: [{ kind: 'kv', key: 'out', to: false }] },
-      { id: 'buyLoaf', effects: [{ kind: 'kv', key: 'loaf', to: true }] },
+      { id: 'goOut', effects: [{ kv: 'out', to: true }] },
+      { id: 'goIn', effects: [{ kv: 'out', to: false }] },
+      { id: 'buyLoaf', effects: [{ kv: 'loaf', to: true }] },
       { id: 'findLetter', effects: [startQuest('letter')] },
-      { id: 'post', effects: [{ kind: 'kv', key: 'posted', to: true }] },
-      { id: 'eat', effects: [{ kind: 'kv', key: 'loaf', to: false }] },
+      { id: 'post', effects: [{ kv: 'posted', to: true }] },
+      { id: 'eat', effects: [{ kv: 'loaf', to: false }] },
     ],
     data: { quests: { quests: [bread, letter, secret, ...extra] } },
   }

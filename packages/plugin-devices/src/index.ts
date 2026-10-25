@@ -105,14 +105,14 @@ export type AppDef = {
 export type DevicesState = { open: Record<string, string | null> }
 
 export type SectionView =
-  | { kind: 'prose'; text: string }
-  | { kind: 'actions'; actions: RenderedChoice[] }
+  | { type: 'prose'; text: string }
+  | { type: 'actions'; actions: RenderedChoice[] }
   | {
-      kind: 'list'
+      type: 'list'
       entries: { id: string; title: string; text: string; image: string | null; actions: RenderedChoice[] }[]
     }
-  | { kind: 'plugin'; plugin: string; with: Record<string, unknown> }
-  | { kind: 'panel'; panel: string; with: Record<string, unknown> }
+  | { type: 'plugin'; plugin: string; with: Record<string, unknown> }
+  | { type: 'panel'; panel: string; with: Record<string, unknown> }
 
 export type AppView = {
   id: string
@@ -188,11 +188,11 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
   function sectionView(state: GameState, game: Game, app: AppDef, section: Section, index: number): SectionView {
     if ('prose' in section) {
       const rendered = renderScene({ id: `${app.id}.${index}`, body: section.prose, choices: [] }, state, defaultRuntime(game))
-      return { kind: 'prose', text: rendered.body ?? '' }
+      return { type: 'prose', text: rendered.body ?? '' }
     }
     if ('actions' in section) {
       return {
-        kind: 'actions',
+        type: 'actions',
         actions: section.actions
           .filter((action) => holds(state, action.when, game) && !hides(state, game, action.blocked))
           .map((action) => renderAction(state, game, action, ID)),
@@ -201,7 +201,7 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
     if ('things' in section) {
       const { of, at = YOU } = section.things
       return {
-        kind: 'list',
+        type: 'list',
         entries: heldBy(state, game, at)
           .filter(({ ref }) => parseRef(ref)?.kind === of)
           .reverse()
@@ -213,7 +213,7 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
     }
     if ('contacts' in section) {
       return {
-        kind: 'list',
+        type: 'list',
         // The cast's, asked by name: everyone met who can be called. None without the cast.
         entries: ((pluginQuery(game, 'cast/contacts')?.(state) ?? []) as Contact[]).map((contact) => ({
           id: contact.id,
@@ -224,8 +224,8 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
         })),
       }
     }
-    if ('plugin' in section) return { kind: 'plugin', plugin: section.plugin, with: section.with ?? {} }
-    return { kind: 'panel', panel: section.panel, with: { ...section.with } }
+    if ('plugin' in section) return { type: 'plugin', plugin: section.plugin, with: section.with ?? {} }
+    return { type: 'panel', panel: section.panel, with: { ...section.with } }
   }
 
   function appView(state: GameState, game: Game, app: AppDef, open: boolean): AppView {

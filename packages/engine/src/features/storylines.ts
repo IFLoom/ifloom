@@ -22,7 +22,7 @@ export type StorylinesShape = {
   }
   effects: {
     /** Close a storyline for some turns. */
-    closeStoryline: { kind: 'closeStoryline'; storyline: string; turns: number }
+    closeStoryline: { closeStoryline: string; turns: number }
   }
   game: {
     /** Threads of story with their own kv store, closed for a while when they need a rest. None if left out. */
@@ -53,10 +53,10 @@ export const storylines = defineFeature<StorylinesShape>({
   effects: {
     closeStoryline: {
       apply: (state, effect) => {
-        const cur = storylineOf(state, effect.storyline)
-        return { ...state, storylines: { ...state.storylines, [effect.storyline]: { ...cur, closedUntil: state.turn + effect.turns } } }
+        const cur = storylineOf(state, effect.closeStoryline)
+        return { ...state, storylines: { ...state.storylines, [effect.closeStoryline]: { ...cur, closedUntil: state.turn + effect.turns } } }
       },
-      references: (effect) => [{ storyline: effect.storyline }],
+      references: (effect) => [{ storyline: effect.closeStoryline }],
     },
   },
   // What the base game declares isn't merged: its storylines come from packs.

@@ -16,7 +16,7 @@ const renamed = (args: unknown, names: Record<string, string>): unknown =>
 const COMMANDS_6: Record<string, Record<string, string>> = { 'jobs/apply': { job: 'id' }, 'jobs/work': { job: 'id' }, 'jobs/quit': { job: 'id' } }
 
 /** The version of what content writes for this plugin. */
-export const CONTENT_VERSION = 6
+export const CONTENT_VERSION = 21
 
 export const contentMigrations: Record<number, ContentStep> = {
   // 5 → 6: a command's one target is `id`.
@@ -24,6 +24,9 @@ export const contentMigrations: Record<number, ContentStep> = {
     tools.calls(pack, (call) =>
       call.form === 'command' && COMMANDS_6[call.name] ? { name: call.name, with: renamed(call.with, COMMANDS_6[call.name]) } : call,
     ),
+  // 20 → 21: effects are told apart by their key, as conditions are: `{ stat: 'coins', by: -2 }`, never
+  // `{ kind: 'stat', … }`. This plugin's content holds effects, so they are keyed here as well as by the engine.
+  20: (pack, tools) => tools.effects(pack),
 }
 
 /** The version of this plugin's commands. */

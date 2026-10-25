@@ -121,7 +121,7 @@ function AppSectionImpl({ section }: { section: SectionView }) {
   const image = usePart('app-entry-image', 'size-12 rounded object-cover')
   const title = usePart('app-entry-title', 'font-medium')
   const text = usePart('app-entry-text', 'text-sm text-muted-foreground')
-  switch (section.kind) {
+  switch (section.type) {
     case 'prose':
       return <p {...prose}>{section.text}</p>
     case 'actions':

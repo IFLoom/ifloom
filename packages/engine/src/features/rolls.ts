@@ -70,7 +70,7 @@ export type RollsShape = {
      * stat's value (`{ stat: 'strength' }`); with `against`, the roll passes
      * when the total reaches it.
      */
-    roll: { kind: 'roll'; key: string; dice: Dice; plus?: number | { stat: string }; against?: number }
+    roll: { roll: string; dice: Dice; plus?: number | { stat: string }; against?: number }
   }
   view: {
     /** The rolls the last command made, in order. Empty when it made none. */
@@ -174,13 +174,13 @@ export const rolls = defineFeature<RollsShape>({
         // Dice the checker reports roll nothing.
         if ('problem' in read) return state
         const made = state.rolls.made
-        const faces = Array.from({ length: read.count }, (_, die) => 1 + cx.roll(read.sides, 'roll', state.seed, state.turn, made, effect.key, die))
+        const faces = Array.from({ length: read.count }, (_, die) => 1 + cx.roll(read.sides, 'roll', state.seed, state.turn, made, effect.roll, die))
         const extra = typeof effect.plus === 'object' ? statValue(state, game, effect.plus.stat, undefined, cx) : (effect.plus ?? 0)
         const plus = read.plus + extra
         const total = faces.reduce((sum, face) => sum + face, 0) + plus
         const critical = faces.every((face) => face === read.sides) ? 'max' : faces.every((face) => face === 1) ? 'min' : undefined
         const roll: Roll = {
-          key: effect.key,
+          key: effect.roll,
           dice: `${read.count}d${read.sides}`,
           faces,
           plus,
@@ -190,12 +190,12 @@ export const rolls = defineFeature<RollsShape>({
         }
         return {
           ...state,
-          kv: { ...state.kv, [effect.key]: total },
-          rolls: { made: made + 1, last: [...state.rolls.last, roll], latest: { ...state.rolls.latest, [effect.key]: roll } },
+          kv: { ...state.kv, [effect.roll]: total },
+          rolls: { made: made + 1, last: [...state.rolls.last, roll], latest: { ...state.rolls.latest, [effect.roll]: roll } },
         }
       },
       references: (effect) => {
-        const refs: Reference[] = [{ dice: effect.dice, key: effect.key, plus: effect.plus, against: effect.against }]
+        const refs: Reference[] = [{ dice: effect.dice, key: effect.roll, plus: effect.plus, against: effect.against }]
         if (typeof effect.plus === 'object' && effect.plus !== null && typeof effect.plus.stat === 'string') refs.push({ stat: effect.plus.stat })
         return refs
       },

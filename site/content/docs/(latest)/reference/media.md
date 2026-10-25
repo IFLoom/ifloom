@@ -6,7 +6,7 @@ Pictures and videos reach the screen in three ways. You write them into prose as
 
 ```ts
 import {
-  mediaKind,
+  mediaType,
   stageView,
   type GameMedia,
   type HotspotDef,
@@ -301,7 +301,7 @@ How a video layer plays, with the defaults filled in. A `video` [beat](/docs/ref
 
 **Gotchas.**
 - `muted: false` asks for sound. Browsers often refuse to start a video with sound by itself, so a UI may need the player to press play. The React UI's [`Video`](/docs/react/components#video) also follows the game's mute and volume settings for a video with sound.
-- `mediaKind` decides picture or video by the file's extension alone. A file in `art/` with no extension is a picture (`.jpg`), unless its markup says `video` (`.mp4`).
+- `mediaType` decides picture or video by the file's extension alone. A file in `art/` with no extension is a picture (`.jpg`), unless its markup says `video` (`.mp4`).
 
 ## Checks
 

@@ -68,7 +68,7 @@ function game(...partners: Plugin[]): Game {
     ...things,
     actions: [
       { id: 'wait', effects: [pass(1)] },
-      { id: 'sleep', effects: [{ kind: 'turn' }] },
+      { id: 'sleep', effects: [{ turn: true }] },
     ],
     data: {
       shop: { vendors: [counter, stall] },
@@ -298,7 +298,7 @@ describe('the shop’s stock, held by the vendor', () => {
           stats: [{ id: 'coins', label: 'Coins', start: 20, spendable: true }],
           kinds: [{ id: 'hat', label: 'Hat', unique: true, listed: false }],
           entities: [{ id: 'bowler', of: 'hat', name: 'bowler', traits: { ...sellable({ coins: 6 }) } }],
-          actions: [{ id: 'sleep', effects: [{ kind: 'turn' }] }],
+          actions: [{ id: 'sleep', effects: [{ turn: true }] }],
           data: { shop: { vendors: [{ id: 'milliner', name: 'Milliner', buysBack: 0.5, goods: [{ entity: 'hat:bowler', stock: 1, restock: 'day' }] }] } },
         },
       ],
@@ -396,7 +396,7 @@ describe('the shop panel', () => {
   it("opens a vendor's counter from anything that runs effects, and stays open while the player buys", () => {
     const base = game()
     const g = { ...base, actions: [...(base.actions ?? []), { id: 'counter', effects: [openShop('counter')] }] }
-    expect(openShop('counter')).toEqual({ kind: 'panel', panel: 'shop', with: { vendor: 'counter' } })
+    expect(openShop('counter')).toEqual({ panel: 'shop', with: { vendor: 'counter' } })
     const open = run(fresh(g), g, { type: 'action', id: 'counter' })
     expect(view(open, g).panel).toEqual({ panel: 'shop', with: { vendor: 'counter' } })
     const bought = run(open, g, buy('counter', 'food:coffee'), buy('counter', 'food:biscuit'))
@@ -414,8 +414,8 @@ describe('the shop panel', () => {
           actions: [
             { id: 'a', effects: [openShop('stall')] },
             { id: 'b', effects: [openShop('kiosk')] },
-            { id: 'c', effects: [{ kind: 'panel', panel: 'shop' }] },
-            { id: 'd', effects: [{ kind: 'panel', panel: 'map', with: { vendor: 'kiosk' } }] },
+            { id: 'c', effects: [{ panel: 'shop' }] },
+            { id: 'd', effects: [{ panel: 'map', with: { vendor: 'kiosk' } }] },
           ],
         },
       ],

@@ -24,8 +24,8 @@ export type TurnsShape = {
     turn: { turn: Range }
   }
   effects: {
-    /** End the turn, `by` times (1 if left out): the game's turn rules run each time. */
-    turn: { kind: 'turn'; by?: number }
+    /** End the turn, `{ turn: true }`, or several times, `{ turn: { by: 3 } }`: the game's turn rules run each time. */
+    turn: { turn: true | { by: number } }
   }
   view: {
     /** How many turns have passed: 0 on the first. */
@@ -68,7 +68,8 @@ export const turns = defineFeature<TurnsShape>({
       apply: (state, effect, game, cx) => {
         if (cx.ending) return state
         let next = state
-        for (let n = 0; n < (effect.by ?? 1); n += 1) next = endTurn(next, game, cx)
+        const times = effect.turn === true ? 1 : effect.turn.by
+        for (let n = 0; n < times; n += 1) next = endTurn(next, game, cx)
         return next
       },
       references: () => [],

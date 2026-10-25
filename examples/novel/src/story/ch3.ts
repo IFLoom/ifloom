@@ -1,7 +1,7 @@
 /** Chapter three: June's sister at the door, and the two endings. */
 import type { Content } from '@ifloom/engine'
 
-const readIt = { kind: 'kv', key: 'readBefore', to: true } as const
+const readIt = { kv: 'readBefore', to: true } as const
 
 export const ch3: Content = {
   // Reaching either ending finishes the game, and the title screen then offers New Game+.
@@ -20,8 +20,8 @@ export const ch3: Content = {
       ],
       choices: [
         // Either ending marks the story as read, for a New Game+ to carry over.
-        { id: 'hand', when: { stat: 'courage', gte: 3 }, effects: [readIt, { kind: 'scene', scene: 'end.kept' }] },
-        { id: 'post', effects: [readIt, { kind: 'scene', scene: 'end.posted' }] },
+        { id: 'hand', when: { stat: 'courage', gte: 3 }, effects: [readIt, { scene: 'end.kept' }] },
+        { id: 'post', effects: [readIt, { scene: 'end.posted' }] },
       ],
     },
     // Each ending offers the story again: `newGame` starts it over, keeping the reader's settings.

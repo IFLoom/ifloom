@@ -30,8 +30,8 @@ const arrows: MinigameDef = {
         {
           go: 'show',
           effects: [
-            { kind: 'kv', key: 'round', of: 'minigame', by: 1 },
-            { kind: 'kv', key: 'arrow', of: 'minigame', random: [1, 2] },
+            { kv: 'round', of: 'minigame', by: 1 },
+            { kv: 'arrow', of: 'minigame', random: [1, 2] },
           ],
         },
       ],
@@ -40,8 +40,8 @@ const arrows: MinigameDef = {
       label: 'arrows.show',
       after: { ms: 1500, go: 'round' },
       on: [
-        { input: 'up', when: { kv: 'arrow', of: 'minigame', lte: 1 }, go: 'round', effects: [{ kind: 'kv', key: 'score', of: 'minigame', by: 1 }] },
-        { input: 'down', when: { kv: 'arrow', of: 'minigame', gte: 2 }, go: 'round', effects: [{ kind: 'kv', key: 'score', of: 'minigame', by: 1 }] },
+        { input: 'up', when: { kv: 'arrow', of: 'minigame', lte: 1 }, go: 'round', effects: [{ kv: 'score', of: 'minigame', by: 1 }] },
+        { input: 'down', when: { kv: 'arrow', of: 'minigame', gte: 2 }, go: 'round', effects: [{ kv: 'score', of: 'minigame', by: 1 }] },
         { input: 'up', go: 'round' },
         { input: 'down', go: 'round' },
       ],
@@ -50,13 +50,10 @@ const arrows: MinigameDef = {
     won: {
       final: {
         copy: { score: 'bestScore' },
-        effects: [
-          { kind: 'stat', stat: 'coins', by: 5 },
-          { kind: 'scene', scene: 'rosa.hello' },
-        ],
+        effects: [{ stat: 'coins', by: 5 }, { scene: 'rosa.hello' }],
       },
     },
-    lost: { final: { effects: [{ kind: 'turn' }] } },
+    lost: { final: { effects: [{ turn: true }] } },
   },
 }
 
@@ -66,8 +63,8 @@ const toss: MinigameDef = {
   start: 'air',
   states: {
     air: { after: { ms: 100, to: ['heads', { state: 'tails', weight: 3 }] } },
-    heads: { final: { effects: [{ kind: 'kv', key: 'side', to: 'heads' }] } },
-    tails: { final: { effects: [{ kind: 'kv', key: 'side', to: 'tails' }] } },
+    heads: { final: { effects: [{ kv: 'side', to: 'heads' }] } },
+    tails: { final: { effects: [{ kv: 'side', to: 'tails' }] } },
   },
 }
 
@@ -76,12 +73,8 @@ function withMinigames(extra: Partial<Game> = {}): Game {
   const game: Game = {
     ...base,
     minigames: [arrows, toss],
-    actions: [
-      ...(base.actions ?? []),
-      { id: 'play', effects: [{ kind: 'minigame', minigame: 'arrows' }] },
-      { id: 'flip', effects: [{ kind: 'minigame', minigame: 'toss' }] },
-    ],
-    scenes: [...base.scenes, { id: 'yard', body: [{ text: 'yard' }], minigame: 'toss', choices: [{ id: 'go', effects: [{ kind: 'scene', scene: null }] }] }],
+    actions: [...(base.actions ?? []), { id: 'play', effects: [{ minigame: 'arrows' }] }, { id: 'flip', effects: [{ minigame: 'toss' }] }],
+    scenes: [...base.scenes, { id: 'yard', body: [{ text: 'yard' }], minigame: 'toss', choices: [{ id: 'go', effects: [{ scene: null }] }] }],
     ...extra,
   }
   game.prose = proseStore(game, { 'arrows.show': 'Quick!', yard: 'A coin on the step.', 'yard#go': 'Go' })
@@ -351,7 +344,7 @@ describe('the minigame checks', () => {
     expect(
       broken({
         states: {
-          a: { on: [{ input: 'go', when: { kv: 'score', of: 'minigame' }, go: 'b', effects: [{ kind: 'kv', key: 'lives', of: 'minigame', by: -1 }] }] },
+          a: { on: [{ input: 'go', when: { kv: 'score', of: 'minigame' }, go: 'b', effects: [{ kv: 'lives', of: 'minigame', by: -1 }] }] },
           b: { final: { copy: { streak: 'best' } } },
         },
       }),
@@ -363,7 +356,7 @@ describe('the minigame checks', () => {
     const good = withMinigames()
     const game: Game = {
       ...good,
-      actions: [...(good.actions ?? []), { id: 'chess', effects: [{ kind: 'minigame', minigame: 'chess' }] }],
+      actions: [...(good.actions ?? []), { id: 'chess', effects: [{ minigame: 'chess' }] }],
       scenes: [...good.scenes, { id: 'board', body: [], minigame: 'draughts', choices: [] }],
     }
     expect(checkGame(game).problems.map((problem) => `${problem.where} · ${problem.what}`)).toEqual([

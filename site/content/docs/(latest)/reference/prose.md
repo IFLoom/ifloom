@@ -497,19 +497,19 @@ artSrc('clips/kettle', 'video')  // 'art/clips/kettle.mp4'
 
 The result is relative on purpose. A built game is a folder opened from disk or from a subpath, where a path starting `/` would point at the root of the drive or host instead of beside `index.html`. Put your pictures in `art/` next to the game's `index.html`. Sound files work the same way under `audio/`, through [`audioSrc`](/docs/reference/audio#audiosrc).
 
-## mediaKind
+## mediaType
 
 ```ts
-import { mediaKind } from '@ifloom/engine'
+import { mediaType } from '@ifloom/engine'
 
-function mediaKind(src: string): 'image' | 'video'
+function mediaType(src: string): 'image' | 'video'
 ```
 
 Whether a file is drawn as a picture or a video, by its extension. `.mp4` and `.webm` are videos, and everything else is a picture, animated `.gif` and `.webp` included.
 
 ```ts
-mediaKind('clips/kettle.mp4') // 'video'
-mediaKind('place/cafe.webp')  // 'image'
+mediaType('clips/kettle.mp4') // 'video'
+mediaType('place/cafe.webp')  // 'image'
 ```
 
 ## See it in an example

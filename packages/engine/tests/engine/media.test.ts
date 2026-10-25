@@ -5,7 +5,7 @@ import { loadState, startingState } from '../../src/intake.ts'
 import { view } from '../../src/view.ts'
 import { replay } from '../../src/runner.ts'
 import { problemsOf } from '../fixtures/checked.ts'
-import { artSrc, mediaKind, parseBeats } from '../../src/sceneBody.ts'
+import { artSrc, mediaType, parseBeats } from '../../src/sceneBody.ts'
 import { pickKey, poolCandidates } from '../../src/features/media.ts'
 import { SAVE_VERSION, type Command, type GameState } from '../../src/types.ts'
 import type { Game, Scene } from '../../src/game.ts'
@@ -16,10 +16,10 @@ const video = { autoplay: true, loop: true, muted: true, controls: false }
 
 describe('picture and video markup', () => {
   it('plays a video like a GIF unless its kv say otherwise', () => {
-    expect(parseBeats('[[video:clips/kettle]]')).toEqual([{ kind: 'video', src: 'art/clips/kettle.mp4', size: 'inline', ...video }])
+    expect(parseBeats('[[video:clips/kettle]]')).toEqual([{ type: 'video', src: 'art/clips/kettle.mp4', size: 'inline', ...video }])
     expect(parseBeats('[[widevideo:clips/rain.webm|controls|once|sound|poster=clips/rain-still|Rain on the window]]')).toEqual([
       {
-        kind: 'video',
+        type: 'video',
         src: 'art/clips/rain.webm',
         poster: 'art/clips/rain-still.jpg',
         alt: 'Rain on the window',
@@ -34,27 +34,27 @@ describe('picture and video markup', () => {
   })
 
   it('draws a video file as a video, whichever markup names it', () => {
-    expect(parseBeats('[[img:clips/kettle.mp4|once]]')[0]).toMatchObject({ kind: 'video', src: 'art/clips/kettle.mp4', loop: false })
-    expect(parseBeats('[[wide:street.gif]]')[0]).toMatchObject({ kind: 'image', src: 'art/street.gif', size: 'wide' })
+    expect(parseBeats('[[img:clips/kettle.mp4|once]]')[0]).toMatchObject({ type: 'video', src: 'art/clips/kettle.mp4', loop: false })
+    expect(parseBeats('[[wide:street.gif]]')[0]).toMatchObject({ type: 'image', src: 'art/street.gif', size: 'wide' })
   })
 
   it('keeps the picture markup as it was: alt text and rot', () => {
     expect(parseBeats('[[img:cafe/cup|rot|A cup of tea]]')).toEqual([
-      { kind: 'image', src: 'art/cafe/cup.jpg', alt: 'A cup of tea', size: 'inline', rotate: true },
+      { type: 'image', src: 'art/cafe/cup.jpg', alt: 'A cup of tea', size: 'inline', rotate: true },
     ])
   })
 
   it('leaves out a pool nobody resolved, rather than drawing a broken picture', () => {
     expect(parseBeats('Before.\n\n[[img:@door|night]]\n\nAfter.')).toEqual([
-      { kind: 'text', text: 'Before.' },
-      { kind: 'text', text: 'After.' },
+      { type: 'text', text: 'Before.' },
+      { type: 'text', text: 'After.' },
     ])
   })
 
   it('knows a video by its extension, and gives a bare video name .mp4', () => {
-    expect(mediaKind('clips/rain.webm')).toBe('video')
-    expect(mediaKind('art/street.mp4')).toBe('video')
-    expect(mediaKind('street.webp')).toBe('image')
+    expect(mediaType('clips/rain.webm')).toBe('video')
+    expect(mediaType('art/street.mp4')).toBe('video')
+    expect(mediaType('street.webp')).toBe('image')
     expect(artSrc('clips/rain', 'video')).toBe('art/clips/rain.mp4')
     expect(artSrc('clips/rain')).toBe('art/clips/rain.jpg')
   })
@@ -112,17 +112,17 @@ describe('media in a data scene’s body', () => {
       { media: { src: 'flat/mug', at: 'end' } },
       { media: { src: 'flat/cat' }, when: { kv: 'cat' } },
     ],
-    choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
+    choices: [{ id: 'leave', effects: [{ scene: null }] }],
   }
 
   it('sits where it is written, with a lead still first and an end one last', () => {
     const g = game([flat])
     expect(view(open(g, 'flat'), g).scene.beats).toEqual([
-      { kind: 'image', src: 'art/flat/morning.jpg', size: 'inline' },
-      { kind: 'text', text: 'You wake to rain.' },
-      { kind: 'video', src: 'art/flat/kettle.mp4', alt: 'The kettle', size: 'wide', ...video },
-      { kind: 'text', text: 'The kettle clicks off.' },
-      { kind: 'image', src: 'art/flat/mug.jpg', size: 'inline' },
+      { type: 'image', src: 'art/flat/morning.jpg', size: 'inline' },
+      { type: 'text', text: 'You wake to rain.' },
+      { type: 'video', src: 'art/flat/kettle.mp4', alt: 'The kettle', size: 'wide', ...video },
+      { type: 'text', text: 'The kettle clicks off.' },
+      { type: 'image', src: 'art/flat/mug.jpg', size: 'inline' },
     ])
   })
 
@@ -134,14 +134,14 @@ describe('media in a data scene’s body', () => {
   it('leaves out a block whose condition fails', () => {
     const g = game([flat])
     const state = { ...open(g, 'flat'), kv: { cat: true } }
-    expect(view(state, g).scene.beats.at(-2)).toEqual({ kind: 'image', src: 'art/flat/cat.jpg', size: 'inline' })
+    expect(view(state, g).scene.beats.at(-2)).toEqual({ type: 'image', src: 'art/flat/cat.jpg', size: 'inline' })
   })
 
   it('takes video kv on a block', () => {
     const g = game([{ id: 'flat', body: [{ media: { src: 'flat/kettle', video: true, controls: true, poster: 'flat/kettle-still' } }], choices: [] }])
     expect(view(open(g, 'flat'), g).scene.beats).toEqual([
       {
-        kind: 'video',
+        type: 'video',
         src: 'art/flat/kettle.mp4',
         poster: 'art/flat/kettle-still.jpg',
         size: 'inline',
@@ -158,7 +158,7 @@ describe('pools', () => {
   const doorstep: DataScene = {
     id: 'doorstep',
     body: [{ text: 'flat.door' }, { media: { pool: 'door', tags: ['blue', 'red'] } }, { media: { pool: 'window', at: 'lead' } }],
-    choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
+    choices: [{ id: 'leave', effects: [{ scene: null }] }],
   }
 
   it('prefer the files with every tag, then drop tags from the end of the request', () => {
@@ -175,9 +175,9 @@ describe('pools', () => {
   it('resolve in markup and in blocks, each pick kept per scene and block', () => {
     const g = game([doorstep], {})
     const beats = view(open(g, 'doorstep'), g).scene.beats
-    expect(beats[0]).toEqual({ kind: 'video', src: 'art/flat/window-rain.mp4', size: 'inline', ...video })
-    expect(beats[2]).toEqual({ kind: 'image', src: 'art/door/red-night.jpg', alt: 'The front door', size: 'inline' })
-    expect(beats[3]).toMatchObject({ kind: 'image', src: expect.stringMatching(/^art\/door\/blue-(day|night)\.jpg$/) })
+    expect(beats[0]).toEqual({ type: 'video', src: 'art/flat/window-rain.mp4', size: 'inline', ...video })
+    expect(beats[2]).toEqual({ type: 'image', src: 'art/door/red-night.jpg', alt: 'The front door', size: 'inline' })
+    expect(beats[3]).toMatchObject({ type: 'image', src: expect.stringMatching(/^art\/door\/blue-(day|night)\.jpg$/) })
   })
 
   it('are drawn from the seed: the same save always gets the same file', () => {
@@ -189,7 +189,7 @@ describe('pools', () => {
   })
 
   it('are recorded after a command, under pool, tags, owner and slot, and the view then reads them', () => {
-    const g = game([doorstep], { actions: [{ id: 'knock', effects: [{ kind: 'scene', scene: 'doorstep' }] }] })
+    const g = game([doorstep], { actions: [{ id: 'knock', effects: [{ scene: 'doorstep' }] }] })
     const before = startingState(g, { seed: 7 })
     expect(before.media).toEqual({ picks: {} })
     const after = apply(before, g, { type: 'action', id: 'knock' }).state
@@ -201,7 +201,7 @@ describe('pools', () => {
   })
 
   it('stay the same across a reload, even once the pool has more files', () => {
-    const g = game([doorstep], { actions: [{ id: 'knock', effects: [{ kind: 'scene', scene: 'doorstep' }] }] })
+    const g = game([doorstep], { actions: [{ id: 'knock', effects: [{ scene: 'doorstep' }] }] })
     const after = apply(startingState(g, { seed: 7 }), g, { type: 'action', id: 'knock' }).state
     const shown = view(after, g).scene.beats[3]
     const loaded = unwrap(loadState(JSON.parse(JSON.stringify(after)), g))
@@ -213,7 +213,7 @@ describe('pools', () => {
   })
 
   it('replay exactly', () => {
-    const g = game([doorstep], { actions: [{ id: 'knock', effects: [{ kind: 'scene', scene: 'doorstep' }] }] })
+    const g = game([doorstep], { actions: [{ id: 'knock', effects: [{ scene: 'doorstep' }] }] })
     const start = startingState(g, { seed: 3 })
     const commands: Command[] = [
       { type: 'action', id: 'knock' },
@@ -235,9 +235,9 @@ describe('pools', () => {
     const g = game([porch])
     const state = apply({ ...startingState(g), sceneId: null }, g, { type: 'scene', id: 'porch' }).state
     expect(view(state, g).scene.beats).toEqual([
-      { kind: 'image', src: 'art/door/red-day.jpg', size: 'inline' },
-      { kind: 'text', text: 'The porch.' },
-      { kind: 'image', src: 'art/door/blue-day.jpg', size: 'wide' },
+      { type: 'image', src: 'art/door/red-day.jpg', size: 'inline' },
+      { type: 'text', text: 'The porch.' },
+      { type: 'image', src: 'art/door/blue-day.jpg', size: 'wide' },
     ])
     expect(state.media.picks).toEqual({ 'door|blue,day|porch|body.0': 'door/blue-day.jpg', 'door|red,day|porch|media.0': 'door/red-day.jpg' })
   })
@@ -263,7 +263,7 @@ describe('the stage', () => {
     },
     body: [{ text: 'flat.wake' }],
     choices: [
-      { id: 'leave', blocked: [{ when: { not: { kv: 'dressed' } }, reason: 'Get dressed first.' }], effects: [{ kind: 'scene', scene: null }] },
+      { id: 'leave', blocked: [{ when: { not: { kv: 'dressed' } }, reason: 'Get dressed first.' }], effects: [{ scene: null }] },
       { id: 'tea', when: { kv: 'kettle' }, effects: [] },
       { id: 'phone', effects: [] },
     ],

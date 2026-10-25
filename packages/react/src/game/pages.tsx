@@ -329,14 +329,14 @@ function SettingControl({ setting, value, change }: { setting: SettingView; valu
   const control = usePart('setting-control', 'flex flex-wrap items-center gap-3')
   const shown = usePart('setting-value', 'min-w-8 text-sm text-muted-foreground tabular-nums')
   const id = `setting-${setting.id}`
-  if (setting.kind === 'toggle') {
+  if (setting.type === 'toggle') {
     return (
       <span {...control}>
         <input id={id} type="checkbox" checked={value === true} onChange={(event) => change(event.target.checked)} />
       </span>
     )
   }
-  if (setting.kind === 'range') {
+  if (setting.type === 'range') {
     return (
       <span {...control}>
         <input

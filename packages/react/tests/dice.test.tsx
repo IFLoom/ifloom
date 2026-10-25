@@ -29,8 +29,8 @@ function river(): Game {
               { text: 'bank.sank', when: { roll: 'skim', passed: false }, ui: { dice: 'skim' } },
             ],
             choices: [
-              { id: 'skim', effects: [{ kind: 'roll', key: 'skim', dice: '2d6', against: 8 }] },
-              { id: 'ducks', effects: [{ kind: 'roll', key: 'ducks', dice: '1d6+2' }] },
+              { id: 'skim', effects: [{ roll: 'skim', dice: '2d6', against: 8 }] },
+              { id: 'ducks', effects: [{ roll: 'ducks', dice: '1d6+2' }] },
               { id: 'wait', effects: [] },
             ],
           },

@@ -1,5 +1,6 @@
 import {
   actionById,
+  callOf,
   apply,
   buildEffects,
   entitiesOf,
@@ -166,7 +167,7 @@ export function explorer(): Policy {
       if (entry.command.type !== 'action') return true
       // An action that only lets time pass is waiting, not doing; its cost does not count.
       const effects = buildEffects(state, game, actionById(state, game, entry.command.id)?.effects ?? [])
-      return effects.some((effect) => !(effect.kind === 'custom' && effect.name === 'calendar/pass'))
+      return effects.some((effect) => callOf(effect)?.name !== 'calendar/pass')
     })
     if (action) {
       today.add(`do:${action.id}`)

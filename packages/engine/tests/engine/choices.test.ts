@@ -60,8 +60,8 @@ describe('choices the player made', () => {
 describe('kv keys as counters', () => {
   it('add, starting from nothing, and range-test', () => {
     const game = fixture()
-    let state = applyEffects(begin(game), game, [{ kind: 'kv', key: 'lies', by: 1 }])
-    state = applyEffects(state, game, [{ kind: 'kv', key: 'lies', by: 2 }])
+    let state = applyEffects(begin(game), game, [{ kv: 'lies', by: 1 }])
+    state = applyEffects(state, game, [{ kv: 'lies', by: 2 }])
     expect(state.kv.lies).toBe(3)
     expect(holds(state, { kv: 'lies', gte: 3 }, game)).toBe(true)
     expect(holds(state, { kv: 'lies', gt: 3 }, game)).toBe(false)
@@ -69,7 +69,7 @@ describe('kv keys as counters', () => {
     expect(holds(state, { kv: 'lies', lt: 3 }, game)).toBe(false)
     expect(explain(state, { kv: 'lies', gte: 1, lte: 2 }, game).why).toBe('kv lies is 3; wants 1 or more and 2 or less')
     // A value that is not a number counts as 0 in a range.
-    const named = applyEffects(state, game, [{ kind: 'kv', key: 'pet', to: 'Biscuit' }])
+    const named = applyEffects(state, game, [{ kv: 'pet', to: 'Biscuit' }])
     expect(holds(named, { kv: 'pet', lte: 0 }, game)).toBe(true)
     expect(holds(named, { kv: 'pet' }, game)).toBe(true)
   })
@@ -190,7 +190,7 @@ describe('storylines', () => {
     const state = begin(game)
     expect(holds(state, { storyline: 'rosa' }, game)).toBe(true)
     expect(holds(state, { storyline: 'rosa', open: false }, game)).toBe(false)
-    const closed = applyEffects(state, game, [{ kind: 'closeStoryline', storyline: 'rosa', turns: 3 }])
+    const closed = applyEffects(state, game, [{ closeStoryline: 'rosa', turns: 3 }])
     expect(holds(closed, { storyline: 'rosa' }, game)).toBe(false)
     expect(holds(closed, { storyline: 'rosa', open: false }, game)).toBe(true)
     expect(holds({ ...closed, turn: closed.turn + 3 }, { storyline: 'rosa' }, game)).toBe(true)

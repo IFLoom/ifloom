@@ -54,16 +54,16 @@ describe('the loader', () => {
           id: 'parcel',
           when: { count: { of: 'parcel', at: 'you' } },
           effects: [
-            { kind: 'create', of: 'drawer', entity: { id: 'a' }, at: 'player' },
-            { kind: 'notify', title: 'Post', text: 'post.unwritten' },
-            { kind: 'scene', scene: 'nowhere' },
+            { create: 'drawer', with: { id: 'a' }, at: 'player' },
+            { notify: 'Post', text: 'post.unwritten' },
+            { scene: 'nowhere' },
             { 'game/shred': true },
           ],
         },
       ],
       inputs: [
-        { id: 'colour', label: 'Colour', kind: 'choice' },
-        { id: 'age', label: 'Age', kind: 'number', min: 10, max: 5, when: { storyline: 'ghost' } },
+        { id: 'colour', label: 'Colour', type: 'choice' },
+        { id: 'age', label: 'Age', type: 'number', min: 10, max: 5, when: { storyline: 'ghost' } },
       ],
     }
     const problems = loadWhole([pack], baseOf()).problems.map(describeProblem)
@@ -173,8 +173,8 @@ describe('content given what only a pack has', () => {
 
 describe('what a mod can reach', () => {
   const scenes: Content['scenes'] = [
-    { id: 'door', body: [], choices: [{ id: 'in', effects: [{ kind: 'scene', scene: null }] }] },
-    { id: 'gate', body: [], choices: [{ id: 'in', effects: [{ kind: 'scene', scene: null }] }] },
+    { id: 'door', body: [], choices: [{ id: 'in', effects: [{ scene: null }] }] },
+    { id: 'gate', body: [], choices: [{ id: 'in', effects: [{ scene: null }] }] },
   ]
   const base = { id: 'yard', title: 'The Yard' }
   const own: Content = {

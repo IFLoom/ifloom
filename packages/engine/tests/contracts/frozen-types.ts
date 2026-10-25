@@ -292,65 +292,69 @@ export type FrozenCommand =
 
 export type FrozenEffect =
   /** Change a stat `by` an amount or put it `to` a value, held to its range: the player's, or with `of`, an entity's. */
-  | { kind: 'stat'; stat: StatKey; by: number; of?: string }
-  | { kind: 'stat'; stat: StatKey; to: number; of?: string }
-  /** A plugin's effect, by its full name. Content writes `{ custom: name, with }`; the engine turns it into this. */
-  | { kind: 'custom'; name: string; with?: Record<string, unknown> }
-  /**
-   * Set a key `to` a value, or change its number `by` an amount (a value
-   * that is not a number counts as 0). With `of`, the key is an entity's.
-   */
-  | { kind: 'kv'; key: string; to: KvValue; of?: string }
-  | { kind: 'kv'; key: string; by: number; of?: string }
-  | { kind: 'kv'; key: string; random: [number, number]; of?: string }
-  /**
-   * A new entity of a kind. Its `id` is the next free number (`#1`, `#2`) if
-   * left out, never reused; an id already there is left as it is.
-   */
-  | { kind: 'create'; of: string; like?: string; entity?: CreatedEntity; at?: Placement }
-  | { kind: 'create'; of?: string; like: string; entity?: CreatedEntity; at?: Placement }
-  /** Take an entity out of the game: `{ kind: 'remove', entity: 'staff:ana' }`. */
-  | { kind: 'remove'; entity: string }
-  /**
-   * The same effects for every entity of a kind (where `where` holds), one
-   * after another, with `'$'` as the one each time: wages, upkeep, a bad week.
-   */
-  | ({ kind: 'each'; effects: EffectRef[] } & Select)
+  | { stat: StatKey; by: number; of?: string }
+  | { stat: StatKey; to: number; of?: string }
+  /** Set a kv key `to` a value, change its number `by` an amount, or draw it at random: the player's, or with `of`, someone else's. */
+  | { kv: string; to: KvValue; of?: string }
+  | { kv: string; by: number; of?: string }
+  | { kv: string; random: [number, number]; of?: string }
+  /** A new entity of a kind, made `with` what it is given, `like` another, given `at` a holder. */
+  | { create: string; like?: string; with?: CreatedEntity; at?: Placement }
+  /** Take an entity out of the game. */
+  | { remove: string }
+  /** The same effects for every entity of a kind, or of a selection, where `where` holds, with `'$'` as each. */
+  | { each: string | Select; where?: FrozenCondition; effects: EffectRef[] }
   /** Change how many of a thing a holder (`'you'` if left out) holds, `by` or `to`. */
-  | { kind: 'entity'; entity: string; at?: string; by: number }
-  | { kind: 'entity'; entity: string; at?: string; to: number }
+  | { entity: string; at?: string; by: number }
+  | { entity: string; at?: string; to: number }
   /** Move a thing to another holder. */
-  | { kind: 'move'; entity: string; from?: string; to: string; by?: number }
+  | { move: string; from?: string; to: string; by?: number }
   /** Play as a protagonist, or `null` for the player. */
-  | { kind: 'you'; to: string | null }
-  | { kind: 'scene'; scene: string | null }
-  /**
-   * Open one scene drawn at random from the scenes whose `drawnFrom` names
-   * `from` and whose `when` holds, by their `weight`. With none to draw, open
-   * `otherwise` if given, else do nothing. A storylet draw: `{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }`.
-   */
-  | { kind: 'scene'; from: string; otherwise?: string }
-  | { kind: 'closeStoryline'; storyline: string; turns: number }
-  /** End the turn, `by` times (1 if left out): the game's turn rules run each time. */
-  | { kind: 'turn'; by?: number }
+  | { you: string | null }
+  /** Open a scene, close the one on screen with null, or draw one from a set. */
+  | { scene: string | null | { from: string; otherwise?: string } }
+  | { closeStoryline: string; turns: number }
+  /** End the turn, once or `by` times. */
+  | { turn: true | { by: number } }
   /** Tell the player something outside a scene. `text` is a prose key. */
-  | { kind: 'notify'; title: string; text?: string; image?: string; tag?: string; id?: string }
-  /**
-   * Put a track on a background channel, kept in the save: `{ kind: 'audio', channel: 'music', to: 'calm' }`.
-   * `track: null` silences the channel; leaving `track` out hands it back to the place or the game's default.
-   */
-  | { kind: 'audio'; channel: string; track?: string | null }
+  | { notify: string; text?: string; image?: string; tag?: string; id?: string }
+  /** Put a track on a background channel, kept in the save. */
+  | { audio: string; to?: string | null }
   /** Play a sound once, on its track's channel. */
-  | { kind: 'sound'; track: string }
+  | { sound: string }
   /** Start a minigame, in its `start` state. One already running is dropped. */
-  | { kind: 'minigame'; minigame: string }
+  | { minigame: string }
   /** Start a timer (for its `ms` or `to`), stop it (`to: null`), or add time (`by`). */
-  | { kind: 'timer'; timer: string; to?: number | null }
-  | { kind: 'timer'; timer: string; by: number }
-  /** Throw dice, keep the total in the kv store under `key`, and record the roll. */
-  | { kind: 'roll'; key: string; dice: Dice; plus?: number | { stat: string }; against?: number }
+  | { timer: string; to?: number | null }
+  | { timer: string; by: number }
+  /** Throw dice, keep the total in the kv store under the key, and record the roll. */
+  | { roll: string; dice: Dice; plus?: number | { stat: string }; against?: number }
   /** Open a panel by name, with what it needs; `panel: null` closes it. */
-  | { kind: 'panel'; panel: string | null; with?: Record<string, unknown> }
+  | { panel: string | null; with?: Record<string, unknown> }
+  /** A plugin's effect or the game's own, in short. */
+  | PluginCall
+
+/** The keys that tell one effect from another. */
+export type FrozenEffectKey =
+  | 'stat'
+  | 'kv'
+  | 'create'
+  | 'remove'
+  | 'each'
+  | 'entity'
+  | 'move'
+  | 'you'
+  | 'scene'
+  | 'closeStoryline'
+  | 'turn'
+  | 'notify'
+  | 'audio'
+  | 'sound'
+  | 'minigame'
+  | 'timer'
+  | 'roll'
+  | 'panel'
+
 /** The screen this command leaves on comes in with `to`. */
 
 export type FrozenGame = {

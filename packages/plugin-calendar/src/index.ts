@@ -7,6 +7,7 @@
  * content passes time with `{ 'calendar/pass': n }`.
  */
 import {
+  callOf,
   definePlugin,
   holds,
   inRange,
@@ -81,8 +82,9 @@ const WEEKDAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satur
 /** How many periods of time the effects pass, in total. */
 function passed(effects: readonly Effect[]): number {
   return effects.reduce((sum, effect) => {
-    if (effect.kind !== 'custom' || effect.name !== `${ID}/pass`) return sum
-    return sum + periodsIn(effect.with ?? {})
+    const call = callOf(effect)
+    if (call?.name !== `${ID}/pass`) return sum
+    return sum + periodsIn(call.with)
   }, 0)
 }
 
@@ -119,7 +121,7 @@ export function calendar(options: CalendarOptions = {}): DefinedPlugin<CalendarS
     const from = absolute(context.slice)
     const target = from + n
     const turns = turn === false ? 0 : unit(target) - unit(from)
-    const after = turns > 0 ? context.apply([{ kind: 'turn', by: turns }], state) : state
+    const after = turns > 0 ? context.apply([{ turn: { by: turns } }], state) : state
     // The turns moved the clock to the start of each new unit; it lands exactly where it was sent.
     return context.set(fromAbsolute(target), after)
   }
@@ -183,7 +185,7 @@ export function calendar(options: CalendarOptions = {}): DefinedPlugin<CalendarS
               return sleep.from.includes(slice.period) ? undefined : say(game, `${ID}/tooEarly`)
             },
             run: (state, _args, context) => pass(state, untilMorning(context.slice), context),
-            effectsOf: (_state, _args, { slice }) => [{ kind: 'custom', name: `${ID}/pass`, with: { by: untilMorning(slice) } }],
+            effectsOf: (_state, _args, { slice }) => [{ [`${ID}/pass`]: { by: untilMorning(slice) } }],
           },
         }
       : {},

@@ -45,7 +45,7 @@ export function oldSavesGame(extra: Partial<Game> = {}): Game {
       { id: 'umbrella', of: 'item', name: 'Umbrella', desc: 'Blue.', at: 'player' },
       { id: 'apple', of: 'item', name: 'Apple', desc: 'Red.', at: { player: 2 } },
     ],
-    settings: [{ id: 'hints', label: 'Hints', kind: 'toggle', default: true }],
+    settings: [{ id: 'hints', label: 'Hints', type: 'toggle', default: true }],
     resets: { tidied: false },
     plugins: [
       {

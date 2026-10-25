@@ -448,23 +448,23 @@ import type { MigrationTools } from '@ifloom/engine'
 
 type MigrationTools = {
   game: Game
-  fill: (kinds?: FillKind[]) => GameState
+  fill: (parts?: FillPart[]) => GameState
 }
 ```
 
-What a step gets besides the state. `game` is the game the save is loading into, for a step that needs its content, such as which entity an old id now names. `fill(kinds)` returns the state the step was given with what the game declares and the save lacks filled in, for the kinds you name. Leave `kinds` out to fill every kind. Nothing the save already has is changed, so `fill` never resets a value the player has earned.
+What a step gets besides the state. `game` is the game the save is loading into, for a step that needs its content, such as which entity an old id now names. `fill(parts)` returns the state the step was given with what the game declares and the save lacks filled in, for the parts you name. Leave `parts` out to fill every part. Nothing the save already has is changed, so `fill` never resets a value the player has earned.
 
 A [plugin's migration](/docs/reference/plugins#state-and-migrations) step gets the same tools. There, `fill` gives the whole game state as the engine carried it, filled the same way, for a step that needs to read the game. The step still returns only the plugin's own state.
 
-### FillKind
+### FillPart
 
 ```ts
-import type { FillKind } from '@ifloom/engine'
+import type { FillPart } from '@ifloom/engine'
 
-type FillKind = 'stats' | 'kv' | 'settings'
+type FillPart = 'stats' | 'kv' | 'settings'
 ```
 
-| Kind | What `fill` adds |
+| Part | What `fill` adds |
 |---|---|
 | `stats` | Each of the player's stats the save lacks, at its `start`. Not [derived stats](/docs/reference/stats#derived-stats), which are never kept. An entity's stats read their start until play changes them, so they need no filling. |
 | `kv` | Each key in [`rules.resets`](/docs/reference/rules#resets) the save lacks, at its reset value. Other keys have no declared value, so set them in the step yourself. |

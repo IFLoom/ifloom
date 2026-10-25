@@ -47,14 +47,14 @@ const town: Content = {
   ],
   storylines: [{ id: 'ava', name: 'Ava' }],
   scenes: [
-    { id: 'ava.hi', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ kind: 'scene', scene: null }] }] },
-    { id: 'ava.call', body: [{ text: 'ava.call' }], choices: [{ id: 'bye', effects: [{ kind: 'scene', scene: null }] }] },
+    { id: 'ava.hi', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ scene: null }] }] },
+    { id: 'ava.call', body: [{ text: 'ava.call' }], choices: [{ id: 'bye', effects: [{ scene: null }] }] },
   ],
   actions: [
     {
       id: 'photo',
       blocked: [{ when: { not: here('ava') }, reason: 'Nobody to take a picture of.' }],
-      effects: [{ kind: 'create', of: 'photo', entity: { id: 'ava.cafe', name: 'Ava at the café', image: 'art/ava-cafe.jpg' }, at: 'player' }],
+      effects: [{ create: 'photo', with: { id: 'ava.cafe', name: 'Ava at the café', image: 'art/ava-cafe.jpg' }, at: 'player' }],
     },
     {
       id: 'post',
@@ -66,7 +66,7 @@ const town: Content = {
       effects: [
         pass(1),
         postTo('fans', 'fans.ava-cafe', { text: 'fans.ava-cafe', image: 'art/ava-cafe.jpg' }),
-        { kind: 'kv', key: 'postedToday', to: true },
+        { kv: 'postedToday', to: true },
         { 'game/fanReaction': true },
       ],
     },
@@ -125,7 +125,7 @@ const town: Content = {
 const rules: GameRules = {
   values: { subscribersLine: (state) => `${state.stats.subscribers ?? 0} subscribers` },
   // How a post did: the game's own roll, here a fixed one.
-  effects: { fanReaction: () => [{ kind: 'stat', stat: 'subscribers', by: 5 }, react('fans.ava-cafe', { likes: 12, from: 'ava', text: 'fans.nice' })] },
+  effects: { fanReaction: () => [{ stat: 'subscribers', by: 5 }, react('fans.ava-cafe', { likes: 12, from: 'ava', text: 'fans.nice' })] },
 }
 
 function game(): Game {
@@ -181,12 +181,12 @@ describe('a smartphone on the sidebar', () => {
     const g = game()
     let state = run(begin(g), g, openApp('camera'))
     expect(phoneOf(state, g).open?.sections[0]).toMatchObject({
-      kind: 'actions',
+      type: 'actions',
       actions: [{ label: 'Take a photo', disabled: 'Nobody to take a picture of.' }],
     })
     state = run(state, g, closeApp('phone'), go('cafe'), openApp('camera'), { type: 'action', id: 'photo' }, openApp('gallery'))
     expect(phoneOf(state, g).open?.sections[0]).toMatchObject({
-      kind: 'list',
+      type: 'list',
       entries: [{ id: 'photo:ava.cafe', title: 'Ava at the café', image: 'art/ava-cafe.jpg' }],
     })
   })
@@ -195,10 +195,10 @@ describe('a smartphone on the sidebar', () => {
     const g = game()
     let state = run(begin(g), g, go('cafe'), { type: 'action', id: 'photo' }, openApp('studio'))
     const post = () => phoneOf(state, g).open?.sections[1]
-    expect(post()).toMatchObject({ kind: 'actions', actions: [{ label: 'Post a photo', disabled: undefined }] })
+    expect(post()).toMatchObject({ type: 'actions', actions: [{ label: 'Post a photo', disabled: undefined }] })
     state = run(state, g, { type: 'action', id: 'post' })
     expect(state.stats).toMatchObject({ energy: 40, subscribers: 5 })
-    expect(phoneOf(state, g).open?.sections[0]).toEqual({ kind: 'prose', text: '5 subscribers' })
+    expect(phoneOf(state, g).open?.sections[0]).toEqual({ type: 'prose', text: '5 subscribers' })
     expect(post()).toMatchObject({ actions: [{ disabled: 'You have posted today.' }] })
     const fans = (view(state, g).plugins.feed as FeedsView).feeds.find((entry) => entry.id === 'fans')!
     expect(fans.posts[0]).toMatchObject({ mine: true, text: 'Coffee with a friend.', likes: 12, comments: [{ name: 'Ava', text: 'Love this' }] })
@@ -206,10 +206,10 @@ describe('a smartphone on the sidebar', () => {
 
   it('calls the people the player has met, unless they don’t pick up', () => {
     const g = game()
-    expect(phoneOf(run(begin(g), g, openApp('contacts')), g).open?.sections[0]).toEqual({ kind: 'list', entries: [] })
+    expect(phoneOf(run(begin(g), g, openApp('contacts')), g).open?.sections[0]).toEqual({ type: 'list', entries: [] })
     let state = run(begin(g), g, go('cafe'), talk('ava'), { type: 'choose', id: 'bye' })
     state = run(state, g, go('house'), openApp('contacts'))
-    expect(phoneOf(state, g).open?.sections[0]).toMatchObject({ kind: 'list', entries: [{ id: 'ava', actions: [{ label: 'Call', disabled: undefined }] }] })
+    expect(phoneOf(state, g).open?.sections[0]).toMatchObject({ type: 'list', entries: [{ id: 'ava', actions: [{ label: 'Call', disabled: undefined }] }] })
     state = run(state, g, call('ava'))
     expect(state.sceneId).toBe('ava.call')
     expect(where(state)).toBe('house')

@@ -16,8 +16,8 @@ describe('the game’s hooks', () => {
       onTurn: (state, { apply, before }) => {
         // Effects apply one after another, each seeing the last.
         const reached = apply([
-          { kind: 'kv', key: 'reached', to: state.turn },
-          { kind: 'kv', key: 'wasTidy', to: before.kv.tidied === true },
+          { kv: 'reached', to: state.turn },
+          { kv: 'wasTidy', to: before.kv.tidied === true },
         ])
         return { ...reached, kv: { ...reached.kv, mornings: Number(reached.kv.mornings ?? 0) + 1 } }
       },
@@ -41,26 +41,26 @@ describe('the game’s hooks', () => {
         onTurn: (state) => (order.push(`onTurn day ${state.kv.day}`), state),
         onTurnDone: (state, { apply, before }) => {
           order.push(`onTurnDone day ${state.kv.day}`)
-          return state.kv.day !== before.kv.day ? apply([{ kind: 'kv', key: 'newDays', by: 1 }]) : state
+          return state.kv.day !== before.kv.day ? apply([{ kv: 'newDays', by: 1 }]) : state
         },
       }),
       plugins: [clock],
     }
-    const next = applyEffects(begin(game, { kv: { day: 4 } }), game, [{ kind: 'turn', by: 2 }])
+    const next = applyEffects(begin(game, { kv: { day: 4 } }), game, [{ turn: { by: 2 } }])
     expect(order).toEqual(['onTurn day 4', 'onTurnDone day 5', 'onTurn day 5', 'onTurnDone day 6'])
     expect(next.kv.newDays).toBe(2)
   })
 
   it('ends several turns by effect', () => {
     const game = fixture({ onTurn: (state) => ({ ...state, kv: { ...state.kv, turns: Number(state.kv.turns ?? 0) + 1 } }) })
-    const next = applyEffects(begin(game), game, [{ kind: 'turn', by: 3 }])
+    const next = applyEffects(begin(game), game, [{ turn: { by: 3 } }])
     expect(next.turn).toBe(5)
     expect(next.kv.turns).toBe(3)
   })
 
   it('ignores a turn ended by the turn rules themselves, rather than looping', () => {
-    const game = fixture({ onTurn: (_state, { apply }) => apply([{ kind: 'turn' }, { kind: 'kv', key: 'ran', by: 1 }]) })
-    const next = applyEffects(begin(game), game, [{ kind: 'turn' }])
+    const game = fixture({ onTurn: (_state, { apply }) => apply([{ turn: true }, { kv: 'ran', by: 1 }]) })
+    const next = applyEffects(begin(game), game, [{ turn: true }])
     expect(next.turn).toBe(3)
     expect(next.kv.ran).toBe(1)
   })
@@ -81,13 +81,13 @@ describe('the game’s own code, as a plugin’s', () => {
   it('is called as game/name from content: a condition, an effect, a value and a command', () => {
     const game = fixture({
       conditions: { tired: (state) => state.stats.coins < 5 },
-      effects: { tip: (_state, args) => [{ kind: 'stat', stat: 'coins', by: Number(args.by ?? 1) }] },
+      effects: { tip: (_state, args) => [{ stat: 'coins', by: Number(args.by ?? 1) }] },
       values: { purse: (state) => `${state.stats.coins} coins` },
       commands: {
         nap: {
           whyNot: (state) => (state.stats.coins > 10 ? 'Too rich to sleep.' : undefined),
-          run: (state, _args, { apply }) => apply([{ kind: 'kv', key: 'napped', to: true }], state),
-          effectsOf: () => [{ kind: 'kv', key: 'napped', to: true }],
+          run: (state, _args, { apply }) => apply([{ kv: 'napped', to: true }], state),
+          effectsOf: () => [{ kv: 'napped', to: true }],
         },
       },
     })
@@ -119,7 +119,7 @@ describe('the game’s own code, as a plugin’s', () => {
           order.push('game')
           return asked.command.type === 'action' && asked.command.id === 'read' ? 'Not now.' : undefined
         },
-        price: (_state, effects) => (effects.some((effect) => effect.kind === 'turn') ? ['the night'] : undefined),
+        price: (_state, effects) => (effects.some((effect) => 'turn' in effect) ? ['the night'] : undefined),
         view: (state) => ({ coins: state.stats.coins }),
       }),
       plugins: [watch],
@@ -204,10 +204,10 @@ describe('plugins’ turn and stat hooks', () => {
       }),
       plugins: [clock],
     }
-    applyEffects(begin(game), game, [{ kind: 'turn' }])
+    applyEffects(begin(game), game, [{ turn: true }])
     expect(order).toEqual(['game onTurn', 'clock onTurn', 'game onTurnDone', 'clock onTurnDone'])
     order.length = 0
-    const spent = applyEffects(begin(game), game, [{ kind: 'stat', stat: 'coins', by: -2 }])
+    const spent = applyEffects(begin(game), game, [{ stat: 'coins', by: -2 }])
     expect(order).toEqual(['game onStat coins', 'clock onStat coins -2'])
     expect(spent.stats.coins).toBe(3)
   })

@@ -4,7 +4,7 @@
  * No plugins, no places, no characters, no clock. What it uses is what a
  * novel with light tracking needs: a name the player types, one stat, choices
  * the engine remembers on its own (`{ chose }`), a kv key counted up
- * (`{ kind: 'kv', by }`), a chapter as a turn, a migration step for
+ * (`{ kv, by }`), a chapter as a turn, a migration step for
  * saves from the game's first version, no saving until the reader has typed
  * a name, and endings that start the story over with `newGame`.
  *

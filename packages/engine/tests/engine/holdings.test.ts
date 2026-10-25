@@ -74,7 +74,7 @@ describe('holdings', () => {
 
   it('change by and to, never below 0, keeping a count once written', () => {
     const g = game()
-    const state = run(startingState(g), g, [give('food:apple', 3), take('food:bread'), { kind: 'entity', entity: 'food:apple', at: 'place:larder', to: 0 }])
+    const state = run(startingState(g), g, [give('food:apple', 3), take('food:bread'), { entity: 'food:apple', at: 'place:larder', to: 0 }])
     expect(heldCount(state, g, 'food:apple')).toBe(5)
     expect(heldCount(state, g, 'food:apple', 'place:larder')).toBe(0)
     // The player had no bread, so taking one changes nothing; the larder's 0 stays, so the 6 never come back.
@@ -95,12 +95,12 @@ describe('holdings', () => {
 
   it('keep a unique thing in one place, taking it from whoever had it', () => {
     const g = game()
-    let state = run(startingState(g), g, [{ kind: 'entity', entity: 'gift:scarf', at: 'person:ava', by: 5 }])
+    let state = run(startingState(g), g, [{ entity: 'gift:scarf', at: 'person:ava', by: 5 }])
     expect(holderOf(state, g, 'gift:scarf')).toBe('person:ava')
     expect(heldCount(state, g, 'gift:scarf', 'person:ava')).toBe(1)
     expect(heldCount(state, g, 'gift:scarf', 'player')).toBe(0)
     // Only unique things hold: food can't.
-    state = run(state, g, [{ kind: 'entity', entity: 'gift:box', at: 'food:apple', by: 1 }])
+    state = run(state, g, [{ entity: 'gift:box', at: 'food:apple', by: 1 }])
     expect(holderOf(state, g, 'gift:box')).toBeUndefined()
   })
 
@@ -110,7 +110,7 @@ describe('holdings', () => {
       move('food:apple', 'person:ava', { by: 1 }),
       move('food:bread', 'player', { from: 'place:larder' }),
       // The scarf goes into the box, the box to Ava: unique things move from wherever they are.
-      { kind: 'entity', entity: 'gift:box', to: 1 },
+      { entity: 'gift:box', to: 1 },
       move('gift:scarf', 'gift:box'),
       move('gift:box', 'person:ava'),
     ])
@@ -130,22 +130,22 @@ describe('holdings', () => {
 
   it('hand what a removed holder held to its own holder', () => {
     const g = game()
-    let state = run(startingState(g), g, [{ kind: 'entity', entity: 'gift:box', to: 1 }, move('gift:scarf', 'gift:box'), give('food:apple')])
-    state = run(state, g, [move('food:apple', 'gift:box', { by: 2 }), { kind: 'remove', entity: 'gift:box' }])
+    let state = run(startingState(g), g, [{ entity: 'gift:box', to: 1 }, move('gift:scarf', 'gift:box'), give('food:apple')])
+    state = run(state, g, [move('food:apple', 'gift:box', { by: 2 }), { remove: 'gift:box' }])
     expect(holderOf(state, g, 'gift:scarf')).toBe('player')
     expect(heldCount(state, g, 'food:apple')).toBe(3)
     expect(heldCount(state, g, 'gift:box')).toBe(0)
     // Removing the larder, which nobody holds, takes what it held with it.
-    state = run(state, g, [{ kind: 'remove', entity: 'place:larder' }])
+    state = run(state, g, [{ remove: 'place:larder' }])
     expect(holds(state, { entity: 'food:apple', gte: 4 }, g)).toBe(false)
   })
 
   it('switch who you are, and what `you` and `of: you` read', () => {
     const g = game()
-    let state = run(startingState(g), g, [{ kind: 'stat', stat: 'coins', by: 1, of: 'you' }])
+    let state = run(startingState(g), g, [{ stat: 'coins', by: 1, of: 'you' }])
     // With nobody played, `you` is the player.
     expect(state.stats.coins).toBe(11)
-    state = run(state, g, [{ kind: 'you', to: 'person:ava' }, { kind: 'stat', stat: 'energy', by: -20, of: 'you' }, give('food:apple')])
+    state = run(state, g, [{ you: 'person:ava' }, { stat: 'energy', by: -20, of: 'you' }, give('food:apple')])
     expect(state.you).toBe('person:ava')
     expect(statValue(state, g, 'energy', 'person:ava')).toBe(50)
     expect(holds(state, { stat: 'energy', of: 'you', lt: 60 }, g)).toBe(true)
@@ -158,10 +158,10 @@ describe('holdings', () => {
       ['gift:scarf', 1, 'player'],
     ])
     // Only a unique entity in the game can be played.
-    expect(run(state, g, [{ kind: 'you', to: 'food:apple' }]).you).toBe('person:ava')
+    expect(run(state, g, [{ you: 'food:apple' }]).you).toBe('person:ava')
     // Removing the one played goes back to the player.
-    expect(run(state, g, [{ kind: 'remove', entity: 'person:ava' }]).you).toBeNull()
-    state = run(state, g, [{ kind: 'you', to: null }])
+    expect(run(state, g, [{ remove: 'person:ava' }]).you).toBeNull()
+    state = run(state, g, [{ you: null }])
     expect(state.you).toBeNull()
     expect(view(state, g).held[0]).toEqual({
       ref: 'food:apple',
@@ -190,19 +190,19 @@ describe('holdings', () => {
 
   it('run each over what a holder holds', () => {
     const g = game()
-    const state = run(startingState(g), g, [{ kind: 'each', at: 'you', of: 'food', effects: [{ kind: 'stat', stat: 'fresh', by: -1, of: '$' }] }])
+    const state = run(startingState(g), g, [{ each: { of: 'food', at: 'you' }, effects: [{ stat: 'fresh', by: -1, of: '$' }] }])
     expect(statValue(state, g, 'fresh', 'food:apple')).toBe(7)
     expect(statValue(state, g, 'fresh', 'food:bread')).toBe(5)
     // `at: '$'` inside an each is each one in turn.
-    const moved = run(state, g, [{ kind: 'each', of: 'place', effects: [{ kind: 'move', entity: 'food:bread', from: '$', to: 'player' }] }])
+    const moved = run(state, g, [{ each: 'place', effects: [{ move: 'food:bread', from: '$', to: 'player' }] }])
     expect(heldCount(moved, g, 'food:bread')).toBe(1)
   })
 
   it('create things like another, which read through it, and give them to a holder', () => {
     const g = game()
     let state = run(startingState(g), g, [
-      { kind: 'create', like: 'food:apple', at: 'you', entity: { stats: { fresh: 3 }, tags: ['bruised'] } },
-      { kind: 'create', of: 'food', like: 'food:bread', entity: { id: 'loaf', name: 'Loaf', traits: { 'washable-no': false } }, at: { 'place:larder': 2 } },
+      { create: 'food', like: 'food:apple', with: { stats: { fresh: 3 }, tags: ['bruised'] }, at: 'you' },
+      { create: 'food', like: 'food:bread', with: { id: 'loaf', name: 'Loaf', traits: { 'washable-no': false } }, at: { 'place:larder': 2 } },
     ])
     expect(state.entities.food['#1']).toEqual({ like: 'food:apple', tags: ['bruised'], stats: { fresh: 3 } })
     expect(entityName(state, g, 'food:#1')).toBe('Apple')
@@ -218,7 +218,7 @@ describe('holdings', () => {
     const loaded = loadState(JSON.parse(JSON.stringify(state)), g)
     expect(loaded.ok && loaded.value.entities.food['#1']).toEqual({ like: 'food:apple', tags: ['bruised'], stats: { fresh: 3 } })
     // Removed, a created thing leaves nothing in `held`.
-    state = run(state, g, [{ kind: 'remove', entity: 'food:#1' }])
+    state = run(state, g, [{ remove: 'food:#1' }])
     expect(state.held.player).toEqual({})
   })
 
@@ -240,13 +240,13 @@ describe('holdings', () => {
             {
               id: 'go',
               effects: [
-                { kind: 'entity', entity: 'food:apple', at: 'food:bread', by: 1 },
-                { kind: 'move', entity: 'gift:box', to: 'gift:box' },
-                { kind: 'move', entity: 'food:apple', to: 'pal' },
-                { kind: 'you', to: 'you' },
-                { kind: 'create', like: 'food:plum' },
-                { kind: 'create', of: 'gift', like: 'food:apple' },
-                { kind: 'each', trait: 'laundry/washable', effects: [] },
+                { entity: 'food:apple', at: 'food:bread', by: 1 },
+                { move: 'gift:box', to: 'gift:box' },
+                { move: 'food:apple', to: 'pal' },
+                { you: 'you' },
+                { create: 'food', like: 'food:plum' },
+                { create: 'gift', like: 'food:apple' },
+                { each: { trait: 'laundry/washable' }, effects: [] },
               ],
             },
           ],

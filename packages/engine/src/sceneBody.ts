@@ -17,13 +17,13 @@ export type PropFace = 'sticky' | 'clip' | 'diary'
  * `key`, filled in for this save.
  */
 export type InlineSpan =
-  | { kind: 'text'; text: string }
-  | { kind: 'action'; text: string; choice: RenderedChoice }
-  | { kind: 'tip'; text: string; tip: string }
+  | { type: 'text'; text: string }
+  | { type: 'action'; text: string; choice: RenderedChoice }
+  | { type: 'tip'; text: string; tip: string }
   /** Words to stress, from `**words**`. `text` is the words alone. */
-  | { kind: 'bold'; text: string }
+  | { type: 'bold'; text: string }
   /** Words in italics, from `*words*`. `text` is the words alone. */
-  | { kind: 'italic'; text: string }
+  | { type: 'italic'; text: string }
   /**
    * A piece of a UI's own, from `[[ui:name|words|arg|…]]`, such as a popup
    * or a picture to zoom. The engine gives it no meaning and carries it as
@@ -32,7 +32,7 @@ export type InlineSpan =
    * and `args` are the parts after the words, as text, in order. A UI
    * package types its names and arguments by augmenting `InlineUi`.
    */
-  | { kind: 'ui'; name: string; text: string; args: string[] }
+  | { type: 'ui'; name: string; text: string; args: string[] }
 
 /**
  * One piece of a scene's body, as the UI draws it. Any beat can carry `ui`:
@@ -46,17 +46,17 @@ export type SceneBeat =
    * nothing else, a screen reader, the backlog and the playtest.
    */
   (
-    | { kind: 'text'; text: string; spans?: InlineSpan[] }
-    | { kind: 'mono'; text: string }
+    | { type: 'text'; text: string; spans?: InlineSpan[] }
+    | { type: 'mono'; text: string }
     /** A spoken line. `voice` is the track of it read aloud, from `[[voice:id]]` at the end of the line. `spans` as a text beat has them. */
-    | { kind: 'say'; who: 'character' | 'player'; text: string; voice?: string; spans?: InlineSpan[] }
-    | { kind: 'image'; src: string; alt?: string; size: BeatSize; rotate?: boolean }
+    | { type: 'say'; who: 'character' | 'player'; text: string; voice?: string; spans?: InlineSpan[] }
+    | { type: 'image'; src: string; alt?: string; size: BeatSize; rotate?: boolean }
     /**
      * A video clip, from `[[video:…]]` or `[[widevideo:…]]`. Like a GIF unless its
      * flags say otherwise: it plays by itself, loops, has no sound and plays inline.
      */
     | {
-        kind: 'video'
+        type: 'video'
         src: string
         /** A still shown before it plays. */
         poster?: string
@@ -67,10 +67,10 @@ export type SceneBeat =
         muted: boolean
         controls: boolean
       }
-    | { kind: 'mail'; headers: MailHeader[]; body: string }
-    | { kind: 'prop'; face: PropFace; text: string }
+    | { type: 'mail'; headers: MailHeader[]; body: string }
+    | { type: 'prop'; face: PropFace; text: string }
     /** A sound played once when the scene is shown, from `[[sound:id]]` on a line of its own. Nothing to draw. */
-    | { kind: 'sound'; track: string }
+    | { type: 'sound'; track: string }
   ) & {
     /** The hints of the block this beat starts, as written; left out with none. See `BlockUi`. */
     ui?: Ui<BlockUi>
@@ -89,20 +89,20 @@ const ART_ROOT = 'art/'
 const VIDEO = /\.(mp4|webm)$/i
 
 /** Whether a file is a picture or a video, by its extension. */
-export function mediaKind(src: string): 'image' | 'video' {
+export function mediaType(src: string): 'image' | 'video' {
   return VIDEO.test(src) ? 'video' : 'image'
 }
 
 /**
  * The one place a picture's or a video's path is resolved. A bare name is a
- * `.jpg`, or an `.mp4` when `kind` is `'video'`.
+ * `.jpg`, or an `.mp4` when `type` is `'video'`.
  */
-export function artSrc(path: string, kind: 'image' | 'video' = 'image'): string {
+export function artSrc(path: string, type: 'image' | 'video' = 'image'): string {
   const trimmed = path.replace(/^\/?art\//, '').replace(/^\//, '')
   if (/\.(jpg|jpeg|png|webp|gif|avif|webm|mp4|svg)$/i.test(trimmed)) {
     return `${ART_ROOT}${trimmed}`
   }
-  return `${ART_ROOT}${trimmed}${kind === 'video' ? '.mp4' : '.jpg'}`
+  return `${ART_ROOT}${trimmed}${type === 'video' ? '.mp4' : '.jpg'}`
 }
 
 /** A video's flags as markup and data write them. Each one changes a default. */
@@ -200,11 +200,11 @@ function mediaBeat(tag: string, path: string, rest: string): SceneBeat[] {
   const read = mediaParts(path, rest)
   if (read.pool !== undefined) return []
   const size: BeatSize = tag === 'wide' || tag === 'widevideo' ? 'wide' : 'inline'
-  if (tag === 'video' || tag === 'widevideo' || mediaKind(read.path) === 'video') {
+  if (tag === 'video' || tag === 'widevideo' || mediaType(read.path) === 'video') {
     const { poster, ...play } = videoView(read.flags)
     return [
       {
-        kind: 'video',
+        type: 'video',
         src: artSrc(read.path, 'video'),
         ...(poster ? { poster } : {}),
         ...(read.alt !== undefined ? { alt: read.alt } : {}),
@@ -215,7 +215,7 @@ function mediaBeat(tag: string, path: string, rest: string): SceneBeat[] {
   }
   return [
     {
-      kind: 'image',
+      type: 'image',
       src: artSrc(read.path),
       alt: read.alt,
       size,
@@ -250,11 +250,11 @@ export function parseMail(text: string): {
 }
 
 /** A block as a spoken line, if it is one: `Name: "…"`, or a bare quote answering the line before. */
-function spoken(block: string, lastSay: 'character' | 'player' | null): Extract<SceneBeat, { kind: 'say' }> | null {
+function spoken(block: string, lastSay: 'character' | 'player' | null): Extract<SceneBeat, { type: 'say' }> | null {
   const named = block.match(/^([A-Za-z][A-Za-z' -]*):\s*"([\s\S]+)"$/)
-  if (named) return { kind: 'say', who: named[1] === 'You' ? 'player' : 'character', text: named[2] }
+  if (named) return { type: 'say', who: named[1] === 'You' ? 'player' : 'character', text: named[2] }
   const quoted = quoteOnly(block)
-  if (quoted !== null) return { kind: 'say', who: lastSay === 'character' ? 'player' : 'character', text: quoted }
+  if (quoted !== null) return { type: 'say', who: lastSay === 'character' ? 'player' : 'character', text: quoted }
   return null
 }
 
@@ -281,17 +281,17 @@ export function uiParts(name: string, rest: string | undefined): { name: string;
 
 /** A piece of a line, as `inlineMarkup` reads it: words, or an inline action, tooltip, bold or italics as written. */
 export type InlinePart =
-  | { kind: 'text'; text: string }
+  | { type: 'text'; text: string }
   /** `[[act:id]]`, with the words to show if it gives them. */
-  | { kind: 'act'; id: string; text?: string; markup: string }
+  | { type: 'act'; id: string; text?: string; markup: string }
   /** `[[tip:key|words]]`. */
-  | { kind: 'tip'; key: string; text: string; markup: string }
+  | { type: 'tip'; key: string; text: string; markup: string }
   /** `[[ui:name|words|arg|…]]`: `args` are the parts after the words. */
-  | { kind: 'ui'; name: string; text: string; args: string[]; markup: string }
+  | { type: 'ui'; name: string; text: string; args: string[]; markup: string }
   /** `**words**`: `text` is the words alone. */
-  | { kind: 'bold'; text: string; markup: string }
+  | { type: 'bold'; text: string; markup: string }
   /** `*words*`: `text` is the words alone. */
-  | { kind: 'italic'; text: string; markup: string }
+  | { type: 'italic'; text: string; markup: string }
 
 type Stars = { stars: number; from: number; to: number; opens: boolean; closes: boolean }
 type Token = { chars: string } | Stars
@@ -334,8 +334,8 @@ export function emphasis(text: string): { parts: InlinePart[]; problems: string[
   const problems: string[] = []
   const words = (more: string) => {
     const last = parts.at(-1)
-    if (last?.kind === 'text') last.text += more
-    else if (more) parts.push({ kind: 'text', text: more })
+    if (last?.type === 'text') last.text += more
+    else if (more) parts.push({ type: 'text', text: more })
   }
   const shown = (token: Token) => ('chars' in token ? token.chars : '*'.repeat(token.stars))
   for (let index = 0; index < tokens.length; index += 1) {
@@ -360,7 +360,7 @@ export function emphasis(text: string): { parts: InlinePart[]; problems: string[
       problems.push("bold and italics don't go inside each other; the inner stars are shown as written")
     const end = tokens[close] as Stars
     const styled = { text: inside.map(shown).join(''), markup: text.slice(token.from, end.to) }
-    parts.push(token.stars === 2 ? { kind: 'bold', ...styled } : { kind: 'italic', ...styled })
+    parts.push(token.stars === 2 ? { type: 'bold', ...styled } : { type: 'italic', ...styled })
     index = close
   }
   return { parts, problems }
@@ -380,14 +380,14 @@ export function inlineMarkup(text: string): InlinePart[] | null {
   const cut: InlinePart[] = []
   let last = 0
   const words = (until: number) => {
-    if (until > last) cut.push({ kind: 'text', text: text.slice(last, until) })
+    if (until > last) cut.push({ type: 'text', text: text.slice(last, until) })
   }
   for (const match of text.matchAll(INLINE_MARKUP)) {
     if (match[1] === 'ui') {
       const piece = uiParts(match[2], match[3])
       if (!UI_NAME.test(piece.name) || !piece.text || piece.args.some((arg) => arg === '')) continue
       words(match.index)
-      cut.push({ kind: 'ui', name: piece.name, text: piece.text, args: piece.args, markup: match[0] })
+      cut.push({ type: 'ui', name: piece.name, text: piece.text, args: piece.args, markup: match[0] })
       last = match.index + match[0].length
       continue
     }
@@ -396,20 +396,20 @@ export function inlineMarkup(text: string): InlinePart[] | null {
     const ok = id !== '' && (match[1] === 'act' ? shown !== '' : Boolean(shown))
     if (!ok) continue
     words(match.index)
-    if (match[1] === 'act') cut.push({ kind: 'act', id, ...(shown !== undefined ? { text: shown } : {}), markup: match[0] })
-    else cut.push({ kind: 'tip', key: id, text: shown!, markup: match[0] })
+    if (match[1] === 'act') cut.push({ type: 'act', id, ...(shown !== undefined ? { text: shown } : {}), markup: match[0] })
+    else cut.push({ type: 'tip', key: id, text: shown!, markup: match[0] })
     last = match.index + match[0].length
   }
   words(text.length)
   const parts: InlinePart[] = []
   for (const part of cut) {
-    for (const piece of part.kind === 'text' ? emphasis(part.text).parts : [part]) {
+    for (const piece of part.type === 'text' ? emphasis(part.text).parts : [part]) {
       const prev = parts.at(-1)
-      if (piece.kind === 'text' && prev?.kind === 'text') prev.text += piece.text
+      if (piece.type === 'text' && prev?.type === 'text') prev.text += piece.text
       else parts.push(piece)
     }
   }
-  if (parts.length === 1 && parts[0].kind === 'text' && parts[0].text === text) return null
+  if (parts.length === 1 && parts[0].type === 'text' && parts[0].text === text) return null
   return parts
 }
 
@@ -423,23 +423,23 @@ export function inlineMarkup(text: string): InlinePart[] | null {
  */
 export function styledBeats(beats: readonly SceneBeat[]): SceneBeat[] {
   return beats.map((beat) => {
-    if ((beat.kind !== 'text' && beat.kind !== 'say') || beat.spans) return beat
+    if ((beat.type !== 'text' && beat.type !== 'say') || beat.spans) return beat
     const parts = inlineMarkup(beat.text)
     if (!parts) return beat
     const spans: InlineSpan[] = []
     for (const part of parts) {
       const piece: InlineSpan =
-        part.kind === 'bold' || part.kind === 'italic'
-          ? { kind: part.kind, text: part.text }
-          : part.kind === 'ui'
-            ? { kind: 'ui', name: part.name, text: part.text, args: part.args }
-            : { kind: 'text', text: part.kind === 'text' ? part.text : part.markup }
+        part.type === 'bold' || part.type === 'italic'
+          ? { type: part.type, text: part.text }
+          : part.type === 'ui'
+            ? { type: 'ui', name: part.name, text: part.text, args: part.args }
+            : { type: 'text', text: part.type === 'text' ? part.text : part.markup }
       const prev = spans.at(-1)
-      if (piece.kind === 'text' && prev?.kind === 'text') prev.text += piece.text
+      if (piece.type === 'text' && prev?.type === 'text') prev.text += piece.text
       else spans.push(piece)
     }
     const text = spans.map((span) => span.text).join('')
-    return spans.some((span) => span.kind !== 'text') ? { ...beat, text, spans } : { ...beat, text }
+    return spans.some((span) => span.type !== 'text') ? { ...beat, text, spans } : { ...beat, text }
   })
 }
 
@@ -464,7 +464,7 @@ function parseBlocks(body: string, base: number): Placed[] {
 
   function beatsOfBlock(block: string): SceneBeat[] {
     const sound = block.match(/^\[\[sound:([^\]]+)\]\]$/)
-    if (sound) return [{ kind: 'sound', track: sound[1].trim() }]
+    if (sound) return [{ type: 'sound', track: sound[1].trim() }]
     // A voice line read aloud: `Ava: "Morning." [[voice:ava.morning]]`. Only on a spoken line.
     const voiced = block.match(/^([\s\S]*?)\s*\[\[voice:([^\]]+)\]\]$/)
     const said = voiced ? spoken(voiced[1], lastSay) : null
@@ -479,7 +479,7 @@ function parseBlocks(body: string, base: number): Placed[] {
     }
     if (block.startsWith('> ')) {
       lastSay = null
-      return [{ kind: 'mono' as const, text: block.slice(2) }]
+      return [{ type: 'mono' as const, text: block.slice(2) }]
     }
     const line = spoken(block, lastSay)
     if (line) {
@@ -487,7 +487,7 @@ function parseBlocks(body: string, base: number): Placed[] {
       return [line]
     }
     lastSay = null
-    return [{ kind: 'text' as const, text: block }]
+    return [{ type: 'text' as const, text: block }]
   }
 }
 
@@ -509,9 +509,9 @@ export function parseBeats(body: string, hints?: readonly { at: number; ui: Ui<B
     const inner = match[2].trim()
     if (tag === 'mail') {
       const mail = parseMail(inner)
-      placed.push({ beat: { kind: 'mail', headers: mail.headers, body: mail.body }, from: match.index })
+      placed.push({ beat: { type: 'mail', headers: mail.headers, body: mail.body }, from: match.index })
     } else {
-      placed.push({ beat: { kind: 'prop', face: tag as PropFace, text: inner }, from: match.index })
+      placed.push({ beat: { type: 'prop', face: tag as PropFace, text: inner }, from: match.index })
     }
     last = match.index + match[0].length
   }

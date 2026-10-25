@@ -56,7 +56,7 @@ describe('weights in content', () => {
       name: 'street',
       prose: { 'weather.sun': 'The sun is out.', 'weather.rain': 'It drizzles.', 'street#leave': 'Leave' },
       variants: { 'street.weather': [{ text: 'weather.sun', weight: 9 }, 'weather.rain'] },
-      scenes: [{ id: 'street', body: [{ variants: 'street.weather' }], choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }] }],
+      scenes: [{ id: 'street', body: [{ variants: 'street.weather' }], choices: [{ id: 'leave', effects: [{ scene: null }] }] }],
     }
     const { game, problems } = loadGame([pack], { id: 'weather', title: 'Weather' })
     expect(problems).toEqual([])

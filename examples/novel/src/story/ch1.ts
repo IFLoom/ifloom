@@ -9,7 +9,7 @@ export const ch1: Content = {
   introScene: 'ch1.mat',
   // No saving on the first page until the reader has typed a name, so every save has one.
   saveable: [{ when: { not: { kv: 'playerName' } }, reason: 'Type your name first.' }],
-  inputs: [{ id: 'playerName', label: 'Your name', kind: 'text', maxLength: 20, when: { not: { kv: 'playerName' } } }],
+  inputs: [{ id: 'playerName', label: 'Your name', type: 'text', maxLength: 20, when: { not: { kv: 'playerName' } } }],
   scenes: [
     {
       id: 'ch1.mat',
@@ -24,9 +24,9 @@ export const ch1: Content = {
         {
           id: 'open',
           when: { kv: 'playerName' },
-          effects: [{ kind: 'stat', stat: 'courage', by: 1 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch2.stairs' }],
+          effects: [{ stat: 'courage', by: 1 }, { turn: true }, { scene: 'ch2.stairs' }],
         },
-        { id: 'shelf', when: { kv: 'playerName' }, effects: [{ kind: 'turn' }, { kind: 'scene', scene: 'ch2.stairs' }] },
+        { id: 'shelf', when: { kv: 'playerName' }, effects: [{ turn: true }, { scene: 'ch2.stairs' }] },
       ],
     },
   ],

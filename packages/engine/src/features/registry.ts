@@ -199,9 +199,9 @@ export const carryChecks = merged((feature) => (feature.carry?.check ? { [featur
   Record<keyof CarryOver, NonNullable<NonNullable<AnyFeature['carry']>['check']>>
 >
 
-/** What `MigrationTools.fill` fills, by kind, in the features' order. */
+/** What `MigrationTools.fill` fills, by part, in the features' order. */
 export const fillSteps = all.flatMap((feature) => (feature.fill ? [feature.fill] : [])) as unknown as readonly {
-  kind: FeatureFill
+  part: FeatureFill
   unversioned?: boolean
   run: (state: GameState, game: Game) => GameState
 }[]

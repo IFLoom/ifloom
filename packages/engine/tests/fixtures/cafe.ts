@@ -19,9 +19,9 @@ export const cafe: Content = {
         {
           id: 'chat',
           once: { per: 'turn', reason: 'She has heard enough from you today.' },
-          effects: [{ kind: 'stat', stat: 'luck', by: 1 }],
+          effects: [{ stat: 'luck', by: 1 }],
         },
-        { id: 'leave', effects: [{ kind: 'scene', scene: null }] },
+        { id: 'leave', effects: [{ scene: null }] },
       ],
     },
   ],

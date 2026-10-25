@@ -87,33 +87,38 @@ export type CoreConditions = {
 export type ConditionMap = CoreConditions & FeatureConditions
 
 /** The keys that tell one kind of condition from another. A plugin's call in short (`{ 'quests/done': … }`) has none. */
-export type ConditionKind = keyof ConditionMap
+export type ConditionKey = keyof ConditionMap
 
 /** The condition a key stands for. */
-export type ConditionOf<K extends ConditionKind> = ConditionMap[K]
+export type ConditionOf<K extends ConditionKey> = ConditionMap[K]
 
 /**
  * A condition: one of the kinds in `ConditionMap`, told apart by its one kind
  * key, or a plugin's condition in short: `{ 'quests/done': { quest: 'bakery' } }`. See `PluginCall`.
  */
-export type Condition = ConditionMap[ConditionKind] | PluginCall
+export type Condition = ConditionMap[ConditionKey] | PluginCall
 
-/** The effects the core keeps itself, by kind. The features' are in `features/`. */
-export type CoreEffects = {
-  /**
-   * A call by its full name: a plugin's, or the game's own (`game/…`).
-   * Content writes the short form, `{ 'game/payRent': {} }`; the engine
-   * turns it into this. It runs in its turn, on the state the effects
-   * before it left.
-   */
-  custom: { kind: 'custom'; name: string; with?: Record<string, unknown> }
-}
+/**
+ * The effects the core keeps itself, by the key that tells each apart. The
+ * features' are in `features/`. The core has none: a call to a plugin's
+ * effect or the game's own is a `PluginCall`.
+ */
+export type CoreEffects = Record<never, never>
 
-/** Every kind of effect: the core's and the features'. */
+/** Every effect, by the key that tells it apart: the core's and the features'. */
 export type EffectMap = CoreEffects & FeatureEffects
 
-/** An effect: one of the kinds in `EffectMap`. */
-export type Effect = EffectMap[keyof EffectMap]
+/** The keys that tell one effect from another, as conditions are told apart: `stat`, `kv`, `scene`. */
+export type EffectKey = keyof EffectMap
+
+/**
+ * An effect: one of the effects in `EffectMap`, told apart by its one key, as
+ * a condition is (`{ stat: 'coins', by: -2 }`, `{ scene: null }`), or a
+ * plugin's effect or the game's own in short: `{ 'quests/start': { quest: 'bakery' } }`,
+ * `{ 'game/payRent': {} }`. It runs in its turn, on the state the effects
+ * before it left. See `PluginCall`.
+ */
+export type Effect = EffectMap[EffectKey] | PluginCall
 
 /** The commands the core keeps itself, by type. The features' are in `features/`. */
 export type CoreCommands = {
@@ -141,7 +146,9 @@ export type CommandMap = CoreCommands & FeatureCommands
 /** A command: one of the types in `CommandMap`. */
 export type Command = CommandMap[keyof CommandMap]
 
-// Each map's keys are the kinds they hold: `stat` holds `{ kind: 'stat' }`. Each line is `true` only while that is so.
+// Each effect has the key it is told apart by: `stat` holds `{ stat }`. Each command's `type` is its key: `choose` holds
+// `{ type: 'choose' }`. Each line is `true` only while that is so.
+type KeyedBy<M> = { [K in keyof M]: M[K] extends Record<K, unknown> ? true : false }[keyof M]
 type KeysMatch<M, F extends string> = { [K in keyof M]: M[K] extends Record<F, K> ? true : false }[keyof M]
-export const effectKeysMatch: [false] extends [KeysMatch<EffectMap, 'kind'>] ? false : true = true
+export const effectKeysMatch: [false] extends [KeyedBy<EffectMap>] ? false : true = true
 export const commandKeysMatch: [false] extends [KeysMatch<CommandMap, 'type'>] ? false : true = true

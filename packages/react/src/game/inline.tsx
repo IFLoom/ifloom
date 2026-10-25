@@ -179,7 +179,7 @@ function TipImpl({ text, tip, className }: { text: string; tip: string; classNam
  */
 export const Tip = overridable('Tip', TipImpl)
 
-function InlineActionImpl({ text, choice, className }: { text: string; choice: Extract<InlineSpan, { kind: 'action' }>['choice']; className?: string }) {
+function InlineActionImpl({ text, choice, className }: { text: string; choice: Extract<InlineSpan, { type: 'action' }>['choice']; className?: string }) {
   const { send } = useGame()
   const disabled = Boolean(choice.disabled)
   // What the bubble says: why it's greyed out, else a warning, else that it can't be undone.
@@ -317,7 +317,7 @@ export function InlineImage({ text, args }: InlineProps<'image'>) {
       <InlineTrigger name="image" open={open} onOpen={() => setOpen(true)}>
         {text}
       </InlineTrigger>
-      {open ? <MediaViewer media={{ kind: 'image', src: artSrc(path), alt: alt ?? text, size: 'inline' }} open={open} onOpenChange={setOpen} /> : null}
+      {open ? <MediaViewer media={{ type: 'image', src: artSrc(path), alt: alt ?? text, size: 'inline' }} open={open} onOpenChange={setOpen} /> : null}
     </>
   )
 }
@@ -329,7 +329,7 @@ export const BUILT_IN_INLINE: Readonly<InlineComponents> = {
 }
 
 /** An inline piece: the game's component by its name, else a built-in one, else its words. */
-function InlinePiece({ span }: { span: Extract<InlineSpan, { kind: 'ui' }> }) {
+function InlinePiece({ span }: { span: Extract<InlineSpan, { type: 'ui' }> }) {
   const own = useGameIfAny()?.inline
   const Piece = (own?.[span.name] ?? BUILT_IN_INLINE[span.name]) as InlineComponent | undefined
   if (!Piece) return <>{span.text}</>
@@ -351,15 +351,15 @@ export function InlineSpans({ spans }: { spans: InlineSpan[] }) {
   return (
     <>
       {spans.map((span, index) =>
-        span.kind === 'text' ? (
+        span.type === 'text' ? (
           <Fragment key={index}>{span.text}</Fragment>
-        ) : span.kind === 'bold' ? (
+        ) : span.type === 'bold' ? (
           <Bold key={index} text={span.text} />
-        ) : span.kind === 'italic' ? (
+        ) : span.type === 'italic' ? (
           <Italic key={index} text={span.text} />
-        ) : span.kind === 'tip' ? (
+        ) : span.type === 'tip' ? (
           <Tip key={index} text={span.text} tip={span.tip} />
-        ) : span.kind === 'ui' ? (
+        ) : span.type === 'ui' ? (
           <InlinePiece key={index} span={span} />
         ) : (
           <InlineAction key={index} text={span.text} choice={span.choice} />

@@ -30,7 +30,7 @@ const STRINGS: Record<string, string> = { 'effects/unknown': 'statuses/unknown',
 const status = (args: unknown) => (isRecord(args) && 'effect' in args && !('status' in args) ? renamed(args, { effect: 'status' }) : args)
 
 /** The version of what content writes for this plugin. */
-export const CONTENT_VERSION = 8
+export const CONTENT_VERSION = 21
 
 export const contentMigrations: Record<number, ContentStep> = {
   // 5 → 6: a condition's or an effect's target is named by its noun: `{ effect }`, not `{ id }`.
@@ -54,6 +54,9 @@ export const contentMigrations: Record<number, ContentStep> = {
     })
     return out
   },
+  // 20 → 21: effects are told apart by their key, as conditions are: `{ stat: 'coins', by: -2 }`, never
+  // `{ kind: 'stat', … }`. This plugin's content holds effects, so they are keyed here as well as by the engine.
+  20: (pack, tools) => tools.effects(pack),
 }
 
 /** The version of this plugin's commands. */

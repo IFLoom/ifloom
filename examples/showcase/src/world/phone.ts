@@ -18,14 +18,7 @@ export const camera: Omit<AppDef, 'on'> = {
           id: `photo-${who}`,
           label: who === 'ava' ? 'Photograph Ava' : 'Photograph Sam',
           blocked: [{ when: { not: here(who) }, reason: 'They aren’t here.' }],
-          effects: [
-            {
-              kind: 'create' as const,
-              of: 'photo',
-              entity: { id: who, name: who === 'ava' ? 'Ava at work' : 'Sam and the dog', image: `photo/${who}.svg` },
-              at: 'player',
-            },
-          ],
+          effects: [{ create: 'photo', with: { id: who, name: who === 'ava' ? 'Ava at work' : 'Sam and the dog', image: `photo/${who}.svg` }, at: 'player' }],
         })),
         {
           id: 'post',
@@ -35,7 +28,7 @@ export const camera: Omit<AppDef, 'on'> = {
             { when: { not: { count: { of: 'photo', at: 'player' } } }, reason: 'Take a photo first.' },
             { when: { kv: 'postedToday' }, reason: 'You have posted today.' },
           ],
-          effects: [{ 'game/postLatest': true }, { kind: 'kv', key: 'postedToday', to: true }],
+          effects: [{ 'game/postLatest': true }, { kv: 'postedToday', to: true }],
         },
       ],
     },

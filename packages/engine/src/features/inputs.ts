@@ -17,7 +17,7 @@ export type InputDef = {
   id: string
   /** What the field is called. */
   label: string
-  kind: 'text' | 'number' | 'choice'
+  type: 'text' | 'number' | 'choice'
   /** The kv key it writes. The input's id if left out. */
   key?: string
   /** Only on offer while this holds. */
@@ -34,7 +34,7 @@ export type InputDef = {
 export type InputView = {
   id: string
   label: string
-  kind: InputDef['kind']
+  type: InputDef['type']
   maxLength: number | null
   min: number | null
   max: number | null
@@ -69,7 +69,7 @@ export function inputById(game: Game, id: string): InputDef | undefined {
 
 /** The value as it will be written: text trimmed. */
 export function inputValue(input: InputDef, value: KvValue): KvValue {
-  return input.kind === 'text' && typeof value === 'string' ? value.trim() : value
+  return input.type === 'text' && typeof value === 'string' ? value.trim() : value
 }
 
 /** Why this value can't be entered, as the player reads it; undefined if it can. */
@@ -78,7 +78,7 @@ export function inputRefusal(state: GameState, game: Game, id: string, value: Kv
   if (!input) return say(game, 'noSuchInput')
   if (!cx.holds(state, input.when, game)) return say(game, 'notNow')
   if (value === undefined) return say(game, 'enterSomething')
-  switch (input.kind) {
+  switch (input.type) {
     case 'text': {
       if (typeof value !== 'string' || !value.trim()) return say(game, 'enterSomething')
       const most = input.maxLength ?? 40
@@ -124,7 +124,7 @@ export const inputs = defineFeature<InputsShape>({
       const source = { list: 'input', id: input.id }
       const where = `input ${input.id}`
       tools.check(source, where, [{ when: input.when }])
-      if (input.kind === 'choice' && !input.options?.length) tools.problem(source, where, 'a choice with no options')
+      if (input.type === 'choice' && !input.options?.length) tools.problem(source, where, 'a choice with no options')
       if (input.min !== undefined && input.max !== undefined && input.min > input.max) tools.problem(source, where, 'min is above max')
     }
   },
@@ -141,8 +141,8 @@ export const inputs = defineFeature<InputsShape>({
           {
             id: input.id,
             label: input.label,
-            kind: input.kind,
-            maxLength: input.kind === 'text' ? (input.maxLength ?? 40) : null,
+            type: input.type,
+            maxLength: input.type === 'text' ? (input.maxLength ?? 40) : null,
             min: input.min ?? null,
             max: input.max ?? null,
             options: input.options ?? [],

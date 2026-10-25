@@ -22,8 +22,8 @@ const caffeinated: StatusDef = {
   label: 'Caffeinated',
   turns: 2,
   modifiers: [{ stat: 'energy', add: 10 }],
-  onStart: [{ kind: 'kv', key: 'buzzing', to: true }],
-  onEnd: [{ kind: 'kv', key: 'buzzing', to: false }],
+  onStart: [{ kv: 'buzzing', to: true }],
+  onEnd: [{ kv: 'buzzing', to: false }],
 }
 /** A cold: a stack per sneeze, at most three, each taking a fifth off energy and a coin a turn for tissues. */
 const cold: StatusDef = {
@@ -33,9 +33,9 @@ const cold: StatusDef = {
   reapply: 'stack',
   max: 3,
   modifiers: [{ stat: 'energy', multiply: 0.8 }],
-  onStart: [{ kind: 'stat', stat: 'sneezes', by: 1 }],
-  eachTurn: [{ kind: 'stat', stat: 'coins', by: -1 }],
-  onEnd: [{ kind: 'stat', stat: 'recovered', by: 1 }],
+  onStart: [{ stat: 'sneezes', by: 1 }],
+  eachTurn: [{ stat: 'coins', by: -1 }],
+  onEnd: [{ stat: 'recovered', by: 1 }],
 }
 
 function game(extra: StatusDef[] = []): Game {
@@ -51,11 +51,11 @@ function game(extra: StatusDef[] = []): Game {
     actions: [
       { id: 'coffee', effects: [applyStatus('caffeinated')] },
       { id: 'sneeze', effects: [applyStatus('cold')] },
-      { id: 'rest', effects: [{ kind: 'turn' }] },
+      { id: 'rest', effects: [{ turn: true }] },
       { id: 'cure', effects: [removeStatus('cold')] },
       { id: 'cureFully', effects: [removeStatus('cold', true)] },
       { id: 'climb', cost: { stats: { energy: 55 } } },
-      { id: 'tire', effects: [{ kind: 'stat', stat: 'energy', by: -10 }] },
+      { id: 'tire', effects: [{ stat: 'energy', by: -10 }] },
     ],
     data: { statuses: { statuses: [caffeinated, cold, ...extra] } },
   }
@@ -113,7 +113,7 @@ describe('timed statuses', () => {
   })
 
   it('refresh by default: applied again, the turns start over and onStart does not run again', () => {
-    const g = game([{ id: 'count', label: 'Counted', turns: 2, onStart: [{ kind: 'stat', stat: 'sneezes', by: 1 }] }])
+    const g = game([{ id: 'count', label: 'Counted', turns: 2, onStart: [{ stat: 'sneezes', by: 1 }] }])
     let state = run(fresh(g), g, 'rest')
     state = apply(state, g, { type: 'custom', name: 'statuses/apply', with: { id: 'count' } }).state
     state = run(state, g, 'rest')
@@ -197,7 +197,7 @@ describe('timed statuses', () => {
                   turns: 0,
                   max: 2,
                   modifiers: [{ stat: 'luck', add: 1 }],
-                  onEnd: [{ kind: 'entity', entity: 'thing:moonstone', by: 1 }],
+                  onEnd: [{ entity: 'thing:moonstone', by: 1 }],
                 },
               ],
             },

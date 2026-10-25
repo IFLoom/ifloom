@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { Command, Condition, Effect } from '../../src/index.ts'
-import { CONDITION_KINDS, EFFECT_KINDS } from '../../src/core.ts'
+import { CONDITION_KEYS, EFFECT_KEYS } from '../../src/core.ts'
 import type { Plugin } from '../../src/plugin.ts'
 import { achievementEarned, achievements, grantAchievement } from '@ifloom/plugin-achievements'
 import { cheatUsed, cheats, runCheat } from '@ifloom/plugin-cheats'
@@ -26,7 +26,9 @@ import { dropThing, giveThing, inventory, useThing } from '@ifloom/plugin-invent
  * fields by one rule.
  *
  * - An effect's or condition's target is named by its noun (`stat`,
- *   `entity`, `storyline`, `scene`); the kv stores keep `key`.
+ *   `entity`, `storyline`, `scene`), which is also the key that tells it
+ *   apart; a kv store's key is named by `kv`, and an effect that does
+ *   something to its target is named by what it does (`move`, `remove`).
  * - `by` changes a number and `to` sets a value. Never `value`, `add`,
  *   `amount`, `delta` or `set`.
  * - A command that targets one thing names it `id`.
@@ -63,6 +65,16 @@ const TARGETS = [
   // the latest roll under a key, for the roll condition
   'roll',
   'timer',
+  // effects named by what they do to their target
+  'create',
+  'remove',
+  'each',
+  'move',
+  'you',
+  'closeStoryline',
+  'notify',
+  'audio',
+  'sound',
 ] as const
 
 /** Qualifiers and details: who it belongs to, what it compares with, what it carries. */
@@ -129,9 +141,9 @@ type Listed = (typeof TARGETS)[number] | (typeof DETAILS)[number]
 const core = {
   // Every field of a condition or an effect is a target or a detail the rule names.
   conditions: true as Exactly<Exclude<KeysOf<Condition>, `${string}/${string}`>, Exclude<KeysOf<Condition>, `${string}/${string}`> & Listed>,
-  effects: true as Exactly<Exclude<KeysOf<Effect>, 'kind'>, Exclude<KeysOf<Effect>, 'kind'> & Listed>,
+  effects: true as Exactly<Exclude<KeysOf<Effect>, `${string}/${string}`>, Exclude<KeysOf<Effect>, `${string}/${string}`> & Listed>,
   // Only the notice names something with `id`: the notice it makes.
-  effectIds: true as Exactly<Extract<KeysOf<Exclude<Effect, { kind: 'notify' }>>, 'id'>, never>,
+  effectIds: true as Exactly<Extract<KeysOf<Exclude<Effect, { notify: string }>>, 'id'>, never>,
   conditionIds: true as Exactly<Extract<KeysOf<Condition>, 'id'>, never>,
   // A command names its target `id`, and sets with `to`.
   // oxlint-disable-next-line typescript/no-duplicate-type-constituents -- the intersection is the test: every key is one of COMMAND_FIELDS
@@ -298,8 +310,8 @@ describe('content naming (ADR 0008)', () => {
   it('holds the core’s conditions, effects and commands to the rule at compile time', () => {
     expect(Object.values(core).every(Boolean)).toBe(true)
     // Every core kind is in the unions the lines above read.
-    expect(CONDITION_KINDS.length).toBeGreaterThan(0)
-    expect(EFFECT_KINDS).not.toContain('setStat')
+    expect(CONDITION_KEYS.length).toBeGreaterThan(0)
+    expect(EFFECT_KEYS).not.toContain('setStat')
   })
 
   it('has a sample call for every kind a first-party plugin registers', () => {

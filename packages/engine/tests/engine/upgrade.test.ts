@@ -165,7 +165,7 @@ describe('content migrations', () => {
       id: 'evening',
       schema: SCHEMA,
       prose: { flag: 'A prose key called flag stays as it is.' },
-      inputs: [{ id: 'name', label: 'Name', kind: 'text', key: 'playerName', when: { not: { kv: 'playerName' } } }],
+      inputs: [{ id: 'name', label: 'Name', type: 'text', key: 'playerName', when: { not: { kv: 'playerName' } } }],
       entities: [
         { id: 'ana', of: 'staff', name: 'Ana', kv: { role: 'cook' } },
         { id: 'rosa', of: 'character', name: 'Rosa', kv: { mood: 'calm' }, traits: { 'cast/person': {} } },
@@ -189,10 +189,10 @@ describe('content migrations', () => {
               id: 'stay',
               blocked: [{ when: { any: [{ kv: 'role', of: 'staff:ana', is: 'cook' }] }, reason: 'Busy.' }],
               effects: [
-                { kind: 'kv', key: 'metAva', to: true },
-                { kind: 'kv', key: 'visits', by: 1 },
-                { kind: 'kv', key: 'met', of: 'storyline:rosa', to: true },
-                { kind: 'create', of: 'staff', entity: { name: 'Bo', kv: { role: 'waiter' } } },
+                { kv: 'metAva', to: true },
+                { kv: 'visits', by: 1 },
+                { kv: 'met', of: 'storyline:rosa', to: true },
+                { create: 'staff', with: { name: 'Bo', kv: { role: 'waiter' } } },
               ],
             },
           ],
@@ -220,7 +220,7 @@ describe('content migrations', () => {
     expect(added.ok && up(added.value.pack)).toEqual({
       id: 'mod:regulars',
       schema: SCHEMA,
-      triggers: [{ id: 'regular', when: { kv: 'visits', gte: 2 }, effects: [{ kind: 'kv', key: 'regular', to: true }] }],
+      triggers: [{ id: 'regular', when: { kv: 'visits', gte: 2 }, effects: [{ kv: 'regular', to: true }] }],
     })
   })
 
@@ -329,7 +329,7 @@ describe('content migrations', () => {
           name: 'Tea',
           desc: '',
           tags: ['stuff'],
-          traits: { 'inventory/usable': { label: 'Drink', effects: [{ kind: 'stat', stat: 'energy', to: 100, of: 'staff:ana' }] } },
+          traits: { 'inventory/usable': { label: 'Drink', effects: [{ stat: 'energy', to: 100, of: 'staff:ana' }] } },
         },
       ],
       triggers: [
@@ -344,23 +344,23 @@ describe('content migrations', () => {
             ],
           },
           effects: [
-            { kind: 'stat', stat: 'coins', by: -2 },
-            { kind: 'entity', entity: 'item:tea', at: 'you', by: 1 },
-            { kind: 'kv', key: 'phase', to: 'night' },
-            { kind: 'scene', scene: null },
-            { kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' },
-            { kind: 'kv', key: 'met', of: 'storyline:rosa', to: true },
-            { kind: 'closeStoryline', storyline: 'rosa', turns: 2 },
-            { kind: 'create', of: 'notes', entity: { id: 'n1' }, at: 'player' },
-            { kind: 'remove', entity: 'notes:n1' },
-            { kind: 'each', of: 'staff', where: { entity: 'notes:n1' }, effects: [{ kind: 'remove', entity: '$' }] },
-            { kind: 'audio', channel: 'music', to: null },
-            { kind: 'minigame', minigame: 'arrows' },
-            { kind: 'kv', key: 'score', of: 'minigame', by: 1 },
-            { kind: 'kv', key: 'round', of: 'minigame', to: 0 },
+            { stat: 'coins', by: -2 },
+            { entity: 'item:tea', at: 'you', by: 1 },
+            { kv: 'phase', to: 'night' },
+            { scene: null },
+            { scene: { from: 'cafe', otherwise: 'cafe.quiet' } },
+            { kv: 'met', of: 'storyline:rosa', to: true },
+            { closeStoryline: 'rosa', turns: 2 },
+            { create: 'notes', with: { id: 'n1' }, at: 'player' },
+            { remove: 'notes:n1' },
+            { each: 'staff', where: { entity: 'notes:n1' }, effects: [{ remove: '$' }] },
+            { audio: 'music', to: null },
+            { minigame: 'arrows' },
+            { kv: 'score', of: 'minigame', by: 1 },
+            { kv: 'round', of: 'minigame', to: 0 },
             { 'achievements/grant': { achievement: 'regular' } },
             { 'statuses/apply': { status: 'tired' } },
-            { kind: 'custom', name: 'calendar/pass', with: { by: 2 } },
+            { 'calendar/pass': { by: 2 } },
           ],
         },
       ],
@@ -439,7 +439,7 @@ describe('content migrations', () => {
             { when: { 'cast/met': { character: 'sam' } }, reason: 'Met Sam.' },
           ],
           // A call that isn't the first party's keeps its bare value, for the checker to report.
-          effects: [{ 'calendar/pass': { by: 2 } }, { kind: 'custom', name: 'places/move', with: { location: 'park' } }, { 'tides/turn': 'high' }],
+          effects: [{ 'calendar/pass': { by: 2 } }, { 'places/move': { location: 'park' } }, { 'tides/turn': 'high' }],
         },
       ],
       data: {
@@ -491,7 +491,7 @@ describe('content migrations', () => {
         {
           id: 'sneeze',
           blocked: [{ when: { 'statuses/active': { status: 'cold', stacks: { gte: 3 } } }, reason: 'Enough.' }],
-          effects: [{ 'statuses/apply': { status: 'cold' } }, { kind: 'custom', name: 'statuses/remove', with: { status: 'warm', runEnd: true } }],
+          effects: [{ 'statuses/apply': { status: 'cold' } }, { 'statuses/remove': { status: 'warm', runEnd: true } }],
         },
       ],
       data: { quests: { quests: [] }, statuses: { statuses: [{ id: 'cold', label: 'A cold', turns: 3, onEnd: [{ 'statuses/apply': { status: 'tired' } }] }] } },
@@ -625,7 +625,7 @@ describe('content migrations', () => {
         {
           id: 'nap',
           blocked: [{ when: { not: { entity: 'item:pillow', at: 'you' } }, reason: 'No pillow.' }],
-          effects: [{ kind: 'stat', stat: 'coins', to: 0 }],
+          effects: [{ stat: 'coins', to: 0 }],
         },
       ],
     })
@@ -751,8 +751,8 @@ describe('content migrations', () => {
             {
               id: 'hi',
               effects: [
-                { kind: 'kv', key: 'visits', of: 'storyline:rosa', by: 1 },
-                { kind: 'kv', key: 'phase', to: 'open' },
+                { kv: 'visits', of: 'storyline:rosa', by: 1 },
+                { kv: 'phase', to: 'open' },
               ],
             },
           ],
@@ -765,7 +765,7 @@ describe('content migrations', () => {
           vars: { score: 0 },
           states: {
             go: {
-              on: [{ input: 'up', when: { kv: 'score', of: 'minigame', lt: 3 }, effects: [{ kind: 'kv', key: 'score', of: 'minigame', random: [1, 3] }] }],
+              on: [{ input: 'up', when: { kv: 'score', of: 'minigame', lt: 3 }, effects: [{ kv: 'score', of: 'minigame', random: [1, 3] }] }],
             },
           },
         },
@@ -806,7 +806,7 @@ describe('content migrations', () => {
             { when: { not: { 'game/canPay': true } }, reason: 'Not enough.' },
             { when: { 'quests/done': { quest: 'rent' } }, reason: 'Paid.' },
           ],
-          effects: [{ 'game/payRent': { weeks: 1 } }, { kind: 'custom', name: 'game/tidy' }, { kind: 'custom', name: 'quests/start', with: { quest: 'rent' } }],
+          effects: [{ 'game/payRent': { weeks: 1 } }, { 'game/tidy': true }, { 'quests/start': { quest: 'rent' } }],
         },
       ],
       prose: { due: 'Rent: {{v:game/rentDue}}, {{v:messages/unread channel=texts}} texts, {{v:game/rentDue weeks=2}} later.' },
@@ -897,7 +897,7 @@ describe('content migrations', () => {
             { variants: 'porch.birds', ui: { reveal: {} } },
           ],
           choices: [
-            { id: 'in', effects: [{ kind: 'scene', scene: null }], ui: { transition: { in: 'slide-up', ms: 400 } } },
+            { id: 'in', effects: [{ scene: null }], ui: { transition: { in: 'slide-up', ms: 400 } } },
             // A hint the choice already has wins.
             { id: 'wait', ui: { transition: 'zoom' }, effects: [] },
           ],
@@ -911,7 +911,7 @@ describe('content migrations', () => {
         'porch.more': 'Crickets. Then quiet.',
         'porch.birds/one': 'A blackbird.\n\nAnother.',
       },
-      triggers: [{ id: 'dusk', effects: [{ kind: 'kv', key: 'dusk', to: true }] }],
+      triggers: [{ id: 'dusk', effects: [{ kv: 'dusk', to: true }] }],
       stats: [{ id: 'energy', label: 'Energy', ui: { display: 'bar' } }],
       kinds: [{ id: 'neighbour', label: 'Neighbour', traits: { 'cast/person': {} }, ui: { hue: 40 } }],
       entities: [
@@ -996,7 +996,7 @@ describe('content migrations', () => {
           name: 'Tea',
           desc: 'Hot.',
           at: { player: 2 },
-          traits: { 'inventory/usable': { label: 'Drink', effects: [{ kind: 'stat', stat: 'energy', by: 5 }] } },
+          traits: { 'inventory/usable': { label: 'Drink', effects: [{ stat: 'energy', by: 5 }] } },
         },
         { id: 'scarf', of: 'item', name: 'Scarf', desc: 'Wool.' },
       ],
@@ -1007,20 +1007,19 @@ describe('content migrations', () => {
           blocked: [{ when: { count: { of: 'photo', at: 'player' }, gte: 3 }, reason: 'Full.' }],
           effects: [
             {
-              kind: 'create',
-              of: 'photo',
-              entity: { id: 'pier', name: 'The pier', desc: 'Gulls, and the end of the pier.', image: 'art/pier.jpg', kv: { sunny: true } },
+              create: 'photo',
+              with: { id: 'pier', name: 'The pier', desc: 'Gulls, and the end of the pier.', image: 'art/pier.jpg', kv: { sunny: true } },
               at: 'player',
             },
-            { kind: 'create', of: 'letters', entity: { id: 'gran' }, at: 'player' },
-            { kind: 'remove', entity: 'letters:old' },
-            { kind: 'entity', entity: 'item:tea', at: 'you', to: 0 },
+            { create: 'letters', with: { id: 'gran' }, at: 'player' },
+            { remove: 'letters:old' },
+            { entity: 'item:tea', at: 'you', to: 0 },
           ],
         },
         {
           id: 'read',
           blocked: [{ when: { not: { entity: 'letters:gran' } }, reason: 'No letter.' }],
-          effects: [{ 'shop/sell': { vendor: 'kiosk', entity: 'item:tea' } }, { kind: 'custom', name: 'debug/held', with: { entity: 'item:tea', to: 1 } }],
+          effects: [{ 'shop/sell': { vendor: 'kiosk', entity: 'item:tea' } }, { 'debug/held': { entity: 'item:tea', to: 1 } }],
         },
       ],
       scenes: [

@@ -1,10 +1,10 @@
+import { callOf } from '../../src/custom.ts'
 import { describe, expect, it } from 'vitest'
 import { effectsOf, warningOf, whyNot } from '../../src/availability.ts'
 import { definePlugin } from '../../src/plugin.ts'
 import { apply, applyEffects } from '../../src/reduce.ts'
 import { view } from '../../src/view.ts'
 import type { Game } from '../../src/game.ts'
-import type { Effect } from '../../src/types.ts'
 import { begin, fixture } from '../fixtures/town.ts'
 import { withCafe } from '../fixtures/cafe.ts'
 
@@ -21,23 +21,23 @@ const tide = definePlugin<{ height: number }>({
     rise: (_state, args, { slice, set, apply }) => {
       const height = slice.height + Number(args.by ?? 1)
       // Over the top: back to the bottom, and that is a turn.
-      return height > 3 ? apply([{ kind: 'turn' }], set({ height: 0 })) : set({ height })
+      return height > 3 ? apply([{ turn: true }], set({ height: 0 })) : set({ height })
     },
   },
   commands: {
     paddle: {
       run: (_state, _args, { apply }) => apply([{ 'tide/rise': { by: 2 } }]),
-      effectsOf: () => [{ kind: 'custom', name: 'tide/rise', with: { by: 2 } }],
+      effectsOf: () => [{ 'tide/rise': { by: 2 } }],
     },
   },
   guard: (_state, { command, effects }, { slice }) => {
     if (command.type === 'action' && command.id === 'swim' && slice.height >= 3) return 'Not at high tide.'
-    const rising = effects.filter((effect): effect is Extract<Effect, { kind: 'custom' }> => effect.kind === 'custom' && effect.name === 'tide/rise')
-    const by = rising.reduce((sum, effect) => sum + Number(effect.with?.by ?? 1), 0)
+    const rising = effects.flatMap((effect) => (callOf(effect)?.name === 'tide/rise' ? [callOf(effect)!] : []))
+    const by = rising.reduce((sum, call) => sum + Number(call.with.by ?? 1), 0)
     return slice.height + by > 3 ? { reason: 'The tide would turn.', soft: true } : undefined
   },
   price: (_state, effects) => {
-    const rises = effects.filter((effect) => effect.kind === 'custom' && effect.name === 'tide/rise').length
+    const rises = effects.filter((effect) => callOf(effect)?.name === 'tide/rise').length
     return rises ? [`the tide rises ${rises === 1 ? 'once' : `${rises} times`}`] : undefined
   },
   label: (_state, { slice }) => `Tide ${slice.height}`,
@@ -52,7 +52,7 @@ function shore(rules: Parameters<typeof fixture>[0] = {}): Game {
       // The town's things to do, and none of its buttons: waiting is done by its command here.
       ...(town.actions ?? []).map(({ label: _label, ...action }) => action),
       { id: 'swim', label: 'Swim', effects: [{ 'tide/rise': true }] },
-      { id: 'dig', label: 'Dig', cost: { stats: { coins: 1 } }, effects: [{ 'tide/rise': { by: 2 } }, { kind: 'stat', stat: 'luck', by: 1 }] },
+      { id: 'dig', label: 'Dig', cost: { stats: { coins: 1 } }, effects: [{ 'tide/rise': { by: 2 } }, { stat: 'luck', by: 1 }] },
       { id: 'paddle', label: 'Paddle', command: { type: 'custom', name: 'tide/paddle' } },
     ],
   }
@@ -65,12 +65,8 @@ describe('effectsOf', () => {
   it('says what each kind of command would apply, before it runs', () => {
     const game = shore()
     const state = begin(game)
-    expect(effectsOf(state, game, { type: 'action', id: 'dig' })).toEqual([
-      { kind: 'stat', stat: 'coins', by: -1 },
-      { kind: 'custom', name: 'tide/rise', with: { by: 2 } },
-      { kind: 'stat', stat: 'luck', by: 1 },
-    ])
-    expect(effectsOf(state, game, { type: 'custom', name: 'tide/paddle' })).toEqual([{ kind: 'custom', name: 'tide/rise', with: { by: 2 } }])
+    expect(effectsOf(state, game, { type: 'action', id: 'dig' })).toEqual([{ stat: 'coins', by: -1 }, { 'tide/rise': { by: 2 } }, { stat: 'luck', by: 1 }])
+    expect(effectsOf(state, game, { type: 'custom', name: 'tide/paddle' })).toEqual([{ 'tide/rise': { by: 2 } }])
     expect(effectsOf(state, game, { type: 'leave' })).toEqual([])
   })
 })
@@ -107,7 +103,7 @@ describe('plugin prices and labels', () => {
 describe('a plugin applying effects', () => {
   it('can end a turn, and the turn rules run as for any other', () => {
     const game = shore({ onTurn: (state) => ({ ...state, kv: { ...state.kv, turned: true } }) })
-    const state = applyEffects(at(game, 3), game, [{ kind: 'custom', name: 'tide/rise' }])
+    const state = applyEffects(at(game, 3), game, [{ 'tide/rise': true }])
     expect(state.turn).toBe(begin(game).turn + 1)
     expect(state.kv.turned).toBe(true)
     expect(tide.read(state, game)).toEqual({ height: 0 })
@@ -115,7 +111,7 @@ describe('a plugin applying effects', () => {
 
   it('cannot end a second turn from inside a turn’s end', () => {
     const game = shore({ onTurn: (_state, { apply }) => apply([{ 'tide/rise': { by: 9 } }]) })
-    const state = applyEffects(begin(game), game, [{ kind: 'turn' }])
+    const state = applyEffects(begin(game), game, [{ turn: true }])
     expect(state.turn).toBe(begin(game).turn + 1)
     expect(tide.read(state, game)).toEqual({ height: 0 })
   })
@@ -129,7 +125,7 @@ describe('locks by effect', () => {
     expect(whyNot(stormy, game, { type: 'custom', name: 'tide/paddle' })).toBe('Not in a storm.')
     expect(whyNot(stormy, game, { type: 'action', id: 'read' })).toBeUndefined()
     const built = fixture({ locks: [{ when: { kv: 'storm' }, deny: ['action'], effect: 'turn', reason: 'Not yet.' }] })
-    const turning = { ...built, actions: [...(built.actions ?? []), { id: 'rest', effects: [{ kind: 'turn' as const }] }] }
+    const turning = { ...built, actions: [...(built.actions ?? []), { id: 'rest', effects: [{ turn: true }] }] }
     expect(whyNot({ ...begin(turning), kv: { storm: true } }, turning, { type: 'action', id: 'rest' })).toBe('Not yet.')
     expect(whyNot({ ...begin(turning), kv: { storm: true } }, turning, { type: 'action', id: 'read' })).toBeUndefined()
   })

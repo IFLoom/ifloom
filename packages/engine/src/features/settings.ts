@@ -21,16 +21,16 @@ export type SettingDef = {
   /** `'play'` if left out: in the state, readable by conditions. `'ui'`: for the UI only. */
   affects?: 'play' | 'ui'
 } & (
-  | { kind: 'toggle'; default: boolean }
-  | { kind: 'choice'; options: { value: string; label: string }[]; default: string }
-  | { kind: 'range'; min: number; max: number; step?: number; default: number }
+  | { type: 'toggle'; default: boolean }
+  | { type: 'choice'; options: { value: string; label: string }[]; default: string }
+  | { type: 'range'; min: number; max: number; step?: number; default: number }
 )
 
 /** A setting as a settings screen draws it. */
 export type SettingView = {
   id: string
   label: string
-  kind: 'toggle' | 'choice' | 'range'
+  type: 'toggle' | 'choice' | 'range'
   affects: 'play' | 'ui'
   /** A choice's options. */
   options?: { value: string; label: string }[]
@@ -89,7 +89,7 @@ export function settingAffects(setting: SettingDef): 'play' | 'ui' {
 
 /** What is wrong with a value for this setting, as a word the callers turn into a sentence. */
 export function settingFault(setting: SettingDef, value: unknown): 'toggle' | 'number' | 'range' | 'step' | 'option' | undefined {
-  switch (setting.kind) {
+  switch (setting.type) {
     case 'toggle':
       return typeof value === 'boolean' ? undefined : 'toggle'
     case 'choice':
@@ -121,7 +121,7 @@ export function settingValue(game: Game, stored: Record<string, unknown> | undef
 /**
  * Why this value can't be given to this setting, as the player reads it;
  * undefined if it can. Through the `setting` command (`'command'`) only a
- * `play` setting can be set; `runner.setSetting` (`'runner'`) sets either kind.
+ * `play` setting can be set; `runner.setSetting` (`'runner'`) sets either.
  */
 export function settingRefusal(game: Game, id: string, value: unknown, through: 'command' | 'runner' = 'command'): string | undefined {
   const setting = settingById(game, id)
@@ -135,9 +135,9 @@ export function settingRefusal(game: Game, id: string, value: unknown, through: 
     case 'number':
       return say(game, 'enterNumber')
     case 'range':
-      return setting.kind === 'range' ? say(game, 'between', { min: setting.min, max: setting.max }) : undefined
+      return setting.type === 'range' ? say(game, 'between', { min: setting.min, max: setting.max }) : undefined
     case 'step':
-      return setting.kind === 'range' ? say(game, 'inSteps', { step: setting.step ?? 1 }) : undefined
+      return setting.type === 'range' ? say(game, 'inSteps', { step: setting.step ?? 1 }) : undefined
     default:
       return undefined
   }
@@ -163,9 +163,9 @@ export function settingProblems(setting: SettingDef): string[] {
   if (setting.affects !== undefined && setting.affects !== 'play' && setting.affects !== 'ui') {
     out.push(`affects is "${String(setting.affects)}", not "play" or "ui"`)
   }
-  if (setting.kind === 'choice' && !setting.options?.length) out.push('a choice with no options')
-  if (setting.kind === 'range' && setting.min > setting.max) out.push('min is above max')
-  if (setting.kind === 'range' && setting.step !== undefined && !(setting.step > 0)) out.push('step must be above 0')
+  if (setting.type === 'choice' && !setting.options?.length) out.push('a choice with no options')
+  if (setting.type === 'range' && setting.min > setting.max) out.push('min is above max')
+  if (setting.type === 'range' && setting.step !== undefined && !(setting.step > 0)) out.push('step must be above 0')
   if (!out.length) {
     const fault = settingFault(setting, setting.default)
     if (fault) out.push(`default ${JSON.stringify(setting.default)} ${faultText(setting, fault)}`)
@@ -191,9 +191,9 @@ function faultText(setting: SettingDef, fault: NonNullable<ReturnType<typeof set
     case 'number':
       return 'is not a number'
     case 'range':
-      return setting.kind === 'range' ? `is not between ${setting.min} and ${setting.max}` : 'is out of range'
+      return setting.type === 'range' ? `is not between ${setting.min} and ${setting.max}` : 'is out of range'
     case 'step':
-      return setting.kind === 'range' ? `is not in steps of ${setting.step}` : 'is not in steps'
+      return setting.type === 'range' ? `is not in steps of ${setting.step}` : 'is not in steps'
   }
 }
 
@@ -204,10 +204,10 @@ function settingsView(settings: Record<string, KvValue> | undefined, game: Game)
     return {
       id: setting.id,
       label: setting.label,
-      kind: setting.kind,
+      type: setting.type,
       affects,
-      ...(setting.kind === 'choice' ? { options: setting.options } : {}),
-      ...(setting.kind === 'range' ? { min: setting.min, max: setting.max, ...(setting.step !== undefined ? { step: setting.step } : {}) } : {}),
+      ...(setting.type === 'choice' ? { options: setting.options } : {}),
+      ...(setting.type === 'range' ? { min: setting.min, max: setting.max, ...(setting.step !== undefined ? { step: setting.step } : {}) } : {}),
       default: setting.default,
       value: affects === 'play' ? (settings?.[setting.id] ?? setting.default) : null,
     }
@@ -269,7 +269,7 @@ export const settings = defineFeature<SettingsShape>({
   lists: ['setting'],
   // A play setting the save lacks (one the game added since, or every one in an older save) takes its default.
   fill: {
-    kind: 'settings',
+    part: 'settings',
     unversioned: true,
     run: (state, game) => {
       const lacking = (game.settings ?? []).filter((setting) => settingAffects(setting) === 'play' && state.settings?.[setting.id] === undefined)

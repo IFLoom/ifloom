@@ -26,14 +26,14 @@ export const things: Content = {
       of: 'item',
       name: 'sandwich',
       desc: 'Cheese and pickle, wrapped in paper.',
-      traits: { ...usable('Eat the sandwich', [{ kind: 'stat', stat: 'energy', by: 25 }]), ...sellable({ coins: 4 }) },
+      traits: { ...usable('Eat the sandwich', [{ stat: 'energy', by: 25 }]), ...sellable({ coins: 4 }) },
     },
     {
       id: 'flapjack',
       of: 'item',
       name: 'flapjack',
       desc: 'Oats, syrup and a lot of butter.',
-      traits: { ...usable('Eat the flapjack', [{ kind: 'stat', stat: 'energy', by: 10 }]), ...sellable({ coins: 2 }) },
+      traits: { ...usable('Eat the flapjack', [{ stat: 'energy', by: 10 }]), ...sellable({ coins: 2 }) },
     },
     // Reading it opens the job board with only the paper's ads on it: a thing opening a panel. It's kept to read again.
     {

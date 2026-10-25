@@ -12,13 +12,13 @@ export const ch2: Content = {
         { text: 'ch2.stairs.shelved', when: { chose: 'ch1.mat#shelf' } },
       ],
       choices: [
-        { id: 'truth', effects: [{ kind: 'stat', stat: 'courage', by: 1 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch3.door' }] },
-        { id: 'deny', effects: [{ kind: 'kv', key: 'fibs', by: 1 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch3.door' }] },
+        { id: 'truth', effects: [{ stat: 'courage', by: 1 }, { turn: true }, { scene: 'ch3.door' }] },
+        { id: 'deny', effects: [{ kv: 'fibs', by: 1 }, { turn: true }, { scene: 'ch3.door' }] },
         // A lie to cover a letter you opened is a second lie.
         {
           id: 'blame',
           when: { chose: 'ch1.mat#open' },
-          effects: [{ kind: 'kv', key: 'fibs', by: 2 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch3.door' }],
+          effects: [{ kv: 'fibs', by: 2 }, { turn: true }, { scene: 'ch3.door' }],
         },
       ],
     },

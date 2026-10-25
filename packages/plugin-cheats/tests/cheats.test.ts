@@ -21,21 +21,21 @@ import { cheatDefs, cheatUsed, cheats, runCheat, type CheatDef, type CheatsView 
 const supporter = { not: { 'unlocks/has': { unlock: 'supporter' } } }
 
 const defs: CheatDef[] = [
-  { id: 'coins', label: '+20 coins', description: 'A little help.', effects: [{ kind: 'stat', stat: 'coins', by: 20 }] },
-  { id: 'map', label: 'Show the map', group: 'Story', once: true, effects: [{ kind: 'kv', key: 'map', to: true }] },
+  { id: 'coins', label: '+20 coins', description: 'A little help.', effects: [{ stat: 'coins', by: 20 }] },
+  { id: 'map', label: 'Show the map', group: 'Story', once: true, effects: [{ kv: 'map', to: true }] },
   {
     id: 'gold',
     label: '+500 coins',
     group: 'Supporters',
     blocked: [{ when: supporter, reason: 'For supporters.' }],
-    effects: [{ kind: 'stat', stat: 'coins', by: 500 }],
+    effects: [{ stat: 'coins', by: 500 }],
   },
   {
     id: 'secret',
     label: 'Skip to the end',
     group: 'Supporters',
     blocked: [{ when: supporter, reason: 'For supporters.', hide: true }],
-    effects: [{ kind: 'scene', scene: 'ending' }],
+    effects: [{ scene: 'ending' }],
   },
 ]
 
@@ -58,8 +58,8 @@ function game(options: { pack?: Partial<Content>; plugins?: Plugin<any>[] } = {}
       { id: 'ending', body: [], choices: [] },
     ],
     actions: [
-      { id: 'rest', effects: [{ kind: 'turn' }] },
-      { id: 'support', effects: [{ kind: 'kv', key: 'unlock.supporter', to: true }] },
+      { id: 'rest', effects: [{ turn: true }] },
+      { id: 'support', effects: [{ kv: 'unlock.supporter', to: true }] },
     ],
     data: { cheats: { cheats: defs } },
     ...options.pack,
@@ -165,7 +165,7 @@ describe('cheats', () => {
         {
           name: 'town',
           actions: [{ id: 'peek', blocked: [{ when: cheatUsed('nope'), reason: 'x' }], effects: [] }],
-          data: { cheats: { cheats: [{ id: 'coins', label: '+20 coins', effects: [{ kind: 'stat', stat: 'coins', by: 20 }] }] } },
+          data: { cheats: { cheats: [{ id: 'coins', label: '+20 coins', effects: [{ stat: 'coins', by: 20 }] }] } },
         },
       ],
       { id: 'g', title: 'g', plugins: [cheats()] },

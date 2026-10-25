@@ -143,11 +143,10 @@ function created(template: TemplateDef, state: GameState, game: Game, kind: stri
   const anyway = (id: string) => (template.like !== undefined ? statValue(state, game, id, template.like) : (statDef(game, id)?.start ?? 0))
   const stats = Object.fromEntries(Object.entries(drawn.stats).filter(([id, value]) => value !== anyway(id)))
   return {
-    kind: 'create',
-    of: kind,
+    create: kind,
     ...(template.like !== undefined ? { like: template.like } : {}),
     ...(template.at !== undefined ? { at: template.at } : {}),
-    entity: {
+    with: {
       ...drawn,
       stats,
       ...(template.tags?.length ? { tags: template.tags } : {}),

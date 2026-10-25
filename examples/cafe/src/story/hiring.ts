@@ -10,19 +10,13 @@ export const hiring: Content = {
       choices: [
         {
           id: 'dev',
-          effects: [
-            { kind: 'create', of: 'staff', entity: { name: 'Dev', stats: { skill: 2, wage: 8, morale: 80 } } },
-            { kind: 'scene', scene: null },
-          ],
+          effects: [{ create: 'staff', with: { name: 'Dev', stats: { skill: 2, wage: 8, morale: 80 } } }, { scene: null }],
         },
         {
           id: 'fen',
-          effects: [
-            { kind: 'create', of: 'staff', entity: { name: 'Fen', stats: { skill: 7, wage: 18 } } },
-            { kind: 'scene', scene: null },
-          ],
+          effects: [{ create: 'staff', with: { name: 'Fen', stats: { skill: 7, wage: 18 } } }, { scene: null }],
         },
-        { id: 'nobody', effects: [{ kind: 'scene', scene: null }] },
+        { id: 'nobody', effects: [{ scene: null }] },
       ],
     },
   ],

@@ -19,26 +19,23 @@ const phone: TimerDef = {
   label: 'The phone',
   ms: 10_000,
   effects: [
-    { kind: 'kv', key: 'missed', to: true },
-    { kind: 'stat', stat: 'coins', by: -1 },
+    { kv: 'missed', to: true },
+    { stat: 'coins', by: -1 },
   ],
 }
-const kettle: TimerDef = { id: 'kettle', ms: 4000, effects: [{ kind: 'kv', key: 'boiled', by: 1 }] }
+const kettle: TimerDef = { id: 'kettle', ms: 4000, effects: [{ kv: 'boiled', by: 1 }] }
 /** Starts the kettle again whenever it runs out: one long tick boils it over and over. */
 const again: TimerDef = {
   id: 'again',
   ms: 1000,
-  effects: [
-    { kind: 'kv', key: 'rounds', by: 1 },
-    { kind: 'timer', timer: 'again' },
-  ],
+  effects: [{ kv: 'rounds', by: 1 }, { timer: 'again' }],
 }
 
 /** A coin in the air for a second: the minigame's own timer, beside the named ones. */
 const toss: MinigameDef = {
   id: 'toss',
   start: 'air',
-  states: { air: { after: { ms: 1000, go: 'down' } }, down: { final: { effects: [{ kind: 'kv', key: 'landed', to: true }] } } },
+  states: { air: { after: { ms: 1000, go: 'down' } }, down: { final: { effects: [{ kv: 'landed', to: true }] } } },
 }
 
 function withTimers(extra: Partial<Game> = {}): Game {
@@ -49,14 +46,14 @@ function withTimers(extra: Partial<Game> = {}): Game {
     minigames: [toss],
     actions: [
       ...(base.actions ?? []),
-      { id: 'ring', effects: [{ kind: 'timer', timer: 'phone' }] },
-      { id: 'boil', effects: [{ kind: 'timer', timer: 'kettle' }] },
-      { id: 'answer', effects: [{ kind: 'timer', timer: 'phone', to: null }] },
-      { id: 'snooze', effects: [{ kind: 'timer', timer: 'phone', by: 5000 }] },
-      { id: 'hurry', effects: [{ kind: 'timer', timer: 'phone', by: -60_000 }] },
-      { id: 'short', effects: [{ kind: 'timer', timer: 'phone', to: 2000 }] },
-      { id: 'flip', effects: [{ kind: 'minigame', minigame: 'toss' }] },
-      { id: 'loop', effects: [{ kind: 'timer', timer: 'again' }] },
+      { id: 'ring', effects: [{ timer: 'phone' }] },
+      { id: 'boil', effects: [{ timer: 'kettle' }] },
+      { id: 'answer', effects: [{ timer: 'phone', to: null }] },
+      { id: 'snooze', effects: [{ timer: 'phone', by: 5000 }] },
+      { id: 'hurry', effects: [{ timer: 'phone', by: -60_000 }] },
+      { id: 'short', effects: [{ timer: 'phone', to: 2000 }] },
+      { id: 'flip', effects: [{ minigame: 'toss' }] },
+      { id: 'loop', effects: [{ timer: 'again' }] },
     ],
     ...extra,
   }
@@ -223,8 +220,8 @@ describe('the timer checks', () => {
           id: 'odd',
           when: { timer: 'nope' },
           effects: [
-            { kind: 'timer', timer: 'phone', to: -5 },
-            { kind: 'timer', timer: 'phone', by: Number.NaN },
+            { timer: 'phone', to: -5 },
+            { timer: 'phone', by: Number.NaN },
           ],
         },
       ],

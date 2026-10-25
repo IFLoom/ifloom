@@ -241,11 +241,11 @@ function cantWork(state: GameState, args: PluginArgs, context: PluginContext<Job
 function shiftEffects(job: JobDef, held: HeldJob | undefined): Effect[] {
   const cost: Effect[] = Object.entries(job.shift.cost ?? {})
     .filter(([, amount]) => amount > 0)
-    .map(([stat, amount]) => ({ kind: 'stat', stat, by: -amount }))
-  const time: Effect[] = job.shift.passes ? [{ kind: 'custom', name: 'calendar/pass', with: { by: job.shift.passes } }] : []
+    .map(([stat, amount]) => ({ stat, by: -amount }))
+  const time: Effect[] = job.shift.passes ? [{ 'calendar/pass': { by: job.shift.passes } }] : []
   const pay: Effect[] = Object.entries(payOf(job, held))
     .filter(([, amount]) => amount !== 0)
-    .map(([stat, amount]) => ({ kind: 'stat', stat, by: amount }))
+    .map(([stat, amount]) => ({ stat, by: amount }))
   return [...cost, ...time, ...pay]
 }
 
@@ -439,7 +439,7 @@ export function jobs(): DefinedPlugin<JobsState, JobsView> {
           const today = dayOf(state, context.game)
           // The shift's own effects come after the cost and the time, before the pay.
           const effects = shiftEffects(job, held)
-          const pay = effects.filter((effect) => effect.kind === 'stat' && 'by' in effect && effect.by > 0)
+          const pay = effects.filter((effect) => 'stat' in effect && 'by' in effect && typeof effect.by === 'number' && effect.by > 0)
           const before = effects.filter((effect) => !pay.includes(effect))
           let next = context.apply([...before, ...(job.shift.effects ?? []), ...pay])
           const slice = sliceOf(next)
@@ -512,8 +512,7 @@ export function jobs(): DefinedPlugin<JobsState, JobsView> {
  * if given (a newspaper's ads, a café's notice), as `with: { job: [...] }`. From a place's action, a
  * person's, an item's `use`, an app or a choice; the UI draws it.
  */
-export const openJobs = (jobs?: string[]): Effect =>
-  jobs === undefined ? { kind: 'panel', panel: PANEL } : { kind: 'panel', panel: PANEL, with: { job: jobs } }
+export const openJobs = (jobs?: string[]): Effect => (jobs === undefined ? { panel: PANEL } : { panel: PANEL, with: { job: jobs } })
 /** A command: apply for the job. */
 export const applyFor = (job: string): CommandRef => ({ 'jobs/apply': { id: job } })
 /** A command: work a shift at the job. */

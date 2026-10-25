@@ -37,9 +37,9 @@ const picnic: Content = {
       name: 'apple',
       desc: 'Crisp.',
       at: { player: 2 },
-      traits: { ...usable('Eat the apple', [{ kind: 'stat', stat: 'energy', by: 5 }]) },
+      traits: { ...usable('Eat the apple', [{ stat: 'energy', by: 5 }]) },
     },
-    { id: 'torch', of: 'gear', name: 'torch', at: 'player', traits: { ...usable('Switch it on', [{ kind: 'kv', key: 'lit', to: true }], { keep: true }) } },
+    { id: 'torch', of: 'gear', name: 'torch', at: 'player', traits: { ...usable('Switch it on', [{ kv: 'lit', to: true }], { keep: true }) } },
     { id: 'stone', of: 'gear', name: 'stone', at: 'player' },
     { id: 'kim', of: 'friend', name: 'Kim' },
   ],
@@ -118,7 +118,7 @@ describe('the inventory alone', () => {
   })
 
   it('works on a thing made in play like another, through its trait', () => {
-    const g = game([{ name: 'bag', actions: [{ id: 'pick', effects: [{ kind: 'create', like: 'food:apple', entity: { id: 'windfall' }, at: 'player' }] }] }])
+    const g = game([{ name: 'bag', actions: [{ id: 'pick', effects: [{ create: 'food', like: 'food:apple', with: { id: 'windfall' }, at: 'player' }] }] }])
     const picked = run(begin(g), g, { type: 'action', id: 'pick' })
     const windfall = shown(g, picked).things.find((thing) => thing.ref === 'food:windfall')
     expect(windfall?.use?.label).toBe('Eat the apple')
@@ -132,7 +132,7 @@ describe('the inventory alone', () => {
         picnic,
         {
           name: 'broken',
-          entities: [{ id: 'pear', of: 'food', name: 'pear', traits: { 'inventory/usable': { label: '', effects: [{ kind: 'stat', stat: 'joy', by: 1 }] } } }],
+          entities: [{ id: 'pear', of: 'food', name: 'pear', traits: { 'inventory/usable': { label: '', effects: [{ stat: 'joy', by: 1 }] } } }],
           actions: [{ id: 'eat', effects: [] }],
           data: { inventory: { kinds: [{ id: 'drink' }] } },
         },
@@ -182,7 +182,7 @@ describe('the inventory with the cast', () => {
   const town: Content = {
     name: 'town',
     stats: [{ id: 'friendship', label: 'Friendship', of: 'character' }],
-    scenes: [{ id: 'ava.hi', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ kind: 'scene', scene: null }] }] }],
+    scenes: [{ id: 'ava.hi', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ scene: null }] }] }],
     prose: { 'ava.hi': 'Hi.', 'ava.hi#bye': 'Bye' },
     entities: [person({ id: 'ava', name: 'Ava', talk: 'ava.hi' })],
   }
@@ -194,7 +194,7 @@ describe('the inventory with the cast', () => {
   })
 
   it('hands what a protagonist holds over to them as you', () => {
-    const g = game([{ ...town, actions: [{ id: 'be', effects: [{ kind: 'you', to: character('ava') }, give('food:apple')] }] }], [inventory(), cast()])
+    const g = game([{ ...town, actions: [{ id: 'be', effects: [{ you: character('ava') }, give('food:apple')] }] }], [inventory(), cast()])
     const played = run(begin(g), g, { type: 'action', id: 'be' })
     expect(shown(g, played).things.map((thing) => [thing.ref, thing.at])).toEqual([
       ['food:apple', 'character:ava'],
@@ -216,7 +216,7 @@ describe('the inventory with the shop and the wardrobe', () => {
     kinds: [{ id: 'clothing', label: 'Clothing', unique: true, listed: false }],
     entities: [
       { id: 'scarf', of: 'clothing', name: 'scarf', traits: { ...wearable('neck'), ...sellable({ coins: 8 }) } },
-      { id: 'pie', of: 'food', name: 'pie', traits: { ...usable('Eat the pie', [{ kind: 'stat', stat: 'energy', by: 20 }]), ...sellable({ coins: 3 }) } },
+      { id: 'pie', of: 'food', name: 'pie', traits: { ...usable('Eat the pie', [{ stat: 'energy', by: 20 }]), ...sellable({ coins: 3 }) } },
     ],
     data: {
       shop: { vendors: [{ id: 'stall', name: 'Stall', buysBack: 0.5, goods: [{ entity: 'clothing:scarf', stock: 1 }, { entity: 'food:pie' }] }] },

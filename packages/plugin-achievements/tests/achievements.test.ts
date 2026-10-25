@@ -31,9 +31,9 @@ function game(extra: Partial<Content> = {}): Game {
       { id: 'charm', label: 'Charm', start: 2 },
     ],
     actions: [
-      { id: 'earn', effects: [{ kind: 'stat', stat: 'coins', by: 30 }] },
-      { id: 'bank', effects: [{ kind: 'kv', key: 'bank', to: true }] },
-      { id: 'dusk', effects: [{ kind: 'kv', key: 'dusk', to: true }] },
+      { id: 'earn', effects: [{ stat: 'coins', by: 30 }] },
+      { id: 'bank', effects: [{ kv: 'bank', to: true }] },
+      { id: 'dusk', effects: [{ kv: 'dusk', to: true }] },
       { id: 'kindness', effects: [grantAchievement('kind')] },
     ],
     data: { achievements: { achievements: defs } },

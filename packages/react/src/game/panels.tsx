@@ -8,7 +8,7 @@ import { mergedFrom, usePluginUis, type PluginPanel, type PluginUi } from './plu
 import { uiSay, useWords, type UiStringKey } from './words.ts'
 
 /**
- * The panels the React UI draws by name, for `{ kind: 'panel', panel }`, for
+ * The panels the React UI draws by name, for `{ panel }`, for
  * what the engine itself keeps: `stats` (the `StatList`) and `inventory`
  * (the `Inventory`). A plugin UI in `plugins` adds its own, such as the
  * shop's `shop`, and a game's own `panels` of the same name go over both.

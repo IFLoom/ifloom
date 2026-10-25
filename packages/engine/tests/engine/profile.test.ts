@@ -10,11 +10,11 @@ import { view } from '../../src/view.ts'
 import { begin, fixture } from '../fixtures/town.ts'
 
 const SETTINGS: SettingDef[] = [
-  { id: 'hints', label: 'Hints', kind: 'toggle', default: true },
+  { id: 'hints', label: 'Hints', type: 'toggle', default: true },
   {
     id: 'textSize',
     label: 'Text size',
-    kind: 'choice',
+    type: 'choice',
     affects: 'ui',
     options: [
       { value: 'small', label: 'Small' },

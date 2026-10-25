@@ -13,7 +13,7 @@ import { postTo, react } from '@ifloom/plugin-feed'
  */
 export const rules: GameRules = {
   // Energy back to full overnight.
-  onTurn: (_state, { apply }) => apply([{ kind: 'stat', stat: 'energy', to: 100 }]),
+  onTurn: (_state, { apply }) => apply([{ stat: 'energy', to: 100 }]),
   values: {
     // The cat's name as the player typed it, or a cat with no name yet.
     catName: (state) => (typeof state.kv.catName === 'string' ? state.kv.catName : 'The cat'),
@@ -31,7 +31,7 @@ export const rules: GameRules = {
       const likes = 2 + roll(10, state.seed, state.turn, 'likes') + (state.stats.charm ?? 0)
       return [
         postTo('social', id, { text: 'post.photo', ...(image ? { image: artSrc(image) } : {}) }),
-        { kind: 'stat', stat: 'charm', by: 1 },
+        { stat: 'charm', by: 1 },
         react(id, { likes, from: 'ava', text: 'comment.nice' }),
       ]
     },

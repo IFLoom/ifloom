@@ -75,7 +75,7 @@ export function customContext(state: GameState, game: Game): CustomContext {
   }
 }
 
-export { commandOf, customCall, shortFormProblem, type CommandRef, type CustomCall, type EffectRef, type PluginCall, type ValueRef } from './calls.ts'
+export { callOf, commandOf, customCall, shortFormProblem, type CommandRef, type CustomCall, type EffectRef, type PluginCall, type ValueRef } from './calls.ts'
 
 /** A condition by full name, a plugin's or the game's own (`game/…`), ready to ask. */
 export function customCondition(game: Game | undefined, name: string): ((state: GameState, args?: PluginArgs) => boolean) | undefined {
@@ -100,35 +100,33 @@ export function hasCustomEffect(game: Game | undefined, name: string): boolean {
 }
 
 /**
- * Flatten an effect list into the plain effects the reducer takes. A custom
- * call, the game's own or a plugin's, is passed on as `{ kind: 'custom' }`
- * and runs in its turn, on the state the effects before it left. A custom
- * effect nobody has contributes nothing; the content checker (`checkGame`)
- * reports it by name.
+ * Effects as the reducer takes them: a call to an effect nobody has (a
+ * plugin the game doesn't have, a name the game never declared) is left
+ * out, as it would do nothing; the content checker (`checkGame`) reports it
+ * by name. Every other effect is kept as written, and a call runs in its
+ * turn, on the state the effects before it left.
  */
 export function buildEffects(_state: GameState, game: Game, refs: readonly EffectRef[]): Effect[] {
-  const out: Effect[] = []
-  for (const entry of refs) {
-    const ref = customCall(entry)
-    if (!ref) out.push(entry as Effect)
-    else if (hasCustomEffect(game, ref.custom)) out.push(ref.with ? { kind: 'custom', name: ref.custom, with: ref.with } : { kind: 'custom', name: ref.custom })
-  }
-  return out
+  return refs.filter((entry) => {
+    const call = customCall(entry)
+    return !call || hasCustomEffect(game, call.custom)
+  })
 }
 
 /**
- * Effects with each of the game's own custom effects worked out against
- * `state`: what a button would do, before it runs, for prices, guards and
- * locks to see. Applying them works each one out in its turn instead, so
- * what this shows is read from the state before any of them apply.
+ * Effects with each of the game's own effects worked out against `state`:
+ * what a button would do, before it runs, for prices, guards and locks to
+ * see. Applying them works each one out in its turn instead, so what this
+ * shows is read from the state before any of them apply.
  */
 export function previewEffects(state: GameState, game: Game, effects: readonly Effect[], depth = 0): Effect[] {
   const out: Effect[] = []
   for (const effect of effects) {
-    const fn = effect.kind === 'custom' && !pluginEffect(game, effect.name) ? customEffect(game, effect.name) : undefined
+    const call = customCall(effect)
+    const fn = call && !pluginEffect(game, call.custom) ? customEffect(game, call.custom) : undefined
     if (!fn) out.push(effect)
-    // A custom effect can name others; ten deep is a loop, not a design.
-    else if (depth < 10) out.push(...previewEffects(state, game, buildEffects(state, game, fn(state, (effect as { with?: PluginArgs }).with ?? {})), depth + 1))
+    // An effect of the game's can name others; ten deep is a loop, not a design.
+    else if (depth < 10) out.push(...previewEffects(state, game, buildEffects(state, game, fn(state, call!.with ?? {})), depth + 1))
   }
   return out
 }

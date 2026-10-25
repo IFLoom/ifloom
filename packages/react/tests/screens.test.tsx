@@ -12,14 +12,14 @@ function game(): Game {
       { name: 'base', introScene: 'intro', actions: [] },
       {
         name: 'town',
-        actions: [{ id: 'wait', label: 'Wait a while', effects: [{ kind: 'kv', key: 'waited', by: 1 }] }],
-        scenes: [{ id: 'intro', title: 'Hello', body: [{ text: 'intro' }], choices: [{ id: 'go', effects: [{ kind: 'scene', scene: null }] }] }],
+        actions: [{ id: 'wait', label: 'Wait a while', effects: [{ kv: 'waited', by: 1 }] }],
+        scenes: [{ id: 'intro', title: 'Hello', body: [{ text: 'intro' }], choices: [{ id: 'go', effects: [{ scene: null }] }] }],
         inputs: [
-          { id: 'catName', label: 'Name the cat', kind: 'text', maxLength: 8 },
+          { id: 'catName', label: 'Name the cat', type: 'text', maxLength: 8 },
           {
             id: 'tea',
             label: 'Tea or coffee',
-            kind: 'choice',
+            type: 'choice',
             options: [
               { value: 'tea', label: 'Tea' },
               { value: 'coffee', label: 'Coffee' },

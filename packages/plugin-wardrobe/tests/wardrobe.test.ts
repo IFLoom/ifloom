@@ -130,7 +130,7 @@ describe('the wardrobe, on its own', () => {
     const g = game([
       {
         name: 'tailor',
-        actions: [{ id: 'sew', effects: [{ kind: 'create', like: 'clothing:raincoat', entity: { id: 'cape', name: 'cape' }, at: 'player' }] }],
+        actions: [{ id: 'sew', effects: [{ create: 'clothing', like: 'clothing:raincoat', with: { id: 'cape', name: 'cape' }, at: 'player' }] }],
       },
     ])
     const sewn = apply(begin(g), g, { type: 'action', id: 'sew' }).state
@@ -202,7 +202,7 @@ describe('the wardrobe with a protagonist', () => {
     const g = game([
       {
         name: 'play',
-        actions: [{ id: 'beKim', effects: [{ kind: 'you', to: 'friend:kim' }, give('clothing:raincoat')] }],
+        actions: [{ id: 'beKim', effects: [{ you: 'friend:kim' }, give('clothing:raincoat')] }],
       },
     ])
     const kim = apply(begin(g), g, { type: 'action', id: 'beKim' }).state
@@ -219,8 +219,8 @@ describe('the wardrobe with a protagonist', () => {
       {
         name: 'play',
         actions: [
-          { id: 'beKim', effects: [{ kind: 'you', to: 'friend:kim' }, give('clothing:raincoat')] },
-          { id: 'beMe', effects: [{ kind: 'you', to: 'player' }] },
+          { id: 'beKim', effects: [{ you: 'friend:kim' }, give('clothing:raincoat')] },
+          { id: 'beMe', effects: [{ you: 'player' }] },
         ],
       },
     ])

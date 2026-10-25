@@ -10,7 +10,7 @@
 import type { Game, SceneMedia } from '../game.ts'
 import type { Command, Condition, GameState } from '../types.ts'
 import type { CommandRef } from '../calls.ts'
-import { artSrc, MEDIA_MARKUP, mediaKind, mediaParts, type VideoFlags, type VideoView } from '../sceneBody.ts'
+import { artSrc, MEDIA_MARKUP, mediaType, mediaParts, type VideoFlags, type VideoView } from '../sceneBody.ts'
 import { defineFeature, type FeatureContext, type ResolveTools } from './feature.ts'
 
 /**
@@ -236,7 +236,7 @@ export function resolveMedia(
 
 /** Media written as the markup that draws it, so a data block and markup become the same beat. */
 export function mediaMarkup(media: SceneMedia): string {
-  const video = Boolean(media.video) || mediaKind(media.src ?? '') === 'video'
+  const video = Boolean(media.video) || mediaType(media.src ?? '') === 'video'
   const wide = media.size === 'wide'
   const tag = video ? (wide ? 'widevideo' : 'video') : wide ? 'wide' : 'img'
   const parts = [media.src ?? '']
@@ -265,7 +265,7 @@ export function poolProblems(game: Game, pool: string, tags: readonly string[] =
 
 /** Could this pool give a video? Then video flags on a picture asking for it are fine. */
 function poolHasVideo(game: Game, pool: string): boolean {
-  return (poolOf(game, pool) ?? []).some((file) => mediaKind(file.src) === 'video')
+  return (poolOf(game, pool) ?? []).some((file) => mediaType(file.src) === 'video')
 }
 
 function videoFlagsSet(flags: VideoFlags): string[] {
@@ -283,7 +283,7 @@ export function mediaMarkupProblems(game: Game, text: string): string[] {
     if (read.extraAlts.length) {
       out.push(`${[read.alt, ...read.extraAlts].map((alt) => `"${alt}"`).join(' and ')} can't all be alt text in ${match[0]}; is one a misspelt flag?`)
     }
-    const video = tag === 'video' || tag === 'widevideo' || (read.pool !== undefined ? poolHasVideo(game, read.pool) : mediaKind(read.path) === 'video')
+    const video = tag === 'video' || tag === 'widevideo' || (read.pool !== undefined ? poolHasVideo(game, read.pool) : mediaType(read.path) === 'video')
     if (!video) for (const flag of read.videoFlags) out.push(`video flag "${flag}" on a picture in ${match[0]}`)
     if (video && read.flags.rot) out.push(`flag "rot" turns a picture, not a video, in ${match[0]}`)
   }
@@ -297,7 +297,7 @@ function sourceProblems(game: Game, media: { src?: string; pool?: string; tags?:
   if (media.src !== undefined && media.pool !== undefined) out.push('has both a src and a pool')
   if (media.pool !== undefined) out.push(...poolProblems(game, media.pool, media.tags ?? []))
   const video =
-    Boolean(media.video) || (media.src !== undefined && mediaKind(media.src) === 'video') || (media.pool !== undefined && poolHasVideo(game, media.pool))
+    Boolean(media.video) || (media.src !== undefined && mediaType(media.src) === 'video') || (media.pool !== undefined && poolHasVideo(game, media.pool))
   if (!video) for (const flag of videoFlagsSet(media)) out.push(`video flag "${flag}" on a picture`)
   return out
 }
@@ -372,7 +372,7 @@ export function poolManifestProblems(game: Game): { where: string; what: string 
 /** Record the files a picture or video names: its own and its poster. */
 function mediaFiles(where: string, media: { src?: string; video?: boolean; poster?: string }, tools: ResolveTools): void {
   if (media.src !== undefined) {
-    const video = Boolean(media.video) || mediaKind(media.src) === 'video'
+    const video = Boolean(media.video) || mediaType(media.src) === 'video'
     tools.file(where, video ? 'video' : 'picture', artSrc(media.src, video ? 'video' : 'image'))
   }
   if (media.poster) tools.file(where, 'picture', artSrc(media.poster))
@@ -407,7 +407,7 @@ export const media = defineFeature<MediaShape>({
     for (const [pool, entries] of Object.entries(game.media?.pools ?? {})) {
       for (const entry of Array.isArray(entries) ? entries : []) {
         if (typeof entry?.src !== 'string' || !entry.src) continue
-        const video = mediaKind(entry.src) === 'video'
+        const video = mediaType(entry.src) === 'video'
         tools.file(`pool ${pool}`, video ? 'video' : 'picture', artSrc(entry.src, video ? 'video' : 'image'))
       }
     }
@@ -440,7 +440,7 @@ export const media = defineFeature<MediaShape>({
       const read = mediaParts(match[2], match[3])
       if (read.flags.poster) tools.file(where, 'picture', artSrc(read.flags.poster))
       if (read.pool !== undefined) continue
-      const video = match[1] === 'video' || match[1] === 'widevideo' || mediaKind(read.path) === 'video'
+      const video = match[1] === 'video' || match[1] === 'widevideo' || mediaType(read.path) === 'video'
       tools.file(where, video ? 'video' : 'picture', artSrc(read.path, video ? 'video' : 'image'))
     }
     return mediaMarkupProblems(game, text)

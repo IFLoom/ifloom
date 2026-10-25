@@ -7,7 +7,7 @@ import { Video } from './video.tsx'
 import { useWords } from './words.ts'
 
 /** A picture or a video beat: what the viewer shows. */
-export type ViewerMedia = Extract<SceneBeat, { kind: 'image' } | { kind: 'video' }>
+export type ViewerMedia = Extract<SceneBeat, { type: 'image' } | { type: 'video' }>
 
 export type MediaViewerProps = {
   media: ViewerMedia
@@ -37,7 +37,7 @@ function MediaViewerImpl({ media, open, onOpenChange }: MediaViewerProps) {
         closeLabel={words('closeViewer')}
       >
         <DialogTitle className="sr-only">{media.alt || words('zoom')}</DialogTitle>
-        {media.kind === 'image' ? (
+        {media.type === 'image' ? (
           <Picture className={shown} src={media.src} alt={media.alt ?? ''} />
         ) : (
           <Video

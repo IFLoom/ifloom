@@ -20,9 +20,9 @@ export const rules: GameRules = {
         (sum, ref) => sum + statValue(state, game, 'price', ref) * statValue(state, game, 'quality', ref),
         0,
       )
-      return [{ kind: 'stat', stat: 'coins', by: Math.round((covers * perCover) / 10) }]
+      return [{ stat: 'coins', by: Math.round((covers * perCover) / 10) }]
     },
-    wages: (state, _args, { game }): EffectRef[] => [{ kind: 'stat', stat: 'coins', by: -total(state, game, 'staff', 'wage') }],
+    wages: (state, _args, { game }): EffectRef[] => [{ stat: 'coins', by: -total(state, game, 'staff', 'wage') }],
   },
   values: {
     payroll: (state, _args, { game }) => total(state, game, 'staff', 'wage'),

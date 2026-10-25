@@ -56,11 +56,11 @@ describe('entities', () => {
   it('take the player’s effects and conditions with `of`, held to the stat’s range', () => {
     const g = game()
     const state = applyEffects(startingState(g), g, [
-      { kind: 'stat', stat: 'skill', by: 20, of: 'staff:ben' },
-      { kind: 'stat', stat: 'morale', to: 80, of: 'staff:ana' },
-      { kind: 'kv', key: 'shifts', by: 2, of: 'staff:ben' },
+      { stat: 'skill', by: 20, of: 'staff:ben' },
+      { stat: 'morale', to: 80, of: 'staff:ana' },
+      { kv: 'shifts', by: 2, of: 'staff:ben' },
       // Nobody called Cleo works here: nothing happens.
-      { kind: 'stat', stat: 'skill', by: 1, of: 'staff:cleo' },
+      { stat: 'skill', by: 1, of: 'staff:cleo' },
     ])
     expect(state.entities.staff.ben).toEqual({ stats: { skill: 10 }, kv: { shifts: 2 } })
     expect(state.entities.staff.ana).toEqual({ stats: { morale: 80 } })
@@ -75,18 +75,15 @@ describe('entities', () => {
   it('are created with the next free number, or a given id, and removed', () => {
     const g = game()
     let state = applyEffects(startingState(g), g, [
-      { kind: 'create', of: 'staff', entity: { name: 'Cleo', stats: { skill: 6 } } },
-      { kind: 'create', of: 'staff', entity: { name: 'Dev' } },
-      { kind: 'create', of: 'staff', entity: { id: 'ana', name: 'Another Ana' } },
+      { create: 'staff', with: { name: 'Cleo', stats: { skill: 6 } } },
+      { create: 'staff', with: { name: 'Dev' } },
+      { create: 'staff', with: { id: 'ana', name: 'Another Ana' } },
     ])
     expect(entitiesOf(state, g, 'staff')).toEqual(['staff:ana', 'staff:ben', 'staff:#1', 'staff:#2'])
     expect(state.entities.staff).toEqual({ '#1': { name: 'Cleo', stats: { skill: 6 } }, '#2': { name: 'Dev' } })
     expect(statValue(state, g, 'morale', 'staff:#1')).toBe(50)
     expect(entityName(state, g, 'staff:ana')).toBe('Ana')
-    state = applyEffects(state, g, [
-      { kind: 'remove', entity: 'staff:#1' },
-      { kind: 'create', of: 'staff', entity: { name: 'Eve' } },
-    ])
+    state = applyEffects(state, g, [{ remove: 'staff:#1' }, { create: 'staff', with: { name: 'Eve' } }])
     // Numbers are never reused, so a removed one's id never comes back as someone else.
     expect(entitiesOf(state, g, 'staff')).toEqual(['staff:ana', 'staff:ben', 'staff:#2', 'staff:#3'])
     expect(holds(state, { entity: 'staff:#1' }, g)).toBe(false)
@@ -95,19 +92,18 @@ describe('entities', () => {
 
   it('run `each` for every one, with `$` as the one each time, only where `where` holds', () => {
     const g = game()
-    const start = applyEffects(startingState(g), g, [{ kind: 'stat', stat: 'morale', to: 10, of: 'staff:ben' }])
+    const start = applyEffects(startingState(g), g, [{ stat: 'morale', to: 10, of: 'staff:ben' }])
     const state = applyEffects(start, g, [
       {
-        kind: 'each',
-        of: 'staff',
+        each: 'staff',
         where: { stat: 'morale', of: '$', gte: 20 },
         effects: [
-          { kind: 'stat', stat: 'morale', by: -5, of: '$' },
-          { kind: 'stat', stat: 'coins', by: -10 },
+          { stat: 'morale', by: -5, of: '$' },
+          { stat: 'coins', by: -10 },
         ],
       },
       // Anyone left unhappy walks out.
-      { kind: 'each', of: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ kind: 'remove', entity: '$' }] },
+      { each: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ remove: '$' }] },
     ])
     expect(statValue(state, g, 'morale', 'staff:ana')).toBe(45)
     expect(state.stats.coins).toBe(40)
@@ -124,12 +120,7 @@ describe('entities', () => {
     expect(explain(state, { count: 'staff', where: { stat: 'skill', of: '$', gte: 3 } }, g).why).toBe('1 staff where it holds; wants more than 0')
     // For each member of staff, a bonus if someone *else* is more skilled: the inner `$` is the inner one's.
     const after = applyEffects(state, g, [
-      {
-        kind: 'each',
-        of: 'staff',
-        where: { count: 'staff', where: { stat: 'skill', of: '$', gte: 4 } },
-        effects: [{ kind: 'kv', key: 'learning', to: true, of: '$' }],
-      },
+      { each: 'staff', where: { count: 'staff', where: { stat: 'skill', of: '$', gte: 4 } }, effects: [{ kv: 'learning', to: true, of: '$' }] },
     ])
     expect(entityKv(after, g, 'staff:ana').learning).toBe(true)
     expect(entityKv(after, g, 'staff:ben').learning).toBe(true)
@@ -137,7 +128,7 @@ describe('entities', () => {
 
   it('show in the view by kind, with each one’s visible stats', () => {
     const g = game()
-    const state = applyEffects(startingState(g), g, [{ kind: 'kv', key: 'tasted', to: true, of: 'dish:soup' }])
+    const state = applyEffects(startingState(g), g, [{ kv: 'tasted', to: true, of: 'dish:soup' }])
     const shown = view(state, g)
     expect(shown.stats.map((stat) => stat.key)).toEqual(['coins'])
     expect(shown.entities.staff.plural).toBe('Staff')
@@ -154,9 +145,9 @@ describe('entities', () => {
     const state = startingState(g)
     expect(holds(state, { kv: 'role', of: 'staff:ghost', lt: 1 }, g)).toBe(false)
     expect(holds(state, { not: { kv: 'role', of: 'staff:ghost' } }, g)).toBe(true)
-    expect(applyEffects(state, g, [{ kind: 'create', of: 'staff', entity: { id: '7', name: 'Seven' } }]).entities).toEqual({})
+    expect(applyEffects(state, g, [{ create: 'staff', with: { id: '7', name: 'Seven' } }]).entities).toEqual({})
     // `'$'` stands for the one in hand wherever an entity is named.
-    const kept = applyEffects(state, g, [{ kind: 'each', of: 'staff', where: { entity: '$' }, effects: [{ kind: 'kv', key: 'seen', to: true, of: '$' }] }])
+    const kept = applyEffects(state, g, [{ each: 'staff', where: { entity: '$' }, effects: [{ kv: 'seen', to: true, of: '$' }] }])
     expect(entityKv(kept, g, 'staff:ben').seen).toBe(true)
   })
 
@@ -166,27 +157,20 @@ describe('entities', () => {
         {
           ...cafe,
           actions: [
-            { id: 'adopt', effects: [{ kind: 'create', of: 'cat', entity: { name: 'Biscuit' } }] },
+            { id: 'adopt', effects: [{ create: 'cat', with: { name: 'Biscuit' } }] },
             {
               id: 'payAna',
               effects: [
-                { kind: 'stat', stat: 'coins', by: 5, of: 'staff:ana' },
-                { kind: 'stat', stat: 'morale', by: 5 },
+                { stat: 'coins', by: 5, of: 'staff:ana' },
+                { stat: 'morale', by: 5 },
               ],
             },
             {
               id: 'week',
-              effects: [
-                {
-                  kind: 'each',
-                  of: 'staff',
-                  where: { stat: 'quality', of: '$', gte: 1 },
-                  effects: [{ kind: 'stat', stat: 'quality', by: 1, of: '$' }, { 'game/nope': true }],
-                },
-              ],
+              effects: [{ each: 'staff', where: { stat: 'quality', of: '$', gte: 1 }, effects: [{ stat: 'quality', by: 1, of: '$' }, { 'game/nope': true }] }],
             },
           ],
-          scenes: [{ id: 'yard', body: [], choices: [{ id: 'feed', effects: [{ kind: 'kv', key: 'fed', to: true, of: 'pig:x' }] }] }],
+          scenes: [{ id: 'yard', body: [], choices: [{ id: 'feed', effects: [{ kv: 'fed', to: true, of: 'pig:x' }] }] }],
           prose: { 'yard#feed': 'Feed the pig' },
         },
       ],
@@ -215,7 +199,7 @@ describe('entities', () => {
             { id: '7', of: 'dish', name: 'Number seven' },
             { id: 'cleo', of: 'staff', name: 'Cleo', stats: { coins: 5 } },
           ],
-          triggers: [{ id: 'empty', when: { count: 'staf' }, effects: [{ kind: 'each', of: 'dishes', effects: [{ kind: 'remove', entity: 'meal:x' }] }] }],
+          triggers: [{ id: 'empty', when: { count: 'staf' }, effects: [{ each: 'dishes', effects: [{ remove: 'meal:x' }] }] }],
         },
       ],
       { id: 'cafe', title: 'The Café' },
@@ -271,8 +255,8 @@ describe('the view of entities', () => {
     expect(shown.staff.entries.map((entry) => entry.ref)).toEqual(['staff:ana'])
     expect(shown.dish.entries.map((entry) => entry.ref)).toEqual(['dish:soup'])
     const later = applyEffects(state, game, [
-      { kind: 'kv', key: 'benHired', to: true },
-      { kind: 'kv', key: 'onMenu', to: true, of: 'dish:pie' },
+      { kv: 'benHired', to: true },
+      { kv: 'onMenu', to: true, of: 'dish:pie' },
     ])
     expect(view(later, game).entities.staff.entries.map((entry) => entry.ref)).toEqual(['staff:ana', 'staff:ben'])
     expect(view(later, game).entities.dish.entries.map((entry) => entry.ref)).toEqual(['dish:soup', 'dish:pie'])
@@ -280,7 +264,7 @@ describe('the view of entities', () => {
 
   it('fill each entry’s name and description, with its picture, tags and flags', () => {
     const game = g()
-    const state = applyEffects(startingState(game, { kv: { title: 'head cook', owner: 'Rosa' } }), game, [{ kind: 'kv', key: 'benHired', to: true }])
+    const state = applyEffects(startingState(game, { kv: { title: 'head cook', owner: 'Rosa' } }), game, [{ kv: 'benHired', to: true }])
     const [ana, ben] = view(state, game).entities.staff.entries
     expect(ana).toMatchObject({
       name: 'Ana, head cook',
@@ -342,24 +326,17 @@ describe('declared entities and old saves', () => {
     // A save from before Ben was written in has no record of him, and needs none.
     expect(entitiesOf(unwrap(loadState(start, g)), g, 'staff')).toEqual(['staff:ana', 'staff:ben'])
     // Ben left in play: he does not come back.
-    const left = applyEffects(start, g, [{ kind: 'remove', entity: 'staff:ben' }])
+    const left = applyEffects(start, g, [{ remove: 'staff:ben' }])
     expect(left.removed).toEqual(['staff:ben'])
     expect(entitiesOf(unwrap(loadState(left, g)), g, 'staff')).toEqual(['staff:ana'])
     // Taken on again by name: no longer gone for good, and removed only once however often.
-    const back = applyEffects(left, g, [{ kind: 'create', of: 'staff', entity: { id: 'ben', name: 'Ben' } }])
+    const back = applyEffects(left, g, [{ create: 'staff', with: { id: 'ben', name: 'Ben' } }])
     expect(back.removed).toEqual([])
-    expect(
-      applyEffects(back, g, [
-        { kind: 'remove', entity: 'staff:ben' },
-        { kind: 'create', of: 'staff', entity: { id: 'ben', name: 'Ben' } },
-        { kind: 'remove', entity: 'staff:ben' },
-      ]).removed,
-    ).toEqual(['staff:ben'])
-    // Someone hired in play and let go is simply gone: nobody declared them.
-    const hired = applyEffects(start, g, [
-      { kind: 'create', of: 'staff', entity: { name: 'Cleo' } },
-      { kind: 'remove', entity: 'staff:#1' },
+    expect(applyEffects(back, g, [{ remove: 'staff:ben' }, { create: 'staff', with: { id: 'ben', name: 'Ben' } }, { remove: 'staff:ben' }]).removed).toEqual([
+      'staff:ben',
     ])
+    // Someone hired in play and let go is simply gone: nobody declared them.
+    const hired = applyEffects(start, g, [{ create: 'staff', with: { name: 'Cleo' } }, { remove: 'staff:#1' }])
     expect(hired.removed).toEqual([])
     expect(hired.entities).toEqual({})
   })

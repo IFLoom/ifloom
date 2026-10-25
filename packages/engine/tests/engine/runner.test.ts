@@ -49,7 +49,7 @@ describe('the runner', () => {
 
     const vow: Game = {
       ...fixture(),
-      scenes: [{ id: 'vow', body: [{ text: 'vow' }], choices: [{ id: 'swear', irreversible: 'For good.', effects: [{ kind: 'scene', scene: null }] }] }],
+      scenes: [{ id: 'vow', body: [{ text: 'vow' }], choices: [{ id: 'swear', irreversible: 'For good.', effects: [{ scene: null }] }] }],
     }
     vow.prose = proseStore(vow, { vow: 'Will you?', 'vow#swear': 'Swear it' })
     const sworn = createRunner(vow, begin(vow, { sceneId: 'vow' }), { history: true })
@@ -176,8 +176,8 @@ describe('the runner when saving goes wrong, or comes from elsewhere', () => {
     const game: Game = {
       ...fixture(),
       settings: [
-        { id: 'hints', label: 'Hints', kind: 'toggle', default: true },
-        { id: 'volume', label: 'Volume', kind: 'range', min: 0, max: 10, affects: 'ui', default: 5 },
+        { id: 'hints', label: 'Hints', type: 'toggle', default: true },
+        { id: 'volume', label: 'Volume', type: 'range', min: 0, max: 10, affects: 'ui', default: 5 },
       ],
     }
     const prof = profile(game, memoryDriver())
@@ -257,7 +257,7 @@ describe('starting over from content', () => {
       ...fixture(),
       scenes: [
         ...fixture().scenes,
-        { id: 'end', body: [{ text: 'end' }], choices: [{ id: 'again', command: { type: 'newGame' }, effects: [{ kind: 'kv', key: 'after', to: true }] }] },
+        { id: 'end', body: [{ text: 'end' }], choices: [{ id: 'again', command: { type: 'newGame' }, effects: [{ kv: 'after', to: true }] }] },
       ],
     }
     game.prose = proseStore(game, { end: 'The end.', 'end#again': 'Play again' })

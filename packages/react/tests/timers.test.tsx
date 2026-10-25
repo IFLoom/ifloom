@@ -18,15 +18,15 @@ function hallway(): Game {
       { name: 'base', introScene: 'hall' },
       {
         name: 'hallway',
-        timers: [{ id: 'phone', label: 'The phone', ms: 10_000, effects: [{ kind: 'scene', scene: 'missed' }] }],
+        timers: [{ id: 'phone', label: 'The phone', ms: 10_000, effects: [{ scene: 'missed' }] }],
         scenes: [
           {
             id: 'hall',
             title: 'The hall',
             body: [{ text: 'hall' }, { text: 'hall.ring', when: { timer: 'phone' }, ui: { timer: 'phone' } }],
             choices: [
-              { id: 'ring', when: { not: { timer: 'phone' } }, effects: [{ kind: 'timer', timer: 'phone' }] },
-              { id: 'answer', when: { timer: 'phone' }, effects: [{ kind: 'timer', timer: 'phone', to: null }] },
+              { id: 'ring', when: { not: { timer: 'phone' } }, effects: [{ timer: 'phone' }] },
+              { id: 'answer', when: { timer: 'phone' }, effects: [{ timer: 'phone', to: null }] },
             ],
           },
           { id: 'missed', title: 'Missed', body: [{ text: 'missed' }], choices: [] },

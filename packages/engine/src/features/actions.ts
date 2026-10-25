@@ -115,8 +115,7 @@ export function payCost(state: GameState, game: Game, cost: ActionCost, cx: Feat
 }
 
 /** What an action's cost applies, as stat effects, for guards, prices and locks to see. */
-const costEffects = (action: ActionDef): Effect[] =>
-  Object.entries(action.cost?.stats ?? {}).map(([stat, amount]): Effect => ({ kind: 'stat', stat, by: -amount }))
+const costEffects = (action: ActionDef): Effect[] => Object.entries(action.cost?.stats ?? {}).map(([stat, amount]): Effect => ({ stat, by: -amount }))
 
 /**
  * The command an action sends, if it sends one that isn't a choice, nor the

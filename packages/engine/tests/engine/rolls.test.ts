@@ -17,19 +17,19 @@ function withDice(extra: Effect[] = []): Game {
     ...fixture(),
     actions: [
       ...activities,
-      { id: 'skim', effects: [{ kind: 'roll', key: 'skim', dice: '2d6', against: 8 }] },
+      { id: 'skim', effects: [{ roll: 'skim', dice: '2d6', against: 8 }] },
       {
         id: 'twice',
         effects: [
-          { kind: 'roll', key: 'first', dice: '1d20' },
-          { kind: 'roll', key: 'second', dice: '1d20' },
+          { roll: 'first', dice: '1d20' },
+          { roll: 'second', dice: '1d20' },
         ],
       },
-      { id: 'clever', effects: [{ kind: 'roll', key: 'think', dice: { count: 1, sides: 6 }, plus: { stat: 'intelligence' } }] },
-      { id: 'coin', effects: [{ kind: 'roll', key: 'coin', dice: 'd2+3' }] },
+      { id: 'clever', effects: [{ roll: 'think', dice: { count: 1, sides: 6 }, plus: { stat: 'intelligence' } }] },
+      { id: 'coin', effects: [{ roll: 'coin', dice: 'd2+3' }] },
       { id: 'extra', effects: extra },
     ],
-    triggers: [{ id: 'weather', when: { kv: 'outside' }, effects: [{ kind: 'roll', key: 'weather', dice: 'd100' }] }],
+    triggers: [{ id: 'weather', when: { kv: 'outside' }, effects: [{ roll: 'weather', dice: 'd100' }] }],
   }
 }
 
@@ -139,7 +139,7 @@ describe('the roll effect', () => {
   })
 
   it('rolls nothing for dice it cannot read', () => {
-    const game = withDice([{ kind: 'roll', key: 'bad', dice: '2x6' }])
+    const game = withDice([{ roll: 'bad', dice: '2x6' }])
     const state = run(game, begin(game), act('extra'))
     expect(state.rolls.made).toBe(0)
     expect(state.kv.bad).toBeUndefined()
@@ -191,12 +191,12 @@ describe('the roll condition', () => {
 describe('checking rolls', () => {
   it('reports dice, keys, plus and against that are wrong, and an unknown stat', () => {
     const game = withDice([
-      { kind: 'roll', key: 'ok', dice: '2d6+1', plus: { stat: 'intelligence' }, against: 9 },
-      { kind: 'roll', key: 'bad', dice: '2x6' },
-      { kind: 'roll', key: 'one', dice: { sides: 1 } },
-      { kind: 'roll', key: '9lives', dice: 'd6' },
-      { kind: 'roll', key: 'strong', dice: 'd6', plus: { stat: 'strength' } },
-      { kind: 'roll', key: 'odd', dice: 'd6', plus: 'two' as unknown as number, against: 'x' as unknown as number },
+      { roll: 'ok', dice: '2d6+1', plus: { stat: 'intelligence' }, against: 9 },
+      { roll: 'bad', dice: '2x6' },
+      { roll: 'one', dice: { sides: 1 } },
+      { roll: '9lives', dice: 'd6' },
+      { roll: 'strong', dice: 'd6', plus: { stat: 'strength' } },
+      { roll: 'odd', dice: 'd6', plus: 'two' as unknown as number, against: 'x' as unknown as number },
     ])
     const problems = checkGame(game).problems.map((problem) => problem.what)
     expect(problems).toEqual([

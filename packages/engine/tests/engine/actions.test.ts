@@ -15,7 +15,7 @@ function town(more: ActionDef[] = []): Game {
 
 describe('one kind of button', () => {
   it('has a label, a cost, a reason it is refused and effects, and its button does it by its id', () => {
-    const game = town([{ id: 'cake', label: 'Buy a cake', cost: { stats: { coins: 2 } }, effects: [{ kind: 'kv', key: 'cake', to: true }] }])
+    const game = town([{ id: 'cake', label: 'Buy a cake', cost: { stats: { coins: 2 } }, effects: [{ kv: 'cake', to: true }] }])
     const button = view(begin(game), game).actions.find((action) => action.id === 'cake')!
     expect(button.command).toEqual({ type: 'action', id: 'cake' })
     expect(button.price?.stats?.map((spent) => spent.amount)).toEqual([2])
@@ -43,7 +43,7 @@ describe('one kind of button', () => {
         label: 'Study',
         command: { type: 'action', id: 'read' },
         cost: { stats: { coins: 1 } },
-        effects: [{ kind: 'kv', key: 'studied', to: true }],
+        effects: [{ kv: 'studied', to: true }],
       },
     ])
     const state = apply(begin(game), game, { type: 'action', id: 'study' }).state
@@ -51,16 +51,16 @@ describe('one kind of button', () => {
     expect(state.stats.coins).toBe(2)
     expect(state.kv.studied).toBe(true)
     expect(effectsOf(begin(game), game, { type: 'action', id: 'study' })).toEqual([
-      { kind: 'stat', stat: 'intelligence', by: 2 },
-      { kind: 'stat', stat: 'coins', by: -1 },
-      { kind: 'kv', key: 'studied', to: true },
+      { stat: 'intelligence', by: 2 },
+      { stat: 'coins', by: -1 },
+      { kv: 'studied', to: true },
     ])
     const tidying = town([{ id: 'sweep', label: 'Sweep', command: { type: 'action', id: 'tidy' } }])
     expect(whyNot(begin(tidying, { kv: { at: 'street' } }), tidying, { type: 'action', id: 'sweep' })).toBe('Not here.')
   })
 
   it('is once a turn with once, counted in chosen under its id', () => {
-    const game = town([{ id: 'pray', label: 'Pray', once: { per: 'turn', reason: 'Once is enough today.' }, effects: [{ kind: 'kv', key: 'prayed', by: 1 }] }])
+    const game = town([{ id: 'pray', label: 'Pray', once: { per: 'turn', reason: 'Once is enough today.' }, effects: [{ kv: 'prayed', by: 1 }] }])
     const once = apply(begin(game), game, { type: 'action', id: 'pray' }).state
     expect(once.chosen.pray).toMatchObject({ n: 1, last: once.turn })
     expect(whyNot(once, game, { type: 'action', id: 'pray' })).toBe('Once is enough today.')
@@ -83,8 +83,8 @@ describe('one kind of button', () => {
     const stall = definePlugin<null>({
       id: 'stall',
       version: 1,
-      buttons: () => [{ id: 'bun', label: 'Buy a bun', cost: { stats: { coins: 1 } }, effects: [{ kind: 'kv', key: 'bun', to: true }] }],
-      action: (_state, id) => (id === 'pie' ? { id: 'pie', effects: [{ kind: 'kv', key: 'pie', to: true }] } : undefined),
+      buttons: () => [{ id: 'bun', label: 'Buy a bun', cost: { stats: { coins: 1 } }, effects: [{ kv: 'bun', to: true }] }],
+      action: (_state, id) => (id === 'pie' ? { id: 'pie', effects: [{ kv: 'pie', to: true }] } : undefined),
     })
     const game = { ...town(), plugins: [stall] }
     const bun = view(begin(game), game).actions.find((action) => action.id === 'bun')!
@@ -105,9 +105,9 @@ describe('activities, from before schema 20', () => {
           id: 'coffee',
           cost: { stats: { coins: 3 } },
           blocked: [{ when: { kv: 'hadCoffee' }, reason: 'Enough.' }],
-          effects: [{ kind: 'kv', key: 'hadCoffee', to: true }],
+          effects: [{ kv: 'hadCoffee', to: true }],
         },
-        { id: 'nap', effects: [{ kind: 'turn' }] },
+        { id: 'nap', effects: [{ turn: true }] },
       ],
       actions: [{ id: 'coffee', label: 'Buy a coffee', command: { type: 'activity', id: 'coffee' } }],
       locks: [{ when: { kv: 'tired' }, deny: ['activity'], reason: 'Too tired.' }],
@@ -117,7 +117,7 @@ describe('activities, from before schema 20', () => {
     expect(upgraded.ok && upgraded.value).toMatchObject({
       actions: [
         { id: 'coffee', label: 'Buy a coffee', cost: { stats: { coins: 3 } }, blocked: [{ when: { kv: 'hadCoffee' }, reason: 'Enough.' }] },
-        { id: 'nap', effects: [{ kind: 'turn' }] },
+        { id: 'nap', effects: [{ turn: true }] },
       ],
       locks: [{ when: { kv: 'tired' }, deny: ['action'], reason: 'Too tired.' }],
       scenes: [{ id: 'bed', body: [], choices: [{ id: 'sleep', command: { type: 'action', id: 'nap' }, effects: [] }] }],

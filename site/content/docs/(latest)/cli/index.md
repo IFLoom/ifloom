@@ -598,7 +598,7 @@ buildFiles('dist') // [{ file: 'index.html', bytes: 434640 }, { file: 'art/place
 function inlineAssets(dir: string, folder?: string): { files: number; bytes: number; videos: number }
 ```
 
-What `ifloom build --inline-assets` runs on the built folder `dir`. Every file under `dir/<folder>` (default `art`), including subfolders, goes into `dir/index.html` as a `data:` URL, except videos (`.mp4` and `.webm`, as the engine's `mediaKind` decides). They go in one `<script>` at the top of `<head>` that sets `window.__ifloomAssets` to a map such as `{ "art/place/cafe.jpg": "data:image/jpeg;base64,…" }`. Then each file that went in is removed, along with any folder that leaves empty. It returns how many files went in, the size of the page afterwards in bytes, and how many videos it left in the folder.
+What `ifloom build --inline-assets` runs on the built folder `dir`. Every file under `dir/<folder>` (default `art`), including subfolders, goes into `dir/index.html` as a `data:` URL, except videos (`.mp4` and `.webm`, as the engine's `mediaType` decides). They go in one `<script>` at the top of `<head>` that sets `window.__ifloomAssets` to a map such as `{ "art/place/cafe.jpg": "data:image/jpeg;base64,…" }`. Then each file that went in is removed, along with any folder that leaves empty. It returns how many files went in, the size of the page afterwards in bytes, and how many videos it left in the folder.
 
 The type in each URL comes from the picture's extension: `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.avif` or `.svg`. Anything else is `application/octet-stream`. The script goes before every other script, so the map is there when the game first draws, and the base UI's [`assetUrl`](/docs/react/components#asseturl) reads it.
 

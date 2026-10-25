@@ -31,8 +31,8 @@ export type NoticesShape = {
     notices: Notice[]
   }
   effects: {
-    /** Tell the player something outside a scene. `text` is a prose key. */
-    notify: { kind: 'notify'; title: string; text?: string; image?: string; tag?: string; id?: string }
+    /** Tell the player something outside a scene: `{ notify: 'A note under your door', text: 'notice.welcome' }`. `text` is a prose key. */
+    notify: { notify: string; text?: string; image?: string; tag?: string; id?: string }
   }
   commands: {
     /** Mark one notice seen, or every one. */
@@ -51,8 +51,8 @@ export const notices = defineFeature<NoticesShape>({
   effects: {
     notify: {
       apply: (state, effect) => {
-        const { kind: _kind, ...notice } = effect
-        return notify(state, notice)
+        const { notify: title, ...notice } = effect
+        return notify(state, { ...notice, title })
       },
       references: (effect) => [
         ...(effect.text !== undefined ? [{ prose: effect.text }] : []),

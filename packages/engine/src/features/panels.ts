@@ -41,10 +41,10 @@ export type PanelsShape = {
   }
   effects: {
     /**
-     * Open a panel by name, with what it needs: `{ kind: 'panel', panel: 'shop', with: { vendor: 'cafe' } }`.
+     * Open a panel by name, with what it needs: `{ panel: 'shop', with: { vendor: 'cafe' } }`.
      * One already open is replaced. `panel: null` closes it.
      */
-    panel: { kind: 'panel'; panel: string | null; with?: PluginArgs }
+    panel: { panel: string | null; with?: PluginArgs }
   }
   commands: {
     /** Close the open panel: what a UI sends when the player dismisses it. Refused with none open. */

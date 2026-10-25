@@ -160,7 +160,7 @@ export function probes(game: Game) {
           },
         },
         game,
-        [{ kind: 'custom', name: 'generators/generate', with: { template: 'visitor', count: 2 } }],
+        [{ 'generators/generate': { template: 'visitor', count: 2 } }],
       ),
     },
   ]

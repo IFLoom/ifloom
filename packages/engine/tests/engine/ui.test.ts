@@ -26,7 +26,7 @@ const porch: DataScene = {
     { text: 'porch.last', ui: { style: 'whisper' } },
   ],
   choices: [
-    { id: 'in', ui: { transition: 'zoom' }, effects: [{ kind: 'scene', scene: null }] },
+    { id: 'in', ui: { transition: 'zoom' }, effects: [{ scene: null }] },
     { id: 'wait', effects: [] },
   ],
 }
@@ -71,7 +71,7 @@ describe('ui hints', () => {
   it("put a block's hints on the first beat it makes, and leave out a block that isn't shown", () => {
     const { game } = make()
     const beats = view(startingState(game), game).scene.beats
-    expect(beats.map((beat) => [beat.kind === 'text' ? beat.text : beat.kind, beat.ui])).toEqual([
+    expect(beats.map((beat) => [beat.type === 'text' ? beat.text : beat.type, beat.ui])).toEqual([
       ['A porch.', undefined],
       ['A swing creaks.', { reveal: { delay: 1200 } }],
       ['Then it stops.', undefined],
@@ -85,7 +85,7 @@ describe('ui hints', () => {
       { at: 11, ui: { b: 2 } },
       { at: 43, ui: { c: 3 } },
     ])
-    expect(beats.map((beat) => [beat.kind, beat.ui])).toEqual([
+    expect(beats.map((beat) => [beat.type, beat.ui])).toEqual([
       ['text', undefined],
       ['text', { a: 1 }],
       ['mail', { b: 2 }],

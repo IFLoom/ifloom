@@ -25,24 +25,20 @@ describe('custom functions belong to their game', () => {
   it('runs a custom effect by name, and drops one the game does not have', () => {
     const game = {
       ...fixture(),
-      rules: { effects: { tip: (_state: unknown, args: Record<string, unknown>) => [{ kind: 'stat' as const, stat: 'coins', by: Number(args.by) }] } },
+      rules: { effects: { tip: (_state: unknown, args: Record<string, unknown>) => [{ stat: 'coins', by: Number(args.by) }] } },
     }
-    expect(buildEffects(begin(game), game, [{ 'game/tip': { by: 2 } }])).toEqual([{ kind: 'custom', name: 'game/tip', with: { by: 2 } }])
+    expect(buildEffects(begin(game), game, [{ 'game/tip': { by: 2 } }])).toEqual([{ 'game/tip': { by: 2 } }])
     expect(buildEffects(begin(game), game, [{ 'game/nothing': true }])).toEqual([])
     expect(applyEffects(begin(game), game, buildEffects(begin(game), game, [{ 'game/tip': { by: 2 } }])).stats.coins).toBe(5)
     // What a button would do, before it runs: worked out against the state now.
-    expect(previewEffects(begin(game), game, [{ kind: 'custom', name: 'game/tip', with: { by: 2 } }])).toEqual([{ kind: 'stat', stat: 'coins', by: 2 }])
+    expect(previewEffects(begin(game), game, [{ 'game/tip': { by: 2 } }])).toEqual([{ stat: 'coins', by: 2 }])
   })
 
   it('runs a custom effect in its turn, on the state the effects before it left', () => {
     // Doubles the coins the player has when it runs.
-    const double: CustomEffect = (state) => [{ kind: 'stat', stat: 'coins', by: state.stats.coins }]
+    const double: CustomEffect = (state) => [{ stat: 'coins', by: state.stats.coins }]
     const game = { ...fixture(), rules: { effects: { double } } }
-    const state = applyEffects(
-      begin(game),
-      game,
-      buildEffects(begin(game), game, [{ kind: 'stat', stat: 'coins', by: 4 }, { 'game/double': true }, { 'game/double': true }]),
-    )
+    const state = applyEffects(begin(game), game, buildEffects(begin(game), game, [{ stat: 'coins', by: 4 }, { 'game/double': true }, { 'game/double': true }]))
     // 3 + 4 = 7, doubled to 14, doubled to 28.
     expect(state.stats.coins).toBe(28)
   })
@@ -64,7 +60,7 @@ describe('custom functions belong to their game', () => {
         effects: {
           wade: (_state, _args, { game, value, roll }) => {
             seen.push(game.id, roll(6, 'wade'), roll(6, 'wade'))
-            return [{ kind: 'stat', stat: 'coins', by: Number(value('tides/height', { times: 2 })) }]
+            return [{ stat: 'coins', by: Number(value('tides/height', { times: 2 })) }]
           },
         },
         values: { tide: (_state, args, { value }) => `${value('tides/height')} ${String(args.unit)}` },
@@ -86,7 +82,7 @@ describe('custom functions belong to their game', () => {
         ring: {
           whyNot: (_state, args) => (args.times === 0 ? 'Silence.' : undefined),
           run: (state, args) => ({ ...state, kv: { ...state.kv, rung: Number(args.times) } }),
-          effectsOf: () => [{ kind: 'stat', stat: 'coins', by: -1 }],
+          effectsOf: () => [{ stat: 'coins', by: -1 }],
         },
       },
     })
@@ -94,7 +90,7 @@ describe('custom functions belong to their game', () => {
     const applied = apply(begin(game), game, { 'bells/ring': { times: 3 } })
     expect(applied.ok && applied.state.kv.rung).toBe(3)
     expect(whyNot(begin(game), game, { 'bells/ring': { times: 0 } })).toBe('Silence.')
-    expect(effectsOf(begin(game), game, { 'bells/ring': { times: 1 } })).toEqual([{ kind: 'stat', stat: 'coins', by: -1 }])
+    expect(effectsOf(begin(game), game, { 'bells/ring': { times: 1 } })).toEqual([{ stat: 'coins', by: -1 }])
     // The view shows it in the long form.
     expect(renderAction(begin(game), game, game.actions![0]).command).toEqual({ type: 'custom', name: 'bells/ring', with: { times: 2 } })
     expect(problemsOf(game)).toEqual([])

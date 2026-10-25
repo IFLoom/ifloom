@@ -6,11 +6,11 @@ export const settings: Content = {
   // game (the high street reads it); `textSize` only changes how the page looks,
   // and main.tsx puts it on the page root for styles.css.
   settings: [
-    { id: 'hints', label: 'Show hints', kind: 'toggle', default: true },
+    { id: 'hints', label: 'Show hints', type: 'toggle', default: true },
     {
       id: 'textSize',
       label: 'Text size',
-      kind: 'choice',
+      type: 'choice',
       affects: 'ui',
       options: [
         { value: 'normal', label: 'Normal' },

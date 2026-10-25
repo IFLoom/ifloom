@@ -1,5 +1,5 @@
 import { holds, type Condition } from './condition.ts'
-import { conditionEntry, conditionKinds, featureContext } from './core.ts'
+import { conditionEntry, conditionKeys, featureContext } from './core.ts'
 import type { Game } from './game.ts'
 import type { GameState } from './types.ts'
 
@@ -22,15 +22,15 @@ export type Explanation = {
 function leaf(state: GameState, condition: Condition, game: Game | undefined): string {
   const entry = conditionEntry(condition)
   if (entry) return entry.explain(state, condition, game, featureContext())
-  const kinds = conditionKinds(condition)
-  return kinds.length ? `a condition with ${kinds.length} kinds (${kinds.join(', ')}); wants one` : 'an unknown condition'
+  const kinds = conditionKeys(condition)
+  return kinds.length ? `a condition with ${kinds.length} keys (${kinds.join(', ')}); wants one` : 'an unknown condition'
 }
 
 /** Explain a condition against a state, part by part. No condition always holds. */
 export function explain(state: GameState, condition: Condition | undefined, game?: Game): Explanation {
   if (!condition) return { holds: true, why: 'no condition' }
   // `all`, `any` and `not` are explained part by part. A condition with another kind key besides is a leaf, and holds nowhere.
-  const kinds = conditionKinds(condition)
+  const kinds = conditionKeys(condition)
   const kind = kinds.length === 1 ? kinds[0] : undefined
   if (kind === 'all' && 'all' in condition) {
     const parts = condition.all.map((entry) => explain(state, entry, game))

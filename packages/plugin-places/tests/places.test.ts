@@ -39,7 +39,7 @@ const town: Content = {
     'place.park': 'Ducks.',
   },
   actions: [
-    { id: 'coffee', blocked: [onlyAt(['cafe'], 'There is no coffee here.')], effects: [{ kind: 'kv', key: 'coffee', to: true }] },
+    { id: 'coffee', blocked: [onlyAt(['cafe'], 'There is no coffee here.')], effects: [{ kv: 'coffee', to: true }] },
     { id: 'nap', label: 'Nap', effects: [pass(1)] },
     { id: 'hop', effects: [moveTo('park')] },
   ],
@@ -155,8 +155,8 @@ describe('places', () => {
                   arrive: {
                     when: { not: { kv: 'ducks' } },
                     effects: [
-                      { kind: 'kv', key: 'ducks', to: true },
-                      { kind: 'kv', key: 'fed', by: 1 },
+                      { kv: 'ducks', to: true },
+                      { kv: 'fed', by: 1 },
                     ],
                   },
                 }
@@ -241,8 +241,8 @@ describe('places', () => {
           default: { music: 'calm' },
         },
         actions: [
-          { id: 'hush', effects: [{ kind: 'audio', channel: 'ambience', to: null }] },
-          { id: 'listen', effects: [{ kind: 'audio', channel: 'ambience' }] },
+          { id: 'hush', effects: [{ audio: 'ambience', to: null }] },
+          { id: 'listen', effects: [{ audio: 'ambience' }] },
         ],
         data: { places: { locations: [place('cafe', ['street'], { audio: { ambience: 'murmur' }, ...extra })] } },
       }
@@ -384,7 +384,7 @@ describe('places', () => {
           { id: 'paper', of: 'item', name: 'Newspaper', at: { 'location:street': 2 } },
           { id: 'coin', of: 'item', name: 'Coin', at: 'location:house', visible: { kv: 'lookedClosely' } },
         ],
-        actions: [...(town.actions ?? []), { id: 'drop', effects: [{ kind: 'move', entity: 'item:paper', from: 'you', to: 'location:park' }] }],
+        actions: [...(town.actions ?? []), { id: 'drop', effects: [{ move: 'item:paper', from: 'you', to: 'location:park' }] }],
       }
       const { game: g, problems } = loadGame([withThings], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'house' })] })
       expect(problems).toEqual([])

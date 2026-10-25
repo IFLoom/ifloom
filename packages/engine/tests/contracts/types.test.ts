@@ -1,6 +1,17 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import type { Command, Condition, Content, Effect, Game, GameState, Pack, View } from '../../src/index.ts'
-import type { FrozenCommand, FrozenCondition, FrozenContent, FrozenEffect, FrozenGame, FrozenGameState, FrozenPack, FrozenView } from './frozen-types.ts'
+import type { EffectKey } from '../../src/types.ts'
+import type {
+  FrozenCommand,
+  FrozenCondition,
+  FrozenContent,
+  FrozenEffect,
+  FrozenEffectKey,
+  FrozenGame,
+  FrozenGameState,
+  FrozenPack,
+  FrozenView,
+} from './frozen-types.ts'
 
 /**
  * The public types are built from the features' pieces now (`features/`), and
@@ -46,7 +57,7 @@ describe('the built public types', () => {
   })
 
   it('keep the kinds a condition, effect and command can be', () => {
-    expectTypeOf<Effect['kind']>().toEqualTypeOf<FrozenEffect['kind']>()
+    expectTypeOf<EffectKey>().toEqualTypeOf<FrozenEffectKey>()
     expectTypeOf<Command['type']>().toEqualTypeOf<FrozenCommand['type']>()
   })
 })

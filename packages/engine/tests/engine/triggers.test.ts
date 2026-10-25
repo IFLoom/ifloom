@@ -11,17 +11,14 @@ function withTriggers(): Game {
       {
         id: 'note',
         when: { kv: 'at', is: 'street' },
-        effects: [
-          { kind: 'notify', title: 'A note on the mat' },
-          { kind: 'kv', key: 'note', to: true },
-        ],
+        effects: [{ notify: 'A note on the mat' }, { kv: 'note', to: true }],
       },
       // Fires off the one before it, in the same pass.
-      { id: 'read', when: { kv: 'note' }, effects: [{ kind: 'stat', stat: 'intelligence', by: 1 }] },
+      { id: 'read', when: { kv: 'note' }, effects: [{ stat: 'intelligence', by: 1 }] },
       // Every turn the player is in the shop, once a turn.
-      { id: 'smell', once: 'turn', when: { kv: 'at', is: 'shop' }, effects: [{ kind: 'stat', stat: 'luck', by: 1 }] },
+      { id: 'smell', once: 'turn', when: { kv: 'at', is: 'shop' }, effects: [{ stat: 'luck', by: 1 }] },
       // Opens a scene, which counts as seen.
-      { id: 'rosa', when: { kv: 'callRosa' }, effects: [{ kind: 'scene', scene: 'rosa.hello' }] },
+      { id: 'rosa', when: { kv: 'callRosa' }, effects: [{ scene: 'rosa.hello' }] },
     ],
   }
 }
@@ -50,7 +47,7 @@ describe('triggers', () => {
   it('count a scene they open as seen', () => {
     const game = {
       ...withTriggers(),
-      actions: [...(fixture().actions ?? []), { id: 'ring', effects: [{ kind: 'kv' as const, key: 'callRosa', to: true }] }],
+      actions: [...(fixture().actions ?? []), { id: 'ring', effects: [{ kv: 'callRosa', to: true }] }],
     }
     const state = apply(begin(game), game, { type: 'action', id: 'ring' }).state
     expect(state.sceneId).toBe('rosa.hello')

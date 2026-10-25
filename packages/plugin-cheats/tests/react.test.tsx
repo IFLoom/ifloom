@@ -50,7 +50,7 @@ function game(options: { plugins?: boolean; hideAll?: boolean } = {}): Game {
                 id: 'coins',
                 label: '+20 coins',
                 description: 'A little help.',
-                effects: [{ kind: 'stat', stat: 'coins', by: 20 }],
+                effects: [{ stat: 'coins', by: 20 }],
                 ...(hide ? { blocked: [{ when: supporter, reason: 'x', hide: true }] } : {}),
               },
               {
@@ -58,7 +58,7 @@ function game(options: { plugins?: boolean; hideAll?: boolean } = {}): Game {
                 label: 'Show the map',
                 once: true,
                 group: 'Story',
-                effects: [{ kind: 'kv', key: 'map', to: true }],
+                effects: [{ kv: 'map', to: true }],
                 ...(hide ? { blocked: [{ when: supporter, reason: 'x', hide: true }] } : {}),
               },
               {
@@ -66,7 +66,7 @@ function game(options: { plugins?: boolean; hideAll?: boolean } = {}): Game {
                 label: '+500 coins',
                 group: 'Supporters',
                 blocked: [{ when: supporter, reason: 'For supporters.', hide }],
-                effects: [{ kind: 'stat', stat: 'coins', by: 500 }],
+                effects: [{ stat: 'coins', by: 500 }],
               },
             ],
           },

@@ -3,15 +3,15 @@ import type { Content } from '@ifloom/engine'
 
 export const triggers: Content = {
   triggers: [
-    { id: 'overdrawn', once: 'turn', when: { stat: 'coins', lt: 0 }, effects: [{ kind: 'notify', title: 'The bank has written.', tag: 'money' }] },
-    { id: 'empty', once: 'turn', when: { count: 'staff', lt: 1 }, effects: [{ kind: 'notify', title: 'Nobody to open up tomorrow.', tag: 'staff' }] },
+    { id: 'overdrawn', once: 'turn', when: { stat: 'coins', lt: 0 }, effects: [{ notify: 'The bank has written.', tag: 'money' }] },
+    { id: 'empty', once: 'turn', when: { count: 'staff', lt: 1 }, effects: [{ notify: 'Nobody to open up tomorrow.', tag: 'staff' }] },
     // A happy team is a good review: once, the first week two of them are glad to be there.
     {
       id: 'review',
       when: { count: 'staff', where: { stat: 'morale', of: '$', gte: 75 }, gte: 2 },
       effects: [
-        { kind: 'stat', stat: 'reputation', by: 10 },
-        { kind: 'notify', title: 'A glowing review in the local paper.', tag: 'press' },
+        { stat: 'reputation', by: 10 },
+        { notify: 'A glowing review in the local paper.', tag: 'press' },
       ],
     },
   ],

@@ -21,8 +21,8 @@ const catchBall: MinigameDef = {
         { input: 'left', go: 'missed' },
       ],
     },
-    caught: { final: { effects: [{ kind: 'scene', scene: 'caught' }] } },
-    missed: { final: { effects: [{ kind: 'scene', scene: 'missed' }] } },
+    caught: { final: { effects: [{ scene: 'caught' }] } },
+    missed: { final: { effects: [{ scene: 'missed' }] } },
   },
 }
 
@@ -44,15 +44,15 @@ function game(): Game {
             title: 'The park',
             body: [{ text: 'intro' }],
             choices: [
-              { id: 'play', effects: [{ kind: 'minigame', minigame: 'catch' }] },
-              { id: 'rest', effects: [{ kind: 'stat', stat: 'energy', by: 10 }] },
-              { id: 'leave', effects: [{ kind: 'scene', scene: null }] },
+              { id: 'play', effects: [{ minigame: 'catch' }] },
+              { id: 'rest', effects: [{ stat: 'energy', by: 10 }] },
+              { id: 'leave', effects: [{ scene: null }] },
             ],
           },
-          { id: 'caught', title: 'Caught it', body: [{ text: 'caught' }], choices: [{ id: 'back', effects: [{ kind: 'scene', scene: 'intro' }] }] },
-          { id: 'missed', title: 'Missed', body: [{ text: 'missed' }], choices: [{ id: 'back', effects: [{ kind: 'scene', scene: 'intro' }] }] },
+          { id: 'caught', title: 'Caught it', body: [{ text: 'caught' }], choices: [{ id: 'back', effects: [{ scene: 'intro' }] }] },
+          { id: 'missed', title: 'Missed', body: [{ text: 'missed' }], choices: [{ id: 'back', effects: [{ scene: 'intro' }] }] },
         ],
-        actions: [{ id: 'wave', label: 'Wave', effects: [{ kind: 'notify', title: 'Someone waves back' }] }],
+        actions: [{ id: 'wave', label: 'Wave', effects: [{ notify: 'Someone waves back' }] }],
         prose: {
           intro: 'Kids are throwing a ball about.',
           'intro#play': 'Join in',

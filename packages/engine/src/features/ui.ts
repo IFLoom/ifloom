@@ -45,7 +45,7 @@ export interface GameUi {}
  * }
  * ```
  *
- * The engine never reads it: the span it gives the view (`{ kind: 'ui' }`)
+ * The engine never reads it: the span it gives the view (`{ type: 'ui' }`)
  * has `name: string` and `args: string[]`, so a name no UI declared still
  * comes through. It's there for a UI's components to type their arguments.
  */

@@ -31,9 +31,9 @@ describe('explain', () => {
     // Before core features registered, `flag` (now `kv`) was asked first here and the condition held.
     const two = { kv: 'metRosa', turn: { gte: 0 } } as never
     expect(holds(state, two, game)).toBe(false)
-    expect(explain(state, two, game)).toEqual({ holds: false, why: 'a condition with 2 kinds (kv, turn); wants one' })
+    expect(explain(state, two, game)).toEqual({ holds: false, why: 'a condition with 2 keys (kv, turn); wants one' })
     const both = { all: [{ kv: 'metRosa' }], not: { kv: 'metRosa' } } as never
-    expect(explain(state, both, game)).toEqual({ holds: false, why: 'a condition with 2 kinds (all, not); wants one' })
+    expect(explain(state, both, game)).toEqual({ holds: false, why: 'a condition with 2 keys (all, not); wants one' })
   })
 
   it('says what each leaf read and what it wanted', () => {

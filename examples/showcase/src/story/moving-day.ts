@@ -22,10 +22,7 @@ export const movingDay: Content = {
           id: 'unpack',
           // The flat slides up into view once the boxes are in.
           ui: { transition: { in: 'slide-up', ms: 400 } },
-          effects: [
-            { kind: 'scene', scene: null },
-            { kind: 'kv', key: 'phase', to: 'open' },
-          ],
+          effects: [{ scene: null }, { kv: 'phase', to: 'open' }],
         },
       ],
     },
@@ -33,13 +30,13 @@ export const movingDay: Content = {
   // Sam's note: the notice says it, and you keep it in the phone's Notes app.
   entities: [{ id: 'welcome', of: 'note', name: 'Welcome note', desc: WELCOME }],
   // On moving day the cat needs a name; the prose says it from then on.
-  inputs: [{ id: 'catName', label: 'Name your cat', kind: 'text', maxLength: 16, when: { kv: 'phase', is: ['arrival'] } }],
+  inputs: [{ id: 'catName', label: 'Name your cat', type: 'text', maxLength: 16, when: { kv: 'phase', is: ['arrival'] } }],
   triggers: [
     // A note under the door the first time the player steps out.
     {
       id: 'welcome',
       when: at('high-street'),
-      effects: [{ kind: 'notify', title: 'A note under your door', text: 'notice.welcome', tag: 'post' }, give('note:welcome')],
+      effects: [{ notify: 'A note under your door', text: 'notice.welcome', tag: 'post' }, give('note:welcome')],
     },
   ],
   data: {

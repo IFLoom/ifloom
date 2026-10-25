@@ -145,7 +145,7 @@ export type FeatureCheckTools = {
   /** Report everything these references name that the game doesn't have, at `where`. */
   check: (source: FeatureSource, where: string, refs: readonly Reference[]) => void
   /** Record a file the game names, as the page asks for it. */
-  file: (where: string, kind: 'picture' | 'video' | 'audio', path: string | null) => void
+  file: (where: string, type: 'picture' | 'video' | 'audio', path: string | null) => void
   /** Report each id that is in one list twice, once: `two settings share this id`. A loaded game can't have these. */
   twice: (list: string, plural: string, ids: readonly string[]) => void
 }
@@ -178,7 +178,7 @@ export type ResolveTools = {
   /** What these references name that the game doesn't have, worded for `where`: how a reference that holds more is looked inside. */
   resolve: (refs: readonly Reference[], where: string) => string[]
   /** Record a file the game names, as the page asks for it. */
-  file: (where: string, kind: 'picture' | 'video' | 'audio', path: string | null) => void
+  file: (where: string, type: 'picture' | 'video' | 'audio', path: string | null) => void
 }
 
 /** The references that have `K` as a key. */
@@ -240,11 +240,11 @@ export type FeatureSpec<T extends FeatureShape> = {
     check?: (game: Game, tools: FeatureCheckTools) => void
   }
   /**
-   * What the game declares and a loaded save lacks, filled in. `kind` names it
+   * What the game declares and a loaded save lacks, filled in. `part` names it
    * for `MigrationTools.fill`; `unversioned` fills it on every load of a game
    * that declares no `version` too.
    */
-  fill?: { kind: T['fill'] & string; unversioned?: boolean; run: (state: GameState, game: Game) => GameState }
+  fill?: { part: T['fill'] & string; unversioned?: boolean; run: (state: GameState, game: Game) => GameState }
   /** What every load adds that the game declares and the save lacks, whatever the game's version. */
   loaded?: (state: GameState, game: Game) => GameState
   /** Its pack key: how a later pack's entries go over an earlier one's. */

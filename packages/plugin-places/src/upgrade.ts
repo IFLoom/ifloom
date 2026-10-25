@@ -95,7 +95,7 @@ function presentationToUi(pack: RawPack): RawPack {
 }
 
 /** The version of what content writes for this plugin. */
-export const CONTENT_VERSION = 16
+export const CONTENT_VERSION = 21
 
 export const contentMigrations: Record<number, ContentStep> = {
   // 5 → 6: a command's one target is `id`.
@@ -116,6 +116,9 @@ export const contentMigrations: Record<number, ContentStep> = {
   8: (pack) => locations(pack, kindToTags),
   // 15 → 16: how a place comes in and shows its words is the UI's, written as `ui` hints.
   15: (pack) => presentationToUi(pack),
+  // 20 → 21: effects are told apart by their key, as conditions are: `{ stat: 'coins', by: -2 }`, never
+  // `{ kind: 'stat', … }`. This plugin's content holds effects, so they are keyed here as well as by the engine.
+  20: (pack, tools) => tools.effects(pack),
 }
 
 /** The version of this plugin's commands. */

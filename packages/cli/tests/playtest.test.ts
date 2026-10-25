@@ -15,10 +15,10 @@ function game(): Game {
         name: 'row',
         stats: [{ id: 'carrots', label: 'Carrots' }],
         actions: [
-          { id: 'dig', effects: [pass(1), { kind: 'stat', stat: 'carrots', by: 1 }] },
+          { id: 'dig', effects: [pass(1), { stat: 'carrots', by: 1 }] },
           { id: 'wait', label: 'Wait', effects: [pass(1)] },
         ],
-        scenes: [{ id: 'wake', title: 'Morning', body: [{ text: 'wake' }], choices: [{ id: 'up', effects: [{ kind: 'scene', scene: null }] }] }],
+        scenes: [{ id: 'wake', title: 'Morning', body: [{ text: 'wake' }], choices: [{ id: 'up', effects: [{ scene: null }] }] }],
         data: {
           places: {
             locations: [
@@ -85,7 +85,7 @@ describe('playtest', () => {
             { id: 'bean', of: 'seed', name: 'Bean' },
             { id: 'list', of: 'note', name: 'List' },
           ],
-          actions: [{ id: 'wait', label: 'Wait', effects: [{ kind: 'turn' }] }],
+          actions: [{ id: 'wait', label: 'Wait', effects: [{ turn: true }] }],
         },
       ],
       { id: 'shed', title: 'Shed' },
@@ -118,7 +118,7 @@ describe('snapshot', () => {
     // The same words and choices the player's screen gets, scene and room.
     const scene = view({ ...start, sceneId: 'wake' }, g).scene
     expect(scene.choices.map((choice) => choice.disabled)).toEqual(['Too sleepy.'])
-    const room = view(applyEffects({ ...start, sceneId: null }, g, [{ kind: 'custom', name: 'places/move', with: { location: 'hall' } }]), g).scene
+    const room = view(applyEffects({ ...start, sceneId: null }, g, [{ 'places/move': { location: 'hall' } }]), g).scene
     expect(text).toContain(`=== place:hall @ start\n${room.body}`)
     expect(room.body).toBe('A hall.')
   })

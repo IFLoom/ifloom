@@ -162,7 +162,7 @@ function useEffects(state: GameState, game: Game, ref: EntityRef): Effect[] {
   const usable = usableOf(state, game, ref)
   const from = takenFrom(state, game, ref)
   if (!usable || from === undefined) return []
-  const spent: Effect[] = usable.keep ? [] : [{ kind: 'entity', entity: ref, at: from, by: -1 }]
+  const spent: Effect[] = usable.keep ? [] : [{ entity: ref, at: from, by: -1 }]
   return [...spent, ...buildEffects(state, game, usable.effects)]
 }
 
@@ -176,13 +176,13 @@ function dropEffects(state: GameState, ref: EntityRef, cx: Ctx): Effect[] {
   const from = takenFrom(state, cx.game, ref)
   if (from === undefined) return []
   const to = dropHolder(state, cx)
-  return to === undefined ? [{ kind: 'entity', entity: ref, at: from, by: -1 }] : [{ kind: 'move', entity: ref, from, to, by: 1 }]
+  return to === undefined ? [{ entity: ref, at: from, by: -1 }] : [{ move: ref, from, to, by: 1 }]
 }
 
 function giveEffects(state: GameState, game: Game, args: PluginArgs): Effect[] {
   const ref = idOf(args)
   const from = takenFrom(state, game, ref)
-  return from === undefined ? [] : [{ kind: 'move', entity: ref, from, to: String(args.to ?? ''), by: 1 }]
+  return from === undefined ? [] : [{ move: ref, from, to: String(args.to ?? ''), by: 1 }]
 }
 
 /** One holder's things as the inventory shows them. */
@@ -284,7 +284,7 @@ export function inventory(): DefinedPlugin<null, InventoryView> {
 
 /**
  * The `inventory/usable` trait, to spread into an entity's or a kind's
- * `traits`: `traits: { ...usable('Eat the apple', [{ kind: 'stat', stat: 'energy', by: 5 }]) }`.
+ * `traits`: `traits: { ...usable('Eat the apple', [{ stat: 'energy', by: 5 }]) }`.
  * Using one spends one unless `keep` is true.
  */
 export const usable = (label: string, effects: EffectRef[], options: { keep?: boolean } = {}): { 'inventory/usable': Usable } => ({

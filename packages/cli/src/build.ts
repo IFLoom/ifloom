@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync, rmdirSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { extname, join } from 'node:path'
-import { mediaKind, type FileRef } from '@ifloom/engine'
+import { mediaType, type FileRef } from '@ifloom/engine'
 import { checkFiles } from './check.ts'
 
 /**
@@ -87,7 +87,7 @@ function pruneEmpty(dir: string): void {
  * for a small game; a large one is better left as a folder. Sound in `audio/`
  * and videos (`.mp4`, `.webm`) are never put in: they are too big, and are
  * played from beside the page, so `art/` stays with only the videos in it.
- * Which files are videos is the engine's `mediaKind`.
+ * Which files are videos is the engine's `mediaType`.
  * Returns how many files went in, how big the page is now, and how many videos
  * were left beside it.
  */
@@ -99,7 +99,7 @@ export function inlineAssets(dir: string, folder = 'art'): { files: number; byte
     all = []
   }
   // Videos are too big to put in the page: they stay beside it, as sound does. The engine says which files are videos.
-  const files = all.filter((entry) => mediaKind(entry.file) !== 'video')
+  const files = all.filter((entry) => mediaType(entry.file) !== 'video')
   const videos = all.length - files.length
   const page = join(dir, 'index.html')
   // Nothing to put in — no art, or a folder already inlined: leave the page as it is.

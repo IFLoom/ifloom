@@ -372,7 +372,7 @@ function cantSell(state: GameState, args: PluginArgs, cx: Ctx): string | undefin
 /** The vendor's stock of a good written as it reads now, so a restock that was due is held. */
 function topUp(state: GameState, slice: ShopState, vendor: VendorDef, good: GoodDef, cx: Ctx): Effect[] {
   const left = stockLeft(state, slice, vendor, good, cx)
-  return left === null ? [] : [{ kind: 'entity', entity: good.entity, at: vendorRef(vendor.id), to: left }]
+  return left === null ? [] : [{ entity: good.entity, at: vendorRef(vendor.id), to: left }]
 }
 
 function buyEffects(state: GameState, args: PluginArgs, slice: ShopState, cx: Ctx): Effect[] {
@@ -382,10 +382,10 @@ function buyEffects(state: GameState, args: PluginArgs, slice: ShopState, cx: Ct
   const count = countOf(args)
   const paid: Effect[] = Object.entries(times(priceToday(state, vendor, good, cx), count))
     .filter(([, amount]) => amount > 0)
-    .map(([stat, amount]) => ({ kind: 'stat', stat, by: -amount }))
+    .map(([stat, amount]) => ({ stat, by: -amount }))
   const handed: Effect[] = limited(cx.game, good)
-    ? [...topUp(state, slice, vendor, good, cx), { kind: 'move', entity: good.entity, from: vendorRef(vendor.id), to: YOU, by: count }]
-    : [{ kind: 'entity', entity: good.entity, at: YOU, by: count }]
+    ? [...topUp(state, slice, vendor, good, cx), { move: good.entity, from: vendorRef(vendor.id), to: YOU, by: count }]
+    : [{ entity: good.entity, at: YOU, by: count }]
   return [...paid, ...handed]
 }
 
@@ -396,10 +396,10 @@ function sellEffects(state: GameState, args: PluginArgs, slice: ShopState, cx: C
   const count = countOf(args)
   const paid: Effect[] = Object.entries(times(sellPrice(state, cx.game, vendor, good), count))
     .filter(([, amount]) => amount > 0)
-    .map(([stat, amount]) => ({ kind: 'stat', stat, by: amount }))
+    .map(([stat, amount]) => ({ stat, by: amount }))
   const handed: Effect[] = limited(cx.game, good)
-    ? [...topUp(state, slice, vendor, good, cx), { kind: 'move', entity: good.entity, from: YOU, to: vendorRef(vendor.id), by: count }]
-    : [{ kind: 'entity', entity: good.entity, at: YOU, by: -count }]
+    ? [...topUp(state, slice, vendor, good, cx), { move: good.entity, from: YOU, to: vendorRef(vendor.id), by: count }]
+    : [{ entity: good.entity, at: YOU, by: -count }]
   return [...handed, ...paid]
 }
 
@@ -635,7 +635,7 @@ export const sell = (vendor: string, entity: EntityRef, count?: number): Command
  * action, a person's, a thing's use, an app or a choice. The UI draws it;
  * `shopUi` from `@ifloom/plugin-shop/react` draws it as a `ShopCounter`.
  */
-export const openShop = (vendor: string): Effect => ({ kind: 'panel', panel: PANEL, with: { vendor } })
+export const openShop = (vendor: string): Effect => ({ panel: PANEL, with: { vendor } })
 /** A condition: the vendor is open now. */
 export const vendorOpen = (vendor: string): Condition => ({ 'shop/open': { vendor } })
 /** A condition: the vendor offers the thing now and has one left. */

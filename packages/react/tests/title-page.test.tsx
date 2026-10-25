@@ -14,11 +14,11 @@ function letter(): Game {
       {
         name: 'letter',
         settings: [
-          { id: 'hints', label: 'Show hints', kind: 'toggle', default: true },
+          { id: 'hints', label: 'Show hints', type: 'toggle', default: true },
           {
             id: 'textSize',
             label: 'Text size',
-            kind: 'choice',
+            type: 'choice',
             affects: 'ui',
             options: [
               { value: 'normal', label: 'Normal' },
@@ -33,8 +33,8 @@ function letter(): Game {
             title: 'The mat',
             body: [{ text: 'mat' }, { when: { kv: 'readBefore' }, text: 'again' }],
             choices: [
-              { id: 'open', effects: [{ kind: 'kv', key: 'readBefore', to: true }] },
-              { id: 'leave', effects: [{ kind: 'scene', scene: null }] },
+              { id: 'open', effects: [{ kv: 'readBefore', to: true }] },
+              { id: 'leave', effects: [{ scene: null }] },
             ],
           },
         ],

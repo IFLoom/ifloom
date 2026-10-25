@@ -27,14 +27,14 @@ function InputFieldImpl({ input }: { input: InputView }) {
   }
   const submit = (event: SyntheticEvent) => {
     event.preventDefault()
-    enter(input.kind === 'number' ? (text.trim() === '' ? undefined : Number(text)) : text)
+    enter(input.type === 'number' ? (text.trim() === '' ? undefined : Number(text)) : text)
   }
   return (
     <div {...box} data-input={input.id}>
       <label {...label} htmlFor={`input-${input.id}`}>
         {input.label}
       </label>
-      {input.kind === 'choice' ? (
+      {input.type === 'choice' ? (
         <div {...options}>
           {input.options.map((option) => (
             <button key={String(option.value)} type="button" {...(input.value === option.value ? picked : unpicked)} onClick={() => enter(option.value)}>
@@ -47,7 +47,7 @@ function InputFieldImpl({ input }: { input: InputView }) {
           <input
             {...field}
             id={`input-${input.id}`}
-            type={input.kind === 'number' ? 'number' : 'text'}
+            type={input.type === 'number' ? 'number' : 'text'}
             value={text}
             min={input.min ?? undefined}
             max={input.max ?? undefined}

@@ -12,7 +12,7 @@
 import { say } from '../strings.ts'
 import type { EffectRef } from '../custom.ts'
 import type { Game } from '../game.ts'
-import type { Condition, Effect, GameState } from '../types.ts'
+import type { Condition, GameState } from '../types.ts'
 import { defineFeature, mergedById, type FeatureCheckTools, type FeatureContext } from './feature.ts'
 
 /** A state a transition can go to at random: its id, or its id with a weight (1 if left out). */
@@ -121,7 +121,7 @@ export type MinigamesShape = {
   }
   effects: {
     /** Start a minigame, in its `start` state. One already running is dropped. */
-    minigame: { kind: 'minigame'; minigame: string }
+    minigame: { minigame: string }
   }
   commands: {
     /** An input to the minigame being played, by name: `{ type: 'minigame', input: 'up' }`. */
@@ -287,12 +287,11 @@ function conditionVars(condition: Condition | undefined): string[] {
   return []
 }
 
-/** The minigame's keys effects write (`{ kind: 'kv', of: 'minigame' }`). */
+/** The minigame's keys effects write (`{ kv, of: 'minigame' }`). */
 function effectVars(effects: readonly EffectRef[] | undefined): string[] {
   return (effects ?? []).flatMap((effect) => {
-    if (!('kind' in effect) || effect.kind !== 'kv') return []
-    const write = effect as Extract<Effect, { kind: 'kv' }>
-    return write.of === 'minigame' ? [write.key] : []
+    if (!('kv' in effect) || typeof effect.kv !== 'string') return []
+    return effect.of === 'minigame' ? [effect.kv] : []
   })
 }
 

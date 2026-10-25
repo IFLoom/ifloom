@@ -14,7 +14,7 @@
  * ```
  *
  * A photo is made in play with `create`:
- * `{ kind: 'create', of: 'photo', entity: { id: 'ava', name: 'Ava at work', image: 'photo/ava.svg' }, at: 'player' }`.
+ * `{ create: 'photo', with: { id: 'ava', name: 'Ava at work', image: 'photo/ava.svg' }, at: 'player' }`.
  *
  * The phone, its apps, channels and feeds are content (`data`), so the game's
  * content or a mod can add an app, a channel or a feed beside them, or replace

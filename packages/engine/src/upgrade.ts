@@ -16,7 +16,7 @@ import type { Pack } from './loader.ts'
 import type { Plugin } from './plugin.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
-export const SCHEMA = 20
+export const SCHEMA = 21
 
 /** A pack as it came in: some schema's shape, not necessarily this one. */
 export type RawPack = Record<string, unknown> & { schema: number }
@@ -106,6 +106,117 @@ export const PACK_STEPS: Record<number, (pack: RawPack) => RawPack> = {
   18: (pack) => toSchema19(pack),
   // 19 → 20: one kind of button. An activity is an action with no label. See `toSchema20`.
   19: (pack) => toSchema20(pack),
+  // 20 → 21: effects are told apart by their key, as conditions are (see `keyedEffect`), and an
+  // input's and a setting's `kind` is its `type`, so "kind" names only a kind of entity.
+  20: (pack) => {
+    const out: RawPack = { ...TOOLS.effects(pack) }
+    const typed = (list: unknown) =>
+      Array.isArray(list) ? list.map((entry) => (isRecord(entry) && 'kind' in entry && !('type' in entry) ? renamed(entry, { kind: 'type' }) : entry)) : list
+    if (Array.isArray(out.inputs)) out.inputs = typed(out.inputs)
+    if (Array.isArray(out.settings)) out.settings = typed(out.settings)
+    return out
+  },
+}
+
+/**
+ * The fields each effect had while effects were told apart by `kind`, before
+ * schema 21. An object is only read as an effect when its `kind` is one of
+ * these and every other field is one of its own, so a scene beat or an
+ * input that happens to have a `kind` is left alone.
+ */
+const KIND_FIELDS: Record<string, readonly string[]> = {
+  stat: ['stat', 'by', 'to', 'of'],
+  kv: ['key', 'to', 'by', 'random', 'of'],
+  create: ['of', 'like', 'entity', 'at'],
+  remove: ['entity'],
+  each: ['effects', 'of', 'at', 'tag', 'trait', 'where'],
+  entity: ['entity', 'at', 'by', 'to'],
+  move: ['entity', 'from', 'to', 'by'],
+  you: ['to'],
+  scene: ['scene', 'from', 'otherwise'],
+  closeStoryline: ['storyline', 'turns'],
+  turn: ['by'],
+  notify: ['title', 'text', 'image', 'tag', 'id'],
+  audio: ['channel', 'to'],
+  sound: ['track'],
+  minigame: ['minigame'],
+  timer: ['timer', 'to', 'by'],
+  roll: ['key', 'dice', 'plus', 'against'],
+  panel: ['panel', 'with'],
+  custom: ['name', 'with'],
+}
+
+/** The field each effect's target was in, where its key is a verb or another noun: `{ kind: 'kv', key }` is `{ kv: key }`. */
+const TARGET_FIELD: Record<string, string> = {
+  kv: 'key',
+  remove: 'entity',
+  move: 'entity',
+  you: 'to',
+  closeStoryline: 'storyline',
+  notify: 'title',
+  audio: 'channel',
+  sound: 'track',
+  roll: 'key',
+}
+
+/**
+ * An effect written while effects were told apart by `kind`, in the keyed
+ * form schema 21 writes, or the object as it came when it isn't one:
+ * - `{ kind: 'stat', stat, by }` is `{ stat, by }`, and so for `entity`,
+ *   `minigame`, `timer` and `panel`, whose key was already their target;
+ * - the others' target is their key: `{ kind: 'kv', key: 'x', to }` is
+ *   `{ kv: 'x', to }`, `remove`, `move` and `you` name their entity,
+ *   `closeStoryline` its storyline, `notify` its title, `audio` its channel,
+ *   `sound` its track and `roll` its key;
+ * - `{ kind: 'scene', from, otherwise }` is `{ scene: { from, otherwise } }`;
+ * - `{ kind: 'turn' }` is `{ turn: true }`, and with `by`, `{ turn: { by } }`;
+ * - `create`'s `of` is its key and its `entity` is `with`, its kind read from
+ *   its `like` when it had no `of`;
+ * - `each`'s `of` is its key, or with `at`, `tag` or `trait`, a selection;
+ * - a call, `{ kind: 'custom', name, with }`, is its short form, `{ [name]: with }`.
+ */
+export function keyedEffect(value: Record<string, unknown>): Record<string, unknown> {
+  const kind = value.kind
+  if (typeof kind !== 'string' || !Object.hasOwn(KIND_FIELDS, kind)) return value
+  const { kind: _kind, ...rest } = value
+  if (!Object.keys(rest).every((field) => KIND_FIELDS[kind].includes(field))) return value
+  switch (kind) {
+    case 'stat':
+    case 'entity':
+    case 'minigame':
+    case 'timer':
+    case 'panel':
+      return kind in rest ? rest : value
+    case 'scene':
+      if ('from' in rest) return { scene: { from: rest.from, ...(rest.otherwise !== undefined ? { otherwise: rest.otherwise } : {}) } }
+      return 'scene' in rest ? { scene: rest.scene } : value
+    case 'turn':
+      return { turn: typeof rest.by === 'number' ? { by: rest.by } : true }
+    case 'create': {
+      const of = typeof rest.of === 'string' ? rest.of : typeof rest.like === 'string' && rest.like.includes(':') ? rest.like.split(':')[0] : undefined
+      if (of === undefined) return value
+      return {
+        create: of,
+        ...(rest.like !== undefined ? { like: rest.like } : {}),
+        ...(rest.entity !== undefined ? { with: rest.entity } : {}),
+        ...(rest.at !== undefined ? { at: rest.at } : {}),
+      }
+    }
+    case 'each': {
+      const { effects, where, of, ...narrow } = rest
+      const each = Object.keys(narrow).length ? { ...(of !== undefined ? { of } : {}), ...narrow } : of
+      if (each === undefined) return value
+      return { each, ...(where !== undefined ? { where } : {}), effects }
+    }
+    case 'custom':
+      return typeof rest.name === 'string' ? { [rest.name]: isRecord(rest.with) ? rest.with : true } : value
+    default: {
+      const field = TARGET_FIELD[kind]
+      if (!(field in rest)) return value
+      const { [field]: target, ...others } = rest
+      return { [kind]: target, ...others }
+    }
+  }
 }
 
 /** An `activity` command, as the `action` command it is from schema 20. */
@@ -657,6 +768,14 @@ export type ContentTools = {
   calls: (pack: RawPack, rewrite: (call: RawCall) => { name: string; with: unknown }) => RawPack
   /** Every line of the pack's `prose` and `strings`, given with its key. */
   words: (pack: RawPack, rewrite: (text: string, key: string) => string) => RawPack
+  /**
+   * Every effect the pack holds, in plugin `data` and traits too, in the form
+   * this engine reads: one written while effects were told apart by `kind`
+   * (`{ kind: 'stat', stat, by }`, before schema 21) in the keyed form
+   * (`{ stat, by }`). One already keyed is left as it is. For a plugin whose
+   * content holds effects somewhere the engine's own step can't see.
+   */
+  effects: (pack: RawPack) => RawPack
 }
 
 /**
@@ -716,6 +835,7 @@ const TOOLS: ContentTools = {
           : value,
       ]),
     ) as RawPack,
+  effects: (pack) => TOOLS.objects(pack, keyedEffect),
 }
 
 /**

@@ -75,7 +75,7 @@ export type TimersShape = {
      * down to 0, and at 0 it runs out on the next tick). Adding to a timer that
      * isn't running does nothing.
      */
-    timer: { kind: 'timer'; timer: string; to?: number | null } | { kind: 'timer'; timer: string; by: number }
+    timer: { timer: string; to?: number | null } | { timer: string; by: number }
   }
   commands: {
     /**

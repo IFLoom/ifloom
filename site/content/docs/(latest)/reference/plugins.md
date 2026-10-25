@@ -235,7 +235,7 @@ type Plugin<S = any> = {
   profile?: (state: GameState, previous: GameState, stored: unknown, context: PluginContext<S>) => unknown
   references?: PluginReferences
   check?: (game: Game, tools: CheckTools) => PluginProblem[]
-  argProblems?: (kind: 'conditions' | 'effects' | 'commands', name: string, args: PluginArgs, game: Game) => string[]
+  argProblems?: (table: CallTable, name: string, args: PluginArgs, game: Game) => string[]
   panelProblems?: (panel: string, args: PluginArgs, game: Game, tools: CheckTools) => string[]
 }
 ```
@@ -1318,14 +1318,18 @@ check: (game, { problems }) =>
 ### Checking calls
 
 ```ts
-argProblems?: (kind: 'conditions' | 'effects' | 'commands', name: string, args: PluginArgs, game: Game) => string[]
+import type { CallTable } from '@ifloom/engine'
+
+type CallTable = 'conditions' | 'effects' | 'commands'
+
+argProblems?: (table: CallTable, name: string, args: PluginArgs, game: Game) => string[]
 ```
 
 What's wrong with how content calls one of this plugin's conditions, effects or commands, by a rule of the plugin's own. It takes what `references.calls` takes. Return the problems, worded for the author, or `[]`. A name the call gives, such as a location, belongs in `references.calls` instead.
 
 ```ts
-argProblems: (kind, name, args) =>
-  kind === 'conditions' && name === 'sells' && !['bread', 'eggs', 'cheese'].includes(String(args.item))
+argProblems: (table, name, args) =>
+  table === 'conditions' && name === 'sells' && !['bread', 'eggs', 'cheese'].includes(String(args.item))
     ? [`nobody sells "${String(args.item)}"`]
     : [],
 ```
@@ -1336,6 +1340,21 @@ activities: [{ id: 'ask', blocked: [{ when: { not: { 'stall/sells': { item: 'fis
 ```
 
 The checker asks it about every call it finds and reports each problem as the call's own, where the call is.
+
+### callOf
+
+```ts
+import { callOf } from '@ifloom/engine'
+
+function callOf(entry: object): { name: string; with: Record<string, unknown> } | undefined
+```
+
+The name and arguments of a call written in short, or `undefined` for one of the engine's own effects or conditions. Use it in code that looks through a list of effects, such as a guard or a price.
+
+```ts
+callOf({ 'calendar/pass': { by: 2 } }) // { name: 'calendar/pass', with: { by: 2 } }
+callOf({ stat: 'coins', by: -2 })      // undefined
+```
 
 ### Checking panels
 

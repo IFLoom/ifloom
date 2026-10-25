@@ -96,11 +96,11 @@ describe('New Game+', () => {
 
 describe('version 9 saves', () => {
   const settings: Game['settings'] = [
-    { id: 'hints', label: 'Hints', kind: 'toggle', default: true },
+    { id: 'hints', label: 'Hints', type: 'toggle', default: true },
     {
       id: 'difficulty',
       label: 'Difficulty',
-      kind: 'choice',
+      type: 'choice',
       options: [
         { value: 'usual', label: 'Usual' },
         { value: 'hard', label: 'Hard' },

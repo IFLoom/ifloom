@@ -29,7 +29,7 @@ describe('data scenes', () => {
       const body = view(state, game).scene.body
       lines.add(body.split('\n\n')[1])
       state = apply(state, game, { type: 'choose', id: 'leave' }).state
-      state = applyEffects(state, game, [{ kind: 'scene', scene: 'cafe.counter' }])
+      state = applyEffects(state, game, [{ scene: 'cafe.counter' }])
     }
     expect(lines.size).toBe(3)
   })

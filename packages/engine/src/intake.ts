@@ -332,7 +332,7 @@ function carryPlugins(state: GameState, game: Game): GameState | string {
     let version = slice.version
     let inner = slice.state
     // The same tools a game's step gets: the state as the engine carried it, filled from the game on request.
-    const tools: MigrationTools = { game, fill: (kinds) => fillDeclared(state, game, kinds) }
+    const tools: MigrationTools = { game, fill: (parts) => fillDeclared(state, game, parts) }
     while (version < plugin.version) {
       const step = plugin.migrations?.[version]
       if (!step) return say(game, 'pluginUnreadable', { plugin: plugin.id })
@@ -347,10 +347,10 @@ function carryPlugins(state: GameState, game: Game): GameState | string {
 
 /**
  * What `MigrationTools.fill` can fill, each named by the feature that fills
- * it: the player's stats (start values), kv keys the
- * game resets each turn (`rules.resets`) and play settings (defaults).
+ * it: the player's stats (start values), kv keys (the content's starting kv
+ * and the keys it resets each turn) and play settings (defaults).
  */
-export type FillKind = FeatureFill
+export type FillPart = FeatureFill
 
 /** What a step of `rules.migrations` is given besides the state. */
 export type MigrationTools = {
@@ -358,19 +358,19 @@ export type MigrationTools = {
   game: Game
   /**
    * The state this step was given, with what the game declares and the save
-   * lacks filled in: the kinds asked for, or every kind if left out. Nothing
-   * is filled unless a step calls this. See `FillKind`.
+   * lacks filled in: the parts asked for, or every part if left out. Nothing
+   * is filled unless a step calls this. See `FillPart`.
    */
-  fill: (kinds?: FillKind[]) => GameState
+  fill: (parts?: FillPart[]) => GameState
 }
 
 /**
  * A state with what the game declares and the save lacks filled in: only the
- * kinds asked for, every kind if left out. Nothing the save already has is
+ * parts asked for, every part if left out. Nothing the save already has is
  * changed.
  */
-function fillDeclared(state: GameState, game: Game, kinds?: readonly FillKind[]): GameState {
-  return fillSteps.reduce((next, fill) => (!kinds || kinds.includes(fill.kind) ? fill.run(next, game) : next), state)
+function fillDeclared(state: GameState, game: Game, parts?: readonly FillPart[]): GameState {
+  return fillSteps.reduce((next, fill) => (!parts || parts.includes(fill.part) ? fill.run(next, game) : next), state)
 }
 
 /**
@@ -387,7 +387,7 @@ function carryGame(state: GameState, game: Game): GameState | string {
     const step = game.rules?.migrations?.[version]
     if (step) {
       const given = next
-      next = step(given, { game, fill: (kinds) => fillDeclared(given, game, kinds) })
+      next = step(given, { game, fill: (parts) => fillDeclared(given, game, parts) })
     }
     version += 1
   }

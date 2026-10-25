@@ -7,7 +7,7 @@ export const cheats: Content = {
     cheats: {
       cheats: [
         // Free for everyone.
-        { id: 'coins', label: '+20 coins', description: 'A little help with the rent.', effects: [{ kind: 'stat', stat: 'coins', by: 20 }] },
+        { id: 'coins', label: '+20 coins', description: 'A little help with the rent.', effects: [{ stat: 'coins', by: 20 }] },
         // For supporters: refused until the supporter code has been entered (the unlocks plugin's `unlocks/has`).
         {
           id: 'energy',
@@ -15,7 +15,7 @@ export const cheats: Content = {
           description: 'As if you had slept.',
           group: 'Supporters',
           blocked: [{ when: { not: hasUnlock('supporter') }, reason: 'For supporters.' }],
-          effects: [{ kind: 'stat', stat: 'energy', to: 100 }],
+          effects: [{ stat: 'energy', to: 100 }],
         },
       ],
     },

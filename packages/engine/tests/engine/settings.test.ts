@@ -14,11 +14,11 @@ import { begin, fixture, loadWhole } from '../fixtures/town.ts'
 import { unwrap } from '../fixtures/result.ts'
 
 const SETTINGS: SettingDef[] = [
-  { id: 'hints', label: 'Hints', kind: 'toggle', default: true },
+  { id: 'hints', label: 'Hints', type: 'toggle', default: true },
   {
     id: 'difficulty',
     label: 'Difficulty',
-    kind: 'choice',
+    type: 'choice',
     options: [
       { value: 'gentle', label: 'Gentle' },
       { value: 'usual', label: 'Usual' },
@@ -26,11 +26,11 @@ const SETTINGS: SettingDef[] = [
     ],
     default: 'usual',
   },
-  { id: 'patience', label: 'Patience', kind: 'range', min: 0, max: 10, step: 2, default: 4 },
+  { id: 'patience', label: 'Patience', type: 'range', min: 0, max: 10, step: 2, default: 4 },
   {
     id: 'textSize',
     label: 'Text size',
-    kind: 'choice',
+    type: 'choice',
     affects: 'ui',
     options: [
       { value: 'small', label: 'Small' },
@@ -57,7 +57,7 @@ function loaded(scene?: Content['scenes']) {
         body: [],
         choices: [
           { id: 'hint', label: 'bakery#hint', when: { setting: 'hints' }, effects: [] },
-          { id: 'leave', label: 'bakery#leave', when: { setting: 'difficulty', is: 'hard' }, effects: [{ kind: 'scene', scene: null }] },
+          { id: 'leave', label: 'bakery#leave', when: { setting: 'difficulty', is: 'hard' }, effects: [{ scene: null }] },
         ],
       },
     ],
@@ -162,7 +162,7 @@ describe('ui settings', () => {
     expect(shown.find((setting) => setting.id === 'textSize')).toEqual({
       id: 'textSize',
       label: 'Text size',
-      kind: 'choice',
+      type: 'choice',
       affects: 'ui',
       options: [
         { value: 'small', label: 'Small' },
@@ -174,7 +174,7 @@ describe('ui settings', () => {
     expect(shown.find((setting) => setting.id === 'patience')).toEqual({
       id: 'patience',
       label: 'Patience',
-      kind: 'range',
+      type: 'range',
       affects: 'play',
       min: 0,
       max: 10,
@@ -192,7 +192,7 @@ describe('the loader’s settings checks', () => {
   }
 
   it('finds two settings with one id in one list, but lets a later pack redeclare one', () => {
-    const toggle: SettingDef = { id: 'hints', label: 'Hints', kind: 'toggle', default: true }
+    const toggle: SettingDef = { id: 'hints', label: 'Hints', type: 'toggle', default: true }
     expect(problemsOf({ settings: [toggle, toggle] })).toEqual(['core · setting hints · two settings share this id'])
     const { scenes: _s, introScene: _in, storylines: _t, actions: _a, stats: _st, actions: _ac, ...rest } = fixture()
     const twice = loadWhole([{ name: 'core', settings: [toggle] }], rest, {
@@ -206,12 +206,12 @@ describe('the loader’s settings checks', () => {
     expect(
       problemsOf({
         settings: [
-          { id: 'hints', label: 'Hints', kind: 'toggle', default: 'yes' as never },
-          { id: 'mood', label: 'Mood', kind: 'choice', options: [{ value: 'calm', label: 'Calm' }], default: 'wild' },
-          { id: 'empty', label: 'Empty', kind: 'choice', options: [], default: 'x' },
-          { id: 'speed', label: 'Speed', kind: 'range', min: 0, max: 5, default: 9 },
-          { id: 'odd', label: 'Odd', kind: 'range', min: 0, max: 10, step: 4, default: 5 },
-          { id: 'upside', label: 'Upside', kind: 'range', min: 5, max: 1, default: 3 },
+          { id: 'hints', label: 'Hints', type: 'toggle', default: 'yes' as never },
+          { id: 'mood', label: 'Mood', type: 'choice', options: [{ value: 'calm', label: 'Calm' }], default: 'wild' },
+          { id: 'empty', label: 'Empty', type: 'choice', options: [], default: 'x' },
+          { id: 'speed', label: 'Speed', type: 'range', min: 0, max: 5, default: 9 },
+          { id: 'odd', label: 'Odd', type: 'range', min: 0, max: 10, step: 4, default: 5 },
+          { id: 'upside', label: 'Upside', type: 'range', min: 5, max: 1, default: 3 },
         ],
       }),
     ).toEqual([
@@ -255,8 +255,8 @@ describe('settings checks in a hand-built game', () => {
       introScene: undefined,
       settings: [
         ...SETTINGS,
-        { id: 'hints', label: 'Hints again', kind: 'toggle', default: false },
-        { id: 'upside', label: 'Upside', kind: 'range', min: 5, max: 1, default: 3 },
+        { id: 'hints', label: 'Hints again', type: 'toggle', default: false },
+        { id: 'upside', label: 'Upside', type: 'range', min: 5, max: 1, default: 3 },
       ],
       finished: { any: [{ setting: 'volume' }, { setting: 'textSize' }, { setting: 'patience', is: 3 }] },
       carryOver: { stats: ['charm'], held: ['umbrella', 'thing:umbrella'] },

@@ -18,14 +18,14 @@ export const activities: ActionDef[] = [
   // Offered while no scene is open.
   { id: 'wait', label: 'Wait a while' },
   // The turn ends, as a night's sleep or the end of a week would end it.
-  { id: 'rest', effects: [{ kind: 'turn' }] },
+  { id: 'rest', effects: [{ turn: true }] },
   { id: 'tidy', blocked: [{ when: { not: { kv: 'at', is: 'house' } }, reason: 'Not here.' }] },
-  { id: 'read', effects: [{ kind: 'stat', stat: 'intelligence', by: 2 }] },
+  { id: 'read', effects: [{ stat: 'intelligence', by: 2 }] },
   // Going somewhere, as far as the engine's tests need to: the stand-in reads `at`.
   ...['house', 'street', 'shop'].map((place) => ({
     id: `go-${place}`,
     blocked: [{ when: { kv: 'at', is: place }, reason: 'You are already here.' }],
-    effects: [{ kind: 'kv' as const, key: 'at', to: place }],
+    effects: [{ kv: 'at', to: place }],
   })),
 ]
 
@@ -49,7 +49,7 @@ export function fixture({ locks, resets, ...rules }: Game['rules'] & Pick<Game, 
       { id: 'start', render: () => ({ choices: [] }) },
       {
         id: 'rosa.hello',
-        render: () => ({ body: 'Rosa looks up from the dough.', choices: [{ id: 'bye', label: 'Bye', effects: [{ kind: 'scene', scene: null }] }] }),
+        render: () => ({ body: 'Rosa looks up from the dough.', choices: [{ id: 'bye', label: 'Bye', effects: [{ scene: null }] }] }),
       },
     ],
     storylines: [{ id: 'rosa', name: 'Rosa' }],

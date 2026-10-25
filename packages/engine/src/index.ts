@@ -29,11 +29,12 @@ export { settingValue } from './features/settings.ts'
 export type { Formula, StatDef, StatLevels, StatRound, StatWords } from './stats.ts'
 export { clampStat, formatStat, lackingLine, levelAt, startingStats, statDef, statLevel, statMax, statValue } from './stats.ts'
 export type { CommandRef, CustomCondition, CustomContext, TurnContext, CustomEffect, CustomValue, EffectRef, PluginCall, ValueRef } from './custom.ts'
-export { buildEffects, commandOf, customCondition, customEffect, customValue, hasCustomEffect, previewEffects } from './custom.ts'
+export { buildEffects, callOf, commandOf, customCondition, customEffect, customValue, hasCustomEffect, previewEffects } from './custom.ts'
 
 // Plugins: systems added to the engine, chosen when the game is built
 export type {
   Asked,
+  CallTable,
   CheckTools,
   ContentReferences,
   DefinedPlugin,
@@ -58,7 +59,7 @@ export { bakeScene, defaultRuntime, drawVariant, isDataScene, renderScene } from
 export type { VariantMember } from './prose.ts'
 export { entityDesc, entityName, fillTokens, proseStore } from './prose.ts'
 export type { InlinePart, InlineSpan, SceneBeat, VideoFlags, VideoView } from './sceneBody.ts'
-export { artSrc, inlineMarkup, mediaKind, parseBeats, styledBeats } from './sceneBody.ts'
+export { artSrc, inlineMarkup, mediaType, parseBeats, styledBeats } from './sceneBody.ts'
 
 // Media: pools, and the stage
 export type { GameMedia, HotspotDef, HotspotView, MediaStage, MediaState, PoolFile, StageLayer, StageLayerView, StageView } from './features/media.ts'
@@ -85,7 +86,7 @@ export { STRINGS, say } from './strings.ts'
 export type { Result } from './result.ts'
 export type { Applied } from './reduce.ts'
 export { apply, applyEffects, dispatch } from './reduce.ts'
-export type { FillKind, MigrationTools, StartOptions } from './intake.ts'
+export type { FillPart, MigrationTools, StartOptions } from './intake.ts'
 export { loadState, startingState } from './intake.ts'
 
 // Conditions, and why they hold

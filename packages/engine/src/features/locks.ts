@@ -32,8 +32,8 @@ export type Lock = {
   deny: readonly LockTarget[]
   except?: readonly LockTarget[]
   /**
-   * Only commands that would apply this effect: a built-in kind (`'turn'`) or
-   * a plugin's effect by name (`'calendar/pass'`). See `effectsOf`.
+   * Only commands that would apply this effect: the engine's by its key
+   * (`'turn'`) or a plugin's by name (`'calendar/pass'`). See `effectsOf`.
    */
   effect?: string
   /**
@@ -84,7 +84,8 @@ export function lockIn(state: GameState, game: Game, command: Command, effects: 
     if (!cx.holds(state, lock.when, game)) continue
     if (lock.effect !== undefined) {
       const effect = lock.effect
-      const applies = effects().some((entry) => (entry.kind === 'custom' ? entry.name === effect : entry.kind === effect))
+      // An effect's key names it, as a call's one key is its name.
+      const applies = effects().some((entry) => Object.hasOwn(entry, effect))
       if (!applies) continue
     }
     return lock

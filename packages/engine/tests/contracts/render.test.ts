@@ -1,3 +1,4 @@
+import { callOf } from '../../src/custom.ts'
 import { describe, expect, it } from 'vitest'
 import type { Game, Scene } from '../../src/game.ts'
 import { definePlugin } from '../../src/plugin.ts'
@@ -22,7 +23,7 @@ const tide = definePlugin<{ height: number }>({
   start: () => ({ height: 0 }),
   effects: { rise: (_state, _args, { slice, set }) => set({ height: slice.height + 1 }) },
   guard: (_state, { effects }) => (effects.length > 3 ? 'Too much at once.' : undefined),
-  price: (_state, effects) => (effects.some((effect) => effect.kind === 'custom') ? ['the tide rises'] : undefined),
+  price: (_state, effects) => (effects.some((effect) => callOf(effect) !== undefined) ? ['the tide rises'] : undefined),
   view: (state, { game, picks, profile }) => ({
     stage: stageView(state, game, { layers: [{ pool: 'sea' }] }, 'tide', null, picks),
     remembered: profile ?? null,
@@ -40,9 +41,9 @@ function counted(): { game: Game; renders: Map<GameState, number> } {
         body: 'The porch.\n\n[[img:@door|red]]',
         audio: { music: 'calm' },
         choices: [
-          { id: 'knock', label: 'Knock', effects: [{ kind: 'kv', key: 'knocked', by: 1 }] },
-          { id: 'wade', label: 'Wade in', effects: [{ kind: 'custom', name: 'tide/rise' }] },
-          { id: 'in', label: 'Go in', effects: [{ kind: 'scene', scene: 'hall' }] },
+          { id: 'knock', label: 'Knock', effects: [{ kv: 'knocked', by: 1 }] },
+          { id: 'wade', label: 'Wade in', effects: [{ 'tide/rise': true }] },
+          { id: 'in', label: 'Go in', effects: [{ scene: 'hall' }] },
         ],
       }
     },
@@ -51,7 +52,7 @@ function counted(): { game: Game; renders: Map<GameState, number> } {
     id: 'hall',
     render: (state) => {
       count(state)
-      return { body: 'The hall.', choices: [{ id: 'out', label: 'Go out', effects: [{ kind: 'scene', scene: 'porch' }] }] }
+      return { body: 'The hall.', choices: [{ id: 'out', label: 'Go out', effects: [{ scene: 'porch' }] }] }
     },
   }
   const town = fixture({

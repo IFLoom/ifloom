@@ -122,7 +122,7 @@ export function checkUiHints(game: Game, options: { allow?: readonly string[]; i
   const inline = new Set([...INLINE, ...Object.keys(options.inline ?? {})])
   for (const key of game.prose?.keys?.() ?? []) {
     for (const part of inlineMarkup(game.prose?.line(key) ?? '') ?? []) {
-      if (part.kind !== 'ui') continue
+      if (part.type !== 'ui') continue
       const where = `prose ${key}: [[ui:${part.name}|${part.text}]]`
       if (!inline.has(part.name) && !allowed.has(part.name)) {
         out.push(`${where} is not an inline piece the React UI draws, so it shows only its words; add it to inline`)

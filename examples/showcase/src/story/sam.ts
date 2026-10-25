@@ -13,10 +13,7 @@ export const sam: Content = {
       choices: [
         {
           id: 'bye',
-          effects: [
-            { kind: 'stat', stat: 'friendship', by: 5, of: character('sam') },
-            { kind: 'scene', scene: null },
-          ],
+          effects: [{ stat: 'friendship', by: 5, of: character('sam') }, { scene: null }],
         },
       ],
     },

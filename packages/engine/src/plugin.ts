@@ -15,6 +15,9 @@ import type { CommandStep, ContentStep } from './upgrade.ts'
 /** What content passes to a plugin's condition, effect or command: `with`. */
 export type PluginArgs = Record<string, unknown>
 
+/** Which of a plugin's tables a call is to: its `conditions`, its `effects` or its `commands`. */
+export type CallTable = 'conditions' | 'effects' | 'commands'
+
 /**
  * What every plugin function is handed besides the game state: what a game's
  * own functions get (the game, `query`, `value` and `roll`; see
@@ -32,7 +35,7 @@ export type PluginContext<S> = CustomContext & {
   /**
    * Apply effects as content would — any effect, a custom one or another
    * plugin's included — to the state the function was handed, or to `on`. How
-   * a plugin effect ends a turn: `apply([{ kind: 'turn' }])`.
+   * a plugin effect ends a turn: `apply([{ turn: true }])`.
    */
   apply: (effects: readonly EffectRef[], on?: GameState) => GameState
   /**
@@ -288,10 +291,10 @@ export type Plugin<S = any, V = unknown> = {
    * plugin's own: `['nobody sells "fish"']`. Names it can say as references
    * belong in `references.calls` instead. Asked of every call the checker finds.
    */
-  argProblems?: (kind: 'conditions' | 'effects' | 'commands', name: string, args: PluginArgs, game: Game) => string[]
+  argProblems?: (table: CallTable, name: string, args: PluginArgs, game: Game) => string[]
   /**
-   * What is wrong with what content opens a panel with (`{ kind: 'panel',
-   * panel, with }`), for the panels this plugin's UI draws: `['unknown vendor
+   * What is wrong with what content opens a panel with (`{ panel,
+   * with }`), for the panels this plugin's UI draws: `['unknown vendor
    * "fish"']` for `panel: 'shop'`. Answer `[]` for a panel that isn't this
    * plugin's; a panel no plugin knows is the UI's business. `tools` words the
    * ids it names as the checker does. Asked of every panel effect the checker finds.
@@ -348,7 +351,7 @@ export type PluginReferences = {
    * without the prefix, from what content passes in `with`: a location, a
    * character, a prose key. Asked of every call the checker finds.
    */
-  calls?: (kind: 'conditions' | 'effects' | 'commands', name: string, args: PluginArgs, game: Game) => readonly Reference[]
+  calls?: (table: CallTable, name: string, args: PluginArgs, game: Game) => readonly Reference[]
   /**
    * What its content names, entry by entry: `{ list: 'locations', id: 'cafe',
    * refs: [...] }`. A problem is reported against `<list> <id>`, and pinned
@@ -520,15 +523,15 @@ export function pluginName(name: string): { plugin: string; name: string } | und
   return { plugin: name.slice(0, at), name: name.slice(at + 1) }
 }
 
-function member<K extends 'conditions' | 'effects' | 'commands' | 'values' | 'queries'>(
+function member<K extends CallTable | 'values' | 'queries'>(
   game: Game | undefined,
   full: string,
-  kind: K,
+  which: K,
 ): { plugin: Plugin; fn: NonNullable<Plugin[K]>[string] } | undefined {
   const parts = pluginName(full)
   if (!parts) return undefined
   const plugin = pluginById(game, parts.plugin)
-  const table = plugin?.[kind] as Record<string, NonNullable<Plugin[K]>[string]> | undefined
+  const table = plugin?.[which] as Record<string, NonNullable<Plugin[K]>[string]> | undefined
   if (!plugin || !table || !Object.hasOwn(table, parts.name)) return undefined
   return { plugin, fn: table[parts.name] }
 }
@@ -660,10 +663,10 @@ export function pluginButtons(game: Game, state: GameState): { action: ActionDef
 }
 
 /** What a plugin says is wrong with how content calls it, by full name; nothing for a name with no plugin behind it. */
-export function pluginArgProblems(game: Game, kind: 'conditions' | 'effects' | 'commands', full: string, args: PluginArgs): string[] {
+export function pluginArgProblems(game: Game, table: CallTable, full: string, args: PluginArgs): string[] {
   const parts = pluginName(full)
   if (!parts) return []
-  return pluginById(game, parts.plugin)?.argProblems?.(kind, parts.name, args, game) ?? []
+  return pluginById(game, parts.plugin)?.argProblems?.(table, parts.name, args, game) ?? []
 }
 
 /** Does any plugin guard or price commands? If none does, nothing needs to know a command's effects. */

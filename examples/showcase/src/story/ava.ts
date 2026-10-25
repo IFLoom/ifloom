@@ -23,7 +23,7 @@ const smallTalk: MessageDef[] = ['rain', 'beans', 'river', 'ducks'].map((topic) 
   when: { not: messageSince(`ava.chat.${topic}`, { lt: 3 }) },
   body: [{ text: `ava.chat.${topic}` }],
   // The beans want an answer, every time she asks.
-  ...(topic === 'beans' ? { replies: [{ id: 'taste', effects: [{ kind: 'stat' as const, stat: 'friendship', by: 2, of: character('ava') }] }] } : {}),
+  ...(topic === 'beans' ? { replies: [{ id: 'taste', effects: [{ stat: 'friendship', by: 2, of: character('ava') }] }] } : {}),
 }))
 
 export const ava: Content = {
@@ -47,20 +47,17 @@ export const ava: Content = {
         {
           id: 'shell',
           when: holding('keepsake:shell'),
-          effects: [move('keepsake:shell', character('ava')), { kind: 'stat', stat: 'friendship', by: 5, of: character('ava') }],
+          effects: [move('keepsake:shell', character('ava')), { stat: 'friendship', by: 5, of: character('ava') }],
         },
-        { id: 'chat', once: { per: 'turn', reason: 'She has a queue.' }, effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: character('ava') }] },
+        { id: 'chat', once: { per: 'turn', reason: 'She has a queue.' }, effects: [{ stat: 'friendship', by: 5, of: character('ava') }] },
         {
           id: 'compliment',
           when: { stat: 'charm', gte: 3 },
-          effects: [
-            { kind: 'stat', stat: 'friendship', by: 10, of: character('ava') },
-            { kind: 'scene', scene: null },
-          ],
+          effects: [{ stat: 'friendship', by: 10, of: character('ava') }, { scene: null }],
         },
         // She points you at the job board by the till: the scene closes and the board opens over the room.
-        { id: 'work', effects: [{ kind: 'scene', scene: null }, openJobs()] },
-        { id: 'bye', effects: [{ kind: 'scene', scene: null }] },
+        { id: 'work', effects: [{ scene: null }, openJobs()] },
+        { id: 'bye', effects: [{ scene: null }] },
       ],
     },
     {
@@ -71,10 +68,7 @@ export const ava: Content = {
       choices: [
         {
           id: 'bye',
-          effects: [
-            { kind: 'stat', stat: 'friendship', by: 3, of: character('ava') },
-            { kind: 'scene', scene: null },
-          ],
+          effects: [{ stat: 'friendship', by: 3, of: character('ava') }, { scene: null }],
         },
       ],
     },
@@ -90,10 +84,7 @@ export const ava: Content = {
         { id: 'shell', when: { not: { entity: 'keepsake:shell', gte: 1 } }, effects: [give('keepsake:shell')] },
         {
           id: 'stay',
-          effects: [
-            { kind: 'stat', stat: 'friendship', by: 5, of: character('ava') },
-            { kind: 'scene', scene: null },
-          ],
+          effects: [{ stat: 'friendship', by: 5, of: character('ava') }, { scene: null }],
         },
       ],
     },
@@ -139,7 +130,7 @@ export const ava: Content = {
           from: 'ava',
           when: { all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] },
           body: [{ text: 'ava.text' }],
-          replies: [{ id: 'yes', effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: character('ava') }] }, { id: 'later' }],
+          replies: [{ id: 'yes', effects: [{ stat: 'friendship', by: 5, of: character('ava') }] }, { id: 'later' }],
         },
         ...smallTalk,
       ],

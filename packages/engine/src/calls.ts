@@ -27,8 +27,8 @@ export type ValueRef = { value: string; with?: PluginArgs }
 /** A call by name, as the engine reads one written in short. */
 export type CustomCall = { custom: string; with?: Record<string, unknown> }
 
-/** An effect as content writes it: a plain effect, or a plugin's or the game's own in short. */
-export type EffectRef = Effect | PluginCall
+/** An effect as content writes it: one of the engine's, or a plugin's or the game's own in short. The same as `Effect`. */
+export type EffectRef = Effect
 
 /** A command as content writes it: a plain command, or a plugin's in short (`{ 'places/go': { id: 'cafe' } }`). */
 export type CommandRef = Command | PluginCall
@@ -51,6 +51,17 @@ export function customCall(entry: object): CustomCall | undefined {
   if (!name) return undefined
   const value = (entry as Record<string, unknown>)[name]
   return isArgs(value) ? { custom: name, with: value } : { custom: name }
+}
+
+/**
+ * The name and arguments of a call in short, `{ 'calendar/pass': { by: 2 } }`
+ * as `{ name: 'calendar/pass', with: { by: 2 } }`, or undefined for anything
+ * else: one of the engine's own effects or conditions. For code that looks at
+ * a list of effects, such as a plugin's guard or price.
+ */
+export function callOf(entry: object): { name: string; with: Record<string, unknown> } | undefined {
+  const call = customCall(entry)
+  return call ? { name: call.custom, with: call.with ?? {} } : undefined
 }
 
 /**

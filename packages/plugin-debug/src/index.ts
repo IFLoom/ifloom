@@ -114,8 +114,7 @@ export function debug(): DefinedPlugin<null, DebugView> {
           if (!canHold(state, game, resolveHolder(state, at))) return sayDebug(game, 'cantHold', at)
           return isNumber(args.to) ? undefined : sayDebug(game, 'notANumber')
         },
-        run: (_state, args, { apply }) =>
-          apply([{ kind: 'entity', entity: String(args.entity), at: args.at === undefined ? YOU : String(args.at), to: Number(args.to) }]),
+        run: (_state, args, { apply }) => apply([{ entity: String(args.entity), at: args.at === undefined ? YOU : String(args.at), to: Number(args.to) }]),
       }),
       /** `{ name: 'debug/scene', with: { id } }`: put the scene `id` on screen; leave `id` out to close it. */
       scene: free({

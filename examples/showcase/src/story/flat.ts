@@ -18,11 +18,7 @@ export const flat: Content = {
       id: 'flat.ring',
       label: 'Ringing',
       ms: 10_000,
-      effects: [
-        { kind: 'scene', scene: null },
-        { kind: 'kv', key: 'missedAva', to: true },
-        { kind: 'notify', id: 'missed-call', title: 'Missed call: Ava', tag: 'phone' },
-      ],
+      effects: [{ scene: null }, { kv: 'missedAva', to: true }, { notify: 'Missed call: Ava', id: 'missed-call', tag: 'phone' }],
     },
   ],
   scenes: [
@@ -36,17 +32,11 @@ export const flat: Content = {
         // Answering stops the timer, so the missed call never comes.
         {
           id: 'answer',
-          effects: [
-            { kind: 'timer', timer: 'flat.ring', to: null },
-            { kind: 'scene', scene: 'ava.call' },
-          ],
+          effects: [{ timer: 'flat.ring', to: null }, { scene: 'ava.call' }],
         },
         {
           id: 'leave',
-          effects: [
-            { kind: 'timer', timer: 'flat.ring', to: null },
-            { kind: 'scene', scene: null },
-          ],
+          effects: [{ timer: 'flat.ring', to: null }, { scene: null }],
         },
       ],
     },
@@ -56,10 +46,7 @@ export const flat: Content = {
     {
       id: 'flat.ring',
       when: { all: [messageReplied('ava.text'), at('flat'), day({ gte: 2 }), period('evening')] },
-      effects: [
-        { kind: 'scene', scene: 'flat.ring' },
-        { kind: 'timer', timer: 'flat.ring' },
-      ],
+      effects: [{ scene: 'flat.ring' }, { timer: 'flat.ring' }],
     },
     // Rent, every Sunday from the first week on: the town's one bill, so money has somewhere to go.
     {
@@ -67,8 +54,8 @@ export const flat: Content = {
       once: 'turn',
       when: { all: [weekday(6), day({ gte: 6 })] },
       effects: [
-        { kind: 'stat', stat: 'coins', by: -30 },
-        { kind: 'notify', id: 'rent', title: 'Rent paid: 30 coins', tag: 'money' },
+        { stat: 'coins', by: -30 },
+        { notify: 'Rent paid: 30 coins', id: 'rent', tag: 'money' },
       ],
     },
   ],
@@ -82,7 +69,7 @@ export const flat: Content = {
           actions: [
             { id: 'bed', label: 'Go to bed', command: sleep() },
             // The wardrobe opens in a panel by its name; the layout also shows what you're wearing only at home.
-            { id: 'wardrobe', label: 'Open the wardrobe', effects: [{ kind: 'panel', panel: 'wardrobe' }] },
+            { id: 'wardrobe', label: 'Open the wardrobe', effects: [{ panel: 'wardrobe' }] },
             // Drawn inline by `[[act:read-text|…]]` in the line above, so it isn't a button as well.
             { id: 'read-text', label: 'Read your messages', when: textWaiting, command: openApp('texts') },
           ],

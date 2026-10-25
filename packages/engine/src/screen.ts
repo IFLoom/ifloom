@@ -17,7 +17,7 @@ import { lockIn, lockedOut } from './locks.ts'
 import { sceneById, type ActionDef, type Blocked, type Game, type SceneMedia } from './game.ts'
 import { actionById } from './action.ts'
 import { runsAsAction } from './features/actions.ts'
-import { artSrc, inlineMarkup, mediaKind, parseBeats, videoView, type InlineSpan, type SceneBeat } from './sceneBody.ts'
+import { artSrc, inlineMarkup, mediaType, parseBeats, videoView, type InlineSpan, type SceneBeat } from './sceneBody.ts'
 import {
   mediaMarkup,
   poolPick,
@@ -277,7 +277,7 @@ function drawStage(
         ? poolPick(state, game, { pool: layer.pool, tags: layer.tags, owner, slot: `stage:${index}` }, featureContext(), drawing.picks)
         : (layer.src ?? null)
     if (!src) return
-    const video = Boolean(layer.video) || mediaKind(src) === 'video'
+    const video = Boolean(layer.video) || mediaType(src) === 'video'
     layers.push({
       id: layer.id ?? null,
       src: artSrc(src, video ? 'video' : 'image'),
@@ -399,7 +399,7 @@ function priced(state: GameState, game: Game, cost: { stats?: Record<string, num
 function priceOfEffects(state: GameState, game: Game, effects: readonly Effect[], spends: Record<string, number> = {}): Price | undefined {
   const spent: Record<string, number> = { ...spends }
   for (const effect of effects) {
-    if (effect.kind === 'stat' && 'by' in effect && effect.of === undefined && effect.by < 0 && statDef(game, effect.stat)?.spendable) {
+    if ('stat' in effect && 'by' in effect && effect.of === undefined && effect.by < 0 && statDef(game, effect.stat)?.spendable) {
       spent[effect.stat] = (spent[effect.stat] ?? 0) - effect.by
     }
   }
@@ -520,23 +520,23 @@ function inlineBeats(
 ): { beats: SceneBeat[]; offered: ScreenChoice[] } {
   const used = new Set<string>()
   const drawn = beats.map((beat): SceneBeat => {
-    if (beat.kind !== 'text' && beat.kind !== 'say') return beat
+    if (beat.type !== 'text' && beat.type !== 'say') return beat
     const parts = inlineMarkup(beat.text)
     if (!parts) return beat
     const spans: InlineSpan[] = []
     const words = (text: string) => {
       const prev = spans.at(-1)
-      if (prev?.kind === 'text') prev.text += text
-      else spans.push({ kind: 'text', text })
+      if (prev?.type === 'text') prev.text += text
+      else spans.push({ type: 'text', text })
     }
     for (const part of parts) {
-      if (part.kind === 'text') words(part.text)
-      else if (part.kind === 'bold' || part.kind === 'italic') spans.push({ kind: part.kind, text: part.text })
-      else if (part.kind === 'ui') spans.push({ kind: 'ui', name: part.name, text: part.text, args: part.args })
-      else if (part.kind === 'tip') {
+      if (part.type === 'text') words(part.text)
+      else if (part.type === 'bold' || part.type === 'italic') spans.push({ type: part.type, text: part.text })
+      else if (part.type === 'ui') spans.push({ type: 'ui', name: part.name, text: part.text, args: part.args })
+      else if (part.type === 'tip') {
         const tip = game.prose?.line(part.key, state)
         if (tip === undefined) words(part.text)
-        else spans.push({ kind: 'tip', text: part.text, tip })
+        else spans.push({ type: 'tip', text: part.text, tip })
       } else {
         const choice = used.has(part.id) ? undefined : offered.find((entry) => entry.id === part.id)
         if (!choice) {
@@ -544,18 +544,18 @@ function inlineBeats(
           continue
         }
         used.add(part.id)
-        spans.push({ kind: 'action', text: part.text ?? choice.label, choice: renderedChoice(choice) })
+        spans.push({ type: 'action', text: part.text ?? choice.label, choice: renderedChoice(choice) })
       }
     }
     const text = spans.map((span) => span.text).join('')
-    return spans.some((span) => span.kind !== 'text') ? { ...beat, text, spans } : { ...beat, text }
+    return spans.some((span) => span.type !== 'text') ? { ...beat, text, spans } : { ...beat, text }
   })
   return { beats: drawn, offered: used.size ? offered.filter((choice) => !used.has(choice.id)) : offered }
 }
 
 /** The choices and buttons a scene's or a room's prose holds inline, in the order they come. */
 export function inlineChoices(beats: readonly SceneBeat[]): RenderedChoice[] {
-  return beats.flatMap((beat) => ('spans' in beat && beat.spans ? beat.spans.flatMap((span) => (span.kind === 'action' ? [span.choice] : [])) : []))
+  return beats.flatMap((beat) => ('spans' in beat && beat.spans ? beat.spans.flatMap((span) => (span.type === 'action' ? [span.choice] : [])) : []))
 }
 
 /**
@@ -564,15 +564,15 @@ export function inlineChoices(beats: readonly SceneBeat[]): RenderedChoice[] {
  */
 export function pastBeats(beats: readonly SceneBeat[]): SceneBeat[] {
   return beats.map((beat) => {
-    if (!('spans' in beat) || !beat.spans?.some((span) => span.kind === 'action')) return beat
+    if (!('spans' in beat) || !beat.spans?.some((span) => span.type === 'action')) return beat
     const spans: InlineSpan[] = []
     for (const span of beat.spans) {
       const prev = spans.at(-1)
-      if (span.kind !== 'text' && span.kind !== 'action') spans.push(span)
-      else if (prev?.kind === 'text') prev.text += span.text
-      else spans.push({ kind: 'text', text: span.text })
+      if (span.type !== 'text' && span.type !== 'action') spans.push(span)
+      else if (prev?.type === 'text') prev.text += span.text
+      else spans.push({ type: 'text', text: span.text })
     }
-    if (spans.every((span) => span.kind === 'text')) {
+    if (spans.every((span) => span.type === 'text')) {
       const { spans: _spans, ...rest } = beat
       return rest
     }

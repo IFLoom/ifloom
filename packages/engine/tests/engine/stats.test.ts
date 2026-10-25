@@ -23,7 +23,7 @@ describe('stats', () => {
     expect(read.stats.intelligence).toBe(100)
     const rich = apply(
       begin(game, { stats: { intelligence: 5, coins: 998, luck: 0 } }),
-      { ...game, actions: [{ id: 'find', effects: [{ kind: 'stat', stat: 'coins', by: 5 }] }] },
+      { ...game, actions: [{ id: 'find', effects: [{ stat: 'coins', by: 5 }] }] },
       { type: 'action', id: 'find' },
     ).state
     expect(rich.stats.coins).toBe(999)
@@ -61,7 +61,7 @@ describe('stats', () => {
   it('reports an effect on a stat the game never declared', () => {
     const game = {
       ...fixture(),
-      actions: [{ id: 'train', effects: [{ kind: 'stat' as const, stat: 'strength', by: 1 }] }],
+      actions: [{ id: 'train', effects: [{ stat: 'strength', by: 1 }] }],
     }
     expect(problemsOf(game)).toContain('action train: unknown stat "strength"')
   })
@@ -116,7 +116,7 @@ describe('spending stats', () => {
   })
 
   it('can put a stat at a value, held to its range', () => {
-    const topUp: Game = { ...game, actions: [{ id: 'nap', effects: [{ kind: 'stat' as const, stat: 'coins', to: 5000 }] }] }
+    const topUp: Game = { ...game, actions: [{ id: 'nap', effects: [{ stat: 'coins', to: 5000 }] }] }
     expect(apply(begin(topUp), topUp, { type: 'action', id: 'nap' }).state.stats.coins).toBe(999)
   })
 })
@@ -128,7 +128,7 @@ describe('checking declared stats', () => {
       stats: [{ id: 'puff', label: 'Puff', max: { value: 'game/neverRegistered' } }],
       actions: [
         { id: 'buy', cost: { stats: { gold: 1 } } },
-        { id: 'rest', effects: [{ kind: 'stat', stat: 'sleep', to: 1 }] },
+        { id: 'rest', effects: [{ stat: 'sleep', to: 1 }] },
       ],
     }
     const problems = problemsOf(game)

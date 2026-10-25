@@ -15,7 +15,7 @@ function novel() {
       {
         name: 'book',
         stats: [{ id: 'courage', label: 'Courage', start: 1 }],
-        scenes: [{ id: 'ch1', title: 'Chapter one', body: [{ text: 'ch1' }], choices: [{ id: 'on', effects: [{ kind: 'scene', scene: null }] }] }],
+        scenes: [{ id: 'ch1', title: 'Chapter one', body: [{ text: 'ch1' }], choices: [{ id: 'on', effects: [{ scene: null }] }] }],
         prose: { ch1: 'The letter is on the mat.', 'ch1#on': 'Read on' },
       },
     ],

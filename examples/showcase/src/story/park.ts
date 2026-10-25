@@ -12,7 +12,7 @@ const ARROWS = ['up', 'down', 'left', 'right'] as const
 const showArrow = (arrow: (typeof ARROWS)[number]): MinigameStateDef => ({
   label: `arrows.${arrow}`,
   after: { ms: 1500, go: 'round' },
-  on: ARROWS.map((input) => ({ input, go: 'round', ...(input === arrow ? { effects: [{ kind: 'kv' as const, key: 'score', of: 'minigame', by: 1 }] } : {}) })),
+  on: ARROWS.map((input) => ({ input, go: 'round', ...(input === arrow ? { effects: [{ kv: 'score', of: 'minigame', by: 1 }] } : {}) })),
 })
 
 /**
@@ -33,8 +33,8 @@ const quickFeet: MinigameDef = {
         {
           go: 'pick',
           effects: [
-            { kind: 'kv', key: 'round', of: 'minigame', by: 1 },
-            { kind: 'kv', key: 'arrow', of: 'minigame', random: [1, 4] },
+            { kv: 'round', of: 'minigame', by: 1 },
+            { kv: 'arrow', of: 'minigame', random: [1, 4] },
           ],
         },
       ],
@@ -44,13 +44,10 @@ const quickFeet: MinigameDef = {
     tally: { always: [{ when: { kv: 'score', of: 'minigame', gte: 3 }, go: 'won' }, { go: 'lost' }] },
     won: {
       final: {
-        effects: [
-          { kind: 'stat', stat: 'coins', by: 5 },
-          { kind: 'scene', scene: 'park.arrows-won' },
-        ],
+        effects: [{ stat: 'coins', by: 5 }, { scene: 'park.arrows-won' }],
       },
     },
-    lost: { final: { effects: [{ kind: 'scene', scene: 'park.arrows-lost' }] } },
+    lost: { final: { effects: [{ scene: 'park.arrows-lost' }] } },
   },
 }
 
@@ -71,13 +68,13 @@ export const park: Content = {
       id: 'park.arrows-won',
       title: 'Quick feet',
       body: [{ text: 'park.arrows-won' }],
-      choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
+      choices: [{ id: 'leave', effects: [{ scene: null }] }],
     },
     {
       id: 'park.arrows-lost',
       title: 'Quick feet',
       body: [{ text: 'park.arrows-lost' }],
-      choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
+      choices: [{ id: 'leave', effects: [{ scene: null }] }],
     },
   ],
   minigames: [quickFeet],
@@ -89,10 +86,10 @@ export const park: Content = {
       id: 'visitors',
       once: 'turn',
       when: at('park'),
-      effects: [{ kind: 'each', of: 'visitor', effects: [{ kind: 'remove', entity: '$' }] }, generate('visitor', 2)],
+      effects: [{ each: 'visitor', effects: [{ remove: '$' }] }, generate('visitor', 2)],
     },
     // And the ducks come to see what you brought: a roll no line of prose hints, so the React UI shows it over the scene.
-    { id: 'ducks', once: 'turn', when: at('park'), effects: [{ kind: 'roll', key: 'ducks', dice: '1d6+2' }] },
+    { id: 'ducks', once: 'turn', when: at('park'), effects: [{ roll: 'ducks', dice: '1d6+2' }] },
   ],
   data: {
     places: {
@@ -110,16 +107,16 @@ export const park: Content = {
             skimmed({ roll: 'skim', passed: false }, 'park.skim.failed'),
           ],
           actions: [
-            { id: 'jog', label: 'Go for a jog', cost: { stats: { energy: 15 } }, effects: [pass(1), { kind: 'stat', stat: 'charm', by: 1 }] },
-            { id: 'arrows', label: 'Play quick feet with the kids', effects: [{ kind: 'minigame', minigame: 'arrows' }] },
+            { id: 'jog', label: 'Go for a jog', cost: { stats: { energy: 15 } }, effects: [pass(1), { stat: 'charm', by: 1 }] },
+            { id: 'arrows', label: 'Play quick feet with the kids', effects: [{ minigame: 'arrows' }] },
             // Two dice against 8: the total goes in the kv store as `skim`, and the roll is kept for `{ roll: 'skim' }`.
             // Drawn inline by `[[act:skim|…]]` in the stones line, so it isn't a button as well.
             {
               id: 'skim',
               label: 'Skim a stone',
               effects: [
-                { kind: 'kv', key: 'skimmed', to: true },
-                { kind: 'roll', key: 'skim', dice: '2d6', against: 8 },
+                { kv: 'skimmed', to: true },
+                { roll: 'skim', dice: '2d6', against: 8 },
               ],
             },
           ],

@@ -8,7 +8,7 @@ import type { DataScene } from '../../src/scene.ts'
 import { problemsOf } from '../fixtures/checked.ts'
 import { unwrap } from '../fixtures/result.ts'
 
-const leave = [{ id: 'leave', effects: [{ kind: 'scene' as const, scene: null }] }]
+const leave = [{ id: 'leave', effects: [{ scene: null }] }]
 
 /** A café with things that might happen while you sit there. */
 function scene(id: string, extra: Partial<DataScene> = {}): DataScene {
@@ -26,9 +26,9 @@ function cafe(scenes: DataScene[], extra: Partial<Content> = {}) {
     ),
     scenes,
     actions: [
-      { id: 'sit', effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] },
-      { id: 'linger', effects: [{ kind: 'scene', from: 'cafe' }] },
-      { id: 'tip', effects: [{ kind: 'kv', key: 'tipped', to: true }] },
+      { id: 'sit', effects: [{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }] },
+      { id: 'linger', effects: [{ scene: { from: 'cafe' } }] },
+      { id: 'tip', effects: [{ kv: 'tipped', to: true }] },
     ],
     ...extra,
   }
@@ -96,7 +96,7 @@ describe('storylets', () => {
     const problems = cafe(
       [scene('cafe.lonely', { weight: 2 }), scene('cafe.heavy', { drawnFrom: ['cafe'], weight: 0 }), scene('cafe.picky', { when: { kv: 'x' } })],
       {
-        actions: [{ id: 'sit', effects: [{ kind: 'scene', from: 'nowhere', otherwise: 'cafe.gone' }] }],
+        actions: [{ id: 'sit', effects: [{ scene: { from: 'nowhere', otherwise: 'cafe.gone' } }] }],
       },
     ).problems.map(describeProblem)
     expect(problems).toEqual(
@@ -112,7 +112,7 @@ describe('storylets', () => {
 
   it('are checked in a hand-built game too', () => {
     const { game } = cafe([gossip, quiet])
-    const broken = { ...game, actions: [{ id: 'sit', effects: [{ kind: 'scene' as const, from: 'nowhere', otherwise: 'cafe.gone' }] }] }
+    const broken = { ...game, actions: [{ id: 'sit', effects: [{ scene: { from: 'nowhere', otherwise: 'cafe.gone' } }] }] }
     expect(problemsOf(broken)).toEqual(
       expect.arrayContaining(['action sit: draws from "nowhere", but no scene is drawn from it', 'action sit: goes to unknown scene "cafe.gone"']),
     )

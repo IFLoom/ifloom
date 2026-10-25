@@ -215,12 +215,12 @@ export function looksLikeHolder(holder: string): boolean {
  * ```
  */
 export function give(ref: EntityRef, n = 1): Effect {
-  return { kind: 'entity', entity: ref, by: n }
+  return { entity: ref, by: n }
 }
 
 /** Take some of a thing from the player (whoever they are playing): 1 if left out, never below 0. */
 export function take(ref: EntityRef, n = 1): Effect {
-  return { kind: 'entity', entity: ref, by: -n }
+  return { entity: ref, by: -n }
 }
 
 /**
@@ -233,7 +233,7 @@ export function take(ref: EntityRef, n = 1): Effect {
  * ```
  */
 export function move(ref: EntityRef, to: Holder, options: { from?: Holder; by?: number } = {}): Effect {
-  return { kind: 'move', entity: ref, to, ...options }
+  return { move: ref, to, ...options }
 }
 
 /** Whether the player (whoever they are playing) holds at least `n` of a thing: 1 if left out. */

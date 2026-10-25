@@ -16,12 +16,9 @@ export const opening: Content = {
       choices: [
         {
           id: 'knock',
-          effects: [
-            { kind: 'stat', stat: 'courage', by: 1 },
-            { kind: 'scene', scene: 'inside' },
-          ],
+          effects: [{ stat: 'courage', by: 1 }, { scene: 'inside' }],
         },
-        { id: 'wait', effects: [{ kind: 'scene', scene: 'inside' }] },
+        { id: 'wait', effects: [{ scene: 'inside' }] },
       ],
     },
     {

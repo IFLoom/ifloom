@@ -9,7 +9,7 @@ export const opening: Content = {
       id: 'opening',
       title: 'The Corner Café',
       body: [{ text: 'opening' }],
-      choices: [{ id: 'begin', effects: [{ kind: 'scene', scene: null }] }],
+      choices: [{ id: 'begin', effects: [{ scene: null }] }],
     },
   ],
   prose: {

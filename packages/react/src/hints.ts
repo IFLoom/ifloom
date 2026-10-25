@@ -124,7 +124,7 @@ export function leavingOf(pressed: Transition | TransitionName | undefined): { o
 /** Every choice and button a view offers: its choices, those its prose holds inline, and the room's buttons. */
 export function offeredIn(view: View): RenderedChoice[] {
   const inline = view.scene.beats.flatMap((beat) =>
-    (beat.kind === 'text' || beat.kind === 'say') && beat.spans ? beat.spans.flatMap((span) => (span.kind === 'action' ? [span.choice] : [])) : [],
+    (beat.type === 'text' || beat.type === 'say') && beat.spans ? beat.spans.flatMap((span) => (span.type === 'action' ? [span.choice] : [])) : [],
   )
   return [...view.scene.choices, ...inline, ...view.actions]
 }

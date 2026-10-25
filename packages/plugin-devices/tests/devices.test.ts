@@ -26,11 +26,11 @@ function game(): Game {
           {
             id: 'setUpMail',
             effects: [
-              { kind: 'kv', key: 'emailSetUp', to: true },
-              { kind: 'kv', key: 'newMail', to: true },
+              { kv: 'emailSetUp', to: true },
+              { kv: 'newMail', to: true },
             ],
           },
-          { id: 'uninstall', effects: [{ kind: 'kv', key: 'emailSetUp', to: false }] },
+          { id: 'uninstall', effects: [{ kv: 'emailSetUp', to: false }] },
         ],
         prose: { 'notes.intro': 'Nothing written yet.' },
       },
@@ -61,7 +61,7 @@ describe('devices', () => {
     const before = begin(g)
     const state = apply(before, g, openApp('notes')).state
     expect(state.turn).toBe(before.turn)
-    expect(laptop(state, g).open).toMatchObject({ id: 'notes', sections: [{ kind: 'prose', text: 'Nothing written yet.' }] })
+    expect(laptop(state, g).open).toMatchObject({ id: 'notes', sections: [{ type: 'prose', text: 'Nothing written yet.' }] })
     expect(laptop(state, g).apps.every((app) => app.sections.length === 0)).toBe(true)
   })
 
@@ -70,7 +70,7 @@ describe('devices', () => {
     let state = apply(begin(g), g, { type: 'action', id: 'setUpMail' }).state
     expect(laptop(state, g).badge).toBe(1)
     state = apply(state, g, openApp('mail')).state
-    expect(laptop(state, g).open?.sections).toEqual([{ kind: 'panel', panel: 'inbox', with: { letters: 2 } }])
+    expect(laptop(state, g).open?.sections).toEqual([{ type: 'panel', panel: 'inbox', with: { letters: 2 } }])
   })
 
   it('close an app that stops being installed', () => {

@@ -165,7 +165,7 @@ export type StatsShape = {
      * full overnight), held to its range: the player's, or with `of`, an
      * entity's (`'staff:ana'`, or `'$'` in an `each`).
      */
-    stat: { kind: 'stat'; stat: StatKey; by: number; of?: string } | { kind: 'stat'; stat: StatKey; to: number; of?: string }
+    stat: { stat: StatKey; by: number; of?: string } | { stat: StatKey; to: number; of?: string }
   }
   game: {
     /** Every stat the game keeps. The engine has none of its own. */
@@ -524,7 +524,7 @@ export const stats = defineFeature<StatsShape>({
   lists: ['stat'],
   // A kept stat of the player's the save lacks starts at its start. An entity's reads its start until play changes it.
   fill: {
-    kind: 'stats',
+    part: 'stats',
     run: (state, game) => {
       const lacking = (game.stats ?? []).filter((stat) => stat.derive === undefined && !stat.of && state.stats?.[stat.id] === undefined)
       return lacking.length ? { ...state, stats: { ...state.stats, ...Object.fromEntries(lacking.map((stat) => [stat.id, stat.start ?? 0])) } } : state

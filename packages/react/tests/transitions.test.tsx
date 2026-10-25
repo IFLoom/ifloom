@@ -25,9 +25,9 @@ function house(): Game {
             ui: { transition: { in: 'fade', out: 'fade', ms: 200 } },
             body: [{ text: 'door' }],
             choices: [
-              { id: 'in', effects: [{ kind: 'scene', scene: 'hall' }] },
+              { id: 'in', effects: [{ scene: 'hall' }] },
               // How the hall comes in when you knock first, whatever the hall says; and the door goes at once.
-              { id: 'knock', ui: { transition: { in: 'zoom', out: 'none', ms: 150 } }, effects: [{ kind: 'scene', scene: 'hall' }] },
+              { id: 'knock', ui: { transition: { in: 'zoom', out: 'none', ms: 150 } }, effects: [{ scene: 'hall' }] },
             ],
           },
           {
@@ -36,7 +36,7 @@ function house(): Game {
             speaker: 'ann',
             ui: { transition: { in: 'slide-up', ms: 200 } },
             body: [{ text: 'hall' }, { text: 'hall.clock', ui: { reveal: { delay: 1000 } } }, { text: 'hall.cough', ui: { reveal: { as: 'slide-left' } } }],
-            choices: [{ id: 'out', effects: [{ kind: 'scene', scene: null }] }],
+            choices: [{ id: 'out', effects: [{ scene: null }] }],
           },
         ],
         prose: {

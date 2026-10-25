@@ -49,7 +49,7 @@ function game(): Game {
     actions: [
       { id: 'crowd', effects: [generate('visitor', 3)] },
       { id: 'one', effects: [generate('visitor')] },
-      { id: 'sleep', effects: [{ kind: 'turn' }] },
+      { id: 'sleep', effects: [{ turn: true }] },
     ],
     data: { generators: { pools, templates: [visitor] } },
   }

@@ -9,18 +9,18 @@ function withInputs(): Game {
   return {
     ...fixture(),
     inputs: [
-      { id: 'petName', label: 'Name the cat', kind: 'text', maxLength: 12 },
-      { id: 'alarm', label: 'Alarm', kind: 'number', min: 5, max: 10, key: 'wakeAt' },
+      { id: 'petName', label: 'Name the cat', type: 'text', maxLength: 12 },
+      { id: 'alarm', label: 'Alarm', type: 'number', min: 5, max: 10, key: 'wakeAt' },
       {
         id: 'tea',
         label: 'Tea or coffee',
-        kind: 'choice',
+        type: 'choice',
         options: [
           { value: 'tea', label: 'Tea' },
           { value: 'coffee', label: 'Coffee' },
         ],
       },
-      { id: 'secret', label: 'Password', kind: 'text', when: { kv: 'knowsDoor' } },
+      { id: 'secret', label: 'Password', type: 'text', when: { kv: 'knowsDoor' } },
     ],
   }
 }
@@ -32,7 +32,7 @@ describe('inputs', () => {
     state = apply(state, game, { type: 'input', id: 'alarm', to: 7 }).state
     state = apply(state, game, { type: 'input', id: 'tea', to: 'coffee' }).state
     expect(state.kv).toMatchObject({ petName: 'Biscuit', wakeAt: 7, tea: 'coffee' })
-    expect(view(state, game).inputs.alarm).toMatchObject({ kind: 'number', min: 5, max: 10, value: 7 })
+    expect(view(state, game).inputs.alarm).toMatchObject({ type: 'number', min: 5, max: 10, value: 7 })
   })
 
   it('refuse what the declaration does not allow, in words the player can read', () => {

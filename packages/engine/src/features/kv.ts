@@ -40,10 +40,7 @@ export type KvShape = {
      * `random: [min, max]`, both included and seeded by the save. With `of`,
      * the key is an entity's, a storyline's or the running minigame's.
      */
-    kv:
-      | { kind: 'kv'; key: string; to: KvValue; of?: string }
-      | { kind: 'kv'; key: string; by: number; of?: string }
-      | { kind: 'kv'; key: string; random: [number, number]; of?: string }
+    kv: { kv: string; to: KvValue; of?: string } | { kv: string; by: number; of?: string } | { kv: string; random: [number, number]; of?: string }
   }
   game: {
     /** The kv store a new game starts with, such as the stretch it opens in: `{ phase: 'arrival' }`. */
@@ -160,13 +157,13 @@ export const kv = defineFeature<KvShape>({
         if (!store) return state
         let value: KvValue
         if ('by' in effect) {
-          const was = store.read[effect.key]
+          const was = store.read[effect.kv]
           value = (typeof was === 'number' ? was : 0) + effect.by
-        } else if ('random' in effect) value = drawn(state, effect.of, effect.key, effect.random, cx)
+        } else if ('random' in effect) value = drawn(state, effect.of, effect.kv, effect.random, cx)
         else value = effect.to
-        return store.write(state, effect.key, value)
+        return store.write(state, effect.kv, value)
       },
-      references: (effect) => ownerReferences(effect.of, effect.key),
+      references: (effect) => ownerReferences(effect.of, effect.kv),
     },
   },
   pack: {
@@ -202,7 +199,7 @@ export const kv = defineFeature<KvShape>({
   lists: ['reset', 'kv'],
   // The keys a new game starts with and the ones the game resets each turn, at those values, where the save lacks them.
   fill: {
-    kind: 'kv',
+    part: 'kv',
     run: (state, game) => {
       const lacking = Object.entries({ ...game.kv, ...game.resets }).filter(([key]) => state.kv?.[key] === undefined)
       return lacking.length ? { ...state, kv: { ...state.kv, ...Object.fromEntries(lacking) } } : state

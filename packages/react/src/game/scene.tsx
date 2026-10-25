@@ -55,7 +55,7 @@ function Zoomable({ media, children }: { media: ViewerMedia; children: ReactNode
       !wide && 'max-w-sm',
     ),
   )
-  if (!on || (media.kind === 'video' && media.controls)) return <>{children}</>
+  if (!on || (media.type === 'video' && media.controls)) return <>{children}</>
   return (
     <>
       <button type="button" {...opener} aria-label={media.alt ? `${words('zoom')}: ${media.alt}` : words('zoom')} onClick={() => setOpen(true)}>
@@ -66,7 +66,7 @@ function Zoomable({ media, children }: { media: ViewerMedia; children: ReactNode
   )
 }
 
-function ImageBeat({ beat, attrs }: { beat: Extract<SceneBeat, { kind: 'image' }>; attrs: { 'data-part': string; className: string } }) {
+function ImageBeat({ beat, attrs }: { beat: Extract<SceneBeat, { type: 'image' }>; attrs: { 'data-part': string; className: string } }) {
   // A missing file takes no space, and leaves no empty button behind.
   const [missing, setMissing] = useState<string | null>(null)
   if (missing === beat.src) return null
@@ -81,16 +81,16 @@ function BeatImpl({ beat }: { beat: SceneBeat }) {
   const words = useWords()
   const text = usePart('beat', 'leading-prose')
   const mono = usePart('beat', 'font-mono text-sm leading-prose')
-  const say = usePart('beat', beat.kind === 'say' && beat.who === 'player' ? 'leading-prose pl-6 text-player-speech' : 'leading-prose text-speech')
+  const say = usePart('beat', beat.type === 'say' && beat.who === 'player' ? 'leading-prose pl-6 text-player-speech' : 'leading-prose text-speech')
   const image = usePart(
     'beat',
-    cn('w-full rounded-lg', beat.kind === 'image' && beat.size === 'inline' && 'max-w-sm', beat.kind === 'image' && beat.rotate && 'rotate-1'),
+    cn('w-full rounded-lg', beat.type === 'image' && beat.size === 'inline' && 'max-w-sm', beat.type === 'image' && beat.rotate && 'rotate-1'),
   )
   const mail = usePart('beat', 'rounded-lg border bg-card p-4 text-sm')
   const header = usePart('mail-header', 'text-muted-foreground')
   const body = usePart('mail-body', 'mt-2 whitespace-pre-wrap')
   const prop = usePart('beat', 'rounded-lg border-2 border-dashed p-4 text-center font-medium')
-  switch (beat.kind) {
+  switch (beat.type) {
     case 'text':
       return (
         <p {...text} data-beat="text">

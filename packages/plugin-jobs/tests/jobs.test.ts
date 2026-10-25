@@ -33,7 +33,7 @@ const cafe: JobDef = {
   at: ['cafe'],
   days: [5],
   hours: ['morning'],
-  shift: { cost: { energy: 20 }, passes: 1, effects: [{ kind: 'stat', stat: 'manner', by: 1 }] },
+  shift: { cost: { energy: 20 }, passes: 1, effects: [{ stat: 'manner', by: 1 }] },
   ranks: [
     { id: 'help', title: 'Weekend help', pay: { coins: 12 } },
     { id: 'barista', title: 'Barista', pay: { coins: 18 }, requires: { shifts: 3 } },
@@ -53,10 +53,10 @@ function game(...partners: Plugin[]): Game {
       { id: 'manner', label: 'Manner', start: 5 },
     ],
     actions: [
-      { id: 'meet', effects: [{ kind: 'kv', key: 'metAva', to: true }] },
-      { id: 'sleep', effects: [{ kind: 'turn' }] },
-      { id: 'rest', effects: [{ kind: 'stat', stat: 'energy', to: 100 }] },
-      { id: 'snap', effects: [{ kind: 'stat', stat: 'manner', to: 0 }] },
+      { id: 'meet', effects: [{ kv: 'metAva', to: true }] },
+      { id: 'sleep', effects: [{ turn: true }] },
+      { id: 'rest', effects: [{ stat: 'energy', to: 100 }] },
+      { id: 'snap', effects: [{ stat: 'manner', to: 0 }] },
       { id: 'hired', effects: [hire('cafe')] },
       { id: 'sacked', effects: [fire('cafe')] },
       // A week goes by, with the calendar's five periods a day.
@@ -265,8 +265,8 @@ describe('jobs with places', () => {
 
 describe('the jobs panel', () => {
   it('opens the job board, or some of its jobs, and stays open as the player applies', () => {
-    expect(openJobs()).toEqual({ kind: 'panel', panel: 'jobs' })
-    expect(openJobs(['cafe'])).toEqual({ kind: 'panel', panel: 'jobs', with: { job: ['cafe'] } })
+    expect(openJobs()).toEqual({ panel: 'jobs' })
+    expect(openJobs(['cafe'])).toEqual({ panel: 'jobs', with: { job: ['cafe'] } })
     const base = game()
     const g = { ...base, actions: [...(base.actions ?? []), { id: 'paper', effects: [openJobs(['cafe'])] }] }
     const open = run(fresh(g), g, act('meet'), { type: 'action', id: 'paper' })
@@ -283,7 +283,7 @@ describe('the jobs panel', () => {
           actions: [
             { id: 'a', effects: [openJobs(['cafe'])] },
             { id: 'b', effects: [openJobs(['cafe', 'circus'])] },
-            { id: 'c', effects: [{ kind: 'panel', panel: 'jobs', with: { job: 'cafe' } }] },
+            { id: 'c', effects: [{ panel: 'jobs', with: { job: 'cafe' } }] },
             { id: 'd', effects: [openJobs()] },
           ],
         },

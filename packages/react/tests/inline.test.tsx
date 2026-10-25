@@ -22,9 +22,9 @@ function house(): Game {
             title: 'The hall',
             body: [{ text: 'hall' }],
             choices: [
-              { id: 'answer', effects: [{ kind: 'kv', key: 'answered', to: true }] },
+              { id: 'answer', effects: [{ kv: 'answered', to: true }] },
               { id: 'knock', blocked: [{ when: { kv: 'shy' }, reason: 'You feel too shy.' }], effects: [] },
-              { id: 'leave', effects: [{ kind: 'scene', scene: null }] },
+              { id: 'leave', effects: [{ scene: null }] },
             ],
           },
         ],
@@ -141,7 +141,7 @@ function hallway(): Game {
       { name: 'base', introScene: 'hall' },
       {
         name: 'hallway',
-        scenes: [{ id: 'hall', title: 'The hall', body: [{ text: 'hall' }], choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }] }],
+        scenes: [{ id: 'hall', title: 'The hall', body: [{ text: 'hall' }], choices: [{ id: 'leave', effects: [{ scene: null }] }] }],
         prose: {
           hall: 'A [[ui:modal|note|hall.note|From Sam]] is under the door, beside [[ui:image|a photo|photo/ava.svg|Ava by the river]]. The [[ui:stamp|stamp|blue]] is smudged, and the [[ui:sticker|sticker]] peels.',
           'hall.note': 'Welcome to the building, {{name}}!\n\nBins go out **Thursday**.',

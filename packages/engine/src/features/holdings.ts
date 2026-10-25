@@ -69,14 +69,14 @@ export type HoldingsShape = {
      * `to` a count: `'you'` if `at` is left out. Never below 0, and never
      * more than 1 of a unique thing, which is taken from whoever else held it.
      */
-    entity: { kind: 'entity'; entity: string; at?: string; by: number } | { kind: 'entity'; entity: string; at?: string; to: number }
+    entity: { entity: string; at?: string; by: number } | { entity: string; at?: string; to: number }
     /**
      * Move a thing `to` another holder: `from` a holder, else from wherever a
      * unique thing is, or from `'you'`; up to `by` of it, else all there is.
      */
-    move: { kind: 'move'; entity: string; from?: string; to: string; by?: number }
-    /** Play as a protagonist, a unique entity, so `'you'` is them; `to: null` to be the player again. */
-    you: { kind: 'you'; to: string | null }
+    move: { move: string; from?: string; to: string; by?: number }
+    /** Play as a protagonist, a unique entity, so `'you'` is them: `{ you: 'character:ava' }`; `{ you: null }` to be the player again. */
+    you: { you: string | null }
   }
   view: {
     /**
@@ -184,23 +184,24 @@ export const holdings = defineFeature<HoldingsShape>({
     },
     move: {
       apply: (state, effect, game) => {
-        const from = moveSource(state, game, effect.entity, effect.from)
-        return from === undefined ? state : moveHeld(state, game, effect.entity, from, effect.to, effect.by)
+        const from = moveSource(state, game, effect.move, effect.from)
+        return from === undefined ? state : moveHeld(state, game, effect.move, from, effect.to, effect.by)
       },
       references: (effect) => [
-        ...ofKind(effect.entity),
+        ...ofKind(effect.move),
         ...(effect.from !== undefined ? [{ holder: effect.from }] : []),
         { holder: effect.to },
-        ...(effect.entity === effect.to ? [{ holder: effect.to, holds: effect.entity }] : []),
+        ...(effect.move === effect.to ? [{ holder: effect.to, holds: effect.move }] : []),
       ],
     },
     you: {
       apply: (state, effect, game) => {
-        if (effect.to === null || effect.to === PLAYER) return state.you === null ? state : { ...state, you: null }
-        if (effect.to === YOU || !canHold(state, game, effect.to)) return state
-        return state.you === effect.to ? state : { ...state, you: effect.to }
+        const to = effect.you
+        if (to === null || to === PLAYER) return state.you === null ? state : { ...state, you: null }
+        if (to === YOU || !canHold(state, game, to)) return state
+        return state.you === to ? state : { ...state, you: to }
       },
-      references: (effect) => (effect.to === null ? [] : [{ holder: effect.to, protagonist: true }]),
+      references: (effect) => (effect.you === null ? [] : [{ holder: effect.you, protagonist: true }]),
     },
   },
   // A New Game+ carries how many the player held of what `carryOver.held` lists, or of everything; a thing made in play comes with its record.

@@ -186,9 +186,9 @@ describe('plugins', () => {
     expect(problemsOf(game)).toContain('action drop: no plugin command named "shells/fling"')
     const triggered = {
       ...withShells(),
-      triggers: [{ id: 'cloth', when: { turn: { gte: 1 } }, effects: [{ kind: 'custom' as const, name: 'shells/polish' }] }],
+      triggers: [{ id: 'cloth', when: { turn: { gte: 1 } }, effects: [{ 'shells/polish': true as const }] }],
     }
-    expect(problemsOf(triggered)).toContain('trigger cloth: no plugin effect named "shells/polish"')
+    expect(problemsOf(triggered)).toContain('trigger cloth: no custom effect named "shells/polish"')
   })
 })
 

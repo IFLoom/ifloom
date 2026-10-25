@@ -219,8 +219,7 @@ export function places(options: PlacesOptions = {}): DefinedPlugin<PlacesState, 
     return undefined
   }
   /** Picking one up: from the place to whoever the player is playing. */
-  const pickUpEffects = (at: string | null, ref: EntityRef): Effect[] =>
-    at === null ? [] : [{ kind: 'move', entity: ref, from: location(at), to: YOU, by: 1 }]
+  const pickUpEffects = (at: string | null, ref: EntityRef): Effect[] => (at === null ? [] : [{ move: ref, from: location(at), to: YOU, by: 1 }])
 
   return definePlugin<PlacesState, PlacesView>({
     id: ID,

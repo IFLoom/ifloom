@@ -119,12 +119,12 @@ export type AudioShape = {
   }
   effects: {
     /**
-     * Put a background channel `to` a track, kept in the save: `{ kind: 'audio', channel: 'music', to: 'calm' }`.
+     * Put a background channel `to` a track, kept in the save: `{ audio: 'music', to: 'calm' }`.
      * `to: null` silences the channel; leaving `to` out hands it back to the place or the game's default.
      */
-    audio: { kind: 'audio'; channel: string; to?: string | null }
+    audio: { audio: string; to?: string | null }
     /** Play a sound once, on its track's channel. */
-    sound: { kind: 'sound'; track: string }
+    sound: { sound: string }
   }
   game: {
     /** The game's sounds and channels. No audio if left out. */
@@ -386,8 +386,8 @@ export function audioView(
   if (beats && state.sceneId) {
     beats.forEach((beat, index) => {
       const key = `scene:${state.seed}:${audio.shown}:${index}`
-      if (beat.kind === 'sound') cue(`${key}:${beat.track}`, beat.track)
-      if (beat.kind === 'say' && beat.voice) cue(`${key}:${beat.voice}`, beat.voice, 'voice')
+      if (beat.type === 'sound') cue(`${key}:${beat.track}`, beat.track)
+      if (beat.type === 'say' && beat.voice) cue(`${key}:${beat.voice}`, beat.voice, 'voice')
     })
   }
   return { channels, cues, muteSetting: game.audio.mute ?? null }
@@ -435,10 +435,10 @@ export function manifestProblems(game: Game): { where: string; what: string }[] 
   if (!audio) return []
   const out: { where: string; what: string }[] = []
   const channels = audioChannels(game)
-  const settingIs = (where: string, id: string, kind: 'range' | 'toggle') => {
+  const settingIs = (where: string, id: string, type: 'range' | 'toggle') => {
     const setting = settingById(game, id)
     if (!setting) out.push({ where, what: `unknown setting "${id}"` })
-    else if (setting.kind !== kind || settingAffects(setting) !== 'ui') out.push({ where, what: `setting "${id}" is not a ui ${kind} setting` })
+    else if (setting.type !== type || settingAffects(setting) !== 'ui') out.push({ where, what: `setting "${id}" is not a ui ${type} setting` })
   }
   for (const [id, entry] of Object.entries(audio.tracks ?? {})) {
     const where = `track ${id}`
@@ -488,12 +488,12 @@ export const audio = defineFeature<AudioShape>({
   started: (state, game, cx) => noteStarted(state, game, undefined, cx),
   effects: {
     audio: {
-      apply: (state, effect) => setChannel(state, effect.channel, effect.to),
-      references: (effect) => [{ channel: effect.channel, track: effect.to }],
+      apply: (state, effect) => setChannel(state, effect.audio, effect.to),
+      references: (effect) => [{ channel: effect.audio, track: effect.to }],
     },
     sound: {
-      apply: (state, effect) => soundCue(state, effect.track),
-      references: (effect) => [{ sound: effect.track }],
+      apply: (state, effect) => soundCue(state, effect.sound),
+      references: (effect) => [{ sound: effect.sound }],
     },
   },
   // Merged by id: tracks, and channels field by field; the last `mute` and each channel's last `default` win.

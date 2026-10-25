@@ -21,11 +21,11 @@ function game(extra: Partial<Content> = {}): Game {
   const pack: Content = {
     name: 'town',
     storylines: [{ id: 'ava', name: 'Ava' }],
-    scenes: [{ id: 'ava.hi', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ kind: 'scene', scene: null }] }] }],
+    scenes: [{ id: 'ava.hi', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ scene: null }] }] }],
     // Going out is all a message waits for here: no map needed.
     actions: [
       { id: 'wait', effects: [pass(1)] },
-      { id: 'goOut', effects: [{ kind: 'kv', key: 'out', to: true }] },
+      { id: 'goOut', effects: [{ kv: 'out', to: true }] },
     ],
     prose: {
       'ava.hi': 'Hi.',
@@ -47,7 +47,7 @@ function game(extra: Partial<Content> = {}): Game {
             from: 'ava',
             when: { kv: 'out' },
             body: [{ text: 'msg.hey' }],
-            replies: [{ id: 'yes', effects: [{ kind: 'kv', key: 'saidYes', to: true }] }, { id: 'no' }],
+            replies: [{ id: 'yes', effects: [{ kv: 'saidYes', to: true }] }, { id: 'no' }],
           },
           { id: 'msg.later', channel: 'texts', from: 'ava', when: { kv: 'saidYes' }, body: [{ text: 'msg.later' }] },
           { id: 'msg.bill', channel: 'post', from: 'Water Board', when: period('afternoon'), body: [{ text: 'msg.bill' }] },
@@ -173,9 +173,9 @@ describe('pictures and videos in a message', () => {
     const state = apply(begin(g), g, { type: 'action', id: 'goOut' }).state
     const message = shown(state, g).channels[0].threads[0].messages[0]
     expect(message.beats).toEqual([
-      { kind: 'text', text: 'Look at the ducks!' },
-      { kind: 'video', src: 'art/ducks.mp4', alt: 'A duck on the pond', size: 'inline', autoplay: true, loop: true, muted: true, controls: false },
-      { kind: 'image', src: 'art/pond/morning.jpg', size: 'inline' },
+      { type: 'text', text: 'Look at the ducks!' },
+      { type: 'video', src: 'art/ducks.mp4', alt: 'A duck on the pond', size: 'inline', autoplay: true, loop: true, muted: true, controls: false },
+      { type: 'image', src: 'art/pond/morning.jpg', size: 'inline' },
     ])
   })
 })

@@ -42,8 +42,8 @@ function flat(extra: Partial<Content> = {}): Game {
             },
             body: [{ text: 'evening' }],
             choices: [
-              { id: 'call', effects: [{ kind: 'kv', key: 'called', to: true }] },
-              { id: 'out', effects: [{ kind: 'scene', scene: null }] },
+              { id: 'call', effects: [{ kv: 'called', to: true }] },
+              { id: 'out', effects: [{ scene: null }] },
             ],
           },
         ],
@@ -135,8 +135,8 @@ describe('Video', () => {
   it('keeps a clip with sound muted while the game’s mute setting is on, and at the sfx volume', async () => {
     const game = flat({
       settings: [
-        { id: 'mute', label: 'Mute', kind: 'toggle', affects: 'ui', default: false },
-        { id: 'sfxVolume', label: 'Sounds', kind: 'range', affects: 'ui', min: 0, max: 10, default: 4 },
+        { id: 'mute', label: 'Mute', type: 'toggle', affects: 'ui', default: false },
+        { id: 'sfxVolume', label: 'Sounds', type: 'range', affects: 'ui', min: 0, max: 10, default: 4 },
       ],
       audio: { tracks: {}, mute: 'mute', channels: { sfx: { mode: 'cue', volume: 'sfxVolume' } } },
       prose: { evening: '[[video:flat/radio|sound]]', 'evening#call': 'Ring Ava', 'evening#out': 'Go out' },

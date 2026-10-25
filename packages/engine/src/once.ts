@@ -18,7 +18,7 @@ export function usedThisTurn(state: GameState, id: string): boolean {
 
 /** The effect that records the line as landed this turn. */
 export function markUsed(state: GameState, id: string): Effect {
-  return { kind: 'kv', key: `${PREFIX}${id}`, to: state.turn }
+  return { kv: `${PREFIX}${id}`, to: state.turn }
 }
 
 /**

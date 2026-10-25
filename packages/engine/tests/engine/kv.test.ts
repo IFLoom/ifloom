@@ -24,10 +24,10 @@ describe('one kv vocabulary, with whose store in `of`', () => {
     const game = town()
     const playing = { ...begin(game), minigame: { id: 'count', state: 'go', elapsed: 0, vars: { score: 0 }, steps: 0 } }
     const state = applyEffects(playing, game, [
-      { kind: 'kv', key: 'visits', by: 2 },
-      { kind: 'kv', key: 'role', of: 'staff:ana', to: 'waiter' },
-      { kind: 'kv', key: 'visits', of: 'storyline:rosa', by: 1 },
-      { kind: 'kv', key: 'score', of: 'minigame', by: 3 },
+      { kv: 'visits', by: 2 },
+      { kv: 'role', of: 'staff:ana', to: 'waiter' },
+      { kv: 'visits', of: 'storyline:rosa', by: 1 },
+      { kv: 'score', of: 'minigame', by: 3 },
     ])
     expect(state.kv.visits).toBe(2)
     expect(state.storylines.rosa.kv.visits).toBe(1)
@@ -48,8 +48,8 @@ describe('one kv vocabulary, with whose store in `of`', () => {
 
   it('draws a whole number from `random`, seeded by the save, the same on every replay', () => {
     const game = town()
-    const once = applyEffects(begin(game), game, [{ kind: 'kv', key: 'dice', random: [1, 6] }])
-    const again = applyEffects(begin(game), game, [{ kind: 'kv', key: 'dice', random: [1, 6] }])
+    const once = applyEffects(begin(game), game, [{ kv: 'dice', random: [1, 6] }])
+    const again = applyEffects(begin(game), game, [{ kv: 'dice', random: [1, 6] }])
     expect(once.kv.dice).toBe(again.kv.dice)
     expect(once.kv.dice).toBeGreaterThanOrEqual(1)
     expect(once.kv.dice).toBeLessThanOrEqual(6)
@@ -78,8 +78,8 @@ describe('one kv vocabulary, with whose store in `of`', () => {
         {
           id: 'x',
           effects: [
-            { kind: 'kv' as const, key: 'met', of: 'storyline:nobody', to: true },
-            { kind: 'kv' as const, key: 'lives', of: 'minigame', by: 1 },
+            { kv: 'met', of: 'storyline:nobody', to: true },
+            { kv: 'lives', of: 'minigame', by: 1 },
           ],
         },
       ],

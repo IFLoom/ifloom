@@ -23,7 +23,7 @@ export const cafe: Content = {
       weight: 3,
       when: { not: { seen: 'cafe.window', gte: 2 } },
       body: [{ text: 'cafe.window' }],
-      choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
+      choices: [{ id: 'leave', effects: [{ scene: null }] }],
     },
     {
       id: 'cafe.crossword',
@@ -34,10 +34,7 @@ export const cafe: Content = {
       choices: [
         {
           id: 'leave',
-          effects: [
-            { kind: 'stat', stat: 'charm', by: 1 },
-            { kind: 'scene', scene: null },
-          ],
+          effects: [{ stat: 'charm', by: 1 }, { scene: null }],
         },
       ],
     },
@@ -52,10 +49,7 @@ export const cafe: Content = {
       choices: [
         {
           id: 'leave',
-          effects: [
-            { kind: 'stat', stat: 'friendship', by: 2, of: character('ava') },
-            { kind: 'scene', scene: null },
-          ],
+          effects: [{ stat: 'friendship', by: 2, of: character('ava') }, { scene: null }],
         },
       ],
     },
@@ -64,7 +58,7 @@ export const cafe: Content = {
       id: 'cafe.quiet',
       title: 'A quiet table',
       body: [{ text: 'cafe.quiet' }],
-      choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
+      choices: [{ id: 'leave', effects: [{ scene: null }] }],
     },
   ],
   data: {
@@ -81,8 +75,8 @@ export const cafe: Content = {
               cost: { stats: { coins: 3 } },
               blocked: [{ when: { kv: 'hadCoffee' }, reason: 'One is enough for today.' }],
               effects: [
-                { kind: 'stat', stat: 'energy', by: 15 },
-                { kind: 'kv', key: 'hadCoffee', to: true },
+                { stat: 'energy', by: 15 },
+                { kv: 'hadCoffee', to: true },
                 // And a lift that lasts till tomorrow is out: 10 more energy, never written.
                 applyStatus('caffeinated'),
               ],
@@ -92,7 +86,7 @@ export const cafe: Content = {
             // A sandwich as a plain action: a cost, a place and a thing given, with no plugin. Always 4 coins, never sold out.
             { id: 'buy-sandwich', label: 'Buy a sandwich', cost: { stats: { coins: 4 } }, effects: [give('item:sandwich')] },
             // Something small happens while you sit: one of the café's storylets, drawn at random.
-            { id: 'sit', label: 'Sit a while', effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] },
+            { id: 'sit', label: 'Sit a while', effects: [{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }] },
           ],
           // A picture of the counter while Ava is on shift, with a hotspot on her that talks to her.
           stage: {

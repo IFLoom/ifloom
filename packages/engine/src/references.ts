@@ -4,15 +4,15 @@
  * against the game; nothing here knows whether a name exists.
  *
  * What each kind names is its entry's `references`, in the core's table or
- * its feature's (`KINDS` in core.ts), which are typed complete: a new
+ * its feature's (`TABLES` in core.ts), which are typed complete: a new
  * condition key, effect kind or command type with no entry fails to compile.
  */
-import { commandOf, customCall, type CommandRef, type EffectRef } from './calls.ts'
+import { commandOf, type CommandRef, type EffectRef } from './calls.ts'
 import type { SceneMedia } from './game.ts'
 import type { MediaStage } from './features/media.ts'
-import type { PluginArgs } from './plugin.ts'
+import type { CallTable, PluginArgs } from './plugin.ts'
 import type { Block } from './scene.ts'
-import type { Condition, Effect, KvValue } from './types.ts'
+import type { Condition, KvValue } from './types.ts'
 import { commandEntry, conditionEntry, effectEntry } from './core.ts'
 
 /**
@@ -78,11 +78,8 @@ export type Reference =
   | { ui: unknown }
   /** A pool, with the tags asked of it. */
   | { pool: string; tags?: readonly string[] }
-  /**
-   * A call to a custom or plugin condition, effect or command by name. `long`
-   * is an effect written `{ kind: 'custom' }`, which only a plugin can answer.
-   */
-  | { call: 'conditions' | 'effects' | 'commands'; name: string; with?: PluginArgs; long?: boolean }
+  /** A call to a plugin's condition, effect or command by name, or the game's own (`game/…`). */
+  | { call: CallTable; name: string; with?: PluginArgs }
   /**
    * An entry in a plugin's content, such as a location: `{ entry: 'cafe',
    * plugin: 'places', list: 'locations', noun: 'location' }`. Not checked when
@@ -124,11 +121,8 @@ export function conditionReferences(condition: Condition | undefined): Reference
   return conditionEntry(condition)?.references(condition) ?? []
 }
 
-/** What one effect names, in either form. */
-export function effectReferences(ref: EffectRef): Reference[] {
-  const call = customCall(ref)
-  if (call) return [{ call: 'effects', name: call.custom, with: call.with }]
-  const effect = ref as Effect
+/** What one effect names: its key's, or a call's. An effect with no key of the engine's, or several, names nothing; the checker reports its shape. */
+export function effectReferences(effect: EffectRef): Reference[] {
   return effectEntry(effect)?.references(effect) ?? []
 }
 

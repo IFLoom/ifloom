@@ -465,7 +465,7 @@ export function anyOf(kind: string): EntityRef {
 
 /** An `each` effect or a `count` condition: it binds `'$'` for what it holds. */
 function ownsCurrent(node: object): boolean {
-  return 'count' in node || ('kind' in node && node.kind === 'each')
+  return 'count' in node || 'each' in node
 }
 
 /** Where a call's arguments are: a short call's `{ 'cast/met': { … } }`, or a long call's or a value's `with`. */
@@ -473,16 +473,17 @@ function holdsArgs(key: string): boolean {
   return key === 'with' || key.includes('/')
 }
 
-/** The fields that name an entity or a holder, where `'$'` is bound: `of`, `entity`, `at` and `like`, and a `move`'s or a `you` effect's `from` and `to`. */
+/** The fields that name an entity or a holder, where `'$'` is bound: `of`, `entity`, `at` and `like`, the `remove`, `move` and `you` effects' own, and a `move`'s `from` and `to`. */
 function namesOne(node: object, key: string): boolean {
-  if (key === 'of' || key === 'entity' || key === 'at' || key === 'like') return true
-  return (key === 'from' || key === 'to') && 'kind' in node && (node.kind === 'move' || node.kind === 'you')
+  if (key === 'of' || key === 'entity' || key === 'at' || key === 'like' || key === 'remove' || key === 'move' || key === 'you') return true
+  return (key === 'from' || key === 'to') && 'move' in node
 }
 
 /**
  * Put a real reference where content wrote `'$'`: in every `of`, `entity`,
- * `at` and `like` of a condition or an effect list, a `move`'s `from` and
- * `to`, and anywhere in a plugin or custom call's arguments
+ * `at` and `like` of a condition or an effect list, a `remove`, `move` or
+ * `you` effect's target, a `move`'s `from` and `to`, and anywhere in a
+ * plugin's or the game's call's arguments or what a `create` is made `with`
  * (`{ 'cast/met': { character: '$' } }`). A nested `each`'s effects and a
  * nested `count`'s `where` are left alone: their `'$'` is their own.
  */

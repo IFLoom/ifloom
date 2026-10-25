@@ -56,19 +56,19 @@ function game(withPlugins = true): Game {
             of: 'food',
             name: 'Sandwich',
             desc: 'Cheese and pickle.',
-            traits: { ...usable('Eat the sandwich', [{ kind: 'stat', stat: 'energy', by: 20 }]) },
+            traits: { ...usable('Eat the sandwich', [{ stat: 'energy', by: 20 }]) },
           },
           { id: 'flapjack', of: 'food', name: 'Flapjack' },
           { id: 'cake', of: 'food', name: 'Cake' },
         ],
         actions: [
           { id: 'coffee', label: 'Have a coffee', effects: [applyStatus('buzz')] },
-          { id: 'sleep', label: 'Sleep', effects: [{ kind: 'turn' }] },
+          { id: 'sleep', label: 'Sleep', effects: [{ turn: true }] },
           // The counter and the jobs are buttons only when the game has their plugins.
           { id: 'counter', ...(withPlugins ? { label: 'Go to the counter' } : {}), effects: [openShop('counter')] },
           { id: 'board', ...(withPlugins ? { label: 'Read the job board' } : {}), effects: [openJobs()] },
           { id: 'paper', ...(withPlugins ? { label: 'Read the paper' } : {}), effects: [openJobs(['weekend'])] },
-          { id: 'pockets', label: 'Check your pockets', effects: [{ kind: 'panel', panel: 'pockets', with: { title: 'Your pockets' } }] },
+          { id: 'pockets', label: 'Check your pockets', effects: [{ panel: 'pockets', with: { title: 'Your pockets' } }] },
         ],
         data: {
           shop: {

@@ -65,12 +65,12 @@ describe('checkGame', () => {
       ],
     } as Game
     expect(problemsOf(game)).toEqual([
-      'action blank: a condition needs one kind, such as kv or stat; this one has nothing in it',
+      'action blank: a condition needs one key that says what it asks, such as kv or stat, or a call by name; this one has nothing in it',
       'action blank: unknown command type "dance"',
-      'action kite: unknown effect kind "fly"',
-      'action kite: an effect needs a kind, or a custom call by name',
+      'action kite: effects are told apart by their key now, as { fly: … }, not { kind: "fly" }',
+      'action kite: an effect needs one key that says what it does, such as stat or kv, or a call by name; this one has nothing in it',
       // Its parts aren't looked into: the engine wouldn't know which one it means.
-      'finished: a condition has one kind, but this one has 2: kv, setting',
+      'finished: a condition asks one thing, but this one has 2 keys that each say what it asks: kv, setting',
     ])
   })
 
@@ -82,7 +82,7 @@ describe('checkGame', () => {
         {
           id: 'shop',
           body: [{ text: 'shop.none' }],
-          choices: [{ id: 'buy', when: { stat: 'grit' }, effects: [{ kind: 'entity', entity: 'thing:roll', by: 1 }] }],
+          choices: [{ id: 'buy', when: { stat: 'grit' }, effects: [{ entity: 'thing:roll', by: 1 }] }],
         },
       ],
     }
@@ -105,7 +105,7 @@ describe('checkGame', () => {
           id: 'porch',
           render: (state) => ({
             body: '[[sound:knock]]',
-            choices: [{ id: 'in', label: 'In', effects: [{ kind: 'scene', scene: state.turn > 0 ? 'hall' : null }] }],
+            choices: [{ id: 'in', label: 'In', effects: [{ scene: state.turn > 0 ? 'hall' : null }] }],
           }),
         },
         {
@@ -131,7 +131,7 @@ describe('a cooperating partner the game does not have', () => {
   const named = {
     when: { 'tides/high': true as const },
     short: { 'tides/turn': true as const },
-    long: { kind: 'custom' as const, name: 'tides/turn' },
+    long: { 'tides/turn': {} },
     command: { type: 'custom' as const, name: 'tides/check' },
   }
 
@@ -153,12 +153,12 @@ describe('a cooperating partner the game does not have', () => {
       plugins: [beach],
       actions: [
         ...(fixture().actions ?? []),
-        { id: 'net', effects: [{ kind: 'custom', name: 'moon/pull' }] },
+        { id: 'net', effects: [{ 'moon/pull': true }] },
         { id: 'look', label: 'Look', when: { 'moon/up': true }, command: { type: 'custom', name: 'moon/look' } },
       ],
     }
     expect(problemsOf(game)).toEqual([
-      'action net: no plugin effect named "moon/pull"',
+      'action net: no custom effect named "moon/pull"',
       'action look: no custom condition named "moon/up"',
       'action look: no plugin command named "moon/look"',
     ])
@@ -183,8 +183,8 @@ describe('the files a game names', () => {
               id: 'snap',
               label: 'flat.in',
               effects: [
-                { kind: 'create', of: 'photo', entity: { id: 'flat', image: 'photo/flat.png' }, at: 'player' },
-                { kind: 'notify', title: 'Snap', image: 'https://example.com/x.png' },
+                { create: 'photo', with: { id: 'flat', image: 'photo/flat.png' }, at: 'player' },
+                { notify: 'Snap', image: 'https://example.com/x.png' },
               ],
             },
           ],
@@ -194,17 +194,17 @@ describe('the files a game names', () => {
     game.prose = proseStore(game, { 'flat.in': 'In. [[img:hall]] [[widevideo:walk|poster=walk-still]] [[img:@door|day]]' })
     expect(checkGame(game).problems).toEqual([])
     expect(checkGame(game).files).toEqual([
-      { path: 'art/clip.mp4', kind: 'video', where: 'scene flat' },
-      { path: 'art/clip-still.jpg', kind: 'picture', where: 'scene flat' },
-      { path: 'art/photo/flat.png', kind: 'picture', where: 'scene flat' },
-      { path: 'art/room.png', kind: 'picture', where: 'scene flat' },
-      { path: 'audio/music/calm.ogg', kind: 'audio', where: 'track calm' },
-      { path: 'audio/knock.mp3', kind: 'audio', where: 'track knock' },
-      { path: 'art/door/blue.jpg', kind: 'picture', where: 'pool door' },
-      { path: 'art/door/rain.mp4', kind: 'video', where: 'pool door' },
-      { path: 'art/hall.jpg', kind: 'picture', where: 'prose flat.in' },
-      { path: 'art/walk-still.jpg', kind: 'picture', where: 'prose flat.in' },
-      { path: 'art/walk.mp4', kind: 'video', where: 'prose flat.in' },
+      { path: 'art/clip.mp4', type: 'video', where: 'scene flat' },
+      { path: 'art/clip-still.jpg', type: 'picture', where: 'scene flat' },
+      { path: 'art/photo/flat.png', type: 'picture', where: 'scene flat' },
+      { path: 'art/room.png', type: 'picture', where: 'scene flat' },
+      { path: 'audio/music/calm.ogg', type: 'audio', where: 'track calm' },
+      { path: 'audio/knock.mp3', type: 'audio', where: 'track knock' },
+      { path: 'art/door/blue.jpg', type: 'picture', where: 'pool door' },
+      { path: 'art/door/rain.mp4', type: 'video', where: 'pool door' },
+      { path: 'art/hall.jpg', type: 'picture', where: 'prose flat.in' },
+      { path: 'art/walk-still.jpg', type: 'picture', where: 'prose flat.in' },
+      { path: 'art/walk.mp4', type: 'video', where: 'prose flat.in' },
     ])
   })
 })

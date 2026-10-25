@@ -19,7 +19,7 @@ function stall() {
             title: 'The stall',
             panel: { panel: 'prices', with: { loaf: 4 } },
             body: [{ text: 'stall' }],
-            choices: [{ id: 'bye', effects: [{ kind: 'scene', scene: null }] }],
+            choices: [{ id: 'bye', effects: [{ scene: null }] }],
           },
         ],
         prose: { stall: 'Bread and jam on a trestle.', 'stall#bye': 'Walk on' },

@@ -45,7 +45,7 @@ function grown(extra: Partial<Game> = {}): Game {
     stats: [...game.stats!, { id: 'patience', label: 'Patience', start: 7 }],
     kinds: [{ id: 'staff', label: 'Staff' }],
     entities: [{ id: 'ana', of: 'staff', name: 'Ana' }],
-    settings: [{ id: 'hints', label: 'Hints', kind: 'toggle', default: true }],
+    settings: [{ id: 'hints', label: 'Hints', type: 'toggle', default: true }],
     resets: { tidied: false },
     ...extra,
   }

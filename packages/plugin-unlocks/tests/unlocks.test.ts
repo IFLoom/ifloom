@@ -54,7 +54,7 @@ const supporterPack: Pack = {
 function build(unlockDefs: UnlockDef[], packs: Pack[] = []): Game {
   const town: Content = {
     scenes: [{ id: 'intro', body: [], choices: [] }],
-    actions: [{ id: 'rest', effects: [{ kind: 'turn' }] }],
+    actions: [{ id: 'rest', effects: [{ turn: true }] }],
     data: { unlocks: { unlocks: unlockDefs } },
   }
   const loaded = loadGame([town], { id: GAME, title: 'Unlocks town', plugins: [unlocks()] }, { packs })

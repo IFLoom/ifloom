@@ -18,7 +18,7 @@ export const office: Content = {
             { when: { all: [weekday(4), { not: period('morning', 'afternoon') }] }, reason: 'Closed. Back on Monday.' },
             { when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' },
           ],
-          actions: [{ id: 'work', label: 'Do a shift', cost: { stats: { energy: 30 } }, effects: [pass(2), { kind: 'stat', stat: 'coins', by: 20 }] }],
+          actions: [{ id: 'work', label: 'Do a shift', cost: { stats: { energy: 30 } }, effects: [pass(2), { stat: 'coins', by: 20 }] }],
         },
       ],
     },

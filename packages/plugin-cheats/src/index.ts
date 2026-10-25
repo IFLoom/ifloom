@@ -33,6 +33,7 @@ import {
   type Reference,
   type RenderedChoice,
 } from '@ifloom/engine'
+import { CONTENT_VERSION, contentMigrations } from './upgrade.ts'
 
 const ID = 'cheats'
 
@@ -152,6 +153,8 @@ export function cheats(): DefinedPlugin<CheatsState, CheatsView> {
   return definePlugin<CheatsState, CheatsView>({
     id: ID,
     version: 1,
+    contentVersion: CONTENT_VERSION,
+    contentMigrations,
     start: () => ({ used: [] }),
     // Unlocks is what a supporter-only cheat names in its `blocked`, when the game has it.
     cooperates: ['unlocks'],

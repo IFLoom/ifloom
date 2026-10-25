@@ -6,7 +6,7 @@ export type { Condition, Range } from './types.ts'
 
 /**
  * Whether a condition holds. No condition always holds. A condition is
- * looked up by its one kind key (`KINDS` in core.ts); one with no kind key,
+ * looked up by its one kind key (`TABLES` in core.ts); one with no kind key,
  * or two, holds nowhere, and the content checker reports it.
  */
 export function holds(state: GameState, condition: Condition | undefined, game?: Game): boolean {

@@ -39,10 +39,7 @@ function cafe(audio = true): Game {
             choices: [
               {
                 id: 'in',
-                effects: [
-                  { kind: 'sound', track: 'bell' },
-                  { kind: 'scene', scene: 'counter' },
-                ],
+                effects: [{ sound: 'bell' }, { scene: 'counter' }],
               },
             ],
           },

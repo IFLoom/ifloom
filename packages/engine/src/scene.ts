@@ -251,7 +251,7 @@ export function renderScene(scene: DataScene, state: GameState, runtime: SceneRu
       // A once-a-day line pays nothing the second time, but the prose and
       // the choice stay on screen — see `oncePerTurn()` for why that reads better.
       effects: already
-        ? buildEffects(state, runtime.game, choice.effects).filter((effect) => effect.kind === 'scene')
+        ? buildEffects(state, runtime.game, choice.effects).filter((effect) => 'scene' in effect)
         : [...buildEffects(state, runtime.game, choice.effects), ...(choice.once ? runtime.spend(state, scene.id, choice.id) : []), ...remember],
     })
   }
@@ -306,11 +306,11 @@ export function drawVariant(
   // Weighted members are drawn at random by weight, each draw seeded by the save, the turn and the count.
   if (weightOf && members.some((member) => (weightOf(member) ?? 1) !== 1)) {
     const id = weighted(members, weightOf, 'variants', name, state.seed, state.turn, used) ?? members[0]
-    return { id, remember: { kind: 'kv', key, to: used + 1 } }
+    return { id, remember: { kv: key, to: used + 1 } }
   }
   const offset = roll(members.length, name, state.seed, state.turn)
   const index = (((offset + used) % members.length) + members.length) % members.length
-  return { id: members[index], remember: { kind: 'kv', key, to: used + 1 } }
+  return { id: members[index], remember: { kv: key, to: used + 1 } }
 }
 
 /**

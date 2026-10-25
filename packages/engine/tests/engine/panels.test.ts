@@ -14,11 +14,11 @@ function withPanels(rules: Parameters<typeof fixture>[0] = {}): Game {
     ...fixture(rules),
     actions: [
       ...activities,
-      { id: 'counter', effects: [{ kind: 'panel', panel: 'shop', with: { vendor: 'bakery' } }] },
-      { id: 'board', effects: [{ kind: 'panel', panel: 'jobs' }] },
-      { id: 'late-board', effects: [{ kind: 'turn' }, { kind: 'panel', panel: 'jobs', with: { job: ['baker'] } }] },
-      { id: 'look-away', effects: [{ kind: 'panel', panel: null }] },
-      { id: 'meet-rosa', effects: [{ kind: 'scene', scene: 'rosa.hello' }] },
+      { id: 'counter', effects: [{ panel: 'shop', with: { vendor: 'bakery' } }] },
+      { id: 'board', effects: [{ panel: 'jobs' }] },
+      { id: 'late-board', effects: [{ turn: true }, { panel: 'jobs', with: { job: ['baker'] } }] },
+      { id: 'look-away', effects: [{ panel: null }] },
+      { id: 'meet-rosa', effects: [{ scene: 'rosa.hello' }] },
     ],
   }
 }
@@ -94,9 +94,9 @@ describe('panels', () => {
       plugins: [counter],
       actions: [
         ...activities,
-        { id: 'a', effects: [{ kind: 'panel', panel: 'shop', with: { vendor: 'nowhere' } }] },
-        { id: 'b', effects: [{ kind: 'panel', panel: 'shop' }] },
-        { id: 'c', effects: [{ kind: 'panel', panel: 'mine', with: { anything: 1 } }] },
+        { id: 'a', effects: [{ panel: 'shop', with: { vendor: 'nowhere' } }] },
+        { id: 'b', effects: [{ panel: 'shop' }] },
+        { id: 'c', effects: [{ panel: 'mine', with: { anything: 1 } }] },
       ],
     }
     expect(checkGame(game).problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
@@ -116,11 +116,11 @@ describe('a scene’s panel', () => {
         {
           id: 'stall',
           body: [],
-          choices: [{ id: 'bye', label: 'stall#bye', effects: [{ kind: 'scene', scene: null }] }],
+          choices: [{ id: 'bye', label: 'stall#bye', effects: [{ scene: null }] }],
           panel: { panel: 'prices', with: { stall: 'bread' } },
         },
       ],
-      actions: [...activities, { id: 'counter', effects: [{ kind: 'panel', panel: 'shop', with: { vendor: 'bakery' } }] }],
+      actions: [...activities, { id: 'counter', effects: [{ panel: 'shop', with: { vendor: 'bakery' } }] }],
     }
   }
 

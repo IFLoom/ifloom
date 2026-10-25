@@ -25,10 +25,7 @@ const supporter: Pack = {
       choices: [
         {
           id: 'leave',
-          effects: [
-            { kind: 'stat', stat: 'charm', by: 1 },
-            { kind: 'scene', scene: null },
-          ],
+          effects: [{ stat: 'charm', by: 1 }, { scene: null }],
         },
       ],
     },

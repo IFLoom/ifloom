@@ -10,32 +10,46 @@ Your game's own actions go in your content's `actions`, and each one with a `lab
 import { actionBlocked, actionById, actionReferences, effectsOf, need, payCost, warningOf, whyNot, type ActionCost, type ActionDef, type Blocked } from '@ifloom/engine'
 ```
 
-## ActionDef
+## ButtonDef
 
 ```ts
-type ActionDef = {
+type ButtonDef = {
   id: string
   label?: string
+  labels?: { when?: Condition; label: string }[]
   when?: Condition
   blocked?: Blocked[]
   cost?: ActionCost
   effects?: EffectRef[]
   command?: CommandRef
   once?: { per: 'turn'; reason: string }
+  tags?: string[]
+  irreversible?: string
   ui?: Ui<ChoiceUi>
 }
+```
+
+Something the player can press. A scene's [`Choice`](/docs/reference/scenes#choice) and an [`ActionDef`](#actiondef) are both one, so a choice and a room's button are written and read the same way. Pressing one runs its command, then pays its cost, then applies its effects.
+
+## ActionDef
+
+```ts
+type ActionDef = ButtonDef
 ```
 
 | Field | What it does |
 |---|---|
 | `id` | Unique among the game's actions. The view passes it on as the [`RenderedChoice`](/docs/reference/view#renderedchoice)'s `id`, and `[[act:id]]` in a room's prose names it. |
-| `label` | The button's text. An action with no label is never drawn as a button. A choice's command, another button or a hotspot does it with `{ type: 'action', id }`. |
+| `label` | The button's words, or a prose key whose line the game's prose has. An action with no label is never drawn as a button. A choice's command, another button or a hotspot does it with `{ type: 'action', id }`. |
+| `labels` | Words that depend on state, each `{ when, label }`. The first whose `when` holds wins over `label`. |
 | `when` | Only offered, and only done, while this holds. Without it, it's always there. |
 | `blocked` | [Conditions](/docs/reference/conditions) that refuse it while they hold, each with the line the player reads. See [`Blocked`](#blocked). |
 | `cost` | The stats it spends. See [`ActionCost`](#actioncost). |
 | `effects` | [Effects](/docs/reference/effects) applied in order after the cost is paid. A plugin's effect or one of the game's own is written [in short](/docs/reference/custom#plugincall), as in `{ 'game/countCoffee': true }`. |
 | `command` | A [command](/docs/reference/commands) it sends, before its cost and effects: a plugin's in short, such as `{ 'places/go': { id: 'cafe' } }`, or the engine's. Any command but `choose`. |
 | `once` | Once a turn. It's refused with `reason`, which shows on its button, once it's been done this turn. It's counted in [`state.chosen`](/docs/reference/state#chosen) under its id. |
+| `tags` | Words the UI can style or filter the button by, passed to its [`RenderedChoice`](/docs/reference/view#renderedchoice). The engine gives them no meaning. |
+| `irreversible` | A warning that it can't be undone, which the UI shows on it. |
 | `ui` | [Presentation hints](/docs/reference/ui-hints) for the UI, passed to the button as written, such as the React UI's [`transition`](/docs/react/hints#transition-on-a-choice) for the screen it leads to. |
 
 This is the showcase's coffee, a room action of the café, with an effect of the game's own added to count the cups:

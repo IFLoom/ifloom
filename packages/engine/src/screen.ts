@@ -18,7 +18,7 @@ import { holds } from './condition.ts'
 import { lockIn, lockedOut } from './locks.ts'
 import { sceneById, type ActionDef, type Blocked, type Game, type SceneMedia } from './game.ts'
 import { actionById } from './action.ts'
-import { runsAsAction } from './features/actions.ts'
+import { costEffects, runsAsAction } from './features/actions.ts'
 import { artSrc, beatsOfParts, inlineMarkup, mediaType, parseBeats, videoView, type BodyPart, type InlineSpan, type SceneBeat } from './sceneBody.ts'
 import {
   mediaMarkup,
@@ -324,8 +324,8 @@ function hidden(state: GameState, game: Game, action: Action, rendered: Renderin
  */
 function idleActions(state: GameState, game: Game, drawing: Drawing): ScreenChoice[] {
   // The game's own actions with a label are its buttons; one with none is done only by a command.
-  const own = (game.actions ?? []).filter((action) => action.label !== undefined).map((action) => asAction(action))
-  return [...pluginButtons(game, state).map(({ action, owner }) => asAction(action, owner)), ...own]
+  const own = (game.actions ?? []).filter((action) => action.label !== undefined).map((action) => asAction(state, game, action))
+  return [...pluginButtons(game, state).map(({ action, owner }) => asAction(state, game, action, owner)), ...own]
     .filter((action) => holds(state, action.when, game) && !hidden(state, game, action, drawing.rendered))
     .map((action) => {
       const effects = effectsIn(drawing.rendered, state, game, action.command)
@@ -342,7 +342,7 @@ function idleActions(state: GameState, game: Game, drawing: Drawing): ScreenChoi
  * (see `Plugin.action`); left out, it is one of the game's.
  */
 export function renderAction(state: GameState, game: Game, action: ActionDef, owner?: string): RenderedChoice {
-  return actionButton(state, game, asAction(action, owner), rendering(state, game))
+  return actionButton(state, game, asAction(state, game, action, owner), rendering(state, game))
 }
 
 /** An action as a button sends it, as the view shows it: its command in the long form, and its words. */
@@ -353,11 +353,21 @@ type Action = Omit<ActionDef, 'command' | 'label'> & { label: string; command: C
  * `{ type: 'action', id }` (a plugin's as `'<owner>/<id>'`), one with only a
  * command sends that, read into the long form.
  */
-const asAction = (action: ActionDef, owner?: string): Action => ({
+const asAction = (state: GameState, game: Game, action: ActionDef, owner?: string): Action => ({
   ...action,
-  label: action.label ?? action.id,
+  label: buttonWords(state, game, action) ?? action.id,
   command: runsAsAction(action) ? { type: 'action', id: owner ? `${owner}/${action.id}` : action.id } : commandOf(action.command!),
 })
+
+/**
+ * A button's words as its `labels` and `label` give them: the first label
+ * whose `when` holds, else `label`, each the prose line when it is a key the
+ * game's prose has, else the words as written, tokens filled. Undefined with neither.
+ */
+function buttonWords(state: GameState, game: Game, button: Pick<ActionDef, 'label' | 'labels'>): string | undefined {
+  const label = button.labels?.find((entry) => holds(state, entry.when, game))?.label ?? button.label
+  return label === undefined ? undefined : (game.prose?.line(label, state) ?? featureContext().fillTokens(label, state, game))
+}
 
 /** `renderAction`, asking `rendered` for the open scene. `effects`, when the caller has worked them out. */
 function actionButton(state: GameState, game: Game, action: Action, rendered: Rendering, known?: readonly Effect[]): RenderedChoice {
@@ -369,6 +379,8 @@ function actionButton(state: GameState, game: Game, action: Action, rendered: Re
     label: action.label,
     price: priced(state, game, { stats: commandEntry(action.command)?.spends?.(action.command, game, state, featureContext()) }, watched ? effects : []),
     disabled: action.blocked?.find((entry) => holds(state, entry.when, game))?.reason ?? whyNotIn(rendered, state, game, action.command, effects),
+    ...(action.tags ? { tags: action.tags } : {}),
+    ...(action.irreversible !== undefined ? { irreversible: action.irreversible } : {}),
     command: action.command,
     ...withUi(action.ui),
   }
@@ -456,12 +468,15 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
       // A choice that also sends a command applies what that command would, after its own effects' price.
       // The game's own custom effects among them are worked out against this state, for the price and the guards.
       const sends = choice.command && commandOf(choice.command)
-      const effects = [...previewEffects(state, game, choice.effects), ...(sends ? effectsIn(drawing.rendered, state, game, sends) : [])]
-      const spends = sends ? commandEntry(sends)?.spends?.(sends, game, state, featureContext()) : undefined
+      const paid = [...previewEffects(state, game, choice.effects), ...(sends ? effectsIn(drawing.rendered, state, game, sends) : [])]
+      // What its cost spends is priced as an action's is, and seen by the guards as the stat effects it applies.
+      const effects = [...costEffects(choice.cost), ...paid]
+      const spends = { ...(sends ? commandEntry(sends)?.spends?.(sends, game, state, featureContext()) : undefined) }
+      for (const [stat, amount] of Object.entries(choice.cost?.stats ?? {})) spends[stat] = (spends[stat] ?? 0) + amount
       return {
         id: choice.id,
         label: choice.label,
-        price: priceOfEffects(state, game, effects, spends),
+        price: priceOfEffects(state, game, paid, spends),
         // The choice's own reason first; then a lock or a plugin's guard, as the reducer will ask.
         disabled: choice.disabled ?? whyNotIn(drawing.rendered, state, game, command, effects),
         tags: choice.tags,

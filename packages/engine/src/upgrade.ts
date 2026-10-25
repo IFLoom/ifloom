@@ -179,6 +179,9 @@ function paperToPieces(text: string): string {
   return out.join('')
 }
 
+/** A `labels` entry from before schema 22, `{ when, key }`, as `{ when, label }`. */
+const keyToLabel = (entry: unknown) => (isRecord(entry) && 'key' in entry && !('label' in entry) ? renamed(entry, { key: 'label' }) : entry)
+
 /** A picture's markup with no `rot` flag: `[[img:cup|rot|A cup]]` is `[[img:cup|A cup]]`. */
 const unturned = (text: string) =>
   text.replace(/\[\[(img|wide):([^\]|]+)((?:\|[^\]|]*)*)\]\]/g, (whole, tag: string, path: string, rest: string) => {
@@ -200,11 +203,19 @@ const unturned = (text: string) =>
  *   `clip` and `diary`) is `[[ui:prop|Milk|sticky]]`, and a `> ` paragraph is
  *   `[[ui:mono|…]]`, each a paragraph of its own;
  * - a picture's `rot` flag goes, and a scene's `{ text }` block naming a line
- *   that had one gets the React UI's block hint `ui: { tilt: true }`.
+ *   that had one gets the React UI's block hint `ui: { tilt: true }`;
+ * - a choice's `labels` name their words `label`, as every button's do:
+ *   `{ when, key: 'cafe.order#late' }` is `{ when, label: 'cafe.order#late' }`.
  */
 function toSchema22(pack: RawPack): RawPack {
   const tilted = new Set<string>()
-  const out = TOOLS.words(pack, (text, key) => {
+  const labelled = (value: unknown) => deep(value, (entry) => (Array.isArray(entry.labels) ? { ...entry, labels: entry.labels.map(keyToLabel) } : entry))
+  const relabelled = {
+    ...pack,
+    ...(pack.scenes !== undefined ? { scenes: labelled(pack.scenes) } : {}),
+    ...(pack.patches !== undefined ? { patches: labelled(pack.patches) } : {}),
+  }
+  const out = TOOLS.words(relabelled as RawPack, (text, key) => {
     const next = unturned(paperToPieces(text))
     if (unturned(text) !== text) tilted.add(key)
     return next

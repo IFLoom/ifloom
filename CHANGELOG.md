@@ -10,6 +10,9 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- A scene's choice can have a `cost`, `{ stats: { coins: 2 } }`, as an action can: shown as its price, checked when it's chosen, and paid after its command. An action can have `labels`, `tags` and `irreversible`, as a choice can. Both are a [`ButtonDef`](/docs/reference/actions#buttondef).
+- A choice's `label` can be the words themselves, `label: 'Buy a slice of cake'`. A prose key still works when the game's prose has it, and so for an action's.
+
 - A plugin's context has [`beats(blocks, id)`](/docs/reference/plugins#beats), which draws a scene's kind of blocks as beats, as a scene's body is drawn: `when`s, tokens, variants, pool picks recorded, spoken lines with their speakers, and bold, italics and UI pieces. The game's own code gets it too. The messages, feed and devices plugins draw their words with it.
 - A spoken line's beat says whose it is: `Ava: "Morning."` gives `{ type: 'say', who: 'character', speaker: 'character:ava', text }` when Ava is an entity, so a UI can tell her lines from Sam's. The name can be in any alphabet.
 - The string [`you`](/docs/reference/strings#buttons-and-labels) is the name the player's spoken lines are written under, `You` in English. A game in another language sets its own, `strings: { you: 'Tú' }`, and a line under the name of whoever the player is playing is theirs too.
@@ -161,6 +164,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - A Life sim patterns recipe in the docs: work each new day with `rules.onTurnDone`, cooldowns with `since` and `last`, wages paid on a Friday, who's behind an exit, lines shared across places, a placeholder for missing art, and the order refusals come in, with how to put your own where you want them.
 
 ### Changed
+
+- **Breaking:** a choice's `labels` entries name their words `label`, as an action's do: `{ when, label }` (was `key`). A pack of an older schema is rewritten when it loads. A choice's `effects` can be left out.
 
 - **Breaking:** who a scene's speaker is comes from their entity, with no plugin to ask. A scene's `speaker` names an entity, by reference (`'character:ava'`) or a bare id (`'ava'` is `character:ava`, else the one entity with that id), and the view shows its name, picture and hints. A message's and a post's `from` work the same way, so any entity can send one. The speaker's picture is their entity's `image`: the `art/character/<id>.jpg` the cast used to guess is gone, so give each speaker an `image`.
 - **Breaking:** `SpeakerView` has `ref` and `image` (was `portrait`), `view.scene.stageImage` is `view.scene.image`, and a hand-built scene's `portrait` is `image`.

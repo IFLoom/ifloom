@@ -153,7 +153,7 @@ An `<<if>>` around a link becomes one of two things on the choice:
 A link whose text changes with the state, such as `<<if $visits gte 3>>[[The usual|Order]]<<else>>[[Order|Order]]<</if>>`, is one choice with `labels`. The first entry whose `when` holds gives the label's prose key:
 
 ```ts
-{ id: 'order', labels: [{ when: { kv: 'visits', gte: 3 }, key: 'cafe#order-usual' }], effects: [/* ... */] }
+{ id: 'order', labels: [{ when: { kv: 'visits', gte: 3 }, label: 'cafe#order-usual' }], effects: [/* ... */] }
 ```
 
 An `<<if>>` that only exists to vary a line, so the player doesn't read the same words every visit, is a set of [variants](/docs/reference/prose#variantmember). The block `{ variants: 'cafe.chatter' }` shows one of the set each time, and rotates through them.

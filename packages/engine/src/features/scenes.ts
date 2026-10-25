@@ -13,6 +13,7 @@ import { emphasis, INLINE_MARKUP, inlineMarkup } from '../sceneBody.ts'
 import { commandOf } from '../calls.ts'
 import { defineFeature, lastWins, together, type FeatureContext, type PackMerge, type ResolveTools } from './feature.ts'
 import { inRange, wanted } from '../range.ts'
+import { costEffects, costRefusal, payCost } from './actions.ts'
 
 /** A surgical change to a data scene an earlier pack declared: a choice added, dropped or replaced. */
 export type Patch =
@@ -147,14 +148,19 @@ export function blockReferences(blocks: readonly Block[] | undefined): Reference
   return out
 }
 
+/** Does a button's label read as a prose key rather than words: no spaces, and a `.` or `#` in it? */
+const readsAsKey = (label: string) => !/\s/.test(label) && /[.#]/.test(label)
+
 /** What a data scene names: its body, its choices' labels, conditions and effects, its audio, panel and stage. */
 export function dataSceneReferences(scene: DataScene): Reference[] {
   const out: Reference[] = [{ blocks: scene.body }]
   out.push({ actionsIn: scene.body, offers: scene.choices.map((choice) => choice.id) })
   for (const choice of scene.choices) {
     if (choice.command) out.push({ within: `choice ${choice.id}`, refs: [{ command: choice.command }] })
-    out.push({ prose: choice.label ?? `${scene.id}#${choice.id}` })
-    for (const entry of choice.labels ?? []) out.push({ prose: entry.key }, { when: entry.when })
+    // A label is words, or a prose key: one that reads as a key (no spaces, a `.` or `#`) must have its prose.
+    if (choice.label === undefined) out.push({ prose: `${scene.id}#${choice.id}` })
+    else if (readsAsKey(choice.label)) out.push({ prose: choice.label })
+    for (const entry of choice.labels ?? []) out.push(...(readsAsKey(entry.label) ? [{ prose: entry.label }] : []), { when: entry.when })
     out.push({ when: choice.when })
     for (const entry of choice.blocked ?? []) out.push({ when: entry.when })
     out.push({ effects: choice.effects })
@@ -405,6 +411,8 @@ export const scenes = defineFeature<ScenesShape>({
         const choice = cx.rendered.scene()!.choices.find((entry) => entry.id === command.id)
         if (!choice || choice.visible === false) return say(game, 'notOnOffer')
         if (choice.disabled) return choice.disabled
+        const short = costRefusal(state, game, choice.cost, cx)
+        if (short) return short
         // The command it sends, asked as it would be on its own. A choice can't send a choice.
         const sends = choice.command && commandOf(choice.command)
         if (sends) return sends.type === 'choose' ? say(game, 'notOnOffer') : cx.whyNotCommand(state, game, sends)
@@ -417,15 +425,17 @@ export const scenes = defineFeature<ScenesShape>({
         const key = `${scene.id}#${choice.id}`
         // Counted on the turn it was picked in, before its effects can end the turn.
         const marked = { ...state, chosen: { ...state.chosen, [key]: oneMore(state.chosen?.[key], state.turn) } }
-        // The command it sends first, then its effects.
+        // The command it sends first, then its cost, then its effects.
         const sent = choice.command ? cx.runCommand(marked, game, commandOf(choice.command)) : marked
-        return cx.runEffects(sent, game, choice.effects, false)
+        const paid = choice.cost ? payCost(sent, game, choice.cost, cx) : sent
+        return cx.runEffects(paid, game, choice.effects, false)
       },
       effectsOf: (state, command, game, cx) => {
         const choice = cx.rendered.scene()?.choices.find((entry) => entry.id === command.id)
         if (!choice) return []
         const sends = choice.command && commandOf(choice.command)
-        return sends && sends.type !== 'choose' ? [...choice.effects, ...cx.effectsOfCommand(state, game, sends)] : [...choice.effects]
+        const own = [...costEffects(choice.cost), ...choice.effects]
+        return sends && sends.type !== 'choose' ? [...own, ...cx.effectsOfCommand(state, game, sends)] : own
       },
       references: () => [],
     },

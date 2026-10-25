@@ -12,6 +12,7 @@ export type {
   RulesCommand,
   RulesContext,
   ActionDef,
+  ButtonDef,
   Blocked,
   ProseStore,
   Scene,

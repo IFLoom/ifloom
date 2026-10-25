@@ -1,13 +1,14 @@
 import { holds, type Condition } from './condition.ts'
-import type { Blocked, Game, MinigameSceneFields, Scene, SceneChoice, SceneMedia, SceneView, StoryletFields } from './game.ts'
+import type { ButtonDef, Game, MinigameSceneFields, Scene, SceneChoice, SceneMedia, SceneView, StoryletFields } from './game.ts'
 import { roll, weighted } from './random.ts'
 import { mediaMarkup, resolveMedia, resolvePoolMarkup, type MediaStage } from './features/media.ts'
 import { featureContext } from './core.ts'
-import type { BlockUi, ChoiceUi, SceneUi, Ui } from './features/ui.ts'
-import { buildEffects, type EffectRef } from './custom.ts'
+import type { BlockUi, SceneUi, Ui } from './features/ui.ts'
+import { buildEffects } from './custom.ts'
 import type { ScenePanel } from './features/panels.ts'
 import type { Effect, GameState } from './types.ts'
-import { commandOf, type CommandRef } from './calls.ts'
+import { commandOf } from './calls.ts'
+import { fillTokens } from './prose.ts'
 import type { BodyPart } from './sceneBody.ts'
 
 /**
@@ -50,24 +51,16 @@ export type Block = (
   ui?: Ui<BlockUi>
 }
 
-export type Choice = {
-  id: string
-  /** Prose key for the label. Defaults to `${scene}#${id}`. */
-  label?: string
-  /**
-   * Labels that depend on state — "Not today" before you have bought it,
-   * "Right." after. First match wins; `label` is the fallback.
-   */
-  labels?: { when?: Condition; key: string }[]
-  when?: Condition
-  /** Reasons it is on screen but cannot be taken (or, with `hide`, left off). First match wins. */
-  blocked?: Blocked[]
-  /**
-   * A line that only lands once a turn: spent while the choice was last
-   * picked this turn (`state.chosen`).
-   * The reason is what the player reads on it afterwards — the line stays on
-   * screen rather than vanishing, which is how the caps read as character.
-   */
+/**
+ * A choice in a scene: a `ButtonDef`, sent as `{ type: 'choose', id }`. Its
+ * id is unique within the scene, and `state.chosen` counts it as
+ * `<scene>#<id>`.
+ *
+ * A once-a-turn choice stays on screen once it has landed this turn, with
+ * its `once.reason`, and pays nothing more, which is how the caps read as
+ * character rather than vanishing.
+ */
+export type Choice = ButtonDef & {
   once?: {
     per: 'turn'
     reason: string
@@ -78,21 +71,6 @@ export type Choice = {
      */
     key?: string
   }
-  /** Words the UI can style or filter the choice by. The engine gives them no meaning. */
-  tags?: string[]
-  irreversible?: string
-  /** Literal effects, or a call in short (`{ 'game/name': args }`) for the few that are computed. */
-  effects: EffectRef[]
-  /**
-   * A command to send as well, such as a plugin's:
-   * `{ 'devices/open': { id: 'messages' } }`. It
-   * runs first, then the effects. The choice is greyed out with that
-   * command's reason while it would be refused, and its price includes what
-   * the command spends. Any command but `choose`.
-   */
-  command?: CommandRef
-  /** Presentation hints for the UI, carried to the view's choice as written. See `ChoiceUi`. */
-  ui?: Ui<ChoiceUi>
 }
 
 export type DataScene = StoryletFields &
@@ -233,7 +211,7 @@ export function renderScene(scene: DataScene, state: GameState, runtime: SceneRu
     const visible = holds(state, choice.when, runtime.game) && !choice.blocked?.some((entry) => entry.hide && holds(state, entry.when, runtime.game))
     const already = choice.once !== undefined && runtime.spent(state, scene.id, choice.id)
     const blocked = choice.blocked?.find((entry) => holds(state, entry.when, runtime.game))
-    const chosen = choice.labels?.find((entry) => holds(state, entry.when, runtime.game))
+    const labelled = choice.labels?.find((entry) => holds(state, entry.when, runtime.game))
     // A reply written to answer the line she actually gave beats a generic
     // one. Any block may carry its own `### Choices`; if one that rendered has
     // a label for this choice, the last of them wins.
@@ -241,7 +219,8 @@ export function renderScene(scene: DataScene, state: GameState, runtime: SceneRu
       .map((key) => runtime.prose.line(`${key}#${choice.id}`, state))
       .filter((line): line is string => line !== undefined)
       .at(-1)
-    const label = matched ?? runtime.prose.line(chosen?.key ?? choice.label ?? `${scene.id}#${choice.id}`, state) ?? choice.id
+    const named = labelled?.label ?? choice.label
+    const label = matched ?? (named !== undefined ? wordsOf(named, state, runtime) : (runtime.prose.line(`${scene.id}#${choice.id}`, state) ?? choice.id))
     choices.push({
       id: choice.id,
       label,
@@ -249,13 +228,14 @@ export function renderScene(scene: DataScene, state: GameState, runtime: SceneRu
       disabled: blocked?.reason ?? (already ? choice.once?.reason : undefined),
       tags: choice.tags,
       irreversible: choice.irreversible,
+      ...(choice.cost ? { cost: choice.cost } : {}),
       ...(choice.command ? { command: commandOf(choice.command) } : {}),
       ...(choice.ui ? { ui: choice.ui } : {}),
       // A once-a-day line pays nothing the second time, but the prose and
       // the choice stay on screen — see `oncePerTurn()` for why that reads better.
       effects: already
-        ? buildEffects(state, runtime.game, choice.effects).filter((effect) => 'scene' in effect)
-        : [...buildEffects(state, runtime.game, choice.effects), ...(choice.once ? runtime.spend(state, scene.id, choice.id) : []), ...remember],
+        ? buildEffects(state, runtime.game, choice.effects ?? []).filter((effect) => 'scene' in effect)
+        : [...buildEffects(state, runtime.game, choice.effects ?? []), ...(choice.once ? runtime.spend(state, scene.id, choice.id) : []), ...remember],
     })
   }
 
@@ -270,6 +250,11 @@ export function renderScene(scene: DataScene, state: GameState, runtime: SceneRu
     ...(scene.audio ? { audio: scene.audio } : {}),
     choices,
   }
+}
+
+/** A button's words: the prose line when `label` is a prose key the game has, else the words as written, tokens filled. */
+function wordsOf(label: string, state: GameState, runtime: SceneRuntime): string {
+  return runtime.prose.line(label, state) ?? fillTokens(label, state, runtime.game)
 }
 
 /** A part as the body's text has it: its markup, or a beat's words. */

@@ -34,47 +34,72 @@ export type Blocked = {
 }
 
 /**
- * Something the player can do, as a button: the game's own in content's
- * `actions`, a plugin's (a place's, an app's). It has the fields a choice has:
- * what it costs, why it is refused, what it does, and a command it sends.
+ * Something the player can press: a scene's choice (`Choice`) or an action
+ * (`ActionDef`). Both have these fields, read the same way: its words, when
+ * it is offered and why it is refused, what it costs, what it does and a
+ * command it sends, once a turn, and words and hints for the UI.
  *
- * Pressing one with only a `command` sends that command. One with a cost,
- * effects or `once` sends `{ type: 'action', id }`, which runs its command
- * first, then pays its cost and applies its effects: the game's by its id,
- * a plugin's as `'<plugin>/<id>'`.
+ * Pressing one runs, in order: its command, its cost, then its effects.
  */
-export type ActionDef = {
+export type ButtonDef = {
   id: string
   /**
-   * The button's words. An action with none is never drawn as a button: a
-   * choice's command, another button or a hotspot runs it with
-   * `{ type: 'action', id }`.
+   * Its words. A prose key works too: when the game's prose has a line for
+   * it, that line is shown. A scene's choice with none reads the prose key
+   * `<scene>#<id>`, else its id; an action with none is never drawn as a
+   * button.
    */
   label?: string
+  /**
+   * Words that depend on state, "Not today" before you have bought it,
+   * "Right." after. The first whose `when` holds wins; `label` is the
+   * fallback. Each `label` is words or a prose key, as `label` is.
+   */
+  labels?: { when?: Condition; label: string }[]
   /** Only offered, and only done, while this holds. */
   when?: Condition
   /**
    * Shown but greyed out while one of these holds, with its reason (or left
-   * off with `hide`), and refused with it.
+   * off with `hide`), and refused with it. The first that holds wins.
    */
   blocked?: Blocked[]
-  /** Stats it spends, checked before it runs and listed on its button. */
+  /** Stats it spends: checked before it runs, listed on its button, and paid after its command. */
   cost?: ActionCost
   /** Applied after the cost, in order. A plugin's or the game's own in short for one that is computed. */
   effects?: EffectRef[]
   /**
-   * A command it sends, run first: a plugin's in short (`{ 'places/go': { id: 'cafe' } }`)
-   * or the engine's. Any command but `choose`.
+   * A command it sends as well, run first: a plugin's in short
+   * (`{ 'devices/open': { id: 'messages' } }`) or the engine's. It is greyed
+   * out with that command's reason while it would be refused, and its price
+   * includes what the command spends. Any command but `choose`.
    */
   command?: CommandRef
   /**
-   * Once a turn: refused, with `reason` on its button, once it has been done
-   * this turn. It is counted in `state.chosen` under its id.
+   * Once a turn: spent once it has been pressed this turn, as `state.chosen`
+   * counts it. `reason` is what the player reads on it afterwards: a choice
+   * stays on screen and pays nothing more, an action is refused.
    */
   once?: { per: 'turn'; reason: string }
-  /** Presentation hints for the UI, carried to the button as written. See `ChoiceUi`. */
+  /** Words the UI can style or filter it by. The engine gives them no meaning. */
+  tags?: string[]
+  /** A warning that it can't be undone, which the UI shows on it. */
+  irreversible?: string
+  /** Presentation hints for the UI, carried to its button as written. See `ChoiceUi`. */
   ui?: Ui<ChoiceUi>
 }
+
+/**
+ * Something the player can do, as a button: the game's own in content's
+ * `actions`, a plugin's (a place's, an app's). It is a `ButtonDef`, the
+ * fields a choice has.
+ *
+ * Pressing one with only a `command` sends that command. One with a cost,
+ * effects or `once` sends `{ type: 'action', id }`, which runs its command
+ * first, then pays its cost and applies its effects: the game's by its id,
+ * a plugin's as `'<plugin>/<id>'`. One with no `label` is never drawn as a
+ * button: a choice's command, another button or a hotspot runs it.
+ */
+export type ActionDef = ButtonDef
 
 export type SceneChoice = {
   id: string
@@ -85,6 +110,8 @@ export type SceneChoice = {
   tags?: string[]
   irreversible?: string
   effects: Effect[]
+  /** Stats it spends, as the choice's `cost` says. */
+  cost?: ActionCost
   /** A command it sends as well, run before its effects. See `Choice.command`. */
   command?: CommandRef
   /** Presentation hints for the UI, carried to the view's choice as written. See `ChoiceUi`. */

@@ -354,38 +354,31 @@ The view resolves the stage into [`view.scene.stage`](/docs/reference/view#the-s
 ### Choice
 
 ```ts
-type Choice = {
-  id: string
-  label?: string
-  labels?: { when?: Condition; key: string }[]
-  when?: Condition
-  blocked?: Blocked[]
+type Choice = ButtonDef & {
   once?: { per: 'turn'; reason: string; key?: string }
-  tags?: string[]
-  irreversible?: string
-  effects: EffectRef[]
-  command?: Command
-  ui?: Ui<ChoiceUi>
 }
 ```
 
+A choice is a [`ButtonDef`](/docs/reference/actions#buttondef), the same fields an [action](/docs/reference/actions#actiondef) has, sent as `{ type: 'choose', id }`. Its id is unique within the scene.
+
 | Field | What it does | Default |
 |---|---|---|
-| `label` | The prose key for the button text. | `` `${scene.id}#${id}` `` |
-| `labels` | Labels that depend on state. The first whose `when` holds wins. | `label` |
+| `label` | The button's words. A prose key works too: when the game's prose has a line for it, that line is shown. | the prose key `` `${scene.id}#${id}` ``, else the id |
+| `labels` | Words that depend on state, each `{ when, label }`. The first whose `when` holds wins. | `label` |
 | `when` | The choice is shown only while this holds. A failing `when` sets `visible: false`. | always shown |
 | `blocked` | Reasons to grey it out, as [`Blocked`](/docs/reference/actions#blocked) entries. The first whose `when` holds becomes the `disabled` text. One with `hide: true` leaves the choice off the screen instead. | not blocked |
 | `once` | The choice pays once per [turn](/docs/reference/state#turn), which is once a day with the [calendar](/docs/plugins/calendar)'s default. `per` is always `'turn'`. Afterwards the choice stays on screen, disabled with `reason`, and its effects shrink to its `scene` effects alone, so it still navigates. It's spent while the choice's record in [`chosen`](/docs/reference/state#chosen) says it was last picked this turn. `key` only matters to a save from before version 18, which kept the cap as a kv key: it names the key (without `turn:`) when it wasn't `scene#choice`, so loading the save keeps a cap set that turn. | unlimited |
 | `tags`, `irreversible`, `ui` | Passed through to [`SceneChoice`](#scenechoice). `ui` holds [presentation hints](/docs/reference/ui-hints), such as the React UI's [`transition`](/docs/react/hints#transition-on-a-choice) for the screen it leads to. | |
+| `cost` | The stats it spends, as an action's [`cost`](/docs/reference/actions#actioncost): listed on the button as its price, checked when it's chosen (greyed out with `reasons` or the stat's own line while there's too little), and paid after its command, before its effects. | free |
 | `effects` | Literal [effects](/docs/reference/effects), or `{ 'game/name': {...} }` for effects worked out by one of the game's own [effects](/docs/reference/custom#effects) in its `rules`. An unknown name adds nothing, and the loader reports it. | |
 | `command` | A [command](/docs/reference/commands) to send as well, run before the effects: a plugin's, such as `openApp('texts')`, or a core one such as `{ type: 'action', id: 'coffee' }`. The choice is greyed out with that command's reason while it would be refused, and its price adds what the command spends. It can't be `choose`. | none |
 
-**Label lookup order.** A drawn variant can carry its own reply. If a block this render used has prose at `` `${drawnKey}#${choice.id}` ``, that wins (the last such block, if there are several). After that come the first matching `labels` entry, then `label`, then `` `${scene.id}#${choice.id}` ``. If none of those keys has prose, the button shows the bare choice id.
+**Label lookup order.** A drawn variant can carry its own reply. If a block this render used has prose at `` `${drawnKey}#${choice.id}` ``, that wins (the last such block, if there are several). After that come the first matching `labels` entry, then `label`, each the prose line when it's a key the prose has, else its words as written. With neither, the button shows the prose at `` `${scene.id}#${choice.id}` ``, else the bare choice id. The loader reports a `label` that reads as a key (no spaces, a `.` or a `#`) with no prose.
 
 ```ts
 {
   id: 'ask',
-  labels: [{ when: { seen: 'ava.river' }, key: 'ava.hi#ask-again' }],
+  labels: [{ when: { seen: 'ava.river' }, label: 'Ask about the river again' }],
   once: { per: 'turn', reason: 'You have asked today already.' },
   effects: [{ stat: 'friendship', by: 2, of: character('ava') }],
 }

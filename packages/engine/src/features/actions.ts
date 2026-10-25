@@ -91,15 +91,21 @@ export function actionBlocked(
     if (cx.holds(state, entry.when, game)) return entry.reason
   }
   if (action.once && doneThisTurn(state, id)) return action.once.reason
-  const cost = action.cost ?? {}
-  for (const [stat, amount] of Object.entries(cost.stats ?? {})) {
-    if (amount > 0 && statValue(state, game, stat, undefined, cx) < amount) {
-      return cost.reasons?.[stat] ?? lackingLine(statDef(game, stat), stat, amount, game)
-    }
-  }
+  const short = costRefusal(state, game, action.cost, cx)
+  if (short) return short
   if (action.command && commandOf(action.command).type === 'choose') return say(game, 'notOnOffer')
   const sends = sent(action, id)
   return sends && cx.whyNotCommand ? deeper(() => cx.whyNotCommand!(state, game, sends)) : undefined
+}
+
+/** Why a button can't be paid for now: the first stat it spends that the player has too little of, in its words or the stat's. */
+export function costRefusal(state: GameState, game: Game, cost: ActionCost | undefined, cx: FeatureContext): string | undefined {
+  for (const [stat, amount] of Object.entries(cost?.stats ?? {})) {
+    if (amount > 0 && statValue(state, game, stat, undefined, cx) < amount) {
+      return cost?.reasons?.[stat] ?? lackingLine(statDef(game, stat), stat, amount, game)
+    }
+  }
+  return undefined
 }
 
 /** The state with an action's cost paid. A derived stat is never written. */
@@ -114,8 +120,9 @@ export function payCost(state: GameState, game: Game, cost: ActionCost, cx: Feat
   return next
 }
 
-/** What an action's cost applies, as stat effects, for guards, prices and locks to see. */
-const costEffects = (action: ActionDef): Effect[] => Object.entries(action.cost?.stats ?? {}).map(([stat, amount]): Effect => ({ stat, by: -amount }))
+/** What a cost applies, as stat effects, for guards, prices and locks to see. */
+export const costEffects = (cost: ActionCost | undefined): Effect[] =>
+  Object.entries(cost?.stats ?? {}).map(([stat, amount]): Effect => ({ stat, by: -amount }))
 
 /**
  * The command an action sends, if it sends one that isn't a choice, nor the
@@ -166,7 +173,7 @@ export const actions = defineFeature<ActionsShape>({
         const sends = sent(action, command.id)
         return [
           ...(sends ? deeper(() => cx.effectsOfCommand(state, game, sends)) : []),
-          ...costEffects(action),
+          ...costEffects(action.cost),
           ...cx.buildEffects(state, game, action.effects ?? []),
         ]
       },

@@ -2,7 +2,7 @@
  * Dice rolls, from `view.rolls`: the rolls the last command made with the
  * engine's `roll` effect. `DiceRoll` draws one: its dice tumble, settle on the
  * faces the engine rolled, then show the total and, against a target, whether
- * it passed. `SceneStage` draws it in the story before a block with a
+ * it passed. `Scene` draws it in the story before a block with a
  * `ui.dice` hint naming the roll's key, and holds that block back until the
  * dice settle. A roll no block names, such as one a trigger made, shows for a
  * moment in `DiceOverlay`, over the scene.
@@ -219,7 +219,7 @@ function DiceOverlayImpl({ rolls, className }: { rolls: readonly Roll[]; classNa
  * last command made that no block's `ui.dice` hint names, such as a roll a
  * trigger made as the player came in. Each is a `DiceRoll`; the whole is the
  * `dice-overlay` part, which goes after a few seconds or when the player
- * dismisses it (`dice-dismiss`). `SceneStage` draws it.
+ * dismisses it (`dice-dismiss`). `Scene` draws it.
  */
 export const DiceOverlay = overridable('DiceOverlay', DiceOverlayImpl)
 

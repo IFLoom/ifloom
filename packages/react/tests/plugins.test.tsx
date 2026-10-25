@@ -3,20 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { createContext, useContext, type ReactNode } from 'react'
 import { createRunner, definePlugin, loadGame, startingState, type Game } from '@ifloom/engine'
-import {
-  Clock,
-  GameShell,
-  NoticeStrip,
-  Plugins,
-  SceneStage,
-  Story,
-  Game as Page,
-  useGame,
-  usePage,
-  usePluginUis,
-  useWords,
-  type PluginUi,
-} from '../src/index.ts'
+import { Clock, GameShell, NoticeStrip, Plugins, Scene, Story, Game as Page, useGame, usePage, usePluginUis, useWords, type PluginUi } from '../src/index.ts'
 
 afterEach(() => {
   cleanup()
@@ -184,7 +171,7 @@ describe('plugin UIs', () => {
         <Page>
           <Story>
             <NoticeStrip />
-            <SceneStage />
+            <Scene />
             <Plugins at="story" />
             <Clock />
             <Seen />

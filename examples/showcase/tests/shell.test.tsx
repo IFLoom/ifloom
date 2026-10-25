@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-/** The showcase's own React UI: the notice strip over the stage, and the number keys on. */
+/** The showcase's own React UI: the notice strip over the story, and the number keys on. */
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { apply, createRunner, notify, startingState, type Command, type CommandRef, type GameState } from '@ifloom/engine'

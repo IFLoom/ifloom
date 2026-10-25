@@ -4,7 +4,7 @@ import { act, cleanup, fireEvent, render, renderHook, screen, within } from '@te
 import type { ReactNode } from 'react'
 import { createRunner, definePlugin, loadGame, startingState, type Game, type Runner } from '@ifloom/engine'
 import { cheats } from '../src/index.ts'
-import { GameMenu, GameProvider, SceneStage, GameShell, type Components, Game as GamePage, Story } from '@ifloom/react'
+import { GameMenu, GameProvider, Scene, GameShell, type Components, Game as GamePage, Story } from '@ifloom/react'
 import { CheatPanel, useCheats } from '../src/react/index.tsx'
 import { cheatsUi } from '../src/react/index.tsx'
 
@@ -143,7 +143,7 @@ describe('the cheat panel', () => {
     play({
       layout: storyOf(
         <>
-          <SceneStage />
+          <Scene />
           <GameMenu />
         </>,
       ),

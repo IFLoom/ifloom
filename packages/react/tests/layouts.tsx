@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Game, GameMenu, InputFields, Notices, Overlay, PanelHost, Plugins, RoomActions, SceneStage, StatList, Story, Title } from '../src/index.ts'
+import { Game, GameMenu, InputFields, Notices, Overlay, PanelHost, Plugins, RoomActions, Scene, StatList, Story, Title } from '../src/index.ts'
 
 /** A page to read, as a novel is: the title, the scene, what to type and the buttons, with no side column. */
 export function Reading() {
@@ -7,7 +7,7 @@ export function Reading() {
     <Game>
       <Story>
         <Title />
-        <SceneStage />
+        <Scene />
         <InputFields />
         <RoomActions />
         <StatList />

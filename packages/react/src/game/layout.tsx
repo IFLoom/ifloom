@@ -8,7 +8,7 @@ import { PanelHost } from './panels.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { Plugins } from './plugins.tsx'
 import { Game, Overlay, Section, Sidebar, Story } from './regions.tsx'
-import { SceneStage } from './scene.tsx'
+import { Scene } from './scene.tsx'
 import { Clock, StatList } from './sidebar.tsx'
 import { useWords } from './words.ts'
 
@@ -53,7 +53,7 @@ export function DefaultLayout() {
         <Plugins at="sidebar" />
       </Sidebar>
       <Story>
-        <SceneStage />
+        <Scene />
         <InputFields />
         <Plugins at="room" />
         <RoomActions />

@@ -26,7 +26,7 @@ import {
   PanelHost,
   Plugins,
   RoomActions,
-  SceneStage,
+  Scene,
   Section,
   Sidebar,
   StatList,
@@ -56,7 +56,7 @@ export function Layout() {
         <Plugins at="sidebar" />
       </Sidebar>
       <Story>
-        <SceneStage />
+        <Scene />
         <InputFields />
         {/* The bottom of the story: where you are and the way out, what to do, then who's here. */}
         <Plugins at="room" />

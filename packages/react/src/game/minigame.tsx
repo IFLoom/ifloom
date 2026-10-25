@@ -95,6 +95,6 @@ function MinigameCardImpl({ className }: { className?: string }) {
  * The minigame being played: its title, the running state's words, a bar
  * counting down its timer, and a button for each live input. The keyboard
  * presses inputs too: the minigame's `keys`, else the arrows and space.
- * `SceneStage` draws it in place of the scene while a minigame runs.
+ * `Scene` draws it in place of the scene while a minigame runs.
  */
 export const MinigameCard = overridable('MinigameCard', MinigameCardImpl)

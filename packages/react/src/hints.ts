@@ -108,7 +108,7 @@ function asPair(spec: Transition | TransitionName | undefined): Transition {
   return typeof spec === 'string' ? { in: spec, out: spec } : spec
 }
 
-/** The screen on show, and how it comes in and goes out, as `SceneStage` plays it. */
+/** The screen on show, and how it comes in and goes out, as `Scene` plays it. */
 export type ScreenTransition = { key: string; in: TransitionName; out: TransitionName; ms: number }
 
 /**

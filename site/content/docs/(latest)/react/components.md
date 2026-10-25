@@ -13,7 +13,7 @@ import {
   // the game
   GameShell, GameProvider, useGame, Icon, WithPages,
   DefaultLayout, Game, Sidebar, Story, Overlay, Section, When, useHolds, Title, RoomActions, Plugins, usePluginUis,
-  SceneStage, Beat, InlineAction, Tip, InlineTrigger, InlineModal, InlineImage, InlineMail, InlineProp, InlineMono, BUILT_IN_INLINE, Picture, Video, LayeredPicture, Hotspot, MediaViewer, assetUrl, ChoiceButton, ChoiceList, PriceTag, usePriceText,
+  Scene, Beat, InlineAction, Tip, InlineTrigger, InlineModal, InlineImage, InlineMail, InlineProp, InlineMono, BUILT_IN_INLINE, Picture, Video, LayeredPicture, Hotspot, MediaViewer, assetUrl, ChoiceButton, ChoiceList, PriceTag, usePriceText,
   Clock, StatList, StatGauge, EntityTable, Inventory, useClock,
   InputField, InputFields,
   GameMenu, SavesMenu, Backlog, ModManager, useSaves, useBacklog, useMods,
@@ -41,7 +41,7 @@ import {
 } from '@ifloom/react'
 ```
 
-Every component that takes `className` merges it over its own classes with [`cn`](#cn), so a later Tailwind class wins: `<SceneStage className="gap-8" />`.
+Every component that takes `className` merges it over its own classes with [`cn`](#cn), so a later Tailwind class wins: `<Scene className="gap-8" />`.
 
 ### Identity attributes
 
@@ -50,7 +50,7 @@ Every element the UI draws carries a `data-part` naming what kind of thing it is
 | Attribute | On |
 |---|---|
 | `data-sidebar` | The side column ([`Sidebar`](#sidebar)). |
-| `data-scene` | The stage ([`SceneStage`](#scenestage)). |
+| `data-scene` | The scene ([`Scene`](#scene)). |
 | `data-choice` | Each choice or action button. |
 | `data-exit`, `data-person` | Each exit, and each person here or met. |
 | `data-stat`, `data-kind`, `data-entity` | Each stat row, entity table and entity row. |
@@ -103,7 +103,7 @@ The React UI's own layout, which a `GameShell` with no `layout` draws, and which
   - `stats` (`ui.stats`), collapsible and open, with the [`StatList`](#statlist), then what the plugin UIs place at `stats`
   - `inventory` (`ui.inventory`), collapsible, with the [`Inventory`](#inventory).
   Then what the plugin UIs place at `sidebar`: a Quests section, a People section, a Wearing section, the Achievements and Cheats buttons and the devices' buttons, for a game that lists those plugins' UIs.
-- **A [`Story`](#story)** with the [`SceneStage`](#scenestage) and the [`InputFields`](#inputfields), then what the plugin UIs place at `room` (where you are and the way out), the [`RoomActions`](#roomactions), and what they place at `story` (who is here, the debug card).
+- **A [`Story`](#story)** with the [`Scene`](#scene) and the [`InputFields`](#inputfields), then what the plugin UIs place at `room` (where you are and the way out), the [`RoomActions`](#roomactions), and what they place at `story` (who is here, the debug card).
 - **A [`PanelHost`](#panelhost)**, and **an [`Overlay`](#overlay)** with the [`Notices`](#notices).
 
 Each `<Plugins at="…" />` draws what the game's [plugin UIs](/docs/react/kit#where-the-layout-puts-them) bring for that spot, in the order of its `plugins` list. Every part draws nothing when the game has nothing for it, and every section with nothing in it hides, so it suits any game.
@@ -146,14 +146,14 @@ type StoryProps = { align?: 'center' | 'start'; className?: string; children?: R
 
 The main column, a `<main>`, with its children in order. It's as wide as the side column leaves.
 
-The scene's title, its prose, the choices, the inputs, the place's name, the exits, the room's actions and the people here form a reading column `--width-prose` wide. On a wide screen that column sits in the middle of the story. Pictures, a place's stage, panels and minigames use the whole width.
+The scene's title, its prose, the choices, the inputs, the place's name, the exits, the room's actions and the people here form a reading column `--width-prose` wide. On a wide screen that column sits in the middle of the story. Pictures, a place's layered picture, panels and minigames use the whole width.
 
 - `align` places the reading column: `'center'` or `'start'`. It's written to the `<main>` as `data-align` and wins over the stylesheet.
 - Left out, the [`--margin-prose`](/docs/react/customising#2-set-tokens-and-colours) token decides. It centres the column unless a preset or your stylesheet changes it.
 
 ```tsx
 <Story align="start">
-  <SceneStage />
+  <Scene />
 </Story>
 ```
 
@@ -374,7 +374,7 @@ type UiOptions = {
 }
 ```
 
-What [`mountGame`](/docs/react#mountgame), [`GameShell`](#gameshell) and [`GameProvider`](#gameprovider) take to change the UI's look and feel. `unstyled: true` drops every built-in class, and keeps the elements, their `data-part`s and what they do. `viewer: false` turns off the [`MediaViewer`](#mediaviewer), so clicking a picture in the story does nothing. It's on if you leave it out. `keys` turns on the keyboard shortcuts: see [`KeyOptions`](#keyoptions). They're off if you leave it out. `motion: false` turns off scene transitions and prose reveals, so every scene and every line shows at once. It's on if you leave it out, and a player whose system asks for reduced motion gets everything at once either way. See [`SceneStage`](#scenestage).
+What [`mountGame`](/docs/react#mountgame), [`GameShell`](#gameshell) and [`GameProvider`](#gameprovider) take to change the UI's look and feel. `unstyled: true` drops every built-in class, and keeps the elements, their `data-part`s and what they do. `viewer: false` turns off the [`MediaViewer`](#mediaviewer), so clicking a picture in the story does nothing. It's on if you leave it out. `keys` turns on the keyboard shortcuts: see [`KeyOptions`](#keyoptions). They're off if you leave it out. `motion: false` turns off scene transitions and prose reveals, so every scene and every line shows at once. It's on if you leave it out, and a player whose system asks for reduced motion gets everything at once either way. See [`Scene`](#scene).
 
 ### KeyOptions
 
@@ -416,7 +416,7 @@ interface OverridableComponents {
 }
 ```
 
-Your own components in place of built-in ones, by name. Each replacement is drawn everywhere the UI draws that component, with the same props plus `Default`, the built-in one. The names are `Game`, `Sidebar`, `Story`, `Overlay`, `Section`, `When`, `Title`, `Clock`, `StatList`, `RoomActions`, `SceneStage`, `Beat`, `InlineAction`, `Tip`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `NoticeStrip`, `MinigameCard`, `DiceRoll`, `DiceOverlay`, `Countdown`, `Timers`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `PanelHost`, `Inventory`, `EntityTable`, `InputFields`, `InputField`, `Picture`, `Video`, `LayeredPicture`, `Hotspot`, `MediaViewer`, `Icon`, `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` and `GatePage`. A plugin's UI adds its own to [`OverridableComponents`](/docs/react/kit#overridablecomponents-and-partnames), such as `ShopCounter` and `QuestLog`, so `components` takes them typed once you import the plugin's `/react`.
+Your own components in place of built-in ones, by name. Each replacement is drawn everywhere the UI draws that component, with the same props plus `Default`, the built-in one. The names are `Game`, `Sidebar`, `Story`, `Overlay`, `Section`, `When`, `Title`, `Clock`, `StatList`, `RoomActions`, `Scene`, `Beat`, `InlineAction`, `Tip`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `NoticeStrip`, `MinigameCard`, `DiceRoll`, `DiceOverlay`, `Countdown`, `Timers`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `PanelHost`, `Inventory`, `EntityTable`, `InputFields`, `InputField`, `Picture`, `Video`, `LayeredPicture`, `Hotspot`, `MediaViewer`, `Icon`, `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` and `GatePage`. A plugin's UI adds its own to [`OverridableComponents`](/docs/react/kit#overridablecomponents-and-partnames), such as `ShopCounter` and `QuestLog`, so `components` takes them typed once you import the plugin's `/react`.
 
 ```tsx
 import type { Components } from '@ifloom/react'
@@ -520,12 +520,12 @@ type IconName = 'close' | 'back' | 'warning' | 'voice' | 'zoom' | 'menu' | 'chev
 
 One of the UI's icons, by what it's for: `close` on dialogs and notices, `back` in an open app, `warning` on a choice or a hotspot with a warning, `voice` on a spoken line's replay button, `zoom` for enlarging a picture, `menu` on the button that opens the side column on a phone, and `chevron` on a folding section. With a `label` it's labelled for screen readers. Without one it's hidden from them. The built-in icons are [Lucide](https://lucide.dev)'s. Replace `Icon` in `components` to use your own set everywhere.
 
-## The stage
+## The scene
 
-### SceneStage
+### Scene
 
 ```tsx
-function SceneStage(props: { className?: string }): JSX.Element
+function Scene(props: { className?: string }): JSX.Element
 ```
 
 The main column. It shows the scene on screen, or the room when no scene is open. The room is a plugin's [room scene](/docs/reference/plugins#scene), such as the [places](/docs/plugins/places) plugin's. Without one, the room is the game's title and an empty body.
@@ -540,7 +540,7 @@ From top to bottom, it draws:
 
 While a [minigame](/docs/reference/minigames) runs, it draws that instead of all of the above: the game's panel named by the minigame's id, if `panels` has one, or else [`MinigameCard`](#minigamecard). It runs the minigame's clock either way, so your panel gets its ticks without asking. The `<article>` then also carries `data-minigame` with the minigame's id.
 
-The `<article>` carries `data-scene` with the scene's id, or `stage` when no scene is open.
+The `<article>` carries `data-scene` with the scene's id, or `room` when no scene is open.
 
 **Transitions.** The article sits in a `scene-transition` part, and is drawn afresh whenever [`view.scene.key`](/docs/reference/view#the-scene) changes. It carries `data-transition-in` with the new screen's `in`, from the content's [`transition`](/docs/react/hints#transition) hints (worked out by [`screenTransition`](/docs/react/hints#screentransition)), which the base styles animate. A choice with its own `transition` hint decides how the screen it leads to comes in. The scene before goes out first: a copy of its HTML stays in its place for its `ms`, with `data-leaving` and `data-transition-out`, inert and hidden from screen readers. Then the new scene is drawn and comes in. The `scene-transition` part sets `--ifloom-transition-ms` for the CSS, and `data-motion="off"` when motion is off.
 
@@ -548,13 +548,13 @@ The `<article>` carries `data-scene` with the scene's id, or `stage` when no sce
 
 With [`motion`](#uioptions) off, or the player asking for reduced motion, none of this plays: no attribute is set and everything is shown at once.
 
-**Dice.** A block with a [`dice`](/docs/react/hints#dice) hint gets the [`DiceRoll`](#diceroll) of the roll the last command made under that key, just above it. A new roll tumbles, and the block waits in a `reveal` part until the dice settle. A click or a key settles them at once. New rolls that no block on screen names show in a [`DiceOverlay`](#diceoverlay), which `SceneStage` draws after the scene.
+**Dice.** A block with a [`dice`](/docs/react/hints#dice) hint gets the [`DiceRoll`](#diceroll) of the roll the last command made under that key, just above it. A new roll tumbles, and the block waits in a `reveal` part until the dice settle. A click or a key settles them at once. New rolls that no block on screen names show in a [`DiceOverlay`](#diceoverlay), which `Scene` draws after the scene.
 
 **Speakers.** While the scene's speaker has a [`hue`](/docs/react/hints#hue) hint, the article carries `data-speaker-hue` and `--ifloom-speaker-hue`, and their spoken lines are drawn in that colour.
 
 **Gotcha.** If a scene names a `panel` that the game has no component for, it shows its choices instead, with no warning.
 
-Replaceable as `SceneStage` in [`components`](#components). Parts: `scene-transition`, `scene` (with `data-scene`), `scene-header`, `scene-portrait`, `scene-title`, `scene-image`, `beats`, `reveal`, `fold`, `fold-summary` and `fold-beats`.
+Replaceable as `Scene` in [`components`](#components). Parts: `scene-transition`, `scene` (with `data-scene`), `scene-header`, `scene-portrait`, `scene-title`, `scene-image`, `beats`, `reveal`, `fold`, `fold-summary` and `fold-beats`.
 
 ### useMotion
 
@@ -606,7 +606,7 @@ To hide the names, hide the part: `[data-part="speaker-name"] { display: none }`
 
 Replaceable as `Beat` in [`components`](#components). Parts: `beat` (with `data-beat`, and `data-who` on a spoken line), `speaker-name`, `voice-replay` and `viewer-open`. A letter, a note or a sign is an [inline piece](/docs/react/hints#inline-pieces) inside a paragraph: see [`InlineMail`](#inlinemail), [`InlineProp`](#inlineprop) and [`InlineMono`](#inlinemono). A video beat is a `video` part, with `data-beat="video"`.
 
-**Folds.** In `SceneStage`, the beats of a section with a [`fold`](/docs/react/hints#fold) hint (what `fold()` writes) are drawn together in a `fold` part, a `<details>` the player opens and shuts, shut to begin with. Its summary is the hint's words, in a `fold-summary` part, and the beats are in a `fold-beats` part.
+**Folds.** In `Scene`, the beats of a section with a [`fold`](/docs/react/hints#fold) hint (what `fold()` writes) are drawn together in a `fold` part, a `<details>` the player opens and shuts, shut to begin with. Its summary is the hint's words, in a `fold-summary` part, and the beats are in a `fold-beats` part.
 
 A paragraph's [bold and italics](/docs/reference/prose#bold-and-italics) are a `<strong>` with the part `bold` and an `<em>` with the part `italic`, inside the beat. Restyle them with [`classes`](#classes) or CSS on `[data-part="bold"]`.
 
@@ -771,7 +771,7 @@ Its `src` and `poster` go through [`assetUrl`](#asseturl). Replaceable as `Video
 function LayeredPicture(props: { picture: PictureView; className?: string }): JSX.Element
 ```
 
-A layered picture with hotspots, from a [`PictureView`](/docs/reference/media#pictureview). [`SceneStage`](#scenestage) draws `view.scene.picture` with it, and [`LocationCard`](/docs/plugins/places#locationcard) draws a place's `location.picture`.
+A layered picture with hotspots, from a [`PictureView`](/docs/reference/media#pictureview). [`Scene`](#scene) draws `view.scene.picture` with it, and [`LocationCard`](/docs/plugins/places#locationcard) draws a place's `location.picture`.
 
 ```tsx
 import { LayeredPicture, useGame } from '@ifloom/react'
@@ -1536,7 +1536,7 @@ It's a `<nav>` labelled `ui.unread`, hidden while nothing in it is drawn. The de
 ```tsx
 <Story>
   <NoticeStrip />
-  <SceneStage />
+  <Scene />
 </Story>
 ```
 
@@ -1556,7 +1556,7 @@ type DiceRollProps = { roll: Roll; animate?: boolean; className?: string }
 
 One [roll](/docs/reference/rolls#roll) from [`view.rolls`](/docs/reference/view#rolls). From left to right: the dice (`2d6`), a face for each die, what was added (`+2`), and once they settle, the total, and with a target, Passed or Failed and what it needed. A die on its top face or on 1 is marked with `data-high` or `data-low`, and a critical gets Critical! or Fumble.
 
-With `animate` (the default), the faces tumble for `DICE_ROLL_MS` milliseconds before they settle on the faces rolled. The tumbling numbers are only for show; the engine's roll was made already. With [`motion`](#uioptions) off, or the player asking for reduced motion, it shows settled at once. The result is in a `status` region, so a screen reader hears it once the dice settle, worded by `ui.diceRolled` and the strings after it. [`SceneStage`](#scenestage) draws it above a block with a [`dice`](/docs/react/hints#dice) hint, and [`DiceOverlay`](#diceoverlay) for the rest.
+With `animate` (the default), the faces tumble for `DICE_ROLL_MS` milliseconds before they settle on the faces rolled. The tumbling numbers are only for show; the engine's roll was made already. With [`motion`](#uioptions) off, or the player asking for reduced motion, it shows settled at once. The result is in a `status` region, so a screen reader hears it once the dice settle, worded by `ui.diceRolled` and the strings after it. [`Scene`](#scene) draws it above a block with a [`dice`](/docs/react/hints#dice) hint, and [`DiceOverlay`](#diceoverlay) for the rest.
 
 ```tsx
 import { DiceRoll, useGame } from '@ifloom/react'
@@ -1575,7 +1575,7 @@ Replaceable as `DiceRoll` in [`components`](#components). Parts: `dice` (with `d
 function DiceOverlay(props: { rolls: readonly Roll[]; className?: string }): JSX.Element | null
 ```
 
-Rolls the story doesn't name, shown for a moment over the scene: a `DiceRoll` for each, near the top of the window. It goes about two and a half seconds after the dice settle, or when the player presses its close button (`ui.diceDismiss`). [`SceneStage`](#scenestage) draws one for the new rolls that no block's `dice` hint names, such as Small Town's ducks, counted by a trigger as you reach the park.
+Rolls the story doesn't name, shown for a moment over the scene: a `DiceRoll` for each, near the top of the window. It goes about two and a half seconds after the dice settle, or when the player presses its close button (`ui.diceDismiss`). [`Scene`](#scene) draws one for the new rolls that no block's `dice` hint names, such as Small Town's ducks, counted by a trigger as you reach the park.
 
 Replaceable as `DiceOverlay` in [`components`](#components). Parts: `dice-overlay` and `dice-dismiss`. To show these rolls somewhere else, replace it with a component that draws them where you like, or with `() => null` to show none.
 
@@ -1585,7 +1585,7 @@ Replaceable as `DiceOverlay` in [`components`](#components). Parts: `dice-overla
 function useFreshRolls(): { rolls: Roll[]; at: number }
 ```
 
-The rolls the last command made, while they're new: those that came with one command more than the view before. Rolls a loaded save or an undo brings back aren't new, so they don't tumble again. `at` counts each new set, so a component can key on it to play afresh. Only inside a [`GameProvider`](#gameprovider). `SceneStage` uses it, and a replacement for it can too.
+The rolls the last command made, while they're new: those that came with one command more than the view before. Rolls a loaded save or an undo brings back aren't new, so they don't tumble again. `at` counts each new set, so a component can key on it to play afresh. Only inside a [`GameProvider`](#gameprovider). `Scene` uses it, and a replacement for it can too.
 
 ## Timers
 
@@ -1602,7 +1602,7 @@ type CountdownProps = { timer: string; label?: boolean; className?: string }
 One running timer, by id: its `label` (unless `label={false}`), a bar that empties as it runs down, and the seconds left, worded by `ui.timerLeft` (`{seconds}s`). The bar is a `progressbar` labelled with the timer's label (or `ui.timeLeft`), from 0 to its `total`, and its inner `<span>` shrinks with `transform: scaleX()`, easing between ticks. The seconds are a `timer` region. With a quarter or less of it left, the countdown and its bar and seconds carry `data-urgent`, which the presets colour. With [`motion`](#uioptions) off, or the player asking for reduced motion, only the seconds show. It draws nothing while the timer isn't running, so it goes the moment the timer runs out or is stopped.
 
 ```tsx
-import { Countdown, Game, SceneStage, Sidebar, Story } from '@ifloom/react'
+import { Countdown, Game, Scene, Sidebar, Story } from '@ifloom/react'
 
 export function Layout() {
   return (
@@ -1611,14 +1611,14 @@ export function Layout() {
         <Countdown timer="flat.ring" label={false} />
       </Sidebar>
       <Story>
-        <SceneStage />
+        <Scene />
       </Story>
     </Game>
   )
 }
 ```
 
-Replaceable as `Countdown` in [`components`](#components), which also changes the one `SceneStage` draws for a hint. Parts: `timer` (with `data-timer` and `data-urgent`), `timer-label`, `timer-bar` (with `data-urgent`) and `timer-left` (with `data-urgent`). Paper draws a thin rule, Storybook a fat bar in a card, Studio a bordered strip, and Terminal a text-mode bar with a prompt.
+Replaceable as `Countdown` in [`components`](#components), which also changes the one `Scene` draws for a hint. Parts: `timer` (with `data-timer` and `data-urgent`), `timer-label`, `timer-bar` (with `data-urgent`) and `timer-left` (with `data-urgent`). Paper draws a thin rule, Storybook a fat bar in a card, Studio a bordered strip, and Terminal a text-mode bar with a prompt.
 
 ### Timers
 
@@ -1665,7 +1665,7 @@ Runs [`startClock`](/docs/browser#startclock) for the runner while the component
 function MinigameCard(props: { className?: string }): JSX.Element | null
 ```
 
-The [minigame](/docs/reference/minigames) being played, from [`view.minigame`](/docs/reference/minigames#minigameview). [`SceneStage`](#scenestage) draws it in place of the scene while one runs. From top to bottom, it shows:
+The [minigame](/docs/reference/minigames) being played, from [`view.minigame`](/docs/reference/minigames#minigameview). [`Scene`](#scene) draws it in place of the scene while one runs. From top to bottom, it shows:
 
 - the minigame's `title`, as a heading
 - the running state's words (`label`), in a polite live region so a screen reader reads each new one
@@ -1678,7 +1678,7 @@ The `<section>` carries `data-minigame` with the minigame's id and `data-state` 
 
 There are two ways to draw a minigame your own way:
 
-- **One minigame.** Put a component in `panels` under the minigame's id. [`SceneStage`](#scenestage) draws it instead, given the [`MinigameView`](/docs/reference/minigames#minigameview) as `data`, and runs the clock for it. Call `useMinigame()` in it for `send`.
+- **One minigame.** Put a component in `panels` under the minigame's id. [`Scene`](#scene) draws it instead, given the [`MinigameView`](/docs/reference/minigames#minigameview) as `data`, and runs the clock for it. Call `useMinigame()` in it for `send`.
 - **Every minigame.** Replace `MinigameCard` in [`components`](#components).
 
 ```tsx
@@ -1731,7 +1731,7 @@ function ArrowPad() {
 }
 ```
 
-**Gotcha.** Nothing ticks unless something calls it. [`SceneStage`](#scenestage) does while a minigame runs, so a game with its own root that leaves out `SceneStage` has to call `useMinigame()` somewhere, or the minigame's timers wait for ever.
+**Gotcha.** Nothing ticks unless something calls it. [`Scene`](#scene) does while a minigame runs, so a game with its own root that leaves out `Scene` has to call `useMinigame()` somewhere, or the minigame's timers wait for ever.
 
 ## Panels
 

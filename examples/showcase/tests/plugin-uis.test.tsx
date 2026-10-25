@@ -8,7 +8,7 @@ import { jobs } from '@ifloom/plugin-jobs'
 import { shop, type ShopView } from '@ifloom/plugin-shop'
 import { statuses } from '@ifloom/plugin-statuses'
 import { inventory } from '@ifloom/plugin-inventory'
-import { GameProvider, GameShell, Inventory, PanelHost, RoomActions, SceneStage, type Components, Game as GamePage, Story } from '@ifloom/react'
+import { GameProvider, GameShell, Inventory, PanelHost, RoomActions, Scene, type Components, Game as GamePage, Story } from '@ifloom/react'
 import { AchievementList, useAchievements } from '@ifloom/plugin-achievements/react'
 import { useInventory } from '@ifloom/plugin-inventory/react'
 import { JobBoard, useJobs } from '@ifloom/plugin-jobs/react'
@@ -342,7 +342,7 @@ describe('the defaults, wired', () => {
     play({
       layout: storyOf(
         <>
-          <SceneStage />
+          <Scene />
           <RoomActions />
         </>,
       ),

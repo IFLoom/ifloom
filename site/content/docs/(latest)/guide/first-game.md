@@ -99,7 +99,7 @@ The locations are content, entities like any other. In step 5 they go into the g
 
 ## 2. A character with a schedule
 
-The core has no people either, so characters come from the cast plugin. A character is an [entity](/docs/reference/entities) written with the cast's `cast.person()`: a name and a line about them, and the cast's own fields beside them. A character has a schedule, somewhere to be when the schedule says nothing, and a scene that talking to them opens. The schedule is checked from the top, and the first entry whose `when` holds gives a place id from step 1. When none holds, the character is at their `home`. With no `home`, they're offstage, which means nowhere on the map.
+The core has no people either, so characters come from the cast plugin. A character is an [entity](/docs/reference/entities) written with the cast's `cast.person()`: a name and a line about them, and the cast's own fields beside them. A character has a schedule, somewhere to be when the schedule says nothing, and a scene that talking to them opens. The schedule is checked from the top, and the first entry whose `when` holds gives a place id from step 1. When none holds, the character is at their `home`. With no `home`, they're away, which means nowhere on the map.
 
 ```ts
 import { calendar } from '@ifloom/plugin-calendar'

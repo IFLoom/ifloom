@@ -329,7 +329,7 @@ function draw(view: View): void {
 
 ```tsx tab="React" tab-group="framework"
 // src/layout.tsx: the react template's, with the HUD over the story and no stat list at the side
-import { Game, GameMenu, Notices, Overlay, PanelHost, RoomActions, SceneStage, Sidebar, Story, Title } from '@ifloom/react'
+import { Game, GameMenu, Notices, Overlay, PanelHost, RoomActions, Scene, Sidebar, Story, Title } from '@ifloom/react'
 import { StatBar } from './hud/StatBar.tsx'
 import { Objective } from './hud/Objective.tsx'
 import { Unread } from './hud/Unread.tsx'
@@ -349,7 +349,7 @@ export function Layout() {
           </div>
           <StatBar stat="energy" />
         </div>
-        <SceneStage />
+        <Scene />
         <RoomActions />
       </Story>
       <PanelHost />

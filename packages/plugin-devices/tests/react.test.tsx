@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { createRunner, loadGame, startingState } from '@ifloom/engine'
 import { phone } from '@ifloom/phone'
-import { Game as GamePage, GameShell, NoticeStrip, SceneStage, Story } from '@ifloom/react'
+import { Game as GamePage, GameShell, NoticeStrip, Scene, Story } from '@ifloom/react'
 import { devicesUi } from '../src/react/index.tsx'
 import { messagesUi } from '@ifloom/plugin-messages/react'
 
@@ -56,7 +56,7 @@ describe('the notice strip, with a phone', () => {
         layout={storyOf(
           <>
             <NoticeStrip />
-            <SceneStage />
+            <Scene />
           </>,
         )}
       />,

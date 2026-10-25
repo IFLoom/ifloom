@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { createRunner, loadGame, notify, startingState, type Game, type SceneBeat } from '@ifloom/engine'
-import { GameShell, mountGame, useGame, type Components, SceneStage } from '../src/index.ts'
+import { GameShell, mountGame, useGame, type Components, Scene } from '../src/index.ts'
 import { Reading } from './layouts.tsx'
 
 afterEach(() => {
@@ -63,7 +63,7 @@ describe('replacing components', () => {
     const Layout = () => (
       <div data-my-frame>
         <header>My game</header>
-        <SceneStage />
+        <Scene />
       </div>
     )
     show({ layout: Layout })

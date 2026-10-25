@@ -292,7 +292,7 @@ The page is a component, the layout. The react and next templates start you with
 
 ```tsx
 // src/layout.tsx
-import { Clock, Game, GameMenu, Inventory, Notices, Overlay, PanelHost, RoomActions, SceneStage, Section, Sidebar, StatList, Story, Title } from '@ifloom/react'
+import { Clock, Game, GameMenu, Inventory, Notices, Overlay, PanelHost, RoomActions, Scene, Section, Sidebar, StatList, Story, Title } from '@ifloom/react'
 import { Exits } from '@ifloom/plugin-places/react'
 import { PeopleHere } from '@ifloom/plugin-cast/react'
 
@@ -307,7 +307,7 @@ export function Layout() {
       </Sidebar>
       <Story>
         <Notices />
-        <SceneStage />
+        <Scene />
         <Exits />
         <RoomActions />
         <PeopleHere />
@@ -363,7 +363,7 @@ const components: Components = { Beat: TownBeat }
 mountGame(module.build(), { components })
 ```
 
-The names you can replace are the keys of [`Components`](/docs/react/components#components): the React UI's own, such as `Game`, `Sidebar`, `Story`, `Section`, `Title`, `Clock`, `StatList`, `RoomActions`, `SceneStage`, `Beat`, `ChoiceButton`, `Notices`, `GameMenu`, `Inventory`, `Picture` and `Icon`, and every component a plugin's UI draws, such as `ShopCounter`, `QuestLog` and `DebugCard`, once you import that plugin's `/react`.
+The names you can replace are the keys of [`Components`](/docs/react/components#components): the React UI's own, such as `Game`, `Sidebar`, `Story`, `Section`, `Title`, `Clock`, `StatList`, `RoomActions`, `Scene`, `Beat`, `ChoiceButton`, `Notices`, `GameMenu`, `Inventory`, `Picture` and `Icon`, and every component a plugin's UI draws, such as `ShopCounter`, `QuestLog` and `DebugCard`, once you import that plugin's `/react`.
 
 A replacement applies wherever the UI draws that component, not only in one spot. The `Beat` above also draws the beats in the [backlog](/docs/react/components#backlog), and a replaced `ChoiceButton` draws a scene's choices, the room's actions, and the buttons the plugins' UIs draw with it, such as each person's and the inventory's Use buttons.
 
@@ -391,7 +391,7 @@ The regions are components too, so the shape of the page is yours. [`Game`](/doc
 
 ```tsx
 // src/layout.tsx
-import { Clock, Game, GameMenu, InputFields, Notices, Overlay, PanelHost, RoomActions, SceneStage, StatList, Story, Title } from '@ifloom/react'
+import { Clock, Game, GameMenu, InputFields, Notices, Overlay, PanelHost, RoomActions, Scene, StatList, Story, Title } from '@ifloom/react'
 
 export function Layout() {
   return (
@@ -403,7 +403,7 @@ export function Layout() {
         <GameMenu />
       </header>
       <Story>
-        <SceneStage />
+        <Scene />
         <InputFields />
         <RoomActions />
       </Story>
@@ -434,7 +434,7 @@ For a page that isn't a side column and a story at all, give `mountGame` your ow
 
 ```tsx
 // src/main.tsx
-import { SceneStage, InputFields, Notices, mountGame, useGame, useSaves } from '@ifloom/react'
+import { Scene, InputFields, Notices, mountGame, useGame, useSaves } from '@ifloom/react'
 import module from './game.ts'
 import './styles.css'
 
@@ -447,7 +447,7 @@ function TownApp() {
         <h1 className="font-heading text-title">{view.title}</h1>
         <p className="text-sm text-muted-foreground">{view.when}</p>
       </header>
-      <SceneStage />
+      <Scene />
       <InputFields />
       <footer className="flex gap-3 text-sm">
         {saves.available ? <button onClick={() => void saves.save('Quick save')}>Quick save</button> : null}

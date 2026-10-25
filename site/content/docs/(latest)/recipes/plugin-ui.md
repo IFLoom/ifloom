@@ -495,7 +495,7 @@ function draw(view: View): void {
 
 ```tsx tab="React" tab-group="framework"
 // src/layout.tsx: the react template's, with the counter under the story and the board in the side column
-import { Game, Sidebar, Story, SceneStage, RoomActions, Section, Title } from '@ifloom/react'
+import { Game, Sidebar, Story, Scene, RoomActions, Section, Title } from '@ifloom/react'
 import { Counter } from './hud/Counter.tsx'
 import { JobBoard } from './hud/JobBoard.tsx'
 
@@ -509,7 +509,7 @@ export function Layout() {
         </Section>
       </Sidebar>
       <Story>
-        <SceneStage />
+        <Scene />
         <RoomActions />
         <Counter />
       </Story>

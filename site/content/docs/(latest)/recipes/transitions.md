@@ -81,7 +81,7 @@ To change how one looks, write CSS against the attributes the React UI sets. The
 }
 ```
 
-Your rules win over the base styles, which sit in a cascade layer. [Components](/docs/react/components#scenestage) has the details.
+Your rules win over the base styles, which sit in a cascade layer. [Components](/docs/react/components#scene) has the details.
 
 ### Your own names
 

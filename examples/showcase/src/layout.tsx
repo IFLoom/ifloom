@@ -8,7 +8,7 @@ import {
   Overlay,
   PanelHost,
   RoomActions,
-  SceneStage,
+  Scene,
   Section,
   Sidebar,
   StatList,
@@ -63,7 +63,7 @@ export function Layout() {
       </Sidebar>
       <Story>
         <NoticeStrip />
-        <SceneStage />
+        <Scene />
         <InputFields />
         <LocationCard />
         <Exits />

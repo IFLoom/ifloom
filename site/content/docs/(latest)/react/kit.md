@@ -49,7 +49,7 @@ A plugin UI's `layout` says what it places, and where. The [`DefaultLayout`](/do
 A layout of your own puts a `Plugins` wherever it likes, or draws a plugin's components itself, in any order, as [the showcase's layout](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/layout.tsx) does:
 
 ```tsx
-import { Game, Plugins, SceneStage, Sidebar, Story } from '@ifloom/react'
+import { Game, Plugins, Scene, Sidebar, Story } from '@ifloom/react'
 import { QuestLog } from '@ifloom/plugin-quests/react'
 
 export function Layout() {
@@ -60,7 +60,7 @@ export function Layout() {
         <Plugins at="sidebar" />
       </Sidebar>
       <Story>
-        <SceneStage />
+        <Scene />
         <Plugins at="story" />
       </Story>
     </Game>

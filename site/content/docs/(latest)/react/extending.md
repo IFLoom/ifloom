@@ -153,7 +153,7 @@ The layout is a component of yours, `src/layout.tsx` in the react and next templ
 
 ```tsx
 // src/layout.tsx
-import { Game, InputFields, Notices, Overlay, PanelHost, RoomActions, SceneStage, Section, StatList, Story, Title } from '@ifloom/react'
+import { Game, InputFields, Notices, Overlay, PanelHost, RoomActions, Scene, Section, StatList, Story, Title } from '@ifloom/react'
 import { QuestLog } from '@ifloom/plugin-quests/react'
 
 export function Layout() {
@@ -162,7 +162,7 @@ export function Layout() {
       <Story>
         <Title />
         <StatList />
-        <SceneStage />
+        <Scene />
         <InputFields />
         <RoomActions />
         <Section id="quests" title="Journal" collapsible open={false}>
@@ -184,14 +184,14 @@ You don't have to use the regions at all. Without `GameShell`, wrap your page in
 
 ```tsx
 import { createRoot } from 'react-dom/client'
-import { GameProvider, InputFields, Notices, SceneStage, StatList, TooltipProvider } from '@ifloom/react'
+import { GameProvider, InputFields, Notices, Scene, StatList, TooltipProvider } from '@ifloom/react'
 import { QuestLog } from '@ifloom/plugin-quests/react'
 
 function MyPage() {
   return (
     <div className="mx-auto grid max-w-5xl gap-6 p-4 md:grid-cols-[1fr_16rem]">
       <main className="flex flex-col gap-4">
-        <SceneStage />
+        <Scene />
         <InputFields />
         <QuestLog title="Journal" />
       </main>
@@ -212,7 +212,7 @@ createRoot(document.getElementById('root')!).render(
 )
 ```
 
-Every part is also a component, such as [`SceneStage`](/docs/react/components#scenestage), [`StatList`](/docs/react/components#statlist), [`Title`](/docs/react/components#title) and [`RoomActions`](/docs/react/components#roomactions). Most take a `className`, and a card takes `title`, like the quest list's above.
+Every part is also a component, such as [`Scene`](/docs/react/components#scene), [`StatList`](/docs/react/components#statlist), [`Title`](/docs/react/components#title) and [`RoomActions`](/docs/react/components#roomactions). Most take a `className`, and a card takes `title`, like the quest list's above.
 
 Each part reads the view itself, so you can leave any part out or use one twice. A part that belongs to a plugin draws nothing without that plugin. A part with nothing to show also draws nothing. For example, `InputFields` draws nothing when no input is on offer, `Inventory` when the player carries nothing, and `GameMenu` when the runner has no saves, undo or backlog and the provider has no `mods`.
 

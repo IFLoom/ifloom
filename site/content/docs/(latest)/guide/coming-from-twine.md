@@ -359,7 +359,7 @@ function draw(view: View): void {
 
 ```tsx tab="React" tab-group="framework"
 // src/layout.tsx: a bar at the side and the passage beside it
-import { Game, GameMenu, InputFields, Inventory, RoomActions, SceneStage, Sidebar, StatList, Story, Title } from '@ifloom/react'
+import { Game, GameMenu, InputFields, Inventory, RoomActions, Scene, Sidebar, StatList, Story, Title } from '@ifloom/react'
 
 export function Layout() {
   return (
@@ -371,7 +371,7 @@ export function Layout() {
         <Inventory />
       </Sidebar>
       <Story>
-        <SceneStage />
+        <Scene />
         <InputFields />
         <RoomActions />
       </Story>
@@ -438,7 +438,7 @@ In the React UI, the layout in `src/layout.tsx` is the closest thing to arrangin
 
 - **StoryCaption** is a part in the `Sidebar`, such as `StatList`, or a component of your own beside it. See [Layouts](/docs/react#layouts).
 - **StoryMenu** is the player's menu, `GameMenu`.
-- **PassageHeader and PassageFooter** are parts above and below `SceneStage` in the `Story`.
+- **PassageHeader and PassageFooter** are parts above and below `Scene` in the `Story`.
 - **The title and start screen** are [pages](/docs/react#pages), turned on with `pages`. [The title screen and settings](/docs/recipes/title-screen) walks through them, with a title screen of your own for the other templates.
 - **StoryInterface**, a whole interface of your own, is [your own root](/docs/react/customising#8-write-your-own-root), or any of the other templates. See [Your own UI in any framework](/docs/guide/frameworks).
 

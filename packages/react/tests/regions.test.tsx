@@ -8,7 +8,7 @@ import {
   GameShell,
   Overlay,
   RoomActions,
-  SceneStage,
+  Scene,
   Section,
   Sidebar,
   StatList,
@@ -113,7 +113,7 @@ describe('the regions', () => {
   })
 
   it('leave data-has-sidebar off with no Sidebar, and find one inside your own components', () => {
-    play({ layout: storyOf(<SceneStage />) })
+    play({ layout: storyOf(<Scene />) })
     expect(part('page')!.hasAttribute('data-has-sidebar')).toBe(false)
     cleanup()
     const Wrapped = () => (
@@ -128,7 +128,7 @@ describe('the regions', () => {
             <Wrapped />
           </>
           <Story>
-            <SceneStage />
+            <Scene />
           </Story>
         </Page>
       ),
@@ -152,7 +152,7 @@ describe('the regions', () => {
   })
 
   it('place the reading column by align, or leave it to --margin-prose', () => {
-    play({ layout: storyOf(<SceneStage />) })
+    play({ layout: storyOf(<Scene />) })
     expect(part('story')!.hasAttribute('data-align')).toBe(false)
     // The scene's title and prose keep to --width-prose and take their margins from the token.
     for (const name of ['scene-header', 'beats']) {
@@ -165,7 +165,7 @@ describe('the regions', () => {
       layout: () => (
         <Page>
           <Story align="start">
-            <SceneStage />
+            <Scene />
           </Story>
         </Page>
       ),
@@ -250,7 +250,7 @@ describe('when, as the state changes', () => {
               <Out />
             </Sidebar>
             <Story>
-              <SceneStage />
+              <Scene />
             </Story>
           </Page>
         )}
@@ -278,7 +278,7 @@ describe('the side column on a phone', () => {
             <RoomActions />
           </Sidebar>
           <Story>
-            <SceneStage />
+            <Scene />
           </Story>
           <Overlay />
         </Page>

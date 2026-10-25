@@ -136,7 +136,7 @@ A scene can also start one as it opens, with a `minigame` field. See [`MinigameS
 
 That's all the page needs. Every template draws a running minigame for you:
 
-- In the React UI, [`SceneStage`](/docs/react/components#scenestage) draws [`MinigameCard`](/docs/react/components#minigamecard) in place of the scene: the title, the shout, a bar counting down the 1.5 seconds, and a button for each arrow. The arrow keys (and W, A, S and D) press them too.
+- In the React UI, [`Scene`](/docs/react/components#scene) draws [`MinigameCard`](/docs/react/components#minigamecard) in place of the scene: the title, the shout, a bar counting down the 1.5 seconds, and a button for each arrow. The arrow keys (and W, A, S and D) press them too.
 - In the `vanilla`, `vue` and `svelte` templates, the scene shows the minigame's words, and a [minigame panel](/docs/guide/frameworks#minigames) draws the timer and a button for each input. `startKeys` from [`@ifloom/browser`](/docs/browser) maps the arrow keys and space to the inputs.
 
 The engine has no clock of its own. The React UI, or [`startClock`](/docs/browser#startclock) in the other templates, sends a [`tick`](/docs/reference/commands#tick) command about ten times a second while a timer runs, with the real time that passed. If the player switches to another tab, the clock pauses, so the round is still there when they come back.

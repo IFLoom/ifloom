@@ -25,7 +25,7 @@ function draw(view: View): void {
 
 ```tsx tab="React" tab-group="framework"
 // src/layout.tsx
-import { Game, Inventory, SceneStage, Section, Sidebar, StatList, Story, Title } from '@ifloom/react'
+import { Game, Inventory, Scene, Section, Sidebar, StatList, Story, Title } from '@ifloom/react'
 
 export function Layout() {
   return (
@@ -41,7 +41,7 @@ export function Layout() {
         </Section>
       </Sidebar>
       <Story>
-        <SceneStage />
+        <Scene />
       </Story>
     </Game>
   )
@@ -310,7 +310,7 @@ The React UI's [`PanelHost`](/docs/react/components#panelhost) draws the built-i
 
 ## Where the story's text sits
 
-On a wide screen the story is much wider than a comfortable line of text. The React UI keeps the scene's title, its prose, the choices, the inputs, the exits and the people here to a reading column `--width-prose` wide, and centres that column in the story. Pictures, a place's stage and panels still use the whole width.
+On a wide screen the story is much wider than a comfortable line of text. The React UI keeps the scene's title, its prose, the choices, the inputs, the exits and the people here to a reading column `--width-prose` wide, and centres that column in the story. Pictures, a place's layered picture and panels still use the whole width.
 
 To keep the column to the start of the story instead, give [`Story`](/docs/react/components#story) `align="start"`. The vue, svelte and vanilla templates keep their text to the start already, and a few lines in `src/styles.css` centre it:
 
@@ -328,14 +328,14 @@ To keep the column to the start of the story instead, give [`Story`](/docs/react
 
 ```tsx tab="React" tab-group="framework"
 // src/layout.tsx
-import { Game, SceneStage, Story } from '@ifloom/react'
+import { Game, Scene, Story } from '@ifloom/react'
 
 export function Layout() {
   return (
     <Game>
       {/* Centred when align is left out. */}
       <Story align="start">
-        <SceneStage />
+        <Scene />
       </Story>
     </Game>
   )

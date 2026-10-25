@@ -1,4 +1,4 @@
-import { Game, GameMenu, InputFields, Notices, Overlay, PanelHost, RoomActions, SceneStage, StatList, Story, Title } from '@ifloom/react'
+import { Game, GameMenu, InputFields, Notices, Overlay, PanelHost, RoomActions, Scene, StatList, Story, Title } from '@ifloom/react'
 
 /**
  * A page to read: no side column, so the story is one centred column, like a
@@ -10,7 +10,7 @@ export function Layout() {
     <Game>
       <Story>
         <Title />
-        <SceneStage />
+        <Scene />
         <InputFields />
         <RoomActions />
         <StatList />

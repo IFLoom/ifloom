@@ -291,7 +291,7 @@ function SceneArticle({ className, motion, transition, rolls }: { className?: st
   const hue = speakerHue(view)
   if (view.minigame) {
     return (
-      <article {...article} data-scene={scene.id ?? 'stage'} data-minigame={view.minigame.id} data-transition-in={entering}>
+      <article {...article} data-scene={scene.id ?? 'room'} data-minigame={view.minigame.id} data-transition-in={entering}>
         <MinigameSlot />
       </article>
     )
@@ -300,7 +300,7 @@ function SceneArticle({ className, motion, transition, rolls }: { className?: st
   return (
     <article
       {...article}
-      data-scene={scene.id ?? 'stage'}
+      data-scene={scene.id ?? 'room'}
       data-transition-in={entering}
       data-revealed={last > 0 && (revealed || !motion) ? '' : undefined}
       data-speaker-hue={hue ? '' : undefined}
@@ -352,7 +352,7 @@ function usePressed(view: View): Transition | TransitionName | undefined {
   return pressed
 }
 
-function SceneStageImpl({ className }: { className?: string }) {
+function SceneImpl({ className }: { className?: string }) {
   const { view, runner } = useGame()
   const motion = useMotion()
   const frame = usePart('scene-transition', '')
@@ -398,4 +398,4 @@ function SceneStageImpl({ className }: { className?: string }) {
  * Folds: the beats of a section with a `ui.fold` hint (what `fold()` writes)
  * are drawn as one `fold` part, a `<details>` the player opens and shuts.
  */
-export const SceneStage = overridable('SceneStage', SceneStageImpl)
+export const Scene = overridable('Scene', SceneImpl)

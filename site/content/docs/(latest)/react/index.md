@@ -263,7 +263,7 @@ The layout is the page, written as JSX: what goes in the side column, what goes 
 
 ```tsx
 // src/layout.tsx
-import { Clock, Game, GameMenu, InputFields, Inventory, Notices, Overlay, PanelHost, Plugins, RoomActions, SceneStage, Section, Sidebar, StatList, Story, Title, useWords } from '@ifloom/react'
+import { Clock, Game, GameMenu, InputFields, Inventory, Notices, Overlay, PanelHost, Plugins, RoomActions, Scene, Section, Sidebar, StatList, Story, Title, useWords } from '@ifloom/react'
 
 export function Layout() {
   const words = useWords()
@@ -283,7 +283,7 @@ export function Layout() {
         <Plugins at="sidebar" />
       </Sidebar>
       <Story>
-        <SceneStage />
+        <Scene />
         <InputFields />
         <Plugins at="room" />
         <RoomActions />

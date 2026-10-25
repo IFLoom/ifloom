@@ -160,7 +160,7 @@ draw(runner.view())
 
 ```tsx tab="React" tab-group="framework"
 // src/layout.tsx
-import { Game, GameMenu, InputFields, Notices, Overlay, PanelHost, RoomActions, SceneStage, StatList, Story, Title } from '@ifloom/react'
+import { Game, GameMenu, InputFields, Notices, Overlay, PanelHost, RoomActions, Scene, StatList, Story, Title } from '@ifloom/react'
 
 // No side column: the story is one centred column, like a book.
 export function Layout() {
@@ -168,7 +168,7 @@ export function Layout() {
     <Game>
       <Story>
         <Title />
-        <SceneStage />
+        <Scene />
         <InputFields />
         <RoomActions />
         <StatList />
@@ -280,7 +280,7 @@ entities: [
 ],
 ```
 
-So a new game has `state.stats` of `{ coins: 120, reputation: 20 }`, and Ana has a skill of 5, a morale of 60 and a wage of 12. The save keeps nothing about her until one of those changes: they're read from the content. Content names her `'staff:ana'`. The [view](/docs/reference/view#entities) hands the UI each kind with its entries, and the [React UI](/docs/react/components#entitytable) draws a table of staff and one of the menu. The café puts them on the stage (see [Drawing it](#drawing-it-the-books-on-the-stage)).
+So a new game has `state.stats` of `{ coins: 120, reputation: 20 }`, and Ana has a skill of 5, a morale of 60 and a wage of 12. The save keeps nothing about her until one of those changes: they're read from the content. Content names her `'staff:ana'`. The [view](/docs/reference/view#entities) hands the UI each kind with its entries, and the [React UI](/docs/react/components#entitytable) draws a table of staff and one of the menu. The café puts them in the story (see [Drawing it](#drawing-it-the-books-in-the-story)).
 
 ### Reaching one of them
 
@@ -381,7 +381,7 @@ With `where`, `count` only counts those the condition holds for, with `'$'` agai
 
 As with The Letter, `start` gives [`ifloom playtest`](/docs/cli#ifloom-playtest) a game with the doors already open, and the example's `playtest` script is `ifloom playtest --turns 8 --out playtest/season.txt`. Its numbers have a column for each of the player's stats, then one for each kind with how many there are, so the weeks the staff dwindled stand out. The [explorer](/docs/cli#explorer) runs each week's errands first and ends the week last. It finds the button that ends the turn by trying each one on the state.
 
-### Drawing it: the books on the stage
+### Drawing it: the books in the story
 
 In a management game the player mostly looks at the things being managed. So the café draws its tables under the scene and over the week's buttons. Each kind of entity is in `view.entities`, with a row for each one and its stats, so a table for each kind is a loop in any framework. The example uses the React UI, and keeps only the title, the coins and reputation, and the player's menu at the side:
 
@@ -428,7 +428,7 @@ draw(runner.view())
 
 ```tsx tab="React" tab-group="framework"
 // src/layout.tsx
-import { Clock, EntityTable, Game, GameMenu, InputFields, Notices, Overlay, PanelHost, RoomActions, SceneStage, Section, Sidebar, StatList, Story, Title, useWords } from '@ifloom/react'
+import { Clock, EntityTable, Game, GameMenu, InputFields, Notices, Overlay, PanelHost, RoomActions, Scene, Section, Sidebar, StatList, Story, Title, useWords } from '@ifloom/react'
 
 // The books in the story, where the eye goes: the staff and the menu over the week's buttons.
 export function Layout() {
@@ -444,7 +444,7 @@ export function Layout() {
         </Section>
       </Sidebar>
       <Story>
-        <SceneStage />
+        <Scene />
         <EntityTable />
         <RoomActions />
         <InputFields />
@@ -600,6 +600,6 @@ You pour the tea and watch the steam curl up.
 [[video:flat/steam]]
 ```
 
-A clip plays like a GIF unless you add flags, such as `|controls` or `|sound`. The React UI draws both, and the player can click either one to see it large. Small Town's café also has a [stage](/docs/reference/media#layered-pictures): a picture of the counter while Ava is on shift, with a hotspot on her that talks to her. [Media](/docs/reference/media) covers pools of pictures, stages and the rules for video.
+A clip plays like a GIF unless you add flags, such as `|controls` or `|sound`. The React UI draws both, and the player can click either one to see it large. Small Town's café also has a [layered picture](/docs/reference/media#layered-pictures): a picture of the counter while Ava is on shift, with a hotspot on her that talks to her. [Media](/docs/reference/media) covers pools of pictures, layered pictures and the rules for video.
 
 The core knows no person, place or time of day, so a novel carries none of these plugins, and a management game carries only the ones it uses. The plugins find each other by name. They ask for answers through `queries`, as the cast asks `places/here`. A plugin can also name the plugins it `cooperates` with, so content may use their conditions and effects in a game that leaves them out. The loader lets it pass, the condition is false and the effect does nothing. See [Writing a plugin](/docs/reference/plugins).

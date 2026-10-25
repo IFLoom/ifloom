@@ -130,7 +130,7 @@
 
 /*
  * Scene transitions and prose reveals, by the names in the content's `ui`
- * hints (`ui.transition`, `ui.reveal`). `SceneStage` sets the attributes;
+ * hints (`ui.transition`, `ui.reveal`). `Scene` sets the attributes;
  * these rules draw them. Redraw one, or add a name your game declares in
  * `game.ui.transitionNames`, with rules of your own:
  *

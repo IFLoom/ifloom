@@ -48,7 +48,7 @@ export const town: Content = {
 
 With no hint anywhere, a screen comes in and goes out with `'none'`, which is an instant swap. `ms` is 300 when nothing says.
 
-`SceneStage` plays a transition only when [`view.scene.key`](/docs/reference/view#the-scene) changes: a new scene, a minigame, or another room. A choice that keeps the same scene open plays nothing. The scene before is kept on the page, inert and hidden from screen readers, for its `out`, then the new one comes in by its `in`.
+`Scene` plays a transition only when [`view.scene.key`](/docs/reference/view#the-scene) changes: a new scene, a minigame, or another room. A choice that keeps the same scene open plays nothing. The scene before is kept on the page, inert and hidden from screen readers, for its `out`, then the new one comes in by its `in`.
 
 ### TransitionName
 
@@ -98,7 +98,7 @@ function screenTransition(view: View, game: Game, pressed?: Transition | Transit
 type ScreenTransition = { key: string; in: TransitionName; out: TransitionName; ms: number }
 ```
 
-The screen in `view` and how it comes and goes, as `SceneStage` plays it: the scene's or room's `ui.transition` over the game's, with `pressed` (the transition of the choice that led here) deciding how it comes in. For a component of your own that animates as the scene does:
+The screen in `view` and how it comes and goes, as `Scene` plays it: the scene's or room's `ui.transition` over the game's, with `pressed` (the transition of the choice that led here) deciding how it comes in. For a component of your own that animates as the scene does:
 
 ```tsx
 import { screenTransition, useGame, useMotion } from '@ifloom/react'
@@ -133,7 +133,7 @@ import { type Reveal } from '@ifloom/react'
 type Reveal = { delay?: number; as?: TransitionName }
 ```
 
-`SceneStage` draws each revealed run of beats in a `reveal` part with `data-reveal` and `--ifloom-reveal-at`, and holds the choices back until the last. Every word is in the page from the start, so a screen reader reads it. A click on the scene or any key shows the rest at once, and a player who asks for reduced motion gets it all at once.
+`Scene` draws each revealed run of beats in a `reveal` part with `data-reveal` and `--ifloom-reveal-at`, and holds the choices back until the last. Every word is in the page from the start, so a screen reader reads it. A click on the scene or any key shows the rest at once, and a player who asks for reduced motion gets it all at once.
 
 ### revealGroups and lastReveal
 
@@ -147,7 +147,7 @@ type RevealPoint = { delay: number; as: TransitionName; at: number }
 type RevealGroup = { reveal: RevealPoint | null; dice?: Roll; beats: { beat: SceneBeat; index: number }[] }
 ```
 
-`revealGroups` cuts a scene's beats into the run shown with the scene (its `reveal` is `null`) and a run for each beat with `ui.reveal`. `at` is when that reveal comes, counted from the scene coming on: its own delay added to every one before it, so delays of 800 and 1500 come at 800 and 2300. `lastReveal` is the last `at`, or 0 with none. Use them in a [`Beat`](/docs/react/components#beat) or a `SceneStage` of your own.
+`revealGroups` cuts a scene's beats into the run shown with the scene (its `reveal` is `null`) and a run for each beat with `ui.reveal`. `at` is when that reveal comes, counted from the scene coming on: its own delay added to every one before it, so delays of 800 and 1500 come at 800 and 2300. `lastReveal` is the last `at`, or 0 with none. Use them in a [`Beat`](/docs/react/components#beat) or a `Scene` of your own.
 
 With `rolled`, the rolls being shown as they land, a beat whose [`dice`](#dice) hint names one of them starts a run too. Its `dice` is that roll, and it waits `DICE_ROLL_MS` more, for the dice to settle. Leave `rolled` out and dice hints change nothing.
 
@@ -161,7 +161,7 @@ body: [
 ]
 ```
 
-On a [block](/docs/reference/scenes#block): the key of a [roll](/docs/reference/effects#roll). When the last command rolled under that key, `SceneStage` draws the roll's [`DiceRoll`](/docs/react/components#diceroll) just above the block. The dice tumble for `DICE_ROLL_MS` (1000) milliseconds and settle on the faces rolled, then the total and Passed or Failed come in. The block, and anything after it, waits for them in a `reveal` part, so the words don't give the result away before the dice do. The choices wait too.
+On a [block](/docs/reference/scenes#block): the key of a [roll](/docs/reference/effects#roll). When the last command rolled under that key, `Scene` draws the roll's [`DiceRoll`](/docs/react/components#diceroll) just above the block. The dice tumble for `DICE_ROLL_MS` (1000) milliseconds and settle on the faces rolled, then the total and Passed or Failed come in. The block, and anything after it, waits for them in a `reveal` part, so the words don't give the result away before the dice do. The choices wait too.
 
 A roll the player made before the last command is drawn settled, with nothing held back. A roll no block names, such as one a [trigger](/docs/reference/triggers) made, shows for a moment over the scene in a [`DiceOverlay`](/docs/react/components#diceoverlay). With motion off, or a player who asks for reduced motion, the dice show settled at once. Either way a screen reader hears the result.
 
@@ -185,7 +185,7 @@ body: [
 ]
 ```
 
-On a [block](/docs/reference/scenes#block): the id of one of the game's [timers](/docs/reference/timers). While that timer runs, `SceneStage` draws its [`Countdown`](/docs/react/components#countdown) just under the block: the timer's label, a bar that empties with each tick, and the seconds left. With a quarter or less to go, the countdown is marked `data-urgent`. With motion off, or a player who asks for reduced motion, it shows only the seconds. Once the timer runs out or is stopped, the countdown goes.
+On a [block](/docs/reference/scenes#block): the id of one of the game's [timers](/docs/reference/timers). While that timer runs, `Scene` draws its [`Countdown`](/docs/react/components#countdown) just under the block: the timer's label, a bar that empties with each tick, and the seconds left. With a quarter or less to go, the countdown is marked `data-urgent`. With motion off, or a player who asks for reduced motion, it shows only the seconds. Once the timer runs out or is stopped, the countdown goes.
 
 The hint only draws the timer. The game's clock runs whether or not anything draws it, so a timer no block names still runs out on time. To show one elsewhere, put `Countdown` or `Timers` in your layout.
 
@@ -208,7 +208,7 @@ fold('Read the postcard', [text(`Wish you were here. The sea is cold and the chi
 // { blocks: [{ text: '…' }], ui: { fold: 'Read the postcard' } }
 ```
 
-On a section, `{ blocks }`: the words the fold opens by. The engine carries a section's hints on every beat it makes, as the beat's `section`, and `SceneStage` draws the beats together in a `<details>` with these words as its summary, shut to begin with. A fold is presentation only and keeps no state. See [Flowing scenes](/docs/reference/flows).
+On a section, `{ blocks }`: the words the fold opens by. The engine carries a section's hints on every beat it makes, as the beat's `section`, and `Scene` draws the beats together in a `<details>` with these words as its summary, shut to begin with. A fold is presentation only and keeps no state. See [Flowing scenes](/docs/reference/flows).
 
 ## display
 
@@ -235,7 +235,7 @@ import { cast } from '@ifloom/plugin-cast'
 cast.person({ id: 'ava', name: 'Ava', ui: { hue: 20 }, home: 'park', talk: 'ava.hi' })
 ```
 
-On an [entity](/docs/reference/entities#entitydef), or on a [kind](/docs/reference/entities#kinddef) for all of its entities: a colour as a hue from 0 to 360. While a scene's [speaker](/docs/reference/view#speakerview) has one, `SceneStage` colours their spoken lines with it, lighter in dark mode. It sets `data-speaker-hue` and `--ifloom-speaker-hue` on the scene for your own CSS too:
+On an [entity](/docs/reference/entities#entitydef), or on a [kind](/docs/reference/entities#kinddef) for all of its entities: a colour as a hue from 0 to 360. While a scene's [speaker](/docs/reference/view#speakerview) has one, `Scene` colours their spoken lines with it, lighter in dark mode. It sets `data-speaker-hue` and `--ifloom-speaker-hue` on the scene for your own CSS too:
 
 ```css
 [data-speaker-hue] [data-part="scene-title"] {

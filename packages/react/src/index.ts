@@ -34,7 +34,7 @@ export type { IconName } from './game/icon.tsx'
 export { mountGame } from './game/mount.tsx'
 export { useAudio } from './game/audio.ts'
 export type { MountOptions } from './game/mount.tsx'
-export { SceneStage, Beat } from './game/scene.tsx'
+export { Scene, Beat } from './game/scene.tsx'
 export { BUILT_IN_INLINE, InlineAction, InlineImage, InlineMail, InlineModal, InlineMono, InlineProp, InlineTrigger, Tip } from './game/inline.tsx'
 export { useMotion, useReducedMotion } from './game/motion.tsx'
 // The hints the React UI reads from content's `ui` fields, typed by augmenting the engine's hint interfaces.

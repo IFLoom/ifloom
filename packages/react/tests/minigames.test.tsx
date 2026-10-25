@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { createRunner, loadGame, startingState, type Command, type Game, type MinigameDef, type Runner } from '@ifloom/engine'
-import { Game as Page, GameShell, NoticeStrip, RoomActions, SceneStage, Sidebar, Story, useGame, useMinigame } from '../src/index.ts'
+import { Game as Page, GameShell, NoticeStrip, RoomActions, Scene, Sidebar, Story, useGame, useMinigame } from '../src/index.ts'
 import { storyOf } from './layouts.tsx'
 
 /** Catch: wait for the throw, then press space within a second. Left drops it. */
@@ -146,7 +146,7 @@ describe('useMinigame', () => {
         runner={runner}
         layout={storyOf(
           <>
-            <SceneStage />
+            <Scene />
             <Extra />
             <Extra />
           </>,
@@ -368,7 +368,7 @@ describe('the notice strip', () => {
               <NoticeStrip />
             </Sidebar>
             <Story>
-              <SceneStage />
+              <Scene />
               <RoomActions />
             </Story>
           </Page>

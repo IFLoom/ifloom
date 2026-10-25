@@ -96,52 +96,17 @@ The command that opened the panel never closes it, even if it also ended a turn 
 
 Moving to another place doesn't close a panel by itself, because the engine keeps no places. In the React UI the panel is a modal dialog, so the player closes it before they can leave.
 
-## Drawing a panel
+## Drawing it
 
-Read `view.panel` and draw it over everything else by its name. Send `closePanel` when the player closes it.
+Read `view.panel`, an [`OpenPanel`](#openpanel), and draw it over everything else by its name, from what it was opened with. Send `{ type: 'closePanel' }` when the player closes it. A scene's own panel has `scene` set: it stays while the scene is open, so give it no Close button.
 
-```ts tab="Plain JS" tab-group="framework"
-// src/main.ts, in the vanilla template: at the end of draw(view)
-if (view.panel) {
-  const dialog = add(root, 'section', '', 'panel')
-  dialog.setAttribute('role', 'dialog')
-  dialog.setAttribute('aria-label', view.panel.panel)
-  const box = add(dialog, 'div')
-  if (view.panel.panel === 'shop') drawCounter(box, String(view.panel.with.vendor))
-  else add(box, 'pre', JSON.stringify(view.panel.with, null, 2))
-  add(box, 'button', 'Close').onclick = () => runner.apply({ type: 'closePanel' })
-}
-```
+The React UI's [`PanelHost`](/docs/react/components#panelhost), in the default layout, draws the panels it knows, and a panel of your own goes in `panels` by its name. The Plain JS tab uses `runner` and `add` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-```ts tab="React" tab-group="framework"
-// The React UI draws view.panel for you with PanelHost, which the default layout has.
-// A panel of your own goes in mountGame's panels, by name, over a built-in one.
-import { mountGame } from '@ifloom/react'
-import { Pockets } from './Pockets.tsx'
+::include[../../../../snippets/plain/panel.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-mountGame(game, { panels: { pockets: Pockets } })
-```
+::include[../../../../snippets/react/mount-panels.tsx]{meta='tab="React" tab-group="framework"'}
 
-```vue tab="Vue" tab-group="framework"
-<!-- src/Panel.vue, in the vue template; App.vue draws <Panel v-if="view.panel" :panel="view.panel" /> -->
-<script setup lang="ts">
-import type { OpenPanel } from '@ifloom/engine'
-import { runner } from './runner.ts'
-import Counter from './Counter.vue'
-
-defineProps<{ panel: OpenPanel }>()
-</script>
-
-<template>
-  <section class="panel" role="dialog" :aria-label="panel.panel">
-    <div>
-      <Counter v-if="panel.panel === 'shop'" :vendor="String(panel.with.vendor)" />
-      <pre v-else>{{ JSON.stringify(panel.with, null, 2) }}</pre>
-      <button @click="runner.apply({ type: 'closePanel' })">Close</button>
-    </div>
-  </section>
-</template>
-```
+::include[../../../../snippets/vue/Panel.vue]{meta='tab="Vue" tab-group="framework"'}
 
 ```svelte tab="Svelte" tab-group="framework"
 <!-- src/Panel.svelte, in the svelte template; App.svelte draws {#if $view.panel}<Panel panel={$view.panel} />{/if} -->

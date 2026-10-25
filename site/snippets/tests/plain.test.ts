@@ -1,8 +1,13 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
 import { runner } from '../plain/runner.ts'
+import { drawInputs } from '../plain/inputs.ts'
+import { drawNotices } from '../plain/notices.ts'
+import { drawProse } from '../plain/prose.ts'
+import { drawRolls } from '../plain/rolls.ts'
 import { drawShop } from '../plain/shop.ts'
-import { atTheCounter } from './play.ts'
+import { drawTimers } from '../plain/timers.ts'
+import { atTheCounter, inThePark, phoneRinging, steppedOut } from './play.ts'
 
 /** The Plain JS snippets, drawn into a box and pressed, as the vanilla template would. */
 function drawn(draw: (box: HTMLElement) => void): HTMLElement {
@@ -14,7 +19,48 @@ function drawn(draw: (box: HTMLElement) => void): HTMLElement {
 const buttons = (box: HTMLElement) => [...box.querySelectorAll('button')]
 
 describe('the Plain JS snippets', () => {
-  it('shop: draws the counter the shop panel names, and its buy buttons buy', () => {
+  it('inputs and notices: names the cat on moving day, and dismisses the note under the door', async () => {
+    await runner.newGame()
+    const box = drawn((into) => drawInputs(into, runner.view()))
+    box.querySelector('input')!.value = 'Biscuit'
+    box.querySelector('form')!.requestSubmit()
+    expect(runner.state.kv.catName).toBe('Biscuit')
+    // A name too long is refused, with why under the field.
+    box.querySelector('input')!.value = 'A very long name for a small cat'
+    box.querySelector('form')!.requestSubmit()
+    expect(box.querySelector('.reason')?.textContent).toBeTruthy()
+    expect(runner.state.kv.catName).toBe('Biscuit')
+  })
+
+  it('prose and rolls: the stones line has its inline action, and the skim it presses is rolled', async () => {
+    await runner.newGame()
+    inThePark(runner)
+    const prose = drawn((into) => drawProse(into, runner.view()))
+    prose.querySelector<HTMLButtonElement>('button.inline-action')!.click()
+    const rolls = drawn((into) => drawRolls(into, runner.view()))
+    expect(rolls.querySelector('[data-roll="skim"]')?.textContent).toMatch(/^2d6: \d \+ \d = \d+ \((passed|failed)\)$/)
+  })
+
+  it('timers: a countdown for the ringing phone, with the seconds left', async () => {
+    await runner.newGame()
+    phoneRinging(runner)
+    const box = drawn((into) => drawTimers(into, runner.view()))
+    expect(box.querySelector('[data-timer="flat.ring"] .timer-left')?.textContent).toMatch(/^\d+s$/)
+  })
+
+  it('notices: a dismissed notice is gone from the next drawing', async () => {
+    await runner.newGame()
+    steppedOut(runner)
+    const before = runner.view().notices.unseen.length
+    expect(before).toBeGreaterThan(0)
+    drawn((into) => drawNotices(into, runner.view()))
+      .querySelector('button')!
+      .click()
+    expect(runner.view().notices.unseen.length).toBe(before - 1)
+  })
+
+  it('shop: draws the counter the shop panel names, and its buy buttons buy', async () => {
+    await runner.newGame()
     atTheCounter(runner)
     const view = runner.view()
     expect(view.panel?.panel).toBe('shop')

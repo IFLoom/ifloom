@@ -249,6 +249,18 @@ What [`view.minigame`](/docs/reference/view#minigame) holds while one runs.
 
 A UI sends ticks while `timeLeft` isn't `null`, and also while [`view.timers`](/docs/reference/view#timers) isn't empty. A tick with nothing counting down is refused with `Nothing is counting down.`
 
+## Drawing it
+
+While a minigame runs, `view.minigame` is its [`MinigameView`](#minigameview), and `view.scene` holds its title and the running state's words. Draw a button for each of its `inputs`, which sends `{ type: 'minigame', input }`, and a bar from `timeLeft` and `timeTotal` while the state has a timer. Something has to send the ticks: the templates call [`startClock`](/docs/browser#startclock), which does.
+
+The React UI's [`Scene`](/docs/react/components#scene) draws a [`MinigameCard`](/docs/react/components#minigamecard) in place of the scene and runs the clock. For one minigame of your own, put a component under its id in `panels`, and use [`useMinigame`](/docs/react/components#useminigame) in it. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+
+::include[../../../../snippets/plain/minigame.ts]{meta='tab="Plain JS" tab-group="framework"'}
+
+::include[../../../../snippets/react/minigame.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/vue/Minigame.vue]{meta='tab="Vue" tab-group="framework"'}
+
 ## The checks
 
 The [content checker](/docs/reference/checks) reports:

@@ -5,8 +5,9 @@ import type { ReactNode } from 'react'
 import { createRunner, startingState, type Runner } from '@ifloom/engine'
 import { GameProvider, type PluginUi } from '@ifloom/react'
 import module from '../react/game.ts'
+import { RingingPhone } from '../react/timers.tsx'
 import { QuickSandwich } from '../react/use-shop.tsx'
-import { inTheCafe } from './play.ts'
+import { inTheCafe, phoneRinging } from './play.ts'
 
 afterEach(() => {
   cleanup()
@@ -45,5 +46,14 @@ describe('the React snippets', () => {
     const coins = runner.state.stats.coins
     act(() => screen.getByRole('button', { name: 'A sandwich to go' }).click())
     expect(runner.state.stats.coins).toBeLessThan(coins)
+  })
+
+  it('useTimer: the ringing phone, gone once it is answered', () => {
+    const runner = newRunner()
+    phoneRinging(runner)
+    drawn(runner, <RingingPhone />)
+    expect(screen.queryByText('☎')).toBeTruthy()
+    act(() => void runner.apply({ type: 'choose', id: 'answer' }))
+    expect(screen.queryByText('☎')).toBeNull()
   })
 })

@@ -92,6 +92,18 @@ type TimerView = { id: string; label: string | null; left: number; total: number
 
 A running timer as [`view.timers`](/docs/reference/view#timers) shows it, in the order they started. `left / total` is the share left. It never includes the effects, so drawing every running timer gives nothing away. A timer is in the view only while it runs.
 
+## Drawing it
+
+`view.timers` has each running timer in the order they started, as a [`TimerView`](#timerview): its `id`, its `label`, and the milliseconds `left` of its `total`. Draw a countdown from `left / total`. Nothing runs down until something sends ticks, so start [`startClock`](/docs/browser#startclock) as the templates do. A timer is only in the view while it runs, so its countdown goes when it runs out or is stopped.
+
+The React UI's [`Scene`](/docs/react/components#scene) draws a [`Countdown`](/docs/react/components#countdown) under a block whose [`timer`](/docs/react/hints#timer) hint names a timer. [`Timers`](/docs/react/components#timers) draws them all, and [`useTimer`](/docs/react/components#usetimer-and-usetimers) gives you one to draw your own way. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+
+::include[../../../../snippets/plain/timers.ts]{meta='tab="Plain JS" tab-group="framework"'}
+
+::include[../../../../snippets/react/timers.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/vue/Timers.vue]{meta='tab="Vue" tab-group="framework"'}
+
 ## The checks
 
 The [content checker](/docs/reference/checks) reports:

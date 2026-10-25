@@ -359,6 +359,18 @@ effectsOf(state, game, { type: 'action', id: 'places/work' })
 - `scene` gives none. Look at the command itself for that. The places plugin's `places/go` and the cast's `cast/talk` give none either, though one moves the player and the other opens a scene. A plugin command such as the calendar's [`sleep`](/docs/plugins/calendar#commands) gives what its own `effectsOf` says.
 - It's only the list the command applies directly. What a plugin's effect applies in turn, through its context's [`apply`](/docs/reference/plugins#applying-effects), isn't in it.
 
+## Drawing it
+
+While no scene is open, the buttons are in `view.actions`: the game's own, then each plugin's (the places plugin's for the room, say), then your content's. Each is a [`RenderedChoice`](/docs/reference/view#renderedchoice). Show its `price` with the label, and grey it out with `disabled`, which is [why it's refused](#why-an-action-is-refused). Show a `warning` too: the button can be pressed, but the command will be refused with that line. Send `command` when it's pressed.
+
+The React UI's [`RoomActions`](/docs/react/components#roomactions) draws them at the bottom of the story in the default layout, and [`ChoiceList`](/docs/react/components#choicelist) draws any list of them the same way. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+
+::include[../../../../snippets/plain/actions.ts]{meta='tab="Plain JS" tab-group="framework"'}
+
+::include[../../../../snippets/react/actions.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/vue/Actions.vue]{meta='tab="Vue" tab-group="framework"'}
+
 ## See it in an example
 
 - Small Town: the café's `coffee` in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts) is one of the café's room actions. It costs 3 coins and is refused once you've had one today. "Wait a while" is in the content's `actions` in [`examples/showcase/src/world/actions.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/actions.ts), and the camera's buttons are an app's in [`examples/showcase/src/world/phone.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/phone.ts).

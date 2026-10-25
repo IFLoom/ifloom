@@ -188,7 +188,7 @@ for (const person of people) for (const talk of person.actions) addButton(`${per
 | `key` | `string` | Which screen this is: `scene:<id>` while a scene is open, `minigame:<id>` while a [minigame](#minigame) runs, `room:<id>` for a plugin's room scene (a place, with the places plugin), and `room` with none. It changes when the screen does, and only then, so a UI keys an animation or moves focus by it. A choice that keeps the same scene open keeps the key. |
 | `title` | `string` | The scene's own title, else the title of a plugin's [room scene](/docs/reference/plugins#scene) (the room's name, with the places plugin), else the game's `title`. |
 | `body` | `string` | The raw prose, with its markup. In-place `{ media }` blocks are in it as markup, and `@pool` markup is already resolved to files. |
-| `beats` | [`SceneBeat[]`](/docs/reference/prose#scenebeat) | The prose parsed, with the scene's pictures and videos in place and pool markup resolved to files. Draw these, not `body`. In a [flowing scene](/docs/reference/flows#in-the-view), everything up to where the flow stops, with a `chose` beat at each past pick. |
+| `beats` | [`SceneBeat[]`](/docs/reference/prose#scenebeat) | The prose parsed, with the scene's pictures and videos in place and pool markup resolved to files. Draw these, not `body`. In a [flowing scene](/docs/reference/flows#drawing-it), everything up to where the flow stops, with a `chose` beat at each past pick. |
 | `fresh` | `number` | The index of the first beat the flow's last step brought (a pick, from its `chose` beat on, a jump, or a minigame or panel done with), so a UI can animate only those. `0` before the visit has taken a step, for a scene with no decisions, and for the room. |
 | `tags` | `string[]` | The render's `tags`, else the scene's, else `[]`. The engine gives them no meaning, so style the scene by them. The room has none. |
 | `speaker` | [`SpeakerView`](#speakerview) ` \| null` | Who's talking: the render's `speaker`, else the scene's, as their [entity](/docs/reference/scenes#speakers) is. `null` when there's none, or the id names no entity. Never guessed from the scene's id. |
@@ -299,7 +299,7 @@ The engine never reads the [profile](/docs/reference/profile), so the view gives
 |---|---|---|
 | `panel` | [`OpenPanel`](/docs/reference/panels#openpanel) ` \| null` | The [panel](/docs/reference/panels) that's open, by name, with what it was opened with: one the `panel` effect opened, or the open scene's own [`panel`](/docs/reference/panels#a-scenes-panel), with that scene's id in `scene`. `null` when none is open. |
 
-Draw it over everything else by its name, and send `{ type: 'closePanel' }` when the player closes it. A scene's own panel has `scene` set: draw it in the scene, in place of its choices, since `closePanel` doesn't close it. See [Drawing a panel](/docs/reference/panels#drawing-a-panel). The React UI draws it with [`PanelHost`](/docs/react/components#panelhost).
+Draw it over everything else by its name, and send `{ type: 'closePanel' }` when the player closes it. A scene's own panel has `scene` set: draw it in the scene, in place of its choices, since `closePanel` doesn't close it. See [Drawing it](/docs/reference/panels#drawing-it). The React UI draws it with [`PanelHost`](/docs/react/components#panelhost).
 
 ### rolls
 

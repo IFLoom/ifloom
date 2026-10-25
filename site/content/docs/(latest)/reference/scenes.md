@@ -357,6 +357,20 @@ The count is per name, not per scene. Two scenes drawing the same variants share
 
 To draw blocks outside a scene, such as a message's words, a plugin uses [`context.beats`](/docs/reference/plugins#beats).
 
+## Drawing it
+
+`view.scene` is what fills the main column: the open scene, or the room while none is open. Draw its `title`, then its `beats`, then its `choices`. The beats are the prose parsed into paragraphs, spoken lines, pictures and the picks made earlier in a [flowing scene](/docs/reference/flows), each a [`SceneBeat`](/docs/reference/prose#scenebeat). Each choice is a [`RenderedChoice`](/docs/reference/view#renderedchoice) with its price, and with `disabled` set to the reason when it can't be pressed. Send its `command` when the player presses it. [The scene](/docs/reference/view#the-scene) lists every field.
+
+The React UI's [`Scene`](/docs/react/components#scene) draws all of it, and the default layout already has it. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+
+::include[../../../../snippets/plain/scene.ts]{meta='tab="Plain JS" tab-group="framework"'}
+
+::include[../../../../snippets/react/scene.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/vue/Scene.vue]{meta='tab="Vue" tab-group="framework"'}
+
+The words inside a line, such as bold, inline actions and tooltips, are in a beat's `spans`. [Prose](/docs/reference/prose#drawing-it) shows how to draw them.
+
 ## See it in an example
 
 - Small Town: `ava.hi` in [`examples/showcase/src/story/ava.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/ava.ts) is a data scene with a `variants` block, a line with a `when`, a `speaker` and a choice limited to once a turn.

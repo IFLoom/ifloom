@@ -427,6 +427,18 @@ type FillPart = 'stats' | 'kv' | 'settings'
 
 The [content checker](/docs/reference/checks) reports a `version` that isn't a whole number of 1 or more, and a step keyed outside 1 to `version - 1`.
 
+## Drawing it
+
+A save screen lists [`runner.saves.list()`](#saves), each entry a [`SaveMeta`](#savemeta) with its `name`, or a save that can't be read with why. Load one with [`runner.load(slot)`](/docs/reference/runner#the-runners-members), and save with `runner.save(slot)`, in a new slot from [`nextSlot`](/docs/browser#nextslot). Grey the Save button out while [`view.saving`](/docs/reference/view#saving) says the game refuses saving.
+
+The React UI's [`GameMenu`](/docs/react/components#gamemenu) opens its [`SavesMenu`](/docs/react/components#savesmenu), which you can also place yourself, and [`useSaves`](/docs/react/components#usesaves) has everything it does without its look. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+
+::include[../../../../snippets/plain/saves.ts]{meta='tab="Plain JS" tab-group="framework"'}
+
+::include[../../../../snippets/react/saves.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/vue/Saves.vue]{meta='tab="Vue" tab-group="framework"'}
+
 ## See it in an example
 
 - Small Town: [`examples/showcase/src/main.tsx`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/main.tsx) keeps saves with `saves(game, driver)` on `localStorageDriver(window.localStorage)`.

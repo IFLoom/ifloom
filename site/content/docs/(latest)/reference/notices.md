@@ -102,6 +102,18 @@ function dismiss(state: GameState, id?: string): GameState
 
 Returns the state with the notice `id` marked seen, or every notice if you leave `id` out. Seen notices stay in the state, but they're no longer in `view.notices.unseen`. It returns the same state when there's nothing unseen to mark. The [`dismiss`](/docs/reference/commands#dismiss) command calls this.
 
+## Drawing it
+
+`view.notices.unseen` is every notice not yet dismissed, newest first, each a [`NoticeView`](/docs/reference/view#noticesview-and-noticeview) with its `title`, `text`, `image` and `tag`. `view.notices.byTag` counts them by tag, for a badge on the post or the phone. Send [`dismiss`](#dismiss) with a notice's `id` when the player has read it, or with no `id` to dismiss them all.
+
+The React UI's [`Notices`](/docs/react/components#notices) draws them as toasts in the corner, in the `Overlay` of the default layout, and [`NoticeStrip`](/docs/react/components#noticestrip) as a strip over the story instead. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+
+::include[../../../../snippets/plain/notices.ts]{meta='tab="Plain JS" tab-group="framework"'}
+
+::include[../../../../snippets/react/notices.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/vue/Notices.vue]{meta='tab="Vue" tab-group="framework"'}
+
 ## Gotchas
 
 - **`text` is words, as `title` is.** Both are written out and never looked up. Before schema 25 `text` was a prose key: an older pack's is rewritten to its words, a save's notices are carried forward (save version 21), and a `text` in your own content that names prose is reported.

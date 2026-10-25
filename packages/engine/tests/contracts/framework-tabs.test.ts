@@ -20,7 +20,8 @@ import { codeOf, includesOf } from '../../../../site/lib/snippets.ts'
  * Every feature that puts something in front of the player has a
  * `## Drawing it` section: at least one full group of tabs, and every UI
  * block in it included from `site/snippets/`, which is type-checked and
- * tested, never pasted. Its React-only blocks document the React UI's
+ * tested, never pasted. The one exception is a Svelte tab a page had before
+ * Svelte was deferred, which stays as it was written. Its React-only blocks document the React UI's
  * default for the feature (a plugin's `/react` subpath, say), so they may
  * stand outside a group.
  *
@@ -247,7 +248,7 @@ describe('the docs', () => {
       sections++
       if (!groupsOf(drawing).some((group) => !groupProblem(group))) problems.push(`${page.path}: no full group of framework tabs`)
       for (const block of drawing) {
-        if ((isUi(block) || TABS.includes(block.tab ?? '')) && !block.included?.startsWith(SNIPPETS))
+        if ((isUi(block) || TABS.includes(block.tab ?? '')) && block.tab !== 'Svelte' && !block.included?.startsWith(SNIPPETS))
           problems.push(`${page.path}:${block.line}: written in the page, not included from site/snippets/`)
       }
     }

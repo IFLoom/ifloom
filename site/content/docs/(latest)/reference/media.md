@@ -301,6 +301,18 @@ How a video layer plays, with the defaults filled in. A `video` [beat](/docs/ref
 - `muted: false` asks for sound. Browsers often refuse to start a video with sound by itself, so a UI may need the player to press play. The React UI's [`Video`](/docs/react/components#video) also follows the game's mute and volume settings for a video with sound.
 - `mediaType` decides picture or video by the file's extension alone. A file in `art/` with no extension is a picture (`.jpg`), unless its markup says `video` (`.mp4`).
 
+## Drawing it
+
+A scene's layered picture is `view.scene.picture`, a [`PictureView`](#pictureview). Stack its `layers` bottom first, and put each of its `hotspots` over them as a button, placed by its `rect` (left, top, width and height, in percent of the picture). A hotspot is greyed out with `disabled` like any button, and sends its `command`. A scene with no layered picture may have a single `view.scene.image`. A place's picture is in the [places plugin's view](/docs/plugins/places#placesview), drawn the same way.
+
+The React UI's [`Scene`](/docs/react/components#scene) draws the picture above the words with [`LayeredPicture`](/docs/react/components#layeredpicture), which you can also place yourself. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+
+::include[../../../../snippets/plain/picture.ts]{meta='tab="Plain JS" tab-group="framework"'}
+
+::include[../../../../snippets/react/picture.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/vue/Picture.vue]{meta='tab="Vue" tab-group="framework"'}
+
 ## Checks
 
 The [content checker](/docs/reference/checks) reports unknown pools, tags no file has, empty pools, unknown markup flags, video flags on a picture, and everything wrong with a picture's hotspots and layers. The full list is under [Media](/docs/reference/checks#media). It also lists every picture and video file the game names, in [`files`](/docs/reference/checks#fileref).

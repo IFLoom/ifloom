@@ -2,14 +2,22 @@
  * What the Plain JS snippets share, copied from the vanilla template's
  * `src/main.ts`: the runner, `add` and `drawChoices`. The template makes its
  * runner with `browserRunner`, which keeps saves in the browser; here it's
- * `createRunner` on a new game, so the tests start each file fresh.
+ * `createRunner` with the same options and everything in memory, so the
+ * tests start each file fresh.
  */
-import { createRunner, startingState, type RenderedChoice } from '@ifloom/engine'
+import { createRunner, memoryDriver, profile, saves, startingState, type RenderedChoice } from '@ifloom/engine'
 import module from './game.ts'
 
 const { game } = module.build()
 
-export const runner = createRunner(game, startingState(game))
+// As browserRunner makes it (undo, saves and a profile), with the backlog on and everything kept in memory.
+const driver = memoryDriver()
+export const runner = createRunner(game, startingState(game), {
+  history: { depth: 50 },
+  saves: saves(game, driver),
+  profile: profile(game, driver),
+  backlog: true,
+})
 
 /** An element with a class and some text, added to `parent`. */
 export function add<K extends keyof HTMLElementTagNameMap>(parent: HTMLElement, tag: K, text = '', className = ''): HTMLElementTagNameMap[K] {

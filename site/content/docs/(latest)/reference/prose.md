@@ -496,6 +496,18 @@ mediaType('clips/kettle.mp4') // 'video'
 mediaType('place/cafe.webp')  // 'image'
 ```
 
+## Drawing it
+
+A `text` or `say` beat has `spans` when its line holds something the view can draw: [bold or italics](#bold-and-italics), an [inline action or a tooltip](#inline-actions-and-tooltips), or a [UI piece](#ui-pieces). Without spans, draw its `text` as it is. With them, draw each [`InlineSpan`](#inlinespan) by its `type`, and send an `action` span's `choice.command` when it's pressed. A `ui` span means only what your UI makes of it, so draw it by its `name`, or show its words.
+
+The React UI's [`Scene`](/docs/react/components#scene) draws every span, and its own UI pieces `modal` and `image`. A piece of your own is a component in `inline`, under its name. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+
+::include[../../../../snippets/plain/prose.ts]{meta='tab="Plain JS" tab-group="framework"'}
+
+::include[../../../../snippets/react/mount-prose.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/vue/Prose.vue]{meta='tab="Vue" tab-group="framework"'}
+
 ## See it in an example
 
 - Small Town: each file in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story) holds its own lines by key, with choice labels as `<scene>#<choice>`, and Ava's and the café's are in files of their own beside them, such as [`examples/showcase/src/story/ava.prose.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/ava.prose.ts). Ava's greeting is speech, and her small talk uses named lines. The flat's line prints a custom value with `{{v:catName}}`.

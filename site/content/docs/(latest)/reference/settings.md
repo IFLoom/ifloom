@@ -94,6 +94,20 @@ A new game takes the player's stored values for play settings. Pass them to [`st
 
 A save keeps the play settings it was made with. Loading it doesn't apply the player's newer choices. A save from before settings existed, or one made before you added a setting, gets each missing setting's default when it loads.
 
+## Drawing it
+
+`view.settings` has every setting the game declares, as a [`SettingView`](/docs/reference/view#settingview): its `label`, its `type`, and the `options` of a choice or the range of a slider. Read the values of both kinds from [`runner.settings()`](/docs/reference/runner#settings), since a `ui` setting isn't in the state. Send a change through [`runner.setSetting`](/docs/reference/runner#setsetting).
+
+The React UI draws a Settings page when you turn on its [pages](/docs/react#pages), and [`useSetting`](/docs/react/components#usesetting) reads one setting for a part of your own. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+
+::include[../../../../snippets/plain/settings.ts]{meta='tab="Plain JS" tab-group="framework"'}
+
+::include[../../../../snippets/react/mount-settings.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/react/settings.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/vue/Settings.vue]{meta='tab="Vue" tab-group="framework"'}
+
 ## Checks
 
 The [content checker](/docs/reference/checks) and [`loadGame`](/docs/reference/loader#what-the-loader-adds) report:

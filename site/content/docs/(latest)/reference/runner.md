@@ -361,6 +361,18 @@ A [`newGame`](/docs/reference/commands#newgame) in a log replays as [`apply`](/d
 
 A command the game refuses is skipped, as it would have been at the time. Against a changed game, that means a log can go its own way after the first command that no longer takes. Compare the states to find where.
 
+## Drawing it
+
+Two of the runner's members put something in front of the player. [`runner.backlog()`](#backlogentry) is what was shown, oldest first, for a "what did she just say?" screen. It's empty unless the runner has the backlog on, `backlog: true`, which `browserRunner` takes too. `runner.canUndo` says whether `runner.undo()` would step back.
+
+The React UI's [`GameMenu`](/docs/react/components#gamemenu) offers the backlog and undo when the runner has them. [`Backlog`](/docs/react/components#backlog) draws the backlog wherever you place it. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+
+::include[../../../../snippets/plain/backlog.ts]{meta='tab="Plain JS" tab-group="framework"'}
+
+::include[../../../../snippets/react/backlog.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/vue/Backlog.vue]{meta='tab="Vue" tab-group="framework"'}
+
 ## See it in an example
 
 Small Town: [`examples/showcase/src/main.tsx`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/main.tsx) makes its runner with `createRunner`, turning on `history`, `backlog`, `saves`, a `profile` and `autosave: { every: 'turn' }`. The Letter and The Corner Café use `mountGame`, which makes one for them.

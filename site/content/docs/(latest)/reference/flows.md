@@ -120,14 +120,20 @@ type FlowStep = { chose: string } | { point: string } | { minigame: string } | {
 
 [`state.flow`](/docs/reference/state#flow) is the open scene's visit: every pick (`chose`), jump (`point`) and minigame or panel passed, in order, and what the flow is waiting on now. It's `null` with no scene open, and for a visit that has nothing to keep yet, such as a scene with no decisions. Every pick is a logged `choose` command, so [replay](/docs/reference/runner#replay), undo and the [backlog](/docs/reference/runner#backlogentry) are exact. The backlog keeps a flowing visit as one entry, which grows with each pick.
 
-## In the view
+## Drawing it
 
 - [`view.scene.beats`](/docs/reference/view#the-scene) holds everything up to where the flow stops, with a `chose` beat at each past pick.
 - `view.scene.choices` holds the choices of the decision the flow stopped at, or the ending choices once it's done. While it waits on a minigame or a panel, there are none.
 - `view.scene.fresh` is the index of the first beat the flow's last step brought, from its `chose` beat on. A UI can animate only those. It's 0 before the visit has taken a step.
 - An `[[act:id]]` in the text names a choice of the decision the flow stopped at. In text from before a pick it's drawn as its words.
 
-A UI that only draws "beats, then choices" draws a flowing scene with no change. It can draw a `chose` beat, restyle it or leave it out.
+A UI that only draws "beats, then choices" draws a flowing scene with no change. It can draw a `chose` beat, restyle it or leave it out. The React UI's [`Scene`](/docs/react/components#scene) draws a flowing scene like any other, and its [`reveal`](/docs/react/hints#reveal) hint brings the fresh beats in one at a time. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+
+::include[../../../../snippets/plain/flow.ts]{meta='tab="Plain JS" tab-group="framework"'}
+
+::include[../../../../snippets/react/scene.tsx]{meta='tab="React" tab-group="framework"'}
+
+::include[../../../../snippets/vue/Flow.vue]{meta='tab="Vue" tab-group="framework"'}
 
 ## The builders
 

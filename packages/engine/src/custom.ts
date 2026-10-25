@@ -2,7 +2,7 @@ import type { Game } from './game.ts'
 import { GAME_ID, pluginCondition, pluginEffect, pluginName, pluginQuery, pluginValue, type PluginArgs } from './plugin.ts'
 import { roll } from './random.ts'
 import type { Effect, GameState } from './types.ts'
-import { customCall, type EffectRef, type QueryAnswer, type QueryArgs, type QueryCalls } from './calls.ts'
+import { customCall, type EffectRef, type QueryAnswer, type QueryArgs, type QueryRegistry } from './calls.ts'
 
 /**
  * The game's own code, by name, in `rules`.
@@ -54,12 +54,12 @@ export type CustomContext = {
 
 /**
  * Ask a plugin or the game something by full name. A name declared in
- * `QueryCalls` takes its arguments and answers its type; any other takes any
+ * `QueryRegistry` takes its arguments and answers its type; any other takes any
  * arguments, with the answer's type given: `query<string | null>('places/here')`.
  * Undefined when the game does not have it.
  */
 export type Query = {
-  <K extends keyof QueryCalls>(name: K, ...args: QueryArgs<K>): QueryAnswer<K> | undefined
+  <K extends keyof QueryRegistry>(name: K, ...args: QueryArgs<K>): QueryAnswer<K> | undefined
   <T = unknown>(name: string, args?: PluginArgs): T | undefined
 }
 
@@ -92,18 +92,18 @@ export {
   customCall,
   shortFormProblem,
   type CommandCall,
-  type CommandCalls,
+  type CommandRegistry,
   type CommandRef,
   type ConditionCall,
-  type ConditionCalls,
+  type ConditionRegistry,
   type CustomCall,
   type EffectCall,
-  type EffectCalls,
+  type EffectRegistry,
   type EffectRef,
   type PluginCall,
-  type PluginViews,
-  type PluginViewsIn,
-  type QueryCalls,
+  type ViewRegistry,
+  type ViewsIn,
+  type QueryRegistry,
   type ValueRef,
 } from './calls.ts'
 

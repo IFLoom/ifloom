@@ -116,7 +116,7 @@ export type Vendor = {
 }
 
 declare module '@ifloom/engine' {
-  interface Traits {
+  interface TraitRegistry {
     'shop/sellable': Sellable
     'shop/vendor': Vendor
   }
@@ -198,15 +198,15 @@ export type ShopView = {
  * and its view, so a call with a misspelled argument fails to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionCalls {
+  interface ConditionRegistry {
     'shop/open': { vendor: string }
     'shop/inStock': { vendor: string; entity: EntityRef }
   }
-  interface CommandCalls {
+  interface CommandRegistry {
     'shop/buy': { vendor: string; entity: EntityRef; count?: number }
     'shop/sell': { vendor: string; entity: EntityRef; count?: number }
   }
-  interface PluginViews {
+  interface ViewRegistry {
     shop: ShopView
   }
 }

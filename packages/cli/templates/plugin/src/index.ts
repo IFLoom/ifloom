@@ -36,16 +36,16 @@ export type __Pascal__View = {
  * fails to compile. Keep each entry true to what the plugin reads.
  */
 declare module '@ifloom/engine' {
-  interface ConditionCalls {
+  interface ConditionRegistry {
     '__id__/marked': { entry: string }
   }
-  interface EffectCalls {
+  interface EffectRegistry {
     '__id__/mark': { entry: string }
   }
-  interface CommandCalls {
+  interface CommandRegistry {
     '__id__/mark': { id: string }
   }
-  interface PluginViews {
+  interface ViewRegistry {
     '__id__': __Pascal__View
   }
 }

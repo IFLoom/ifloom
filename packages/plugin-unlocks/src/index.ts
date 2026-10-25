@@ -35,13 +35,13 @@ export { ITERATIONS, normaliseCode } from './crypto.ts'
  * and its view, so a call with a misspelled argument fails to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionCalls {
+  interface ConditionRegistry {
     'unlocks/has': { unlock: string }
   }
-  interface CommandCalls {
+  interface CommandRegistry {
     'unlocks/record': { id: string }
   }
-  interface PluginViews {
+  interface ViewRegistry {
     unlocks: UnlocksView
   }
 }

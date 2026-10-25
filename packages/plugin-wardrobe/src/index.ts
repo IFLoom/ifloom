@@ -46,7 +46,7 @@ export type Wearable = {
 }
 
 declare module '@ifloom/engine' {
-  interface Traits {
+  interface TraitRegistry {
     'wardrobe/wearable': Wearable
   }
 }
@@ -77,14 +77,14 @@ export type WardrobeView = {
  * and its view, so a call with a misspelled argument fails to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionCalls {
+  interface ConditionRegistry {
     'wardrobe/wearing': { entity?: EntityRef; slot?: string; at?: string }
   }
-  interface CommandCalls {
+  interface CommandRegistry {
     'wardrobe/wear': { id: EntityRef }
     'wardrobe/takeOff': { id: string }
   }
-  interface PluginViews {
+  interface ViewRegistry {
     wardrobe: WardrobeView
   }
 }

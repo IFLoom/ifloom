@@ -109,7 +109,7 @@ export type Place = {
 }
 
 declare module '@ifloom/engine' {
-  interface Traits {
+  interface TraitRegistry {
     'places/location': Place
   }
 }
@@ -198,25 +198,25 @@ export type PlacesView = {
  * and its view, so a call with a misspelled argument fails to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionCalls {
+  interface ConditionRegistry {
     'places/at': { location: string | readonly string[] }
     'places/within': { location: string | readonly string[] }
   }
-  interface EffectCalls {
+  interface EffectRegistry {
     'places/move': { location: string }
   }
-  interface CommandCalls {
+  interface CommandRegistry {
     'places/go': { id: string }
     'places/pickUp': { id: EntityRef }
   }
-  interface QueryCalls {
+  interface QueryRegistry {
     'places/here': () => string | null
     'places/holder': () => EntityRef | null
     'places/all': () => (Place & { id: string; ref: EntityRef })[]
     'places/known': (args: { location: string }) => boolean
     'places/exits': () => string[]
   }
-  interface PluginViews {
+  interface ViewRegistry {
     places: PlacesView
   }
 }

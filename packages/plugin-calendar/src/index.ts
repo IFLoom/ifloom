@@ -80,26 +80,26 @@ export type CalendarView = {
  * and its view, so a call with a misspelled argument fails to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionCalls {
+  interface ConditionRegistry {
     'calendar/period': { period: string | readonly string[] }
     'calendar/weekday': { day: number | readonly number[] }
     'calendar/weekend': true
     'calendar/day': Range | true
     'calendar/curfew': true
   }
-  interface EffectCalls {
+  interface EffectRegistry {
     'calendar/pass': { by?: number } | true
     'calendar/set': { day?: number; period?: string }
   }
-  interface CommandCalls {
+  interface CommandRegistry {
     'calendar/sleep': true
   }
-  interface QueryCalls {
+  interface QueryRegistry {
     'calendar/now': () => CalendarState
     'calendar/periods': () => string[]
     'calendar/bedtime': () => boolean
   }
-  interface PluginViews {
+  interface ViewRegistry {
     calendar: CalendarView
   }
 }

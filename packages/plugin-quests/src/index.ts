@@ -98,19 +98,19 @@ export type QuestsView = {
  * and its view, so a call with a misspelled argument fails to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionCalls {
+  interface ConditionRegistry {
     'quests/active': { quest: string }
     'quests/done': { quest: string }
     'quests/reached': { quest: string; stage: string }
   }
-  interface EffectCalls {
+  interface EffectRegistry {
     'quests/start': { quest: string }
   }
-  interface CommandCalls {
+  interface CommandRegistry {
     'quests/track': { id?: string } | true
     'quests/seen': { id?: string } | true
   }
-  interface PluginViews {
+  interface ViewRegistry {
     quests: QuestsView
   }
 }

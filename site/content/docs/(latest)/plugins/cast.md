@@ -166,7 +166,7 @@ type Person = {
 }
 ```
 
-The `cast/person` trait: what makes an entity someone the player can meet, find and talk to. The plugin types it by augmenting [`Traits`](/docs/reference/entities#traits), so `traitOf(game, ref, 'cast/person')` is a `Person`.
+The `cast/person` trait: what makes an entity someone the player can meet, find and talk to. The plugin types it by augmenting [`TraitRegistry`](/docs/reference/entities#traits), so `traitOf(game, ref, 'cast/person')` is a `Person`.
 
 | Field | What it is | If left out |
 |---|---|---|

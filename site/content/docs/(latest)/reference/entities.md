@@ -270,22 +270,22 @@ withTrait(game, 'laundry/washable')                   // ['clothing:scarf', 'clo
 
 **What the table is for.** It gives an entity a trait without writing the entity out again, so a [mod](/docs/reference/mods) can change how the hat is washed with one row. In your own content, each row is declared once, like everything else (see [One key declared twice](/docs/reference/loader#one-key-declared-twice)). A pack's row replaces an earlier one. See [the `traits` key](/docs/reference/loader#traits).
 
-**Typed by the plugin.** A plugin that declares a trait adds its data's type to the engine's `Traits` interface, so `traitOf` returns that type and a typo in a field is a type error. See [Declaring traits](/docs/reference/plugins#traits).
+**Typed by the plugin.** A plugin that declares a trait adds its data's type to the engine's `TraitRegistry` interface, so `traitOf` returns that type and a typo in a field is a type error. See [Declaring traits](/docs/reference/plugins#traits).
 
 **Checked by the plugin.** The [content checker](/docs/reference/checks#traits) asks each plugin's trait about the data on every entity that has it. A trait of a plugin the game doesn't have is let through, as content for a [cooperating](/docs/reference/plugins#cooperates) plugin is.
 
-### Traits and TraitData
+### TraitRegistry and TraitData
 
 ```ts
-interface Traits {}
-type TraitData<K extends string> = K extends keyof Traits ? Traits[K] : unknown
+interface TraitRegistry {}
+type TraitData<K extends string> = K extends keyof TraitRegistry ? TraitRegistry[K] : unknown
 ```
 
-`Traits` is empty in the engine. Each plugin adds its own traits to it with a `declare module` block, and `TraitData<'laundry/washable'>` is then the data that trait takes. A trait nobody has added, your game's own included, is `unknown`. To type your own, add them the same way:
+`TraitRegistry` is empty in the engine. Each plugin adds its own traits to it with a `declare module` block, and `TraitData<'laundry/washable'>` is then the data that trait takes. A trait nobody has added, your game's own included, is `unknown`. To type your own, add them the same way:
 
 ```ts
 declare module '@ifloom/engine' {
-  interface Traits {
+  interface TraitRegistry {
     cosy: boolean
   }
 }
@@ -294,7 +294,7 @@ declare module '@ifloom/engine' {
 ### TraitTable
 
 ```ts
-type TraitTable = Record<string, Record<EntityRef, unknown>>   // typed by Traits for the ids it knows
+type TraitTable = Record<string, Record<EntityRef, unknown>>   // typed by TraitRegistry for the ids it knows
 ```
 
 Traits by trait id and then entity reference. It's the type of the `traits` key in [content and packs](/docs/reference/loader#traits), and of [`game.traits`](/docs/reference/game#game). On a game [`loadGame`](/docs/reference/loader#loadgame) returns, `game.traits` holds every declared entity's traits already worked out, so a tool can read them as plain data.

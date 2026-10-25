@@ -12,17 +12,17 @@ import type { EntityUi, Ui } from './features/ui.ts'
  *
  * ```ts
  * declare module '@ifloom/engine' {
- *   interface Traits {
+ *   interface TraitRegistry {
  *     'laundry/washable': { temp: number; gentle?: boolean }
  *   }
  * }
  * ```
  */
 // oxlint-disable-next-line typescript/no-empty-interface, typescript/no-empty-object-type -- plugins augment it; a type alias can't be
-export interface Traits {}
+export interface TraitRegistry {}
 
-/** The data a trait takes: what `Traits` says for an id a plugin declared, and `unknown` for any other. */
-export type TraitData<K extends string> = K extends keyof Traits ? Traits[K] : unknown
+/** The data a trait takes: what `TraitRegistry` says for an id a plugin declared, and `unknown` for any other. */
+export type TraitData<K extends string> = K extends keyof TraitRegistry ? TraitRegistry[K] : unknown
 
 /**
  * A trait's data on the entities that have it, by trait id and then entity:
@@ -30,7 +30,7 @@ export type TraitData<K extends string> = K extends keyof Traits ? Traits[K] : u
  * content, rows that give an entity a trait, over what it declares itself;
  * on a loaded game, every entity's traits, worked out.
  */
-export type TraitTable = { [K in keyof Traits]?: Record<EntityRef, Traits[K]> } & Record<string, Record<EntityRef, unknown>>
+export type TraitTable = { [K in keyof TraitRegistry]?: Record<EntityRef, TraitRegistry[K]> } & Record<string, Record<EntityRef, unknown>>
 
 /** What a trait's `check` is handed beside the data: the game, and the entity the data is on. */
 export type TraitTools = { game: Game; ref: EntityRef }
@@ -38,7 +38,7 @@ export type TraitTools = { game: Game; ref: EntityRef }
 /**
  * A trait a plugin declares, in its `traits`: a named piece of data entities
  * carry, which the plugin gives meaning. Its id is the plugin's own id, `/`
- * and a name. Name `K` to have the data typed, as `Traits` says for it:
+ * and a name. Name `K` to have the data typed, as `TraitRegistry` says for it:
  * `const washable: TraitDef<'laundry/washable'> = { id: 'laundry/washable', ... }`.
  */
 export type TraitDef<K extends string = string, S = unknown> = {
@@ -92,7 +92,7 @@ export type KindDef = {
    * start from. Where an entity gives the same trait, an object here is laid
    * under the entity's, field by field; anything else is replaced whole.
    */
-  traits?: { [K in keyof Traits]?: Partial<Traits[K]> } & Record<string, unknown>
+  traits?: { [K in keyof TraitRegistry]?: Partial<TraitRegistry[K]> } & Record<string, unknown>
   /** Presentation hints for the UI, for every one of the kind, under each entity's own. See `EntityUi`. */
   ui?: Ui<EntityUi>
 }
@@ -127,7 +127,7 @@ export type EntityDef = {
    * Its traits, by trait id: `{ 'laundry/washable': { temp: 30 } }`.
    * Over its kind's, and under a row for it in content's `traits` table.
    */
-  traits?: { [K in keyof Traits]?: Traits[K] } & Record<string, unknown>
+  traits?: { [K in keyof TraitRegistry]?: TraitRegistry[K] } & Record<string, unknown>
   /** Presentation hints for the UI, laid over its kind's field by field, carried to the view as written. See `EntityUi`. */
   ui?: Ui<EntityUi>
 }
@@ -566,7 +566,7 @@ export function resolveTraits(game: TraitSource): Record<string, Record<EntityRe
 
 /**
  * The data of one trait on one entity, as content gives it, typed as
- * `Traits` says for the id; undefined when it doesn't have it. A row in
+ * `TraitRegistry` says for the id; undefined when it doesn't have it. A row in
  * content's `traits` table wins, then the entity's own `traits`, each laid
  * over its kind's default. It reads content only: an entity created in play
  * has its kind's here, and `entityTrait` adds what it was created with. It

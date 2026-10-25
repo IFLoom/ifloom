@@ -57,7 +57,7 @@ function isKvValue(value: unknown): value is KvValue {
  * and its view, so a call with a misspelled argument fails to compile.
  */
 declare module '@ifloom/engine' {
-  interface CommandCalls {
+  interface CommandRegistry {
     'debug/stat': { stat: string; to: number; of?: string }
     'debug/kv': { key: string; to: KvValue }
     'debug/held': { entity: string; to: number; at?: string }
@@ -66,7 +66,7 @@ declare module '@ifloom/engine' {
     'debug/turn': { to: number }
     'debug/go': { id: string }
   }
-  interface PluginViews {
+  interface ViewRegistry {
     debug: DebugView
   }
 }

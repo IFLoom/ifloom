@@ -40,13 +40,13 @@ import { CONTENT_VERSION, contentMigrations } from './upgrade.ts'
  * and its view, so a call with a misspelled argument fails to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionCalls {
+  interface ConditionRegistry {
     'cheats/used': { cheat?: string } | true
   }
-  interface CommandCalls {
+  interface CommandRegistry {
     'cheats/use': { id: string }
   }
-  interface PluginViews {
+  interface ViewRegistry {
     cheats: CheatsView
   }
 }

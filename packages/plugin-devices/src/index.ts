@@ -148,14 +148,14 @@ export type DevicesView = { devices: DeviceView[] }
  * and its view, so a call with a misspelled argument fails to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionCalls {
+  interface ConditionRegistry {
     'devices/open': { app: string } | { device: string }
   }
-  interface CommandCalls {
+  interface CommandRegistry {
     'devices/open': { id: string }
     'devices/close': { id: string }
   }
-  interface PluginViews {
+  interface ViewRegistry {
     devices: DevicesView
   }
 }

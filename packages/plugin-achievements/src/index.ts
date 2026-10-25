@@ -90,13 +90,13 @@ export type AchievementsView = {
  * and its view, so a call with a misspelled argument fails to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionCalls {
+  interface ConditionRegistry {
     'achievements/earned': { achievement: string }
   }
-  interface EffectCalls {
+  interface EffectRegistry {
     'achievements/grant': { achievement: string }
   }
-  interface PluginViews {
+  interface ViewRegistry {
     achievements: AchievementsView
   }
 }

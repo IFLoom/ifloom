@@ -6,7 +6,7 @@ import type { SceneBeat } from './sceneBody.ts'
 import type { SceneUi, Ui } from './features/ui.ts'
 import type { RenderedChoice } from './screen.ts'
 import type { Flat, GameState } from './types.ts'
-import type { PluginViewsIn } from './calls.ts'
+import type { ViewsIn } from './calls.ts'
 import { renderedChoice, screen, type Screen, type ViewOptions } from './screen.ts'
 import { featureContext } from './core.ts'
 import { viewPieces, type FeatureView } from './features/registry.ts'
@@ -44,8 +44,8 @@ type ViewBase = {
     ui?: Ui<SceneUi>
   }
   actions: RenderedChoice[]
-  /** What each plugin gives the UI, by plugin id: typed for each plugin that declares its view in `PluginViews`. */
-  plugins: PluginViewsIn
+  /** What each plugin gives the UI, by plugin id: typed for each plugin that declares its view in `ViewRegistry`. */
+  plugins: ViewsIn
 }
 
 /** Everything a UI draws for one state: the core's fields and each feature's. */

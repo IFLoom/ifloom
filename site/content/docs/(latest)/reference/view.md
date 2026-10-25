@@ -96,7 +96,7 @@ type Screen = {
   choices: ScreenChoice[]
   actions: ScreenChoice[]
   stage: StageView | null
-  plugins: PluginViewsIn
+  plugins: ViewsIn
   picks: Record<string, string>
   audio: AudioView & { tracks: Record<string, string | null> }
 }
@@ -415,7 +415,7 @@ The vanilla, Vue and Svelte templates have a Save and a Load button like these i
 
 | Field | Type | Meaning |
 |---|---|---|
-| `plugins` | [`PluginViewsIn`](/docs/reference/plugins#pluginviewsin) | What each [plugin](/docs/reference/plugins#the-view) gives the UI, by plugin id, and what the game's own [`rules.view`](/docs/reference/rules#gamerules) gives, under `game`. A plugin without a `view` has no entry. |
+| `plugins` | [`ViewsIn`](/docs/reference/plugins#viewsin) | What each [plugin](/docs/reference/plugins#the-view) gives the UI, by plugin id, and what the game's own [`rules.view`](/docs/reference/rules#gamerules) gives, under `game`. A plugin without a `view` has no entry. |
 
 The engine doesn't look inside a slice. A plugin that [declares its view](/docs/reference/plugins#typed-calls-queries-and-views) has it typed for you once you import the plugin's package, and every first-party plugin does:
 

@@ -197,8 +197,8 @@ import {
   type PluginReferences, type ContentReferences, type StatModifier,
   type TraitDef, type TraitTools, type ContentStep, type ContentTools,
   type CommandStep, type RawPack, type RawCommand,
-  type ConditionCalls, type EffectCalls, type CommandCalls, type QueryCalls, type PluginViews,
-  type ConditionCall, type EffectCall, type CommandCall, type Query, type PluginViewsIn,
+  type ConditionRegistry, type EffectRegistry, type CommandRegistry, type QueryRegistry, type ViewRegistry,
+  type ConditionCall, type EffectCall, type CommandCall, type Query, type ViewsIn,
 } from '@ifloom/engine'
 
 type Plugin<S = any, V = unknown> = {
@@ -413,25 +413,25 @@ import { definePlugin, type DefinedPlugin } from '@ifloom/engine'
 export type LoyaltyView = { stamps: number; free: number }
 
 declare module '@ifloom/engine' {
-  interface ConditionCalls {
+  interface ConditionRegistry {
     'loyalty/stamps': { gte?: number }
   }
-  interface EffectCalls {
+  interface EffectRegistry {
     'loyalty/stamp': { by?: number } | true
   }
-  interface CommandCalls {
+  interface CommandRegistry {
     'loyalty/redeem': { card: string }
   }
-  interface QueryCalls {
+  interface QueryRegistry {
     'loyalty/stampsLeft': () => number
   }
-  interface PluginViews {
+  interface ViewRegistry {
     loyalty: LoyaltyView
   }
 }
 ```
 
-Each registry is keyed by the call's full name, and each entry is what content writes as the call's value: its arguments, or `true` for none, or both as a union when the arguments are all optional. A query's entry is a function from its arguments to its answer. `PluginViews` is keyed by the plugin's id.
+Each registry is keyed by the call's full name, and each entry is what content writes as the call's value: its arguments, or `true` for none, or both as a union when the arguments are all optional. A query's entry is a function from its arguments to its answer. `ViewRegistry` is keyed by the plugin's id.
 
 Once a game imports the plugin's package, those calls are checked wherever a [`Condition`](/docs/reference/conditions#condition), an [`Effect`](/docs/reference/effects#effect) or a [`CommandRef`](/docs/reference/custom#commandref) goes:
 
@@ -452,10 +452,10 @@ The game's own code is called the same way, with `game` in front, and the game c
 import type { GameRules } from '@ifloom/engine'
 
 declare module '@ifloom/engine' {
-  interface EffectCalls {
+  interface EffectRegistry {
     'game/payRent': { by?: number } | true
   }
-  interface ConditionCalls {
+  interface ConditionRegistry {
     'game/tired': true
   }
 }
@@ -477,31 +477,31 @@ Small Town declares its `game/postLatest` this way, and the café its `game/taki
 ### ConditionCall, EffectCall and CommandCall
 
 ```ts
-type ConditionCall = CallIn<ConditionCalls>
-type EffectCall = CallIn<EffectCalls>
-type CommandCall = CallIn<CommandCalls>
+type ConditionCall = CallIn<ConditionRegistry>
+type EffectCall = CallIn<EffectRegistry>
+type CommandCall = CallIn<CommandRegistry>
 ```
 
-A call in short, checked against its registry when its name is declared there, and loose otherwise. [`Condition`](/docs/reference/conditions#condition) and [`Effect`](/docs/reference/effects#effect) end in a `ConditionCall` and an `EffectCall`, and a [`CommandRef`](/docs/reference/custom#commandref) is a command or a `CommandCall`. The registries themselves are the interfaces `ConditionCalls`, `EffectCalls`, `CommandCalls`, `QueryCalls` and `PluginViews`, empty in the engine, which knows no plugin.
+A call in short, checked against its registry when its name is declared there, and loose otherwise. [`Condition`](/docs/reference/conditions#condition) and [`Effect`](/docs/reference/effects#effect) end in a `ConditionCall` and an `EffectCall`, and a [`CommandRef`](/docs/reference/custom#commandref) is a command or a `CommandCall`. The registries themselves are the interfaces `ConditionRegistry`, `EffectRegistry`, `CommandRegistry`, `QueryRegistry` and `ViewRegistry`, empty in the engine, which knows no plugin.
 
 ### Query
 
 ```ts
 type Query = {
-  <K extends keyof QueryCalls>(name: K, ...args: QueryArgs<K>): QueryAnswer<K> | undefined
+  <K extends keyof QueryRegistry>(name: K, ...args: QueryArgs<K>): QueryAnswer<K> | undefined
   <T = unknown>(name: string, args?: PluginArgs): T | undefined
 }
 ```
 
 What a context's `query` is: a declared query takes its arguments and answers its type, and any other name answers the type you give it.
 
-### PluginViewsIn
+### ViewsIn
 
 ```ts
-type PluginViewsIn = { readonly [K in keyof PluginViews]?: PluginViews[K] } & Readonly<Record<string, unknown>>
+type ViewsIn = { readonly [K in keyof ViewRegistry]?: ViewRegistry[K] } & Readonly<Record<string, unknown>>
 ```
 
-The type of [`view.plugins`](/docs/reference/view#plugins): each plugin's slice typed as it declares it in `PluginViews`, and `unknown` for a plugin that doesn't.
+The type of [`view.plugins`](/docs/reference/view#plugins): each plugin's slice typed as it declares it in `ViewRegistry`, and `unknown` for a plugin that doesn't.
 
 ## Queries
 
@@ -1023,7 +1023,7 @@ wash: (_state, _args, { set, apply }) => apply([{ turn: true }], set({ dirty: 0 
 
 ## The view
 
-`view(state, context)` returns whatever the plugin's UI needs, whether that's your own code or a React UI the plugin ships in its `/react` subpath (see [Plugin UIs and the kit](/docs/react/kit)). The engine's [`view()`](/docs/reference/view#plugins) collects each one at `plugins[id]`, and a plugin without `view` has no entry. The engine never looks inside it. Declare its type in [`PluginViews`](#typed-calls-queries-and-views) and code that imports your package reads it typed:
+`view(state, context)` returns whatever the plugin's UI needs, whether that's your own code or a React UI the plugin ships in its `/react` subpath (see [Plugin UIs and the kit](/docs/react/kit)). The engine's [`view()`](/docs/reference/view#plugins) collects each one at `plugins[id]`, and a plugin without `view` has no entry. The engine never looks inside it. Declare its type in [`ViewRegistry`](#typed-calls-queries-and-views) and code that imports your package reads it typed:
 
 ```ts
 import { view } from '@ifloom/engine'
@@ -1248,13 +1248,13 @@ traits?: readonly TraitDef[]
 
 A plugin that works on things the game declares, such as clothes to wash or tools to use, reads what it needs from [traits](/docs/reference/entities#traits). Content writes a trait on a kind, an entity or the `traits` table, and the plugin reads it back with [`entityTrait`](/docs/reference/entities#entitytrait), [`traitOf`](/docs/reference/entities#traitof) and [`withTrait`](/docs/reference/entities#withtrait). A trait is data only. What it does is the plugin's own conditions, effects and commands.
 
-Declaring one takes three things: the data's type, added to the engine's `Traits`, the trait in `traits`, and the code that reads it.
+Declaring one takes three things: the data's type, added to the engine's `TraitRegistry`, the trait in `traits`, and the code that reads it.
 
 ```ts
 import { definePlugin, entityTrait, type TraitDef } from '@ifloom/engine'
 
 declare module '@ifloom/engine' {
-  interface Traits {
+  interface TraitRegistry {
     'laundry/washable': { temp: number; gentle?: boolean }
   }
 }

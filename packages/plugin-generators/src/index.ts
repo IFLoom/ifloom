@@ -77,7 +77,7 @@ export type GeneratedEntity = { name?: string; desc?: string; image?: string; st
  * and its view, so a call with a misspelled argument fails to compile.
  */
 declare module '@ifloom/engine' {
-  interface EffectCalls {
+  interface EffectRegistry {
     'generators/generate': { template: string; count?: number }
   }
 }

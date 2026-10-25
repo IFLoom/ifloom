@@ -12,7 +12,7 @@ import { postTo, react } from '@ifloom/plugin-feed'
  * call with arguments it doesn't take doesn't.
  */
 declare module '@ifloom/engine' {
-  interface EffectCalls {
+  interface EffectRegistry {
     'game/postLatest': true
   }
 }

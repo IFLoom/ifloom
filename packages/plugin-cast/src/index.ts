@@ -77,7 +77,7 @@ export type Person = {
 }
 
 declare module '@ifloom/engine' {
-  interface Traits {
+  interface TraitRegistry {
     'cast/person': Person
   }
 }
@@ -134,21 +134,21 @@ export type CastView = {
  * and its view, so a call with a misspelled argument fails to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionCalls {
+  interface ConditionRegistry {
     'cast/here': { character: string | readonly string[] }
     'cast/at': { character: string; at: string | readonly string[] }
     'cast/met': { character: string | readonly string[] }
   }
-  interface CommandCalls {
+  interface CommandRegistry {
     'cast/talk': { id: string }
     'cast/call': { id: string }
   }
-  interface QueryCalls {
+  interface QueryRegistry {
     'cast/present': () => string[]
     'cast/where': (args: { character: string }) => string | undefined
     'cast/contacts': () => { id: string; name: string; desc: string | null; portrait: string | null; command: CommandRef; disabled: string | undefined }[]
   }
-  interface PluginViews {
+  interface ViewRegistry {
     cast: CastView
   }
 }

@@ -6,7 +6,7 @@ import { entitiesOf, statValue, type EffectRef, type Game, type GameRules, type 
 
 /** The café's calls, declared so content written in code is checked against them. */
 declare module '@ifloom/engine' {
-  interface EffectCalls {
+  interface EffectRegistry {
     'game/takings': true
     'game/wages': true
   }

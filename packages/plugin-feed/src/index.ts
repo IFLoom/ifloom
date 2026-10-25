@@ -105,19 +105,19 @@ export type FeedsView = { feeds: FeedView[]; unread: number }
  * and its view, so a call with a misspelled argument fails to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionCalls {
+  interface ConditionRegistry {
     'feed/appeared': { post: string }
     'feed/posted': { feed?: string; gte?: number } | true
     'feed/likes': { post: string; gte?: number }
   }
-  interface EffectCalls {
+  interface EffectRegistry {
     'feed/post': { feed: string; post: string; text?: string; image?: string; video?: string; likes?: number }
     'feed/react': { post: string; likes?: number; from?: string; text?: string }
   }
-  interface CommandCalls {
+  interface CommandRegistry {
     'feed/seen': { id?: string } | true
   }
-  interface PluginViews {
+  interface ViewRegistry {
     feed: FeedsView
   }
 }

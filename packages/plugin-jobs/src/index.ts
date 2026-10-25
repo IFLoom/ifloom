@@ -149,22 +149,22 @@ export type JobsView = {
  * and its view, so a call with a misspelled argument fails to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionCalls {
+  interface ConditionRegistry {
     'jobs/hired': { job: string; rank?: string }
     'jobs/fired': { job: string }
     'jobs/worked': { job: string } | true
     'jobs/shifts': { job: string } & Range
   }
-  interface EffectCalls {
+  interface EffectRegistry {
     'jobs/hire': { job: string }
     'jobs/fire': { job: string }
   }
-  interface CommandCalls {
+  interface CommandRegistry {
     'jobs/apply': { id: string }
     'jobs/work': { id: string }
     'jobs/quit': { id: string }
   }
-  interface PluginViews {
+  interface ViewRegistry {
     jobs: JobsView
   }
 }

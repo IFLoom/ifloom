@@ -153,20 +153,20 @@ export type MessagesView = { channels: ChannelView[]; unread: number }
  * and its view, so a call with a misspelled argument fails to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionCalls {
+  interface ConditionRegistry {
     'messages/arrived': { message: string }
     'messages/since': { message: string } & Range
     'messages/replied': { message: string; reply?: string }
     'messages/read': { message: string }
   }
-  interface EffectCalls {
+  interface EffectRegistry {
     'messages/draw': { pool: string }
   }
-  interface CommandCalls {
+  interface CommandRegistry {
     'messages/reply': { message: string; reply: string }
     'messages/read': { id?: string; channel?: string } | true
   }
-  interface PluginViews {
+  interface ViewRegistry {
     messages: MessagesView
   }
 }

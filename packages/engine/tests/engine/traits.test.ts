@@ -9,7 +9,7 @@ import { applyEffects } from '../../src/reduce.ts'
 import { unwrap } from '../fixtures/result.ts'
 
 declare module '@ifloom/engine' {
-  interface Traits {
+  interface TraitRegistry {
     'closet/hangs': { slot: string; layer?: number }
   }
 }

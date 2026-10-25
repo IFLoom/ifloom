@@ -58,7 +58,7 @@ export type Usable = {
 }
 
 declare module '@ifloom/engine' {
-  interface Traits {
+  interface TraitRegistry {
     'inventory/usable': Usable
   }
 }
@@ -102,12 +102,12 @@ export type InventoryView = {
  * and its view, so a call with a misspelled argument fails to compile.
  */
 declare module '@ifloom/engine' {
-  interface CommandCalls {
+  interface CommandRegistry {
     'inventory/use': { id: EntityRef }
     'inventory/drop': { id: EntityRef }
     'inventory/give': { id: EntityRef; to: Holder }
   }
-  interface PluginViews {
+  interface ViewRegistry {
     inventory: InventoryView
   }
 }

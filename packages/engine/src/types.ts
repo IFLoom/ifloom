@@ -128,7 +128,7 @@ export type ConditionOf<K extends ConditionKey> = ConditionMap[K]
 /**
  * A condition: one of the kinds in `ConditionMap`, told apart by its one kind
  * key, or a plugin's condition in short: `{ 'quests/done': { quest: 'bakery' } }`,
- * checked against `ConditionCalls` when the plugin declares its calls. See `PluginCall`.
+ * checked against `ConditionRegistry` when the plugin declares its calls. See `PluginCall`.
  */
 export type Condition = ConditionMap[ConditionKey] | ConditionCall
 

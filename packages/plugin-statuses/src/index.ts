@@ -85,18 +85,18 @@ export type StatusesView = {
  * and its view, so a call with a misspelled argument fails to compile.
  */
 declare module '@ifloom/engine' {
-  interface ConditionCalls {
+  interface ConditionRegistry {
     'statuses/active': { status: string; stacks?: Range }
   }
-  interface EffectCalls {
+  interface EffectRegistry {
     'statuses/apply': { status: string }
     'statuses/remove': { status: string; runEnd?: boolean }
   }
-  interface CommandCalls {
+  interface CommandRegistry {
     'statuses/apply': { id: string }
     'statuses/remove': { id: string; runEnd?: boolean }
   }
-  interface PluginViews {
+  interface ViewRegistry {
     statuses: StatusesView
   }
 }

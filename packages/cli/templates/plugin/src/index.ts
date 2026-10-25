@@ -72,7 +72,11 @@ export function __camel__(): DefinedPlugin<__Pascal__State, __Pascal__View> {
     id: ID,
     version: 1,
     start: () => ({ marked: {} }),
+    // The plugin's own lines, which a game rewords by their full key, `__id__/noSuchEntry`.
     strings: { noSuchEntry: 'There is nothing like that.' },
+    // Which fields of its content are words a player reads, so a translation's `words` table reaches them:
+    // `__id__/entries.<id>.label`. https://ifloom.dev/docs/reference/words
+    words: { entries: { label: true } },
     conditions: {
       /** `{ '__id__/marked': { entry } }`: the entry has been marked. */
       marked: (_state, args, { slice }) => slice.marked[entryId(args)] !== undefined,

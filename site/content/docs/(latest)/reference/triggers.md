@@ -87,7 +87,7 @@ There's one pass per command. A trigger that an earlier trigger makes true fires
 - **Fired is fired.** A `once: 'game'` trigger never fires again, even when its condition stops holding and holds again. Only `once: 'turn'` repeats, at most once a turn. For "every time X happens", put the effects on the choice or action that does X.
 - **A trigger is tested on every command.** That includes ones that take no time, such as [`dismiss`](/docs/reference/commands#dismiss). A `once: 'turn'` trigger whose condition holds all turn fires after the first command of each turn, whatever that command is.
 - **A scene effect cuts in.** A trigger with a `{ scene: 'id' }` effect puts that scene on screen whether or not one was open. If it shouldn't interrupt certain scenes, add `{ not: { scene: [...] } }` naming them to its `when`.
-- **`text` in a `notify` effect is a prose key.** The [content checker](/docs/reference/checks) reports one with no prose.
+- **`text` in a `notify` effect is its words.** It's written out, with tokens filled as it's shown, as its title is.
 
 ## See it in an example
 

@@ -40,7 +40,7 @@ type ActionDef = ButtonDef
 | Field | What it does |
 |---|---|
 | `id` | Unique among the game's actions. The view passes it on as the [`RenderedChoice`](/docs/reference/view#renderedchoice)'s `id`, and `[[act:id]]` in a room's prose names it. |
-| `label` | The button's words, or a prose key whose line the game's prose has. An action with no label is never drawn as a button. A choice's command, another button or a hotspot does it with `{ type: 'action', id }`. |
+| `label` | The button's words, as written, with tokens filled in. An action with no label is never drawn as a button. A choice's command, another button or a hotspot does it with `{ type: 'action', id }`. |
 | `labels` | Words that depend on state, each `{ when, label }`. The first whose `when` holds wins over `label`. |
 | `when` | Only offered, and only done, while this holds. Without it, it's always there. |
 | `blocked` | [Conditions](/docs/reference/conditions) that refuse it while they hold, each with the line the player reads. See [`Blocked`](#blocked). |

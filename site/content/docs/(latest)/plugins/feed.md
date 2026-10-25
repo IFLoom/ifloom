@@ -143,7 +143,7 @@ const posts: PostDef[] = [
 
 ### The player's own posts
 
-The player posts with the `feed/post` effect. It names the feed and gives the post an id. It can also carry a prose key for the words, an image, a video and a starting number of likes:
+The player posts with the `feed/post` effect. It names the feed and gives the post an id. It can also carry the post's words, an image, a video and a starting number of likes:
 
 ```ts
 import { postTo } from '@ifloom/plugin-feed'
@@ -163,7 +163,7 @@ The `feed/react` effect adds likes, a comment, or both, to a post. That can be t
 import { react } from '@ifloom/plugin-feed'
 
 react('river', { likes: 12 })
-react('river', { from: 'ava', text: 'comment.nice' })   // text is a prose key
+react('river', { from: 'ava', text: 'Lovely!' })   // a comment, in its words
 react('ava.cake', { likes: 1 })                        // the player likes Ava's post
 ```
 
@@ -317,8 +317,8 @@ An unknown post is false for `feed/appeared`, and has 0 likes for `feed/likes`.
 
 | Content writes | Helper | Does |
 |---|---|---|
-| `{ 'feed/post': { feed, post, text?, image?, video?, likes? } }` | `postTo(feed, id, { text?, image?, video?, likes? })` | The player posts to `feed`, as the post `post`, stamped with this turn. `text` is a prose key. An id already posted, or a feed the plugin wasn't given, does nothing. |
-| `{ 'feed/react': { post, likes?, from?, text? } }` | `react(post, { likes?, from?, text? })` | Adds `likes` to a post, and a comment if `text` is given. `text` is a prose key and `from` is a character id or a name. A post that hasn't appeared does nothing. |
+| `{ 'feed/post': { feed, post, text?, image?, video?, likes? } }` | `postTo(feed, id, { text?, image?, video?, likes? })` | The player posts to `feed`, as the post `post`, stamped with this turn. `text` is its words, as written. An id already posted, or a feed the plugin wasn't given, does nothing. |
+| `{ 'feed/react': { post, likes?, from?, text? } }` | `react(post, { likes?, from?, text? })` | Adds `likes` to a post, and a comment if `text` is given. `text` is the comment's words and `from` is a character id or a name. A post that hasn't appeared does nothing. |
 
 They work in any effect list: a data scene choice's, an action's, a thing's use in the [inventory](/docs/plugins/inventory), a message reply's, a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), and what one of the game's own effects returns. Written out, a post is `{ 'feed/post': { feed: 'social', post: 'river' } }` (see [plugin calls](/docs/reference/custom#plugincall)).
 
@@ -504,7 +504,7 @@ type OwnPost = {
 }
 ```
 
-A post the player made, as the state keeps it, with the turn it was posted. `text` is a prose key.
+A post the player made, as the state keeps it, with the turn it was posted. `text` is its words, as written, and tokens in it are filled as it's shown.
 
 The plugin's state is at version 2. A save made at version 1 kept a `day` on each of the player's posts. When you load it, the plugin's [migration](/docs/reference/plugins) moves that number to `turn` unchanged. Nothing else changed.
 
@@ -514,7 +514,7 @@ The plugin's state is at version 2. A save made at version 1 kept a `day` on eac
 type Comment = { from: string; text: string }
 ```
 
-A comment as the state keeps it. `from` is who wrote it, as written, and `text` is a prose key.
+A comment as the state keeps it. `from` is who wrote it, as written, and `text` its words.
 
 ## For code
 
@@ -560,7 +560,7 @@ The player's own posts and reactions are made by effects, and those are checked 
 - **A post appears once.** After that it stays, whatever `when` does.
 - **No notice.** Unlike a [message](/docs/plugins/messages), a post raises no [notice](/docs/reference/notices) when it appears. Badge a feed from `feed/unread` with `{ feed }`, or add a [trigger](/docs/reference/triggers) with a `notify` effect for a post that should pop up.
 - **A feed the game doesn't have counts nothing.** `feed/unread` with `{ feed: 'board' }` is 0 when there's no `board` feed, so a badge that names a renamed feed stops counting.
-- **Own-post and comment prose keys are checked where they're written.** A `text` key that one of the [game's own effects](/docs/reference/custom#effects) works out in play isn't, and a missing one shows as `''`.
+- **A post's words are kept in the save.** A post the player made, and a comment, keep the words they were made with, so a translation loaded later doesn't change them. A save from version 2 of the feed, which kept a prose key, gets that key's words when it loads. A `text` that is a prose key the game has is reported where content writes it.
 - **Ids are shared.** `feed/react` and `feed/likes` look for the player's own post with that id first, then someone else's. Give the player's posts ids that no `PostDef` uses.
 - **Posting twice still reacts twice.** A second `feed/post` with an id the player has used makes no new post, but any `feed/react` after it in the same list still lands on the old post. If an action can run more than once, guard it with a `blocked` entry, as the showcase does with its `postedToday` kv key.
 - **React after posting.** `feed/react` on a post that isn't there yet does nothing. Put the reaction after the `feed/post` in the list, or in a later command.

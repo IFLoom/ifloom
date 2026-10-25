@@ -54,15 +54,15 @@ state.flow                        // { scene: 'cafe.counter', path: [{ chose: 't
 
 ## The blocks
 
-A flowing scene uses the same [`Block`](/docs/reference/scenes#block) list as any scene, with these kinds beside `text`, `variants` and `media`:
+A flowing scene uses the same [`Block`](/docs/reference/scenes#block) list as any scene, with these kinds beside `text`, `prose`, `variants` and `media`:
 
 ```ts
 type Block = (
-  | { text: string; when?: Condition }
+  | { text: string; id?: string; when?: Condition }
+  | { prose: string; when?: Condition }
   | { variants: string; when?: Condition; gate?: Record<string, Condition>; art?: Record<string, string> }
   | { media: SceneMedia; when?: Condition }
-  | { words: string; when?: Condition }
-  | { say: string; speaker: string; voice?: string; when?: Condition }
+  | { say: string; speaker: string; voice?: string; id?: string; when?: Condition }
   | { blocks: Block[]; when?: Condition }
   | { decide: string; choices: FlowChoice[]; when?: Condition }
   | { point: string }
@@ -73,7 +73,7 @@ type Block = (
 
 | Block | What it does |
 |---|---|
-| `{ words }` | Words written in place, one paragraph or several, read as prose is: spoken lines, pictures, [inline markup](/docs/reference/prose#markup) and tokens. |
+| `{ text }` | Words written in place, one paragraph or several, read as prose is: spoken lines, pictures, [inline markup](/docs/reference/prose#markup) and tokens. `id` names it for a translation's [words table](/docs/reference/words). Before schema 25 this was `{ words }`, and `{ text }` named a prose key, which is `{ prose }` now. |
 | `{ say, speaker }` | A spoken line, under who says it, by id as `@id: "…"` names them in [prose](/docs/reference/prose#speech): an entity (`'ava'`, `'character:ava'`), `'you'` for whoever the player is playing, or `'player'`. Its beat is a `say` with that `speaker` and their `name`. |
 | `{ blocks }` | A section: its blocks show together while `when` holds. A section can hold anything a body can, decisions included. Its `ui` hints go on every beat it makes, as the beat's `section`. |
 | `{ decide, choices }` | A decision. The flow waits here until the player picks one of `choices`, then shows the pick's `then` and carries on after the decision. Its id is unique within the scene. |
@@ -139,8 +139,8 @@ import { choice, decide, fold, image, jump, minigame, panel, point, say, text, w
 
 | Builder | Writes |
 |---|---|
-| `text(words, { when?, ui? })` | `{ words }`. The indentation every line shares is taken off, and blank lines at either end go, so the words can sit indented in your code. A blank line starts a new paragraph. |
-| `say(who, words, { when?, ui?, voice? })` | `{ say, speaker }`. `who` is an id: `'ava'`, `'character:ava'`, `'you'` or `'player'`. |
+| `text(words, { id?, when?, ui? })` | `{ text }`. The indentation every line shares is taken off, and blank lines at either end go, so the words can sit indented in your code. A blank line starts a new paragraph. |
+| `say(who, words, { id?, when?, ui?, voice? })` | `{ say, speaker }`. `who` is an id: `'ava'`, `'character:ava'`, `'you'` or `'player'`. |
 | `when(condition, blocks, { ui? })` | `{ when, blocks }`: a section shown while `condition` holds. |
 | `decide(id, choices, { when?, ui? })` | `{ decide, choices }`. |
 | `choice(id, label, fields)` | `{ id, label, ...fields }`, a [`FlowChoice`](#flowchoice). `label` is the words. |

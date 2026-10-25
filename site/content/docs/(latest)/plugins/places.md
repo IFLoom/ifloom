@@ -807,7 +807,7 @@ A place named by something that isn't one is reported as `"item:paper" has no pl
 - A trait with no `exits` or no `body` list (`a place needs its exits: exits: [] for none`).
 - An exit to a place the game doesn't have (`exit to unknown location "…"`).
 - A `parent` the game doesn't have (`inside unknown location "…"`), or one that leads back round to the place (`is inside itself`, on every place in the loop).
-- Anything the `body` names that the game doesn't have, such as prose keys, variants or conditions (`no prose for "…"`).
+- Anything the `body` names that the game doesn't have, such as a `{ prose }` block's key, variants or conditions (`no prose for "…"`).
 - Anything a `blocked` entry's `when` names that the game doesn't have.
 - Anything an action's `when`, `blocked` conditions or `command` names that the game doesn't have, prefixed with the action (`action dig: unknown entity "location:moon"`).
 - A track or channel in `audio` that the game doesn't have, a cue channel such as `sfx`, or a sound effect's track, prefixed with `audio:` (`audio: unknown track "rain"`). See [Audio](/docs/reference/checks#audio).

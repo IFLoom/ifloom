@@ -122,7 +122,7 @@ type MessageDef = {
 
 | Field | What it is |
 |---|---|
-| `id` | Unique among messages. Its replies' labels are prose keys built from it. |
+| `id` | Unique among messages. |
 | `channel` | The [channel](#channel) it arrives in. |
 | `from` | Who sent it. Either an entity, by reference or a bare id as a scene's [speaker](/docs/reference/scenes#speakers) is (`'ava'`), or any name as it should be shown (`'Town council'`). An entity's name and picture are looked up, and anything else is shown as written. |
 | `thread` | The thread it goes in. If you leave it out, the thread is the sender, so every message from `ava` in a channel goes in one thread. |
@@ -144,7 +144,8 @@ type ReplyDef = {
 
 | Field | What it is |
 |---|---|
-| `id` | Unique within the message. The reply's label is the prose key `<message id>#<reply id>`, as a [data scene choice](/docs/reference/scenes#choice)'s is. |
+| `id` | Unique within the message. |
+| `label` | Its words, as written, with tokens filled in, as a [data scene choice](/docs/reference/scenes#choice)'s are. Its id if left out. A translation gives it other words under `messages/messages.<message>.replies.<reply>.label`. |
 | `when` | The reply is only on offer while this holds. |
 | `effects` | What sending it does, in order. These can be plain effects, one of the [game's own](/docs/reference/custom#effects) or a plugin's. |
 
@@ -244,7 +245,7 @@ const town: Content = {
   actions: [{ id: 'wait', effects: [pass(1)] }],
   entities: [ava, ...map],
   scenes: [
-    { id: 'ava.hi', title: 'Ava', speaker: 'ava', body: [{ prose: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ scene: null }] }] },
+    { id: 'ava.hi', title: 'Ava', speaker: 'ava', body: [{ prose: 'ava.hi' }], choices: [{ id: 'bye', label: 'Leave her to it', effects: [{ scene: null }] }] },
   ],
   prose: {
     'place.flat': 'Boxes, mostly.',
@@ -252,10 +253,7 @@ const town: Content = {
     'place.cafe': 'Six tables, one of them wobbly.',
     'place.park': 'The river is slow and brown.',
     'ava.hi': 'Ava looks up from the till and grins.',
-    'ava.hi#bye': 'Leave her to it',
     'ava.text': 'Good to meet you yesterday! Coffee’s on me next time 🙂',
-    'ava.text#yes': 'Deal!',
-    'ava.text#later': 'Maybe later in the week',
     'ava.beans': 'New beans in. Tell me if they’re awful.',
     'council.bins': 'Bins go out on Thursdays from now on.',
     'ui.inbox': 'Inbox ({{v:messages/unread}})',
@@ -270,7 +268,7 @@ const town: Content = {
           from: 'ava',
           when: { all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] },
           body: [{ prose: 'ava.text' }],
-          replies: [{ id: 'yes', effects: [{ stat: 'friendship', by: 5, of: character('ava') }] }, { id: 'later' }],
+          replies: [{ id: 'yes', label: 'Deal!', effects: [{ stat: 'friendship', by: 5, of: character('ava') }] }, { id: 'later', label: 'Maybe later in the week' }],
         },
         {
           id: 'ava.beans',
@@ -643,7 +641,7 @@ A `messages/arrived`, `messages/since`, `messages/replied` or `messages/read` co
 - **Messages arrive only after a command.** The plugin delivers them in its `onCommand` [hook](/docs/reference/plugins#hooks-and-providers), which runs after every command that went through, never on `start`. A message whose `when` already holds when the game starts arrives after the player's first command. To open the game with one, have the first command bring it, or put the words in the intro scene.
 - **`when` is tested at the end of each command.** A message whose `when` held only partway through a command, or only before it, waits for a later command that ends while it holds. A message with the [calendar](/docs/plugins/calendar#conditions)'s `period('morning')` as its `when` doesn't arrive if the player's first command of the day ends in the afternoon. It arrives at the end of the next command that ends in a morning, which may be days later. If it matters when a message comes, write `when` for something that stays true, such as a kv key, a day (`day({ gte: 2 })`) or a scene seen.
 - **A message arrives once, unless it's in a pool.** After that it stays, whatever `when` does. A message with `drawnFrom` never arrives by `when` alone; only a draw brings it, as often as it's drawn. See [Messages that come again](#messages-that-come-again).
-- **Reply labels are prose keys.** The label of reply `yes` on message `ava.text` is the prose line `ava.text#yes`. The loader reports a missing one, and the view falls back to the reply's id.
+- **A reply's label is its words.** Before schema 25 it was the prose line `<message>#<reply>`. A pack of an older schema gets those words as the reply's `label` when it loads, and the checker reports a reply in your own content with no label whose old prose has words.
 - **One reply, once.** After the player sends one, the others are gone and `messages/reply` refuses. To let the player say more, send a new message with replies of its own.
 - **A channel the game doesn't have counts nothing.** `messages/unread` with `{ channel: 'post' }` is 0 when there's no `post` channel, so a badge that names a renamed channel stops counting. A [devices](/docs/plugins/devices) app badge that names a value nobody has is reported when the game loads.
 - **The notice is the engine's.** Each arrival raises a [notice](/docs/reference/notices) with the id `messages.<key>`, the [arrival's key](#arrival), the sender's name as its `title` and the channel as its `tag`. So `view.notices.byTag.texts` counts arrivals the player hasn't dismissed. Reading a message doesn't dismiss its notice, and dismissing doesn't read the message. If your UI wants them to go together, send both commands.

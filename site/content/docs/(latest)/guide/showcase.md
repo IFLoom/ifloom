@@ -28,7 +28,7 @@ These are the [CLI](/docs/cli)'s commands, `ifloom dev`, `build`, `check`, `play
 | File | What's in it |
 |---|---|
 | `src/world/` | What the whole town shares, one file of [content](/docs/reference/loader#content) per kind: `stats.ts`, `things.ts` (the things you carry and wear, and notes, as entities), `cast.ts` (Ava and Sam, and their storylines), `settings.ts`, `actions.ts` (waiting, offered everywhere), `phone.ts` (the camera and notes apps), `strings.ts` (the engine's words it rewords), `achievements.ts` and `cheats.ts`. |
-| `src/story/` | The story, one file per place or arc: `moving-day.ts`, `ava.ts`, `flat.ts`, `high-street.ts`, `cafe.ts`, `park.ts`, `office.ts` and `sam.ts`. Each holds its scenes, its actions, its locks and resets, its slice of the plugins' content (the place, its vendor, its jobs) and its prose. Ava's and the café's prose is long, so it's in `ava.prose.ts` and `cafe.prose.ts` beside them. Choice labels are `<scene>#<choice>`, and reply labels are `<message>#<reply>`. All of it is data. |
+| `src/story/` | The story, one file per place or arc: `moving-day.ts`, `ava.ts`, `flat.ts`, `high-street.ts`, `cafe.ts`, `park.ts`, `office.ts` and `sam.ts`. Each holds its scenes, its actions, its locks and resets, its slice of the plugins' content (the place, its vendor, its jobs), and their words, written in place. The lines read by key (variants, tooltips, Ava's small talk by text) are in each file's `prose`, and Ava's are in `ava.prose.ts` beside her arc. All of it is data. |
 | `src/rules.ts` | The game's own code, its [`rules`](/docs/reference/rules): energy back overnight, an effect worked out from the state, and a value the prose prints. |
 | `src/place.ts` | A small helper each place's file uses, which fills in the place's tag, picture and words. |
 | `src/game.ts` | The game put together: the content in order, with the phone kit's first, the plugins and the rules. It also exports the `start` and `probes` that the playtest and the snapshot use. |
@@ -69,7 +69,9 @@ A second lock, in `story/office.ts`, `{ id: 'no-phone', when: at('office'), deny
 
 `GameShell` gets `mods={{ store: modStore, problems, onChange: () => location.reload() }}`, so the player's menu has a Mods dialog. There the player can add a file, turn a mod off or remove it, then restart with the mods they've chosen.
 
-`mods/fog-season.json` is a mod to try it with. Its pack adds a fourth line, a fog, to the high street's `street.weather` variants, and rewrites `place.park`. A pack's variants are appended, and its prose replaces the town's. Add it from the Mods dialog and restart. The test `takes the example mod: fog in the weather, a quieter park, and no problems` loads it through the store, checks both changes, and checks that the loader finds nothing wrong.
+`mods/fog-season.json` is a mod to try it with. Its pack adds a fourth line, a fog, to the high street's `street.weather` variants, and rewrites `place.park`, the one line of the park the town reads by key so that a mod can. A pack's variants are appended, and its prose replaces the town's.
+
+`mods/french.json` is the start of a translation: one pack with a [`words` table](/docs/reference/words) over moving day, the flat and the first quest, the tooltip's prose and a string. The test `takes the French mod` loads it and checks that every key names a field. See [Translating a game](/docs/recipes/translating). Add it from the Mods dialog and restart. The test `takes the example mod: fog in the weather, a quieter park, and no problems` loads it through the store, checks both changes, and checks that the loader finds nothing wrong.
 
 ### Its own art
 
@@ -103,7 +105,7 @@ The town declares two [settings](/docs/reference/settings). `hints` is a play se
 
 ### Actions and tooltips in the text
 
-`story/moving-day.ts` and `story/flat.ts`. The moving-day prose has `[[tip:intro.launderette|launderette]]`, a tooltip whose note is the prose line `intro.launderette`. The flat's body has a second block, `place.flat.text`, shown while Ava's text has come and hasn't been read. It says "Your phone buzzes on the sill: a message. [[act:read-text|Check it]].", and `read-text` is one of the flat's `actions`, with the command `openApp('texts')`. So Check it is a link in the line that opens the phone's messages, and it isn't a button under the text as well. See [Actions and tooltips in the text](/docs/recipes/inline-actions).
+`story/moving-day.ts` and `story/flat.ts`. The moving-day prose has `[[tip:intro.launderette|launderette]]`, a tooltip whose note is the prose line `intro.launderette`. The flat's body has a second block, shown while Ava's text has come and hasn't been read. It says "Your phone buzzes on the sill: a message. [[act:read-text|Check it]].", and `read-text` is one of the flat's `actions`, with the command `openApp('texts')`. So Check it is a link in the line that opens the phone's messages, and it isn't a button under the text as well. See [Actions and tooltips in the text](/docs/recipes/inline-actions).
 
 ### The calendar
 
@@ -159,11 +161,11 @@ Ava's [schedule](/docs/plugins/cast#where-people-are) puts her at the café Mond
 
 The rest of the time she's at her `home`, the park. The first entry whose `when` holds says where she is. Sam is on the high street every morning, `{ location: 'high-street', when: period('morning') }`.
 
-The café's body has a line that only shows while Ava is there, `{ prose: 'place.cafe.ava', when: here('ava') }`, with the cast's [`here()`](/docs/plugins/cast#conditions). The camera's `photo-ava` and `photo-sam` actions use the same condition, in a `blocked` entry that refuses the photo while the person isn't here.
+The café's body has a line that only shows while Ava is there, `{ text: 'Ava is behind the counter, flour to the elbows, and nods you in.', when: here('ava') }`, with the cast's [`here()`](/docs/plugins/cast#conditions). The camera's `photo-ava` and `photo-sam` actions use the same condition, in a `blocked` entry that refuses the photo while the person isn't here.
 
 ### Data scenes, variants and once-a-turn choices
 
-`story/ava.ts`, the scene `ava.hi`, and its words in `story/ava.prose.ts`. Its [body](/docs/reference/scenes#block) is a line, then `{ variants: 'ava.smalltalk' }`, which deals one of three lines from the file's `variants`, then a line for a regular. That last line shows once the scene has been seen three times (`{ seen: 'ava.hi', gte: 3 }`).
+`story/ava.ts`, the scene `ava.hi`, and its small talk in `story/ava.prose.ts`. Its [body](/docs/reference/scenes#block) is a line, then `{ variants: 'ava.smalltalk' }`, which deals one of three lines from the file's `variants`, then a line for a regular. That last line shows once the scene has been seen three times (`{ seen: 'ava.hi', gte: 3 }`).
 
 Its [choices](/docs/reference/scenes#choice) are:
 
@@ -173,7 +175,7 @@ Its [choices](/docs/reference/scenes#choice) are:
 
 Talking to Ava opens it, because it's the last of her [`talk`](/docs/plugins/cast#talkoption) options, the one with no `when`.
 
-Ava's greeting is two paragraphs in `story/ava.prose.ts`, the narration and then her line in quotes. A paragraph that starts and ends with a quote is drawn as [speech](/docs/reference/prose#speech), so the narration has to be a paragraph of its own.
+Ava's greeting is two paragraphs in one `text()` block, the narration and then her line in quotes. A paragraph that starts and ends with a quote is drawn as [speech](/docs/reference/prose#speech), so the narration has to be a paragraph of its own.
 
 Her small talk comes straight after that line, so each of the three lines is written under her id, such as `@ava: "Rain later. The ducks know before the forecast does."`. The view shows it under her name, from her entity. A bare quote after a character's line is read as the player's answer, so written that way, Ava's small talk would come out in the player's voice.
 
@@ -183,7 +185,7 @@ Her small talk comes straight after that line, so each of the three lines is wri
 
 ### Sit a while at the café
 
-`story/cafe.ts`, the `sit` action and the four `cafe.*` scenes, with their words in `story/cafe.prose.ts`. The café has a "Sit a while" button, a room action whose one effect draws a [storylet](/docs/reference/storylets):
+`story/cafe.ts`, the `sit` action and the four `cafe.*` scenes. The café has a "Sit a while" button, a room action whose one effect draws a [storylet](/docs/reference/storylets):
 
 ```ts
 { id: 'sit', label: 'Sit a while', effects: [{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }] }
@@ -229,7 +231,7 @@ It holds when the player is in the park, which is Ava's `home` and where she goe
 
 ### Timed statuses
 
-`story/cafe.ts`, the `coffee` action and `data.statuses`, and `statuses()` in `src/game.ts`. A coffee applies the [statuses plugin](/docs/plugins/statuses)'s `caffeinated` with `applyStatus('caffeinated')`. It adds 10 to energy for two turns (the rest of the day and the next) through a [stat modifier](/docs/reference/plugins#stat-modifiers), so `state.stats.energy` keeps its own value and only what it reads goes up. The React UI's [status list](/docs/plugins/statuses#statuslist) shows it under the stats with its turns left. While it lasts, the café has an extra line, `{ prose: 'place.cafe.caffeinated', when: statusActive('caffeinated') }`. The test `leaves you caffeinated after a coffee, for the rest of the day and the next` plays it.
+`story/cafe.ts`, the `coffee` action and `data.statuses`, and `statuses()` in `src/game.ts`. A coffee applies the [statuses plugin](/docs/plugins/statuses)'s `caffeinated` with `applyStatus('caffeinated')`. It adds 10 to energy for two turns (the rest of the day and the next) through a [stat modifier](/docs/reference/plugins#stat-modifiers), so `state.stats.energy` keeps its own value and only what it reads goes up. The React UI's [status list](/docs/plugins/statuses#statuslist) shows it under the stats with its turns left. While it lasts, the café has an extra line, `{ text: 'Your knee won’t stop jiggling under the table. …', when: statusActive('caffeinated') }`. The test `leaves you caffeinated after a coffee, for the rest of the day and the next` plays it.
 
 ### The café counter
 
@@ -341,4 +343,4 @@ The default export of `src/game.ts` is a function that returns the release build
 
 - **Pictures of places.** Each place names its art, `place/<id>`, and the places plugin's [view](/docs/plugins/places#the-view) passes it on as `location.art`. But there's no `art/place/` yet, and the React UI doesn't draw a place's art. The café's [stage](#a-stage-with-a-hotspot) is the one picture of a place, drawn from a photo the town already has.
 - **Video and layers.** Small Town has no video and no picture with transparent parts, so its one stage has a single layer. [Media](/docs/reference/media) shows a stage with a clip layered over a picture.
-- **A patch.** The example mod adds prose and variants, but no mod patches a choice into one of the town's scenes. See [Patches](/docs/reference/loader#patches).
+- **A patch.** The example mods add prose, variants and words, but no mod patches a choice into one of the town's scenes. See [Patches](/docs/reference/loader#patches).

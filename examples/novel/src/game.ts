@@ -9,8 +9,8 @@
  * a name, and endings that start the story over with `newGame`.
  *
  * This file only puts the game together. The stat is in `world/stats.ts`,
- * and each chapter is a file of its own in `story/`, its prose beside its
- * scenes.
+ * and each chapter is a file of its own in `story/`, its words written in
+ * its scenes.
  */
 import { loadGame, startingState, type Content, type Game } from '@ifloom/engine'
 import { stats } from './world/stats.ts'

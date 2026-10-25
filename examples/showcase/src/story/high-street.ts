@@ -13,7 +13,11 @@ export const highStreet: Content = {
       tags: ['outdoors'],
       exits: ['flat', 'cafe', 'park', 'office'],
       // The street, then a line about the weather, drawn afresh each day.
-      body: [{ prose: 'place.high-street' }, { variants: 'street.weather' }, { prose: 'place.high-street.hint', when: { setting: 'hints' } }],
+      body: [
+        { text: 'A bakery, a launderette, a bus stop with a bench nobody sits on. The café on the corner has its door propped open.' },
+        { variants: 'street.weather' },
+        { text: 'Hint: the café is open in the day, and whoever runs it likes a chat.', when: { setting: 'hints' } },
+      ],
       actions: [
         {
           id: 'scarf',
@@ -26,8 +30,6 @@ export const highStreet: Content = {
     }),
   ],
   prose: {
-    'place.high-street': 'A bakery, a launderette, a bus stop with a bench nobody sits on. The café on the corner has its door propped open.',
-    'place.high-street.hint': 'Hint: the café is open in the day, and whoever runs it likes a chat.',
     'street.weather.drizzle': 'A fine drizzle that never quite becomes rain.',
     'street.weather.sun': 'Sun on the shopfronts; someone has put a chair out on the pavement.',
     'street.weather.wind': 'Wind down the street, rattling the bakery sign.',

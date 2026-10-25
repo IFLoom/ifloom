@@ -16,10 +16,11 @@ The showcase's park has a game of quick feet with the kids. There are five round
 import type { MinigameDef, MinigameStateDef, Content } from '@ifloom/engine'
 
 const ARROWS = ['up', 'down', 'left', 'right'] as const
+const POINTS = { up: 'She points at the sky. Up!', down: 'She points at her shoes. Down!', left: 'She points at the river. Left!', right: 'She points at the swings. Right!' }
 
 // One arrow on screen. The right input scores. A wrong one, or the time running out, doesn't.
 const showArrow = (arrow: (typeof ARROWS)[number]): MinigameStateDef => ({
-  label: `arrows.${arrow}`,
+  label: POINTS[arrow],
   after: { ms: 1500, go: 'round' },
   on: ARROWS.map((input) => ({
     input,
@@ -156,7 +157,7 @@ type MinigameStateDef = {
 
 | Field | What it does |
 |---|---|
-| `label` | A [prose](/docs/reference/prose) key: what the player reads while the minigame is in this state. |
+| `label` | What the player reads while the minigame is in this state, as written, with [tokens](/docs/reference/prose#tokens) filled in. Before schema 25 it was a prose key, which an older pack has rewritten to its words and the checker reports in your own content. |
 | `after` | A timer. Once `ms` milliseconds of ticks have passed in this state, its transition is taken. |
 | `on` | What each input does here. The first entry for the input whose `when` holds is taken. Several entries can share an input, each with its own `when`. |
 | `always` | Taken as soon as the state is entered: the first entry whose `when` holds. |

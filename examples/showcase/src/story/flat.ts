@@ -1,5 +1,5 @@
 /** Your flat: home, bed, the wardrobe, Ava's text on the sill, her call, and the rent every Sunday. */
-import type { Condition, Content } from '@ifloom/engine'
+import { text, type Condition, type Content } from '@ifloom/engine'
 import { day, period, sleep, weekday } from '@ifloom/plugin-calendar'
 import { messageReplied } from '@ifloom/plugin-messages'
 import { at } from '@ifloom/plugin-places'
@@ -27,7 +27,7 @@ export const flat: Content = {
       title: 'The phone',
       speaker: 'ava',
       // The React UI draws the timer's countdown under this block, from its `ui.timer` hint.
-      body: [{ prose: 'flat.ring', ui: { timer: 'flat.ring' } }],
+      body: [{ text: 'Your phone is ringing on the sill. Ava. Answer before it stops.', ui: { timer: 'flat.ring' } }],
       choices: [
         // Answering stops the timer, so the missed call never comes.
         {
@@ -67,8 +67,15 @@ export const flat: Content = {
       name: 'Your flat',
       desc: 'Home',
       exits: ['high-street'],
-      // Once Ava's text has come and until it's read, the room's prose holds a link that opens the phone.
-      body: [{ prose: 'place.flat' }, { prose: 'place.flat.text', when: textWaiting }],
+      body: [
+        // `[[ui:modal|…]]` is the React UI's: "the radiator knocks" opens Sam's welcome note, the prose `notice.welcome`, in a dialog.
+        text(
+          "Boxes, mostly. The window looks over the high street, and [[ui:modal|the radiator knocks|notice.welcome|Sam's note]] when it feels like it. {{v:game/catName}} has claimed the warm spot on the sill.",
+        ),
+        // Once Ava's text has come and until it's read, a line with a link that opens the phone: `[[act:read-text|…]]`
+        // draws the flat's "Read your messages" action here, in the line.
+        text('Your phone buzzes on the sill: a message. [[act:read-text|Check it]].', { when: textWaiting }),
+      ],
       actions: [
         { id: 'bed', label: 'Go to bed', command: sleep() },
         // The wardrobe opens in a panel by its name; the layout also shows what you're wearing only at home.
@@ -78,12 +85,4 @@ export const flat: Content = {
       ],
     }),
   ],
-  prose: {
-    // `[[ui:modal|…]]` is the React UI's: "the radiator knocks" opens Sam's welcome note in a dialog.
-    'place.flat':
-      "Boxes, mostly. The window looks over the high street, and [[ui:modal|the radiator knocks|notice.welcome|Sam's note]] when it feels like it. {{v:game/catName}} has claimed the warm spot on the sill.",
-    // `[[act:read-text|…]]` draws the flat's "Read your messages" action here, in the line.
-    'place.flat.text': 'Your phone buzzes on the sill: a message. [[act:read-text|Check it]].',
-    'flat.ring': 'Your phone is ringing on the sill. Ava. Answer before it stops.',
-  },
 }

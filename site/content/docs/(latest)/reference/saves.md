@@ -297,7 +297,7 @@ A save from version 0 doesn't load.
 ## SAVE_VERSION
 
 ```ts
-const SAVE_VERSION: 20
+const SAVE_VERSION: 21
 ```
 
 The current save format. Every new state carries it in `state.version`.

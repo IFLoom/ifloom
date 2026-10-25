@@ -264,9 +264,9 @@ const sam = person({
 
 const place = (id: string, name: string, exits: string[]): PlaceDef =>
   ({ id, name, desc: 'Small Town', exits, body: [{ prose: `place.${id}` }] })
-const chat = (id: string, who: string, by: number): DataScene => ({
-  id, speaker: who, body: [{ text: id }],
-  choices: [{ id: 'bye', effects: [{ stat: 'friendship', by, of: character(who) }, { scene: null }] }],
+const chat = (id: string, who: string, by: number, label: string): DataScene => ({
+  id, speaker: who, body: [{ prose: id }],
+  choices: [{ id: 'bye', label, effects: [{ stat: 'friendship', by, of: character(who) }, { scene: null }] }],
 })
 
 const map = [
@@ -279,7 +279,12 @@ const town: Content = {
   stats: [{ id: 'friendship', label: 'Friendship', of: 'character' }],
   storylines: [{ id: 'ava', name: 'Ava' }, { id: 'sam', name: 'Sam' }],
   entities: [ava, sam, ...map],
-  scenes: [chat('ava.hi', 'ava', 10), chat('ava.river', 'ava', 5), chat('ava.call', 'ava', 3), chat('sam.hi', 'sam', 5)],
+  scenes: [
+    chat('ava.hi', 'ava', 10, 'Leave her to it'),
+    chat('ava.river', 'ava', 5, 'Sit with her'),
+    chat('ava.call', 'ava', 3, 'Say goodnight'),
+    chat('sam.hi', 'sam', 5, 'Pat the dog'),
+  ],
   prose: {
     'place.high-street': 'A bakery, a launderette, a bus stop.',
     'place.cafe': 'Six tables, one of them wobbly.',
@@ -288,7 +293,6 @@ const town: Content = {
     'ava.river': 'Ava is on the bench, feeding the ducks.',
     'ava.call': '"Oh, hello! I’m by the river."',
     'sam.hi': 'Sam is walking a dog that is clearly not theirs.',
-    'ava.hi#bye': 'Leave her to it', 'ava.river#bye': 'Sit with her', 'ava.call#bye': 'Say goodnight', 'sam.hi#bye': 'Pat the dog',
   },
 }
 ```

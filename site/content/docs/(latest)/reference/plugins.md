@@ -93,15 +93,13 @@ const cafe: Content = {
       body: [{ prose: 'counter' }],
       choices: [
         // Only offered once the card is full.
-        { id: 'free-coffee', when: { 'loyalty/full': true }, effects: [{ scene: null }] },
-        { id: 'leave', effects: [{ scene: null }] },
+        { id: 'free-coffee', label: 'Claim a free coffee', when: { 'loyalty/full': true }, effects: [{ scene: null }] },
+        { id: 'leave', label: 'Not today', effects: [{ scene: null }] },
       ],
     },
   ],
   prose: {
     counter: 'Your card has {{v:loyalty/stamps}} stamps.',
-    'counter#free-coffee': 'Claim a free coffee',
-    'counter#leave': 'Not today',
   },
 }
 
@@ -1078,7 +1076,7 @@ type StageDef = {
 }
 ```
 
-What the screen shows while no scene is open, such as a room's description, a shop front or a heading over a dashboard. The view asks the game's own `rules.stage`, then each plugin in the order `game.plugins` lists them, and the first that returns a `StageDef` fills [`view.scene`](/docs/reference/view#the-scene). `title` becomes the title, and `body` is rendered as a data scene's body would be (prose keys, variants, conditions and the game's prose), with `id: null` and no choices. Return `undefined` to let the next plugin answer.
+What the screen shows while no scene is open, such as a room's description, a shop front or a heading over a dashboard. The view asks the game's own `rules.stage`, then each plugin in the order `game.plugins` lists them, and the first that returns a `StageDef` fills [`view.scene`](/docs/reference/view#the-scene). `title` becomes the title, and `body` is rendered as a data scene's body would be (its words, lines by key, variants and conditions), with `id: null` and no choices. Return `undefined` to let the next plugin answer.
 
 | Field | What it is |
 |---|---|

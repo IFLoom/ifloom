@@ -110,12 +110,11 @@ A game is one module that exports what [`loadGame`](/docs/reference/loader#loadg
 
 ```ts
 // src/game.ts
-import { loadGame, type Content } from '@ifloom/engine'
+import { loadGame, text, type Content } from '@ifloom/engine'
 
 const story: Content = {
   introScene: 'start',
-  scenes: [{ id: 'start', title: 'The door', body: [{ prose: 'start' }], choices: [] }],
-  prose: { start: 'A green door, half open. Someone inside is laughing.' },
+  scenes: [{ id: 'start', title: 'The door', body: [text('A green door, half open. Someone inside is laughing.')], choices: [] }],
 }
 
 export default loadGame([story], { id: 'my-game', title: 'My Game' })

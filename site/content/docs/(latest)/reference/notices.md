@@ -65,7 +65,7 @@ A notice as the state keeps it in [`state.notices`](/docs/reference/state#notice
 |---|---|
 | `id` | The `notify` effect's `id`, or one the engine makes up (`notice.<turn>.<n>`). |
 | `title` | A short line. It's shown as written, not looked up. |
-| `text` | A prose key for more words, if there are any. The view fills it in. |
+| `text` | More words, if there are any, as written. The view fills in their tokens. |
 | `image` | An image path, passed through. |
 | `tag` | What it's about, for badges, such as `'post'`, `'money'` or `'quests'`. Any string the game likes. |
 | `turn` | The [turn](/docs/reference/state#turn) it was raised in. |
@@ -104,7 +104,7 @@ Returns the state with the notice `id` marked seen, or every notice if you leave
 
 ## Gotchas
 
-- **`text` is a prose key, not words.** The [content checker](/docs/reference/checks) reports one with no prose (`no prose for "…"`) wherever the effect is. `title` is the opposite. It's written out and never looked up.
+- **`text` is words, as `title` is.** Both are written out and never looked up. Before schema 25 `text` was a prose key: an older pack's is rewritten to its words, a save's notices are carried forward (save version 21), and a `text` in your own content that names prose is reported.
 - **Notices are capped at 50.** They're for news, not records. Give the player anything they must be able to find again as a [thing they hold](/docs/reference/entities#notes-photos-and-other-things-made-in-play), such as a note.
 - **Give a notice an `id` if it can be raised more than once.** Without one, a notice raised every turn adds a copy each time. With one, it replaces itself.
 - **A made-up id is only unique among the notices kept.** It's `notice.<turn>.<n>`, the first one not in the list, so once an old notice has gone its id can be handed out again. If you want to replace or dismiss a notice by id later, name it yourself.

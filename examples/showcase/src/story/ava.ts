@@ -1,6 +1,7 @@
 /**
  * Ava's arc: meeting her at the café, her calls and texts, the evening by the
- * river, and the friendship quest. Her words are in `ava.prose.ts`.
+ * river, and the friendship quest. Her words are written where they are
+ * read; the lines drawn at random, her small talk, are by key in `ava.prose.ts`.
  */
 import { choice, decide, give, holding, jump, move, point, say, text, type Content } from '@ifloom/engine'
 import { questActive } from '@ifloom/plugin-quests'
@@ -38,11 +39,18 @@ export const ava: Content = {
       title: 'Ava',
       speaker: 'ava',
       body: [
-        { prose: 'ava.hi' },
+        // A paragraph in quotes is a spoken line, so narration goes in a paragraph of its own.
+        // `[[ui:image|…]]` is the React UI's: her name opens her photo in the viewer.
+        text(`
+          [[ui:image|Ava|photo/ava.svg|Ava at the café counter]] looks up from the till and grins.
+
+          "You’re the one above the launderette. Welcome to the worst-kept secret in town: me."
+        `),
+        // Drawn from the variants by key, a different line each visit.
         { variants: 'ava.smalltalk' },
-        { prose: 'ava.hi.regular', when: { seen: 'ava.hi', gte: 3 } },
+        { text: 'She has your cup out before you ask.', when: { seen: 'ava.hi', gte: 3 } },
         // Things are held: once the shell is Ava's, it sits by her till.
-        { prose: 'ava.hi.shell', when: { entity: 'keepsake:shell', at: character('ava') } },
+        { text: 'The river shell sits by the till, holding down the receipts.', when: { entity: 'keepsake:shell', at: character('ava') } },
       ],
       choices: [
         // Shown while you hold the shell from the river: giving it moves it to her.
@@ -73,7 +81,7 @@ export const ava: Content = {
       id: 'ava.call',
       title: 'Ava, on the phone',
       speaker: 'ava',
-      body: [{ prose: 'ava.call' }],
+      body: [{ text: '"Oh, hello! I’m on the bench by the river. Come and find me some evening."' }],
       choices: [
         {
           id: 'bye',
@@ -89,9 +97,9 @@ export const ava: Content = {
       ui: { transition: { in: 'fade', out: 'fade', ms: 600 } },
       speaker: 'ava',
       body: [
-        { prose: 'ava.river' },
+        { text: 'Ava is on the bench with her shoes off, feeding the ducks the crusts of the day.' },
         // Her line comes a moment after the ducks: a block of its own, revealed by the React UI.
-        { prose: 'ava.river.2', ui: { reveal: { delay: 1500, as: 'slide-up' } } },
+        { text: '"I told you it was the only quiet in town." She shuffles up to make room.', ui: { reveal: { delay: 1500, as: 'slide-up' } } },
         // Each pick but the last jumps back here, so you can do both before you sit.
         point('bench'),
         decide('evening', [
@@ -156,7 +164,7 @@ export const ava: Content = {
           channel: 'texts',
           from: 'ava',
           when: { all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] },
-          body: [{ prose: 'ava.text' }],
+          body: [{ text: 'Good to meet you yesterday! Coffee’s on me next time 🙂' }],
           replies: [
             { id: 'yes', label: 'Deal!', effects: [{ stat: 'friendship', by: 5, of: character('ava') }] },
             { id: 'later', label: 'Maybe later in the week' },
@@ -166,7 +174,16 @@ export const ava: Content = {
       ],
     },
     feed: {
-      posts: [{ id: 'ava.cake', feed: 'social', from: 'ava', when: day({ gte: 1 }), body: [{ prose: 'feed.ava-cake' }], likes: 14 }],
+      posts: [
+        {
+          id: 'ava.cake',
+          feed: 'social',
+          from: 'ava',
+          when: day({ gte: 1 }),
+          body: [{ text: 'Lemon drizzle today. It will not last until noon.' }],
+          likes: 14,
+        },
+      ],
     },
   },
   prose,

@@ -8,12 +8,12 @@ export const opening: Content = {
     {
       id: 'opening',
       title: 'The Corner Café',
-      body: [{ prose: 'opening' }],
+      body: [
+        {
+          text: 'The lease is signed, the sign is up, and Ana has already rearranged the mugs. Every week the till is counted, the staff are paid, and you find out what the town thought.',
+        },
+      ],
       choices: [{ id: 'begin', label: 'Open the doors', effects: [{ scene: null }] }],
     },
   ],
-  prose: {
-    opening:
-      'The lease is signed, the sign is up, and Ana has already rearranged the mugs. Every week the till is counted, the staff are paid, and you find out what the town thought.',
-  },
 }

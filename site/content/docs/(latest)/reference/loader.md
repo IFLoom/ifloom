@@ -90,7 +90,7 @@ export const ch1: Content = {
 | `ui` | [Presentation hints](/docs/reference/ui-hints) for the whole game, by key. |
 | `entities` | By kind and id (`'staff:ana'`), so two kinds may each have an entity with the same id. See [Entities](/docs/reference/entities). |
 | `traits` | By trait id and then entity, one row each. See [Traits](#traits). |
-| `strings` | By key. A file of nothing but `strings` is a translation. See [Strings](/docs/reference/strings#overriding). |
+| `strings` | By key: the engine's and plugins' own lines, reworded. See [Strings](/docs/reference/strings#overriding). |
 | `prose` | By key. |
 | `words` | By key: other words for the fields of the content, laid over it once everything is merged. A translation is one pack with this table. See [The words table](/docs/reference/words). |
 | `variants` | By variants name. Each file appends its members to the list, so several files can add lines to one name. A member is a prose key, or `{ text, weight }` to give it a [weight](/docs/reference/prose#variantmember). |
@@ -183,24 +183,24 @@ A pack written before this split may still have `overrides: true`, which told th
 ## SCHEMA
 
 ```ts
-const SCHEMA = 23
+const SCHEMA = 25
 ```
 
 The format of packs this engine reads. Write `schema: SCHEMA` in a pack you write in TypeScript so it always matches. Your content has no schema.
 
-A pack written for an older schema still loads. [`loadGame`](#loadgame) upgrades it first with [`upgradePack`](#upgradepack), mods included, so a mod file made for an earlier version of your game keeps working after you update the engine or a plugin. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 24, this engine reads 23`, and a mod like that is refused when the player adds it.
+A pack written for an older schema still loads. [`loadGame`](#loadgame) upgrades it first with [`upgradePack`](#upgradepack), mods included, so a mod file made for an earlier version of your game keeps working after you update the engine or a plugin. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 26, this engine reads 25`, and a mod like that is refused when the player adds it.
 
 ## upgradePack
 
 ```ts
 function upgradePack(pack: { schema: number; plugins?: Record<string, number> }, plugins: readonly Plugin[], context?: PackContext): Result<Pack>
 
-type PackContext = { entities?: readonly unknown[]; you?: readonly string[] }
+type PackContext = { entities?: readonly unknown[]; you?: readonly string[]; prose?: Readonly<Record<string, string>> }
 ```
 
 Brings a pack written for an older [`SCHEMA`](#schema) up to this one, and for older versions of the game's plugins up to theirs, or says why it can't, as a [`Result`](/docs/reference/runner#result). Pass the game's plugins, the same list as the base's `plugins`. The engine keeps one step for each schema change, and a pack goes through them in order until it reaches `SCHEMA`. Each step rewrites what that change renamed or reshaped, such as an old name for a condition, in every scene, choice and effect of the pack.
 
-`context` is what a step needs to know of the game the pack goes over: the entities its content and plugins declare, and the game's string `you`. Only the step from schema 22 reads it, to know whose name a spoken line was written under. [`loadGame`](#loadgame) passes it, with the entities of the packs before this one too. Leave it out and that step reads only the pack's own entities.
+`context` is what a step needs to know of the game the pack goes over: the entities its content and plugins declare, the game's string `you`, and the prose under the pack. The step from schema 22 reads the entities and `you`, to know whose name a spoken line was written under, and the step from schema 24 reads the prose, to give a label that was a prose key its words. [`loadGame`](#loadgame) passes it, with the entities and prose of the packs before this one too. Leave it out and those steps read only the pack's own.
 
 What a plugin reads (its `data`, its calls' arguments, its strings and its traits) is that plugin's to carry forward, with its own [`contentMigrations`](/docs/reference/plugins#content-and-command-migrations). The engine runs them alongside its own steps: before its step from each schema, every plugin's steps keyed by that schema or below, and after its last, the rest. The table below lists what both rewrite at each schema, the first-party plugins' steps included, so an old pack upgraded with those plugins comes out as described. Without a plugin in the list, its content is left as it was.
 
@@ -224,8 +224,9 @@ What a plugin reads (its `data`, its calls' arguments, its strings and its trait
 | 19 to 20 | One kind of button (see [`ActionDef`](/docs/reference/actions#actiondef)). Each of `activities` becomes an action with no label, its `cost`, `blocked` and `effects` as they were. An action the pack declares with the same id, whose command did that activity, takes them in place of its command. `{ type: 'activity', id }` becomes `{ type: 'action', id }` wherever a command is, and a lock's `deny` and `except` name `'action'` for `'activity'`. |
 | 20 to 21 | Effects are told apart by their key, as conditions are (see [Effects](/docs/reference/effects#effect)). `{ kind: 'stat', stat, by }` becomes `{ stat, by }`, `{ kind: 'kv', key: 'met', to }` becomes `{ kv: 'met', to }`, `{ kind: 'scene', scene }` becomes `{ scene }`, `{ kind: 'scene', from, otherwise }` becomes `{ scene: { from, otherwise } }`, and `{ kind: 'turn' }` becomes `{ turn: true }` (with `by`, `{ turn: { by } }`). `remove`, `move` and `you` name their entity in their key, `closeStoryline` its storyline, `notify` its title, `audio` its channel, `sound` its track and `roll` its key. `create`'s `of` becomes its key and its `entity` becomes `with`, and `each`'s `of` becomes its key, or with `at`, `tag` or `trait` a [`Select`](/docs/reference/entities#select). A call, `{ kind: 'custom', name, with }`, becomes its short form. An input's and a setting's `kind` becomes `type`. The plugins whose content holds effects (statuses, devices, inventory, jobs, places, messages and cheats) rewrite theirs too, and so do the effects in entities' traits. |
 | 21 to 22 | The engine's [beats](/docs/reference/prose#scenebeat) are text, speech, pictures, video and sound, and how a letter or a sign looks is the UI's. In prose and strings, `[[mail]] … [[/mail]]` becomes the React UI's [piece](/docs/reference/prose#letters-notes-and-signs) `[[ui:mail|body|From: …|Subject: …]]`, `[[sticky]]`, `[[clip]]` and `[[diary]]` become `[[ui:prop|words|sticky]]` (and so on), and a paragraph starting `> ` becomes `[[ui:mono|words]]`, each a paragraph of its own. Words a piece can't hold (a `|` or a `]`) stay as plain paragraphs. A picture's `rot` flag goes, and a scene's `{ text }` block whose line had one gets the React UI's block hint `ui: { tilt: true }`. A choice's `labels` entries name their words `label` (was `key`), as every [button](/docs/reference/actions#buttondef)'s do. A minigame's `vars` are its `kv`, the store `{ kv, of: 'minigame' }` reads. |
-| 22 to 23 | [Speech](/docs/reference/prose#speech) names who says it by id, `@ava: "…"`, and the view shows their name from their entity. In `prose` and in scenes' `{ words }` blocks, a line written `Ava: "…"` becomes `@ava: "…"` when exactly one entity, in `context` or the pack, has that name: its bare id when that reads as the entity (a `character`, or the one entity with that id), else its full reference, `@staff:jo:`. `You:`, or a line under the game's or the pack's string `you`, becomes `@you:`. A name no entity has, or that two share, is left as it was, a line under that label with no speaker. |
+| 22 to 23 | [Speech](/docs/reference/prose#speech) names who says it by id, `@ava: "…"`, and the view shows their name from their entity. In `prose` and in scenes' `{ words }` blocks (`{ text }` blocks since schema 25), a line written `Ava: "…"` becomes `@ava: "…"` when exactly one entity, in `context` or the pack, has that name: its bare id when that reads as the entity (a `character`, or the one entity with that id), else its full reference, `@staff:jo:`. `You:`, or a line under the game's or the pack's string `you`, becomes `@you:`. A name no entity has, or that two share, is left as it was, a line under that label with no speaker. |
 | 23 to 24 | The [places plugin](/docs/plugins/places#older-content)'s locations and the [shop](/docs/plugins/shop#checks)'s vendors are entities with their plugin's trait. Each entry of `data.places.locations` becomes an entity `{ of: 'location', id, name, desc, image, tags, traits: { 'places/location': { ... } } }`, its old `tag` the `desc` and its `art` the `image` (an empty one dropped), and `{{v:places/tag}}` becomes `{{v:places/desc}}`. Each entry of `data.shop.vendors` becomes `{ of: 'vendor', id, name, traits: { 'shop/vendor': { ... } } }`. They follow the pack's own entities, and `data.places` and `data.shop` go when nothing is left in them. Each plugin's own step does it (content version 24). |
+| 24 to 25 | The words a player reads are written in place (see [The words table](/docs/reference/words)). A block of words written in place, `{ words }`, becomes `{ text }`, and a block that read the prose by key, `{ text: key }`, becomes `{ prose: key }`, wherever a block is: scenes, patches, plugin `data` and entities' traits. A label that is a prose key (a choice's, an action's or a `labels` entry's, in a scene, an action or a plugin's buttons) becomes that prose's words, and so does a scene's choice with no label, from the prose `<scene>#<choice>` it read, a `notify` effect's `text` and a minigame state's `label`. The [messages plugin](/docs/plugins/messages)'s replies get `label` from `<message>#<reply>`, and the [feed](/docs/plugins/feed)'s `feed/post` and `feed/react` their `text`'s words (content version 25). The words come from the pack's own prose, else the prose under it in `context`. A key neither has is left as written, and now reads as those words, and a choice with no label and no prose shows its id, as it did. |
 
 Schema 4 is the oldest a pack can be.
 
@@ -233,8 +234,8 @@ It returns the pack at `SCHEMA`, with `plugins` recording each plugin's version,
 
 | When | Returns |
 |---|---|
-| `schema` is newer than `SCHEMA` | `written for schema 24, this engine reads 23` |
-| `schema` is older than the oldest schema there's a step from | `written for schema 3, too old for this engine to read (it reads 23)` |
+| `schema` is newer than `SCHEMA` | `written for schema 26, this engine reads 25` |
+| `schema` is older than the oldest schema there's a step from | `written for schema 3, too old for this engine to read (it reads 25)` |
 | `plugins` gives a newer version of a plugin's content than the game has | `written for version 14 of the shop plugin's content, this game's reads 13` |
 
 A pack with nothing to do comes back unchanged, as the same object. The pack you pass in is never changed, so keep the result.
@@ -354,9 +355,8 @@ import { SCHEMA, type Pack } from '@ifloom/engine'
 const mod: Pack = {
   id: 'mod:compliments',
   schema: SCHEMA,
-  prose: { 'ava.hi#coffee': 'Ask what she recommends' },
   patches: [
-    { scene: 'ava.hi', addChoice: { id: 'coffee', effects: [{ stat: 'energy', by: 5 }] }, before: 'bye' },
+    { scene: 'ava.hi', addChoice: { id: 'coffee', label: 'Ask what she recommends', effects: [{ stat: 'energy', by: 5 }] }, before: 'bye' },
   ],
 }
 ```

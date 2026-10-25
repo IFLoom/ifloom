@@ -1,21 +1,36 @@
 ---
 title: "Prose and markup"
-description: "Prose keys, tokens such as {{playerName}}, markup for speech, pictures, video, sound, inline actions and tooltips, and variants."
+description: "Words written in place and lines kept by key, tokens such as {{playerName}}, markup for speech, pictures, video, sound, inline actions and tooltips, and variants."
 ---
-A game keeps its words apart from its logic, under prose keys. A scene names keys, a prose store turns each key into text, and the view parses that text into beats a UI can draw. This page covers all three. For the scenes that name keys, see [Scenes](/docs/reference/scenes).
+A game's words are written where they're read: a scene's blocks of text, its choices' labels, an entity's name. A line several scenes share, or a set of lines drawn at random, is kept by key in the `prose` table instead. Either way, the view parses the words into beats a UI can draw. This page covers the words, the tokens and markup in them, and the prose table. For the scenes they sit in, see [Scenes](/docs/reference/scenes), and to translate them, [The words table](/docs/reference/words).
 
-## Prose keys
+## Words in place and prose keys
 
-A prose key is a plain string. The engine only gives meaning to the label pattern (`scene#choice`) that a [`DataScene`](/docs/reference/scenes#datascene) uses:
+Most words go straight into the content, as a `{ text }` block, a `say` line, a `label` or a `name`:
+
+```ts
+body: [text('Ava looks up from the till.'), say('ava', 'Morning. The usual?')],
+choices: [{ id: 'tea', label: 'A pot of tea', effects: [] }],
+```
+
+The `prose` table holds lines read by key. Use it for:
+
+- **A line shared between scenes**, read with `{ prose: 'cafe.menu' }` in each.
+- **Variants**: a set of lines a `{ variants }` block draws from, one each visit (see [VariantMember](#variantmember)).
+- **What markup names by key**: a [tooltip](#inline-actions-and-tooltips)'s words, `[[tip:cafe.menu|the menu]]`, and the React UI's `[[ui:modal|…|key]]`.
+- **A line a mod should rewrite by key**: a pack's `prose` replaces the line under the same key.
+
+A prose key is a plain string:
 
 | Key | Used for |
 |---|---|
-| `ava.hi` | Any `text` block. By convention, the scene's id is the key for its main body. |
-| `ava.hi.regular` | Any other block. A `.` before the part is a convention, not syntax. |
-| `ava.hi#chat` | The label for choice `chat` in scene `ava.hi`. It's the default when a choice gives no `label`. |
-| `ava.smalltalk.rain#chat` | A label written for one drawn variant. If that member was drawn, it beats the scene's own label. |
+| `cafe.menu` | A `{ prose }` block, a tooltip or a modal. A `.` before the part is a convention, not syntax. |
+| `ava.smalltalk.rain` | A member of the variants `ava.smalltalk`. |
+| `ava.smalltalk.rain#chat` | A reply written for one drawn line: if that member was drawn, it labels the choice `chat` over its own label. |
 
 Keep `/` out of your keys. It names a plugin everywhere else, as in `quests/done`. See [Ids and separators](/docs/reference/game#ids-and-separators).
+
+A label is never a prose key. Before schema 25, a `{ text }` block named a key, a choice with no `label` read the prose `<scene>#<choice>`, and a label or a notice's `text` could be a key. A pack of an older schema is rewritten when it loads, from its own prose or the game's. Your own content isn't, so the [checker](/docs/reference/checks#words-written-as-prose-keys) reports each one with the words to write.
 
 Variants are named lists of keys, and one of them is drawn each time. The [loader](/docs/reference/loader) takes them as explicit lists (`Pack.variants`), where a member can carry a [weight](#variantmember). A store you build by hand can find them however it likes, for example by key prefix.
 
@@ -31,7 +46,7 @@ type ProseStore = {
 }
 ```
 
-The game's `prose` field, where data scenes read their words. `line` returns the words for a key, filled in for this save, or `undefined` if nobody has written them. `variants` returns the member keys of a named set of variants, in declaration order. `weight` returns a member's weight in a set, 1 if it has none. Leave `weight` out and every member weighs 1.
+The game's `prose` field, where `{ prose }` blocks, variants and markup read lines by key. `line` returns the words for a key, filled in for this save, or `undefined` if nobody has written them. `variants` returns the member keys of a named set of variants, in declaration order. `weight` returns a member's weight in a set, 1 if it has none. Leave `weight` out and every member weighs 1.
 
 You rarely write one by hand. [`loadGame`](/docs/reference/loader#loadgame) sets `game.prose` from the content's and packs' prose and variants.
 
@@ -96,7 +111,7 @@ The engine has no player name of its own. A game that wants one sets a kv key, w
 function fillTokens(text: string, state: GameState, game: Game): string
 ```
 
-Fills in the [tokens](#tokens) in one string. The prose store calls it on every line. Call it yourself for text that doesn't come from the store, such as an action's label, a phone message or a panel of your own.
+Fills in the [tokens](#tokens) in one string. The engine calls it on every block of words, label and line it shows. Call it yourself for text of your own, such as a panel's.
 
 ```ts
 import { fillTokens } from '@ifloom/engine'
@@ -107,7 +122,7 @@ fillTokens('{{playerName}} has been here {{kv:visits of=storyline:ava}} times.',
 
 ## Markup
 
-The text at a prose key is split into paragraphs on blank lines, and each paragraph becomes one [`SceneBeat`](#scenebeat). The view does this for you, so `view().scene.beats` is the parsed body.
+The words of a block, or of a line kept by key, are split into paragraphs on blank lines, and each paragraph becomes one [`SceneBeat`](#scenebeat). The view does this for you, so `view().scene.beats` is the parsed body.
 
 | Write | Beat |
 |---|---|
@@ -240,7 +255,7 @@ The open scene's sound and voice beats are in [`view.audio.cues`](/docs/referenc
 
 ### Paragraphs that wait
 
-Prose has no markup for timing. To make a paragraph wait before it appears, put it in a [block](/docs/reference/scenes#block) of its own, under its own prose key, and give the block a [presentation hint](/docs/reference/ui-hints) such as the React UI's [`reveal`](/docs/react/hints#reveal). The block's hints arrive on the first beat it makes.
+Prose has no markup for timing. To make a paragraph wait before it appears, put it in a [block](/docs/reference/scenes#block) of its own and give the block a [presentation hint](/docs/reference/ui-hints) such as the React UI's [`reveal`](/docs/react/hints#reveal). The block's hints arrive on the first beat it makes.
 
 `[[reveal]]` used to be markup. The checker reports one left in prose (`[[reveal]] is no longer markup and would be shown as written`), and a pack written before schema 16 has it turned into blocks by [`upgradePack`](/docs/reference/loader#upgradepack).
 
@@ -264,10 +279,10 @@ A choice can send any command as well as its effects, with its [`command`](/docs
 ```ts
 const kitchen: DataScene = {
   id: 'kitchen.phone',
-  body: [{ prose: 'kitchen.phone' }],
+  body: [text('Your phone buzzes on the counter. [[act:answer|Pick it up]], or leave it.')],
   choices: [
-    { id: 'answer', command: openApp('texts'), effects: [{ kv: 'answered', to: true }] },
-    { id: 'ignore', effects: [{ scene: null }] },
+    { id: 'answer', label: 'Answer the phone', command: openApp('texts'), effects: [{ kv: 'answered', to: true }] },
+    { id: 'ignore', label: 'Leave it', effects: [{ scene: null }] },
   ],
 }
 ```

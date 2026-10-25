@@ -165,7 +165,7 @@ const { game } = loadGame([town], base)
 
 ### As a translation mod
 
-A translation is a [pack](/docs/reference/loader#pack) with nothing in it but `strings`, plus [`prose`](/docs/reference/prose) for the story itself. It goes over the game's content, so its lines win, and a later pack wins over an earlier one:
+A translation is a [pack](/docs/reference/loader#pack). Its `strings` reword the engine's and plugins' lines, its [`words`](/docs/reference/words) table the words your content writes in place, and its [`prose`](/docs/reference/prose) the lines read by key (see [Translating a game](/docs/recipes/translating)). It goes over the game's content, so its lines win, and a later pack wins over an earlier one:
 
 ```ts
 import { loadGame, stringOf, SCHEMA, type Pack } from '@ifloom/engine'

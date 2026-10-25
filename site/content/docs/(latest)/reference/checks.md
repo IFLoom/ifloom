@@ -335,6 +335,30 @@ A `ui` field of [presentation hints](/docs/reference/ui-hints) is checked only f
 
 A choice's `command` is checked as any command is, under `choice <id>:`.
 
+## Words written as prose keys
+
+Content from before schema 25 named prose keys where it now writes words. A pack of an older schema is [rewritten](/docs/reference/loader#upgradepack) when it loads, but your own content isn't, so the checker reports each one, wherever it sits: a scene, a flow's decision, an action, a place's or an app's buttons, a notice, a minigame, a message's replies, the feed's posts.
+
+| Problem | When |
+|---|---|
+| `{ text: "…" } names the prose "…", but a { text } block is words written in place now (schema 25): write the words, or { prose: "…" } to read that prose` | A `{ text }` block whose words are a prose key the game has. |
+| `` `{ words }` is `{ text }` now: a block of words written in place is `{ text: "…" }` `` | A `{ words }` block, as flowing scenes wrote one before schema 25. |
+| `label "…" names the prose "…", but a label is words written in place now (schema 25): write the words` | A choice's or an action's `label` or `labels` entry, a minigame state's `label` or a reply's `label` that is a prose key the game has. |
+| `notice text "…" names the prose "…", …` | A `notify` effect's `text` that is a prose key. |
+| `post "…" names the prose "…", …` and `comment "…" …` | The text of a `feed/post` or `feed/react` that is a prose key. |
+| `no label: its words are no longer read from the prose "…" (schema 25), so give it label: "…"` | A scene's choice, or a message's reply, with no `label`, where the game's prose has words for it under `<scene>#<choice>` or `<message>#<reply>`. With no label, it shows its id. |
+
+Words with a space in them are never read as a key, so `label: 'Leave'` is never reported.
+
+## The words table
+
+A translation's [words table](/docs/reference/words) is checked against the fields the game has:
+
+| Problem | Where | When |
+|---|---|---|
+| `names no field the game has (translatableFields lists every key)` | `words <key>` | A pack's key names no field: a typo, or a block whose words have changed since, so its hash key moved on. |
+| `two fields with different words share the words key "…"; give a block of words an id, or rename one` | The entry | Two blocks of words in one scene with the same `id`, or two ids that join into one key. |
+
 ## Plugin references
 
 A plugin tells the checker what its calls and its content name, so its content is checked the same way the engine's is. It gives a [`references`](/docs/reference/plugins#references) field with two functions, both optional:

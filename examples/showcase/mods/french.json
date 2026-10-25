@@ -1,0 +1,31 @@
+{
+  "ifloomMod": 1,
+  "id": "french",
+  "name": "En français",
+  "version": "1.0",
+  "game": "small-town",
+  "description": "The start of a French translation: moving day, the flat and the quest to settle in.",
+  "pack": {
+    "id": "french",
+    "schema": 25,
+    "words": {
+      "scene.intro.title": "Le jour du déménagement",
+      "scene.intro.text.arrival": "La camionnette repart et vous laisse sur le trottoir avec trois cartons, une clé et *un chat dans un panier*. L'appartement est au-dessus d'une [[tip:intro.launderette|laverie]] ; ça sent **le coton chaud**.",
+      "scene.intro.text.tonight": "Demain, vous apprendrez à connaître la ville. Ce soir, vous déballez, et le chat a besoin d'un nom.",
+      "scene.intro.choice.unpack.label": "Déballer",
+      "action.wait.label": "Attendre un peu",
+      "entity.location:flat.name": "Votre appartement",
+      "entity.location:flat.desc": "Chez vous",
+      "entity.location:flat.traits.places/location.actions.bed.label": "Aller au lit",
+      "entity.character:ava.desc": "Tient le café",
+      "quests/quests.settle.title": "S'installer",
+      "quests/quests.settle.stages.out.hint": "Sortez dans la grand-rue."
+    },
+    "prose": {
+      "intro.launderette": "Sam, de l'appartement 2, la tient. Lavage au poids, du lundi au samedi."
+    },
+    "strings": {
+      "calendar/period.morning": "matin"
+    }
+  }
+}

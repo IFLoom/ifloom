@@ -1,5 +1,5 @@
 /** Moving day: the arrival, the cat's name, the note under the door and settling in. */
-import { give, type Content } from '@ifloom/engine'
+import { give, text, type Content } from '@ifloom/engine'
 import { at } from '@ifloom/plugin-places'
 
 /** Sam's note under the door: the notice's words, and the note's, kept in the phone's Notes app. */
@@ -16,7 +16,16 @@ export const movingDay: Content = {
       title: 'Moving day',
       // The React UI's hints: it fades in from the title page, and its second paragraph comes after a pause.
       ui: { transition: { in: 'fade', out: 'fade', ms: 500 } },
-      body: [{ prose: 'intro' }, { prose: 'intro.tonight', ui: { reveal: { delay: 1200 } } }],
+      body: [
+        // `*…*` is italics and `**…**` bold, inside the line, and the tooltip on "launderette" is the prose `intro.launderette`.
+        text(
+          'The van pulls away and leaves you on the pavement with three boxes, a key and *a cat in a basket*. The flat is above a [[tip:intro.launderette|launderette]]; it smells of **warm cotton**.',
+          // An id names the block for a translation's words table, `scene.intro.text.arrival`, however its words change.
+          { id: 'arrival' },
+        ),
+        // Revealed after the line above, by its `ui.reveal` hint.
+        text('Tomorrow you start learning the town. Tonight you unpack, and the cat needs a name.', { id: 'tonight', ui: { reveal: { delay: 1200 } } }),
+      ],
       choices: [
         {
           id: 'unpack',
@@ -58,13 +67,8 @@ export const movingDay: Content = {
     },
   },
   prose: {
-    // `*…*` is italics and `**…**` bold, inside the line.
-    intro:
-      'The van pulls away and leaves you on the pavement with three boxes, a key and *a cat in a basket*. The flat is above a [[tip:intro.launderette|launderette]]; it smells of **warm cotton**.',
-    // The tooltip on "launderette" above.
+    // The tooltip on "launderette" in the scene, and Sam's note the flat's radiator opens: lines read by key.
     'intro.launderette': 'Sam from flat 2 runs it. Service washes, Monday to Saturday.',
-    // Revealed after the line above: the scene's block says so with its `ui.reveal` hint.
-    'intro.tonight': 'Tomorrow you start learning the town. Tonight you unpack, and the cat needs a name.',
     'notice.welcome': WELCOME,
   },
 }

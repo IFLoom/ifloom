@@ -61,16 +61,20 @@ for coding agents working on the game.
   player can change. Each file exports a `Content` object.
 - `src/story/` holds the story, one file per area: a place, a chapter or a
   character's arc. Each exports a `Content` object with that area's scenes,
-  choices, prose and its slice of plugin content (that place, its vendor, its
-  jobs). Long prose moves to `<area>.prose.ts` beside it.
+  choices and its slice of plugin content (that place, its vendor, its jobs).
+- The words a player reads are written in place: a choice's `label`, an
+  entity's `name`, a block of words in a scene, `text('…')` or
+  `{ text: '…' }`. Only lines read by key, `{ prose: 'key' }` blocks,
+  `variants` and pools, go in the `prose` table. A translation is one pack
+  with a `words` table: https://ifloom.dev/docs/recipes/translating
 - `src/rules.ts` holds the game's rules (`onTurn`, `onStat`, ...) once it has any.
 - A new file's content goes in the list in `src/game.ts`. Files can be renamed
-  and split freely, but each scene, prose key, stat or other key is declared
+  and split freely, but each scene, stat, prose key or other key is declared
   once: `npm run check` reports one declared twice.
 - A pack is different: content from outside the code, with an `id` and a
   `schema`, such as a mod. Packs go in `loadGame`'s third argument and replace
   what the content declares.
-- Content is plain data: scenes, choices, conditions, effects, stats and prose.
+- Content is plain data: scenes, choices, conditions, effects, stats and words.
   Prefer data over code.
 - How to organise a game: https://ifloom.dev/docs/guide/organising
 

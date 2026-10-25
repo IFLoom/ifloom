@@ -142,14 +142,13 @@ export const rainyDays: Pack = {
   schema: SCHEMA,
   prose: {
     'cafe.umbrella': 'Someone has left an umbrella hooked over the back of your chair. Nobody comes back for it.',
-    'cafe.umbrella#leave': 'Leave it where it is',
   },
   scenes: [
     {
       id: 'cafe.umbrella',
       drawnFrom: ['cafe'],
       body: [{ prose: 'cafe.umbrella' }],
-      choices: [{ id: 'leave', effects: [{ scene: null }] }],
+      choices: [{ id: 'leave', label: 'Leave it where it is', effects: [{ scene: null }] }],
     },
   ],
 }

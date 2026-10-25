@@ -560,6 +560,34 @@ describe('Small Town', () => {
     expect(view(park, modded.game).scene.body).toContain('fog')
   })
 
+  it('takes the French mod: one words table over the labels, names and words in place, and no problems', async () => {
+    const { mods, memoryDriver, translatableFields } = await import('@ifloom/engine')
+    const { readFileSync } = await import('node:fs')
+    const store = mods('small-town', memoryDriver())
+    await store.add(readFileSync(new URL('../mods/french.json', import.meta.url), 'utf8'))
+    const french = smallTown({ mods: await store.packs() })
+    expect(french.problems).toEqual([])
+    const intro = view(startingState(french.game), french.game).scene
+    expect(intro.title).toBe('Le jour du déménagement')
+    expect(intro.beats[0]).toMatchObject({ type: 'text', text: expect.stringContaining('La camionnette repart') })
+    expect(intro.beats[0].type === 'text' && intro.beats[0].spans?.find((span) => span.type === 'tip')).toMatchObject({
+      text: 'laverie',
+      tip: expect.stringContaining('Sam, de'),
+    })
+    expect(intro.choices.map((choice) => choice.label)).toEqual(['Déballer'])
+    const fresh = startingState(french.game)
+    const home = on({ ...fresh, sceneId: null, kv: { ...fresh.kv, phase: 'open' } }, 1, 'morning')
+    const room = view(home, french.game)
+    expect(room.scene.title).toBe('Votre appartement')
+    expect(room.actions.map((action) => action.label)).toEqual(expect.arrayContaining(['Aller au lit', 'Attendre un peu']))
+    // Every key in it names a field the English game has.
+    const keys = new Set(translatableFields(game).map((field) => field.key))
+    const pack = JSON.parse(readFileSync(new URL('../mods/french.json', import.meta.url), 'utf8')).pack as { words: Record<string, string> }
+    expect(Object.keys(pack.words).filter((key) => !keys.has(key))).toEqual([])
+    // The English game is as it was.
+    expect(view(startingState(game), game).scene.title).toBe('Moving day')
+  })
+
   it('has the debugger only when built with it', () => {
     expect(view(startingState(game), game).plugins.debug).toBeUndefined()
     const dev = smallTown({ withDebug: true }).game

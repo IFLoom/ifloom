@@ -40,8 +40,8 @@ export const flat: Content = {
         { prose: 'phone.hurry', when: { timer: 'phone', lte: 3000 } },
       ],
       choices: [
-        { id: 'answer', effects: [{ timer: 'phone', to: null }, { scene: 'ava.call' }] },
-        { id: 'leave', effects: [{ timer: 'phone', to: null }, { scene: null }] },
+        { id: 'answer', label: 'Answer it', effects: [{ timer: 'phone', to: null }, { scene: 'ava.call' }] },
+        { id: 'leave', label: 'Let it ring', effects: [{ timer: 'phone', to: null }, { scene: null }] },
       ],
     },
   ],
@@ -58,8 +58,6 @@ export const flat: Content = {
   prose: {
     phone: 'Your phone is ringing on the sill. Ava. Answer before it stops.',
     'phone.hurry': 'It has rung a long time now.',
-    'phone#answer': 'Answer it',
-    'phone#leave': 'Let it ring',
   },
 }
 ```

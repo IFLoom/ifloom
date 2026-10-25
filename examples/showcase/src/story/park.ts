@@ -65,7 +65,7 @@ const quickFeet: MinigameDef = {
  * draws the dice before the line that shows (`ui.dice`), and holds the line
  * back until they settle.
  */
-const skimmed = (when: Condition, prose: string): Block => ({ prose, when: { all: [{ kv: 'skimmed' }, when] }, ui: { dice: 'skim' } })
+const skimmed = (when: Condition, text: string): Block => ({ text, when: { all: [{ kv: 'skimmed' }, when] }, ui: { dice: 'skim' } })
 
 export const park: Content = {
   // One skimmed stone a day: each new day resets it.
@@ -75,13 +75,13 @@ export const park: Content = {
     {
       id: 'park.arrows-won',
       title: 'Quick feet',
-      body: [{ prose: 'park.arrows-won' }],
+      body: [{ text: 'The kids count it up on their fingers and agree, grudgingly, that you win. Five coins change hands from a jam jar.' }],
       choices: [{ id: 'leave', label: 'Bow', effects: [{ scene: null }] }],
     },
     {
       id: 'park.arrows-lost',
       title: 'Quick feet',
-      body: [{ prose: 'park.arrows-lost' }],
+      body: [{ text: '"Too slow!" They are already picking a new grown-up to beat.' }],
       choices: [{ id: 'leave', label: 'Retire with dignity', effects: [{ scene: null }] }],
     },
   ],
@@ -107,13 +107,18 @@ export const park: Content = {
       exits: ['high-street'],
       // The river, the ducks, a line while the day's visitors are about, then the stones, with how today's skim went.
       body: [
+        // Read by key from the prose, so a mod can rewrite the river: the example mod's fog does.
         { prose: 'place.park' },
-        { prose: 'place.park.ducks', when: { roll: 'ducks' } },
-        { prose: 'place.park.visitors', when: { count: 'visitor', gte: 1 } },
-        { prose: 'place.park.stones' },
-        skimmed({ roll: 'skim', critical: 'max' }, 'park.skim.best'),
-        skimmed({ roll: 'skim', passed: true, critical: false }, 'park.skim.passed'),
-        skimmed({ roll: 'skim', passed: false }, 'park.skim.failed'),
+        // `{{ducks}}` is the total the trigger's roll put in the kv store.
+        { text: '{{ducks}} of them paddle over at once, in case you brought bread.', when: { roll: 'ducks' } },
+        { text: 'A few people are out along the path today, walking off their lunch.', when: { count: 'visitor', gte: 1 } },
+        { text: 'Flat stones lie along the water’s edge. [[act:skim|Try to skim a stone]].' },
+        skimmed({ roll: 'skim', critical: 'max' }, 'Skip after skip, clean to the far bank. An old man on the bench gives you a slow round of applause.'),
+        skimmed(
+          { roll: 'skim', passed: true, critical: false },
+          'The stone skips once, twice, again, and sinks most of the way across. The ducks look impressed despite themselves.',
+        ),
+        skimmed({ roll: 'skim', passed: false }, 'Plop. It goes straight in, and the ducks look delighted.'),
       ],
       actions: [
         { id: 'jog', label: 'Go for a jog', cost: { stats: { energy: 15 } }, effects: [pass(1), { stat: 'charm', by: 1 }] },
@@ -164,14 +169,5 @@ export const park: Content = {
   },
   prose: {
     'place.park': 'The river is slow and brown and full of ducks with opinions.',
-    'place.park.visitors': 'A few people are out along the path today, walking off their lunch.',
-    // `{{ducks}}` is the total the trigger's roll put in the kv store.
-    'place.park.ducks': '{{ducks}} of them paddle over at once, in case you brought bread.',
-    'place.park.stones': 'Flat stones lie along the water’s edge. [[act:skim|Try to skim a stone]].',
-    'park.skim.best': 'Skip after skip, clean to the far bank. An old man on the bench gives you a slow round of applause.',
-    'park.skim.passed': 'The stone skips once, twice, again, and sinks most of the way across. The ducks look impressed despite themselves.',
-    'park.skim.failed': 'Plop. It goes straight in, and the ducks look delighted.',
-    'park.arrows-won': 'The kids count it up on their fingers and agree, grudgingly, that you win. Five coins change hands from a jam jar.',
-    'park.arrows-lost': '"Too slow!" They are already picking a new grown-up to beat.',
   },
 }

@@ -6,7 +6,7 @@ You'll build a short story in three chapters, called The Last Bus. You wait for 
 
 It's the smallest kind of game you can make with IFLoom. There are no plugins, so there's no map or clock to set up. Along the way you'll use:
 
-- scenes and choices, with their words kept apart by key
+- scenes and choices, with their words written in place
 - a stat
 - a choice the story remembers later
 - a counter
@@ -59,7 +59,7 @@ A game is [content](/docs/reference/loader#content-and-packs) that [`loadGame`](
 
 ```ts
 // src/story/opening.ts
-import type { Content } from '@ifloom/engine'
+import { text, type Content } from '@ifloom/engine'
 
 export const opening: Content = {
   introScene: 'ch1.stop',
@@ -67,13 +67,10 @@ export const opening: Content = {
     {
       id: 'ch1.stop',
       title: 'Chapter one: the stop',
-      body: [{ prose: 'ch1.stop' }],
+      body: [text('Rain, and the last bus is late. A man in a thin jacket shelters beside you under half an umbrella.')],
       choices: [],
     },
   ],
-  prose: {
-    'ch1.stop': 'Rain, and the last bus is late. A man in a thin jacket shelters beside you under half an umbrella.',
-  },
 }
 ```
 
@@ -88,9 +85,9 @@ import { opening } from './story/opening.ts'
 export default loadGame([stats, opening], { id: 'last-bus', title: 'The Last Bus' })
 ```
 
-The scene is a [data scene](/docs/reference/scenes#datascene). Its `body` is a list of blocks, and `{ prose: 'ch1.stop' }` shows the prose stored under the key `ch1.stop`. Keeping the words apart from the structure means the loader can check that every key has words, and a translation can replace them.
+The scene is a [data scene](/docs/reference/scenes#datascene). Its `body` is a list of blocks, read top to bottom, and `text('…')` is a block of words, written where it's read. It's plain data, `{ text: '…' }`, which you can write by hand too. A blank line in the words starts a new paragraph.
 
-Prose is plain text, with `**bold**` and `*italic*` as in Markdown (see [Prose](/docs/reference/prose#bold-and-italics)).
+The words are plain text, with `**bold**` and `*italic*` as in Markdown (see [Prose](/docs/reference/prose#bold-and-italics)). A translation can give every one of them other words later, with no change to this file (see [Translating a game](/docs/recipes/translating)).
 
 `loadGame` takes your content, in a list, and a base with the game's `id` and `title`. Everything the story holds, its first scene included, is content. The base holds only what says which game this is, its plugins and its own code.
 
@@ -98,7 +95,7 @@ The default export is what the [CLI](/docs/cli) reads: `loadGame` returns `{ gam
 
 ## 2. Choices
 
-A scene moves on through its choices. Each choice has an `id` and a list of [effects](/docs/reference/effects) that run when the player picks it. `{ scene: 'ch2.bus' }` opens another scene.
+A scene moves on through its choices. Each choice has an `id`, a `label` the player reads on its button, and a list of [effects](/docs/reference/effects) that run when the player picks it. `{ scene: 'ch2.bus' }` opens another scene.
 
 Add a second chapter, and two ways to get there:
 
@@ -107,30 +104,24 @@ scenes: [
   {
     id: 'ch1.stop',
     title: 'Chapter one: the stop',
-    body: [{ prose: 'ch1.stop' }],
+    body: [text('Rain, and the last bus is late. A man in a thin jacket shelters beside you under half an umbrella.')],
     choices: [
-      { id: 'share', effects: [{ scene: 'ch2.bus' }] },
-      { id: 'keep', effects: [{ scene: 'ch2.bus' }] },
+      { id: 'share', label: 'Hold the umbrella over both of you', effects: [{ scene: 'ch2.bus' }] },
+      { id: 'keep', label: 'Keep the umbrella to yourself', effects: [{ scene: 'ch2.bus' }] },
     ],
   },
   {
     id: 'ch2.bus',
     title: 'Chapter two: the bus',
-    body: [{ prose: 'ch2.bus' }],
+    body: [text('The bus comes at last. At the front, the driver looks at your card and shakes her head. "That one’s run out, love."')],
     choices: [],
   },
 ],
-prose: {
-  'ch1.stop': 'Rain, and the last bus is late. A man in a thin jacket shelters beside you under half an umbrella.',
-  'ch1.stop#share': 'Hold the umbrella over both of you',
-  'ch1.stop#keep': 'Keep the umbrella to yourself',
-  'ch2.bus': 'The bus comes at last. At the front, the driver looks at your card and shakes her head. "That one’s run out, love."',
-},
 ```
 
-A choice's label is the prose under `scene#choice`, so `ch1.stop#share` labels the `share` choice. A scene with no choices left is an ending, so the player sees the second chapter and nothing more for now.
+A scene with no choices left is an ending, so the player sees the second chapter and nothing more for now.
 
-If you misspell a scene id or forget a label, `npm run check` says which scene and which key. The full list is under [the checks](/docs/reference/checks).
+If you misspell a scene id, `npm run check` says which scene names it. The full list is under [the checks](/docs/reference/checks).
 
 A choice here moves the story to another scene. When you'd rather the scene carried on after the pick, with the player's answer and what it brings on the same page, write it as a [flowing scene](/docs/recipes/flowing-scenes): a decision partway through the body, with the words in place. The Letter's second chapter is one.
 
@@ -163,15 +154,10 @@ Give the second chapter a line for each choice at the stop. A block with a `when
 
 ```ts
 body: [
-  { prose: 'ch2.bus' },
-  { prose: 'ch2.bus.shared', when: { chose: 'ch1.stop#share' } },
-  { prose: 'ch2.bus.kept', when: { chose: 'ch1.stop#keep' } },
+  text('The bus comes at last. At the front, the driver looks at your card and shakes her head. "That one’s run out, love."'),
+  text('Behind you, the man from the stop is still drying his glasses on his scarf.', { when: { chose: 'ch1.stop#share' } }),
+  text('Behind you, the man from the stop is wringing out his sleeves.', { when: { chose: 'ch1.stop#keep' } }),
 ],
-```
-
-```ts
-'ch2.bus.shared': 'Behind you, the man from the stop is still drying his glasses on his scarf.',
-'ch2.bus.kept': 'Behind you, the man from the stop is wringing out his sleeves.',
 ```
 
 A choice can have a `when` too. A choice whose condition doesn't hold isn't offered at all.
@@ -182,10 +168,11 @@ Now the driver. The player can pay, make an excuse, or, if they shared the umbre
 
 ```ts
 choices: [
-  { id: 'pay', effects: [{ stat: 'warmth', by: 1 }, { scene: 'ch3.home' }] },
-  { id: 'excuse', effects: [{ kv: 'excuses', by: 1 }, { scene: 'ch3.home' }] },
+  { id: 'pay', label: 'Count out the fare in coins', effects: [{ stat: 'warmth', by: 1 }, { scene: 'ch3.home' }] },
+  { id: 'excuse', label: '“It worked this morning.”', effects: [{ kv: 'excuses', by: 1 }, { scene: 'ch3.home' }] },
   {
     id: 'blame',
+    label: '“He’s paying for me.”',
     when: { chose: 'ch1.stop#share' },
     effects: [{ kv: 'excuses', by: 2 }, { scene: 'ch3.home' }],
   },
@@ -199,18 +186,18 @@ The third chapter reads the count back with a range. `lt`, `is` and `gte` are th
   id: 'ch3.home',
   title: 'Chapter three: home',
   body: [
-    { prose: 'ch3.home' },
-    { prose: 'ch3.home.none', when: { kv: 'excuses', lt: 1 } },
-    { prose: 'ch3.home.one', when: { kv: 'excuses', is: 1 } },
-    { prose: 'ch3.home.more', when: { kv: 'excuses', gte: 2 } },
+    text('Your stop. The man gets off too, and turns up your street.'),
+    text('The driver calls goodnight after you both.', { when: { kv: 'excuses', lt: 1 } }),
+    text('The driver watches you go and says nothing.', { when: { kv: 'excuses', is: 1 } }),
+    text('The man gives you a long look and walks a little faster.', { when: { kv: 'excuses', gte: 2 } }),
   ],
   choices: [
-    { id: 'wave', when: { stat: 'warmth', gte: 2 }, effects: [{ scene: 'end.wave' }] },
-    { id: 'door', effects: [{ scene: 'end.door' }] },
+    { id: 'wave', label: 'Wave him in for a cup of tea', when: { stat: 'warmth', gte: 2 }, effects: [{ scene: 'end.wave' }] },
+    { id: 'door', label: 'Let yourself in', effects: [{ scene: 'end.door' }] },
   ],
 },
-{ id: 'end.wave', title: 'The end', body: [{ prose: 'end.wave' }], choices: [] },
-{ id: 'end.door', title: 'The end', body: [{ prose: 'end.door' }], choices: [] },
+{ id: 'end.wave', title: 'The end', body: [text('He turns out to live two doors down. He brings biscuits next time.')], choices: [] },
+{ id: 'end.door', title: 'The end', body: [text('The kettle, the radiator, the rain on the window. You sleep well enough.')], choices: [] },
 ```
 
 A key that was never set counts as 0, so the honest player's line needs nothing written first. The `wave` ending uses the stat. Only a player who shared the umbrella and paid the fare has a warmth of 2.
@@ -223,19 +210,16 @@ An [input](/docs/reference/inputs) asks the player for a value and writes it to 
 inputs: [{ id: 'playerName', label: 'Your name', type: 'text', maxLength: 20, when: { not: { kv: 'playerName' } } }],
 ```
 
-`{ kv: 'playerName' }` holds once the key has a value, so `{ not: … }` hides the input after that. The prose prints any key by name with a token, `{{playerName}}`:
+`{ kv: 'playerName' }` holds once the key has a value, so `{ not: … }` hides the input after that. Words print any key by name with a token, `{{playerName}}`. Add a line that uses it, shown once the name is in, and hold the first chapter's choices back until then:
 
 ```ts
-'ch1.stop.named': 'He nods at you, {{playerName}}, as if he knows you from somewhere.',
-```
-
-Show that line, and hold the first chapter's choices back, until the name is in:
-
-```ts
-body: [{ prose: 'ch1.stop' }, { prose: 'ch1.stop.named', when: { kv: 'playerName' } }],
+body: [
+  text('Rain, and the last bus is late. A man in a thin jacket shelters beside you under half an umbrella.'),
+  text('He nods at you, {{playerName}}, as if he knows you from somewhere.', { when: { kv: 'playerName' } }),
+],
 choices: [
-  { id: 'share', when: { kv: 'playerName' }, effects: [/* … */] },
-  { id: 'keep', when: { kv: 'playerName' }, effects: [/* … */] },
+  { id: 'share', label: 'Hold the umbrella over both of you', when: { kv: 'playerName' }, effects: [/* … */] },
+  { id: 'keep', label: 'Keep the umbrella to yourself', when: { kv: 'playerName' }, effects: [/* … */] },
 ],
 ```
 
@@ -256,7 +240,7 @@ export default loadGame([stats, opening], {
 The engine dates things in turns. `state.turn` starts at 0, and the `turn` effect, `{ turn: true }`, ends one. Your game decides how long a turn is. In this story it's a chapter, so every choice that moves to the next chapter ends a turn before it changes the scene:
 
 ```ts
-{ id: 'keep', when: { kv: 'playerName' }, effects: [{ turn: true }, { scene: 'ch2.bus' }] },
+{ id: 'keep', label: 'Keep the umbrella to yourself', when: { kv: 'playerName' }, effects: [{ turn: true }, { scene: 'ch2.bus' }] },
 ```
 
 Now `state.turn` is the chapter the player has reached, counting from 0. Anything else the engine dates, such as how many turns have passed [`since`](/docs/reference/conditions#since) a scene was seen, counts chapters. A save made with no name of its own is named by its turn, such as `Turn 2`, and [`ifloom playtest`](/docs/cli#ifloom-playtest) writes its transcript a turn at a time.
@@ -356,7 +340,7 @@ Every template starts the game with [`browserRunner`](/docs/browser#browserrunne
 npm run check   # No problems.
 ```
 
-If you misspelled a key or a scene id along the way, `check` names it.
+If you misspelled a scene id or a key along the way, `check` names it.
 
 A playtest plays the game with no one at the keyboard. It needs somewhere to start, and a new game would stop at the name input. So export a `start` from `src/game.ts`, a player who has already typed a name:
 
@@ -411,11 +395,11 @@ export const stats: Content = {
 }
 ```
 
-And `src/story/opening.ts` is the story, its scenes beside their words:
+And `src/story/opening.ts` is the story, its words written in its scenes:
 
 ```ts
 // src/story/opening.ts
-import type { Content } from '@ifloom/engine'
+import { text, type Content } from '@ifloom/engine'
 
 export const opening: Content = {
   introScene: 'ch1.stop',
@@ -424,29 +408,34 @@ export const opening: Content = {
     {
       id: 'ch1.stop',
       title: 'Chapter one: the stop',
-      body: [{ prose: 'ch1.stop' }, { prose: 'ch1.stop.named', when: { kv: 'playerName' } }],
+      body: [
+        text('Rain, and the last bus is late. A man in a thin jacket shelters beside you under half an umbrella.'),
+        text('He nods at you, {{playerName}}, as if he knows you from somewhere.', { when: { kv: 'playerName' } }),
+      ],
       choices: [
         {
           id: 'share',
+          label: 'Hold the umbrella over both of you',
           when: { kv: 'playerName' },
           effects: [{ stat: 'warmth', by: 1 }, { turn: true }, { scene: 'ch2.bus' }],
         },
-        { id: 'keep', when: { kv: 'playerName' }, effects: [{ turn: true }, { scene: 'ch2.bus' }] },
+        { id: 'keep', label: 'Keep the umbrella to yourself', when: { kv: 'playerName' }, effects: [{ turn: true }, { scene: 'ch2.bus' }] },
       ],
     },
     {
       id: 'ch2.bus',
       title: 'Chapter two: the bus',
       body: [
-        { prose: 'ch2.bus' },
-        { prose: 'ch2.bus.shared', when: { chose: 'ch1.stop#share' } },
-        { prose: 'ch2.bus.kept', when: { chose: 'ch1.stop#keep' } },
+        text('The bus comes at last. At the front, the driver looks at your card and shakes her head. "That one’s run out, love."'),
+        text('Behind you, the man from the stop is still drying his glasses on his scarf.', { when: { chose: 'ch1.stop#share' } }),
+        text('Behind you, the man from the stop is wringing out his sleeves.', { when: { chose: 'ch1.stop#keep' } }),
       ],
       choices: [
-        { id: 'pay', effects: [{ stat: 'warmth', by: 1 }, { turn: true }, { scene: 'ch3.home' }] },
-        { id: 'excuse', effects: [{ kv: 'excuses', by: 1 }, { turn: true }, { scene: 'ch3.home' }] },
+        { id: 'pay', label: 'Count out the fare in coins', effects: [{ stat: 'warmth', by: 1 }, { turn: true }, { scene: 'ch3.home' }] },
+        { id: 'excuse', label: '“It worked this morning.”', effects: [{ kv: 'excuses', by: 1 }, { turn: true }, { scene: 'ch3.home' }] },
         {
           id: 'blame',
+          label: '“He’s paying for me.”',
           when: { chose: 'ch1.stop#share' },
           effects: [{ kv: 'excuses', by: 2 }, { turn: true }, { scene: 'ch3.home' }],
         },
@@ -456,39 +445,19 @@ export const opening: Content = {
       id: 'ch3.home',
       title: 'Chapter three: home',
       body: [
-        { prose: 'ch3.home' },
-        { prose: 'ch3.home.none', when: { kv: 'excuses', lt: 1 } },
-        { prose: 'ch3.home.one', when: { kv: 'excuses', is: 1 } },
-        { prose: 'ch3.home.more', when: { kv: 'excuses', gte: 2 } },
+        text('Your stop. The man gets off too, and turns up your street.'),
+        text('The driver calls goodnight after you both.', { when: { kv: 'excuses', lt: 1 } }),
+        text('The driver watches you go and says nothing.', { when: { kv: 'excuses', is: 1 } }),
+        text('The man gives you a long look and walks a little faster.', { when: { kv: 'excuses', gte: 2 } }),
       ],
       choices: [
-        { id: 'wave', when: { stat: 'warmth', gte: 2 }, effects: [{ scene: 'end.wave' }] },
-        { id: 'door', effects: [{ scene: 'end.door' }] },
+        { id: 'wave', label: 'Wave him in for a cup of tea', when: { stat: 'warmth', gte: 2 }, effects: [{ scene: 'end.wave' }] },
+        { id: 'door', label: 'Let yourself in', effects: [{ scene: 'end.door' }] },
       ],
     },
-    { id: 'end.wave', title: 'The end', body: [{ prose: 'end.wave' }], choices: [] },
-    { id: 'end.door', title: 'The end', body: [{ prose: 'end.door' }], choices: [] },
+    { id: 'end.wave', title: 'The end', body: [text('He turns out to live two doors down. He brings biscuits next time.')], choices: [] },
+    { id: 'end.door', title: 'The end', body: [text('The kettle, the radiator, the rain on the window. You sleep well enough.')], choices: [] },
   ],
-  prose: {
-    'ch1.stop': 'Rain, and the last bus is late. A man in a thin jacket shelters beside you under half an umbrella.',
-    'ch1.stop.named': 'He nods at you, {{playerName}}, as if he knows you from somewhere.',
-    'ch1.stop#share': 'Hold the umbrella over both of you',
-    'ch1.stop#keep': 'Keep the umbrella to yourself',
-    'ch2.bus': 'The bus comes at last. At the front, the driver looks at your card and shakes her head. "That one’s run out, love."',
-    'ch2.bus.shared': 'Behind you, the man from the stop is still drying his glasses on his scarf.',
-    'ch2.bus.kept': 'Behind you, the man from the stop is wringing out his sleeves.',
-    'ch2.bus#pay': 'Count out the fare in coins',
-    'ch2.bus#excuse': '“It worked this morning.”',
-    'ch2.bus#blame': '“He’s paying for me.”',
-    'ch3.home': 'Your stop. The man gets off too, and turns up your street.',
-    'ch3.home.none': 'The driver calls goodnight after you both.',
-    'ch3.home.one': 'The driver watches you go and says nothing.',
-    'ch3.home.more': 'The man gives you a long look and walks a little faster.',
-    'ch3.home#wave': 'Wave him in for a cup of tea',
-    'ch3.home#door': 'Let yourself in',
-    'end.wave': 'He turns out to live two doors down. He brings biscuits next time.',
-    'end.door': 'The kettle, the radiator, the rain on the window. You sleep well enough.',
-  },
 }
 ```
 

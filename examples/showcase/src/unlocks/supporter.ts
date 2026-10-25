@@ -21,7 +21,11 @@ const supporter: Pack = {
       drawnFrom: ['cafe'],
       weight: 5,
       when: { all: [hasUnlock('supporter'), { not: { seen: 'cafe.back-room' } }] },
-      body: [{ prose: 'cafe.back-room' }],
+      body: [
+        {
+          text: 'Ava lifts the counter flap and waves you through to the back room, where the regulars who chip in for the new espresso machine get their names chalked on the beam above the sink. Yours is there now, in her careful capitals.',
+        },
+      ],
       choices: [
         {
           id: 'leave',
@@ -31,10 +35,6 @@ const supporter: Pack = {
       ],
     },
   ],
-  prose: {
-    'cafe.back-room':
-      'Ava lifts the counter flap and waves you through to the back room, where the regulars who chip in for the new espresso machine get their names chalked on the beam above the sink. Yours is there now, in her careful capitals.',
-  },
 }
 
 export default supporter

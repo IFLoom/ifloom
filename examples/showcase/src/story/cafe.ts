@@ -1,6 +1,6 @@
 /**
  * The Corner Café: coffee, the counter, its storylets when you sit a while,
- * and weekend work. Its words are in `cafe.prose.ts`.
+ * and weekend work.
  */
 import { give, type Content } from '@ifloom/engine'
 import { applyStatus, statusActive } from '@ifloom/plugin-statuses'
@@ -9,7 +9,6 @@ import { period } from '@ifloom/plugin-calendar'
 import { character, here, talk } from '@ifloom/plugin-cast'
 import { openShop, vendor } from '@ifloom/plugin-shop'
 import { place } from '../place.ts'
-import { prose } from './cafe.prose.ts'
 
 export const cafe: Content = {
   // One coffee a day: each new day resets it.
@@ -22,7 +21,7 @@ export const cafe: Content = {
       drawnFrom: ['cafe'],
       weight: 3,
       when: { not: { seen: 'cafe.window', gte: 2 } },
-      body: [{ prose: 'cafe.window' }],
+      body: [{ text: 'You take the stool by the window. A bus goes by, then a man with a ladder, then the same bus the other way.' }],
       choices: [{ id: 'leave', label: 'Finish your cup', effects: [{ scene: null }] }],
     },
     {
@@ -30,7 +29,11 @@ export const cafe: Content = {
       title: 'Seven down',
       drawnFrom: ['cafe'],
       when: { not: { seen: 'cafe.crossword' } },
-      body: [{ prose: 'cafe.crossword' }],
+      body: [
+        {
+          text: 'The man at the next table taps his paper with a pencil.\n\n"Seven down. Somewhere to sit and wait, four letters." He looks at you over his glasses.\n\nYou try "café". He counts the squares, and writes it in.',
+        },
+      ],
       choices: [
         {
           id: 'leave',
@@ -46,7 +49,7 @@ export const cafe: Content = {
       drawnFrom: ['cafe'],
       weight: 2,
       when: here('ava'),
-      body: [{ prose: 'cafe.break' }],
+      body: [{ text: 'Ava drops into the chair opposite with a mug of her own.\n\n"Five minutes. Don’t tell anyone I sat down."' }],
       choices: [
         {
           id: 'leave',
@@ -59,7 +62,7 @@ export const cafe: Content = {
     {
       id: 'cafe.quiet',
       title: 'A quiet table',
-      body: [{ prose: 'cafe.quiet' }],
+      body: [{ text: 'Nothing much happens. The coffee machine sighs, and you let it.' }],
       choices: [{ id: 'leave', label: 'Get up', effects: [{ scene: null }] }],
     },
   ],
@@ -98,10 +101,10 @@ export const cafe: Content = {
         hotspots: [{ id: 'ava', rect: [36, 22, 28, 44], label: 'Talk to Ava', command: talk('ava'), layer: 'counter' }],
       },
       body: [
-        { prose: 'place.cafe' },
-        { prose: 'place.cafe.ava', when: here('ava') },
-        { prose: 'place.cafe.raincoat', when: wearing('clothing:raincoat') },
-        { prose: 'place.cafe.caffeinated', when: statusActive('caffeinated') },
+        { text: 'Six tables, one of them wobbly. The coffee machine sighs like it has been working since dawn, which it has.' },
+        { text: 'Ava is behind the counter, flour to the elbows, and nods you in.', when: here('ava') },
+        { text: 'Someone points at your raincoat and grins. It is very yellow.', when: wearing('clothing:raincoat') },
+        { text: 'Your knee won’t stop jiggling under the table. The coffee is working.', when: statusActive('caffeinated') },
       ],
     }),
     vendor({
@@ -150,5 +153,4 @@ export const cafe: Content = {
       ],
     },
   },
-  prose,
 }

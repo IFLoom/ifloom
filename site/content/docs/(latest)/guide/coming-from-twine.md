@@ -2,7 +2,7 @@
 title: "Coming from SugarCube or Harlowe"
 description: For authors who know Twine's SugarCube or Harlowe story formats. Maps passages, links, macros, variables, special passages, saves, audio and randomness to IFLoom's scenes, choices, conditions, effects and plugins, with side-by-side snippets.
 ---
-If you've written Twine stories in SugarCube or Harlowe, most of what you know carries over. A passage becomes a scene, a link becomes a choice, and a variable becomes a stat or a key in the kv store. What changes is where things are written. In Twine, a passage is text with macros mixed in. In IFLoom, a scene is data: its words live under prose keys, and its conditions and effects are plain objects beside them.
+If you've written Twine stories in SugarCube or Harlowe, most of what you know carries over. A passage becomes a scene, a link becomes a choice, and a variable becomes a stat or a key in the kv store. What changes is where things are written. In Twine, a passage is text with macros mixed in. In IFLoom, a scene is data: its words are written in place, as blocks of text and choice labels, and its conditions and effects are plain objects beside them.
 
 This page maps each idea, with their version first and IFLoom's under it. The examples come from the showcase's small town: Ava's café on the corner, and the coins in the player's pocket. If you haven't made a game yet, start with [Your first story](/docs/guide/first-story), then come back here as a phrasebook.
 
@@ -27,7 +27,7 @@ The same scene in IFLoom, in one file to keep it short:
 
 ```ts
 // src/game.ts
-import { loadGame, type Content } from '@ifloom/engine'
+import { loadGame, text, type Content } from '@ifloom/engine'
 
 const cafe: Content = {
   introScene: 'cafe',
@@ -36,25 +36,19 @@ const cafe: Content = {
     {
       id: 'cafe',
       title: 'The Corner Café',
-      body: [{ prose: 'cafe' }, { prose: 'cafe.broke', when: { stat: 'coins', lt: 3 } }],
+      body: [text('Ava looks up from the till. "The usual?"'), text('Your pockets feel light.', { when: { stat: 'coins', lt: 3 } })],
       choices: [
         {
           id: 'coffee',
+          label: 'Buy a coffee',
           blocked: [{ when: { stat: 'coins', lt: 3 }, reason: 'You need 3 coins.' }],
           effects: [{ stat: 'coins', by: -3 }, { kv: 'hadCoffee', to: true }, { scene: 'street' }],
         },
-        { id: 'leave', effects: [{ scene: 'street' }] },
+        { id: 'leave', label: 'Head back out', effects: [{ scene: 'street' }] },
       ],
     },
-    { id: 'street', title: 'The high street', body: [{ prose: 'street' }], choices: [] },
+    { id: 'street', title: 'The high street', body: [text('The high street, busy with the market.')], choices: [] },
   ],
-  prose: {
-    cafe: 'Ava looks up from the till. "The usual?"',
-    'cafe.broke': 'Your pockets feel light.',
-    'cafe#coffee': 'Buy a coffee',
-    'cafe#leave': 'Head back out',
-    street: 'The high street, busy with the market.',
-  },
 }
 
 export default loadGame([cafe], { id: 'corner-cafe', title: 'The Corner Café' })
@@ -64,7 +58,7 @@ It's longer, and it does a few things the passage doesn't:
 
 - The coffee button stays on screen when the player can't afford it, greyed out, with `You need 3 coins.` on it. You wrote the rule once and the reason comes with it.
 - `coins` is declared, with a start, a range and a label, so the UI lists it. Because it's `spendable`, the button works its price out from the choice's effects and shows `Buy a coffee (3 coins)` by itself. Leave the price out of the label, or it shows twice.
-- `npm run check` fails if `street` is misspelt anywhere, or a choice has no words.
+- `npm run check` fails if `street` is misspelt anywhere.
 
 ### Where passages go
 
@@ -77,7 +71,7 @@ A Twine story is one file of passages. An IFLoom game is a few files, each expor
 | Passages tagged `widget`, and JavaScript in the Story JavaScript | `src/rules.ts`: the game's own code, its hooks and the functions content calls by name |
 | The story's title and its start passage | `src/game.ts`, which lists the files' content for `loadGame` and holds the title. The start passage is `introScene`, in the content that holds it. |
 
-So the café above would be `src/story/cafe.ts`, with its scenes and prose, and `coins` would go in `src/world/stats.ts`, where every other area can use it.
+So the café above would be `src/story/cafe.ts`, with its scenes and their words, and `coins` would go in `src/world/stats.ts`, where every other area can use it.
 
 ## SugarCube
 
@@ -114,18 +108,18 @@ A scene's body is a list of blocks, and each block can have a `when`. A block wh
 
 ```ts
 body: [
-  { prose: 'cafe' },
-  { prose: 'cafe.regular', when: { kv: 'visits', gte: 3 } },
-  { prose: 'cafe.new', when: { kv: 'visits', lt: 3 } },
+  text('The café is warm and smells of toast.'),
+  text('Ava has your cup out before you reach the counter.', { when: { kv: 'visits', gte: 3 } }),
+  text('Ava gives you a polite nod.', { when: { kv: 'visits', lt: 3 } }),
 ],
 ```
 
 There's no `else`, so an `<<elseif>>` chain becomes blocks whose conditions don't overlap:
 
 ```ts
-{ prose: 'cafe.rich', when: { stat: 'coins', gte: 20 } },
-{ prose: 'cafe.ok', when: { stat: 'coins', gte: 5, lt: 20 } },
-{ prose: 'cafe.broke', when: { stat: 'coins', lt: 5 } },
+text('You could buy the whole cake cabinet.', { when: { stat: 'coins', gte: 20 } }),
+text('Enough for a coffee and a bun.', { when: { stat: 'coins', gte: 5, lt: 20 } }),
+text('Your pockets feel light.', { when: { stat: 'coins', lt: 5 } }),
 ```
 
 `and`, `or` and `not` are `all`, `any` and `not`:
@@ -150,10 +144,10 @@ An `<<if>>` around a link becomes one of two things on the choice:
 }
 ```
 
-A link whose text changes with the state, such as `<<if $visits gte 3>>[[The usual|Order]]<<else>>[[Order|Order]]<</if>>`, is one choice with `labels`. The first entry whose `when` holds gives the label's prose key:
+A link whose text changes with the state, such as `<<if $visits gte 3>>[[The usual|Order]]<<else>>[[Order|Order]]<</if>>`, is one choice with `labels`. The first entry whose `when` holds gives its words, and `label` is the rest of the time:
 
 ```ts
-{ id: 'order', labels: [{ when: { kv: 'visits', gte: 3 }, label: 'cafe#order-usual' }], effects: [/* ... */] }
+{ id: 'order', label: 'Order', labels: [{ when: { kv: 'visits', gte: 3 }, label: 'The usual' }], effects: [/* ... */] }
 ```
 
 An `<<if>>` that only exists to vary a line, so the player doesn't read the same words every visit, is a set of [variants](/docs/reference/prose#variantmember). The block `{ variants: 'cafe.chatter' }` shows one of the set each time, and rotates through them.
@@ -174,15 +168,15 @@ A passage is a [scene](/docs/reference/scenes), and each link is a choice whose 
 ```ts
 {
   id: 'street',
-  body: [{ prose: 'street' }],
+  body: [text('The high street, busy with the market.')],
   choices: [
-    { id: 'cafe', effects: [{ scene: 'cafe' }] },
-    { id: 'park', effects: [{ scene: 'park' }] },
+    { id: 'cafe', label: 'Go to the café', effects: [{ scene: 'cafe' }] },
+    { id: 'park', label: 'Walk to the park', effects: [{ scene: 'park' }] },
   ],
 }
 ```
 
-The link text is the prose under `scene#choice`, so `'street#cafe': 'Go to the café'`. A scene with no choices is an ending. A setter link, `[[Buy a coffee|Cafe][$coins -= 3]]`, is a choice with more than one effect.
+The link text is the choice's `label`. A scene with no choices is an ending. A setter link, `[[Buy a coffee|Cafe][$coins -= 3]]`, is a choice with more than one effect.
 
 
 A passage that carries on after a link, with the text the link brings below it, is a [flowing scene](/docs/reference/flows). A decision partway through the body waits for the pick, and the pick's `then` comes next, before the rest of the passage. A link back to an earlier part of the passage, such as a list of questions to ask, is a `point()` and a choice that `jump()`s to it. The logic stays in data, beside the words, rather than in the prose.
@@ -232,7 +226,7 @@ A `<<goto>>` that runs as soon as a passage shows, because some condition holds,
 triggers: [{ id: 'broke', when: { stat: 'coins', lt: 1 }, effects: [{ scene: 'broke' }] }]
 ```
 
-`<<include>>` is a prose key used by more than one scene. A block names a key, and any number of scenes can name the same one:
+`<<include>>` is a line of prose kept by key and read by more than one scene. A `{ prose }` block names a key in the `prose` table, and any number of scenes can name the same one:
 
 ```ts
 { id: 'cafe.morning', body: [{ prose: 'cafe.menu' }, { prose: 'cafe.morning' }], choices: [] },
@@ -278,7 +272,7 @@ export const rules: GameRules = {
 }
 ```
 
-A set of widgets that keeps its own state, such as a loyalty card or an inventory screen, is a [plugin](/docs/reference/plugins). [Your first plugin](/docs/reference/plugins#your-first-plugin) builds the loyalty card in about twenty lines. A widget that only prints markup has no equivalent, because prose can't run code. Its words go in a prose key, and its looks go in your UI.
+A set of widgets that keeps its own state, such as a loyalty card or an inventory screen, is a [plugin](/docs/reference/plugins). [Your first plugin](/docs/reference/plugins#your-first-plugin) builds the loyalty card in about twenty lines. A widget that only prints markup has no equivalent, because prose can't run code. Its words go in a block of text, or a line kept by key when several scenes share it, and its looks go in your UI.
 
 ### `StoryInit` and starting state
 
@@ -463,7 +457,7 @@ settings: [
 ```
 
 ```ts
-{ prose: 'cafe.hint', when: { setting: 'hints' } }
+text('The board above the till has today’s specials.', { when: { setting: 'hints' } })
 ```
 
 ### Old saves, `Config.saves` and `Save.onLoad`
@@ -529,7 +523,7 @@ audio: {
 ```
 
 ```ts
-{ id: 'cafe', audio: { ambience: 'cafe.murmur' }, body: [{ prose: 'cafe' }], choices: [] }
+{ id: 'cafe', audio: { ambience: 'cafe.murmur' }, body: [text('The café hums.')], choices: [] }
 { sound: 'bell' }
 { audio: 'music', to: null }
 ```
@@ -566,23 +560,23 @@ IFLoom has no runtime randomness. Every draw is worked out from the save's seed 
 **A line that varies** is a set of variants. Each time the block shows, it draws a member, and it rotates so the player doesn't read the same line twice running:
 
 ```ts
-body: [{ prose: 'cafe' }, { variants: 'cafe.chatter' }],
-// in the content
-variants: { 'cafe.chatter': ['cafe.chatter/rain', 'cafe.chatter/market', 'cafe.chatter/cat'] },
+body: [text('The café hums.'), { variants: 'cafe.chatter' }],
+// in the content: the lines are kept by key in `prose`, and the variants list them
+variants: { 'cafe.chatter': ['cafe.chatter.rain', 'cafe.chatter.market', 'cafe.chatter.cat'] },
 ```
 
 **Something that may happen** is a [storylet](/docs/reference/storylets): a scene marked as drawn from a set, with a weight and its own `when`. An effect draws one of the eligible scenes:
 
 ```ts
-import type { DataScene, Effect } from '@ifloom/engine'
+import { text, type DataScene, type Effect } from '@ifloom/engine'
 
 const windowSeat: DataScene = {
   id: 'cafe.window',
   drawnFrom: ['cafe'],
   weight: 3,
   when: { not: { seen: 'cafe.window' } },
-  body: [{ prose: 'cafe.window' }],
-  choices: [{ id: 'leave', effects: [{ scene: null }] }],
+  body: [text('You take the stool by the window.')],
+  choices: [{ id: 'leave', label: 'Finish your cup', effects: [{ scene: null }] }],
 }
 
 const sit: Effect = { scene: { from: 'cafe', otherwise: 'cafe.quiet' } }
@@ -663,9 +657,9 @@ Harlowe's macros map to the same places as SugarCube's.
 | `(set: $coins to it + 2)` | `{ stat: 'coins', by: 2 }`, an [effect](/docs/reference/effects) on a choice |
 | `(set: $metAva to true)` | `{ kv: 'metAva', to: true }` |
 | `(if: $coins >= 3)[…](else:)[…]` | A block or a choice with `when: { stat: 'coins', gte: 3 }`, and one with `lt: 3` for the else |
-| `(link-goto: "Go to the café", "Cafe")` | A choice with `{ scene: 'cafe' }`, labelled by the prose key `street#cafe` |
+| `(link-goto: "Go to the café", "Cafe")` | A choice with `{ scene: 'cafe' }` and `label: 'Go to the café'` |
 | `(go-to: "Cafe")` | The `scene` effect, on a choice or a [trigger](/docs/reference/triggers) |
-| `(display: "Menu")` | A prose key, `cafe.menu`, used as a block in each scene that shows it |
+| `(display: "Menu")` | A line kept by key in `prose`, `cafe.menu`, read with `{ prose: 'cafe.menu' }` in each scene that shows it |
 | `(either: "rain", "sun")` | A [variants](/docs/reference/prose#variantmember) block, or [`drawOne`](/docs/reference/random#drawone) in a value of the game's own |
 | `(random: 1, 6)` | `roll` on the [context](/docs/reference/custom#customcontext) of the game's own code, or `{ kv: key, of: 'minigame', random: [1, 6] }` in a minigame |
 | `(dm: "name", "Soup", "price", 6)` | An [entity](/docs/reference/entities) of a declared kind, with its own stats and kv store |
@@ -686,10 +680,10 @@ Hooks are the biggest difference. Harlowe changes parts of a passage in place. I
 {
   id: 'cafe',
   body: [
-    { prose: 'cafe.waiting', when: { not: { kv: 'askedUsual' } } },
-    { prose: 'cafe.usual', when: { kv: 'askedUsual' } },
+    text('Ava waits for your order.', { when: { not: { kv: 'askedUsual' } } }),
+    text('Ava is already reaching for your cup.', { when: { kv: 'askedUsual' } }),
   ],
-  choices: [{ id: 'usual', when: { not: { kv: 'askedUsual' } }, effects: [{ kv: 'askedUsual', to: true }] }],
+  choices: [{ id: 'usual', label: 'Ask for the usual', when: { not: { kv: 'askedUsual' } }, effects: [{ kv: 'askedUsual', to: true }] }],
 }
 ```
 
@@ -710,7 +704,7 @@ A datamap you'd keep in a variable becomes an entity when it's one of several th
 ## What's different
 
 - **No raw HTML or JavaScript in prose.** Prose is words with a small [markup](/docs/reference/prose#markup) for speech, pictures, video and sound. Anything that looks different is your UI's job, through [themes and CSS](/docs/react/customising), and anything that computes is the game's own code, in `rules`.
-- **Content is data in TypeScript.** There's no story file to open in a Twine editor. Scenes are objects in `.ts` files, and their words are in `prose`. You edit them in a code editor, and you can split them across as many files as you like (see [Content and packs](/docs/reference/loader#content-and-packs)).
+- **Content is data in TypeScript.** There's no story file to open in a Twine editor. Scenes are objects in `.ts` files, with their words written in them. You edit them in a code editor, and you can split them across as many files as you like (see [Content and packs](/docs/reference/loader#content-and-packs)).
 - **State is typed and declared.** Stats, kinds, entities, settings and inputs are declared before they're used. Keys in the kv store don't need declaring, but only hold a number, a string or `true`/`false`. There's no storing objects or functions in the state, because the state is the save and must survive being written out as JSON.
 - **The whole scene redraws.** There's no changing text in place after a passage is shown. A choice changes the state, and the scene is drawn again from it.
 

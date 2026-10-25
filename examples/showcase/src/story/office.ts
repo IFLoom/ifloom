@@ -1,5 +1,5 @@
 /** The office: shifts on weekdays, in the day. */
-import type { Content } from '@ifloom/engine'
+import { text, type Content } from '@ifloom/engine'
 import { pass, period, weekday } from '@ifloom/plugin-calendar'
 import { at } from '@ifloom/plugin-places'
 import { place } from '../place.ts'
@@ -13,6 +13,7 @@ export const office: Content = {
       name: 'The Office',
       desc: 'Work',
       exits: ['high-street'],
+      body: [text('Strip lights, a kettle, a stack of forms that never gets shorter.')],
       // Weekdays only, in the day.
       blocked: [
         { when: weekday(5, 6), reason: 'Shut at weekends.' },
@@ -22,7 +23,4 @@ export const office: Content = {
       actions: [{ id: 'work', label: 'Do a shift', cost: { stats: { energy: 30 } }, effects: [pass(2), { stat: 'coins', by: 20 }] }],
     }),
   ],
-  prose: {
-    'place.office': 'Strip lights, a kettle, a stack of forms that never gets shorter.',
-  },
 }

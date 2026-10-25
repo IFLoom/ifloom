@@ -349,7 +349,7 @@ Switches who `'you'` is: the [protagonist](/docs/reference/entities#protagonists
 { notify: 'Rent is due on Friday', id: 'rent', text: 'notice.rent', tag: 'money' }
 ```
 
-Raises a [notice](/docs/reference/notices), which is something the game tells the player outside a scene. Its title, in `notify`, is written out, `text` is a prose key for more words, and `tag` groups notices for badges. A notice with the `id` of an earlier one replaces it as the newest, unseen. With no `id`, one is made up. Only the newest 50 are kept.
+Raises a [notice](/docs/reference/notices), which is something the game tells the player outside a scene. Its title, in `notify`, and its `text`, for more words, are written out, with tokens filled as it's shown, and `tag` groups notices for badges. A notice with the `id` of an earlier one replaces it as the newest, unseen. With no `id`, one is made up. Only the newest 50 are kept.
 
 ### audio
 

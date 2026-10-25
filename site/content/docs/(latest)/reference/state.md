@@ -198,7 +198,7 @@ The engine writes some keys here itself, so don't use these prefixes for your ow
 notices: Notice[]
 ```
 
-What the game has told the player outside scenes, oldest first, whether seen or not. It holds at most the last 50. The [`notify`](/docs/reference/effects#notify) effect raises one and the [`dismiss`](/docs/reference/commands#dismiss) command marks one seen. See [Notices](/docs/reference/notices).
+What the game has told the player outside scenes, oldest first, whether seen or not. It holds at most the last 50. The [`notify`](/docs/reference/effects#notify) effect raises one and the [`dismiss`](/docs/reference/commands#dismiss) command marks one seen. See [Notices](/docs/reference/notices). A notice's `text` is its words. A save from before version 21 kept a prose key there, and gets that key's words when it loads.
 
 ### fired
 
@@ -328,7 +328,7 @@ The [content checker](/docs/reference/checks) reports a stat in `carryOver` that
 ### SAVE_VERSION
 
 ```ts
-const SAVE_VERSION = 20
+const SAVE_VERSION = 21
 ```
 
 The save format this engine writes. [`loadState`](/docs/reference/saves#loadstate) carries older ones forward. The version goes up only when a field older saves already have changes shape. A new field doesn't bump it: a save that lacks the field gets its load default when it loads, as [`minigame`](#minigame) does. See [SAVE_VERSION](/docs/reference/saves#save_version) for the rule.

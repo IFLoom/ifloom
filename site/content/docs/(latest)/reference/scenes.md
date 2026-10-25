@@ -2,7 +2,7 @@
 title: "Scenes"
 description: "Scenes as data: blocks, choices, labels, once a turn, prices, speakers, endings and how they are drawn."
 ---
-A scene is one screen of story: some prose, and the choices under it. You write each one as data, a [`DataScene`](#datascene), and list it in your content's `scenes`. Its prose lives in [prose keys](/docs/reference/prose) or in the body itself, its conditions and effects are data, and the [content checker](/docs/reference/checks) can check every id it names. The engine draws it for you (see [Running data scenes](#running-data-scenes)).
+A scene is one screen of story: some prose, and the choices under it. You write each one as data, a [`DataScene`](#datascene), and list it in your content's `scenes`. Its words are written in place, in its body's blocks and its choices' labels, with lines shared between scenes kept by key in the [prose](/docs/reference/prose) table. Its conditions and effects are data, and the [content checker](/docs/reference/checks) can check every id it names. The engine draws it for you (see [Running data scenes](#running-data-scenes)).
 
 A scene can also be a [storylet](/docs/reference/storylets), a scene an effect draws at random from a named set. See [`StoryletFields`](#storyletfields).
 
@@ -13,7 +13,7 @@ For a walkthrough, see [Your first story](/docs/guide/first-story). For what hap
 A scene's `speaker` says who is talking, and the view draws them as [`view.scene.speaker`](/docs/reference/view#speakerview): their name, picture and [hints](/docs/reference/ui-hints). People are [entities](/docs/reference/entities), so the engine reads these from the entity itself, with no plugin to ask.
 
 ```ts
-{ id: 'cafe.counter', speaker: 'ava', body: [{ prose: 'cafe.counter' }], choices: [] }
+{ id: 'cafe.counter', speaker: 'ava', body: [text('Ava wipes down the counter.')], choices: [] }
 ```
 
 - A reference names the entity as written: `'character:ava'`, or `'you'` for whoever the player is [playing](/docs/reference/entities#protagonists-you-and-player).
@@ -84,12 +84,12 @@ type DataScene = {
 }
 ```
 
-A scene written as data. You build its body from blocks, each with its own prose key, rather than writing one key for the whole body. That way a conditional line is one more block, not another copy of the scene. Put it in your [content](/docs/reference/loader#content)'s `scenes`, and the engine [draws](#running-data-scenes) it when it's shown.
+A scene written as data. You build its body from blocks, each its own piece of the words, rather than one text for the whole body. That way a conditional line is one more block, not another copy of the scene. Put it in your [content](/docs/reference/loader#content)'s `scenes`, and the engine [draws](#running-data-scenes) it when it's shown.
 
 This is Ava's hello from the showcase:
 
 ```ts
-import type { DataScene } from '@ifloom/engine'
+import { text, type DataScene } from '@ifloom/engine'
 import { character } from '@ifloom/plugin-cast'
 
 const hello: DataScene = {
@@ -97,26 +97,31 @@ const hello: DataScene = {
   title: 'Ava',
   speaker: 'ava',
   body: [
-    { prose: 'ava.hi' },
+    text('Ava looks up from the till and grins.'),
     { variants: 'ava.smalltalk' },
-    { prose: 'ava.hi.regular', when: { seen: 'ava.hi', gte: 3 } },
+    text('She has your cup out before you ask.', { when: { seen: 'ava.hi', gte: 3 } }),
   ],
   choices: [
-    { id: 'chat', once: { per: 'turn', reason: 'She has a queue.' }, effects: [{ stat: 'friendship', by: 5, of: character('ava') }] },
-    { id: 'compliment', when: { stat: 'charm', gte: 3 }, effects: [{ stat: 'friendship', by: 10, of: character('ava') }, { scene: null }] },
-    { id: 'bye', effects: [{ scene: null }] },
+    { id: 'chat', label: 'Chat for a minute', once: { per: 'turn', reason: 'She has a queue.' }, effects: [{ stat: 'friendship', by: 5, of: character('ava') }] },
+    {
+      id: 'compliment',
+      label: 'Tell her the café is the best thing in town',
+      when: { stat: 'charm', gte: 3 },
+      effects: [{ stat: 'friendship', by: 10, of: character('ava') }, { scene: null }],
+    },
+    { id: 'bye', label: 'Leave her to it', effects: [{ scene: null }] },
   ],
 }
 ```
 
-Its prose lives under the keys `ava.hi` and `ava.hi.regular`, the members of the variants `ava.smalltalk` (`ava.smalltalk.rain` and the rest), and the labels `ava.hi#chat`, `ava.hi#compliment` and `ava.hi#bye`. See [The showcase](/docs/guide/showcase#data-scenes-variants-and-once-a-turn-choices) for how it plays.
+Its words are in place: two blocks of text and the choices' labels. The line in the middle is drawn from the variants `ava.smalltalk`, whose members (`ava.smalltalk.rain` and the rest) are lines kept by key in the prose table. See [The showcase](/docs/guide/showcase#data-scenes-variants-and-once-a-turn-choices) for how it plays.
 
 ### audio
 
 A data scene's `audio` names what plays on [background channels](/docs/reference/audio#channels) while it's open. Here the flat goes quiet for a letter:
 
 ```ts
-{ id: 'flat.letter', audio: { music: null, ambience: 'rain' }, body: [{ prose: 'flat.letter' }], choices: [/* ... */] }
+{ id: 'flat.letter', audio: { music: null, ambience: 'rain' }, body: [text('A letter, in Gran’s hand.')], choices: [/* ... */] }
 ```
 
 A channel the scene doesn't name keeps playing whatever an effect, the place or the default says. For one-shot sounds, use `[[sound:id]]` in the [prose](/docs/reference/prose#sound-and-voice). The loader reports an unknown track or channel, and a sound effect's track put on a background channel.
@@ -125,13 +130,13 @@ A channel the scene doesn't name keeps playing whatever an effect, the place or 
 
 ```ts
 type Block = (
-  | { text: string; when?: Condition }
+  | { text: string; id?: string; when?: Condition }
+  | { prose: string; when?: Condition }
   | { variants: string; when?: Condition; gate?: Record<string, Condition>; art?: Record<string, string> }
   | { media: SceneMedia; when?: Condition }
-  // and, for a scene that flows: words written in place, a spoken line, a section,
-  // a decision, a point, a minigame and a panel where they stand
-  | { words: string; when?: Condition }
-  | { say: string; speaker: string; voice?: string; when?: Condition }
+  // and, for a scene that flows: a spoken line, a section, a decision, a point,
+  // a minigame and a panel where they stand
+  | { say: string; speaker: string; voice?: string; id?: string; when?: Condition }
   | { blocks: Block[]; when?: Condition }
   | { decide: string; choices: FlowChoice[]; when?: Condition }
   | { point: string }
@@ -142,14 +147,16 @@ type Block = (
 
 Blocks render in order, and a block whose `when` fails is dropped. Rendered blocks are joined with a blank line between them. The kinds after `media` let a scene read on as the player chooses, with decisions partway through: see [Flowing scenes](/docs/reference/flows).
 
-- **`text`** renders the prose at that key. An unwritten key renders nothing.
-- **`variants`** renders one member of a named set of variants, drawn as [How variants are drawn](#how-variants-are-drawn) says. What the draw needs to remember, so the variants rotate, is added to the effects of every choice. The members are `game.prose.variants(name)`, minus any key the same scene uses as a `text` block and any key with no prose. So a scene's own fixed block named `ava.smalltalk/closing` is never dealt as a random line.
+- **`text`** renders its words, as written, read as [prose](/docs/reference/prose#markup) is: paragraphs on blank lines, spoken lines, pictures, inline markup and tokens. It's what the [`text()`](/docs/reference/flows#the-builders) builder writes. `id` names it for a translation's [words table](/docs/reference/words), `scene.<scene>.text.<id>`. Without one, it's named by a hash of its words.
+- **`prose`** renders the line kept at that key in the game's [prose](/docs/reference/prose) table: for a line several scenes share, or one a mod should be able to rewrite by key. An unwritten key renders nothing, and the loader reports it.
+- **`variants`** renders one member of a named set of variants, drawn as [How variants are drawn](#how-variants-are-drawn) says. What the draw needs to remember, so the variants rotate, is added to the effects of every choice. The members are `game.prose.variants(name)`, minus any key the same scene uses as a `prose` block and any key with no prose. So a scene's own fixed block named `ava.smalltalk/closing` is never dealt as a random line.
   - **`gate`** puts conditions on individual members, by key. A member whose gate fails is left out of the draw, so one set of variants can hold a line that only makes sense later.
   - **`art`** names, for a member, another set of variants to draw a picture from. The drawn picture's prose (usually a single image line) goes in front of the drawn member.
-- **`media`** renders a picture or a video, [`SceneMedia`](#scenemedia), with no prose key. Without `at`, it's drawn right there in the body, between the blocks around it.
-- **`ui`**, on any block, holds [presentation hints](/docs/reference/ui-hints) for the UI, and the view puts them on the first [beat](/docs/reference/prose#scenebeat) the block makes. The React UI's [`reveal`](/docs/react/hints#reveal) makes the block wait before it appears: `{ prose: 'intro.tonight', ui: { reveal: { delay: 1200 } } }`. A block that isn't shown takes its hints with it.
+- **`media`** renders a picture or a video, [`SceneMedia`](#scenemedia). Without `at`, it's drawn right there in the body, between the blocks around it.
+- **`ui`**, on any block, holds [presentation hints](/docs/reference/ui-hints) for the UI, and the view puts them on the first [beat](/docs/reference/prose#scenebeat) the block makes. The React UI's [`reveal`](/docs/react/hints#reveal) makes the block wait before it appears: `{ text: 'Tonight you unpack.', ui: { reveal: { delay: 1200 } } }`. A block that isn't shown takes its hints with it.
 
 **Gotchas.**
+- A `{ text }` block that names prose, as content wrote one before schema 25 (`{ text: 'cafe.counter' }` with that key in the prose), is reported, because it would show the key itself: write the words, or `{ prose: 'cafe.counter' }`. So is a `{ words }` block, which is `{ text }` now. A pack of an older schema is rewritten when it loads.
 - If every member of a set of variants is gated out, the block renders nothing and there's no error.
 - In a [place's body](/docs/plugins/places#the-stage), or any plugin's [stage](/docs/reference/plugins#stage), a `variants` block has no choice to record its draw, so the count never moves. The member is picked by the save's seed and the [turn](/docs/reference/state#turn). A room deals a fresh line each turn and the same line every time the player looks in that turn, and it can deal the same line two turns running.
 
@@ -172,8 +179,8 @@ const flat: DataScene = {
       { id: 'lamp', rect: [10, 10, 12, 30], label: 'The lamp', command: { type: 'action', id: 'read' }, layer: 'lamp' },
     ],
   },
-  body: [{ prose: 'flat.morning' }],
-  choices: [{ id: 'leave', effects: [{ scene: null }] }],
+  body: [text('Grey light through the curtains.')],
+  choices: [{ id: 'leave', label: 'Head out', effects: [{ scene: null }] }],
 }
 ```
 
@@ -204,7 +211,7 @@ A choice is a [`ButtonDef`](/docs/reference/actions#buttondef), the same fields 
 
 | Field | What it does | Default |
 |---|---|---|
-| `label` | The button's words. A prose key works too: when the game's prose has a line for it, that line is shown. | the prose key `` `${scene.id}#${id}` ``, else the id |
+| `label` | The button's words, as written, with [tokens](/docs/reference/prose#tokens) filled in. | the id |
 | `labels` | Words that depend on state, each `{ when, label }`. The first whose `when` holds wins. | `label` |
 | `when` | The choice is shown only while this holds. A failing `when` sets `visible: false`. | always shown |
 | `blocked` | Reasons to grey it out, as [`Blocked`](/docs/reference/actions#blocked) entries. The first whose `when` holds becomes the `disabled` text. One with `hide: true` leaves the choice off the screen instead. | not blocked |
@@ -214,7 +221,9 @@ A choice is a [`ButtonDef`](/docs/reference/actions#buttondef), the same fields 
 | `effects` | Literal [effects](/docs/reference/effects), or `{ 'game/name': {...} }` for effects worked out by one of the game's own [effects](/docs/reference/custom#effects) in its `rules`. An unknown name adds nothing, and the loader reports it. | |
 | `command` | A [command](/docs/reference/commands) to send as well, run before the effects: a plugin's, such as `openApp('texts')`, or a core one such as `{ type: 'action', id: 'coffee' }`. The choice is greyed out with that command's reason while it would be refused, and its price adds what the command spends. It can't be `choose`. | none |
 
-**Label lookup order.** A drawn variant can carry its own reply. If a block this render used has prose at `` `${drawnKey}#${choice.id}` ``, that wins (the last such block, if there are several). After that come the first matching `labels` entry, then `label`, each the prose line when it's a key the prose has, else its words as written. With neither, the button shows the prose at `` `${scene.id}#${choice.id}` ``, else the bare choice id. The loader reports a `label` that reads as a key (no spaces, a `.` or a `#`) with no prose.
+**Label lookup order.** A line drawn by key can carry its own reply. If a `prose` or `variants` block this render used has prose at `` `${drawnKey}#${choice.id}` ``, that wins (the last such block, if there are several), so a reply can answer the line she actually gave. After that come the first matching `labels` entry, then `label`, then the bare choice id.
+
+A label is never looked up as a prose key: content from before schema 25 that wrote `label: 'ava.hi.chat'`, or left a label out for the prose `ava.hi#chat`, is reported with the words to write. A pack of an older schema is rewritten from its prose when it loads. A translation gives a label other words with the [words table](/docs/reference/words), under `scene.<scene>.choice.<id>.label`.
 
 ```ts
 {
@@ -228,8 +237,8 @@ A choice is a [`ButtonDef`](/docs/reference/actions#buttondef), the same fields 
 **In the text.** A choice the scene's prose names with `[[act:id]]` is drawn there, as a link inside the line, and left out of `view.scene.choices`. It's still a choice in every other way: the same `choose` command, `blocked` reasons, price and checks. See [Inline actions and tooltips](/docs/reference/prose#inline-actions-and-tooltips).
 
 ```ts
-// prose: 'kitchen.phone': 'Your phone buzzes. [[act:answer|Pick it up]], or leave it.'
-{ id: 'answer', command: openApp('texts'), effects: [{ kv: 'answered', to: true }] }
+// body: [text('Your phone buzzes. [[act:answer|Pick it up]], or leave it.')]
+{ id: 'answer', label: 'Answer the phone', command: openApp('texts'), effects: [{ kv: 'answered', to: true }] }
 ```
 
 **Gotchas.**
@@ -252,7 +261,7 @@ Otherwise `choose` runs the choice's `command`, if it has one, then applies its 
 ### panel
 
 ```ts
-{ id: 'market.stall', title: 'The stall', panel: { panel: 'prices', with: { stall: 'bread' } }, body: [{ prose: 'market.stall' }], choices: [] }
+{ id: 'market.stall', title: 'The stall', panel: { panel: 'prices', with: { stall: 'bread' } }, body: [text('Loaves in rows, still warm.')], choices: [] }
 ```
 
 A [`ScenePanel`](/docs/reference/panels#a-scenes-panel), `{ panel, with }`, holds that panel open for as long as the scene is on screen, as [`view.panel`](/docs/reference/view#panel) with the scene's id in `scene`. A UI usually draws it in place of the scene's choices. A panel that needs numbers worked out reads them from the view or a [value](/docs/reference/custom#values). See [A scene's panel](/docs/reference/panels#a-scenes-panel).
@@ -265,9 +274,8 @@ An ending is a scene the story doesn't move on from. Give it a choice that start
 {
   id: 'end.posted',
   title: 'The end',
-  body: [{ prose: 'end.posted' }],
-  // prose: 'end.posted#again': 'Read it again'
-  choices: [{ id: 'again', command: { type: 'newGame' }, effects: [] }],
+  body: [text('You write the address she gives you on a fresh envelope. It goes in the postbox on the corner, and that is that.')],
+  choices: [{ id: 'again', label: 'Read it again', command: { type: 'newGame' }, effects: [] }],
 }
 ```
 

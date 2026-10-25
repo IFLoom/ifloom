@@ -25,22 +25,23 @@ import type { MinigameDef, MinigameStateDef } from '@ifloom/engine'
 /** The four arrows of quick feet, in the order the minigame's `arrow` variable numbers them from 1. */
 const ARROWS = ['up', 'down', 'left', 'right'] as const
 
+/** What the girl with the whistle does for each arrow. */
+const POINTS: Record<(typeof ARROWS)[number], string> = {
+  up: 'The girl with the whistle points at the sky. Up!',
+  down: 'She points at her shoes. Down!',
+  left: 'She points at the river. Left!',
+  right: 'She points at the swings. Right!',
+}
+
 /** One arrow on screen: 1.5 seconds to press it. The right one scores; a wrong one or the time running out doesn't. */
 const showArrow = (arrow: (typeof ARROWS)[number]): MinigameStateDef => ({
-  label: `arrows.${arrow}`,
+  label: POINTS[arrow],
   after: { ms: 1500, go: 'round' },
   on: ARROWS.map((input) => ({ input, go: 'round', ...(input === arrow ? { effects: [{ kv: 'score', of: 'minigame', by: 1 }] } : {}) })),
 })
 ```
 
-`label` is a prose key, so the words live with the rest of your prose:
-
-```ts
-'arrows.up': 'The girl with the whistle points at the sky. Up!',
-'arrows.down': 'She points at her shoes. Down!',
-'arrows.left': 'She points at the river. Left!',
-'arrows.right': 'She points at the swings. Right!',
-```
+`label` is the words the player reads in that state, written in place, with tokens filled in. A translation gives each other words under `minigame.arrows.states.<state>.label`.
 
 `after` is the timer. When 1.5 seconds of ticks have passed in the state, it goes to `round`. Each `on` entry is what an input does. All four go to `round`, and only the right one also adds a point with the [`kv`](/docs/reference/effects#whose-key-it-is) effect, `of: 'minigame'`.
 

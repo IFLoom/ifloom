@@ -13,10 +13,10 @@ export const ch3: Content = {
       id: 'ch3.door',
       title: 'Chapter three: the door',
       body: [
-        { prose: 'ch3.door' },
-        { prose: 'ch3.door.honest', when: { kv: 'fibs', lt: 1 } },
-        { prose: 'ch3.door.fib', when: { kv: 'fibs', is: 1 } },
-        { prose: 'ch3.door.tangle', when: { kv: 'fibs', gte: 2 } },
+        { text: 'On Saturday someone knocks. A woman with June’s chin and a carrier bag of shopping: “I’m her sister. I was told there might be post.”' },
+        { text: 'You already told Mrs Okafor everything, and it shows: she smiles before you speak.', when: { kv: 'fibs', lt: 1 } },
+        { text: 'Mrs Okafor is behind her on the stairs, not quite looking at you.', when: { kv: 'fibs', is: 1 } },
+        { text: 'Mrs Okafor is behind her on the stairs, and she has clearly been talking.', when: { kv: 'fibs', gte: 2 } },
       ],
       choices: [
         // Either ending marks the story as read, for a New Game+ to carry over.
@@ -28,22 +28,14 @@ export const ch3: Content = {
     {
       id: 'end.kept',
       title: 'The end',
-      body: [{ prose: 'end.kept' }],
+      body: [{ text: 'She reads it on your doorstep and laughs, then cries a bit, then asks if you want a biscuit. You do.' }],
       choices: [{ id: 'again', label: 'Read it again', command: { type: 'newGame' }, effects: [] }],
     },
     {
       id: 'end.posted',
       title: 'The end',
-      body: [{ prose: 'end.posted' }],
+      body: [{ text: 'You write the address she gives you on a fresh envelope. It goes in the postbox on the corner, and that is that.' }],
       choices: [{ id: 'again', label: 'Read it again', command: { type: 'newGame' }, effects: [] }],
     },
   ],
-  prose: {
-    'ch3.door': 'On Saturday someone knocks. A woman with June’s chin and a carrier bag of shopping: “I’m her sister. I was told there might be post.”',
-    'ch3.door.honest': 'You already told Mrs Okafor everything, and it shows: she smiles before you speak.',
-    'ch3.door.fib': 'Mrs Okafor is behind her on the stairs, not quite looking at you.',
-    'ch3.door.tangle': 'Mrs Okafor is behind her on the stairs, and she has clearly been talking.',
-    'end.kept': 'She reads it on your doorstep and laughs, then cries a bit, then asks if you want a biscuit. You do.',
-    'end.posted': 'You write the address she gives you on a fresh envelope. It goes in the postbox on the corner, and that is that.',
-  },
 }

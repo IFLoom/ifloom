@@ -46,11 +46,12 @@ If you'd rather see a finished game of this shape first, `--template town` copie
 
 ## 1. Places
 
-The core has no map, so places come from the places plugin. A location is an entity you write with the plugin's `location()`. It has an id, a name, the exits you can walk to from it, and a `body`, which is the text shown while no scene is playing. The body is a list of blocks, each naming a piece of prose by key. You write the words themselves in step 4.
+The core has no map, so places come from the places plugin. A location is an entity you write with the plugin's `location()`. It has an id, a name, the exits you can walk to from it, and a `body`, which is the text shown while no scene is playing. The body is a list of blocks, each a piece of the words written in place, `text('…')`.
 
 `desc` is the short line the UI shows under the place's name, for what sort of place it is. `blocked` is a list of conditions, each with a reason. While one holds, the plugin won't let the player in, and says why. That's how the café keeps hours, with a condition from the calendar: `period('morning', 'afternoon')` holds in the morning and the afternoon.
 
 ```ts
+import { text } from '@ifloom/engine'
 import { pass, period } from '@ifloom/plugin-calendar'
 import { location } from '@ifloom/plugin-places'
 import { here } from '@ifloom/plugin-cast'
@@ -61,14 +62,14 @@ const locations = [
     name: 'Your house',
     desc: 'Home',
     exits: ['high-street'],
-    body: [{ prose: 'house' }],
+    body: [text('The kettle, the window, the post on the mat.')],
   }),
   location({
     id: 'high-street',
     name: 'The high street',
     desc: 'Town',
     exits: ['house', 'cafe'],
-    body: [{ prose: 'high-street' }],
+    body: [text('Shopfronts, a bus stop, a bakery smell from the corner.')],
   }),
   location({
     id: 'cafe',
@@ -77,9 +78,9 @@ const locations = [
     exits: ['high-street'],
     blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
     body: [
-      { prose: 'cafe' },
-      { prose: 'cafe.ruth', when: here('ruth') },
-      { prose: 'cafe.empty', when: { not: here('ruth') } },
+      text('Steam on the windows.'),
+      text('Ruth is behind the counter, flour to the elbows.', { when: here('ruth') }),
+      text('The counter is empty.', { when: { not: here('ruth') } }),
     ],
     actions: [
       { id: 'coffee', label: 'Buy a coffee', cost: { stats: { coins: 3 } }, effects: [pass(1), { stat: 'energy', by: 20 }] },
@@ -167,22 +168,22 @@ const actions: ActionDef[] = [
 
 ## 4. Scenes
 
-A scene is one screen of story, with some text and the choices under it. Write it as data, a `DataScene`, and the engine renders it for you. Its body is a list of blocks, each naming a prose key and each with an optional [condition](/docs/reference/conditions). Its choices carry their [effects](/docs/reference/effects) as plain data.
+A scene is one screen of story, with some text and the choices under it. Write it as data, a `DataScene`, and the engine renders it for you. Its body is a list of blocks of words, each with an optional [condition](/docs/reference/conditions). Its choices carry their labels and their [effects](/docs/reference/effects) as plain data.
 
 The game opens on its intro scene, so start with that:
 
 ```ts
-import type { DataScene } from '@ifloom/engine'
+import { text, type DataScene } from '@ifloom/engine'
 
 const intro: DataScene = {
   id: 'intro',
   title: 'Moving day',
-  body: [{ prose: 'intro' }],
-  choices: [{ id: 'bed', effects: [{ scene: null }] }],
+  body: [text('The last box is in. {{playerName}}, you could sleep for a week.')],
+  choices: [{ id: 'bed', label: 'Go to bed', effects: [{ scene: null }] }],
 }
 ```
 
-`{ scene: null }` closes the scene and leaves the player standing in the room.
+`{ scene: null }` closes the scene and leaves the player standing in the room. `{{playerName}}` is a token. It's filled with the `playerName` key in the game's kv store when the line is shown. The name is a key like any other, and step 6 sets it. A save's [`SaveMeta`](/docs/reference/saves#savemeta) can show it on a load screen, as `playerName`, if the game's [`rules`](/docs/reference/rules) give a `saveName` that reads it. [Prose and markup](/docs/reference/prose#tokens) lists the other tokens, such as a counter or a value the game works out.
 
 Ruth's talk scene has a line that only appears once you're a regular, and a choice that pays once a turn. In this game a turn is a day, so that's once a day:
 
@@ -193,48 +194,27 @@ const ruthTalk: DataScene = {
   id: 'ruth.talk',
   speaker: 'ruth',
   body: [
-    { prose: 'ruth.talk.hello' },
-    { prose: 'ruth.talk.regular', when: { stat: 'friendship', of: character('ruth'), gte: 5 } },
+    text('"Morning. What can I get you?"'),
+    text('She is already reaching for your usual cup.', { when: { stat: 'friendship', of: character('ruth'), gte: 5 } }),
   ],
   choices: [
     {
       id: 'chat',
+      label: 'Ask how the bread is going',
       once: { per: 'turn', reason: 'She has a queue.' },
       effects: [
         { stat: 'friendship', by: 5, of: character('ruth') },
         { scene: null },
       ],
     },
-    { id: 'bye', effects: [{ scene: null }] },
+    { id: 'bye', label: 'Just the coffee, thanks', effects: [{ scene: null }] },
   ],
 }
 ```
 
 `character('ruth')` is how content names Ruth's entity, `'character:ruth'`. The second line only appears once her friendship has reached 5. The `chat` choice adds 5 to it, once a turn. After that it stays on screen, greyed out with its reason, until the player has slept. `speaker: 'ruth'` draws the scene as Ruth, and the cast supplies her name, colour and portrait.
 
-### The words
-
-The words are kept apart from the structure, by key. A choice's label is looked up under `scene#choice` unless you name another key.
-
-```ts
-const prose: Record<string, string> = {
-  'house': 'The kettle, the window, the post on the mat.',
-  'high-street': 'Shopfronts, a bus stop, a bakery smell from the corner.',
-  'cafe': 'Steam on the windows.',
-  'cafe.ruth': 'Ruth is behind the counter, flour to the elbows.',
-  'cafe.empty': 'The counter is empty.',
-  'intro': 'The last box is in. {{playerName}}, you could sleep for a week.',
-  'intro#bed': 'Go to bed',
-  'ruth.talk.hello': '"Morning. What can I get you?"',
-  'ruth.talk.regular': 'She is already reaching for your usual cup.',
-  'ruth.talk#chat': 'Ask how the bread is going',
-  'ruth.talk#bye': 'Just the coffee, thanks',
-}
-```
-
-The first five keys are the locations' blocks from step 1, and the rest are the scenes'. `{{playerName}}` is a token. It's filled with the `playerName` key in the game's kv store when the line is shown. The name is a key like any other, and step 6 sets it. A save's [`SaveMeta`](/docs/reference/saves#savemeta) can show it on a load screen, as `playerName`, if the game's [`rules`](/docs/reference/rules) give a `saveName` that reads it. [Prose and markup](/docs/reference/prose#tokens) lists the other tokens, such as a counter or a value the game works out.
-
-That's all a scene needs. You don't write a `render` function or wire the words to the scenes. The loader in the next step hands the prose to the game, and the engine renders every data scene from it. The places plugin renders every location's body the same way. There's more in [Scenes](/docs/reference/scenes).
+That's all a scene needs. You don't write a `render` function or wire the words to the scenes: the engine renders every data scene from its blocks, and the places plugin renders every location's body the same way. The words sit in the scenes they belong to, and a translation can give them other words without touching them (see [Translating a game](/docs/recipes/translating)). There's more in [Scenes](/docs/reference/scenes).
 
 ## 5. The game
 
@@ -263,7 +243,6 @@ export const { game, problems } = loadGame(
       actions,
       scenes: [intro, ruthTalk],
       introScene: 'intro',
-      prose,
       entities: [...locations, ruth],
     },
   ],
@@ -277,7 +256,7 @@ export const { game, problems } = loadGame(
 for (const problem of problems) console.warn(describeProblem(problem))
 ```
 
-The loader checks the whole game once it has merged it, plugins' content included. A misspelt prose key, scene id or stat is reported, and so is an exit to a place that doesn't exist or `here('ruht')` naming a character the game doesn't have. Each problem says where it is, and `problems` is empty here. The full list is on [Checking content](/docs/reference/checks).
+The loader checks the whole game once it has merged it, plugins' content included. A misspelt scene id or stat is reported, and so is an exit to a place that doesn't exist or `here('ruht')` naming a character the game doesn't have. Each problem says where it is, and `problems` is empty here. The full list is on [Checking content](/docs/reference/checks).
 
 Put `problems` in a test, so a broken id fails before anybody plays. `ifloom check` prints them too. A game you build by hand, without `loadGame`, is checked with [`checkGame`](/docs/reference/checks#checkgame) in the same way.
 
@@ -603,6 +582,7 @@ import {
   saves,
   startingState,
   statValue,
+  text,
   view,
   type ActionDef,
   type DataScene,
@@ -618,14 +598,14 @@ const locations = [
     name: 'Your house',
     desc: 'Home',
     exits: ['high-street'],
-    body: [{ prose: 'house' }],
+    body: [text('The kettle, the window, the post on the mat.')],
   }),
   location({
     id: 'high-street',
     name: 'The high street',
     desc: 'Town',
     exits: ['house', 'cafe'],
-    body: [{ prose: 'high-street' }],
+    body: [text('Shopfronts, a bus stop, a bakery smell from the corner.')],
   }),
   location({
     id: 'cafe',
@@ -634,9 +614,9 @@ const locations = [
     exits: ['high-street'],
     blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
     body: [
-      { prose: 'cafe' },
-      { prose: 'cafe.ruth', when: here('ruth') },
-      { prose: 'cafe.empty', when: { not: here('ruth') } },
+      text('Steam on the windows.'),
+      text('Ruth is behind the counter, flour to the elbows.', { when: here('ruth') }),
+      text('The counter is empty.', { when: { not: here('ruth') } }),
     ],
     actions: [
       { id: 'coffee', label: 'Buy a coffee', cost: { stats: { coins: 3 } }, effects: [pass(1), { stat: 'energy', by: 20 }] },
@@ -679,42 +659,29 @@ const actions: ActionDef[] = [
 const intro: DataScene = {
   id: 'intro',
   title: 'Moving day',
-  body: [{ prose: 'intro' }],
-  choices: [{ id: 'bed', effects: [{ scene: null }] }],
+  body: [text('The last box is in. {{playerName}}, you could sleep for a week.')],
+  choices: [{ id: 'bed', label: 'Go to bed', effects: [{ scene: null }] }],
 }
 
 const ruthTalk: DataScene = {
   id: 'ruth.talk',
   speaker: 'ruth',
   body: [
-    { prose: 'ruth.talk.hello' },
-    { prose: 'ruth.talk.regular', when: { stat: 'friendship', of: character('ruth'), gte: 5 } },
+    text('"Morning. What can I get you?"'),
+    text('She is already reaching for your usual cup.', { when: { stat: 'friendship', of: character('ruth'), gte: 5 } }),
   ],
   choices: [
     {
       id: 'chat',
+      label: 'Ask how the bread is going',
       once: { per: 'turn', reason: 'She has a queue.' },
       effects: [
         { stat: 'friendship', by: 5, of: character('ruth') },
         { scene: null },
       ],
     },
-    { id: 'bye', effects: [{ scene: null }] },
+    { id: 'bye', label: 'Just the coffee, thanks', effects: [{ scene: null }] },
   ],
-}
-
-const prose: Record<string, string> = {
-  'house': 'The kettle, the window, the post on the mat.',
-  'high-street': 'Shopfronts, a bus stop, a bakery smell from the corner.',
-  'cafe': 'Steam on the windows.',
-  'cafe.ruth': 'Ruth is behind the counter, flour to the elbows.',
-  'cafe.empty': 'The counter is empty.',
-  'intro': 'The last box is in. {{playerName}}, you could sleep for a week.',
-  'intro#bed': 'Go to bed',
-  'ruth.talk.hello': '"Morning. What can I get you?"',
-  'ruth.talk.regular': 'She is already reaching for your usual cup.',
-  'ruth.talk#chat': 'Ask how the bread is going',
-  'ruth.talk#bye': 'Just the coffee, thanks',
 }
 
 export const { game, problems } = loadGame(
@@ -724,7 +691,6 @@ export const { game, problems } = loadGame(
       actions,
       scenes: [intro, ruthTalk],
       introScene: 'intro',
-      prose,
       entities: [...locations, ruth],
     },
   ],

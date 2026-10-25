@@ -125,7 +125,7 @@ body: [
 ]
 ```
 
-On a [block](/docs/reference/scenes#block): it waits `delay` milliseconds after the reveal before it, or after the scene comes on, then comes in with `as`. `delay` is 800 (`DEFAULT_REVEAL_DELAY`) and `as` is `'fade'` if left out. A paragraph that should wait goes in a block of its own, under its own prose key. The block's hint arrives on the first beat it makes, and everything from there waits, up to the next block with a reveal.
+On a [block](/docs/reference/scenes#block): it waits `delay` milliseconds after the reveal before it, or after the scene comes on, then comes in with `as`. `delay` is 800 (`DEFAULT_REVEAL_DELAY`) and `as` is `'fade'` if left out. A paragraph that should wait goes in a block of its own. The block's hint arrives on the first beat it makes, and everything from there waits, up to the next block with a reveal.
 
 ```ts
 import { type Reveal } from '@ifloom/react'
@@ -330,7 +330,7 @@ What's wrong with a game's hints for the React UI, as `where: what` lines, or no
 - a block's `timer` that isn't one of the game's `timers`
 - an [inline piece](#inline-pieces) in the prose whose name is neither built in nor in `inline` (pass the same object you give `mountGame`), a `modal` with no prose key or one whose key has no prose, an `image` with no path, and either with more than two arguments
 
-It reads the game's scenes, choices and blocks, its actions, stats, kinds and entities, the places plugin's locations, and every prose line. Put it in a test beside the engine's checks:
+It reads the game's scenes, choices and blocks, its actions, stats, kinds and entities, the places plugin's locations, every prose line, and every block of words written in place. Put it in a test beside the engine's checks:
 
 ```ts
 import { describe, expect, it } from 'vitest'

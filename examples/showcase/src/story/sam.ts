@@ -9,7 +9,7 @@ export const sam: Content = {
       id: 'sam.hi',
       title: 'Sam',
       speaker: 'sam',
-      body: [{ prose: 'sam.hi' }],
+      body: [{ text: 'Sam is walking a dog that is clearly not theirs. "Dog-sitting," they say. "He’s in charge."' }],
       choices: [
         {
           id: 'bye',
@@ -21,11 +21,7 @@ export const sam: Content = {
   ],
   data: {
     feed: {
-      posts: [{ id: 'sam.river', feed: 'social', from: 'sam', when: day({ gte: 2 }), body: [{ prose: 'feed.sam-river' }], likes: 3 }],
+      posts: [{ id: 'sam.river', feed: 'social', from: 'sam', when: day({ gte: 2 }), body: [{ text: 'The ducks have unionised.' }], likes: 3 }],
     },
-  },
-  prose: {
-    'sam.hi': 'Sam is walking a dog that is clearly not theirs. "Dog-sitting," they say. "He’s in charge."',
-    'feed.sam-river': 'The ducks have unionised.',
   },
 }

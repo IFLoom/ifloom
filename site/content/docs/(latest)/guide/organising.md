@@ -1,6 +1,6 @@
 ---
 title: "Organising a game"
-description: "Where a game's content goes as it grows: src/game.ts only assembles, src/world/ holds what the whole game shares by kind, src/story/ holds the story by area. Combining your files, prose files, tests per area, an editor export and mods."
+description: "Where a game's content goes as it grows: src/game.ts only assembles, src/world/ holds what the whole game shares by kind, src/story/ holds the story by area. Combining your files, words in their scenes, tests per area, an editor export and mods."
 ---
 A game's [content](/docs/reference/loader#content-and-packs) can be split across as many files as you like, and [`loadGame`](/docs/reference/loader#loadgame) merges them into one game. A small story fits in one file, but a game with places, people and a few weeks of story gets hard to find your way around in one. This page shows how the templates and the examples split a game into files, and why.
 
@@ -18,7 +18,7 @@ src/
 │   ├── cast.ts       the people, entities written with person(), when there's a cast
 │   └── settings.ts   what the player can change
 └── story/            the story, one file per area
-    ├── opening.ts    an area's scenes, choices, prose and plugin content
+    ├── opening.ts    an area's scenes, their words, and its plugin content
     └── cafe.ts       ...and one more for each place, chapter or arc
 ```
 
@@ -85,32 +85,29 @@ Lists keep the order you combine your files in. Triggers fire in that order, and
 
 Your files have no ids of their own, so you can rename, split or merge them at any time, even after release. What a save depends on is the ids inside them: keep scene, entity and storyline ids stable once players have saves.
 
-## Prose beside its scenes
+## Words in their scenes
 
-An area's words go in its `prose`, next to the scenes that show them, so the key and the line are in the same file. When an area has a lot of words, move them to a sibling file named after it, and import them:
-
-```ts
-// src/story/cafe.prose.ts
-export const prose: Record<string, string> = {
-  'place.cafe': 'Six tables, one of them wobbly.',
-  'cafe.window': 'You take the stool by the window.',
-}
-```
+An area's words are written in its scenes, where they're read: a block of text in a scene's body, a choice's `label`, a place's description. So a scene and what it says are in one place, and moving a scene moves its words.
 
 ```ts
 // src/story/cafe.ts
-import type { Content } from '@ifloom/engine'
-import { prose } from './cafe.prose.ts'
+import { text, type Content } from '@ifloom/engine'
 
 export const cafe: Content = {
   scenes: [
-    /* … */
+    {
+      id: 'cafe.window',
+      title: 'The window seat',
+      body: [text('You take the stool by the window. A bus goes by, then a man with a ladder.')],
+      choices: [{ id: 'leave', label: 'Finish your cup', effects: [{ scene: null }] }],
+    },
   ],
-  prose,
 }
 ```
 
-A writer can then work through `cafe.prose.ts` without the scenes in the way. Small Town does this for Ava's arc and the café, and keeps the shorter areas' prose inline.
+Lines read by key go in the area's `prose`: a set of [variants](/docs/reference/prose#variantmember) drawn at random, a tooltip's words, or a line several scenes share. When an area has a lot of them, move them to a sibling file named after it, `cafe.prose.ts`, and import them into the area's content as `prose`. Small Town does this for Ava's small talk.
+
+A translation doesn't change these files: it's one pack with a `words` table over them (see [Translating a game](/docs/recipes/translating)).
 
 ## Tests per area
 

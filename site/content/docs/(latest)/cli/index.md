@@ -397,7 +397,7 @@ changed: sam.hi @ moving-day (gone)
 3 scene renders changed. If you meant it, run again with --update.
 ```
 
-Commit the file. A difference is either a bug or a change you meant. Read the diff before you run `--update`. It tells you which scene now reads differently, and in which state. A change to a condition or a prose key can do that without anyone noticing. Small Town's tests compare its snapshot on every run, so a change to how any scene reads fails them until the file is updated.
+Commit the file. A difference is either a bug or a change you meant. Read the diff before you run `--update`. It tells you which scene now reads differently, and in which state. A change to a condition or a line of words can do that without anyone noticing. Small Town's tests compare its snapshot on every run, so a change to how any scene reads fails them until the file is updated.
 
 ### What snapshot reads
 

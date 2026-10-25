@@ -6,7 +6,7 @@ export const hiring: Content = {
     {
       id: 'hiring',
       title: 'Interviews',
-      body: [{ prose: 'hiring' }],
+      body: [{ text: 'Two people answer the card in the window. Wages are {{v:game/payroll}} a week already.' }],
       choices: [
         {
           id: 'dev',
@@ -22,7 +22,4 @@ export const hiring: Content = {
       ],
     },
   ],
-  prose: {
-    hiring: 'Two people answer the card in the window. Wages are {{v:game/payroll}} a week already.',
-  },
 }

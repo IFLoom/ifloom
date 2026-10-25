@@ -14,15 +14,13 @@ const hall: DataScene = {
   title: 'The hall',
   body: [{ prose: 'hall.phone' }],
   choices: [
-    { id: 'answer', effects: [{ kv: 'answered', to: true }, { scene: 'ava.call' }] },
-    { id: 'leave', effects: [{ scene: null }] },
+    { id: 'answer', label: 'Answer the phone', effects: [{ kv: 'answered', to: true }, { scene: 'ava.call' }] },
+    { id: 'leave', label: 'Go out', effects: [{ scene: null }] },
   ],
 }
 
 const prose = {
   'hall.phone': 'Your phone is ringing on the hall table. [[act:answer|Pick it up]], or let it ring.',
-  'hall.phone#answer': 'Answer the phone',
-  'hall.phone#leave': 'Go out',
 }
 ```
 

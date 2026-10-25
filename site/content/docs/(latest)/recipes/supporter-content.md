@@ -129,12 +129,11 @@ const supporter: Pack = {
       weight: 5,
       when: { all: [hasUnlock('supporter'), { not: { seen: 'cafe.back-room' } }] },
       body: [{ prose: 'cafe.back-room' }],
-      choices: [{ id: 'leave', effects: [{ scene: null }] }],
+      choices: [{ id: 'leave', label: 'Thank her and head back out', effects: [{ scene: null }] }],
     },
   ],
   prose: {
     'cafe.back-room': 'Ava lifts the counter flap and waves you through to the back room…',
-    'cafe.back-room#leave': 'Thank her and head back out',
   },
 }
 

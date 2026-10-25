@@ -61,7 +61,7 @@ body: [
 ]
 ```
 
-A paragraph that should wait goes in a block of its own, under its own prose key. The block's hints arrive on the first [beat](/docs/reference/prose#scenebeat) it makes, and the lines after it are in the beats from the start. So a UI can put every word in the page at once for screen readers and hold back only how they look.
+A paragraph that should wait goes in a block of its own. The block's hints arrive on the first [beat](/docs/reference/prose#scenebeat) it makes, and the lines after it are in the beats from the start. So a UI can put every word in the page at once for screen readers and hold back only how they look.
 
 ## The React UI
 

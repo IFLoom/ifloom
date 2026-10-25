@@ -236,10 +236,6 @@ The first five keys are the locations' blocks from step 1, and the rest are the 
 
 That's all a scene needs. You don't write a `render` function or wire the words to the scenes. The loader in the next step hands the prose to the game, and the engine renders every data scene from it. The places plugin renders every location's body the same way. There's more in [Scenes](/docs/reference/scenes).
 
-:::tip[Scenes by hand]
-For the odd screen that doesn't fit blocks and choices, a scene can also be a plain object with a `render(state, ctx)` function, listed in the same `scenes` array. See [`Scene`](/docs/reference/scenes#scene).
-:::
-
 ## 5. The game
 
 The game gathers everything. [`loadGame`](/docs/reference/loader) merges your content into one game, here one object, and a mod would be a pack laid over it. The locations and Ruth are entities, so they all go in the content's `entities`.

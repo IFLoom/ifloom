@@ -26,9 +26,9 @@ The rule behind it: the engine owns what changes the game's state, its rules or 
 
 | Written on | Arrives in the view as | Typed by |
 |---|---|---|
-| A [data scene](/docs/reference/scenes#datascene) or a hand-built [`Scene`](/docs/reference/scenes#scene) | [`view.scene.ui`](/docs/reference/view#the-scene) | `SceneUi` |
+| A [data scene](/docs/reference/scenes#datascene) | [`view.scene.ui`](/docs/reference/view#the-scene) | `SceneUi` |
 | A plugin's [stage](/docs/reference/plugins#stage), such as a [place](/docs/plugins/places#the-location-trait) | `view.scene.ui` while no scene is open | `SceneUi` |
-| A [`Choice`](/docs/reference/scenes#choice) or a hand-built [`SceneChoice`](/docs/reference/scenes#scenechoice) | The choice's `ui` ([`RenderedChoice`](/docs/reference/view#renderedchoice)) | `ChoiceUi` |
+| A [`Choice`](/docs/reference/scenes#choice) | The choice's `ui` ([`RenderedChoice`](/docs/reference/view#renderedchoice)) | `ChoiceUi` |
 | An [action](/docs/reference/actions) | The button's `ui` in `view.actions` | `ChoiceUi` |
 | A [`Block`](/docs/reference/scenes#block) | The `ui` of the first [beat](/docs/reference/prose#scenebeat) the block makes | `BlockUi` |
 | A [kind](/docs/reference/entities#kinddef) | Each of its entities' `ui`, under the entity's own | `EntityUi` |

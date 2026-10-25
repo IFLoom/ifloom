@@ -8,7 +8,7 @@ import { problemsOf } from '../fixtures/checked.ts'
 import { artSrc, mediaType, parseBeats } from '../../src/sceneBody.ts'
 import { pickKey, poolCandidates } from '../../src/features/media.ts'
 import { SAVE_VERSION, type Command, type GameState } from '../../src/types.ts'
-import type { Game, Scene } from '../../src/game.ts'
+import type { Game } from '../../src/game.ts'
 import type { DataScene } from '../../src/scene.ts'
 import { unwrap } from '../fixtures/result.ts'
 
@@ -69,7 +69,7 @@ const pools = {
   window: [{ src: 'flat/window-rain.mp4', tags: ['rain'] }],
 }
 
-function town(scenes: (Scene | DataScene)[], extra: Partial<Content> = {}) {
+function town(scenes: DataScene[], extra: Partial<Content> = {}) {
   const pack: Content = {
     name: 'town',
     media: { pools },
@@ -91,7 +91,7 @@ function town(scenes: (Scene | DataScene)[], extra: Partial<Content> = {}) {
   return loaded
 }
 
-function game(scenes: (Scene | DataScene)[], extra: Partial<Content> = {}): Game {
+function game(scenes: DataScene[], extra: Partial<Content> = {}): Game {
   const loaded = town(scenes, extra)
   expect(loaded.problems).toEqual([])
   return loaded.game
@@ -224,21 +224,6 @@ describe('pools', () => {
     expect(unwrap(replayed)).toEqual(state)
     expect(view(unwrap(replayed), g).scene.beats).toEqual(view(state, g).scene.beats)
   })
-
-  it('resolve in a hand-built scene’s body and media, by position', () => {
-    const porch: Scene = {
-      id: 'porch',
-      render: () => ({ body: 'The porch.\n\n[[wide:@door|blue,day]]', media: [{ pool: 'door', tags: ['red', 'day'], at: 'lead' }], choices: [] }),
-    }
-    const g = game([porch])
-    const state = apply({ ...startingState(g), sceneId: null }, g, { type: 'scene', id: 'porch' }).state
-    expect(view(state, g).scene.beats).toEqual([
-      { type: 'image', src: 'art/door/red-day.jpg', size: 'inline' },
-      { type: 'text', text: 'The porch.' },
-      { type: 'image', src: 'art/door/blue-day.jpg', size: 'wide' },
-    ])
-    expect(state.media.picks).toEqual({ 'door|blue,day|porch|body.0': 'door/blue-day.jpg', 'door|red,day|porch|media.0': 'door/red-day.jpg' })
-  })
 })
 
 describe('the stage', () => {
@@ -302,12 +287,6 @@ describe('the stage', () => {
     const g = game([flat, { id: 'bare', body: [{ text: 'flat.out' }], choices: [] }])
     expect(view(open(g, 'bare'), g).scene.stage).toBeNull()
     expect(view({ ...startingState(g), sceneId: null }, g).scene.stage).toBeNull()
-  })
-
-  it("draws a hand-built scene's own picture as the scene's image", () => {
-    const portrait: Scene = { id: 'portrait', render: () => ({ image: 'art/people/ava.jpg', choices: [] }) }
-    const g = game([portrait])
-    expect(view(open(g, 'portrait'), g).scene).toMatchObject({ image: 'art/people/ava.jpg', stage: null })
   })
 })
 
@@ -386,7 +365,7 @@ describe('media checks', () => {
     ])
   })
 
-  it('are made for a hand-built game too, and its scenes rendered against probes', () => {
+  it('are made for every scene, and pools without files are reported', () => {
     const { game: g } = town(
       [
         {
@@ -394,16 +373,6 @@ describe('media checks', () => {
           body: [{ text: 'flat.bad' }, { media: { pool: 'cupboard' } }],
           stage: { layers: [], hotspots: [{ id: 'x', rect: [0, 0, 10, 10], label: 'X', choice: 'nope' }] },
           choices: [],
-        },
-        {
-          id: 'porch',
-          render: () => ({
-            stage: {
-              layers: [{ id: 'a', src: 'porch' }],
-              hotspots: [{ id: 'y', rect: [0, 0, 50, 50], label: 'Y', layer: 'b', command: { type: 'scene', id: 'garden' } }],
-            },
-            choices: [],
-          }),
         },
       ],
       { prose: { 'flat.bad': '[[img:@door|green]]' }, media: { pools: { ...pools, shelf: [] } } },
@@ -413,8 +382,6 @@ describe('media checks', () => {
       'scene flat: hotspot x: no choice "nope" in this scene',
       'pool shelf: a pool with no files',
       'prose flat.bad: no file in pool "door" is tagged "green"',
-      'scene porch (start): hotspot y: unknown layer "b"',
-      'scene porch (start): hotspot y: opens unknown scene "garden"',
     ])
   })
 })

@@ -177,7 +177,7 @@ describe('who is speaking', () => {
   it('is never guessed from a scene id', () => {
     const game = fixture()
     // Begins with a character's id, but names no speaker.
-    game.scenes = [...game.scenes, { id: 'rosa.aside', render: () => ({ body: 'The shop is quiet.', choices: [] }) }]
+    game.scenes = [...game.scenes, { id: 'rosa.aside', body: [], choices: [] }]
     const shown = view({ ...begin(game), sceneId: 'rosa.aside' }, game).scene
     expect(shown.speaker).toBeNull()
     expect(shown.tags).toEqual([])

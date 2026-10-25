@@ -72,7 +72,8 @@
  * a roll's `plus` and `against` each take an `Amount`. Typed registries
  * (P5): a call in short is a `ConditionCall` or `EffectCall`, checked against
  * the registries a plugin augments, and `GameState.you` is an `EntityRef`,
- * now `${string}:${string}`.
+ * now `${string}:${string}`. The prune (P6): `Game.scenes` and
+ * `Pack.scenes` hold data scenes only, as hand-built scenes are internal.
  */
 import type {
   Amount,
@@ -124,7 +125,6 @@ import type {
   ProseStore,
   RenderedChoice,
   SAVE_VERSION,
-  Scene,
   SceneBeat,
   SettingDef,
   SettingView,
@@ -428,7 +428,7 @@ export type FrozenGame = {
   /** The scene on screen on the first frame. Left out, the game opens on its idle screen. */
   introScene?: string
   /** Hand-written scenes and data scenes, side by side. */
-  scenes: (Scene | DataScene)[]
+  scenes: DataScene[]
   storylines?: StorylineDef[]
   prose?: ProseStore
   rules?: GameRules
@@ -471,7 +471,7 @@ export type FrozenPack = {
   schema: number
   /** The version of each plugin's content it was written for. */
   plugins?: Record<string, number>
-  scenes?: (Scene | DataScene)[]
+  scenes?: DataScene[]
   storylines?: StorylineDef[]
   /** Stats the game keeps. A later pack can redeclare one by id. */
   stats?: StatDef[]

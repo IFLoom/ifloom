@@ -1,98 +1,12 @@
 ---
 title: "Scenes"
-description: "Data scenes and hand-written scenes: blocks, choices, labels, once a turn, prices, speakers, endings and rendering."
+description: "Scenes as data: blocks, choices, labels, once a turn, prices, speakers, endings and how they are drawn."
 ---
-A scene is one screen of story: some prose, and the choices under it. The engine runs every scene the same way, as an object with a `render` function that turns the current state into a [`SceneView`](#sceneview). You can write a scene in either of two ways, and list both kinds side by side in `game.scenes`:
+A scene is one screen of story: some prose, and the choices under it. You write each one as data, a [`DataScene`](#datascene), and list it in your content's `scenes`. Its prose lives in [prose keys](/docs/reference/prose) or in the body itself, its conditions and effects are data, and the [content checker](/docs/reference/checks) can check every id it names. The engine draws it for you (see [Running data scenes](#running-data-scenes)).
 
-- **Declare it as data**, as a [`DataScene`](#datascene). Its prose lives in [prose keys](/docs/reference/prose), its conditions and effects are data, and the [content checker](/docs/reference/checks) can check every id it names. The engine renders it for you (see [Running data scenes](#running-data-scenes)). Most scenes should be data scenes.
-- **Write it by hand**, as a [`Scene`](#scene). You get full control in plain TypeScript, for a screen that doesn't fit blocks and choices.
-
-Either kind can also be a [storylet](/docs/reference/storylets), a scene an effect draws at random from a named set. See [`StoryletFields`](#storyletfields).
+A scene can also be a [storylet](/docs/reference/storylets), a scene an effect draws at random from a named set. See [`StoryletFields`](#storyletfields).
 
 For a walkthrough, see [Your first story](/docs/guide/first-story). For what happens after the player picks a choice, see [Commands](/docs/reference/commands#choose) and [Effects](/docs/reference/effects).
-
-## Scene
-
-```ts
-import type { Scene } from '@ifloom/engine'
-
-type Scene = {
-  id: string
-  title?: string
-  speaker?: string
-  tags?: string[]
-  panel?: ScenePanel
-  ui?: Ui<SceneUi>
-  drawnFrom?: string[]
-  weight?: number
-  when?: Condition
-  render: (state: GameState, ctx: SceneCtx) => SceneView
-}
-```
-
-This is what sits in `game.scenes`. The engine calls `render` whenever it builds the view and again when the player chooses, so it must be a pure function of `state` (and of `ctx`, which comes from the state). If you need anything random, draw it with [`roll` or `pick`](/docs/reference/random), never `Math.random`.
-
-The top-level `title`, `speaker` and `tags` are fallbacks. Whatever `render` returns in its `SceneView` wins. `panel` holds a [panel](/docs/reference/panels#a-scenes-panel) open while the scene is. `drawnFrom`, `weight` and `when` make the scene a storylet (see [`StoryletFields`](#storyletfields)). `ui` holds [presentation hints](/docs/reference/ui-hints), such as how the scene comes on screen in the React UI, carried to [`view.scene.ui`](/docs/reference/view#the-scene) as written.
-
-```ts
-import type { Scene } from '@ifloom/engine'
-
-const counter: Scene = {
-  id: 'cafe.counter',
-  title: 'The Corner Café',
-  speaker: 'ava',
-  render: (state) => ({
-    body: (state.stats.coins ?? 0) >= 4
-      ? 'Ava wraps a sandwich in paper and slides it over.'
-      : 'Ava looks at your empty hands and smiles anyway.',
-    choices: [
-      {
-        id: 'buy',
-        label: 'Buy a sandwich (4)',
-        disabled: (state.stats.coins ?? 0) < 4 ? 'You need 4 coins.' : undefined,
-        effects: [{ stat: 'coins', by: -4 }, { entity: 'item:sandwich', by: 1 }],
-      },
-      { id: 'leave', label: 'Leave', effects: [{ scene: null }] },
-    ],
-  }),
-}
-```
-
-**Gotcha.** The [content checker](/docs/reference/checks) can't see inside a hand-written scene. It looks at one's choices only when you give [`checkGame`](/docs/reference/checks#probes) probe states. Otherwise a typo in a scene id inside a hand-written effect turns up at run time, when the player lands on a scene that doesn't exist and reads "The moment has passed." (the [`momentPassed`](/docs/reference/strings#buttons-and-labels) string).
-
-## SceneView
-
-```ts
-import type { SceneView } from '@ifloom/engine'
-
-type SceneView = {
-  title?: string
-  speaker?: string               // who is talking: an entity, by reference or bare id
-  tags?: string[]
-  image?: string
-  body?: string                  // the scene's prose, with its markup
-  media?: SceneMedia[]
-  stage?: MediaStage             // a layered picture with hotspots
-  audio?: Record<string, string | null>   // background audio by channel while the scene is open
-  blockUi?: { at: number; ui: Ui<BlockUi> }[]
-  choices: SceneChoice[]
-}
-```
-
-What `render` returns.
-
-| Field | Meaning |
-|---|---|
-| `title` | The heading. Falls back to `Scene.title`, then the title of a plugin's [stage](/docs/reference/plugins#stage) (with the [places plugin](/docs/plugins/places#the-stage), the room's name), then the game's title. |
-| `speaker` | Who's talking: an [entity](/docs/reference/entities), by reference (`'character:ava'`) or by a bare id. See [Speakers](#speakers). Falls back to `Scene.speaker`. Nothing else sets a speaker. The engine never reads one from the scene's id, so `ava.chat` with no `speaker` has none. |
-| `tags` | Words the UI can style the scene by, such as `['letter']` or `['flashback']`. The engine gives them no meaning and passes them to [`view.scene.tags`](/docs/reference/view#the-scene). Falls back to `Scene.tags`, then `[]`. |
-| `image` | Replaces the speaker's picture as the scene's [`image`](/docs/reference/view#the-scene). |
-| `body` | The scene's prose, with its [markup](/docs/reference/prose#markup). The view parses it into beats. If it's left out, the scene has no body text. |
-| `media` | Pictures and videos that aren't in the prose. See [`SceneMedia`](#scenemedia). |
-| `stage` | A layered picture with hotspots, drawn as the scene's stage. See [The stage](#the-stage). |
-| `audio` | What plays on [background channels](/docs/reference/audio#what-plays-on-a-background-channel) while the scene is open, by channel. It wins over effects, places and the default. `null` silences a channel. |
-| `blockUi` | Where each block with [hints](/docs/reference/ui-hints) starts in `body`, by character, so the view can put its `ui` on the first beat it makes. A hand-built render that wants hints on its beats fills it; a data scene's hints go on its beats by themselves. |
-| `choices` | Every choice the scene knows about, including hidden ones. |
 
 ## Speakers
 
@@ -108,89 +22,6 @@ A scene's `speaker` says who is talking, and the view draws them as [`view.scene
 - A spoken line in the body names who says it with the same ids: `@ava: "Morning."` in [prose](/docs/reference/prose#speech), or `say('ava', 'Morning.')` in a [flowing scene](/docs/reference/flows#the-builders). `'player'` is the player there too.
 
 The speaker's picture is the entity's `image`. With none, there's no picture. The engine doesn't guess a file from the id.
-
-## SceneChoice
-
-```ts
-import type { SceneChoice } from '@ifloom/engine'
-
-type SceneChoice = {
-  id: string
-  label: string
-  visible?: boolean
-  disabled?: string
-  tags?: string[]
-  irreversible?: string
-  effects: Effect[]
-  command?: Command
-  ui?: Ui<ChoiceUi>
-}
-```
-
-| Field | Meaning |
-|---|---|
-| `id` | What the `choose` command names. Unique within the scene. |
-| `label` | The button text. |
-| `visible` | `false` hides it. Shown by default. |
-| `disabled` | A reason. The button stays on screen, greyed out, with this text. It's worked out by the render for this state. A [data scene](#choice) writes `blocked` instead and the engine fills it in. |
-| `tags` | Words the UI can style or filter the choice by, such as `['kind']` or `['risky']`. The engine gives them no meaning and passes them to the [`RenderedChoice`](/docs/reference/view#renderedchoice). |
-| `irreversible` | A warning the UI shows before the choice is taken. A [runner](/docs/reference/runner#historyoptions) with history on never undoes past it. |
-| `effects` | Applied in order when the player picks it. See [Effects](/docs/reference/effects). |
-| `command` | A command to run as well, before the effects. A data scene's [`Choice.command`](#choice) is passed through. |
-| `ui` | [Presentation hints](/docs/reference/ui-hints), passed to the view's choice as written. A data scene's [`Choice.ui`](#choice) is passed through. |
-
-The view works out a choice's [price](/docs/reference/view#price) from its `effects`. That covers what it spends of any [spendable](/docs/reference/stats#statdef) stat, and what plugins note about it, such as the [calendar](/docs/plugins/calendar#price-notes)'s `until evening`. What a choice pays the player is never shown.
-
-### How `choose` checks a choice
-
-The `choose` command first asks [`whyNot`](/docs/reference/actions#whynot), which renders the open scene again against the current state. The command is refused, leaving the state unchanged, at the first of these that applies:
-
-1. A [lock](/docs/reference/locks) stops `choose`. The refusal is the lock's `reason`.
-2. A [plugin's guard](/docs/reference/plugins#guards-prices-and-labels) refuses it outright.
-3. The game has its own [`rules.commands.choose`](/docs/reference/rules#commands). It's called instead of steps 4 and 5, and a string it returns is the refusal. If it returns a state, that state is the result (after step 6), and the choice's effects don't run unless the rule runs them.
-4. No scene is open, or the scene has no choice with that id, or the choice's `visible` is `false`.
-5. The choice's `disabled` is set. The refusal is the disabled text. Then, for a choice with a `command`, that command is asked as it would be on its own: a lock on it, a plugin's guard and its own `whyNot`. A `command` that is itself `choose` is refused.
-6. A plugin's guard gives a soft warning, such as the [calendar](/docs/plugins/calendar#the-guard)'s `That would run past dawn.` This one isn't part of `whyNot`, so the button can still be pressed, but the reducer refuses the command with the warning (see [`warningOf`](/docs/reference/actions#warningof)).
-
-Otherwise `choose` runs the choice's `command`, if it has one, then applies its `effects` in order. The command log holds the `choose`, so a replay runs the command again the same way. If the scene itself no longer exists, `choose` closes it. Use [`apply`](/docs/reference/commands#apply) rather than `dispatch` when you need to know which of these happened.
-
-## SceneCtx
-
-```ts
-import type { SceneCtx } from '@ifloom/engine'
-
-type SceneCtx = {
-  kv: (key: string, of?: string) => KvValue | undefined
-  picks?: Record<string, string>
-}
-```
-
-The second argument to `render`. It gives a hand-written scene shortcuts into the state, though everything here can also be read from `state`. `kv(key)` reads a key in the player's [kv store](/docs/reference/state#kv), and `kv(key, of)` one in the store `of` names, as the [`kv` condition](/docs/reference/conditions#kv) names it: a [storyline](/docs/reference/storylines)'s (`'storyline:ava'`), the running minigame's (`'minigame'`) or an entity's. It's `undefined` when unset. `picks` is set when the engine draws a [`screen`](/docs/reference/view#screen) and wants the render's new [pool picks](/docs/reference/media#remembered-picks) recorded. The engine records them for a data scene by itself.
-
-```ts
-render: (state, ctx) => {
-  const body = ctx.kv('knowsYou', 'storyline:ava') ? 'Ava waves you in.' : 'Ava nods, busy at the till.'
-  // ...
-}
-```
-
-There's no time of day here. With the [calendar](/docs/plugins/calendar), read it with the calendar's conditions or its `read`.
-
-**Gotcha.** There's nothing here about people or places, because the engine keeps neither. A hand-written scene that needs to know who's in the room asks with a condition over a `game` it closes over, such as `holds(state, here('ava'), game)` with the [cast](/docs/plugins/cast#conditions)'s `here`. A data scene puts the same condition in a block's `when`.
-
-### sceneContext
-
-```ts
-function sceneContext(state: GameState, game: Game): SceneCtx
-```
-
-Builds the `SceneCtx` the engine passes to `render`. Call it when you render a hand-written scene yourself, in a test or in a tool that previews scenes:
-
-```ts
-import { sceneContext } from '@ifloom/engine'
-
-const shown = counter.render(state, sceneContext(state, game))
-```
 
 ## SceneMedia
 
@@ -212,13 +43,13 @@ type SceneMedia = {
 }
 ```
 
-A picture or a video, in a data scene's [`{ media }` block](#block) or a `SceneView`'s `media` list. Give a file as `src`, which goes through [`artSrc`](/docs/reference/prose#artsrc) (`'scene/market-morning'` becomes `art/scene/market-morning.jpg`), or ask a [pool](/docs/reference/media#pools) for one with `pool` and `tags`. `size` is `inline` or `wide`, as for [images in prose](/docs/reference/prose#images).
+A picture or a video, in a data scene's [`{ media }` block](#block). Give a file as `src`, which goes through [`artSrc`](/docs/reference/prose#artsrc) (`'scene/market-morning'` becomes `art/scene/market-morning.jpg`), or ask a [pool](/docs/reference/media#pools) for one with `pool` and `tags`. `size` is `inline` or `wide`, as for [images in prose](/docs/reference/prose#images).
 
 It's a video when `video` is `true` or the file ends in `.mp4` or `.webm`. `controls`, `once`, `sound` and `poster` are the [video flags](/docs/reference/prose#videos), and they mean the same as in markup.
 
 `at` says where it goes:
 
-- **Left out**, a `{ media }` block sits where it is in the body, in order with the prose. A hand-built scene's `media` list has no place in the body, so its entries go after it.
+- **Left out**, a `{ media }` block sits where it is in the body, in order with the prose.
 - **`lead`** puts it before the body, as an establishing still.
 - **`end`** puts it after the body.
 
@@ -253,7 +84,7 @@ type DataScene = {
 }
 ```
 
-A scene written as data. You build its body from blocks, each with its own prose key, rather than writing one key for the whole body. That way a conditional line is one more block, not another copy of the scene. Put it straight into `game.scenes`, or your [content](/docs/reference/loader#content)'s `scenes`, and the engine [bakes](#running-data-scenes) it into a `Scene` when it's first shown.
+A scene written as data. You build its body from blocks, each with its own prose key, rather than writing one key for the whole body. That way a conditional line is one more block, not another copy of the scene. Put it in your [content](/docs/reference/loader#content)'s `scenes`, and the engine [draws](#running-data-scenes) it when it's shown.
 
 This is Ava's hello from the showcase:
 
@@ -282,7 +113,7 @@ Its prose lives under the keys `ava.hi` and `ava.hi.regular`, the members of the
 
 ### audio
 
-A data scene's `audio` names what plays on [background channels](/docs/reference/audio#channels) while it's open, and the render passes it on to the `SceneView`. Here the flat goes quiet for a letter:
+A data scene's `audio` names what plays on [background channels](/docs/reference/audio#channels) while it's open. Here the flat goes quiet for a letter:
 
 ```ts
 { id: 'flat.letter', audio: { music: null, ambience: 'rain' }, body: [{ text: 'flat.letter' }], choices: [/* ... */] }
@@ -355,7 +186,7 @@ A hotspot is a rectangle, `[x, y, width, height]` in percent of the stage from t
 
 A hotspot with a `when` that fails is left out, and so is one whose `layer` isn't shown. `label` is what a screen reader reads.
 
-The view resolves the stage into [`view.scene.stage`](/docs/reference/view#the-scene), and the [React UI](/docs/react) draws it with [`Stage`](/docs/react/components#stage), with its hotspots as buttons over the picture. See [Media](/docs/reference/media#the-stage) for the types. A hand-built scene can return a `stage` from `render` too.
+The view resolves the stage into [`view.scene.stage`](/docs/reference/view#the-scene), and the [React UI](/docs/react) draws it with [`Stage`](/docs/react/components#stage), with its hotspots as buttons over the picture. See [Media](/docs/reference/media#the-stage) for the types.
 
 **Gotchas.**
 - The loader reports a hotspot with both or neither of `command` and `choice`, a `choice` the scene doesn't have, a rect outside 0 to 100 or running off the edge, two hotspots with one id, a `layer` no layer has, and an unknown pool or tag.
@@ -378,7 +209,7 @@ A choice is a [`ButtonDef`](/docs/reference/actions#buttondef), the same fields 
 | `when` | The choice is shown only while this holds. A failing `when` sets `visible: false`. | always shown |
 | `blocked` | Reasons to grey it out, as [`Blocked`](/docs/reference/actions#blocked) entries. The first whose `when` holds becomes the `disabled` text. One with `hide: true` leaves the choice off the screen instead. | not blocked |
 | `once` | The choice pays once per [turn](/docs/reference/state#turn), which is once a day with the [calendar](/docs/plugins/calendar)'s default. `per` is always `'turn'`. Afterwards the choice stays on screen, disabled with `reason`, and its effects shrink to its `scene` effects alone, so it still navigates. It's spent while the choice's record in [`chosen`](/docs/reference/state#chosen) says it was last picked this turn. `key` only matters to a save from before version 18, which kept the cap as a kv key: it names the key (without `turn:`) when it wasn't `scene#choice`, so loading the save keeps a cap set that turn. | unlimited |
-| `tags`, `irreversible`, `ui` | Passed through to [`SceneChoice`](#scenechoice). `ui` holds [presentation hints](/docs/reference/ui-hints), such as the React UI's [`transition`](/docs/react/hints#transition-on-a-choice) for the screen it leads to. | |
+| `tags`, `irreversible`, `ui` | Passed through to the view's [`RenderedChoice`](/docs/reference/view#renderedchoice). `ui` holds [presentation hints](/docs/reference/ui-hints), such as the React UI's [`transition`](/docs/react/hints#transition-on-a-choice) for the screen it leads to. | |
 | `cost` | The stats it spends, as an action's [`cost`](/docs/reference/actions#actioncost): listed on the button as its price, checked when it's chosen (greyed out with `reasons` or the stat's own line while there's too little), and paid after its command, before its effects. | free |
 | `effects` | Literal [effects](/docs/reference/effects), or `{ 'game/name': {...} }` for effects worked out by one of the game's own [effects](/docs/reference/custom#effects) in its `rules`. An unknown name adds nothing, and the loader reports it. | |
 | `command` | A [command](/docs/reference/commands) to send as well, run before the effects: a plugin's, such as `openApp('texts')`, or a core one such as `{ type: 'action', id: 'coffee' }`. The choice is greyed out with that command's reason while it would be refused, and its price adds what the command spends. It can't be `choose`. | none |
@@ -404,6 +235,19 @@ A choice is a [`ButtonDef`](/docs/reference/actions#buttondef), the same fields 
 **Gotchas.**
 - `per: 'turn'` reads the choice's `last` turn in [`chosen`](/docs/reference/state#chosen), which picking any choice records, so it writes nothing to the kv store. The turn ending clears it, through a [`turn`](/docs/reference/effects#turn) effect or the calendar's sleep. Leaving the scene doesn't. A choice that ends the turn is dated the turn it was picked in, so it's free again on the next.
 - An [action](/docs/reference/actions#actiondef) takes the same `once`. For counters and stages paced over turns, see [A friendship in stages](/docs/recipes/friendship-stages).
+
+#### How `choose` checks a choice
+
+The `choose` command first asks [`whyNot`](/docs/reference/actions#whynot), which draws the open scene again against the current state. The command is refused, leaving the state unchanged, at the first of these that applies:
+
+1. A [lock](/docs/reference/locks) stops `choose`. The refusal is the lock's `reason`.
+2. A [plugin's guard](/docs/reference/plugins#guards-prices-and-labels) refuses it outright.
+3. The game has its own [`rules.commands.choose`](/docs/reference/rules#commands). It's called instead of steps 4 and 5, and a string it returns is the refusal. If it returns a state, that state is the result (after step 6), and the choice's effects don't run unless the rule runs them.
+4. No scene is open, or the scene has no choice with that id, or the choice is hidden: its `when` doesn't hold, or a `blocked` entry with `hide` holds.
+5. The choice is greyed out: a `blocked` entry holds, or its `once` is spent this turn. The refusal is that reason. Then, for a choice with a `command`, that command is asked as it would be on its own: a lock on it, a plugin's guard and its own `whyNot`. A `command` that is itself `choose` is refused.
+6. A plugin's guard gives a soft warning, such as the [calendar](/docs/plugins/calendar#the-guard)'s `That would run past dawn.` This one isn't part of `whyNot`, so the button can still be pressed, but the reducer refuses the command with the warning (see [`warningOf`](/docs/reference/actions#warningof)).
+
+Otherwise `choose` runs the choice's `command`, if it has one, then applies its `effects` in order. The command log holds the `choose`, so a replay runs the command again the same way. If the scene itself no longer exists, `choose` closes it. [`apply`](/docs/reference/commands#apply) says which of these happened.
 
 ### panel
 
@@ -458,7 +302,7 @@ type StoryletFields = {
 }
 ```
 
-The fields that make a scene a [storylet](/docs/reference/storylets), a scene drawn at random from a named set by the effect [`{ scene: { from } }`](/docs/reference/effects#scene). Both `Scene` and `DataScene` have them, and also `minigame`, a [minigame](/docs/reference/minigames#minigamescenefields) that starts when the scene is entered.
+The fields that make a scene a [storylet](/docs/reference/storylets), a scene drawn at random from a named set by the effect [`{ scene: { from } }`](/docs/reference/effects#scene). A `DataScene` has them, and also `minigame`, a [minigame](/docs/reference/minigames#minigamescenefields) that starts when the scene is entered.
 
 | Field | Default | What it does |
 |---|---|---|
@@ -488,7 +332,7 @@ const avasBreak: DataScene = {
 
 ## Running data scenes
 
-A game lists data scenes in `game.scenes` and the engine runs them. The reducer and the view get every scene through [`sceneById`](/docs/reference/game#scenebyid). The first time it's asked for a `DataScene`, it bakes it into a `Scene` and keeps the result. You don't have to wrap your scenes or give them a `render`.
+A game lists its scenes in `game.scenes` and the engine runs them. The first time the reducer or the view needs a scene, the engine works out how to draw it and keeps that for the game, so the same scene object listed in two games runs with each game's own prose and code.
 
 A data scene reads:
 
@@ -502,24 +346,6 @@ A data scene reads:
 A `variants` block gets one member of its set each time it's drawn. The [turn](/docs/reference/state#turn) picks a starting offset through its own [hash](/docs/reference/random), mixed with the save's seed. The count of draws so far, kept in the kv key `variants:<name>`, then walks one step at a time from there. So a scene doesn't repeat itself on consecutive visits, and two playthroughs don't deal the same lines. When a member has a [weight](/docs/reference/prose#variantmember), the draw is by weight instead, seeded by the name, the save's seed, the turn and the count. What the draw needs to remember is added to the effects of every choice, so picking one moves the rotation on.
 
 The count is per name, not per scene. Two scenes drawing the same variants share one rotation.
-
-### bakeScene
-
-```ts
-function bakeScene(game: Game, scene: DataScene): Scene
-```
-
-The `Scene` the engine runs for a data scene. It has the data scene's `id`, `title`, `speaker`, `tags` and `panel`, its `drawnFrom`, `weight`, `when`, `minigame` and `ui` when it has them, and a `render` that draws it as above. It's built once per `DataScene` object and game, and cached. `sceneById` calls it for you.
-
-The cache is per game, so the same scene object listed in two games runs with each game's own prose and code.
-
-### isDataScene
-
-```ts
-function isDataScene(scene: Scene | DataScene): scene is DataScene
-```
-
-True for a data scene (it has a `body` list) and false for a hand-written one. Use it in tools that walk `game.scenes`.
 
 To draw blocks outside a scene, such as a message's words, a plugin uses [`context.beats`](/docs/reference/plugins#beats).
 

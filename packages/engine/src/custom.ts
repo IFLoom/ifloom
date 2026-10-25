@@ -1,6 +1,6 @@
 import type { Game } from './game.ts'
 import { GAME_ID, pluginCondition, pluginEffect, pluginName, pluginQuery, pluginValue, type PluginArgs } from './plugin.ts'
-import { roll } from './random.ts'
+import { draw } from './random.ts'
 import type { Effect, GameState } from './types.ts'
 import { customCall, type EffectRef, type QueryAnswer, type QueryArgs, type QueryRegistry } from './calls.ts'
 
@@ -82,7 +82,7 @@ export function customContext(state: GameState, game: Game): CustomContext {
     game,
     query: ((name: string, args: PluginArgs = {}) => pluginQuery(game, name)?.(state, args)) as Query,
     value: (name, args = {}) => customValue(game, name)?.(state, args),
-    roll: (max, name) => roll(max, name, state.seed, state.turn),
+    roll: (max, name) => draw(max, name, state.seed, state.turn),
   }
 }
 

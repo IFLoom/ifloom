@@ -1,6 +1,6 @@
 import { holds, type Condition } from './condition.ts'
 import type { ButtonDef, Game, MinigameSceneFields, Scene, SceneChoice, SceneMedia, SceneView, StoryletFields } from './game.ts'
-import { roll, weighted } from './random.ts'
+import { draw, weighted } from './random.ts'
 import { mediaMarkup, resolveMedia, resolvePoolMarkup, type MediaStage } from './features/media.ts'
 import { featureContext } from './core.ts'
 import type { BlockUi, SceneUi, Ui } from './features/ui.ts'
@@ -386,7 +386,7 @@ export function drawVariant(
     const id = weighted(members, weightOf, 'variants', name, state.seed, state.turn, used) ?? members[0]
     return { id, remember: { kv: key, to: used + 1 } }
   }
-  const offset = roll(members.length, name, state.seed, state.turn)
+  const offset = draw(members.length, name, state.seed, state.turn)
   const index = (((offset + used) % members.length) + members.length) % members.length
   return { id: members[index], remember: { kv: key, to: used + 1 } }
 }

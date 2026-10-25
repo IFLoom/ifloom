@@ -3,7 +3,7 @@
  * calls by name, as `game/…`. Everything else in the game is data, in
  * `world/` and `story/`.
  */
-import { artSrc, entityImage, heldBy, parseRef, PLAYER, roll, type GameRules } from '@ifloom/engine'
+import { artSrc, entityImage, heldBy, parseRef, PLAYER, type GameRules } from '@ifloom/engine'
 import { postTo, react } from '@ifloom/plugin-feed'
 
 /**
@@ -33,13 +33,13 @@ export const rules: GameRules = {
   effects: {
     // Post the newest photo, and roll how it does. It returns plain effects, a plugin's
     // included, and draws its dice from the save's seed, so the same save gets the same likes.
-    postLatest: (state, _args, { game }) => {
+    postLatest: (state, _args, { game, roll }) => {
       const photos = heldBy(state, game, PLAYER).filter(({ ref }) => parseRef(ref)?.kind === 'photo')
       const latest = photos.at(-1)?.ref
       if (!latest) return []
       const image = entityImage(state, game, latest)
       const id = `post.photo.${parseRef(latest)!.id}`
-      const likes = 2 + roll(10, state.seed, state.turn, 'likes') + (state.stats.charm ?? 0)
+      const likes = 2 + roll(10, 'likes') + (state.stats.charm ?? 0)
       return [
         postTo('social', id, { text: 'post.photo', ...(image ? { image: artSrc(image) } : {}) }),
         { stat: 'charm', by: 1 },

@@ -328,7 +328,7 @@ The real file is `examples/showcase/src/game.ts`, which lists all of the town's 
 
 **Gotchas:**
 - `loadGame` never throws on bad content. It returns problems, and it's up to you whether to refuse to start.
-- `game.scenes` holds `DataScene`s exactly as declared, beside any hand-written `Scene`s. The engine turns a data scene into a `Scene` the first time [`sceneById`](/docs/reference/game#scenebyid) asks for it, so you don't wrap them yourself.
+- `game.scenes` holds `DataScene`s exactly as declared. The engine works out how to draw each one the first time it's shown.
 - `game.prose` is a [`proseStore`](/docs/reference/prose#prosestore-1) over the merged prose and variants. `Loaded.prose` and `Loaded.variants` are the same merged records, for tools that want the raw text.
 - `game.packs` lists the packs' ids in order, and nothing for your content. [Saves](/docs/reference/saves#savemeta) record it, so loading a save made with a mod the player has since removed names that mod.
 - The game's own functions are its [`rules`](/docs/reference/rules), on `base` and only there. Content and packs can't hold code.
@@ -360,7 +360,6 @@ const mod: Pack = {
 ```
 
 **Gotchas:**
-- Only a [`DataScene`](/docs/reference/scenes#datascene) can be patched. Patching a hand-written `Scene` is a problem.
 - A patch applies to the scene as it stands when its pack is read. A later pack that redeclares the scene replaces it, patch and all.
 - A `before` that names a choice that isn't there adds the choice at the end, without a problem. A `replaceChoice` with no matching id is a problem.
 

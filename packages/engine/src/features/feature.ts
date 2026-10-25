@@ -43,8 +43,8 @@ export type FeatureContext = {
   buildEffects: (state: GameState, game: Game, refs: readonly EffectRef[]) => Effect[]
   /** One of `items` drawn by weight, seeded by `parts`; undefined when there are none. See `weighted`. */
   weighted: <T>(items: readonly T[], weightOf: (item: T) => number | undefined, ...parts: (string | number)[]) => T | undefined
-  /** A whole number from 0 to `max - 1`, seeded by `parts`. See `roll`. */
-  roll: (max: number, ...parts: (string | number)[]) => number
+  /** A whole number from 0 to `max - 1`, seeded by `parts`. See `draw`. */
+  draw: (max: number, ...parts: (string | number)[]) => number
   /** A custom value by name, the game's or a plugin's. */
   customValue: (game: Game | undefined, name: string) => ((state: GameState, args?: Record<string, unknown>) => string | number) | undefined
   /** An `Amount` worked out in this state, as `amountOf` does. */
@@ -57,8 +57,8 @@ export type FeatureContext = {
   pluginAudio: (game: Game, state: GameState) => Record<string, string | null>
   /** An action by the id the `action` command names it by: the game's, or a plugin's as `'<plugin>/<id>'`, in this state. */
   actionOf: (state: GameState, game: Game, id: string) => ActionDef | undefined
-  /** A scene ready to render, by id, as `sceneById` gives it. */
-  sceneById: (game: Game, id: string) => Scene | undefined
+  /** A scene ready to render, by id, as `bakedScene` gives it. */
+  bakedScene: (game: Game, id: string) => Scene | undefined
   /** The open scene rendered, for a caller with no screen; undefined with none open. */
   sceneView: (state: GameState, game: Game) => SceneView | undefined
 }

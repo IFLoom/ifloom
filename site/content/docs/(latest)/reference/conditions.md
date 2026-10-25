@@ -164,7 +164,7 @@ Tests a `play` [setting](/docs/reference/settings), the value in [`state.setting
 
 How many times the player has picked a choice. The key is the scene's id, a `#` and the choice's id, as in the choice's label key (see [`chosen`](/docs/reference/state#chosen)). A bare `{ chose }` means at least once. Every choice is counted, so a later scene can branch on an earlier decision without the choice setting a kv key.
 
-**Gotcha.** The [content checker](/docs/reference/checks) checks the key against data scenes. It takes a hand-written scene at its word, because that scene's choices aren't known until it renders.
+**Gotcha.** The [content checker](/docs/reference/checks) checks the key against the scene's choices, so a typo in the choice's id is reported when the game loads.
 
 ### seen
 

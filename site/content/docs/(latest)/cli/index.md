@@ -669,7 +669,6 @@ checkFiles(files, 'dist')   // []
 
 - **It looks only at the list it's given.** What's in the list, and what isn't, is the content checker's. [FileRef](/docs/reference/checks#fileref) says what it covers. A place's `art` isn't listed, because no UI draws it.
 - **A pool request isn't looked for on its own.** `[[img:@door|night]]` and `{ pool: 'door' }` are covered by the pool's files.
-- **A hand-built scene's media isn't seen.** Its body and `media` come from a function, so only a [data scene](/docs/reference/scenes)'s files are listed.
 
 ### gameFrom
 
@@ -890,7 +889,7 @@ Six tables, one of them wobbly. The coffee machine sighs like it has been workin
 Ava is behind the counter, flour to the elbows, and nods you in.
 ```
 
-Every block comes from the engine's [`view`](/docs/reference/view#view), so it reads as the player's screen does. A scene's block is the probe's state with `sceneId` set to the scene, written as `view(...).scene`: its body, then each visible choice as `[>]`, or as `[ ]` with `— ` and the reason it's greyed out. That reason is the choice's own `disabled`, or else what a [lock](/docs/reference/locks) or a plugin's guard would refuse it with, as on screen. Data scenes and hand-written ones both render. If a scene throws, the block records `!! threw: <message>` instead of stopping the run.
+Every block comes from the engine's [`view`](/docs/reference/view#view), so it reads as the player's screen does. A scene's block is the probe's state with `sceneId` set to the scene, written as `view(...).scene`: its body, then each visible choice as `[>]`, or as `[ ]` with `— ` and the reason it's greyed out. That reason is the choice's own `disabled`, or else what a [lock](/docs/reference/locks) or a plugin's guard would refuse it with, as on screen. If a scene throws, the block records `!! threw: <message>` instead of stopping the run.
 
 The places are the ones the [places](/docs/plugins/places) plugin's `places/all` [query](/docs/plugins/places#queries) returns, asked by name with [`pluginQuery`](/docs/reference/plugins#pluginquery). A game without the plugin has no places here. A place's block is headed `place:<id>`. The player is moved there by the plugin's own [`places/move`](/docs/plugins/places#effects) effect, with `sceneId` cleared, and the block holds the room's body as `view(...).scene` draws it when no scene is open.
 

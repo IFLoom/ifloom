@@ -126,7 +126,7 @@ A weight only matters among the files that fit. It doesn't make a file fit a req
 You ask a pool for a file in three places:
 
 - markup, as `[[img:@door|red,night]]`, `[[wide:@door]]` or `[[video:@window|rain]]`
-- a `{ media }` block or a hand-built scene's `media`, as `{ pool: 'door', tags: ['red', 'night'] }`
+- a `{ media }` block, as `{ pool: 'door', tags: ['red', 'night'] }`
 - a stage layer, as `{ pool: 'window', tags: ['rain'] }`
 
 The engine picks a file in three steps.
@@ -157,8 +157,6 @@ door|red,night|flat.knock|1
 | Markup in a data scene's block | the scene's id | the block's index and the request's place in that block's text, such as `0.0` |
 | A place's body (and any plugin [stage](/docs/reference/plugins#stage)'s body) | the place's id | as for a data scene |
 | A message's or a post's body | the message's or post's id | as for a data scene |
-| Markup in a hand-built scene's `body` | the scene's id | `body.0`, `body.1`, ... in order |
-| A hand-built scene's `media` list | the scene's id | `media.0`, `media.1`, ... |
 | A stage layer | the scene's or place's id | `stage:0`, `stage:1`, ... by the layer's index |
 
 The visit isn't part of the key. A scene shows the same door every time it opens, and that's on purpose: a picture that changes each time you look reads as a mistake.
@@ -188,7 +186,7 @@ type MediaStage = {
 }
 ```
 
-A layered picture with hotspots. A [data scene](/docs/reference/scenes#the-stage), a hand-built scene's `SceneView` and a [place](/docs/plugins/places#the-picture-stage) can each have one. `layers` are drawn bottom first. `aspect` is the width over the height as CSS writes it, such as `'16/9'`. Leave it out and the UI picks one.
+A layered picture with hotspots. A [data scene](/docs/reference/scenes#the-stage) and a [place](/docs/plugins/places#the-picture-stage) can each have one. `layers` are drawn bottom first. `aspect` is the width over the height as CSS writes it, such as `'16/9'`. Leave it out and the UI picks one.
 
 ### StageLayer
 

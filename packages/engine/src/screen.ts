@@ -17,7 +17,7 @@ import { effectsIn, rendering, warningIn, whyNotIn, type Rendering } from './ava
 import { formatStat, statDef } from './features/stats.ts'
 import { holds } from './condition.ts'
 import { lockIn, lockedOut } from './locks.ts'
-import { sceneById, type ActionDef, type Blocked, type Game, type SceneMedia } from './game.ts'
+import { bakedScene, type ActionDef, type Blocked, type Game, type SceneMedia } from './game.ts'
 import { actionById } from './action.ts'
 import { costEffects, runsAsAction } from './features/actions.ts'
 import { artSrc, beatsOfParts, inlineMarkup, mediaType, parseBeats, videoView, type BodyPart, type InlineSpan, type SceneBeat } from './sceneBody.ts'
@@ -440,7 +440,7 @@ type Dialogue = {
 /** The open scene as the screen draws it, and what it puts on the audio channels. */
 function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogue | null {
   if (!state.sceneId) return null
-  const scene = sceneById(game, state.sceneId)
+  const scene = bakedScene(game, state.sceneId)
   if (!scene) {
     return {
       scene: {

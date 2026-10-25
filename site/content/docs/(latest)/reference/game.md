@@ -62,7 +62,7 @@ type Game = {
 | `version` | The game's own version, a whole number from 1. Saves record it, so an update can carry older saves forward with [`rules.migrations`](/docs/reference/rules#migrations). Leave it out and the game is at version 1. Declaring it, even as 1, also stops the engine filling newly declared settings into old saves by itself. See [The game's own migrations](/docs/reference/saves#the-games-own-migrations). |
 | `plugins` | The [plugins](/docs/reference/plugins) the game is built with, in the order their hooks run. You choose them on the base you pass to [`loadGame`](/docs/reference/loader#loadgame). |
 | `rules` | The game's own code: its hooks, the functions content calls as `game/…`, its commands, `saveName` and `migrations`. See [Rules and hooks](/docs/reference/rules). |
-| `scenes` | Every scene. [Data scenes](/docs/reference/scenes#datascene) and hand-written [`Scene`](/docs/reference/scenes#scene)s sit side by side. A data scene is baked into a `Scene` the first time [`sceneById`](#scenebyid) asks for it. |
+| `scenes` | Every scene, as [data scenes](/docs/reference/scenes#datascene). |
 | `introScene` | The scene on screen on the first frame. It counts as seen once, at turn 0, before any command runs. Leave it out and the game opens on its idle screen (see [below](#game)) with nothing seen. |
 | `storylines` | The storylines. None if left out. See [`StorylineDef`](#storylinedef). |
 | `prose` | The words data scenes draw on. See [`ProseStore`](#prosestore). [`loadGame`](/docs/reference/loader#loadgame) sets it. If you build a game by hand, make it with [`proseStore`](/docs/reference/prose#prosestore-1). |
@@ -146,25 +146,6 @@ const { game, problems } = loadGame([movingDay], {
 
 The town's locations and its people are entities, in `entities`, written with the places plugin's `location()` and the cast's `person()`. `loadGame` fills in `game.entities` from the content. To build a game from several files, with mods layered on top, see [Content, packs and loading](/docs/reference/loader).
 
-## Scene
-
-```ts
-type Scene = {
-  id: string
-  title?: string
-  speaker?: string
-  tags?: string[]
-  panel?: ScenePanel
-  ui?: Ui<SceneUi>
-  drawnFrom?: string[]
-  weight?: number
-  when?: Condition
-  render: (state: GameState, ctx: SceneCtx) => SceneView
-}
-```
-
-A scene is anything with an id and a `render` function. If you write it as data, a [`DataScene`](/docs/reference/scenes#datascene), the engine builds `render` for you. `drawnFrom`, `weight` and `when` make it a [storylet](/docs/reference/storylets), a scene drawn at random from a named set. See [Scenes](/docs/reference/scenes) for `Scene`, `SceneView`, `SceneChoice` and `SceneCtx`.
-
 ## StorylineDef
 
 ```ts
@@ -213,23 +194,20 @@ So keep `/`, `#` and `:` out of your own ids and prose keys. A name with a `/` i
 ## Looking things up
 
 ```ts
-function sceneById(game: Game, id: string): Scene | undefined
+function sceneById(game: Game, id: string): DataScene | undefined
 ```
 
-Returns the scene with that id, or `undefined`. To look up an entity, use [`entityOf`](/docs/reference/entities#entityof) or [`kindById`](/docs/reference/entities#kindbyid).
+Returns the scene with that id, as your content declares it, or `undefined`. To look up an entity, use [`entityOf`](/docs/reference/entities#entityof) or [`kindById`](/docs/reference/entities#kindbyid).
 
 ### sceneById
 
-Returns a scene ready to render. A [`DataScene`](/docs/reference/scenes#datascene) is baked into a `Scene` (with [`bakeScene`](/docs/reference/scenes#bakescene)) the first time it's asked for, and the same `Scene` comes back after that. A hand-written `Scene` is returned as it is.
-
 ```ts
-import { sceneById, sceneContext } from '@ifloom/engine'
+import { sceneById } from '@ifloom/engine'
 
-const intro = sceneById(game, 'intro')
-const shown = intro?.render(state, sceneContext(state, game))
+sceneById(game, 'ava.hi')?.title // 'Ava'
 ```
 
-**Gotcha.** Look scenes up through `sceneById`, not `game.scenes.find(...)`. The list holds data scenes as you declared them, with no `render`.
+What a scene shows for a state is in the [view](/docs/reference/view#the-scene), so a tool that previews a scene opens it in a state and reads `view(state, game).scene`.
 
 ## Checking a game
 

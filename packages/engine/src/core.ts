@@ -14,7 +14,7 @@
 import { stringOf } from './strings.ts'
 import { holds } from './condition.ts'
 import { buildEffects, customCall, customCondition, customContext, customEffect, customValue } from './custom.ts'
-import { sceneById } from './game.ts'
+import { bakedScene } from './game.ts'
 import { actionById } from './action.ts'
 import { sceneContext } from './context.ts'
 import { fillTokens } from './prose.ts'
@@ -22,7 +22,7 @@ import { amountOf } from './amount.ts'
 import { pluginAudio, pluginCommand, pluginEffect, pluginStatModifiers, rulesContext, runStatHooks, runTurnDoneHooks, runTurnHooks } from './plugin.ts'
 import { runEffects, runIn } from './reduce.ts'
 import { effectsIn, effectsOf, whyNotIn } from './availability.ts'
-import { roll, weighted } from './random.ts'
+import { draw, weighted } from './random.ts'
 import type { Reference } from './references.ts'
 import { type CommandContext, type EffectContext, type FeatureContext, type Rendering } from './features/feature.ts'
 import { withCore, type FeatureCommands, type FeatureConditions, type FeatureEffects } from './features/registry.ts'
@@ -50,15 +50,15 @@ export function featureContext(): FeatureContext {
     buildEffects: (state, game, refs) => buildEffects(state, game, refs),
     effectsOf: (state, game, command) => effectsOf(state, game, command),
     weighted,
-    roll,
+    draw,
     customValue,
     amount: (state, game, amount) => amountOf(state, game, amount),
     fillTokens,
     pluginAudio,
     statModifiers: (state, game) => pluginStatModifiers(game, state),
-    sceneById,
+    bakedScene,
     actionOf: (state, game, id) => actionById(state, game, id),
-    sceneView: (state, game) => (state.sceneId ? sceneById(game, state.sceneId)?.render(state, sceneContext(state, game)) : undefined),
+    sceneView: (state, game) => (state.sceneId ? bakedScene(game, state.sceneId)?.render(state, sceneContext(state, game)) : undefined),
   })
 }
 

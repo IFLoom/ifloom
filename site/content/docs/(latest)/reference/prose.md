@@ -390,7 +390,7 @@ A `text` or `say` beat has `spans` only when its paragraph holds an [inline acti
 
 A `video` beat always has all four of `autoplay`, `loop`, `muted` and `controls`, worked out from its [flags](#videos). Without flags they're `true`, `true`, `true` and `false`. With `controls`, `autoplay` is `false`.
 
-A data scene's `{ media }` blocks become `image` or `video` beats where they are in the body. Media with `at: 'lead'` comes before the body, and media with `at: 'end'` (or a hand-built scene's [`media`](/docs/reference/scenes#scenemedia) with no `at`) comes after it.
+A data scene's `{ media }` blocks become `image` or `video` beats where they are in the body. Media with `at: 'lead'` comes before the body, and media with `at: 'end'` comes after it.
 
 ## InlineSpan
 
@@ -428,7 +428,7 @@ function parseBeats(
 ): SceneBeat[]
 ```
 
-The parser described above. `hints` puts each block's `ui` on the first beat of the block that starts at its `at`, a character offset into `body`, as a hand-built scene's render gives them in [`SceneView.blockUi`](/docs/reference/scenes#sceneview). `find` says who a line under `@id` is, and the name to show. Left out, `@you` and `@player` are the player's, under `You`, and any other id is a character's under the id, with no `speaker`. [`view`](/docs/reference/view) already calls it, so you only need it to parse text outside a scene. It leaves `[[act:]]`, `[[tip:]]`, `[[ui:]]` and the stars of bold and italics in the text: the view draws them, and only the view knows the choices and the prose.
+The parser described above. `hints` puts each block's `ui` on the first beat of the block that starts at its `at`, a character offset into `body`. `find` says who a line under `@id` is, and the name to show. Left out, `@you` and `@player` are the player's, under `You`, and any other id is a character's under the id, with no `speaker`. [`view`](/docs/reference/view) already calls it, so you only need it to parse text outside a scene. It leaves `[[act:]]`, `[[tip:]]`, `[[ui:]]` and the stars of bold and italics in the text: the view draws them, and only the view knows the choices and the prose.
 
 ## styledBeats
 

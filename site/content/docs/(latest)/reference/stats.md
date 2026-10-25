@@ -276,7 +276,7 @@ Everything that reads stats reads a derived one the same way, through [`statValu
 - an action's [cost](/docs/reference/actions#actioncost) check, so a derived stat can make a button unaffordable (it can't be spent, though)
 - the [view](/docs/reference/view#statview), in `stats`, `statsById` and each entity's stats
 
-A derived stat isn't in `state.stats`, so a hand-written scene or one of the game's functions that reads `state.stats.service` gets `undefined`. Read it with `statValue(state, game, 'service')`.
+A derived stat isn't in `state.stats`, so one of the game's functions that reads `state.stats.service` gets `undefined`. Read it with `statValue(state, game, 'service')`.
 
 ### Formula
 

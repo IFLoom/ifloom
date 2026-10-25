@@ -8,6 +8,7 @@ import { memoryDriver } from '../../src/drivers.ts'
 import { profile } from '../../src/profile.ts'
 import { screen, stageView } from '../../src/screen.ts'
 import type { GameState } from '../../src/types.ts'
+import { baked } from '../fixtures/baked.ts'
 import { begin, fixture } from '../fixtures/town.ts'
 
 /**
@@ -61,7 +62,7 @@ function counted(): { game: Game; renders: Map<GameState, number> } {
   })
   const game: Game = {
     ...town,
-    scenes: [...town.scenes, porch, hall],
+    scenes: [...town.scenes, baked(porch), baked(hall)],
     plugins: [tide],
     media: {
       pools: {

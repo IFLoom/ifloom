@@ -176,7 +176,7 @@ A cut-down Small Town with a social feed and a notice board on the high street. 
 The time of day comes from the [calendar](/docs/plugins/calendar), the map from [places](/docs/plugins/places) and Ava and Sam from the [cast](/docs/plugins/cast). The calendar goes first in `plugins`, so the feed sees the new day when one begins.
 
 ```ts
-import { loadGame, roll, type Content, type GameRules } from '@ifloom/engine'
+import { loadGame, type Content, type GameRules } from '@ifloom/engine'
 import { calendar, day, pass, sleep } from '@ifloom/plugin-calendar'
 import { places, location, type PlaceDef } from '@ifloom/plugin-places'
 import { cast, person } from '@ifloom/plugin-cast'
@@ -236,8 +236,8 @@ const town: Content = {
 // The game's own code: how the photo did, 3 to 12 likes, and Ava always says something.
 const rules: GameRules = {
   effects: {
-    howItDid: (state) => [
-      react('river', { likes: 3 + roll(10, state.seed, state.turn, 'river.likes') }),
+    howItDid: (_state, _args, { roll }) => [
+      react('river', { likes: 3 + roll(10, 'river.likes') }),
       react('river', { from: 'ava', text: 'comment.nice' }),
     ],
   },

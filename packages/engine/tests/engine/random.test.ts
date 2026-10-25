@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { chance, hash, pick, roll } from '../../src/random.ts'
+import { chance, draw, drawOne, hash } from '../../src/random.ts'
 
 /**
  * The bug this guards against: a hash of the shape `n * 31 + charCode` maps
@@ -29,29 +29,29 @@ describe('hash', () => {
   })
 })
 
-describe('roll and pick', () => {
+describe('draw and drawOne', () => {
   it('stays inside the range', () => {
     for (let i = 0; i < 200; i += 1) {
-      const value = roll(7, 'x', i)
+      const value = draw(7, 'x', i)
       expect(value).toBeGreaterThanOrEqual(0)
       expect(value).toBeLessThan(7)
     }
   })
 
   it('spreads a run of indices across the whole range', () => {
-    const seen = new Set([...Array(40).keys()].map((i) => roll(5, 'tray', i)))
+    const seen = new Set([...Array(40).keys()].map((i) => draw(5, 'tray', i)))
     expect(seen.size).toBe(5)
   })
 
   it('gives different answers for different fields of the same draw', () => {
     const fields = ['client', 'day', 'code', 'sessions', 'nhs']
-    const values = fields.map((field) => roll(100, 'seed', 3, 1, field))
+    const values = fields.map((field) => draw(100, 'seed', 3, 1, field))
     expect(new Set(values).size).toBeGreaterThan(3)
   })
 
   it('picks from a list without leaving anything out', () => {
     const items = ['a', 'b', 'c', 'd']
-    const seen = new Set([...Array(60).keys()].map((i) => pick(items, i)))
+    const seen = new Set([...Array(60).keys()].map((i) => drawOne(items, i)))
     expect(seen).toEqual(new Set(items))
   })
 

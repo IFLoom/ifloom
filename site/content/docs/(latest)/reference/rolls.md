@@ -77,7 +77,7 @@ What a save keeps of its rolls, as [`state.rolls`](/docs/reference/state#rolls).
 
 ## How a roll is drawn
 
-Each die is a separate [seeded draw](/docs/reference/random): `roll(sides, 'roll', seed, turn, made, key, die)`, plus 1. `made` goes up with every roll, so:
+Each die is a separate [seeded draw](/docs/reference/random): `draw(sides, 'roll', seed, turn, made, key, die)`, plus 1. `made` goes up with every roll, so:
 
 - two rolls in one command never share a draw, even under the same key
 - trying a check again in the same turn rolls afresh

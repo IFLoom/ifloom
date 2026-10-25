@@ -29,7 +29,7 @@ export function oldSavesGame(extra: Partial<Game> = {}): Game {
       { id: 'patience', label: 'Patience', start: 7 },
       { id: 'skill', label: 'Skill', of: 'staff', start: 1 },
     ],
-    scenes: [{ id: 'start', render: () => ({ choices: [] }) }],
+    scenes: [{ id: 'start', body: [], choices: [] }],
     storylines: [
       { id: 'rosa', name: 'Rosa' },
       { id: 'ben', name: 'Ben' },

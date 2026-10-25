@@ -116,8 +116,8 @@ function drawn(state: GameState, of: string | undefined, key: string, ends: [num
   const [low, high] = [Math.min(...ends), Math.max(...ends)].map(Math.round)
   const running = state.minigame
   if (of === MINIGAME_KV && running)
-    return low + cx.roll(high - low + 1, 'minigame', running.id, state.seed, plays(state, running.id), running.steps, 'var', key)
-  return low + cx.roll(high - low + 1, 'kv', of ?? '', key, state.seed, state.turn)
+    return low + cx.draw(high - low + 1, 'minigame', running.id, state.seed, plays(state, running.id), running.steps, 'var', key)
+  return low + cx.draw(high - low + 1, 'kv', of ?? '', key, state.seed, state.turn)
 }
 
 /** Whose key a line about it names: nothing for the player's. */

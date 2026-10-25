@@ -27,19 +27,19 @@ export function hash(text: string): number {
 }
 
 /** A whole number in [0, max), drawn from these parts. */
-export function roll(max: number, ...parts: (string | number)[]): number {
+export function draw(max: number, ...parts: (string | number)[]): number {
   if (max <= 0) return 0
   return hash(parts.join(':')) % max
 }
 
 /** One of these, drawn from these parts. */
-export function pick<T>(items: readonly T[], ...parts: (string | number)[]): T {
-  return items[roll(items.length, ...parts)]
+export function drawOne<T>(items: readonly T[], ...parts: (string | number)[]): T {
+  return items[draw(items.length, ...parts)]
 }
 
 /** True `numerator` times in `outOf`, drawn from these parts. */
 export function chance(numerator: number, outOf: number, ...parts: (string | number)[]): boolean {
-  return roll(outOf, ...parts) < numerator
+  return draw(outOf, ...parts) < numerator
 }
 
 /**
@@ -49,7 +49,7 @@ export function chance(numerator: number, outOf: number, ...parts: (string | num
  * number, is never drawn. Undefined when nothing can be drawn.
  *
  * With every weight a whole number the draw is `hash % total`, so a list where
- * every weight is 1 draws exactly what `pick` would from the same parts.
+ * every weight is 1 draws exactly what `drawOne` would from the same parts.
  */
 export function weighted<T>(items: readonly T[], weightOf: (item: T) => number | undefined, ...parts: (string | number)[]): T | undefined {
   const weights = items.map((item) => {

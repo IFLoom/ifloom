@@ -37,26 +37,20 @@ Walks every part of the game that is data: scenes and data scenes, actions, trig
 It never throws on bad content. It returns the problems in the order it found them, and an empty list when there's nothing wrong.
 
 **Gotchas:**
-- A hand-written `Scene` is a function, so the checker can't see inside it. Only its [storylet](/docs/reference/storylets) fields are checked, unless you give it probes.
 - It doesn't run the game's own code. An [effect in `rules`](/docs/reference/custom#effects) that returns a broken effect, or a `rules.onTurn` that applies one, is only found in play.
 - A key content or a pack can't hold, such as `rules`, is reported by [`loadGame`](/docs/reference/loader#loadgame) as `content has no "rules", so it was left out`. So is a key your content declares twice. A hand-built game has no content files, so `checkGame` has nothing to say about these.
 - It doesn't check the tokens in prose, such as `{{v:game/breadPrice}}`. An unknown one is left on screen as written, so you can see it.
 
 ## Probes
 
-A probe is a state to render every scene against, with a name for the problems it finds. It's the only way to check a hand-written scene's choices.
+A probe is a state to draw every scene in, with a name for the problems it finds.
 
 ```ts
 const later = { ...startingState(game), turn: 5 }
 checkGame(game, { probes: [{ name: 'day five', state: later }] })
 ```
 
-For each probe the checker renders every scene and reports, against `scene <id> (<name>)`:
-
-- `render threw: …` when a scene's `render` throws
-- for a hand-written scene, `two choices share the id "…"`, and everything its rendered body, media, audio and stage name, and each rendered choice's effects, after `choice <id>:`.
-
-A data scene's content is checked already, so a probe only renders it to see that it doesn't throw.
+For each probe the checker draws every scene and reports `render threw: …` against `scene <id> (<name>)` when drawing one throws, such as when one of the game's own values throws for that state. A scene's content is checked already, without probes.
 
 ## Problem and describeProblem
 
@@ -116,7 +110,7 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | `plugin "…" has no trait "…"` | A `count`'s `Select` names a `trait` of a plugin the game has, which that plugin doesn't declare. |
 | `gated on unknown scene "…"` | A scene that doesn't exist, in `seen`, `since` or `scene`. |
 | `gated on a choice in unknown scene "…"` | A `chose` key, or a `since` naming a `scene#choice`, whose scene doesn't exist. |
-| `gated on unknown choice "…"` | A `chose` or `since` key whose data scene has no such choice. A hand-written scene's choices aren't known in advance. |
+| `gated on unknown choice "…"` | A `chose` or `since` key whose data scene has no such choice. |
 | `no custom condition named "…"` | A [call](/docs/reference/custom#plugincall) to a condition that neither the game's `rules` nor a plugin declares. A name with no `/` adds `; the game's own code is called with "game/" in front, as "game/…"`. |
 | A stat owner problem | See [Stat owners](#stat-owners). |
 | `minigame key "…" is not in any minigame's kv` | A `kv` condition with `of: 'minigame'` naming a key no [minigame](/docs/reference/minigames) declares. |
@@ -217,7 +211,7 @@ A condition, effect or command named after a plugin the game wasn't built with i
 
 | `where` | Checked |
 |---|---|
-| `scene <id>` | For a [data scene](/docs/reference/scenes#datascene): `no prose for "…"` for its `text` blocks, each choice's label key (its `label`, or the default `scene#choice`) and every `labels` key. `variants "…" has no lines` for its `variants` blocks and the variants their `art` names. The conditions on its blocks, a `variants` block's `gate`, and each choice's `when`, `blocked` and `labels`. Each choice's `effects`. `two choices share the id "…"`, among its decisions' choices and its ending choices together. For a scene that [flows](/docs/reference/flows#the-checks): what its sections, decisions (each choice, and what its `then` names) and minigame and panel blocks name, and the flow's own checks. Its `audio` as a placement (see [Audio](#audio)), its `{ media }` blocks and its `stage` (see [Media](#media)), and, for its `panel`, each plugin's [`panelProblems`](/docs/reference/plugins#checking-panels) about its `with`. For every scene, data or hand-written, `unknown minigame "…"` for its `minigame` field, and its storylet fields: `weight must be above 0`, `has a weight but no drawnFrom, so it is never drawn`, `has a when but no drawnFrom; when only gates draws`, and its `when`. |
+| `scene <id>` | For a [data scene](/docs/reference/scenes#datascene): `no prose for "…"` for its `text` blocks, each choice's label key (its `label`, or the default `scene#choice`) and every `labels` key. `variants "…" has no lines` for its `variants` blocks and the variants their `art` names. The conditions on its blocks, a `variants` block's `gate`, and each choice's `when`, `blocked` and `labels`. Each choice's `effects`. `two choices share the id "…"`, among its decisions' choices and its ending choices together. For a scene that [flows](/docs/reference/flows#the-checks): what its sections, decisions (each choice, and what its `then` names) and minigame and panel blocks name, and the flow's own checks. Its `audio` as a placement (see [Audio](#audio)), its `{ media }` blocks and its `stage` (see [Media](#media)), and, for its `panel`, each plugin's [`panelProblems`](/docs/reference/plugins#checking-panels) about its `with`. For every scene, `unknown minigame "…"` for its `minigame` field, and its storylet fields: `weight must be above 0`, `has a weight but no drawnFrom, so it is never drawn`, `has a when but no drawnFrom; when only gates draws`, and its `when`. |
 | `action <id>` | The content's [`actions`](/docs/reference/actions#actiondef): each one's `when`, `blocked`, `effects` and `command`. For each stat its `cost` spends: `spends unknown stat "…"`, or `spends stat "…", which is derived and never written`. `an action's command can't be a choice`, and `an action's command can't be the action itself; give it the effects`. |
 | `trigger <id>` | Its `when` and its `effects`. |
 | `input <id>` | Its `when`, `a choice with no options`, and `min is above max`. |
@@ -323,7 +317,7 @@ A `ui` field of [presentation hints](/docs/reference/ui-hints) is checked only f
 
 ## Inline actions and tooltips
 
-[Inline actions and tooltips](/docs/reference/prose#inline-actions-and-tooltips) are checked in every prose line, and against the choices of the scene (or the buttons of the room) whose body names them. A data scene's body is checked against its choices, a hand-built scene's rendered body against the choices its render gives, and a place's body against its `actions` and the game's.
+[Inline actions and tooltips](/docs/reference/prose#inline-actions-and-tooltips) are checked in every prose line, and against the choices of the scene (or the buttons of the room) whose body names them. A scene's body is checked against its choices, and a place's body against its `actions` and the game's.
 
 | Problem | When |
 |---|---|

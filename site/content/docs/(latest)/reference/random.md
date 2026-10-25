@@ -1,18 +1,18 @@
 ---
 title: "Randomness"
-description: "Seeded randomness: the save's seed, and roll, pick, chance and weighted for draws that replay the same."
+description: "Seeded randomness: the save's seed, and draw, drawOne, chance and weighted for draws that replay the same."
 ---
-To get a value that looks random, such as today's cake at the café, you draw it from parts you name, usually the save's seed, the [turn](/docs/reference/state#turn) and what the draw is for. The engine hashes those parts into a number. Nothing is random at runtime, so the same save in the same turn always gives the same draws.
+To get a value that looks random, such as today's cake at the café, you draw it from parts you name, usually the save's seed, the [turn](/docs/reference/state#turn) and what the draw is for. In the game's own code, the context's `roll(max, name)` does this for you (see [`CustomContext`](/docs/reference/custom#customcontext)). The functions here are for code that names its own parts, such as a plugin's. The engine hashes those parts into a number. Nothing is random at runtime, so the same save in the same turn always gives the same draws.
 
 ```ts
-import { hash, roll, pick, chance, weighted } from '@ifloom/engine'
+import { hash, draw, drawOne, chance, weighted } from '@ifloom/engine'
 ```
 
 ## Why deterministic
 
 - **Undo and snapshots.** A state is the whole game. Replaying a command from a saved state gives the same result, so undo goes back to the previous state, and a test can pin a screen exactly.
 - **No save-scumming.** Reloading and trying again deals the same draw. The player can't re-roll today's market prices by walking out and back in.
-- **Rendering is pure.** A scene's `render` runs every time the view is built and again when a choice is picked. With `Math.random`, the screen the player read and the choice they picked could disagree.
+- **Rendering is pure.** A scene is drawn every time the view is built and again when a choice is picked. With `Math.random`, the screen the player read and the choice they picked could disagree.
 
 Don't call `Math.random` in content.
 
@@ -39,11 +39,11 @@ That one `Math.random` is outside the game. It picks the seed once, and the save
 Draw each value from its own named parts. Don't draw one number and slice several values out of it.
 
 ```ts
-import { chance, hash, pick, roll } from '@ifloom/engine'
+import { chance, draw, drawOne, hash } from '@ifloom/engine'
 
 // Right: each value has its own draw.
-const special = pick(CAKES, state.seed, state.turn, 'cafe.special')
-const price   = 3 + roll(3, state.seed, state.turn, 'cafe.price')
+const special = drawOne(CAKES, state.seed, state.turn, 'cafe.special')
+const price   = 3 + draw(3, state.seed, state.turn, 'cafe.price')
 const queue   = chance(1, 4, state.seed, state.turn, 'cafe.queue')
 
 // Wrong: one number, carved up.
@@ -64,42 +64,42 @@ import { hash } from '@ifloom/engine'
 function hash(text: string): number
 ```
 
-Turns a string into a 32-bit unsigned whole number, using FNV-1a followed by the murmur3 finaliser. Changing one character changes every bit. `roll`, `pick` and `chance` are built on it.
+Turns a string into a 32-bit unsigned whole number, using FNV-1a followed by the murmur3 finaliser. Changing one character changes every bit. `draw`, `drawOne` and `chance` are built on it.
 
 ```ts
 hash('market') // a number in [0, 2^32)
 ```
 
-## roll
+## draw
 
 ```ts
-import { roll } from '@ifloom/engine'
+import { draw } from '@ifloom/engine'
 
-function roll(max: number, ...parts: (string | number)[]): number
+function draw(max: number, ...parts: (string | number)[]): number
 ```
 
 A whole number in `[0, max)`, from the parts joined with `:`. Returns `0` when `max` is `0` or less.
 
 ```ts
-roll(6, state.seed, state.turn, 'dice') // 0 to 5
+draw(6, state.seed, state.turn, 'dice') // 0 to 5
 ```
 
 For dice in content, a check against a target or a total the prose prints, use the [`roll` effect](/docs/reference/effects#roll) instead. It draws its dice this way and records the roll for the view. See [Dice rolls](/docs/reference/rolls).
 
-**Gotcha:** the parts are joined into one string, so `roll(6, 'a:b')` and `roll(6, 'a', 'b')` are the same draw. Keep `:` out of the names you draw with.
+**Gotcha:** the parts are joined into one string, so `draw(6, 'a:b')` and `draw(6, 'a', 'b')` are the same draw. Keep `:` out of the names you draw with.
 
-## pick
+## drawOne
 
 ```ts
-import { pick } from '@ifloom/engine'
+import { drawOne } from '@ifloom/engine'
 
-function pick<T>(items: readonly T[], ...parts: (string | number)[]): T
+function drawOne<T>(items: readonly T[], ...parts: (string | number)[]): T
 ```
 
 One item from the list. It returns `undefined` for an empty list, though the type doesn't say so.
 
 ```ts
-pick(['rye', 'sourdough', 'brioche'], state.seed, state.turn, 'bakery.loaf')
+drawOne(['rye', 'sourdough', 'brioche'], state.seed, state.turn, 'bakery.loaf')
 ```
 
 ## chance
@@ -153,7 +153,7 @@ The rules for a weight:
 
 It returns `undefined` when nothing can be drawn: an empty list, or one where every weight is 0 or less. Check for that before you use the result.
 
-When every weight is a whole number, the draw is `hash(parts) % total`, walking the list in order. So a list where every weight is 1 draws exactly what [`pick`](#pick) would draw from the same parts, and you can add weights to a list later without changing the draws of a list that has none. With a weight that isn't whole, the hash is scaled to the total instead.
+When every weight is a whole number, the draw is `hash(parts) % total`, walking the list in order. So a list where every weight is 1 draws exactly what [`drawOne`](#drawone) would draw from the same parts, and you can add weights to a list later without changing the draws of a list that has none. With a weight that isn't whole, the hash is scaled to the total instead.
 
 The engine draws with it wherever content has weights:
 
@@ -168,4 +168,4 @@ The engine draws with it wherever content has weights:
 
 ## See it in an example
 
-Small Town: `postLatest` in [`examples/showcase/src/rules.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/rules.ts) rolls a post's likes with `roll(10, state.seed, state.turn, 'likes')`.
+Small Town: `postLatest` in [`examples/showcase/src/rules.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/rules.ts) rolls a post's likes with its context's `roll(10, 'likes')`, which draws from the save's seed and the turn for you.

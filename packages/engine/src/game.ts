@@ -10,7 +10,7 @@ import type { MinigameSceneFields } from './features/minigames.ts'
 import type { BlockUi, ChoiceUi, SceneUi, Ui } from './features/ui.ts'
 import type { FeatureGame } from './features/registry.ts'
 import type { SceneBeat, VideoFlags } from './sceneBody.ts'
-import { bakeScene, isDataScene, type Block } from './scene.ts'
+import { bakeScene, isDataScene, type Block, type DataScene } from './scene.ts'
 import type { MigrationTools } from './intake.ts'
 import type { Effect, Flat, KvValue, GameState, StatKey } from './types.ts'
 
@@ -382,13 +382,18 @@ type CoreGame = {
 /** A game: what the core reads, and what each feature does. */
 export type Game = Flat<CoreGame & FeatureGame>
 
+/** The scene with this id, as content declares it, or undefined. */
+export function sceneById(game: Game, id: string): DataScene | undefined {
+  return game.scenes.find((scene) => scene.id === id)
+}
+
 /**
- * A scene ready to render, by id. A data scene is baked into one the first
- * time it is asked for, so a game can list data scenes and hand-written ones
- * side by side.
+ * A scene ready to render, by id: the data scene baked the first time it is
+ * asked for. Internal; the engine's own tests also hand in scenes already
+ * baked, which pass through as they are.
  */
-export function sceneById(game: Game, id: string): Scene | undefined {
-  const found = game.scenes.find((scene) => scene.id === id)
+export function bakedScene(game: Game, id: string): Scene | undefined {
+  const found: Scene | DataScene | undefined = game.scenes.find((scene) => scene.id === id)
   if (!found) return undefined
   return isDataScene(found) ? bakeScene(game, found) : found
 }

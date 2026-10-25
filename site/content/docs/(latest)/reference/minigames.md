@@ -190,7 +190,7 @@ type MinigameSceneFields = {
 }
 ```
 
-A field on a [scene](/docs/reference/scenes), data or hand-built. The minigame starts when the scene is entered, in the same command, after the scene is counted as [seen](/docs/reference/state#seen). Redrawing the scene that's already open doesn't start it again. If a new game opens on a scene with one, it's running from the first frame.
+A field on a [scene](/docs/reference/scenes). The minigame starts when the scene is entered, in the same command, after the scene is counted as [seen](/docs/reference/state#seen). Redrawing the scene that's already open doesn't start it again. If a new game opens on a scene with one, it's running from the first frame.
 
 ```ts
 {

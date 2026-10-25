@@ -25,7 +25,7 @@ A storylet is an ordinary scene in `game.scenes`. It renders, records [seen](/do
 
 ## Marking a scene
 
-Any scene can be a storylet, a [data scene](/docs/reference/scenes#datascene) or a hand-written [`Scene`](/docs/reference/scenes#scene). These three fields make it one (they're the [`StoryletFields`](/docs/reference/scenes#storyletfields) type):
+Any [scene](/docs/reference/scenes#datascene) can be a storylet. These three fields make it one (they're the [`StoryletFields`](/docs/reference/scenes#storyletfields) type):
 
 | Field | Default | What it does |
 |---|---|---|

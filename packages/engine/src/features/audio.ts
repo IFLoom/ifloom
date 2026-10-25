@@ -309,7 +309,7 @@ function weightedOrder<T>(cx: FeatureContext, items: readonly T[], weightOf: (it
 function shuffled<T>(cx: FeatureContext, items: readonly T[], ...parts: (string | number)[]): T[] {
   const out = [...items]
   for (let i = out.length - 1; i > 0; i -= 1) {
-    const j = cx.roll(i + 1, ...parts, i)
+    const j = cx.draw(i + 1, ...parts, i)
     ;[out[i], out[j]] = [out[j], out[i]]
   }
   return out

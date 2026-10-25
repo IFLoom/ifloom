@@ -108,7 +108,7 @@ let fixed = startingState(game)
 
 `apply(null, game, { type: 'start', seed, kv })` does the same.
 
-**Gotcha.** If you leave the seed out, it's the same for every new game of the same game, so every playthrough draws the same [variants](/docs/reference/random) and [rolls](/docs/reference/random#roll). That's what a test wants, but a UI should pass a fresh seed for each new game.
+**Gotcha.** If you leave the seed out, it's the same for every new game of the same game, so every playthrough draws the same [variants](/docs/reference/random) and [rolls](/docs/reference/rolls). That's what a test wants, but a UI should pass a fresh seed for each new game.
 
 The engine keeps no player name. A name is a key in the kv store like any other, so pass it in `kv` or ask for it with an [input](/docs/reference/inputs). Prose reads it back with `{{playerName}}`, and [`SaveMeta.playerName`](/docs/reference/saves#savemeta) shows whatever the game's [`rules.saveName`](/docs/reference/rules#savename) makes of it.
 

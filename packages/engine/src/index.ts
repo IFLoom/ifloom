@@ -15,11 +15,7 @@ export type {
   ButtonDef,
   Blocked,
   ProseStore,
-  Scene,
-  SceneChoice,
-  SceneCtx,
   SceneMedia,
-  SceneView,
   CarryOver,
   SettingDef,
   StorylineDef,
@@ -69,7 +65,6 @@ export { speakerOf } from './speakers.ts'
 
 // Scenes and prose
 export type { Block, Choice, DataScene, FlowChoice } from './scene.ts'
-export { bakeScene, isDataScene } from './scene.ts'
 export type { BlockExtras } from './flow.ts'
 export { choice, decide, fold, image, jump, minigame, panel, point, say, text, when } from './flow.ts'
 export type { VariantMember } from './prose.ts'
@@ -87,7 +82,6 @@ export { uiProblems } from './features/ui.ts'
 // Audio
 export type { AudioChannelView, AudioCue, AudioState, AudioView, ChannelDef, GameAudio, PlaylistDef, TrackDef } from './features/audio.ts'
 export { audioChannels, audioSrc } from './features/audio.ts'
-export { sceneContext } from './context.ts'
 
 // The state
 export type { Command, Effect, KvValue, GameState, StatKey, Stats, StorylineState } from './types.ts'
@@ -184,7 +178,7 @@ export { inputById, inputRefusal, inputValue } from './inputs.ts'
 export { emptyStoryline, storylineOf, storylineOpen } from './storylines.ts'
 
 // Randomness
-export { chance, hash, pick, roll, weighted } from './random.ts'
+export { chance, draw, drawOne, hash, weighted } from './random.ts'
 
 // Loading, checking and saving
 export type { Content, GameBase, Loaded, LoadOptions, Pack, Patch } from './loader.ts'

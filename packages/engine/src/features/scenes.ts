@@ -113,11 +113,11 @@ export type ScenesShape = {
   game: {
     /** The scene on screen on the first frame. Left out, the game opens on its idle screen. */
     introScene?: string
-    /** Hand-written scenes and data scenes, side by side. */
-    scenes: (Scene | DataScene)[]
+    /** Every scene, as data. */
+    scenes: DataScene[]
   }
   pack: {
-    scenes?: (Scene | DataScene)[]
+    scenes?: DataScene[]
     /** Surgical changes to content an earlier pack declared. */
     patches?: Patch[]
     /** The scene on screen on the first frame: a later pack's replaces an earlier one's. */
@@ -203,15 +203,15 @@ export function dataSceneReferences(scene: DataScene): Reference[] {
  * patches to the data scenes merged so far. The base game's own aren't merged.
  */
 function merge(problem: (from: string, where: string, what: string) => void): PackMerge<ScenesShape['game'], ScenesShape['pack']> {
-  const scenes = new Map<string, { value: Scene | DataScene; from: string }>()
+  const scenes = new Map<string, { value: DataScene; from: string }>()
   return {
     base: () => {},
     add: (pack, from) => {
       for (const scene of pack.scenes ?? []) scenes.set(scene.id, { value: scene, from })
       for (const patch of pack.patches ?? []) {
         const target = scenes.get(patch.scene)
-        if (!target || !isDataScene(target.value)) {
-          problem(from, `patch ${patch.scene}`, target ? 'that scene is not declarative, so it cannot be patched' : 'no such scene')
+        if (!target) {
+          problem(from, `patch ${patch.scene}`, 'no such scene')
           continue
         }
         const scene = { ...target.value, choices: [...target.value.choices] }
@@ -428,7 +428,7 @@ export const scenes = defineFeature<ScenesShape>({
     scene: {
       whyNot: (state, command, game, cx) => {
         if (state.sceneId) return stringOf(game, 'finishFirst')
-        return cx.sceneById(game, command.id) ? undefined : stringOf(game, 'noSuchScene')
+        return cx.bakedScene(game, command.id) ? undefined : stringOf(game, 'noSuchScene')
       },
       run: (state, command) => ({ ...state, sceneId: command.id, flow: null }),
       references: (command) => [{ scene: command.id, as: 'open' }],
@@ -437,7 +437,7 @@ export const scenes = defineFeature<ScenesShape>({
       whyNot: (state, command, game, cx) => {
         if (!state.sceneId) return stringOf(game, 'nothingToChoose')
         // A scene the game no longer has is let through: choosing closes it.
-        if (!cx.sceneById(game, state.sceneId)) return undefined
+        if (!cx.bakedScene(game, state.sceneId)) return undefined
         const choice = cx.rendered.scene()!.choices.find((entry) => entry.id === command.id)
         if (!choice || choice.visible === false) return stringOf(game, 'notOnOffer')
         if (choice.disabled) return choice.disabled
@@ -449,7 +449,7 @@ export const scenes = defineFeature<ScenesShape>({
         return undefined
       },
       run: (state, command, game, cx) => {
-        const scene = cx.sceneById(game, state.sceneId!)
+        const scene = cx.bakedScene(game, state.sceneId!)
         if (!scene) return { ...state, sceneId: null }
         const rendered = cx.rendered.scene()! as Partial<RenderedScene> & SceneView
         const choice = rendered.choices.find((entry) => entry.id === command.id)!
@@ -527,35 +527,19 @@ export const scenes = defineFeature<ScenesShape>({
       tools.check(source, where, [{ when: scene.when }, { ui: scene.ui }])
     }
   },
-  // Render every scene against a probe state and check what falls out. A data scene's content is checked already.
+  // Render every scene against a probe state: a scene that throws for it is a problem. Its content is checked already.
   probe: (game, { name, state }, tools, cx) => {
     const ctx = sceneContext(state, game)
     for (const listed of game.scenes) {
-      const scene = cx.sceneById(game, listed.id)
+      const scene = cx.bakedScene(game, listed.id)
       if (!scene) continue
       const source = { list: 'scene', id: listed.id }
       const where = `scene ${listed.id} (${name})`
-      let shown
       try {
-        shown = scene.render(state, ctx)
+        scene.render(state, ctx)
       } catch (error) {
         tools.problem(source, where, `render threw: ${(error as Error).message}`)
-        continue
       }
-      if (isDataScene(listed)) continue
-      const ids = new Set<string>()
-      for (const choice of shown.choices) {
-        if (ids.has(choice.id)) tools.problem(source, where, `two choices share the id "${choice.id}"`)
-        ids.add(choice.id)
-      }
-      tools.check(source, where, [
-        { markup: shown.body ?? '' },
-        { actionsIn: shown.body ?? '', offers: shown.choices.map((choice) => choice.id) },
-        ...(shown.media ?? []).map((media) => ({ media })),
-        ...Object.entries(shown.audio ?? {}).map(([channel, track]) => ({ channel, track })),
-        { stage: shown.stage, choices: shown.choices.map((choice) => choice.id) },
-        ...shown.choices.map((choice) => ({ within: `choice ${choice.id}`, refs: [{ effects: choice.effects }] })),
-      ])
     }
   },
   // Scenes as gates, as places to go and to open, the choices in them, the draws, and prose blocks.

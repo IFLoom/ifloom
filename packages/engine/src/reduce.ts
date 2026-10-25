@@ -7,7 +7,7 @@ import { runCommandHooks } from './plugin.ts'
 import { commandOf, type CommandRef } from './custom.ts'
 import { startingState } from './intake.ts'
 import { StartOver, commandContext, commandEntry, effectContext, effectEntry, featureContext } from './core.ts'
-import { roll } from './random.ts'
+import { draw } from './random.ts'
 import { afterSteps, screenSteps } from './features/registry.ts'
 
 export function clamp(n: number, min = 0, max = 100): number {
@@ -99,7 +99,7 @@ export function apply(state: GameState | null, game: Game, ref: CommandRef): App
  * instead, with the player's settings and a fresh seed.
  */
 function startedOver(current: GameState, game: Game): GameState {
-  return startingState(game, { seed: roll(2 ** 31, 'newGame', current.seed, current.turn), settings: current.settings })
+  return startingState(game, { seed: draw(2 ** 31, 'newGame', current.seed, current.turn), settings: current.settings })
 }
 
 function run(current: GameState, game: Game, command: Command): GameState {

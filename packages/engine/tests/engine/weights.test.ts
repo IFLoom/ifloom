@@ -6,7 +6,7 @@ import { poolPick } from '../../src/features/media.ts'
 import { featureContext } from '../../src/core.ts'
 import { apply } from '../../src/reduce.ts'
 import { startingState } from '../../src/intake.ts'
-import { pick, weighted } from '../../src/random.ts'
+import { drawOne, weighted } from '../../src/random.ts'
 import { problemsOf } from '../fixtures/checked.ts'
 import { view } from '../../src/view.ts'
 import { fixture } from '../fixtures/town.ts'
@@ -38,8 +38,8 @@ describe('weighted', () => {
     expect(draws.size).toBe(3)
   })
 
-  it('draws what pick would when every weight is 1', () => {
-    for (const seed of seeds.slice(0, 50)) expect(weighted(items, () => 1, 'menu', seed)).toBe(pick(items, 'menu', seed))
+  it('draws what drawOne would when every weight is 1', () => {
+    for (const seed of seeds.slice(0, 50)) expect(weighted(items, () => 1, 'menu', seed)).toBe(drawOne(items, 'menu', seed))
   })
 
   it('never draws a weight of 0 or less, and gives undefined when nothing can be drawn', () => {

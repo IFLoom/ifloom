@@ -5,6 +5,7 @@ import { definePlugin } from '../../src/plugin.ts'
 import { proseStore } from '../../src/prose.ts'
 import { startingState } from '../../src/intake.ts'
 import type { Game } from '../../src/game.ts'
+import { baked } from '../fixtures/baked.ts'
 import { fixture, loadWhole } from '../fixtures/town.ts'
 import { problemsOf } from '../fixtures/checked.ts'
 
@@ -96,33 +97,22 @@ describe('checkGame', () => {
     expect(problemsOf({ ...fixture(), introScene: 'lost' })).toEqual(['introScene: unknown scene "lost"'])
   })
 
-  it('renders every scene against each probe, and checks a hand-built scene by what it shows', () => {
+  it('renders every scene against each probe, and reports one that throws', () => {
     const game: Game = {
       ...fixture(),
       scenes: [
         ...fixture().scenes,
-        {
-          id: 'porch',
-          render: (state) => ({
-            body: '[[sound:knock]]',
-            choices: [{ id: 'in', label: 'In', effects: [{ scene: state.turn > 0 ? 'hall' : null }] }],
-          }),
-        },
-        {
+        baked({
           id: 'cellar',
           render: () => {
             throw new Error('too dark')
           },
-        },
+        }),
       ],
     }
     expect(problemsOf(game)).toEqual([])
     const later = { ...startingState(game), turn: 3 }
-    expect(problemsOf(game, [{ name: 'later', state: later }])).toEqual([
-      'scene porch (later): unknown track "knock"',
-      'scene porch (later): choice in: goes to unknown scene "hall"',
-      'scene cellar (later): render threw: too dark',
-    ])
+    expect(problemsOf(game, [{ name: 'later', state: later }])).toEqual(['scene cellar (later): render threw: too dark'])
   })
 })
 

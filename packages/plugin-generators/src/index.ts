@@ -12,7 +12,7 @@
 import {
   definePlugin,
   parseRef,
-  roll,
+  draw,
   statDef,
   statValue,
   weighted,
@@ -103,7 +103,7 @@ function entryWeight(entry: PoolEntry): number | undefined {
 }
 
 /** One field drawn: from the parts that seed it, plus where it is in the template. */
-function draw(field: FieldDef, game: Game, parts: (string | number)[]): KvValue {
+function drawField(field: FieldDef, game: Game, parts: (string | number)[]): KvValue {
   if (typeof field !== 'object' || field === null) return field
   if ('pool' in field) {
     const pool = poolDefs(game).find((entry) => entry.id === field.pool)
@@ -114,9 +114,9 @@ function draw(field: FieldDef, game: Game, parts: (string | number)[]): KvValue 
     const [low, high] = field.between
     const min = Math.ceil(Math.min(low, high))
     const max = Math.floor(Math.max(low, high))
-    return min + roll(max - min + 1, ...parts)
+    return min + draw(max - min + 1, ...parts)
   }
-  return field.join.map((part, n) => String(draw(part, game, [...parts, n]))).join(field.with ?? ' ')
+  return field.join.map((part, n) => String(drawField(part, game, [...parts, n]))).join(field.with ?? ' ')
 }
 
 /**
@@ -126,15 +126,15 @@ function draw(field: FieldDef, game: Game, parts: (string | number)[]): KvValue 
  */
 export function drawEntity(template: TemplateDef, state: GameState, game: Game, n: number): GeneratedEntity {
   const parts = (field: string) => [ID, state.seed, template.id, n, field]
-  const text = (field: FieldDef | undefined, name: string) => (field === undefined ? {} : { [name]: String(draw(field, game, parts(name))) })
+  const text = (field: FieldDef | undefined, name: string) => (field === undefined ? {} : { [name]: String(drawField(field, game, parts(name))) })
   const stats: Record<string, number> = {}
   for (const [id, field] of Object.entries(template.stats ?? {})) {
-    const value = Number(draw(field, game, parts(`stat:${id}`)))
+    const value = Number(drawField(field, game, parts(`stat:${id}`)))
     if (Number.isFinite(value)) stats[id] = value
   }
   const kv: Record<string, KvValue> = {}
   // Drawn under `flag:<id>`, the name from before the kv store, so a seed deals the same values it always has.
-  for (const [id, field] of Object.entries(template.kv ?? {})) kv[id] = draw(field, game, parts(`flag:${id}`))
+  for (const [id, field] of Object.entries(template.kv ?? {})) kv[id] = drawField(field, game, parts(`flag:${id}`))
   return { ...text(template.name, 'name'), ...text(template.desc, 'desc'), ...text(template.image, 'image'), stats, kv }
 }
 

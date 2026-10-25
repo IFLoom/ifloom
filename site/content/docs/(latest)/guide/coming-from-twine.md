@@ -588,13 +588,13 @@ const windowSeat: DataScene = {
 const sit: Effect = { scene: { from: 'cafe', otherwise: 'cafe.quiet' } }
 ```
 
-**A value worked out in code** uses [`pick`, `roll`, `chance` or `weighted`](/docs/reference/random), with the seed, the turn and a name for the draw. A value in the game's `rules` prints it in prose as `{{v:game/cake}}`:
+**A value worked out in code** uses [`drawOne`, `draw`, `chance` or `weighted`](/docs/reference/random), with the seed, the turn and a name for the draw. A value in the game's `rules` prints it in prose as `{{v:game/cake}}`:
 
 ```ts
-import { pick, type GameRules } from '@ifloom/engine'
+import { drawOne, type GameRules } from '@ifloom/engine'
 
 export const rules: GameRules = {
-  values: { cake: (state) => pick(['lemon', 'carrot', 'walnut'], state.seed, state.turn, 'cafe.cake') },
+  values: { cake: (state) => drawOne(['lemon', 'carrot', 'walnut'], state.seed, state.turn, 'cafe.cake') },
 }
 ```
 
@@ -666,8 +666,8 @@ Harlowe's macros map to the same places as SugarCube's.
 | `(link-goto: "Go to the café", "Cafe")` | A choice with `{ scene: 'cafe' }`, labelled by the prose key `street#cafe` |
 | `(go-to: "Cafe")` | The `scene` effect, on a choice or a [trigger](/docs/reference/triggers) |
 | `(display: "Menu")` | A prose key, `cafe.menu`, used as a block in each scene that shows it |
-| `(either: "rain", "sun")` | A [variants](/docs/reference/prose#variantmember) block, or [`pick`](/docs/reference/random#pick) in a value of the game's own |
-| `(random: 1, 6)` | [`roll`](/docs/reference/random#roll) in the game's own code, or `{ kv: key, of: 'minigame', random: [1, 6] }` in a minigame |
+| `(either: "rain", "sun")` | A [variants](/docs/reference/prose#variantmember) block, or [`drawOne`](/docs/reference/random#drawone) in a value of the game's own |
+| `(random: 1, 6)` | `roll` on the [context](/docs/reference/custom#customcontext) of the game's own code, or `{ kv: key, of: 'minigame', random: [1, 6] }` in a minigame |
 | `(dm: "name", "Soup", "price", 6)` | An [entity](/docs/reference/entities) of a declared kind, with its own stats and kv store |
 | `(a: "lemon", "carrot")` | A plain TypeScript array in your content, or [things the player holds](/docs/reference/entities#notes-photos-and-other-things-made-in-play) when they gather them |
 | `\|order>[…]` with `(replace: ?order)[…]` | A choice that stays on the scene and sets a kv key, and a block whose `when` reads it |

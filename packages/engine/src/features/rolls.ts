@@ -166,7 +166,7 @@ export const rolls = defineFeature<RollsShape>({
         // Dice the checker reports roll nothing.
         if ('problem' in read) return state
         const made = state.rolls.made
-        const faces = Array.from({ length: read.count }, (_, die) => 1 + cx.roll(read.sides, 'roll', state.seed, state.turn, made, effect.roll, die))
+        const faces = Array.from({ length: read.count }, (_, die) => 1 + cx.draw(read.sides, 'roll', state.seed, state.turn, made, effect.roll, die))
         const extra = effect.plus === undefined ? 0 : cx.amount(state, game, effect.plus)
         const against = effect.against === undefined ? undefined : cx.amount(state, game, effect.against)
         const plus = read.plus + extra

@@ -46,11 +46,8 @@ export function fixture({ locks, resets, ...rules }: Game['rules'] & Pick<Game, 
     ],
     scenes: [
       // Where a new game opens: nothing to read, and nothing to do but carry on.
-      { id: 'start', render: () => ({ choices: [] }) },
-      {
-        id: 'rosa.hello',
-        render: () => ({ body: 'Rosa looks up from the dough.', choices: [{ id: 'bye', label: 'Bye', effects: [{ scene: null }] }] }),
-      },
+      { id: 'start', body: [], choices: [] },
+      { id: 'rosa.hello', body: [{ words: 'Rosa looks up from the dough.' }], choices: [{ id: 'bye', label: 'Bye', effects: [{ scene: null }] }] },
     ],
     storylines: [{ id: 'rosa', name: 'Rosa' }],
     rules,

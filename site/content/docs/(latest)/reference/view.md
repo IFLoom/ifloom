@@ -184,7 +184,7 @@ for (const person of people) for (const talk of person.actions) addButton(`${per
 |---|---|---|
 | `id` | `string \| null` | The scene, or `null` for the stage. |
 | `key` | `string` | Which screen this is: `scene:<id>` while a scene is open, `minigame:<id>` while a [minigame](#minigame) runs, `room:<id>` for a plugin's stage (a place, with the places plugin), and `room` with none. It changes when the screen does, and only then, so a UI keys an animation or moves focus by it. A choice that keeps the same scene open keeps the key. |
-| `title` | `string` | The title in the scene's rendered [`SceneView`](/docs/reference/scenes#sceneview), else the scene's own, else the title of a plugin's [stage](/docs/reference/plugins#stage) (the room's name, with the places plugin), else the game's `title`. |
+| `title` | `string` | The scene's own title, else the title of a plugin's [stage](/docs/reference/plugins#stage) (the room's name, with the places plugin), else the game's `title`. |
 | `body` | `string` | The raw prose, with its markup. In-place `{ media }` blocks are in it as markup, and `@pool` markup is already resolved to files. |
 | `beats` | [`SceneBeat[]`](/docs/reference/prose#scenebeat) | The prose parsed, with the scene's pictures and videos in place and pool markup resolved to files. Draw these, not `body`. In a [flowing scene](/docs/reference/flows#in-the-view), everything up to where the flow stops, with a `chose` beat at each past pick. |
 | `fresh` | `number` | The index of the first beat the flow's last step brought (a pick, from its `chose` beat on, a jump, or a minigame or panel done with), so a UI can animate only those. `0` before the visit has taken a step, for a scene with no decisions, and for the room. |
@@ -451,7 +451,7 @@ Every pressable thing in a `View`: scene choices, the game's and plugins' button
 - **`disabled`** is the reason it can't be pressed. Show it.
 - **`warning`** means the button can be pressed, but the reducer will refuse it with this line. It's a plugin [guard](/docs/reference/plugins#guards)'s soft refusal, such as the [calendar](/docs/plugins/calendar#the-guard)'s `That would run past dawn.` Show it and offer something else. It comes from [`warningOf`](/docs/reference/actions#warningof), on buttons and scene choices alike. The places plugin's exits carry one too, as [`ExitView.warning`](/docs/plugins/places#exitview). The engine sets no warnings of its own.
 - **`irreversible`** is a warning to show before sending. The [React UI](/docs/react/components#choicebutton) prints it on the button.
-- **`tags`** are a scene choice's [`tags`](/docs/reference/scenes#scenechoice), passed through as words to style or filter it by. The engine gives them no meaning, and other buttons have none.
+- **`tags`** are a scene choice's [`tags`](/docs/reference/scenes#choice), passed through as words to style or filter it by. The engine gives them no meaning, and other buttons have none.
 - **`price`** is what pressing it will cost. See [Price](#price).
 - **`ui`** is a scene choice's or an action's [presentation hints](/docs/reference/ui-hints), as written, such as the React UI's [`transition`](/docs/react/hints#transition-on-a-choice). Left out when there are none.
 

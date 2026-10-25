@@ -1,6 +1,6 @@
 import { stringOf } from './strings.ts'
 import { sceneContext } from './context.ts'
-import { sceneById, type Game, type SceneView } from './game.ts'
+import { bakedScene, type Game, type SceneView } from './game.ts'
 import { pluginGuards, pluginsWatch } from './plugin.ts'
 import { commandContext, commandEntry, featureContext } from './core.ts'
 import { refusals } from './features/registry.ts'
@@ -34,7 +34,7 @@ export function rendering(state: GameState, game: Game, picks?: Record<string, s
     scene: () => {
       if (!done) {
         done = true
-        const scene = state.sceneId ? sceneById(game, state.sceneId) : undefined
+        const scene = state.sceneId ? bakedScene(game, state.sceneId) : undefined
         view = scene?.render(state, sceneContext(state, game, picks))
       }
       return view

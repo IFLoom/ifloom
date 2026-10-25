@@ -4,7 +4,7 @@
  * so this is where a typo such as `ui: { transiton: 'fade' }` is caught. Call
  * it in a test, beside `checkGame`.
  */
-import { inlineMarkup, isDataScene, type Block, type Game } from '@ifloom/engine'
+import { inlineMarkup, type Block, type Game } from '@ifloom/engine'
 import type { InlineComponents } from './game/context.tsx'
 import { MAX_PIPS, TRANSITIONS } from './hints.ts'
 
@@ -113,7 +113,6 @@ export function checkUiHints(game: Game, options: { allow?: readonly string[]; i
   for (const scene of game.scenes) {
     const where = `scene ${scene.id}`
     hints('scene', where, scene.ui)
-    if (!isDataScene(scene)) continue
     blocks(where, scene.body)
     for (const choice of scene.choices) hints('choice', `${where} choice ${choice.id}`, choice.ui)
   }

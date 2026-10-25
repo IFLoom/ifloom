@@ -82,7 +82,7 @@ type HistoryOptions = {
 | Field | What it does | Default |
 |---|---|---|
 | `depth` | How many commands back undo reaches. | `50` |
-| `stopAtIrreversible` | No undo past a choice marked [`irreversible`](/docs/reference/scenes#scenechoice). | `true` |
+| `stopAtIrreversible` | No undo past a choice marked [`irreversible`](/docs/reference/scenes#choice). | `true` |
 | `stopAtNewTurn` | No undo past the start of a new [turn](/docs/reference/state#turn), meaning past the command that ended the last one. That's a choice or an action with a [`turn`](/docs/reference/effects#turn) effect, or the [calendar](/docs/plugins/calendar#commands)'s bed. | `false` |
 | `stopWhen` | No undo past any state where this [condition](/docs/reference/conditions) holds, tested after each command. | none |
 

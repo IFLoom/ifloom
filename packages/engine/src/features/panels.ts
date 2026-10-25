@@ -99,7 +99,7 @@ export const panels = defineFeature<PanelsShape>({
   // One the `panel` effect opened, else the open scene's own, for as long as it is open.
   view: (state, game, _shown, cx) => {
     if (state.panel) return { panel: state.panel }
-    const held = state.sceneId ? cx.sceneById(game, state.sceneId)?.panel : undefined
+    const held = state.sceneId ? cx.bakedScene(game, state.sceneId)?.panel : undefined
     return { panel: held ? { panel: held.panel, with: { ...held.with }, scene: state.sceneId! } : null }
   },
 })

@@ -406,8 +406,10 @@ type Reference =
   | { pool: string; tags?: readonly string[] }
   | { call: CallTable; name: string; with?: PluginArgs }
   | { entry: string; plugin: string; list: string; noun: string }
-  | { picture: string; asWritten?: boolean }
-  | { video: string; asWritten?: boolean }
+  | { reason: Reason | undefined }
+  | { problem: string }
+  | { picture: string }
+  | { video: string }
   | { audio: string }
   | { markup: string }
   | { when: Condition | undefined }

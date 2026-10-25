@@ -69,10 +69,10 @@ type Effect =
   | { roll: string; dice: Dice; plus?: Amount; against?: Amount }
   | { panel: string | null; with?: Record<string, unknown> }
   | { point: string }
-  | PluginCall
+  | EffectCall
 ```
 
-A [`PluginCall`](/docs/reference/custom#plugincall) is a call by name, `{ 'calendar/pass': { by: 2 } }`, to a plugin's effect or the game's own.
+An [`EffectCall`](/docs/reference/plugins#conditioncall-effectcall-and-commandcall) is a call by name, `{ 'calendar/pass': { by: 2 } }`, to a plugin's effect or the game's own, as a [`PluginCall`](/docs/reference/custom#plugincall), checked in code against what the plugin declares.
 
 Where an effect takes an [`Amount`](/docs/reference/amounts#amount), it can be a number or a number worked out as the effect applies, such as another stat: `{ stat: 'coins', by: { scale: 'rent', by: -1 } }` pays the rent, whatever it is this week.
 

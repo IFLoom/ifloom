@@ -72,7 +72,7 @@ type Condition =
   | { turn: Range }
   | { roll: string; passed?: boolean; critical?: boolean | 'max' | 'min' }
   | ({ timer: string } & Range)
-  | PluginCall
+  | ConditionCall
 ```
 
 A condition names what it reads by its noun, as effects do: `{ stat: 'coins', gte: 3 }`, `{ entity: 'clothing:scarf', at: 'you' }`, `{ storyline: 'ava' }`. The range or `is` sits beside it. A condition that names nothing, such as `turn`, takes its range as its value: `{ turn: { gte: 3 } }`.

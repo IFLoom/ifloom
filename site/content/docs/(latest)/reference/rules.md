@@ -63,6 +63,8 @@ type GameRules = {
 | `view` | What the UI needs from the game's own code, at `view.plugins.game`. See [The view](/docs/reference/plugins#the-view). |
 | `profile` | What the game keeps in the player's [profile](/docs/reference/profile), under `game`. See [The profile](/docs/reference/plugins#the-profile). |
 
+To have content written in code checked against your functions, declare what each `game/` call takes, as a plugin does: see [The game's own calls](/docs/reference/plugins#the-games-own-calls).
+
 The engine runs the game's code as a plugin whose id is `game`, which is why no plugin can have that id. It comes first, before every plugin, so its providers answer before theirs and its hooks run before theirs.
 
 ## RulesContext

@@ -66,9 +66,13 @@
  * effects and once), and the `activity` command is `action`. Scenes and
  * beats (API pass P3): `view.scene.image` for `stageImage`, and
  * `SpeakerView` read from the speaker's entity. Flowing scenes: the `point`
- * effect, `GameState.flow`, and `view.scene.fresh`.
+ * effect, `GameState.flow`, and `view.scene.fresh`. One `Amount` (API pass
+ * P5): range bounds, the `stat` effect's `by` and `to`, the `kv` effect's
+ * `by` and `random`, the `entity` effect's `by` and `to`, `move`'s `by`, and
+ * a roll's `plus` and `against` each take an `Amount`.
  */
 import type {
+  Amount,
   ActionDef,
   AudioState,
   AudioView,
@@ -135,7 +139,7 @@ import type {
   VariantMember,
 } from '../../src/index.ts'
 
-export type FrozenRange = { gte?: number; gt?: number; lte?: number; lt?: number }
+export type FrozenRange = { gte?: Amount; gt?: Amount; lte?: Amount; lt?: Amount }
 
 export type FrozenCondition =
   | { all: FrozenCondition[] }
@@ -298,12 +302,12 @@ export type FrozenCommand =
 
 export type FrozenEffect =
   /** Change a stat `by` an amount or put it `to` a value, held to its range: the player's, or with `of`, an entity's. */
-  | { stat: StatKey; by: number; of?: string }
-  | { stat: StatKey; to: number; of?: string }
+  | { stat: StatKey; by: Amount; of?: string }
+  | { stat: StatKey; to: Amount; of?: string }
   /** Set a kv key `to` a value, change its number `by` an amount, or draw it at random: the player's, or with `of`, someone else's. */
   | { kv: string; to: KvValue; of?: string }
-  | { kv: string; by: number; of?: string }
-  | { kv: string; random: [number, number]; of?: string }
+  | { kv: string; by: Amount; of?: string }
+  | { kv: string; random: [Amount, Amount]; of?: string }
   /** A new entity of a kind, made `with` what it is given, `like` another, given `at` a holder. */
   | { create: string; like?: string; with?: CreatedEntity; at?: Placement }
   /** Take an entity out of the game. */
@@ -311,10 +315,10 @@ export type FrozenEffect =
   /** The same effects for every entity of a kind, or of a selection, where `where` holds, with `'$'` as each. */
   | { each: string | Select; where?: FrozenCondition; effects: EffectRef[] }
   /** Change how many of a thing a holder (`'you'` if left out) holds, `by` or `to`. */
-  | { entity: string; at?: string; by: number }
-  | { entity: string; at?: string; to: number }
+  | { entity: string; at?: string; by: Amount }
+  | { entity: string; at?: string; to: Amount }
   /** Move a thing to another holder. */
-  | { move: string; from?: string; to: string; by?: number }
+  | { move: string; from?: string; to: string; by?: Amount }
   /** Play as a protagonist, or `null` for the player. */
   | { you: string | null }
   /** Open a scene, close the one on screen with null, or draw one from a set. */
@@ -334,7 +338,7 @@ export type FrozenEffect =
   | { timer: string; to?: number | null }
   | { timer: string; by: number }
   /** Throw dice, keep the total in the kv store under the key, and record the roll. */
-  | { roll: string; dice: Dice; plus?: number | { stat: string }; against?: number }
+  | { roll: string; dice: Dice; plus?: Amount; against?: Amount }
   /** Open a panel by name, with what it needs; `panel: null` closes it. */
   | { panel: string | null; with?: Record<string, unknown> }
   /** In a choice of a flowing scene: carry the flow on from this point. */

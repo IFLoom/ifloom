@@ -7,6 +7,7 @@
  * a scene is rendered once per screen rather than once per question asked
  * about it.
  */
+import { amountOf } from './amount.ts'
 import { stringOf } from './strings.ts'
 import { pluginButtons, pluginCommand, pluginPrices, pluginStage, pluginsWatch, pluginViews } from './plugin.ts'
 import { defaultRuntime, renderScene, type RenderedScene } from './scene.ts'
@@ -413,14 +414,14 @@ function priced(state: GameState, game: Game, cost: { stats?: Record<string, num
 
 /**
  * A scene choice spends through its effects: any spendable
- * stat down. Listed in the order the game declared its stats.
+ * stat down, by the amount it reads now. Listed in the order the game declared its stats.
  */
 function priceOfEffects(state: GameState, game: Game, effects: readonly Effect[], spends: Record<string, number> = {}): Price | undefined {
   const spent: Record<string, number> = { ...spends }
   for (const effect of effects) {
-    if ('stat' in effect && 'by' in effect && effect.of === undefined && effect.by < 0 && statDef(game, effect.stat)?.spendable) {
-      spent[effect.stat] = (spent[effect.stat] ?? 0) - effect.by
-    }
+    if (!('stat' in effect && 'by' in effect && effect.of === undefined && statDef(game, effect.stat)?.spendable)) continue
+    const by = amountOf(state, game, effect.by)
+    if (by < 0) spent[effect.stat] = (spent[effect.stat] ?? 0) - by
   }
   const stats: Record<string, number> = {}
   for (const stat of game.stats ?? []) {

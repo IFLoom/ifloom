@@ -14,7 +14,7 @@
 import {
   actionReferences,
   artSrc,
-  customValue,
+  amountOf,
   commandOf,
   definePlugin,
   entityDesc,
@@ -42,7 +42,7 @@ import {
   type Reference,
   type SceneBeat,
   type RenderedChoice,
-  type ValueRef,
+  type Amount,
 } from '@ifloom/engine'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
@@ -93,11 +93,11 @@ export type AppDef = {
   /** On the home screen but greyed out while one holds, with its reason; with `hide`, off the home screen. */
   blocked?: Blocked[]
   /**
-   * A count from a value, asked with its arguments
-   * (`{ value: 'messages/unread', with: { channel: 'texts' } }`), or a dot
-   * while a condition holds (`{ when }`).
+   * A count, as an `Amount`: a value asked with its arguments
+   * (`{ value: 'messages/unread', with: { channel: 'texts' } }`), a stat or a
+   * kv key's number. Or a dot while a condition holds (`{ when }`).
    */
-  badge?: ValueRef | { when: Condition }
+  badge?: Amount | { when: Condition }
   sections: Section[]
 }
 
@@ -180,10 +180,9 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
   }
 
   function badgeOf(state: GameState, game: Game, app: AppDef): number | boolean {
-    if (!app.badge) return 0
-    if ('when' in app.badge) return holds(state, app.badge.when, game)
-    const value = Number(customValue(game, app.badge.value)?.(state, app.badge.with ?? {}) ?? 0)
-    return Number.isFinite(value) ? value : 0
+    if (app.badge === undefined) return 0
+    if (typeof app.badge === 'object' && 'when' in app.badge) return holds(state, app.badge.when, game)
+    return amountOf(state, game, app.badge)
   }
 
   function sectionView(state: GameState, context: PluginContext<DevicesState>, app: AppDef, section: Section, index: number): SectionView {
@@ -322,8 +321,8 @@ export function devices(): DefinedPlugin<DevicesState, DevicesView> {
             { entry: app.on, plugin: ID, list: 'devices', noun: 'device' },
             { when: app.when },
             ...(app.blocked ?? []).map((entry) => ({ when: entry.when })),
-            ...(app.badge && 'value' in app.badge ? [{ value: app.badge.value }] : []),
-            ...(app.badge && 'when' in app.badge ? [{ when: app.badge.when }] : []),
+            ...(app.badge !== undefined && !(typeof app.badge === 'object' && 'when' in app.badge) ? [{ amount: app.badge }] : []),
+            ...(typeof app.badge === 'object' && 'when' in app.badge ? [{ when: app.badge.when }] : []),
             ...app.sections.flatMap((section): Reference[] => {
               if ('things' in section) return [{ kind: section.things.of }, ...(section.things.at !== undefined ? [{ holder: section.things.at }] : [])]
               if ('panel' in section) return [{ openPanel: section.panel, with: section.with ?? {} }]

@@ -10,6 +10,10 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- [Amounts](/docs/reference/amounts): most places that take a number also take an `Amount`, a number worked out in play. It's a number, a stat (`'rent'` or `{ stat, of }`), a [formula](/docs/reference/stats#formula), a kv key's number (`{ kv, of }`), a value by name (`{ value, with }`) or a count of entities (`{ count }`). So "coins at least the rent" is `{ stat: 'coins', gte: { stat: 'rent' } }`, with no code. Range bounds take one, as do a `stat` effect's `by` and `to`, a `kv` effect's `by` and `random`, the `entity` and `move` effects' `by`, a stat's `min` and `max`, and a roll's `plus` and `against`. [`amountOf(state, game, amount)`](/docs/reference/amounts#amountof) reads one, and the checker reports one naming a stat, kv owner or value the game doesn't have.
+- An achievement's progress `value` and a device app's `badge` take any `Amount`, so a badge can count a kv key or a stat.
+- [`inRange`](/docs/reference/conditions#inrange) takes the state and the game, to work out a bound that is an amount.
+
 - The React UI shows who says a spoken line in a small label over its words, the `speaker-name` part: the speaker's name from their entity, or on the player's own lines the name the save is listed under (`rules.saveName`), else `You`. A quote that answers the line before names no one, and narration has no label. Each preset styles it, and `[data-part="speaker-name"] { display: none }` hides it. The vanilla, Vue and Svelte templates show it too, as `.speaker-name`.
 
 - [Flowing scenes](/docs/reference/flows): a scene's body can stop partway through at a decision, `decide('order', [choice('tea', 'A pot of tea', { then: [...] }), ...])`, and once the player picks, the pick's `then` comes next and the scene reads on after it, the earlier text still on the page with a `chose` beat where the pick was. A `point()` marks a place a choice can go to with `jump()`, so questions can be asked in any order. A point can sit anywhere, in a section or a pick's `then` too, so a jump can also skip ahead, and the flow reads on from the point. Sections show under a `when()`, a minigame or a panel is played where it stands and the flow waits for it, and `fold()` makes a part the player opens and shuts. Words go in place with `text()`, which takes off shared indentation, and `say(who, words)`. The builders are exported from `@ifloom/engine` and return plain data. The save keeps the visit's path in `state.flow` (older saves load with none), every pick is a logged `choose`, so replay, undo and the backlog are exact, and the checker reports duplicate ids, a jump to nowhere, a decision that can get stuck and text that can't be reached. See [Writing a flowing scene](/docs/recipes/flowing-scenes).
@@ -324,6 +328,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Removed
 
+- The achievements plugin's `ProgressValue` type and `progressValue` function: a progress value is an [`Amount`](/docs/reference/amounts), read with `amountOf`.
 - **Breaking:** a plugin's `entities` provider. A plugin brings entities in its [`content`](/docs/reference/plugins#kinds-and-entities), and the places and shop plugins read theirs from their traits.
 - **Breaking:** the `mono`, `mail` and `prop` beats, an image beat's `rotate`, `MailHeader`, `PropFace` and the React UI's `ui.mailHeader` word.
 - **Breaking:** a plugin's `speaker` provider, `pluginSpeaker` and the cast's `cast/person` query. A scene's speaker is its entity.

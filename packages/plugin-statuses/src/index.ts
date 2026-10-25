@@ -224,11 +224,11 @@ export function statuses(): DefinedPlugin<StatusesState, StatusesView> {
     strings: { unknown: 'Nothing like that can happen.', notActive: 'That isn’t affecting you.' },
     conditions: {
       /** `{ 'statuses/active': { status, stacks? } }`: active, with that many stacks if asked. */
-      active: (_state, args, { slice }) => {
+      active: (state, args, { slice, game }) => {
         const record = slice.active.find((entry) => entry.id === idOf(args))
         if (!record) return false
         const stacks = stacksOf(args)
-        return stacks ? inRange(record.left.length, stacks) : true
+        return stacks ? inRange(record.left.length, stacks, state, game) : true
       },
     },
     effects: {
@@ -255,7 +255,13 @@ export function statuses(): DefinedPlugin<StatusesState, StatusesView> {
     onTurn: (state, context) => (context.slice.active.length ? endTurn(state, context) : state),
     view: (_state, { slice, game }) => statusesView(slice, game),
     references: {
-      calls: (_kind, _name, args) => (idOf(args) === '' ? [] : [{ entry: idOf(args), plugin: ID, list: 'statuses', noun: 'status' }]),
+      calls: (_kind, _name, args) => [
+        ...(idOf(args) === '' ? [] : [{ entry: idOf(args), plugin: ID, list: 'statuses', noun: 'status' }]),
+        // A stacks bound can be an amount: `{ gte: { stat: 'resolve' } }`.
+        ...Object.values(stacksOf(args) ?? {})
+          .filter((bound) => typeof bound !== 'number')
+          .map((amount) => ({ amount })),
+      ],
       content: (game) =>
         statusesOf(game).map((def) => ({
           list: 'statuses',

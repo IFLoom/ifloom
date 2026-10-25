@@ -12,9 +12,8 @@
  * animate; a command that rolls nothing leaves it empty.
  */
 import type { Reference } from '../references.ts'
-import type { GameState } from '../types.ts'
+import type { Amount, GameState } from '../types.ts'
 import { defineFeature } from './feature.ts'
-import { statValue } from './stats.ts'
 
 /** Dice as content writes them: notation (`'2d6+1'`, `'1d20'`, `'d100'`) or a count of dice and their sides. */
 export type Dice = string | { count?: number; sides: number }
@@ -66,11 +65,11 @@ export type RollsShape = {
   effects: {
     /**
      * Throw dice and keep the total in the kv store under `key`. `dice` is
-     * notation (`'2d6+1'`) or `{ count, sides }`; `plus` adds a number or a
-     * stat's value (`{ stat: 'strength' }`); with `against`, the roll passes
-     * when the total reaches it.
+     * notation (`'2d6+1'`) or `{ count, sides }`; `plus` adds an `Amount`,
+     * such as a stat's value (`{ stat: 'strength' }`); with `against`, also
+     * an `Amount`, the roll passes when the total reaches it.
      */
-    roll: { roll: string; dice: Dice; plus?: number | { stat: string }; against?: number }
+    roll: { roll: string; dice: Dice; plus?: Amount; against?: Amount }
   }
   view: {
     /** The rolls the last command made, in order. Empty when it made none. */
@@ -107,21 +106,14 @@ export function readDice(dice: unknown): { count: number; sides: number; plus: n
   return { count, sides, plus }
 }
 
-/** What is wrong with a roll effect's key, dice, `plus` and `against`. */
-function rollProblems(ref: { dice: unknown; key?: unknown; plus?: unknown; against?: unknown }): string[] {
+/** What is wrong with a roll effect's key and dice. Its `plus` and `against` are amounts, checked as amounts. */
+function rollProblems(ref: { dice: unknown; key?: unknown }): string[] {
   const problems: string[] = []
   if (typeof ref.key !== 'string' || !KEY.test(ref.key)) {
     problems.push(`roll key ${JSON.stringify(ref.key)} must be letters, digits and _, not starting with a digit, so {{key}} can show it`)
   }
   const read = readDice(ref.dice)
   if ('problem' in read) problems.push(read.problem)
-  const plus = ref.plus
-  const plusOk =
-    plus === undefined ||
-    (typeof plus === 'number' && Number.isFinite(plus)) ||
-    (typeof plus === 'object' && plus !== null && typeof (plus as { stat?: unknown }).stat === 'string')
-  if (!plusOk) problems.push('roll plus must be a number or { stat }')
-  if (ref.against !== undefined && !(typeof ref.against === 'number' && Number.isFinite(ref.against))) problems.push('roll against must be a number')
   return problems
 }
 
@@ -175,7 +167,8 @@ export const rolls = defineFeature<RollsShape>({
         if ('problem' in read) return state
         const made = state.rolls.made
         const faces = Array.from({ length: read.count }, (_, die) => 1 + cx.roll(read.sides, 'roll', state.seed, state.turn, made, effect.roll, die))
-        const extra = typeof effect.plus === 'object' ? statValue(state, game, effect.plus.stat, undefined, cx) : (effect.plus ?? 0)
+        const extra = effect.plus === undefined ? 0 : cx.amount(state, game, effect.plus)
+        const against = effect.against === undefined ? undefined : cx.amount(state, game, effect.against)
         const plus = read.plus + extra
         const total = faces.reduce((sum, face) => sum + face, 0) + plus
         const critical = faces.every((face) => face === read.sides) ? 'max' : faces.every((face) => face === 1) ? 'min' : undefined
@@ -185,7 +178,7 @@ export const rolls = defineFeature<RollsShape>({
           faces,
           plus,
           total,
-          ...(effect.against === undefined ? {} : { against: effect.against, passed: total >= effect.against }),
+          ...(against === undefined ? {} : { against, passed: total >= against }),
           ...(critical ? { critical } : {}),
         }
         return {
@@ -195,8 +188,9 @@ export const rolls = defineFeature<RollsShape>({
         }
       },
       references: (effect) => {
-        const refs: Reference[] = [{ dice: effect.dice, key: effect.roll, plus: effect.plus, against: effect.against }]
-        if (typeof effect.plus === 'object' && effect.plus !== null && typeof effect.plus.stat === 'string') refs.push({ stat: effect.plus.stat })
+        const refs: Reference[] = [{ dice: effect.dice, key: effect.roll }]
+        if (effect.plus !== undefined) refs.push({ within: 'roll plus', refs: [{ amount: effect.plus }] })
+        if (effect.against !== undefined) refs.push({ within: 'roll against', refs: [{ amount: effect.against }] })
         return refs
       },
     },

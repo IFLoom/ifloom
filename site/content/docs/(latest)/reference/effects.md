@@ -45,17 +45,17 @@ An effect's key names what it changes (`stat`, `kv`, `entity`, `scene`, `timer` 
 
 ```ts
 type Effect =
-  | { stat: StatKey; by: number; of?: string }
-  | { stat: StatKey; to: number; of?: string }
+  | { stat: StatKey; by: Amount; of?: string }
+  | { stat: StatKey; to: Amount; of?: string }
   | { kv: string; to: KvValue; of?: string }
-  | { kv: string; by: number; of?: string }
-  | { kv: string; random: [number, number]; of?: string }
+  | { kv: string; by: Amount; of?: string }
+  | { kv: string; random: [Amount, Amount]; of?: string }
   | { create: string; like?: string; with?: CreatedEntity; at?: Placement }
   | { remove: string }
   | { each: string | Select; where?: Condition; effects: Effect[] }
-  | { entity: string; at?: string; by: number }
-  | { entity: string; at?: string; to: number }
-  | { move: string; from?: string; to: string; by?: number }
+  | { entity: string; at?: string; by: Amount }
+  | { entity: string; at?: string; to: Amount }
+  | { move: string; from?: string; to: string; by?: Amount }
   | { you: string | null }
   | { scene: string | null | { from: string; otherwise?: string } }
   | { closeStoryline: string; turns: number }
@@ -66,13 +66,15 @@ type Effect =
   | { minigame: string }
   | { timer: string; to?: number | null }
   | { timer: string; by: number }
-  | { roll: string; dice: Dice; plus?: number | { stat: string }; against?: number }
+  | { roll: string; dice: Dice; plus?: Amount; against?: Amount }
   | { panel: string | null; with?: Record<string, unknown> }
   | { point: string }
   | PluginCall
 ```
 
 A [`PluginCall`](/docs/reference/custom#plugincall) is a call by name, `{ 'calendar/pass': { by: 2 } }`, to a plugin's effect or the game's own.
+
+Where an effect takes an [`Amount`](/docs/reference/amounts#amount), it can be a number or a number worked out as the effect applies, such as another stat: `{ stat: 'coins', by: { scale: 'rent', by: -1 } }` pays the rent, whatever it is this week.
 
 Conditions use the same keys, so `{ stat: 'coins', gte: 4 }` asks about what `{ stat: 'coins', by: -4 }` changes. Which one an object is depends on where it's written: in `when` it's a condition, in `effects` an effect.
 
@@ -140,7 +142,9 @@ Runs a [plugin](/docs/reference/plugins)'s effect by its full name, or one of th
 
 Sets a key in the [kv store](/docs/reference/state#kv) `to` a value, or changes its number `by` an amount. A key that isn't a number yet (unset, text or `true`) counts as 0, so the first `by: 1` makes it 1. Test a count with a [range](/docs/reference/conditions#kv), such as `{ kv: 'coffeesBought', gte: 3 }`.
 
-With `random`, it's set to a whole number drawn between the two ends, both included: `{ kv: 'arrow', random: [1, 4] }`. The draw comes from the save's seed, so the same commands draw the same number every time.
+`by` is an [`Amount`](/docs/reference/amounts#amount), so `{ kv: 'savings', by: { stat: 'wage' } }` adds the wage. `to` is set as written, since text there is a value, not a stat's id.
+
+With `random`, it's set to a whole number drawn between the two ends, both included: `{ kv: 'arrow', random: [1, 4] }`. Each end can be an amount too. The draw comes from the save's seed, so the same commands draw the same number every time.
 
 #### Whose key it is
 
@@ -430,14 +434,14 @@ In a choice of a [flowing scene](/docs/reference/flows): once the choice's `then
 Throws dice and keeps the total in the [kv store](/docs/reference/state#kv) under the key that `roll` names, so `{ kv: 'skim', gte: 8 }` tests it and `{{skim}}` prints it in prose. The roll itself is recorded too: the [`roll` condition](/docs/reference/conditions#roll) reads whether it passed, and [`view.rolls`](/docs/reference/view#rolls) gives a UI the faces to show.
 
 - **`dice`** is notation, `'2d6'`, `'1d20'`, `'d100'` or `'2d6+1'`, or an object, `{ count: 2, sides: 6 }`. A notation's `+1` or `-1` is added to the total.
-- **`plus`** adds a number, or the player's stat as [`statValue`](/docs/reference/stats#statvalue) reads it (modifiers included): `plus: { stat: 'strength' }`.
-- **`against`** is a target. The roll passes when the total reaches it, so `2d6` against 8 passes on 8 or more.
+- **`plus`** adds an [`Amount`](/docs/reference/amounts#amount): a number, or the player's stat as [`statValue`](/docs/reference/stats#statvalue) reads it (modifiers included), `plus: { stat: 'strength' }`.
+- **`against`** is a target, also an `Amount`. The roll passes when the total reaches it, so `2d6` against 8 passes on 8 or more, and `against: { kv: 'wall' }` reads the wall's height as the dice are thrown.
 
 A roll is a critical when every die shows its top face (`'max'`) or every die shows 1 (`'min'`). On one die, that's a natural 20 or a natural 1 on a d20. A critical doesn't change whether a roll passed. Test it with the condition's `critical` if your game says a natural 20 always succeeds.
 
 Each die is drawn from the save's seed, the turn, the save's count of rolls so far, the key and the die's place. The count goes up with every roll, so two rolls in one command differ and trying again in the same turn rolls afresh. A replay of the same commands makes the same rolls, and reloading a save and trying again gives the same result. See [Dice rolls](/docs/reference/rolls).
 
-The [content checker](/docs/reference/checks#in-an-effect) reports dice it can't read, a die with fewer than 2 sides, more than 100 dice, a key that `{{key}}` couldn't print, a `plus` that isn't a number or `{ stat }`, an unknown stat, and an `against` that isn't a number. Dice it can't read roll nothing.
+The [content checker](/docs/reference/checks#in-an-effect) reports dice it can't read, a die with fewer than 2 sides, more than 100 dice, a key that `{{key}}` couldn't print, and a `plus` or `against` that isn't an amount or names a stat the game doesn't have. Dice it can't read roll nothing.
 
 ## Computed effects
 

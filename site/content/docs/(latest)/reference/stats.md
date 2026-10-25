@@ -30,8 +30,8 @@ type StatDef = {
   of?: string
   label: string
   start?: number
-  min?: number
-  max?: number | ValueRef
+  min?: Amount
+  max?: Amount
   visible?: Condition
   listed?: boolean
   spendable?: boolean
@@ -52,8 +52,8 @@ type StatRound = 'none' | 'floor' | 'round' | 'ceil'
 | `of` | the player's | The [kind](/docs/reference/entities#kinddef) of entity that keeps it. `'staff'` gives every member of staff one. See [Entity stats](#entity-stats). |
 | `label` | | What the player reads, in the view's stat list and in the default `lacking` line. |
 | `start` | `0` | The value a new game starts with. |
-| `min` | `0` | The lowest any effect or cost can take it. |
-| `max` | `100` | The highest any effect or payment can take it. Either a number, or a [`ValueRef`](/docs/reference/custom#values), `{ value: name, with? }`, for a ceiling that moves. The name is a [value](/docs/reference/custom#values), the game's own as `game/<name>` or a plugin's, the game's or a plugin's, worked out against the state each time and asked with `with`. See [`statMax`](#statmax). Raise it for coins and other open-ended counts. |
+| `min` | `0` | The lowest any effect or cost can take it. A number, or an [`Amount`](/docs/reference/amounts#amount) for a floor that moves. |
+| `max` | `100` | The highest any effect or payment can take it. A number, or an [`Amount`](/docs/reference/amounts#amount) for a ceiling that moves, worked out against the state each time: another stat (`{ stat: 'fitness' }`), a kv key, or a [value](/docs/reference/custom#values) by name, the game's own as `game/<name>` or a plugin's, asked with `with`. See [`statMax`](#statmax). Raise it for coins and other open-ended counts. |
 | `visible` | always | A [condition](/docs/reference/conditions). The stat appears in [`view().stats`](/docs/reference/view) only while it holds. Use it for a stat the player hasn't discovered yet. |
 | `listed` | `true` | `false` keeps it out of `view().stats`, for a stat your UI shows its own way, such as a purse in the corner or an energy gauge. It's still in [`view().statsById`](/docs/reference/view#statview). |
 | `spendable` | `false` | The stat is spent on things. A scene choice's [price](/docs/reference/view#price) only counts its negative `stat` effects on spendable stats. |
@@ -178,7 +178,7 @@ Every one of the player's stats (those declared without `of`) at its `start` val
 function statMax(state: GameState, game: Game, id: string): number
 ```
 
-The highest the stat can go right now. If its `max` is a number, that's the answer. If it's `{ value: name }`, it's the [value](/docs/reference/custom#values) of that name worked out against `state` and turned into a number. If the stat declares no `max`, or isn't declared at all, it's `100`.
+The highest the stat can go right now. If its `max` is a number, that's the answer. If it's any other [`Amount`](/docs/reference/amounts#amount), it's worked out against `state`, such as the player's `fitness` for `{ stat: 'fitness' }` or the [value](/docs/reference/custom#values) of that name for `{ value: name }`. If the stat declares no `max`, or isn't declared at all, it's `100`.
 
 ```ts
 import { statMax } from '@ifloom/engine'
@@ -187,7 +187,7 @@ import { statMax } from '@ifloom/engine'
 statMax(state, game, 'energy') // fitness 12 → 92
 ```
 
-**Gotcha.** A `{ value }` name that neither the game's [`rules.values`](/docs/reference/custom#values) nor a plugin declares quietly gives `100`. A value that returns text that isn't a number gives `NaN`, and every effect on the stat then gives `NaN` too.
+**Gotcha.** A `{ value }` name that neither the game's [`rules.values`](/docs/reference/custom#values) nor a plugin declares quietly gives `100`. So does a ceiling that comes back to the stat itself while it's worked out. A value that returns text that isn't a number gives `100` too.
 
 ## clampStat
 
@@ -195,7 +195,7 @@ statMax(state, game, 'energy') // fitness 12 → 92
 function clampStat(state: GameState, game: Game, id: string, value: number): number
 ```
 
-Returns `value` held between the stat's declared `min` and its [`statMax`](#statmax) against `state`. Those are 0 and 100 if the stat declares neither, or isn't declared. Effects and costs both go through it.
+Returns `value` held between the stat's declared `min` and its [`statMax`](#statmax), each worked out against `state`. Those are 0 and 100 if the stat declares neither, or isn't declared. Effects and costs both go through it.
 
 **Gotcha.** A moving ceiling doesn't pull a stat down when it drops. The value is only held to the new ceiling the next time something changes it.
 

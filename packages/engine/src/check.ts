@@ -4,6 +4,7 @@
  * names. `loadGame` runs it on the game it merges; a hand-built game calls
  * `checkGame` itself.
  */
+import { amountProblems, amountReferences } from './amount.ts'
 import { commandOf, customCall, customValue, hasCustomEffect, customCondition, shortFormProblem, type CommandRef, type EffectRef } from './custom.ts'
 import type { Game } from './game.ts'
 import { absentPartner, pluginArgProblems, pluginById, pluginCommand, pluginName, type CallTable, type Plugin } from './plugin.ts'
@@ -176,6 +177,7 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
     if ('within' in ref) {
       return resolve(ref.refs, where).map((what) => (ref.within.startsWith('in each ') && what.startsWith('in each ') ? what : `${ref.within}: ${what}`))
     }
+    if ('amount' in ref) return [...amountProblems(ref.amount), ...resolve(amountReferences(ref.amount), where)]
     if ('when' in ref) return ref.when ? [...shapeProblems(ref.when), ...resolve(conditionReferences(ref.when), where)] : []
     if ('effects' in ref) return [...(ref.effects ?? []).flatMap(keyProblem), ...resolve((ref.effects ?? []).flatMap(effectReferences), where)]
     if ('command' in ref) return ref.command ? [...typeProblem(ref.command), ...resolve(commandReferences(ref.command), where)] : []

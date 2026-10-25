@@ -122,7 +122,7 @@ type AppDef = {
   on: string
   when?: Condition
   blocked?: Blocked[]
-  badge?: ValueRef | { when: Condition }
+  badge?: Amount | { when: Condition }
   sections: Section[]
 }
 ```
@@ -135,7 +135,7 @@ type AppDef = {
 | `on` | The [device](#devicedef) it's on. |
 | `when` | When the app is installed. It stays off the home screen until this holds. If you leave it out, it's always installed. |
 | `blocked` | The app shows on the home screen but is greyed out while one of these [`Blocked`](/docs/reference/actions#blocked) entries holds, with the first one's `reason`. With `hide: true`, it's left off the home screen instead. A [lock](/docs/reference/locks) on `devices/open` greys it out too. |
-| `badge` | A [`ValueRef`](/docs/reference/custom#values), `{ value, with }`, shows the number that value gives for its arguments, such as `{ value: 'messages/unread', with: { channel: 'texts' } }`. `{ when }` shows a dot while a condition holds. There's no badge if you leave it out. |
+| `badge` | An [`Amount`](/docs/reference/amounts#amount) shows that number, such as a value with its arguments, `{ value: 'messages/unread', with: { channel: 'texts' } }`, or a kv key's count, `{ kv: 'letters' }`. `{ when }` shows a dot while a condition holds. There's no badge if you leave it out. |
 | `sections` | What fills the app, top to bottom. |
 
 An icon's states come from fields you already have. A locked icon comes from `blocked`, a new one from a badge, and a waiting one from an action's reason.
@@ -657,7 +657,7 @@ When the game loads, the plugin reports, with `where` as `apps <id>`:
 
 - an app on a device the game doesn't have (`unknown device "…"`)
 - anything the app's `when`, a `blocked` entry or a dot badge names that the game doesn't have, such as `unknown storyline "…"`
-- a count badge naming a value neither a plugin nor the game has (`no custom value named "…"`)
+- a count badge naming a value neither a plugin nor the game has (`no custom value named "…"`), or a stat the game doesn't declare
 - a `things` section's kind the game doesn't declare (`unknown kind "…"`), and a holder in its `at` that can't hold things
 - a plugin the game wasn't built with (`the game has no plugin named "…"`)
 - a panel's `with` that the plugin drawing that panel refuses, such as the shop's unknown vendor

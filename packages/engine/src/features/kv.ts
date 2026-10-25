@@ -7,7 +7,7 @@ import { entityKv, entityOf, hasEntity, ofKind, ownerOf, writeEntity } from '../
 import { storylineOf } from '../storylines.ts'
 import type { Game } from '../game.ts'
 import type { Reference } from '../references.ts'
-import type { GameState, KvValue, Range } from '../types.ts'
+import type { Amount, GameState, KvValue, Range } from '../types.ts'
 import { defineFeature, mergedByKey, type FeatureContext } from './feature.ts'
 import { asCount, bounded, inRange, wanted } from '../range.ts'
 
@@ -37,10 +37,11 @@ export type KvShape = {
     /**
      * Set a key `to` a value, change its number `by` an amount (a value that
      * is not a number counts as 0), or set it to a whole number drawn from
-     * `random: [min, max]`, both included and seeded by the save. With `of`,
+     * `random: [min, max]`, both included and seeded by the save. `by` and
+     * the ends of `random` are each an `Amount`. With `of`,
      * the key is an entity's, a storyline's or the running minigame's.
      */
-    kv: { kv: string; to: KvValue; of?: string } | { kv: string; by: number; of?: string } | { kv: string; random: [number, number]; of?: string }
+    kv: { kv: string; to: KvValue; of?: string } | { kv: string; by: Amount; of?: string } | { kv: string; random: [Amount, Amount]; of?: string }
   }
   game: {
     /** The kv store a new game starts with, such as the stretch it opens in: `{ phase: 'arrival' }`. */
@@ -98,16 +99,21 @@ function storeOf(state: GameState, game: Game | undefined, of: string | undefine
   }
 }
 
+/** A key's value in the store `of` names, or undefined when it is unset or the owner isn't there. */
+export function kvValue(state: GameState, game: Game | undefined, key: string, of: string | undefined): KvValue | undefined {
+  return storeOf(state, game, of)?.read[key]
+}
+
 /** What `of` names, for the content checker: a kind, a storyline, or a minigame's key. */
-function ownerReferences(of: string | undefined, key: string): Reference[] {
+export function ownerReferences(of: string | undefined, key: string): Reference[] {
   if (of === MINIGAME_KV) return [{ minigameKv: key }]
   if (of?.startsWith(STORYLINE_KV)) return [{ storyline: of.slice(STORYLINE_KV.length) }]
   return ofKind(of)
 }
 
 /** A whole number from `random`, both ends included: the minigame's own draw while one runs, else one seeded by the save, the turn and the key. */
-function drawn(state: GameState, of: string | undefined, key: string, random: [number, number], cx: FeatureContext): number {
-  const [low, high] = [Math.min(...random), Math.max(...random)].map(Math.round)
+function drawn(state: GameState, of: string | undefined, key: string, ends: [number, number], cx: FeatureContext): number {
+  const [low, high] = [Math.min(...ends), Math.max(...ends)].map(Math.round)
   const running = state.minigame
   if (of === MINIGAME_KV && running)
     return low + cx.roll(high - low + 1, 'minigame', running.id, state.seed, plays(state, running.id), running.steps, 'var', key)
@@ -158,12 +164,17 @@ export const kv = defineFeature<KvShape>({
         let value: KvValue
         if ('by' in effect) {
           const was = store.read[effect.kv]
-          value = (typeof was === 'number' ? was : 0) + effect.by
-        } else if ('random' in effect) value = drawn(state, effect.of, effect.kv, effect.random, cx)
-        else value = effect.to
+          value = (typeof was === 'number' ? was : 0) + cx.amount(state, game, effect.by)
+        } else if ('random' in effect) {
+          const [low, high] = effect.random.map((end) => cx.amount(state, game, end))
+          value = drawn(state, effect.of, effect.kv, [low, high], cx)
+        } else value = effect.to
         return store.write(state, effect.kv, value)
       },
-      references: (effect) => ownerReferences(effect.of, effect.kv),
+      references: (effect) => [
+        ...ownerReferences(effect.of, effect.kv),
+        ...('by' in effect ? [{ amount: effect.by }] : 'random' in effect ? effect.random.map((amount) => ({ amount })) : []),
+      ],
     },
   },
   pack: {

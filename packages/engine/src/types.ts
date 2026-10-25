@@ -1,4 +1,5 @@
-import type { PluginCall } from './calls.ts'
+import type { PluginCall, ValueRef } from './calls.ts'
+import type { Select } from './features/entities.ts'
 import type { PluginSlice } from './plugin.ts'
 import type { FeatureCommands, FeatureConditions, FeatureEffects, FeatureState } from './features/registry.ts'
 
@@ -74,7 +75,39 @@ export type StartOptions = {
  * that an arbitrary function never was. Anything genuinely derived escapes
  * through `{ 'game/name': args }`, a condition the game's `rules` declare.
  */
-export type Range = { gte?: number; gt?: number; lte?: number; lt?: number }
+/**
+ * A number content names, worked out when it is read: a number as written, a
+ * stat of the player's by id, a stat with `{ stat, of? }`, a
+ * kv key's number with `{ kv, of? }` (a value that is not a number counts as
+ * 0), a value by name with `{ value, with? }`, or how many entities there are
+ * with `{ count, where?, units? }`, counted as the `count` condition counts.
+ * They combine as a `Formula` does (`sum`, `product`, `min`, `max`, `scale`,
+ * `clamp`), with any amount as a part. `of` names whose, as it does in conditions. Read one with `amountOf`.
+ * Effects take one in `by` and `to`, ranges in their bounds, stats in `min`
+ * and `max`, and rolls in `plus` and `against`:
+ * `{ stat: 'coins', gte: { stat: 'rent' } }` holds while the player has at
+ * least the rent.
+ */
+export type Amount =
+  | number
+  | StatKey
+  | { stat: StatKey; of?: string }
+  | { kv: string; of?: string }
+  | ValueRef
+  | { count: string | Select; where?: Condition; units?: true }
+  | { sum: Amount[] }
+  | { product: Amount[] }
+  | { min: Amount[] }
+  | { max: Amount[] }
+  | { scale: Amount; by: number }
+  | { clamp: Amount; min?: number; max?: number }
+
+/**
+ * Bounds a number is compared with, as conditions compare one: `{ gte: 3 }`
+ * is 3 or more. Each bound is an `Amount`, so it can be another number in
+ * the game: `{ gte: { stat: 'rent' } }`.
+ */
+export type Range = { gte?: Amount; gt?: Amount; lte?: Amount; lt?: Amount }
 
 /** The conditions the core keeps itself, by the key that tells each apart. The features' are in `features/`. */
 export type CoreConditions = {

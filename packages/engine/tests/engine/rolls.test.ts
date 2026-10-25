@@ -196,16 +196,16 @@ describe('checking rolls', () => {
       { roll: 'one', dice: { sides: 1 } },
       { roll: '9lives', dice: 'd6' },
       { roll: 'strong', dice: 'd6', plus: { stat: 'strength' } },
-      { roll: 'odd', dice: 'd6', plus: 'two' as unknown as number, against: 'x' as unknown as number },
+      { roll: 'odd', dice: 'd6', plus: [2] as unknown as number, against: { stat: 'x' } },
     ])
     const problems = checkGame(game).problems.map((problem) => problem.what)
     expect(problems).toEqual([
       'dice "2x6" is not dice notation such as "2d6+1", "1d20" or "d100"',
       'dice have 1 sides; a die needs at least 2',
       'roll key "9lives" must be letters, digits and _, not starting with a digit, so {{key}} can show it',
-      'unknown stat "strength"',
-      'roll plus must be a number or { stat }',
-      'roll against must be a number',
+      'roll plus: unknown stat "strength"',
+      'roll plus: an amount is a number, a stat id, a formula, { stat }, { kv }, { value } or { count }; this one is [2]',
+      'roll against: unknown stat "x"',
     ])
   })
 })

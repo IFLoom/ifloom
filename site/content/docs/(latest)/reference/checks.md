@@ -153,7 +153,8 @@ Every condition is walked, including inside `all`, `any`, `not` and a `count`'s 
 | `dice "…" is not dice notation such as "2d6+1", "1d20" or "d100"` | A [`roll`](/docs/reference/effects#roll) effect's `dice` that isn't notation. The effect rolls nothing. |
 | `dice have … sides; a die needs at least 2`, `… dice; a roll throws 1 to 100` | A `roll` effect's dice, in notation or as `{ count, sides }`. |
 | `roll key "…" must be letters, digits and _, not starting with a digit, so {{key}} can show it` | The kv key a `roll` effect names. |
-| `roll plus must be a number or { stat }`, `roll against must be a number` | A `roll` effect's `plus` and `against`. |
+| `roll plus: …`, `roll against: …` | A `roll` effect's `plus` and `against`, read as [amounts](/docs/reference/amounts#checking-amounts). |
+| `an amount is a number, a stat id, a formula, { stat }, { kv }, { value } or { count }; …` | An [`Amount`](/docs/reference/amounts) of a shape the engine can't read. |
 | `unknown stat "…"` | A `roll` effect's `plus: { stat }`. |
 | `unknown timer "…"` | A [`timer`](/docs/reference/effects#timer) effect naming a timer the game doesn't declare. The effect does nothing. |
 | `a timer’s to must be a number of milliseconds above 0, or null to stop it`, `a timer’s by must be a number of milliseconds` | A `timer` effect's `to` and `by`. |
@@ -374,7 +375,8 @@ type Reference =
   | { openPanel: string; with?: PluginArgs }
   | { channel: string; track: string | null | undefined }
   | { sound: string }
-  | { dice: unknown; key?: unknown; plus?: unknown; against?: unknown }
+  | { dice: unknown; key?: unknown }
+  | { amount: unknown }
   | { ui: unknown }
   | { pool: string; tags?: readonly string[] }
   | { call: CallTable; name: string; with?: PluginArgs }

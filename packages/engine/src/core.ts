@@ -18,6 +18,7 @@ import { sceneById } from './game.ts'
 import { actionById } from './action.ts'
 import { sceneContext } from './context.ts'
 import { fillTokens } from './prose.ts'
+import { amountOf } from './amount.ts'
 import { pluginAudio, pluginCommand, pluginEffect, pluginStatModifiers, rulesContext, runStatHooks, runTurnDoneHooks, runTurnHooks } from './plugin.ts'
 import { runEffects, runIn } from './reduce.ts'
 import { effectsIn, effectsOf, whyNotIn } from './availability.ts'
@@ -51,6 +52,7 @@ export function featureContext(): FeatureContext {
     weighted,
     roll,
     customValue,
+    amount: (state, game, amount) => amountOf(state, game, amount),
     fillTokens,
     pluginAudio,
     statModifiers: (state, game) => pluginStatModifiers(game, state),

@@ -27,7 +27,7 @@ import {
 } from '../entities.ts'
 import { canHold, heldBy, heldCount, holderOf, moveHeld, placementCounts, setHeld } from '../holdings.ts'
 import type { Game } from '../game.ts'
-import type { GameState } from '../types.ts'
+import type { Amount, GameState } from '../types.ts'
 import { withUi, type EntityUi, type Ui } from './ui.ts'
 import { defineFeature, type FeatureCheckTools, type FeatureContext } from './feature.ts'
 
@@ -68,13 +68,14 @@ export type HoldingsShape = {
      * Change how many of a thing a holder holds `by` an amount, or put it
      * `to` a count: `'you'` if `at` is left out. Never below 0, and never
      * more than 1 of a unique thing, which is taken from whoever else held it.
+     * `by` and `to` are each an `Amount`.
      */
-    entity: { entity: string; at?: string; by: number } | { entity: string; at?: string; to: number }
+    entity: { entity: string; at?: string; by: Amount } | { entity: string; at?: string; to: Amount }
     /**
      * Move a thing `to` another holder: `from` a holder, else from wherever a
-     * unique thing is, or from `'you'`; up to `by` of it, else all there is.
+     * unique thing is, or from `'you'`; up to `by` of it (an `Amount`), else all there is.
      */
-    move: { move: string; from?: string; to: string; by?: number }
+    move: { move: string; from?: string; to: string; by?: Amount }
     /** Play as a protagonist, a unique entity, so `'you'` is them: `{ you: 'character:ava' }`; `{ you: null }` to be the player again. */
     you: { you: string | null }
   }
@@ -175,20 +176,26 @@ export const holdings = defineFeature<HoldingsShape>({
   },
   effects: {
     entity: {
-      apply: (state, effect, game) => {
+      apply: (state, effect, game, cx) => {
         const at = effect.at ?? YOU
-        const count = 'to' in effect ? effect.to : heldCount(state, game, effect.entity, at) + effect.by
+        const count = 'to' in effect ? cx.amount(state, game, effect.to) : heldCount(state, game, effect.entity, at) + cx.amount(state, game, effect.by)
         return setHeld(state, game, effect.entity, at, count)
       },
-      references: (effect) => [...ofKind(effect.entity), ...(effect.at !== undefined ? [{ holder: effect.at }] : [])],
+      references: (effect) => [
+        ...ofKind(effect.entity),
+        ...(effect.at !== undefined ? [{ holder: effect.at }] : []),
+        { amount: 'to' in effect ? effect.to : effect.by },
+      ],
     },
     move: {
-      apply: (state, effect, game) => {
+      apply: (state, effect, game, cx) => {
         const from = moveSource(state, game, effect.move, effect.from)
-        return from === undefined ? state : moveHeld(state, game, effect.move, from, effect.to, effect.by)
+        const by = effect.by === undefined ? undefined : cx.amount(state, game, effect.by)
+        return from === undefined ? state : moveHeld(state, game, effect.move, from, effect.to, by)
       },
       references: (effect) => [
         ...ofKind(effect.move),
+        ...(effect.by !== undefined ? [{ amount: effect.by }] : []),
         ...(effect.from !== undefined ? [{ holder: effect.from }] : []),
         { holder: effect.to },
         ...(effect.move === effect.to ? [{ holder: effect.to, holds: effect.move }] : []),

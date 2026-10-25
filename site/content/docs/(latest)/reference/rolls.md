@@ -28,15 +28,15 @@ Anywhere effects run. A player makes one with a choice, an [action](/docs/refere
 ## The effect
 
 ```ts
-{ roll: string, dice: Dice, plus: number | { stat: string }, against: number }
+{ roll: string, dice: Dice, plus?: Amount, against?: Amount }
 ```
 
 | Field | Meaning |
 |---|---|
 | `roll` | The kv key the total goes in, and the key the [`roll` condition](/docs/reference/conditions#roll) reads. Letters, digits and `_`, not starting with a digit, so `{{skim}}` prints it. |
 | `dice` | What to throw: notation or `{ count, sides }`. See [`Dice`](#dice). |
-| `plus` | Added to the total: a number, or `{ stat }` for the player's stat as [`statValue`](/docs/reference/stats#statvalue) reads it. |
-| `against` | A target. The roll passes when the total is at least this. |
+| `plus` | Added to the total: an [`Amount`](/docs/reference/amounts#amount), such as a number or `{ stat: 'strength' }` for the player's stat as [`statValue`](/docs/reference/stats#statvalue) reads it. |
+| `against` | A target, also an `Amount`. The roll passes when the total is at least this. The [`Roll`](#roll) keeps the number it read. |
 
 The [effects reference](/docs/reference/effects#roll) has the details, and [Checks](/docs/reference/checks#in-an-effect) lists what the content checker reports.
 

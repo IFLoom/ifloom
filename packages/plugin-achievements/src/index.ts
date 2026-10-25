@@ -10,33 +10,27 @@
  * both.
  */
 import {
-  customValue,
+  amountOf,
   definePlugin,
   holds,
   notify,
   stringOf,
-  statValue,
+  type Amount,
   type Condition,
   type DefinedPlugin,
   type EffectRef,
-  type Formula,
   type Game,
   type GameState,
   type PluginProblem,
-  type Reference,
-  type ValueRef,
 } from '@ifloom/engine'
 import { CONTENT_VERSION, contentMigrations } from './upgrade.ts'
 
 /**
- * Where a progress count comes from: a formula over the player's stats (a
- * stat's id is the simplest), one stat of an entity, a key in the kv store, or a custom
- * value by name (the game's or a plugin's, such as `quests/updates`).
+ * How far towards an achievement the player is: the value, out of `target`.
+ * The value is an `Amount`, such as a stat's id, a kv key (`{ kv: 'coffees' }`)
+ * or a value by name (`{ value: 'quests/updates' }`).
  */
-export type ProgressValue = Formula | { stat: string; of?: string } | { kv: string } | ValueRef
-
-/** How far towards an achievement the player is: the value, out of `target`. */
-export type ProgressDef = { value: ProgressValue; target: number }
+export type ProgressDef = { value: Amount; target: number }
 
 /** An achievement, as content declares it. */
 export type AchievementDef = {
@@ -102,33 +96,10 @@ export function achievementDefs(game: Game): AchievementDef[] {
   return (game.data?.[ID]?.achievements ?? []) as AchievementDef[]
 }
 
-function evaluate(formula: Formula, state: GameState, game: Game): number {
-  if (typeof formula === 'number') return formula
-  if (typeof formula === 'string') return statValue(state, game, formula)
-  const all = (list: Formula[]) => list.map((entry) => evaluate(entry, state, game))
-  if ('sum' in formula) return all(formula.sum).reduce((a, b) => a + b, 0)
-  if ('product' in formula) return all(formula.product).reduce((a, b) => a * b, 1)
-  if ('min' in formula && Array.isArray(formula.min)) return formula.min.length ? Math.min(...all(formula.min)) : 0
-  if ('max' in formula && Array.isArray(formula.max)) return formula.max.length ? Math.max(...all(formula.max)) : 0
-  if ('scale' in formula) return evaluate(formula.scale, state, game) * formula.by
-  if ('clamp' in formula) return Math.max(formula.min ?? -Infinity, Math.min(formula.max ?? Infinity, evaluate(formula.clamp, state, game)))
-  return 0
-}
-
-/** A progress value read now. Anything that isn't a number reads as 0. */
-export function progressValue(value: ProgressValue, state: GameState, game: Game): number {
-  let out: unknown
-  if (typeof value === 'object' && 'stat' in value) out = statValue(state, game, value.stat, value.of)
-  else if (typeof value === 'object' && 'kv' in value) out = state.kv[value.kv]
-  else if (typeof value === 'object' && 'value' in value) out = customValue(game, value.value)?.(state, value.with ?? {})
-  else out = evaluate(value, state, game)
-  return typeof out === 'number' && Number.isFinite(out) ? out : 0
-}
-
 /** Has this achievement's condition, or its progress, been met in this state? */
 function met(def: AchievementDef, state: GameState, game: Game): boolean {
   if (def.when) return holds(state, def.when, game)
-  if (def.progress) return progressValue(def.progress.value, state, game) >= def.progress.target
+  if (def.progress) return amountOf(state, game, def.progress.value) >= def.progress.target
   return false
 }
 
@@ -156,7 +127,7 @@ function entry(def: AchievementDef, earnedOn: number | null, earned: boolean, st
   let progress: AchievementEntry['progress'] = null
   if (def.progress && !hidden) {
     const target = def.progress.target
-    progress = { value: earned ? target : Math.max(0, Math.min(target, progressValue(def.progress.value, state, game))), target }
+    progress = { value: earned ? target : Math.max(0, Math.min(target, amountOf(state, game, def.progress.value))), target }
   }
   return {
     id: def.id,
@@ -240,7 +211,7 @@ export function achievements(): DefinedPlugin<AchievementsState, AchievementsVie
           id: def.id,
           refs: [
             { within: 'when', refs: [{ when: def.when }] },
-            ...(def.progress ? [{ within: 'progress', refs: progressRefs(def.progress.value) }] : []),
+            ...(def.progress ? [{ within: 'progress', refs: [{ amount: def.progress.value }] }] : []),
             ...(def.image ? [{ picture: def.image }] : []),
           ],
         })),
@@ -253,30 +224,6 @@ export function achievements(): DefinedPlugin<AchievementsState, AchievementsVie
       return problems
     },
   })
-}
-
-/** What a progress value names, for the content checker. */
-function progressRefs(value: ProgressValue): Reference[] {
-  if (typeof value === 'number') return []
-  if (typeof value === 'string') return [{ stat: value }]
-  if ('stat' in value) return [{ stat: value.stat, ...(value.of !== undefined ? { of: value.of } : {}) }]
-  if ('kv' in value) return []
-  if ('value' in value) return [{ value: value.value }]
-  const parts: Formula[] =
-    'sum' in value
-      ? value.sum
-      : 'product' in value
-        ? value.product
-        : 'min' in value && Array.isArray(value.min)
-          ? value.min
-          : 'max' in value && Array.isArray(value.max)
-            ? value.max
-            : 'scale' in value
-              ? [value.scale]
-              : 'clamp' in value
-                ? [value.clamp]
-                : []
-  return parts.flatMap(progressRefs)
 }
 
 /** A condition: the achievement is earned in this save. */

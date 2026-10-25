@@ -119,8 +119,10 @@ export function checkUiHints(game: Game, options: { allow?: readonly string[]; i
   }
   for (const action of game.actions ?? []) hints('choice', `action ${action.id}`, action.ui)
   for (const stat of game.stats ?? []) {
-    // A ceiling from a custom value isn't known until play.
-    const range = typeof stat.max === 'object' ? undefined : (stat.max ?? 100) - (stat.min ?? 0)
+    // A bound worked out in play isn't known until then.
+    const max = stat.max ?? 100
+    const min = stat.min ?? 0
+    const range = typeof max === 'number' && typeof min === 'number' ? max - min : undefined
     hints('stat', `stat ${stat.id}`, stat.ui, { range })
   }
   for (const kind of game.kinds ?? []) hints('entity', `kind ${kind.id}`, kind.ui)

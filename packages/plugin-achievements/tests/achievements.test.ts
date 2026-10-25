@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  amountOf,
   apply,
   createRunner,
   holds,
@@ -14,7 +15,7 @@ import {
   type GameState,
   type Content,
 } from '@ifloom/engine'
-import { achievementEarned, achievements, grantAchievement, progressValue, type AchievementDef, type AchievementsView } from '../src/index.ts'
+import { achievementEarned, achievements, grantAchievement, type AchievementDef, type AchievementsView } from '../src/index.ts'
 
 const defs: AchievementDef[] = [
   { id: 'regular', title: 'A regular', description: 'Ten coffees at the café.', progress: { value: { kv: 'coffees' }, target: 10 } },
@@ -105,12 +106,12 @@ describe('achievements', () => {
   it('read progress from a stat, a formula, an entity’s stat, a kv key or a custom value', () => {
     const g = game()
     const state = { ...fresh(g), kv: { coffees: 3, mood: 'fine' } }
-    expect(progressValue('coins', state, g)).toBe(10)
-    expect(progressValue({ sum: ['coins', { scale: 'charm', by: 5 }] }, state, g)).toBe(20)
-    expect(progressValue({ kv: 'coffees' }, state, g)).toBe(3)
-    expect(progressValue({ kv: 'mood' }, state, g)).toBe(0)
-    expect(progressValue({ value: 'achievements/earned' }, state, g)).toBe(0)
-    expect(progressValue({ stat: 'coins' }, state, g)).toBe(10)
+    expect(amountOf(state, g, 'coins')).toBe(10)
+    expect(amountOf(state, g, { sum: ['coins', { scale: 'charm', by: 5 }] })).toBe(20)
+    expect(amountOf(state, g, { kv: 'coffees' })).toBe(3)
+    expect(amountOf(state, g, { kv: 'mood' })).toBe(0)
+    expect(amountOf(state, g, { value: 'achievements/earned' })).toBe(0)
+    expect(amountOf(state, g, { stat: 'coins' })).toBe(10)
   })
 
   it('can be granted by an effect', () => {

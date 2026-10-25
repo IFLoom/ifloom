@@ -21,7 +21,7 @@ import type { ActionDef, CarryOver, Game, Scene, SceneView } from '../game.ts'
 import type { StatModifier } from '../plugin.ts'
 import type { Profile } from '../profile.ts'
 import type { Reference } from '../references.ts'
-import type { Command, Condition, Effect, GameState, StartOptions } from '../types.ts'
+import type { Amount, Command, Condition, Effect, GameState, StartOptions } from '../types.ts'
 
 /** The core's helpers a feature can call. The core hands one to every hook that needs it. */
 export type FeatureContext = {
@@ -47,6 +47,8 @@ export type FeatureContext = {
   roll: (max: number, ...parts: (string | number)[]) => number
   /** A custom value by name, the game's or a plugin's. */
   customValue: (game: Game | undefined, name: string) => ((state: GameState, args?: Record<string, unknown>) => string | number) | undefined
+  /** An `Amount` worked out in this state, as `amountOf` does. */
+  amount: (state: GameState, game: Game | undefined, amount: Amount) => number
   /** A line with its prose tokens filled in for this save, as `fillTokens` does. */
   fillTokens: (text: string, state: GameState, game: Game) => string
   /** What the plugins' `statModifiers` change about the player's stats right now. */

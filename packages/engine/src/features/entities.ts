@@ -227,14 +227,14 @@ function selected(state: GameState, game: Game | undefined, select: Select, cx: 
 }
 
 /** A `count` condition's selection: a kind's, or the one it gives, with its own `where` and the condition's both asked. */
-function countSelect(condition: EntitiesShape['conditions']['count']): Select {
+export function countSelect(condition: EntitiesShape['conditions']['count']): Select {
   if (typeof condition.count === 'string') return { of: condition.count, where: condition.where }
   const both = [condition.count.where, condition.where].filter((when): when is Condition => when !== undefined)
   return { ...condition.count, where: both.length > 1 ? { all: both } : both[0] }
 }
 
 /** How many a `count` condition counts: distinct things, or with `units`, how many of each are held. */
-function counting(state: GameState, condition: EntitiesShape['conditions']['count'], game: Game | undefined, cx: FeatureContext): number {
+export function counting(state: GameState, condition: EntitiesShape['conditions']['count'], game: Game | undefined, cx: FeatureContext): number {
   const select = countSelect(condition)
   const refs = selected(state, game, select, cx)
   if (!condition.units) return refs.length
@@ -255,7 +255,7 @@ function described(select: Select): string {
 }
 
 /** What a selection names: its kind, holder and trait, and its `where` with `'$'` as one of its kind (left as `'$'` with no kind). */
-function selectReferences(select: Select): Reference[] {
+export function selectReferences(select: Select): Reference[] {
   return [
     ...(select.of !== undefined ? [{ kind: select.of }] : []),
     ...(select.at !== undefined ? [{ holder: select.at }] : []),

@@ -4,7 +4,7 @@
 import type { Game } from '../game.ts'
 import type { GameState, Range } from '../types.ts'
 import { defineFeature, type FeatureContext } from './feature.ts'
-import { inRange, wanted } from '../range.ts'
+import { amountBounds, inRange, rangeWith, wanted } from '../range.ts'
 
 /** What the turns feature adds, as types. */
 export type TurnsShape = {
@@ -58,9 +58,13 @@ export const turns = defineFeature<TurnsShape>({
   },
   conditions: {
     turn: {
-      holds: (state, condition) => inRange(state.turn, condition.turn),
-      explain: (state, condition) => `turn ${state.turn}; wants ${wanted(condition.turn)}`,
-      references: () => [],
+      holds: (state, condition, game, cx) =>
+        inRange(
+          state.turn,
+          rangeWith(condition.turn, (amount) => cx.amount(state, game, amount)),
+        ),
+      explain: (state, condition, game, cx) => `turn ${state.turn}; wants ${wanted(rangeWith(condition.turn, (amount) => cx.amount(state, game, amount)))}`,
+      references: (condition) => amountBounds(condition.turn).map((amount) => ({ amount })),
     },
   },
   effects: {

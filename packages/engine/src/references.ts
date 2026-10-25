@@ -14,6 +14,7 @@ import type { CallTable, PluginArgs } from './plugin.ts'
 import type { Block } from './scene.ts'
 import type { Condition, KvValue } from './types.ts'
 import { commandEntry, conditionEntry, effectEntry } from './core.ts'
+import { boundReferences } from './amount.ts'
 
 /**
  * One thing a piece of content names, for the content checker to resolve.
@@ -75,14 +76,16 @@ export type Reference =
   | { variants: string }
   /** A custom value. */
   | { value: string }
+  /** An `Amount`, which must be well formed, with what it reads looked inside: a stat, a kv key's owner, a value, a count. */
+  | { amount: unknown }
   /** A panel an effect opens, by name, with what it is opened with: asked of the plugins' `panelProblems`. */
   | { openPanel: string; with?: PluginArgs }
   /** Background audio: a track (or silence) on a channel. */
   | { channel: string; track: string | null | undefined }
   /** A track played once. */
   | { sound: string }
-  /** A roll effect's dice, key, `plus` and `against`, which must be well formed. */
-  | { dice: unknown; key?: unknown; plus?: unknown; against?: unknown }
+  /** A roll effect's dice and key, which must be well formed. */
+  | { dice: unknown; key?: unknown }
   /** A `ui` field of presentation hints, which must be data. */
   | { ui: unknown }
   /** A pool, with the tags asked of it. */
@@ -127,7 +130,9 @@ export type Reference =
 export function conditionReferences(condition: Condition | undefined): Reference[] {
   if (!condition) return []
   // A condition with no kind key, or several, names nothing; the checker reports its shape.
-  return conditionEntry(condition)?.references(condition) ?? []
+  const entry = conditionEntry(condition)
+  // Its range's bounds, its own or a call's, are amounts that can name things too.
+  return entry ? [...entry.references(condition), ...boundReferences(condition)] : []
 }
 
 /** What one effect names: its key's, or a call's. An effect with no key of the engine's, or several, names nothing; the checker reports its shape. */

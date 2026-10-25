@@ -7,9 +7,8 @@ import { stringOf } from '../strings.ts'
 import type { Game } from '../game.ts'
 import { entityOf, entityStat, hasEntity, ofKind, ownerOf, statOwnerProblem, writeEntity } from '../entities.ts'
 import { notify } from '../notices.ts'
-import type { Condition, GameState, Range, StatKey, Stats } from '../types.ts'
+import type { Amount, Condition, GameState, Range, StatKey, Stats } from '../types.ts'
 import type { StatModifier } from '../plugin.ts'
-import type { ValueRef } from '../calls.ts'
 import { defineFeature, type FeatureContext } from './feature.ts'
 import { withUi, type StatUi, type Ui } from './ui.ts'
 import { inRange, wanted } from '../range.ts'
@@ -67,14 +66,18 @@ export type StatDef = {
   label: string
   /** Where a new game starts it. 0 if left out. */
   start?: number
-  /** Lowest it can go. 0 if left out. */
-  min?: number
   /**
-   * Highest it can go. 100 if left out. A number, or a custom value by name
-   * (`{ value: 'energyMax' }`, with `with` for its arguments) when the
-   * ceiling moves with the game.
+   * Lowest it can go. 0 if left out. An `Amount`, so a floor can move with
+   * the game: `{ stat: 'debtLimit' }`.
    */
-  max?: number | ValueRef
+  min?: Amount
+  /**
+   * Highest it can go. 100 if left out. An `Amount`, so a ceiling can move
+   * with the game: another stat (`{ stat: 'fitness' }`), or a value by name
+   * (`{ value: 'game/energyMax' }`, with `with` for its arguments). A ceiling
+   * that reads the stat itself reads 100.
+   */
+  max?: Amount
   /** When the player can see it. Always, if left out. */
   visible?: Condition
   /**
@@ -163,9 +166,10 @@ export type StatsShape = {
     /**
      * Change a stat `by` an amount, or put it `to` a value (energy back to
      * full overnight), held to its range: the player's, or with `of`, an
-     * entity's (`'staff:ana'`, or `'$'` in an `each`).
+     * entity's (`'staff:ana'`, or `'$'` in an `each`). Each is an `Amount`,
+     * worked out as the effect applies: `{ stat: 'coins', by: { stat: 'wage', of: '$' } }`.
      */
-    stat: { stat: StatKey; by: number; of?: string } | { stat: StatKey; to: number; of?: string }
+    stat: { stat: StatKey; by: Amount; of?: string } | { stat: StatKey; to: Amount; of?: string }
   }
   game: {
     /** Every stat the game keeps. The engine has none of its own. */
@@ -296,7 +300,7 @@ export function statLevel(
   const level = levelAt(value, at)
   const next = level < at.length ? at[level] : null
   if (next === null) return { level, next, progress: 1 }
-  const from = level === 0 ? (def.min ?? 0) : at[level - 1]
+  const from = level === 0 ? statMin(state, game, id, cx) : at[level - 1]
   const progress = next > from ? Math.max(0, Math.min(1, (value - from) / (next - from))) : 0
   return { level, next, progress }
 }
@@ -341,7 +345,8 @@ export function statProblems(game: Game): { where: string; what: string }[] {
       if (!Array.isArray(at) || !at.length) out.push({ where, what: 'levels.at needs at least one threshold' })
       else {
         if (at.some((n, i) => i > 0 && n <= at[i - 1])) out.push({ where, what: 'levels.at must go up, each threshold above the last' })
-        const min = stat.min ?? 0
+        // A bound worked out in play can be anything: only one written as a number is checked here.
+        const min = typeof stat.min === 'number' ? stat.min : stat.min === undefined ? 0 : -Infinity
         const max = typeof stat.max === 'number' ? stat.max : stat.max === undefined ? 100 : Infinity
         const outside = at.filter((n) => n < min || n > max)
         if (outside.length) out.push({ where, what: `levels.at ${outside.join(', ')} outside the stat's range (${min} to ${max})` })
@@ -369,19 +374,40 @@ export function statProblems(game: Game): { where: string; what: string }[] {
   return out
 }
 
-/** The highest a stat can go right now: its declared max, worked out if it names a value. */
+/** The bounds being worked out now, by `stat id`: a bound that reads its own stat back reads its default instead of going round. */
+const working = new Set<string>()
+
+/** A stat's bound worked out: as written for a number, else its `Amount` read now, with `fallback` while it is already being read. */
+function bound(state: GameState, game: Game, id: string, which: 'min' | 'max', fallback: number, cx: FeatureContext): number {
+  const amount = statDef(game, id)?.[which]
+  if (amount === undefined) return fallback
+  if (typeof amount === 'number') return amount
+  // A value nobody declares, as from a plugin the game no longer has, leaves the default.
+  if (typeof amount === 'object' && 'value' in amount && !cx.customValue(game, amount.value)) return fallback
+  const key = `${which} ${id}`
+  if (working.has(key)) return fallback
+  working.add(key)
+  try {
+    const value = cx.amount(state, game, amount)
+    return Number.isFinite(value) ? value : fallback
+  } finally {
+    working.delete(key)
+  }
+}
+
+/** The highest a stat can go right now: its declared max, worked out if it is an `Amount`. 100 if it says none. */
 export function statMax(state: GameState, game: Game, id: string, cx: FeatureContext): number {
-  const max = statDef(game, id)?.max
-  if (max === undefined) return 100
-  if (typeof max === 'number') return max
-  const fn = cx.customValue(game, max.value)
-  return fn ? Number(fn(state, max.with ?? {})) : 100
+  return bound(state, game, id, 'max', 100, cx)
+}
+
+/** The lowest a stat can go right now: its declared min, worked out if it is an `Amount`. 0 if it says none. */
+export function statMin(state: GameState, game: Game, id: string, cx: FeatureContext): number {
+  return bound(state, game, id, 'min', 0, cx)
 }
 
 /** A value held to the stat's declared range (0–100 unless it says). */
 export function clampStat(state: GameState, game: Game, id: string, value: number, cx: FeatureContext): number {
-  const min = statDef(game, id)?.min ?? 0
-  return Math.max(min, Math.min(statMax(state, game, id, cx), value))
+  return Math.max(statMin(state, game, id, cx), Math.min(statMax(state, game, id, cx), value))
 }
 
 /** The refusal for a cost the player cannot cover. */
@@ -412,7 +438,7 @@ export function statView(state: GameState, game: Game, stat: StatDef, of: string
     key: stat.id,
     label: stat.label,
     value,
-    min: stat.min ?? 0,
+    min: statMin(state, game, stat.id, cx),
     max: statMax(state, game, stat.id, cx),
     text: formatStat(stat, value),
     ...(level ? { level } : {}),
@@ -497,12 +523,13 @@ export const stats = defineFeature<StatsShape>({
       apply: (state, effect, game, cx) => {
         const set = 'to' in effect
         const of = ownerOf(state, effect.of)
-        const after = writeStat(state, game, effect.stat, of, (was) => (set ? effect.to : was + effect.by), cx)
+        const amount = cx.amount(state, game, set ? effect.to : effect.by)
+        const after = writeStat(state, game, effect.stat, of, (was) => (set ? amount : was + amount), cx)
         if (after === state || of !== undefined) return after
-        const delta = set ? after.stats[effect.stat] - (state.stats[effect.stat] ?? 0) : effect.by
+        const delta = set ? after.stats[effect.stat] - (state.stats[effect.stat] ?? 0) : amount
         return cx.statHooks(state, after, effect.stat, delta, game)
       },
-      references: (effect) => [{ stat: effect.stat, of: effect.of, writes: true }, ...ofKind(effect.of)],
+      references: (effect) => [{ stat: effect.stat, of: effect.of, writes: true }, ...ofKind(effect.of), { amount: 'to' in effect ? effect.to : effect.by }],
     },
   },
   pack: {
@@ -560,7 +587,12 @@ export const stats = defineFeature<StatsShape>({
       const source = { list: 'stat', id: stat.id }
       const where = `stat ${stat.id}`
       if (stat.of !== undefined && !kindIds.has(stat.of)) tools.problem(source, where, `belongs to unknown kind "${stat.of}"`)
-      tools.check(source, where, [...(typeof stat.max === 'object' ? [{ value: stat.max.value }] : []), { when: stat.visible }, { ui: stat.ui }])
+      tools.check(source, where, [
+        ...(stat.min !== undefined ? [{ amount: stat.min }] : []),
+        ...(stat.max !== undefined ? [{ amount: stat.max }] : []),
+        { when: stat.visible },
+        { ui: stat.ui },
+      ])
     }
     // Derived stats and levels: formulas, cycles, thresholds.
     for (const { where, what } of statProblems(game)) tools.problem({ list: 'stat', id: where.slice('stat '.length) }, where, what)

@@ -9,8 +9,8 @@ What a save has earned is kept in the save. Everything earned in any save is als
 ```ts
 import {
   achievements, achievementEarned, grantAchievement,
-  achievementDefs, achievementsView, progressValue,
-  type AchievementDef, type ProgressDef, type ProgressValue,
+  achievementDefs, achievementsView,
+  type AchievementDef, type ProgressDef,
   type AchievementsState, type AchievementsProfile,
   type AchievementsView, type AchievementEntry,
 } from '@ifloom/plugin-achievements'
@@ -103,18 +103,18 @@ An achievement is earned:
 ### Progress
 
 ```ts
-type ProgressDef = { value: ProgressValue; target: number }
-type ProgressValue = Formula | { stat: string; of?: string } | { kv: string } | ValueRef
+type ProgressDef = { value: Amount; target: number }
 ```
 
-`value` says where the count comes from:
+`value` says where the count comes from. It's an [`Amount`](/docs/reference/amounts#amount), so it can be any number the game keeps:
 
 | `value` | Reads |
 |---|---|
 | `'coins'` | A stat of the player's, by id. |
 | `{ sum: ['coins', 'savings'] }` | A [formula](/docs/reference/stats#formula) over the player's stats, the same kind a derived stat uses. |
 | `{ stat: 'friendship', of: 'character:ava' }` | One stat of an [entity](/docs/reference/entities). |
-| `{ kv: 'coffees' }` | A key in the [kv store](/docs/reference/state#kv). One that isn't a number reads 0. |
+| `{ kv: 'coffees' }` | A key in the [kv store](/docs/reference/state#kv), or with `of` someone else's. One that isn't a number reads 0. |
+| `{ count: 'photo' }` | How many entities of a kind there are, or a selection's, as the [`count` condition](/docs/reference/conditions#count) counts them. |
 | `{ value: 'quests/updates' }` | A [value](/docs/reference/custom#values), the game's own (`game/…`) or a plugin's, asked with `with` if it has one: `{ value: 'messages/unread', with: { channel: 'texts' } }`. |
 
 Stats read as [`statValue`](/docs/reference/stats#statvalue) reads them, so a timed status's boost counts. The view holds the count between 0 and `target`, and shows it full once the achievement is earned.
@@ -348,20 +348,14 @@ const ever = achievementsView(plugin.read(state, game), state, game, stored)
 
 You need it only for a state the runner isn't playing, such as a save's preview. For the current game, read `runner.view()`.
 
-### progressValue
-
-```ts
-function progressValue(value: ProgressValue, state: GameState, game: Game): number
-```
-
-A progress value read now. Anything that isn't a finite number reads 0.
+To read a progress value yourself, use [`amountOf`](/docs/reference/amounts#amountof): `amountOf(state, game, def.progress.value)`.
 
 ## Checks
 
 When the game loads, the plugin reports these problems against the content or pack each achievement came from, with `where` as `achievements <id>`:
 
 - Anything `when` names that the game doesn't have (`when: unknown kind "…"`).
-- A progress value naming a stat or value the game doesn't have (`progress: unknown stat "…"`).
+- A progress value naming a stat, kv owner or value the game doesn't have (`progress: unknown stat "…"`), or one that isn't an amount.
 - A progress target of 0 or less (`progress target must be more than 0`).
 - A missing `image` file, when `ifloom check` looks for files.
 

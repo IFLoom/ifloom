@@ -96,8 +96,9 @@ export { loadState, startingState } from './intake.ts'
 
 // Conditions, and why they hold
 export type { Condition, Range } from './condition.ts'
+export type { Amount } from './types.ts'
 export { holds } from './condition.ts'
-export { inRange } from './range.ts'
+export { amountOf, inRange } from './amount.ts'
 export type { Explanation } from './explain.ts'
 export { explain, explainText } from './explain.ts'
 

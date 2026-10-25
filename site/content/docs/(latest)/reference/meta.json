@@ -18,6 +18,7 @@
     "commands",
     "effects",
     "conditions",
+    "amounts",
     "custom",
     "actions",
     "locks",

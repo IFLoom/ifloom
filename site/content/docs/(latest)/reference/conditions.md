@@ -35,10 +35,10 @@ When a choice is greyed out or a line is missing and you can't see why, [`explai
 ## Range
 
 ```ts
-type Range = { gte?: number; gt?: number; lte?: number; lt?: number }
+type Range = { gte?: Amount; gt?: Amount; lte?: Amount; lt?: Amount }
 ```
 
-Many conditions compare a number against a range: at least `gte`, above `gt`, at most `lte`, below `lt`. You can leave any bound out, and every bound you give must hold.
+Many conditions compare a number against a range: at least `gte`, above `gt`, at most `lte`, below `lt`. You can leave any bound out, and every bound you give must hold. Each bound is a number or an [`Amount`](/docs/reference/amounts#amount), worked out as the condition is asked, so a bound can be another stat, a kv key or a count.
 
 A range with no bounds at all means "any of it", so the value has to be above 0. That's why `{ entity: 'clothing:scarf', at: 'you' }` means "has a scarf", and `{ seen: 'ava.hi' }` means "has seen it at least once".
 
@@ -48,6 +48,7 @@ A range with no bounds at all means "any of it", so the value has to be above 0.
 { stat: 'charm', lt: 10 }           // below 10
 { stat: 'coins', gte: 5, lte: 20 }  // 5 to 20
 { stat: 'energy' }                  // above 0
+{ stat: 'coins', gte: { stat: 'rent' } }  // at least the rent
 ```
 
 ## Condition
@@ -411,10 +412,12 @@ holds(state, here('ava'), town)               // so does the cast's
 ## inRange
 
 ```ts
-function inRange(value: number, range: Range): boolean
+function inRange(value: number, range: Range, state?: GameState, game?: Game): boolean
 ```
 
 Whether a number is in a [`Range`](#range), tested the way every built-in condition tests one. Every bound given must hold, and a range with no bounds at all asks whether the number is above 0. Use it in a [plugin](/docs/reference/plugins)'s condition that takes a range in its `with`, so it reads the way the built-in ones do.
+
+The engine works out the bounds at the top of a call's arguments before it asks the plugin, so `args` there already holds numbers. For a range deeper in, such as `{ stacks: { gte: 2 } }`, pass the state and the game, and a bound that is an [`Amount`](/docs/reference/amounts#amount) is worked out. Without them, such a bound fails.
 
 ```ts
 import { inRange, type Range } from '@ifloom/engine'
@@ -430,7 +433,7 @@ inRange(4, { gte: 3 })   // true
 inRange(0, {})           // false: no bounds asks for above 0
 ```
 
-**Gotcha.** `with` is unchecked content. Bounds that aren't numbers compare the way JavaScript compares them, so check them first if a mod might pass anything.
+**Gotcha.** `with` is unchecked content. Without a state and a game, a bound that isn't a number fails. With them, one that isn't an amount reads as 0. Check them first if a mod might pass anything.
 
 ## Why does it hold?
 

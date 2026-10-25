@@ -2,6 +2,7 @@ import { holds, type Condition } from './condition.ts'
 import { conditionEntry, conditionKeys, featureContext } from './core.ts'
 import type { Game } from './game.ts'
 import type { GameState } from './types.ts'
+import { withAmounts } from './amount.ts'
 
 /**
  * Why a condition holds or not, part by part.
@@ -21,7 +22,7 @@ export type Explanation = {
 /** One leaf's line, from its kind's entry; a condition with no kind key, or several, says so. */
 function leaf(state: GameState, condition: Condition, game: Game | undefined): string {
   const entry = conditionEntry(condition)
-  if (entry) return entry.explain(state, condition, game, featureContext())
+  if (entry) return entry.explain(state, withAmounts(state, condition, game), game, featureContext())
   const kinds = conditionKeys(condition)
   return kinds.length ? `a condition with ${kinds.length} keys (${kinds.join(', ')}); wants one` : 'an unknown condition'
 }

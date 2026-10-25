@@ -52,7 +52,18 @@ function game(extra: Partial<Content> = {}): Game {
       'msg.later': 'Coffee tomorrow?',
       'msg.bill': 'The water bill. You owe 12.',
     },
-    entities: [cast.person({ id: 'ava', name: 'Ava', description: 'Neighbour', ui: { hue: 200 }, talk: 'ava.hi', storyline: 'ava' })],
+    entities: [
+      cast.person({
+        id: 'ava',
+        name: 'Ava',
+        description: 'Neighbour',
+        image: 'character/ava.svg',
+        portrait: 'faces/ava.png',
+        ui: { hue: 200 },
+        talk: 'ava.hi',
+        storyline: 'ava',
+      }),
+    ],
     data: {
       // Ava is the cast's: messages from her are signed with her name.
       messages: {
@@ -93,6 +104,9 @@ describe('messages', () => {
       expect.objectContaining({
         id: 'ava',
         name: 'Ava',
+        // Her picture, and her face from the cast for the thread's avatar.
+        image: 'art/character/ava.svg',
+        portrait: 'art/faces/ava.png',
         unread: 1,
         messages: [expect.objectContaining({ id: 'msg.hey', text: 'Hey Sam, was that you on the street?', read: false })],
       }),

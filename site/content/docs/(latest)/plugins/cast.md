@@ -128,7 +128,7 @@ const cast: {
 type PersonDef = Omit<EntityDef, 'of'> & Person & { of?: string }
 ```
 
-Writes a character for your content's `entities`: an [`EntityDef`](/docs/reference/entities#entitydef) of the kind `character` (or `of`) with the `cast/person` trait. You give the entity's fields and the trait's side by side, and `cast.person()` sorts them: `fullName`, `pronouns`, `home`, `schedule`, `talk`, `call`, `storyline` and `met` go in the trait, and the rest stay on the entity.
+Writes a character for your content's `entities`: an [`EntityDef`](/docs/reference/entities#entitydef) of the kind `character` (or `of`) with the `cast/person` trait. You give the entity's fields and the trait's side by side, and `cast.person()` sorts them: `fullName`, `pronouns`, `home`, `schedule`, `talk`, `call`, `storyline`, `met` and `portrait` go in the trait, and the rest stay on the entity.
 
 ```ts
 import { cast } from '@ifloom/plugin-cast'
@@ -145,7 +145,7 @@ The entity's fields that matter most to a character:
 | `id` | What content names them by, as in `cast.talk('ava')`, `cast.here('ava')` or `cast.character('ava')`. It's also how a scene names them as its [speaker](#speakers). | Required. |
 | `name` | Shown over their lines, on their card, and in refusals such as `Ava is not here.` [Prose tokens](/docs/reference/prose) in it are filled for the save wherever it's shown, so `'{{friendName}}'` is the name the player typed (see [A name the player chooses](#a-name-the-player-chooses)). | Required. |
 | `description` | A word or two about them, such as `Runs the café`, shown under the name. | `null` in the view. |
-| `image` | Their portrait, through [`artSrc`](/docs/reference/prose#artsrc). A bare name under `art/` is taken as a `.jpg`. | `art/character/<id>.jpg` in the cast's own view; none in [`view.entities`](/docs/reference/view#entities) or as a scene's speaker. |
+| `image` | Their picture, through [`artSrc`](/docs/reference/prose#artsrc). A bare name under `art/` is taken as a `.jpg`. | `art/character/<id>.jpg` in the cast's own view; none in [`view.entities`](/docs/reference/view#entities) or as a scene's speaker. |
 | `tags` | Labels for your own code. The plugin doesn't read them. | None. |
 | `stats` | Their stats at the start, where they differ from each stat's own `start`. | Each stat's `start`. |
 | `kv` | Their kv store at the start. | `{}` |
@@ -163,10 +163,11 @@ type Person = {
   call?: { scene?: string; when?: Condition; busy?: string }
   storyline?: string
   met?: Condition
+  portrait?: string
 }
 ```
 
-The `cast/person` trait: what makes an entity someone the player can meet, find and talk to. The plugin types it by augmenting [`TraitRegistry`](/docs/reference/entities#traits), so `traitOf(game, ref, 'cast/person')` is a `Person`.
+The `cast/person` trait: what makes an entity someone the player can meet, find and talk to. The plugin types it by augmenting [`TraitRegistry`](/docs/reference/entities#traits), so `traitOf(state, game, ref, 'cast/person')` is a `Person`.
 
 | Field | What it is | If left out |
 |---|---|---|
@@ -178,6 +179,7 @@ The `cast/person` trait: what makes an entity someone the player can meet, find 
 | `call` | Whether they can be reached from anywhere. See [Calls](#calls). | They can't be called. |
 | `storyline` | The id of their [storyline](/docs/reference/storylines). While it's closed, they won't talk or pick up. | Never closed. |
 | `met` | Whether the player has met them, as a [condition](/docs/reference/conditions). | Having seen one of their `talk` or `call` scenes. |
+| `portrait` | A face for avatars, a path in `art/` as an `image` is. A UI draws it where it shows someone small: the React UI's cards, message threads, posts and contacts. Other plugins ask for it with the [`cast/portrait`](#queries) query. | Their `image`. |
 
 Inside a character's own conditions, `'$'` stands for them. Every `when` in `schedule`, `talk` and `call`, and `met` itself, is run with `'$'` bound to the character's entity (by [`bindCurrent`](/docs/reference/entities#bindcurrent)). So `{ stat: 'friendship', of: '$', gte: 25 }` in Ava's `talk` is Ava's friendship. Anywhere else, name them in full with `of: cast.character('ava')`.
 
@@ -499,7 +501,8 @@ These answer other plugins' code, through the context's [`query`](/docs/referenc
 |---|---|
 | `cast/present` | The ids of everyone in the room, in the game's order. Empty with no places plugin or with the player nowhere. |
 | `cast/where` | Where that character is: a place id or `AWAY`. `undefined` for one the game doesn't have. |
-| `cast/contacts` | Everyone [met](#meeting-people) who has a `call`, each as `{ id, name, description, portrait, command, disabled }`. `description` is `null` when they have none, `command` is `cast.call(id)`, and `disabled` is the [refusal](#commands) the call would get now, or `undefined`. |
+| `cast/portrait` | That character's face for avatars: their [`portrait`](#person), else their picture as the [view](#personview) gives it, through `artSrc`. `undefined` for anyone who isn't a person. The [messages](/docs/plugins/messages) and [feed](/docs/plugins/feed) plugins ask it for a sender's face. |
+| `cast/contacts` | Everyone [met](#meeting-people) who has a `call`, each as `{ id, name, description, image, portrait, command, disabled }`. `description` is `null` when they have none, `command` is `cast.call(id)`, and `disabled` is the [refusal](#commands) the call would get now, or `undefined`. |
 
 For example, a contacts plugin of your own might list them in its view:
 
@@ -559,6 +562,7 @@ type PersonView = {
   fullName: string
   description: string | null
   ui?: Ui<EntityUi>
+  image: string | null
   portrait: string | null
   here: boolean
   closed: boolean
@@ -575,7 +579,8 @@ type PersonView = {
 | `ui` | Their entity's [presentation hints](/docs/reference/ui-hints), over their kind's, as [`entityUi`](/docs/reference/ui-hints#entityui) reads them. Left out when they have none. |
 | `fullName` | Their `fullName`, or `name`. |
 | `description` | Their entity's `description`, tokens filled, or `null`. |
-| `portrait` | Their entity's `image`, or `art/<kind>/<id>.jpg`. Typed `string | null` like every plugin's portrait, though the cast always gives one. |
+| `image` | Their entity's `image`, or `art/<kind>/<id>.jpg`, through `artSrc`. Typed `string | null` like every plugin's picture, though the cast always gives one. |
+| `portrait` | Their face for avatars: the trait's [`portrait`](#person), through `artSrc`, else `image`. |
 | `here` | They're in the room with the player. |
 | `closed` | Their storyline is closed for now. |
 | `met` | The player has [met](#meeting-people) them. |
@@ -586,7 +591,7 @@ In the café on Monday morning, Ava's card is:
 ```ts
 {
   id: 'ava', ref: 'character:ava', name: 'Ava', fullName: 'Ava Marsh', description: 'Runs the café', ui: { hue: 20 },
-  portrait: 'art/character/ava.svg', here: true, closed: false, met: false,
+  image: 'art/character/ava.svg', portrait: 'art/character/ava.svg', here: true, closed: false, met: false,
   actions: [{ id: 'talk-ava', label: 'Talk', command: cast.talk('ava') }],
 }
 ```

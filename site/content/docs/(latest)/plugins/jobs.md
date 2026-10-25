@@ -5,7 +5,7 @@ description: "Jobs with hiring requirements, shifts that cost stats and time and
 `@ifloom/plugin-jobs` adds jobs the player applies for, works shifts at, gets promoted in and can be fired from. A shift costs stats such as energy, and time on the calendar, and pays a wage in a spendable stat. A job can have a ladder of ranks, each paying more. Missing shifts, or a condition such as a low performance stat, gets the player fired.
 
 ```ts
-import { jobs, jobsOf, jobOf, jobsView, type JobDef, type ShiftDef, type RankDef, type FireDef, type JobsState, type HeldJob, type JobsView, type JobView, type RankView } from '@ifloom/plugin-jobs'
+import { jobs, jobsOf, jobOf, type JobDef, type ShiftDef, type RankDef, type FireDef, type JobsState, type HeldJob, type JobsView, type JobView, type RankView } from '@ifloom/plugin-jobs'
 ```
 
 The plugin's engine side draws nothing: its React UI is a [subpath of its own](#the-react-ui), and any UI can draw it. Its commands work on any button, such as a location's actions, and the button shows the shift's cost and greys out with the reason. For a job board, its view lists every job, and [Building UI for plugins](/docs/recipes/plugin-ui#a-job-board) builds one.
@@ -437,14 +437,6 @@ function jobOf(game: Game, id: string): JobDef | undefined
 ```
 
 The game's jobs, merged from its content and packs: `game.data.jobs.jobs`. `jobOf` is the one with this id, or `undefined`.
-
-### jobsView
-
-```ts
-function jobsView(state: GameState, context: PluginContext<JobsState>): JobsView
-```
-
-The `JobsView` for a state. The plugin's view is `jobsView(state, context)`.
 
 ## Checks
 

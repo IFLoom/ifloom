@@ -956,6 +956,20 @@ describe('content migrations', () => {
     expect(data.statuses.statuses[0]).not.toHaveProperty('onStart')
   })
 
+  it('carry schema 26 content to 27: pictures are image, gating is blocked, and once has one shape', () => {
+    const v26 = {
+      id: 'mod:p9b',
+      schema: 26,
+      scenes: [{ id: 'hall', body: [{ variants: 'hall.lines', art: { 'hall.lines.1': 'hall.stills' } }], choices: [] }],
+    }
+    const plugins = [places(), cast(), shop(), cheats(), feed(), devices()] as Plugin[]
+    const out = unwrap(upgradePack(v26, plugins)) as unknown as Record<string, unknown>
+    expect(out).toMatchObject({
+      schema: SCHEMA,
+      scenes: [{ id: 'hall', body: [{ variants: 'hall.lines', image: { 'hall.lines.1': 'hall.stills' } }], choices: [] }],
+    })
+  })
+
   it('read every kv store the one way at schema 19, with whose in of, and the phase as a kv key', () => {
     const v18 = {
       id: 'baker',

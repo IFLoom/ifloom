@@ -7,7 +7,7 @@ description: "Cheats for the player: effects they can use at any time, free for 
 A cheat can be free for everyone, or refused with a reason (or hidden) while a condition holds. That's how you offer some cheats only to supporters, after the game is finished, or once a kv key is set. The plugin keeps a log of every use, so a replay shows them and your content can react, for example by refusing an achievement to a save that cheated.
 
 ```ts
-import { cheats, cheatsOf, cheatsView, type CheatDef, type CheatUse, type CheatsState, type CheatsView, type CheatView } from '@ifloom/plugin-cheats'
+import { cheats, cheatsOf, type CheatDef, type CheatUse, type CheatsState, type CheatsView, type CheatView } from '@ifloom/plugin-cheats'
 ```
 
 ## Cheats or debug?
@@ -422,14 +422,6 @@ function cheatOf(game: Game, id: string): CheatDef | undefined
 ```
 
 The game's cheats, merged from its content and packs: `game.data.cheats.cheats`. `cheatOf` is the one with this id, or `undefined`.
-
-### cheatsView
-
-```ts
-function cheatsView(state: GameState, context: PluginContext<CheatsState>): CheatsView
-```
-
-The plugin's view, as its `view` provider builds it. You need it only inside a plugin of your own that wraps this one. For the current game, read `runner.view()`.
 
 ## Checks
 

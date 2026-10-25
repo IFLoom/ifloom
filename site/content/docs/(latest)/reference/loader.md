@@ -183,12 +183,12 @@ A pack written before this split may still have `overrides: true`, which told th
 ## SCHEMA
 
 ```ts
-const SCHEMA = 26
+const SCHEMA = 27
 ```
 
 The format of packs this engine reads. Write `schema: SCHEMA` in a pack you write in TypeScript so it always matches. Your content has no schema.
 
-A pack written for an older schema still loads. [`loadGame`](#loadgame) upgrades it first with [`upgradePack`](#upgradepack), mods included, so a mod file made for an earlier version of your game keeps working after you update the engine or a plugin. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 26, this engine reads 25`, and a mod like that is refused when the player adds it.
+A pack written for an older schema still loads. [`loadGame`](#loadgame) upgrades it first with [`upgradePack`](#upgradepack), mods included, so a mod file made for an earlier version of your game keeps working after you update the engine or a plugin. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 28, this engine reads 27`, and a mod like that is refused when the player adds it.
 
 ## upgradePack
 
@@ -228,6 +228,7 @@ What a plugin reads (its `data`, its calls' arguments, its strings and its trait
 | 23 to 24 | The [places plugin](/docs/plugins/places#older-content)'s locations and the [shop](/docs/plugins/shop#checks)'s vendors are entities with their plugin's trait. Each entry of `data.places.locations` becomes an entity `{ of: 'location', id, name, desc, image, tags, traits: { 'places/location': { ... } } }`, its old `tag` the `desc` and its `art` the `image` (an empty one dropped), and `{{v:places/tag}}` becomes `{{v:places/desc}}`. Each entry of `data.shop.vendors` becomes `{ of: 'vendor', id, name, traits: { 'shop/vendor': { ... } } }`. They follow the pack's own entities, and `data.places` and `data.shop` go when nothing is left in them. Each plugin's own step does it (content version 24). |
 | 24 to 25 | The words a player reads are written in place (see [The words table](/docs/reference/words)). A block of words written in place, `{ words }`, becomes `{ text }`, and a block that read the prose by key, `{ text: key }`, becomes `{ prose: key }`, wherever a block is: scenes, patches, plugin `data` and entities' traits. A label that is a prose key (a choice's, an action's or a `labels` entry's, in a scene, an action or a plugin's buttons) becomes that prose's words, and so does a scene's choice with no label, from the prose `<scene>#<choice>` it read, a `notify` effect's `text` and a minigame state's `label`. The [messages plugin](/docs/plugins/messages)'s replies get `label` from `<message>#<reply>`, and the [feed](/docs/plugins/feed)'s `feed/post` and `feed/react` their `text`'s words (content version 25). The words come from the pack's own prose, else the prose under it in `context`. A key neither has is left as written, and now reads as those words, and a choice with no label and no prose shows its id, as it did. |
 | 25 to 26 | One word each: a thing's line is its `description` and a heading its `title`. An entity's `desc` (in `entities` and in a `create` effect's `with`) becomes `description`, a minigame's `label` its `title`, and the `words` table's `entity.<ref>.desc` and `minigame.<id>.label` follow. The plugins' own steps (content version 26) rename theirs: a quest's `title` and `summary` are its `name` and `description`, a status's `label` and `summary` its `name` and `description` and its `onStart`, `eachTurn` and `onEnd` its `effects: { start, turn, end }`, an achievement's, a job's and a rank's `title` and a cheat's and an unlock's `label` their `name`, a generator template's `desc` its `description`, the value `places/desc` is `places/description`, and the cast's `offstage`, where someone nowhere on the map is, is `away`. |
+| 26 to 27 | A `variants` block's `art`, the variants a member's picture is drawn from, is `image`. |
 
 Schema 4 is the oldest a pack can be.
 
@@ -235,7 +236,7 @@ It returns the pack at `SCHEMA`, with `plugins` recording each plugin's version,
 
 | When | Returns |
 |---|---|
-| `schema` is newer than `SCHEMA` | `written for schema 26, this engine reads 25` |
+| `schema` is newer than `SCHEMA` | `written for schema 28, this engine reads 27` |
 | `schema` is older than the oldest schema there's a step from | `written for schema 3, too old for this engine to read (it reads 25)` |
 | `plugins` gives a newer version of a plugin's content than the game has | `written for version 14 of the shop plugin's content, this game's reads 13` |
 

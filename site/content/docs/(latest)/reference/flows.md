@@ -60,7 +60,7 @@ A flowing scene uses the same [`Block`](/docs/reference/scenes#block) list as an
 type Block = (
   | { text: string; id?: string; when?: Condition }
   | { prose: string; when?: Condition }
-  | { variants: string; when?: Condition; gate?: Record<string, Condition>; art?: Record<string, string> }
+  | { variants: string; when?: Condition; gate?: Record<string, Condition>; image?: Record<string, string> }
   | { media: SceneMedia; when?: Condition }
   | { say: string; speaker: string; voice?: string; id?: string; when?: Condition }
   | { blocks: Block[]; when?: Condition }

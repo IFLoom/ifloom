@@ -108,7 +108,26 @@ describe('the cast', () => {
     expect(personOf(state, g, 'character:sam')).toEqual({ home: 'park', talk: 'sam.hi' })
     // Their description is the line under their name, their image their portrait.
     const cafe = run(g, state, places.go('cafe'))
-    expect(shown(cafe, g).present[0]).toMatchObject({ id: 'ava', ref: 'character:ava', description: 'Runs the café', portrait: 'art/character/ava.jpg' })
+    expect(shown(cafe, g).present[0]).toMatchObject({
+      id: 'ava',
+      ref: 'character:ava',
+      description: 'Runs the café',
+      image: 'art/character/ava.jpg',
+      portrait: 'art/character/ava.jpg',
+    })
+  })
+
+  it('show a face for avatars beside their picture: the trait’s portrait, else their image', () => {
+    const faced: Content = { name: 'faces', traits: { 'cast/person': { 'character:sam': { home: 'park', talk: 'sam.hi', portrait: 'faces/sam.png' } } } }
+    const { game: g } = loadGame([town, map, faced], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'street' }), cast()] })
+    const park = run(g, startingState(g), places.go('park'))
+    expect(shown(park, g).present.find((one) => one.id === 'sam')).toMatchObject({ image: 'art/character/sam.jpg', portrait: 'art/faces/sam.png' })
+    const portrait = pluginQuery(g, 'cast/portrait')!
+    expect([portrait(park, { character: 'sam' }), portrait(park, { character: 'ava' }), portrait(park, { character: 'nobody' })]).toEqual([
+      'art/faces/sam.png',
+      'art/character/ava.jpg',
+      undefined,
+    ])
   })
 
   it('include anyone with the trait, of any kind or made in play, named by reference', () => {

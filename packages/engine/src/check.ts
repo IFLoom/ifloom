@@ -220,11 +220,11 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
     }
     if ('value' in ref) return customValue(game, ref.value) ? [] : [`no custom value named "${ref.value}"${unprefixed(ref.value)}`]
     if ('picture' in ref) {
-      file(where, 'picture', ref.asWritten ? pagePath(ref.picture) : artSrc(ref.picture))
+      file(where, 'picture', pagePath(artSrc(ref.picture)))
       return []
     }
     if ('video' in ref) {
-      file(where, 'video', ref.asWritten ? pagePath(ref.video) : artSrc(ref.video, 'video'))
+      file(where, 'video', pagePath(artSrc(ref.video, 'video')))
       return []
     }
     // A feature's: the first key of the reference that a feature resolves.

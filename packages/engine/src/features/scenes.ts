@@ -134,7 +134,7 @@ function isDataScene(scene: Scene | DataScene): scene is DataScene {
 }
 
 /**
- * What prose blocks name: prose keys, variants and their art, conditions,
+ * What prose blocks name: prose keys, variants and their pictures, conditions,
  * media, hints, the markup in words written in place, a spoken line's
  * markup, and inside sections, decisions (each choice as a scene's is, and
  * what it brings) and the minigames and panels a flow plays.
@@ -145,7 +145,7 @@ export function blockReferences(blocks: readonly Block[] | undefined): Reference
     if ('prose' in block) out.push({ prose: block.prose })
     if ('variants' in block) {
       out.push({ variants: block.variants })
-      for (const art of Object.values(block.art ?? {})) out.push({ variants: art })
+      for (const pictures of Object.values(block.image ?? {})) out.push({ variants: pictures })
     }
     if ('media' in block) out.push({ media: block.media })
     if ('text' in block) out.push({ markup: block.text }, { words: block.text, field: 'block' })

@@ -72,7 +72,7 @@ data: {
 }
 ```
 
-The plugin lists `cooperates: ['cast']` (see [`cooperates`](/docs/reference/plugins#cooperates)). A poster or commenter who is an [entity](/docs/reference/entities), such as one of the [cast](/docs/plugins/cast)'s characters, is shown with their name, and a poster with their picture too. The plugin reads these with [`speakerOf`](/docs/reference/plugins#speakerof). Anyone else is shown as written, with no portrait.
+The plugin lists `cooperates: ['cast']` (see [`cooperates`](/docs/reference/plugins#cooperates)). A poster or commenter who is an [entity](/docs/reference/entities), such as one of the [cast](/docs/plugins/cast)'s characters, is shown with their name, and a poster with their face too. The plugin reads these with [`speakerOf`](/docs/reference/plugins#speakerof), and with the game's cast it asks the `cast/portrait` query for a person's [`portrait`](/docs/plugins/cast#person), falling back to their entity's picture. Anyone else is shown as written, with no portrait.
 
 ### FeedDef
 
@@ -121,8 +121,8 @@ type PostDef = {
 | `from` | Who posted it. Either a [cast](/docs/plugins/cast) character's id, or any name as it should be shown (`'Town council'`). |
 | `when` | It appears the first time this holds at the end of a command. |
 | `body` | Its words, as [prose blocks](/docs/reference/scenes#block). |
-| `image` | An image path, passed through to the view. |
-| `video` | A video path, such as `'art/clips/fete.mp4'`, passed through to the view. A UI plays it like a GIF: by itself, looping and muted. |
+| `image` | A picture, as a path in the game's `art/` folder (`'photo/fete.jpg'` or `'art/photo/fete.jpg'`) or a URL. The view gives it through [`artSrc`](/docs/reference/prose#artsrc), as every picture in the view is. |
+| `video` | A video, as a path like `image`'s, such as `'clips/fete.mp4'`; a bare name is an `.mp4`. The view gives it through `artSrc`. A UI plays it like a GIF: by itself, looping and muted. |
 | `likes` | How many likes it has when it appears. `0` if you leave it out. |
 
 These are the showcase's two posts. Ava's appears on the second day and Sam's on the third:
@@ -404,11 +404,11 @@ type PostView = {
 |---|---|
 | `from` | The poster, as written. `''` for the player's own. |
 | `name` | The poster's name if they're a [cast](/docs/plugins/cast) character, or `from` as written. On the player's own posts it's the `playerName` key in the game's [kv store](/docs/reference/state#kv) when that's a string, and otherwise the [`feed/you`](#strings) string, `You`. |
-| `portrait` | The poster's entity's `image`, through `artSrc`, or `null`. Always `null` for the player's own. |
+| `portrait` | The poster's face for an avatar: with the [cast](/docs/plugins/cast), a person's [`portrait`](/docs/plugins/cast#person), else their entity's `image`, through `artSrc`, or `null`. Always `null` for the player's own. |
 | `text` | The words of its beats, joined, for a UI that draws no beats. |
 | `beats` | The words as [beats](/docs/reference/prose#scenebeat), as a scene's body is drawn: someone else's post's body drawn for the current state with [`context.beats`](/docs/reference/plugins#beats), and the player's own post's prose line, so a picture or video written into a post's words with [markup](/docs/reference/prose#videos) sits in order with them. [Bold and italics](/docs/reference/prose#bold-and-italics) come as spans. |
-| `image` | The image path, or `null`. |
-| `video` | The video path, or `null`. The React UI's [`FeedSection`](#feedsection) draws it under the image with [`Video`](/docs/react/components#video). |
+| `image` | The post's picture, through `artSrc`, or `null`. |
+| `video` | The post's video, through `artSrc`, or `null`. The React UI's [`FeedSection`](#feedsection) draws it under the image with [`Video`](/docs/react/components#video). |
 | `turn` | The [turn](/docs/reference/state#turn) it appeared or was posted on. With the [calendar](/docs/plugins/calendar#what-a-turn-is)'s default, a turn is a day. |
 | `likes` | The likes it started with, plus every `feed/react` since. |
 | `comments` | Oldest first, each with the commenter's name and the comment's words filled in. |
@@ -548,7 +548,7 @@ When the game loads, the plugin reports these problems against the content or pa
 mod:summer-fete · posts fete.stalls · unknown feed "newsletter"
 ```
 
-A post's `image` and `video` are listed in the checker's [`files`](/docs/reference/checks#fileref), as paths from the page.
+A post's `image` and `video` are listed in the checker's [`files`](/docs/reference/checks#fileref), through `artSrc`, as every picture is.
 
 The player's own posts and reactions are made by effects, and those are checked wherever the effect is. A `feed/post` or `feed/react` whose `text` has no prose gives `no prose for "…"`, and a `feed/post`'s `image` and `video` are listed in `files`. A `feed/appeared` condition naming a post the game doesn't have gives `unknown post "…"`. A `feed/post` to a feed the game wasn't given isn't reported, and does nothing when it runs.
 

@@ -146,7 +146,7 @@ function cantUse(state: GameState, args: PluginArgs, context: PluginContext<Chea
 }
 
 /** Everything the UI needs for a cheat panel. */
-export function cheatsView(state: GameState, context: PluginContext<CheatsState>): CheatsView {
+function cheatsView(state: GameState, context: PluginContext<CheatsState>): CheatsView {
   const { game, slice } = context
   const shown = cheatsOf(game).filter((cheat) => !blockedBy(cheat, state, game)?.hide)
   return {

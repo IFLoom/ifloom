@@ -4,6 +4,7 @@
  * in `notices.ts`.
  */
 import { dismiss, notify, type Notice } from '../notices.ts'
+import { artSrc } from '../sceneBody.ts'
 import { defineFeature } from './feature.ts'
 
 export type NoticeView = {
@@ -11,6 +12,7 @@ export type NoticeView = {
   title: string
   /** The notice's words, tokens filled in; empty if it has none. */
   text: string
+  /** Its picture's path, through `artSrc`; null with none. */
   image: string | null
   tag: string | null
   /** The turn it was raised. */
@@ -54,10 +56,7 @@ export const notices = defineFeature<NoticesShape>({
         const { notify: title, ...notice } = effect
         return notify(state, { ...notice, title })
       },
-      references: (effect) => [
-        { words: effect.text, field: 'notice text' },
-        ...(effect.image !== undefined ? [{ picture: effect.image, asWritten: true }] : []),
-      ],
+      references: (effect) => [{ words: effect.text, field: 'notice text' }, ...(effect.image !== undefined ? [{ picture: effect.image }] : [])],
     },
   },
   commands: {
@@ -77,7 +76,7 @@ export const notices = defineFeature<NoticesShape>({
           id: notice.id,
           title: notice.title,
           text: notice.text ? cx.fillTokens(state, game, notice.text) : '',
-          image: notice.image ?? null,
+          image: notice.image === undefined ? null : artSrc(notice.image),
           tag: notice.tag ?? null,
           turn: notice.turn,
         })),

@@ -9,10 +9,12 @@
  * Nothing here knows about phones; a device shows a feed as an app.
  */
 import {
+  artSrc,
   definePlugin,
   fillTokens,
   holds,
   parseBeats,
+  pluginQuery,
   styledBeats,
   speakerOf,
   stringOf,
@@ -40,8 +42,9 @@ export type PostDef = {
   when: Condition
   /** Its words, as prose blocks. */
   body: Block[]
+  /** A picture on the post: a path in the game's `art/` folder (`'photo/park.jpg'`), as an entity's `image` is, or a URL. */
   image?: string
-  /** A video clip on the post, as a path from the page like `image`. Drawn like a GIF: playing, looping, muted. */
+  /** A video clip on the post, a path like `image`'s (a bare name is an `.mp4`). Drawn like a GIF: playing, looping, muted. */
   video?: string
   /** Likes it shows when it appears. */
   likes?: number
@@ -80,13 +83,15 @@ export type PostView = {
   id: string
   from: string
   name: string
+  /** The poster's face, for an avatar: a person's `portrait` with the cast, else their entity's picture, through `artSrc`; null for the player's own and for a name as written. */
   portrait: string | null
   /** The words, filled in, with any picture and video markup in them. */
   text: string
   /** The words as beats, as a scene's are, with pictures and videos in the order written. */
   beats: SceneBeat[]
+  /** The post's picture's path, through `artSrc`, or null. */
   image: string | null
-  /** The post's video clip, or null. Drawn like a GIF: playing, looping, muted. */
+  /** The post's video clip's path, through `artSrc`, or null. Drawn like a GIF: playing, looping, muted. */
   video: string | null
   /** The turn it appeared, or was posted. */
   turn: number
@@ -130,10 +135,13 @@ export function postsOf(game: Game): PostDef[] {
   return (game.data?.[ID]?.posts ?? []) as PostDef[]
 }
 
-/** Who posted, as their entity is (`speakerOf`): a name and a face, or the name as written. */
-function senderOf(state: GameState, game: Game, from: string): { name: string; portrait: string | null } {
+/** Who posted, as their entity is (`speakerOf`): a name, a picture and a face, or the name as written. */
+function senderOf(state: GameState, game: Game, from: string): { name: string; image: string | null; portrait: string | null } {
   const known = from ? speakerOf(state, game, from) : null
-  return known ? { name: known.name, portrait: known.image } : { name: from, portrait: null }
+  if (!known) return { name: from, image: null, portrait: null }
+  // Their face, from the cast when the game has it (a person's `portrait`); else their picture.
+  const face = pluginQuery(game, 'cast/portrait')?.(state, { character: known.ref }) as string | undefined
+  return { name: known.name, image: known.image, portrait: face ?? known.image }
 }
 
 /** A post's words: its beats, and their words as a line of text, for a UI that draws no beats. */
@@ -297,8 +305,8 @@ function feedPlugin(): DefinedPlugin<FeedState, FeedsView> {
             name: senderOf(state, game, post.from).name,
             portrait: senderOf(state, game, post.from).portrait,
             ...drawn(beats(post.body, post.id)),
-            image: post.image ?? null,
-            video: post.video ?? null,
+            image: post.image === undefined ? null : artSrc(post.image),
+            video: post.video === undefined ? null : artSrc(post.video, 'video'),
             turn: slice.appeared[post.id],
             likes: (post.likes ?? 0) + (slice.reactions[post.id]?.likes ?? 0),
             comments: comments(slice.reactions[post.id]?.comments ?? []),
@@ -313,8 +321,8 @@ function feedPlugin(): DefinedPlugin<FeedState, FeedsView> {
             name: typeof state.kv.playerName === 'string' ? state.kv.playerName : stringOf(game, 'feed/you'),
             portrait: null,
             ...drawn(styledBeats(parseBeats(words(post.text)))),
-            image: post.image ?? null,
-            video: post.video ?? null,
+            image: post.image === undefined ? null : artSrc(post.image),
+            video: post.video === undefined ? null : artSrc(post.video, 'video'),
             turn: post.turn,
             likes: post.likes,
             comments: comments(post.comments),
@@ -333,8 +341,8 @@ function feedPlugin(): DefinedPlugin<FeedState, FeedsView> {
         // What the player posts or comments: its words, and its picture or video as a path from the page.
         const refs: Reference[] = []
         if (args.text !== undefined) refs.push({ words: String(args.text), field: name === 'post' ? 'post' : 'comment' })
-        if (name === 'post' && args.image !== undefined) refs.push({ picture: String(args.image), asWritten: true })
-        if (name === 'post' && args.video !== undefined) refs.push({ video: String(args.video), asWritten: true })
+        if (name === 'post' && args.image !== undefined) refs.push({ picture: String(args.image) })
+        if (name === 'post' && args.video !== undefined) refs.push({ video: String(args.video) })
         return refs
       },
       content: (game) =>
@@ -345,8 +353,8 @@ function feedPlugin(): DefinedPlugin<FeedState, FeedsView> {
             { entry: post.feed, plugin: ID, list: 'feeds', noun: 'feed' },
             { when: post.when },
             { blocks: post.body },
-            ...(post.image !== undefined ? [{ picture: post.image, asWritten: true }] : []),
-            ...(post.video !== undefined ? [{ video: post.video, asWritten: true }] : []),
+            ...(post.image !== undefined ? [{ picture: post.image }] : []),
+            ...(post.video !== undefined ? [{ video: post.video }] : []),
           ],
         })),
     },

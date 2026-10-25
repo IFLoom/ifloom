@@ -66,7 +66,7 @@ A notice as the state keeps it in [`state.notices`](/docs/reference/state#notice
 | `id` | The `notify` effect's `id`, or one the engine makes up (`notice.<turn>.<n>`). |
 | `title` | A short line. It's shown as written, not looked up. |
 | `text` | More words, if there are any, as written. The view fills in their tokens. |
-| `image` | An image path, passed through. |
+| `image` | A picture, as a path in the game's `art/` folder or a URL. The view gives it through [`artSrc`](/docs/reference/prose#artsrc), as every picture in the view is. |
 | `tag` | What it's about, for badges, such as `'post'`, `'money'` or `'quests'`. Any string the game likes. |
 | `turn` | The [turn](/docs/reference/state#turn) it was raised in. |
 | `seen` | `true` once dismissed. |

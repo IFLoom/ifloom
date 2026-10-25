@@ -3,7 +3,7 @@
  * calls by name, as `game/…`. Everything else in the game is data, in
  * `world/` and `story/`.
  */
-import { artSrc, entityImage, heldBy, parseRef, PLAYER, type GameRules } from '@ifloom/engine'
+import { entityImage, heldBy, parseRef, PLAYER, type GameRules } from '@ifloom/engine'
 import { feed } from '@ifloom/plugin-feed'
 
 /**
@@ -41,7 +41,7 @@ export const rules: GameRules = {
       const id = `post.photo.${parseRef(latest)!.id}`
       const likes = 2 + roll(10, 'likes') + (state.stats.charm ?? 0)
       return [
-        feed.post('social', id, { text: 'New town, new faces.', ...(image ? { image: artSrc(image) } : {}) }),
+        feed.post('social', id, { text: 'New town, new faces.', ...(image ? { image } : {}) }),
         { stat: 'charm', by: 1 },
         feed.react(id, { likes, from: 'ava', text: 'Lovely!' }),
       ]

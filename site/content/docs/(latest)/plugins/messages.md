@@ -72,7 +72,7 @@ data: {
 }
 ```
 
-The plugin lists `cooperates: ['cast']` (see [`cooperates`](/docs/reference/plugins#cooperates)). A sender who is an [entity](/docs/reference/entities), such as one of the [cast](/docs/plugins/cast)'s characters, is shown with their name and portrait, which the plugin reads with [`speakerOf`](/docs/reference/plugins#speakerof). Anyone else is shown as written.
+The plugin lists `cooperates: ['cast']` (see [`cooperates`](/docs/reference/plugins#cooperates)). A sender who is an [entity](/docs/reference/entities), such as one of the [cast](/docs/plugins/cast)'s characters, is shown with their name and picture, which the plugin reads with [`speakerOf`](/docs/reference/plugins#speakerof), and with the game's cast their face for avatars, the person's [`portrait`](/docs/plugins/cast#person), which it asks with the `cast/portrait` query. Anyone else is shown as written.
 
 ### Channel
 
@@ -323,7 +323,7 @@ state = apply(state, game, wait).state
 state = apply(state, game, wait).state
 state = apply(state, game, calendar.sleep()).state    // Day 2 · Tuesday morning, turn 1
 inbox(state).channels[0].threads
-// [{ id: 'ava', name: 'Ava', portrait: 'art/character/ava.svg', unread: 1, messages: [
+// [{ id: 'ava', name: 'Ava', image: 'art/character/ava.svg', portrait: 'art/character/ava.svg', unread: 1, messages: [
 //   { id: 'ava.text', from: 'ava', name: 'Ava', text: 'Good to meet you yesterday! Coffee’s on me next time 🙂',
 //     turn: 1, read: false, replied: null,
 //     replies: [{ id: 'yes', label: 'Deal!', command: messages.reply('ava.text', 'yes') }, { id: 'later', ... }] } ] }]
@@ -340,7 +340,7 @@ inbox(state).channels[0].threads[0].messages
 state = apply(state, game, messages.read('ava')).state   // the player read the thread
 state = apply(state, game, wait).state                // afternoon, and the letter comes
 inbox(state).channels[1]
-// { id: 'letters', name: 'Letters', unread: 1, threads: [{ id: 'Town council', name: 'Town council', portrait: null, ... }] }
+// { id: 'letters', name: 'Letters', unread: 1, threads: [{ id: 'Town council', name: 'Town council', image: null, portrait: null, ... }] }
 
 // The flat's button picks up the post
 state = apply(state, game, { type: 'custom', name: 'messages/read', with: { channel: 'letters' } }).state
@@ -459,6 +459,7 @@ type ChannelView = {
 type ThreadView = {
   id: string
   name: string
+  image: string | null
   portrait: string | null
   messages: MessageView[]
   unread: number
@@ -469,7 +470,8 @@ type ThreadView = {
 |---|---|
 | `id` | The messages' `thread`, or their sender. |
 | `name` | The [cast](/docs/plugins/cast) character's name if `id` is one, or `id` as written. |
-| `portrait` | The sender's entity's `image`, through `artSrc`. It's `null` if `id` names no entity, or one with no picture. |
+| `image` | The sender's entity's `image`, through `artSrc`. It's `null` if `id` names no entity, or one with no picture. |
+| `portrait` | The sender's face for an avatar: with the [cast](/docs/plugins/cast), a person's [`portrait`](/docs/plugins/cast#person), else `image`. The React UI draws this one. |
 | `messages` | Oldest first. |
 | `unread` | Unread messages in the thread. |
 

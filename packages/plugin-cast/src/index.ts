@@ -74,6 +74,12 @@ export type Person = {
   storyline?: string
   /** Whether the player has met them. Having seen one of their talk or call scenes, if left out. */
   met?: Condition
+  /**
+   * A face for avatars, beside the entity's `image`: a path in the game's
+   * `art/` folder, as an image's is. Where a UI draws someone small (a
+   * thread, a post, a contact), it uses this. Their `image` if left out.
+   */
+  portrait?: string
 }
 
 declare module '@ifloom/engine' {
@@ -85,7 +91,8 @@ declare module '@ifloom/engine' {
 /**
  * What `cast.person()` takes: an entity's fields (its `of` is `'character'` if
  * left out; its `description` is the line under their name, "Runs the café", and
- * its `image` their portrait) and the `cast/person` trait's, side by side.
+ * its `image` their picture) and the `cast/person` trait's (its `portrait`
+ * their face, for avatars), side by side.
  */
 export type PersonDef = Omit<EntityDef, 'of'> & Person & { of?: string }
 
@@ -110,7 +117,9 @@ export type PersonView = {
   description: string | null
   /** Their entity's presentation hints, as written (the React UI's `hue`, say); left out with none. */
   ui?: Ui<EntityUi>
-  /** The portrait's path: the entity's `image`, else `<kind>/<id>`. Typed as every plugin's portrait is, though the cast always gives one. */
+  /** Their picture's path: the entity's `image`, else `<kind>/<id>`, through `artSrc`. Typed as every plugin's picture is, though the cast always gives one. */
+  image: string | null
+  /** Their face, for avatars: the trait's `portrait`, else their `image`, through `artSrc`. */
   portrait: string | null
   /** In the room with the player. */
   here: boolean
@@ -146,10 +155,12 @@ declare module '@ifloom/engine' {
   interface QueryRegistry {
     'cast/present': () => string[]
     'cast/where': (args: { character: string }) => string | undefined
+    'cast/portrait': (args: { character: string }) => string | undefined
     'cast/contacts': () => {
       id: string
       name: string
       description: string | null
+      image: string | null
       portrait: string | null
       command: CommandRef
       disabled: string | undefined
@@ -191,7 +202,7 @@ function ids(value: unknown): string[] {
   return (Array.isArray(value) ? value : value === undefined ? [] : [value]).map(String)
 }
 
-const PERSON_FIELDS = ['fullName', 'pronouns', 'home', 'schedule', 'talk', 'call', 'storyline', 'met'] as const
+const PERSON_FIELDS = ['fullName', 'pronouns', 'home', 'schedule', 'talk', 'call', 'storyline', 'met', 'portrait'] as const
 
 const talkOptions = (person: Person): TalkOption[] => (typeof person.talk === 'string' ? [{ scene: person.talk }] : (person.talk ?? []))
 
@@ -228,10 +239,12 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
     them.person.met !== undefined
       ? holdsFor(state, game, them, them.person.met)
       : [...talkOptions(them.person).map((option) => option.scene), them.person.call?.scene].some((scene) => scene && (state.seen?.[scene]?.n ?? 0) > 0)
-  const portraitOf = (state: GameState, game: Game, ref: EntityRef) => {
+  const imageOf = (state: GameState, game: Game, ref: EntityRef) => {
     const parts = parseRef(ref)!
     return artSrc(entityImage(state, game, ref) ?? `${parts.kind}/${parts.id}`)
   }
+  const portraitOf = (state: GameState, game: Game, them: One) =>
+    them.person.portrait !== undefined ? artSrc(them.person.portrait) : imageOf(state, game, them.ref)
   /** A name as this save shows it: its tokens filled, so `'{{partnerName}}'` is what the player typed. */
   const nameOf = (state: GameState, game: Game, them: One) => entityName(state, game, them.ref)
   const fullNameOf = (state: GameState, game: Game, them: One) =>
@@ -272,7 +285,8 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
       fullName: fullNameOf(state, game, them),
       description: descriptionOf(state, game, them),
       ...uiOf(state, game, them.ref),
-      portrait: portraitOf(state, game, them.ref),
+      image: imageOf(state, game, them.ref),
+      portrait: portraitOf(state, game, them),
       here: isHere(state, context, them),
       closed: closed(state, them),
       met: met(state, game, them),
@@ -306,6 +320,7 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
         { within: 'talk', refs: options.map((option) => ({ scene: option.scene, as: 'open' as const })) },
         { within: 'call', refs: data?.call?.scene ? [{ scene: data.call.scene, as: 'open' as const }] : [] },
         ...(data?.storyline !== undefined ? [{ storyline: data.storyline }] : []),
+        ...(data?.portrait !== undefined ? [{ picture: data.portrait }] : []),
         ...[...(data?.schedule ?? []).map((block) => block.when), ...options.map((option) => option.when), data?.call?.when, data?.met].map(
           (when): Reference => ({ when: bindCurrent(when, ref) }),
         ),
@@ -384,6 +399,11 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
         const them = one(state, game, who(args.character)[0])
         return them ? placeOf(state, game, them) : undefined
       },
+      /** Someone's face for avatars (`{ character }`): the trait's `portrait`, else their picture, through `artSrc`; undefined for anyone not in the cast. */
+      portrait: (state, args, { game }) => {
+        const them = one(state, game, who(args.character)[0])
+        return them ? portraitOf(state, game, them) : undefined
+      },
       /** Everyone met who can be called, each with the call command and why it can't go through now. */
       contacts: (state, _args, { game }) =>
         everyone(state, game)
@@ -392,7 +412,8 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
             id: short(them.ref),
             name: nameOf(state, game, them),
             description: descriptionOf(state, game, them),
-            portrait: portraitOf(state, game, them.ref),
+            image: imageOf(state, game, them.ref),
+            portrait: portraitOf(state, game, them),
             command: call(short(them.ref)),
             disabled: whyNot(state, game, call(short(them.ref))),
           })),

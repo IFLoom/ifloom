@@ -14,6 +14,7 @@ export type Notice = {
   title: string
   /** More words, as written, if there are any. Tokens are filled as the view shows it. */
   text?: string
+  /** A picture, as a path in the game's `art/` folder (`'notes/bins.jpg'`) or a URL. */
   image?: string
   /** What it is about, for badges: `'messages'`, `'quests'`. */
   tag?: string

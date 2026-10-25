@@ -501,7 +501,7 @@ function settleStock(state: GameState, context: PluginContext<ShopState>): GameS
 }
 
 /** Everything the UI needs to draw the vendors and their goods. */
-export function shopView(state: GameState, slice: ShopState, cx: Ctx): ShopView {
+function shopView(state: GameState, slice: ShopState, cx: Ctx): ShopView {
   const { game } = cx
   const vendors = everyVendor(state, game).map((one): VendorView => {
     const closed = closedReason(state, one, cx) ?? null

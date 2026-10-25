@@ -107,10 +107,10 @@ export type Reference =
    * the game doesn't have that plugin.
    */
   | { entry: string; plugin: string; list: string; noun: string }
-  /** A picture file, through `artSrc`, or used as written with `asWritten`. */
-  | { picture: string; asWritten?: boolean }
-  /** A video file, through `artSrc`, or used as written with `asWritten`. */
-  | { video: string; asWritten?: boolean }
+  /** A picture file, through `artSrc`. */
+  | { picture: string }
+  /** A video file, through `artSrc`. */
+  | { video: string }
   /** A sound file, through `audioSrc`. */
   | { audio: string }
   /** Prose with markup in it: the sounds, pools and files it names. */

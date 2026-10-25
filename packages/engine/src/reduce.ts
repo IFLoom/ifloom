@@ -4,7 +4,7 @@ import type { Game } from './game.ts'
 import type { Command, Effect, GameState } from './types.ts'
 import { screen } from './screen.ts'
 import { runCommandHooks } from './plugin.ts'
-import { commandOf, type CommandRef } from './custom.ts'
+import { buildEffects, commandOf, type CommandRef, type EffectRef } from './custom.ts'
 import { startingState } from './intake.ts'
 import { StartOver, commandContext, commandEntry, effectContext, effectEntry, featureContext } from './core.ts'
 import { draw } from './random.ts'
@@ -121,8 +121,13 @@ export function runIn(rendered: Rendering, current: GameState, game: Game, comma
   return entry.run(current, command, game, commandContext(rendered))
 }
 
-export function applyEffects(state: GameState, game: Game, effects: Effect[]): GameState {
-  return runEffects(state, game, effects, false)
+/**
+ * Apply effects as content writes them, the engine's and short plugin calls
+ * (`{ 'quests/start': { quest: 'bread' } }`) alike, as a plugin's
+ * `context.apply` does: a call to an effect nobody has is left out.
+ */
+export function applyEffects(state: GameState, game: Game, effects: readonly EffectRef[]): GameState {
+  return runEffects(state, game, buildEffects(game, effects), false)
 }
 
 /**

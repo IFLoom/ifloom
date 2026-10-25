@@ -213,7 +213,7 @@ function entry(quest: QuestDef, record: QuestsState): QuestEntry {
 }
 
 /** Everything the UI needs to draw the quest list. */
-export function questsView(record: QuestsState, game: Game): QuestsView {
+function questsView(record: QuestsState, game: Game): QuestsView {
   const defs = questsOf(game)
   const started = defs.filter((quest) => record.started[quest.id] !== undefined)
   const active = started

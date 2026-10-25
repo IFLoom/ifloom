@@ -468,13 +468,16 @@ import { artSrc } from '@ifloom/engine'
 function artSrc(path: string, type?: 'image' | 'video'): string
 ```
 
-Resolves a picture's or a video's path. Everything in the engine resolves media through it. It strips a leading `/`, `art/` or `/art/`, and puts `art/` in front. If the path doesn't already end in `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`, `.avif`, `.svg`, `.mp4` or `.webm`, it adds `.jpg`, or `.mp4` when `kind` is `'video'`.
+Resolves a picture's or a video's path. Everything in the engine resolves media through it, and every picture and video in the view has been through it: a scene's, an entity's, a notice's and every plugin's. It strips a leading `/`, `art/` or `/art/`, and puts `art/` in front. If the path doesn't already end in `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`, `.avif`, `.svg`, `.mp4` or `.webm`, it adds `.jpg`, or `.mp4` when `type` is `'video'`. A URL, such as `https://…` or `data:…`, is left as it is.
 
 ```ts
 artSrc('place/cafe')             // 'art/place/cafe.jpg'
 artSrc('/art/place/cafe.png')    // 'art/place/cafe.png'
 artSrc('clips/kettle', 'video')  // 'art/clips/kettle.mp4'
+artSrc('https://example.com/a.png')  // 'https://example.com/a.png'
 ```
+
+So content writes a picture the same way everywhere, as a path in `art/`, and your UI draws the view's paths as they come, with no call to `artSrc` of its own.
 
 The result is relative on purpose. A built game is a folder opened from disk or from a subpath, where a path starting `/` would point at the root of the drive or host instead of beside `index.html`. Put your pictures in `art/` next to the game's `index.html`. Sound files work the same way under `audio/`, through [`audioSrc`](/docs/reference/audio#audiosrc).
 

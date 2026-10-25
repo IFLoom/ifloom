@@ -9,7 +9,7 @@ You'd want it when the player has goals to work towards and might lose track of 
 A quest is a list of stages, and each stage is done by a [condition](/docs/reference/conditions) on the game state. These are the same conditions that gate the content, so a quest can't drift from the story it describes. Progress is kept once it's made, so a stage that was done stays done.
 
 ```ts
-import { quests, advance, questsOf, questsView, type QuestDef, type QuestStage, type QuestsState, type QuestsView, type QuestEntry } from '@ifloom/plugin-quests'
+import { quests, advance, questsOf, type QuestDef, type QuestStage, type QuestsState, type QuestsView, type QuestEntry } from '@ifloom/plugin-quests'
 ```
 
 The engine calls them quests, but what the player sees them called, such as a journal, a diary or a to-do list, is up to you. The showcase calls its list "To do". The plugin's own line, `You are not doing that.`, comes from the [strings table](/docs/reference/strings), so you can reword that too (see [Strings](#strings)).
@@ -434,14 +434,6 @@ function advance(record: QuestsState, state: GameState, game: Game): QuestsState
 ```
 
 Brings a record up to date with the game state. It starts what should start, moves each quest through every stage that's done, in order, and marks the finished ones. Nothing is ever taken back. It returns the same object when nothing moved. The plugin runs it after every command, and before answering a condition or building the view.
-
-### questsView
-
-```ts
-function questsView(record: QuestsState, game: Game): QuestsView
-```
-
-The `QuestsView` for a record. The plugin's view is `questsView(advance(record, state, game), game)`.
 
 ## Checks
 

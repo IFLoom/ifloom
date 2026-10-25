@@ -132,7 +132,7 @@ A channel the scene doesn't name keeps playing whatever an effect, the place or 
 type Block = (
   | { text: string; id?: string; when?: Condition }
   | { prose: string; when?: Condition }
-  | { variants: string; when?: Condition; gate?: Record<string, Condition>; art?: Record<string, string> }
+  | { variants: string; when?: Condition; gate?: Record<string, Condition>; image?: Record<string, string> }
   | { media: SceneMedia; when?: Condition }
   // and, for a scene that flows: a spoken line, a section, a decision, a point,
   // a minigame and a panel where they stand
@@ -151,7 +151,7 @@ Blocks render in order, and a block whose `when` fails is dropped. Rendered bloc
 - **`prose`** renders the line kept at that key in the game's [prose](/docs/reference/prose) table: for a line several scenes share, or one a mod should be able to rewrite by key. An unwritten key renders nothing, and the loader reports it.
 - **`variants`** renders one member of a named set of variants, drawn as [How variants are drawn](#how-variants-are-drawn) says. What the draw needs to remember, so the variants rotate, is added to the effects of every choice. The members are `game.prose.variants(name)`, minus any key the same scene uses as a `prose` block and any key with no prose. So a scene's own fixed block named `ava.smalltalk/closing` is never dealt as a random line.
   - **`gate`** puts conditions on individual members, by key. A member whose gate fails is left out of the draw, so one set of variants can hold a line that only makes sense later.
-  - **`art`** names, for a member, another set of variants to draw a picture from. The drawn picture's prose (usually a single image line) goes in front of the drawn member.
+  - **`image`** names, for a member, another set of variants to draw a picture from. The drawn picture's prose (usually a single image line) goes in front of the drawn member.
 - **`media`** renders a picture or a video, [`SceneMedia`](#scenemedia). Without `at`, it's drawn right there in the body, between the blocks around it.
 - **`ui`**, on any block, holds [presentation hints](/docs/reference/ui-hints) for the UI, and the view puts them on the first [beat](/docs/reference/prose#scenebeat) the block makes. The React UI's [`reveal`](/docs/react/hints#reveal) makes the block wait before it appears: `{ text: 'Tonight you unpack.', ui: { reveal: { delay: 1200 } } }`. A block that isn't shown takes its hints with it.
 

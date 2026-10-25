@@ -86,11 +86,10 @@ The list covers:
 - every file in a [pool](/docs/reference/media#pools)
 - a `{ media }` block's `src` and `poster`, and a stage layer's
 - the files in picture and video markup in any prose, posters included
-- the `image` of a `notify` effect, used as written (a URL is left out), and of an entity, declared or made by a `create` effect, through `artSrc`, so a character's portrait is listed with them
+- the `image` of a `notify` effect and of an entity, declared or made by a `create` effect, through `artSrc` (a URL is left out), so a character's picture is listed with them
 - whatever a plugin's [references](#plugin-references) name, such as a post's picture.
 
-A pool request (`[[img:@door]]`) names no file itself. Its pool's files are listed instead. A place's `art` isn't listed, because no UI draws it.
-
+A pool request (`[[img:@door]]`) names no file itself. Its pool's files are listed instead. 
 The same file named in two places is listed once for each place. The CLI uses this list and nothing else to find a game's files. [`ifloom check`](/docs/cli#ifloom-check) looks for each one in `public/`, and [`ifloom build`](/docs/cli#ifloom-build) looks in the built folder, both with [`checkFiles`](/docs/cli#checkfiles).
 
 ## What content names
@@ -215,7 +214,7 @@ A condition, effect or command named after a plugin the game wasn't built with i
 
 | `where` | Checked |
 |---|---|
-| `scene <id>` | For a [data scene](/docs/reference/scenes#datascene): `no prose for "…"` for its `text` blocks, each choice's label key (its `label`, or the default `scene#choice`) and every `labels` key. `variants "…" has no lines` for its `variants` blocks and the variants their `art` names. The conditions on its blocks, a `variants` block's `gate`, and each choice's `when`, `blocked` and `labels`. Each choice's `effects`. `two choices share the id "…"`, among its decisions' choices and its ending choices together. For a scene that [flows](/docs/reference/flows#the-checks): what its sections, decisions (each choice, and what its `then` names) and minigame and panel blocks name, and the flow's own checks. Its `audio` as a placement (see [Audio](#audio)), its `{ media }` blocks and its `stage` (see [Media](#media)), and, for its `panel`, each plugin's [`panelProblems`](/docs/reference/plugins#checking-panels) about its `with`. For every scene, `unknown minigame "…"` for its `minigame` field, and its storylet fields: `weight must be above 0`, `has a weight but no drawnFrom, so it is never drawn`, `has a when but no drawnFrom; when only gates draws`, and its `when`. |
+| `scene <id>` | For a [data scene](/docs/reference/scenes#datascene): `no prose for "…"` for its `text` blocks, each choice's label key (its `label`, or the default `scene#choice`) and every `labels` key. `variants "…" has no lines` for its `variants` blocks and the variants their `image` names. The conditions on its blocks, a `variants` block's `gate`, and each choice's `when`, `blocked` and `labels`. Each choice's `effects`. `two choices share the id "…"`, among its decisions' choices and its ending choices together. For a scene that [flows](/docs/reference/flows#the-checks): what its sections, decisions (each choice, and what its `then` names) and minigame and panel blocks name, and the flow's own checks. Its `audio` as a placement (see [Audio](#audio)), its `{ media }` blocks and its `stage` (see [Media](#media)), and, for its `panel`, each plugin's [`panelProblems`](/docs/reference/plugins#checking-panels) about its `with`. For every scene, `unknown minigame "…"` for its `minigame` field, and its storylet fields: `weight must be above 0`, `has a weight but no drawnFrom, so it is never drawn`, `has a when but no drawnFrom; when only gates draws`, and its `when`. |
 | `action <id>` | The content's [`actions`](/docs/reference/actions#actiondef): each one's `when`, `blocked`, `effects` and `command`. For each stat its `cost` spends: `spends unknown stat "…"`, or `spends stat "…", which is derived and never written`. `an action's command can't be a choice`, and `an action's command can't be the action itself; give it the effects`. |
 | `trigger <id>` | Its `when` and its `effects`. |
 | `input <id>` | Its `when`, `a choice with no options`, and `min is above max`. |

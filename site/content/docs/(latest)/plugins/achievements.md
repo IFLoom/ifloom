@@ -7,7 +7,7 @@ description: "Achievements earned by a condition or an effect, secret ones, prog
 What a save has earned is kept in the save. Everything earned in any save is also kept in the player's [profile](/docs/reference/profile), which outlives saves and new games. The view, built by a runner with a profile, shows both, so a UI can show everything the player has ever earned.
 
 ```ts
-import { achievements, achievementsOf, achievementsView, type AchievementDef, type ProgressDef, type AchievementsState, type AchievementsProfile, type AchievementsView, type AchievementEntry } from '@ifloom/plugin-achievements'
+import { achievements, achievementsOf, type AchievementDef, type ProgressDef, type AchievementsState, type AchievementsProfile, type AchievementsView, type AchievementEntry } from '@ifloom/plugin-achievements'
 ```
 
 The plugin's engine side draws nothing: its React UI is a [subpath of its own](#the-react-ui), and any UI can draw it. Its view lists every achievement, earned or not, and [Building UI for plugins](/docs/recipes/plugin-ui#an-achievements-page) builds an achievements page on it.
@@ -207,7 +207,7 @@ type AchievementEntry = {
 |---|---|
 | `name` | Its name, or `???` while it's secret and not earned. |
 | `description` | Its description, or `''` if it has none or is a secret not yet earned. |
-| `image` | Its picture as written, or `null`. Always `null` for a secret not yet earned. |
+| `image` | Its picture, through [`artSrc`](/docs/reference/prose#artsrc), or `null`. Always `null` for a secret not yet earned. |
 | `earned` | Whether this save earned it, or any save did, as the profile records. |
 | `earnedOn` | The turn this save earned it, or `null`. Also `null` for one earned only in another save. |
 | `progress` | How far towards it, or `null` if it has no progress or is a secret not yet earned. |
@@ -322,17 +322,13 @@ function achievementsOf(game: Game): AchievementDef[]
 
 The game's achievements, merged from its content and packs: `game.data.achievements.achievements`.
 
-### achievementsView
+### Reading the view yourself
+
+The plugin's view is at `view.plugins.achievements`, typed through the factory's [`viewIn`](/docs/reference/plugins#defineplugin). For a state the runner isn't playing, such as a save's preview, build its view with the profile's `achievements` namespace, an [`AchievementsProfile`](#achievementsprofile), so what was earned in other saves shows as earned:
 
 ```ts
-function achievementsView(record: AchievementsState, state: GameState, game: Game, stored?: unknown): AchievementsView
-```
-
-The `AchievementsView` for a record. It needs the state to read progress. `stored` is what the profile's `achievements` namespace holds, an [`AchievementsProfile`](#achievementsprofile). Each achievement in it shows as earned, with `earnedOn` `null` unless this save earned it too. The plugin's view is `achievementsView(slice, state, game, context.profile)`.
-
-```ts
-import type { Game, GameState, Runner } from '@ifloom/engine'
-import { achievements, achievementsView } from '@ifloom/plugin-achievements'
+import { view, type Game, type GameState, type Runner } from '@ifloom/engine'
+import { achievements } from '@ifloom/plugin-achievements'
 
 declare const runner: Runner
 declare const game: Game
@@ -340,10 +336,10 @@ declare const state: GameState
 
 const plugin = achievements()
 const stored = await runner.profile?.get('achievements')
-const ever = achievementsView(plugin.read(state, game), state, game, stored)
+const ever = plugin.viewIn(view(state, game, { profile: { achievements: stored } }))
 ```
 
-You need it only for a state the runner isn't playing, such as a save's preview. For the current game, read `runner.view()`.
+Each achievement the profile holds shows as earned, with `earnedOn` `null` unless this save earned it too. For the current game, read `runner.view()`.
 
 To read a progress value yourself, use [`amountOf`](/docs/reference/amounts#amountof): `amountOf(state, game, def.progress.value)`.
 

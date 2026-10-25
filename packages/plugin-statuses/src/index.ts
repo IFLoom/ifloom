@@ -144,7 +144,7 @@ function combined(game: Game, active: readonly ActiveRecord[]): StatModifier[] {
 }
 
 /** Everything the UI needs to show what's active. */
-export function statusesView(record: StatusesState, game: Game): StatusesView {
+function statusesView(record: StatusesState, game: Game): StatusesView {
   const active: ActiveStatus[] = []
   for (const entry of record.active) {
     const def = statusOf(game, entry.id)

@@ -5,7 +5,7 @@ description: "Vendors that sell things for any spendable stat, with stock the ve
 `@ifloom/plugin-shop` adds vendors the player buys from and sells back to. What a vendor sells are [entities](/docs/reference/entities), things the player then holds, for prices in any of your [spendable stats](/docs/reference/stats#statdef), such as coins, energy or both. A good never runs out unless you give it a stock, which the vendor holds and can get back each turn or each day. A vendor can take things back for part of their price, and mark a few goods down each day.
 
 ```ts
-import { shop, vendorsOf, vendorOf, sellableOf, shopView, type Vendor, type VendorDef, type GoodDef, type DiscountDef, type Restock, type Sellable, type ShopState, type StockRecord, type ShopView, type VendorView, type GoodView } from '@ifloom/plugin-shop'
+import { shop, vendorsOf, vendorOf, sellableOf, type Vendor, type VendorDef, type GoodDef, type DiscountDef, type Restock, type Sellable, type ShopState, type StockRecord, type ShopView, type VendorView, type GoodView } from '@ifloom/plugin-shop'
 ```
 
 The plugin's engine side draws nothing: its React UI is a [subpath of its own](#the-react-ui), and any UI can draw it. You can put its `buy` commands on any button, such as a location's actions, and the button shows the price and greys out with the reason as any action's does. For a shop screen, its view lists every vendor and their goods, and [Building UI for plugins](/docs/recipes/plugin-ui#a-shop-counter) builds one.
@@ -506,14 +506,6 @@ function sellableOf(state: GameState, game: Game, ref: EntityRef): Sellable | un
 ```
 
 A thing's `shop/sellable` trait, read through the thing it was made [`like`](/docs/reference/effects#create), so a copy made in play has its pattern's price.
-
-### shopView
-
-```ts
-function shopView(state: GameState, slice: ShopState, cx: Pick<PluginContext<ShopState>, 'game' | 'query'>): ShopView
-```
-
-The `ShopView` for a state. The plugin's view is `shopView(state, slice, context)`. It needs the context's `query` to ask the calendar and places.
 
 ## Checks
 

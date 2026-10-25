@@ -135,6 +135,9 @@ export type MessageView = {
 export type ThreadView = {
   id: string
   name: string
+  /** The sender's picture: their entity's `image`, through `artSrc`; null for a name as written. */
+  image: string | null
+  /** The sender's face, for an avatar: a person's `portrait` with the cast, else their `image`. */
   portrait: string | null
   /** Oldest first. */
   messages: MessageView[]
@@ -185,10 +188,13 @@ function threadOf(message: MessageDef): string {
   return message.thread ?? message.from
 }
 
-/** Who a message is from, as their entity is (`speakerOf`): a name and a face, or the name as written. */
-function senderOf(state: GameState, game: Game, from: string): { name: string; portrait: string | null } {
-  const known = speakerOf(state, game, from)
-  return known ? { name: known.name, portrait: known.image } : { name: from, portrait: null }
+/** Who a message is from, as their entity is (`speakerOf`): a name, a picture and a face, or the name as written. */
+function senderOf(state: GameState, game: Game, from: string): { name: string; image: string | null; portrait: string | null } {
+  const known = from ? speakerOf(state, game, from) : null
+  if (!known) return { name: from, image: null, portrait: null }
+  // Their face, from the cast when the game has it (a person's `portrait`); else their picture.
+  const face = pluginQuery(game, 'cast/portrait')?.(state, { character: known.ref }) as string | undefined
+  return { name: known.name, image: known.image, portrait: face ?? known.image }
 }
 
 /** The replies on offer for an arrival now: none once one is sent. */
@@ -419,6 +425,7 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
           return {
             id,
             name: sender.name,
+            image: sender.image,
             portrait: sender.portrait,
             messages: shown,
             unread: shown.filter((message) => !message.read).length,

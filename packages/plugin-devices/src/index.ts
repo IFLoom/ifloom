@@ -47,7 +47,7 @@ import {
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** One of the cast's contacts, as `cast/contacts` answers: read by shape, so devices need no cast. */
-type Contact = { id: string; name: string; description: string | null; portrait: string | null; command: Command }
+type Contact = { id: string; name: string; description: string | null; image: string | null; portrait: string | null; command: Command }
 
 export type DeviceDef = {
   id: string

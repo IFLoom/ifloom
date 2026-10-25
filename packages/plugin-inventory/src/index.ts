@@ -225,7 +225,7 @@ function thingsOf(state: GameState, game: Game, holder: Holder): InventoryThing[
 }
 
 /** Everything the UI needs to draw what you hold, with its buttons. */
-export function inventoryView(state: GameState, game: Game): InventoryView {
+function inventoryView(state: GameState, game: Game): InventoryView {
   const you = protagonist(state)
   const played = you !== PLAYER && inGame(state, game, you) ? thingsOf(state, game, you) : []
   return { things: [...played, ...thingsOf(state, game, PLAYER)] }

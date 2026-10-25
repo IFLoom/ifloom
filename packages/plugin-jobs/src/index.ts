@@ -356,7 +356,7 @@ function rankView(game: Game, rank: RankDef): RankView {
 }
 
 /** Everything the UI needs for a job board. */
-export function jobsView(state: GameState, context: PluginContext<JobsState>): JobsView {
+function jobsView(state: GameState, context: PluginContext<JobsState>): JobsView {
   const { game, slice } = context
   return {
     jobs: jobsOf(game).map((job): JobView => {

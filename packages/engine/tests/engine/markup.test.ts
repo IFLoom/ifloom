@@ -70,5 +70,8 @@ describe('scene body', () => {
     expect(artSrc('character/rosa')).toBe('art/character/rosa.jpg')
     expect(artSrc('scene/rosa-banter.webm')).toBe('art/scene/rosa-banter.webm')
     expect(artSrc('scene/rosa-talk.webp')).toBe('art/scene/rosa-talk.webp')
+    // A URL is left as it is.
+    expect(artSrc('https://example.com/rosa.jpg')).toBe('https://example.com/rosa.jpg')
+    expect(artSrc('data:image/png;base64,AAAA')).toBe('data:image/png;base64,AAAA')
   })
 })

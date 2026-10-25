@@ -23,21 +23,23 @@ Each effect is told apart by its key, as a [condition](/docs/reference/condition
 ## applyEffects
 
 ```ts
-function applyEffects(state: GameState, game: Game, effects: Effect[]): GameState
+function applyEffects(state: GameState, game: Game, effects: readonly EffectRef[]): GameState
 ```
 
 Runs a list of effects against a state and returns the new state, without a command around it. Nothing is refused, no turn ends unless an effect ends one, and no scene is counted as seen. It's useful in tests and tools, for example to put the player in a scene or give them coins, and in one of the game's own effects that wants to see where its own list leads.
 
 ```ts
 import { applyEffects } from '@ifloom/engine'
+import { quests } from '@ifloom/plugin-quests'
 
 const next = applyEffects(state, game, [
   { stat: 'coins', by: 5 },
   { scene: 'ava.hi' },
+  quests.start('bread'),
 ])
 ```
 
-A call to a plugin's effect or the game's own runs in its turn here, as it does in content.
+It takes effects as content writes them, so a plugin's helper such as `quests.start('bread')` goes straight in. A call to a plugin's effect or the game's own runs in its turn, as it does in content. A call to an effect the game doesn't have, such as one from a plugin it leaves out, is skipped, as a plugin's `context.apply` skips it.
 
 ## Effect
 

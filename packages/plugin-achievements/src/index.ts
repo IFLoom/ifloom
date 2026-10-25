@@ -11,6 +11,7 @@
  */
 import {
   amountOf,
+  artSrc,
   definePlugin,
   holds,
   notify,
@@ -69,6 +70,7 @@ export type AchievementEntry = {
   name: string
   /** Its description, or `''` while it's secret and not earned. */
   description: string
+  /** Its picture's path, through `artSrc`; null with none, or while it's secret and not earned. */
   image: string | null
   secret: boolean
   earned: boolean
@@ -150,7 +152,7 @@ function entry(def: AchievementDef, earnedOn: number | null, earned: boolean, st
     id: def.id,
     name: hidden ? stringOf(game, 'achievements/secret') : def.name,
     description: hidden ? '' : (def.description ?? ''),
-    image: hidden ? null : (def.image ?? null),
+    image: hidden || def.image === undefined ? null : artSrc(def.image),
     secret: Boolean(def.secret),
     earned,
     earnedOn,
@@ -163,7 +165,7 @@ function entry(def: AchievementDef, earnedOn: number | null, earned: boolean, st
  * record has earned, and what the profile has earned in any save, when it's
  * given (`stored`, what the profile's `achievements` namespace holds).
  */
-export function achievementsView(record: AchievementsState, state: GameState, game: Game, stored?: unknown): AchievementsView {
+function achievementsView(record: AchievementsState, state: GameState, game: Game, stored?: unknown): AchievementsView {
   const ever = new Set(profileIds(stored))
   const achievements = achievementsOf(game).map((def) => {
     const on = record.earned[def.id]

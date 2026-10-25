@@ -10,6 +10,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- A person can have a face for avatars beside their picture: the `cast/person` trait's [`portrait`](/docs/plugins/cast#person), written in `cast.person({ ..., image: 'character/ava.jpg', portrait: 'faces/ava.png' })`. The cast's cards, message threads, posts and contacts draw it, and it falls back to the entity's `image`. Other plugins ask for it with the `cast/portrait` query.
+
 - [`ifloom words`](/docs/cli#ifloom-words) lists every field a player reads, by its key in a translation's `words` table, with its words and where it is. `ifloom words --out words.en.json` writes them as a table to translate from. It builds the game with no translation, from its game module.
 - [`probe(name, game, steps, from?)`](/docs/cli#probe), from `@ifloom/cli/game`, makes a snapshot probe by playing: each step is an effect, a plugin's included, or `{ play: command }`, a command played as the player would press it. A refused command throws with why, so a probe never stops short. Small Town's probes are played this way now, and read as before but for one line: by its seventh day Ava's text has arrived in the flat.
 
@@ -185,6 +187,11 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Changed
 
+- **Breaking:** every picture and video in the view has been through [`artSrc`](/docs/reference/prose#artsrc), so a UI draws each path as it comes and never resolves one itself. A notice's `image`, an achievement's, and a feed post's `image` and `video` are written as a path in the game's `art/` folder, as an entity's `image` is, where they used to be passed through as written: `'photo/park.jpg'` and `'art/photo/park.jpg'` both give `'art/photo/park.jpg'`. `artSrc` leaves a URL (`https:`, `data:`) as it is.
+- **Breaking:** a `variants` block's `art`, the variants each member's picture is drawn from, is `image`. An older pack is rewritten when it loads.
+- **Breaking:** the cast's [`PersonView`](/docs/plugins/cast#personview) and its `cast/contacts` query give `image`, the person's picture, beside `portrait`, their face for avatars. A message thread ([`ThreadView`](/docs/plugins/messages#threadview)) has `image` too, and its `portrait` and a post's are the sender's face from the cast when the game has it.
+- [`applyEffects`](/docs/reference/effects#applyeffects) takes effects as content writes them, a plugin's helper such as `quests.start('bread')` included, and skips a call to an effect the game doesn't have, as a plugin's `context.apply` does.
+
 - **Breaking:** [`startAudio`](/docs/browser/audio-player#startaudio) returns the function that stops it, as `startClock`, `startKeys` and the other `start*` do, with `unlock` and `play` on it: `const player = startAudio(runner)`, then `player()` where you called `player.stop()`.
 - **Breaking:** the cast's `OFFSTAGE` is [`AWAY`](/docs/plugins/cast#away), and where someone nowhere on the map is reads `'away'`, not `'offstage'`, in a schedule, a `home`, `cast/at` and `cast/where`. An older pack is rewritten when it loads.
 
@@ -357,6 +364,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - **Breaking:** `PeopleCard` is `PeopleHere`, `Actions` is `RoomActions`, and `LocationCard` draws the place without its exits, which are `Exits`. `Title` no longer has the clock under it; `Clock` goes where you put it.
 
 ### Removed
+
+- **Breaking:** the plugins' view builders are no longer exported: `achievementsView`, `questsView`, `statusesView`, `cheatsView`, `jobsView`, `shopView` and `inventoryView`. Read a plugin's view from the view, typed by its factory's `viewIn`: `quests().viewIn(runner.view())`. For a state the runner isn't playing, pass the profile to [`view`](/docs/reference/view#view): `view(state, game, { profile })`.
 
 - **Breaking:** the engine exports less. These were helpers for the engine's own work that nothing outside it called, and each is gone from the exports: `NOTICES_KEPT` (the state keeps the last 50 notices), `actionBlocked` and `payCost` (an action's refusal is [`whyNot`](/docs/reference/actions#whynot)`(state, game, { type: 'action', id })`), `audioChannels`, `customCondition`, `customEffect`, `customValue`, `hasCustomEffect` and `previewEffects` (ask a call through [`holds`](/docs/reference/conditions#holds) or [`amountOf`](/docs/reference/amounts#amountof) with `{ value, with }`), `emptyStoryline`, `everyEntity`, `fireTriggers`, `heldTotal`, `inputById`, `inputRefusal` and `inputValue` (a refused value is `whyNot` on the `input` command), `levelAt`, `startingStats` and `statMax` (read [`statLevel`](/docs/reference/stats#statlevel), or a stat's `max` in [`view().statsById`](/docs/reference/view#statview)), `lockedBy` (use [`lockOn`](/docs/reference/locks#lockon)`(...)?.reason`), `minigameDef`, `timerDef` and `pluginById`, `ownerOf`, `proseStore` (`loadGame` builds the game's prose), `readDice`, `settingValue` (use [`runner.settings()`](/docs/reference/runner#settings)) and `uiProblems`.
 - **Breaking:** scenes are data only. A hand-written scene, an object with a `render` function, is no longer something content or a game can list, and `Scene`, `SceneView`, `SceneChoice`, `SceneCtx`, `sceneContext`, `bakeScene` and `isDataScene` are gone with it. `game.scenes` and the `scenes` of content and packs hold [`DataScene`](/docs/reference/scenes#datascene)s, and [`sceneById`](/docs/reference/game#scenebyid) returns the scene as declared. To see what a scene shows for a state, open it in that state and read `view(state, game).scene`.

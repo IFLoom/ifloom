@@ -11,7 +11,7 @@ function withNotices(): Game {
     actions: [
       ...(fixture().actions ?? []),
       { id: 'rent', effects: [{ notify: 'Rent is due', id: 'rent', tag: 'money' }] },
-      { id: 'post', effects: [{ notify: 'A letter came', tag: 'post' }] },
+      { id: 'post', effects: [{ notify: 'A letter came', tag: 'post', image: 'notes/letter.png' }] },
       { id: 'hum', effects: [{ notify: 'Something hums' }] },
     ],
   }
@@ -27,6 +27,8 @@ describe('notices', () => {
     const shown = view(state, game).notices
     expect(shown.unseen.map((notice) => notice.title)).toEqual(['Something hums', 'A letter came', 'Rent is due'])
     expect(shown.byTag).toEqual({ money: 1, post: 1, '': 1 })
+    // A picture is resolved from the game's art folder, as every picture in the view is.
+    expect(shown.unseen.map((notice) => notice.image)).toEqual([null, 'art/notes/letter.png', null])
     state = apply(state, game, { type: 'dismiss', id: 'rent' }).state
     expect(view(state, game).notices.byTag).toEqual({ post: 1, '': 1 })
     state = apply(state, game, { type: 'dismiss' }).state

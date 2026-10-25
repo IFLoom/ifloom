@@ -146,7 +146,7 @@ describe('video on a post', () => {
     let state = apply(begin(g), g, { type: 'action', id: 'wait' }).state
     state = apply(state, g, { type: 'action', id: 'film' }).state
     const [social, board] = shown(state, g).feeds
-    expect(social.posts[0]).toMatchObject({ id: 'pond', image: null, video: 'clips/pond.mp4', beats: [{ type: 'text', text: 'Ducks.' }] })
+    expect(social.posts[0]).toMatchObject({ id: 'pond', image: null, video: 'art/clips/pond.mp4', beats: [{ type: 'text', text: 'Ducks.' }] })
     expect(board.posts[0]).toMatchObject({ id: 'fete', image: 'art/fete.jpg', video: 'art/fete.webm' })
     expect(board.posts[0].beats).toEqual([
       { type: 'text', text: 'Bunting going up.' },

@@ -110,10 +110,13 @@ export function mediaType(src: string): 'image' | 'video' {
 }
 
 /**
- * The one place a picture's or a video's path is resolved. A bare name is a
- * `.jpg`, or an `.mp4` when `type` is `'video'`.
+ * The one place a picture's or a video's path is resolved, from the game's
+ * `art/` folder: `'photo/ava.svg'` and `'art/photo/ava.svg'` are both
+ * `'art/photo/ava.svg'`. A bare name is a `.jpg`, or an `.mp4` when `type` is
+ * `'video'`. A URL (`https:`, `data:`, `//host/…`) is left as it is.
  */
 export function artSrc(path: string, type: 'image' | 'video' = 'image'): string {
+  if (/^(?:[a-z][a-z0-9+.-]*:|\/\/)/i.test(path)) return path
   const trimmed = path.replace(/^\/?art\//, '').replace(/^\//, '')
   if (/\.(jpg|jpeg|png|webp|gif|avif|webm|mp4|svg)$/i.test(trimmed)) {
     return `${ART_ROOT}${trimmed}`

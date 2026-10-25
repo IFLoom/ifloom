@@ -7,7 +7,7 @@ description: "Timed statuses that last some turns, change what the player's stat
 While a status lasts, it can change what the player's stats read, and it can run effects when it starts, at the end of each turn and when it ends. The stat changes use the engine's [stat modifiers](/docs/reference/plugins#stat-modifiers), so nothing is written into the stats. When the status wears off, they read as they did before.
 
 ```ts
-import { statuses, statusesOf, statusOf, statusesView, type StatusDef, type StatusModifier, type Reapply, type StatusesState, type ActiveRecord, type StatusesView, type ActiveStatus } from '@ifloom/plugin-statuses'
+import { statuses, statusesOf, statusOf, type StatusDef, type StatusModifier, type Reapply, type StatusesState, type ActiveRecord, type StatusesView, type ActiveStatus } from '@ifloom/plugin-statuses'
 ```
 
 ## Install
@@ -312,14 +312,6 @@ function statusOf(game: Game, id: string): StatusDef | undefined
 ```
 
 The game's statuses, merged from its content and packs: `game.data.statuses.statuses`. `statusOf` is the one with this id, or `undefined`.
-
-### statusesView
-
-```ts
-function statusesView(record: StatusesState, game: Game): StatusesView
-```
-
-The `StatusesView` for a record. The plugin's view is `statusesView(slice, game)`.
 
 ## Checks
 

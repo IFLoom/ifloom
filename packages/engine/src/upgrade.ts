@@ -16,7 +16,7 @@ import type { Pack } from './loader.ts'
 import type { Plugin } from './plugin.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
-export const SCHEMA = 26
+export const SCHEMA = 27
 
 /** A pack as it came in: some schema's shape, not necessarily this one. */
 export type RawPack = Record<string, unknown> & { schema: number }
@@ -137,12 +137,26 @@ export const PACK_STEPS: Record<number, (pack: RawPack, context: PackContext) =>
   24: (pack, context) => toSchema25(pack, context),
   // 25 → 26: one word each: a thing's line is its `description`, and a heading its `title`. See `toSchema26`.
   25: (pack) => toSchema26(pack),
+  // 26 → 27: pictures are `image`, gating is `blocked` and `once` has one shape. See `toSchema27`.
+  26: (pack) => toSchema27(pack),
 }
 
 /** Keys of a pack's `words` table renamed, the words kept. */
 function wordKeys(pack: RawPack, rename: (key: string) => string): RawPack {
   if (!isRecord(pack.words)) return pack
   return { ...pack, words: Object.fromEntries(Object.entries(pack.words).map(([key, text]) => [rename(key), text])) }
+}
+
+/**
+ * 26 → 27:
+ * - a `variants` block's `art`, the variants each member's picture is drawn
+ *   from, is `image`.
+ * The plugins' own steps rename their content's fields.
+ */
+function toSchema27(pack: RawPack): RawPack {
+  return TOOLS.objects(pack, (value) =>
+    typeof value.variants === 'string' && isRecord(value.art) && !('image' in value) ? renamed(value, { art: 'image' }) : value,
+  )
 }
 
 /**

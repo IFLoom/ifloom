@@ -7,7 +7,7 @@ description: "Using, dropping and giving away the things you hold: a usable trai
 What you hold is the engine's: things are [entities](/docs/reference/entities), and [`give`](/docs/reference/entities#give-take-move-and-holding), `take` and `move` change who [holds](/docs/reference/entities#holding-things) them. [`view.held`](/docs/reference/view#held) lists them without this plugin. Add it when holding things isn't enough and the player should use them.
 
 ```ts
-import { inventory, usableOf, inventoryKindsOf, inventoryView, type Usable, type InventoryData, type InventoryThing, type InventoryView } from '@ifloom/plugin-inventory'
+import { inventory, usableOf, inventoryKindsOf, type Usable, type InventoryData, type InventoryThing, type InventoryView } from '@ifloom/plugin-inventory'
 ```
 
 ## Install
@@ -278,14 +278,13 @@ function usableOf(state: GameState, game: Game, ref: EntityRef): Usable | undefi
 
 The thing's `inventory/usable` trait, read through what it was made `like`, or undefined when it does nothing.
 
-### inventoryKindsOf and inventoryView
+### inventoryKindsOf
 
 ```ts
 function inventoryKindsOf(game: Game): { id: string }[] | undefined
-function inventoryView(state: GameState, game: Game): InventoryView
 ```
 
-`inventoryKindsOf` is the game's `data.inventory.kinds`, merged from its content and packs, or `undefined` when it lists none, for every kind. `inventoryView` is the plugin's view for a state.
+The game's `data.inventory.kinds`, merged from its content and packs, or `undefined` when it lists none, for every kind.
 
 ## Strings
 

@@ -45,10 +45,11 @@ export type Block =
          */
         gate?: Record<string, Condition>
         /**
-         * A picture that belongs with a particular line, given as the variants to
-         * draw it from — so a rotating line keeps its paired, rotating still.
+         * A picture that belongs with a particular line, by member: the variants
+         * to draw its picture line from, so a rotating line keeps its paired,
+         * rotating still.
          */
-        art?: Record<string, string>
+        image?: Record<string, string>
       }
     /**
      * A picture or a video. Left without `at`, it sits here in the body, in
@@ -202,7 +203,7 @@ function blockText(
   if (members.length === 0) return {}
   const drawn = runtime.prose.draw(state, block.variants, members)
   const line = runtime.prose.line(drawn.id, state)
-  const artVariants = block.art?.[drawn.id]
+  const artVariants = block.image?.[drawn.id]
   if (!artVariants) return { text: line, remember: drawn.remember, drawn: drawn.id }
   const stills = variantMembers(scene, artVariants, runtime)
   if (stills.length === 0) {

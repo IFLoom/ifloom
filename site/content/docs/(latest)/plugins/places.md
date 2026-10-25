@@ -14,7 +14,7 @@ These are the parts of a game that deal with places, and where each one comes fr
 - **Walking** is the [`go()`](#commands) command, which the view hands the UI on each [exit](#exitview).
 - **Being somewhere at once** (a lift home, or a scene that ends across town) is the [`moveTo()`](#effects) effect.
 - **Opening hours** are a location's `blocked` entries, written with the [calendar](/docs/plugins/calendar)'s conditions. See [Opening hours](#opening-hours).
-- **"Only in the café"** is the [`at()`](#conditions) condition, or [`onlyAt()`](#helpers) in an activity's `blocked` list.
+- **"Only in the café"** is an action in the café's own `actions`, the [`at()`](#conditions) condition, or [`onlyAt()`](#helpers) in a game action's `blocked` list.
 - **The header** is the plugin's [label](#the-label), at `view.when`.
 - **Things lying somewhere**, such as a dropped scarf or a parcel left in the hall, are held by the place's [entity](#each-place-is-an-entity), and the view lists them with a button to [pick each up](#things-lying-in-a-place).
 
@@ -142,7 +142,7 @@ What happens as the player walks into a place, such as someone catching them on 
 {
   id: 'park',
   // …
-  arrive: { when: { not: { kv: 'sawPark' } }, effects: [{ kind: 'kv', key: 'sawPark', to: true }, { kind: 'scene', scene: 'park.ducks' }] },
+  arrive: { when: { not: { kv: 'sawPark' } }, effects: [{ kv: 'sawPark', to: true }, { scene: 'park.ducks' }] },
 }
 ```
 
@@ -171,7 +171,7 @@ const locations: LocationDef[] = [
     id: 'cafe', name: 'The Corner Café', tag: 'Café', exits: ['high-street'], art: 'place/cafe',
     blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
     body: [{ text: 'place.cafe' }],
-    actions: [{ id: 'coffee', label: 'Buy a coffee', command: { type: 'activity', id: 'coffee' } }],
+    actions: [{ id: 'coffee', label: 'Buy a coffee', effects: [{ kv: 'hadCoffee', to: true }] }],
   },
   { id: 'park', name: 'Riverside Park', tag: 'Small Town', exits: ['high-street'], art: 'place/park', body: [{ text: 'place.park' }] },
   {
@@ -309,22 +309,24 @@ apply(state, game, pickUp('item:parcel')).state.held.player   // { 'item:parcel'
 
 ## A worked example
 
-The town above, with the calendar and a coffee to buy in the café. The coffee is only sold in the café, so it lists [`onlyAt`](#helpers) in its `blocked`.
+The town above, with the calendar and a coffee to buy in the café. The coffee is the café's own action, offered only there. A room's action is done as `{ type: 'action', id: 'places/<id>' }`, which is what its button sends. A game action, in the content's `actions`, is offered everywhere, so one that belongs somewhere lists [`onlyAt`](#helpers) in its `blocked`, as the phone call does here.
 
 ```ts
-import { apply, loadGame, startingState, view, whyNot, type ActivityDef } from '@ifloom/engine'
+import { apply, loadGame, startingState, view, whyNot, type ActionDef } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { go, onlyAt, places, where, type PlacesView } from '@ifloom/plugin-places'
 import { town } from './town.ts'
 
-const coffee: ActivityDef = {
-  id: 'coffee',
-  blocked: [onlyAt(['cafe'], 'There is no coffee here.')],
-  effects: [{ kind: 'kv', key: 'hadCoffee', to: true }],
+// A game action, offered in every room, but refused anywhere but home.
+const phoneHome: ActionDef = {
+  id: 'phoneHome',
+  label: 'Phone home',
+  blocked: [onlyAt(['flat'], 'The phone is at home.')],
+  effects: [{ kv: 'calledHome', to: true }],
 }
 
 const clock = calendar()
-const { game } = loadGame([{ ...town, activities: [coffee] }], {
+const { game } = loadGame([{ ...town, actions: [phoneHome] }], {
   id: 'small-town',
   title: 'Small Town',
   plugins: [clock, places({ start: 'flat' })],
@@ -342,9 +344,9 @@ view(state, game).scene.body        // 'Boxes, mostly. The radiator knocks when 
 
 whyNot(state, game, go('cafe'))     // 'You cannot get there from here.'
 state = apply(state, game, go('high-street')).state
-whyNot(state, game, { type: 'activity', id: 'coffee' })   // 'There is no coffee here.'
+whyNot(state, game, { type: 'action', id: 'phoneHome' })  // 'The phone is at home.'
 state = apply(state, game, go('cafe')).state
-view(state, game).actions.map((a) => a.id)                 // ['coffee']
+view(state, game).actions.map((a) => a.id)                 // ['coffee', 'phoneHome']
 const room = view(state, game).plugins.places as PlacesView
 room.exits.map((e) => e.id)                                // ['high-street']
 
@@ -384,7 +386,7 @@ A [lock](/docs/reference/locks#lock) names the command `places/go`, or `places/*
 |---|---|---|
 | `{ 'places/move': { location: 'cafe' } }` | `moveTo('cafe')` | Puts the player there at once, and closes any open scene. |
 
-It works in any effect list: a data scene choice's, an activity's or a thing's use in the [inventory](/docs/plugins/inventory). In a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), which lists plain effects, write the long form: `{ kind: 'custom', name: 'places/move', with: { location: 'cafe' } }`.
+It works in any effect list: a data scene choice's, an action's, a thing's use in the [inventory](/docs/plugins/inventory), or a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does).
 
 No exit is needed and nothing is refused, so the player can be moved from nowhere, or into a `blocked` place. The place's [`arrive`](#arrival) doesn't run. A place the game doesn't have does nothing: the player stays where they were, and the scene stays open.
 
@@ -395,7 +397,7 @@ No exit is needed and nothing is refused, so the player can be moved from nowher
 | `{ 'places/at': { location: ['cafe', 'park'] } }` | `at('cafe', 'park')` | The player is in one of these places. |
 | `{ 'places/within': { location: ['cafe'] } }` | `within('cafe')` | The player is in one of these places, or anywhere inside one, following each place's `parent`. |
 
-These are the short forms, with the full name as the only key (see [plugin calls](/docs/reference/custom#plugincall)). The long form of the first row is `{ custom: 'places/at', with: { location: ['cafe', 'park'] } }`. A single place works too, as in `{ 'places/at': { location: 'cafe' } }`.
+Each is a call with the full name as the only key (see [plugin calls](/docs/reference/custom#plugincall)), which the helpers write for you. A single place works too, as in `{ 'places/at': { location: 'cafe' } }`.
 
 In the café's [back room](#rooms-inside-rooms), `at('cafe.back')` and `within('cafe')` hold, and `at('cafe')` doesn't. Neither holds while the player is nowhere. `within('cafe', 'office')` holds inside either building.
 
@@ -470,7 +472,7 @@ A place can give a `stage` as well as its `art`: layers of pictures or videos wi
       { id: 'lamp', src: 'place/cafe-lamp.png', when: { kv: 'evening' } },
     ],
     hotspots: [
-      { id: 'menu', rect: [10, 20, 30, 20], label: 'Read the menu', command: { type: 'activity', id: 'coffee' } },
+      { id: 'menu', rect: [10, 20, 30, 20], label: 'Read the menu', command: { type: 'action', id: 'places/coffee' } },
       { id: 'back', rect: [85, 30, 15, 70], label: 'The back door', command: go('cafe.back') },
     ],
   },
@@ -723,7 +725,7 @@ const onlyAt: (places: string[], reason?: string) => Blocked
 | `LOCATION` | The kind every place's entity is, `'location'`. |
 | `at`, `within` | The [conditions](#conditions). |
 | `moveTo` | The [`places/move`](#effects) effect. |
-| `onlyAt` | A [`blocked`](/docs/reference/actions#blocked) entry for an activity: `{ when: { not: at(...places) }, reason }`, which refuses it anywhere else. The reason is `Not here.` if left out. |
+| `onlyAt` | A [`blocked`](/docs/reference/actions#blocked) entry for an action: `{ when: { not: at(...places) }, reason }`, which refuses it anywhere else. The reason is `Not here.` if left out. |
 
 `locationById` and `locationsOf` read the game's content, so they work on any state. `where` reads the state alone.
 
@@ -731,10 +733,10 @@ const onlyAt: (places: string[], reason?: string) => Blocked
 
 When the game loads, the plugin reports two kinds of problem.
 
-**Place ids that content names.** Every place named in `places/at`, `places/within`, `places/move` or `places/go` is looked up (and the thing `places/pickUp` names, as an entity), wherever content writes it: an activity's `blocked` entries and effects, a scene, a lock, a room's actions, or the game's own `actions`. One the game doesn't have is reported where it's named:
+**Place ids that content names.** Every place named in `places/at`, `places/within`, `places/move` or `places/go` is looked up (and the thing `places/pickUp` names, as an entity), wherever content writes it: an action's `blocked` entries and effects, a scene, a lock, a room's actions, or the game's own `actions`. One the game doesn't have is reported where it's named:
 
 ```text
-town · activity swim · unknown location "lido"
+town · action swim · unknown location "lido"
 ```
 
 **The places themselves.** These are pinned on the content or pack each place came from, with `where` as `locations <id>`. The `start` option is pinned on `base` as `options start`. The plugin reports:
@@ -772,4 +774,4 @@ town · locations cafe · hotspot menu: names choice "order", but only a scene h
 
 ## See it in an example
 
-Small Town: the `locations` are the town, one in each place's file in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story), with `blocked` opening hours on the café and the office, a `stage` in the café, and activities kept to one place with `onlyAt`. [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) adds `places({ start: 'flat' })`.
+Small Town: the `locations` are the town, one in each place's file in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story), with `blocked` opening hours on the café and the office, a `stage` in the café, and each place's own `actions`. [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) adds `places({ start: 'flat' })`.

@@ -135,7 +135,7 @@ type PluginPanel = {
 }
 ```
 
-A panel a plugin UI draws by name. `component` gets what the panel was opened with as `data`. The dialog's title is content's `with.title` if it gave one, else `title`: a key of the module's words, or a function of `data` and the view, such as the shop's, which gives the vendor's name. A game's own panel of the same name keeps the plugin UI's title.
+A panel a plugin UI draws by name. `component` gets what the panel was opened with as `data`, the panel's `with`. The dialog's title is content's `with.title` if it gave one, else `title`: a key of the module's words, or a function of `data` and the view, such as the shop's, which gives the vendor's name. A game's own panel of the same name keeps the plugin UI's title.
 
 ### PluginPage
 

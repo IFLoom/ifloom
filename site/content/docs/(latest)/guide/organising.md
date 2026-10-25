@@ -11,7 +11,7 @@ Every template starts a game in this layout, and the three examples follow it:
 ```
 src/
 ├── game.ts           puts the game together from the files below
-├── rules.ts          rules and custom functions, once it has any
+├── rules.ts          the game's own code, once it has any
 ├── world/            what the whole game shares, one file per kind
 │   ├── stats.ts      the stats
 │   ├── things.ts     kinds and things: what the player carries, wears or buys
@@ -31,7 +31,7 @@ import { stats } from './world/stats.ts'
 import { opening } from './story/opening.ts'
 import { cafe } from './story/cafe.ts'
 
-export default loadGame([stats, opening, cafe], { id: 'my-game', title: 'My Game', introScene: 'start' })
+export default loadGame([stats, opening, cafe], { id: 'my-game', title: 'My Game' })
 ```
 
 ```ts
@@ -43,18 +43,18 @@ export const stats: Content = {
 }
 ```
 
-`game.ts` holds no content. Its job is the list of files and what only the base can hold: the game's `id` and `title`, its `plugins`, `rules`, `actions` and the rest that [can't go in content](/docs/reference/loader#content).
+`game.ts` holds no content. Its job is the list of files and the base: the game's `id`, `title` and `version`, its `plugins` and its own code in `rules`. Everything a mod could change, actions, locks and the scene it opens on included, is [content](/docs/reference/loader#content) and goes in a file of its own.
 
 ### World by kind, story by area
 
 The two folders split the game in different ways on purpose.
 
 - **`world/` goes by kind.** A stat, a thing or a character is used all over the story. Coins are spent in the café and earned at the office, and Ava turns up in three places. These declarations have no one home in the story, so they're kept together by what they are, and you know where to look for every thing.
-- **`story/` goes by area.** A scene, its choices, the words it shows, the activity that opens it and the plugin content around it are written and changed together. Keeping them in one file means a change to the café touches `story/cafe.ts` and nothing else.
+- **`story/` goes by area.** A scene, its choices, the words it shows, the action that opens it and the plugin content around it are written and changed together. Keeping them in one file means a change to the café touches `story/cafe.ts` and nothing else.
 
 What an area is depends on the shape of your game:
 
-- **A place**, in a game with the [places plugin](/docs/plugins/places): the flat, the high street, the café. Its file holds the location, the activities you can do there, its scenes, and the plugin content that belongs to it, such as its shop's vendor or the jobs based there.
+- **A place**, in a game with the [places plugin](/docs/plugins/places): the flat, the high street, the café. Its file holds the location, the actions you can do there, its scenes, and the plugin content that belongs to it, such as its shop's vendor or the jobs based there.
 - **A chapter**, in a linear story: The Letter has `story/ch1.ts`, `ch2.ts` and `ch3.ts`.
 - **A character's arc**, for a story that follows one person across places: Small Town's `story/ava.ts` holds her scenes, her texts, her quest and her achievement.
 
@@ -68,7 +68,7 @@ A small game can keep one file in each folder. The templates start with `world/s
 
 The layout is a convention. The engine only sees the list of content, so any layout works.
 
-- **Everything by kind**, for a management game that's mostly data. The Corner Café keeps its stats, staff, menu, activities and triggers in `world/`, a file each, and has only two scenes in `story/`. When most of your game is tables of things and the story is a few scenes around them, by kind is easier to read.
+- **Everything by kind**, for a management game that's mostly data. The Corner Café keeps its stats, staff, menu, actions and triggers in `world/`, a file each, and has only two scenes in `story/`. When most of your game is tables of things and the story is a few scenes around them, by kind is easier to read.
 - **One file**, for a tiny story. A game of a dozen scenes reads fine as one `Content` object in `game.ts`. [Installation](/docs/guide/installation#add-ifloom-to-an-existing-project) shows one. Move it into the folders when it grows.
 
 ## Combining your files
@@ -127,7 +127,7 @@ const { game } = loaded
 describe('the café', () => {
   it('sells a coffee for 3 coins', () => {
     const runner = createRunner(game, { ...startingState(game), sceneId: null })
-    runner.apply({ type: 'activity', id: 'coffee' })
+    runner.apply({ type: 'action', id: 'coffee' })
     expect(runner.state.stats.coins).toBe(9)
   })
 })
@@ -155,6 +155,6 @@ A pack replaces whatever it repeats, since changing your game is what it's for, 
 
 ## See it in the examples
 
-- **Small Town** (`examples/showcase`): `world/` has stats, things, cast, settings, activities, achievements and cheats, and `story/` has moving day, Ava, the flat, the high street, the café, the park, the office and Sam. The tour in [The showcase](/docs/guide/showcase#the-files) lists every file.
+- **Small Town** (`examples/showcase`): `world/` has stats, things, cast, settings, actions, the phone's apps, strings, achievements and cheats, and `story/` has moving day, Ava, the flat, the high street, the café, the park, the office and Sam. The tour in [The showcase](/docs/guide/showcase#the-files) lists every file.
 - **The Letter** (`examples/novel`): `world/stats.ts` and a file per chapter in `story/`.
 - **The Corner Café** (`examples/cafe`): nearly everything in `world/`, by kind, with its sums in `rules.ts`.

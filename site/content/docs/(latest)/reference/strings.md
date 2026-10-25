@@ -11,7 +11,7 @@ import { STRINGS, say, type StringKey, type Strings } from '@ifloom/engine'
 Lines your game writes itself aren't in the table, because they're already your words and the engine prints them as written. These include:
 
 - a [lock](/docs/reference/locks)'s `reason`
-- an [activity](/docs/reference/actions#blocked)'s `blocked` `reason` and a cost's `reasons`
+- an [action](/docs/reference/actions#blocked)'s `blocked` `reason` and a cost's `reasons`
 - a stat's [`lacking`](/docs/reference/stats#lackingline)
 - a [place](/docs/plugins/places#locationdef)'s `blocked` `reason`
 - a [cast](/docs/plugins/cast#calls) character's `call.busy` and a [talk option](/docs/plugins/cast#talkoption)'s `label`
@@ -35,7 +35,7 @@ const game: Game = {
 }
 
 // `busy` is a state with a scene open
-whyNot(busy, game, { type: 'activity', id: 'coffee' })   // 'Not yet, love.'
+whyNot(busy, game, { type: 'action', id: 'coffee' })     // 'Not yet, love.'
 apply(busy, game, go('high-street')).reason              // 'Not yet, love.' (the places plugin says it too)
 whyNot(busy, game, talk('ava'))                           // 'Not yet, love.' (and so does the cast)
 whyNot(state, game, talk('ava'))                          // 'Ava has popped out.' when Ava is elsewhere
@@ -153,7 +153,7 @@ Give only the lines you want to change. Every other key keeps its English.
 
 ### In your content
 
-Your [content](/docs/reference/loader#content) can carry `strings` too. [`loadGame`](/docs/reference/loader#loadgame) starts from the base's `strings` and lays your content's over them. Each key is declared once across your content:
+Your [content](/docs/reference/loader#content) can carry `strings` too. [`loadGame`](/docs/reference/loader#loadgame) gathers them from each plugin's own [`content`](/docs/reference/plugins#kinds-and-entities), then your content, then your packs. Each key is declared once across your content:
 
 ```ts
 import { loadGame, type Content } from '@ifloom/engine'
@@ -228,7 +228,7 @@ function say(game: Game | undefined, key: StringKey | (string & {}), vars?: Reco
 
 Returns the words for a key. It looks in this order and takes the first it finds:
 
-1. the game's `strings[key]`, from the base, its content and its packs
+1. the game's `strings[key]`, from its content and its packs
 2. for a `plugin/name` key, the plugin's own default, its `strings[name]`
 3. the engine's `STRINGS`
 4. the key itself

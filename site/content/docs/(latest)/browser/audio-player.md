@@ -67,8 +67,8 @@ Volume comes from the `ui` [settings](/docs/reference/settings) the game names i
 
 ```ts
 settings: [
-  { id: 'musicVolume', label: 'Music', affects: 'ui', kind: 'range', min: 0, max: 100, default: 70 },
-  { id: 'muted', label: 'Mute', affects: 'ui', kind: 'toggle', default: false },
+  { id: 'musicVolume', label: 'Music', affects: 'ui', type: 'range', min: 0, max: 100, default: 70 },
+  { id: 'muted', label: 'Mute', affects: 'ui', type: 'toggle', default: false },
 ],
 audio: {
   tracks: { calm: { src: 'music/calm.ogg', channel: 'music', volume: 0.8 } },
@@ -240,7 +240,7 @@ case 'say':
 
 ```vue tab="Vue" tab-group="framework"
 <!-- src/Beat.vue -->
-<p v-else-if="beat.kind === 'say'" class="beat-say" :data-who="beat.who">
+<p v-else-if="beat.type === 'say'" class="beat-say" :data-who="beat.who">
   {{ beat.text }}
   <VoiceReplay v-if="beat.voice" :voice="beat.voice" />
 </p>

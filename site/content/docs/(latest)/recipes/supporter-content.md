@@ -94,13 +94,13 @@ import { hasUnlock } from '@ifloom/plugin-unlocks'
 data: {
   cheats: {
     cheats: [
-      { id: 'coins', label: '+20 coins', effects: [{ kind: 'stat', stat: 'coins', by: 20 }] },
+      { id: 'coins', label: '+20 coins', effects: [{ stat: 'coins', by: 20 }] },
       {
         id: 'energy',
         label: 'Full energy',
         group: 'Supporters',
         blocked: [{ when: { not: hasUnlock('supporter') }, reason: 'For supporters.' }],
-        effects: [{ kind: 'stat', stat: 'energy', to: 100 }],
+        effects: [{ stat: 'energy', to: 100 }],
       },
     ],
   },
@@ -129,7 +129,7 @@ const supporter: Pack = {
       weight: 5,
       when: { all: [hasUnlock('supporter'), { not: { seen: 'cafe.back-room' } }] },
       body: [{ text: 'cafe.back-room' }],
-      choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
+      choices: [{ id: 'leave', effects: [{ scene: null }] }],
     },
   ],
   prose: {

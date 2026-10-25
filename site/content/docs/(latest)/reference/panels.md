@@ -16,16 +16,11 @@ The showcase's café has a Go to the counter action that opens the shop plugin's
 
 ```ts
 import type { Content } from '@ifloom/engine'
-import { onlyAt } from '@ifloom/plugin-places'
 import { openShop } from '@ifloom/plugin-shop'
 import { openJobs } from '@ifloom/plugin-jobs'
 import { usable } from '@ifloom/plugin-inventory'
 
 export const town: Content = {
-  activities: [
-    // { kind: 'panel', panel: 'shop', with: { vendor: 'counter' } }
-    { id: 'counter', blocked: [onlyAt(['cafe'])], effects: [openShop('counter')] },
-  ],
   kinds: [{ id: 'item', label: 'Thing', listed: false }],
   entities: [
     {
@@ -34,7 +29,7 @@ export const town: Content = {
       name: 'newspaper',
       desc: 'Today’s Small Town Gazette. The back page is job ads.',
       at: 'player',
-      // { kind: 'panel', panel: 'jobs', with: { job: ['dogs'] } }, and the paper is kept to read again.
+      // { panel: 'jobs', with: { job: ['dogs'] } }, and the paper is kept to read again.
       traits: { ...usable('Read the job ads', [openJobs(['dogs'])], { keep: true }) },
     },
   ],
@@ -44,15 +39,15 @@ export const town: Content = {
       body: [{ text: 'ava.hi' }],
       choices: [
         // The scene closes and the board opens over the room, in one choice.
-        { id: 'work', effects: [{ kind: 'scene', scene: null }, openJobs()] },
-        { id: 'bye', effects: [{ kind: 'scene', scene: null }] },
+        { id: 'work', effects: [{ scene: null }, openJobs()] },
+        { id: 'bye', effects: [{ scene: null }] },
       ],
     },
   ],
 }
 ```
 
-The café's location then lists `{ id: 'counter', label: 'Go to the counter', command: { type: 'activity', id: 'counter' } }` among its actions. The paper is kept, so the player can read the ads again.
+The café's location lists the counter among its actions, `{ id: 'counter', label: 'Go to the counter', effects: [openShop('counter')] }`, which is `{ panel: 'shop', with: { vendor: 'counter' } }`. The paper is kept, so the player can read the ads again.
 
 ## OpenPanel
 
@@ -84,8 +79,8 @@ While that scene is open, `view.panel` is `{ panel: 'prices', with: { stall: 'br
 
 ## Opening and closing
 
-- **Open** one with `{ kind: 'panel', panel: 'shop', with: { vendor: 'counter' } }`. A panel already open is replaced.
-- **Close** it from content with `{ kind: 'panel', panel: null }`.
+- **Open** one with `{ panel: 'shop', with: { vendor: 'counter' } }`. A panel already open is replaced.
+- **Close** it from content with `{ panel: null }`.
 - **Close** it from the UI with the [`closePanel`](/docs/reference/commands#closepanel) command, `{ type: 'closePanel' }`, when the player dismisses it. No lock stops it.
 
 ## How long a panel stays open

@@ -58,6 +58,7 @@ declare const notes: AppDef, bank: AppDef, mail: AppDef
 
 const town: Content = {
   // … the rest of your content
+  introScene: 'intro',
   data: {
     devices: {
       devices: [{ id: 'laptop', name: 'Laptop', frame: 'laptop' }],
@@ -69,7 +70,6 @@ const town: Content = {
 const { game } = loadGame([town], {
   id: 'small-town',
   title: 'Small Town',
-  introScene: 'intro',
   plugins: [places({ start: 'flat' }), devices()],
 })
 ```
@@ -107,7 +107,7 @@ The game's devices and apps, merged from its content and packs, in order.
 
 ## Writing apps
 
-Apps are content, in your content's [`data`](/docs/reference/loader#content) under `devices.apps`, merged by id as scenes are, so a mod can add an app or replace one. Apps given in the base game's `data`, as the [phone](/docs/plugins/phone) gives its stock apps, come first, and a pack's app with the same id replaces one.
+Apps are content, in your content's [`data`](/docs/reference/loader#content) under `devices.apps`, merged by id as scenes are, so a mod can add an app or replace one. Apps in content that comes earlier in the list, as the [phone](/docs/plugins/phone)'s content gives its stock apps, come first, and later content or a pack with an app of the same id replaces it.
 
 ### AppDef
 
@@ -151,17 +151,17 @@ type Section =
   | { things: { of: string; at?: string } }
   | { contacts: true }
   | { plugin: string; with?: Record<string, unknown> }
-  | { panel: string }
+  | { panel: string; with?: Record<string, unknown> }
 ```
 
 | Section | What it shows |
 |---|---|
-| `{ prose }` | Words, as [prose blocks](/docs/reference/scenes#block). They're the same blocks as a scene's body, with tokens and `when`s, so a [custom value](/docs/reference/custom) in a token can print a balance or the weather. |
-| `{ actions }` | Buttons, the same [`ActionDef`](/docs/reference/actions#actiondef)s as a room's, rendered with [`renderAction`](/docs/reference/view#renderaction), so each has an activity's price, `blocked` and the reason it can't be done. An action whose `when` doesn't hold is left out. |
+| `{ prose }` | Words, as [prose blocks](/docs/reference/scenes#block). They're the same blocks as a scene's body, with tokens and `when`s, so a [value](/docs/reference/custom#values) of the game's own in a token can print a balance or the weather. |
+| `{ actions }` | Buttons, the same [`ActionDef`](/docs/reference/actions#actiondef)s as a room's, rendered with [`renderAction`](/docs/reference/view#renderaction), so each has its price, `blocked` and the reason it can't be done. An action whose `when` doesn't hold is left out. One with a cost or effects is done as `{ type: 'action', id: 'devices/<id>' }`, so give each an id no other app's action has. |
 | `{ things: { of, at? } }` | The [things](/docs/reference/entities#notes-photos-and-other-things-made-in-play) of the kind `of` that a holder holds, newest first, such as photos or notes. `at` is `'you'` if left out, or name `'player'` or a unique entity. Each entry is the thing's reference, name, description and picture, and has no buttons. |
 | `{ contacts: true }` | The [cast](/docs/plugins/cast)'s people the player can call and has met, each with a Call button that sends the cast's [`call`](/docs/plugins/cast#commands) command. See [Contacts](#contacts). |
 | `{ plugin, with? }` | Another plugin's view, for the UI to draw with that plugin's own renderer. `with` says which part, such as `{ channel: 'texts' }` for [messages](/docs/plugins/messages) or `{ feed: 'social' }` for a [feed](/docs/plugins/feed). |
-| `{ panel }` | A screen the game draws itself, with the data the game's [custom panel](/docs/reference/custom) of that name returns. |
+| `{ panel, with? }` | A [panel](/docs/reference/panels) the UI draws by name, as one the `panel` effect opens is, with what it's opened with in `with`. |
 
 ```ts
 import type { AppDef } from '@ifloom/plugin-devices'
@@ -169,7 +169,7 @@ import type { AppDef } from '@ifloom/plugin-devices'
 const bank: AppDef = {
   id: 'bank', name: 'Bank', icon: 'bank', on: 'laptop',
   blocked: [{ when: { not: { kv: 'bankAccount' } }, reason: 'You have no account yet.' }],
-  sections: [{ prose: [{ text: 'bank.balance' }] }],   // 'You have {{v:balance}}.'
+  sections: [{ prose: [{ text: 'bank.balance' }] }],   // 'You have {{v:game/balance}}.'
 }
 
 const mail: AppDef = {
@@ -218,8 +218,14 @@ const apps: AppDef[] = [
     id: 'shop', name: 'Corner Café', icon: 'basket', on: 'laptop',
     sections: [{
       actions: [
-        { id: 'sandwich', label: 'Order a sandwich', command: { type: 'activity', id: 'orderSandwich' } },
-        { id: 'scarf', label: 'Order a scarf', command: { type: 'activity', id: 'orderScarf' }, when: { not: { entity: 'clothing:scarf', at: 'you' } } },
+        { id: 'sandwich', label: 'Order a sandwich', cost: { stats: { coins: 4 } }, effects: [{ entity: 'item:sandwich', by: 1 }] },
+        {
+          id: 'scarf',
+          label: 'Order a scarf',
+          when: { not: { entity: 'clothing:scarf', at: 'you' } },
+          cost: { stats: { coins: 8 } },
+          effects: [{ entity: 'clothing:scarf', by: 1 }],
+        },
       ],
     }],
   },
@@ -232,7 +238,7 @@ const apps: AppDef[] = [
     id: 'mail', name: 'Mail', icon: 'mail', on: 'laptop',
     when: { kv: 'emailSetUp' },
     badge: { when: { kv: 'newMail' } },
-    sections: [{ panel: 'inbox' }],
+    sections: [{ panel: 'inbox', with: { unread: 1 } }],
   },
 ]
 
@@ -252,21 +258,17 @@ const town: Content = {
     { id: 'sandwich', of: 'item', name: 'sandwich', desc: 'Cheese and pickle, wrapped in paper.' },
     { id: 'scarf', of: 'clothing', name: 'scarf', desc: 'Knitted by someone who loved you.' },
   ],
-  activities: [
-    { id: 'orderSandwich', cost: { stats: { coins: 4 } }, effects: [{ kind: 'entity', entity: 'item:sandwich', by: 1 }] },
-    { id: 'orderScarf', cost: { stats: { coins: 8 } }, effects: [{ kind: 'entity', entity: 'clothing:scarf', by: 1 }] },
-    { id: 'jot', effects: [{ kind: 'create', of: 'note', entity: { id: 'shopping', name: 'Shopping', desc: 'Milk, bread, a lemon.' }, at: 'player' }] },
-    { id: 'setUpMail', effects: [{ kind: 'kv', key: 'emailSetUp', to: true }, { kind: 'kv', key: 'newMail', to: true }] },
+  // Done from elsewhere in the game, by a choice or a test: no label, so no button of their own.
+  actions: [
+    { id: 'jot', effects: [{ create: 'note', with: { id: 'shopping', name: 'Shopping', desc: 'Milk, bread, a lemon.' }, at: 'player' }] },
+    { id: 'setUpMail', effects: [{ kv: 'emailSetUp', to: true }, { kv: 'newMail', to: true }] },
   ],
+  locks: [{ when: { not: at('flat') }, deny: ['devices/*'], reason: 'The laptop is at home.' }],
   prose: {
     'place.flat': 'Boxes, mostly.',
     'place.high-street': 'The high street.',
     'notes.top': 'Your notes, newest first.',
-    'bank.balance': 'You have {{v:balance}}.',
-  },
-  custom: {
-    values: { balance: (state) => `${state.stats.coins} coins` },
-    panels: { inbox: (state) => ({ unread: state.kv.newMail ? 1 : 0 }) },
+    'bank.balance': 'You have {{v:game/balance}}.',
   },
   data: {
     places: { locations },
@@ -279,7 +281,7 @@ export const { game } = loadGame([town], {
   title: 'Small Town',
   plugins: [places({ start: 'flat' }), devices()],
   rules: {
-    locks: [{ when: { not: at('flat') }, deny: ['devices/*'], reason: 'The laptop is at home.' }],
+    values: { balance: (state) => `${state.stats.coins} coins` },
   },
 })
 ```
@@ -301,27 +303,27 @@ laptop(state)
 //   apps: [{ id: 'notes', ... }, { id: 'shop', ... }, { id: 'bank', disabled: 'You have no account yet.', ... }] }
 // No Mail: it isn't installed yet.
 
-state = apply(state, game, { type: 'activity', id: 'jot' }).state
+state = apply(state, game, { type: 'action', id: 'jot' }).state
 state = apply(state, game, openApp('notes')).state     // no time passes, and the player is still at home
 laptop(state).open?.sections
-// [{ kind: 'prose', text: 'Your notes, newest first.' },
-//  { kind: 'list', entries: [{ id: 'note:shopping', title: 'Shopping', text: 'Milk, bread, a lemon.', image: null, actions: [] }] }]
+// [{ type: 'prose', text: 'Your notes, newest first.' },
+//  { type: 'list', entries: [{ id: 'note:shopping', title: 'Shopping', text: 'Milk, bread, a lemon.', image: null, actions: [] }] }]
 
 state = apply(state, game, openApp('shop')).state      // the notes close: one app open per device
 laptop(state).open?.sections
-// [{ kind: 'actions', actions: [{ id: 'sandwich', label: 'Order a sandwich', ... }, { id: 'scarf', label: 'Order a scarf', ... }] }]
-state = apply(state, game, { type: 'activity', id: 'orderScarf' }).state
+// [{ type: 'actions', actions: [{ id: 'sandwich', label: 'Order a sandwich', ... }, { id: 'scarf', label: 'Order a scarf', ... }] }]
+state = apply(state, game, { type: 'action', id: 'devices/scarf' }).state
 state.stats.coins       // 4
 laptop(state).open?.sections
-// [{ kind: 'actions', actions: [{ id: 'sandwich', ... }] }]   The scarf button's `when` no longer holds.
+// [{ type: 'actions', actions: [{ id: 'sandwich', ... }] }]   The scarf button's `when` no longer holds.
 
 whyNot(state, game, openApp('bank'))   // 'You have no account yet.'
 whyNot(state, game, openApp('mail'))   // 'That is not installed.'
 
-state = apply(state, game, { type: 'activity', id: 'setUpMail' }).state
+state = apply(state, game, { type: 'action', id: 'setUpMail' }).state
 laptop(state).badge     // 1, for Mail's dot
 state = apply(state, game, openApp('mail')).state
-laptop(state).open?.sections    // [{ kind: 'panel', panel: 'inbox', data: { unread: 1 } }]
+laptop(state).open?.sections    // [{ type: 'panel', panel: 'inbox', with: { unread: 1 } }]
 
 state = apply(state, game, go('high-street')).state
 whyNot(state, game, openApp('notes'))  // 'The laptop is at home.'
@@ -343,12 +345,12 @@ import { appOpen } from '@ifloom/plugin-devices'
 const body: Block[] = [
   { text: 'place.cafe' },
   // Ava looks up when you're on your phone at the counter.
-  { text: 'place.cafe.ava-looks-up', when: { custom: 'devices/open', with: { device: 'phone' } } },
+  { text: 'place.cafe.ava-looks-up', when: { 'devices/open': { device: 'phone' } } },
   { text: 'place.cafe.camera', when: appOpen('camera') },
 ]
 ```
 
-The first `when` is the long form. In the short form, with the full name as the only key, it's `{ 'devices/open': { device: 'phone' } }`, which is what `appOpen` writes (see [plugin calls](/docs/reference/custom#plugincall)).
+The first `when` is the call written out. `appOpen` writes the same call for an app (see [plugin calls](/docs/reference/custom#plugincall)).
 
 ## Commands
 
@@ -428,7 +430,7 @@ type DeviceView = {
 |---|---|
 | `frame` | The device's `frame`, or its `id`. |
 | `badge` | What the sidebar button shows. It's every app's count added up, plus one for each dot. |
-| `apps` | The installed apps, in order: the base game's first, then the ones content and packs add. |
+| `apps` | The installed apps, in order: as the content gives them, then the ones packs add. |
 | `open` | The app open on this device, with its sections filled in, or `null` for the home screen. |
 
 ### AppView
@@ -452,7 +454,7 @@ type AppView = {
 |---|---|
 | `badge` | A count, a dot (`true`, or `false` when the dot's condition doesn't hold), or `0` for an app with no badge. |
 | `disabled` | Why it can't be opened now. It's [`whyNot`](/docs/reference/actions#whynot) for its `command`, so a lock's `reason`, `That is not installed.` or the first `blocked` reason that holds. It's left out if the app can be opened. |
-| `command` | The command that opens it, `openApp(id)` in the long form. |
+| `command` | The command that opens it, `openApp(id)` as the view writes commands, `{ type: 'custom', name: 'devices/open', with: { id } }`. |
 | `sections` | Only filled in for the open app. In `apps`, every app's `sections` is `[]`, so read them from `open`. |
 
 ### SectionView
@@ -461,20 +463,20 @@ type AppView = {
 import type { RenderedChoice } from '@ifloom/engine'
 
 type SectionView =
-  | { kind: 'prose'; text: string }
-  | { kind: 'actions'; actions: RenderedChoice[] }
-  | { kind: 'list'; entries: { id: string; title: string; text: string; image: string | null; actions: RenderedChoice[] }[] }
-  | { kind: 'plugin'; plugin: string; with: Record<string, unknown> }
-  | { kind: 'panel'; panel: string; data: unknown }
+  | { type: 'prose'; text: string }
+  | { type: 'actions'; actions: RenderedChoice[] }
+  | { type: 'list'; entries: { id: string; title: string; text: string; image: string | null; actions: RenderedChoice[] }[] }
+  | { type: 'plugin'; plugin: string; with: Record<string, unknown> }
+  | { type: 'panel'; panel: string; with: Record<string, unknown> }
 ```
 
-| Kind | From | What it holds |
+| Type | From | What it holds |
 |---|---|---|
 | `prose` | `{ prose }` | The blocks rendered for the current state. |
 | `actions` | `{ actions }` | The buttons, as [`RenderedChoice`](/docs/reference/view#renderedchoice)s. |
 | `list` | `{ things }`, `{ contacts }` | One entry per thing (its reference as `id`, name, description filled in, picture, no actions) or per contact (name, desc, portrait, a Call button). |
 | `plugin` | `{ plugin, with }` | Only the plugin's id and `with`. The data is the plugin's own slice, at `view.plugins[plugin]`. |
-| `panel` | `{ panel }` | What the game's custom panel returned, or `null` if it has none. |
+| `panel` | `{ panel, with }` | The panel's name, and the section's `with`, or `{}`. |
 
 ## The React UI
 
@@ -563,15 +565,15 @@ Replaceable as `DeviceScreen` in [`components`](/docs/react/components#component
 function AppSection(props: { section: SectionView }): JSX.Element | null
 ```
 
-One [`SectionView`](/docs/plugins/devices#sectionview) of an open app, drawn by kind:
+One [`SectionView`](/docs/plugins/devices#sectionview) of an open app, drawn by its type:
 
-| Kind | Drawn as |
+| Type | Drawn as |
 |---|---|
 | `prose` | A paragraph, with line breaks kept. |
 | `actions` | A [`ChoiceList`](/docs/react/components#choicelist). |
 | `list` | Each entry (`data-entry`) with its picture, title, text and actions. |
 | `plugin` | The renderer in `sections` for that plugin id, given the plugin's view and the section's `with`. Nothing if there's no renderer. |
-| `panel` | The component in `panels` with the panel's name, given its data. Nothing if there's no component. |
+| `panel` | The component in `panels` with the panel's name, given the section's `with`. Nothing if there's no component. |
 
 Replaceable as `AppSection` in [`components`](/docs/react/components#components). Parts: `app-prose`, `app-entries`, `app-entry` (with `data-entry`), `app-entry-image`, `app-entry-title` and `app-entry-text`.
 
@@ -655,20 +657,19 @@ When the game loads, the plugin reports, with `where` as `apps <id>`:
 
 - an app on a device the game doesn't have (`unknown device "…"`)
 - anything the app's `when`, a `blocked` entry or a dot badge names that the game doesn't have, such as `unknown storyline "…"`
-- a count badge naming a value no plugin and no custom function has (`no custom value named "…"`)
+- a count badge naming a value neither a plugin nor the game has (`no custom value named "…"`)
 - a `things` section's kind the game doesn't declare (`unknown kind "…"`), and a holder in its `at` that can't hold things
 - a plugin the game wasn't built with (`the game has no plugin named "…"`)
-- a panel the game has no custom panel for (`no custom panel named "…"`)
+- a panel's `with` that the plugin drawing that panel refuses, such as the shop's unknown vendor
 - a prose block with no prose (`no prose for "…"`), and anything its `when` names
 - anything an action's `when`, `blocked` conditions or `command` names that the game doesn't have, checked as the game's own [actions](/docs/reference/actions#actiondef) are
 
-The action check catches an unknown scene or activity, a plugin command no plugin has, and a command whose plugin refuses its arguments. A `cast/call` naming someone the cast doesn't have, for example, gives `action <id>: unknown character "…"`.
+The action check catches an unknown scene or action, a plugin command no plugin has, and a command whose plugin refuses its arguments. A `cast/call` naming someone the cast doesn't have, for example, gives `action <id>: unknown character "…"`.
 
-A problem with an app is pinned on the content or pack it came from, or on `base` for one in the base game's `data`.
+A problem with an app is pinned on the content or pack it came from, such as `phone` for one of the phone's own apps.
 
 ```text
-base · apps mail · no custom value named "messages/unread"
-mod:radio · apps tuner · no custom panel named "dial"
+phone · apps mail · no custom value named "messages/unread"
 ```
 
 ## Gotchas
@@ -679,7 +680,7 @@ mod:radio · apps tuner · no custom panel named "dial"
 - **Contacts come from the cast.** They're the people with a `call` whom the player has [met](/docs/plugins/cast#meeting-people), which by default means one of their talk or call scenes has been on screen. On a new game, contacts are empty. To list someone from the start, give them a `met` condition that holds from the start. Without the cast, contacts are always empty.
 - **An app closes as soon as it couldn't be opened.** The plugin checks after every command. If an effect undoes the app's `when`, or one of its `blocked` entries or a [lock](/docs/reference/locks) on `devices/open` starts to hold (no phone at work), the device goes back to its home screen. That way its buttons aren't left live.
 - **Any lock that stops opening greys out the whole device.** `deny: ['devices/*']`, `['devices/open']`, `['custom']` and `'*'` all stop `devices/open`, so every app reads the lock's `reason` and an open one closes. An intro that locks `'*'` keeps the device shut too, unless its `except` lists `devices/open`.
-- **Actions in an app are ordinary commands.** A lock on `devices/*` doesn't stop the activity an app's button sends. If that activity must not happen at work, put the condition on the activity.
+- **Actions in an app are ordinary actions.** A lock on `devices/*` doesn't stop the `action` command an app's button sends. If that action must not happen at work, put the condition in its `blocked`, or lock `action`.
 - **A count badge reads a value by name, with arguments.** The [messages](/docs/plugins/messages) and [feed](/docs/plugins/feed) plugins' values take the channel or feed as an argument, such as `{ value: 'feed/unread', with: { feed: 'social' } }`. A value that isn't a number counts as `0`.
 - **One app open per device.** Opening another app on the same device closes the first. Apps on different devices stay open side by side.
 

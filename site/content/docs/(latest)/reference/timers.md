@@ -17,8 +17,8 @@ export const flat: Content = {
       ms: 10_000,
       // What happens if nobody answers.
       effects: [
-        { kind: 'scene', scene: null },
-        { kind: 'notify', title: 'Missed call: Ava' },
+        { scene: null },
+        { notify: 'Missed call: Ava' },
       ],
     },
   ],
@@ -29,12 +29,12 @@ export const flat: Content = {
       body: [{ text: 'phone' }],
       choices: [
         // Answering stops the timer, so the missed call never comes.
-        { id: 'answer', effects: [{ kind: 'timer', timer: 'phone', to: null }, { kind: 'scene', scene: 'ava.call' }] },
+        { id: 'answer', effects: [{ timer: 'phone', to: null }, { scene: 'ava.call' }] },
       ],
     },
   ],
   triggers: [
-    { id: 'phone', when: { kv: 'ringing' }, effects: [{ kind: 'scene', scene: 'phone' }, { kind: 'timer', timer: 'phone' }] },
+    { id: 'phone', when: { kv: 'ringing' }, effects: [{ scene: 'phone' }, { timer: 'phone' }] },
   ],
 }
 ```
@@ -74,7 +74,7 @@ type TimerDef = {
 }
 ```
 
-A timer as `game.timers` and a [pack](/docs/reference/loader)'s `timers` declare it. Packs merge timers by id, so a mod can change how long one runs or what it does. The `label` is shown as written, in [`TimerView`](#timerview). The effects are any effects, [custom](/docs/reference/custom) and plugin calls included.
+A timer as your content's `timers` and a [pack](/docs/reference/loader)'s declare it. Packs merge timers by id, so a mod can change how long one runs or what it does. The `label` is shown as written, in [`TimerView`](#timerview). The effects are any effects, [calls](/docs/reference/custom) to the game's own and plugins' included.
 
 ## RunningTimer
 
@@ -113,7 +113,7 @@ The [content checker](/docs/reference/checks) reports:
 ## Gotchas
 
 - **Nothing ticks by itself.** A timer started in a test or a playtest waits until you send a tick. `ifloom playtest` sends none, so it never sees a timer run out.
-- **Starting one that's running starts it again.** Use `{ kind: 'timer', timer, by }` to add time instead.
+- **Starting one that's running starts it again.** Use `{ timer, by }` to add time instead.
 - **Leaving the scene doesn't stop it.** A timer runs until it runs out or something stops it. If its effects close a scene, stop the timer in every choice that leaves, or the scene effect will close whatever is open when it runs out.
 - **The player can wait it out in another tab.** The clock drops the time a page is hidden, so a timer waits for the player. A tick only ever covers time the page was on screen.
 

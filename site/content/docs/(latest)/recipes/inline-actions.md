@@ -14,8 +14,8 @@ const hall: DataScene = {
   title: 'The hall',
   body: [{ text: 'hall.phone' }],
   choices: [
-    { id: 'answer', effects: [{ kind: 'kv', key: 'answered', to: true }, { kind: 'scene', scene: 'ava.call' }] },
-    { id: 'leave', effects: [{ kind: 'scene', scene: null }] },
+    { id: 'answer', effects: [{ kv: 'answered', to: true }, { scene: 'ava.call' }] },
+    { id: 'leave', effects: [{ scene: null }] },
   ],
 }
 
@@ -33,7 +33,7 @@ A choice can send a command as well as its effects, so an inline action can do a
 ```ts
 import { openApp } from '@ifloom/plugin-devices'
 
-{ id: 'read', command: openApp('texts'), effects: [{ kind: 'kv', key: 'readText', to: true }] }
+{ id: 'read', command: openApp('texts'), effects: [{ kv: 'readText', to: true }] }
 ```
 
 The command runs first, then the effects. While the command would be refused (no phone at work, say), the choice is greyed out with that reason, in the line or in the list.
@@ -81,12 +81,12 @@ A paragraph that holds either kind of markup gets `spans` on its `text` or `say`
 
 ```ts
 {
-  kind: 'text',
+  type: 'text',
   text: 'Your phone is ringing on the hall table. Pick it up, or let it ring.',
   spans: [
-    { kind: 'text', text: 'Your phone is ringing on the hall table. ' },
-    { kind: 'action', text: 'Pick it up', choice: { id: 'answer', label: 'Answer the phone', command: { type: 'choose', id: 'answer' } } },
-    { kind: 'text', text: ', or let it ring.' },
+    { type: 'text', text: 'Your phone is ringing on the hall table. ' },
+    { type: 'action', text: 'Pick it up', choice: { id: 'answer', label: 'Answer the phone', command: { type: 'choose', id: 'answer' } } },
+    { type: 'text', text: ', or let it ring.' },
   ],
 }
 ```
@@ -136,25 +136,25 @@ export function drawLine(runner: Runner, line: HTMLElement, text: string, spans:
     return line
   }
   for (const span of spans) {
-    if (span.kind === 'text') {
+    if (span.type === 'text') {
       line.append(span.text)
       continue
     }
-    if (span.kind === 'bold' || span.kind === 'italic') {
-      line.appendChild(document.createElement(span.kind === 'bold' ? 'strong' : 'em')).textContent = span.text
+    if (span.type === 'bold' || span.type === 'italic') {
+      line.appendChild(document.createElement(span.type === 'bold' ? 'strong' : 'em')).textContent = span.text
       continue
     }
     // A UI piece, [[ui:…]]: its words, unless you draw that name (see the Popups and modals recipe).
-    if (span.kind === 'ui') {
+    if (span.type === 'ui') {
       line.append(span.text)
       continue
     }
     const button = line.appendChild(document.createElement('button'))
     button.type = 'button'
-    button.className = span.kind === 'tip' ? 'tip' : 'inline-action'
+    button.className = span.type === 'tip' ? 'tip' : 'inline-action'
     button.textContent = span.text
-    const note = span.kind === 'tip' ? span.tip : span.choice.disabled
-    if (span.kind === 'action') {
+    const note = span.type === 'tip' ? span.tip : span.choice.disabled
+    if (span.type === 'action') {
       if (span.choice.disabled) button.setAttribute('aria-disabled', 'true')
       else button.onclick = () => runner.apply(span.choice.command)
     }
@@ -182,21 +182,21 @@ export function Line({ runner, text, spans }: { runner: Runner; text: string; sp
   return (
     <>
       {spans.map((span, at) => {
-        if (span.kind === 'text') return <span key={at}>{span.text}</span>
-        if (span.kind === 'bold') return <strong key={at}>{span.text}</strong>
-        if (span.kind === 'italic') return <em key={at}>{span.text}</em>
-        if (span.kind === 'ui') return <span key={at}>{span.text}</span>
-        const note = span.kind === 'tip' ? span.tip : span.choice.disabled
+        if (span.type === 'text') return <span key={at}>{span.text}</span>
+        if (span.type === 'bold') return <strong key={at}>{span.text}</strong>
+        if (span.type === 'italic') return <em key={at}>{span.text}</em>
+        if (span.type === 'ui') return <span key={at}>{span.text}</span>
+        const note = span.type === 'tip' ? span.tip : span.choice.disabled
         const press = () => {
-          if (span.kind === 'action' && !span.choice.disabled) runner.apply(span.choice.command)
+          if (span.type === 'action' && !span.choice.disabled) runner.apply(span.choice.command)
           else setOpen(open === at ? null : at)
         }
         return (
           <span key={at}>
             <button
               type="button"
-              className={span.kind === 'tip' ? 'tip' : 'inline-action'}
-              aria-disabled={span.kind === 'action' && span.choice.disabled ? true : undefined}
+              className={span.type === 'tip' ? 'tip' : 'inline-action'}
+              aria-disabled={span.type === 'action' && span.choice.disabled ? true : undefined}
               aria-describedby={note ? `${id}-${at}` : undefined}
               aria-expanded={note ? open === at : undefined}
               onClick={press}
@@ -224,24 +224,24 @@ const id = useId()
 const open = ref<number | null>(null)
 
 function press(span: InlineSpan, at: number) {
-  if (span.kind === 'action' && !span.choice.disabled) runner.apply(span.choice.command)
+  if (span.type === 'action' && !span.choice.disabled) runner.apply(span.choice.command)
   else open.value = open.value === at ? null : at
 }
-const note = (span: InlineSpan) => (span.kind === 'tip' ? span.tip : span.kind === 'action' ? span.choice.disabled : undefined)
+const note = (span: InlineSpan) => (span.type === 'tip' ? span.tip : span.type === 'action' ? span.choice.disabled : undefined)
 </script>
 
 <template>
   <template v-if="!spans">{{ text }}</template>
   <template v-for="(span, at) in spans" v-else :key="at">
-    <template v-if="span.kind === 'text'">{{ span.text }}</template>
-    <strong v-else-if="span.kind === 'bold'">{{ span.text }}</strong>
-    <em v-else-if="span.kind === 'italic'">{{ span.text }}</em>
-    <template v-else-if="span.kind === 'ui'">{{ span.text }}</template>
+    <template v-if="span.type === 'text'">{{ span.text }}</template>
+    <strong v-else-if="span.type === 'bold'">{{ span.text }}</strong>
+    <em v-else-if="span.type === 'italic'">{{ span.text }}</em>
+    <template v-else-if="span.type === 'ui'">{{ span.text }}</template>
     <template v-else>
       <button
         type="button"
-        :class="span.kind === 'tip' ? 'tip' : 'inline-action'"
-        :aria-disabled="span.kind === 'action' && span.choice.disabled ? 'true' : undefined"
+        :class="span.type === 'tip' ? 'tip' : 'inline-action'"
+        :aria-disabled="span.type === 'action' && span.choice.disabled ? 'true' : undefined"
         :aria-describedby="note(span) ? `${id}-${at}` : undefined"
         :aria-expanded="note(span) ? open === at : undefined"
         @click="press(span, at)"
@@ -265,16 +265,16 @@ const note = (span: InlineSpan) => (span.kind === 'tip' ? span.tip : span.kind =
   let open: number | null = $state(null)
 
   function press(span: InlineSpan, at: number) {
-    if (span.kind === 'action' && !span.choice.disabled) runner.apply(span.choice.command)
+    if (span.type === 'action' && !span.choice.disabled) runner.apply(span.choice.command)
     else open = open === at ? null : at
   }
-  const note = (span: InlineSpan) => (span.kind === 'tip' ? span.tip : span.kind === 'action' ? span.choice.disabled : undefined)
+  const note = (span: InlineSpan) => (span.type === 'tip' ? span.tip : span.type === 'action' ? span.choice.disabled : undefined)
 </script>
 
-{#if !spans}{text}{:else}{#each spans as span, at (at)}{#if span.kind === 'text'}{span.text}{:else if span.kind === 'bold'}<strong>{span.text}</strong>{:else if span.kind === 'italic'}<em>{span.text}</em>{:else if span.kind === 'ui'}{span.text}{:else}<button
+{#if !spans}{text}{:else}{#each spans as span, at (at)}{#if span.type === 'text'}{span.text}{:else if span.type === 'bold'}<strong>{span.text}</strong>{:else if span.type === 'italic'}<em>{span.text}</em>{:else if span.type === 'ui'}{span.text}{:else}<button
         type="button"
-        class={span.kind === 'tip' ? 'tip' : 'inline-action'}
-        aria-disabled={span.kind === 'action' && span.choice.disabled ? 'true' : undefined}
+        class={span.type === 'tip' ? 'tip' : 'inline-action'}
+        aria-disabled={span.type === 'action' && span.choice.disabled ? 'true' : undefined}
         aria-describedby={note(span) ? `${id}-${at}` : undefined}
         aria-expanded={note(span) ? open === at : undefined}
         onclick={() => press(span, at)}>{span.text}</button

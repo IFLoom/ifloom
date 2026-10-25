@@ -34,7 +34,7 @@ This page walks through the smallest shape first, then a management game, then a
 
 Every game has a turn. It's `state.turn`, 0 in a new game, and `view.turn` for the screen. Everything the engine dates is dated in turns, such as when a scene was first seen (so `{ since }` counts turns), when a trigger last fired, when a notice arrived, and how long a storyline stays closed.
 
-Your game decides how long a turn is. A turn ends when the [`turn` effect](/docs/reference/effects#turn), `{ kind: 'turn' }`, runs, and any choice or activity can carry it (`by` ends several). A novel ends one per chapter.
+Your game decides how long a turn is. A turn ends when the [`turn` effect](/docs/reference/effects#turn), `{ turn: true }`, runs, and any choice or action can carry it (`by` ends several). A novel ends one per chapter.
 
 A game that keeps a [calendar](/docs/plugins/calendar) lets the calendar end turns. The calendar says whether a turn is a period, a day or a week, and ends one each time its clock passes that boundary, through the same effect. With a turn of a day, going to bed with its `sleep` command moves the clock to the next morning and ends the turn. Small Town works that way.
 
@@ -48,10 +48,11 @@ It declares no plugins, places, characters or clock. Its tests, `examples/novel/
 
 ### No world to declare
 
-The base handed to [`loadGame`](/docs/reference/loader) needs only an `id` and a `title`. The Letter adds its first scene and nothing else:
+The base handed to [`loadGame`](/docs/reference/loader) needs only an `id` and a `title`. The Letter's first scene is content, `introScene: 'ch1.mat'` in `story/ch1.ts`, and its base adds only its `version` and the game's own code in `rules`, a migration and a save name:
 
 ```ts
-loadGame([stats, ch1, ch2, ch3], { id: 'the-letter', title: 'The Letter', introScene: 'ch1.mat' })
+// src/game.ts, with the rules written out there
+loadGame([stats, ch1, ch2, ch3], { id: 'the-letter', title: 'The Letter', version: 2, rules: { migrations, saveName } })
 ```
 
 With no [places plugin](/docs/plugins/places) there's no map, so there are no exits and nobody present. The only buttons are plugins' and the game's own `actions`, and The Letter has none of either. The [React UI](/docs/react)'s location panel draws nothing. If you leave out `introScene` too, a new game opens with no scene at all, and the screen is the game's title with an empty body.
@@ -61,7 +62,7 @@ With no [places plugin](/docs/plugins/places) there's no map, so there are no ex
 An [input](/docs/reference/inputs) asks for a name, and only until one is given:
 
 ```ts
-inputs: [{ id: 'playerName', label: 'Your name', kind: 'text', maxLength: 20, when: { not: { kv: 'playerName' } } }],
+inputs: [{ id: 'playerName', label: 'Your name', type: 'text', maxLength: 20, when: { not: { kv: 'playerName' } } }],
 ```
 
 The first chapter's choices wait on it with `when: { kv: 'playerName' }`, so the story doesn't move until the reader has typed something. The prose prints it as any kv key, with `{{playerName}}`: "You turn it over, `{{playerName}}`. The flap is barely stuck."
@@ -72,10 +73,10 @@ The first chapter's choices wait on it with `when: { kv: 'playerName' }`, so the
 stats: [{ id: 'courage', label: 'Courage', start: 1, max: 5 }],
 ```
 
-Opening the letter and telling the truth each pay `{ kind: 'stat', stat: 'courage', by: 1 }`. The braver ending is a choice that's only offered to a reader with enough courage:
+Opening the letter and telling the truth each pay `{ stat: 'courage', by: 1 }`. The braver ending is a choice that's only offered to a reader with enough courage:
 
 ```ts
-{ id: 'hand', when: { stat: 'courage', gte: 3 }, effects: [{ kind: 'scene', scene: 'end.kept' }] },
+{ id: 'hand', when: { stat: 'courage', gte: 3 }, effects: [{ scene: 'end.kept' }] },
 ```
 
 ### Choices the engine remembers
@@ -91,7 +92,7 @@ The same condition can hide a choice. `blame` ("Only something that came open in
 
 ### A count
 
-Each lie adds to a kv key with `{ kind: 'kv', key: 'fibs', by: 1 }` (`blame` adds 2), and the last chapter reads the count back as a range:
+Each lie adds to a kv key with `{ kv: 'fibs', by: 1 }` (`blame` adds 2), and the last chapter reads the count back as a range:
 
 ```ts
 { text: 'ch3.door.honest', when: { kv: 'fibs', lt: 1 } },
@@ -106,7 +107,7 @@ A kv key that was never set counts as 0, so the honest reader's line needs nothi
 Every choice that moves on to the next chapter ends a turn before it changes the scene:
 
 ```ts
-{ id: 'truth', effects: [{ kind: 'stat', stat: 'courage', by: 1 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch3.door' }] },
+{ id: 'truth', effects: [{ stat: 'courage', by: 1 }, { turn: true }, { scene: 'ch3.door' }] },
 ```
 
 So `state.turn` is the chapter the reader has reached, counting from 0. Anything dated is dated in chapters, such as `{ since }`, a [trigger](/docs/reference/triggers) set to fire `once: 'turn'`, or a choice marked `once: { per: 'turn' }`. The Letter has no calendar, so there are no periods and no bed.
@@ -139,7 +140,7 @@ function draw(view: View): void {
   const page = document.createElement('article')
   page.append(Object.assign(document.createElement('h2'), { textContent: view.scene.title }))
   for (const beat of view.scene.beats) {
-    if (beat.kind === 'text') page.append(Object.assign(document.createElement('p'), { textContent: beat.text }))
+    if (beat.type === 'text') page.append(Object.assign(document.createElement('p'), { textContent: beat.text }))
   }
   for (const choice of [...view.scene.choices, ...view.actions]) {
     const button = Object.assign(document.createElement('button'), { textContent: choice.label, disabled: Boolean(choice.disabled) })
@@ -199,7 +200,7 @@ import { runner, view } from './runner.ts'
   <article>
     <h2>{{ view.scene.title }}</h2>
     <template v-for="(beat, at) in view.scene.beats" :key="at">
-      <p v-if="beat.kind === 'text'">{{ beat.text }}</p>
+      <p v-if="beat.type === 'text'">{{ beat.text }}</p>
     </template>
     <button
       v-for="(choice, at) in [...view.scene.choices, ...view.actions]"
@@ -223,7 +224,7 @@ import { runner, view } from './runner.ts'
 <article>
   <h2>{$view.scene.title}</h2>
   {#each $view.scene.beats as beat, at (at)}
-    {#if beat.kind === 'text'}<p>{beat.text}</p>{/if}
+    {#if beat.type === 'text'}<p>{beat.text}</p>{/if}
   {/each}
   {#each [...$view.scene.choices, ...$view.actions] as choice, at (at)}
     <button disabled={Boolean(choice.disabled)} onclick={() => runner.apply(choice.command)}>{choice.label}</button>
@@ -239,7 +240,7 @@ In React, the novel's [layout](/docs/react#layouts) has no `Sidebar`, so the pag
 
 ## A management game: The Corner Café
 
-`examples/cafe` is the second whole game. It's mostly data, so most of it is in `src/world/`, a file per kind (stats, staff, the menu, activities and triggers), with its two scenes in `src/story/` and its sums in `src/rules.ts`. In The Corner Café the player runs a café a week at a time. Each week the till is counted, the staff are paid, and everyone gets a little more tired. Look after them and they stay, and a happy team gets a good review in the local paper. Its tests, `examples/cafe/tests/cafe.test.ts`, play it for a few weeks.
+`examples/cafe` is the second whole game. It's mostly data, so most of it is in `src/world/`, a file per kind (stats, staff, the menu, actions and triggers), with its two scenes in `src/story/` and its sums in `src/rules.ts`. In The Corner Café the player runs a café a week at a time. Each week the till is counted, the staff are paid, and everyone gets a little more tired. Look after them and they stay, and a happy team gets a good review in the local paper. Its tests, `examples/cafe/tests/cafe.test.ts`, play it for a few weeks.
 
 Like The Letter, it has no places, characters or clock. What it adds is [entities](/docs/reference/entities), the things the game keeps several of, each with numbers of its own.
 
@@ -283,10 +284,11 @@ The same effects and conditions that change and test the player's stats take an 
 
 ```ts
 {
-  id: 'improveSoup',
+  id: 'soup',
+  label: 'Better ingredients for the soup',
   cost: { stats: { coins: 40 } },
   blocked: [{ when: { stat: 'quality', of: 'dish:soup', gte: 5 }, reason: 'It could not be better.' }],
-  effects: [{ kind: 'stat', stat: 'quality', by: 1, of: 'dish:soup' }],
+  effects: [{ stat: 'quality', by: 1, of: 'dish:soup' }],
 },
 ```
 
@@ -298,9 +300,10 @@ Putting a card in the window opens a scene of interviews, while there's room beh
 
 ```ts
 {
-  id: 'interview',
+  id: 'hire',
+  label: 'Put a card in the window',
   blocked: [{ when: { count: 'staff', gte: 4 }, reason: 'There is no room behind the counter.' }],
-  effects: [{ kind: 'scene', scene: 'hiring' }],
+  effects: [{ scene: 'hiring' }],
 },
 ```
 
@@ -308,49 +311,50 @@ Each choice in the scene hires someone with a [`create`](/docs/reference/effects
 
 ```ts
 choices: [
-  { id: 'dev', effects: [{ kind: 'create', of: 'staff', entity: { name: 'Dev', stats: { skill: 2, wage: 8, morale: 80 } } }, { kind: 'scene', scene: null }] },
-  { id: 'fen', effects: [{ kind: 'create', of: 'staff', entity: { name: 'Fen', stats: { skill: 7, wage: 18 } } }, { kind: 'scene', scene: null }] },
-  { id: 'nobody', effects: [{ kind: 'scene', scene: null }] },
+  { id: 'dev', effects: [{ create: 'staff', with: { name: 'Dev', stats: { skill: 2, wage: 8, morale: 80 } } }, { scene: null }] },
+  { id: 'fen', effects: [{ create: 'staff', with: { name: 'Fen', stats: { skill: 7, wage: 18 } } }, { scene: null }] },
+  { id: 'nobody', effects: [{ scene: null }] },
 ],
 ```
 
-Someone created without an id gets the next number. Dev is `staff:#1`, and Fen, hired after him, is `staff:#2`. A number is never given twice, so if Dev leaves, the next person hired is `#3`. The scene's prose tells the player what they already pay, through a [custom value](/docs/reference/custom#values) printed with `{{v:payroll}}`: "Wages are 12 a week already."
+Someone created without an id gets the next number. Dev is `staff:#1`, and Fen, hired after him, is `staff:#2`. A number is never given twice, so if Dev leaves, the next person hired is `#3`. The scene's prose tells the player what they already pay, through a [value](/docs/reference/custom#values) of the game's own, printed with `{{v:game/payroll}}`: "Wages are 12 a week already."
 
 ### The end of the week
 
-A single activity, sent by the game's Count the till and end the week button, runs the week:
+A single action, the game's Count the till and end the week button, runs the week:
 
 ```ts
 {
-  id: 'endWeek',
+  id: 'end-week',
+  label: 'Count the till and end the week',
   effects: [
-    { custom: 'takings' },
-    { custom: 'wages' },
+    { 'game/takings': true },
+    { 'game/wages': true },
     // A week's work wears everyone down a little.
-    { kind: 'each', of: 'staff', effects: [{ kind: 'stat', stat: 'morale', by: -8, of: '$' }] },
+    { each: 'staff', effects: [{ stat: 'morale', by: -8, of: '$' }] },
     // Anyone at the end of their tether hands in their apron.
-    { kind: 'each', of: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ kind: 'remove', entity: '$' }] },
-    { kind: 'turn' },
+    { each: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ remove: '$' }] },
+    { turn: true },
   ],
 },
 ```
 
 It runs four steps, in order:
 
-1. **Takings and wages.** Two [custom effects](/docs/reference/effects#computed-effects) the game declares work these out from the state. Takings multiply every dish's price by its quality, and work out how many covers the kitchen gets out from everyone's skill and the reputation. Wages add up every wage. Both go through [`entitiesOf`](/docs/reference/entities#entitiesof) and [`statValue`](/docs/reference/stats#statvalue):
+1. **Takings and wages.** Two of the [game's own effects](/docs/reference/effects#computed-effects), in its `rules`, work these out from the state. Takings multiply every dish's price by its quality, and work out how many covers the kitchen gets out from everyone's skill and the reputation. Wages add up every wage. Both go through [`entitiesOf`](/docs/reference/entities#entitiesof) and [`statValue`](/docs/reference/stats#statvalue):
 
    ```ts
    function total(state: GameState, game: Game, kind: string, stat: string): number {
      return entitiesOf(state, game, kind).reduce((sum, ref) => sum + statValue(state, game, stat, ref), 0)
    }
 
-   wages: (state, _args, { game }): EffectRef[] => [{ kind: 'stat', stat: 'coins', by: -total(state, game, 'staff', 'wage') }],
+   wages: (state, _args, { game }): Effect[] => [{ stat: 'coins', by: -total(state, game, 'staff', 'wage') }],
    ```
 
-   Like any custom effect in a list, each runs in its turn, on the state the effects before it left. The wages come before anyone quits, so they include anyone who quits further down.
+   Like any call in a list, each runs in its turn, on the state the effects before it left. The wages come before anyone quits, so they include anyone who quits further down.
 2. **Morale.** [`each`](/docs/reference/effects#each) runs the same effects for every one of a kind, with `'$'` standing for the one each time. Everyone loses 8 morale.
 3. **Quitting.** `each` with `where` only runs for those the condition holds for. Anyone now below 20 is [removed](/docs/reference/effects#remove). Who an `each` visits is fixed when it starts, so removing someone partway through is safe.
-4. **The turn.** [`{ kind: 'turn' }`](/docs/reference/effects#turn) ends the turn. A turn here is a week, and nobody ever sleeps.
+4. **The turn.** [`{ turn: true }`](/docs/reference/effects#turn) ends the turn. A turn here is a week, and nobody ever sleeps.
 
 In the first week there's only Ana. The kitchen gets out 24 covers, and the menu's prices times qualities add up to 26, so the takings are 24 × 26 ÷ 10, about £62. Less her £12 wage, the till goes from £120 to £170, and her morale drops from 60 to 52. Left alone, she quits at the end of the sixth week. The Buy the staff lunch button is the answer. It costs 25 coins and gives everyone 15 morale, with an `each` again.
 
@@ -359,11 +363,11 @@ In the first week there's only Ana. The kitchen gets out 24 covers, and the menu
 [Triggers](/docs/reference/triggers) watch a condition and act the first time it holds. With `{ count }`, a trigger can watch a kind:
 
 ```ts
-{ id: 'empty', once: 'turn', when: { count: 'staff', lt: 1 }, effects: [{ kind: 'notify', title: 'Nobody to open up tomorrow.', tag: 'staff' }] },
+{ id: 'empty', once: 'turn', when: { count: 'staff', lt: 1 }, effects: [{ notify: 'Nobody to open up tomorrow.', tag: 'staff' }] },
 {
   id: 'review',
   when: { count: 'staff', where: { stat: 'morale', of: '$', gte: 75 }, gte: 2 },
-  effects: [{ kind: 'stat', stat: 'reputation', by: 10 }, { kind: 'notify', title: 'A glowing review in the local paper.', tag: 'press' }],
+  effects: [{ stat: 'reputation', by: 10 }, { notify: 'A glowing review in the local paper.', tag: 'press' }],
 },
 ```
 
@@ -403,7 +407,7 @@ function drawTables(view: View): HTMLElement[] {
 function draw(view: View): void {
   const scene = document.createElement('article')
   for (const beat of view.scene.beats) {
-    if (beat.kind === 'text') scene.append(Object.assign(document.createElement('p'), { textContent: beat.text }))
+    if (beat.type === 'text') scene.append(Object.assign(document.createElement('p'), { textContent: beat.text }))
   }
   const buttons = [...view.scene.choices, ...view.actions].map((choice) => {
     const button = Object.assign(document.createElement('button'), { textContent: choice.label, disabled: Boolean(choice.disabled) })
@@ -468,7 +472,7 @@ import { runner, view } from './runner.ts'
 <template>
   <article>
     <template v-for="(beat, at) in view.scene.beats" :key="at">
-      <p v-if="beat.kind === 'text'">{{ beat.text }}</p>
+      <p v-if="beat.type === 'text'">{{ beat.text }}</p>
     </template>
   </article>
   <!-- A table for each kind, the staff and the menu: a row for each one, a cell for each stat. -->
@@ -500,7 +504,7 @@ import { runner, view } from './runner.ts'
 
 <article>
   {#each $view.scene.beats as beat, at (at)}
-    {#if beat.kind === 'text'}<p>{beat.text}</p>{/if}
+    {#if beat.type === 'text'}<p>{beat.text}</p>{/if}
   {/each}
 </article>
 <!-- A table for each kind, the staff and the menu: a row for each one, a cell for each stat. -->
@@ -526,7 +530,7 @@ In the React layout, the [`EntityTable`](/docs/react/components#entitytable) dra
 
 ### A calendar, if the game wants one
 
-The café has no clock. A turn is a week because the `endWeek` activity ends one with `{ kind: 'turn' }`. A management game that wants days and a weekday too adds the [calendar](/docs/plugins/calendar) with a turn of a week. The calendar then ends a turn each time its clock passes into a new week, so the week's button moves the clock on rather than carrying a `{ kind: 'turn' }` of its own:
+The café has no clock. A turn is a week because the `end-week` action ends one with `{ turn: true }`. A management game that wants days and a weekday too adds the [calendar](/docs/plugins/calendar) with a turn of a week. The calendar then ends a turn each time its clock passes into a new week, so the week's button moves the clock on rather than carrying a `{ turn: true }` of its own:
 
 ```ts
 import { calendar } from '@ifloom/plugin-calendar'
@@ -556,7 +560,7 @@ import { cast } from '@ifloom/plugin-cast'
 plugins: [calendar(), places({ start: 'flat' }), cast()]
 ```
 
-A place keeps hours with its `blocked` list and the calendar's conditions. An activity that only happens in one place lists [`onlyAt(['cafe'])`](/docs/plugins/places#helpers) in its `blocked`. A character's [schedule](/docs/plugins/cast#where-people-are) says where they are while each condition holds, and they're in the room when the places plugin's `places/here` says the player is there too.
+A place keeps hours with its `blocked` list and the calendar's conditions. Something to do in one place is an action in that place's own `actions`, and a game action that belongs somewhere lists [`onlyAt(['cafe'])`](/docs/plugins/places#helpers) in its `blocked`. A character's [schedule](/docs/plugins/cast#where-people-are) says where they are while each condition holds, and they're in the room when the places plugin's `places/here` says the player is there too.
 
 Each character is an [entity](/docs/reference/entities) of the kind `character`, so a relationship is a stat the game declares on that kind, `{ id: 'friendship', label: 'Friendship', of: 'character' }`. Content reads it with `{ stat: 'friendship', of: character('ava'), gte: 25 }`. [Small Town](/docs/guide/showcase) is a small life sim made that way, where a turn is a day. [A game with a world](/docs/guide/first-game) builds a smaller one step by step.
 
@@ -569,7 +573,7 @@ The React UI's default layout is made for a life sim, so Small Town's `src/layou
 </Section>
 ```
 
-Out and about, you get to it with the flat's Open the wardrobe action. Its activity's effect is `{ kind: 'panel', panel: 'wardrobe' }`, which opens the built-in wardrobe [panel](/docs/reference/panels). `src/main.tsx` passes the layout to `GameShell`:
+Out and about, you get to it with the flat's Open the wardrobe action. Its effect is `{ panel: 'wardrobe' }`, which opens the built-in wardrobe [panel](/docs/reference/panels). `src/main.tsx` passes the layout to `GameShell`:
 
 ```tsx
 <GameShell runner={runner} layout={Layout} mods={{ store: modStore, problems, onChange: () => location.reload() }} />

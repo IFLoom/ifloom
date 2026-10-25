@@ -16,12 +16,13 @@ In the showcase, the rent goes out every Sunday and the player gets a notice abo
 import type { Content } from '@ifloom/engine'
 
 const town: Content = {
-  activities: [
+  actions: [
     {
       id: 'pay-rent',
+      label: 'Pay the rent',
       effects: [
-        { kind: 'stat', stat: 'coins', by: -30 },
-        { kind: 'notify', id: 'rent', title: 'Rent paid: 30 coins', text: 'notice.rent', tag: 'money' },
+        { stat: 'coins', by: -30 },
+        { notify: 'Rent paid: 30 coins', id: 'rent', text: 'notice.rent', tag: 'money' },
       ],
     },
   ],
@@ -32,7 +33,7 @@ const town: Content = {
 ```ts
 import { apply, view } from '@ifloom/engine'
 
-state = apply(state, game, { type: 'activity', id: 'pay-rent' }).state
+state = apply(state, game, { type: 'action', id: 'pay-rent' }).state
 
 const { unseen, byTag } = view(state, game).notices
 unseen[0]  // { id: 'rent', title: 'Rent paid: 30 coins', text: 'The landlord sends a receipt. Same again next Sunday.', image: null, tag: 'money', turn: 6 }

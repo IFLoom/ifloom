@@ -1,5 +1,5 @@
 // The content the homepage types out, and a small highlighter for it. It runs as
-// written: loadGame([cafe], { id, title, introScene: 'counter' }) reports no
+// written: loadGame([cafe, { introScene: 'counter' }], { id, title }) reports no
 // problems, and its view is what the output panel beside it shows.
 
 export const LINES = [
@@ -16,9 +16,9 @@ export const LINES = [
   `    body: [{ text: 'counter' }],`,
   `    choices: [`,
   `      { id: 'tea',`,
-  `        effects: [{ kind: 'stat', stat: 'coins', by: -2 }] },`,
+  `        effects: [{ stat: 'coins', by: -2 }] },`,
   `      { id: 'cake',`,
-  `        effects: [{ kind: 'stat', stat: 'coins', by: -5 }],`,
+  `        effects: [{ stat: 'coins', by: -5 }],`,
   `        blocked: [{`,
   `          when: { stat: 'coins', lt: 5 },`,
   `          reason: 'You only have £3 on you.',`,

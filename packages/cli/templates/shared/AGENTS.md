@@ -12,8 +12,10 @@ for coding agents working on the game.
 
 ## Where things go
 
-- `src/game.ts` only assembles the game: `loadGame([...content], { ... })`,
-  with the plugins and rules. Content doesn't go here.
+- `src/game.ts` only assembles the game: `loadGame([...content], { id, title, plugins, rules })`.
+  Content doesn't go here, and neither does anything a mod could change: the
+  actions, locks, where the game starts (`introScene`) and its starting kv are
+  content too.
 - `src/world/` holds what the whole game shares, one file per kind:
   `stats.ts`, `things.ts`, `cast.ts` for the people, `settings.ts` for what the
   player can change. Each file exports a `Content` object.
@@ -21,7 +23,9 @@ for coding agents working on the game.
   character's arc. Each exports a `Content` object with that area's scenes,
   choices, prose and its slice of plugin content (that place, its vendor, its
   jobs). Long prose moves to `<area>.prose.ts` beside it.
-- `src/rules.ts` holds the game's rules (`onTurn`, `onStat`, ...) once it has any.
+- `src/rules.ts` holds the game's own code once it has any: `rules`, with its
+  hooks (`onTurn`, `onStat`, ...) and the conditions, effects and values content
+  calls as `{ 'game/name': args }`.
 - A new file's content goes in the list in `src/game.ts`. Files can be renamed
   and split freely, but each scene, prose key, stat or other key is declared
   once: `npm run check` reports one declared twice.

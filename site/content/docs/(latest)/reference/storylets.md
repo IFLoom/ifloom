@@ -14,11 +14,11 @@ const windowSeat: DataScene = {
   weight: 3,
   when: { not: { seen: 'cafe.window', gte: 2 } },
   body: [{ text: 'cafe.window' }],
-  choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
+  choices: [{ id: 'leave', effects: [{ scene: null }] }],
 }
 
-// The effect that draws one, on an activity or a choice.
-const sit: Effect = { kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }
+// The effect that draws one, on an action or a choice.
+const sit: Effect = { scene: { from: 'cafe', otherwise: 'cafe.quiet' } }
 ```
 
 A storylet is an ordinary scene in `game.scenes`. It renders, records [seen](/docs/reference/state#seen) and counts as the scene on screen like any other. The only difference is that an effect can pick it by chance.
@@ -35,16 +35,16 @@ Any scene can be a storylet, a [data scene](/docs/reference/scenes#datascene) or
 
 `drawnFrom` is separate from `tags`. Tags style a scene in the UI and have nothing to do with draws.
 
-`when` only gates draws. A `{ kind: 'scene', id }` effect or a `scene` command that names the scene opens it whether `when` holds or not.
+`when` only gates draws. A `{ scene: 'id' }` effect or a `scene` command that names the scene opens it whether `when` holds or not.
 
 ## Drawing one
 
 ```ts
-{ kind: 'scene', from: 'cafe' }
-{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }
+{ scene: { from: 'cafe' } }
+{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }
 ```
 
-This is the [`scene` effect](/docs/reference/effects#scene) with `from` in place of `id`. It can go in any effect list: a choice, an activity, a trigger or a thing's use. When it runs, it:
+This is the [`scene` effect](/docs/reference/effects#scene) with `from` in place of `id`. It can go in any effect list: a choice, an action, a trigger or a thing's use. When it runs, it:
 
 1. Finds the eligible scenes: the scenes in `game.scenes` whose `drawnFrom` includes `from` and whose `when` holds.
 2. Draws one of them by weight, with [`weighted`](/docs/reference/random#weighted).
@@ -67,7 +67,7 @@ So:
 
 **Gotchas.**
 - The draw walks the eligible scenes in the order they sit in `game.scenes`. Content or a mod that adds a storylet to a set changes which scene a given save draws next, even when the new one isn't the one drawn.
-- The count is per set, not per place. Two activities that both draw from `'cafe'` share one count.
+- The count is per set, not per place. Two actions that both draw from `'cafe'` share one count.
 - The engine writes `storylet:` keys itself, so don't use that prefix for your own. See [the kv store](/docs/reference/state#kv).
 
 ## Once, at most, and only while
@@ -81,17 +81,17 @@ when: here('ava')                                  // only while Ava is in the c
 when: { stat: 'friendship', of: character('ava'), gte: 25 }  // only once you know her
 ```
 
-For once a turn, set a kv key in the storylet's choice, list that key in [`rules.resets`](/docs/reference/rules#resets) so it goes back each turn, and test it in `when`.
+For once a turn, set a kv key in the storylet's choice, list that key in your content's [`resets`](/docs/reference/rules#resets) so it goes back each turn, and test it in `when`.
 
 ### A cooldown
 
-`{ since }` counts from the first time a scene was seen, so it can't say "not within three days of the last time". For a cooldown, have the storylet's choice write the turn into a kv key, and test it with a small custom condition:
+`{ since }` counts from the first time a scene was seen, so it can't say "not within three days of the last time". For a cooldown, have the storylet's choice write the turn into a kv key, and test it with a small condition of the game's own:
 
 ```ts
-import type { Custom, DataScene } from '@ifloom/engine'
+import type { DataScene, GameRules } from '@ifloom/engine'
 
-// goes on the game as `custom`
-const custom: Custom = {
+// in the game's rules
+const rules: GameRules = {
   conditions: {
     // True when the key was never written, or at least `turns` turns ago.
     cooledDown: (state, args) => {
@@ -100,16 +100,16 @@ const custom: Custom = {
     },
   },
   effects: {
-    stamp: (state, args) => [{ kind: 'kv', key: String(args.key), to: state.turn }],
+    stamp: (state, args) => [{ kv: String(args.key), to: state.turn }],
   },
 }
 
 const samAtTheCafe: DataScene = {
   id: 'cafe.sam',
   drawnFrom: ['cafe'],
-  when: { custom: 'cooledDown', with: { key: 'cafe.sam.last', turns: 3 } },
+  when: { 'game/cooledDown': { key: 'cafe.sam.last', turns: 3 } },
   body: [{ text: 'cafe.sam' }],
-  choices: [{ id: 'leave', effects: [{ custom: 'stamp', with: { key: 'cafe.sam.last' } }, { kind: 'scene', scene: null }] }],
+  choices: [{ id: 'leave', effects: [{ 'game/stamp': { key: 'cafe.sam.last' } }, { scene: null }] }],
 }
 ```
 
@@ -117,14 +117,15 @@ Sam turns up at most once every three days. Stamp the key in every way out of th
 
 ### A chance that it happens at all
 
-A draw always opens something while any storylet is eligible. To make an event rare, put an ordinary storylet in the same set with a bigger weight, such as a `cafe.ordinary` visit where nothing happens. With the window seat at weight 1 and an ordinary visit at weight 3, the window seat comes up about one sit in four. For a chance worked out from the state, such as 20% plus 8% per rank, roll it in a [custom effect](/docs/reference/custom#effects) with [`chance`](/docs/reference/random#chance) and return the draw only when it comes up:
+A draw always opens something while any storylet is eligible. To make an event rare, put an ordinary storylet in the same set with a bigger weight, such as a `cafe.ordinary` visit where nothing happens. With the window seat at weight 1 and an ordinary visit at weight 3, the window seat comes up about one sit in four. For a chance worked out from the state, such as 20% plus 8% per rank, roll it in one of the game's own [effects](/docs/reference/custom#effects) with [`chance`](/docs/reference/random#chance) and return the draw only when it comes up:
 
 ```ts
 import { chance, type CustomEffect } from '@ifloom/engine'
 
+// in rules.effects, called as { 'game/maybeSomething': { rank: 2 } }
 const maybeSomething: CustomEffect = (state, args) =>
   chance(20 + 8 * Number(args.rank ?? 0), 100, state.seed, state.turn, 'cafe.event')
-    ? [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }]
+    ? [{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }]
     : []
 ```
 
@@ -148,7 +149,7 @@ export const rainyDays: Pack = {
       id: 'cafe.umbrella',
       drawnFrom: ['cafe'],
       body: [{ text: 'cafe.umbrella' }],
-      choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
+      choices: [{ id: 'leave', effects: [{ scene: null }] }],
     },
   ],
 }
@@ -156,14 +157,11 @@ export const rainyDays: Pack = {
 
 ## The showcase café
 
-The [showcase](/docs/guide/showcase#sit-a-while-at-the-café) has a "Sit a while" button in the café. It's a room action on the `cafe` location that runs the activity `sit`:
+The [showcase](/docs/guide/showcase#sit-a-while-at-the-café) has a "Sit a while" button in the café. It's a room action on the `cafe` location whose effect draws one:
 
 ```ts
 // the cafe location's actions
-{ id: 'sit', label: 'Sit a while', command: { type: 'activity', id: 'sit' } },
-
-// the content's activities
-{ id: 'sit', blocked: [onlyAt(['cafe'])], effects: [{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }] },
+{ id: 'sit', label: 'Sit a while', effects: [{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }] },
 ```
 
 Three scenes are drawn from `'cafe'`, and a fourth is the quiet table for when none of them can happen:
@@ -177,7 +175,7 @@ Three scenes are drawn from `'cafe'`, and a fourth is the quiet table for when n
   weight: 3,
   when: { not: { seen: 'cafe.window', gte: 2 } },
   body: [{ text: 'cafe.window' }],
-  choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
+  choices: [{ id: 'leave', effects: [{ scene: null }] }],
 },
 {
   id: 'cafe.crossword',
@@ -185,7 +183,7 @@ Three scenes are drawn from `'cafe'`, and a fourth is the quiet table for when n
   drawnFrom: ['cafe'],
   when: { not: { seen: 'cafe.crossword' } },
   body: [{ text: 'cafe.crossword' }],
-  choices: [{ id: 'leave', effects: [{ kind: 'stat', stat: 'charm', by: 1 }, { kind: 'scene', scene: null }] }],
+  choices: [{ id: 'leave', effects: [{ stat: 'charm', by: 1 }, { scene: null }] }],
 },
 {
   id: 'cafe.break',
@@ -195,14 +193,14 @@ Three scenes are drawn from `'cafe'`, and a fourth is the quiet table for when n
   weight: 2,
   when: here('ava'),
   body: [{ text: 'cafe.break' }],
-  choices: [{ id: 'leave', effects: [{ kind: 'stat', stat: 'friendship', by: 2, of: character('ava') }, { kind: 'scene', scene: null }] }],
+  choices: [{ id: 'leave', effects: [{ stat: 'friendship', by: 2, of: character('ava') }, { scene: null }] }],
 },
 // When none of them can happen.
 {
   id: 'cafe.quiet',
   title: 'A quiet table',
   body: [{ text: 'cafe.quiet' }],
-  choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
+  choices: [{ id: 'leave', effects: [{ scene: null }] }],
 },
 ```
 
@@ -224,8 +222,8 @@ The [content checker](/docs/reference/checks) reports:
 
 A storylet's `when` is checked like [any other condition](/docs/reference/checks#in-a-condition), for unknown stats, scenes and so on.
 
-The effect is checked wherever it is, in activities and triggers too. It says `draws from "<name>", but no scene is drawn from it` and `goes to unknown scene "<id>"`.
+The effect is checked wherever it is, in actions and triggers too. It says `draws from "<name>", but no scene is drawn from it` and `goes to unknown scene "<id>"`.
 
 ## See it in an example
 
-Small Town: the `sit` activity and the `cafe.*` scenes in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts). The test `draws something to happen when you sit a while at the café, and a quiet table when nothing can` in [`examples/showcase/tests/showcase.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/tests/showcase.test.ts) plays them.
+Small Town: the `sit` action and the `cafe.*` scenes in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts). The test `draws something to happen when you sit a while at the café, and a quiet table when nothing can` in [`examples/showcase/tests/showcase.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/tests/showcase.test.ts) plays them.

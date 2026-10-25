@@ -48,10 +48,10 @@ If you'd rather see a finished game of this shape first, `--template town` copie
 
 The core has no map, so places come from the places plugin. A location has an id, the exits you can walk to from it, and a `body`, which is the text shown while no scene is playing. The body is a list of blocks, each naming a piece of prose by key. You write the words themselves in step 4.
 
-`kind` says what sort of place it is. `blocked` is a list of conditions, each with a reason. While one holds, the plugin won't let the player in, and says why. That's how the café keeps hours, with a condition from the calendar: `period('morning', 'afternoon')` holds in the morning and the afternoon.
+`tag` is the short word the UI shows for what sort of place it is. `blocked` is a list of conditions, each with a reason. While one holds, the plugin won't let the player in, and says why. That's how the café keeps hours, with a condition from the calendar: `period('morning', 'afternoon')` holds in the morning and the afternoon.
 
 ```ts
-import { period } from '@ifloom/plugin-calendar'
+import { pass, period } from '@ifloom/plugin-calendar'
 import type { LocationDef } from '@ifloom/plugin-places'
 import { here } from '@ifloom/plugin-cast'
 
@@ -85,7 +85,7 @@ const locations: LocationDef[] = [
       { text: 'cafe.empty', when: { not: here('ruth') } },
     ],
     actions: [
-      { id: 'coffee', label: 'Buy a coffee', command: { type: 'activity', id: 'coffee' } },
+      { id: 'coffee', label: 'Buy a coffee', cost: { stats: { coins: 3 } }, effects: [pass(1), { stat: 'energy', by: 20 }] },
     ],
   },
 ]
@@ -95,7 +95,7 @@ const locations: LocationDef[] = [
 
 A block with a `when` only shows while its [condition](/docs/reference/conditions) holds. The cast's [`here('ruth')`](/docs/plugins/cast#conditions) holds while Ruth's schedule puts her in the room the player is in, so the café reads differently with her behind the counter.
 
-`actions` is the list of buttons the room offers. Here it offers the `coffee` activity you'll declare in step 3. `{ not: … }` turns the calendar's condition round, so the door is locked for the rest of the day.
+`actions` is the list of buttons the room offers. Each is an [action](/docs/reference/actions): an id, the label on its button, what it costs and its effects. The coffee costs 3 coins, passes a period of time with the calendar's `pass(1)`, and gives 20 energy. Step 3 declares the coins and the energy. The engine charges the cost before the effects apply, and refuses the action, with the stat's `lacking` line, when the player can't pay. `{ not: … }` turns the calendar's condition round, so the door is locked for the rest of the day.
 
 The locations are content. In step 5 they go into the game's content, under `data.places.locations`. There's more in [Places](/docs/plugins/places#locationdef) and the calendar's [conditions](/docs/plugins/calendar#conditions).
 
@@ -154,25 +154,19 @@ const stats: StatDef[] = [
 
 `of: 'character'` makes `friendship` a stat that every character keeps for themselves, starting at 0, rather than one the player has. Content says whose it is with `of: character('ruth')`. There's more in [Stats](/docs/reference/stats) and the cast's [entities](/docs/plugins/cast#each-one-is-an-entity).
 
-An activity is something the player can do. It has a cost the engine charges before the effects apply, and a `blocked` list. Each entry is a condition with the reason the player reads while it holds. The engine refuses the activity, with that reason, when an entry holds or the player can't pay.
+An [action](/docs/reference/actions) can also belong to the game rather than a room. One in the content's `actions` is offered in every room, after the room's own:
 
 ```ts
-import type { ActivityDef } from '@ifloom/engine'
-import { pass } from '@ifloom/plugin-calendar'
-import { onlyAt } from '@ifloom/plugin-places'
+import type { ActionDef } from '@ifloom/engine'
+import { pass, sleep } from '@ifloom/plugin-calendar'
 
-const activities: ActivityDef[] = [
-  { id: 'wait', effects: [pass(1)] },
-  {
-    id: 'coffee',
-    blocked: [onlyAt(['cafe'], 'There is no coffee here.')],
-    cost: { stats: { coins: 3 } },
-    effects: [pass(1), { kind: 'stat', stat: 'energy', by: 20 }],
-  },
+const actions: ActionDef[] = [
+  { id: 'wait', label: 'Wait a while', effects: [pass(1)] },
+  { id: 'bed', label: 'Go to bed', command: sleep() },
 ]
 ```
 
-`onlyAt` is the places plugin's `blocked` entry for "anywhere but here". The coffee can only be bought in the café, and anywhere else it's refused with `There is no coffee here.` `cost.stats` is what it spends, by stat id. `pass(1)` is the calendar's effect for one period of time going by. `wait` does nothing but pass a period, and in step 5 the game offers it as a button in every room. See [Activities and buttons](/docs/reference/actions), the places plugin's [helpers](/docs/plugins/places#helpers) and the calendar's [effects](/docs/plugins/calendar#effects).
+`wait` does nothing but pass a period. `bed` sends a command rather than running effects: `sleep()` is the calendar's command for going to bed. An action can also have a `blocked` list, each entry a condition with the reason the player reads while it holds, and the engine refuses the action with that reason. See [Actions](/docs/reference/actions), and the calendar's [effects](/docs/plugins/calendar#effects).
 
 ## 4. Scenes
 
@@ -187,11 +181,11 @@ const intro: DataScene = {
   id: 'intro',
   title: 'Moving day',
   body: [{ text: 'intro' }],
-  choices: [{ id: 'bed', effects: [{ kind: 'scene', scene: null }] }],
+  choices: [{ id: 'bed', effects: [{ scene: null }] }],
 }
 ```
 
-`{ kind: 'scene', scene: null }` closes the scene and leaves the player standing in the room.
+`{ scene: null }` closes the scene and leaves the player standing in the room.
 
 Ruth's talk scene has a line that only appears once you're a regular, and a choice that pays once a turn. In this game a turn is a day, so that's once a day:
 
@@ -210,11 +204,11 @@ const ruthTalk: DataScene = {
       id: 'chat',
       once: { per: 'turn', reason: 'She has a queue.' },
       effects: [
-        { kind: 'stat', stat: 'friendship', by: 5, of: character('ruth') },
-        { kind: 'scene', scene: null },
+        { stat: 'friendship', by: 5, of: character('ruth') },
+        { scene: null },
       ],
     },
-    { id: 'bye', effects: [{ kind: 'scene', scene: null }] },
+    { id: 'bye', effects: [{ scene: null }] },
   ],
 }
 ```
@@ -241,7 +235,7 @@ const prose: Record<string, string> = {
 }
 ```
 
-The first five keys are the locations' blocks from step 1, and the rest are the scenes'. `{{playerName}}` is a token. It's filled with the `playerName` key in the game's kv store when the line is shown. The name is a key like any other, and step 6 sets it. The only special thing about `playerName` is that a save's [`SaveMeta`](/docs/reference/saves#savemeta) reads it into its `player` field, for a load screen. [Prose and markup](/docs/reference/prose#tokens) lists the other tokens, such as a counter or a value the game works out.
+The first five keys are the locations' blocks from step 1, and the rest are the scenes'. `{{playerName}}` is a token. It's filled with the `playerName` key in the game's kv store when the line is shown. The name is a key like any other, and step 6 sets it. A save's [`SaveMeta`](/docs/reference/saves#savemeta) can show it on a load screen, as `playerName`, if the game's [`rules`](/docs/reference/rules) give a `saveName` that reads it. [Prose and markup](/docs/reference/prose#tokens) lists the other tokens, such as a counter or a value the game works out.
 
 That's all a scene needs. You don't write a `render` function or wire the words to the scenes. The loader in the next step hands the prose to the game, and the engine renders every data scene from it. The places plugin renders every location's body the same way. There's more in [Scenes](/docs/reference/scenes).
 
@@ -253,11 +247,11 @@ For the odd screen that doesn't fit blocks and choices, a scene can also be a pl
 
 The game gathers everything. [`loadGame`](/docs/reference/loader) merges your content into one game, here one object, and a mod would be a pack laid over it. The locations are the places plugin's content, so they go in the content's `data`, under the plugin's id and the list's name: `data.places.locations`. Ruth is an entity, so she goes in `entities`.
 
-The second argument holds everything that isn't content, and only `id` and `title` are required. `introScene` is on screen from the first frame. `actions` are buttons offered in every room after the room's own, here the `wait` activity from step 3 and a bed to go to. A story that opens on its room leaves out `introScene`.
+The content's `introScene` is on screen from the first frame. A story that opens on its room leaves it out. The second argument, the base, holds what isn't content: the game's `id` and `title`, its plugins, and its own code in [`rules`](/docs/reference/rules) when it has any. Only `id` and `title` are required.
 
 `plugins` is where the calendar, the places and the cast go in:
 
-- `calendar()` builds the calendar. Its `start` says the game opens at night, on moving day. By default a turn is a day. `sleep()` is the calendar's command for going to bed.
+- `calendar()` builds the calendar. Its `start` says the game opens at night, on moving day. By default a turn is a day.
 - `places()` builds the places. Its `start` is where the player wakes up.
 - `cast()` builds the cast.
 
@@ -265,7 +259,7 @@ A story with no places leaves out the places plugin, and one with nobody to talk
 
 ```ts
 import { describeProblem, loadGame } from '@ifloom/engine'
-import { calendar, sleep } from '@ifloom/plugin-calendar'
+import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
 
@@ -273,8 +267,9 @@ export const { game, problems } = loadGame(
   [
     {
       stats,
-      activities,
+      actions,
       scenes: [intro, ruthTalk],
+      introScene: 'intro',
       prose,
       entities: [ruth],
       data: { places: { locations } },
@@ -283,12 +278,7 @@ export const { game, problems } = loadGame(
   {
     id: 'new-in-town',
     title: 'New in Town',
-    introScene: 'intro',
     plugins: [calendar({ start: { period: 'night' } }), places({ start: 'house' }), cast()],
-    actions: [
-      { id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } },
-      { id: 'bed', label: 'Go to bed', command: sleep() },
-    ],
   },
 )
 
@@ -322,7 +312,7 @@ Everything the player does is a [command](/docs/reference/commands). `apply` run
 ```ts
 import { apply } from '@ifloom/engine'
 
-const tried = apply(state, game, { type: 'activity', id: 'coffee' })
+const tried = apply(state, game, { type: 'action', id: 'wait' })
 tried.ok      // false: the intro scene is still open
 tried.reason // 'Finish this first.'
 ```
@@ -333,6 +323,7 @@ When you don't need to know, `dispatch` returns just the next state:
 
 ```ts
 import { dispatch, statValue } from '@ifloom/engine'
+import { sleep } from '@ifloom/plugin-calendar'
 import { go } from '@ifloom/plugin-places'
 import { character, talk } from '@ifloom/plugin-cast'
 
@@ -369,7 +360,7 @@ const screen = view(state, game)
 screen.when                   // 'Day 2 · Tuesday morning · The corner café'
 screen.scene.title            // the scene's title, or the room's name
 screen.scene.speaker?.name    // 'Ruth'
-screen.scene.beats            // [{ kind: 'say', who: 'character', text: 'Morning. What can I get you?' }, …]
+screen.scene.beats            // [{ type: 'say', who: 'character', text: 'Morning. What can I get you?' }, …]
 screen.scene.choices          // [{ id: 'chat', label: 'Ask how the bread is going',
                               //    disabled: 'She has a queue.', command: { type: 'choose', id: 'chat' } }, …]
 // Each plugin's part of the view is typed `unknown`, so cast it to the plugin's view type.
@@ -407,18 +398,18 @@ room.actions[0].price
 room.actions[2].disabled         // 'Too early.'
 ```
 
-The stats in the price are the engine's, and the note is the calendar's, which prices every button that passes time. Bed is greyed out with the calendar's reason until the evening. Buying a coffee costs three coins and a period, and five coins don't stretch to a second one.
+The stats in the price are the engine's, and the note is the calendar's, which prices every button that passes time. Bed is greyed out with the calendar's reason until the evening. Buying a coffee costs three coins and a period, and five coins don't stretch to a second one. A button sends its action by id, and a room's action has the places plugin's id in front, `places/coffee`:
 
 ```ts
-state = dispatch(state, game, { type: 'activity', id: 'coffee' }) // afternoon
-state.stats                                                      // { coins: 2, energy: 70 }
-apply(state, game, { type: 'activity', id: 'coffee' }).reason   // 'Not enough on you.'
+state = dispatch(state, game, { type: 'action', id: 'places/coffee' }) // afternoon
+state.stats                                                           // { coins: 2, energy: 70 }
+apply(state, game, { type: 'action', id: 'places/coffee' }).reason   // 'Not enough on you.'
 ```
 
 Wait another period and it's evening. Ruth has gone for the day and the café has shut.
 
 ```ts
-state = dispatch(state, game, { type: 'activity', id: 'wait' })   // evening
+state = dispatch(state, game, { type: 'action', id: 'wait' })   // evening
 view(state, game).when       // 'Day 2 · Tuesday evening · The corner café'
 ;(view(state, game).plugins.cast as CastView).present // []
 view(state, game).scene.body // 'Steam on the windows.\n\nThe counter is empty.'
@@ -491,7 +482,7 @@ function draw(view: View): void {
   root.replaceChildren()
   if (view.when) add('p', view.when)
   add('h2', view.scene.title)
-  for (const beat of view.scene.beats) if (beat.kind === 'text') add('p', beat.text)
+  for (const beat of view.scene.beats) if (beat.type === 'text') add('p', beat.text)
 
   // The scene's choices, or the room's buttons and its exits when no scene is open.
   const exits = (view.plugins.places as PlacesView | undefined)?.exits ?? []
@@ -539,7 +530,7 @@ const exits = computed(() => (view.value.plugins.places as PlacesView | undefine
   <p v-if="view.when">{{ view.when }}</p>
   <h2>{{ view.scene.title }}</h2>
   <template v-for="(beat, at) in view.scene.beats" :key="at">
-    <p v-if="beat.kind === 'text'">{{ beat.text }}</p>
+    <p v-if="beat.type === 'text'">{{ beat.text }}</p>
   </template>
   <button
     v-for="(choice, at) in [...view.scene.choices, ...view.actions]"
@@ -574,7 +565,7 @@ const exits = computed(() => (view.value.plugins.places as PlacesView | undefine
 {#if view.when}<p>{view.when}</p>{/if}
 <h2>{view.scene.title}</h2>
 {#each view.scene.beats as beat, at (at)}
-  {#if beat.kind === 'text'}<p>{beat.text}</p>{/if}
+  {#if beat.type === 'text'}<p>{beat.text}</p>{/if}
 {/each}
 {#each [...view.scene.choices, ...view.actions] as choice, at (at)}
   <button disabled={Boolean(choice.disabled)} title={choice.disabled} onclick={() => runner.apply(choice.command)}>
@@ -621,12 +612,12 @@ import {
   startingState,
   statValue,
   view,
-  type ActivityDef,
+  type ActionDef,
   type DataScene,
   type StatDef,
 } from '@ifloom/engine'
 import { calendar, pass, period, sleep, weekday } from '@ifloom/plugin-calendar'
-import { go, onlyAt, places, where, type LocationDef } from '@ifloom/plugin-places'
+import { go, places, where, type LocationDef } from '@ifloom/plugin-places'
 import { cast, character, here, person, talk } from '@ifloom/plugin-cast'
 
 const locations: LocationDef[] = [
@@ -659,7 +650,7 @@ const locations: LocationDef[] = [
       { text: 'cafe.empty', when: { not: here('ruth') } },
     ],
     actions: [
-      { id: 'coffee', label: 'Buy a coffee', command: { type: 'activity', id: 'coffee' } },
+      { id: 'coffee', label: 'Buy a coffee', cost: { stats: { coins: 3 } }, effects: [pass(1), { stat: 'energy', by: 20 }] },
     ],
   },
 ]
@@ -691,21 +682,16 @@ const stats: StatDef[] = [
   { id: 'friendship', label: 'Friendship', of: 'character' },
 ]
 
-const activities: ActivityDef[] = [
-  { id: 'wait', effects: [pass(1)] },
-  {
-    id: 'coffee',
-    blocked: [onlyAt(['cafe'], 'There is no coffee here.')],
-    cost: { stats: { coins: 3 } },
-    effects: [pass(1), { kind: 'stat', stat: 'energy', by: 20 }],
-  },
+const actions: ActionDef[] = [
+  { id: 'wait', label: 'Wait a while', effects: [pass(1)] },
+  { id: 'bed', label: 'Go to bed', command: sleep() },
 ]
 
 const intro: DataScene = {
   id: 'intro',
   title: 'Moving day',
   body: [{ text: 'intro' }],
-  choices: [{ id: 'bed', effects: [{ kind: 'scene', scene: null }] }],
+  choices: [{ id: 'bed', effects: [{ scene: null }] }],
 }
 
 const ruthTalk: DataScene = {
@@ -720,11 +706,11 @@ const ruthTalk: DataScene = {
       id: 'chat',
       once: { per: 'turn', reason: 'She has a queue.' },
       effects: [
-        { kind: 'stat', stat: 'friendship', by: 5, of: character('ruth') },
-        { kind: 'scene', scene: null },
+        { stat: 'friendship', by: 5, of: character('ruth') },
+        { scene: null },
       ],
     },
-    { id: 'bye', effects: [{ kind: 'scene', scene: null }] },
+    { id: 'bye', effects: [{ scene: null }] },
   ],
 }
 
@@ -746,8 +732,9 @@ export const { game, problems } = loadGame(
   [
     {
       stats,
-      activities,
+      actions,
       scenes: [intro, ruthTalk],
+      introScene: 'intro',
       prose,
       entities: [ruth],
       data: { places: { locations } },
@@ -756,12 +743,7 @@ export const { game, problems } = loadGame(
   {
     id: 'new-in-town',
     title: 'New in Town',
-    introScene: 'intro',
     plugins: [calendar({ start: { period: 'night' } }), places({ start: 'house' }), cast()],
-    actions: [
-      { id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } },
-      { id: 'bed', label: 'Go to bed', command: sleep() },
-    ],
   },
 )
 
@@ -785,9 +767,9 @@ console.log(chat.ok, statValue(chat.state, game, 'friendship', character('ruth')
 
 state = dispatch(chat.state, game, talk('ruth'))
 state = dispatch(state, game, { type: 'choose', id: 'bye' })
-state = dispatch(state, game, { type: 'activity', id: 'coffee' })
+state = dispatch(state, game, { type: 'action', id: 'places/coffee' })
 console.log(state.stats) // { coins: 2, energy: 70 }
-console.log(apply(state, game, { type: 'activity', id: 'coffee' }).reason) // 'Not enough on you.'
+console.log(apply(state, game, { type: 'action', id: 'places/coffee' }).reason) // 'Not enough on you.'
 
 // Now through a runner, as a UI would. In a browser, use localStorageDriver() or indexedDbDriver().
 const runner = createRunner(game, startingState(game, { kv: { playerName: 'Sam' } }), {

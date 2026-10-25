@@ -13,7 +13,7 @@ import {
 } from '@ifloom/plugin-shop'
 ```
 
-The plugin's engine side draws nothing: its React UI is a [subpath of its own](#the-react-ui), and any UI can draw it. You can put its `buy` commands on any button, such as a location's actions, and the button shows the price and greys out with the reason as an activity's does. For a shop screen, its view lists every vendor and their goods, and [Building UI for plugins](/docs/recipes/plugin-ui#a-shop-counter) builds one.
+The plugin's engine side draws nothing: its React UI is a [subpath of its own](#the-react-ui), and any UI can draw it. You can put its `buy` commands on any button, such as a location's actions, and the button shows the price and greys out with the reason as any action's does. For a shop screen, its view lists every vendor and their goods, and [Building UI for plugins](/docs/recipes/plugin-ui#a-shop-counter) builds one.
 
 ## Install
 
@@ -219,10 +219,8 @@ Nothing about a vendor is drawn by itself. Content opens a vendor's counter in t
 ```ts
 import { openShop } from '@ifloom/plugin-shop'
 
-// { kind: 'panel', panel: 'shop', with: { vendor: 'counter' } }
-activities: [{ id: 'counter', blocked: [onlyAt(['cafe'])], effects: [openShop('counter')] }],
-// and in the café's location:
-actions: [{ id: 'counter', label: 'Go to the counter', command: { type: 'activity', id: 'counter' } }],
+// In the café's location. openShop('counter') is { panel: 'shop', with: { vendor: 'counter' } }.
+actions: [{ id: 'counter', label: 'Go to the counter', effects: [openShop('counter')] }],
 ```
 
 The counter stays open while the player buys and sells, and closes when a turn ends or the scene changes. See [How long a panel stays open](/docs/reference/panels#how-long-a-panel-stays-open).
@@ -232,11 +230,10 @@ Opening a counter doesn't move the player. A vendor with `at` still sells only t
 ```ts
 // An online shop: no `at`, so it sells wherever the player is.
 const webshop: VendorDef = { id: 'webshop', name: 'Pinecone Online', goods: [{ entity: 'clothing:scarf', price: { coins: 10 } }] }
-// An activity opens it, and a laptop app's actions section has a button for the activity.
-const browse: ActivityDef = { id: 'browse', effects: [openShop('webshop')] }
+// A laptop app's actions section has a button that opens it.
 const app: AppDef = {
   id: 'pinecone', name: 'Pinecone', icon: 'basket', on: 'laptop',
-  sections: [{ actions: [{ id: 'browse', label: 'Browse the shop', command: { type: 'activity', id: 'browse' } }] }],
+  sections: [{ actions: [{ id: 'browse', label: 'Browse the shop', effects: [openShop('webshop')] }] }],
 }
 ```
 

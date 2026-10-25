@@ -8,9 +8,9 @@ A dice roll is an effect. It throws the dice, keeps the total in the [kv store](
 import type { Content } from '@ifloom/engine'
 
 export const park: Content = {
-  activities: [
+  actions: [
     // Two dice against 8: the total is the kv key `skim`.
-    { id: 'skim', effects: [{ kind: 'roll', key: 'skim', dice: '2d6', against: 8 }] },
+    { id: 'skim', label: 'Skim a stone', effects: [{ roll: 'skim', dice: '2d6', against: 8 }] },
   ],
 }
 ```
@@ -28,12 +28,12 @@ Anywhere effects run. A player makes one with a choice, an [action](/docs/refere
 ## The effect
 
 ```ts
-{ kind: 'roll'; key: string; dice: Dice; plus?: number | { stat: string }; against?: number }
+{ roll: string, dice: Dice, plus: number | { stat: string }, against: number }
 ```
 
 | Field | Meaning |
 |---|---|
-| `key` | The kv key the total goes in, and the key the [`roll` condition](/docs/reference/conditions#roll) reads. Letters, digits and `_`, not starting with a digit, so `{{key}}` prints it. |
+| `roll` | The kv key the total goes in, and the key the [`roll` condition](/docs/reference/conditions#roll) reads. Letters, digits and `_`, not starting with a digit, so `{{skim}}` prints it. |
 | `dice` | What to throw: notation or `{ count, sides }`. See [`Dice`](#dice). |
 | `plus` | Added to the total: a number, or `{ stat }` for the player's stat as [`statValue`](/docs/reference/stats#statvalue) reads it. |
 | `against` | A target. The roll passes when the total is at least this. |
@@ -99,4 +99,4 @@ readDice('2x6')     // { problem: 'dice "2x6" is not dice notation such as "2d6+
 
 ## See it in an example
 
-Small Town's park, in [`examples/showcase/src/story/park.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/park.ts). Its stones line holds `[[act:skim|Try to skim a stone]]`, whose activity rolls `2d6` against 8, and three blocks after it show how the stone went, each with the React UI's `ui: { dice: 'skim' }`. A trigger rolls `1d6+2` ducks as you arrive, and the line after the river prints `{{ducks}}`.
+Small Town's park, in [`examples/showcase/src/story/park.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/park.ts). Its stones line holds `[[act:skim|Try to skim a stone]]`, whose action rolls `2d6` against 8, and three blocks after it show how the stone went, each with the React UI's `ui: { dice: 'skim' }`. A trigger rolls `1d6+2` ducks as you arrive, and the line after the river prints `{{ducks}}`.

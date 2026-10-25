@@ -31,7 +31,7 @@ Lists keep the order you combine your content in. Triggers fire in that order, a
 
 Because content has no id, renaming a file or splitting one into two changes nothing a player can see. What a save does depend on is the ids inside your content: keep scene, entity and storyline ids stable once players have saves.
 
-Because content has no schema, it isn't upgraded when you update the engine. In TypeScript the compiler tells you what changed. In a plain-JS game, `loadGame` and `ifloom check` report each old name they meet, such as `unknown effect kind "setStat"`, or `unknown stat "undefined"` for an effect whose field was renamed. The [upgrade steps](#upgradepack) list what each schema renamed.
+Because content has no schema, it isn't upgraded when you update the engine. In TypeScript the compiler tells you what changed. In a plain-JS game, `loadGame` and `ifloom check` report each old name they meet, such as `effects are told apart by their key now, as { stat: … }, not { kind: "stat" }`, or `unknown stat "undefined"` for an effect whose field was renamed. The [upgrade steps](#upgradepack) list what each schema renamed.
 
 ## Content
 
@@ -39,24 +39,31 @@ Because content has no schema, it isn't upgraded when you update the engine. In 
 type Content = {
   name?: string
   scenes?: (Scene | DataScene)[]
+  introScene?: string
   storylines?: StorylineDef[]
-  activities?: ActivityDef[]
   stats?: StatDef[]
+  kv?: Record<string, KvValue>
+  resets?: Record<string, KvValue>
   kinds?: KindDef[]
   entities?: EntityDef[]
   traits?: TraitTable
+  actions?: ActionDef[]
+  locks?: Lock[]
   triggers?: TriggerDef[]
   inputs?: InputDef[]
   minigames?: MinigameDef[]
   timers?: TimerDef[]
   settings?: SettingDef[]
+  saveable?: Blocked[]
+  finished?: Condition
+  carryOver?: CarryOver
   strings?: Record<string, string>
   prose?: Record<string, string>
   variants?: Record<string, VariantMember[]>
-  custom?: Custom
   data?: Record<string, Record<string, readonly PluginEntry[]>>
   audio?: Partial<GameAudio>
   media?: GameMedia
+  ui?: Ui<GameUi>
 }
 ```
 
@@ -66,7 +73,7 @@ One file of your game's content. This is the novel's first chapter, cut down:
 import type { Content } from '@ifloom/engine'
 
 export const ch1: Content = {
-  inputs: [{ id: 'playerName', label: 'Your name', kind: 'text', maxLength: 20, when: { not: { kv: 'playerName' } } }],
+  inputs: [{ id: 'playerName', label: 'Your name', type: 'text', maxLength: 20, when: { not: { kv: 'playerName' } } }],
   scenes: [{ id: 'ch1.mat', title: 'Chapter one: the mat', body: [{ text: 'ch1.mat' }], choices: [] }],
   prose: { 'ch1.mat': 'The flat still smells of someone else’s cooking. On the mat is a letter with a name on it that isn’t yours.' },
 }
@@ -75,18 +82,21 @@ export const ch1: Content = {
 | Field | Merged how |
 |---|---|
 | `name` | Optional. What problems call this content, such as `story.cafe`. Without one, they say `content`. |
-| `scenes`, `storylines`, `activities`, `stats`, `kinds`, `triggers`, `inputs`, `minigames`, `timers`, `settings` | By `id`, each declared once across your content. The order is the order you combine your content in. Any `kinds`, `triggers`, `inputs`, `minigames`, `timers` and `settings` on `loadGame`'s `base` come first. |
-| `entities` | By kind and id (`'staff:ana'`), so two kinds may each have an entity with the same id. The base's come first. See [Entities](/docs/reference/entities). |
+| `scenes`, `storylines`, `stats`, `kinds`, `actions`, `triggers`, `inputs`, `minigames`, `timers`, `settings` | By `id`, each declared once across your content. The order is the order you combine your content in. A plugin's own [`content`](/docs/reference/plugins#kinds-and-entities) comes first. |
+| `introScene`, `finished`, `carryOver` | One value each, given by one file of your content. See [Game](/docs/reference/game#game). |
+| `kv`, `resets` | By key, each declared once: `kv` is what a new game's [kv store](/docs/reference/state#kv) starts with, and `resets` what goes back each turn (see [`resets`](/docs/reference/rules#resets)). |
+| `locks`, `saveable` | Added, each file's after the ones before. A [lock](/docs/reference/locks) with an `id` is declared once by it. |
+| `ui` | [Presentation hints](/docs/reference/ui-hints) for the whole game, by key. |
+| `entities` | By kind and id (`'staff:ana'`), so two kinds may each have an entity with the same id. See [Entities](/docs/reference/entities). |
 | `traits` | By trait id and then entity, one row each. See [Traits](#traits). |
-| `strings` | By key, over the base's `strings`. A file of nothing but `strings` is a translation. See [Strings](/docs/reference/strings#overriding). |
+| `strings` | By key. A file of nothing but `strings` is a translation. See [Strings](/docs/reference/strings#overriding). |
 | `prose` | By key. |
 | `variants` | By variants name. Each file appends its members to the list, so several files can add lines to one name. A member is a prose key, or `{ text, weight }` to give it a [weight](/docs/reference/prose#variantmember). |
-| `custom` | [Custom functions](/docs/reference/custom), kind by kind (`conditions`, `effects`, `values`, `panels`) and then by name. |
 | `data` | Content for the game's [plugins](/docs/reference/plugins#content-and-checks), by plugin id and then list name, such as `{ quests: { quests: [...] } }`. Each list merges by entry `id`, as scenes do. The result is at `game.data.quests.quests`. Locations are content of this kind: `data.places.locations` for the [places plugin](/docs/plugins/places#in-your-content). The [cast](/docs/plugins/cast#in-your-content)'s characters are entities instead, in `entities`. |
-| `audio` | [Audio](/docs/reference/audio#gameaudio), over the base's own `audio`. `tracks` and `channels` merge by id, and `mute` and `default` go over the base's. |
-| `media` | [Media](/docs/reference/media#gamemedia), over the base's own `media`. `pools` merge by id. |
+| `audio` | [Audio](/docs/reference/audio#gameaudio). `tracks` and `channels` merge by id, and `mute` and `default` go over the earlier ones. |
+| `media` | [Media](/docs/reference/media#gamemedia). `pools` merge by id. |
 
-Some of a game can only go on the `base` you give [`loadGame`](#loadgame), never in content or a pack: `title`, `actions`, `rules`, `plugins`, `introScene`, `startPhase`, `finished`, `carryOver`, `saveName`, `version`, `migrations` and `ui`. Content that has one of them anyway loads without it, with the problem `content has no "…", so it was left out`. So does content with an `id`, a `schema` or `patches`, which only a pack has. TypeScript catches all of these sooner, because they aren't in the `Content` type.
+What the game is and its code go on the `base` you give [`loadGame`](#loadgame), never in content or a pack: `id`, `title`, `version`, `plugins` and `rules`. Content that has one of them anyway loads without it, with the problem `content has no "…", so it was left out`. So does content with an `id`, a `schema` or `patches`, which only a pack has, and content with `custom`, which is the game's code now and goes in [`rules`](/docs/reference/rules). TypeScript catches all of these sooner, because they aren't in the `Content` type.
 
 ### One key declared twice
 
@@ -102,7 +112,7 @@ Give your content a `name` and the problem says which two files it's in:
 story.town · scene "cafe.counter" · declared twice, in story.cafe and story.town
 ```
 
-It looks at everything content declares by a key: scenes (storylets too), prose keys, strings, stats, kinds, entities, rows of the `traits` table (as in `trait "laundry/washable" on "clothing:hat"`), storylines, activities, triggers, inputs, minigames, timers, settings, custom functions, audio tracks, media pools and plugin content (`data`, by plugin, list and `id`, as in `places/locations "cafe"`). Content appends to a variants name, so two files adding lines to one name is fine. Only the same line listed by both is reported.
+It looks at everything content declares by a key: scenes (storylets too), prose keys, strings, stats, kinds, entities, rows of the `traits` table (as in `trait "laundry/washable" on "clothing:hat"`), storylines, actions, locks with an `id`, triggers, inputs, minigames, timers, settings, kv and `resets` keys, `ui` hints, `introScene`, `finished`, `carryOver`, audio tracks, media pools and plugin content (`data`, by plugin, list and `id`, as in `places/locations "cafe"`). Content appends to a variants name, so two files adding lines to one name is fine. Only the same line listed by both is reported.
 
 To change something on purpose, change it where it's declared. Packs are the only way to replace what the content declares.
 
@@ -150,33 +160,33 @@ Content from outside your code, laid over the game. It has everything [`Content`
 | `plugins` | The version of each plugin's content it was written for, by plugin id: `{ shop: 13 }`. A plugin's own steps carry an older one forward as it loads, and a newer one is skipped whole, with a problem. A plugin left out is read as written for the pack's `schema`, or for the plugin's own version if that's lower. See [Content and command migrations](/docs/reference/plugins#content-and-command-migrations). |
 | `patches` | Small changes to scenes the content or an earlier pack declared, applied straight away, in order. See [Patches](#patches). |
 
-A pack merges as content does, except that it may repeat any key. Its scene, entity, stat or plugin entry replaces the one with the same id as a whole, so fields aren't merged. So does a row of its `traits` table, for that trait on that entity. Its `prose`, `strings` and custom functions replace the ones with the same key or name, and the rest are kept. Its `variants` members are appended. Its audio `tracks` and media `pools` replace the ones with the same id, its audio `channels` merge field by field, and its `mute` and `default` win. To add a file to a pool, a mod redeclares the pool with every file.
+A pack merges as content does, except that it may repeat any key. Its scene, entity, stat or plugin entry replaces the one with the same id as a whole, so fields aren't merged. So does a row of its `traits` table, for that trait on that entity. Its `prose`, `strings`, `kv`, `resets` and `ui` hints replace the ones with the same key, and the rest are kept. Its `locks` and `saveable` entries come after the ones before, and a lock with an `id` replaces the one with that id. Its `introScene`, `finished` and `carryOver` replace the content's whole. Its `variants` members are appended. Its audio `tracks` and media `pools` replace the ones with the same id, its audio `channels` merge field by field, and its `mute` and `default` win. To add a file to a pool, a mod redeclares the pool with every file.
 
-So a mod that changes one custom condition ships only that one:
+So a mod that changes one button ships only that one:
 
 ```ts
 import { SCHEMA, type Pack } from '@ifloom/engine'
 
-const longerMarket: Pack = {
-  id: 'mod:longer-market-days',
+const longerNap: Pack = {
+  id: 'mod:longer-naps',
   schema: SCHEMA,
-  custom: { conditions: { marketDay: (state) => [5, 6].includes(state.turn % 7) } },
+  actions: [{ id: 'nap', label: 'Sleep till noon', effects: [{ stat: 'energy', by: 40 }, { 'calendar/pass': { by: 2 } }] }],
 }
 ```
 
-The game's other custom conditions, and its effects, values and panels, are left alone.
+The game's other actions are left alone. A pack holds data only: the game's own functions are its [`rules`](/docs/reference/rules), which no pack can change.
 
 A pack written before this split may still have `overrides: true`, which told the loader a pack replaced things on purpose. Every pack does now, so the field is ignored.
 
 ## SCHEMA
 
 ```ts
-const SCHEMA = 16
+const SCHEMA = 21
 ```
 
 The format of packs this engine reads. Write `schema: SCHEMA` in a pack you write in TypeScript so it always matches. Your content has no schema.
 
-A pack written for an older schema still loads. [`loadGame`](#loadgame) upgrades it first with [`upgradePack`](#upgradepack), mods included, so a mod file made for an earlier version of your game keeps working after you update the engine or a plugin. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 17, this engine reads 16`, and a mod like that is refused when the player adds it.
+A pack written for an older schema still loads. [`loadGame`](#loadgame) upgrades it first with [`upgradePack`](#upgradepack), mods included, so a mod file made for an earlier version of your game keeps working after you update the engine or a plugin. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 22, this engine reads 21`, and a mod like that is refused when the player adds it.
 
 ## upgradePack
 
@@ -190,7 +200,7 @@ What a plugin reads (its `data`, its calls' arguments, its strings and its trait
 
 | Step | What it rewrites |
 |---|---|
-| 4 to 5 | Flags become the [kv store](/docs/reference/state#kv). `{ flag }` and `{ storylineFlag }` conditions become `{ kv }` and `{ storylineKv }`. The `flag` effect becomes `kv`, with `value` as `to` and `add` as `by`, and `storylineFlag` becomes `storylineKv` with `to`. A `flags` record on an entity, a character, a generator template or a `create` effect becomes `kv`, and an input's `variable` becomes `key`. Prose, strings, variants and custom functions are left alone. |
+| 4 to 5 | Flags become the [kv store](/docs/reference/state#kv). `{ flag }` and `{ storylineFlag }` conditions become `{ kv }` and `{ storylineKv }`. The `flag` effect becomes `kv`, with `value` as `to` and `add` as `by`, and `storylineFlag` becomes `storylineKv` with `to`. (Schema 19 folds `storylineKv` into `kv`.) A `flags` record on an entity, a character, a generator template or a `create` effect becomes `kv`, and an input's `variable` becomes `key`. Prose, strings, variants and custom functions are left alone. |
 | 5 to 6 | One naming rule for content (see [Effects](/docs/reference/effects#effect) and [Commands](/docs/reference/commands#command)). An effect names its target by its noun: `stat`'s and `setStat`'s `key` becomes `stat` (and `setStat` becomes `stat` with `to`), `item`'s, `scene`'s and `minigame`'s `id` becomes `item`, `scene` and `minigame`, `storylineKv`'s and `closeStoryline`'s `id` becomes `storyline`, `collect`'s `to` and `discard`'s `from` become `collection` (and `discard`'s `id` becomes `entry`), and `remove`'s `of` becomes `entity`. `phase`'s `value`, `audio`'s `track` and `minigameVar`'s `value` become `to`, and `minigameVar`'s `add` becomes `by`. `{ has }` becomes `{ item }`, `{ turn: true, gte }` becomes `{ turn: { gte } }`, `{ counter }` and `storylineKv`'s inner `is` become one `{ storylineKv }`, and a `{ collection }` condition's `id` becomes `entry`. The `use` command's `itemId` becomes `id`, and `setting`'s and `input`'s `value` becomes `to`. The first-party plugins' renamed arguments follow, such as `places/go`'s `to`, which becomes `id`. Gating: an activity's or a job's `requires` becomes `blocked`, with each `when` turned round, and a place's or an app's `locked` becomes `blocked`. |
 | 6 to 7 | A plugin call's arguments are always an object (see [PluginCall](/docs/reference/custom#plugincall)). The first-party calls that took a bare value name it: `{ 'places/at': ['cafe'] }` becomes `{ 'places/at': { location: ['cafe'] } }`, and the same for `places/within` and `places/move` (`location`), `cast/here` and `cast/met` (`character`), `calendar/period` (`period`), `calendar/weekday` (`day`) and `calendar/pass` (`by`), in the short form and the long. Values take arguments instead of holding them in their names: an app's badge `{ count: 'messages/unread-texts' }` becomes `{ value: 'messages/unread', with: { channel: 'texts' } }`, `feed/unseen-<feed>` becomes `feed/unseen` with `{ feed }`, and any other `count` becomes `value`. Prose and strings get the same change in their tokens: `{{v:messages/unread-texts}}` becomes `{{v:messages/unread channel=texts}}`. |
 | 7 to 8 | The timed-effects plugin is the [statuses plugin](/docs/plugins/statuses). `effects/active`, `effects/apply` and `effects/remove` become `statuses/active`, `statuses/apply` and `statuses/remove`, in the short form and the long, and a condition's or an effect's `effect` becomes `status` (a command keeps its `id`). Its content moves from `data.effects.effects` to `data.statuses.statuses`, and its strings from `effects/unknown` and `effects/notActive` to `statuses/…`. |
@@ -202,6 +212,11 @@ What a plugin reads (its `data`, its calls' arguments, its strings and its trait
 | 13 to 14 | The [cast](/docs/plugins/cast#characters)'s characters are entities with the `cast/person` trait. Each entry of `data.cast.characters` becomes an entity of the kind `character`, after the pack's own entities: its `id`, `name`, `tags`, `stats` and `kv` as they were, its `role` as `desc` and its `portrait` as `image`, and everything else (`fullName`, `schedule`, `talk`, `call` and the rest) as the trait. `data.cast.characters` goes. |
 | 14 to 15 | A [kind](/docs/reference/entities#kinddef)'s named conditions are its `flags`: `{ id: 'staff', marks: { senior: … } }` becomes `{ id: 'staff', flags: { senior: … } }`. |
 | 15 to 16 | How things look and move is the UI's, written as [presentation hints](/docs/reference/ui-hints) in the React UI's words. A scene's and a place's `transition` becomes `ui.transition`, and a scene's `frame` goes. A block's `reveal` becomes `ui.reveal`. `[[reveal]]` on a line of its own, in the prose of a scene's or a place's `{ text }` block, splits that prose there: the words before it keep the key, and each part after it gets a key of its own (`<key>.2`, `<key>.3`) and a block of its own with `ui.reveal`, under the same `when`. Anywhere else, such as inside a paragraph or in a variants member, the markup is taken out and the words show at once. A `transition` effect in a choice's effects becomes that choice's `ui.transition` (`{ in, ms }`), and is dropped anywhere else. A stat's `display` becomes `ui.display`. The cast's `hue`, on a person's `cast/person` trait, becomes the entity's or the kind's `ui.hue`; a `traits` table row's `hue` moves to the pack's own entity of that reference, or is dropped when the pack doesn't declare it. |
+| 16 to 17 | One panel model (see [A scene's panel](/docs/reference/panels#a-scenes-panel)). A scene's `panel: 'prices'` becomes `panel: { panel: 'prices' }`, and its `panelData` goes. |
+| 17 to 18 | The game's own code is its [`rules`](/docs/reference/rules), called as a plugin's is, with `game` in front. `{ custom: 'tired' }` becomes `{ 'game/tired': true }`, and with `with`, `{ 'game/tired': with }`. A plugin's call written `{ custom: 'quests/done', with }` becomes its short form. A `{ kind: 'custom', name }` effect names `game/<name>` when the name has no plugin, a value `{ value: 'payroll' }` names `game/payroll`, and in prose and strings `{{v:payroll}}` becomes `{{v:game/payroll}}`. A pack's own `custom` functions are code, which a pack can't hold, so the loader reports them. |
+| 18 to 19 | One kv vocabulary, with whose store in `of` (see [`kv`](/docs/reference/conditions#kv)). `{ storylineKv: { storyline: 'baker', key: 'visits' }, gte: 3 }` becomes `{ kv: 'visits', of: 'storyline:baker', gte: 3 }`, and the `storylineKv` effect a `kv` effect with that `of`. `{ minigameVar: 'score' }` becomes `{ kv: 'score', of: 'minigame' }`, and so does its effect. The phase is the kv key `phase`: `{ phase: ['open'] }` becomes `{ kv: 'phase', is: ['open'] }`, the `phase` effect a `kv` effect on `phase`, and `startPhase: 'arrival'` the starting kv `kv: { phase: 'arrival' }`. In prose and strings, `{{n:baker.visits}}` becomes `{{kv:visits of=storyline:baker}}`. |
+| 19 to 20 | One kind of button (see [`ActionDef`](/docs/reference/actions#actiondef)). Each of `activities` becomes an action with no label, its `cost`, `blocked` and `effects` as they were. An action the pack declares with the same id, whose command did that activity, takes them in place of its command. `{ type: 'activity', id }` becomes `{ type: 'action', id }` wherever a command is, and a lock's `deny` and `except` name `'action'` for `'activity'`. |
+| 20 to 21 | Effects are told apart by their key, as conditions are (see [Effects](/docs/reference/effects#effect)). `{ kind: 'stat', stat, by }` becomes `{ stat, by }`, `{ kind: 'kv', key: 'met', to }` becomes `{ kv: 'met', to }`, `{ kind: 'scene', scene }` becomes `{ scene }`, `{ kind: 'scene', from, otherwise }` becomes `{ scene: { from, otherwise } }`, and `{ kind: 'turn' }` becomes `{ turn: true }` (with `by`, `{ turn: { by } }`). `remove`, `move` and `you` name their entity in their key, `closeStoryline` its storyline, `notify` its title, `audio` its channel, `sound` its track and `roll` its key. `create`'s `of` becomes its key and its `entity` becomes `with`, and `each`'s `of` becomes its key, or with `at`, `tag` or `trait` a [`Select`](/docs/reference/entities#select). A call, `{ kind: 'custom', name, with }`, becomes its short form. An input's and a setting's `kind` becomes `type`. The plugins whose content holds effects (statuses, devices, inventory, jobs, places, messages and cheats) rewrite theirs too, and so do the effects in entities' traits. |
 
 Schema 4 is the oldest a pack can be.
 
@@ -209,8 +224,8 @@ It returns the pack at `SCHEMA`, with `plugins` recording each plugin's version,
 
 | When | Returns |
 |---|---|
-| `schema` is newer than `SCHEMA` | `written for schema 17, this engine reads 16` |
-| `schema` is older than the oldest schema there's a step from | `written for schema 3, too old for this engine to read (it reads 16)` |
+| `schema` is newer than `SCHEMA` | `written for schema 22, this engine reads 21` |
+| `schema` is older than the oldest schema there's a step from | `written for schema 3, too old for this engine to read (it reads 21)` |
 | `plugins` gives a newer version of a plugin's content than the game has | `written for version 14 of the shop plugin's content, this game's reads 13` |
 
 A pack with nothing to do comes back unchanged, as the same object. The pack you pass in is never changed, so keep the result.
@@ -233,7 +248,7 @@ You rarely call it yourself, because `loadGame` and `readMod` do. Use it when yo
 ```ts
 function loadGame(content: readonly Content[], base: GameBase, options?: LoadOptions): Loaded
 
-type GameBase = Omit<Game, 'scenes' | 'storylines' | 'activities' | 'stats'>
+type GameBase = Pick<Game, 'id' | 'title' | 'version' | 'plugins' | 'rules'>
 
 type LoadOptions = {
   packs?: readonly Pack[]
@@ -247,9 +262,19 @@ type Loaded = {
 }
 ```
 
-Merges `content` in order, then each of `options.packs` over it in order, lays the result over `base`, builds `game.prose` from the prose and variants, and checks the game with [`checkGame`](/docs/reference/checks#checkgame). See [What the loader adds](#what-the-loader-adds). `base` (a `GameBase`) carries everything that isn't content: the game's `id`, `title`, `introScene`, `plugins`, `rules`, `actions` and so on. The game that comes back is ready to run. Data scenes render through the engine's [default runtime](/docs/reference/scenes#defaultruntime) with no further wiring.
+Merges each plugin's own [`content`](/docs/reference/plugins#kinds-and-entities) first, then `content` in order, then each of `options.packs` over it in order, builds `game.prose` from the prose and variants, and checks the game with [`checkGame`](/docs/reference/checks#checkgame). See [What the loader adds](#what-the-loader-adds). The game that comes back is ready to run. Data scenes render through the engine's [default runtime](/docs/reference/scenes#defaultruntime) with no further wiring.
 
-`base` needs only `id` and `title`. Leave out `introScene` for a game that opens on its idle screen (with the [places plugin](/docs/plugins/places), the room it starts in). A linear story passes `{ id, title, introScene }`. See [Shapes of game](/docs/guide/shapes).
+`base` (a `GameBase`) says what the game is and holds its code, and nothing a mod could change:
+
+| Key | What it is |
+|---|---|
+| `id` | The game's id, which saves are kept under. |
+| `title` | The game's name. |
+| `version` | The game's own version, for [its save migrations](/docs/reference/saves#the-games-own-migrations). 1 if left out. |
+| `plugins` | The [plugins](/docs/reference/plugins) it's built with, in the order their hooks run. |
+| `rules` | The game's own code: hooks, the functions content calls as `game/…`, commands, `saveName` and `migrations`. See [Rules and hooks](/docs/reference/rules). |
+
+`base` needs only `id` and `title`. Anything else on it is left out with a problem that says where it goes: `the base has no "actions", so it was left out; it is content now, so it goes in the game's content`, or, for `custom`, `migrations` and `saveName`, one that says it is the game's code and goes in `rules`. Where the game opens is content's `introScene`: leave it out for a game that opens on its idle screen (with the [places plugin](/docs/plugins/places), the room it starts in). See [Shapes of game](/docs/guide/shapes).
 
 A game with no mods or unlocks leaves out the third argument. This is the template's `src/game.ts`:
 
@@ -258,7 +283,7 @@ import { loadGame } from '@ifloom/engine'
 import { stats } from './world/stats.ts'
 import { opening } from './story/opening.ts'
 
-export default loadGame([stats, opening], { id: 'my-story', title: 'My Story', introScene: 'start' })
+export default loadGame([stats, opening], { id: 'my-story', title: 'My Story' })
 ```
 
 This is how the showcase builds Small Town, trimmed to the parts that matter here. The player's unlocked supporter content and mods are packs, over the town's content:
@@ -268,12 +293,14 @@ import { describeProblem, loadGame, type Content, type Pack } from '@ifloom/engi
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
-import { custom } from './rules.ts'
+import { rules } from './rules.ts'
 import { stats } from './world/stats.ts'
+import { actions } from './world/actions.ts'
 import { movingDay } from './story/moving-day.ts'
 import { cafe } from './story/cafe.ts'
 
-export const content: Content[] = [stats, movingDay, cafe]
+// moving-day.ts gives the introScene and the starting kv, actions.ts the buttons.
+export const content: Content[] = [stats, actions, movingDay, cafe]
 
 export function smallTown({ unlocked = [] as Pack[], mods = [] as Pack[] } = {}) {
   const { game, problems } = loadGame(
@@ -281,10 +308,8 @@ export function smallTown({ unlocked = [] as Pack[], mods = [] as Pack[] } = {})
     {
       id: 'small-town',
       title: 'Small Town',
-      introScene: 'intro',
-      custom,
       plugins: [calendar({ start: { day: 0, period: 'night' } }), places({ start: 'flat' }), cast()],
-      actions: [{ id: 'wait', label: 'Wait a while', command: { type: 'activity', id: 'wait' } }],
+      rules,
     },
     { packs: [...unlocked, ...mods] },
   )
@@ -292,16 +317,16 @@ export function smallTown({ unlocked = [] as Pack[], mods = [] as Pack[] } = {})
 }
 ```
 
-The real file is `examples/showcase/src/game.ts`, which lists all fifteen of the town's content files from `world/` and `story/`. It also adds the phone, quests, wardrobe and debug plugins, a start phase, strings and rules. Its `main.tsx` logs the problems as warnings and starts the game anyway.
+The real file is `examples/showcase/src/game.ts`, which lists all of the town's content files from `world/` and `story/`, with the phone's content first. It also adds the phone, quests, wardrobe and debug plugins. Its `main.tsx` logs the problems as warnings and starts the game anyway.
 
 **Gotchas:**
 - `loadGame` never throws on bad content. It returns problems, and it's up to you whether to refuse to start.
 - `game.scenes` holds `DataScene`s exactly as declared, beside any hand-written `Scene`s. The engine turns a data scene into a `Scene` the first time [`sceneById`](/docs/reference/game#scenebyid) asks for it, so you don't wrap them yourself.
-- `game.prose` is a [`proseStore`](/docs/reference/prose#prosestore-1) over the merged prose and variants. It replaces any `prose` on `base`. `Loaded.prose` and `Loaded.variants` are the same merged records, for tools that want the raw text.
+- `game.prose` is a [`proseStore`](/docs/reference/prose#prosestore-1) over the merged prose and variants. `Loaded.prose` and `Loaded.variants` are the same merged records, for tools that want the raw text.
 - `game.packs` lists the packs' ids in order, and nothing for your content. [Saves](/docs/reference/saves#savemeta) record it, so loading a save made with a mod the player has since removed names that mod.
-- Custom functions can sit on `base`, in content and in packs. The base's come first, and the content and packs lay theirs over them by name, kind by kind.
-- [Plugins](/docs/reference/plugins) go on `base`, as `plugins`, and only there. Content and packs can't add one. Plugin content can sit in `base.data`, in content and in packs, and the base's comes first.
-- `kinds`, `entities`, `triggers` and `inputs` can sit on `base` as well as in content. The base's come first and are reported as from `base`. A plugin's own `kinds` come before the base's, so the game can redeclare them, keeping the plugin's fields it leaves out (such as `listed`), and the entities a plugin makes from its content are added only where the game hasn't declared one with the same kind and id.
+- The game's own functions are its [`rules`](/docs/reference/rules), on `base` and only there. Content and packs can't hold code.
+- [Plugins](/docs/reference/plugins) go on `base`, as `plugins`, and only there. Content and packs can't add one. Plugin content can sit in content and in packs.
+- Each plugin's own [`content`](/docs/reference/plugins#kinds-and-entities) is merged first, under the game's, and isn't counted as declared by your content. Your content can redeclare one of its kinds, keeping the plugin's fields it leaves out (such as `listed`), and a pack can replace anything in it by id. The entities a plugin makes from its content are added only where the game hasn't declared one with the same kind and id.
 
 ## Patches
 
@@ -322,7 +347,7 @@ const mod: Pack = {
   schema: SCHEMA,
   prose: { 'ava.hi#coffee': 'Ask what she recommends' },
   patches: [
-    { scene: 'ava.hi', addChoice: { id: 'coffee', effects: [{ kind: 'stat', stat: 'energy', by: 5 }] }, before: 'bye' },
+    { scene: 'ava.hi', addChoice: { id: 'coffee', effects: [{ stat: 'energy', by: 5 }] }, before: 'bye' },
   ],
 }
 ```
@@ -334,7 +359,7 @@ const mod: Pack = {
 
 ## What the loader adds
 
-`loadGame` merges the content and packs, then checks the merged game with the [content checker](/docs/reference/checks), the same `checkGame` you can run on any game. It pins each problem on where the thing it's in came from: the pack that last declared or patched the scene, entity, stat, prose key, track or plugin entry, or else the content's `name` (`content` if it has none). What came with `base`, such as the game's `actions`, `finished` and `carryOver`, is reported against `base`. [Checking content](/docs/reference/checks) has the full list of checks.
+`loadGame` merges the content and packs, then checks the merged game with the [content checker](/docs/reference/checks), the same `checkGame` you can run on any game. It pins each problem on where the thing it's in came from: the pack that last declared or patched the scene, entity, stat, prose key, track or plugin entry, or else the content's `name` (`content` if it has none). A key `base` can't hold is reported against `base`, and what came from a plugin's own content against that plugin's id. [Checking content](/docs/reference/checks) has the full list of checks.
 
 It also reports what is wrong with the content and packs themselves, which the merged game no longer shows:
 
@@ -343,9 +368,10 @@ It also reports what is wrong with the content and packs themselves, which the m
 | `pack` | `written for schema …, this engine reads …`, or `… too old for this engine to read …`: the pack's `schema` is newer than [`SCHEMA`](#schema), or older than any [upgrade step](#upgradepack). The whole pack is skipped. |
 | `patch <scene>` | `no such scene`, `that scene is not declarative, so it cannot be patched`, and `no choice <id>` for a `replaceChoice` with no match. |
 | `<what>`, such as `scene "cafe.counter"` | `declared twice`, or `declared twice, in <name> and <name>` when both files have a `name`: your content declares the same key twice. See [One key declared twice](#one-key-declared-twice). |
-| `content` | `content has no "…", so it was left out`: a key content can't hold, such as `actions`, or an `id`, `schema` or `patches`, which only a pack has. |
-| `pack` | `a pack has no "…", so it was left out`: a key a pack can't hold, such as `actions`. |
-| `setting <id>` | `two settings share this id`: twice in one list, or the base's. |
+| `content` | `content has no "…", so it was left out`: a key content can't hold, such as `rules` or `custom`, or an `id`, `schema` or `patches`, which only a pack has. |
+| `pack` | `a pack has no "…", so it was left out`: a key a pack can't hold, such as `rules` or `custom`. |
+| `base` | `the base has no "…", so it was left out`, with where it goes: content (`actions`, `introScene` and the rest) or `rules` (`custom`, `migrations`, `saveName`). |
+| `setting <id>` | `two settings share this id`: twice in one list. |
 | `variants <name>` | `"…" has a weight of …; a weight must be above 0`, for a [variants member](/docs/reference/prose#variantmember) with a weight of 0 or less. |
 | `data <plugin>` | `the game has no plugin named "<plugin>"`: content or a pack carries plugin content for a plugin the game wasn't built with. That content is skipped. |
 
@@ -353,7 +379,7 @@ Some problems as [`describeProblem`](/docs/reference/checks#problem-and-describe
 
 ```text
 story.ava · scene ava.hi · gated on unknown scene "ava.hello"
-mod:night-market · activity browse · unknown stat "stamina"
+mod:night-market · action browse · spends unknown stat "stamina"
 mod:night-market · trigger parcel · unknown kind "drawer"
 mod:night-market · locations yard · no prose for "place.yard"
 mod:new-menu · entity dish:pie · no dish stat named "coins"

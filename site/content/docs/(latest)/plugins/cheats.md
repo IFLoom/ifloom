@@ -54,7 +54,7 @@ const coins: CheatDef = {
   id: 'coins',
   label: '+20 coins',
   description: 'A little help with the rent.',
-  effects: [{ kind: 'stat', stat: 'coins', by: 20 }],
+  effects: [{ stat: 'coins', by: 20 }],
 }
 
 const energy: CheatDef = {
@@ -63,7 +63,7 @@ const energy: CheatDef = {
   description: 'As if you had slept.',
   group: 'Supporters',
   blocked: [{ when: { not: { 'unlocks/has': { unlock: 'supporter' } } }, reason: 'For supporters.' }],
-  effects: [{ kind: 'stat', stat: 'energy', to: 100 }],
+  effects: [{ stat: 'energy', to: 100 }],
 }
 
 const town: Content = {
@@ -109,7 +109,7 @@ const gold: CheatDef = {
   label: '+500 coins',
   group: 'Supporters',
   blocked: [{ when: { not: { 'unlocks/has': { unlock: 'supporter' } } }, reason: 'For supporters.' }],
-  effects: [{ kind: 'stat', stat: 'coins', by: 500 }],
+  effects: [{ stat: 'coins', by: 500 }],
 }
 ```
 
@@ -131,7 +131,7 @@ When it takes, the cheat's effects run on the current state, then the plugin add
 
 - **ignores locks.** It sets [`ignoresLocks`](/docs/reference/plugins#commands-outside-the-story), so it works in an intro that only moves through its scenes, and no plugin guard stops it.
 - **costs nothing.** Its button has no price.
-- **ends no turn** unless its effects do. A cheat with `{ kind: 'turn' }` or `calendar/pass` among its effects passes time as written.
+- **ends no turn** unless its effects do. A cheat with `{ turn: true }` or `calendar/pass` among its effects passes time as written.
 - **is refused** with `There's no such cheat.` for an id the game doesn't have, with the reason of its first `blocked` entry that holds, and with `Already used.` for a `once` cheat used before.
 
 Plugins' `onCommand` hooks run after it as after any command, so an achievement whose condition a cheat meets is earned. A cheat is recorded in the command log like any other command, and [`replay`](/docs/reference/runner#replay) plays it back exactly.

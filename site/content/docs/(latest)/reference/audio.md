@@ -24,14 +24,13 @@ import {
 Say you gave the showcase's town sound: calm music by default, a murmur of its own in the café, a knock when you get back to the flat, and Ava's first line read aloud. (Small Town itself has no audio yet.)
 
 ```ts
-import type { Game } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-const game: Game = {
-  // ...
+export const sound: Content = {
   settings: [
-    { id: 'musicVolume', label: 'Music', affects: 'ui', kind: 'range', min: 0, max: 100, default: 70 },
-    { id: 'sfxVolume', label: 'Sounds', affects: 'ui', kind: 'range', min: 0, max: 100, default: 90 },
-    { id: 'muted', label: 'Mute', affects: 'ui', kind: 'toggle', default: false },
+    { id: 'musicVolume', label: 'Music', affects: 'ui', type: 'range', min: 0, max: 100, default: 70 },
+    { id: 'sfxVolume', label: 'Sounds', affects: 'ui', type: 'range', min: 0, max: 100, default: 90 },
+    { id: 'muted', label: 'Mute', affects: 'ui', type: 'toggle', default: false },
   ],
   audio: {
     tracks: {
@@ -62,7 +61,7 @@ The café names its ambience in its [location](/docs/plugins/places#locationdef)
 The knock is a `sound` effect on arriving at the flat, and Ava's line carries its voice in the prose:
 
 ```ts
-{ kind: 'sound', track: 'knock' }
+{ sound: 'knock' }
 ```
 
 ```md

@@ -14,7 +14,6 @@ The showcase's park has a game of quick feet with the kids. There are five round
 
 ```ts
 import type { MinigameDef, MinigameStateDef, Content } from '@ifloom/engine'
-import { onlyAt } from '@ifloom/plugin-places'
 
 const ARROWS = ['up', 'down', 'left', 'right'] as const
 
@@ -25,7 +24,7 @@ const showArrow = (arrow: (typeof ARROWS)[number]): MinigameStateDef => ({
   on: ARROWS.map((input) => ({
     input,
     go: 'round',
-    ...(input === arrow ? { effects: [{ kind: 'minigameVar' as const, key: 'score', by: 1 }] } : {}),
+    ...(input === arrow ? { effects: [{ kv: 'score', of: 'minigame', by: 1 }] } : {}),
   })),
 })
 
@@ -39,37 +38,37 @@ const quickFeet: MinigameDef = {
     // A new round draws an arrow. After the fifth, the score is counted.
     round: {
       always: [
-        { when: { minigameVar: 'round', gte: 5 }, go: 'tally' },
+        { when: { kv: 'round', of: 'minigame', gte: 5 }, go: 'tally' },
         {
           go: 'pick',
           effects: [
-            { kind: 'minigameVar', key: 'round', by: 1 },
-            { kind: 'minigameVar', key: 'arrow', random: [1, 4] },
+            { kv: 'round', of: 'minigame', by: 1 },
+            { kv: 'arrow', of: 'minigame', random: [1, 4] },
           ],
         },
       ],
     },
-    pick: { always: ARROWS.map((arrow, i) => ({ when: { minigameVar: 'arrow', gte: i + 1, lte: i + 1 }, go: arrow })) },
+    pick: { always: ARROWS.map((arrow, i) => ({ when: { kv: 'arrow', of: 'minigame', is: i + 1 }, go: arrow })) },
     ...Object.fromEntries(ARROWS.map((arrow) => [arrow, showArrow(arrow)])),
-    tally: { always: [{ when: { minigameVar: 'score', gte: 3 }, go: 'won' }, { go: 'lost' }] },
-    won: { final: { effects: [{ kind: 'stat', stat: 'coins', by: 5 }, { kind: 'scene', scene: 'park.arrows-won' }] } },
-    lost: { final: { effects: [{ kind: 'scene', scene: 'park.arrows-lost' }] } },
+    tally: { always: [{ when: { kv: 'score', of: 'minigame', gte: 3 }, go: 'won' }, { go: 'lost' }] },
+    won: { final: { effects: [{ stat: 'coins', by: 5 }, { scene: 'park.arrows-won' }] } },
+    lost: { final: { effects: [{ scene: 'park.arrows-lost' }] } },
   },
 }
 
-export const town: Content = {
+export const park: Content = {
   minigames: [quickFeet],
-  activities: [{ id: 'arrows', blocked: [onlyAt(['park'])], effects: [{ kind: 'minigame', minigame: 'arrows' }] }],
-  // ...
+  // ...and the park, in data.places.locations, lists an action that starts it:
+  // { id: 'arrows', label: 'Play quick feet with the kids', effects: [{ minigame: 'arrows' }] }
 }
 ```
 
-The park offers it as a button whose activity applies [`{ kind: 'minigame', minigame: 'arrows' }`](/docs/reference/effects#minigame). From then on the UI reads `view.minigame` and sends two commands:
+The park offers it as a room action whose effects apply [`{ minigame: 'arrows' }`](/docs/reference/effects#minigame). From then on the UI reads `view.minigame` and sends two commands:
 
 ```ts
 import { apply, view } from '@ifloom/engine'
 
-state = apply(state, game, { type: 'activity', id: 'arrows' }).state
+state = apply(state, game, { type: 'action', id: 'places/arrows' }).state
 view(state, game).minigame
 // { id: 'arrows', title: 'Quick feet', state: 'left', label: 'She points at the river. Left!',
 //   timeLeft: 1500, timeTotal: 1500, inputs: ['up', 'down', 'left', 'right'],
@@ -85,7 +84,7 @@ The React UI draws a minigame with [`MinigameCard`](/docs/react/components#minig
 
 ## How a minigame runs
 
-- **Starting.** The [`minigame` effect](/docs/reference/effects#minigame) starts one, from a choice, an activity, a trigger or anything else that applies effects. A scene with a `minigame` field starts it when the scene is entered (see [`MinigameSceneFields`](#minigamescenefields)). It starts in its `start` state with its `vars` at their starting values. Starting one while another runs drops the old one.
+- **Starting.** The [`minigame` effect](/docs/reference/effects#minigame) starts one, from a choice, an action, a trigger or anything else that applies effects. A scene with a `minigame` field starts it when the scene is entered (see [`MinigameSceneFields`](#minigamescenefields)). It starts in its `start` state with its `vars` at their starting values. Starting one while another runs drops the old one.
 - **While it runs.** The view draws it over the open scene or the room. `view.scene` keeps the scene's id, but its title is the minigame's `label` and its body is the running state's words. The scene's choices and the room's buttons are left out. Every command but [`tick`](/docs/reference/commands#tick), [`minigame`](/docs/reference/commands#minigame), [`dismiss`](/docs/reference/commands#dismiss) and [`setting`](/docs/reference/commands#setting) is refused with `Finish this first.`, apart from a plugin command that ignores locks, such as the [debugger](/docs/plugins/debug)'s.
 - **Inputs.** `{ type: 'minigame', input }` takes the running state's first `on` entry for that input whose `when` holds. An input with no such entry isn't live, and is refused with `That does nothing now.` `view.minigame.inputs` lists the live ones.
 - **Timers.** `{ type: 'tick', ms }` adds `ms` to how long the minigame has been in its state. When that reaches the state's `after.ms`, its transition is taken. Whatever is left of `ms` carries on into the next state, so one long tick can run out several timers in a row. It stops when the minigame ends. See [Minigames and the game's timers](#minigames-and-the-games-timers).
@@ -97,13 +96,13 @@ No more than 1,000 transitions are taken in one command. That keeps a timer with
 
 ### Its variables
 
-A minigame keeps its own numbers in `vars`, such as a score, a round or a streak. Transitions change them with the [`minigameVar` effect](/docs/reference/effects#minigamevar), which sets a value, adds to it or draws a whole number at random. Conditions read them with [`{ minigameVar }`](/docs/reference/conditions#minigamevar), which works like `{ kv }` with a range. They're gone when the minigame ends, unless the final state's `copy` writes them to the [kv store](/docs/reference/state#kv).
+A minigame keeps its own numbers in `vars`, such as a score, a round or a streak. They're a kv store of the running minigame's, named `of: 'minigame'`. Transitions change them with the [`kv` effect](/docs/reference/effects#whose-key-it-is), `{ kv: 'score', of: 'minigame', by: 1 }`, which sets a value, adds to it or draws a whole number at random. Conditions read them with the [`kv` condition](/docs/reference/conditions#kv), `{ kv: 'score', of: 'minigame', gte: 3 }`, and prose prints one with `{{kv:score of=minigame}}`. They're gone when the minigame ends, unless the final state's `copy` writes them to the [kv store](/docs/reference/state#kv).
 
 Every variable a minigame uses has to be declared in its `vars`, and the checker reports one that isn't.
 
 ### Randomness
 
-A transition's `to` draws its next state by weight, and `minigameVar` with `random` draws a number. Both are drawn from the save's [seed](/docs/reference/state#seed), the minigame, how many times it has started and how many transitions it has taken. So the same save and the same commands always draw the same, and a [command log](/docs/reference/runner#commandlog) with its ticks plays back exactly. Playing the minigame again draws afresh, because each start is counted in the kv key `minigame:<id>`. You can read that with `{ kv: 'minigame:arrows', gte: 1 }` to ask whether the player has played it.
+A transition's `to` draws its next state by weight, and a `kv` effect with `of: 'minigame'` and `random` draws a number. Both are drawn from the save's [seed](/docs/reference/state#seed), the minigame, how many times it has started and how many transitions it has taken. So the same save and the same commands always draw the same, and a [command log](/docs/reference/runner#commandlog) with its ticks plays back exactly. Playing the minigame again draws afresh, because each start is counted in the kv key `minigame:<id>`. You can read that with `{ kv: 'minigame:arrows', gte: 1 }` to ask whether the player has played it.
 
 ### Minigames and the game's timers
 
@@ -141,7 +140,7 @@ type MinigameDef = {
 | `keys` | The keys a UI maps to each input, by input name, as `KeyboardEvent.key` names them. A UI uses its own if left out. |
 | `states` | Its states, by id. |
 
-Declare minigames in `Game.minigames`, on the base you give [`loadGame`](/docs/reference/loader#loadgame) or in your [content](/docs/reference/loader#content)'s `minigames`. They merge by id, so a pack's minigame replaces one with the same id.
+Declare minigames in your [content](/docs/reference/loader#content)'s `minigames`. They merge by id, so a pack's minigame replaces one with the same id.
 
 ## MinigameStateDef
 
@@ -179,7 +178,7 @@ type MinigameTarget = string | { state: string; weight?: number }
 |---|---|
 | `go` | The state it goes to. |
 | `to` | A state drawn at random when there's no `go`. A weight left out is 1, so `['heads', { state: 'tails', weight: 3 }]` lands on tails three times in four. |
-| `effects` | What it does before it moves. Any [effect](/docs/reference/effects) or [custom call](/docs/reference/effects#computed-effects) can go here, including a `turn`. |
+| `effects` | What it does before it moves. Any [effect](/docs/reference/effects), or a call to a plugin's or the game's own, can go here, including a `turn`. |
 
 The state from `to` is drawn before the effects run, so they can't change the draw. If the effects end the minigame or start one, the transition goes no further.
 
@@ -199,7 +198,7 @@ A field on a [scene](/docs/reference/scenes), data or hand-built. The minigame s
   title: 'The coconut shy',
   minigame: 'coconut',
   body: [{ text: 'fair.coconut' }],
-  choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
+  choices: [{ id: 'leave', effects: [{ scene: null }] }],
 }
 ```
 
@@ -275,9 +274,9 @@ The [content checker](/docs/reference/checks) reports:
 
 - **Ticks come from the UI.** The engine has no clock. Nothing happens to a timer until something sends `{ type: 'tick', ms }`, so a minigame with timers waits for ever in a UI that doesn't tick.
 - **Locks don't stop it.** `tick` and `minigame` ignore [locks](/docs/reference/locks) and plugin guards, because the minigame is already running. To keep the player out of one, gate what starts it.
-- **`{ minigameVar }` is false with no minigame running**, or for a variable the running one doesn't have, whatever the range, `lt` included.
+- **`{ kv, of: 'minigame' }` is false with no minigame running**, whatever the range, `lt` included, and a `kv` effect on it does nothing. A minigame's variables are numbers: a `kv` effect that sets one `to` anything else sets it to 0.
 - **A variable is a number.** Use `copy` to keep one in the kv store, and `{ kv }` to read it afterwards.
 
 ## See it in an example
 
-Small Town: quick feet, `quickFeet` in [`examples/showcase/src/story/park.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/park.ts), is five rounds of arrows to press in time, started by the park's `arrows` activity. [`examples/showcase/tests/quick-feet.test.tsx`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/tests/quick-feet.test.tsx) plays it in the React UI.
+Small Town: quick feet, `quickFeet` in [`examples/showcase/src/story/park.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/park.ts), is five rounds of arrows to press in time, started by the park's `arrows` action. [`examples/showcase/tests/quick-feet.test.tsx`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/tests/quick-feet.test.tsx) plays it in the React UI.

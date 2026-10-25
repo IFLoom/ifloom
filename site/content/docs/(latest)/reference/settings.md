@@ -2,17 +2,17 @@
 title: "Settings"
 description: "Settings the player can change: play settings in the state that conditions read, and ui settings kept in the profile."
 ---
-Settings are what the player can change from a settings screen, such as whether hints are shown or how large the text is. The engine has none of its own, so you declare every one your game offers in `game.settings` or your content's `settings`.
+Settings are what the player can change from a settings screen, such as whether hints are shown or how large the text is. The engine has none of its own, so you declare every one your game offers in your content's `settings`.
 
 ```ts
 import type { SettingDef } from '@ifloom/engine'
 
 const settings: SettingDef[] = [
-  { id: 'hints', label: 'Show hints', kind: 'toggle', default: true },
+  { id: 'hints', label: 'Show hints', type: 'toggle', default: true },
   {
     id: 'difficulty',
     label: 'Difficulty',
-    kind: 'choice',
+    type: 'choice',
     options: [
       { value: 'gentle', label: 'Gentle' },
       { value: 'usual', label: 'Usual' },
@@ -23,7 +23,7 @@ const settings: SettingDef[] = [
   {
     id: 'textSize',
     label: 'Text size',
-    kind: 'choice',
+    type: 'choice',
     affects: 'ui',
     options: [
       { value: 'small', label: 'Small' },
@@ -39,7 +39,7 @@ Each setting either changes the game or only changes how it looks:
 - **A `play` setting** (the default) is part of the game. Its value is in [`state.settings`](/docs/reference/state#settings), it's saved with the game, and conditions can read it. `hints` and `difficulty` above are play settings.
 - **A `ui` setting** never enters the state. It lives in the player's [profile](/docs/reference/profile), and only your UI reads it. `textSize` is one, and so is a volume.
 
-Whichever kind it is, the player's last choice is stored in the profile's `core:settings`, so it carries over to their next game.
+Whichever type it is, the player's last choice is stored in the profile's `core:settings`, so it carries over to their next game.
 
 ## SettingDef
 
@@ -49,9 +49,9 @@ type SettingDef = {
   label: string
   affects?: 'play' | 'ui'
 } & (
-  | { kind: 'toggle'; default: boolean }
-  | { kind: 'choice'; options: { value: string; label: string }[]; default: string }
-  | { kind: 'range'; min: number; max: number; step?: number; default: number }
+  | { type: 'toggle'; default: boolean }
+  | { type: 'choice'; options: { value: string; label: string }[]; default: string }
+  | { type: 'range'; min: number; max: number; step?: number; default: number }
 )
 ```
 
@@ -60,7 +60,7 @@ type SettingDef = {
 | `id` | How content and the profile name it. |
 | `label` | What the settings screen calls it. |
 | `affects` | `'play'` if left out. `'ui'` keeps it out of the state. |
-| `kind` | A `toggle` is on or off. A `choice` is one of its `options`, by `value`. A `range` is a number from `min` to `max`, in steps of `step` from `min` if given. |
+| `type` | A `toggle` is on or off. A `choice` is one of its `options`, by `value`. A `range` is a number from `min` to `max`, in steps of `step` from `min` if given. |
 | `default` | Its value until the player changes it. It has to be one the setting can take. |
 
 ## Reading a setting

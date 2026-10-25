@@ -21,7 +21,7 @@ type Scene = {
   title?: string
   speaker?: string
   tags?: string[]
-  panel?: string
+  panel?: ScenePanel
   ui?: Ui<SceneUi>
   drawnFrom?: string[]
   weight?: number
@@ -32,7 +32,7 @@ type Scene = {
 
 This is what sits in `game.scenes`. The engine calls `render` whenever it builds the view and again when the player chooses, so it must be a pure function of `state` (and of `ctx`, which comes from the state). If you need anything random, draw it with [`roll` or `pick`](/docs/reference/random), never `Math.random`.
 
-The top-level `title`, `speaker`, `tags` and `panel` are fallbacks. Whatever `render` returns in its `SceneView` wins. `drawnFrom`, `weight` and `when` make the scene a storylet (see [`StoryletFields`](#storyletfields)). `ui` holds [presentation hints](/docs/reference/ui-hints), such as how the scene comes on screen in the React UI, carried to [`view.scene.ui`](/docs/reference/view#the-scene) as written.
+The top-level `title`, `speaker` and `tags` are fallbacks. Whatever `render` returns in its `SceneView` wins. `panel` holds a [panel](/docs/reference/panels#a-scenes-panel) open while the scene is. `drawnFrom`, `weight` and `when` make the scene a storylet (see [`StoryletFields`](#storyletfields)). `ui` holds [presentation hints](/docs/reference/ui-hints), such as how the scene comes on screen in the React UI, carried to [`view.scene.ui`](/docs/reference/view#the-scene) as written.
 
 ```ts
 import type { Scene } from '@ifloom/engine'
@@ -50,9 +50,9 @@ const counter: Scene = {
         id: 'buy',
         label: 'Buy a sandwich (4)',
         disabled: (state.stats.coins ?? 0) < 4 ? 'You need 4 coins.' : undefined,
-        effects: [{ kind: 'stat', stat: 'coins', by: -4 }, { kind: 'entity', entity: 'item:sandwich', by: 1 }],
+        effects: [{ stat: 'coins', by: -4 }, { entity: 'item:sandwich', by: 1 }],
       },
-      { id: 'leave', label: 'Leave', effects: [{ kind: 'scene', scene: null }] },
+      { id: 'leave', label: 'Leave', effects: [{ scene: null }] },
     ],
   }),
 }
@@ -69,8 +69,6 @@ type SceneView = {
   title?: string
   speaker?: string               // a speaker id, as a plugin knows it: the cast's characters
   tags?: string[]
-  panel?: string
-  panelData?: unknown
   portrait?: string
   body?: string                  // the scene's prose, with its markup
   media?: SceneMedia[]
@@ -88,8 +86,6 @@ What `render` returns.
 | `title` | The heading. Falls back to `Scene.title`, then the title of a plugin's [stage](/docs/reference/plugins#stage) (with the [places plugin](/docs/plugins/places#the-stage), the room's name), then the game's title. |
 | `speaker` | Who's talking, as an id that a [plugin's `speaker`](/docs/reference/plugins#speakers) knows, such as a [cast](/docs/plugins/cast#speakers) character's. The view shows their name and portrait. Falls back to `Scene.speaker`. Nothing else sets a speaker. The engine never reads one from the scene's id, so `ava.chat` with no `speaker` has none. An id no plugin knows gives no speaker either, so a game without the cast (or another plugin that answers) shows none. |
 | `tags` | Words the UI can style the scene by, such as `['letter']` or `['flashback']`. The engine gives them no meaning and passes them to [`view.scene.tags`](/docs/reference/view#the-scene). Falls back to `Scene.tags`, then `[]`. |
-| `panel` | The name of a bespoke UI panel the game draws instead of the choice list. The panel keeps its own local state and finishes by dispatching one of the scene's own choices. |
-| `panelData` | Whatever that panel needs. The engine passes it through without looking inside. |
 | `portrait` | Replaces the speaker's portrait as the stage image. |
 | `body` | The scene's prose, with its [markup](/docs/reference/prose#markup). The view parses it into beats. If it's left out, the scene has no body text. |
 | `media` | Pictures and videos that aren't in the prose. See [`SceneMedia`](#scenemedia). |
@@ -149,17 +145,16 @@ Otherwise `choose` runs the choice's `command`, if it has one, then applies its 
 import type { SceneCtx } from '@ifloom/engine'
 
 type SceneCtx = {
-  kv: (key: string) => KvValue | undefined
-  storylineKv: (storylineId: string, key: string) => KvValue | undefined
+  kv: (key: string, of?: string) => KvValue | undefined
   picks?: Record<string, string>
 }
 ```
 
-The second argument to `render`. It gives a hand-written scene shortcuts into the state, though everything here can also be read from `state`. `kv(key)` reads a key in the game's [kv store](/docs/reference/state#kv), and `storylineKv(id, key)` one in a [storyline](/docs/reference/storylines)'s. Both are `undefined` when unset. `picks` is set when the engine draws a [`screen`](/docs/reference/view#screen) and wants the render's new [pool picks](/docs/reference/media#remembered-picks) recorded. Pass it on to [`renderScene`](#renderscene) if you call that yourself.
+The second argument to `render`. It gives a hand-written scene shortcuts into the state, though everything here can also be read from `state`. `kv(key)` reads a key in the player's [kv store](/docs/reference/state#kv), and `kv(key, of)` one in the store `of` names, as the [`kv` condition](/docs/reference/conditions#kv) names it: a [storyline](/docs/reference/storylines)'s (`'storyline:ava'`), the running minigame's (`'minigame'`) or an entity's. It's `undefined` when unset. `picks` is set when the engine draws a [`screen`](/docs/reference/view#screen) and wants the render's new [pool picks](/docs/reference/media#remembered-picks) recorded. Pass it on to [`renderScene`](#renderscene) if you call that yourself.
 
 ```ts
 render: (state, ctx) => {
-  const body = ctx.storylineKv('ava', 'knowsYou') ? 'Ava waves you in.' : 'Ava nods, busy at the till.'
+  const body = ctx.kv('knowsYou', 'storyline:ava') ? 'Ava waves you in.' : 'Ava nods, busy at the till.'
   // ...
 }
 ```
@@ -230,8 +225,7 @@ type DataScene = {
   title?: string
   speaker?: string
   tags?: string[]
-  panel?: string
-  panelData?: string      // the name of a custom panel on the game
+  panel?: ScenePanel      // a panel held open while the scene is: { panel, with }
   audio?: Record<string, string | null>   // background audio by channel while it's open
   stage?: MediaStage      // a layered picture with hotspots
   drawnFrom?: string[]    // the storylet sets it can be drawn from
@@ -262,9 +256,9 @@ const hello: DataScene = {
     { text: 'ava.hi.regular', when: { seen: 'ava.hi', gte: 3 } },
   ],
   choices: [
-    { id: 'chat', once: { per: 'turn', reason: 'She has a queue.' }, effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: character('ava') }] },
-    { id: 'compliment', when: { stat: 'charm', gte: 3 }, effects: [{ kind: 'stat', stat: 'friendship', by: 10, of: character('ava') }, { kind: 'scene', scene: null }] },
-    { id: 'bye', effects: [{ kind: 'scene', scene: null }] },
+    { id: 'chat', once: { per: 'turn', reason: 'She has a queue.' }, effects: [{ stat: 'friendship', by: 5, of: character('ava') }] },
+    { id: 'compliment', when: { stat: 'charm', gte: 3 }, effects: [{ stat: 'friendship', by: 10, of: character('ava') }, { scene: null }] },
+    { id: 'bye', effects: [{ scene: null }] },
   ],
 }
 ```
@@ -320,11 +314,11 @@ const flat: DataScene = {
     ],
     hotspots: [
       { id: 'door', rect: [78, 20, 18, 75], label: 'The front door', choice: 'leave' },
-      { id: 'lamp', rect: [10, 10, 12, 30], label: 'The lamp', command: { type: 'activity', id: 'read' }, layer: 'lamp' },
+      { id: 'lamp', rect: [10, 10, 12, 30], label: 'The lamp', command: { type: 'action', id: 'read' }, layer: 'lamp' },
     ],
   },
   body: [{ text: 'flat.morning' }],
-  choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
+  choices: [{ id: 'leave', effects: [{ scene: null }] }],
 }
 ```
 
@@ -369,8 +363,8 @@ type Choice = {
 | `blocked` | Reasons to grey it out, as [`Blocked`](/docs/reference/actions#blocked) entries. The first whose `when` holds becomes the `disabled` text. One with `hide: true` leaves the choice off the screen instead. | not blocked |
 | `once` | The choice pays once per [turn](/docs/reference/state#turn), which is once a day with the [calendar](/docs/plugins/calendar)'s default. `per` is always `'turn'`. Afterwards the choice stays on screen, disabled with `reason`, and its effects shrink to its `scene` effects alone, so it still navigates. It's spent while the choice's record in [`chosen`](/docs/reference/state#chosen) says it was last picked this turn. `key` only matters to a save from before version 18, which kept the cap as a kv key: it names the key (without `turn:`) when it wasn't `scene#choice`, so loading the save keeps a cap set that turn. | unlimited |
 | `tags`, `irreversible`, `ui` | Passed through to [`SceneChoice`](#scenechoice). `ui` holds [presentation hints](/docs/reference/ui-hints), such as the React UI's [`transition`](/docs/react/hints#transition-on-a-choice) for the screen it leads to. | |
-| `effects` | Literal [effects](/docs/reference/effects), or `{ custom: 'name', with: {...} }` for effects worked out by a [custom effect](/docs/reference/custom#effects) on the game. An unknown name adds nothing, and the loader reports it. | |
-| `command` | A [command](/docs/reference/commands) to send as well, run before the effects: a plugin's, such as `openApp('texts')`, or a core one such as `{ type: 'activity', id: 'coffee' }`. The choice is greyed out with that command's reason while it would be refused, and its price adds what the command spends. It can't be `choose`. | none |
+| `effects` | Literal [effects](/docs/reference/effects), or `{ 'game/name': {...} }` for effects worked out by one of the game's own [effects](/docs/reference/custom#effects) in its `rules`. An unknown name adds nothing, and the loader reports it. | |
+| `command` | A [command](/docs/reference/commands) to send as well, run before the effects: a plugin's, such as `openApp('texts')`, or a core one such as `{ type: 'action', id: 'coffee' }`. The choice is greyed out with that command's reason while it would be refused, and its price adds what the command spends. It can't be `choose`. | none |
 
 **Label lookup order.** A drawn variant can carry its own reply. If a block this render used has prose at `` `${drawnKey}#${choice.id}` ``, that wins (the last such block, if there are several). After that come the first matching `labels` entry, then `label`, then `` `${scene.id}#${choice.id}` ``. If none of those keys has prose, the button shows the bare choice id.
 
@@ -379,7 +373,7 @@ type Choice = {
   id: 'ask',
   labels: [{ when: { seen: 'ava.river' }, key: 'ava.hi#ask-again' }],
   once: { per: 'turn', reason: 'You have asked today already.' },
-  effects: [{ kind: 'stat', stat: 'friendship', by: 2, of: character('ava') }],
+  effects: [{ stat: 'friendship', by: 2, of: character('ava') }],
 }
 ```
 
@@ -387,28 +381,20 @@ type Choice = {
 
 ```ts
 // prose: 'kitchen.phone': 'Your phone buzzes. [[act:answer|Pick it up]], or leave it.'
-{ id: 'answer', command: openApp('texts'), effects: [{ kind: 'kv', key: 'answered', to: true }] }
+{ id: 'answer', command: openApp('texts'), effects: [{ kv: 'answered', to: true }] }
 ```
 
 **Gotchas.**
 - With the [default runtime](#defaultruntime), `per: 'turn'` reads the choice's `last` turn in [`chosen`](/docs/reference/state#chosen), which picking any choice records, so it writes nothing to the kv store. The turn ending clears it, through a [`turn`](/docs/reference/effects#turn) effect or the calendar's sleep. Leaving the scene doesn't. A choice that ends the turn is dated the turn it was picked in, so it's free again on the next.
 - For a once-a-turn limit outside a `DataScene`, see [`oncePerTurn`](/docs/reference/progress#onceperturn).
 
-### panelData
-
-`panelData` on a `DataScene` names a [custom panel](/docs/reference/custom#panels) in `game.custom.panels`. The scene calls it with the state and puts the result on `SceneView.panelData`, so a scene with a bespoke panel can stay declarative.
+### panel
 
 ```ts
-import type { Custom } from '@ifloom/engine'
-
-// goes on the game as `custom`
-const custom: Custom = {
-  panels: { menuPrices: (state) => ({ coffee: 3, sandwich: state.kv.hadCoffee ? 3 : 4 }) },
-}
-// DataScene: { id: 'cafe.menu', panel: 'MenuPanel', panelData: 'menuPrices', ... }
+{ id: 'market.stall', title: 'The stall', panel: { panel: 'prices', with: { stall: 'bread' } }, body: [{ text: 'market.stall' }], choices: [] }
 ```
 
-**Gotcha.** An unknown name gives `panelData: undefined`, not an error. The [content checker](/docs/reference/checks) reports a data scene's unknown one as `no custom panel named "…"`, but can't see a hand-written scene's.
+A [`ScenePanel`](/docs/reference/panels#a-scenes-panel), `{ panel, with }`, holds that panel open for as long as the scene is on screen, as [`view.panel`](/docs/reference/view#panel) with the scene's id in `scene`. A UI usually draws it in place of the scene's choices. A panel that needs numbers worked out reads them from the view or a [value](/docs/reference/custom#values). See [A scene's panel](/docs/reference/panels#a-scenes-panel).
 
 ### Endings
 
@@ -431,14 +417,14 @@ A scene with `choices: []` is an ending too, with nothing on it to press. While 
 - **In the React UI** with [`pages`](/docs/react#pages) on, the player's menu has Title screen, which leads to New game, Continue and Load. Without `pages`, they can still load a save from the menu. Say so in the ending's words if the player might not know.
 - **In a UI of your own,** draw a "Start again" button when `view.scene.id` is set and the scene has no choices, and call [`runner.newGame()`](/docs/reference/runner#newgame) from it.
 
-For a game over that the rest of the game should respect too, set a [phase](/docs/reference/state#phase) with the ending and add a [lock](/docs/reference/locks) that denies `'*'` in that phase, so a stray command (a debug button, a message reply) can't carry on playing:
+For a game over that the rest of the game should respect too, set the kv key [`phase`](/docs/reference/effects#the-phase) with the ending and add a [lock](/docs/reference/locks) that denies `'*'` in that phase, so a stray command (a debug button, a message reply) can't carry on playing:
 
 ```ts
 // in the effects that end the game
-[{ kind: 'phase', to: 'over' }, { kind: 'scene', scene: 'ending.evicted' }]
+[{ kv: 'phase', to: 'over' }, { scene: 'ending.evicted' }]
 
-// in rules.locks
-{ when: { phase: ['over'] }, deny: ['*'], reason: 'The story is over.' }
+// in your content's locks
+{ id: 'over', when: { kv: 'phase', is: 'over' }, deny: ['*'], reason: 'The story is over.' }
 ```
 
 Give the game a [`finished`](/docs/reference/state#new-game) condition only for endings that count as finishing it, since that's what offers New Game+.
@@ -455,7 +441,7 @@ type StoryletFields = {
 }
 ```
 
-The fields that make a scene a [storylet](/docs/reference/storylets), a scene drawn at random from a named set by the effect [`{ kind: 'scene', from }`](/docs/reference/effects#scene). Both `Scene` and `DataScene` have them, and also `minigame`, a [minigame](/docs/reference/minigames#minigamescenefields) that starts when the scene is entered.
+The fields that make a scene a [storylet](/docs/reference/storylets), a scene drawn at random from a named set by the effect [`{ scene: { from } }`](/docs/reference/effects#scene). Both `Scene` and `DataScene` have them, and also `minigame`, a [minigame](/docs/reference/minigames#minigamescenefields) that starts when the scene is entered.
 
 | Field | Default | What it does |
 |---|---|---|
@@ -475,12 +461,12 @@ const avasBreak: DataScene = {
   weight: 2,
   when: here('ava'),
   body: [{ text: 'cafe.break' }],
-  choices: [{ id: 'leave', effects: [{ kind: 'stat', stat: 'friendship', by: 2, of: character('ava') }, { kind: 'scene', scene: null }] }],
+  choices: [{ id: 'leave', effects: [{ stat: 'friendship', by: 2, of: character('ava') }, { scene: null }] }],
 }
 ```
 
 **Gotchas.**
-- `when` gates draws only. A `scene` command or a `{ kind: 'scene', id }` effect naming the scene opens it whether `when` holds or not.
+- `when` gates draws only. A `scene` command or a `{ scene: 'id' }` effect naming the scene opens it whether `when` holds or not.
 - The loader reports a `weight` or a `when` on a scene with no `drawnFrom`, and a weight of 0 or less. See [the checks](/docs/reference/storylets#the-checks).
 
 ## Running data scenes
@@ -492,7 +478,7 @@ The default runtime reads:
 - **words** from `game.prose` (set by [`loadGame`](/docs/reference/loader#loadgame), or by you with [`proseStore`](/docs/reference/prose#prosestore-1)), with tokens filled in for the save
 - **variants** drawn by [`drawVariant`](#drawvariant), which rotates and starts somewhere different each turn, or draws by weight when a member has a [weight](/docs/reference/prose#variantmember)
 - **`once: { per: 'turn' }`** from the choice's record in [`chosen`](/docs/reference/state#chosen): spent while it was last picked this turn
-- **conditions, custom effects and panels** from the game
+- **conditions and the game's own effects** from the game
 
 Only write a [`SceneRuntime`](#sceneruntime) and call [`renderScene`](#renderscene) yourself when a game needs something different, such as words from another store or its own idea of what "once" counts.
 
@@ -504,7 +490,7 @@ function bakeScene(game: Game, scene: DataScene): Scene
 
 The `Scene` the engine runs for a data scene. It has the data scene's `id`, `title`, `speaker`, `tags` and `panel`, its `drawnFrom`, `weight`, `when`, `minigame` and `ui` when it has them, and a `render` that calls `renderScene` with `defaultRuntime(game)`. It's built once per `DataScene` object and game, and cached. `sceneById` calls it for you.
 
-The cache is per game, so the same scene object listed in two games runs with each game's own prose and custom functions.
+The cache is per game, so the same scene object listed in two games runs with each game's own prose and code.
 
 ### defaultRuntime
 
@@ -520,7 +506,7 @@ import { defaultRuntime, type SceneRuntime } from '@ifloom/engine'
 const runtime: SceneRuntime = {
   ...defaultRuntime(game),
   spent: (state, scene, choice) => Boolean(state.kv[`once:${scene}.${choice}`]),
-  spend: (state, scene, choice) => [{ kind: 'kv', key: `once:${scene}.${choice}`, to: true }],
+  spend: (state, scene, choice) => [{ kv: `once:${scene}.${choice}`, to: true }],
 }
 ```
 
@@ -543,7 +529,7 @@ With `weightOf`, and any member weighing something other than 1, it draws by wei
 import { drawVariant } from '@ifloom/engine'
 
 const { id, remember } = drawVariant(state, 'street.weather', ['street.weather.drizzle', 'street.weather.sun', 'street.weather.wind'])
-// id: one of the three; remember: { kind: 'kv', key: 'variants:street.weather', to: 1 }
+// id: one of the three; remember: { kv: 'variants:street.weather', to: 1 }
 ```
 
 **Gotchas.**
@@ -589,7 +575,7 @@ type SceneRuntime = {
 What a custom runtime supplies. You only need one if [`defaultRuntime`](#defaultruntime), the one the engine uses, doesn't suit you.
 
 - `prose` is a [`Prose`](/docs/reference/prose#prose): a [`ProseStore`](/docs/reference/prose#prosestore) plus `draw`, which picks a member and returns an effect that records the pick. [`drawVariant`](#drawvariant) is a ready-made `draw`.
-- `game` is the game, used for conditions, custom effects and panels.
+- `game` is the game, used for conditions and the game's own effects.
 - `spent` and `spend` back `once`, called with `(scene.id, choice.id)`. The default runtime's `spent` reads [`chosen`](/docs/reference/state#chosen) and its `spend` records nothing, since `choose` already counts the choice.
 
 ## See it in an example

@@ -160,7 +160,7 @@ Some parts carry a second attribute that says more:
 
 | Attribute | On | Values |
 |---|---|---|
-| `data-beat` | Every `beat`, and a video beat's `video` | The beat's kind: `text`, `mono`, `say`, `image`, `video`, `mail` or `prop`. |
+| `data-beat` | Every `beat`, and a video beat's `video` | The beat's type: `text`, `mono`, `say`, `image`, `video`, `mail` or `prop`. |
 | `data-who` | A `say` beat | `character` or `player`. |
 | `data-face` | A `prop` beat | The prop's face, such as a sign or a note. |
 | `data-from` | Every `bubble` | `them` or `player`. |
@@ -342,14 +342,14 @@ import './styles.css'
 const TownBeat: Override<{ beat: SceneBeat }> = ({ beat, Default }) => {
   const line = usePart('beat', 'border-l-2 border-speech pl-4 leading-prose italic')
   const letter = usePart('beat', 'mx-auto max-w-md rotate-1 bg-card p-6 font-heading shadow-card')
-  if (beat.kind === 'say' && beat.who === 'character') {
+  if (beat.type === 'say' && beat.who === 'character') {
     return (
       <blockquote {...line} data-beat="say" data-who="character">
         {beat.text}
       </blockquote>
     )
   }
-  if (beat.kind === 'mail') {
+  if (beat.type === 'mail') {
     return (
       <article {...letter} data-beat="mail">
         <p className="whitespace-pre-wrap">{beat.body}</p>

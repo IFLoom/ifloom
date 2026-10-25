@@ -22,7 +22,7 @@ const town: Content = {
 const { game } = loadGame([town], { id: 'my-game', title: 'My Game', plugins: [__camel__()] })
 ```
 
-| Name | Kind | What it does |
+| Name | Used as | What it does |
 |---|---|---|
 | `__id__/marked` (`__camel__Marked`) | condition | `{ '__id__/marked': { entry } }` holds once the entry is marked. |
 | `__id__/mark` (`mark__Pascal__`) | effect | `{ '__id__/mark': { entry } }` marks the entry. |

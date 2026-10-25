@@ -70,7 +70,7 @@ import { startKeys } from '@ifloom/browser'
 const menu = document.querySelector<HTMLDialogElement>('#menu')!
 startKeys(runner, {
   escape: () => menu.showModal(),
-  map: { F5: { type: 'activity', id: 'quick-save' } },
+  map: { F5: { type: 'action', id: 'quick-save' } },
 })
 ```
 
@@ -82,7 +82,7 @@ import { runner } from './runner.ts'
 
 export function App() {
   const [menuOpen, setMenuOpen] = useState(false)
-  useEffect(() => startKeys(runner, { escape: () => setMenuOpen(true), map: { F5: { type: 'activity', id: 'quick-save' } } }), [])
+  useEffect(() => startKeys(runner, { escape: () => setMenuOpen(true), map: { F5: { type: 'action', id: 'quick-save' } } }), [])
   return menuOpen ? <Menu onClose={() => setMenuOpen(false)} /> : <Game />
 }
 ```
@@ -97,7 +97,7 @@ import { runner } from './runner.ts'
 const menuOpen = ref(false)
 let stop = () => {}
 onMounted(() => {
-  stop = startKeys(runner, { escape: () => (menuOpen.value = true), map: { F5: { type: 'activity', id: 'quick-save' } } })
+  stop = startKeys(runner, { escape: () => (menuOpen.value = true), map: { F5: { type: 'action', id: 'quick-save' } } })
 })
 onUnmounted(() => stop())
 </script>
@@ -110,7 +110,7 @@ onUnmounted(() => stop())
   import { runner } from './runner.ts'
 
   let menuOpen = $state(false)
-  $effect(() => startKeys(runner, { escape: () => (menuOpen = true), map: { F5: { type: 'activity', id: 'quick-save' } } }))
+  $effect(() => startKeys(runner, { escape: () => (menuOpen = true), map: { F5: { type: 'action', id: 'quick-save' } } }))
 </script>
 ```
 

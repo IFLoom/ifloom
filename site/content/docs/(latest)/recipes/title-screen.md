@@ -197,11 +197,11 @@ Declare settings in your content's `settings`. This declares one of each kind th
 ```ts
 const town: Content = {
   settings: [
-    { id: 'hints', label: 'Show hints', kind: 'toggle', default: true },
+    { id: 'hints', label: 'Show hints', type: 'toggle', default: true },
     {
       id: 'textSize',
       label: 'Text size',
-      kind: 'choice',
+      type: 'choice',
       affects: 'ui',
       options: [
         { value: 'normal', label: 'Normal' },
@@ -305,24 +305,21 @@ Then the stylesheet uses the attribute. The React UI sizes everything in `rem`, 
 
 ## Offer New Game+
 
-New Game+ starts a new game that keeps a little of the last one. Say when the game counts as finished, and what carries over, in the base you pass to [`loadGame`](/docs/reference/loader#loadgame):
+New Game+ starts a new game that keeps a little of the last one. Say when the game counts as finished, and what carries over, in your [content](/docs/reference/loader#content):
 
 ```ts
-loadGame([letter], {
-  id: 'the-letter',
-  title: 'The Letter',
-  introScene: 'ch1.mat',
+export const endings: Content = {
   finished: { scene: ['end.kept', 'end.posted'] },
   carryOver: { kv: ['readBefore'] },
-})
+}
 ```
 
-The first time `finished` holds, the runner records it in the profile's `core:finished`. From then on the React UI's title screen shows a New Game+ button. It starts a new game carrying over from the newest save, or from the game in play if there's no save. On a title screen of your own, offer it once `runner.profile.get('core:finished')` has a value, and start it with [`runner.newGame({ carry })`](/docs/reference/runner#newgame), where `carry` is the state to carry over from, such as `runner.state`. Only what `carryOver` lists is kept. Everything else starts fresh. See [New Game+](/docs/reference/state#new-game) for exactly what's copied.
+The Letter puts them in `story/ch3.ts`, beside its endings. The first time `finished` holds, the runner records it in the profile's `core:finished`. From then on the React UI's title screen shows a New Game+ button. It starts a new game carrying over from the newest save, or from the game in play if there's no save. On a title screen of your own, offer it once `runner.profile.get('core:finished')` has a value, and start it with [`runner.newGame({ carry })`](/docs/reference/runner#newgame), where `carry` is the state to carry over from, such as `runner.state`. Only what `carryOver` lists is kept. Everything else starts fresh. See [New Game+](/docs/reference/state#new-game) for exactly what's copied.
 
 The Letter sets `readBefore` as the reader reaches an ending, and its first chapter has a line that only a second reader sees:
 
 ```ts
-{ id: 'post', effects: [{ kind: 'kv', key: 'readBefore', to: true }, { kind: 'scene', scene: 'end.posted' }] }
+{ id: 'post', effects: [{ kv: 'readBefore', to: true }, { scene: 'end.posted' }] }
 
 body: [
   { text: 'ch1.mat' },

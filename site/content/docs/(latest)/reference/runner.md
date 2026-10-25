@@ -109,7 +109,7 @@ type HistoryOptions = {
 |---|---|---|
 | `depth` | How many commands back undo reaches. | `50` |
 | `stopAtIrreversible` | No undo past a choice marked [`irreversible`](/docs/reference/scenes#scenechoice). | `true` |
-| `stopAtNewTurn` | No undo past the start of a new [turn](/docs/reference/state#turn), meaning past the command that ended the last one. That's a choice or an activity with a [`turn`](/docs/reference/effects#turn) effect, or the [calendar](/docs/plugins/calendar#commands)'s bed. | `false` |
+| `stopAtNewTurn` | No undo past the start of a new [turn](/docs/reference/state#turn), meaning past the command that ended the last one. That's a choice or an action with a [`turn`](/docs/reference/effects#turn) effect, or the [calendar](/docs/plugins/calendar#commands)'s bed. | `false` |
 | `stopWhen` | No undo past any state where this [condition](/docs/reference/conditions) holds, tested after each command. | none |
 
 A barrier is a command that undo can't go back past: the irreversible choice itself, the command that started the turn, or the command that made `stopWhen` hold. Undo history is cleared at a barrier and builds up again from there.

@@ -1,6 +1,6 @@
 ---
 title: "Game state"
-description: "GameState field by field: the turn, phase, scene, stats, kv store, entities and what is held, plugins' state, and what was seen and chosen when."
+description: "GameState field by field: the turn, scene, stats, kv store, entities and what is held, plugins' state, and what was seen and chosen when."
 ---
 `GameState` is the whole save, as a plain object you can serialise to JSON. Commands take one and return the next, and nothing else in the engine holds state. Treat it as read-only, and change it only through [commands](/docs/reference/commands) and [effects](/docs/reference/effects).
 
@@ -14,7 +14,6 @@ import type { GameState } from '@ifloom/engine'
 type GameState = {
   version: typeof SAVE_VERSION
   seed: number
-  phase: Phase
   turn: number
   sceneId: string | null
   seen: Record<string, Times>
@@ -41,7 +40,7 @@ type GameState = {
 }
 ```
 
-`KvValue`, `StorylineState`, `Phase`, `Stats`, `EntityState` and `Notice` come from the package root too:
+`KvValue`, `StorylineState`, `Stats`, `EntityState` and `Notice` come from the package root too:
 
 ```ts
 import type { KvValue, StorylineState } from '@ifloom/engine'
@@ -59,15 +58,7 @@ The game's own [version](/docs/reference/saves#the-games-own-migrations) the sta
 
 Fixed for the life of a save. A new game takes the `seed` given to [`startingState`](/docs/reference/commands#startingstate) or the [`start`](/docs/reference/commands#start) command. If none is given, it's a hash of the game's id, so every new game started without one deals the same. Every random draw mixes the seed in. Two playthroughs with different seeds deal different variants, while one save always deals the same. A UI should pass a fresh seed for each new game. See [Randomness](/docs/reference/random#the-seed).
 
-There is no player name in the state. A game that asks for one keeps it in the [kv store](#kv), under a key such as `playerName`, and names its saves after it with [`saveName`](/docs/reference/game#savename).
-
-### phase
-
-```ts
-type Phase = string
-```
-
-Which stage of the game the player is in, such as `'arrival'`, `'first-day'` or `'open'`. Your game names the stages and the engine gives the names no meaning. [Locks](/docs/reference/locks) and `{ phase }` [conditions](/docs/reference/conditions#phase) read it, and the [`phase`](/docs/reference/effects#phase) effect sets it. A new game starts in `game.startPhase`, or `''` if the game doesn't set one.
+There is no player name in the state. A game that asks for one keeps it in the [kv store](#kv), under a key such as `playerName`, and names its saves after it with [`rules.saveName`](/docs/reference/rules#savename).
 
 ### turn
 
@@ -75,7 +66,7 @@ Which stage of the game the player is in, such as `'arrival'`, `'first-day'` or 
 turn: number
 ```
 
-How many turns have passed. This is the engine's only clock, and a new game starts at 0. Your game decides how long a turn is, whether that's a day, a chapter or a week. The engine moves the counter on when a turn ends, which is when a [`turn`](/docs/reference/effects#turn) effect runs, from a choice, an activity or a plugin. The [calendar plugin](/docs/plugins/calendar#what-a-turn-is) ends turns this way when time passes and when the player sleeps, so with it a turn is a day, a period or a week.
+How many turns have passed. This is the engine's only clock, and a new game starts at 0. Your game decides how long a turn is, whether that's a day, a chapter or a week. The engine moves the counter on when a turn ends, which is when a [`turn`](/docs/reference/effects#turn) effect runs, from a choice, an action or a plugin. The [calendar plugin](/docs/plugins/calendar#what-a-turn-is) ends turns this way when time passes and when the player sleeps, so with it a turn is a day, a period or a week.
 
 Everything the engine dates is dated in turns: [`seen`](#seen) and [`chosen`](#chosen), [`fired`](#fired), [notices](#notices) and a storyline's [`closedUntil`](#storylines). Read it with [`{ turn: {} }`](/docs/reference/conditions#turn). See [Rules: the end of a turn](/docs/reference/rules#the-end-of-a-turn).
 
@@ -85,7 +76,7 @@ Everything the engine dates is dated in turns: [`seen`](#seen) and [`chosen`](#c
 
 ### sceneId
 
-The scene on screen, or `null` for the idle screen. A new game starts on `game.introScene`, or `null` if the game leaves it out. While a scene is open, activities and opening another scene are refused with "Finish this first." (the [`finishFirst`](/docs/reference/strings#refusals) string, which a game can reword). So are plugin commands that check for an open scene, such as the places plugin's [`places/go`](/docs/plugins/places#commands) and the cast's talking and calling.
+The scene on screen, or `null` for the idle screen. A new game starts on the content's `introScene`, or `null` if it leaves it out. While a scene is open, actions and opening another scene are refused with "Finish this first." (the [`finishFirst`](/docs/reference/strings#refusals) string, which a game can reword). So are plugin commands that check for an open scene, such as the places plugin's [`places/go`](/docs/plugins/places#commands) and the cast's talking and calling.
 
 ### seen
 
@@ -174,7 +165,7 @@ One entry per storyline declared in `game.storylines`.
 | Field | What it holds |
 |---|---|
 | `closedUntil` | A [turn](#turn). While `turn` is below this, the storyline is closed, and the [cast](/docs/plugins/cast) won't let the player talk to or call a character who belongs to it. `null` means open. Set by [`closeStoryline`](/docs/reference/effects#closestoryline). |
-| `kv` | The storyline's own kv store. [`storylineKv`](/docs/reference/effects#storylinekv) sets its keys and [`{ storylineKv }`](/docs/reference/conditions#storylinekv) reads them. With a range, `{ storylineKv }` reads the numbers here. |
+| `kv` | The storyline's own kv store. The [`kv` effect](/docs/reference/effects#whose-key-it-is) with `of: 'storyline:<id>'` sets its keys, and the [`kv` condition](/docs/reference/conditions#kv) with the same `of` reads them. |
 
 Reading a storyline that isn't in the save gives an empty one (open, nothing set), so an undeclared id doesn't crash. A storyline doesn't keep a number for how well the player is liked. A game keeps that as a [stat](/docs/reference/stats#entity-stats) on the cast's characters (see [Storylines](/docs/reference/storylines)).
 
@@ -186,7 +177,11 @@ type KvValue = boolean | number | string
 
 The kv store: keys with a true/false, number or text value, such as `metAva: true`, `visits: 3` or `playerName: 'Robin'`. It's where a game keeps anything that isn't a stat or a thing. Keys need no declaring. A key nobody has set reads as unset, which a condition treats as false, or as 0 in a range.
 
-A new game starts with the `kv` given to [`startingState`](/docs/reference/commands#startingstate), or `{}`. The [`kv`](/docs/reference/effects#kv) effect and [inputs](/docs/reference/inputs) set keys. [`{ kv }`](/docs/reference/conditions#kv) reads them, and so does a `{{name}}` [prose token](/docs/reference/prose#tokens), as text. [`rules.resets`](/docs/reference/rules#resets) puts some back at the start of each turn. Each [storyline](#storylines) and each [entity](#entities) has a kv store of its own too.
+A new game starts with the content's starting `kv`, with the `kv` given to [`startingState`](/docs/reference/commands#startingstate) over it, or `{}`. The [`kv`](/docs/reference/effects#kv) effect and [inputs](/docs/reference/inputs) set keys. [`{ kv }`](/docs/reference/conditions#kv) reads them, and so does a `{{name}}` [prose token](/docs/reference/prose#tokens), as text. The content's [`resets`](/docs/reference/rules#resets) put some back at the start of each turn. Each [storyline](#storylines) and each [entity](#entities) has a kv store of its own too, and so does a running [minigame](#minigame).
+
+#### phase
+
+The stretch of the game the player is in, such as `'arrival'`, `'first-day'` or `'open'`, is the kv key `phase`. Your game names the stretches and the engine gives the names no meaning. Give a new game its first one in the content's starting `kv` (`kv: { phase: 'arrival' }`), set it with `{ kv: 'phase', to: 'open' }` and read it with `{ kv: 'phase', is: ['arrival'] }`, as [locks](/docs/reference/locks) often do. Save version 19 moved a save's old `phase` field here.
 
 Save version 12 renamed it from `flags`, and an older save's flags load here.
 
@@ -280,16 +275,16 @@ The [timers](/docs/reference/timers) running now, by id, in the order they start
 
 ## New Game+
 
-When a player finishes your game, you can let them start again with some of what they had. List what carries over in `game.carryOver`, and say when the game counts as finished with `game.finished`:
+When a player finishes your game, you can let them start again with some of what they had. List what carries over in your content's `carryOver`, and say when the game counts as finished with its `finished`:
 
 ```ts
-const { game } = loadGame([town], {
-  id: 'small-town',
-  title: 'Small Town',
+import type { Content } from '@ifloom/engine'
+
+export const ending: Content = {
   // Finished once the letter is read and the bakery's last scene has been seen.
   finished: { all: [{ kv: 'readTheLetter' }, { seen: 'bakery.ending' }] },
   carryOver: { stats: ['coins'], kv: ['readTheLetter'], held: ['clothing:umbrella'] },
-})
+}
 ```
 
 The [runner](/docs/reference/runner#finished) watches `finished`. After each command that takes, if the condition holds and the [profile](/docs/reference/profile) has no `core:finished` yet, it records `{ at }`, the time in milliseconds. A title screen checks it to decide whether to offer New Game+:
@@ -324,7 +319,7 @@ The [content checker](/docs/reference/checks) reports a stat in `carryOver` that
 ### SAVE_VERSION
 
 ```ts
-const SAVE_VERSION = 18
+const SAVE_VERSION = 19
 ```
 
 The save format this engine writes. [`loadState`](/docs/reference/saves#loadstate) carries older ones forward. The version goes up only when a field older saves already have changes shape. A new field doesn't bump it: a save that lacks the field gets its load default when it loads, as [`minigame`](#minigame) does. See [SAVE_VERSION](/docs/reference/saves#save_version) for the rule.
@@ -350,10 +345,11 @@ The versions so far:
 | 16 | Took out `items` and `collections`: the player's items are counts in [`held`](#held), and collection entries are entities made in play that the player holds. |
 | 17 | Took out `transition`, which a `transition` effect set. How a screen comes in is the UI's now, from [presentation hints](/docs/reference/ui-hints). |
 | 18 | Made [`seen`](#seen) and [`chosen`](#chosen) one [`Times`](#times) record per id, in place of `seenOn`, `lastSeenOn`, `chosenOn` and `lastChosenOn`, and dropped the `turn:` kv keys that capped a choice's `once`. |
+| 19 | Moved `phase` into the [kv store](#kv), as the key `phase`. |
 
 The versions that only added a field (4, 7, 9, 10 and 11) are from before the rule above. A field added now gets a load default and no new version.
 
 ## See it in an example
 
-- The Letter: [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts) declares `finished` and `carryOver: { kv: ['readBefore'] }` for New Game+, and the first chapter, [`examples/novel/src/story/ch1.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/story/ch1.ts), has a line only a second read shows. The test `counts as finished at either ending, and a New Game+ remembers the first read` in [`examples/novel/tests/novel.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/tests/novel.test.ts) plays it.
+- The Letter: [`examples/novel/src/story/ch3.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/story/ch3.ts) declares `finished` and `carryOver: { kv: ['readBefore'] }` for New Game+, and the first chapter, [`examples/novel/src/story/ch1.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/story/ch1.ts), has a line only a second read shows. The test `counts as finished at either ending, and a New Game+ remembers the first read` in [`examples/novel/tests/novel.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/tests/novel.test.ts) plays it.
 - Small Town: `probes` in [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) builds states by hand, with `kv`, `entities`, `stats` and `plugins` filled in.

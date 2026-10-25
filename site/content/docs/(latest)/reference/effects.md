@@ -1,16 +1,16 @@
 ---
 title: "Effects"
-description: "Every effect: stats, kv, scenes and storylet draws, entities and what holds them, each, turns, notices, audio, minigames, timers, and custom effects."
+description: "Every effect: stats, kv, scenes and storylet draws, entities and what holds them, each, turns, notices, audio, minigames, timers, and calls to a plugin or the game."
 ---
-An effect is one change to the [state](/docs/reference/state), written as data. Choices, activities, triggers and the end of a turn all carry lists of them, and so can a plugin's content, such as a thing's use in the inventory.
+An effect is one change to the [state](/docs/reference/state), written as data. Choices, actions, triggers and the end of a turn all carry lists of them, and so can a plugin's content, such as a thing's use in the inventory.
 
 ```ts
 import type { Effect } from '@ifloom/engine'
 
 const effects: Effect[] = [
-  { kind: 'stat', stat: 'coins', by: -4 },
-  { kind: 'entity', entity: 'item:sandwich', by: 1 },
-  { kind: 'storylineKv', storyline: 'ava', key: 'boughtLunch', to: true },
+  { stat: 'coins', by: -4 },
+  { entity: 'item:sandwich', by: 1 },
+  { kv: 'boughtLunch', of: 'storyline:ava', to: true },
 ]
 ```
 
@@ -18,7 +18,7 @@ const effects: Effect[] = [
 
 Effects apply in order, each to the state the one before it left. An effect that can't apply does nothing and the rest still run, so an effect never refuses a command. The command around it can refuse first, though. For example, a plugin guard can refuse a choice before any of its effects run, as the [calendar](/docs/plugins/calendar#the-guard) does for one that would pass time past dawn. See [`choose`](/docs/reference/commands#choose).
 
-An effect with an unknown `kind` does nothing, and the [content checker](/docs/reference/checks#in-an-effect) reports it.
+Each effect is told apart by its key, as a [condition](/docs/reference/conditions) is. `{ stat: 'coins', by: -4 }` changes a stat and `{ scene: null }` closes the scene: the key says what changes and holds the target, and the other fields say how. An effect with no key the engine knows does nothing, and so does one with two, such as `{ stat: 'coins', kv: 'met', by: 1 }`. The [content checker](/docs/reference/checks#in-an-effect) reports both. A key with a `/` in it is a call to a plugin's effect or the game's own, as in `{ 'quests/start': { quest: 'letter' } }`.
 
 ## applyEffects
 
@@ -26,76 +26,83 @@ An effect with an unknown `kind` does nothing, and the [content checker](/docs/r
 function applyEffects(state: GameState, game: Game, effects: Effect[]): GameState
 ```
 
-Runs a list of effects against a state and returns the new state, without a command around it. Nothing is refused, no turn ends unless an effect ends one, and no scene is counted as seen. It's useful in tests and tools, for example to put the player in a scene or give them coins, and in a custom effect that wants to see where its own list leads.
+Runs a list of effects against a state and returns the new state, without a command around it. Nothing is refused, no turn ends unless an effect ends one, and no scene is counted as seen. It's useful in tests and tools, for example to put the player in a scene or give them coins, and in one of the game's own effects that wants to see where its own list leads.
 
 ```ts
 import { applyEffects } from '@ifloom/engine'
 
 const next = applyEffects(state, game, [
-  { kind: 'stat', stat: 'coins', by: 5 },
-  { kind: 'scene', scene: 'ava.hi' },
+  { stat: 'coins', by: 5 },
+  { scene: 'ava.hi' },
 ])
 ```
 
-**Gotcha.** It only takes plain `Effect`s. Flatten a `{ custom }` reference, or its [shorthand](/docs/reference/custom#plugincall), with [`buildEffects`](/docs/reference/custom#buildeffects) first. A plugin's effect in its long form, `{ kind: 'custom', name }`, is a plain effect and runs.
+A call to a plugin's effect or the game's own runs in its turn here, as it does in content.
 
 ## Effect
 
-Every effect follows one naming rule. Its target is named by its noun (`stat`, `entity`, `storyline`, `scene`, or `key` in a kv store), `by` changes a number, and `to` sets a value.
+An effect's key names what it changes (`stat`, `kv`, `entity`, `scene`, `timer` and so on) and holds the target. `by` changes a number, `to` sets a value, and `of` says whose it is when it isn't the player's.
 
 ```ts
 type Effect =
-  | { kind: 'stat'; stat: StatKey; by: number; of?: string }
-  | { kind: 'stat'; stat: StatKey; to: number; of?: string }
-  | { kind: 'custom'; name: string; with?: Record<string, unknown> }
-  | { kind: 'storylineKv'; storyline: string; key: string; to: KvValue }
-  | { kind: 'storylineKv'; storyline: string; key: string; by: number }
-  | { kind: 'kv'; key: string; to: KvValue; of?: string }
-  | { kind: 'kv'; key: string; by: number; of?: string }
-  | { kind: 'create'; of: string; like?: string; entity?: CreatedEntity; at?: Placement }
-  | { kind: 'create'; of?: string; like: string; entity?: CreatedEntity; at?: Placement }
-  | { kind: 'remove'; entity: string }
-  | ({ kind: 'each'; effects: EffectRef[] } & Select)
-  | { kind: 'entity'; entity: string; at?: string; by: number }
-  | { kind: 'entity'; entity: string; at?: string; to: number }
-  | { kind: 'move'; entity: string; from?: string; to: string; by?: number }
-  | { kind: 'you'; to: string | null }
-  | { kind: 'scene'; scene: string | null }
-  | { kind: 'scene'; from: string; otherwise?: string }
-  | { kind: 'phase'; to: Phase }
-  | { kind: 'closeStoryline'; storyline: string; turns: number }
-  | { kind: 'turn'; by?: number }
-  | { kind: 'notify'; title: string; text?: string; image?: string; tag?: string; id?: string }
-  | { kind: 'audio'; channel: string; to?: string | null }
-  | { kind: 'sound'; track: string }
-  | { kind: 'minigame'; minigame: string }
-  | { kind: 'minigameVar'; key: string; to: number }
-  | { kind: 'minigameVar'; key: string; by: number }
-  | { kind: 'minigameVar'; key: string; random: [number, number] }
-  | { kind: 'panel'; panel: string | null; with?: Record<string, unknown> }
-  | { kind: 'roll'; key: string; dice: Dice; plus?: number | { stat: string }; against?: number }
-  | { kind: 'timer'; timer: string; to?: number | null }
-  | { kind: 'timer'; timer: string; by: number }
+  | { stat: StatKey; by: number; of?: string }
+  | { stat: StatKey; to: number; of?: string }
+  | { kv: string; to: KvValue; of?: string }
+  | { kv: string; by: number; of?: string }
+  | { kv: string; random: [number, number]; of?: string }
+  | { create: string; like?: string; with?: CreatedEntity; at?: Placement }
+  | { remove: string }
+  | { each: string | Select; where?: Condition; effects: Effect[] }
+  | { entity: string; at?: string; by: number }
+  | { entity: string; at?: string; to: number }
+  | { move: string; from?: string; to: string; by?: number }
+  | { you: string | null }
+  | { scene: string | null | { from: string; otherwise?: string } }
+  | { closeStoryline: string; turns: number }
+  | { turn: true | { by: number } }
+  | { notify: string; text?: string; image?: string; tag?: string; id?: string }
+  | { audio: string; to?: string | null }
+  | { sound: string }
+  | { minigame: string }
+  | { timer: string; to?: number | null }
+  | { timer: string; by: number }
+  | { roll: string; dice: Dice; plus?: number | { stat: string }; against?: number }
+  | { panel: string | null; with?: Record<string, unknown> }
+  | PluginCall
 ```
+
+A [`PluginCall`](/docs/reference/custom#plugincall) is a call by name, `{ 'calendar/pass': { by: 2 } }`, to a plugin's effect or the game's own.
+
+Conditions use the same keys, so `{ stat: 'coins', gte: 4 }` asks about what `{ stat: 'coins', by: -4 }` changes. Which one an object is depends on where it's written: in `when` it's a condition, in `effects` an effect.
+
+### EffectKey
+
+```ts
+import type { EffectKey } from '@ifloom/engine'
+
+type EffectKey = 'stat' | 'kv' | 'create' | 'remove' | 'each' | 'entity' | 'move' | 'you' | 'scene' | 'closeStoryline' | 'turn' | 'notify' | 'audio' | 'sound' | 'minigame' | 'timer' | 'roll' | 'panel'
+```
+
+The keys that tell the engine's effects apart. Narrow an `Effect` by one with `in`: inside `if ('stat' in effect)`, `effect.stat` is the stat's key.
 
 ### stat
 
 ```ts
-{ kind: 'stat', stat: 'fitness', by: 1 }
-{ kind: 'stat', stat: 'energy', to: 100 }
+{ stat: 'fitness', by: 1 }
+{ stat: 'energy', to: 100 }
 ```
 
 Adds `by` to a stat, or puts it `to` a value, held to the stat's declared `min` and [`max`](/docs/reference/stats#statmax) (0 to 100 unless it says otherwise). Spending and earning both use this effect, because coins, energy and every other number are [declared stats](/docs/reference/stats). Afterwards [`rules.onStat`](/docs/reference/rules#onstat) sees the before and after, and can veto or add to the change. `stat` must be a [declared stat](/docs/reference/stats).
 
 A [derived stat](/docs/reference/stats#derived-stats) is never written, so a `stat` effect on one does nothing, and the loader reports it. The effect adds to the value the save keeps, which is 0 for a stat the save doesn't have yet, such as one added in an update. See [Filling new content](/docs/reference/saves#filling-new-content).
 
-**Gotcha.** A `stat` effect never refuses. Spending 4 coins the player doesn't have leaves them at the stat's `min` rather than stopping the choice. Check `{ stat: 'coins', gte: 4 }` first, or use an activity [cost](/docs/reference/actions#activitycost), which refuses.
+**Gotcha.** A `stat` effect never refuses. Spending 4 coins the player doesn't have leaves them at the stat's `min` rather than stopping the choice. Check `{ stat: 'coins', gte: 4 }` first, or use an action's [cost](/docs/reference/actions#actioncost), which refuses.
 
 #### An entity's stat
 
 ```ts
-{ kind: 'stat', stat: 'quality', by: 1, of: 'dish:soup' }
-{ kind: 'each', of: 'staff', effects: [{ kind: 'stat', stat: 'morale', by: -8, of: '$' }] }
+{ stat: 'quality', by: 1, of: 'dish:soup' }
+{ each: 'staff', effects: [{ stat: 'morale', by: -8, of: '$' }] }
 ```
 
 With `of`, the stat belongs to an [entity](/docs/reference/entities). `of` is an [entity reference](/docs/reference/entities#entityref) such as `'staff:ana'`, or `'$'` inside an [`each`](#each). The value is held to the stat's range as the player's would be. If the entity isn't there, the effect does nothing. `rules.onStat` isn't called, because it only runs for the player's stats. A negative amount here is never part of a button's [price](/docs/reference/view#price), even on a spendable stat.
@@ -106,56 +113,63 @@ With `of`, the stat belongs to an [entity](/docs/reference/entities). `of` is an
 
 ```ts
 // In rules.onTurn, through apply: wake up with a full tank, whatever the ceiling is today.
-effects: [{ kind: 'stat', stat: 'energy', to: 9999 }]
+effects: [{ stat: 'energy', to: 9999 }]
 ```
 
-With `to` in place of `by`, the stat is set to `to`, held to its declared range. Use it for energy back to full overnight, or a mood reset at the start of a day. [`rules.onStat`](/docs/reference/rules#onstat) is called as for `by`, with `by` being the change it made (`to` held to range, minus the value before). With `of`, it sets an [entity](/docs/reference/entities)'s stat: `{ kind: 'stat', stat: 'morale', to: 80, of: 'staff:ana' }`.
+With `to` in place of `by`, the stat is set to `to`, held to its declared range. Use it for energy back to full overnight, or a mood reset at the start of a day. [`rules.onStat`](/docs/reference/rules#onstat) is called as for `by`, with `by` being the change it made (`to` held to range, minus the value before). With `of`, it sets an [entity](/docs/reference/entities)'s stat: `{ stat: 'morale', to: 80, of: 'staff:ana' }`.
 
-### custom
+### Calls
 
 ```ts
-{ kind: 'custom', name: 'loyalty/stamp' }
-{ kind: 'custom', name: 'quests/start', with: { quest: 'letter' } }
+{ 'loyalty/stamp': true }
+{ 'quests/start': { quest: 'letter' } }
+{ 'game/payRent': { by: 2 } }
 ```
 
-Runs a [plugin](/docs/reference/plugins)'s effect by its full name, or one of the game's own [custom effects](/docs/reference/custom#effects), on the state the effects before it left. `with` is passed as its arguments, or `{}` when left out. A name that neither the game nor its plugins has does nothing.
+Runs a [plugin](/docs/reference/plugins)'s effect by its full name, or one of the game's own [effects in `rules`](#computed-effects) with `game/` in front, on the state the effects before it left. The name is the only key, and its value is the arguments, or `true` for none. A name that neither the game nor its plugins has does nothing. See [`PluginCall`](/docs/reference/custom#plugincall).
 
-In a data scene choice, an activity or a trigger, write the short form, `{ custom: 'loyalty/stamp' }`, or shorter still, [`{ 'loyalty/stamp': true }`](/docs/reference/custom#plugincall). [`buildEffects`](/docs/reference/custom#buildeffects) turns either into this one.
-
-**Gotcha.** The [content checker](/docs/reference/checks) checks the name in every form, as `no plugin effect named "…"` for the long form and `no custom effect named "…"` for the others, wherever the effect is data. [`rules.onTurn`](/docs/reference/rules#onturn) is a function, so nothing checks a name it applies, and a typo there silently does nothing.
-
-### storylineKv
-
-```ts
-{ kind: 'storylineKv', storyline: 'ava', key: 'lentBook', to: true }
-```
-
-```ts
-{ kind: 'storylineKv', storyline: 'ava', key: 'visits', by: 1 }
-```
-
-Sets a key in a [storyline](/docs/reference/storylines)'s own kv store `to` a value, or changes its number `by` an amount, as [`kv`](#kv) does. Read it back with [`{ storylineKv }`](/docs/reference/conditions#storylinekv), with a range for a number.
-
-A storyline doesn't keep score of how well someone likes the player. Keep that as a stat on the [cast](/docs/plugins/cast#each-one-is-an-entity)'s characters: `{ kind: 'stat', stat: 'friendship', by: 5, of: character('ava') }`.
+**Gotcha.** The [content checker](/docs/reference/checks) checks the name wherever the effect is data, as `no custom effect named "…"`. [`rules.onTurn`](/docs/reference/rules#onturn) is a function, so nothing checks a name it applies, and a typo there silently does nothing.
 
 ### kv
 
 ```ts
-{ kind: 'kv', key: 'hadCoffee', to: true }
-{ kind: 'kv', key: 'coffeesBought', by: 1 }
+{ kv: 'hadCoffee', to: true }
+{ kv: 'coffeesBought', by: 1 }
 ```
 
 Sets a key in the [kv store](/docs/reference/state#kv) `to` a value, or changes its number `by` an amount. A key that isn't a number yet (unset, text or `true`) counts as 0, so the first `by: 1` makes it 1. Test a count with a [range](/docs/reference/conditions#kv), such as `{ kv: 'coffeesBought', gte: 3 }`.
 
-With `of`, both forms set a key in an [entity](/docs/reference/entities)'s kv store instead, as in `{ kind: 'kv', key: 'role', to: 'cook', of: 'staff:ana' }`, or `of: '$'` inside an [`each`](#each). Read it back with [`{ kv, of }`](/docs/reference/conditions#kv). If the entity isn't there, the effect does nothing.
+With `random`, it's set to a whole number drawn between the two ends, both included: `{ kv: 'arrow', random: [1, 4] }`. The draw comes from the save's seed, so the same commands draw the same number every time.
+
+#### Whose key it is
+
+```ts
+{ kv: 'role', to: 'cook', of: 'staff:ana' }
+{ kv: 'visits', by: 1, of: 'storyline:ava' }
+{ kv: 'score', by: 1, of: 'minigame' }
+```
+
+Without `of`, the key is the player's. `of` names another kv store, the same way the [`kv` condition](/docs/reference/conditions#kv) reads it:
+
+- **An [entity](/docs/reference/entities)**, as in `of: 'staff:ana'`, or `of: '$'` inside an [`each`](#each). If the entity isn't there, the effect does nothing.
+- **A [storyline](/docs/reference/storylines)**, as in `of: 'storyline:ava'`, its own kv store. A storyline doesn't keep score of how well someone likes the player. Keep that as a stat on the [cast](/docs/plugins/cast#each-one-is-an-entity)'s characters: `{ stat: 'friendship', by: 5, of: character('ava') }`.
+- **The [minigame](/docs/reference/minigames#its-variables) being played**, `of: 'minigame'`, one of its variables. With no minigame running, it does nothing. The checker reports a variable that no minigame declares in its `vars`, and one a minigame uses but doesn't declare itself.
+
+#### The phase
+
+```ts
+{ kv: 'phase', to: 'open' }
+```
+
+The stretch of the game the player is in, such as an intro and then the game proper, is the player's kv key `phase`. Set it on the last choice of an intro, read it with `{ kv: 'phase', is: 'open' }`, and give its first value in the content's starting [`kv`](/docs/reference/state#kv). [Locks](/docs/reference/locks) often ask for it.
 
 **Gotcha.** `by` has no bounds here. Unlike a [stat](#stat), the number isn't held to any range, and a negative `by` can take it below 0.
 
 ### scene
 
 ```ts
-{ kind: 'scene', scene: 'ava.hi' }
-{ kind: 'scene', scene: null }
+{ scene: 'ava.hi' }
+{ scene: null }
 ```
 
 Puts a scene on screen, or closes it with `null`. The id isn't checked when the effect runs, but the [content checker](/docs/reference/checks) checks it. Only the scene left on screen at the end of the command counts as [seen](/docs/reference/state#seen).
@@ -163,28 +177,20 @@ Puts a scene on screen, or closes it with `null`. The id isn't checked when the 
 #### Drawing a storylet
 
 ```ts
-{ kind: 'scene', from: 'cafe' }
-{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }
+{ scene: { from: 'cafe' } }
+{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }
 ```
 
-With `from` instead of `scene`, it draws a [storylet](/docs/reference/storylets): one of the scenes whose `drawnFrom` names `from` and whose `when` holds, picked by their `weight`, and puts it on screen. If none can be drawn, it puts `otherwise` on screen, and with no `otherwise` it leaves the screen as it was.
+With `{ from }` in place of a scene's id, it draws a [storylet](/docs/reference/storylets): one of the scenes whose `drawnFrom` names `from` and whose `when` holds, picked by their `weight`, and puts it on screen. If none can be drawn, it puts `otherwise` on screen, and with no `otherwise` it leaves the screen as it was.
 
 The draw is seeded by the save, the turn and a count of draws from that set, kept in the kv key `storylet:<from>`, so the same save always draws the same scene and [`replay`](/docs/reference/runner#replay) draws it again. See [Storylets](/docs/reference/storylets) for the details and the checks.
 
-The engine has no effect that moves the player. The [places plugin](/docs/plugins/places) keeps track of places, and its [`places/move`](/docs/plugins/places#effects) effect, written `moveTo('park')`, puts the player somewhere at once. In a plain-effect list, such as a plugin's `effectsOf`, write it in the long form: `{ kind: 'custom', name: 'places/move', with: { location: 'park' } }`.
-
-### phase
-
-```ts
-{ kind: 'phase', to: 'open' }
-```
-
-Moves the game `to` another [stage](/docs/reference/state#phase). It's typically on the last choice of an intro.
+The engine has no effect that moves the player. The [places plugin](/docs/plugins/places) keeps track of places, and its [`places/move`](/docs/plugins/places#effects) effect, written `moveTo('park')`, puts the player somewhere at once. Written out, that's `{ 'places/move': { location: 'park' } }`.
 
 ### closeStoryline
 
 ```ts
-{ kind: 'closeStoryline', storyline: 'ava', turns: 2 }
+{ closeStoryline: 'ava', turns: 2 }
 ```
 
 Closes a storyline until `turns` [turns](/docs/reference/state#turn) from now, by setting its [`closedUntil`](/docs/reference/state#storylines) to the current turn plus `turns`. While it's closed, [`{ storyline: 'ava' }`](/docs/reference/conditions#storyline) stops holding. A [cast](/docs/plugins/cast) character who belongs to it is still in the room, but the player can't talk to them or call them. Nothing on the storyline is lost. In a game whose turn is a day (the [calendar](/docs/plugins/calendar#what-a-turn-is)'s default), `turns: 2` is the day after tomorrow.
@@ -192,16 +198,16 @@ Closes a storyline until `turns` [turns](/docs/reference/state#turn) from now, b
 ### turn
 
 ```ts
-{ kind: 'turn' }
-{ kind: 'turn', by: 3 }
+{ turn: true }
+{ turn: { by: 3 } }
 ```
 
-Ends the turn `by` times, or once when `by` is left out. Each time, the [turn](/docs/reference/state#turn) counter goes up by one and [`rules.resets`](/docs/reference/rules#resets) are written. Then [`rules.onTurn`](/docs/reference/rules#onturn) runs, then each plugin's [`onTurn` hook](/docs/reference/plugins#hooks-and-providers). See [The end of a turn](/docs/reference/rules#the-end-of-a-turn).
+Ends the turn once with `true`, or `by` times. Each time, the [turn](/docs/reference/state#turn) counter goes up by one and the content's [`resets`](/docs/reference/rules#resets) are written. Then [`rules.onTurn`](/docs/reference/rules#onturn) runs, then each plugin's [`onTurn` hook](/docs/reference/plugins#hooks-and-providers), then `rules.onTurnDone` and each plugin's `onTurnDone`. See [The end of a turn](/docs/reference/rules#the-end-of-a-turn).
 
 The engine keeps no time of day, so this effect is how a turn ends, whether a turn is a chapter of a novel or a week of running the café. Put it on the choice that closes a chapter. A plugin can end turns the same way. The [calendar](/docs/plugins/calendar#what-a-turn-is)'s `pass` and `sleep` end one at each day they cross, and its `onTurn` hook moves its clock on when this effect ends one.
 
 ```ts
-{ id: 'lock-up', effects: [{ kind: 'turn' }, { kind: 'scene', scene: 'cafe.monday' }] }
+{ id: 'lock-up', effects: [{ turn: true }, { scene: 'cafe.monday' }] }
 ```
 
 **Gotchas.**
@@ -212,12 +218,12 @@ The engine keeps no time of day, so this effect is how a turn ends, whether a tu
 ### create
 
 ```ts
-{ kind: 'create', of: 'staff', entity: { name: 'Dev', stats: { skill: 2, wage: 8, morale: 80 } } }
-{ kind: 'create', of: 'staff', entity: { id: 'cleo', name: 'Cleo' } }
-{ kind: 'create', like: 'food:cake', at: 'you', entity: { stats: { fresh: 3 } } }
+{ create: 'staff', with: { name: 'Dev', stats: { skill: 2, wage: 8, morale: 80 } } }
+{ create: 'staff', with: { id: 'cleo', name: 'Cleo' } }
+{ create: 'food', like: 'food:cake', with: { stats: { fresh: 3 } }, at: 'you' }
 ```
 
-Adds an [entity](/docs/reference/entities) of kind `of`, after the ones already there. The save keeps a record of it with what `entity` gives:
+Adds an [entity](/docs/reference/entities) of the kind `create` names, after the ones already there. The save keeps a record of it with what `with` gives:
 
 ```ts
 type CreatedEntity = {
@@ -237,12 +243,12 @@ Its `desc` is read like a declared entity's, with tokens filled in, and its `ima
 A thing made in play this way is how a game keeps notes, photos or letters. The phone's camera makes a photo the player keeps:
 
 ```ts
-{ kind: 'create', of: 'photo', entity: { id: 'ava', name: 'Ava at work', image: 'photo/ava.svg' }, at: 'player' }
+{ create: 'photo', with: { id: 'ava', name: 'Ava at work', image: 'photo/ava.svg' }, at: 'player' }
 ```
 
 The phone's gallery lists the `photo` things you hold, and `{ count: { of: 'photo', at: 'you' } }` asks whether you have any. See [Notes, photos and other things made in play](/docs/reference/entities#notes-photos-and-other-things-made-in-play).
 
-With `like`, the new entity is [made like](/docs/reference/entities#things-made-like-another) another, and reads whatever it isn't given from that one: name, description, picture, tags, stats, kv and traits. Its kind is the `like`'s if `of` is left out, and `entity` can be left out altogether. `like` names an entity your content declares.
+With `like`, the new entity is [made like](/docs/reference/entities#things-made-like-another) another, and reads whatever it isn't given from that one: name, description, picture, tags, stats, kv and traits. `with` can be left out altogether. `like` names an entity your content declares, of the same kind.
 
 With `at`, it's given to a [holder](/docs/reference/entities#holding-things) once made: one holder for one of it, or how many each holder has, such as `{ 'place:larder': 6 }`.
 
@@ -252,22 +258,22 @@ This choice, from the café's interviews, hires someone:
 
 ```ts
 choices: [
-  { id: 'dev', effects: [{ kind: 'create', of: 'staff', entity: { name: 'Dev', stats: { skill: 2, wage: 8, morale: 80 } } }, { kind: 'scene', scene: null }] },
-  { id: 'fen', effects: [{ kind: 'create', of: 'staff', entity: { name: 'Fen', stats: { skill: 7, wage: 18 } } }, { kind: 'scene', scene: null }] },
+  { id: 'dev', effects: [{ create: 'staff', with: { name: 'Dev', stats: { skill: 2, wage: 8, morale: 80 } } }, { scene: null }] },
+  { id: 'fen', effects: [{ create: 'staff', with: { name: 'Fen', stats: { skill: 7, wage: 18 } } }, { scene: null }] },
 ]
 ```
 
 **Gotchas.**
 - The id it was given isn't handed back. To refer to someone created without an id, go through them all with [`each`](#each) or [`entitiesOf`](/docs/reference/entities#entitiesof), or give an `id` of your own.
 - An `id` that's a whole number, such as `'7'`, does nothing, as one that's already taken does. It would otherwise jump to the front of the kind's order. See [Ids](/docs/reference/entities#ids).
-- `entity.stats` is taken as written, not held to range, until an effect next moves it.
-- The [content checker](/docs/reference/checks) reports a kind the game doesn't declare, a `like` it doesn't declare or of another kind than `of`, and a holder in `at` that can't hold things.
+- `with.stats` is taken as written, not held to range, until an effect next moves it.
+- The [content checker](/docs/reference/checks) reports a kind the game doesn't declare, a `like` it doesn't declare or of another kind, and a holder in `at` that can't hold things.
 
 ### remove
 
 ```ts
-{ kind: 'remove', entity: 'staff:ana' }
-{ kind: 'each', of: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ kind: 'remove', entity: '$' }] }
+{ remove: 'staff:ana' }
+{ each: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ remove: '$' }] }
 ```
 
 Takes an [entity](/docs/reference/entities) out of the game, with what the save kept about it. It does nothing if the entity isn't there. Its id isn't given to anyone created later.
@@ -279,30 +285,30 @@ Nobody holds it any more, and what it [held](/docs/reference/entities#holding-th
 ### each
 
 ```ts
-{ kind: 'each', of: 'staff', effects: [{ kind: 'stat', stat: 'morale', by: -8, of: '$' }] }
-{ kind: 'each', of: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ kind: 'remove', entity: '$' }] }
-{ kind: 'each', at: 'you', of: 'food', effects: [{ kind: 'stat', stat: 'fresh', by: -1, of: '$' }] }
+{ each: 'staff', effects: [{ stat: 'morale', by: -8, of: '$' }] }
+{ each: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ remove: '$' }] }
+{ each: { of: 'food', at: 'you' }, effects: [{ stat: 'fresh', by: -1, of: '$' }] }
 ```
 
-Runs `effects` once for every [entity](/docs/reference/entities) of kind `of`, in the order they arrived, with `'$'` standing for the current one each time. With `where`, it only runs for those the condition holds for, with `'$'` again standing for the current one. Use it for upkeep, wages, a bad week, or everyone who quits.
+Runs `effects` once for every [entity](/docs/reference/entities) of the kind `each` names, in the order they arrived, with `'$'` standing for the current one each time. With `where`, it only runs for those the condition holds for, with `'$'` again standing for the current one. Use it for upkeep, wages, a bad week, or everyone who quits.
 
-It picks what it runs over as a [`Select`](/docs/reference/entities#select) does. `at` runs it over what a [holder](/docs/reference/entities#holding-things) holds (once for each thing, however many of it), and `tag` and `trait` narrow it further. With no `of`, it runs over every kind.
+In place of a kind, `each` can be a [`Select`](/docs/reference/entities#select). Its `at` runs it over what a [holder](/docs/reference/entities#holding-things) holds (once for each thing, however many of it), and `tag` and `trait` narrow it further. With no `of` in the selection, it runs over every kind.
 
 - **Who it runs for is fixed before it starts.** One created along the way isn't visited, and one removed along the way by an earlier entity's effects is skipped.
 - **`where` is tested on the state as it is when each entity comes up**, after the effects for the ones before it.
-- **`effects` are built for each entity in turn**, with `'$'` bound, against the state as it is then. They can be anything content can write, a `{ custom }` effect included. A custom effect sees the state after the entities before it, not the state the list started from. To tell it which entity it's working on, pass `with: { of: '$' }`. Every `of: '$'` inside is replaced, a `with` included, so the function gets `args.of` as `'staff:ana'`.
+- **`effects` are built for each entity in turn**, with `'$'` bound, against the state as it is then. They can be anything content can write, a call by name included. A call sees the state after the entities before it, not the state the list started from. To tell it which entity it's working on, pass `with: { of: '$' }`. Every `of: '$'` inside is replaced, a `with` included, so the function gets `args.of` as `'staff:ana'`.
 - **A nested `each`**, or a [`{ count }`](/docs/reference/conditions#count) in `where`, binds its own `'$'`. See [EntityRef](/docs/reference/entities#entityref).
 
-An effect inside that doesn't name `'$'` still runs once per entity. `{ kind: 'stat', stat: 'coins', by: -10 }` in an `each` over three members of staff takes 30 coins.
+An effect inside that doesn't name `'$'` still runs once per entity. `{ stat: 'coins', by: -10 }` in an `each` over three members of staff takes 30 coins.
 
 The [content checker](/docs/reference/checks) looks inside an `each`, with `'$'` standing for one of its kind, so a stat named on `'$'` has to belong to that kind.
 
 ### entity
 
 ```ts
-{ kind: 'entity', entity: 'food:apple', by: 2 }                       // two more apples for you
-{ kind: 'entity', entity: 'food:apple', at: 'place:larder', to: 6 }   // the larder restocked
-{ kind: 'entity', entity: 'gift:scarf', at: 'character:ava', to: 1 }  // Ava has the scarf now
+{ entity: 'food:apple', by: 2 }                       // two more apples for you
+{ entity: 'food:apple', at: 'place:larder', to: 6 }   // the larder restocked
+{ entity: 'gift:scarf', at: 'character:ava', to: 1 }  // Ava has the scarf now
 ```
 
 Changes how many of a thing a [holder](/docs/reference/entities#holding-things) holds, `by` an amount or `to` a count. `at` is `'you'` if left out: the [protagonist](/docs/reference/entities#protagonists-you-and-player) being played, or the player. It never goes below 0. A unique thing's count is 0 or 1, and giving it to one holder takes it from whoever had it.
@@ -312,9 +318,9 @@ It does nothing if the thing isn't in the game, or the holder can't hold things:
 ### move
 
 ```ts
-{ kind: 'move', entity: 'food:apple', to: 'character:ava', by: 1 }    // hand Ava an apple
-{ kind: 'move', entity: 'food:bread', from: 'place:larder', to: 'you' }
-{ kind: 'move', entity: 'gift:scarf', to: 'gift:box' }               // wrap it
+{ move: 'food:apple', to: 'character:ava', by: 1 }    // hand Ava an apple
+{ move: 'food:bread', from: 'place:larder', to: 'you' }
+{ move: 'gift:scarf', to: 'gift:box' }               // wrap it
 ```
 
 Moves a thing from one [holder](/docs/reference/entities#holding-things) `to` another. `from` is where it comes from: if it's left out, a unique thing moves from wherever it is, and anything else from `'you'`. `by` is how many: all there is, if left out. It moves at most what `from` holds, so asking for 10 apples from someone with 2 moves 2.
@@ -326,34 +332,34 @@ It does nothing when `to` can't hold things, when `from` and `to` are the same, 
 ### you
 
 ```ts
-{ kind: 'you', to: 'character:sam' }   // play as Sam
-{ kind: 'you', to: null }              // back to the player
+{ you: 'character:sam' }   // play as Sam
+{ you: null }              // back to the player
 ```
 
-Switches who `'you'` is: the [protagonist](/docs/reference/entities#protagonists-you-and-player) being played, a unique entity, kept in [`state.you`](/docs/reference/state#you). `to: null`, or `'player'`, goes back to the player. It does nothing for an entity that isn't there or can't hold things. A game with one protagonist never needs it.
+Switches who `'you'` is: the [protagonist](/docs/reference/entities#protagonists-you-and-player) being played, a unique entity, kept in [`state.you`](/docs/reference/state#you). `null`, or `'player'`, goes back to the player. It does nothing for an entity that isn't there or can't hold things. A game with one protagonist never needs it.
 
 ### notify
 
 ```ts
-{ kind: 'notify', id: 'rent', title: 'Rent is due on Friday', text: 'notice.rent', tag: 'money' }
+{ notify: 'Rent is due on Friday', id: 'rent', text: 'notice.rent', tag: 'money' }
 ```
 
-Raises a [notice](/docs/reference/notices), which is something the game tells the player outside a scene. `title` is written out, `text` is a prose key for more words, and `tag` groups notices for badges. A notice with the `id` of an earlier one replaces it as the newest, unseen. With no `id`, one is made up. Only the newest [`NOTICES_KEPT`](/docs/reference/notices#notices_kept) are kept.
+Raises a [notice](/docs/reference/notices), which is something the game tells the player outside a scene. Its title, in `notify`, is written out, `text` is a prose key for more words, and `tag` groups notices for badges. A notice with the `id` of an earlier one replaces it as the newest, unseen. With no `id`, one is made up. Only the newest [`NOTICES_KEPT`](/docs/reference/notices#notices_kept) are kept.
 
 ### audio
 
 ```ts
-{ kind: 'audio', channel: 'music', to: 'radio' }
+{ audio: 'music', to: 'radio' }
 ```
 
-Puts a background [channel](/docs/reference/audio#channels) `to` a track or playlist and keeps it in the save, in `state.audio.channels`. It plays over the place's audio and the game's default, but an open scene that names the same channel still wins while it's open. See [what plays on a background channel](/docs/reference/audio#what-plays-on-a-background-channel).
+Puts the background [channel](/docs/reference/audio#channels) that `audio` names `to` a track or playlist and keeps it in the save, in `state.audio.channels`. It plays over the place's audio and the game's default, but an open scene that names the same channel still wins while it's open. See [what plays on a background channel](/docs/reference/audio#what-plays-on-a-background-channel).
 
 - **`to: null`** silences the channel, place and default included.
 - **Leave `to` out** to hand the channel back, so the place's audio or the game's default plays again.
 
 ```ts
-{ kind: 'audio', channel: 'music', to: null }  // the music stops
-{ kind: 'audio', channel: 'music' }            // back to whatever the flat or the default plays
+{ audio: 'music', to: null }  // the music stops
+{ audio: 'music' }            // back to whatever the flat or the default plays
 ```
 
 The loader reports an unknown track or channel, a cue channel such as `sfx`, and a sound effect's track put on a background channel.
@@ -361,7 +367,7 @@ The loader reports an unknown track or channel, a cue channel such as `sfx`, and
 ### sound
 
 ```ts
-{ kind: 'sound', track: 'knock' }
+{ sound: 'knock' }
 ```
 
 Plays a [track](/docs/reference/audio#trackdef) once, on its own channel (`sfx` unless the track says otherwise). The state keeps the last 20 in `state.audio.cues`, each with a running count, and [`view.audio.cues`](/docs/reference/audio#sounds-and-voices) gives each a key so a player plays it once. The loader reports an unknown track, a playlist, and a track on a background channel.
@@ -369,33 +375,21 @@ Plays a [track](/docs/reference/audio#trackdef) once, on its own channel (`sfx` 
 ### minigame
 
 ```ts
-{ kind: 'minigame', minigame: 'arrows' }
+{ minigame: 'arrows' }
 ```
 
 Starts a [minigame](/docs/reference/minigames) in its `start` state, with its variables at their starting values. A minigame already running is dropped. Until it ends, the view draws it over the scene or the room, and every command but its own (and `dismiss` and `setting`) is refused with `Finish this first.`
 
-It also adds 1 to the kv key `minigame:<id>`, which counts how many times the minigame has started. The [content checker](/docs/reference/checks) reports an unknown minigame.
-
-### minigameVar
-
-```ts
-{ kind: 'minigameVar', key: 'score', by: 1 }
-{ kind: 'minigameVar', key: 'round', to: 0 }
-{ kind: 'minigameVar', key: 'arrow', random: [1, 4] }
-```
-
-Changes a variable of the [minigame](/docs/reference/minigames#its-variables) being played: sets it `to` a value, changes it `by` an amount, or sets it to a whole number drawn from `random`, both ends included. The draw comes from the save's seed, so it's the same every time the same commands are played. With no minigame running, it does nothing.
-
-The checker reports a variable that no minigame declares in its `vars`, and one a minigame uses but doesn't declare itself.
+It also adds 1 to the kv key `minigame:<id>`, which counts how many times the minigame has started. The [content checker](/docs/reference/checks) reports an unknown minigame. Its variables are written with [`kv`](#whose-key-it-is) and `of: 'minigame'`.
 
 ### timer
 
 ```ts
-{ kind: 'timer', timer: 'phone' }             // start it, for its own ms
-{ kind: 'timer', timer: 'phone', to: 5000 }   // start it for 5 seconds
-{ kind: 'timer', timer: 'phone', to: null }   // stop it; its effects don't run
-{ kind: 'timer', timer: 'phone', by: 5000 }   // 5 more seconds
-{ kind: 'timer', timer: 'phone', by: -2000 }  // 2 seconds fewer
+{ timer: 'phone' }             // start it, for its own ms
+{ timer: 'phone', to: 5000 }   // start it for 5 seconds
+{ timer: 'phone', to: null }   // stop it; its effects don't run
+{ timer: 'phone', by: 5000 }   // 5 more seconds
+{ timer: 'phone', by: -2000 }  // 2 seconds fewer
 ```
 
 Starts, stops or changes one of the game's [timers](/docs/reference/timers), named by its id in `timers`. Starting one that's already running starts it again from the top. `to` sets how long it runs this time instead of its `ms`. `to: null` stops it without running its effects, so answering the phone stops the missed call. `by` adds milliseconds to a running timer (a negative `by` takes them away, down to 0) and does nothing to one that isn't running. A timer at 0 runs out on the next [`tick`](/docs/reference/commands#tick).
@@ -405,9 +399,9 @@ When a tick runs a timer out, the timer stops and its `effects` run. See [When a
 ### panel
 
 ```ts
-{ kind: 'panel', panel: 'shop', with: { vendor: 'counter' } }
-{ kind: 'panel', panel: 'jobs' }
-{ kind: 'panel', panel: null }
+{ panel: 'shop', with: { vendor: 'counter' } }
+{ panel: 'jobs' }
+{ panel: null }
 ```
 
 Opens a [panel](/docs/reference/panels) over the story by name, such as a shop's counter or a job board, with what it needs in `with`. A panel already open is replaced, and `panel: null` closes it. The UI decides what each name draws. The shop and jobs plugins write these for you with [`openShop`](/docs/plugins/shop#opening-a-counter) and [`openJobs`](/docs/plugins/jobs#opening-the-job-board).
@@ -419,12 +413,12 @@ The checker allows any name. A plugin that knows a panel checks its `with`, so t
 ### roll
 
 ```ts
-{ kind: 'roll', key: 'skim', dice: '2d6', against: 8 }
-{ kind: 'roll', key: 'climb', dice: '1d20', plus: { stat: 'strength' }, against: 12 }
-{ kind: 'roll', key: 'ducks', dice: { count: 1, sides: 6 }, plus: 2 }
+{ roll: 'skim', dice: '2d6', against: 8 }
+{ roll: 'climb', dice: '1d20', plus: { stat: 'strength' }, against: 12 }
+{ roll: 'ducks', dice: { count: 1, sides: 6 }, plus: 2 }
 ```
 
-Throws dice and keeps the total in the [kv store](/docs/reference/state#kv) under `key`, so `{ kv: 'skim', gte: 8 }` tests it and `{{skim}}` prints it in prose. The roll itself is recorded too: the [`roll` condition](/docs/reference/conditions#roll) reads whether it passed, and [`view.rolls`](/docs/reference/view#rolls) gives a UI the faces to show.
+Throws dice and keeps the total in the [kv store](/docs/reference/state#kv) under the key that `roll` names, so `{ kv: 'skim', gte: 8 }` tests it and `{{skim}}` prints it in prose. The roll itself is recorded too: the [`roll` condition](/docs/reference/conditions#roll) reads whether it passed, and [`view.rolls`](/docs/reference/view#rolls) gives a UI the faces to show.
 
 - **`dice`** is notation, `'2d6'`, `'1d20'`, `'d100'` or `'2d6+1'`, or an object, `{ count: 2, sides: 6 }`. A notation's `+1` or `-1` is added to the total.
 - **`plus`** adds a number, or the player's stat as [`statValue`](/docs/reference/stats#statvalue) reads it (modifiers included): `plus: { stat: 'strength' }`.
@@ -438,44 +432,40 @@ The [content checker](/docs/reference/checks#in-an-effect) reports dice it can't
 
 ## Computed effects
 
-Most effects are fixed data. When one has to be worked out from the state, such as "one more than the counter is now" or "the next stage of this ladder", declare a custom effect on the game and name it in the content:
+Most effects are fixed data. When one has to be worked out from the state, such as "one more than the counter is now" or "the next stage of this ladder", declare an effect in the game's [`rules`](/docs/reference/rules) and call it with `game/` in front:
 
 ```ts
-type CustomEffect = (state: GameState, args: PluginArgs, context: CustomContext) => EffectRef[]
-type EffectRef = Effect | { custom: string; with?: Record<string, unknown> } | PluginCall
+type CustomEffect = (state: GameState, args: PluginArgs, context: CustomContext) => Effect[]
 ```
 
 ```ts
-import type { Custom } from '@ifloom/engine'
+import type { GameRules } from '@ifloom/engine'
 
-// goes on the game as `custom`
-const custom: Custom = {
+export const rules: GameRules = {
   effects: {
     bumpVisits: (state, args) => {
       const now = Number(state.storylines.ava?.kv.visits ?? 0)
-      return [{ kind: 'storylineKv', storyline: 'ava', key: 'visits', to: now + Number(args.by ?? 1) }]
+      return [{ kv: 'visits', of: 'storyline:ava', to: now + Number(args.by ?? 1) }]
     },
   },
 }
 ```
 
 ```ts
-effects: [{ custom: 'bumpVisits', with: { by: 1 } }, { kind: 'scene', scene: null }]
+effects: [{ 'game/bumpVisits': { by: 1 } }, { scene: null }]
 ```
 
-A custom effect runs in its turn. Its function is called with the state the effects before it left, and what it returns applies there and then. It can return anything content can write: plain effects, a plugin's effect such as `{ 'quests/start': { quest: 'letter' } }`, or another of the game's own custom effects, which runs in its turn too. `with` is passed as `args`, or `{}` when left out. Your [content](/docs/reference/loader#content) can ship custom effects in its `custom.effects`. See [Custom functions](/docs/reference/custom) for the other kinds.
+The game's effect runs in its turn. Its function is called with the state the effects before it left, and what it returns applies there and then. It can return anything content can write: plain effects, a plugin's effect such as `{ 'quests/start': { quest: 'letter' } }`, or another of the game's own, which runs in its turn too. The arguments are passed as `args`, or `{}` for `true`. See [Calls by name](/docs/reference/custom) for conditions and values worked out the same way.
 
-You write a [plugin](/docs/reference/plugins)'s effect the same way, with the plugin's id in front: `{ custom: 'quests/start', with: { quest: 'letter' } }`, or in [short](/docs/reference/custom#plugincall), `{ 'quests/start': { quest: 'letter' } }`. Either kind becomes a [`custom`](#custom) effect that runs in its turn. See [Effects run in order](/docs/reference/plugins#effects-run-in-order).
+A [plugin](/docs/reference/plugins)'s effect is called the same way, with the plugin's id in front: `{ 'quests/start': { quest: 'letter' } }`. See [Effects run in order](/docs/reference/plugins#effects-run-in-order).
 
 **Gotchas.**
-- `{ custom }` works in the choices of a [data scene](/docs/reference/scenes#datascene), in an [activity](/docs/reference/actions#activitydef)'s `effects`, in a [trigger](/docs/reference/triggers)'s `effects`, in a thing's [`inventory/usable`](/docs/plugins/inventory) trait, inside an `each`, and in what a custom effect returns. The [shorthand](/docs/reference/custom#plugincall) works in all the same places, and `rules.onTurn`'s `apply` takes either. Neither is a plain `Effect`, so a list that takes only those, such as a plugin's `effectsOf`, needs the long form.
-- A button's price, a guard and a lock see a custom effect worked out against the state on screen, before anything applies ([`previewEffects`](/docs/reference/custom#previeweffects)). In play it's worked out again in its turn.
-- Custom effects that return custom effects run up to 10 deep. One that names itself, or a loop of them, does nothing past that.
-- A name that neither the game nor its plugins declare adds nothing. The [content checker](/docs/reference/checks) reports it.
-- To flatten a list yourself, in a custom runtime for example, use [`buildEffects`](/docs/reference/custom#buildeffects).
+- A button's price, a guard and a lock see a computed effect worked out against the state on screen, before anything applies ([`previewEffects`](/docs/reference/custom#previeweffects)). In play it's worked out again in its turn.
+- Effects that return calls to the game's effects run up to 10 deep. One that names itself, or a loop of them, does nothing past that.
+- A name that neither the game nor its plugins declare does nothing. The [content checker](/docs/reference/checks) reports it.
 
 ## See it in an example
 
-- The Corner Café: the `endWeek` activity in [`examples/cafe/src/world/activities.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/activities.ts) runs two custom effects, then `each` over the staff to lower their morale, `remove` on anyone below 20, and `{ kind: 'turn' }`. The `hiring` scene's choices `create` new staff.
-- The Letter: in [`examples/novel/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/novel/src/story), `{ kind: 'kv', key: 'fibs', by: 1 }` counts a lie, and the choices in the first two chapters end with `{ kind: 'turn' }` and a `scene` effect.
-- Small Town: in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story), the café's `sit` activity draws a storylet with `{ kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }`, the park's `arrows` activity starts a minigame, its `skim` activity rolls two dice against 8, and Ava's choices raise her friendship with `{ kind: 'stat', stat: 'friendship', by: 5, of: character('ava') }`.
+- The Corner Café: the `end-week` action in [`examples/cafe/src/world/actions.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/actions.ts) runs two of the game's own effects, then `each` over the staff to lower their morale, `remove` on anyone below 20, and `{ turn: true }`. The `hiring` scene's choices `create` new staff.
+- The Letter: in [`examples/novel/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/novel/src/story), `{ kv: 'fibs', by: 1 }` counts a lie, and the choices in the first two chapters end with `{ turn: true }` and a `scene` effect.
+- Small Town: in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story), the café's `sit` action draws a storylet with `{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }`, the park's `arrows` action starts a minigame, its `skim` action rolls two dice against 8, and Ava's choices raise her friendship with `{ stat: 'friendship', by: 5, of: character('ava') }`.

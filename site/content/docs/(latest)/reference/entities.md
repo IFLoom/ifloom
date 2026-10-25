@@ -100,9 +100,9 @@ statValue(state, game, 'skill', 'staff:ana')  // 5, from her declaration
 Content names her `'staff:ana'`:
 
 ```ts
-{ kind: 'stat', stat: 'quality', by: 1, of: 'dish:soup' }          // better ingredients
+{ stat: 'quality', by: 1, of: 'dish:soup' }          // better ingredients
 { stat: 'quality', of: 'dish:soup', lt: 5 }                         // there is still room to improve it
-{ kind: 'each', of: 'staff', effects: [{ kind: 'stat', stat: 'morale', by: -8, of: '$' }] }   // a long week for everyone
+{ each: 'staff', effects: [{ stat: 'morale', by: -8, of: '$' }] }   // a long week for everyone
 { count: 'staff', where: { stat: 'morale', of: '$', gte: 75 }, gte: 2 }                   // two of them are happy
 ```
 
@@ -134,7 +134,7 @@ type KindDef = {
 | `traits` | `{}` | [Traits](#traits) every entity of the kind has, by trait id. They're defaults: an entity's own trait of the same id is laid over them. |
 | `ui` | none | [Presentation hints](/docs/reference/ui-hints) for each of its entities, under each one's own, such as the React UI's [`hue`](/docs/react/hints#hue). The engine carries them to the view as written. |
 
-Kinds go in [`Game.kinds`](/docs/reference/game#game). You can declare them on the base you give [`loadGame`](/docs/reference/loader#loadgame), in your [content](/docs/reference/loader#content)'s `kinds`, or both, and a [plugin](/docs/reference/plugins#kinds-and-entities) can bring its own `kinds`. They merge by id, the plugins' first, then the base's, then each pack's. A later kind replaces an earlier one with the same id. When it replaces a plugin's kind, the fields it leaves out keep the plugin's, so a game can reword the cast's kind without listing every character.
+Kinds go in [`Game.kinds`](/docs/reference/game#game). You declare them in your [content](/docs/reference/loader#content)'s `kinds`, and a [plugin](/docs/reference/plugins#kinds-and-entities) can bring its own in its `content`. They merge by id, the plugins' first, then your content's, then each pack's. A later kind replaces an earlier one with the same id. When it replaces a plugin's kind, the fields it leaves out keep the plugin's, so a game can reword the cast's kind without listing every character.
 
 ## EntityDef
 
@@ -172,7 +172,7 @@ One entity that exists from the start of the game, and stays until a [`remove`](
 | `traits` | Its [traits](#traits), by trait id, such as `{ 'laundry/washable': { temp: 30 } }`. |
 | `ui` | Its [presentation hints](/docs/reference/ui-hints), laid over its kind's field by field and carried to the view as written (see [`entityUi`](/docs/reference/ui-hints#entityui)). |
 
-Entities go in [`Game.entities`](/docs/reference/game#game), on the base or in your content. They merge by kind and id (`'staff:ana'`), the base's first. A pack's entity replaces one with the same kind and id, whole.
+Entities go in [`Game.entities`](/docs/reference/game#game), from your content. They merge by kind and id (`'staff:ana'`), in the order you list your content. A pack's entity replaces one with the same kind and id, whole.
 
 A [plugin](/docs/reference/plugins#kinds-and-entities)'s `entities` adds more, made from its content once the content and packs are merged. If the game declares one itself with the same kind and id, the game's wins, whole. The rest come after the game's own, and the loader checks them like any declared entity. Only [`loadGame`](/docs/reference/loader#loadgame) asks plugins for entities, so a game built by hand lists them in `game.entities` itself.
 
@@ -217,28 +217,23 @@ Names an entity in content, as its kind, a colon and its id: `'staff:ana'` or `'
 **`'$'` is the current one.** Inside an [`each`](/docs/reference/effects#each) effect's `where` and `effects`, and inside a [`{ count }`](/docs/reference/conditions#count) condition's `where`, `of: '$'` means the entity being looked at, one after another. The same goes for a kind's `listed` and `flags`, an entity's `visible` and the `visible` of a stat declared `of` a kind, which the [view](/docs/reference/view#entitiesview-and-entityview) asks for each entity. Anywhere else, `'$'` names nothing, so an effect with it does nothing and a `{ stat }` condition with it fails.
 
 ```ts
-{ kind: 'each', of: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ kind: 'remove', entity: '$' }] }
+{ each: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ remove: '$' }] }
 ```
 
 A nested `each` or `count` binds its own `'$'`. Inside it, `'$'` is the inner one, and there's no way to name the outer one:
 
 ```ts
 // For each member of staff: is anyone at all skilled enough to learn from? The inner $ is the inner one.
-{
-  kind: 'each',
-  of: 'staff',
-  where: { count: 'staff', where: { stat: 'skill', of: '$', gte: 4 } },
-  effects: [{ kind: 'kv', key: 'learning', to: true, of: '$' }],
-}
+{ each: 'staff', where: { count: 'staff', where: { stat: 'skill', of: '$', gte: 4 } }, effects: [{ kv: 'learning', to: true, of: '$' }] }
 ```
 
-**Where `'$'` is replaced.** It's replaced where it's the value of an `of`, `entity`, `at` or `like` key, or a `move`'s `from` or `to`, at any depth, and anywhere in a plugin or custom call's arguments. That's how a custom function or a plugin learns which entity it's working on. `{ custom: 'payBonus', with: { of: '$' } }` is called with `args.of` set to `'staff:ana'`, then `'staff:#1'`, and so on, and the cast lists a character once `{ 'cast/met': { character: '$' } }` holds for them. A `'$'` under any other key, such as a kv condition's `is`, is left as it is.
+**Where `'$'` is replaced.** It's replaced where it's the value of an `of`, `entity`, `at` or `like` key, the target of a `remove`, `move` or `you` effect (`{ remove: '$' }`), or a `move`'s `from` or `to`, at any depth, and anywhere in a call's arguments, a plugin's or the game's own, or in what a `create` is made `with`. That's how one of the game's functions or a plugin learns which entity it's working on. `{ 'game/payBonus': { of: '$' } }` is called with `args.of` set to `'staff:ana'`, then `'staff:#1'`, and so on, and the cast lists a character once `{ 'cast/met': { character: '$' } }` holds for them. A `'$'` under any other key, such as a kv condition's `is`, is left as it is.
 
 ## Traits
 
 A trait is a named piece of data an entity carries, such as "wash this at 30 degrees". The engine doesn't know what any trait means. A [plugin](/docs/reference/plugins#traits) declares the traits it reads and gives them meaning, and your game can keep traits of its own. Stats and kv stay as they are: a trait is for what an entity *is*, written in content, never for what changes in play.
 
-A trait's id says whose it is. `laundry/washable` belongs to a plugin called `laundry`, and an id with no `/`, such as `cosy`, is your game's own, for your [custom functions](/docs/reference/custom) to read. The first-party plugins' traits are the [cast](/docs/plugins/cast#person-1)'s `cast/person` (who a character is: their schedule, talk and call), the [wardrobe](/docs/plugins/wardrobe#the-wearable-trait)'s `wardrobe/wearable`, the [inventory](/docs/plugins/inventory#usable)'s `inventory/usable` and the [shop](/docs/plugins/shop#the-sellable-trait)'s `shop/sellable`.
+A trait's id says whose it is. `laundry/washable` belongs to a plugin called `laundry`, and an id with no `/`, such as `cosy`, is your game's own, for the game's own [code](/docs/reference/rules) to read. The first-party plugins' traits are the [cast](/docs/plugins/cast#person-1)'s `cast/person` (who a character is: their schedule, talk and call), the [wardrobe](/docs/plugins/wardrobe#the-wearable-trait)'s `wardrobe/wearable`, the [inventory](/docs/plugins/inventory#usable)'s `inventory/usable` and the [shop](/docs/plugins/shop#the-sellable-trait)'s `shop/sellable`.
 
 You can write a trait in three places:
 
@@ -381,8 +376,8 @@ In play, content changes and asks about holdings with these helpers, or the effe
 ```ts
 import { give, holding, move, take } from '@ifloom/engine'
 
-give('food:apple', 2)                           // { kind: 'entity', entity: 'food:apple', by: 2 }: two more for you
-take('food:apple')                              // { kind: 'entity', entity: 'food:apple', by: -1 }
+give('food:apple', 2)                           // { entity: 'food:apple', by: 2 }: two more for you
+take('food:apple')                              // { entity: 'food:apple', by: -1 }
 move('food:apple', 'place:larder', { by: 1 })   // one back in the larder
 move('gift:scarf', 'character:ava')             // a unique thing moves from wherever it is
 holding('food:apple', 3)                        // { entity: 'food:apple', at: 'you', gte: 3 }
@@ -396,7 +391,7 @@ The effects are [`entity`](/docs/reference/effects#entity) and [`move`](/docs/re
 
 **Gotchas.**
 - **An effect that can't happen does nothing.** Giving to a holder that isn't there, or to an entity whose kind isn't unique, changes nothing. A `move` moves at most what's there. The [content checker](/docs/reference/checks#holders) reports the holders it can tell are wrong.
-- **Giving a unique thing takes it.** `{ kind: 'entity', entity: 'gift:scarf', at: 'character:ava', to: 1 }` takes the scarf from whoever had it. A unique thing's count is 0 or 1.
+- **Giving a unique thing takes it.** `{ entity: 'gift:scarf', at: 'character:ava', to: 1 }` takes the scarf from whoever had it. A unique thing's count is 0 or 1.
 - **Holding isn't listing.** A kind with `listed: false` still shows in [`view.held`](/docs/reference/view#held) when you hold one of it. An entity's `visible` does hide it there too.
 
 ### Notes, photos and other things made in play
@@ -413,10 +408,11 @@ export const notes: Content = {
   ],
   entities: [{ id: 'welcome', of: 'note', name: 'Welcome note', desc: 'Bins go out Thursday. — Sam, flat 2' }],
   triggers: [{ id: 'welcome', when: { seen: 'street' }, effects: [give('note:welcome')] }],
-  activities: [
+  actions: [
     {
       id: 'photo-pier',
-      effects: [{ kind: 'create', of: 'photo', entity: { id: 'pier', name: 'The pier', desc: 'Gulls, and the end of the pier.', image: 'photo/pier.jpg' }, at: 'player' }],
+      label: 'Take a photo of the pier',
+      effects: [{ create: 'photo', with: { id: 'pier', name: 'The pier', desc: 'Gulls, and the end of the pier.', image: 'photo/pier.jpg' }, at: 'player' }],
     },
   ],
 }
@@ -436,8 +432,8 @@ A UI lists them by kind. The [devices plugin](/docs/plugins/devices#section)'s `
 A game where the player plays more than one person, such as two siblings taking turns, switches who `'you'` is with the [`you`](/docs/reference/effects#you) effect:
 
 ```ts
-{ kind: 'you', to: 'character:sam' }   // play as Sam
-{ kind: 'you', to: null }              // back to the player
+{ you: 'character:sam' }   // play as Sam
+{ you: null }              // back to the player
 ```
 
 The protagonist is a unique entity, kept in [`state.you`](/docs/reference/state#you). While Sam is played:
@@ -453,7 +449,7 @@ A game with one protagonist never runs a `you` effect, and `'you'` and `of: 'you
 A thing with state of its own, such as a cake that goes stale, is made in play with [`create`](/docs/reference/effects#create) and `like`. It reads whatever it isn't given (its name, description, picture, tags, stats, kv and traits) from the entity it was made like, so the save keeps only a reference:
 
 ```ts
-{ kind: 'create', like: 'food:cake', at: 'you', entity: { stats: { fresh: 3 } } }
+{ create: 'food', like: 'food:cake', with: { stats: { fresh: 3 } }, at: 'you' }
 ```
 
 The new entity is a `food` named "Cake", held by you, with a `fresh` of its own. Make things like a declared entity you keep as a pattern, held by nobody. A copy reads the pattern as it reads now, so if play changes the pattern's stats, copies that never set their own follow it.
@@ -497,7 +493,7 @@ import { applyEffects, entitiesOf } from '@ifloom/engine'
 
 entitiesOf(save, game, 'staff')   // ['staff:ana', 'staff:ben']: Ben is there, record or not
 
-const left = applyEffects(save, game, [{ kind: 'remove', entity: 'staff:ben' }])
+const left = applyEffects(save, game, [{ remove: 'staff:ben' }])
 left.removed                      // ['staff:ben']
 entitiesOf(left, game, 'staff')   // ['staff:ana']: he stays gone
 ```
@@ -513,7 +509,7 @@ Saves made before version 15 copied every declared entity's name and starting nu
 
 ## Functions
 
-The effects, conditions and view use these. A [custom function](/docs/reference/custom) or a [plugin](/docs/reference/plugins) can call them directly.
+The effects, conditions and view use these. The game's own [functions](/docs/reference/custom) and a [plugin](/docs/reference/plugins) can call them directly.
 
 ### entitiesOf
 
@@ -529,7 +525,7 @@ import { entitiesOf } from '@ifloom/engine'
 entitiesOf(state, game, 'staff')   // ['staff:ana', 'staff:#1']
 ```
 
-The café's custom effects use it with [`statValue`](/docs/reference/stats#statvalue) to add up a stat over a kind:
+The café's own effects, in its `rules`, use it with [`statValue`](/docs/reference/stats#statvalue) to add up a stat over a kind:
 
 ```ts
 import { entitiesOf, statValue, type Game, type GameState } from '@ifloom/engine'
@@ -538,8 +534,8 @@ function total(state: GameState, game: Game, kind: string, stat: string): number
   return entitiesOf(state, game, kind).reduce((sum, ref) => sum + statValue(state, game, stat, ref), 0)
 }
 
-// goes on the game as custom.effects
-wages: (state, _args, { game }) => [{ kind: 'stat', stat: 'coins', by: -total(state, game, 'staff', 'wage') }],
+// in the café's rules.effects, called as { 'game/wages': true }
+wages: (state, _args, { game }) => [{ stat: 'coins', by: -total(state, game, 'staff', 'wage') }],
 ```
 
 ### entityOf
@@ -735,7 +731,7 @@ references: {
 function bindCurrent<T extends Condition | EffectRef | readonly EffectRef[] | undefined>(value: T, ref: EntityRef): T
 ```
 
-Returns a copy of a condition or of effects, with every `of`, `entity`, `at` and `like` that is `'$'` set to `ref` (and a `move`'s `from` and `to`), at any depth, and every `'$'` in a plugin or custom call's arguments. This is how `each` and `count` run their `where` and `effects` for each entity, and how the view asks a kind's `listed`. A plugin or custom function can use it to run content written for "this one" on a particular entity:
+Returns a copy of a condition or of effects, with every `of`, `entity`, `at` and `like` that is `'$'` set to `ref` (and a `remove`, `move` or `you` effect's target, and a `move`'s `from` and `to`), at any depth, and every `'$'` in a call's arguments or a `create`'s `with`. A nested `each`'s effects and a nested `count`'s `where` keep their own `'$'`. This is how `each` and `count` run their `where` and `effects` for each entity, and how the view asks a kind's `listed`. A plugin or one of the game's functions can use it to run content written for "this one" on a particular entity:
 
 ```ts
 import { bindCurrent, holds } from '@ifloom/engine'
@@ -853,13 +849,13 @@ Every entity in the game, of every kind: the declared ones as your content lists
 ## Gotchas
 
 - **Stat ids are shared.** A stat's id is unique across the whole game, counting the player's stats and every kind's. The café can't have both a player's `skill` and a staff `skill`. A `stat` effect or a `{ stat }` condition finds its range, format and levels by id alone.
-- **A stat named on the wrong owner does nothing useful.** At run time, `{ kind: 'stat', stat: 'coins', by: 5, of: 'staff:ana' }` gives Ana a `coins` of her own, which no view shows. The [content checker](/docs/reference/checks) reports it, and a kind the game doesn't declare.
+- **A stat named on the wrong owner does nothing useful.** At run time, `{ stat: 'coins', by: 5, of: 'staff:ana' }` gives Ana a `coins` of her own, which no view shows. The [content checker](/docs/reference/checks) reports it, and a kind the game doesn't declare.
 - **A stat with a moving ceiling** (`max: { value }`) is worked out against the whole state. It's the same for every entity, not worked out for the one it's on.
 - **What a declaration or a `create` gives isn't held to range.** `stats: { skill: 20 }` on a stat with `max: 10` starts at 20, and the next effect that moves it brings it back to 10.
 
 ## See it in an example
 
-- The Corner Café: [`examples/cafe/src/world/staff.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/staff.ts) and [`examples/cafe/src/world/menu.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/menu.ts) declare the kinds `staff` and `dish` and start with Ana, cheese on toast and soup as entities, each with a description. [`examples/cafe/src/rules.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/rules.ts) adds up a stat over a kind with `entitiesOf` and `statValue` in its `total` helper. The `improveSoup` activity names one entity as `'dish:soup'`.
+- The Corner Café: [`examples/cafe/src/world/staff.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/staff.ts) and [`examples/cafe/src/world/menu.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/menu.ts) declare the kinds `staff` and `dish` and start with Ana, cheese on toast and soup as entities, each with a description. [`examples/cafe/src/rules.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/rules.ts) adds up a stat over a kind with `entitiesOf` and `statValue` in its `total` helper. The `soup` action in [`examples/cafe/src/world/actions.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/actions.ts) names one entity as `'dish:soup'`.
 - Small Town: the cast's characters are entities of the kind `character`, listed in the view once the player has met them.
 - Small Town: in [`examples/showcase/src/story/ava.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/ava.ts), the river shell is an entity of the unique kind `keepsake`. You pick it up by the river with `give`, and give it to Ava at the café with `move`; the café scene says so once `{ entity: 'keepsake:shell', at: 'character:ava' }` holds.
 - Small Town: the park's visitors in [`examples/showcase/src/story/park.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/park.ts) are entities of the kind `visitor`, made by the generators plugin and cleared each day with `each` and `remove`.

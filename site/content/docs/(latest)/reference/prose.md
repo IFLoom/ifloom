@@ -88,7 +88,7 @@ The members counted are the ones left after a [`variants` block](/docs/reference
 
 Content or a pack that adds to a list adds its members with their weights. The [content checker](/docs/reference/checks) reports a weight of 0 or less as `"…" has a weight of …; a weight must be above 0`, against `variants <name>`.
 
-**Gotcha.** The store needs the game, because `{{v:name}}` reads `game.custom.values` and the game's plugins. It keeps the game by reference, so declare the game first and set `prose` on it afterwards, as above. `loadGame` does this for you.
+**Gotcha.** The store needs the game, because `{{v:game/name}}` reads the game's [`rules.values`](/docs/reference/custom#values) and its plugins' values. It keeps the game by reference, so declare the game first and set `prose` on it afterwards, as above. `loadGame` does this for you.
 
 ## Tokens
 
@@ -96,22 +96,23 @@ A line of prose can carry tokens, which are filled in for the save when the line
 
 | Token | Becomes |
 |---|---|
-| `{{playerName}}` | The key `playerName` in the game's [kv store](/docs/reference/state#kv), when it's a string or a number. Any name works the same way, so `{{catName}}` is `state.kv.catName`. |
-| `{{n:ava.visits}}` | The counter `visits` on storyline `ava` ([`count`](/docs/reference/progress#counters)), or 0 if unset. |
-| `{{v:coffeePrice}}` | The game's [custom value](/docs/reference/custom#values) `coffeePrice`, as text. |
+| `{{playerName}}` | The key `playerName` in the player's [kv store](/docs/reference/state#kv), when it's a string or a number. Any name works the same way, so `{{catName}}` is `state.kv.catName`. |
+| `{{kv:playerName}}` | The same, written out. |
+| `{{kv:visits of=storyline:ava}}` | The key `visits` in another kv store, named as the [`kv` condition's `of`](/docs/reference/conditions#kv) names it: a storyline's (`of=storyline:ava`), the running minigame's (`of=minigame`), or an entity's (`of=character:ava`, `of=you`). |
+| `{{v:game/coffeePrice}}` | The game's own [value](/docs/reference/custom#values) `coffeePrice`, from its `rules.values`, as text. |
 | `{{v:quests/updates}}` | The value `updates` of the [plugin](/docs/reference/plugins#naming) `quests`, as text. |
 | `{{v:messages/unread channel=texts}}` | A value asked with arguments, here `{ channel: 'texts' }`. |
 
-`A coffee is {{v:coffeePrice}} today, {{playerName}}.`
+`A coffee is {{v:game/coffeePrice}} today, {{playerName}}.`
 
 The engine has no player name of its own. A game that wants one sets a kv key, with an [input](/docs/reference/inputs) or in the `kv` passed to [`startingState`](/docs/reference/commands#startingstate), and prose reads it like any other.
 
 **Gotchas:**
-- A `{{name}}` whose key is unset, or is `true` or `false`, is left in place, braces and all. Set the key before the line is shown, or keep the line behind a [`{ kv }`](/docs/reference/conditions#kv) condition.
+- A `{{name}}` or `{{kv:…}}` whose key is unset, or is `true` or `false`, is left in place, braces and all. Set the key before the line is shown, or keep the line behind a [`{ kv }`](/docs/reference/conditions#kv) condition.
 - A key in a token is letters, digits and `_`, and can't start with a digit. A key named `cat-name` can be set but can't be printed this way.
 - A `{{v:…}}` naming a value the game doesn't declare is left in place, so the missing name shows on screen instead of vanishing.
-- In `{{n:storyline.key}}`, the storyline id is letters, digits, `_` and `-`, and the key is letters, digits and `_`.
-- A `{{v:…}}` name is letters, digits, `_` and `-`. A plugin value is the plugin's id (letters, digits and `-`), a `/`, and such a name. Arguments follow the name as `key=value`, separated by spaces, as in `{{v:messages/unread channel=texts}}`. A number or `true`/`false` is passed as one, anything else as text. Anything else isn't a token and is left as written.
+- In `{{kv:key of=…}}`, `of` comes after the key with a space between, and the store it names has no spaces in it. An `of` naming an entity that isn't there leaves the token in place.
+- A `{{v:…}}` name is the plugin's id (letters, digits and `-`), or `game` for the game's own, a `/`, and the value's name (letters, digits, `_` and `-`). A name with no `/` in front is left in place. Arguments follow the name as `key=value`, separated by spaces, as in `{{v:messages/unread channel=texts}}`. A number or `true`/`false` is passed as one, anything else as text. Anything else isn't a token and is left as written.
 - The pronoun forms on a [cast](/docs/plugins/cast#person-1) character (`pronouns`) aren't tokens. A game that wants them substitutes them itself.
 
 ## fillTokens
@@ -120,12 +121,12 @@ The engine has no player name of its own. A game that wants one sets a kv key, w
 function fillTokens(text: string, state: GameState, game: Game): string
 ```
 
-Fills in the [tokens](#tokens) in one string. `proseStore` calls it on every line. Call it yourself for text that doesn't come from the store, such as an activity's label, a phone message or a custom panel.
+Fills in the [tokens](#tokens) in one string. `proseStore` calls it on every line. Call it yourself for text that doesn't come from the store, such as an action's label, a phone message or a panel of your own.
 
 ```ts
 import { fillTokens } from '@ifloom/engine'
 
-fillTokens('{{playerName}} has been here {{n:ava.visits}} times.', state, game)
+fillTokens('{{playerName}} has been here {{kv:visits of=storyline:ava}} times.', state, game)
 // 'Sam has been here 4 times.'
 ```
 
@@ -151,22 +152,22 @@ The text at a prose key is split into paragraphs on blank lines, and each paragr
 
 | Write | Beat |
 |---|---|
-| Plain paragraph | `{ kind: 'text', text }` |
-| `> A thought, in your own head.` | `{ kind: 'mono', text }`. The `> ` is only removed from the start of the paragraph. |
-| `Ava: "New beans this week."` | `{ kind: 'say', who: 'character', text }` |
-| `You: "Just a coffee, then."` | `{ kind: 'say', who: 'player', text }` |
+| Plain paragraph | `{ type: 'text', text }` |
+| `> A thought, in your own head.` | `{ type: 'mono', text }`. The `> ` is only removed from the start of the paragraph. |
+| `Ava: "New beans this week."` | `{ type: 'say', who: 'character', text }` |
+| `You: "Just a coffee, then."` | `{ type: 'say', who: 'player', text }` |
 | `"Anything else?"` (a bare quote) | `say`, alternating (see below). |
-| `[[img:place/market]]` | `{ kind: 'image', size: 'inline', src }` |
-| `[[wide:scene/market-morning\|The market at seven]]` | `{ kind: 'image', size: 'wide', src, alt }` |
+| `[[img:place/market]]` | `{ type: 'image', size: 'inline', src }` |
+| `[[wide:scene/market-morning\|The market at seven]]` | `{ type: 'image', size: 'wide', src, alt }` |
 | `[[wide:scene/sign.svg\|A painted sign\|rot]]` | adds `rotate: true` |
-| `[[video:clips/kettle]]` | `{ kind: 'video', size: 'inline', src, autoplay, loop, muted, controls }` |
-| `[[widevideo:clips/rain\|controls\|Rain on the window]]` | `{ kind: 'video', size: 'wide', src, alt, ... }` |
+| `[[video:clips/kettle]]` | `{ type: 'video', size: 'inline', src, autoplay, loop, muted, controls }` |
+| `[[widevideo:clips/rain\|controls\|Rain on the window]]` | `{ type: 'video', size: 'wide', src, alt, ... }` |
 | `[[img:@door\|red,night]]` | `image`, with a file picked from the pool `door` |
-| `[[mail]] … [[/mail]]` | `{ kind: 'mail', headers, body }` |
-| `[[sticky]] … [[/sticky]]` | `{ kind: 'prop', face: 'sticky', text }` |
-| `[[clip]] … [[/clip]]` | `{ kind: 'prop', face: 'clip', text }` |
-| `[[diary]] … [[/diary]]` | `{ kind: 'prop', face: 'diary', text }` |
-| `[[sound:knock]]` | `{ kind: 'sound', track }`. Nothing to draw. |
+| `[[mail]] … [[/mail]]` | `{ type: 'mail', headers, body }` |
+| `[[sticky]] … [[/sticky]]` | `{ type: 'prop', face: 'sticky', text }` |
+| `[[clip]] … [[/clip]]` | `{ type: 'prop', face: 'clip', text }` |
+| `[[diary]] … [[/diary]]` | `{ type: 'prop', face: 'diary', text }` |
+| `[[sound:knock]]` | `{ type: 'sound', track }`. Nothing to draw. |
 | `Ava: "Hi!" [[voice:ava.hello]]` | `say`, with `voice: 'ava.hello'` |
 | `… [[act:answer\|Pick it up]] …` inside a paragraph | The paragraph's `text` or `say` beat gets `spans`, with an `action` span for the choice. See [Inline actions and tooltips](#inline-actions-and-tooltips). |
 | `… [[tip:cafe.menu\|the menu]] …` inside a paragraph | The same, with a `tip` span holding the prose line `cafe.menu`. |
@@ -303,8 +304,8 @@ const kitchen: DataScene = {
   id: 'kitchen.phone',
   body: [{ text: 'kitchen.phone' }],
   choices: [
-    { id: 'answer', command: openApp('texts'), effects: [{ kind: 'kv', key: 'answered', to: true }] },
-    { id: 'ignore', effects: [{ kind: 'scene', scene: null }] },
+    { id: 'answer', command: openApp('texts'), effects: [{ kv: 'answered', to: true }] },
+    { id: 'ignore', effects: [{ scene: null }] },
   ],
 }
 ```
@@ -330,7 +331,7 @@ Boxes, mostly. The window looks over the high street, and [[ui:modal|the radiato
 - `words` are what the line shows. They're also what a screen reader, the backlog and `ifloom playtest` read.
 - Everything after the words is the piece's arguments, as text, in order. There can be none.
 
-The engine gives a UI piece no meaning. The view hands it to the UI as a `ui` span, `{ kind: 'ui', name, text, args }`, with the words in `text`, and the beat's `text` has the words as for any other span. So a piece can't change the state, and it isn't in the log or a replay. Something that should change the game, such as a dialog with buttons that buy things, is an [inline action](#inline-actions-and-tooltips) whose choice opens a [panel](/docs/reference/panels). [Popups and modals](/docs/recipes/modals) shows both.
+The engine gives a UI piece no meaning. The view hands it to the UI as a `ui` span, `{ type: 'ui', name, text, args }`, with the words in `text`, and the beat's `text` has the words as for any other span. So a piece can't change the state, and it isn't in the log or a replay. Something that should change the game, such as a dialog with buttons that buy things, is an [inline action](#inline-actions-and-tooltips) whose choice opens a [panel](/docs/reference/panels). [Popups and modals](/docs/recipes/modals) shows both.
 
 The React UI draws two pieces itself: `modal`, whose words open a dialog with a prose line, and `image`, whose words open a picture in the viewer. A game adds its own by name. See [Inline pieces](/docs/react/hints#inline-pieces). A UI types its names and arguments by augmenting [`InlineUi`](/docs/reference/ui-hints#inlineui).
 
@@ -376,12 +377,12 @@ The atlas you asked for is in. We hold books for a week.
 import type { SceneBeat } from '@ifloom/engine'
 
 type SceneBeat = (
-  | { kind: 'text'; text: string; spans?: InlineSpan[] }
-  | { kind: 'mono'; text: string }
-  | { kind: 'say'; who: 'character' | 'player'; text: string; voice?: string; spans?: InlineSpan[] }
-  | { kind: 'image'; src: string; alt?: string; size: 'inline' | 'wide'; rotate?: boolean }
+  | { type: 'text'; text: string; spans?: InlineSpan[] }
+  | { type: 'mono'; text: string }
+  | { type: 'say'; who: 'character' | 'player'; text: string; voice?: string; spans?: InlineSpan[] }
+  | { type: 'image'; src: string; alt?: string; size: 'inline' | 'wide'; rotate?: boolean }
   | {
-      kind: 'video'
+      type: 'video'
       src: string
       poster?: string
       alt?: string
@@ -391,13 +392,13 @@ type SceneBeat = (
       muted: boolean
       controls: boolean
     }
-  | { kind: 'mail'; headers: { key: string; value: string }[]; body: string }
-  | { kind: 'prop'; face: 'sticky' | 'clip' | 'diary'; text: string }
-  | { kind: 'sound'; track: string }
+  | { type: 'mail'; headers: { key: string; value: string }[]; body: string }
+  | { type: 'prop'; face: 'sticky' | 'clip' | 'diary'; text: string }
+  | { type: 'sound'; track: string }
 ) & { ui?: Ui<BlockUi> }
 ```
 
-One piece of a scene. A UI switches on `kind`, and draws nothing for `sound`. `ui` is there on the first beat of a [block](/docs/reference/scenes#block) that has [presentation hints](/docs/reference/ui-hints), as the block wrote them, so a UI knows where the block starts and what it asked for.
+One piece of a scene. A UI switches on `type`, and draws nothing for `sound`. `ui` is there on the first beat of a [block](/docs/reference/scenes#block) that has [presentation hints](/docs/reference/ui-hints), as the block wrote them, so a UI knows where the block starts and what it asked for.
 
 A `text` or `say` beat has `spans` only when its paragraph holds an [inline action or a tooltip](#inline-actions-and-tooltips) that the view could draw, or [bold or italics](#bold-and-italics). Its `text` is the same words without the markup either way.
 
@@ -411,12 +412,12 @@ A data scene's `{ media }` blocks become `image` or `video` beats where they are
 import type { InlineSpan } from '@ifloom/engine'
 
 type InlineSpan =
-  | { kind: 'text'; text: string }
-  | { kind: 'action'; text: string; choice: RenderedChoice }
-  | { kind: 'tip'; text: string; tip: string }
-  | { kind: 'ui'; name: string; text: string; args: string[] }
-  | { kind: 'bold'; text: string }
-  | { kind: 'italic'; text: string }
+  | { type: 'text'; text: string }
+  | { type: 'action'; text: string; choice: RenderedChoice }
+  | { type: 'tip'; text: string; tip: string }
+  | { type: 'ui'; name: string; text: string; args: string[] }
+  | { type: 'bold'; text: string }
+  | { type: 'italic'; text: string }
 ```
 
 One piece of a paragraph that holds [inline actions or tooltips](#inline-actions-and-tooltips), [UI pieces](#ui-pieces) or [bold or italics](#bold-and-italics), in order. Joined, the `text` of every span is the beat's `text`.
@@ -427,7 +428,7 @@ One piece of a paragraph that holds [inline actions or tooltips](#inline-actions
 - `ui` is a UI piece, as written: `name` says which of your UI's components draws it, `text` is its words and `args` the arguments after them. The engine gives it no meaning.
 - `bold` and `italic` are words to draw in bold or in italics, without their stars.
 
-A UI draws an `action` as a button in the line, a `tip` as a button that shows its note, and `bold` and `italic` as `<strong>` and `<em>`. A UI that doesn't know a kind, or a `ui` span's name, can draw its `text`, and the line still reads. The React UI does all four, with [`InlineAction`](/docs/react/components#inlineaction), [`Tip`](/docs/react/components#tip) and the parts `bold` and `italic`. For your own UI, see [Actions and tooltips in the text](/docs/recipes/inline-actions).
+A UI draws an `action` as a button in the line, a `tip` as a button that shows its note, and `bold` and `italic` as `<strong>` and `<em>`. A UI that doesn't know a type, or a `ui` span's name, can draw its `text`, and the line still reads. The React UI does all four, with [`InlineAction`](/docs/react/components#inlineaction), [`Tip`](/docs/react/components#tip) and the parts `bold` and `italic`. For your own UI, see [Actions and tooltips in the text](/docs/recipes/inline-actions).
 
 ## parseBeats
 
@@ -451,7 +452,7 @@ Draws the [bold and italics](#bold-and-italics) and the [UI pieces](#ui-pieces) 
 
 ```ts
 styledBeats(parseBeats('The sign says **Closed**.'))
-// [{ kind: 'text', text: 'The sign says Closed.', spans: [{ kind: 'text', text: 'The sign says ' }, { kind: 'bold', text: 'Closed' }, { kind: 'text', text: '.' }] }]
+// [{ type: 'text', text: 'The sign says Closed.', spans: [{ type: 'text', text: 'The sign says ' }, { type: 'bold', text: 'Closed' }, { type: 'text', text: '.' }] }]
 ```
 
 `[[act:]]` and `[[tip:]]` stay in the words as written, because only the view knows the choices and the prose. A beat that already has `spans` is left as it is.
@@ -464,19 +465,19 @@ import { inlineMarkup, type InlinePart } from '@ifloom/engine'
 function inlineMarkup(text: string): InlinePart[] | null
 
 type InlinePart =
-  | { kind: 'text'; text: string }
-  | { kind: 'act'; id: string; text?: string; markup: string }
-  | { kind: 'tip'; key: string; text: string; markup: string }
-  | { kind: 'ui'; name: string; text: string; args: string[]; markup: string }
-  | { kind: 'bold'; text: string; markup: string }
-  | { kind: 'italic'; text: string; markup: string }
+  | { type: 'text'; text: string }
+  | { type: 'act'; id: string; text?: string; markup: string }
+  | { type: 'tip'; key: string; text: string; markup: string }
+  | { type: 'ui'; name: string; text: string; args: string[]; markup: string }
+  | { type: 'bold'; text: string; markup: string }
+  | { type: 'italic'; text: string; markup: string }
 ```
 
 A line cut at its `[[act:]]`, `[[tip:]]`, `[[ui:]]`, bold and italic markup, as written, or `null` when it has none. `markup` is the markup itself, and a bold or italic part's `text` is its words without the stars. Malformed markup (no id or key, a tooltip or UI piece with no words, a UI piece whose name isn't an id or with an empty argument, a star that never closes) stays in the text around it, and each `\*` in a text part is already a plain star. The view uses it to make [`InlineSpan`](#inlinespan)s, and an editor can use it to preview a line.
 
 ```ts
 inlineMarkup('Ring. [[act:answer|Pick up]]')
-// [{ kind: 'text', text: 'Ring. ' }, { kind: 'act', id: 'answer', text: 'Pick up', markup: '[[act:answer|Pick up]]' }]
+// [{ type: 'text', text: 'Ring. ' }, { type: 'act', id: 'answer', text: 'Pick up', markup: '[[act:answer|Pick up]]' }]
 ```
 
 ## artSrc
@@ -484,7 +485,7 @@ inlineMarkup('Ring. [[act:answer|Pick up]]')
 ```ts
 import { artSrc } from '@ifloom/engine'
 
-function artSrc(path: string, kind?: 'image' | 'video'): string
+function artSrc(path: string, type?: 'image' | 'video'): string
 ```
 
 Resolves a picture's or a video's path. Everything in the engine resolves media through it. It strips a leading `/`, `art/` or `/art/`, and puts `art/` in front. If the path doesn't already end in `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`, `.avif`, `.svg`, `.mp4` or `.webm`, it adds `.jpg`, or `.mp4` when `kind` is `'video'`.

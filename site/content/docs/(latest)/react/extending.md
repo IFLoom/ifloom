@@ -12,15 +12,15 @@ To change how the built-in screens look, or to replace one, see [Make it your ow
 
 A panel is a screen your game draws itself, in place of the usual one. There are three places a panel can go:
 
-- **A scene's panel** is drawn instead of the scene's choices, for a market stall with prices, a card game or a map. The scene names it with [`panel`](/docs/reference/scenes#sceneview).
+- **A scene's panel** is drawn instead of the scene's choices, for a market stall with prices, a card game or a map. The scene names it with [`panel`](/docs/reference/panels#a-scenes-panel).
 - **An app's panel section** is drawn inside an app, such as an inbox or a radio dial. The app has a [`{ panel }` section](/docs/plugins/devices#section).
 - **An open panel** is drawn in a dialog over the story when content opens it with the [`panel` effect](/docs/reference/effects#panel). [`PanelHost`](/docs/react/components#panelhost) draws it, and has [built-in ones](/docs/react/components#built_in_panels) such as `shop` and `jobs` that yours replace by name. See [Panels](/docs/reference/panels).
 
-In each case the component is a [`PanelComponent`](/docs/react/components#panelcomponent). It gets `data`, which is what the game's [custom panel](/docs/reference/custom#panels) returned (or, for an open panel, what it was opened with), and it can read anything else it needs with [`useGame`](/docs/react/components#usegame). You pass your panels to the UI by name in the `panels` prop.
+In each case the component is a [`PanelComponent`](/docs/react/components#panelcomponent). It gets `data`, which is what the panel was given in `with`, and it can read anything else it needs with [`useGame`](/docs/react/components#usegame). You pass your panels to the UI by name in the `panels` prop.
 
 ### A scene's panel
 
-Say a market stall shows today's prices and lets the player buy a loaf. The scene names the panel and the custom panel that fills it. Its choices are still the moves the player can make:
+Say a market stall shows today's prices and lets the player buy a loaf. The scene names the panel, and what to draw it with in `with`. Its choices are still the moves the player can make:
 
 ```ts
 import type { DataScene } from '@ifloom/engine'
@@ -28,18 +28,16 @@ import type { DataScene } from '@ifloom/engine'
 const stall: DataScene = {
   id: 'market.stall',
   title: 'The stall',
-  panel: 'StallPanel',
-  panelData: 'stallPrices',
+  panel: { panel: 'StallPanel', with: { loaf: 4 } },
   body: [{ text: 'stall' }],
   choices: [
-    { id: 'buy', effects: [{ kind: 'stat', stat: 'coins', by: -4 }, { kind: 'scene', scene: null }] },
-    { id: 'leave', effects: [{ kind: 'scene', scene: null }] },
+    { id: 'buy', effects: [{ stat: 'coins', by: -4 }, { scene: null }] },
+    { id: 'leave', effects: [{ scene: null }] },
   ],
 }
-
-// in the content or the game
-custom: { panels: { stallPrices: () => ({ loaf: 4 }) } }
 ```
+
+The engine shows the scene's panel as [`view.panel`](/docs/reference/panels#a-scenes-panel) while the scene is open. A price that changes in play is better read in the component itself, from the view or a [value](/docs/reference/custom#values), than written into `with`.
 
 The component draws the prices its own way, then sends one of the scene's own choices. That way what happens is still content, and the engine still checks it:
 
@@ -65,14 +63,14 @@ const panels = { StallPanel }
 <GameShell runner={runner} panels={panels} />
 ```
 
-The key in `panels` is the scene's `panel`. The scene's title and body are drawn above the panel as usual.
+The key in `panels` is the name in the scene's `panel`. The scene's title and body are drawn above the panel as usual.
 
 ### An app's panel
 
-An app's `{ panel: 'inbox' }` section names a custom panel. The UI draws the component with the same name, passing it what that custom panel returned:
+An app's `{ panel: 'inbox', with }` section names a panel. The UI draws the component with the same name, passing it the section's `with`:
 
 ```ts
-custom: { panels: { inbox: (state) => ({ unread: state.kv.newMail ? 1 : 0 }) } }
+sections: [{ panel: 'inbox', with: { unread: 1 } }]
 ```
 
 ```tsx
@@ -86,7 +84,7 @@ const panels = { StallPanel, inbox: Inbox }
 **Gotchas.**
 
 - **A panel with no component is quietly left out.** A scene falls back to its choices, and an app section draws nothing.
-- **The data is whatever the custom panel returned**, typed `unknown`. Cast it to the shape you wrote it with.
+- **The data is the panel's `with`**, typed `unknown`. Cast it to the shape you wrote it with.
 - **A panel's local state isn't saved.** A component can keep local state with React's `useState`, such as what's in the basket or which card is face up. That state isn't in the save, so finish with a command that is.
 - **Define `panels` once**, outside any component. See [`GameProvider`](/docs/react/components#gameprovider).
 

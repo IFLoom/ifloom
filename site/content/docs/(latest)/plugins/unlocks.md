@@ -124,7 +124,7 @@ const supporter: Pack = {
       weight: 5,
       when: { all: [hasUnlock('supporter'), { not: { seen: 'cafe.back-room' } }] },
       body: [{ text: 'cafe.back-room' }],
-      choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
+      choices: [{ id: 'leave', effects: [{ scene: null }] }],
     },
   ],
   prose: {
@@ -334,7 +334,7 @@ Use it anywhere a condition goes: a [cheat's](/docs/plugins/cheats#supporter-che
 ```ts
 import { hasUnlock } from '@ifloom/plugin-unlocks'
 
-const choice = { id: 'back-room', when: hasUnlock('supporter'), effects: [{ kind: 'scene', scene: 'cafe.back-room' }] }
+const choice = { id: 'back-room', when: hasUnlock('supporter'), effects: [{ scene: 'cafe.back-room' }] }
 ```
 
 It reads the save, not the profile. Conditions must give the same answer when a save is [replayed](/docs/reference/runner#replay), and the profile is outside the save. So the save keeps its own record, which `startUnlocks` keeps in step with the profile.

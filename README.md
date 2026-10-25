@@ -30,8 +30,8 @@ export const letter: Content = {
       id: 'mat',
       body: [{ text: 'mat' }],
       choices: [
-        { id: 'open', effects: [{ kind: 'stat', stat: 'courage', by: 1 }, { kind: 'scene', scene: 'stairs' }] },
-        { id: 'shelf', effects: [{ kind: 'scene', scene: 'stairs' }] },
+        { id: 'open', effects: [{ stat: 'courage', by: 1 }, { scene: 'stairs' }] },
+        { id: 'shelf', effects: [{ scene: 'stairs' }] },
       ],
     },
     {

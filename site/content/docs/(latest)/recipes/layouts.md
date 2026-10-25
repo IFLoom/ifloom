@@ -299,12 +299,10 @@ const places = computed(() => view.value.plugins.places as PlacesView | undefine
 Some things shouldn't be on screen at all until the story asks for them, such as the wardrobe when the player opens the wardrobe door, or a shop's counter. Content opens them with the [`panel` effect](/docs/reference/panels), from a place's action, a choice, a thing the player uses or an app, and the UI draws the panel by its name:
 
 ```ts
-const activities = [{ id: 'openWardrobe', blocked: [onlyAt(['flat'])], effects: [{ kind: 'panel', panel: 'wardrobe' }] }]
-
 const flat: LocationDef = {
   id: 'flat', name: 'Your flat', tag: 'Home', art: 'place/flat', exits: ['high-street'],
   body: [{ text: 'place.flat' }],
-  actions: [{ id: 'wardrobe', label: 'Open the wardrobe', command: { type: 'activity', id: 'openWardrobe' } }],
+  actions: [{ id: 'wardrobe', label: 'Open the wardrobe', effects: [{ panel: 'wardrobe' }] }],
 }
 ```
 

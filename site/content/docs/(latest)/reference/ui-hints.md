@@ -14,7 +14,7 @@ Some things in a game are about how it looks, not how it plays: a scene that fad
     { text: 'ava.river' },
     { text: 'ava.river.shuffle', ui: { reveal: { delay: 1500, as: 'slide-up' } } },
   ],
-  choices: [{ id: 'stay', ui: { transition: 'slide-up' }, effects: [{ kind: 'scene', scene: null }] }],
+  choices: [{ id: 'stay', ui: { transition: 'slide-up' }, effects: [{ scene: null }] }],
 }
 ```
 
@@ -34,7 +34,7 @@ The rule behind it: the engine owns what changes the game's state, its rules or 
 | A [kind](/docs/reference/entities#kinddef) | Each of its entities' `ui`, under the entity's own | `EntityUi` |
 | An [entity](/docs/reference/entities#entitydef) | Its `ui` in [`view.entities`](/docs/reference/view#entitiesview-and-entityview), [`view.held`](/docs/reference/view#heldview) and, for someone speaking, [`SpeakerView`](/docs/reference/view#speakerview) | `EntityUi` |
 | A [stat](/docs/reference/stats#statdef) | Its [`StatView`](/docs/reference/view#statview)'s `ui` | `StatUi` |
-| The [`Game`](/docs/reference/game) | `game.ui`, which a UI reads from the runner's game | `GameUi` |
+| The [`Game`](/docs/reference/game) | `game.ui`, from your content's `ui` (a pack's hints replace it key by key), which a UI reads from the runner's game | `GameUi` |
 
 A view leaves `ui` out where content wrote none, so a UI checks for it before reading a hint.
 

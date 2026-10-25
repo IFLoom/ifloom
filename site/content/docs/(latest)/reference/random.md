@@ -157,7 +157,7 @@ When every weight is a whole number, the draw is `hash(parts) % total`, walking 
 
 The engine draws with it wherever content has weights:
 
-- [storylets](/docs/reference/storylets), the scenes a `{ kind: 'scene', from }` effect draws
+- [storylets](/docs/reference/storylets), the scenes a `{ scene: { from } }` effect draws
 - [variants](/docs/reference/prose#variantmember) with a weight on any member
 - [pool files](/docs/reference/media#poolfile), when a pool request picks a file
 - shuffled [playlists](/docs/reference/audio#playlistdef), drawn without replacement

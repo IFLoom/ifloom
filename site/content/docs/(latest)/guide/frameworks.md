@@ -407,7 +407,7 @@ A scene's prose comes as [beats](/docs/reference/prose#scenebeat): a paragraph, 
 // src/main.ts
 /** One paragraph of a scene: narration, a spoken line, a picture, a letter. A sound beat is heard, not drawn. */
 function drawBeat(beat: SceneBeat): void {
-  switch (beat.kind) {
+  switch (beat.type) {
     case 'text':
       add(root, 'p', beat.text)
       break
@@ -450,7 +450,7 @@ import type { SceneBeat } from '@ifloom/engine'
 
 /** One paragraph of a scene: narration, a spoken line, a picture, a letter. A sound beat is heard, not drawn. */
 export function Beat({ beat }: { beat: SceneBeat }) {
-  switch (beat.kind) {
+  switch (beat.type) {
     case 'text':
       return <p>{beat.text}</p>
     case 'mono':
@@ -505,12 +505,12 @@ defineProps<{ beat: SceneBeat }>()
 </script>
 
 <template>
-  <p v-if="beat.kind === 'text'">{{ beat.text }}</p>
-  <p v-else-if="beat.kind === 'mono'" class="beat-mono">{{ beat.text }}</p>
-  <p v-else-if="beat.kind === 'say'" class="beat-say" :data-who="beat.who">{{ beat.text }}</p>
-  <img v-else-if="beat.kind === 'image'" class="beat-image" :src="beat.src" :alt="beat.alt ?? ''" />
+  <p v-if="beat.type === 'text'">{{ beat.text }}</p>
+  <p v-else-if="beat.type === 'mono'" class="beat-mono">{{ beat.text }}</p>
+  <p v-else-if="beat.type === 'say'" class="beat-say" :data-who="beat.who">{{ beat.text }}</p>
+  <img v-else-if="beat.type === 'image'" class="beat-image" :src="beat.src" :alt="beat.alt ?? ''" />
   <video
-    v-else-if="beat.kind === 'video'"
+    v-else-if="beat.type === 'video'"
     class="beat-image"
     :src="beat.src"
     :poster="beat.poster"
@@ -520,11 +520,11 @@ defineProps<{ beat: SceneBeat }>()
     :controls="beat.controls"
     playsinline
   />
-  <div v-else-if="beat.kind === 'mail'" class="beat-prop">
+  <div v-else-if="beat.type === 'mail'" class="beat-prop">
     <p v-for="line in beat.headers" :key="line.key">{{ line.key }}: {{ line.value }}</p>
     <p>{{ beat.body }}</p>
   </div>
-  <div v-else-if="beat.kind === 'prop'" class="beat-prop">{{ beat.text }}</div>
+  <div v-else-if="beat.type === 'prop'" class="beat-prop">{{ beat.text }}</div>
 </template>
 ```
 
@@ -537,15 +537,15 @@ defineProps<{ beat: SceneBeat }>()
   let { beat }: { beat: SceneBeat } = $props()
 </script>
 
-{#if beat.kind === 'text'}
+{#if beat.type === 'text'}
   <p>{beat.text}</p>
-{:else if beat.kind === 'mono'}
+{:else if beat.type === 'mono'}
   <p class="beat-mono">{beat.text}</p>
-{:else if beat.kind === 'say'}
+{:else if beat.type === 'say'}
   <p class="beat-say" data-who={beat.who}>{beat.text}</p>
-{:else if beat.kind === 'image'}
+{:else if beat.type === 'image'}
   <img class="beat-image" src={beat.src} alt={beat.alt ?? ''} />
-{:else if beat.kind === 'video'}
+{:else if beat.type === 'video'}
   <video
     class="beat-image"
     src={beat.src}
@@ -556,12 +556,12 @@ defineProps<{ beat: SceneBeat }>()
     controls={beat.controls}
     playsinline
   ></video>
-{:else if beat.kind === 'mail'}
+{:else if beat.type === 'mail'}
   <div class="beat-prop">
     {#each beat.headers as line (line.key)}<p>{line.key}: {line.value}</p>{/each}
     <p>{beat.body}</p>
   </div>
-{:else if beat.kind === 'prop'}
+{:else if beat.type === 'prop'}
   <div class="beat-prop">{beat.text}</div>
 {/if}
 ```
@@ -576,7 +576,7 @@ An [input](/docs/reference/inputs) is a value the game asks the player for, such
 // src/main.ts
 /** A value the game asks for, such as the player's name. What they enter goes back as an `input` command. */
 function drawInput(parent: HTMLElement, input: InputView): void {
-  if (input.kind === 'choice') {
+  if (input.type === 'choice') {
     for (const option of input.options) {
       add(parent, 'button', option.label).onclick = () => runner.apply({ type: 'input', id: input.id, to: option.value })
     }
@@ -585,7 +585,7 @@ function drawInput(parent: HTMLElement, input: InputView): void {
   const form = add(parent, 'form')
   const label = add(form, 'label', input.label)
   const field = add(label, 'input')
-  field.type = input.kind === 'number' ? 'number' : 'text'
+  field.type = input.type === 'number' ? 'number' : 'text'
   field.value = input.value === null ? '' : String(input.value)
   if (input.maxLength !== null) field.maxLength = input.maxLength
   if (input.min !== null) field.min = String(input.min)
@@ -593,7 +593,7 @@ function drawInput(parent: HTMLElement, input: InputView): void {
   add(form, 'button', 'OK').type = 'submit'
   form.onsubmit = (event) => {
     event.preventDefault()
-    runner.apply({ type: 'input', id: input.id, to: input.kind === 'number' ? Number(field.value) : field.value })
+    runner.apply({ type: 'input', id: input.id, to: input.type === 'number' ? Number(field.value) : field.value })
   }
 }
 ```
@@ -607,7 +607,7 @@ import { runner } from './runner.ts'
 /** A value the game asks for, such as the player's name. What they enter goes back as an `input` command. */
 export function InputField({ input }: { input: InputView }) {
   const [value, setValue] = useState(input.value === null ? '' : String(input.value))
-  if (input.kind === 'choice') {
+  if (input.type === 'choice') {
     return (
       <div className="inputs" role="group" aria-label={input.label}>
         {input.options.map((option) => (
@@ -620,7 +620,7 @@ export function InputField({ input }: { input: InputView }) {
   }
   const submit = (event: FormEvent) => {
     event.preventDefault()
-    runner.apply({ type: 'input', id: input.id, to: input.kind === 'number' ? Number(value) : value })
+    runner.apply({ type: 'input', id: input.id, to: input.type === 'number' ? Number(value) : value })
   }
   return (
     <form onSubmit={submit}>
@@ -629,7 +629,7 @@ export function InputField({ input }: { input: InputView }) {
         <input
           value={value}
           onChange={(event) => setValue(event.target.value)}
-          type={input.kind === 'number' ? 'number' : 'text'}
+          type={input.type === 'number' ? 'number' : 'text'}
           maxLength={input.maxLength ?? undefined}
           min={input.min ?? undefined}
           max={input.max ?? undefined}
@@ -653,12 +653,12 @@ const props = defineProps<{ input: InputView }>()
 const value = ref(props.input.value === null ? '' : String(props.input.value))
 
 function submit() {
-  runner.apply({ type: 'input', id: props.input.id, to: props.input.kind === 'number' ? Number(value.value) : value.value })
+  runner.apply({ type: 'input', id: props.input.id, to: props.input.type === 'number' ? Number(value.value) : value.value })
 }
 </script>
 
 <template>
-  <div v-if="input.kind === 'choice'" class="inputs" role="group" :aria-label="input.label">
+  <div v-if="input.type === 'choice'" class="inputs" role="group" :aria-label="input.label">
     <button v-for="option in input.options" :key="String(option.value)" @click="runner.apply({ type: 'input', id: input.id, to: option.value })">
       {{ option.label }}
     </button>
@@ -668,7 +668,7 @@ function submit() {
       {{ input.label }}
       <input
         v-model="value"
-        :type="input.kind === 'number' ? 'number' : 'text'"
+        :type="input.type === 'number' ? 'number' : 'text'"
         :maxlength="input.maxLength ?? undefined"
         :min="input.min ?? undefined"
         :max="input.max ?? undefined"
@@ -692,11 +692,11 @@ function submit() {
 
   function submit(event: SubmitEvent) {
     event.preventDefault()
-    runner.apply({ type: 'input', id: input.id, to: input.kind === 'number' ? Number(value) : value })
+    runner.apply({ type: 'input', id: input.id, to: input.type === 'number' ? Number(value) : value })
   }
 </script>
 
-{#if input.kind === 'choice'}
+{#if input.type === 'choice'}
   <div class="inputs" role="group" aria-label={input.label}>
     {#each input.options as option (option.value)}
       <button onclick={() => runner.apply({ type: 'input', id: input.id, to: option.value })}>{option.label}</button>
@@ -708,7 +708,7 @@ function submit() {
       {input.label}
       <input
         bind:value
-        type={input.kind === 'number' ? 'number' : 'text'}
+        type={input.type === 'number' ? 'number' : 'text'}
         maxlength={input.maxLength ?? undefined}
         min={input.min ?? undefined}
         max={input.max ?? undefined}
@@ -719,7 +719,7 @@ function submit() {
 {/if}
 ```
 
-An input of kind `choice` has its `options`, each with a `value` and a `label`, so the templates draw a button for each. The input stays in `view.inputs` while its `when` holds, which for a name is usually until the player has given one.
+An input of type `choice` has its `options`, each with a `value` and a `label`, so the templates draw a button for each. The input stays in `view.inputs` while its `when` holds, which for a name is usually until the player has given one.
 
 ## Minigames
 

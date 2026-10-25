@@ -115,7 +115,7 @@ type ProgressValue = Formula | { stat: string; of?: string } | { kv: string } | 
 | `{ sum: ['coins', 'savings'] }` | A [formula](/docs/reference/stats#formula) over the player's stats, the same kind a derived stat uses. |
 | `{ stat: 'friendship', of: 'character:ava' }` | One stat of an [entity](/docs/reference/entities). |
 | `{ kv: 'coffees' }` | A key in the [kv store](/docs/reference/state#kv). One that isn't a number reads 0. |
-| `{ value: 'quests/updates' }` | A [custom value](/docs/reference/custom#values), the game's or a plugin's, asked with `with` if it has one: `{ value: 'messages/unread', with: { channel: 'texts' } }`. |
+| `{ value: 'quests/updates' }` | A [value](/docs/reference/custom#values), the game's own (`game/…`) or a plugin's, asked with `with` if it has one: `{ value: 'messages/unread', with: { channel: 'texts' } }`. |
 
 Stats read as [`statValue`](/docs/reference/stats#statvalue) reads them, so a timed status's boost counts. The view holds the count between 0 and `target`, and shows it full once the achievement is earned.
 
@@ -157,7 +157,7 @@ It reads what this save has earned, not the profile, so a replay of a save alway
 |---|---|---|
 | `{ 'achievements/grant': { achievement } }` | `grantAchievement(id)` | Earns it now, with its notice, if this save hasn't earned it. |
 
-It works in any effect list, a thing's use in the [inventory](/docs/plugins/inventory) included. In a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), which lists plain effects, write the long form, `{ kind: 'custom', name: 'achievements/grant', with: { achievement: 'regular' } }`.
+It works in any effect list, a thing's use in the [inventory](/docs/plugins/inventory) included. So does a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does). Written out, it's `{ 'achievements/grant': { achievement: 'regular' } }`.
 
 ## Value
 
@@ -361,7 +361,7 @@ A progress value read now. Anything that isn't a finite number reads 0.
 When the game loads, the plugin reports these problems against the content or pack each achievement came from, with `where` as `achievements <id>`:
 
 - Anything `when` names that the game doesn't have (`when: unknown kind "…"`).
-- A progress value naming a stat or custom value the game doesn't have (`progress: unknown stat "…"`).
+- A progress value naming a stat or value the game doesn't have (`progress: unknown stat "…"`).
 - A progress target of 0 or less (`progress target must be more than 0`).
 - A missing `image` file, when `ifloom check` looks for files.
 

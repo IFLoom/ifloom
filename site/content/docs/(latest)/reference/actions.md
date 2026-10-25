@@ -48,13 +48,13 @@ const coffee: ActionDef = {
   label: 'Buy a coffee',
   cost: { stats: { coins: 3 }, reasons: { coins: 'Not even for a small one.' } },
   blocked: [{ when: { kv: 'hadCoffee' }, reason: 'One is enough for today.' }],
-  effects: [{ kind: 'stat', stat: 'energy', by: 15 }, { kind: 'kv', key: 'hadCoffee', to: true }, { 'game/countCoffee': true }],
+  effects: [{ stat: 'energy', by: 15 }, { kv: 'hadCoffee', to: true }, { 'game/countCoffee': true }],
 }
 
 // The game's own code, in its rules.
 const rules: GameRules = {
   effects: {
-    countCoffee: () => [{ kind: 'kv', key: 'coffees', by: 1 }],
+    countCoffee: () => [{ kv: 'coffees', by: 1 }],
   },
 }
 ```
@@ -101,7 +101,7 @@ type ActionCost = {
 
 The cost shows on the button before it's pressed, as its [`Price`](/docs/reference/view#price).
 
-**Gotcha.** A negative amount pays the player. `{ coins: -5 }` adds 5 coins when the action is done, and [`effectsOf`](#effectsof) lists it as `{ kind: 'stat', stat: 'coins', by: 5 }`. It isn't checked against what the player has, and it isn't shown in the price, so the button gives no hint of it. An amount of 0 does nothing. For a payment the player should see coming in your code, a [`stat` effect](/docs/reference/effects#stat) in `effects` is clearer.
+**Gotcha.** A negative amount pays the player. `{ coins: -5 }` adds 5 coins when the action is done, and [`effectsOf`](#effectsof) lists it as `{ stat: 'coins', by: 5 }`. It isn't checked against what the player has, and it isn't shown in the price, so the button gives no hint of it. An amount of 0 does nothing. For a payment the player should see coming in your code, a [`stat` effect](/docs/reference/effects#stat) in `effects` is clearer.
 
 ## Blocked
 
@@ -325,11 +325,11 @@ An unknown action or choice gives none.
 ```ts
 import { effectsOf } from '@ifloom/engine'
 
-// the showcase's office action { id: 'work', label: 'Do a shift', cost: { stats: { energy: 30 } }, effects: [pass(2), { kind: 'stat', stat: 'coins', by: 20 }] }
+// the showcase's office action { id: 'work', label: 'Do a shift', cost: { stats: { energy: 30 } }, effects: [pass(2), { stat: 'coins', by: 20 }] }
 effectsOf(state, game, { type: 'action', id: 'places/work' })
-// [{ kind: 'stat', stat: 'energy', by: -30 },
-//  { kind: 'custom', name: 'calendar/pass', with: { by: 2 } },
-//  { kind: 'stat', stat: 'coins', by: 20 }]
+// [{ stat: 'energy', by: -30 },
+//  { 'calendar/pass': { by: 2 } },
+//  { stat: 'coins', by: 20 }]
 ```
 
 **Gotchas.**

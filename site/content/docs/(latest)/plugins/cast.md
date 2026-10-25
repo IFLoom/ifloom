@@ -36,7 +36,7 @@ import { type Condition, type Effect } from '@ifloom/engine'
 import { character } from '@ifloom/plugin-cast'
 
 const closeToAva: Condition = { stat: 'friendship', of: character('ava'), gte: 25 }          // 'character:ava'
-const chat: Effect = { kind: 'stat', stat: 'friendship', by: 5, of: character('ava') }
+const chat: Effect = { stat: 'friendship', by: 5, of: character('ava') }
 ```
 
 The plugin keeps no state of its own. Where people are is worked out from their schedules each time, and what the game keeps about them lives in their entities.
@@ -192,7 +192,7 @@ import type { Content } from '@ifloom/engine'
 import { person } from '@ifloom/plugin-cast'
 
 const town: Content = {
-  inputs: [{ id: 'friendName', label: 'Your oldest friend is called', kind: 'text', maxLength: 16 }],
+  inputs: [{ id: 'friendName', label: 'Your oldest friend is called', type: 'text', maxLength: 16 }],
   entities: [person({ id: 'sam', name: '{{friendName}}', home: 'park', talk: 'sam.hi' })],
   // ...
 }
@@ -266,7 +266,7 @@ const place = (id: string, name: string, exits: string[]): LocationDef =>
   ({ id, name, tag: 'Small Town', art: '', exits, body: [{ text: `place.${id}` }] })
 const chat = (id: string, who: string, by: number): DataScene => ({
   id, speaker: who, body: [{ text: id }],
-  choices: [{ id: 'bye', effects: [{ kind: 'stat', stat: 'friendship', by, of: character(who) }, { kind: 'scene', scene: null }] }],
+  choices: [{ id: 'bye', effects: [{ stat: 'friendship', by, of: character(who) }, { scene: null }] }],
 })
 
 const town: Content = {
@@ -300,7 +300,7 @@ The [loader](/docs/reference/loader#content) merges characters as it merges ever
 
 ### Each one is an entity
 
-The plugin declares the kind (through its [`kinds`](/docs/reference/plugins#kinds-and-entities)), and each character is an entity of it that your content writes. A stat the game declares `of: 'character'` is then kept on every character, and you read and write it as any [entity's stat](/docs/reference/stats#entity-stats):
+The plugin brings the kind in its own [`content`](/docs/reference/plugins#kinds-and-entities), and each character is an entity of it that your content writes. A stat the game declares `of: 'character'` is then kept on every character, and you read and write it as any [entity's stat](/docs/reference/stats#entity-stats):
 
 ```ts
 import { entitiesOf, startingState, statValue, type Condition, type Effect, type Game } from '@ifloom/engine'
@@ -313,9 +313,9 @@ entitiesOf(state, game, 'character')                    // ['character:ava', 'ch
 statValue(state, game, 'friendship', character('ava'))     // 0
 
 const isFriend: Condition = { stat: 'friendship', of: character('ava'), gte: 25 }
-const warmer: Effect = { kind: 'stat', stat: 'friendship', by: 10, of: character('ava') }
+const warmer: Effect = { stat: 'friendship', by: 10, of: character('ava') }
 // Everyone drifts apart a little.
-const drift: Effect = { kind: 'each', of: 'character', effects: [{ kind: 'stat', stat: 'friendship', by: -1, of: '$' }] }
+const drift: Effect = { each: 'character', effects: [{ stat: 'friendship', by: -1, of: '$' }] }
 ```
 
 A save keeps only what play changed about a character, such as their friendship, and reads the rest from content. So a save made before a character was added has them as soon as it loads, and a fixed name or schedule reaches old saves too (see [Entities in old saves](/docs/reference/entities#entities-in-old-saves)).
@@ -447,7 +447,7 @@ apply(state, game, talk('ava')).state.sceneId   // 'ava.hi': not friends yet
 apply(state, game, call('ava')).state.sceneId   // 'ava.call'
 
 // A few more chats later, as a test would fake them.
-const friends = applyEffects(state, game, [{ kind: 'stat', stat: 'friendship', by: 20, of: 'character:ava' }])
+const friends = applyEffects(state, game, [{ stat: 'friendship', by: 20, of: 'character:ava' }])
 holds(friends, { stat: 'friendship', of: 'character:ava', gte: 25 }, game)   // true
 apply(friends, game, talk('ava')).state.sceneId                           // 'ava.river'
 ```
@@ -485,7 +485,7 @@ A [lock](/docs/reference/locks#lock) names them `cast/talk` and `cast/call`, or 
 | `{ 'cast/at': { character: 'ava', at: ['park'] } }` | `isAt('ava', 'park')` | They're in one of these places, wherever the player is. |
 | `{ 'cast/met': { character: ['ava'] } }` | `hasMet('ava')` | The player has [met](#meeting-people) any of them. |
 
-These are the short forms, with the full name as the only key (see [plugin calls](/docs/reference/custom#plugincall)). The long form of the first row is `{ custom: 'cast/here', with: { character: ['ava', 'sam'] } }`. A single id works too, as in `{ 'cast/here': { character: 'ava' } }`, and so does a whole reference, `'character:ava'` or `'staff:ana'`, which is what `'$'` becomes. A character the game doesn't have never holds.
+Each is a call with the full name as the only key (see [plugin calls](/docs/reference/custom#plugincall)), which the helpers write for you. A single id works too, as in `{ 'cast/here': { character: 'ava' } }`, and so does a whole reference, `'character:ava'` or `'staff:ana'`, which is what `'$'` becomes. A character the game doesn't have never holds.
 
 `cast/at` reads the schedule alone, so it works without places, and you can ask it about someone the player can't see. `isAt('ava', OFFSTAGE)` holds while she's out of town.
 
@@ -704,7 +704,7 @@ When the game loads, the plugin reports two kinds of problem.
 **Characters that content names.** Every character named in `cast/here`, `cast/at` (its `character`) or `cast/met` is looked up as an entity wherever the [content checker](/docs/reference/checks) finds the condition, and so is every character in a `cast/talk` or `cast/call` command. One the game doesn't have is reported where it's named:
 
 ```text
-town · activity wave · unknown entity "character:ghost"
+town · action wave · unknown entity "character:ghost"
 ```
 
 **The characters themselves.** The trait is checked on each entity that has it, with `where` as `trait cast/person on <ref>`. The plugin reports:
@@ -730,7 +730,7 @@ The places in `cast/at` aren't checked. An `image` the game gives is listed in t
 ## Gotchas
 
 - **No places, nobody here.** Without the places plugin, `present` is empty, `cast/here` never holds and `cast/talk` says `Ava is not here.` Calls, `cast/at`, `cast/met` and the `speaker` provider still work.
-- **`'$'` is only bound in a character's own conditions.** In a scene, an activity or a trigger, write `of: character('ava')`.
+- **`'$'` is only bound in a character's own conditions.** In a scene, an action or a trigger, write `of: character('ava')`.
 - **The first entry wins.** A schedule entry or talk option with no `when` always holds, so nothing below it is reached.
 - **A portrait you name must exist.** `ifloom check` reports `no file public/art/character/ava.jpg` for an `image` whose file isn't there. Leave `image` out while the art is still to come. The default path isn't checked, and the React UI leaves out a picture whose file is missing.
 - **Met is by scene unless you say otherwise.** Without `met`, someone whose talk scene the player has never opened isn't met, even if they've spoken in another scene as its `speaker`. Give them a `met` condition if they should be.

@@ -1,6 +1,6 @@
 ---
 title: "Conditions"
-description: "Every condition: kv, stats, levels, choices, scenes seen, things held, counts, turns, phases, custom and plugin calls."
+description: "Every condition: kv, stats, levels, choices, scenes seen, things held, counts, turns, and calls to a plugin or the game."
 ---
 A condition says when something applies, such as a line of prose, a choice, a lock or a character's schedule. It's plain nested data, so content stays serialisable and the [content checker](/docs/reference/checks) can check every id in it.
 
@@ -27,8 +27,7 @@ When a choice is greyed out or a line is missing and you can't see why, [`explai
 ## Where conditions are used
 
 - [Data scenes](/docs/reference/scenes#datascene): a block's `when`, a choice's `when`, `blocked` and `labels`, and a `variants` block's `gate`.
-- The game's own [actions](/docs/reference/actions#actiondef): `when` and `blocked`.
-- An [activity](/docs/reference/actions#blocked)'s `blocked`.
+- [Actions](/docs/reference/actions#actiondef): `when` and `blocked`.
 - [Stages](/docs/reference/progress#stages): `needs`.
 - [Locks](/docs/reference/locks), [triggers](/docs/reference/triggers) and [inputs](/docs/reference/inputs): `when`.
 - A plugin's content. The [places plugin](/docs/plugins/places#locationdef) uses them for a room's `blocked`, a body block's `when` and `gate`, and each room action's `when` and `blocked`. The [cast](/docs/plugins/cast#person-1) uses them for a character's `schedule`, `talk`, `call` and `met`, with `'$'` standing for that character.
@@ -58,12 +57,11 @@ type Condition =
   | { all: Condition[] }
   | { any: Condition[] }
   | { not: Condition }
-  | ({ kv: string; is?: KvValue; of?: string } & Range)
+  | ({ kv: string; is?: KvValue | KvValue[]; of?: string } & Range)
   | ({ setting: string; is?: KvValue } & Range)
   | ({ chose: string } & Range)
   | ({ seen: string } & Range)
   | ({ since: string; last?: boolean } & Range)
-  | ({ storylineKv: { storyline: string; key: string }; is?: KvValue } & Range)
   | ({ stat: StatKey; of?: string } & Range)
   | ({ count: string | Select; where?: Condition; units?: true } & Range)
   | ({ entity: string; at?: string } & Range)
@@ -71,24 +69,31 @@ type Condition =
   | { storyline: string; open?: boolean }
   | { scene: string[] }
   | { turn: Range }
-  | { phase: Phase[] }
-  | ({ minigameVar: string } & Range)
   | { roll: string; passed?: boolean; critical?: boolean | 'max' | 'min' }
   | ({ timer: string } & Range)
-  | { custom: string; with?: Record<string, unknown> }
   | PluginCall
 ```
 
 A condition names what it reads by its noun, as effects do: `{ stat: 'coins', gte: 3 }`, `{ entity: 'clothing:scarf', at: 'you' }`, `{ storyline: 'ava' }`. The range or `is` sits beside it. A condition that names nothing, such as `turn`, takes its range as its value: `{ turn: { gte: 3 } }`.
 
-**Gotcha.** Put one kind in each object. A condition with two kinds, such as `{ kv: 'x', stat: 'coins' }`, never holds, because the engine can't tell which one you meant. One with no kind at all, such as `{}`, never holds either. The [content checker](/docs/reference/checks#in-a-condition) reports both, so combine kinds with `all` instead. A [short call](#plugin-shorthand) has no kind key of its own and counts as `custom`.
+Effects use the same keys, so `{ kv: 'met' }` asks about what `{ kv: 'met', to: true }` sets. Which one an object is depends on where it's written: in `when` it's a condition, in `effects` an effect.
+
+### ConditionKey
+
+```ts
+import type { ConditionKey } from '@ifloom/engine'
+```
+
+The keys that tell the engine's conditions apart: `all`, `any`, `not`, `kv`, `setting`, `stat` and the rest above.
+
+**Gotcha.** Put one key that says what it asks in each object. A condition with two, such as `{ kv: 'x', stat: 'coins' }`, never holds, because the engine can't tell which one you meant. One with none, such as `{}`, never holds either. The [content checker](/docs/reference/checks#in-a-condition) reports both, so combine them with `all` instead. A [call by name](#calls) has no key of the engine's, only its name.
 
 ### all, any, not
 
 ```ts
 { all: [{ kv: 'marketDay' }, { entity: 'clothing:scarf', at: 'you' }] }   // on market day, with a scarf
 { any: [{ entity: 'clothing:scarf', at: 'you' }, { entity: 'clothing:raincoat', at: 'you' }] }
-{ not: { phase: ['arrival'] } }
+{ not: { kv: 'phase', is: 'arrival' } }
 ```
 
 `{ all: [] }` is true and `{ any: [] }` is false.
@@ -96,20 +101,39 @@ A condition names what it reads by its noun, as effects do: `{ stat: 'coins', gt
 ### kv
 
 ```ts
-{ kv: 'marketOpen' }             // set to anything truthy
-{ kv: 'errand', is: 'bread' }    // exactly this value
-{ kv: 'coffeesBought', gte: 3 }  // a number, 3 or more
+{ kv: 'marketOpen' }                       // set to anything truthy
+{ kv: 'errand', is: 'bread' }              // exactly this value
+{ kv: 'phase', is: ['arrival', 'open'] }   // one of these values
+{ kv: 'coffeesBought', gte: 3 }            // a number, 3 or more
 ```
 
 Tests a key in the [kv store](/docs/reference/state#kv), the game's keys with a true/false, number or text value. What it tests depends on what you give:
 
-- **`is`** tests strict equality, so `1` and `'1'` differ. Any range bound beside it is ignored.
+- **`is`** tests strict equality, so `1` and `'1'` differ. Given a list, it holds when the key equals any of them. Any range bound beside it is ignored.
 - **A [range](#range) bound** (`gte`, `gt`, `lte` or `lt`) tests whether the key's number is in the range. A value that isn't a number (unset, text or `true`) counts as 0.
 - **Neither** tests whether the key is truthy. `0`, `''` and `false` aren't.
 
 To count something, use the [`kv`](/docs/reference/effects#kv) effect's `by` form, and test the count with a range.
 
-With `of`, it tests a key in an [entity](/docs/reference/entities)'s kv store, as in `{ kv: 'role', of: 'staff:ana', is: 'cook' }`, or `of: '$'` inside an [`each`](/docs/reference/effects#each) or a [`count`](#count)'s `where`. The same three tests apply.
+With `of`, it tests a key in another kv store. The same three tests apply.
+
+```ts
+{ kv: 'role', of: 'staff:ana', is: 'cook' }       // an entity's
+{ kv: 'visits', of: 'storyline:ava', gte: 3 }     // a storyline's
+{ kv: 'score', of: 'minigame', gte: 3 }           // the running minigame's
+```
+
+- **An [entity](/docs/reference/entities)**, as in `of: 'staff:ana'`, or `of: '$'` inside an [`each`](/docs/reference/effects#each) or a [`count`](#count)'s `where`.
+- **A [storyline](/docs/reference/storylines)**, as in `of: 'storyline:ava'`. A key that's missing reads as unset.
+- **The [minigame](/docs/reference/minigames#its-variables) being played**, `of: 'minigame'`, one of its variables. It's false with no minigame running, whatever you ask. A variable the running minigame doesn't have reads as unset. Use it in a minigame's `on` and `always` entries to branch on a score or a round. The [content checker](/docs/reference/checks) reports a variable that no minigame declares.
+
+#### The phase
+
+```ts
+{ kv: 'phase', is: ['arrival', 'first-day'] }
+```
+
+The stretch of the game the player is in is the kv key `phase`, set with the [`kv` effect](/docs/reference/effects#the-phase) and given its first value in the content's starting `kv`.
 
 **Gotcha.** With `of`, an entity that isn't there fails whatever you asked, `lt` and `is` included, just as [`stat`](#stat) does. So `{ kv: 'warned', of: 'staff:ghost', lt: 1 }` is false. To ask that something isn't set on an entity that may have gone, write `{ not: { kv: 'warned', of: 'staff:ghost' } }`, which is true when it's missing.
 
@@ -165,13 +189,13 @@ Whole [turns](/docs/reference/state#turn) since a scene was first entered (its `
 
 With `last: true` it counts from the latest time instead, the record's `last`. That's a cooldown: something that can happen again, but not too often.
 
-**A cooldown.** The bench by the river can be visited again three days after the last time. Put it on whatever opens the scene, here an activity:
+**A cooldown.** The bench by the river can be visited again three days after the last time. Put it on whatever opens the scene, here an action:
 
 ```ts
 {
   id: 'sit-by-the-river',
   blocked: [{ when: { since: 'river.bench', last: true, lt: 3 }, reason: 'You sat there only recently.' }],
-  effects: [{ kind: 'scene', scene: 'river.bench' }],
+  effects: [{ scene: 'river.bench' }],
 }
 ```
 
@@ -182,19 +206,6 @@ Before the first visit, `since` fails every range, so the `blocked` entry doesn'
 - A bare `{ since: 'x' }` means at least one turn since, so it's false in the same turn.
 - A save from before the latest times were kept has only the first. Until the scene is entered again, `last: true` counts from the first visit. For a choice, it has no record at all until the choice is picked again.
 - Without `last`, a choice picked before the record was kept fails as "not picked yet". Use [`{ chose }`](#chose) to ask whether it was ever picked.
-
-### storylineKv
-
-```ts
-{ storylineKv: { storyline: 'ava', key: 'lentBook' } }
-{ storylineKv: { storyline: 'ava', key: 'favourite' }, is: 'poetry' }
-```
-
-```ts
-{ storylineKv: { storyline: 'ava', key: 'visits' }, gte: 3 }
-```
-
-Works like [`kv`](#kv) on a [storyline](/docs/reference/storylines)'s own kv store, named by the storyline and the key. Bare, it asks whether the key is truthy. With `is`, it tests strict equality. With a range, it tests the key's number, and a key that's missing or isn't a number counts as 0.
 
 ### stat
 
@@ -291,17 +302,6 @@ Whether a [storyline](/docs/reference/storylines) is open, meaning it isn't clos
 
 **Gotcha.** A storyline doesn't keep score of how well someone likes the player. Test that as a stat on the [cast](/docs/plugins/cast#each-one-is-an-entity)'s characters, as in `{ stat: 'friendship', of: character('ava'), gte: 20 }`.
 
-### minigameVar
-
-```ts
-{ minigameVar: 'score', gte: 3 }
-{ minigameVar: 'arrow', gte: 2, lte: 2 }   // exactly 2
-```
-
-Tests a variable of the [minigame](/docs/reference/minigames#its-variables) being played against a range. Bare, it asks whether it's above 0. It's false with no minigame running, or for a variable the running minigame doesn't have, whatever the range. Use it in a minigame's `on` and `always` entries to branch on a score or a round, or anywhere else a condition goes.
-
-The [content checker](/docs/reference/checks) reports a variable that no minigame declares.
-
 ### roll
 
 ```ts
@@ -316,7 +316,7 @@ Reads the latest [roll](/docs/reference/effects#roll) made under a key. Bare, it
 
 The total itself is a kv key, so test a number with [`kv`](#kv): `{ kv: 'skim', gte: 10 }`.
 
-A roll is kept until another roll under the same key replaces it, across turns and saves. To show an outcome only on the turn of the roll, set a kv key in the same effects and reset it each turn with [`rules.resets`](/docs/reference/rules#resets), as the showcase does with `skimmed`.
+A roll is kept until another roll under the same key replaces it, across turns and saves. To show an outcome only on the turn of the roll, set a kv key in the same effects and reset it each turn with the content's [`resets`](/docs/reference/rules#resets), as the showcase does with `skimmed`.
 
 [`explain`](#explain) says `roll skim is 9 on 2d6, passed; wants failed`.
 
@@ -353,15 +353,7 @@ The scene on screen is one of these. It's false when no scene is open.
 
 How many [turns](/docs/reference/state#turn) have passed, counting from 0, in a [range](#range). It names nothing, so the range is its value. An empty range, `{ turn: {} }`, is false in turn 0. Your game decides how long a turn is. It's a day with the [calendar](/docs/plugins/calendar#what-a-turn-is)'s default, or a chapter in a novel that ends its turns with the [`turn`](/docs/reference/effects#turn) effect.
 
-The engine keeps no clock but the turn, so there's no core condition for the time of day. The period, the weekday and the day come from the [calendar plugin](/docs/plugins/calendar#conditions) as [plugin calls](#plugin-shorthand): `period('morning')`, `weekday(5, 6)` and `day({ gte: 2 })`.
-
-### phase
-
-```ts
-{ phase: ['arrival', 'first-day'] }
-```
-
-The game's current [stage](/docs/reference/state#phase) is one of these.
+The engine keeps no clock but the turn, so there's no core condition for the time of day. The period, the weekday and the day come from the [calendar plugin](/docs/plugins/calendar#conditions) as [plugin calls](#calls): `period('morning')`, `weekday(5, 6)` and `day({ gte: 2 })`.
 
 ### Where the player is
 
@@ -371,43 +363,30 @@ It doesn't keep characters either. With the [cast](/docs/plugins/cast#conditions
 
 **Gotcha.** An object whose key the engine doesn't know, such as `{ at: ['cafe'] }`, never holds, and the loader doesn't report it.
 
-### custom
+### Calls
 
 ```ts
-{ custom: 'marketDay' }
-{ custom: 'priceBelow', with: { coins: 4 } }
-{ custom: 'quests/done', with: { quest: 'bread' } }
+{ 'game/marketDay': true }
+{ 'game/priceBelow': { coins: 4 } }
+{ 'quests/done': { quest: 'bread' } }
+{ 'wardrobe/wearing': { entity: 'clothing:raincoat' } }
 ```
 
-Calls a [custom condition](/docs/reference/custom#conditions) the game declares in `game.custom.conditions`, or a [plugin](/docs/reference/plugins#naming)'s condition, named with the plugin's id in front. Use it for a test worked out from several values rather than read from one. The content stays data, and a mod can use it without shipping code.
-
-`with` is passed to the function as its arguments, or `{}` when you leave it out. A name with a `/` is looked up among the game's plugins first.
+Calls a condition of the game's own, declared in its [`rules`](/docs/reference/rules#gamerules) and named with `game/` in front, or a [plugin](/docs/reference/plugins#naming)'s condition, named with the plugin's id in front. The name is the only key, and its value is the arguments, or `true` for none. See [`PluginCall`](/docs/reference/custom#plugincall). Use the game's own for a test worked out from several values rather than read from one. The content stays data, and a mod can use it without shipping code.
 
 ```ts
-import type { Game } from '@ifloom/engine'
+import type { GameRules } from '@ifloom/engine'
 
-const town: Game = {
-  // ...
-  custom: {
-    conditions: {
-      marketDay: (state) => state.turn % 7 === 5 && !state.kv.rainedOff,
-    },
+export const rules: GameRules = {
+  conditions: {
+    marketDay: (state) => state.turn % 7 === 5 && !state.kv.rainedOff,
   },
 }
 ```
 
 **Gotchas.**
-- A name that neither the game nor its plugins declare is false rather than an error, so a broken mod hides content instead of crashing. The [content checker](/docs/reference/checks) reports it.
-- Without a `game`, every `{ custom }` is false.
-
-### Plugin shorthand
-
-```ts
-{ 'quests/done': { quest: 'bread' } }    // { custom: 'quests/done', with: { quest: 'bread' } }
-{ 'wardrobe/wearing': { entity: 'clothing:raincoat' } }
-```
-
-A plugin's condition with its full name as the only key, and its arguments as an object (or `true` for none). See [`PluginCall`](/docs/reference/custom#plugincall). It holds, fails and is checked exactly like the `{ custom }` it stands for.
+- A name that neither the game nor its plugins declare is false rather than an error, so a broken mod hides content instead of crashing. The [content checker](/docs/reference/checks) reports it, and for a name with no `/`, says to put `game/` in front.
+- Without a `game`, every call is false.
 
 ## holds
 
@@ -427,7 +406,7 @@ holds(state, at('cafe'), town)                // a plugin's condition needs the 
 holds(state, here('ava'), town)               // so does the cast's
 ```
 
-**Gotcha.** `custom` and a plugin's condition need `game`. Without it, they're false, and `level` reads every level as 0. A `count`'s `where` is tested with the same `game`, or without one.
+**Gotcha.** A call to the game's own condition or a plugin's needs `game`. Without it, they're false, and `level` reads every level as 0. A `count`'s `where` is tested with the same `game`, or without one.
 
 ## inRange
 
@@ -485,8 +464,8 @@ why.parts?.[1].parts?.[0].why    // 'stat coins is 3; wants 5 or more'
 With no condition, it returns `{ holds: true, why: 'no condition' }`.
 
 **Gotchas.**
-- A `{ custom }` leaf can only say which function it called (`custom condition marketDay`), not what that function read.
-- Pass `game`, as with `holds`. Without it, the custom and plugin leaves fail, and `level` reads level 0.
+- A call can only say which function it called (`custom condition game/marketDay`), not what that function read.
+- Pass `game`, as with `holds`. Without it, the calls fail, and `level` reads level 0.
 
 ### Explanation
 
@@ -522,5 +501,5 @@ console.log(explainText(why))
 ## See it in an example
 
 - The Letter: in [`examples/novel/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/novel/src/story), `{ chose: 'ch1.mat#open' }` lets chapter two remember a choice from chapter one, and the three lines of `ch3.door` read the `fibs` key with `lt`, `is` and `gte`.
-- Small Town: the files in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story) use `{ seen: 'ava.hi', gte: 3 }` in Ava's scene, `{ since: 'ava.hi', gte: 3 }` in the `friend` quest, `{ setting: 'hints' }` on the high street, `{ count: 'visitor', gte: 1 }` in the park, `{ count: { of: 'photo', at: 'player' } }` on the `post` activity and `{ minigameVar }` in quick feet.
+- Small Town: the files in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story) use `{ seen: 'ava.hi', gte: 3 }` in Ava's scene, `{ since: 'ava.hi', gte: 3 }` in the `friend` quest, `{ setting: 'hints' }` on the high street, `{ count: 'visitor', gte: 1 }` in the park, `{ count: { of: 'photo', at: 'player' } }` on the `post` action and `{ kv, of: 'minigame' }` in quick feet.
 - The Corner Café: the `review` trigger in [`examples/cafe/src/world/triggers.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/triggers.ts) counts staff with a `where`, `{ count: 'staff', where: { stat: 'morale', of: '$', gte: 75 }, gte: 2 }`.

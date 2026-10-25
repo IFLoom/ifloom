@@ -63,7 +63,7 @@ Every element the UI draws carries a `data-part` naming what kind of thing it is
 | `data-job`, `data-hired`, `data-fired` | Each job on the board, and on it whether the player holds it or was fired from it. |
 | `data-device`, `data-open-app`, `data-app`, `data-entry` | Each device button, each app icon, an open app, and each entry in an app's list. |
 | `data-frame`, `data-icon`, `data-face` | A device's frame, an app's icon name, and a `prop` beat's face, for a stylesheet to dress. |
-| `data-beat`, `data-who` | Each beat's kind, and on a spoken line, `character` or `player`. |
+| `data-beat`, `data-who` | Each beat's type, and on a spoken line, `character` or `player`. |
 | `data-from` | Each message bubble: `them` or `player`. |
 | `data-has-sidebar` | The page, when the layout has a side column. |
 | `data-channel`, `data-thread`, `data-post`, `data-feed` | Messages and feeds. |
@@ -337,7 +337,7 @@ The game's [mods](/docs/reference/mods), for the [mod manager](#modmanager). Pas
 type PanelComponent = ComponentType<{ data: unknown }>
 ```
 
-A game's own panel: a scene's bespoke panel, an app's panel section, or a [panel](/docs/reference/panels) content opens. `data` is what the game's [custom panel](/docs/reference/custom#panels) returned, or what the open panel was opened with. See [Panels](/docs/react/extending#panels).
+A game's own panel: a scene's bespoke panel, an app's panel section, or a [panel](/docs/reference/panels) content opens. `data` is what the panel was given in `with`: the scene's or the app section's, or what the open panel was opened with. See [Panels](/docs/react/extending#panels).
 
 ### InlineComponents
 
@@ -394,7 +394,7 @@ Keyboard shortcuts for the game. Pass `keys: true` for the built-in ones, or an 
 import { mountGame } from '@ifloom/react'
 
 mountGame(game, {
-  keys: { map: { w: { type: 'activity', id: 'wait' } } },  // 1 to 9, Escape, and W to wait
+  keys: { map: { w: { type: 'action', id: 'wait' } } },  // 1 to 9, Escape, and W to wait
 })
 ```
 
@@ -581,7 +581,7 @@ function SceneTitle() {
 function Beat(props: { beat: SceneBeat }): JSX.Element
 ```
 
-One beat of a scene's body, drawn by kind:
+One beat of a scene's body, drawn by its type:
 
 | Kind | Drawn as |
 |---|---|
@@ -597,7 +597,7 @@ One beat of a scene's body, drawn by kind:
 ```tsx
 import { Beat } from '@ifloom/react'
 
-<Beat beat={{ kind: 'say', who: 'character', text: '“Morning. What can I get you?”' }} />
+<Beat beat={{ type: 'say', who: 'character', text: '“Morning. What can I get you?”' }} />
 ```
 
 The [`Backlog`](#backlog), [`MessagesSection`](/docs/plugins/messages#messagessection) and [`FeedSection`](/docs/plugins/feed#feedsection) draw their beats with `Beat` too, so a replacement `Beat` changes them all.
@@ -783,7 +783,7 @@ Replaceable as `Hotspot` in [`components`](#components). Parts: `hotspot` and `h
 function MediaViewer(props: MediaViewerProps): JSX.Element
 
 type MediaViewerProps = { media: ViewerMedia; open: boolean; onOpenChange: (open: boolean) => void }
-type ViewerMedia = Extract<SceneBeat, { kind: 'image' } | { kind: 'video' }>
+type ViewerMedia = Extract<SceneBeat, { type: 'image' } | { type: 'video' }>
 ```
 
 A picture or a clip from the story, shown large over the page. [`Beat`](#beat) opens it when the player clicks an `image` or a `video` beat, in a scene, the [backlog](#backlog), a message or a post. Stage layers don't open it. It's a [`Dialog`](#dialog), so Escape, a click outside and its close button (`ui.closeViewer`) all close it, and focus goes back to the picture.
@@ -1002,8 +1002,8 @@ function InputField(props: { input: InputView }): JSX.Element
 
 One of the game's [inputs](/docs/reference/inputs), an [`InputView`](/docs/reference/view#inputview) from `view.inputs`. It shows the input's label, then:
 
-- for `kind: 'text'` or `'number'`, a box and an **Enter** button (`ui.enter`) that sends [`input`](/docs/reference/commands#input) with what was typed. The box honours `maxLength`, `min` and `max`
-- for `kind: 'choice'`, a button for each option, with the one already picked filled in. Each sends its value.
+- for `type: 'text'` or `'number'`, a box and an **Enter** button (`ui.enter`) that sends [`input`](/docs/reference/commands#input) with what was typed. The box honours `maxLength`, `min` and `max`
+- for `type: 'choice'`, a button for each option, with the one already picked filled in. Each sends its value.
 
 If the engine refuses the value, its reason shows under the field (`Keep it to 8 characters.`, say) until a value is accepted. The box follows the input's value when something else changes it, such as an undo or a load, so it always shows what the game holds. It carries `data-input` with the input's id.
 
@@ -1021,7 +1021,7 @@ An [`InputField`](#inputfield) for every input in `view.inputs`, which holds the
 
 ```ts
 // The showcase asks for the cat's name on moving day, and only then.
-inputs: [{ id: 'catName', label: 'Name your cat', kind: 'text', maxLength: 16, when: { phase: ['arrival'] } }]
+inputs: [{ id: 'catName', label: 'Name your cat', type: 'text', maxLength: 16, when: { kv: 'phase', is: ['arrival'] } }]
 ```
 
 **Gotcha.** A [lock](/docs/reference/locks) that denies `'*'` denies `input` too. If a scene asks for a value while the rest of the game is locked, put `input` in the lock's `except`.
@@ -1716,7 +1716,7 @@ A [panel](/docs/reference/panels) is a named piece of UI that content opens over
 function PanelHost(): JSX.Element
 ```
 
-What the `'panel'` part draws: the [panel](/docs/reference/panels) content opened, [`view.panel`](/docs/reference/view#panel), in a [`PartDialog`](#partdialog). It draws the game's own [`panels`](#gameprovider) component of that name if there is one, else a listed plugin UI's panel of that name, else the one in [`BUILT_IN_PANELS`](#built_in_panels), and hands it what the panel was opened with as `data`. Closing the dialog, with its close button or Escape, sends [`closePanel`](/docs/reference/commands#closepanel).
+What the `'panel'` part draws: the [panel](/docs/reference/panels) the `panel` effect opened, [`view.panel`](/docs/reference/view#panel), in a [`PartDialog`](#partdialog). A scene's own panel, one whose `view.panel` has a `scene`, isn't drawn here: the scene draws it in place of its choices. It draws the game's own [`panels`](#gameprovider) component of that name if there is one, else a listed plugin UI's panel of that name, else the one in [`BUILT_IN_PANELS`](#built_in_panels), and hands it what the panel was opened with as `data`. Closing the dialog, with its close button or Escape, sends [`closePanel`](/docs/reference/commands#closepanel).
 
 The dialog is titled with `with.title` when content gave one, else the plugin UI's [title for the panel](/docs/react/kit#pluginpanel) (the vendor's name for the shop, `ui.jobs` for the job board), else a built-in panel's word, or else the panel's name. The panel is drawn inside a `div` with `data-panel` set to its name.
 
@@ -1725,7 +1725,7 @@ A name nothing draws shows nothing. The panel stays open in the state until it's
 ```tsx
 import { mountGame } from '@ifloom/react'
 
-// { kind: 'panel', panel: 'noticeboard', with: { title: 'The noticeboard' } } opens this.
+// { panel: 'noticeboard', with: { title: 'The noticeboard' } } opens this.
 function Noticeboard({ data }: { data: unknown }) {
   return <p>Lost: one grey cat, answers to Biscuit.</p>
 }

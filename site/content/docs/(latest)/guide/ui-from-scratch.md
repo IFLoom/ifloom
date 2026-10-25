@@ -118,7 +118,7 @@ It never decides what can be pressed. The view has already worked that out, and 
 ```ts
 /** One paragraph of a scene: narration, a spoken line, a picture, a letter. A sound beat is heard, not drawn. */
 function drawBeat(beat: SceneBeat): void {
-  switch (beat.kind) {
+  switch (beat.type) {
     case 'text':
       drawLine(add(root, 'p'), beat.text, beat.spans)
       break
@@ -149,11 +149,11 @@ function drawLine(line: HTMLElement, text: string, spans: InlineSpan[] | undefin
     return line
   }
   for (const span of spans) {
-    if (span.kind === 'text') {
+    if (span.type === 'text') {
       line.append(span.text)
       continue
     }
-    const button = add(line, 'button', span.text, span.kind === 'tip' ? 'tip' : 'inline-action')
+    const button = add(line, 'button', span.text, span.type === 'tip' ? 'tip' : 'inline-action')
     // ...
   }
   return line
@@ -167,7 +167,7 @@ An `action` span carries a choice, with its command and its reason, like the but
 ```ts
 /** A value the game asks for, such as the player's name. What they enter goes back as an `input` command. */
 function drawInput(parent: HTMLElement, input: InputView): void {
-  if (input.kind === 'choice') {
+  if (input.type === 'choice') {
     for (const option of input.options) {
       add(parent, 'button', option.label).onclick = () => runner.apply({ type: 'input', id: input.id, to: option.value })
     }
@@ -176,7 +176,7 @@ function drawInput(parent: HTMLElement, input: InputView): void {
   const form = add(parent, 'form')
   const label = add(form, 'label', input.label)
   const field = add(label, 'input')
-  field.type = input.kind === 'number' ? 'number' : 'text'
+  field.type = input.type === 'number' ? 'number' : 'text'
   field.value = input.value === null ? '' : String(input.value)
   if (input.maxLength !== null) field.maxLength = input.maxLength
   if (input.min !== null) field.min = String(input.min)
@@ -184,7 +184,7 @@ function drawInput(parent: HTMLElement, input: InputView): void {
   add(form, 'button', 'OK').type = 'submit'
   form.onsubmit = (event) => {
     event.preventDefault()
-    runner.apply({ type: 'input', id: input.id, to: input.kind === 'number' ? Number(field.value) : field.value })
+    runner.apply({ type: 'input', id: input.id, to: input.type === 'number' ? Number(field.value) : field.value })
   }
 }
 ```

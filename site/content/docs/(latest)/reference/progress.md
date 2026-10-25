@@ -13,7 +13,7 @@ The running example is a friendship with Ava, who runs the café, growing over a
 
 Talking usually costs no time. So a choice that pays something, such as friendship, a stat or money, and can be picked again is an endless farm. A player can click it twenty times in a row and skip the story, so any repeatable choice that pays needs a limit. A once-a-turn limit keeps the line on screen and the prose readable. It only caps the payout and never takes anything back, so the choice pays again next turn.
 
-In a [`DataScene`](/docs/reference/scenes#choice), `once: { per: 'turn' }` does this for you. Outside one, such as in a hand-written scene or an activity's effects, use the functions below.
+In a [`DataScene`](/docs/reference/scenes#choice), `once: { per: 'turn' }` does this for you. Outside one, such as in a hand-written scene or an action's effects, use the functions below.
 
 ## oncePerTurn
 
@@ -33,8 +33,8 @@ import { character } from '@ifloom/plugin-cast'
   id: 'chat',
   label: 'Ask how the coffee machine is behaving',
   effects: [
-    ...oncePerTurn(state, 'ava.chat', [{ kind: 'stat', stat: 'friendship', by: 2, of: character('ava') }]),
-    { kind: 'scene', scene: 'ava.chat.machine' },
+    ...oncePerTurn(state, 'ava.chat', [{ stat: 'friendship', by: 2, of: character('ava') }]),
+    { scene: 'ava.chat.machine' },
   ],
 }
 ```
@@ -86,7 +86,7 @@ effects: [bumped(state, 'ava', 'coffeesBought')]
 if (count(state, 'ava', 'coffeesBought') >= 10) { /* she knows your order */ }
 ```
 
-In data, the same counter is the `{ storylineKv: { storyline, key }, gte }` [condition](/docs/reference/conditions).
+In data, the same counter is the [`kv` condition](/docs/reference/conditions#kv) with the storyline in `of`, `{ kv: 'coffeesBought', of: 'storyline:ava', gte: 10 }`, and the effect is `{ kv: 'coffeesBought', of: 'storyline:ava', by: 1 }`, which reads the count when it runs.
 
 **Gotcha:** `bumped` reads the count when the effect is built. Two `bumped` effects for the same key in one list both start from the same value, so the second overwrites the first instead of adding to it.
 
@@ -140,7 +140,7 @@ const AVA: Stages = {
   stages: [
     { id: 'name', key: 'knowsName', scene: 'ava.name' },
     { id: 'recipe', key: 'sharedRecipe', scene: 'ava.recipe', after: 3,
-      needs: { storylineKv: { storyline: 'ava', key: 'visits' }, gte: 5 } },
+      needs: { kv: 'visits', of: 'storyline:ava', gte: 5 } },
     { id: 'river', key: 'avaTrusts', scene: 'ava.river', after: 7 },
   ],
 }
@@ -154,7 +154,7 @@ function stageOpen(state: GameState, stages: Stages, id: string, game?: Game): b
 
 Whether this stage can happen now. It walks the stages from the start. Every stage up to and including this one must have its `needs` hold and its `after` satisfied, and every stage before it must be done. It's `false` for an unknown id.
 
-`needs` is a [condition](/docs/reference/conditions). Pass `game` when one of them uses `{ custom }` or a plugin's condition, such as the [cast](/docs/plugins/cast#conditions)'s `here`, because those find nothing without it.
+`needs` is a [condition](/docs/reference/conditions). Pass `game` when one of them calls the game's own condition (`game/…`) or a plugin's, such as the [cast](/docs/plugins/cast#conditions)'s `here`, because those find nothing without it.
 
 **Gotchas:**
 - Earlier stages' `needs` must still hold, not only have held once.

@@ -10,31 +10,29 @@ You open one with the [`panel` effect](/docs/reference/effects#panel). The shop 
 import { openShop } from '@ifloom/plugin-shop'
 import { openJobs } from '@ifloom/plugin-jobs'
 
-openShop('counter')   // { kind: 'panel', panel: 'shop', with: { vendor: 'counter' } }
-openJobs()            // { kind: 'panel', panel: 'jobs' }
-openJobs(['dogs'])    // { kind: 'panel', panel: 'jobs', with: { job: ['dogs'] } }
+openShop('counter')   // { panel: 'shop', with: { vendor: 'counter' } }
+openJobs()            // { panel: 'jobs' }
+openJobs(['dogs'])    // { panel: 'jobs', with: { job: ['dogs'] } }
 ```
 
 Any list of effects can hold one. The sections below put them in each kind of content the showcase has.
 
 ## From a place
 
-A location's action sends a command, so give the effect to an activity and point the action at it. `onlyAt` keeps the activity in the café, as the action is.
+A location's action runs effects, so put the effect on the action. It's only offered in that place.
 
 ```ts
-import { onlyAt, type LocationDef } from '@ifloom/plugin-places'
+import type { LocationDef } from '@ifloom/plugin-places'
 import { openShop } from '@ifloom/plugin-shop'
-
-const activities = [{ id: 'counter', blocked: [onlyAt(['cafe'])], effects: [openShop('counter')] }]
 
 const cafe: LocationDef = {
   id: 'cafe', name: 'The Corner Café', tag: 'Café', art: 'place/cafe', exits: ['high-street'],
   body: [{ text: 'place.cafe' }],
-  actions: [{ id: 'counter', label: 'Go to the counter', command: { type: 'activity', id: 'counter' } }],
+  actions: [{ id: 'counter', label: 'Go to the counter', effects: [openShop('counter')] }],
 }
 ```
 
-A town hall's job board is the same, with `openJobs()` in its activity.
+A town hall's job board is the same, with `openJobs()` in its action's effects.
 
 ## From a person
 
@@ -48,8 +46,8 @@ const avaHi = {
   speaker: 'ava',
   body: [{ text: 'ava.hi' }],
   choices: [
-    { id: 'work', effects: [{ kind: 'scene', scene: null }, openJobs()] },   // "Ask about weekend work"
-    { id: 'bye', effects: [{ kind: 'scene', scene: null }] },
+    { id: 'work', effects: [{ scene: null }, openJobs()] },   // "Ask about weekend work"
+    { id: 'bye', effects: [{ scene: null }] },
   ],
 }
 ```
@@ -75,17 +73,16 @@ const paper: EntityDef = {
 
 ## From a phone or a laptop
 
-An app's actions section has buttons that send commands, so the button sends an activity that opens the panel. A vendor opened away from its `at` won't sell, so leave `at` out of an online shop.
+An app's actions section has buttons that run effects too. A vendor opened away from its `at` won't sell, so leave `at` out of an online shop.
 
 ```ts
 import type { AppDef } from '@ifloom/plugin-devices'
 import { openShop, type VendorDef } from '@ifloom/plugin-shop'
 
 const webshop: VendorDef = { id: 'webshop', name: 'Pinecone Online', goods: [{ entity: 'clothing:scarf', price: { coins: 10 } }] }
-const activities = [{ id: 'browse', effects: [openShop('webshop')] }]
 const app: AppDef = {
   id: 'pinecone', name: 'Pinecone', icon: 'basket', on: 'phone',
-  sections: [{ actions: [{ id: 'browse', label: 'Browse the shop', command: { type: 'activity', id: 'browse' } }] }],
+  sections: [{ actions: [{ id: 'browse', label: 'Browse the shop', effects: [openShop('webshop')] }] }],
 }
 ```
 
@@ -102,6 +99,6 @@ The shop's and the jobs' React UIs draw both panels for you, as a [`ShopCounter`
 `npx ifloom check` reports an `openShop` for a vendor the game doesn't have, and an `openJobs` that lists a job it doesn't have, at the place the effect is written:
 
 ```text
-town · activity counter · unknown vendor "kiosk"
+town · locations cafe · action counter: unknown vendor "kiosk"
 town · trait inventory/usable on item:paper · unknown job "circus"
 ```

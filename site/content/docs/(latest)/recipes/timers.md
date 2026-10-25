@@ -24,9 +24,9 @@ export const flat: Content = {
       ms: 10_000,
       // Nobody answered: the scene closes and a missed call waits.
       effects: [
-        { kind: 'scene', scene: null },
-        { kind: 'kv', key: 'missedAva', to: true },
-        { kind: 'notify', title: 'Missed call: Ava' },
+        { scene: null },
+        { kv: 'missedAva', to: true },
+        { notify: 'Missed call: Ava' },
       ],
     },
   ],
@@ -40,8 +40,8 @@ export const flat: Content = {
         { text: 'phone.hurry', when: { timer: 'phone', lte: 3000 } },
       ],
       choices: [
-        { id: 'answer', effects: [{ kind: 'timer', timer: 'phone', to: null }, { kind: 'scene', scene: 'ava.call' }] },
-        { id: 'leave', effects: [{ kind: 'timer', timer: 'phone', to: null }, { kind: 'scene', scene: null }] },
+        { id: 'answer', effects: [{ timer: 'phone', to: null }, { scene: 'ava.call' }] },
+        { id: 'leave', effects: [{ timer: 'phone', to: null }, { scene: null }] },
       ],
     },
   ],
@@ -50,8 +50,8 @@ export const flat: Content = {
       id: 'phone',
       when: { all: [at('flat'), period('evening')] },
       effects: [
-        { kind: 'scene', scene: 'phone' },
-        { kind: 'timer', timer: 'phone' },
+        { scene: 'phone' },
+        { timer: 'phone' },
       ],
     },
   ],
@@ -67,12 +67,12 @@ export const flat: Content = {
 What each piece does:
 
 1. **The timer.** `timers` declares it once, with its length and its effects. The save keeps only how long is left, and the effects are read from here when it runs out.
-2. **Starting it.** `{ kind: 'timer', timer: 'phone' }` starts it for its `ms`. The trigger opens the scene in the same effects, so the countdown starts as the scene comes up.
+2. **Starting it.** `{ timer: 'phone' }` starts it for its `ms`. The trigger opens the scene in the same effects, so the countdown starts as the scene comes up.
 3. **Stopping it.** Both choices stop it with `to: null`, so its effects never run. Stop it in every way out of the scene, because a timer keeps running after its scene has closed.
 4. **Running out.** If neither choice is made in ten seconds, the tick that reaches 0 runs the effects: the scene closes, a kv key remembers, and a notice says so.
 5. **The last seconds.** `{ timer: 'phone', lte: 3000 }` holds while three seconds or fewer are left, so the second block comes in late. It's checked again after every tick.
 
-To give the player more time, add some with `{ kind: 'timer', timer: 'phone', by: 5000 }`. A negative `by` takes time away. `{ kind: 'timer', timer: 'phone', to: 3000 }` starts it again with three seconds.
+To give the player more time, add some with `{ timer: 'phone', by: 5000 }`. A negative `by` takes time away. `{ timer: 'phone', to: 3000 }` starts it again with three seconds.
 
 ## The countdown, in the React UI
 
@@ -206,7 +206,7 @@ The engine only moves a timer on a tick, so a test sends the ticks itself and ge
 import { apply, startingState } from '@ifloom/engine'
 
 let state = startingState(game)
-state = apply(state, game, { type: 'activity', id: 'go-home' }).state
+state = apply(state, game, { type: 'action', id: 'go-home' }).state
 // The phone is ringing: let six seconds pass, then answer.
 state = apply(state, game, { type: 'tick', ms: 6000 }).state
 state = apply(state, game, { type: 'choose', id: 'answer' }).state

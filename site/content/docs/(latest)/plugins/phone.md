@@ -12,13 +12,13 @@ description: "A smartphone in one call, wiring devices, messages and feed togeth
 
 You'd want it in a game set in the present day, where the player gets texts, scrolls a feed and calls people, as in the [showcase](/docs/guide/showcase). If your game needs a device that isn't a phone, or a phone without messages or a feed, use the [devices](/docs/plugins/devices) plugin on its own.
 
-To add it, list `@ifloom/phone` and the three plugins it wires together in your game's `package.json`. Then call `phone()` once and pass on its `plugins`, its `kinds` and its `data`, as [phone](#phone) shows.
+To add it, list `@ifloom/phone` and the three plugins it wires together in your game's `package.json`. Then call `phone()` once and pass on its `plugins` and its `content`, as [phone](#phone) shows.
 
 ```ts
 import { phone, type PhoneOptions, type PhoneKit } from '@ifloom/phone'
 ```
 
-It's a bundle, not a plugin. `phone()` returns the three plugins, the `photo` kind and the content that sets the phone up (the device, its apps, the channels and the feeds), ready to pass to the game. Everything else is content too. Messages, posts and any apps a pack adds are data, built from the same [sections](/docs/plugins/devices#section) as any app.
+It's a bundle, not a plugin. `phone()` returns the three plugins, and the content that sets the phone up (the `photo` kind, the device, its apps, the channels and the feeds), ready to pass to the game. Everything else is content too. Messages, posts and any apps a pack adds are data, built from the same [sections](/docs/plugins/devices#section) as any app.
 
 ## Install
 
@@ -42,7 +42,7 @@ The bundle needs the three plugins it wires together, beside the engine. See [Ad
 function phone(options?: PhoneOptions): PhoneKit
 ```
 
-Builds the phone. Call it once, when you build the game, and pass on all three parts of what it returns:
+Builds the phone. Call it once, when you build the game, and pass on both parts of what it returns:
 
 ```ts
 import { loadGame, type Content } from '@ifloom/engine'
@@ -55,13 +55,10 @@ declare const town: Content // your content
 
 const kit = phone()
 
-const { game } = loadGame([town], {
+const { game } = loadGame([kit.content, town], {
   id: 'small-town',
   title: 'Small Town',
-  introScene: 'intro',
   plugins: [calendar(), places({ start: 'flat' }), ...kit.plugins, quests()],
-  kinds: kit.kinds,
-  data: kit.data,
 })
 ```
 
@@ -104,20 +101,18 @@ The device's `frame` is always `'phone'`.
 ### PhoneKit
 
 ```ts
-import type { KindDef, Plugin, PluginEntry } from '@ifloom/engine'
+import type { Content, Plugin } from '@ifloom/engine'
 
 type PhoneKit = {
   plugins: Plugin[]
-  kinds: KindDef[]
-  data: Record<string, Record<string, readonly PluginEntry[]>>
+  content: Content
 }
 ```
 
 | Field | What it is |
 |---|---|
 | `plugins` | The devices, messages and feed plugins, in that order, for [`game.plugins`](/docs/reference/game#game). There's no feed plugin when `feeds` is `[]`. |
-| `kinds` | The `photo` [kind](/docs/reference/entities#kinddef), `{ id: 'photo', label: 'Photo', plural: 'Photos', listed: false }`, for the base game's `kinds`. It's empty when `gallery` is `false`. |
-| `data` | The phone as content, for the base game's [`data`](/docs/reference/loader#loadgame): the device and its apps under `devices`, the channels under `messages` and the feeds under `feed`. If your base game has `data` of its own, merge them by plugin id: `{ ...kit.data, places: { locations } }`. |
+| `content` | The phone as [content](/docs/reference/loader#content), named `phone`, to load first in your content list: the `photo` [kind](/docs/reference/entities#kinddef), `{ id: 'photo', label: 'Photo', plural: 'Photos', listed: false }` (left out when `gallery` is `false`), and in `data` the device and its apps under `devices`, the channels under `messages` and the feeds under `feed`. Your content and a pack can add apps, channels and feeds beside them, or replace one by id. |
 
 ### The stock apps
 
@@ -137,13 +132,14 @@ This is the [showcase](/docs/guide/showcase#the-phone-kit-with-its-own-apps)'s p
 The phone itself is one `phone()` call and one lock:
 
 ```ts
-import { loadGame, type Content } from '@ifloom/engine'
+import { loadGame, type Content, type GameRules } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { at, places } from '@ifloom/plugin-places'
-import { cast } from '@ifloom/plugin-cast'
+import { cast, here } from '@ifloom/plugin-cast'
 import { phone } from '@ifloom/phone'
 
 declare const town: Content // the showcase's content, below
+declare const rules: GameRules // the showcase's own code, with postLatest
 
 const kit = phone({
   sidebar: true,
@@ -154,10 +150,27 @@ const kit = phone({
       icon: 'camera',
       sections: [
         {
+          // One photo of each person, if they're here to take. A photo is a thing the player keeps.
           actions: [
-            { id: 'photo-ava', label: 'Photograph Ava', command: { type: 'activity', id: 'photo-ava' } },
-            { id: 'photo-sam', label: 'Photograph Sam', command: { type: 'activity', id: 'photo-sam' } },
-            { id: 'post', label: 'Post your latest photo', command: { type: 'activity', id: 'post' } },
+            ...(['ava', 'sam'] as const).map((who) => ({
+              id: `photo-${who}`,
+              label: who === 'ava' ? 'Photograph Ava' : 'Photograph Sam',
+              blocked: [{ when: { not: here(who) }, reason: 'They aren’t here.' }],
+              effects: [
+                { create: 'photo', with: { id: who, name: who === 'ava' ? 'Ava at work' : 'Sam and the dog', image: `photo/${who}.svg` }, at: 'player' },
+              ],
+            })),
+            {
+              id: 'post',
+              label: 'Post your latest photo',
+              cost: { stats: { energy: 5 } },
+              blocked: [
+                { when: { not: { count: { of: 'photo', at: 'player' } } }, reason: 'Take a photo first.' },
+                { when: { kv: 'postedToday' }, reason: 'You have posted today.' },
+              ],
+              // postLatest is the game's own effect, in its rules: it posts the photo and rolls its likes.
+              effects: [{ 'game/postLatest': true }, { kv: 'postedToday', to: true }],
+            },
           ],
         },
       ],
@@ -166,58 +179,32 @@ const kit = phone({
   ],
 })
 
-const { game } = loadGame([town], {
+const day: Content = {
+  introScene: 'intro',
+  kv: { phase: 'arrival' },
+  resets: { postedToday: false },
+  locks: [
+    { when: { kv: 'phase', is: ['arrival'] }, deny: ['*'], except: ['choose', 'input'], reason: 'Unpack first.' },
+    // No phone at work.
+    { when: at('office'), deny: ['devices/*'], reason: 'Not at work.' },
+  ],
+}
+
+const { game } = loadGame([kit.content, day, town], {
   id: 'small-town',
   title: 'Small Town',
-  introScene: 'intro',
-  startPhase: 'arrival',
-  kinds: kit.kinds,
-  data: kit.data,
   // The calendar first, so the phone's plugins see the new day.
   plugins: [calendar({ start: { day: 0, period: 'night' } }), places({ start: 'flat' }), cast(), ...kit.plugins],
-  rules: {
-    resets: { postedToday: false },
-    locks: [
-      { when: { phase: ['arrival'] }, deny: ['*'], except: ['choose', 'input'], reason: 'Unpack first.' },
-      // No phone at work.
-      { when: at('office'), deny: ['devices/*'], reason: 'Not at work.' },
-    ],
-  },
+  rules,
 })
 ```
 
 The rest is the town's content. These are the parts the phone uses (the full files are in `examples/showcase/src/story/ava.ts` and `story/sam.ts`):
 
 ```ts
-import { type ActivityDef } from '@ifloom/engine'
-import { character, here, person } from '@ifloom/plugin-cast'
+import { character, person } from '@ifloom/plugin-cast'
 import { period } from '@ifloom/plugin-calendar'
 import type { MessageDef } from '@ifloom/plugin-messages'
-
-// The camera: one photo of each person, if they're here to take. A photo is a thing the player keeps.
-const activities: ActivityDef[] = [
-  ...(['ava', 'sam'] as const).map((who) => ({
-    id: `photo-${who}`,
-    blocked: [{ when: { not: here(who) }, reason: 'They aren’t here.' }],
-    effects: [
-      {
-        kind: 'create' as const,
-        of: 'photo',
-        entity: { id: who, name: who === 'ava' ? 'Ava at work' : 'Sam and the dog', image: `photo/${who}.svg` },
-        at: 'player',
-      },
-    ],
-  })),
-  {
-    id: 'post',
-    cost: { stats: { energy: 5 } },
-    blocked: [
-      { when: { not: { count: { of: 'photo', at: 'player' } } }, reason: 'Take a photo first.' },
-      { when: { kv: 'postedToday' }, reason: 'You have posted today.' }],
-    // postLatest is a custom effect that posts the photo and rolls its likes.
-    effects: [{ custom: 'postLatest' }, { kind: 'kv', key: 'postedToday', to: true }],
-  },
-]
 
 // Ava can be called in the evening and at night (the rest of her entry is left out here).
 const ava = person({
@@ -233,7 +220,7 @@ const text: MessageDef = {
   from: 'ava',
   when: { all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] },
   body: [{ text: 'ava.text' }],
-  replies: [{ id: 'yes', effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: character('ava') }] }, { id: 'later' }],
+  replies: [{ id: 'yes', effects: [{ stat: 'friendship', by: 5, of: character('ava') }] }, { id: 'later' }],
 }
 ```
 
@@ -259,7 +246,7 @@ phoneOf(state).apps.map((app) => app.name)
 
 ### The camera and the gallery
 
-The next morning the player goes to the café and talks to Ava. The camera's buttons are priced and refused like any action. Sam isn't here, and there's nothing to post yet:
+The next morning the player goes to the café and talks to Ava. The camera's buttons are priced and refused like any action. One with effects is done as `{ type: 'action', id: 'devices/<id>' }`. Sam isn't here, and there's nothing to post yet:
 
 ```ts
 import { apply, view, type Game, type GameState } from '@ifloom/engine'
@@ -272,19 +259,19 @@ const phoneOf = (state: GameState) => (view(state, game).plugins.devices as Devi
 
 state = apply(state, game, openApp('camera')).state
 phoneOf(state).open?.sections[0]
-// { kind: 'actions', actions: [
+// { type: 'actions', actions: [
 //   { id: 'photo-ava', label: 'Photograph Ava', ... },
 //   { id: 'photo-sam', label: 'Photograph Sam', disabled: 'They aren’t here.', ... },
 //   { id: 'post', label: 'Post your latest photo', price: { stats: [{ id: 'energy', amount: 5, text: '5%' }] },
 //     disabled: 'Take a photo first.', ... }] }
 
-state = apply(state, game, { type: 'activity', id: 'photo-ava' }).state
+state = apply(state, game, { type: 'action', id: 'devices/photo-ava' }).state
 state = apply(state, game, openApp('gallery')).state
 phoneOf(state).open?.sections[0]
-// { kind: 'list', entries: [{ id: 'photo.ava', title: 'Ava at work', text: '', image: 'art/photo/ava.svg', actions: [] }] }
+// { type: 'list', entries: [{ id: 'photo.ava', title: 'Ava at work', text: '', image: 'art/photo/ava.svg', actions: [] }] }
 
 state = apply(state, game, openApp('camera')).state
-state = apply(state, game, { type: 'activity', id: 'post' }).state
+state = apply(state, game, { type: 'action', id: 'devices/post' }).state
 const social = (view(state, game).plugins.feed as FeedsView).feeds.find((feed) => feed.id === 'social')!
 social.posts[0]
 // { id: 'post.photo.ava', mine: true, name: 'You', text: 'New town, new faces.', image: 'art/photo/ava.svg',
@@ -310,7 +297,7 @@ apply(state, game, call('ava')).reason   // in the morning: 'She’s busy at the
 // ...wait until the evening
 state = apply(state, game, openApp('contacts')).state
 phoneOf(state).open?.sections[0]
-// { kind: 'list', entries: [{ id: 'ava', title: 'Ava', text: 'Runs the café', image: 'art/character/ava.svg',
+// { type: 'list', entries: [{ id: 'ava', title: 'Ava', text: 'Runs the café', image: 'art/character/ava.svg',
 //   actions: [{ id: 'call-ava', label: 'Call', command: { type: 'custom', name: 'cast/call', with: { id: 'ava' } } }] }] }
 state = apply(state, game, call('ava')).state
 state.sceneId           // 'ava.call'
@@ -336,7 +323,7 @@ phoneOf(state).apps.find((app) => app.id === 'texts')?.badge   // 1
 phoneOf(state).badge     // 3: the text, and Ava's and Sam's posts on Social
 
 state = apply(state, game, openApp('texts')).state
-phoneOf(state).open?.sections   // [{ kind: 'plugin', plugin: 'messages', with: { channel: 'texts' } }]
+phoneOf(state).open?.sections   // [{ type: 'plugin', plugin: 'messages', with: { channel: 'texts' } }]
 // The UI draws view.plugins.messages, channel 'texts'.
 state = apply(state, game, replyTo('ava.text', 'yes')).state
 phoneOf(state).badge     // 2: Social is still unseen
@@ -365,15 +352,14 @@ apply(state, game, openApp('texts')).reason     // 'Not at work.'
 
 ## Gotchas
 
-- **Pass on `data` as well as `plugins`.** Without it, the phone has no device, no apps, no channels and no feeds, and every message and post is reported against a channel or feed the game doesn't have.
-- **Pass on `kinds` as well as `plugins`.** The Gallery app lists `photo` things. If the game doesn't declare the kind, the loader reports the app (`apps gallery · unknown kind "photo"`) and every effect that makes a photo (`activity photo-ava · unknown kind "photo"`). Pass `kit.kinds` as the base game's `kinds`, with any of your own after it, or turn the gallery off with `gallery: false`.
+- **Pass on `content` as well as `plugins`.** Without it, the phone has no device, no apps, no channels and no feeds, and every message and post is reported against a channel or feed the game doesn't have. Nor is there a `photo` kind, so the loader reports the Gallery app (`apps gallery · unknown kind "photo"`) and every effect that makes a photo. Load `kit.content` first in your content list, or turn the gallery off with `gallery: false`.
 - **A photo is a thing you hold.** The Gallery lists the photos `'you'` hold, newest first, so make them with `at: 'player'` (or `'you'`). It's in [`view.held`](/docs/reference/view#held) too. List the kinds the inventory shows in [`data.inventory.kinds`](/docs/plugins/inventory) to keep photos out of the inventory card.
 - **Don't add the plugins a second time.** The kit already has devices, messages and feed. Adding `messages(...)` again gives two plugins with one id, which the loader reports. For more channels or feeds, pass `channels` and `feeds` to `phone()`.
 - **Channels, feeds and apps share one list of ids.** Each one becomes an app with its own id, so a channel and a feed with the same id, or an app of yours called `contacts`, replace one another. Give each its own id.
 - **Badges name the channels and feeds.** The texts app counts `messages/unread` with `{ channel: 'texts' }`, and the Social app `feed/unread` with `{ feed: 'social' }`. Renaming a channel means renaming it in its badge too.
 - **Messages and posts arrive only after a command.** They arrive at the end of the first command after which their `when` holds, so a text whose `when` holds on a new game arrives after the player's first command. See [Messages](/docs/plugins/messages#gotchas).
 - **Opening an app is free and doesn't leave the room.** The camera at the café photographs whoever is at the café. Opening the phone takes no time and moves nobody.
-- **A `plugin` section only names the slice.** The Messages and Social apps carry `{ kind: 'plugin', plugin, with }`. The UI draws `view.plugins.messages` or `view.plugins.feed`, picking the channel or feed in `with`.
+- **A `plugin` section only names the slice.** The Messages and Social apps carry `{ type: 'plugin', plugin, with }`. The UI draws `view.plugins.messages` or `view.plugins.feed`, picking the channel or feed in `with`.
 - **Contacts come from the cast.** The app lists the [cast](/docs/plugins/cast)'s [`cast/contacts`](/docs/plugins/cast#queries), which is the people with a `call` whom the player has [met](/docs/plugins/cast#meeting-people). On a new game Contacts is empty until someone is met, and in a game without the cast it's always empty.
 - **A lock on `devices/*` shuts the whole phone.** Every app is greyed out with the lock's reason, and an app left open closes after the command that makes the lock hold. A lock on `'*'`, such as the showcase's moving day, does the same unless its `except` lists `devices/open`. See [Devices](/docs/plugins/devices#gotchas).
 - **Stock app names aren't in the strings table.** They're names, not lines the plugins say, so you set them through `phone()`. `Messages` and `Social` come from the default `channels` and `feeds`, so pass your own with the names you want. `Contacts`, `Gallery` and the `Photos` kind have no option of their own. To rename one, turn the stock app off and add your own with the same sections, such as `{ id: 'people', name: 'People', icon: 'contacts', sections: [{ contacts: true }] }`.
@@ -381,4 +367,4 @@ apply(state, game, openApp('texts')).reason     // 'Not at work.'
 
 ## See it in an example
 
-Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) builds its phone with `phone({ sidebar: true, apps: [...] })`, spreads `kit.plugins` into its `plugins`, and passes `kit.kinds` as the base game's `kinds` and `kit.data` as its `data`.
+Small Town: [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) builds its phone with `phone({ sidebar: true, apps: [...] })`, spreads `kit.plugins` into its `plugins`, and loads `kit.content` first in its content list. Its camera and notes apps are in [`examples/showcase/src/world/phone.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/phone.ts).

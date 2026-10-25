@@ -35,10 +35,13 @@ The [Transitions recipe](/docs/recipes/transitions) walks through transitions an
 }
 ```
 
-How a screen comes on (`in`) and goes off (`out`), over `ms` milliseconds each. A name on its own means the same both ways, so `ui: { transition: 'fade' }` is `{ in: 'fade', out: 'fade' }`. On a [scene](/docs/reference/scenes#datascene) it's that scene's. On a [place](/docs/plugins/places#locationdef) it's the room's while no scene is open, so walking between places can slide. On the game's `ui` it's the default for every screen that says nothing, part by part: a scene that sets only `in` takes `out` and `ms` from the game.
+How a screen comes on (`in`) and goes off (`out`), over `ms` milliseconds each. A name on its own means the same both ways, so `ui: { transition: 'fade' }` is `{ in: 'fade', out: 'fade' }`. On a [scene](/docs/reference/scenes#datascene) it's that scene's. On a [place](/docs/plugins/places#locationdef) it's the room's while no scene is open, so walking between places can slide. In the content's `ui`, the game's own hints, it's the default for every screen that says nothing, part by part: a scene that sets only `in` takes `out` and `ms` from the game's.
 
 ```ts
-loadGame([town], { id: 'small-town', title: 'Small Town', ui: { transition: { in: 'fade', ms: 250 } } })
+export const town: Content = {
+  ui: { transition: { in: 'fade', ms: 250 } },
+  scenes: [/* ... */],
+}
 ```
 
 With no hint anywhere, a screen comes in and goes out with `'none'`, which is an instant swap. `ms` is 300 when nothing says.
@@ -67,16 +70,16 @@ type Transition = { in?: TransitionName; out?: TransitionName; ms?: number }
 
 ### Your own transition names
 
-List names of your own in the game's `ui.transitionNames` and draw them with CSS keyed on `data-transition-in`, `data-transition-out` and `data-reveal`. The recipe has [an example](/docs/recipes/transitions#your-own-names). A name is lower-case letters, digits and `-`.
+List names of your own in the content's `ui.transitionNames` and draw them with CSS keyed on `data-transition-in`, `data-transition-out` and `data-reveal`. The recipe has [an example](/docs/recipes/transitions#your-own-names). A name is lower-case letters, digits and `-`.
 
 ```ts
-loadGame([town], { id: 'small-town', title: 'Small Town', ui: { transitionNames: ['curtain'] } })
+export const town: Content = { ui: { transitionNames: ['curtain'] } }
 ```
 
 ### transition on a choice
 
 ```ts
-{ id: 'unpack', ui: { transition: { in: 'slide-up', ms: 400 } }, effects: [{ kind: 'scene', scene: null }] }
+{ id: 'unpack', ui: { transition: { in: 'slide-up', ms: 400 } }, effects: [{ scene: null }] }
 ```
 
 How the screen this choice leads to comes in, whatever that screen says. A bare name is only the `in`. An `out` changes how the screen the choice leaves goes off. It works the same on an [action](/docs/reference/actions), a room's button.

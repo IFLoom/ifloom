@@ -84,11 +84,11 @@ Settings are what the player can change, such as whether hints are shown or how 
 ```ts
 const story: Content = {
   settings: [
-    { id: 'hints', label: 'Show hints', kind: 'toggle', default: true },
+    { id: 'hints', label: 'Show hints', type: 'toggle', default: true },
     {
       id: 'textSize',
       label: 'Text size',
-      kind: 'choice',
+      type: 'choice',
       affects: 'ui',
       options: [
         { value: 'normal', label: 'Normal' },
@@ -101,7 +101,7 @@ const story: Content = {
 }
 ```
 
-There are two kinds:
+A setting is one of two sorts:
 
 - **A `play` setting**, the default, is part of the game. It's saved with it, and content reads it with the [`{ setting }`](/docs/reference/conditions#setting) condition, such as a hint that appears only with `when: { setting: 'hints' }`.
 - **A `ui` setting** only changes how the game looks or sounds. It lives in the profile, never in the game state, and only your UI reads it.
@@ -122,7 +122,7 @@ if (!result.ok) showMessage(result.reason)
 
 `settings()` is synchronous and returns the same object until a value changes, so you can call it while you draw. `setSetting` checks the value against the declaration. A play setting goes through the game as a command, so it's logged and replays the same. A ui setting is written to the profile, and needs a runner made with one. `browserRunner` has one.
 
-To draw a whole settings screen, read [`view.settings`](/docs/reference/view#settings). It lists every setting in order with its `label`, `kind`, `options` or range, and `default`. Take each one's current value from `runner.settings()`, and call `setSetting` when the player changes it.
+To draw a whole settings screen, read [`view.settings`](/docs/reference/view#settings). It lists every setting in order with its `label`, `type`, `options` or range, and `default`. Take each one's current value from `runner.settings()`, and call `setSetting` when the player changes it.
 
 The player's last choices are kept in the profile, so a new game starts with them. [Settings](/docs/reference/settings) has the rest, such as ranges.
 

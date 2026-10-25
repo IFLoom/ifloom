@@ -14,7 +14,7 @@ See [Game state](/docs/reference/state).
 
 ## Commands go through `apply`
 
-The player changes the game only through commands. The core has a few, such as `choose`, `activity`, `leave`, `use` and `input`, and plugins add their own, such as the places plugin's `go('cafe')` and the cast's `talk('ava')`. `apply(state, game, command)` returns the next state, whether the command took (`ok`), and if not, why (`refused`). A refused command returns the state unchanged.
+The player changes the game only through commands. The core has a few, such as `choose`, `action`, `leave`, `use` and `input`, and plugins add their own, such as the places plugin's `go('cafe')` and the cast's `talk('ava')`. `apply(state, game, command)` returns the next state, whether the command took (`ok`), and if not, why (`refused`). A refused command returns the state unchanged.
 
 `dispatch` is the same call, returning only the state. Use `apply` wherever the answer matters, because a refusal and a command that changed nothing leave identical states behind.
 
@@ -26,13 +26,13 @@ What a choice does is a list of effects. When something applies is a condition. 
 
 ```ts
 // effects
-[{ kind: 'stat', stat: 'friendship', by: 5, of: 'character:ava' }, { kind: 'stat', stat: 'coins', by: -3 }]
+[{ stat: 'friendship', by: 5, of: 'character:ava' }, { stat: 'coins', by: -3 }]
 
 // a condition
 { all: [{ 'places/at': { location: 'cafe' } }, { 'cast/here': { character: 'ava' } }, { stat: 'friendship', of: 'character:ava', gte: 10 }] }
 ```
 
-Because they're data, the loader can check them. An effect that names a storyline nobody declared is caught before anyone plays, and a mod can add to them without shipping code. A plugin's conditions and effects are data too, named with the plugin's id first (`places/at` and `cast/here` above). When a test really needs code, a condition or effect can name a [custom function](/docs/reference/custom) the game declares.
+Because they're data, the loader can check them. An effect that names a storyline nobody declared is caught before anyone plays, and a mod can add to them without shipping code. A plugin's conditions and effects are data too, named with the plugin's id first (`places/at` and `cast/here` above). When a test really needs code, a condition or effect can [call the game's own code](/docs/reference/custom) by name, with `game/` in front, as in `{ 'game/marketDay': true }`.
 
 See [Effects](/docs/reference/effects) and [Conditions](/docs/reference/conditions).
 
@@ -42,19 +42,21 @@ The game is your content. It can hold:
 
 - scenes, their prose and the variants of a line
 - storylets, which are scenes an effect draws at random from a named set
-- the scene it opens on (`introScene`) and the phase it starts in (`startPhase`)
+- the scene it opens on (`introScene`), and the kv keys it starts with (`kv`), such as the phase the player is in
 - stats
 - kinds of entity, and the entities that exist at the start
-- activities and the buttons offered in every room (`actions`)
+- actions, the buttons offered in every room and the things the player can do (`actions`)
+- locks, and the kv keys put back each turn (`locks`, `resets`)
 - storylines
 - triggers and inputs
 - the words that replace the engine's own (`strings`)
-- named custom functions that conditions, effects and prose can call (`custom`)
-- the plugins it uses, and their content under `data`
+- when the player may save (`saveable`), when the game counts as finished and what a New Game+ carries over (`finished`, `carryOver`)
+- presentation hints for the whole game (`ui`)
+- the plugins' content, under `data`
 
-The engine doesn't know any of these by name. It reads them all from the game.
+A plugin can bring content of its own too, such as the cast's `character` kind. It goes in first, under yours, so your content and any pack can replace it. The engine doesn't know any of these by name. It reads them all from the game.
 
-Some of a game is logic rather than content, such as what happens at the end of a turn, or what the player can't do yet. Those are rules, on `game.rules`. Most are optional hooks that the engine calls at fixed moments, and leaving one out means the engine does the plain thing. The game's locks are kept there too.
+Some of a game is code rather than content, such as what happens at the end of a turn, or a condition worked out from several values. That's the game's `rules`, a plain object that goes in the base beside its plugins. It can have anything a plugin can: hooks that the engine calls at fixed moments, and conditions, effects and values that content calls with `game/` in front. Leave a hook out and the engine does the plain thing.
 
 See [The game](/docs/reference/game) and [Rules and hooks](/docs/reference/rules).
 
@@ -62,15 +64,15 @@ See [The game](/docs/reference/game) and [Rules and hooks](/docs/reference/rules
 
 `view(state, game)` turns the state into a view. It has the scene on screen, with its body already split into beats, the choices, the buttons on offer, and each plugin's own part, such as the places plugin's exits. Every button carries the command it sends, and a button that can't be pressed carries the reason.
 
-An activity's `blocked` reasons and a lock's reason are each written once, and both `apply` and `view` read them, so the greyed-out button and the refusal say the same thing. Your UI draws the view and sends commands. It never needs to read the state directly.
+An action's `blocked` reasons and a lock's reason are each written once, and both `apply` and `view` read them, so the greyed-out button and the refusal say the same thing. Your UI draws the view and sends commands. It never needs to read the state directly.
 
 See [The view](/docs/reference/view).
 
 ## The turn
 
-The engine has one clock, the turn. `state.turn` is 0 in a new game. Your game decides how long a turn is: a chapter in a novel, a week in a management game, a day in a life sim. A turn ends when the `turn` effect, `{ kind: 'turn' }`, runs. Everything the engine dates is dated in turns, such as when a scene was first seen or when a trigger last fired.
+The engine has one clock, the turn. `state.turn` is 0 in a new game. Your game decides how long a turn is: a chapter in a novel, a week in a management game, a day in a life sim. A turn ends when the `turn` effect, `{ turn: true }`, runs. Everything the engine dates is dated in turns, such as when a scene was first seen or when a trigger last fired.
 
-At the end of a turn the counter goes up by one, the kv keys the game lists in `resets` are put back, and the game's `onTurn` rule, each plugin's `onTurn` hook and the game's `onTurnDone` rule run. That's where a game that has energy fills it back up.
+At the end of a turn the counter goes up by one, the kv keys the content lists in `resets` are put back, and the game's `onTurn` rule, each plugin's `onTurn` hook, the game's `onTurnDone` rule and each plugin's `onTurnDone` run. That's where a game that has energy fills it back up.
 
 The core has no time of day. A game that wants days, the periods of a day and a weekday adds the [calendar plugin](/docs/plugins/calendar), which ends a turn each time its clock passes a period, a day or a week, whichever the game picks.
 
@@ -168,7 +170,7 @@ Each save has a seed, and every random draw is worked out from the seed, a name 
 
 That's what makes undo honest, since stepping back and trying again doesn't re-roll. It also lets a scripted playtest or a snapshot test give the same result every run. Draw your own values the same way, with `roll`, `pick`, `chance` and `weighted`, one named draw per value.
 
-Content can carry weights where the engine picks for it: a line among its variants, a file in a pool, a track in a shuffled playlist. A [storylet](/docs/reference/storylets) is the same idea for whole scenes. You mark scenes as drawn from a named set, such as `'cafe'`, each with a weight and its own `when`, and the effect `{ kind: 'scene', from: 'cafe' }` opens one of them.
+Content can carry weights where the engine picks for it: a line among its variants, a file in a pool, a track in a shuffled playlist. A [storylet](/docs/reference/storylets) is the same idea for whole scenes. You mark scenes as drawn from a named set, such as `'cafe'`, each with a weight and its own `when`, and the effect `{ scene: { from: 'cafe' } }` opens one of them.
 
 See [Randomness](/docs/reference/random).
 
@@ -186,7 +188,7 @@ A save is a snapshot of the state, with details for a load screen: the turn, the
 
 The driver says where saves are kept: `localStorage`, IndexedDB, memory for tests, or one you write for a desktop wrapper. The engine has no default, so the game chooses.
 
-Each save carries a version. The format is at version 18 (`SAVE_VERSION`). When the state's shape changes, the engine adds a step from the old version, and an older save is carried forward one step at a time when it's loaded. A save with no route to the current version is refused rather than misread.
+Each save carries a version. The format is at version 19 (`SAVE_VERSION`). When the state's shape changes, the engine adds a step from the old version, and an older save is carried forward one step at a time when it's loaded. A save with no route to the current version is refused rather than misread.
 
 Your game can do the same for its own content. Give it a `version`, and when an update renames a kv key or adds a stat, raise the version and add a step to `migrations` that carries older saves forward. A step can call `tools.fill()` to add the new content an old save lacks. See [The game's own migrations](/docs/reference/saves#the-games-own-migrations).
 

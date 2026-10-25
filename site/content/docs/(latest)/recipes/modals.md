@@ -25,7 +25,7 @@ The popup's text is a prose line like any other, so a translation or a mod can c
 
 ### Draw it yourself
 
-The view gives the paragraph's beat a `ui` [span](/docs/reference/prose#inlinespan), `{ kind: 'ui', name: 'modal', text, args }`, where `args[0]` is the prose key and `args[1]` the title if there is one. Read the line from the game's prose for the current state, and show it in a dialog when the words are pressed.
+The view gives the paragraph's beat a `ui` [span](/docs/reference/prose#inlinespan), `{ type: 'ui', name: 'modal', text, args }`, where `args[0]` is the prose key and `args[1]` the title if there is one. Read the line from the game's prose for the current state, and show it in a dialog when the words are pressed.
 
 A native `<dialog>` opened with `showModal()` does most of the work. It closes on Escape, keeps focus inside while it's open, and puts focus back on the button when it closes. Draw the other spans as the [inline actions recipe](/docs/recipes/inline-actions#draw-them-yourself) does.
 
@@ -33,7 +33,7 @@ A native `<dialog>` opened with `showModal()` does most of the work. It closes o
 // src/popup.ts: call it from your line drawing for a `ui` span named modal.
 import type { InlineSpan, Runner } from '@ifloom/engine'
 
-export function drawPopup(runner: Runner, line: HTMLElement, span: Extract<InlineSpan, { kind: 'ui' }>): void {
+export function drawPopup(runner: Runner, line: HTMLElement, span: Extract<InlineSpan, { type: 'ui' }>): void {
   const [key, title] = span.args
   const text = key ? runner.game.prose?.line(key, runner.state) : undefined
   // A key with no prose: the words, so the line still reads.
@@ -61,7 +61,7 @@ export function drawPopup(runner: Runner, line: HTMLElement, span: Extract<Inlin
 import { useRef } from 'react'
 import type { InlineSpan, Runner } from '@ifloom/engine'
 
-export function Popup({ runner, span }: { runner: Runner; span: Extract<InlineSpan, { kind: 'ui' }> }) {
+export function Popup({ runner, span }: { runner: Runner; span: Extract<InlineSpan, { type: 'ui' }> }) {
   const dialog = useRef<HTMLDialogElement>(null)
   const [key, title] = span.args
   const text = key ? runner.game.prose?.line(key, runner.state) : undefined
@@ -86,13 +86,13 @@ export function Popup({ runner, span }: { runner: Runner; span: Extract<InlineSp
 ```
 
 ```vue tab="Vue" tab-group="framework"
-<!-- src/Popup.vue: <Popup v-if="span.kind === 'ui' && span.name === 'modal'" :span="span" /> in Line.vue -->
+<!-- src/Popup.vue: <Popup v-if="span.type === 'ui' && span.name === 'modal'" :span="span" /> in Line.vue -->
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import type { InlineSpan } from '@ifloom/engine'
 import { runner, view } from './runner.ts'
 
-const props = defineProps<{ span: Extract<InlineSpan, { kind: 'ui' }> }>()
+const props = defineProps<{ span: Extract<InlineSpan, { type: 'ui' }> }>()
 const dialog = ref<HTMLDialogElement>()
 // Read again whenever the view changes, so tokens follow the state.
 const text = computed(() => {
@@ -133,13 +133,13 @@ import type { Content } from '@ifloom/engine'
 import { onlyAt } from '@ifloom/plugin-places'
 
 export const lease: Content = {
-  activities: [
-    { id: 'read-lease', effects: [{ kind: 'panel', panel: 'lease', with: { title: 'The lease' } }] },
+  // Sent by the panel's button, so it has no label and no button of its own.
+  actions: [
     {
       id: 'sign-lease',
       cost: { stats: { coins: 50 }, reasons: { coins: "You can't cover the deposit yet." } },
       blocked: [onlyAt(['flat']), { when: { kv: 'signed' }, reason: 'You signed it already.' }],
-      effects: [{ kind: 'kv', key: 'signed', to: true }, { kind: 'panel', panel: null }],
+      effects: [{ kv: 'signed', to: true }, { panel: null }],
     },
   ],
   prose: {
@@ -150,7 +150,7 @@ export const lease: Content = {
 
 // The flat's location gains the line and the button it links to:
 // body: [{ text: 'place.flat' }, { text: 'place.flat.lease', when: { not: { kv: 'signed' } } }],
-// actions: [{ id: 'lease', label: 'Read the lease', command: { type: 'activity', id: 'read-lease' } }],
+// actions: [{ id: 'lease', label: 'Read the lease', effects: [{ panel: 'lease', with: { title: 'The lease' } }] }],
 ```
 
 The button is drawn in the line, not in the room's list. The panel stays open while the player reads, and closes when signing closes it, when the player dismisses it (the [`closePanel`](/docs/reference/commands#closepanel) command), or when the story moves on. The [Panels](/docs/reference/panels#how-long-a-panel-stays-open) page has the details.
@@ -181,7 +181,7 @@ export function drawPanel(runner: Runner): void {
     const reason = document.createElement('p')
     const sign = Object.assign(document.createElement('button'), { type: 'button', textContent: 'Sign it' })
     sign.onclick = () => {
-      const done = runner.apply({ type: 'activity', id: 'sign-lease' })
+      const done = runner.apply({ type: 'action', id: 'sign-lease' })
       if (!done.ok) reason.textContent = done.reason
     }
     const close = Object.assign(document.createElement('button'), { type: 'button', textContent: 'Close' })
@@ -210,7 +210,7 @@ function LeasePanel() {
   const { runner, send } = useGame()
   const [reason, setReason] = useState<string>()
   const sign = () => {
-    const done = send({ type: 'activity', id: 'sign-lease' })
+    const done = send({ type: 'action', id: 'sign-lease' })
     if (!done.ok) setReason(done.reason)
   }
   return (
@@ -250,7 +250,7 @@ watch(
 )
 
 function sign() {
-  const done = runner.apply({ type: 'activity', id: 'sign-lease' })
+  const done = runner.apply({ type: 'action', id: 'sign-lease' })
   if (!done.ok) reason.value = done.reason
 }
 </script>

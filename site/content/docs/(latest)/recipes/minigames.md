@@ -29,7 +29,7 @@ const ARROWS = ['up', 'down', 'left', 'right'] as const
 const showArrow = (arrow: (typeof ARROWS)[number]): MinigameStateDef => ({
   label: `arrows.${arrow}`,
   after: { ms: 1500, go: 'round' },
-  on: ARROWS.map((input) => ({ input, go: 'round', ...(input === arrow ? { effects: [{ kind: 'minigameVar' as const, key: 'score', by: 1 }] } : {}) })),
+  on: ARROWS.map((input) => ({ input, go: 'round', ...(input === arrow ? { effects: [{ kv: 'score', of: 'minigame', by: 1 }] } : {}) })),
 })
 ```
 
@@ -42,7 +42,7 @@ const showArrow = (arrow: (typeof ARROWS)[number]): MinigameStateDef => ({
 'arrows.right': 'She points at the swings. Right!',
 ```
 
-`after` is the timer. When 1.5 seconds of ticks have passed in the state, it goes to `round`. Each `on` entry is what an input does. All four go to `round`, and only the right one also adds a point with the [`minigameVar`](/docs/reference/effects#minigamevar) effect.
+`after` is the timer. When 1.5 seconds of ticks have passed in the state, it goes to `round`. Each `on` entry is what an input does. All four go to `round`, and only the right one also adds a point with the [`kv`](/docs/reference/effects#whose-key-it-is) effect, `of: 'minigame'`.
 
 The input names are yours to choose. `up`, `down`, `left` and `right` are worth using where they fit, because the React UI gives them the arrow keys and labelled buttons without being told. In the other templates, [`startKeys`](/docs/browser#startkeys) gives them the arrow keys.
 
@@ -65,21 +65,21 @@ const quickFeet: MinigameDef = {
     // A new round draws an arrow, or after the fifth, the score is counted.
     round: {
       always: [
-        { when: { minigameVar: 'round', gte: 5 }, go: 'tally' },
+        { when: { kv: 'round', of: 'minigame', gte: 5 }, go: 'tally' },
         {
           go: 'pick',
           effects: [
-            { kind: 'minigameVar', key: 'round', by: 1 },
-            { kind: 'minigameVar', key: 'arrow', random: [1, 4] },
+            { kv: 'round', of: 'minigame', by: 1 },
+            { kv: 'arrow', of: 'minigame', random: [1, 4] },
           ],
         },
       ],
     },
-    pick: { always: ARROWS.map((arrow, index) => ({ when: { minigameVar: 'arrow', gte: index + 1, lte: index + 1 }, go: arrow })) },
+    pick: { always: ARROWS.map((arrow, index) => ({ when: { kv: 'arrow', of: 'minigame', is: index + 1 }, go: arrow })) },
     ...Object.fromEntries(ARROWS.map((arrow) => [arrow, showArrow(arrow)])),
-    tally: { always: [{ when: { minigameVar: 'score', gte: 3 }, go: 'won' }, { go: 'lost' }] },
-    won: { final: { effects: [{ kind: 'stat', stat: 'coins', by: 5 }, { kind: 'scene', scene: 'park.arrows-won' }] } },
-    lost: { final: { effects: [{ kind: 'scene', scene: 'park.arrows-lost' }] } },
+    tally: { always: [{ when: { kv: 'score', of: 'minigame', gte: 3 }, go: 'won' }, { go: 'lost' }] },
+    won: { final: { effects: [{ stat: 'coins', by: 5 }, { scene: 'park.arrows-won' }] } },
+    lost: { final: { effects: [{ scene: 'park.arrows-lost' }] } },
   },
 }
 ```
@@ -115,18 +115,16 @@ The random draw comes from the save's seed, so the same save always gets the sam
 
 ## Starting it
 
-Add the minigame to your content, with the two closing scenes and something that starts it. In the park, that's an activity with the [`minigame`](/docs/reference/effects#minigame) effect, offered as one of the park's buttons:
+Add the minigame to your content, with the two closing scenes and something that starts it. In the park, that's one of the park's actions, with the [`minigame`](/docs/reference/effects#minigame) effect:
 
 ```ts
 export const town: Pack = {
   // ...
   minigames: [quickFeet],
-  activities: [
-    { id: 'arrows', blocked: [onlyAt(['park'])], effects: [{ kind: 'minigame', minigame: 'arrows' }] },
-  ],
+  // and in the park's location: actions: [{ id: 'arrows', label: 'Play quick feet with the kids', effects: [{ minigame: 'arrows' }] }]
   scenes: [
-    { id: 'park.arrows-won', title: 'Quick feet', body: [{ text: 'park.arrows-won' }], choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }] },
-    { id: 'park.arrows-lost', title: 'Quick feet', body: [{ text: 'park.arrows-lost' }], choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }] },
+    { id: 'park.arrows-won', title: 'Quick feet', body: [{ text: 'park.arrows-won' }], choices: [{ id: 'leave', effects: [{ scene: null }] }] },
+    { id: 'park.arrows-lost', title: 'Quick feet', body: [{ text: 'park.arrows-lost' }], choices: [{ id: 'leave', effects: [{ scene: null }] }] },
   ],
 }
 ```
@@ -305,7 +303,7 @@ Ticks are ordinary commands, so a test can play a minigame with no browser and n
 ```ts
 import { apply, view } from '@ifloom/engine'
 
-let state = apply(atThePark, game, { type: 'activity', id: 'arrows' }).state
+let state = apply(atThePark, game, { type: 'action', id: 'places/arrows' }).state
 const arrow = state.minigame!.state                                        // 'left', say
 state = apply(state, game, { type: 'tick', ms: 400 }).state                 // a moment's thought
 state = apply(state, game, { type: 'minigame', input: arrow }).state       // the right arrow

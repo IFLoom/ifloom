@@ -250,7 +250,7 @@ What a save says about itself, which is enough to draw a row on a load screen wi
 | `played` | Time played, in milliseconds, as the [runner](/docs/reference/runner) counted it. |
 | `turn` | How many turns had passed: [`state.turn`](/docs/reference/state#turn), from 0. |
 | `when` | When and where the game was, in its plugins' [labels](/docs/reference/plugins#labels), as the view shows it in [`view.when`](/docs/reference/view#the-clock-and-the-player): `'Day 5 · Friday evening · The Corner Café'` with the calendar and the places plugin, `'Day 5 · Friday evening'` with the calendar alone. `null` when no plugin says. |
-| `playerName` | What [`game.saveName`](/docs/reference/game#savename) returns for the state, or `null` when the game has no `saveName`. A save written before version 18 called it `player`, and reading it gives it as `playerName`. The engine keeps no name of its own, so a game that asks the player's name declares `saveName` to show it on its load screen. |
+| `playerName` | What [`rules.saveName`](/docs/reference/rules#savename) returns for the state, or `null` when the game has no `saveName`. A save written before version 18 called it `player`, and reading it gives it as `playerName`. The engine keeps no name of its own, so a game that asks the player's name declares `saveName` to show it on its load screen. |
 | `packs` | The ids of the [packs](/docs/reference/loader#content-and-packs) the game was loaded with ([`game.packs`](/docs/reference/game)), such as mods and unlocked content. Your own content has no id, so it isn't recorded. |
 | `plugins` | Each [plugin](/docs/reference/plugins) the game was built with, by id, and the version of its state: `{ quests: 1 }`. |
 | `version` | The state's save format, `state.version`. |
@@ -340,6 +340,7 @@ These are the changes to the save format so far, with what loading a save from b
 - **15 → 16** takes items and collections out of the engine, since the things a player has are [entities](/docs/reference/entities#holding-things) they hold. Each count in `items` is written to [`held`](/docs/reference/state#held) for the player, 0s included, under the entity the item became: `item:<id>` if your game declares it, else the one entity your game declares with that id (a raincoat that's `clothing:raincoat` now), else `item:<id>`. Each entry in `collections` becomes an entity made in play, held by the player, of a kind named after the collection, with the entry's id. The phone's `gallery` becomes the `photo` kind. The entry's `title` is the name, its prose is the description (as written, so its tokens are filled when it's read), its `image` the picture and its `data` the kv. A collection's `max` and an entry's `turn` aren't kept. An entry with no id, or one already there, is skipped.
 - **16 → 17** drops `transition`, which a `transition` effect set. How a screen comes in is the UI's now, from a choice's [hints](/docs/reference/ui-hints).
 - **17 → 18** folds what the player has seen and chosen into one record per id, `{ n, first, last }`, in [`seen`](/docs/reference/state#seen) and [`chosen`](/docs/reference/state#chosen). The count comes from the old `seen` or `chosen`, `first` from `seenOn` or `chosenOn`, and `last` from `lastSeenOn` or `lastChosenOn`, falling back to `first`. A record a save kept no turn for, from before the turns were kept, is dated the turn the save is at. A choice's `once` now reads `chosen`, so the `turn:<scene>#<choice>` kv keys that capped the game's choices go (and `turn:<key>` for a choice with a [`once.key`](/docs/reference/scenes#choice)). One that still caps the save's turn makes that choice's `last` the turn, so the cap holds. Other `turn:` keys, such as [`oncePerTurn`](/docs/reference/progress#onceperturn)'s, are kept.
+- **18 → 19** moves the phase into the kv store. The stretch of the game the player is in is the kv key `phase` now, not a field of the state, so the save's `phase` becomes `kv.phase`. A save in no phase (`''`) gets no key, and one that already has a `phase` key keeps its own.
 
 A save from version 0 doesn't load.
 
@@ -348,7 +349,7 @@ A save from version 0 doesn't load.
 ## SAVE_VERSION
 
 ```ts
-const SAVE_VERSION: 18
+const SAVE_VERSION: 19
 ```
 
 The current save format. Every new state carries it in `state.version`.
@@ -361,7 +362,7 @@ Versions 4, 7, 9, 10 and 11 only added fields. They're from before this rule and
 
 ## The game's own migrations
 
-When an update to your game changes its content in a way old saves need to know about, such as a kv key renamed or a stat added, give the game a `version` and a step that carries older saves forward. The Letter, the novel in `examples/novel`, renamed its count of lies to `fibs` in version 2:
+When an update to your game changes its content in a way old saves need to know about, such as a kv key renamed or a stat added, give the game a `version` on the base and a step in its [`rules.migrations`](/docs/reference/rules#migrations) that carries older saves forward. The Letter, the novel in `examples/novel`, renamed its count of lies to `fibs` in version 2:
 
 ```ts
 const { game, problems } = loadGame([letter], {
@@ -369,15 +370,15 @@ const { game, problems } = loadGame([letter], {
   title: 'The Letter',
   // Version 2 counts `fibs` where version 1 counted `lies`. A version-1 save is carried
   // forward by the step below when it loads, so a reader mid-story keeps their count.
-  version: 2,
-  migrations: {
-    1: (state) => {
-      const { lies, ...kv } = state.kv
-      return lies === undefined ? state : { ...state, kv: { ...kv, fibs: lies } }
+    version: 2,
+  rules: {
+    migrations: {
+      1: (state) => {
+        const { lies, ...kv } = state.kv
+        return lies === undefined ? state : { ...state, kv: { ...kv, fibs: lies } }
+      },
     },
   },
-  introScene: 'ch1.mat',
-  // ...
 })
 ```
 
@@ -386,7 +387,7 @@ A reader who saved at the door after two lies under version 1 loads with `fibs: 
 ### Versions and steps
 
 - `version` is a whole number from 1. A game that leaves it out is at version 1.
-- `migrations` holds the steps, keyed by the version each one upgrades from. Step 1 takes a version-1 save to version 2, step 2 takes it from 2 to 3, and so on.
+- `rules.migrations` holds the steps, keyed by the version each one upgrades from. Step 1 takes a version-1 save to version 2, step 2 takes it from 2 to 3, and so on.
 - A step is a function `(state, tools) => GameState`. It gets the state and [`MigrationTools`](#migrationtools), and returns a new state. Don't change the one it's given.
 - A version with no step is carried forward unchanged, so you only write steps for the versions that need one.
 
@@ -413,17 +414,21 @@ A game with no `version` keeps the engine's old behaviour, so a game that existe
 So when you set `version` for the first time, even `version: 1`, loading stops adding settings. When an update declares a new setting or stat, raise the version and fill it in the step:
 
 ```ts
-import type { Game } from '@ifloom/engine'
+import type { GameBase } from '@ifloom/engine'
 
-const base: Partial<Game> = {
+const base: GameBase = {
+  id: 'the-letter',
+  title: 'The Letter',
   version: 3,
-  migrations: {
-    1: (state) => {
-      const { lies, ...kv } = state.kv
-      return lies === undefined ? state : { ...state, kv: { ...kv, fibs: lies } }
+  rules: {
+    migrations: {
+      1: (state) => {
+        const { lies, ...kv } = state.kv
+        return lies === undefined ? state : { ...state, kv: { ...kv, fibs: lies } }
+      },
+      // 2 → 3: version 3 adds a patience stat. Cleo, a new member of staff, needs no step.
+      2: (_state, tools) => tools.fill(['stats']),
     },
-    // 2 → 3: version 3 adds a patience stat. Cleo, a new member of staff, needs no step.
-    2: (_state, tools) => tools.fill(['stats']),
   },
 }
 ```
@@ -438,7 +443,7 @@ const base: Partial<Game> = {
 ```
 
 **Gotchas.**
-- A stat the save lacks reads as its `start` in conditions and the view either way, so a missing stat doesn't break anything. But a `stat` effect adds to what's kept, which is 0 for a stat that isn't there, so `{ kind: 'stat', stat: 'patience', by: 1 }` on a save without `patience` gives 1, not `start + 1`. Fill new stats whose `start` isn't 0.
+- A stat the save lacks reads as its `start` in conditions and the view either way, so a missing stat doesn't break anything. But a `stat` effect adds to what's kept, which is 0 for a stat that isn't there, so `{ stat: 'patience', by: 1 }` on a save without `patience` gives 1, not `start + 1`. Fill new stats whose `start` isn't 0.
 - A missing step is skipped without a word. Keep every old step when you add a new one, or a save from before it skips that change.
 
 ### MigrationTools
@@ -467,7 +472,7 @@ type FillPart = 'stats' | 'kv' | 'settings'
 | Part | What `fill` adds |
 |---|---|
 | `stats` | Each of the player's stats the save lacks, at its `start`. Not [derived stats](/docs/reference/stats#derived-stats), which are never kept. An entity's stats read their start until play changes them, so they need no filling. |
-| `kv` | Each key in [`rules.resets`](/docs/reference/rules#resets) the save lacks, at its reset value. Other keys have no declared value, so set them in the step yourself. |
+| `kv` | Each key of the content's starting [`kv`](/docs/reference/game#game) and its [`resets`](/docs/reference/rules#resets) the save lacks, at its starting or reset value. Other keys have no declared value, so set them in the step yourself. |
 | `settings` | Each `play` [setting](/docs/reference/settings) the save lacks, at its default. |
 
 ### Checks

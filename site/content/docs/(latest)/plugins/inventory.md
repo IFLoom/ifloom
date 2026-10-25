@@ -52,7 +52,7 @@ const things: Content = {
   stats: [{ id: 'energy', label: 'Energy', start: 50, max: 100 }],
   kinds: [{ id: 'item', label: 'Thing', plural: 'Things', listed: false }],
   entities: [
-    { id: 'sandwich', of: 'item', name: 'sandwich', desc: 'Cheese and pickle.', at: 'player', traits: { ...usable('Eat the sandwich', [{ kind: 'stat', stat: 'energy', by: 25 }]) } },
+    { id: 'sandwich', of: 'item', name: 'sandwich', desc: 'Cheese and pickle.', at: 'player', traits: { ...usable('Eat the sandwich', [{ stat: 'energy', by: 25 }]) } },
     // Kept: reading the paper doesn't use it up.
     { id: 'paper', of: 'item', name: 'newspaper', at: 'player', traits: { ...usable('Read the job ads', [openJobs(['dogs'])], { keep: true }) } },
   ],
@@ -69,7 +69,7 @@ const usable: (label: string, effects: EffectRef[], options?: { keep?: boolean }
 | Field | What it is |
 |---|---|
 | `label` | The button's label: "Eat the sandwich". |
-| `effects` | What using one does: any [effects](/docs/reference/effects), a plugin's included, such as opening a panel. They read the state as it was before one was spent, as an activity's effects read it before its cost. |
+| `effects` | What using one does: any [effects](/docs/reference/effects), a plugin's included, such as opening a panel. They read the state as it was before one was spent, as an action's effects read it before its cost. |
 | `keep` | Using it doesn't spend one: a book you read again, a torch you switch on. One is spent if left out. |
 
 It's a [trait](/docs/reference/entities#traits), so you can write it on a kind as a default (every kind of fruit is eaten), on an entity, or in content's `traits` table, where a mod can change what a thing does. A thing made in play [`like`](/docs/reference/effects#create) a usable one is usable too.
@@ -139,7 +139,7 @@ const market: Content = {
   ],
   entities: [
     { id: 'scarf', of: 'clothing', name: 'scarf', traits: { ...wearable('neck'), ...sellable({ coins: 8 }) } },
-    { id: 'pie', of: 'food', name: 'pie', traits: { ...usable('Eat the pie', [{ kind: 'stat', stat: 'energy', by: 20 }]), ...sellable({ coins: 3 }) } },
+    { id: 'pie', of: 'food', name: 'pie', traits: { ...usable('Eat the pie', [{ stat: 'energy', by: 20 }]), ...sellable({ coins: 3 }) } },
   ],
   data: {
     shop: { vendors: [{ id: 'stall', name: 'Stall', buysBack: 0.5, goods: [{ entity: 'clothing:scarf', stock: 1 }, { entity: 'food:pie' }] }] },

@@ -16,7 +16,7 @@ const stats: StatDef[] = [
 const game = { /* … */, stats }
 ```
 
-A player's stat lives in `state.stats[id]`. You change it with a [`stat` effect](/docs/reference/effects#stat), which changes it `by` an amount or sets it `to` a value. A [`{ stat }` condition](/docs/reference/conditions#stat) tests it, and an activity's [cost](/docs/reference/actions#activitycost) spends it.
+A player's stat lives in `state.stats[id]`. You change it with a [`stat` effect](/docs/reference/effects#stat), which changes it `by` an amount or sets it `to` a value. A [`{ stat }` condition](/docs/reference/conditions#stat) tests it, and an action's [cost](/docs/reference/actions#actioncost) spends it.
 
 A stat can also be [derived](#derived-stats), worked out from other stats by a formula instead of kept, and any stat can have [levels](#levels) that it passes as it grows.
 
@@ -48,16 +48,16 @@ type StatRound = 'none' | 'floor' | 'round' | 'ceil'
 
 | Field | Default | What it does |
 |---|---|---|
-| `id` | | The key: `state.stats[id]`, `{ stat: id }`, `{ kind: 'stat', stat: id }`. |
+| `id` | | The key: `state.stats[id]`, `{ stat: id }`, `{ stat: id }`. |
 | `of` | the player's | The [kind](/docs/reference/entities#kinddef) of entity that keeps it. `'staff'` gives every member of staff one. See [Entity stats](#entity-stats). |
 | `label` | | What the player reads, in the view's stat list and in the default `lacking` line. |
 | `start` | `0` | The value a new game starts with. |
 | `min` | `0` | The lowest any effect or cost can take it. |
-| `max` | `100` | The highest any effect or payment can take it. Either a number, or a [`ValueRef`](/docs/reference/custom#values), `{ value: name, with? }`, for a ceiling that moves. The name is a [custom value](/docs/reference/custom#values), the game's or a plugin's, worked out against the state each time and asked with `with`. See [`statMax`](#statmax). Raise it for coins and other open-ended counts. |
+| `max` | `100` | The highest any effect or payment can take it. Either a number, or a [`ValueRef`](/docs/reference/custom#values), `{ value: name, with? }`, for a ceiling that moves. The name is a [value](/docs/reference/custom#values), the game's own as `game/<name>` or a plugin's, the game's or a plugin's, worked out against the state each time and asked with `with`. See [`statMax`](#statmax). Raise it for coins and other open-ended counts. |
 | `visible` | always | A [condition](/docs/reference/conditions). The stat appears in [`view().stats`](/docs/reference/view) only while it holds. Use it for a stat the player hasn't discovered yet. |
 | `listed` | `true` | `false` keeps it out of `view().stats`, for a stat your UI shows its own way, such as a purse in the corner or an energy gauge. It's still in [`view().statsById`](/docs/reference/view#statview). |
 | `spendable` | `false` | The stat is spent on things. A scene choice's [price](/docs/reference/view#price) only counts its negative `stat` effects on spendable stats. |
-| `lacking` | `Not enough <label>.` | The refusal when an activity costs more than the player has, with `{n}` for the amount the cost asks for. Like `format`, it can be a line for 1 and one for any other amount. See [`lackingLine`](#lackingline). |
+| `lacking` | `Not enough <label>.` | The refusal when an action costs more than the player has, with `{n}` for the amount the cost asks for. Like `format`, it can be a line for 1 and one for any other amount. See [`lackingLine`](#lackingline). |
 | `format` | the number | How the value is written, with `{n}` for the number, as in `'{n}c'`, `'£{n}'` or `'{n} energy'`. For words that change with the number, give one for 1 and one for the rest: `{ one: '{n} coin', other: '{n} coins' }`. The view's `text` and prices use it. See [`StatWords`](#statwords). |
 | `derive` | none | Work the stat out from other stats with a [`Formula`](#formula) instead of keeping it. See [Derived stats](#derived-stats). |
 | `levels` | none | Thresholds the stat passes as it grows, shown to the player or hidden. See [`StatLevels`](#statlevels). |
@@ -68,7 +68,7 @@ type StatRound = 'none' | 'floor' | 'round' | 'ceil'
 - You have to declare a stat before you use it. The [content checker](/docs/reference/checks) reports content that names an undeclared stat, or names a stat on the wrong owner.
 - Keep money in whole minor units, such as pence or cents, and let your UI place the decimal point. Sums and saves stay exact that way.
 - Declaration order is display order. `view().stats` lists listed, visible stats in the order you declared them, and a scene choice's price lists its stats in that order too.
-- `spendable` changes what's shown, not what's allowed. Any stat can be in an activity's `cost`, and the activity's price lists it either way.
+- `spendable` changes what's shown, not what's allowed. Any stat can be in an action's `cost`, and the action's price lists it either way.
 - An id is unique across the whole game, counting the player's stats and every kind's together. One `skill` can't be both the player's and the staff's.
 
 ### Rounding
@@ -111,23 +111,18 @@ The other fields work much as they do for the player's stats:
 
 | Field | On an entity stat |
 |---|---|
-| `start`, `min`, `max` | The same range, kept by every effect. `{ kind: 'stat', stat: 'morale', by: -8, of: 'staff:ana' }` stops at 0. |
+| `start`, `min`, `max` | The same range, kept by every effect. `{ stat: 'morale', by: -8, of: 'staff:ana' }` stops at 0. |
 | `format` | How the value is written in the entity's [`StatView`](/docs/reference/view#statview). |
 | `visible` | Tested with `'$'` bound to the entity, so a stat can show on one entity and not another. `visible: { kv: 'tasted', of: '$' }` shows a dish's quality only once it's been tasted. |
 | `listed` | `false` keeps it out of every entity's `stats` in the view. |
-| `spendable` | Does nothing. A `stat` effect with `of` is never part of a button's [price](/docs/reference/view#price), and an activity's `cost` only spends the player's stats. |
+| `spendable` | Does nothing. A `stat` effect with `of` is never part of a button's [price](/docs/reference/view#price), and an action's `cost` only spends the player's stats. |
 
 ### A purse and an energy gauge
 
 A town game usually wants these two stats. Coins are spent, and the UI shows them in a purse of its own. Energy has a ceiling that grows with fitness, and fills back up overnight.
 
 ```ts
-import type { Custom, GameRules, StatDef } from '@ifloom/engine'
-
-// goes on the game as `custom`
-const custom: Custom = {
-  values: { energyCeiling: (state) => 80 + (state.stats.fitness ?? 0) },
-}
+import type { GameRules, StatDef } from '@ifloom/engine'
 
 const stats: StatDef[] = [
   {
@@ -144,7 +139,7 @@ const stats: StatDef[] = [
     id: 'energy',
     label: 'Energy',
     start: 80,
-    max: { value: 'energyCeiling' },
+    max: { value: 'game/energyCeiling' },
     spendable: true,
     listed: false,
     lacking: 'Need {n} energy.',
@@ -153,8 +148,9 @@ const stats: StatDef[] = [
 ]
 
 const rules: GameRules = {
+  values: { energyCeiling: (state) => 80 + (state.stats.fitness ?? 0) },
   // A full night's sleep puts energy back at its ceiling.
-  turn: () => ({ effects: [{ kind: 'stat', stat: 'energy', to: 9999 }] }),
+  onTurn: (_state, { apply }) => apply([{ stat: 'energy', to: 9999 }]),
 }
 ```
 
@@ -182,16 +178,16 @@ Every one of the player's stats (those declared without `of`) at its `start` val
 function statMax(state: GameState, game: Game, id: string): number
 ```
 
-The highest the stat can go right now. If its `max` is a number, that's the answer. If it's `{ value: name }`, it's the custom value of that name worked out against `state` and turned into a number. If the stat declares no `max`, or isn't declared at all, it's `100`.
+The highest the stat can go right now. If its `max` is a number, that's the answer. If it's `{ value: name }`, it's the [value](/docs/reference/custom#values) of that name worked out against `state` and turned into a number. If the stat declares no `max`, or isn't declared at all, it's `100`.
 
 ```ts
 import { statMax } from '@ifloom/engine'
 
-// max: { value: 'energyCeiling' }, declared in game.custom.values as 80 + fitness
+// max: { value: 'game/energyCeiling' }, declared in rules.values as 80 + fitness
 statMax(state, game, 'energy') // fitness 12 → 92
 ```
 
-**Gotcha.** A `{ value }` name the game doesn't declare in [`custom.values`](/docs/reference/custom#values) quietly gives `100`. A value that returns text that isn't a number gives `NaN`, and every effect on the stat then gives `NaN` too.
+**Gotcha.** A `{ value }` name that neither the game's [`rules.values`](/docs/reference/custom#values) nor a plugin declares quietly gives `100`. A value that returns text that isn't a number gives `NaN`, and every effect on the stat then gives `NaN` too.
 
 ## clampStat
 
@@ -211,7 +207,7 @@ function lackingLine(def: StatDef | undefined, id: string, amount: number, game?
 
 The refusal for a cost of `amount` that the player can't cover. It's the declaration's `lacking` with `{n}` replaced by `amount`. Without a `lacking`, it's the [`notEnough`](/docs/reference/strings#refusals) line, `Not enough {stat}.`, with the label in lower case (or the id, if the stat isn't declared).
 
-Pass the game to get its own wording of `notEnough`. Without it you get the engine's English. A stat's `lacking` always wins over `notEnough`. [`activityBlocked`](/docs/reference/actions#activityblocked) uses this unless the activity's `cost.reasons` has a line for that stat.
+Pass the game to get its own wording of `notEnough`. Without it you get the engine's English. A stat's `lacking` always wins over `notEnough`. [`actionBlocked`](/docs/reference/actions#actionblocked) uses this unless the action's `cost.reasons` has a line for that stat.
 
 ```ts
 import { lackingLine, statDef } from '@ifloom/engine'
@@ -256,7 +252,7 @@ const coins: StatDef = {
 }
 ```
 
-**Gotcha.** It's English's rule for one and many. A language with more forms than that needs a format that reads the same for every number, such as `'£{n}'`, or a [custom value](/docs/reference/custom#values) of its own.
+**Gotcha.** It's English's rule for one and many. A language with more forms than that needs a format that reads the same for every number, such as `'£{n}'`, or a [value](/docs/reference/custom#values) of its own.
 
 ## Derived stats
 
@@ -277,10 +273,10 @@ The engine works a derived stat out from its [`Formula`](#formula) every time so
 Everything that reads stats reads a derived one the same way, through [`statValue`](#statvalue):
 
 - a [`{ stat }`](/docs/reference/conditions#stat) condition and a [`{ level }`](/docs/reference/conditions#level) condition
-- an activity's [cost](/docs/reference/actions#activitycost) check, so a derived stat can make a button unaffordable (it can't be spent, though)
+- an action's [cost](/docs/reference/actions#actioncost) check, so a derived stat can make a button unaffordable (it can't be spent, though)
 - the [view](/docs/reference/view#statview), in `stats`, `statsById` and each entity's stats
 
-A derived stat isn't in `state.stats`, so a hand-written scene or a custom function that reads `state.stats.service` gets `undefined`. Read it with `statValue(state, game, 'service')`.
+A derived stat isn't in `state.stats`, so a hand-written scene or one of the game's functions that reads `state.stats.service` gets `undefined`. Read it with `statValue(state, game, 'service')`.
 
 ### Formula
 
@@ -356,12 +352,12 @@ A derived stat that another formula reads is held to its range before the other 
 
 ### What it can't do
 
-A derived stat is never written. A `stat` effect on one does nothing, a [cost](/docs/reference/actions#activitycost) doesn't spend it, and a [`create`](/docs/reference/effects#create) effect or an entity's declaration can't give it a value. It has no `start`, and it can't be `spendable`.
+A derived stat is never written. A `stat` effect on one does nothing, a [cost](/docs/reference/actions#actioncost) doesn't spend it, and a [`create`](/docs/reference/effects#create) effect or an entity's declaration can't give it a value. It has no `start`, and it can't be `spendable`.
 
 The [content checker](/docs/reference/checks) reports each of these:
 
 - a `stat` effect on a derived stat, and a derived stat in a `create` effect's `stats` or an entity's `stats` (`stat "…" is derived: it is worked out, never written`)
-- an activity whose `cost` spends one (`spends stat "…", which is derived and never written`)
+- an action whose `cost` spends one (`spends stat "…", which is derived and never written`)
 - a derived stat with `spendable` or a `start`
 - a formula that names a stat the game doesn't declare, or one with another owner
 - a cycle, such as `service` reading `mood` while `mood` reads `service`. It's reported as `derive goes round in a cycle: service → mood → service`. If you run the game anyway, a formula that goes round reads 0 once it's 64 steps deep.

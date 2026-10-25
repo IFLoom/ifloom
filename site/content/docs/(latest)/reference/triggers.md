@@ -25,7 +25,7 @@ const town: Content = {
       id: 'welcome',
       when: at('high-street'),
       effects: [
-        { kind: 'notify', title: 'A note under your door', text: 'notice.welcome', tag: 'post' },
+        { notify: 'A note under your door', text: 'notice.welcome', tag: 'post' },
         give('note:welcome'),
       ],
     },
@@ -34,8 +34,8 @@ const town: Content = {
       once: 'turn',
       when: { all: [weekday(6), day({ gte: 6 })] },
       effects: [
-        { kind: 'stat', stat: 'coins', by: -30 },
-        { kind: 'notify', id: 'rent', title: 'Rent paid: 30 coins', tag: 'money' },
+        { stat: 'coins', by: -30 },
+        { notify: 'Rent paid: 30 coins', id: 'rent', tag: 'money' },
       ],
     },
   ],
@@ -64,10 +64,10 @@ type TriggerDef = {
 |---|---|
 | `id` | Names it in [`state.fired`](/docs/reference/state#fired) and in the loader's problems. |
 | `when` | A [condition](/docs/reference/conditions). The trigger fires when this holds and it hasn't already fired. |
-| `effects` | What happens: plain [effects](/docs/reference/effects), `{ custom }` references and [short plugin calls](/docs/reference/custom#plugincall), as in a data scene choice. |
+| `effects` | What happens: [effects](/docs/reference/effects), calls to a plugin's or the game's own (`{ 'game/payRent': {} }`, see [Calls by name](/docs/reference/custom#plugincall)), as in a data scene choice. |
 | `once` | `'game'` (the default) fires once in the whole game. `'turn'` fires at most once a [turn](/docs/reference/state#turn), in every turn its condition holds after a command. In a game whose turn is a day, that's once a day. |
 
-Declare triggers in [`Game.triggers`](/docs/reference/game#game), either on the base you give [`loadGame`](/docs/reference/loader#loadgame) or in your [content](/docs/reference/loader#content)'s `triggers`, or both. They merge by id with the base's first, so a later pack's trigger replaces an earlier one with the same id.
+Declare triggers in your [content](/docs/reference/loader#content)'s `triggers`. They merge by id, so a pack's trigger replaces one with the same id.
 
 ## When triggers fire
 
@@ -90,7 +90,7 @@ function fireTriggers(
 ): GameState
 ```
 
-Runs the pass described above on `state` and returns the result. `apply` applies a trigger's effects once its `{ custom }` references are flattened with [`buildEffects`](/docs/reference/custom#buildeffects). [`applyEffects`](/docs/reference/effects#applyeffects) is the usual choice. The reducer calls `fireTriggers` for you. Only call it yourself from a tool, a test, or a plugin command that has moved the state in a way triggers should see before the command ends.
+Runs the pass described above on `state` and returns the result. `apply` applies a trigger's effects once [`buildEffects`](/docs/reference/custom#buildeffects) has left out any call nobody declares. [`applyEffects`](/docs/reference/effects#applyeffects) is the usual choice. The reducer calls `fireTriggers` for you. Only call it yourself from a tool, a test, or a plugin command that has moved the state in a way triggers should see before the command ends.
 
 ```ts
 import { applyEffects, fireTriggers } from '@ifloom/engine'
@@ -102,9 +102,9 @@ const next = fireTriggers(state, game, (state, effects) => applyEffects(state, g
 
 - **Triggers don't fire on `start`.** A new game is built, not run, so a trigger whose condition already holds on the first frame fires after the player's first command. To open the game with something, put it in the intro scene.
 - **They don't fire on a refused command.** Nor do they fire under [`applyEffects`](/docs/reference/effects#applyeffects), or when a game sets the state by hand.
-- **Fired is fired.** A `once: 'game'` trigger never fires again, even when its condition stops holding and holds again. Only `once: 'turn'` repeats, at most once a turn. For "every time X happens", put the effects on the choice or activity that does X.
+- **Fired is fired.** A `once: 'game'` trigger never fires again, even when its condition stops holding and holds again. Only `once: 'turn'` repeats, at most once a turn. For "every time X happens", put the effects on the choice or action that does X.
 - **A trigger is tested on every command.** That includes ones that take no time, such as [`dismiss`](/docs/reference/commands#dismiss). A `once: 'turn'` trigger whose condition holds all turn fires after the first command of each turn, whatever that command is.
-- **A scene effect cuts in.** A trigger with `{ kind: 'scene', id }` puts that scene on screen whether or not one was open. If it shouldn't interrupt certain scenes, add `{ not: { scene: [...] } }` naming them to its `when`.
+- **A scene effect cuts in.** A trigger with a `{ scene: 'id' }` effect puts that scene on screen whether or not one was open. If it shouldn't interrupt certain scenes, add `{ not: { scene: [...] } }` naming them to its `when`.
 - **`text` in a `notify` effect is a prose key.** The [content checker](/docs/reference/checks) reports one with no prose.
 
 ## See it in an example

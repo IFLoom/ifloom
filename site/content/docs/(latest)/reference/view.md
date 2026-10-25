@@ -64,7 +64,7 @@ import { screen } from '@ifloom/engine'
 
 const shown = screen(state, game)
 for (const choice of shown.choices) {
-  const spends = choice.effects.filter((effect) => effect.kind === 'stat' && effect.by < 0)
+  const spends = choice.effects.filter((effect) => 'stat' in effect && 'by' in effect && effect.by < 0)
   console.log(choice.label, choice.disabled ?? 'open', spends.length ? 'costs something' : '')
 }
 ```
@@ -110,8 +110,6 @@ type ScreenScene = {
   body: string
   beats: SceneBeat[]
   tags: string[]
-  panel: string | null
-  panelData: unknown
   speaker: SpeakerView | null
   stageImage: string | null
   ui?: Ui<SceneUi>
@@ -139,7 +137,6 @@ type ScreenScene = {
 | Field | Type | Meaning |
 |---|---|---|
 | `title` | `string` | The game's `title`. |
-| `phase` | `string` | The stretch of the game the player is in. |
 | `turn` | `number` | How many [turns](/docs/reference/state#turn) have passed. It's `0` on the first turn, not one-based. |
 | `when` | `string \| null` | When and where the game is, in plugins' words. It's every plugin's [`label`](/docs/reference/plugins#labels), in the order `game.plugins` lists them, joined with ` · `, such as `'Day 3 · Wednesday morning · The Corner Café'` from the [calendar](/docs/plugins/calendar#the-label) and then the [places plugin](/docs/plugins/places#the-label). `null` when no plugin gives one. |
 
@@ -159,7 +156,7 @@ While no scene is open, the screen is the idle screen. It shows the [stage](#the
 
 A button the room's prose draws inline with `[[act:id]]` is left out of `actions`, and is in `scene.beats` instead (see [inline actions](/docs/reference/prose#inline-actions-and-tooltips)).
 
-Otherwise `actions` is every plugin's [`buttons`](/docs/reference/plugins#buttons), in the order `game.plugins` lists them, then the game's own [`actions`](/docs/reference/game#game). A button is left out while its `when` doesn't hold, or while a [lock](/docs/reference/locks) with `hide: true` stops its command. All of them are drawn alike, with [`renderAction`](#renderaction). The engine adds none of its own, so the showcase declares its Wait a while button in `game.actions`.
+Otherwise `actions` is the game's own [`rules.buttons`](/docs/reference/rules#gamerules), then every plugin's [`buttons`](/docs/reference/plugins#buttons), in the order `game.plugins` lists them, then the content's [`actions`](/docs/reference/actions#actiondef) that have a `label`. A button is left out while its `when` doesn't hold, or while a [lock](/docs/reference/locks) with `hide: true` stops its command. All of them are drawn alike, with [`renderAction`](#renderaction). The engine adds none of its own, so the showcase declares its Wait a while button in its content's `actions`.
 
 The engine keeps no places, so the view has no location or exits of its own. With the [places plugin](/docs/plugins/places), the room is at `view.plugins.places`, a [`PlacesView`](/docs/plugins/places#placesview), with its `location` and its `exits`. Each exit is an [`ExitView`](/docs/plugins/places#exitview) carrying the command that takes it. The room's own actions are the plugin's buttons, so they come first in `actions`. Its name is in `when`, and its description is the stage.
 
@@ -191,8 +188,6 @@ for (const person of people) for (const talk of person.actions) addButton(`${per
 | `body` | `string` | The raw prose, with its markup. In-place `{ media }` blocks are in it as markup, and `@pool` markup is already resolved to files. |
 | `beats` | [`SceneBeat[]`](/docs/reference/prose#scenebeat) | The prose parsed, with the scene's pictures and videos in place and pool markup resolved to files. Draw these, not `body`. |
 | `tags` | `string[]` | The render's `tags`, else the scene's, else `[]`. The engine gives them no meaning, so style the scene by them. The stage has none. |
-| `panel` | `string \| null` | A bespoke panel to draw instead of the choice list. |
-| `panelData` | `unknown` | What that panel needs. Opaque to the engine. |
 | `speaker` | [`SpeakerView`](#speakerview) ` \| null` | Who's talking. The id is the render's `speaker`, else the scene's, and the first plugin whose [`speaker`](/docs/reference/plugins#speakers) knows it says who it is (the [cast](/docs/plugins/cast#speakers) does for its characters). `null` otherwise. Never guessed from the scene's id. |
 | `stageImage` | `string \| null` | The big picture: the render's `portrait`, else the speaker's portrait, else `null`. |
 | `stage` | [`StageView`](/docs/reference/media#stageview) ` \| null` | The scene's [layered picture and hotspots](/docs/reference/scenes#the-stage), resolved by [`stageView`](#stageview). `null` when the scene has none, and on the idle screen (a place's stage is in its [plugin view](/docs/plugins/places#placesview)). |
@@ -203,7 +198,7 @@ If `state.sceneId` names a scene the game doesn't have, the scene reads "The mom
 
 `inScene` (`boolean`) is `true` whenever a scene is open.
 
-While a [minigame](#minigame) runs, `scene` is drawn over: its `title` is the minigame's `label` (else the scene's or the stage's title), its `body` and `beats` are the running state's `label` rendered as prose, and `panel` and `panelData` are `null`. Its `id` and the rest stay those of the scene or the stage underneath. `choices` is empty and `stage` is `null`.
+While a [minigame](#minigame) runs, `scene` is drawn over: its `title` is the minigame's `label` (else the scene's or the stage's title), its `body` and `beats` are the running state's `label` rendered as prose. Its `id` and the rest stay those of the scene or the stage underneath. `choices` is empty and `stage` is `null`.
 
 ### The player's numbers and things
 
@@ -301,9 +296,9 @@ The engine never reads the [profile](/docs/reference/profile), so the view gives
 
 | Field | Type | Meaning |
 |---|---|---|
-| `panel` | [`OpenPanel`](/docs/reference/panels#openpanel) ` \| null` | The [panel](/docs/reference/panels) content opened, by name, with what it was opened with. `null` when none is open. |
+| `panel` | [`OpenPanel`](/docs/reference/panels#openpanel) ` \| null` | The [panel](/docs/reference/panels) that's open, by name, with what it was opened with: one the `panel` effect opened, or the open scene's own [`panel`](/docs/reference/panels#a-scenes-panel), with that scene's id in `scene`. `null` when none is open. |
 
-Draw it over everything else by its name, and send `{ type: 'closePanel' }` when the player closes it. See [Drawing a panel](/docs/reference/panels#drawing-a-panel). The React UI draws it with [`PanelHost`](/docs/react/components#panelhost).
+Draw it over everything else by its name, and send `{ type: 'closePanel' }` when the player closes it. A scene's own panel has `scene` set: draw it in the scene, in place of its choices, since `closePanel` doesn't close it. See [Drawing a panel](/docs/reference/panels#drawing-a-panel). The React UI draws it with [`PanelHost`](/docs/react/components#panelhost).
 
 ### rolls
 
@@ -419,7 +414,7 @@ The vanilla, Vue and Svelte templates have a Save and a Load button like these i
 
 | Field | Type | Meaning |
 |---|---|---|
-| `plugins` | `Record<string, unknown>` | What each [plugin](/docs/reference/plugins#the-view) gives the UI, by plugin id. A plugin without a `view` has no entry. |
+| `plugins` | `Record<string, unknown>` | What each [plugin](/docs/reference/plugins#the-view) gives the UI, by plugin id, and what the game's own [`rules.view`](/docs/reference/rules#gamerules) gives, under `game`. A plugin without a `view` has no entry. |
 
 The engine doesn't look inside a slice, so give it its type where you read it. A plugin package exports the type:
 
@@ -430,7 +425,7 @@ const journal = shown.plugins.quests as QuestsView
 badge.textContent = String(journal.updates)
 ```
 
-Buttons for a plugin's commands are ordinary [actions](/docs/reference/actions#actiondef) carrying `{ type: 'custom', name }`. They're greyed out with the plugin's `whyNot` line, like any other. A plugin can offer them itself while no scene is open, with [`buttons`](/docs/reference/plugins#buttons).
+Buttons for a plugin's commands are ordinary [actions](/docs/reference/actions#actiondef) whose `command` is the call, so the button carries `{ type: 'custom', name }`. They're greyed out with the plugin's `whyNot` line, like any other. A plugin can offer them itself while no scene is open, with [`buttons`](/docs/reference/plugins#buttons).
 
 ## RenderedChoice
 
@@ -481,7 +476,7 @@ function renderAction(state: GameState, game: Game, action: ActionDef): Rendered
 Turns an [action](/docs/reference/actions#actiondef) into a button, exactly as the view does for the idle screen's buttons. Use it in a [plugin](/docs/reference/plugins) that shows actions somewhere other than a room, such as an app on a device or a notice board. The button gets:
 
 - its `label`
-- a `price` from the activity's `cost`, if the action sends `{ type: 'activity' }`, plus any notes [plugins' prices](/docs/reference/plugins#prices) give for the command's effects
+- a `price` from its `cost` and the stats its effects and command spend, plus any notes [plugins' prices](/docs/reference/plugins#prices) give for the command's effects
 - `disabled` from the first `blocked` entry that holds, or else [`whyNot`](/docs/reference/actions#whynot) for its command
 - `warning` from [`warningOf`](/docs/reference/actions#warningof)
 
@@ -582,7 +577,7 @@ What pressing a button will cost, to show on it beforehand. A `price` sits on an
 
 Each entry in `stats` is a stat spent, its amount, and the amount written through the stat's `format`, such as `'3 coins'`. Only amounts above zero are listed.
 
-- For an activity, the stats come from its `cost`, in the order the cost lists them.
+- For an action, the stats come from its `cost`, in the order the cost lists them, then from what its command spends.
 - For a scene choice, they come from its effects. Each negative `stat` effect on one of the player's [spendable](/docs/reference/stats#statdef) stats counts, in declaration order. A `stat` effect with `of`, on an [entity](/docs/reference/entities)'s stat, never does.
 
 `notes` are every plugin's [price](/docs/reference/plugins#prices) for the button's effects, in the order `game.plugins` lists them. Time passing, for example, is the [calendar](/docs/plugins/calendar#price-notes)'s note `until evening`. A button with notes and no cost has a price of only `{ notes }`, and a button with neither has no `price`.
@@ -673,7 +668,7 @@ type NoticeView = {
 type InputView = {
   id: string
   label: string
-  kind: 'text' | 'number' | 'choice'
+  type: 'text' | 'number' | 'choice'
   maxLength: number | null
   min: number | null
   max: number | null
@@ -690,7 +685,7 @@ An [input](/docs/reference/inputs) as the UI draws a field for it. `maxLength` i
 type SettingView = {
   id: string
   label: string
-  kind: 'toggle' | 'choice' | 'range'
+  type: 'toggle' | 'choice' | 'range'
   affects: 'play' | 'ui'
   options?: { value: string; label: string }[]
   min?: number

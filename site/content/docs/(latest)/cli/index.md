@@ -269,7 +269,7 @@ import { story } from './story.ts'
 
 /** What `ifloom check` loads. */
 export default function release() {
-  return loadGame([story], { id: 'my-game', title: 'My Game', introScene: 'start' })
+  return loadGame([story], { id: 'my-game', title: 'My Game' })
 }
 ```
 
@@ -282,7 +282,7 @@ import { unlocks } from '@ifloom/plugin-unlocks'
 import { story } from './story.ts'
 
 export function build({ unlocked = [] as Pack[] } = {}) {
-  return loadGame([story], { id: 'my-game', title: 'My Game', introScene: 'start', plugins: [unlocks()] }, { packs: unlocked })
+  return loadGame([story], { id: 'my-game', title: 'My Game', plugins: [unlocks()] }, { packs: unlocked })
 }
 
 export default build
@@ -407,26 +407,36 @@ Pick probes that differ in what the content looks at: the first screen, an ordin
 
 ```ts
 // src/game.ts, after Small Town's `clock` and `start`
-import type { Game } from '@ifloom/engine'
+import { applyEffects, type Game } from '@ifloom/engine'
 
 export function probes(game: Game) {
   // `clock` is the game's calendar(...). Its write() sets the calendar's clock in a state.
-  const first = clock.write({ ...start(game), phase: 'open', sceneId: null, turn: 1 }, { day: 1, period: 'morning' })
+  const first = clock.write({ ...start(game), kv: { ...start(game).kv, phase: 'open' }, sceneId: null, turn: 1 }, { day: 1, period: 'morning' })
   return [
     { name: 'moving-day', state: start(game) },
     { name: 'first-morning', state: first },
     {
       name: 'a-week-in',
-      state: {
-        ...clock.write(first, { day: 7, period: 'afternoon' }),
-        turn: 7,
-        seen: { ...first.seen, 'ava.hi': 4 },
-        kv: { catName: 'Biscuit' },
-        // Ava's friendship, a stat of the cast's `character` kind. The save keeps only what changed about her.
-        entities: { ...first.entities, character: { ava: { stats: { friendship: 30 } } } },
-        stats: { ...first.stats, charm: 5 },
-        plugins: { ...first.plugins, wardrobe: { version: 1, state: { worn: { coat: null, neck: null } } } },
-      },
+      // Two of the day's park visitors, made as the park's trigger makes them.
+      state: applyEffects(
+        {
+          ...clock.write(first, { day: 7, period: 'afternoon' }),
+          turn: 7,
+          seen: { ...first.seen, 'ava.hi': { n: 4, first: 2, last: 6 } },
+          kv: { catName: 'Biscuit' },
+          // Only what play changed is saved: Ava's friendship, a stat of the cast's `character` kind.
+          entities: { ...first.entities, character: { ava: { stats: { friendship: 30 } } } },
+          stats: { ...first.stats, charm: 5 },
+          plugins: {
+            ...first.plugins,
+            wardrobe: { version: 3, state: { worn: { player: { coat: null, neck: null } } } },
+            // Still buzzing from the morning's coffee.
+            statuses: { version: 1, state: { active: [{ id: 'caffeinated', left: [2] }] } },
+          },
+        },
+        game,
+        [{ 'generators/generate': { template: 'visitor', count: 2 } }],
+      ),
     },
   ]
 }
@@ -780,9 +790,9 @@ The default policy: a curious player who knows nothing about the game. Each call
 
 1. **In a scene**, a choice it hasn't made yet in this playtest, so a scene it comes back to takes another branch. Once every choice has been made, it takes the first open one. A choice that's greyed out or carries a `warning` is never open. With no open choice, it sends `leave`.
 2. **At bedtime**, bed. That's an action here whose command is the [calendar](/docs/plugins/calendar#commands)'s `sleep` (`{ type: 'custom', name: 'calendar/sleep' }`), or else the first step on the shortest walk to a place that has one. It's bedtime when the calendar's [`calendar/bedtime`](/docs/plugins/calendar#queries) query says so, by default in the evening, night and late periods. The explorer asks by name with [`pluginQuery`](/docs/reference/plugins#pluginquery), so in a game with no calendar it never goes to bed.
-3. **Someone to talk to**, then **something to do**, each once a turn. Someone to talk to is a person's button in the [cast](/docs/plugins/cast#the-view)'s view, `view.plugins.cast.present`, read by its shape. Something to do is an action sending any command except bed, or an activity whose effects do something besides pass time (`calendar/pass`). Something to do never ends the turn. Buttons that would end it wait for the last step.
+3. **Someone to talk to**, then **something to do**, each once a turn. Someone to talk to is a person's button in the [cast](/docs/plugins/cast#the-view)'s view, `view.plugins.cast.present`, read by its shape. Something to do is an action sending any command except bed, or one whose effects do something besides pass time (`calendar/pass`). Something to do never ends the turn. Buttons that would end it wait for the last step.
 4. **The first step toward the nearest place** it hasn't been to this turn.
-5. **Ending the turn**, with an action that ends the turn. Failing that, it takes an action not done this turn, or else the first action there is. An activity that only passes time counts as waiting, and waits until this step.
+5. **Ending the turn**, with an action that ends the turn. Failing that, it takes an action not done this turn, or else the first action there is. An action that only passes time counts as waiting, and waits until this step.
 
 To tell which buttons end the turn, it tries each one. It runs the button's command on the current state with [`apply`](/docs/reference/commands#apply) and checks whether `turn` went up. `apply` is deterministic and the state carries its seed, so trying a button gives the same result as pressing it, and the explorer doesn't have to know anything about the game. So even in a game with no calendar, it does everything else there is to do before pressing the button that moves the week on.
 
@@ -803,7 +813,7 @@ The Corner Café uses no places, cast or calendar, so every turn offers the same
   [>] Better ingredients for the soup (£40)
   [>] Put a card in the window
 
-> {"type":"activity","id":"staffLunch"}
+> {"type":"action","id":"lunch"}
 ```
 
 ```
@@ -821,8 +831,8 @@ It takes on Dev, then Fen, then turns the next applicant away, taking a differen
 **Gotchas.**
 
 - **"Once a turn" is per action id and per person, not per place.** A `wait` done on the high street counts as done in the café too. That memory resets each turn, while the choices made in scenes are remembered for the whole playtest.
-- **Trying a button runs it.** Each action's command is applied once to see whether it ends the turn, so a game's [custom functions](/docs/reference/custom) run for buttons that are never pressed. A custom function that only reads the state and returns, as [`apply`](/docs/reference/commands#apply) expects, won't notice. One that logs or counts its calls outside the state will see the extra runs.
-- **It only presses the screen's buttons.** That means choices, actions, people and exits. It never uses a thing, opens a device, answers a message or types into an [input](/docs/reference/inputs). An intro that won't go on until the player types a name stops the run there, so give the input a fallback (a [custom value](/docs/reference/custom#values) that prints a default name) or set the name in [`start`](#what-playtest-reads). In Small Town it buys a sandwich most days and never eats one. Write a policy for what it doesn't reach.
+- **Trying a button runs it.** Each action's command is applied once to see whether it ends the turn, so the game's own [functions](/docs/reference/custom) run for buttons that are never pressed. One that only reads the state and returns, as [`apply`](/docs/reference/commands#apply) expects, won't notice. One that logs or counts its calls outside the state will see the extra runs.
+- **It only presses the screen's buttons.** That means choices, actions, people and exits. It never uses a thing, opens a device, answers a message or types into an [input](/docs/reference/inputs). An intro that won't go on until the player types a name stops the run there, so give the input a fallback (a [value](/docs/reference/custom#values) of the game's own that prints a default name) or set the name in [`start`](#what-playtest-reads). In Small Town it buys a sandwich most days and never eats one. Write a policy for what it doesn't reach.
 
 ### screenText
 

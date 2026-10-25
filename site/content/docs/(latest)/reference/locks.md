@@ -8,19 +8,23 @@ A lock stops the player doing something for a while, and says why. Use one for a
 import { lockOn, lockedBy, lockedOut, type Lock, type LockTarget } from '@ifloom/engine'
 ```
 
-Locks go in [`rules.locks`](/docs/reference/rules#locks) and are checked in order. The reducer refuses a command on the first lock that stops it, and the view greys the button out (or hides it) with the same line, so the two can't disagree.
+Locks are content: they go in your content's `locks`, so a mod can add one, and are checked in order. The reducer refuses a command on the first lock that stops it, and the view greys the button out (or hides it) with the same line, so the two can't disagree.
 
 This is the showcase's pair. Moving day only moves through its scene, and the phone stays in the pocket at work:
 
 ```ts
-import type { GameRules } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 import { at } from '@ifloom/plugin-places'
 
-const rules: GameRules = {
-  locks: [
-    { when: { phase: ['arrival'] }, deny: ['*'], except: ['choose', 'input'], reason: 'Unpack first.' },
-    { when: at('office'), deny: ['devices/*'], reason: 'Not at work.' },
-  ],
+// in story/moving-day.ts
+export const movingDay: Content = {
+  kv: { phase: 'arrival' },
+  locks: [{ id: 'moving-day', when: { kv: 'phase', is: ['arrival'] }, deny: ['*'], except: ['choose', 'input'], reason: 'Unpack first.' }],
+}
+
+// in story/office.ts
+export const office: Content = {
+  locks: [{ id: 'no-phone', when: at('office'), deny: ['devices/*'], reason: 'Not at work.' }],
 }
 ```
 
@@ -30,6 +34,7 @@ The examples on this page use the [places plugin](/docs/plugins/places), where `
 
 ```ts
 type Lock = {
+  id?: string
   when: Condition
   deny: readonly LockTarget[]
   except?: readonly LockTarget[]
@@ -41,23 +46,25 @@ type Lock = {
 
 | Field | What it does |
 |---|---|
+| `id` | Optional. Names the lock in problems, as `lock <id>`, and lets a pack replace it: a pack's lock with the same `id` takes its place. Your content declares each `id` once. Without one, a pack's locks are added after the ones before. |
 | `when` | While this [condition](/docs/reference/conditions) holds, the lock is on. |
 | `deny` | What it stops. Name [command](/docs/reference/commands#command) types, `'*'` for every type not in `except`, a [plugin](/docs/reference/plugins) command by its full name (`'places/go'`), or all of one plugin's commands (`'places/*'`). `'custom'` stops every plugin command. |
 | `except` | What it never stops, even under `'*'`. It names things the same way as `deny`. |
-| `effect` | Only stop commands that would apply this effect. Give a built-in effect's `kind`, such as `'turn'`, or a plugin's effect by its full name, such as `'calendar/pass'` for everything that passes time. What a command would apply comes from [`effectsOf`](/docs/reference/actions#effectsof). |
-| `hide` | Leave a stopped button off the screen instead of greying it out. This works for a [places](/docs/plugins/places#the-view) exit, a room's action, a [game action](/docs/reference/game#game) and a plugin's [button](/docs/reference/plugins#buttons). Scene choices, the [cast](/docs/plugins/cast#personview)'s Talk buttons and buttons a plugin draws elsewhere, such as a [device](/docs/plugins/devices)'s actions, are still greyed out. |
+| `effect` | Only stop commands that would apply this effect. Give a built-in effect's key, such as `'turn'`, or a plugin's effect by its full name, such as `'calendar/pass'` for everything that passes time. What a command would apply comes from [`effectsOf`](/docs/reference/actions#effectsof). |
+| `hide` | Leave a stopped button off the screen instead of greying it out. This works for a [places](/docs/plugins/places#the-view) exit, a room's action, one of your content's [actions](/docs/reference/actions#actiondef) and a plugin's [button](/docs/reference/plugins#buttons). Scene choices, the [cast](/docs/plugins/cast#personview)'s Talk buttons and buttons a plugin draws elsewhere, such as a [device](/docs/plugins/devices)'s actions, are still greyed out. |
 | `reason` | The refusal and the disabled text, written for the player. |
 
 **Gotchas.**
 - A lock stops a command wherever it's aimed, so `deny: ['places/go']` stops every journey. To keep the player out of some places and not others, give those places a [`blocked`](/docs/plugins/places#locationdef) entry instead.
 - A lock with `effect` still only stops what `deny` covers. `deny: ['*']` with `effect: 'turn'` stops every command that would end a turn.
-- `effect` only sees what [`effectsOf`](/docs/reference/actions#effectsof) lists, which is an activity's cost and effects, a choice's effects, and a plugin command's own [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does). The calendar's `sleep` lists a `calendar/pass`, not a `turn`, so `effect: 'turn'` doesn't stop it but `effect: 'calendar/pass'` does.
+- `effect` only sees what [`effectsOf`](/docs/reference/actions#effectsof) lists, which is an action's cost and effects (and its command's), a choice's effects, and a plugin command's own [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does). The calendar's `sleep` lists a `calendar/pass`, not a `turn`, so `effect: 'turn'` doesn't stop it but `effect: 'calendar/pass'` does.
 - A lock that denies `'*'` counts for [`lockedOut`](#lockedout) even when it has an `effect`, so the room shows no exits, people or actions while it's on.
-- Locks are checked before [`rules.commands`](/docs/reference/rules#commands), so they also stop commands your game handles itself. They never stop `start`.
+- Locks stop the game's own [`rules.commands`](/docs/reference/rules#commands) too, named `'game/rest'` or `'game/*'`. They never stop `start`.
 - A plugin command that sets [`ignoresLocks`](/docs/reference/plugins#commands-outside-the-story) is never stopped by a lock, even under `'*'`, and `hide` never leaves its button off. Only tools outside the story set it, such as the [debug plugin](/docs/plugins/debug)'s commands. [`lockOn`](#lockon) and [`lockedBy`](#lockedby) still report the lock that matches it. It's [`whyNot`](/docs/reference/actions#whynot) that skips it.
 - The [`setting`](/docs/reference/commands#setting) command is never stopped by a lock either, because changing a setting is the menu's business.
 - `hide` goes by the first lock that stops the command. If a lock without `hide` stops a button first, the button stays on screen greyed out, even if a later lock would hide it.
-- `when` is tested against the state before the command runs. A choice that changes the phase is judged by the phase it was picked in.
+- `when` is tested against the state before the command runs. A choice that sets the kv key `phase` is judged by the phase it was picked in.
+- An action is the command `action`, so `deny: ['action']` stops every action with a cost, effects or `once`, the game's and the plugins' alike. A plugin's action, such as `{ type: 'action', id: 'places/coffee' }`, is the plugin's too, so `'places/*'` stops it as it stops the plugin's commands. A single name such as `'places/go'` names a command, never an action. An action that only sends a command is that command, so a lock on the command stops its button.
 
 ### LockTarget
 
@@ -78,7 +85,7 @@ What `deny` and `except` can name. A plugin command's type is always `custom`, s
 function lockOn(state: GameState, game: Game, command: Command): Lock | undefined
 ```
 
-The first lock in `rules.locks` that stops this command right now, or `undefined`.
+The first lock in `game.locks` that stops this command right now, or `undefined`.
 
 ## lockedBy
 
@@ -111,23 +118,20 @@ The showcase, [Small Town](/docs/guide/showcase#locks), uses the pair at the top
 
 ### An intro that only moves through its scenes
 
-The player starts in the `arrival` phase and can only take choices until the last scene sets the phase to `open`.
+The player starts with the kv key `phase` at `arrival`, and can only take choices until the last scene sets it to `open`.
 
 ```ts
-rules: {
-  locks: [
-    { when: { phase: ['arrival'] }, deny: ['*'], except: ['choose'], reason: 'Not yet.' },
-  ],
-}
+kv: { phase: 'arrival' },
+locks: [{ id: 'intro', when: { kv: 'phase', is: 'arrival' }, deny: ['*'], except: ['choose'], reason: 'Not yet.' }],
 ```
 
 The last choice of the intro:
 
 ```ts
-effects: [{ kind: 'phase', to: 'open' }, moveTo('flat')]
+effects: [{ kv: 'phase', to: 'open' }, moveTo('flat')]
 ```
 
-In a game with the [calendar](/docs/plugins/calendar), the intro's scenes may need to carry the clock through the night. Build the calendar with `calendar({ curfew: { not: { phase: ['arrival'] } } })` so its curfew doesn't apply during the intro.
+In a game with the [calendar](/docs/plugins/calendar), the intro's scenes may need to carry the clock through the night. Build the calendar with `calendar({ curfew: { not: { kv: 'phase', is: 'arrival' } } })` so its curfew doesn't apply during the intro.
 
 ### A first night that keeps the player in
 
@@ -135,21 +139,21 @@ On the evening the player moves in, they stay in the flat, and every journey is 
 
 ```ts
 locks: [
-  { when: { phase: ['first-night'] }, deny: ['places/go'], reason: 'Stay in tonight.' },
+  { when: { kv: 'phase', is: 'first-night' }, deny: ['places/go'], reason: 'Stay in tonight.' },
 ]
 ```
 
 Every exit shows greyed out with `Stay in tonight.` To keep the player out of the park but let them walk the high street, put the condition on the park itself, as a place's [`blocked`](/docs/plugins/places#locationdef) entry. Add `hide: true` for a place that shouldn't be on the map at all:
 
 ```ts
-{ id: 'park', /* … */ blocked: [{ when: { phase: ['first-night'] }, reason: 'Too far for tonight.' }] }
-{ id: 'office', /* … */ blocked: [{ when: { phase: ['first-night'] }, reason: 'Nobody is in yet.', hide: true }] }
+{ id: 'park', /* … */ blocked: [{ when: { kv: 'phase', is: 'first-night' }, reason: 'Too far for tonight.' }] }
+{ id: 'office', /* … */ blocked: [{ when: { kv: 'phase', is: 'first-night' }, reason: 'Nobody is in yet.', hide: true }] }
 ```
 
-A lock's `hide` leaves any button off the screen, not only exits. With this lock, late at night every activity button, such as Buy a coffee, is gone rather than greyed out, while the exits home still show:
+A lock's `hide` leaves any button off the screen, not only exits. With this lock, late at night every button that does an action, such as Buy a coffee, is gone rather than greyed out, while the exits home still show:
 
 ```ts
-{ when: { kv: 'lateNight' }, deny: ['activity'], hide: true, reason: 'Everything is shut.' }
+{ when: { kv: 'lateNight' }, deny: ['action'], hide: true, reason: 'Everything is shut.' }
 ```
 
 ### Nothing that ends the turn
@@ -158,31 +162,31 @@ While the café is short-staffed, the player can't do anything in the room that 
 
 ```ts
 locks: [
-  { when: { kv: 'shortStaffed' }, deny: ['activity', 'custom'], effect: 'turn', reason: 'Not while the café is this busy.' },
+  { when: { kv: 'shortStaffed' }, deny: ['action', 'custom'], effect: 'turn', reason: 'Not while the café is this busy.' },
 ]
 ```
 
-An activity whose effects hold `{ kind: 'turn' }` is greyed out with the line, and one without isn't. The lock denies `activity` and `custom` rather than `'*'`, because a lock that denies `'*'` empties the room while it's on (see [`lockedOut`](#lockedout)).
+An action whose effects hold `{ turn: true }` is greyed out with the line, and one without isn't. The lock denies `action` and `custom` rather than `'*'`, because a lock that denies `'*'` empties the room while it's on (see [`lockedOut`](#lockedout)).
 
 ### Stopping what passes time
 
-On the first morning, the player should get to work, not spend the morning jogging. Activities that take no time are still allowed. With the [calendar](/docs/plugins/calendar), time passes through its [`calendar/pass`](/docs/plugins/calendar#effects) effect, so a lock on that effect stops only the activities that pass time:
+On the first morning, the player should get to work, not spend the morning jogging. Actions that take no time are still allowed. With the [calendar](/docs/plugins/calendar), time passes through its [`calendar/pass`](/docs/plugins/calendar#effects) effect, so a lock on that effect stops only the actions that pass time:
 
 ```ts
 import { period } from '@ifloom/plugin-calendar'
 
 locks: [
   {
-    when: { all: [{ phase: ['first-day'] }, period('morning')] },
-    deny: ['activity'],
+    when: { all: [{ kv: 'phase', is: 'first-day' }, period('morning')] },
+    deny: ['action', 'custom'],
     effect: 'calendar/pass',
     reason: 'No time for that. Work starts soon.',
   },
 ]
 ```
 
-Buying a coffee takes no time, so it still works. A jog in the park, whose effects hold `pass(1)`, is greyed out with the line. If you deny `'*'` instead, the room empties (see [`lockedOut`](#lockedout)). Deny `['activity', 'choose']` to stop scene choices that pass time too.
+Buying a coffee takes no time, so it still works. A jog in the park, whose effects hold `pass(1)`, is greyed out with the line. If you deny `'*'` instead, the room empties (see [`lockedOut`](#lockedout)). Add `'choose'` to stop scene choices that pass time too.
 
 ## See it in an example
 
-Small Town: `rules.locks` in [`examples/showcase/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/game.ts) keeps moving day to its scene with `deny: ['*']` and `except: ['choose', 'input']`, and keeps the phone away at the office with `deny: ['devices/*']`. The tests `holds the player in moving day until they unpack` and `keeps the phone in the pocket at work` in [`examples/showcase/tests/showcase.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/tests/showcase.test.ts) play both.
+Small Town: the lock in [`examples/showcase/src/story/moving-day.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/moving-day.ts) keeps moving day to its scene with `deny: ['*']` and `except: ['choose', 'input']`, and the one in [`story/office.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/office.ts) keeps the phone away at the office with `deny: ['devices/*']`. The tests `holds the player in moving day until they unpack` and `keeps the phone in the pocket at work` in [`examples/showcase/tests/showcase.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/tests/showcase.test.ts) play both.

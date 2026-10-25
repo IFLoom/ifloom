@@ -62,6 +62,7 @@ A game is [content](/docs/reference/loader#content-and-packs) that [`loadGame`](
 import type { Content } from '@ifloom/engine'
 
 export const opening: Content = {
+  introScene: 'ch1.stop',
   scenes: [
     {
       id: 'ch1.stop',
@@ -76,7 +77,7 @@ export const opening: Content = {
 }
 ```
 
-Then point `src/game.ts` at it, with the game's own title and first scene:
+`introScene` is the scene on screen when a new game starts. Then give `src/game.ts` the game's own id and title:
 
 ```ts
 // src/game.ts
@@ -84,20 +85,20 @@ import { loadGame } from '@ifloom/engine'
 import { stats } from './world/stats.ts'
 import { opening } from './story/opening.ts'
 
-export default loadGame([stats, opening], { id: 'last-bus', title: 'The Last Bus', introScene: 'ch1.stop' })
+export default loadGame([stats, opening], { id: 'last-bus', title: 'The Last Bus' })
 ```
 
 The scene is a [data scene](/docs/reference/scenes#datascene). Its `body` is a list of blocks, and `{ text: 'ch1.stop' }` shows the prose stored under the key `ch1.stop`. Keeping the words apart from the structure means the loader can check that every key has words, and a translation can replace them.
 
 Prose is plain text, with `**bold**` and `*italic*` as in Markdown (see [Prose](/docs/reference/prose#bold-and-italics)).
 
-`loadGame` takes your content, in a list, and a base with the game's `id` and `title`. `introScene` is the scene on screen when a new game starts.
+`loadGame` takes your content, in a list, and a base with the game's `id` and `title`. Everything the story holds, its first scene included, is content. The base holds only what says which game this is, its plugins and its own code.
 
 The default export is what the [CLI](/docs/cli) reads: `loadGame` returns `{ game, problems }`, and `npm run check` prints each problem, or `No problems.` when there are none.
 
 ## 2. Choices
 
-A scene moves on through its choices. Each choice has an `id` and a list of [effects](/docs/reference/effects) that run when the player picks it. `{ kind: 'scene', id }` opens another scene.
+A scene moves on through its choices. Each choice has an `id` and a list of [effects](/docs/reference/effects) that run when the player picks it. `{ scene: 'ch2.bus' }` opens another scene.
 
 Add a second chapter, and two ways to get there:
 
@@ -108,8 +109,8 @@ scenes: [
     title: 'Chapter one: the stop',
     body: [{ text: 'ch1.stop' }],
     choices: [
-      { id: 'share', effects: [{ kind: 'scene', scene: 'ch2.bus' }] },
-      { id: 'keep', effects: [{ kind: 'scene', scene: 'ch2.bus' }] },
+      { id: 'share', effects: [{ scene: 'ch2.bus' }] },
+      { id: 'keep', effects: [{ scene: 'ch2.bus' }] },
     ],
   },
   {
@@ -147,7 +148,7 @@ export const stats: Content = {
 Sharing the umbrella raises it. Back in `src/story/opening.ts`, put the stat effect before the scene change:
 
 ```ts
-{ id: 'share', effects: [{ kind: 'stat', stat: 'warmth', by: 1 }, { kind: 'scene', scene: 'ch2.bus' }] },
+{ id: 'share', effects: [{ stat: 'warmth', by: 1 }, { scene: 'ch2.bus' }] },
 ```
 
 A stat stays between its `min` (0 unless you say) and its `max`. Every template shows it in the side column, beside the story.
@@ -179,12 +180,12 @@ Now the driver. The player can pay, make an excuse, or, if they shared the umbre
 
 ```ts
 choices: [
-  { id: 'pay', effects: [{ kind: 'stat', stat: 'warmth', by: 1 }, { kind: 'scene', scene: 'ch3.home' }] },
-  { id: 'excuse', effects: [{ kind: 'kv', key: 'excuses', by: 1 }, { kind: 'scene', scene: 'ch3.home' }] },
+  { id: 'pay', effects: [{ stat: 'warmth', by: 1 }, { scene: 'ch3.home' }] },
+  { id: 'excuse', effects: [{ kv: 'excuses', by: 1 }, { scene: 'ch3.home' }] },
   {
     id: 'blame',
     when: { chose: 'ch1.stop#share' },
-    effects: [{ kind: 'kv', key: 'excuses', by: 2 }, { kind: 'scene', scene: 'ch3.home' }],
+    effects: [{ kv: 'excuses', by: 2 }, { scene: 'ch3.home' }],
   },
 ],
 ```
@@ -202,8 +203,8 @@ The third chapter reads the count back with a range. `lt`, `is` and `gte` are th
     { text: 'ch3.home.more', when: { kv: 'excuses', gte: 2 } },
   ],
   choices: [
-    { id: 'wave', when: { stat: 'warmth', gte: 2 }, effects: [{ kind: 'scene', scene: 'end.wave' }] },
-    { id: 'door', effects: [{ kind: 'scene', scene: 'end.door' }] },
+    { id: 'wave', when: { stat: 'warmth', gte: 2 }, effects: [{ scene: 'end.wave' }] },
+    { id: 'door', effects: [{ scene: 'end.door' }] },
   ],
 },
 { id: 'end.wave', title: 'The end', body: [{ text: 'end.wave' }], choices: [] },
@@ -217,7 +218,7 @@ A key that was never set counts as 0, so the honest player's line needs nothing 
 An [input](/docs/reference/inputs) asks the player for a value and writes it to a key in the kv store. It goes in `src/story/opening.ts`, beside the first scene, since that's where it's asked. This one asks for a name, writes it to `playerName` (the input's id), and is only offered until a name has been given:
 
 ```ts
-inputs: [{ id: 'playerName', label: 'Your name', kind: 'text', maxLength: 20, when: { not: { kv: 'playerName' } } }],
+inputs: [{ id: 'playerName', label: 'Your name', type: 'text', maxLength: 20, when: { not: { kv: 'playerName' } } }],
 ```
 
 `{ kv: 'playerName' }` holds once the key has a value, so `{ not: … }` hides the input after that. The prose prints any key by name with a token, `{{playerName}}`:
@@ -236,23 +237,24 @@ choices: [
 ],
 ```
 
-Saves can use `playerName` too. A save's [`SaveMeta`](/docs/reference/saves#savemeta) has a `playerName` field for a load screen to show, which comes from the game's [`saveName`](/docs/reference/game#savename). Add it to the base in `src/game.ts`:
+Saves can use `playerName` too. A save's [`SaveMeta`](/docs/reference/saves#savemeta) has a `playerName` field for a load screen to show, which comes from the game's `saveName`. It's code, so it goes in the game's [`rules`](/docs/reference/rules#gamerules), in the base in `src/game.ts`:
 
 ```ts
 export default loadGame([stats, opening], {
   id: 'last-bus',
   title: 'The Last Bus',
-  introScene: 'ch1.stop',
-  saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : null),
+  rules: {
+    saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : null),
+  },
 })
 ```
 
 ## 7. A chapter is a turn
 
-The engine dates things in turns. `state.turn` starts at 0, and the `turn` effect, `{ kind: 'turn' }`, ends one. Your game decides how long a turn is. In this story it's a chapter, so every choice that moves to the next chapter ends a turn before it changes the scene:
+The engine dates things in turns. `state.turn` starts at 0, and the `turn` effect, `{ turn: true }`, ends one. Your game decides how long a turn is. In this story it's a chapter, so every choice that moves to the next chapter ends a turn before it changes the scene:
 
 ```ts
-{ id: 'keep', when: { kv: 'playerName' }, effects: [{ kind: 'turn' }, { kind: 'scene', scene: 'ch2.bus' }] },
+{ id: 'keep', when: { kv: 'playerName' }, effects: [{ turn: true }, { scene: 'ch2.bus' }] },
 ```
 
 Now `state.turn` is the chapter the player has reached, counting from 0. Anything else the engine dates, such as how many turns have passed [`since`](/docs/reference/conditions#since) a scene was seen, counts chapters. A save made with no name of its own is named by its turn, such as `Turn 2`, and [`ifloom playtest`](/docs/cli#ifloom-playtest) writes its transcript a turn at a time.
@@ -273,7 +275,7 @@ const root = document.querySelector<HTMLElement>('#root')!
 function draw(view: View): void {
   root.replaceChildren()
   for (const beat of view.scene.beats) {
-    if (beat.kind === 'text') root.append(Object.assign(document.createElement('p'), { textContent: beat.text }))
+    if (beat.type === 'text') root.append(Object.assign(document.createElement('p'), { textContent: beat.text }))
   }
   for (const choice of [...view.scene.choices, ...view.actions]) {
     const button = document.createElement('button')
@@ -386,8 +388,9 @@ import { opening } from './story/opening.ts'
 export default loadGame([stats, opening], {
   id: 'last-bus',
   title: 'The Last Bus',
-  introScene: 'ch1.stop',
-  saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : null),
+  rules: {
+    saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : null),
+  },
 })
 
 /** Where `ifloom playtest` starts: a player who has already typed a name. */
@@ -412,7 +415,8 @@ And `src/story/opening.ts` is the story, its scenes beside their words:
 import type { Content } from '@ifloom/engine'
 
 export const opening: Content = {
-  inputs: [{ id: 'playerName', label: 'Your name', kind: 'text', maxLength: 20, when: { not: { kv: 'playerName' } } }],
+  introScene: 'ch1.stop',
+  inputs: [{ id: 'playerName', label: 'Your name', type: 'text', maxLength: 20, when: { not: { kv: 'playerName' } } }],
   scenes: [
     {
       id: 'ch1.stop',
@@ -422,9 +426,9 @@ export const opening: Content = {
         {
           id: 'share',
           when: { kv: 'playerName' },
-          effects: [{ kind: 'stat', stat: 'warmth', by: 1 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch2.bus' }],
+          effects: [{ stat: 'warmth', by: 1 }, { turn: true }, { scene: 'ch2.bus' }],
         },
-        { id: 'keep', when: { kv: 'playerName' }, effects: [{ kind: 'turn' }, { kind: 'scene', scene: 'ch2.bus' }] },
+        { id: 'keep', when: { kv: 'playerName' }, effects: [{ turn: true }, { scene: 'ch2.bus' }] },
       ],
     },
     {
@@ -436,12 +440,12 @@ export const opening: Content = {
         { text: 'ch2.bus.kept', when: { chose: 'ch1.stop#keep' } },
       ],
       choices: [
-        { id: 'pay', effects: [{ kind: 'stat', stat: 'warmth', by: 1 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch3.home' }] },
-        { id: 'excuse', effects: [{ kind: 'kv', key: 'excuses', by: 1 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch3.home' }] },
+        { id: 'pay', effects: [{ stat: 'warmth', by: 1 }, { turn: true }, { scene: 'ch3.home' }] },
+        { id: 'excuse', effects: [{ kv: 'excuses', by: 1 }, { turn: true }, { scene: 'ch3.home' }] },
         {
           id: 'blame',
           when: { chose: 'ch1.stop#share' },
-          effects: [{ kind: 'kv', key: 'excuses', by: 2 }, { kind: 'turn' }, { kind: 'scene', scene: 'ch3.home' }],
+          effects: [{ kv: 'excuses', by: 2 }, { turn: true }, { scene: 'ch3.home' }],
         },
       ],
     },
@@ -455,8 +459,8 @@ export const opening: Content = {
         { text: 'ch3.home.more', when: { kv: 'excuses', gte: 2 } },
       ],
       choices: [
-        { id: 'wave', when: { stat: 'warmth', gte: 2 }, effects: [{ kind: 'scene', scene: 'end.wave' }] },
-        { id: 'door', effects: [{ kind: 'scene', scene: 'end.door' }] },
+        { id: 'wave', when: { stat: 'warmth', gte: 2 }, effects: [{ scene: 'end.wave' }] },
+        { id: 'door', effects: [{ scene: 'end.door' }] },
       ],
     },
     { id: 'end.wave', title: 'The end', body: [{ text: 'end.wave' }], choices: [] },

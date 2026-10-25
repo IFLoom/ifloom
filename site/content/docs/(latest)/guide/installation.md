@@ -113,11 +113,12 @@ A game is one module that exports what [`loadGame`](/docs/reference/loader#loadg
 import { loadGame, type Content } from '@ifloom/engine'
 
 const story: Content = {
+  introScene: 'start',
   scenes: [{ id: 'start', title: 'The door', body: [{ text: 'start' }], choices: [] }],
   prose: { start: 'A green door, half open. Someone inside is laughing.' },
 }
 
-export default loadGame([story], { id: 'my-game', title: 'My Game', introScene: 'start' })
+export default loadGame([story], { id: 'my-game', title: 'My Game' })
 ```
 
 Then draw it into an element on your page, here `<div id="game">`:
@@ -133,7 +134,7 @@ const root = document.querySelector<HTMLElement>('#game')!
 function draw(): void {
   const view = runner.view()
   root.replaceChildren()
-  for (const beat of view.scene.beats) if (beat.kind === 'text') root.append(Object.assign(document.createElement('p'), { textContent: beat.text }))
+  for (const beat of view.scene.beats) if (beat.type === 'text') root.append(Object.assign(document.createElement('p'), { textContent: beat.text }))
   for (const choice of view.scene.choices) {
     const button = Object.assign(document.createElement('button'), { textContent: choice.label, disabled: Boolean(choice.disabled) })
     button.onclick = () => runner.apply(choice.command)
@@ -175,7 +176,7 @@ import { runner, view } from './runner.ts'
 
 <template>
   <template v-for="(beat, at) in view.scene.beats" :key="at">
-    <p v-if="beat.kind === 'text'">{{ beat.text }}</p>
+    <p v-if="beat.type === 'text'">{{ beat.text }}</p>
   </template>
   <button v-for="choice in view.scene.choices" :key="choice.id" :disabled="Boolean(choice.disabled)" @click="runner.apply(choice.command)">
     {{ choice.label }}
@@ -200,7 +201,7 @@ export const view = readable(runner.view(), (set) => runner.subscribe(() => set(
 </script>
 
 {#each $view.scene.beats as beat}
-  {#if beat.kind === 'text'}<p>{beat.text}</p>{/if}
+  {#if beat.type === 'text'}<p>{beat.text}</p>{/if}
 {/each}
 {#each $view.scene.choices as choice (choice.id)}
   <button disabled={Boolean(choice.disabled)} onclick={() => runner.apply(choice.command)}>{choice.label}</button>

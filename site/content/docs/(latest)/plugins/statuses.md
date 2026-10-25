@@ -58,7 +58,7 @@ const caffeinated: StatusDef = {
 
 const town: Content = {
   stats: [{ id: 'energy', label: 'Energy', start: 80, spendable: true }],
-  activities: [{ id: 'coffee', effects: [applyStatus('caffeinated')] }],
+  actions: [{ id: 'coffee', label: 'Buy a coffee', effects: [applyStatus('caffeinated')] }],
   data: { statuses: { statuses: [caffeinated] } },
 }
 ```
@@ -126,8 +126,8 @@ const cold: StatusDef = {
   reapply: 'stack',
   max: 3,
   modifiers: [{ stat: 'energy', multiply: 0.8 }],
-  eachTurn: [{ kind: 'stat', stat: 'coins', by: -1 }],
-  onEnd: [{ kind: 'notify', title: 'You feel a bit better.' }],
+  eachTurn: [{ stat: 'coins', by: -1 }],
+  onEnd: [{ notify: 'You feel a bit better.' }],
 }
 ```
 
@@ -172,7 +172,7 @@ const medicine = removeStatus('cold')        // gone, nothing else happens
 const recovered = removeStatus('cold', true) // gone, and "You feel a bit better."
 ```
 
-Applying or removing a status the game doesn't have does nothing. Both work in any effect list, a thing's use in the [inventory](/docs/plugins/inventory) included. In a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), which lists plain effects, write the long form, `{ kind: 'custom', name: 'statuses/apply', with: { status: 'tired' } }`.
+Applying or removing a status the game doesn't have does nothing. Both work in any effect list, a thing's use in the [inventory](/docs/plugins/inventory) included. So does a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does). Written out, `applyStatus('tired')` is `{ 'statuses/apply': { status: 'tired' } }`.
 
 ## Commands
 
@@ -345,4 +345,4 @@ A call that names a status the game doesn't have gives `unknown status "…"` wh
 
 ## See it in an example
 
-Small Town: `caffeinated` in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts) adds 10 energy for two turns. The `coffee` activity starts it with `applyStatus('caffeinated')`, and the café's body reads it with `statusActive`. The React UI lists it under the stats with its turns left.
+Small Town: `caffeinated` in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts) adds 10 energy for two turns. The `coffee` action starts it with `applyStatus('caffeinated')`, and the café's body reads it with `statusActive`. The React UI lists it under the stats with its turns left.

@@ -422,20 +422,16 @@ The look comes from a theme preset, CSS variables for the fonts, sizes and colou
 
 ## Words
 
-The UI's own words, such as "Stats", "Saves" and "Mark all seen", come from the same [strings table](/docs/reference/strings) as the engine's, under keys that start with `ui.`. A plugin's UI has words of its own, listed on that plugin's page under **The React UI**, reworded the same way, such as `ui.quests` for the quests plugin's "Quests". To reword any of them, set it in `game.strings`:
+The UI's own words, such as "Stats", "Saves" and "Mark all seen", come from the same [strings table](/docs/reference/strings) as the engine's, under keys that start with `ui.`. A plugin's UI has words of its own, listed on that plugin's page under **The React UI**, reworded the same way, such as `ui.quests` for the quests plugin's "Quests". To reword any of them, set it in your content's `strings`:
 
 ```ts
-import { loadGame } from '@ifloom/engine'
-import { content } from './content.ts'
+import type { Content } from '@ifloom/engine'
 
-const { game } = loadGame(content, {
-  id: 'small-town',
-  title: 'Small Town',
-  introScene: 'intro',
+export const words: Content = {
   strings: {
     'ui.quests': 'To do',
   },
-})
+}
 ```
 
 The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/docs/reference/view#the-clock-and-the-player), which a plugin writes. In a game with the [calendar](/docs/plugins/calendar), reword it with the calendar's own string, such as `'calendar/label': '{weekday} {period}, day {day}'`. See the calendar's [strings](/docs/plugins/calendar#strings).

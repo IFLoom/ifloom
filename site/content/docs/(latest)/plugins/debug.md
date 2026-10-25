@@ -52,7 +52,6 @@ const base: Plugin[] = [calendar(), places({ start: 'flat' }), quests()]
 const { game } = loadGame([town], {
   id: 'small-town',
   title: 'Small Town',
-  introScene: 'intro',
   plugins: [...base, ...(import.meta.env.DEV ? [debug()] : [])],
 })
 ```
@@ -162,7 +161,7 @@ apply(state, game, debugTime({ period: 'noon' })).reason
 apply(state, game, debugTurn(-1)).reason            // 'A turn is a whole number from 0.'
 ```
 
-The debug commands don't change the [phase](/docs/reference/state#phase), so the showcase's moving-day lock still stops ordinary commands here. A test that wants to play on from this point can start from `{ ...startingState(game), phase: 'open', sceneId: null }` instead, as the showcase's own `probes` do.
+The debug commands don't change the `phase` kv key, so the showcase's moving-day lock still stops ordinary commands here. A test that wants to play on from this point can start from a state with `phase` set to `open` and no scene, as the showcase's own `probes` do: `{ ...start, kv: { ...start.kv, phase: 'open' }, sceneId: null }`, where `start` is `startingState(game)`.
 
 A test does the same to start a scene from the state it needs. In the [React UI](/docs/react), the debug card sends these commands from a form.
 
@@ -302,10 +301,9 @@ The [debug](/docs/plugins/debug) plugin's view (the locks on, the triggers fired
 
 - **A number must be a number.** `to: '5'`, `to: ''` or `to: null` in a command written by hand is refused with `debug/notANumber`, and so are `NaN` and `Infinity`.
 - **A stat is held to its range** as the game declares it, so `debugStat('coins', 5000)` gives 999 in the showcase, where coins have `max: 999`. To test past the ceiling, raise the ceiling.
-- **No rule is asked.** `debug/stat` writes the value into the state itself, held to the stat's range. It doesn't go through a `stat` effect, so the game's [`rules.onStat`](/docs/reference/rules#onstat) never sees the change.
+- **No rule is asked.** `debug/stat` writes the value into the state itself, held to the stat's range. It doesn't go through a `stat` effect, so neither the game's [`rules.onStat`](/docs/reference/rules#onstat) nor a plugin's `onStat` sees the change.
 - **The stat must be the owner's.** With no `of`, it has to be one of the player's stats. With `of`, it has to be one declared on that entity's kind. Otherwise the command is refused with `That is not whose friendship it is.` (`debug/notTheirs`).
 - **A kv key isn't checked.** Any key is set, including a misspelt one.
-- **A `custom` entry in [`rules.commands`](/docs/reference/rules#commands) takes over the debug commands too,** as it does every plugin command.
 - **Never give the player a way to send these.** A debug command in a scene's choices or a game action would work in any build that still lists the plugin. Keep the plugin out of release builds, and keep the commands out of content.
 
 ## See it in an example

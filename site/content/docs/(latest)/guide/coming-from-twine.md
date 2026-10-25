@@ -30,6 +30,7 @@ The same scene in IFLoom, in one file to keep it short:
 import { loadGame, type Content } from '@ifloom/engine'
 
 const cafe: Content = {
+  introScene: 'cafe',
   stats: [{ id: 'coins', label: 'Coins', start: 5, max: 999, spendable: true, format: '{n} coins' }],
   scenes: [
     {
@@ -40,9 +41,9 @@ const cafe: Content = {
         {
           id: 'coffee',
           blocked: [{ when: { stat: 'coins', lt: 3 }, reason: 'You need 3 coins.' }],
-          effects: [{ kind: 'stat', stat: 'coins', by: -3 }, { kind: 'kv', key: 'hadCoffee', to: true }, { kind: 'scene', scene: 'street' }],
+          effects: [{ stat: 'coins', by: -3 }, { kv: 'hadCoffee', to: true }, { scene: 'street' }],
         },
-        { id: 'leave', effects: [{ kind: 'scene', scene: 'street' }] },
+        { id: 'leave', effects: [{ scene: 'street' }] },
       ],
     },
     { id: 'street', title: 'The high street', body: [{ text: 'street' }], choices: [] },
@@ -56,7 +57,7 @@ const cafe: Content = {
   },
 }
 
-export default loadGame([cafe], { id: 'corner-cafe', title: 'The Corner Café', introScene: 'cafe' })
+export default loadGame([cafe], { id: 'corner-cafe', title: 'The Corner Café' })
 ```
 
 It's longer, and it does a few things the passage doesn't:
@@ -73,8 +74,8 @@ A Twine story is one file of passages. An IFLoom game is a few files, each expor
 |---|---|
 | `StoryInit`, the variables every passage uses | `src/world/`, a file per kind: `stats.ts`, `things.ts`, `cast.ts` for the people |
 | The passages of one place, chapter or character | A file in `src/story/`, such as `story/cafe.ts`, with those scenes, their words and anything else that belongs there |
-| Passages tagged `widget`, and JavaScript in the Story JavaScript | `src/rules.ts`: the rules and the custom functions content calls by name |
-| The story's title and its start passage | `src/game.ts`, which lists the files' content for `loadGame` and holds the title and `introScene` |
+| Passages tagged `widget`, and JavaScript in the Story JavaScript | `src/rules.ts`: the game's own code, its hooks and the functions content calls by name |
+| The story's title and its start passage | `src/game.ts`, which lists the files' content for `loadGame` and holds the title. The start passage is `introScene`, in the content that holds it. |
 
 So the café above would be `src/story/cafe.ts`, with its scenes and prose, and `coins` would go in `src/world/stats.ts`, where every other area can use it.
 
@@ -92,13 +93,13 @@ So the café above would be `src/story/cafe.ts`, with its scenes and prose, and 
 Each change is an [effect](/docs/reference/effects), and a choice runs its list of effects in order when the player picks it:
 
 ```ts
-{ kind: 'stat', stat: 'coins', by: 2 }
-{ kind: 'stat', stat: 'coins', to: 5 }
-{ kind: 'kv', key: 'metAva', to: true }
-{ kind: 'kv', key: 'visits', by: 1 }
+{ stat: 'coins', by: 2 }
+{ stat: 'coins', to: 5 }
+{ kv: 'metAva', to: true }
+{ kv: 'visits', by: 1 }
 ```
 
-Numbers the player sees, earns or spends are [stats](/docs/reference/stats), and you declare each one. A stat stays between its `min` and `max`, so `coins` can't go below 0 however many coffees are bought. Everything else goes in the [kv store](/docs/reference/state#kv): keys with a true/false, number or text value, set with the `kv` effect. A key that was never set reads as 0, so a counter needs no `<<set $visits to 0>>` first. Things the player carries are [entities](/docs/reference/entities#holding-things) they hold: `{ kind: 'entity', entity: 'item:umbrella', by: 1 }` gives one, and the `give` helper writes it.
+Numbers the player sees, earns or spends are [stats](/docs/reference/stats), and you declare each one. A stat stays between its `min` and `max`, so `coins` can't go below 0 however many coffees are bought. Everything else goes in the [kv store](/docs/reference/state#kv): keys with a true/false, number or text value, set with the `kv` effect. A key that was never set reads as 0, so a counter needs no `<<set $visits to 0>>` first. Things the player carries are [entities](/docs/reference/entities#holding-things) they hold: `{ entity: 'item:umbrella', by: 1 }` gives one, and the `give` helper writes it.
 
 There's no temporary `_variable`. A value you only need while a scene is on screen is usually a condition you can write where it's used.
 
@@ -145,7 +146,7 @@ An `<<if>>` around a link becomes one of two things on the choice:
   id: 'cake',
   when: { seen: 'ava.hi' },
   blocked: [{ when: { stat: 'coins', lt: 4 }, reason: 'You need 4 coins.' }],
-  effects: [{ kind: 'stat', stat: 'coins', by: -4 }],
+  effects: [{ stat: 'coins', by: -4 }],
 }
 ```
 
@@ -168,15 +169,15 @@ The high street, busy with the market.
 [[Walk to the park->Park]]
 ```
 
-A passage is a [scene](/docs/reference/scenes), and each link is a choice whose effects include `{ kind: 'scene', id }`:
+A passage is a [scene](/docs/reference/scenes), and each link is a choice whose effects include `{ scene: 'cafe' }`:
 
 ```ts
 {
   id: 'street',
   body: [{ text: 'street' }],
   choices: [
-    { id: 'cafe', effects: [{ kind: 'scene', scene: 'cafe' }] },
-    { id: 'park', effects: [{ kind: 'scene', scene: 'park' }] },
+    { id: 'cafe', effects: [{ scene: 'cafe' }] },
+    { id: 'park', effects: [{ scene: 'park' }] },
   ],
 }
 ```
@@ -193,25 +194,23 @@ The link text is the prose under `scene#choice`, so `'street#cafe': 'Go to the c
 Both are choices. A choice with a `scene` effect moves on, and one without stays on the scene, which is redrawn with the new state:
 
 ```ts
-{ id: 'coffee', effects: [{ kind: 'stat', stat: 'coins', by: -3 }, { kind: 'scene', scene: 'cafe' }] }
-{ id: 'tip', effects: [{ kind: 'stat', stat: 'coins', by: -1 }, { kind: 'kv', key: 'tipped', to: true }] }
+{ id: 'coffee', effects: [{ stat: 'coins', by: -3 }, { scene: 'cafe' }] }
+{ id: 'tip', effects: [{ stat: 'coins', by: -1 }, { kv: 'tipped', to: true }] }
 ```
 
-A `<<button>>` in the StoryCaption or PassageFooter, offered on every screen, is an [action](/docs/reference/actions#actiondef). Actions are the game's own buttons, shown while no scene is open, and each sends one [command](/docs/reference/commands). When the button does something with a price, it usually runs an [activity](/docs/reference/actions#activitydef), which can refuse with a reason:
+A `<<button>>` in the StoryCaption or PassageFooter, offered on every screen, is an [action](/docs/reference/actions#actiondef). Actions are the game's own buttons, shown while no scene is open. One can have a cost, effects, and `blocked` entries that refuse it with a reason:
 
 ```ts
 // in the content
-activities: [
+actions: [
   {
     id: 'coffee',
+    label: 'Buy a coffee',
     cost: { stats: { coins: 3 } },
     blocked: [{ when: { kv: 'hadCoffee' }, reason: 'One is enough for today.' }],
-    effects: [{ kind: 'kv', key: 'hadCoffee', to: true }],
+    effects: [{ kv: 'hadCoffee', to: true }],
   },
 ],
-
-// on the game
-actions: [{ id: 'coffee', label: 'Buy a coffee', command: { type: 'activity', id: 'coffee' } }],
 ```
 
 The button shows the cost as its price, and it's greyed out with `Not enough Coins.` or `One is enough for today.` when it can't be pressed.
@@ -223,12 +222,12 @@ The button shows the cost as its price, and it's greyed out with `Not enough Coi
 <<include "Menu">>
 ```
 
-`<<goto>>` is the `scene` effect. Put it in the effects of whatever should move the player: a choice, an activity or a [trigger](/docs/reference/triggers). `{ kind: 'scene', scene: null }` closes the scene and goes back to the game's idle screen, which is the room the player is in when the game has the [places plugin](/docs/plugins/places).
+`<<goto>>` is the `scene` effect. Put it in the effects of whatever should move the player: a choice, an action or a [trigger](/docs/reference/triggers). `{ scene: null }` closes the scene and goes back to the game's idle screen, which is the room the player is in when the game has the [places plugin](/docs/plugins/places).
 
 A `<<goto>>` that runs as soon as a passage shows, because some condition holds, is a trigger. It fires by itself after a command, the first time its `when` holds:
 
 ```ts
-triggers: [{ id: 'broke', when: { stat: 'coins', lt: 1 }, effects: [{ kind: 'scene', scene: 'broke' }] }]
+triggers: [{ id: 'broke', when: { stat: 'coins', lt: 1 }, effects: [{ scene: 'broke' }] }]
 ```
 
 `<<include>>` is a prose key used by more than one scene. A block names a key, and any number of scenes can name the same one:
@@ -249,30 +248,31 @@ That covers shared words. A scene can't include another scene's choices, so a sh
 <<pay 4>>
 ```
 
-A widget that changes the state is a [custom effect](/docs/reference/custom#effects): a function on `game.custom` that returns effects, called by name from content. A widget that answers a question is a custom condition:
+A widget that changes the state is one of the [game's own effects](/docs/reference/custom#effects): a function in the game's `rules` that returns effects, called by name from content with `game/` in front. A widget that answers a question is one of its conditions:
 
 ```ts
-custom: {
+// src/rules.ts
+export const rules: GameRules = {
   effects: {
     payFor: (_state, args) => {
       const price = Number(args.price ?? 0)
       return [
-        { kind: 'stat', stat: 'coins', by: -price },
-        { kind: 'kv', key: 'spent', by: price },
+        { stat: 'coins', by: -price },
+        { kv: 'spent', by: price },
       ]
     },
   },
   conditions: {
     canAfford: (state, args) => (state.stats.coins ?? 0) >= Number(args.price ?? 0),
   },
-},
+}
 ```
 
 ```ts
 {
   id: 'cake',
-  when: { custom: 'canAfford', with: { price: 4 } },
-  effects: [{ custom: 'payFor', with: { price: 4 } }, { kind: 'scene', scene: null }],
+  when: { 'game/canAfford': { price: 4 } },
+  effects: [{ 'game/payFor': { price: 4 } }, { scene: null }],
 }
 ```
 
@@ -300,9 +300,9 @@ kinds: [{ id: 'item', label: 'Thing', listed: false }],
 entities: [{ id: 'umbrella', of: 'item', name: 'umbrella', desc: 'Big enough for two.', at: 'player' }],
 ```
 
-A thing starts with whoever its `at` names, here the player, and with nobody if it gives none. Keys in the kv store need no declaration, and one that's never been set reads as 0, so `$visits` needs no line at all. The first scene is the game's `introScene`.
+A thing starts with whoever its `at` names, here the player, and with nobody if it gives none. Keys in the kv store need no declaration, and one that's never been set reads as 0, so `$visits` needs no line at all. The first scene is the content's `introScene`.
 
-When you'd write a variable with a start value that isn't 0, ask whether it's really a stat (a number the player sees or spends) or a thing they have. If it's neither, set it with an effect on the first scene's choices.
+When you'd write a variable with a start value that isn't 0, ask whether it's really a stat (a number the player sees or spends) or a thing they have. If it's neither, give it in the content's starting `kv`, as in `kv: { mood: 'tired' }`.
 
 ### `State.variables` and `setup`
 
@@ -314,7 +314,7 @@ setup.dishes = {
 }
 ```
 
-In IFLoom the whole game is one [state](/docs/reference/state) object, and it's also the save. Stats are in `state.stats`, the kv store in `state.kv` and what the player holds in `state.held`. Content reads them with conditions, and only custom functions and your UI read the object itself.
+In IFLoom the whole game is one [state](/docs/reference/state) object, and it's also the save. Stats are in `state.stats`, the kv store in `state.kv` and what the player holds in `state.held`. Content reads them with conditions, and only the game's own code and your UI read the object itself.
 
 Data in `setup` that never changes is content: it stays in your TypeScript, beside the scenes. When you'd keep several of something, each with numbers that change in play, declare a kind and its [entities](/docs/reference/entities):
 
@@ -330,7 +330,7 @@ entities: [
 The same effects and conditions reach them with `of`:
 
 ```ts
-{ kind: 'stat', stat: 'price', by: 1, of: 'dish:soup' }
+{ stat: 'price', by: 1, of: 'dish:soup' }
 { stat: 'price', of: 'dish:soup', gte: 6 }
 ```
 
@@ -349,7 +349,7 @@ function draw(view: View): void {
   add(bar, 'h1', view.title)
   add(bar, 'p', view.stats.map((stat) => `${stat.label}: ${stat.text}`).join(' · '), 'stats')
   const passage = document.createElement('main')
-  for (const beat of view.scene.beats) if (beat.kind === 'text') add(passage, 'p', beat.text)
+  for (const beat of view.scene.beats) if (beat.type === 'text') add(passage, 'p', beat.text)
   for (const choice of [...view.scene.choices, ...view.actions]) {
     const button = add(passage, 'button', choice.label)
     button.disabled = Boolean(choice.disabled)
@@ -455,8 +455,8 @@ Settings are declared on the game, and the React UI draws a settings page from t
 
 ```ts
 settings: [
-  { id: 'hints', label: 'Show hints', kind: 'toggle', default: true },
-  { id: 'textSize', label: 'Text size', kind: 'choice', affects: 'ui', options: [{ value: 'small', label: 'Small' }, { value: 'large', label: 'Large' }], default: 'small' },
+  { id: 'hints', label: 'Show hints', type: 'toggle', default: true },
+  { id: 'textSize', label: 'Text size', type: 'choice', affects: 'ui', options: [{ value: 'small', label: 'Small' }, { value: 'large', label: 'Large' }], default: 'small' },
 ],
 ```
 
@@ -473,28 +473,37 @@ Save.onLoad.add(function (save) {
 });
 ```
 
-In SugarCube, when an update renames a variable, you set a save version and patch old saves in a load handler yourself. In IFLoom you give the game a `version` and a step in `migrations` for each version that needs one. A step takes a save's state and returns the new one:
+In SugarCube, when an update renames a variable, you set a save version and patch old saves in a load handler yourself. In IFLoom you give the game a `version` in the base you pass to `loadGame`, and a step in its [`rules`](/docs/reference/rules)' `migrations` for each version that needs one. A step takes a save's state and returns the new one:
 
 ```ts
-import type { Game } from '@ifloom/engine'
+import { loadGame, type GameRules } from '@ifloom/engine'
 
-const base: Partial<Game> = {
-  // Version 1 kept the purse in a kv key called money. Version 2 has a coins stat.
-  version: 2,
+const rules: GameRules = {
   migrations: {
+    // Version 1 kept the purse in a kv key called money. Version 2 has a coins stat.
     1: (state) => {
       const { money, ...kv } = state.kv
       return money === undefined ? state : { ...state, kv, stats: { ...state.stats, coins: Number(money) } }
     },
   },
 }
+
+export default loadGame([cafe], { id: 'corner-cafe', title: 'The Corner Café', version: 2, rules })
 ```
 
 The engine runs every step from the save's version up to the game's when the save loads, so a save from two versions ago runs both. See [The game's own migrations](/docs/reference/saves#the-games-own-migrations).
 
 Saving itself needs no setup. [`mountGame`](/docs/react#mountgame) keeps saves in the browser's `localStorage` and autosaves to the `auto` slot each turn. The React UI's menu saves and loads, and undo goes 50 steps back. To change any of that, pass [`RunnerOptions`](/docs/reference/runner#runneroptions) as `runner`. What should outlive a save, such as the player's settings or that they've finished the game once, goes in the [profile](/docs/reference/profile).
 
-There's no `Config.saves.isAllowed`. The engine can't stop the player saving during an intro or a cutscene, and the React UI's save menu is always there. Autosave only writes when its moment comes, so with `autosave: { every: 'turn' }` (the default) the first autosave is the first morning, after the intro is done. A game that must not be saved mid-intro keeps the intro short, or puts it before the game starts, on a title page of its own.
+`Config.saves.isAllowed` is the content's [`saveable`](/docs/reference/game#saveable): a list of conditions, each with the reason the player reads, and saving is refused while one holds. The React UI greys out its Save button with that reason, and the runner skips its autosave too.
+
+```ts
+export const cafe: Content = {
+  saveable: [{ when: { not: { kv: 'playerName' } }, reason: 'Type your name first.' }],
+}
+```
+
+Autosave only writes when its moment comes, so with `autosave: { every: 'turn' }` (the default) the first autosave is the first morning, after the intro is done.
 
 ### `<<audio>>`
 
@@ -519,8 +528,8 @@ audio: {
 
 ```ts
 { id: 'cafe', audio: { ambience: 'cafe.murmur' }, body: [{ text: 'cafe' }], choices: [] }
-{ kind: 'sound', track: 'bell' }
-{ kind: 'audio', channel: 'music', to: null }
+{ sound: 'bell' }
+{ audio: 'music', to: null }
 ```
 
 The engine works out what should be playing, and the [audio player](/docs/browser/audio-player) plays it. The React UI starts it for you, and its settings page gets volume and mute when you declare those settings. See [Audio](/docs/reference/audio).
@@ -571,24 +580,24 @@ const windowSeat: DataScene = {
   weight: 3,
   when: { not: { seen: 'cafe.window' } },
   body: [{ text: 'cafe.window' }],
-  choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
+  choices: [{ id: 'leave', effects: [{ scene: null }] }],
 }
 
-const sit: Effect = { kind: 'scene', from: 'cafe', otherwise: 'cafe.quiet' }
+const sit: Effect = { scene: { from: 'cafe', otherwise: 'cafe.quiet' } }
 ```
 
-**A value worked out in code** uses [`pick`, `roll`, `chance` or `weighted`](/docs/reference/random), with the seed, the turn and a name for the draw. A custom value prints it in prose as `{{v:cake}}`:
+**A value worked out in code** uses [`pick`, `roll`, `chance` or `weighted`](/docs/reference/random), with the seed, the turn and a name for the draw. A value in the game's `rules` prints it in prose as `{{v:game/cake}}`:
 
 ```ts
-import { pick } from '@ifloom/engine'
+import { pick, type GameRules } from '@ifloom/engine'
 
-custom: {
+export const rules: GameRules = {
   values: { cake: (state) => pick(['lemon', 'carrot', 'walnut'], state.seed, state.turn, 'cafe.cake') },
-},
+}
 ```
 
 ```ts
-'cafe.special': "Today's cake is {{v:cake}}.",
+'cafe.special': "Today's cake is {{v:game/cake}}.",
 ```
 
 Reloading or undoing deals the same cake. That's on purpose: the player can't re-roll by reloading, and a playtest gives the same result every run.
@@ -610,8 +619,8 @@ minigames: [
     start: 'boiling',
     states: {
       boiling: { label: 'kettle.boiling', after: { ms: 3000, go: 'boiled' }, on: [{ input: 'pour', go: 'early' }] },
-      boiled: { final: { effects: [{ kind: 'scene', scene: 'kettle.done' }] } },
-      early: { final: { effects: [{ kind: 'scene', scene: 'kettle.weak' }] } },
+      boiled: { final: { effects: [{ scene: 'kettle.done' }] } },
+      early: { final: { effects: [{ scene: 'kettle.weak' }] } },
     },
   },
 ],
@@ -626,18 +635,18 @@ Many SugarCube games keep `$time` and `$weekday` themselves, move them on with a
 | SugarCube | IFLoom |
 |---|---|
 | `$time` as a number of periods, `$weekday`, `$gameDay` | The [calendar plugin](/docs/plugins/calendar), with your periods: `calendar({ periods: [{ id: 'early', label: 'early morning' }, ...] })`. The header reads them, and conditions test them with `period('evening')` and `weekday(5, 6)`. |
-| A link that costs time, `<<set $time += 2>>` | [`pass(2)`](/docs/plugins/calendar#effects) in the choice's or activity's effects. The button shows `until noon` by itself. |
+| A link that costs time, `<<set $time += 2>>` | [`pass(2)`](/docs/plugins/calendar#effects) in the choice's or action's effects. The button shows `until noon` by itself. |
 | "Too late" once `$time` reaches night | The calendar's [curfew guard](/docs/plugins/calendar#the-guard), and `blocked` entries such as `{ when: period('night'), reason: 'Too late for that.' }`. |
 | A `Sleep` passage that only works late | The calendar's [`sleep()`](/docs/plugins/calendar#commands) command, with `sleep: { from: ['evening', 'night'] }`. |
 | `<<dayshift>>`: payday, rent, decay, mood, which morning passage to show | [`rules.onTurn`](/docs/reference/rules#a-days-end-step-by-step). It runs once per day, sees the state as the player went to bed as `before`, and applies effects in the order you write them, ending with the scene the morning opens on. |
-| Per-day flags reset in the widget, `<<set $talkedToday to false>>` | [`rules.resets`](/docs/reference/rules#resets). |
+| Per-day flags reset in the widget, `<<set $talkedToday to false>>` | The content's [`resets`](/docs/reference/rules#resets): `resets: { talkedToday: false }`. |
 | Opening hours, `<<if $weekday lte 5 and $time lte 1>>[[Office]]<</if>>` | A place's [`blocked`](/docs/plugins/places#opening-hours) entries. The exit stays on screen, greyed out with the reason. |
 | Where someone is, `$ava.location` set by a schedule widget | A [cast](/docs/plugins/cast#where-people-are) character's `schedule`. |
 | Warnings in StoryCaption, such as "Rent due tomorrow" | Blocks with a `when` in each place's body. See [Lines on every place](/docs/plugins/places#lines-on-every-place). |
 | One-off feedback, "You got paid" | A [notice](/docs/reference/notices) from the `notify` effect. |
-| `<<goto "Game Over">>` | A scene with a "Play again" choice, or no choices, a phase and a lock. See [Endings](/docs/reference/scenes#endings). |
+| `<<goto "Game Over">>` | A scene with a "Play again" choice, or no choices, a `phase` kv key and a lock. See [Endings](/docs/reference/scenes#endings). |
 | `Engine.restart()` | A choice that sends [`{ type: 'newGame' }`](/docs/reference/commands#newgame). The runner starts a new game and keeps the player's settings. |
-| `Config.saves.isAllowed` | The game's [`saveable`](/docs/reference/game#saveable): `blocked` entries, refused while `when` holds, with the reason on the greyed-out Save button. |
+| `Config.saves.isAllowed` | The content's [`saveable`](/docs/reference/game#saveable): `blocked` entries, refused while `when` holds, with the reason on the greyed-out Save button. |
 
 The day's end is the biggest change. A `<<dayshift>>` widget changes variables one after another, and each line sees the last. `rules.onTurn` works the same way: each `apply` runs on the state the one before it left, so the rent can come out of the wages just paid. What the day held before the night's resets is in `before`. [A day's end, step by step](/docs/reference/rules#a-days-end-step-by-step) shows one.
 
@@ -649,14 +658,14 @@ Harlowe's macros map to the same places as SugarCube's.
 
 | Harlowe | IFLoom |
 |---|---|
-| `(set: $coins to it + 2)` | `{ kind: 'stat', stat: 'coins', by: 2 }`, an [effect](/docs/reference/effects) on a choice |
-| `(set: $metAva to true)` | `{ kind: 'kv', key: 'metAva', to: true }` |
+| `(set: $coins to it + 2)` | `{ stat: 'coins', by: 2 }`, an [effect](/docs/reference/effects) on a choice |
+| `(set: $metAva to true)` | `{ kv: 'metAva', to: true }` |
 | `(if: $coins >= 3)[…](else:)[…]` | A block or a choice with `when: { stat: 'coins', gte: 3 }`, and one with `lt: 3` for the else |
-| `(link-goto: "Go to the café", "Cafe")` | A choice with `{ kind: 'scene', scene: 'cafe' }`, labelled by the prose key `street#cafe` |
+| `(link-goto: "Go to the café", "Cafe")` | A choice with `{ scene: 'cafe' }`, labelled by the prose key `street#cafe` |
 | `(go-to: "Cafe")` | The `scene` effect, on a choice or a [trigger](/docs/reference/triggers) |
 | `(display: "Menu")` | A prose key, `cafe.menu`, used as a block in each scene that shows it |
-| `(either: "rain", "sun")` | A [variants](/docs/reference/prose#variantmember) block, or [`pick`](/docs/reference/random#pick) in a custom value |
-| `(random: 1, 6)` | [`roll`](/docs/reference/random#roll) in a custom function, or `{ kind: 'minigameVar', key, random: [1, 6] }` in a minigame |
+| `(either: "rain", "sun")` | A [variants](/docs/reference/prose#variantmember) block, or [`pick`](/docs/reference/random#pick) in a value of the game's own |
+| `(random: 1, 6)` | [`roll`](/docs/reference/random#roll) in the game's own code, or `{ kv: key, of: 'minigame', random: [1, 6] }` in a minigame |
 | `(dm: "name", "Soup", "price", 6)` | An [entity](/docs/reference/entities) of a declared kind, with its own stats and kv store |
 | `(a: "lemon", "carrot")` | A plain TypeScript array in your content, or [things the player holds](/docs/reference/entities#notes-photos-and-other-things-made-in-play) when they gather them |
 | `\|order>[…]` with `(replace: ?order)[…]` | A choice that stays on the scene and sets a kv key, and a block whose `when` reads it |
@@ -678,7 +687,7 @@ Hooks are the biggest difference. Harlowe changes parts of a passage in place. I
     { text: 'cafe.waiting', when: { not: { kv: 'askedUsual' } } },
     { text: 'cafe.usual', when: { kv: 'askedUsual' } },
   ],
-  choices: [{ id: 'usual', when: { not: { kv: 'askedUsual' } }, effects: [{ kind: 'kv', key: 'askedUsual', to: true }] }],
+  choices: [{ id: 'usual', when: { not: { kv: 'askedUsual' } }, effects: [{ kv: 'askedUsual', to: true }] }],
 }
 ```
 
@@ -690,7 +699,7 @@ A datamap you'd keep in a variable becomes an entity when it's one of several th
 
 - **Rules written once.** A condition that greys out a choice carries its reason, and the same check runs when the button is drawn and when it's pressed. The player sees `You need 3 coins.` on the button, and the button and the refusal never disagree. In Twine you'd write the `<<if>>` around the link and the line explaining it separately.
 - **`ifloom check` before anyone plays.** Every scene, stat, kind and prose key that content names is checked, so a typo shows up as a line like `cafe · scene cafe · goes to unknown scene "stret"` instead of a broken link in play. See [`ifloom check`](/docs/cli#ifloom-check).
-- **Typed content.** Scenes, conditions and effects are TypeScript types, so your editor completes `kind: 'stat'` and underlines a missing field as you type.
+- **Typed content.** Scenes, conditions and effects are TypeScript types, so your editor completes `stat: 'coins'` and underlines a missing field as you type.
 - **Seeded randomness that replays.** Every draw comes from the save's seed. Undo can't re-roll, a bug report's save reproduces exactly, and tests give the same result every run. See [Randomness](/docs/reference/random).
 - **Versioned saves.** Give the game a `version` and `migrations`, and saves from older releases load into the new one. See [Saves](/docs/reference/saves#the-games-own-migrations).
 - **Playtests and snapshots.** [`ifloom playtest`](/docs/cli#ifloom-playtest) plays the game with no one at the keyboard and writes every screen to a transcript. [`ifloom snapshot`](/docs/cli#ifloom-snapshot) records how every scene reads, and tells you which ones a change altered.
@@ -698,7 +707,7 @@ A datamap you'd keep in a variable becomes an entity when it's one of several th
 
 ## What's different
 
-- **No raw HTML or JavaScript in prose.** Prose is words with a small [markup](/docs/reference/prose#markup) for speech, pictures, video and sound. Anything that looks different is your UI's job, through [themes and CSS](/docs/react/customising), and anything that computes is a custom function.
+- **No raw HTML or JavaScript in prose.** Prose is words with a small [markup](/docs/reference/prose#markup) for speech, pictures, video and sound. Anything that looks different is your UI's job, through [themes and CSS](/docs/react/customising), and anything that computes is the game's own code, in `rules`.
 - **Content is data in TypeScript.** There's no story file to open in a Twine editor. Scenes are objects in `.ts` files, and their words are in `prose`. You edit them in a code editor, and you can split them across as many files as you like (see [Content and packs](/docs/reference/loader#content-and-packs)).
 - **State is typed and declared.** Stats, kinds, entities, settings and inputs are declared before they're used. Keys in the kv store don't need declaring, but only hold a number, a string or `true`/`false`. There's no storing objects or functions in the state, because the state is the save and must survive being written out as JSON.
 - **The whole scene redraws.** There's no changing text in place after a passage is shown. A choice changes the state, and the scene is drawn again from it.

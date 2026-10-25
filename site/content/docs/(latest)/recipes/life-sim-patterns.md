@@ -8,7 +8,7 @@ The examples use Small Town's world and its plugins: the [calendar](/docs/plugin
 
 ## New-day work
 
-To do something once each new day, such as drawing the day's weather, use [`rules.onTurnDone`](/docs/reference/rules#onturndone). It runs at the end of every turn, after the plugins' own turn hooks, so the calendar has already moved on to the new day. Keep the last day you acted on in the kv store and compare:
+To do something once each new day, such as drawing the day's weather, use [`rules.onTurnDone`](/docs/reference/rules#onturndone). It runs at the end of every turn, after the plugins' `onTurn` hooks, so the calendar has already moved on to the new day. Keep the last day you acted on in the kv store and compare:
 
 ```ts
 import type { GameRules } from '@ifloom/engine'
@@ -20,9 +20,9 @@ const rules: GameRules = {
     const day = query<{ day: number }>('calendar/now')?.day ?? state.turn
     if (state.kv.lastNewDay === day) return state
     return apply([
-      { kind: 'kv', key: 'lastNewDay', to: day },
-      { kind: 'kv', key: 'weather', to: WEATHER[roll(WEATHER.length, 'weather')] },
-      { kind: 'kv', key: 'ateToday', to: false },
+      { kv: 'lastNewDay', to: day },
+      { kv: 'weather', to: WEATHER[roll(WEATHER.length, 'weather')] },
+      { kv: 'ateToday', to: false },
     ])
   },
 }
@@ -30,7 +30,7 @@ const rules: GameRules = {
 
 With a turn of a day this runs every turn. With the calendar's `turn: 'period'` it runs on the first turn of each day, and the other turns of the day return the state untouched. The roll is seeded by the save and the turn, so an undo or a replay draws the same weather. [Each new day](/docs/reference/rules#each-new-day) on the rules page has more on the pattern.
 
-For a value that only needs putting back each day, such as `ateToday` on its own, [`rules.resets`](/docs/reference/rules#resets) is shorter.
+For a value that only needs putting back each day, such as `ateToday` on its own, the content's [`resets`](/docs/reference/rules#resets) is shorter: `resets: { ateToday: false }`.
 
 ## Cooldowns
 
@@ -44,7 +44,7 @@ const crossword: DataScene = {
   drawnFrom: ['cafe'],
   when: { not: { since: 'cafe.crossword', last: true, lt: 3 } },
   body: [{ text: 'cafe.crossword' }],
-  choices: [{ id: 'leave', effects: [{ kind: 'scene', scene: null }] }],
+  choices: [{ id: 'leave', effects: [{ scene: null }] }],
 }
 ```
 
@@ -81,9 +81,9 @@ const rules: GameRules = {
     const owed = state.stats.owed ?? 0
     if (owed <= 0 || !holds(state, weekday(4), game)) return state
     return apply([
-      { kind: 'stat', stat: 'coins', by: owed },
-      { kind: 'stat', stat: 'owed', to: 0 },
-      { kind: 'notify', id: 'payday', title: `Payday: ${owed} coins`, tag: 'money' },
+      { stat: 'coins', by: owed },
+      { stat: 'owed', to: 0 },
+      { notify: `Payday: ${owed} coins`, id: 'payday', tag: 'money' },
     ])
   },
 }
@@ -314,10 +314,9 @@ Every picture the React UI draws is a `Picture`, so the replacement covers scene
 When the player can't do something, they see one reason. [`whyNot`](/docs/reference/actions#whynot) decides which, and the reducer refuses with the same line, so a greyed-out button and the refusal always agree. It asks, in this order, and stops at the first answer:
 
 1. **A minigame in progress.** While one runs, other commands are refused with "Finish this first."
-2. **Locks.** The game's [`rules.locks`](/docs/reference/locks), in the order you list them.
-3. **Plugins' guards.** A plugin's hard [guard](/docs/reference/plugins#guards-prices-and-labels), such as the calendar's curfew.
-4. **Your own handler.** If the game has [`rules.commands`](/docs/reference/rules#commands) for this command's type, its answer is the only one left. The built-in checks below don't run.
-5. **The command's own checks.** For an activity, these are an open scene, a lock on it, its `blocked` entries in the order written, then its `cost`, one stat at a time. For a choice, see [How `choose` checks a choice](/docs/reference/scenes#how-choose-checks-a-choice). A plugin command has its own `whyNot`, such as jobs' "You've done today's shift." before "No shift today."
+2. **Locks.** The content's [`locks`](/docs/reference/locks), in the order they're listed.
+3. **Guards.** The game's own [`rules.guard`](/docs/reference/rules#gamerules), then each plugin's hard [guard](/docs/reference/plugins#guards-prices-and-labels), such as the calendar's curfew.
+4. **The command's own checks.** For an action, these are an open scene, a lock on it, its `blocked` entries in the order written, then its `cost`, one stat at a time. For a choice, see [How `choose` checks a choice](/docs/reference/scenes#how-choose-checks-a-choice). A plugin command has its own `whyNot`, such as jobs' "You've done today's shift." before "No shift today."
 
 A command that ignores locks, such as a setting or a [cheat](/docs/plugins/cheats), skips the first three steps. After all that, a guard's soft warning, such as "That would run past dawn.", can still refuse the command, but the button stays pressable (see [`warningOf`](/docs/reference/actions#warningof)).
 
@@ -327,21 +326,22 @@ To put your own reason where you want it:
 - **Ahead of the cost**, write a `blocked` entry. `blocked` is checked before `cost`, so "The café is shut." comes before "Not enough coins."
 - **Ahead of another `blocked` entry**, list it first. The first entry whose `when` holds is the one the player sees.
 - **After the cost**, write the cost as a `blocked` entry of its own, before the one that should come later, and leave `cost` for the spending: `{ when: { stat: 'coins', lt: 5 }, reason: 'You need 5 coins.' }`.
-- **In an order no rule above gives**, take the command over with `rules.commands`, and return your reasons in the order you choose.
+- **In an order no rule above gives**, write a guard in the game's `rules.guard`, which is asked before any action's own checks, and return your reasons in the order you choose.
 
 ```ts
-import type { ActivityDef } from '@ifloom/engine'
+import type { ActionDef } from '@ifloom/engine'
 import { period } from '@ifloom/plugin-calendar'
 
-const coffee: ActivityDef = {
+const coffee: ActionDef = {
   id: 'coffee',
+  label: 'Buy a coffee',
   // Shut beats tired, and tired beats the price.
   blocked: [
     { when: period('night'), reason: 'The café is shut.' },
     { when: { stat: 'energy', lt: 5 }, reason: 'You are too tired to queue.' },
   ],
   cost: { stats: { coins: 3 } },
-  effects: [{ kind: 'stat', stat: 'energy', by: 10 }],
+  effects: [{ stat: 'energy', by: 10 }],
 }
 ```
 

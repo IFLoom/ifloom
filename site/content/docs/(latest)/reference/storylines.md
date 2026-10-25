@@ -15,18 +15,18 @@ type StorylineState = {
 
 `StorylineDef` is listed with the rest of the game on [The game](/docs/reference/game#storylinedef). This page is about how storylines behave.
 
-Declare your storylines in `game.storylines`, or in your [content](/docs/reference/loader#content)'s `storylines`. A new game starts each one open and with an empty kv store. Its live state is `state.storylines[id]`:
+Declare your storylines in your [content](/docs/reference/loader#content)'s `storylines`. A new game starts each one open and with an empty kv store. Its live state is `state.storylines[id]`:
 
 | Field | Meaning |
 |---|---|
-| `closedUntil` | A [turn](/docs/reference/state#turn). While `state.turn` is below it, the storyline is closed. [`{ kind: 'closeStoryline', storyline, turns }`](/docs/reference/effects#closestoryline) sets it to the current turn plus `turns`. `null` means open. |
-| `kv` | The storyline's own kv store. Set its keys with [`{ kind: 'storylineKv' }`](/docs/reference/effects#storylinekv), read them with a [`{ storylineKv }`](/docs/reference/conditions#storylinekv) condition, count them with [progress counters](/docs/reference/progress) and show them with the `{{n:storyline.key}}` token. |
+| `closedUntil` | A [turn](/docs/reference/state#turn). While `state.turn` is below it, the storyline is closed. [`{ closeStoryline: storyline, turns }`](/docs/reference/effects#closestoryline) sets it to the current turn plus `turns`. `null` means open. |
+| `kv` | The storyline's own kv store. Set its keys with the [`kv` effect](/docs/reference/effects#whose-key-it-is) and `of: 'storyline:<id>'`, as in `{ kv: 'visits', by: 1, of: 'storyline:ava' }`, read them with the [`kv` condition](/docs/reference/conditions#kv) and the same `of`, count them with [progress counters](/docs/reference/progress) and show them with the `{{kv:visits of=storyline:ava}}` token. |
 
 ```ts
 storylines: [{ id: 'ava', name: 'Ava' }]
 
 // Ava has had enough of you for three turns.
-{ kind: 'closeStoryline', storyline: 'ava', turns: 3 }
+{ closeStoryline: 'ava', turns: 3 }
 
 // A choice offered only while she's talking to you.
 { id: 'apologise', when: { storyline: 'ava' }, effects: [/* … */] }
@@ -51,10 +51,10 @@ function storylineOpen(state: GameState, id: string): boolean
 
 ```ts
 storylineOpen(state, 'ava')              // true on a new game
-storylineOf(state, 'ava').kv.met      // undefined until a storylineKv sets it
+storylineOf(state, 'ava').kv.met      // undefined until { kv: 'met', of: 'storyline:ava', to: true } sets it
 ```
 
-**Gotcha:** a storyline the game doesn't declare isn't an error here. It reads as empty and open. The [content checker](/docs/reference/checks) reports a condition, a `storylineKv` effect or a `closeStoryline` effect that names an unknown storyline.
+**Gotcha:** a storyline the game doesn't declare isn't an error here. It reads as empty and open. The [content checker](/docs/reference/checks) reports a condition, a `kv` effect with `of: 'storyline:…'` or a `closeStoryline` effect that names an unknown storyline.
 
 ## emptyStoryline
 

@@ -98,10 +98,9 @@ A cut-down Small Town. The player starts in the raincoat, which people in the ca
 
 ```ts
 import { give, need, type Content } from '@ifloom/engine'
-import { onlyAt, type LocationDef } from '@ifloom/plugin-places'
+import type { LocationDef } from '@ifloom/plugin-places'
 import { wearable, wearing } from '@ifloom/plugin-wardrobe'
 
-const act = (id: string, label: string) => ({ id, label, command: { type: 'activity' as const, id } })
 const place = (id: string, name: string, exits: string[]): LocationDef =>
   ({ id, name, tag: 'Small Town', art: '', exits, body: [{ text: `place.${id}` }] })
 
@@ -116,10 +115,6 @@ const town: Content = {
     { id: 'scarf', of: 'clothing', name: 'scarf', traits: { ...wearable('neck') } },
     { id: 'sandwich', of: 'food', name: 'sandwich', at: 'player' },
   ],
-  activities: [
-    { id: 'buyScarf', cost: { stats: { coins: 8 } }, blocked: [onlyAt(['high-street'])], effects: [give('clothing:scarf')] },
-    { id: 'bench', blocked: [onlyAt(['park']), need('Too cold without a scarf.', wearing('clothing:scarf'))], effects: [] },
-  ],
   prose: {
     'place.high-street': 'A bakery, a launderette, a bus stop.',
     'place.cafe': 'Six tables, one of them wobbly.',
@@ -129,12 +124,18 @@ const town: Content = {
   data: {
     places: {
       locations: [
-        { ...place('high-street', 'High Street', ['cafe', 'park']), actions: [act('buyScarf', 'Buy a scarf at the market')] },
+        {
+          ...place('high-street', 'High Street', ['cafe', 'park']),
+          actions: [{ id: 'buyScarf', label: 'Buy a scarf at the market', cost: { stats: { coins: 8 } }, effects: [give('clothing:scarf')] }],
+        },
         {
           ...place('cafe', 'The Corner Café', ['high-street']),
           body: [{ text: 'place.cafe' }, { text: 'place.cafe.raincoat', when: wearing('clothing:raincoat') }],
         },
-        { ...place('park', 'Riverside Park', ['high-street']), actions: [act('bench', 'Sit on the bench by the river')] },
+        {
+          ...place('park', 'Riverside Park', ['high-street']),
+          actions: [{ id: 'bench', label: 'Sit on the bench by the river', blocked: [need('Too cold without a scarf.', wearing('clothing:scarf'))], effects: [] }],
+        },
       ],
     },
     wardrobe: {
@@ -179,13 +180,13 @@ apply(state, game, takeOff('coat')).reason       // 'There is nothing to take of
 
 whyNot(state, game, wear('clothing:scarf'))      // 'You have no scarf.'
 whyNot(state, game, wear('food:sandwich'))       // 'The sandwich is not something you wear.'
-state = apply(state, game, { type: 'activity', id: 'buyScarf' }).state
+state = apply(state, game, { type: 'action', id: 'places/buyScarf' }).state
 state = apply(state, game, wear('clothing:scarf')).state
 holds(state, slotFilled('neck'), game)           // true
 apply(state, game, wear('clothing:scarf')).reason  // 'You are already wearing the scarf.'
 
 state = apply(state, game, go('park')).state
-whyNot(state, game, { type: 'activity', id: 'bench' })   // undefined: the scarf is on
+whyNot(state, game, { type: 'action', id: 'places/bench' })   // undefined: the scarf is on
 ```
 
 ## Condition
@@ -197,7 +198,7 @@ whyNot(state, game, { type: 'activity', id: 'bench' })   // undefined: the scarf
 | `{ 'wardrobe/wearing': { slot } }` | `slotFilled(slot)` | Something is in that slot. |
 | `{ 'wardrobe/wearing': { entity, at } }` | | The thing is on `at`'s body: `'player'` or a protagonist, such as `'character:sam'`, whoever is played. |
 
-Without `at`, it asks about whoever the player is playing now ([`'you'`](/docs/reference/entities#protagonists-you-and-player)). You can use it anywhere a [condition](/docs/reference/conditions) goes: a block's `when`, a choice, a `blocked` entry or a lock. These are the short forms (see [plugin calls](/docs/reference/custom#plugincall)). The long form of the first row is `{ custom: 'wardrobe/wearing', with: { entity: 'clothing:scarf' } }`. With neither `entity` nor `slot`, it's false. An unknown thing, or a slot the save has nothing in, is false.
+Without `at`, it asks about whoever the player is playing now ([`'you'`](/docs/reference/entities#protagonists-you-and-player)). You can use it anywhere a [condition](/docs/reference/conditions) goes: a block's `when`, a choice, a `blocked` entry or a lock. Each is a call by name (see [plugin calls](/docs/reference/custom#plugincall)). With neither `entity` nor `slot`, it's false. An unknown thing, or a slot the save has nothing in, is false.
 
 To ask whether you hold a thing at all, worn or not, use the engine's [`holding`](/docs/reference/entities#give-take-move-and-holding), or [`{ entity, at }`](/docs/reference/conditions#entity).
 
@@ -234,19 +235,14 @@ The plugin's lines go in the [strings table](/docs/reference/strings#plugins-str
 
 `wardrobe/wear` also uses the engine's [`noSuchThing`](/docs/reference/strings#refusals) (`There is no such thing.`), so it reads the same as everywhere else.
 
-To reword one in your game, put it in the base's `strings`:
+To reword one in your game, put it in your content's `strings`:
 
 ```ts
-import { loadGame } from '@ifloom/engine'
-import { wardrobe } from '@ifloom/plugin-wardrobe'
-import { town } from './town.ts'
+import type { Content } from '@ifloom/engine'
 
-const { game } = loadGame([town], {
-  id: 'small-town',
-  title: 'Small Town',
-  plugins: [wardrobe()],
+export const words: Content = {
   strings: { 'wardrobe/alreadyWearing': 'The {thing} is already on.' },
-})
+}
 ```
 
 ## The view
@@ -364,17 +360,17 @@ import { wear, wearing } from '@ifloom/plugin-wardrobe'
 declare const game: Game
 declare const state: GameState   // the player in the raincoat; Sam holds a scarf
 
-const asSam = applyEffects(state, game, [{ kind: 'you', to: 'character:sam' }])
+const asSam = applyEffects(state, game, [{ you: 'character:sam' }])
 const dressed = apply(asSam, game, wear('clothing:scarf')).state
 holds(dressed, wearing('clothing:raincoat'), game)   // false: Sam isn't wearing it
-const back = applyEffects(dressed, game, [{ kind: 'you', to: 'player' }])
+const back = applyEffects(dressed, game, [{ you: 'player' }])
 holds(back, wearing('clothing:raincoat'), game)      // true: the player still is
 holds(back, { 'wardrobe/wearing': { entity: 'clothing:scarf', at: 'character:sam' } }, game)   // true
 ```
 
 ## For code
 
-The helpers above write the content objects for you, typed. `wearing` and `slotFilled` return a `Condition`, `wear` and `takeOff` return a [`CommandRef`](/docs/reference/custom#commandref), in the short form, and `wearable` returns the trait.
+The helpers above write the content objects for you, typed. `wearing` and `slotFilled` return a `Condition`, `wear` and `takeOff` return a [`CommandRef`](/docs/reference/custom#commandref), and `wearable` returns the trait.
 
 ### Helpers
 

@@ -16,12 +16,12 @@ import type { Content } from '@ifloom/engine'
 const town: Content = {
   inputs: [
     // The showcase asks for this on moving day.
-    { id: 'catName', label: 'Name your cat', kind: 'text', maxLength: 16, when: { phase: ['arrival'] } },
-    { id: 'alarm', label: 'Wake at', kind: 'number', min: 5, max: 10, key: 'wakeAt' },
+    { id: 'catName', label: 'Name your cat', type: 'text', maxLength: 16, when: { kv: 'phase', is: ['arrival'] } },
+    { id: 'alarm', label: 'Wake at', type: 'number', min: 5, max: 10, key: 'wakeAt' },
     {
       id: 'order',
       label: 'Your usual',
-      kind: 'choice',
+      type: 'choice',
       options: [{ value: 'tea', label: 'Tea' }, { value: 'coffee', label: 'Coffee' }],
     },
   ],
@@ -35,7 +35,7 @@ The UI reads what to draw from [`view.inputs`](/docs/reference/view#inputs), and
 import { apply, view } from '@ifloom/engine'
 
 view(state, game).inputs.alarm
-// { id: 'alarm', label: 'Wake at', kind: 'number', maxLength: null, min: 5, max: 10, options: [], value: null }
+// { id: 'alarm', label: 'Wake at', type: 'number', maxLength: null, min: 5, max: 10, options: [], value: null }
 
 state = apply(state, game, { type: 'input', id: 'alarm', to: 7 }).state
 state = apply(state, game, { type: 'input', id: 'catName', to: '  Biscuit ' }).state
@@ -53,7 +53,7 @@ A button can send the command with no `to`, as `{ type: 'input', id: 'catName' }
 type InputDef = {
   id: string
   label: string
-  kind: 'text' | 'number' | 'choice'
+  type: 'text' | 'number' | 'choice'
   key?: string
   when?: Condition
   maxLength?: number
@@ -67,14 +67,14 @@ type InputDef = {
 |---|---|
 | `id` | What the `input` command names. |
 | `label` | What the field is called, for the UI. |
-| `kind` | `'text'`, `'number'` or `'choice'`. |
+| `type` | `'text'`, `'number'` or `'choice'`. A pack written before schema 21 called it `kind`, and loading it carries it across. |
 | `key` | The kv key it writes. The input's `id` if left out. |
 | `when` | The input is only on offer while this [condition](/docs/reference/conditions) holds. Otherwise it's left out of the view, and refused with `Not now.` |
 | `maxLength` | Text only. The most characters, after trimming. 40 if left out. |
 | `min`, `max` | Number only. The range, inclusive. Either may be left out. |
 | `options` | Choice only. The values on offer, each with what the player reads. |
 
-Declare inputs in [`Game.inputs`](/docs/reference/game#game), either on the base you give [`loadGame`](/docs/reference/loader#loadgame) or in your [content](/docs/reference/loader#content)'s `inputs`, or both. They merge by id with the base's first, so a later pack's input replaces an earlier one with the same id.
+Declare inputs in your [content](/docs/reference/loader#content)'s `inputs`, which [`loadGame`](/docs/reference/loader#loadgame) gathers into [`Game.inputs`](/docs/reference/game#game). They merge by id, so a pack's input replaces one with the same id.
 
 ## inputRefusal
 
@@ -121,12 +121,12 @@ The declaration with that id, or `undefined`.
 
 - **A number must be sent as a number.** An HTML field gives a string, and `'7'` is refused with `Enter a number.`, so convert it before sending.
 - **Choice values are compared exactly.** `1` and `'1'` are different options.
-- **An input writes a kv key, not a stat.** To let the player set a number that effects spend, have a choice or activity read the key through a [custom effect](/docs/reference/effects#computed-effects).
+- **An input writes a kv key, not a stat.** To let the player set a number that effects spend, have a choice or an action read the key through one of the game's own [effects](/docs/reference/effects#computed-effects).
 - **A typed name can name a character.** The [cast plugin](/docs/plugins/cast#a-name-the-player-chooses) fills tokens in a character's `name`, so `name: '{{friendName}}'` shows what the player typed.
 - **It works with a scene open.** Inputs aren't refused with `Finish this first.`, so a scene can ask for a name halfway through. To keep an input to one scene, use `when` (for example `{ scene: ['intro'] }`) or a [lock](/docs/reference/locks) that denies `'input'`.
 - **The loader checks the declaration.** It reports a `'choice'` input with no options and a `min` above `max`. See [Checking content](/docs/reference/checks).
 
 ## See it in an example
 
-- Small Town: [`examples/showcase/src/story/moving-day.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/moving-day.ts) asks for the cat's name with the `catName` input, offered only on moving day with `when: { phase: ['arrival'] }`.
+- Small Town: [`examples/showcase/src/story/moving-day.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/moving-day.ts) asks for the cat's name with the `catName` input, offered only on moving day with `when: { kv: 'phase', is: ['arrival'] }`.
 - The Letter: [`examples/novel/src/story/ch1.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/story/ch1.ts) asks for the reader's name with `playerName` until one is typed, and the first chapter's choices wait for it.

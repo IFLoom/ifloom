@@ -16,7 +16,7 @@ Give a scene a `ui.transition`. A name on its own is used both ways:
   title: 'By the river',
   ui: { transition: 'fade' },
   body: [{ text: 'ava.river' }],
-  choices: [{ id: 'stay', effects: [{ kind: 'scene', scene: null }] }],
+  choices: [{ id: 'stay', effects: [{ scene: null }] }],
 }
 ```
 
@@ -34,16 +34,19 @@ A place takes one too, for the room while no scene is open, so walking between p
 { id: 'high-street', name: 'High Street', tag: 'Town', exits: ['flat', 'cafe'], art: 'place/high-street', body: [{ text: 'place.high-street' }], ui: { transition: 'slide-left' } }
 ```
 
-For the whole game, set a default in the game's `ui`. Any scene or place that says nothing uses it, and one that sets only `in` takes `out` and `ms` from it:
+For the whole game, set a default in the content's `ui`. Any scene or place that says nothing uses it, and one that sets only `in` takes `out` and `ms` from it:
 
 ```ts
-loadGame([town], { id: 'small-town', title: 'Small Town', ui: { transition: { in: 'fade', ms: 250 } } })
+export const town: Content = {
+  ui: { transition: { in: 'fade', ms: 250 } },
+  scenes: [/* ... */],
+}
 ```
 
 A choice can say how the screen it leads to comes in, whatever that screen declares. The React UI knows which choice was pressed, by a click or a number key, and plays it once:
 
 ```ts
-{ id: 'unpack', ui: { transition: { in: 'slide-up', ms: 400 } }, effects: [{ kind: 'scene', scene: null }] }
+{ id: 'unpack', ui: { transition: { in: 'slide-up', ms: 400 } }, effects: [{ scene: null }] }
 ```
 
 ## Reveal lines one after another
@@ -82,10 +85,10 @@ Your rules win over the base styles, which sit in a cascade layer. [Components](
 
 ### Your own names
 
-List a name in the game's `ui.transitionNames`, use it like a built-in one, and draw it with CSS. [`checkUiHints`](/docs/react/hints#checkuihints) reports a name that is neither built in nor listed, which catches typos.
+List a name in the content's `ui.transitionNames`, use it like a built-in one, and draw it with CSS. [`checkUiHints`](/docs/react/hints#checkuihints) reports a name that is neither built in nor listed, which catches typos.
 
 ```ts
-loadGame([town], { id: 'small-town', title: 'Small Town', ui: { transitionNames: ['curtain'] } })
+export const town: Content = { ui: { transitionNames: ['curtain'] } }
 ```
 
 ```css

@@ -54,7 +54,6 @@ declare const town: Content // your content
 const { game } = loadGame([town], {
   id: 'small-town',
   title: 'Small Town',
-  introScene: 'intro',
   plugins: [
     calendar(),
     places({ start: 'flat' }),
@@ -147,7 +146,7 @@ type ReplyDef = {
 |---|---|
 | `id` | Unique within the message. The reply's label is the prose key `<message id>#<reply id>`, as a [data scene choice](/docs/reference/scenes#choice)'s is. |
 | `when` | The reply is only on offer while this holds. |
-| `effects` | What sending it does, in order. These can be plain effects, a game's [custom effect](/docs/reference/custom) or a plugin's. |
+| `effects` | What sending it does, in order. These can be plain effects, one of the [game's own](/docs/reference/custom#effects) or a plugin's. |
 
 This is the showcase's text from Ava. It arrives once a day has passed since the player first talked to her:
 
@@ -162,7 +161,7 @@ const text: MessageDef = {
   when: { all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] },
   body: [{ text: 'ava.text' }],
   replies: [
-    { id: 'yes', effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: character('ava') }] },
+    { id: 'yes', effects: [{ stat: 'friendship', by: 5, of: character('ava') }] },
     { id: 'later' },
   ],
 }
@@ -229,10 +228,10 @@ const ava = person({
 
 const town: Content = {
   stats: [{ id: 'friendship', label: 'Friendship', of: 'character' }],
-  activities: [{ id: 'wait', effects: [pass(1)] }],
+  actions: [{ id: 'wait', effects: [pass(1)] }],
   entities: [ava],
   scenes: [
-    { id: 'ava.hi', title: 'Ava', speaker: 'ava', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ kind: 'scene', scene: null }] }] },
+    { id: 'ava.hi', title: 'Ava', speaker: 'ava', body: [{ text: 'ava.hi' }], choices: [{ id: 'bye', effects: [{ scene: null }] }] },
   ],
   prose: {
     'place.flat': 'Boxes, mostly.',
@@ -272,7 +271,7 @@ const town: Content = {
           from: 'ava',
           when: { all: [{ seen: 'ava.hi' }, { since: 'ava.hi', gte: 1 }] },
           body: [{ text: 'ava.text' }],
-          replies: [{ id: 'yes', effects: [{ kind: 'stat', stat: 'friendship', by: 5, of: character('ava') }] }, { id: 'later' }],
+          replies: [{ id: 'yes', effects: [{ stat: 'friendship', by: 5, of: character('ava') }] }, { id: 'later' }],
         },
         {
           id: 'ava.beans',
@@ -315,7 +314,7 @@ import { talk } from '@ifloom/plugin-cast'
 import { readThread, replyTo, type MessagesView } from '@ifloom/plugin-messages'
 
 const inbox = (state: GameState) => view(state, game).plugins.messages as MessagesView
-const wait = { type: 'activity', id: 'wait' } as const
+const wait = { type: 'action', id: 'wait' } as const
 let state = startingState(game)
 
 // To the café, and say hello to Ava
@@ -365,7 +364,7 @@ inbox(state).unread     // 0
 | `{ 'messages/replied': { message, reply? } }` | `messageReplied(message, reply?)` | The player replied to the message's latest arrival. With `reply`, they sent that reply. |
 | `{ 'messages/read': { message } }` | | The player has read the message's latest arrival. |
 
-You can use them anywhere a condition goes, such as another message's `when`, a scene block, a lock or a quest stage. Each can also be written short, with the full name as the only key. `{ 'messages/arrived': { message: 'ava.text' } }` is the same as `{ custom: 'messages/arrived', with: { message: 'ava.text' } }` (see [plugin calls](/docs/reference/custom#plugincall)).
+You can use them anywhere a condition goes, such as another message's `when`, a scene block, a lock or a quest stage. Each is a call with the full name as the only key, as in `{ 'messages/arrived': { message: 'ava.text' } }` (see [plugin calls](/docs/reference/custom#plugincall)).
 
 ```ts
 import { messageReplied } from '@ifloom/plugin-messages'
@@ -407,7 +406,7 @@ Both are commands like any other, so triggers run after them, and so does every 
 | `{{v:messages/unread}}` | Unread messages in every channel. |
 | `{{v:messages/unread channel=texts}}` | Unread messages in that channel. |
 
-The value works as a badge too, with the channel as its argument: a devices app's `badge: { value: 'messages/unread', with: { channel: 'texts' } }`. Code can read it with [`customValue`](/docs/reference/custom#looking-them-up), or a custom function with its context's `value('messages/unread', { channel: 'texts' })`.
+The value works as a badge too, with the channel as its argument: a devices app's `badge: { value: 'messages/unread', with: { channel: 'texts' } }`. Code can read it with [`customValue`](/docs/reference/custom#looking-them-up), or the game's own code with its context's `value('messages/unread', { channel: 'texts' })`.
 
 ## Strings
 
@@ -419,19 +418,14 @@ The plugin's lines go in the [strings table](/docs/reference/strings#plugins-str
 | `messages/alreadyReplied` | `You have already replied.` |
 | `messages/notOnOffer` | `That is not a reply on offer.` |
 
-To reword one in your game, put it in the base's `strings`:
+To reword one in your game, put it in your content's `strings`:
 
 ```ts
-import { loadGame } from '@ifloom/engine'
-import { messages } from '@ifloom/plugin-messages'
-import { town } from './town.ts'
+import type { Content } from '@ifloom/engine'
 
-const { game } = loadGame([town], {
-  id: 'small-town',
-  title: 'Small Town',
-  plugins: [messages()],
+export const words: Content = {
   strings: { 'messages/alreadyReplied': 'You have said your piece.' },
-})
+}
 ```
 
 ## The view
@@ -606,7 +600,7 @@ One arrival of a message. `key` is the message's id for its first arrival, then 
 
 ## For code
 
-The helpers write the content objects for you, typed. `messageArrived`, `messageReplied` and `messageSince` return a `Condition`, `drawMessage` an `EffectRef`, and `replyTo` and `readThread` a [`CommandRef`](/docs/reference/custom#commandref), in the short form.
+The helpers write the content objects for you, typed. `messageArrived`, `messageReplied` and `messageSince` return a `Condition`, `drawMessage` an `Effect`, and `replyTo` and `readThread` a [`CommandRef`](/docs/reference/custom#commandref).
 
 ### Helpers
 

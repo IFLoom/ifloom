@@ -102,7 +102,7 @@ type JobDef = {
 | `id` | Unique among jobs. Commands name the job by it. |
 | `title` | Its name on the job board and in its notices. |
 | `description` | A line or two about it. |
-| `blocked` | Why an application is refused. Each is a [`Blocked`](/docs/reference/actions#blocked) entry, `{ when, reason }`, as an activity's are. The first whose `when` holds refuses `jobs/apply` with its `reason`. |
+| `blocked` | Why an application is refused. Each is a [`Blocked`](/docs/reference/actions#blocked) entry, `{ when, reason }`, as an action's are. The first whose `when` holds refuses `jobs/apply` with its `reason`. |
 | `at` | The [places](/docs/plugins/places) locations shifts are worked at. Anywhere if left out. |
 | `days` | The calendar's weekdays it has shifts on, from 0 (with the default week, 0 is Monday and 5 is Saturday). Every day if left out. |
 | `hours` | The calendar's periods a shift can start in. Any if left out. |
@@ -118,7 +118,7 @@ type ShiftDef = { cost?: Record<string, number>; passes?: number; effects?: Effe
 
 | Field | What it is |
 |---|---|
-| `cost` | Stats a shift spends, such as `{ energy: 25 }`. Checked against what the stat reads, as an activity's cost is, and shown as the button's price. |
+| `cost` | Stats a shift spends, such as `{ energy: 25 }`. Checked against what the stat reads, as an action's cost is, and shown as the button's price. |
 | `passes` | How many of the calendar's periods it takes, applied as [`calendar/pass`](/docs/plugins/calendar#effects). The calendar's [price note](/docs/plugins/calendar#price-notes), such as `until afternoon`, shows on the button. |
 | `effects` | More effects, applied after the cost and the time and before the pay, such as a performance stat going up. |
 
@@ -193,9 +193,9 @@ const rules: GameRules = {
   onTurn: (state, { apply }) =>
     (state.turn - 1) % 7 === 4
       ? apply([
-          { kind: 'stat', stat: 'coins', by: state.stats.owed ?? 0 },
-          { kind: 'stat', stat: 'owed', to: 0 },
-          { kind: 'notify', id: 'payday', title: 'Payday', tag: 'money' },
+          { stat: 'coins', by: state.stats.owed ?? 0 },
+          { stat: 'owed', to: 0 },
+          { notify: 'Payday', id: 'payday', tag: 'money' },
         ])
       : state,
 }
@@ -243,9 +243,9 @@ Nothing about a job is drawn by itself. Content opens the job board in the `jobs
 ```ts
 import { openJobs } from '@ifloom/plugin-jobs'
 
-// Every job: { kind: 'panel', panel: 'jobs' }
-{ id: 'work', effects: [{ kind: 'scene', scene: null }, openJobs()] }
-// Only the paper's ads: { kind: 'panel', panel: 'jobs', with: { job: ['dogs'] } }
+// Every job: { panel: 'jobs' }
+{ id: 'work', effects: [{ scene: null }, openJobs()] }
+// Only the paper's ads: { panel: 'jobs', with: { job: ['dogs'] } }
 { id: 'paper', name: 'newspaper', desc: 'Today’s Gazette.', use: { label: 'Read the job ads', effects: [openJobs(['dogs'])] } }
 ```
 

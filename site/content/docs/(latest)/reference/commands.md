@@ -2,7 +2,7 @@
 title: "Commands"
 description: "apply, dispatch and startingState, every command the player can send, and what each one refuses with."
 ---
-A command is one thing the player does, such as picking a choice, starting an activity or a plugin's own, such as using a thing in the inventory. Your UI sends commands, and the engine returns the next [state](/docs/reference/state). Running a command is a pure function, so the same state, game and command always give the same result.
+A command is one thing the player does, such as picking a choice, doing an action or a plugin's own, such as using a thing in the inventory. Your UI sends commands, and the engine returns the next [state](/docs/reference/state). Running a command is a pure function, so the same state, game and command always give the same result.
 
 ```ts
 import { apply, dispatch, startingState, type Command } from '@ifloom/engine'
@@ -86,10 +86,10 @@ type StartOptions = {
 }
 ```
 
-Returns a new game at turn 0, with `introScene` open and counted as seen. Every other state, such as a save, comes in through [`loadState`](/docs/reference/saves#loadstate). `apply` expects a state from one of the two and doesn't check its shape itself. A game without `introScene` starts with no scene open and nothing seen, on its [idle screen](/docs/reference/view#the-idle-screen).
+Returns a new game at turn 0, with the content's `introScene` open and counted as seen. Every other state, such as a save, comes in through [`loadState`](/docs/reference/saves#loadstate). `apply` expects a state from one of the two and doesn't check its shape itself. A game without `introScene` starts with no scene open and nothing seen, on its [idle screen](/docs/reference/view#the-idle-screen).
 
 - Each [plugin](/docs/reference/plugins)'s state is its `start`. For example, where the player stands is the [places plugin](/docs/plugins/places#placesoptions)'s `start` option.
-- The phase is `game.startPhase`, or `''`.
+- The [kv store](/docs/reference/state#kv) holds the content's starting `kv`, such as its `phase`, with the `kv` option over it.
 - Every declared storyline is empty.
 - Nothing is held yet in [`held`](/docs/reference/state#held): each entity's `at` says where it starts, and is read until play changes it.
 - Each declared [stat](/docs/reference/stats) is at its `start`. The engine adds no stats of its own.
@@ -100,9 +100,9 @@ See [Game state](/docs/reference/state) for the other starting values. The optio
 | Option | What it does | Default |
 |---|---|---|
 | `seed` | The save's [seed](/docs/reference/state#seed), which fixes every random draw it makes. | A hash of `game.id`, so every new game deals the same way. |
-| `kv` | Keys written to the [kv store](/docs/reference/state#kv) before the first scene, such as a name asked for on a title screen. | None. |
+| `kv` | Keys written to the [kv store](/docs/reference/state#kv) before the first scene, such as a name asked for on a title screen, over the content's starting `kv`. | None. |
 | `settings` | The player's stored values for the game's `play` [settings](/docs/reference/settings), usually the [profile](/docs/reference/profile)'s `core:settings`. Unknown ids, `ui` settings and values a setting can't take are ignored. | Each setting's default. |
-| `carry` | The state a finished game ended on, for a [New Game+](/docs/reference/state#new-game). What `game.carryOver` lists is copied from it. | Nothing carried. |
+| `carry` | The state a finished game ended on, for a [New Game+](/docs/reference/state#new-game). What the content's `carryOver` lists is copied from it. | Nothing carried. |
 
 ```ts
 import { startingState } from '@ifloom/engine'
@@ -118,7 +118,7 @@ let fixed = startingState(game)
 
 **Gotcha.** If you leave the seed out, it's the same for every new game of the same game, so every playthrough draws the same [variants](/docs/reference/random) and [rolls](/docs/reference/random#roll). That's what a test wants, but a UI should pass a fresh seed for each new game.
 
-The engine keeps no player name. A name is a key in the kv store like any other, so pass it in `kv` or ask for it with an [input](/docs/reference/inputs). Prose reads it back with `{{playerName}}`, and [`SaveMeta.playerName`](/docs/reference/saves#savemeta) shows whatever the game's [`saveName`](/docs/reference/game#savename) makes of it.
+The engine keeps no player name. A name is a key in the kv store like any other, so pass it in `kv` or ask for it with an [input](/docs/reference/inputs). Prose reads it back with `{{playerName}}`, and [`SaveMeta.playerName`](/docs/reference/saves#savemeta) shows whatever the game's [`rules.saveName`](/docs/reference/rules#savename) makes of it.
 
 ## Command
 
@@ -126,7 +126,7 @@ The engine keeps no player name. A name is a key in the kv store like any other,
 type Command =
   | { type: 'start'; seed?: number; kv?: Record<string, KvValue> }
   | { type: 'newGame' }
-  | { type: 'activity'; id: string }
+  | { type: 'action'; id: string }
   | { type: 'scene'; id: string }
   | { type: 'choose'; id: string }
   | { type: 'leave' }
@@ -141,9 +141,9 @@ type Command =
 
 A command that names one thing names it `id`, and one that sets a value takes it as `to`. Plugins' commands follow the same rule, as in `{ type: 'custom', name: 'places/go', with: { id: 'cafe' } }`.
 
-The union is closed, so a game can't add a command type. Something new for the player to do is an [activity](/docs/reference/actions), not a command. A [plugin](/docs/reference/plugins) adds its commands under the one type `custom`, by name. For example, walking somewhere is the [places plugin](/docs/plugins/places#commands)'s `places/go`, which you write as `go('cafe')`, and talking to someone is the [cast](/docs/plugins/cast#commands)'s `cast/talk`, written `talk('ava')`.
+The union is closed, so a game can't add a command type. Something new for the player to do is an [action](/docs/reference/actions), done with the `action` command. A [plugin](/docs/reference/plugins) adds its commands under the one type `custom`, by name, and so does the game's own code, as [`rules.commands`](/docs/reference/rules#commands) sent as `{ 'game/rest': true }`. For example, walking somewhere is the [places plugin](/docs/plugins/places#commands)'s `places/go`, which you write as `go('cafe')`, and talking to someone is the [cast](/docs/plugins/cast#commands)'s `cast/talk`, written `talk('ava')`.
 
-Each built-in handler below runs only if no lock or plugin [guard](/docs/reference/plugins#guards) stopped the command and the game has no handler for its type. The refusals listed for each come after a lock's and a guard's, and before a [warning](/docs/reference/actions#warningof).
+Each built-in handler below runs only if no lock or [guard](/docs/reference/plugins#guards), the game's own or a plugin's, stopped the command. The refusals listed for each come after a lock's and a guard's, and before a [warning](/docs/reference/actions#warningof).
 
 While a [minigame](/docs/reference/minigames) runs, every command but `tick`, `minigame`, `dismiss`, `setting` and `closePanel` is refused with `Finish this first.`, and so is a plugin command that doesn't ignore locks. This comes before the locks.
 
@@ -174,11 +174,18 @@ The engine can't make the runner's new game itself, because the player's profile
 
 When a choice sends it, the run ends there: the choice isn't counted in [`chosen`](/docs/reference/state#chosen), its effects don't run, and no trigger or plugin hook runs after it. Nothing is carried over, so it isn't a New Game+. [`ifloom playtest`](/docs/cli#playtest) stops when it meets one.
 
-### activity
+### action
 
-Runs the [activity](/docs/reference/actions) with this id. It pays the activity's cost, then applies its effects.
+```ts
+{ type: 'action', id: 'coffee' }
+{ type: 'action', id: 'places/coffee' }
+```
 
-It's refused with `There is no such thing to do.` if there's no such activity. After that comes the first reason from [`activityBlocked`](/docs/reference/actions#activityblocked): a scene is open, a lock, a `blocked` entry (such as the places plugin's [`onlyAt`](/docs/plugins/places#helpers)), or too little of a stat the cost spends. Last comes a plugin guard's [warning](/docs/reference/actions#warningof).
+Does the [action](/docs/reference/actions) with this id: one of the content's `actions`, or a plugin's with its id in front, found among its buttons or by its [`action`](/docs/reference/plugins#action) provider. It sends the action's `command` first, if it has one, then pays its cost and applies its effects. An action with `once` is counted in [`chosen`](/docs/reference/state#chosen) under its id before anything runs.
+
+It's refused with `There is no such thing to do.` if there's no such action. After that comes the first reason from [`actionBlocked`](/docs/reference/actions#actionblocked): a scene is open, its `when` doesn't hold, a lock, a `blocked` entry (such as the places plugin's [`onlyAt`](/docs/plugins/places#helpers)), it's been done this turn with `once`, too little of a stat the cost spends, or why its command can't be sent. Last comes a guard's [warning](/docs/reference/actions#warningof).
+
+A command log from before schema 20 sent `{ type: 'activity', id }`. [`replay`](/docs/reference/runner#replay) reads it as `action`.
 
 ### scene
 
@@ -270,11 +277,11 @@ Closes the open [panel](/docs/reference/panels). A UI sends it when the player d
 { type: 'custom', name: 'quests/track', with: { id: 'bread' } }
 ```
 
-Runs a [plugin's command](/docs/reference/plugins#plugincommand) by its full name, with the plugin's id in front. `with` is passed as its arguments, or `{}` when left out.
+Runs a [plugin's command](/docs/reference/plugins#plugincommand) by its full name, with the plugin's id in front, or one of the game's own [`rules.commands`](/docs/reference/rules#commands) with `game/` in front. `with` is passed as its arguments, or `{}` when left out.
 
 Content, `apply` and the runner also take it in short, with the full name as the only key: `{ 'quests/track': { id: 'bread' } }` (see [`CommandRef`](/docs/reference/custom#commandref)). The view always gives it in this long form.
 
-It's refused with `There is no such thing to do.` if none of the game's plugins has a command by that name, and then with the plugin's own `whyNot` line. A command its plugin marks `ignoresLocks` skips the lock and guard checks.
+It's refused with `There is no such thing to do.` if neither the game nor its plugins have a command by that name, and then with the plugin's own `whyNot` line. A command its plugin marks `ignoresLocks` skips the lock and guard checks.
 
 The [content checker](/docs/reference/checks#in-a-command) reports a button whose command names no plugin command, unless the plugin is an [absent partner](/docs/reference/checks#absent-partners).
 

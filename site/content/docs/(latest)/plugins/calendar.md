@@ -10,7 +10,7 @@ The engine's only clock is the turn, `state.turn`, and it dates everything in tu
 
 These are the parts of a game that deal with time, and where each one comes from:
 
-- **Time passing** is the [`calendar/pass`](#effects) effect, on an activity or a choice.
+- **Time passing** is the [`calendar/pass`](#effects) effect, on an action or a choice.
 - **Bed** is the [`sleep()`](#commands) command, usually on a room's action.
 - **Opening hours** are a [place](/docs/plugins/places)'s [`blocked`](/docs/plugins/places#locationdef) entries, written with the calendar's [conditions](#conditions), such as `{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }`.
 - **Schedules** are a [cast](/docs/plugins/cast) character's [`schedule`](/docs/plugins/cast#where-people-are) entries, with the calendar's conditions as their `when`, such as `{ location: 'cafe', when: period('morning', 'afternoon') }`.
@@ -133,7 +133,7 @@ With `turn: 'period'`, every period passed ends a turn, so `pass(3)` ends three.
 
 ### Ending a turn another way
 
-A turn ended any other way moves the clock to the start of the next unit. A [`{ kind: 'turn' }`](/docs/reference/effects#turn) effect on a choice or an activity runs the calendar's `onTurn` hook, which moves the clock:
+A turn ended any other way moves the clock to the start of the next unit. A [`{ turn: true }`](/docs/reference/effects#turn) effect on a choice or an action runs the calendar's `onTurn` hook, which moves the clock:
 
 | `turn` | The clock goes to |
 |---|---|
@@ -145,18 +145,18 @@ A turn ended any other way moves the clock to the start of the next unit. A [`{ 
 So a management game whose turn is a week can close the week with a button:
 
 ```ts
-import { type ActivityDef } from '@ifloom/engine'
+import { type ActionDef } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 
 const clock = calendar({ turn: 'week' })
-const activities: ActivityDef[] = [{ id: 'closeTheWeek', effects: [{ kind: 'turn' }] }]
+const actions: ActionDef[] = [{ id: 'closeTheWeek', label: 'Close the week', effects: [{ turn: true }] }]
 ```
 
-From day 0 at any period, the `closeTheWeek` activity ends turn 0 and the clock reads day 7, morning. Run it again and it reads day 14, morning.
+From day 0 at any period, the `closeTheWeek` action ends turn 0 and the clock reads day 7, morning. Run it again and it reads day 14, morning.
 
 ### What the game's turn rules see
 
-The game's `onTurn` sees the clock as the turn ended. At the end of a turn, the engine runs [`rules.onTurn`](/docs/reference/rules#onturn) first, then each plugin's `onTurn` hook. So the game's own rule sees the clock before the calendar moves it. If the player goes to bed at night, `rules.onTurn` sees the clock at day 0, night, not day 1, morning, in both its state and its `before`. Plugins listed after the calendar see the new day, and so does the game's [`rules.onTurnDone`](/docs/reference/rules#onturndone), which runs after every plugin. [Each new day](/docs/reference/rules#each-new-day) uses it.
+The game's `onTurn` sees the clock as the turn ended. At the end of a turn, the engine runs [`rules.onTurn`](/docs/reference/rules#onturn) first, then each plugin's `onTurn` hook. So the game's own rule sees the clock before the calendar moves it. If the player goes to bed at night, `rules.onTurn` sees the clock at day 0, night, not day 1, morning, in both its state and its `before`. Plugins listed after the calendar see the new day, and so does the game's [`rules.onTurnDone`](/docs/reference/rules#onturndone), which runs after every plugin's `onTurn`, and each plugin's own `onTurnDone` after it. [Each new day](/docs/reference/rules#each-new-day) uses it.
 
 When one pass ends several turns, the first turn's rules see the clock where the pass began. Each later turn's rules see the clock where the turn before left it, which is the start of the day (or period, or week) that turn ends.
 
@@ -167,9 +167,8 @@ A Monday in Small Town, the [showcase](/docs/guide/showcase)'s world. The player
 ```ts
 import { apply, loadGame, startingState, view, whyNot, type GameState, type Content } from '@ifloom/engine'
 import { calendar, pass, period, sleep, weekday } from '@ifloom/plugin-calendar'
-import { go, onlyAt, places, type LocationDef } from '@ifloom/plugin-places'
+import { go, places, type LocationDef } from '@ifloom/plugin-places'
 
-const act = (id: string, label: string) => ({ id, label, command: { type: 'activity' as const, id } })
 const place = (id: string, name: string, exits: string[]): LocationDef =>
   ({ id, name, tag: 'Small Town', art: '', exits, body: [{ text: `place.${id}` }] })
 
@@ -184,19 +183,15 @@ const town: Content = {
           ...place('cafe', 'The Corner Café', ['high-street']),
           blocked: [{ when: { not: period('morning', 'afternoon') }, reason: 'Closed. Opens tomorrow morning.' }],
         },
-        { ...place('park', 'Riverside Park', ['high-street']), actions: [act('jog', 'Go for a jog')] },
+        { ...place('park', 'Riverside Park', ['high-street']), actions: [{ id: 'jog', label: 'Go for a jog', effects: [pass(1)] }] },
         {
           ...place('office', 'The Office', ['high-street']),
           blocked: [{ when: weekday(5, 6), reason: 'Shut at weekends.' }],
-          actions: [act('work', 'Do a shift')],
+          actions: [{ id: 'work', label: 'Do a shift', effects: [pass(2), { stat: 'coins', by: 20 }] }],
         },
       ],
     },
   },
-  activities: [
-    { id: 'work', blocked: [onlyAt(['office'])], effects: [pass(2), { kind: 'stat', stat: 'coins', by: 20 }] },
-    { id: 'jog', blocked: [onlyAt(['park'])], effects: [pass(1)] },
-  ],
   prose: {
     'place.flat': 'Boxes everywhere.',
     'place.high-street': 'Shops and puddles.',
@@ -214,7 +209,7 @@ const { game } = loadGame([town], {
 })
 ```
 
-Played through, the Monday goes like this. `button` finds an idle-screen button by id, and `walk` takes several exits in turn:
+Played through, the Monday goes like this. `button` finds an idle-screen button by id, and `walk` takes several exits in turn. A room's action is done as `{ type: 'action', id: 'places/<id>' }`, which is what its button sends:
 
 ```ts
 let state: GameState = startingState(game)
@@ -227,19 +222,19 @@ whyNot(state, game, sleep())      // 'Too early.'
 
 walk('high-street', 'office')
 button('work').price              // { notes: ['until evening'] }
-state = apply(state, game, { type: 'activity', id: 'work' }).state
+state = apply(state, game, { type: 'action', id: 'places/work' }).state
 view(state, game).when            // 'Day 1 · Monday evening · The Office'
 
 walk('high-street')
 whyNot(state, game, go('cafe'))   // 'Closed. Opens tomorrow morning.'
 
 walk('park')
-state = apply(state, game, { type: 'activity', id: 'jog' }).state   // evening → night
-state = apply(state, game, { type: 'activity', id: 'jog' }).state   // night → late
+state = apply(state, game, { type: 'action', id: 'places/jog' }).state   // evening → night
+state = apply(state, game, { type: 'action', id: 'places/jog' }).state   // night → late
 state.turn                        // 0: still Monday
 
 button('jog').warning             // 'That would run past dawn.'
-apply(state, game, { type: 'activity', id: 'jog' }).reason   // 'That would run past dawn.'
+apply(state, game, { type: 'action', id: 'places/jog' }).reason   // 'That would run past dawn.'
 
 walk('high-street', 'flat')
 button('bed').price               // { notes: ['until tomorrow morning'] }
@@ -260,7 +255,7 @@ A UI reads the calendar at [`view.plugins.calendar`](#the-view) and the label at
 | `{ 'calendar/day': { gte: 6 } }` | `day({ gte: 6 })` | The day, from `0`, is in this [range](/docs/reference/conditions#range). |
 | `{ 'calendar/curfew': true }` | none | The [curfew](#calendaroptions) binds right now. |
 
-These are the short forms, with the full name as the only key (see [plugin calls](/docs/reference/custom#plugincall)). The long form of the first row is `{ custom: 'calendar/period', with: { period: ['evening', 'night'] } }`. A single period or weekday works too, as in `{ 'calendar/period': { period: 'evening' } }`.
+Each is a call with the full name as the only key (see [plugin calls](/docs/reference/custom#plugincall)), which the helpers write for you. A single period or weekday works too, as in `{ 'calendar/period': { period: 'evening' } }`.
 
 You can use them anywhere a [condition](/docs/reference/conditions) goes: a block's `when`, a choice, a `blocked` entry, a lock or a schedule.
 
@@ -273,7 +268,7 @@ You can use them anywhere a [condition](/docs/reference/conditions) goes: a bloc
 | `{ 'calendar/pass': { by: 2 } }` | `pass(2)` | Passes that many periods, ending a turn at each boundary crossed. See [What a turn is](#what-a-turn-is). `pass()` is one period. |
 | `{ 'calendar/set': { day: 3, period: 'evening' } }` | none | Puts the clock there. A field you leave out stays as it is. Ends no turn. |
 
-They work in any effect list: a data scene choice's, an activity's or a thing's use in the [inventory](/docs/plugins/inventory). In a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), which lists plain effects, write the long form: `{ kind: 'custom', name: 'calendar/pass', with: { by: 2 } }`.
+They work in any effect list: a data scene choice's, an action's, a thing's use in the [inventory](/docs/plugins/inventory), or a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does).
 
 A count that isn't a number passes nothing, a fraction is rounded down, and a negative count passes nothing. `calendar/set` ignores a period the calendar doesn't have, and leaves the period as it was.
 
@@ -288,13 +283,13 @@ A calendar built with `sleep: false` has no `calendar/sleep` command at all. The
 - `Finish this first.` (the engine's [`finishFirst`](/docs/reference/strings#refusals)) while a scene is open.
 - `Too early.` ([`calendar/tooEarly`](#strings)) in a period that isn't in `sleep.from`.
 
-Its [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does) is the pass it makes: `[{ kind: 'custom', name: 'calendar/pass', with: { by: n } }]`. So a bed button carries a [price](#price-notes) (`until tomorrow morning`), and a lock on `calendar/pass` stops it.
+Its [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does) is the pass it makes: `[{ 'calendar/pass': { by: n } }]`. So a bed button carries a [price](#price-notes) (`until tomorrow morning`), and a lock on `calendar/pass` stops it.
 
 A lock names it `calendar/sleep`, or `calendar/*`.
 
 ### Locks by effect
 
-A [lock with `effect`](/docs/reference/locks#lock) stops every command that would pass time, whether it's an activity, a choice or bed.
+A [lock with `effect`](/docs/reference/locks#lock) stops every command that would pass time, whether it's an action, a choice or bed.
 
 ```ts
 import { type Lock } from '@ifloom/engine'
@@ -302,7 +297,7 @@ import { type Lock } from '@ifloom/engine'
 const locks: Lock[] = [{ when: { kv: 'ill' }, deny: ['*'], effect: 'calendar/pass', reason: 'You feel too ill.' }]
 ```
 
-While `ill` is set, the jog button and the bed button are both greyed out with `You feel too ill.` The lock doesn't stop an activity whose only effect is `{ kind: 'turn' }`, since that activity passes no time in its own list. In the same way, `effect: 'turn'` doesn't stop `calendar/pass`, because the turns it ends are applied inside it rather than listed.
+While `ill` is set, the jog button and the bed button are both greyed out with `You feel too ill.` The lock doesn't stop an action whose only effect is `{ turn: true }`, since that action passes no time in its own list. In the same way, `effect: 'turn'` doesn't stop `calendar/pass`, because the turns it ends are applied inside it rather than listed.
 
 ## Queries
 
@@ -512,7 +507,7 @@ To set the clock by hand while testing, use the [debug plugin](/docs/plugins/deb
 
 ## For code
 
-The helpers write the content objects for you, typed. `sleep` returns a [`CommandRef`](/docs/reference/custom#commandref), in the short form, `pass` an `EffectRef`, and the rest a `Condition`.
+The helpers write the content objects for you, typed. `sleep` returns a [`CommandRef`](/docs/reference/custom#commandref), `pass` an `Effect`, and the rest a `Condition`.
 
 ### Helpers
 

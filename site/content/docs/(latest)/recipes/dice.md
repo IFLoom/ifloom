@@ -10,23 +10,13 @@ The pieces are an inline action, an effect that rolls, a block for each outcome,
 
 ```ts
 import type { Block, Condition, Content } from '@ifloom/engine'
-import { onlyAt } from '@ifloom/plugin-places'
 
 /** A line about how the stone went: only on the day you skimmed, with the dice drawn above it. */
 const skimmed = (when: Condition, text: string): Block => ({ text, when: { all: [{ kv: 'skimmed' }, when] }, ui: { dice: 'skim' } })
 
 export const park: Content = {
-  activities: [
-    // 1. The roll: two dice against 8. The total goes in the kv store as `skim`.
-    {
-      id: 'skim',
-      blocked: [onlyAt(['park'])],
-      effects: [
-        { kind: 'kv', key: 'skimmed', to: true },
-        { kind: 'roll', key: 'skim', dice: '2d6', against: 8 },
-      ],
-    },
-  ],
+  // `skimmed` goes back to false each day.
+  resets: { skimmed: false },
   data: {
     places: {
       locations: [
@@ -43,7 +33,10 @@ export const park: Content = {
             skimmed({ roll: 'skim', passed: true, critical: false }, 'park.skim.passed'),
             skimmed({ roll: 'skim', passed: false }, 'park.skim.failed'),
           ],
-          actions: [{ id: 'skim', label: 'Skim a stone', command: { type: 'activity', id: 'skim' } }],
+          actions: [
+            // 1. The roll: two dice against 8. The total goes in the kv store as `skim`.
+            { id: 'skim', label: 'Skim a stone', effects: [{ kv: 'skimmed', to: true }, { roll: 'skim', dice: '2d6', against: 8 }] },
+          ],
         },
       ],
     },
@@ -56,12 +49,6 @@ export const park: Content = {
     'park.skim.failed': 'Plop. It goes straight in, and the ducks look delighted.',
   },
 }
-```
-
-And in the game's rules, `skimmed` goes back to false each day:
-
-```ts
-const rules: GameRules = { resets: { skimmed: false } }
 ```
 
 What each piece does:
@@ -78,7 +65,7 @@ Without a target, a roll is just a number. Leave out `against` and branch on the
 `plus` adds the player's stat to the total, modifiers and all:
 
 ```ts
-{ kind: 'roll', key: 'climb', dice: '1d20', plus: { stat: 'strength' }, against: 12 }
+{ roll: 'climb', dice: '1d20', plus: { stat: 'strength' }, against: 12 }
 ```
 
 Notation can carry its own number too, `'2d6+1'`, and `plus` adds on top. The roll's `plus` in the view is the two together.
@@ -88,7 +75,7 @@ Notation can carry its own number too, `'2d6+1'`, and `plus` adds on top. The ro
 Any effect list can roll, so the game can roll by itself. Small Town counts the ducks as you arrive at the park, with a [trigger](/docs/reference/triggers):
 
 ```ts
-triggers: [{ id: 'ducks', once: 'turn', when: at('park'), effects: [{ kind: 'roll', key: 'ducks', dice: '1d6+2' }] }],
+triggers: [{ id: 'ducks', once: 'turn', when: at('park'), effects: [{ roll: 'ducks', dice: '1d6+2' }] }],
 // 'place.park.ducks': '{{ducks}} of them paddle over at once, in case you brought bread.'
 ```
 

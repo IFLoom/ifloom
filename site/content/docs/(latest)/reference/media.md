@@ -56,8 +56,8 @@ const knock: DataScene = {
   },
   body: [{ text: 'flat.knock' }, { media: { pool: 'door', tags: ['red', 'night'], alt: 'The front door' } }],
   choices: [
-    { id: 'answer', effects: [{ kind: 'scene', scene: 'flat.visitor' }] },
-    { id: 'ignore', effects: [{ kind: 'scene', scene: null }] },
+    { id: 'answer', effects: [{ scene: 'flat.visitor' }] },
+    { id: 'ignore', effects: [{ scene: null }] },
   ],
 }
 ```
@@ -95,7 +95,7 @@ type GameMedia = {
 }
 ```
 
-The game's `media` field. A pool is a named list of files content can pick from. [`loadGame`](/docs/reference/loader#loadgame) merges the base's, the content's and every pack's pools by id, and a pack's pool replaces one with the same id whole. Leave `media` out and the game has no pools.
+The game's `media` field. A pool is a named list of files content can pick from. [`loadGame`](/docs/reference/loader#loadgame) merges the content's and every pack's pools by id, and a pack's pool replaces one with the same id whole. Leave `media` out and the game has no pools.
 
 ## PoolFile
 

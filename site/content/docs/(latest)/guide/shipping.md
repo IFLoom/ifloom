@@ -132,7 +132,7 @@ const { game } = module.build()
 
 export const runner = await browserRunner(game, { saves: saves(game, indexedDbDriver()) })
 export const view = shallowRef(runner.view())
-runner.subscribe(() => (view.value = runner.view()))
+runner.subscribe((snapshot) => (view.value = snapshot.view))
 ```
 
 ```ts tab="Svelte" tab-group="framework"
@@ -145,7 +145,7 @@ import module from './game.ts'
 const { game } = module.build()
 
 export const runner = await browserRunner(game, { saves: saves(game, indexedDbDriver()) })
-export const view = readable(runner.view(), (set) => runner.subscribe(() => set(runner.view())))
+export const view = readable(runner.view(), (set) => runner.subscribe((snapshot) => set(snapshot.view)))
 ```
 
 Every driver is asynchronous, so switching from one to another later changes this line and nothing else.

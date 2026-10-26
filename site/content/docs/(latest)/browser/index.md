@@ -38,7 +38,7 @@ import { browserRunner } from '@ifloom/browser'
 
 const runner = await browserRunner(game, { backlog: { limit: 200 } })
 
-runner.subscribe(() => draw(runner.view()))
+runner.subscribe(({ view }) => draw(view))
 draw(runner.view())
 ```
 

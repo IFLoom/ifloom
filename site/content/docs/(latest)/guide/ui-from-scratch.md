@@ -217,7 +217,7 @@ A [minigame](/docs/reference/minigames) is a small state machine the game declar
 ## 8. Draw again on every change
 
 ```ts
-runner.subscribe(() => draw(runner.view()))
+runner.subscribe(({ view }) => draw(view))
 draw(runner.view())
 ```
 

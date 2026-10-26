@@ -412,7 +412,7 @@ const runner = createRunner(game, startingState(game, { kv: { playerName: 'Sam' 
 The UI's loop becomes sending each button's command to the runner, and drawing again whenever it says the state has changed.
 
 ```ts
-runner.subscribe(() => render(runner.view()))
+runner.subscribe(({ view }) => render(view))
 
 function press(button: { command: Command }) {
   const result = runner.apply(button.command)
@@ -467,7 +467,7 @@ function draw(view: View): void {
   add('p', view.stats.map((stat) => `${stat.label}: ${stat.text}`).join(' · '))
 }
 
-runner.subscribe(() => draw(runner.view()))
+runner.subscribe(({ view }) => draw(view))
 draw(runner.view())
 ```
 
@@ -492,7 +492,7 @@ import { runner } from './runner.ts'
 
 // The view, replaced whole after every change of state.
 const view = shallowRef(runner.view())
-onUnmounted(runner.subscribe(() => (view.value = runner.view())))
+onUnmounted(runner.subscribe((snapshot) => (view.value = snapshot.view)))
 
 // The room's exits, while no scene is open.
 const exits = computed(() => (view.value.plugins.places as PlacesView | undefined)?.exits ?? [])
@@ -528,7 +528,7 @@ const exits = computed(() => (view.value.plugins.places as PlacesView | undefine
 
   // The view, replaced whole after every change of state.
   let view = $state.raw(runner.view())
-  $effect(() => runner.subscribe(() => (view = runner.view())))
+  $effect(() => runner.subscribe((snapshot) => (view = snapshot.view)))
 
   // The room's exits, while no scene is open.
   const exits = $derived((view.plugins.places as PlacesView | undefined)?.exits ?? [])
@@ -731,7 +731,7 @@ const runner = createRunner(game, startingState(game, { kv: { playerName: 'Sam' 
   history: { stopAtNewTurn: true },
   autosave: { every: 'scene' },
 })
-runner.subscribe(() => console.log(runner.view().scene.title))
+runner.subscribe(({ view }) => console.log(view.scene.title))
 
 runner.apply({ type: 'choose', id: 'bed' })
 runner.apply(calendar.sleep())

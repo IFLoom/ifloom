@@ -143,7 +143,8 @@ The React UI's [`PanelHost`](/docs/react/components#panelhost), in the default l
 
 <section class="panel" role="dialog" aria-label={panel.panel}>
   <div>
-    {#if panel.panel === 'shop'}<Counter vendor={String(panel.with.vendor)} />{:else}<pre>{JSON.stringify(panel.with, null, 2)}</pre>{/if}
+    <!-- The shop's counter is its view's panel, already the vendor the panel names. -->
+    {#if panel.panel === 'shop'}<Counter />{:else}<pre>{JSON.stringify(panel.with, null, 2)}</pre>{/if}
     <button onclick={() => runner.apply({ type: 'closePanel' })}>Close</button>
   </div>
 </section>

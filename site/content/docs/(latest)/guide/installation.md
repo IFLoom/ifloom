@@ -201,7 +201,7 @@ import module from './game.ts'
 const { game } = module.build()
 
 export const runner = await browserRunner(game)
-export const view = readable(runner.view(), (set) => runner.subscribe(() => set(runner.view())))
+export const view = readable(runner.view(), (set) => runner.subscribe((snapshot) => set(snapshot.view)))
 ```
 
 ```svelte tab="Svelte" tab-group="framework"

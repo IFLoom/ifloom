@@ -259,7 +259,7 @@ A UI sends ticks while `timeLeft` isn't `null`, and also while [`view.timers`](/
 
 ## Drawing it
 
-While a minigame runs, `view.minigame` is its [`MinigameView`](#minigameview), and `view.scene` holds its title and the running state's words. Draw a button for each of its `inputs`, which sends `{ type: 'minigame', input }`, and a bar from `timeLeft` and `timeTotal` while the state has a timer. Something has to send the ticks: the templates call [`startClock`](/docs/browser#startclock), which does.
+While a minigame runs, `view.minigame` is its [`MinigameView`](#minigameview), and `view.scene` holds its title and the running state's words. Each of its `inputs` is a ready button, with its words in `label` and the `{ type: 'minigame', input }` it sends in `command`, so draw them as any other button, and a bar from `timeLeft` and `timeTotal` while the state has a timer. Something has to send the ticks: the templates call [`startClock`](/docs/browser#startclock), which does.
 
 The React UI's [`Scene`](/docs/react/components#scene) draws a [`MinigameCard`](/docs/react/components#minigamecard) in place of the scene and runs the clock. For one minigame of your own, put a component under its id in `panels`, and use [`useMinigame`](/docs/react/components#useminigame) in it. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 

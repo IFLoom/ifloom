@@ -154,7 +154,7 @@ function draw(view: View): void {
   root.replaceChildren(page)
 }
 
-runner.subscribe(() => draw(runner.view()))
+runner.subscribe(({ view }) => draw(view))
 draw(runner.view())
 ```
 
@@ -422,7 +422,7 @@ function draw(view: View): void {
   root.replaceChildren(scene, ...drawTables(view), ...buttons)
 }
 
-runner.subscribe(() => draw(runner.view()))
+runner.subscribe(({ view }) => draw(view))
 draw(runner.view())
 ```
 

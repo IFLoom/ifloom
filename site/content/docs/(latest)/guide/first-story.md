@@ -282,7 +282,7 @@ function draw(view: View): void {
 }
 
 // Draw again after every change of state.
-runner.subscribe(() => draw(runner.view()))
+runner.subscribe(({ view }) => draw(view))
 draw(runner.view())
 ```
 
@@ -332,7 +332,7 @@ import module from './game.ts'
 export const runner = await browserRunner(game)
 
 // The view as a store, set again after every change of state.
-export const view = readable(runner.view(), (set) => runner.subscribe(() => set(runner.view())))
+export const view = readable(runner.view(), (set) => runner.subscribe((snapshot) => set(snapshot.view)))
 
 // src/main.ts
 import { mount } from 'svelte'

@@ -38,7 +38,7 @@ export async function titleScreen(root: HTMLElement, runner: Runner, start: () =
 
 // src/main.ts, in the vanilla template: the title screen first, then the game.
 void titleScreen(root, runner, () => {
-  runner.subscribe(() => draw(runner.view()))
+  runner.subscribe(({ view }) => draw(view))
   draw(runner.view())
 })
 ```

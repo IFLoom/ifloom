@@ -305,7 +305,7 @@ The jobs view lists every job, held or not. A job not held has an `apply` button
 import type { Price, RenderedChoice, Runner, View } from '@ifloom/engine'
 import type { JobView, JobsView } from '@ifloom/plugin-jobs'
 
-const payText = (pay: Price | null) => pay?.stats?.map((stat) => stat.text).join(', ') ?? 'nothing'
+const payText = (pay: Price | null) => pay?.text ?? 'nothing'
 
 function press(runner: Runner, choice: RenderedChoice, label: string): HTMLButtonElement {
   const button = document.createElement('button')
@@ -373,7 +373,7 @@ export function JobBoard() {
           </h3>
           <p className="text-sm">{job.description}</p>
           <p className="text-sm">
-            Pays {job.pay?.stats?.map((stat) => stat.text).join(', ') ?? 'nothing'} a shift
+            Pays {job.pay?.text ?? 'nothing'} a shift
             {job.nextShift ? ` · next shift ${job.nextShift.inDays === 0 ? 'today' : `in ${job.nextShift.inDays} days`}` : ''}
           </p>
           {job.next ? (
@@ -399,7 +399,7 @@ import type { Price } from '@ifloom/engine'
 import type { JobsView } from '@ifloom/plugin-jobs'
 import { runner, view } from './runner.ts'
 
-const payText = (pay: Price | null) => pay?.stats?.map((stat) => stat.text).join(', ') ?? 'nothing'
+const payText = (pay: Price | null) => pay?.text ?? 'nothing'
 const jobs = computed(() => (view.value.plugins.jobs as JobsView | undefined)?.jobs ?? [])
 </script>
 
@@ -433,7 +433,7 @@ const jobs = computed(() => (view.value.plugins.jobs as JobsView | undefined)?.j
   import type { JobsView } from '@ifloom/plugin-jobs'
   import { runner, view } from './runner.ts'
 
-  const payText = (pay: Price | null) => pay?.stats?.map((stat) => stat.text).join(', ') ?? 'nothing'
+  const payText = (pay: Price | null) => pay?.text ?? 'nothing'
   const jobs = $derived(($view.plugins.jobs as JobsView | undefined)?.jobs ?? [])
 </script>
 

@@ -1,6 +1,6 @@
 import type { RunnerSnapshot } from '@ifloom/engine'
-// runner and add, as in the vanilla template's src/main.ts.
-import { add, runner } from './runner.ts'
+// add and drawChoices, as in the vanilla template's src/main.ts.
+import { add, drawChoices } from './runner.ts'
 
 /** Each feed's posts, newest first, with their likes and comments, and a button that marks the feed seen. */
 export function drawFeed(parent: HTMLElement, { view }: RunnerSnapshot): void {
@@ -14,6 +14,7 @@ export function drawFeed(parent: HTMLElement, { view }: RunnerSnapshot): void {
       add(card, 'span', `${post.likes} likes`, 'likes')
       for (const comment of post.comments) add(card, 'p', `${comment.name}: ${comment.text}`, 'comment')
     }
-    if (feed.unread) add(parent, 'button', 'Mark seen').onclick = () => runner.apply({ 'feed/seen': { id: feed.id } })
+    // Mark all seen, while anything in the feed is new.
+    if (feed.seen) drawChoices(parent, [feed.seen])
   }
 }

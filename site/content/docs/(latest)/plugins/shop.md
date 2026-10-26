@@ -307,10 +307,10 @@ Its [React UI](#drawing-it) draws the `shop` panel as a [`ShopCounter`](#shopcou
 ### ShopView
 
 ```ts
-type ShopView = { vendors: VendorView[] }
+type ShopView = { vendors: VendorView[]; panel: VendorView | null }
 ```
 
-Every vendor, in the order the game declares them. A UI usually shows the ones that are `here`.
+`vendors` is every vendor, in the order the game declares them. A UI usually shows the ones that are `here`. `panel` is the vendor whose counter the open `shop` panel shows, by its `with.vendor` (an id or a whole reference), or `null` while no `shop` panel is open. A UI draws the counter from it, with no looking up. It's worked out with the engine's [`panelOf`](/docs/reference/panels#panelof).
 
 ### VendorView
 
@@ -369,7 +369,7 @@ type GoodView = {
 
 ## Drawing it
 
-Nothing about a vendor is drawn until content opens its counter with [`shop.open`](#opening-a-counter). Then `view.panel` is `{ panel: 'shop', with: { vendor: 'counter' } }`, and the vendor is the one in [`view.plugins.shop`](#the-view) with that id. Each good's `buy` and `sell` are ready-made buttons with today's price and the reason one can't be pressed, so you draw them like any other button and send their `command`.
+Nothing about a vendor is drawn until content opens its counter with [`shop.open`](#opening-a-counter). Then `view.panel` is `{ panel: 'shop', with: { vendor: 'counter' } }`, and [`view.plugins.shop.panel`](#shopview) is that vendor. Each good's `buy` and `sell` are ready-made buttons with today's price and the reason one can't be pressed, so you draw them like any other button and send their `command`.
 
 With the React UI, list `shopUi` in `plugins` and the panel is drawn for you as a [`ShopCounter`](#shopcounter) in a dialog. In plain JS or Vue, draw the vendor when the open panel is `shop`. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 

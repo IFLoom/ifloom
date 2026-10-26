@@ -2,6 +2,8 @@
 import { describe, expect, it, vi } from 'vitest'
 import { startUnlocks } from '@ifloom/plugin-unlocks'
 import { drawBacklog } from '../plain/backlog.ts'
+import { drawDevices } from '../plain/devices.ts'
+import { drawWardrobe } from '../plain/wardrobe.ts'
 import { drawSaves } from '../plain/saves.ts'
 import { drawUnlocks } from '../plain/unlocks.ts'
 import { runner } from '../plain/runner.ts'
@@ -12,7 +14,7 @@ import { drawProse } from '../plain/prose.ts'
 import { drawRolls } from '../plain/rolls.ts'
 import { drawShop } from '../plain/shop.ts'
 import { drawTimers } from '../plain/timers.ts'
-import { atTheCounter, inTheCafe, inThePark, phoneRinging, steppedOut, unpacked } from './play.ts'
+import { atTheCounter, inTheCafe, inThePark, phoneRinging, readingTexts, steppedOut, unpacked } from './play.ts'
 
 /** The Plain JS snippets, drawn into a box and pressed, as the vanilla template would. */
 function drawn(draw: (box: HTMLElement) => void): HTMLElement {
@@ -108,6 +110,26 @@ describe('the Plain JS snippets', () => {
     await runner.settled()
     await new Promise((resolve) => setTimeout(resolve, 0))
     expect(runner.snapshot().saves.some((entry) => entry.slot === '1')).toBe(false)
+  })
+
+  it('devices and wardrobe: ready buttons from the view, and the phone out or put away as the state says', async () => {
+    await runner.newGame()
+    readingTexts(runner)
+    const phone = drawn((into) => drawDevices(into, runner.snapshot()))
+    buttons(phone)
+      .find((button) => button.textContent === 'Home')!
+      .click()
+    expect(runner.view().plugins.devices?.devices[0]).toMatchObject({ shown: true, open: null })
+    buttons(drawn((into) => drawDevices(into, runner.snapshot())))
+      .find((button) => button.textContent === 'Close')!
+      .click()
+    expect(runner.view().plugins.devices?.devices[0].shown).toBe(false)
+    const wardrobe = drawn((into) => drawWardrobe(into, runner.snapshot()))
+    const wear = buttons(wardrobe).find((button) => button.textContent?.startsWith('Wear'))
+    if (wear) {
+      wear.click()
+      expect(runner.view().plugins.wardrobe?.spare.length).toBeLessThan(buttons(wardrobe).filter((button) => button.textContent?.startsWith('Wear')).length)
+    }
   })
 
   it('unlocks: a wrong code says why, from the snapshot', async () => {

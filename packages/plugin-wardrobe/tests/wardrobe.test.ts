@@ -60,9 +60,9 @@ const shown = (state: GameState, g: Game) => view(state, g).plugins.wardrobe as 
 describe('the wardrobe, on its own', () => {
   it('starts with what the game says you have on', () => {
     const g = game()
-    expect(shown(begin(g), g)).toEqual({
+    expect(shown(begin(g), g)).toMatchObject({
       slots: [
-        { id: 'coat', label: 'Coat', entity: null, name: null },
+        { id: 'coat', label: 'Coat', entity: null, name: null, takeOff: null },
         { id: 'feet', label: 'Feet', entity: 'clothing:boots', name: 'boots' },
       ],
       spare: [
@@ -72,6 +72,22 @@ describe('the wardrobe, on its own', () => {
     })
     expect(holds(begin(g), g, wardrobe.wearing('clothing:boots'))).toBe(true)
     expect(holds(begin(g), g, wardrobe.slotFilled('coat'))).toBe(false)
+  })
+
+  it('offers ready buttons: take off what is in a slot, and wear each spare thing, refused in advance', () => {
+    const g = game()
+    const { slots, spare } = shown(begin(g), g)
+    expect(slots[1].takeOff).toMatchObject({
+      id: 'takeOff.feet',
+      label: 'Take off',
+      command: { type: 'custom', name: 'wardrobe/takeOff', with: { id: 'feet' } },
+    })
+    expect(spare[0].wear).toMatchObject({ label: 'Wear raincoat', command: { type: 'custom', name: 'wardrobe/wear', with: { id: 'clothing:raincoat' } } })
+    expect(spare[0].wear.disabled).toBeUndefined()
+    const worded = { ...g, strings: { ...g.strings, 'wardrobe/wear': 'Put on the {thing}' } }
+    expect(shown(begin(worded), worded).spare[0].wear.label).toBe('Put on the raincoat')
+    const off = apply(begin(g), g, slots[1].takeOff!.command)
+    expect(shown(off.state, g).slots[1]).toMatchObject({ entity: null, takeOff: null })
   })
 
   it('puts clothes on in place of whatever was in the slot, without changing what you hold', () => {
@@ -134,7 +150,7 @@ describe('the wardrobe, on its own', () => {
       },
     ])
     const sewn = apply(begin(g), g, { type: 'action', id: 'sew' }).state
-    expect(shown(sewn, g).spare).toContainEqual({ entity: 'clothing:cape', name: 'cape', slot: 'coat' })
+    expect(shown(sewn, g).spare).toContainEqual(expect.objectContaining({ entity: 'clothing:cape', name: 'cape', slot: 'coat' }))
     expect(holds(apply(sewn, g, wardrobe.wear('clothing:cape')).state, g, wardrobe.wearing('clothing:cape', 'coat'))).toBe(true)
   })
 
@@ -208,7 +224,7 @@ describe('the wardrobe with a protagonist', () => {
     const kim = apply(begin(g), g, { type: 'action', id: 'beKim' }).state
     // Kim has nothing on yet; the raincoat is Kim's now, to wear.
     expect(holds(kim, g, wardrobe.slotFilled('feet'))).toBe(false)
-    expect(shown(kim, g).spare).toEqual([{ entity: 'clothing:raincoat', name: 'raincoat', slot: 'coat' }])
+    expect(shown(kim, g).spare).toMatchObject([{ entity: 'clothing:raincoat', name: 'raincoat', slot: 'coat' }])
     const dressed = apply(kim, g, wardrobe.wear('clothing:raincoat')).state
     expect(shown(dressed, g).slots.map((slot) => slot.entity)).toEqual(['clothing:raincoat', null])
     expect(dressed.plugins.wardrobe.state).toEqual({ worn: { player: { coat: null, feet: 'clothing:boots' }, 'friend:kim': { coat: 'clothing:raincoat' } } })

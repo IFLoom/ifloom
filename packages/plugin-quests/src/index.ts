@@ -12,6 +12,7 @@
 import {
   definePlugin,
   holds,
+  renderAction,
   stringOf,
   type CommandRef,
   type Condition,
@@ -20,6 +21,7 @@ import {
   type Game,
   type GameState,
   type PluginProblem,
+  type RenderedChoice,
 } from '@ifloom/engine'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
@@ -81,6 +83,12 @@ export type QuestEntry = {
   tracked: boolean
   /** Started or moved on since the player last looked. */
   updated: boolean
+  /**
+   * The button that tracks it, or stops tracking it once it's tracked
+   * (labelled with the `quests/track` or `quests/untrack` string), or null
+   * once the quest is done.
+   */
+  track: RenderedChoice | null
 }
 
 export type QuestsView = {
@@ -92,6 +100,8 @@ export type QuestsView = {
   toFind: number
   /** How many quests have news the player has not looked at: a badge. */
   updates: number
+  /** The button that marks every quest's news seen (the `quests/allSeen` string, `Mark all seen`), or null while there is none. */
+  seen: RenderedChoice | null
 }
 
 /**
@@ -194,7 +204,7 @@ function isUpdated(record: QuestsState, id: string): boolean {
   return seen === undefined || seen < mark(record, id)
 }
 
-function entry(quest: QuestDef, record: QuestsState): QuestEntry {
+function entry(quest: QuestDef, record: QuestsState, state: GameState, game: Game): QuestEntry {
   const stage = record.reached[quest.id] ?? 0
   const doneOn = record.done[quest.id] ?? null
   return {
@@ -209,26 +219,41 @@ function entry(quest: QuestDef, record: QuestsState): QuestEntry {
     doneOn,
     tracked: record.tracked === quest.id,
     updated: isUpdated(record, quest.id),
+    track:
+      doneOn === null
+        ? renderAction(state, game, {
+            id: `track.${quest.id}`,
+            label: stringOf(game, record.tracked === quest.id ? `${ID}/untrack` : `${ID}/track`),
+            command: record.tracked === quest.id ? { [`${ID}/track`]: {} } : trackQuest(quest.id),
+          })
+        : null,
   }
 }
 
+/** How many started quests have news the player has not looked at. */
+function updatesIn(record: QuestsState, game: Game): number {
+  return questsOf(game).filter((quest) => record.started[quest.id] !== undefined && isUpdated(record, quest.id)).length
+}
+
 /** Everything the UI needs to draw the quest list. */
-function questsView(record: QuestsState, game: Game): QuestsView {
+function questsView(record: QuestsState, game: Game, state: GameState): QuestsView {
   const defs = questsOf(game)
   const started = defs.filter((quest) => record.started[quest.id] !== undefined)
   const active = started
     .filter((quest) => record.done[quest.id] === undefined)
-    .map((quest) => entry(quest, record))
+    .map((quest) => entry(quest, record, state, game))
     .sort((a, b) => Number(b.tracked) - Number(a.tracked) || b.startedOn - a.startedOn)
   const done = started
     .filter((quest) => record.done[quest.id] !== undefined)
-    .map((quest) => entry(quest, record))
+    .map((quest) => entry(quest, record, state, game))
     .sort((a, b) => (b.doneOn ?? 0) - (a.doneOn ?? 0))
+  const updates = [...active, ...done].filter((quest) => quest.updated).length
   return {
     active,
     done,
     toFind: defs.filter((quest) => record.started[quest.id] === undefined && !quest.secret).length,
-    updates: [...active, ...done].filter((quest) => quest.updated).length,
+    updates,
+    seen: updates ? renderAction(state, game, { id: 'seen', label: stringOf(game, `${ID}/allSeen`), command: seeQuests() }) : null,
   }
 }
 
@@ -252,7 +277,13 @@ function questsPlugin(): DefinedPlugin<QuestsState, QuestsView> {
     commandVersion: COMMAND_VERSION,
     commandMigrations,
     start: emptyState,
-    strings: { notDoing: 'You are not doing that.' },
+    strings: {
+      notDoing: 'You are not doing that.',
+      // The view's buttons.
+      track: 'Track',
+      untrack: 'Untrack',
+      allSeen: 'Mark all seen',
+    },
     conditions: {
       /** `{ 'quests/active': { quest } }`: started and not finished. */
       active: (state, args, { slice, game }) => {
@@ -302,13 +333,13 @@ function questsPlugin(): DefinedPlugin<QuestsState, QuestsView> {
     },
     values: {
       /** <code v-pre>{{v:quests/updates}}</code>: quests with news, for a badge. */
-      updates: (state, _args, { slice, game }) => questsView(advance(slice, state, game), game).updates,
+      updates: (state, _args, { slice, game }) => updatesIn(advance(slice, state, game), game),
     },
     onCommand: (_before, after, { slice, set, game }) => {
       const next = advance(slice, after, game)
       return next === slice ? after : set(next)
     },
-    view: (state, { slice, game }) => questsView(advance(slice, state, game), game),
+    view: (state, { slice, game }) => questsView(advance(slice, state, game), game, state),
     references: {
       // The quest a condition, effect or command names. Tracking or looking with none is fine.
       calls: (_kind, _name, args) => (questId(args) === '' ? [] : [{ entry: questId(args), plugin: 'quests', list: 'quests', noun: 'quest' }]),

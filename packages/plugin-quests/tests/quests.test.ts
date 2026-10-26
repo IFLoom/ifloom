@@ -108,6 +108,19 @@ describe('quests', () => {
     expect(shown(run(tracked, g, quests.track()), g).active.every((quest) => !quest.tracked)).toBe(true)
   })
 
+  it('offer ready buttons: track or untrack each active quest, and mark all seen while there is news', () => {
+    const g = game()
+    const state = run({ ...startingState(g), sceneId: null }, g, act('getHungry'))
+    const bread = shown(state, g).active[0]
+    expect(bread.track).toMatchObject({ label: 'Track', command: { type: 'custom', name: 'quests/track', with: { id: 'bread' } } })
+    const tracked = run(state, g, bread.track!.command)
+    expect(shown(tracked, g).active[0]).toMatchObject({ tracked: true, track: { label: 'Untrack' } })
+    expect(shown(run(tracked, g, shown(tracked, g).active[0].track!.command), g).active[0].tracked).toBe(false)
+    expect(shown(state, g).seen).toMatchObject({ label: 'Mark all seen' })
+    const looked = run(state, g, shown(state, g).seen!.command)
+    expect(shown(looked, g)).toMatchObject({ updates: 0, seen: null })
+  })
+
   it('count news until the player looks', () => {
     const g = game()
     let state = run({ ...startingState(g), sceneId: null }, g, act('getHungry'), act('findLetter'))

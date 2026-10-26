@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { runner, view } from './runner.ts'
 
-// Each device: its open app, with a Home button, or else its home screen of apps, each with its badge.
+// Each device: a button that brings it out, and while it's out, its open app or else its home screen of apps, with Home and Close.
+// Whether it's out, and on what, is the game's state, so every UI shows the same.
 // A `plugin` section is the messages' or the feed's, drawn as their pages show.
 </script>
 
@@ -10,7 +11,8 @@ import { runner, view } from './runner.ts'
     <h3>
       {{ device.name }}<template v-if="device.badge"> ({{ device.badge }})</template>
     </h3>
-    <template v-if="device.open">
+    <button v-if="!device.shown" @click="runner.apply(device.home.command)">Take out the {{ device.name }}</button>
+    <template v-else-if="device.open">
       <template v-for="(section, at) in device.open.sections" :key="at">
         <p v-if="section.type === 'prose'">{{ section.text }}</p>
         <div v-else-if="section.type === 'actions'">
@@ -28,12 +30,15 @@ import { runner, view } from './runner.ts'
           </div>
         </template>
       </template>
-      <button @click="runner.apply({ 'devices/close': { id: device.id } })">Home</button>
+      <!-- Home goes back from an app. -->
+      <button @click="runner.apply(device.home.command)">{{ device.home.label }}</button>
     </template>
     <template v-else>
       <button v-for="app in device.apps" :key="app.id" :disabled="Boolean(app.disabled)" :title="app.disabled" @click="runner.apply(app.command)">
         {{ app.name }}<template v-if="app.badge"> ({{ app.badge }})</template>
       </button>
     </template>
+    <!-- Close puts it away. -->
+    <button v-if="device.close" @click="runner.apply(device.close.command)">{{ device.close.label }}</button>
   </section>
 </template>

@@ -70,8 +70,11 @@ describe('feeds', () => {
       ['social', ['Baked a cake!'], 1],
       ['board', ['Village fete on Saturday.'], 1],
     ])
-    state = apply(state, g, feed.seen('social')).state
+    const social = shown(state, g).feeds[0]
+    expect(social.seen).toMatchObject({ label: 'Mark all seen', command: { type: 'custom', name: 'feed/seen', with: { id: 'social' } } })
+    state = apply(state, g, social.seen!.command).state
     expect(shown(state, g).unread).toBe(1)
+    expect(shown(state, g).feeds[0].seen).toBeNull()
   })
 
   it('take the player’s own posts, newest first, with the reactions they get', () => {

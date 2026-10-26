@@ -20,6 +20,7 @@ import {
   lackingLine,
   notify,
   pluginQuery,
+  panelOf,
   renderAction,
   stringOf,
   statValue,
@@ -138,11 +139,19 @@ export type JobView = {
   apply: RenderedChoice | null
   /** The button that works a shift, or null when not hired. Its `price` is the shift's cost. */
   work: RenderedChoice | null
+  /** The button that leaves the job, labelled with the `jobs/quit` string (`Quit`), or null when not hired. */
+  quit: RenderedChoice | null
 }
 
 export type JobsView = {
   /** Every job, in the order the game declares them. */
   jobs: JobView[]
+  /**
+   * The jobs on the open job board, the `jobs` panel: only those its
+   * `with.job` lists, or every job when it lists none. Null while no job
+   * board is open. What a UI draws in the panel, already filtered.
+   */
+  panel: JobView[] | null
 }
 
 /**
@@ -351,29 +360,33 @@ function rankView(game: Game, rank: RankDef): RankView {
 /** Everything the UI needs for a job board. */
 function jobsView(state: GameState, context: PluginContext<JobsState>): JobsView {
   const { game, slice } = context
-  return {
-    jobs: jobsOf(game).map((job): JobView => {
-      const held = slice.held[job.id]
-      const rank = rankOf(job, held)
-      const up = held ? job.ranks[held.rank + 1] : undefined
-      const firedOn = slice.fired[job.id] ?? null
-      return {
-        id: job.id,
-        name: job.name,
-        description: job.description ?? '',
-        hired: Boolean(held),
-        firedOn,
-        rank: rank ? rankView(game, rank) : null,
-        next: up && held ? { ...rankView(game, up), shiftsToGo: Math.max(0, (up.requires?.shifts ?? 0) - held.shifts) } : null,
-        pay: priceView(game, payOf(job, held)),
-        shifts: held?.shifts ?? 0,
-        missed: held?.missed ?? 0,
-        nextShift: held ? nextShift(job, held, state, context) : null,
-        apply: held || firedOn !== null ? null : renderAction(state, game, { id: `apply.${job.id}`, label: job.name, command: applyFor(job.id) }),
-        work: held ? renderAction(state, game, { id: `work.${job.id}`, label: job.name, command: work(job.id) }) : null,
-      }
-    }),
-  }
+  const jobs = jobsOf(game).map((job): JobView => {
+    const held = slice.held[job.id]
+    const rank = rankOf(job, held)
+    const up = held ? job.ranks[held.rank + 1] : undefined
+    const firedOn = slice.fired[job.id] ?? null
+    return {
+      id: job.id,
+      name: job.name,
+      description: job.description ?? '',
+      hired: Boolean(held),
+      firedOn,
+      rank: rank ? rankView(game, rank) : null,
+      next: up && held ? { ...rankView(game, up), shiftsToGo: Math.max(0, (up.requires?.shifts ?? 0) - held.shifts) } : null,
+      pay: priceView(game, payOf(job, held)),
+      shifts: held?.shifts ?? 0,
+      missed: held?.missed ?? 0,
+      nextShift: held ? nextShift(job, held, state, context) : null,
+      apply: held || firedOn !== null ? null : renderAction(state, game, { id: `apply.${job.id}`, label: job.name, command: applyFor(job.id) }),
+      work: held ? renderAction(state, game, { id: `work.${job.id}`, label: job.name, command: work(job.id) }) : null,
+      quit: held ? renderAction(state, game, { id: `quit.${job.id}`, label: stringOf(game, `${ID}/quit`), command: quit(job.id) }) : null,
+    }
+  })
+  // The board content opened, with only the jobs it lists if it lists any.
+  const open = panelOf(state, game)
+  const only = open?.panel === PANEL ? open.with.job : undefined
+  const board = open?.panel === PANEL ? jobs.filter((job) => !Array.isArray(only) || only.includes(job.id)) : null
+  return { jobs, panel: board }
 }
 
 function jobRef(job: unknown): Reference[] {
@@ -407,6 +420,8 @@ function jobsPlugin(): DefinedPlugin<JobsState, JobsView> {
       workedToday: 'You’ve done today’s shift.',
       promoted: 'Promoted: {title}',
       firedNotice: 'You’ve lost your job: {title}',
+      // The button that leaves a job.
+      quit: 'Quit',
     },
     conditions: {
       /** `{ 'jobs/hired': { job, rank? } }`: holds the job, at that rank if asked. */

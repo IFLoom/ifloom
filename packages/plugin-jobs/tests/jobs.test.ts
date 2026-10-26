@@ -153,7 +153,9 @@ describe('jobs, on their own', () => {
     const g = game()
     let state = run(fresh(g), g, act('hired'))
     expect(holds(state, g, jobs.hired('cafe'))).toBe(true)
-    state = run(state, g, jobs.quit('cafe'))
+    expect(board(fresh(g), g).quit).toBeNull()
+    expect(board(state, g).quit).toMatchObject({ label: 'Quit', command: { type: 'custom', name: 'jobs/quit', with: { id: 'cafe' } } })
+    state = run(state, g, board(state, g).quit!.command)
     expect(holds(state, g, jobs.hired('cafe'))).toBe(false)
     expect(holds(state, g, jobs.fired('cafe'))).toBe(false)
     state = run(state, g, act('hired'), act('sacked'))
@@ -269,6 +271,9 @@ describe('the jobs panel', () => {
     const g = { ...base, actions: [...(base.actions ?? []), { id: 'paper', effects: [jobs.open(['cafe'])] }] }
     const open = run(fresh(g), g, act('meet'), { type: 'action', id: 'paper' })
     expect(view(open, g).panel).toEqual({ panel: 'jobs', with: { job: ['cafe'] } })
+    // The view's panel is the board as opened: only the jobs it lists, and none while it is shut.
+    expect((view(open, g).plugins.jobs as JobsView).panel?.map((job) => job.id)).toEqual(['cafe'])
+    expect((view(fresh(g), g).plugins.jobs as JobsView).panel).toBeNull()
     expect(run(open, g, jobs.apply('cafe')).panel).toEqual(open.panel)
   })
 

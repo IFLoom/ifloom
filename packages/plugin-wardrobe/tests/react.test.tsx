@@ -54,7 +54,7 @@ describe('the wardrobe UI', () => {
     const { result } = renderHook(() => useWardrobe(), {
       wrapper: ({ children }: { children: ReactNode }) => <GameProvider runner={runner}>{children}</GameProvider>,
     })
-    expect(result.current!.slots[0].wear.map((choice) => choice.label)).toEqual(['cape'])
+    expect(result.current!.slots[0].wear.map((choice) => choice.label)).toEqual(['Wear cape'])
     act(() => void result.current!.wear('clothing:cape'))
     expect(slot(runner)).toBe('clothing:cape')
   })

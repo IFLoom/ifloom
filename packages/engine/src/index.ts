@@ -212,6 +212,6 @@ export { createRunner, replay } from './runner.ts'
 // The view a UI draws, and the screen it is built from
 export type { Price, RenderedChoice, Screen, ScreenChoice, ScreenScene, ViewOptions } from './screen.ts'
 export { inlineChoices } from './screen.ts'
-export { renderAction, screen, pictureView, priceView } from './screen.ts'
+export { panelOf, renderAction, screen, pictureView, priceView } from './screen.ts'
 export type { StatView, View, EntitiesView, EntityView, InputView, NoticeView, NoticesView, SettingView } from './view.ts'
 export { view } from './view.ts'

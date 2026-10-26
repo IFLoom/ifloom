@@ -3,10 +3,8 @@ import { computed } from 'vue'
 import { runner, view } from './runner.ts'
 
 // The `shop` panel, shown from Panel.vue: shop.open('counter') opens it with { vendor: 'counter' }.
-const vendor = computed(() => {
-  const { panel, plugins } = view.value
-  return panel?.panel === 'shop' ? plugins.shop?.vendors.find((one) => one.id === panel.with.vendor) : undefined
-})
+// The vendor whose counter the open panel shows; null while it's shut.
+const vendor = computed(() => view.value.plugins.shop?.panel)
 </script>
 
 <template>

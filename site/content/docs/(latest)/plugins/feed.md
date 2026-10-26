@@ -337,11 +337,12 @@ The player's own posts are never counted, since they aren't news to the player. 
 
 ## Strings
 
-The feed never refuses anything, and has one line of its own in the [strings table](/docs/reference/strings#plugins-strings). A game, a pack or a translation rewords it by its full key. Every other word it shows is the game's, such as feed names, post bodies and comments.
+The feed never refuses anything, and has two lines of its own in the [strings table](/docs/reference/strings#plugins-strings). A game, a pack or a translation rewords it by its full key. Every other word it shows is the game's, such as feed names, post bodies and comments.
 
 | Key | English |
 |---|---|
 | `feed/you` | `You`. The name on the player's own posts when the game has no `playerName` key in its kv store. |
+| `feed/allSeen` | `Mark all seen`, a feed's [`seen`](#feedview) button. |
 
 To reword it in your game, put it in your content's `strings`:
 
@@ -373,13 +374,14 @@ type FeedsView = { feeds: FeedView[]; unread: number }
 ### FeedView
 
 ```ts
-type FeedView = { id: string; name: string; posts: PostView[]; unread: number }
+type FeedView = { id: string; name: string; posts: PostView[]; unread: number; seen: RenderedChoice | null }
 ```
 
 | Field | What it is |
 |---|---|
 | `posts` | Newest turn first. Within a turn, the player's own come first, latest first, then other people's, in reverse of the order the content lists them. |
 | `unread` | Other people's posts that have appeared in this feed since the player last sent `feed/seen` for it. The player's own aren't counted. |
+| `seen` | The button that marks the feed seen, a [`RenderedChoice`](/docs/reference/view#renderedchoice) labelled with the `feed/allSeen` string, or `null` while nothing in it is new. |
 
 ### PostView
 
@@ -416,7 +418,7 @@ type PostView = {
 
 ## Drawing it
 
-`view.plugins.feed` is a [`FeedsView`](#feedsview): each feed's posts, with their likes and comments, and how many are new. Send `feed/seen` with a feed's id when the player has looked. A feed usually shows inside an app on a [device](/docs/plugins/devices).
+`view.plugins.feed` is a [`FeedsView`](#feedsview): each feed's posts, with their likes and comments, and how many are new. A feed's `seen` is a ready button that marks it seen. A feed usually shows inside an app on a [device](/docs/plugins/devices).
 
 `@ifloom/plugin-feed/react` draws a feed inside an app, for a game drawn with [`@ifloom/react`](/docs/react). List `feedUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a [`FeedSection`](#feedsection) is drawn wherever a [device](/docs/plugins/devices)'s app shows a feed. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
@@ -450,7 +452,7 @@ const FeedSection: PluginSectionComponent
 
 A [feed](/docs/plugins/feed), the one named by `with.feed` (`data-feed`). Each post (`data-post`) shows the poster's name and portrait, its picture, its `video` (a [`Video`](/docs/react/components#video), playing like a GIF), its words, its likes (`ui.likes`) and its comments. The words are the post's [`beats`](/docs/plugins/feed#postview), drawn with [`Beat`](/docs/react/components#beat), so pictures and clips in them show in order.
 
-Opening the feed marks nothing seen. While it has unseen posts, a **Mark all seen** button (`ui.allSeen`) sends `feed/seen` for the feed. It draws nothing if the feed isn't in the view.
+Opening the feed marks nothing seen. While it has unseen posts, the feed's **Mark all seen** button from the view marks it seen. It draws nothing if the feed isn't in the view.
 
 Replaceable as `FeedSection` in [`components`](/docs/react/components#components). Parts: `feed`, `post`, `post-author`, `post-portrait`, `post-image`, `post-text`, `post-meta`, `post-comment`, `post-comment-name` and `button`.
 

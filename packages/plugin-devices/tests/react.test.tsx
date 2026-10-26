@@ -93,5 +93,13 @@ describe('the notice strip, with a phone', () => {
     act(() => void fireEvent.click(item))
     const dialog = screen.getByRole('dialog', { name: 'Phone' })
     expect(dialog.querySelector('[data-app="texts"]')).toBeTruthy()
+    // Which device is out, and on what, is the game's: back goes to its home screen, and closing puts it away.
+    expect(runner.state.plugins.devices.state).toEqual({ shown: { phone: 'texts' } })
+    click('Back')
+    expect(runner.state.plugins.devices.state).toEqual({ shown: { phone: null } })
+    expect(screen.getByRole('dialog', { name: 'Phone' }).querySelector('[data-open-app="texts"]')).toBeTruthy()
+    click('Close')
+    expect(runner.state.plugins.devices.state).toEqual({ shown: {} })
+    expect(screen.queryByRole('dialog', { name: 'Phone' })).toBeNull()
   })
 })

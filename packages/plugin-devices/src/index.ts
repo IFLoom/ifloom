@@ -102,8 +102,12 @@ export type AppDef = {
   sections: Section[]
 }
 
-/** What the plugin keeps in a save: the app open on each device. */
-export type DevicesState = { open: Record<string, string | null> }
+/**
+ * What the plugin keeps in a save: each device the player has out, by id,
+ * with the app open on it, or null on its home screen. A device not in
+ * `shown` is put away. So every UI draws the same thing.
+ */
+export type DevicesState = { shown: Record<string, string | null> }
 
 export type SectionView =
   /** Words: the section's blocks as beats, drawn as a scene's are, and their words as text, for a UI that draws no beats. */
@@ -139,7 +143,14 @@ export type DeviceView = {
   badge: number
   /** Installed apps, in order. */
   apps: AppView[]
+  /** Out: on its home screen, or on an app. A UI draws a device that's shown, and none that isn't. */
+  shown: boolean
+  /** The app open on it while it's shown, or null on its home screen or put away. */
   open: AppView | null
+  /** The button that shows it on its home screen, from put away or from an app (the `devices/home` string, `Home`). */
+  home: RenderedChoice
+  /** The button that puts it away (the `devices/close` string, `Close`), or null while it isn't shown. */
+  close: RenderedChoice | null
 }
 
 export type DevicesView = { devices: DeviceView[] }
@@ -154,6 +165,7 @@ declare module '@ifloom/engine' {
   }
   interface CommandRegistry {
     'devices/open': { id: string }
+    'devices/home': { id: string }
     'devices/close': { id: string }
   }
   interface ViewRegistry {
@@ -270,7 +282,7 @@ function devicesPlugin(): DefinedPlugin<DevicesState, DevicesView> {
 
   return definePlugin<DevicesState, DevicesView>({
     id: ID,
-    version: 1,
+    version: 2,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
     // The words a player reads in each list of the plugin's content, for a translation's `words` table.
@@ -283,27 +295,44 @@ function devicesPlugin(): DefinedPlugin<DevicesState, DevicesView> {
       noSuchApp: 'There is no such app.',
       notInstalled: 'That is not installed.',
       noSuchDevice: 'There is no such device.',
+      notShown: 'That is put away.',
       call: 'Call',
+      // The view's buttons.
+      home: 'Home',
+      close: 'Close',
     },
-    start: (game) => ({ open: Object.fromEntries(devicesOf(game).map((device) => [device.id, null])) }),
+    start: () => ({ shown: {} }),
+    // Version 1 kept the app open on every device, put away or not: each device starts put away.
+    migrations: { 1: () => ({ shown: {} }) },
     conditions: {
-      /** `{ 'devices/open': { app } }`: that app is open; with `device` instead, anything is. */
-      open: (_state, args, { slice }) =>
-        args.app !== undefined ? Object.values(slice.open).includes(String(args.app)) : Boolean(slice.open[String(args.device)]),
+      /** `{ 'devices/open': { app } }`: that app is open on a device that's shown; with `device` instead, that device is shown, on any screen. */
+      open: (_state, args, { slice }) => (args.app !== undefined ? Object.values(slice.shown).includes(String(args.app)) : String(args.device) in slice.shown),
     },
     commands: {
-      /** `{ 'devices/open': { id } }`: open the app `id`. Free: no time passes. */
+      /** `{ 'devices/open': { id } }`: open the app `id`, showing its device on it. Free: no time passes. */
       open: {
         whyNot: (state, args, { game }) => refusal(state, game, appById(game, String(args.id ?? ''))),
         run: (_state, args, { slice, set, game }) => {
           const app = appById(game, String(args.id))!
-          return set({ ...slice, open: { ...slice.open, [app.on]: app.id } })
+          return set({ shown: { ...slice.shown, [app.on]: app.id } })
         },
       },
-      /** `{ 'devices/close': { id } }`: the device `id` back to its home screen. */
-      close: {
+      /** `{ 'devices/home': { id } }`: show the device `id` on its home screen, from put away or from an app. */
+      home: {
         whyNot: (_state, args, { game }) => (known(game, String(args.id ?? '')) ? undefined : stringOf(game, 'devices/noSuchDevice')),
-        run: (_state, args, { slice, set }) => set({ ...slice, open: { ...slice.open, [String(args.id)]: null } }),
+        run: (_state, args, { slice, set }) => set({ shown: { ...slice.shown, [String(args.id)]: null } }),
+      },
+      /** `{ 'devices/close': { id } }`: put the device `id` away. */
+      close: {
+        whyNot: (_state, args, { game, slice }) => {
+          const id = String(args.id ?? '')
+          if (!known(game, id)) return stringOf(game, 'devices/noSuchDevice')
+          return id in slice.shown ? undefined : stringOf(game, 'devices/notShown')
+        },
+        run: (_state, args, { slice, set }) => {
+          const { [String(args.id)]: _away, ...rest } = slice.shown
+          return set({ shown: rest })
+        },
       },
     },
     // An app's action with a cost or effects is done as `devices/<id>`, from whichever app has it.
@@ -313,19 +342,21 @@ function devicesPlugin(): DefinedPlugin<DevicesState, DevicesView> {
         .find((action) => action.id === id),
     // An app that could not be opened now — not installed, blocked, or a lock on
     // the device (no phone at work) — closes, so its buttons are not left live.
+    // An app closed so goes back to its device's home screen; the device stays out.
     onCommand: (_before, after, { slice, set, game }) => {
-      let open = slice.open
-      for (const [device, id] of Object.entries(slice.open)) {
-        if (id && whyNot(after, game, openApp(id))) open = { ...open, [device]: null }
+      let shown = slice.shown
+      for (const [device, id] of Object.entries(slice.shown)) {
+        if (id && whyNot(after, game, openApp(id))) shown = { ...shown, [device]: null }
       }
-      return open === slice.open ? after : set({ ...slice, open })
+      return shown === slice.shown ? after : set({ shown })
     },
     view: (state, context): DevicesView => ({
       devices: devicesOf(context.game).map((device): DeviceView => {
         const { slice, game } = context
         const installed = apps(game).filter((app) => app.on === device.id && holds(state, game, app.when) && !hides(state, game, app.blocked))
-        const shown = installed.map((app) => appView(state, context, app, false))
-        const openId = slice.open[device.id] ?? null
+        const listed = installed.map((app) => appView(state, context, app, false))
+        const out = device.id in slice.shown
+        const openId = slice.shown[device.id] ?? null
         const openApp = installed.find((app) => app.id === openId)
         return {
           id: device.id,
@@ -333,9 +364,12 @@ function devicesPlugin(): DefinedPlugin<DevicesState, DevicesView> {
           frame: device.frame ?? device.id,
           sidebar: Boolean(device.sidebar),
           wallpaper: device.wallpaper ?? null,
-          badge: shown.reduce((sum, app) => sum + (typeof app.badge === 'number' ? app.badge : app.badge ? 1 : 0), 0),
-          apps: shown,
-          open: openApp ? appView(state, context, openApp, true) : null,
+          badge: listed.reduce((sum, app) => sum + (typeof app.badge === 'number' ? app.badge : app.badge ? 1 : 0), 0),
+          apps: listed,
+          shown: out,
+          open: out && openApp ? appView(state, context, openApp, true) : null,
+          home: renderAction(state, game, { id: `home.${device.id}`, label: stringOf(game, `${ID}/home`), command: homeScreen(device.id) }),
+          close: out ? renderAction(state, game, { id: `close.${device.id}`, label: stringOf(game, `${ID}/close`), command: closeApp(device.id) }) : null,
         }
       }),
     }),
@@ -376,7 +410,9 @@ function devicesPlugin(): DefinedPlugin<DevicesState, DevicesView> {
 
 /** A command: open this app. */
 const openApp = (app: string): CommandRef => ({ [`${ID}/open`]: { id: app } })
-/** A command: back to this device's home screen. */
+/** A command: show this device on its home screen, from put away or from an app. */
+const homeScreen = (device: string): CommandRef => ({ [`${ID}/home`]: { id: device } })
+/** A command: put this device away. */
 const closeApp = (device: string): CommandRef => ({ [`${ID}/close`]: { id: device } })
 /** A condition: this app is open. */
 const appOpen = (app: string): Condition => ({ [`${ID}/open`]: { app } })
@@ -385,4 +421,4 @@ const appOpen = (app: string): Condition => ({ [`${ID}/open`]: { app } })
  * The plugin, with its helpers on it: `devices()` makes the plugin for the
  * game's `plugins`, and content is written with `devices.open('camera')`.
  */
-export const devices = Object.assign(devicesPlugin, { open: openApp, close: closeApp, appOpen })
+export const devices = Object.assign(devicesPlugin, { open: openApp, home: homeScreen, close: closeApp, appOpen })

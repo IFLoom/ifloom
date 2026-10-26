@@ -15,8 +15,6 @@ export const QUESTS_WORDS = {
   questNew: 'New',
   questStage: '{stage} of {stages}',
   quests: 'Quests',
-  track: 'Track',
-  untrack: 'Untrack',
 } as const
 
 declare module '@ifloom/react' {
@@ -36,27 +34,25 @@ declare module '@ifloom/react' {
   }
 }
 
-/** What `useQuests` returns: the quests plugin's view, and what the player can do with it. */
+/** What `useQuests` returns: the quests plugin's view, with its buttons, and a command to track a quest of your choosing. */
 export type QuestsControls = QuestsView & {
-  /** Track a quest by id, or track none with `null`: sends `quests/track`. */
+  /** Track a quest by id, or track none with `null`: sends `quests/track`. Each quest's `track` button does it for that quest. */
   track: (id: string | null) => Result<GameState>
-  /** Mark every quest's news seen: sends `quests/seen`. */
-  seen: () => Result<GameState>
 }
 
-/** The quests plugin's view with its commands, or null in a game without the plugin. `QuestLog` is drawn from it. */
+/** The quests plugin's view with its buttons and commands, or null in a game without the plugin. `QuestLog` is drawn from it. */
 export function useQuests(): QuestsControls | null {
   const { view, send } = useGame()
   const quests = view.plugins.quests as QuestsView | undefined
   if (!quests) return null
   return {
     ...quests,
-    track: (id) => send({ type: 'custom', name: 'quests/track', with: { id: id ?? undefined } }),
-    seen: () => send({ type: 'custom', name: 'quests/seen' }),
+    track: (id) => send({ type: 'custom', name: 'quests/track', with: id === null ? {} : { id } }),
   }
 }
 
 function QuestLogImpl({ className, title }: { className?: string; title?: string | false }) {
+  const { send } = useGame()
   const words = useWords(QUESTS_WORDS)
   const log = usePart('quests', 'flex flex-col gap-3', className)
   const heading = usePart('quests-title', 'flex items-center gap-2 font-heading font-semibold')
@@ -91,9 +87,17 @@ function QuestLogImpl({ className, title }: { className?: string; title?: string
           {quest.description ? <p {...description}>{quest.description}</p> : null}
           <p {...hint}>{quest.hint}</p>
           <p {...stage}>{words('questStage', { stage: quest.stage, stages: quest.stages })}</p>
-          <button type="button" {...(quest.tracked ? tracked : untracked)} onClick={() => quests.track(quest.tracked ? null : quest.id)}>
-            {quest.tracked ? words('untrack') : words('track')}
-          </button>
+          {quest.track ? (
+            <button
+              type="button"
+              {...(quest.tracked ? tracked : untracked)}
+              disabled={Boolean(quest.track.disabled)}
+              title={quest.track.disabled}
+              onClick={() => send(quest.track!.command)}
+            >
+              {quest.track.label}
+            </button>
+          ) : null}
         </div>
       ))}
       {quests.done.length ? (
@@ -105,9 +109,9 @@ function QuestLogImpl({ className, title }: { className?: string; title?: string
           ))}
         </ul>
       ) : null}
-      {quests.updates ? (
-        <button type="button" {...seen} onClick={() => quests.seen()}>
-          {words('allSeen')}
+      {quests.seen ? (
+        <button type="button" {...seen} onClick={() => send(quests.seen!.command)}>
+          {quests.seen.label}
         </button>
       ) : null}
     </section>

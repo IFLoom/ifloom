@@ -182,6 +182,7 @@ const SAMPLES: Record<string, Call> = {
   'commands:debug/go': debug.go('park'),
   'conditions:devices/open': devices.appOpen('camera'),
   'commands:devices/open': devices.open('camera'),
+  'commands:devices/home': devices.home('phone'),
   'commands:devices/close': devices.close('phone'),
   'conditions:statuses/active': statuses.active('tired', { gte: 2 }),
   'effects:statuses/apply': statuses.apply('tired'),

@@ -150,15 +150,14 @@ function ShopDialogImpl({ vendorId, onClose }: ShopDialogProps) {
 /** The vendor with this id in a dialog, titled with its name and drawn as a `ShopCounter`. Closed while `vendorId` is null or names no vendor. */
 export const ShopDialog = overridable('ShopDialog', ShopDialogImpl)
 
-/** The vendor a `shop` panel was opened for, from its `with.vendor`. */
-function vendorIn(data: unknown, view: { plugins: Record<string, unknown> }): VendorView | undefined {
-  const vendor = data && typeof data === 'object' ? (data as { vendor?: unknown }).vendor : undefined
-  return (view.plugins.shop as ShopView | undefined)?.vendors.find((entry) => entry.id === vendor)
+/** The vendor whose counter the open `shop` panel shows: the view's `panel`. */
+function counterIn(view: { plugins: Record<string, unknown> }): VendorView | null {
+  return (view.plugins.shop as ShopView | undefined)?.panel ?? null
 }
 
-function ShopPanel({ data }: { data: unknown }) {
+function ShopPanel() {
   const { view } = useGame()
-  const vendor = vendorIn(data, view)
+  const vendor = counterIn(view)
   return vendor ? <ShopCounter vendor={vendor} /> : null
 }
 
@@ -172,6 +171,6 @@ export const shopUi: PluginUi = {
   id: 'shop',
   words: SHOP_WORDS,
   panels: {
-    shop: { component: ShopPanel, title: (data, view) => vendorIn(data, view)?.name ?? '' },
+    shop: { component: ShopPanel, title: (_data, view) => counterIn(view)?.name ?? '' },
   },
 }

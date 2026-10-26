@@ -15,6 +15,7 @@ import {
   holds,
   parseBeats,
   pluginQuery,
+  renderAction,
   styledBeats,
   speakerOf,
   stringOf,
@@ -26,6 +27,7 @@ import {
   type Game,
   type GameState,
   type Reference,
+  type RenderedChoice,
   type SceneBeat,
 } from '@ifloom/engine'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
@@ -102,7 +104,14 @@ export type PostView = {
 }
 
 /** One feed, newest post first, with how many posts the player hasn't seen: `unread`, as messages count theirs. */
-export type FeedView = { id: string; name: string; posts: PostView[]; unread: number }
+export type FeedView = {
+  id: string
+  name: string
+  posts: PostView[]
+  unread: number
+  /** The button that marks the feed seen (the `feed/allSeen` string, `Mark all seen`), or null while nothing in it is new. */
+  seen: RenderedChoice | null
+}
 
 export type FeedsView = { feeds: FeedView[]; unread: number }
 
@@ -209,6 +218,8 @@ function feedPlugin(): DefinedPlugin<FeedState, FeedsView> {
     strings: {
       /** The name on the player's own posts when the game has no `playerName` key in its kv store. */
       you: 'You',
+      /** The view's button that marks a feed seen. */
+      allSeen: 'Mark all seen',
     },
     start: () => ({ appeared: {}, own: [], reactions: {}, seen: {} }),
     conditions: {
@@ -332,7 +343,9 @@ function feedPlugin(): DefinedPlugin<FeedState, FeedsView> {
             order: 1000000 + order,
           }))
         const posts = [...theirs, ...mine].sort((a, b) => b.turn - a.turn || b.order - a.order).map(({ order: _order, ...post }) => post)
-        return { id: entry.id, name: entry.name, posts, unread: unseenIn(slice, game, entry.id) }
+        const unread = unseenIn(slice, game, entry.id)
+        const seen = unread ? renderAction(state, game, { id: `seen.${entry.id}`, label: stringOf(game, `${ID}/allSeen`), command: seeFeed(entry.id) }) : null
+        return { id: entry.id, name: entry.name, posts, unread, seen }
       })
       return { feeds, unread: feeds.reduce((sum, entry) => sum + entry.unread, 0) }
     },

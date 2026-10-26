@@ -35,6 +35,7 @@ import {
   lackingLine,
   parseRef,
   reasonOf,
+  panelOf,
   renderAction,
   stringOf,
   statOf,
@@ -197,6 +198,12 @@ export type VendorView = {
 export type ShopView = {
   /** Every vendor, in the order the game declares them. */
   vendors: VendorView[]
+  /**
+   * The vendor whose counter the open `shop` panel shows, by its
+   * `with.vendor`, or null while no `shop` panel is open: what a UI draws in
+   * the panel, with no looking up.
+   */
+  panel: VendorView | null
 }
 
 /**
@@ -521,7 +528,10 @@ function shopView(state: GameState, slice: ShopState, cx: Ctx): ShopView {
       })
     return { id: one.id, ref: one.ref, name: entityName(state, game, one.ref), here: isHere(one, cx), closed, buysBack: sellable, goods }
   })
-  return { vendors }
+  // The open counter, as `shop.open(vendor)` names it: by its id, or its whole reference.
+  const open = panelOf(state, game)
+  const named = open?.panel === PANEL ? String(open.with.vendor ?? '') : undefined
+  return { vendors, panel: vendors.find((vendor) => vendor.id === named || vendor.ref === named) ?? null }
 }
 
 /** Version 1 kept how many of each item had gone; version 2 keeps when each thing's stock was topped up, the stock being what the vendor holds. */

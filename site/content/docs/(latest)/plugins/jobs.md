@@ -262,6 +262,7 @@ The checker reports a `job` list entry the game doesn't have (`unknown job "circ
 | `jobs/workedToday` | `You’ve done today’s shift.` |
 | `jobs/promoted` | `Promoted: {title}`, the notice's title, with the new rank's name. |
 | `jobs/firedNotice` | `You’ve lost your job: {title}`, with the job's name. |
+| `jobs/quit` | `Quit`, a held job's [`quit`](#jobview) button. |
 
 The notices are tagged `jobs`, with the ids `job.<id>.rank` and `job.<id>.fired`.
 
@@ -274,10 +275,10 @@ Its [React UI](#drawing-it) draws the `jobs` panel as a [`JobBoard`](#jobboard) 
 ### JobsView
 
 ```ts
-type JobsView = { jobs: JobView[] }
+type JobsView = { jobs: JobView[]; panel: JobView[] | null }
 ```
 
-Every job, in the order the game declares them.
+`jobs` is every job, in the order the game declares them. `panel` is the jobs on the open job board, the `jobs` panel, already filtered: only the jobs its `with.job` lists, or every job when it lists none. It's `null` while no board is open. A UI draws the board from it, with no filtering of its own. It's worked out with the engine's [`panelOf`](/docs/reference/panels#panelof).
 
 ### JobView
 
@@ -296,6 +297,7 @@ type JobView = {
   nextShift: { day: number; inDays: number } | null
   apply: RenderedChoice | null
   work: RenderedChoice | null
+  quit: RenderedChoice | null
 }
 type RankView = { id: string; name: string; pay: Price | null }
 ```
@@ -310,10 +312,11 @@ type RankView = { id: string; name: string; pay: Price | null }
 | `nextShift` | The next day with a shift, the calendar's day or the turn, and how many days away (0 for today). `null` when not hired, or when there's none in the next two weeks. |
 | `apply` | The button that applies, built with [`renderAction`](/docs/reference/view#renderaction), or `null` once hired or fired. Its `disabled` is the reason of the first `blocked` entry that holds. |
 | `work` | The button that works a shift, or `null` when not hired. Its `price` is the shift's cost, and its `disabled` says why not. |
+| `quit` | The button that leaves the job, labelled with the `jobs/quit` string, or `null` when not hired. |
 
 ## Drawing it
 
-Nothing about a job is drawn until content opens the board with [`jobs.open`](#opening-the-job-board). Then `view.panel` is `{ panel: 'jobs' }`, with `with: { job: [...] }` when it names only some. Each job in [`view.plugins.jobs`](#jobsview) has its pay, its rank, its next shift, and ready-made `apply` and `work` buttons.
+Nothing about a job is drawn until content opens the board with [`jobs.open`](#opening-the-job-board). Then `view.panel` is `{ panel: 'jobs' }`, with `with: { job: [...] }` when it names only some, and [`view.plugins.jobs.panel`](#jobsview) is the jobs on that board, already filtered. Each job has its pay, its rank, its next shift, and ready-made `apply`, `work` and `quit` buttons.
 
 `@ifloom/plugin-jobs/react` draws the job board, for a game drawn with [`@ifloom/react`](/docs/react). List `jobsUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the `jobs` panel, which [`jobs.open`](#opening-the-job-board) opens, is drawn as the [`JobBoard`](#jobboard), only the jobs it was opened with if it names any. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
@@ -346,7 +349,6 @@ Its words are in `JOBS_WORDS`. A game rewords any of them with `ui.<key>` in its
 | `ui.jobPay` | `Pays {pay} a shift` |
 | `ui.jobShifts` | `Shifts worked: {n}` |
 | `ui.jobs` | `Jobs` |
-| `ui.quitJob` | `Quit` |
 | `ui.shiftInDays` | `Next shift: in {n} days` |
 | `ui.shiftToday` | `Next shift: today` |
 | `ui.shiftTomorrow` | `Next shift: tomorrow` |
@@ -366,7 +368,7 @@ Every [job](/docs/plugins/jobs), held or not, from [`JobView`](/docs/plugins/job
 - the shifts worked and missed (`ui.jobShifts`, `ui.jobMissed`)
 - **Let go** (`ui.jobFired`) on a job the player was fired from.
 
-A job not held has **Apply** (`ui.applyJob`), a [`ChoiceButton`](/docs/react/components#choicebutton) from the job's `apply` button, greyed out with the reason of its first `blocked` entry that holds. A job held has **Work a shift** (`ui.workShift`), with the shift's cost as its price and the reason it can't be worked now, such as `No shift today.`, and a **Quit** button (`ui.quitJob`) that sends `jobs/quit`.
+A job not held has **Apply** (`ui.applyJob`), a [`ChoiceButton`](/docs/react/components#choicebutton) from the job's `apply` button, greyed out with the reason of its first `blocked` entry that holds. A job held has **Work a shift** (`ui.workShift`), with the shift's cost as its price and the reason it can't be worked now, such as `No shift today.`, and the job's **Quit** button from the view.
 
 It draws nothing in a game without the plugin or with no jobs to show.
 

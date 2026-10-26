@@ -409,6 +409,8 @@ The plugin's lines go in the [strings table](/docs/reference/strings#plugins-str
 | `messages/noSuchMessage` | `There is no such message.` |
 | `messages/alreadyReplied` | `You have already replied.` |
 | `messages/notOnOffer` | `That is not a reply on offer.` |
+| `messages/markRead` | `Mark read`, a thread's [`read`](#threadview) button. |
+| `messages/allRead` | `Mark all read`, a channel's [`read`](#channelview) button. |
 
 To reword one in your game, put it in your content's `strings`:
 
@@ -445,6 +447,7 @@ type ChannelView = {
   name: string
   threads: ThreadView[]
   unread: number
+  read: RenderedChoice | null
 }
 ```
 
@@ -452,6 +455,7 @@ type ChannelView = {
 |---|---|
 | `threads` | The threads with at least one message that has arrived, the one with the newest message first. |
 | `unread` | Unread messages in the channel. |
+| `read` | The button that marks the whole channel read, a [`RenderedChoice`](/docs/reference/view#renderedchoice) labelled with the `messages/allRead` string, or `null` while nothing in it is unread. |
 
 ### ThreadView
 
@@ -463,6 +467,7 @@ type ThreadView = {
   portrait: string | null
   messages: MessageView[]
   unread: number
+  read: RenderedChoice | null
 }
 ```
 
@@ -474,6 +479,7 @@ type ThreadView = {
 | `portrait` | The sender's face for an avatar: with the [cast](/docs/plugins/cast), a person's [`portrait`](/docs/plugins/cast#person), else `image`. The React UI draws this one. |
 | `messages` | Oldest first. |
 | `unread` | Unread messages in the thread. |
+| `read` | The button that marks the thread read, labelled with the `messages/markRead` string, or `null` while nothing in it is unread. |
 
 ### MessageView
 
@@ -516,7 +522,7 @@ The React UI's [`MessagesSection`](#messagessection) draws each message's beats 
 
 ## Drawing it
 
-`view.plugins.messages` is a [`MessagesView`](#messagesview): each channel's threads and their messages, with how many are unread. A message's `replies` are ready-made buttons, and `replied` is the reply once it's sent. Send `messages/read` with a thread's id when the player has read it. Messages usually show inside an app on a [device](/docs/plugins/devices).
+`view.plugins.messages` is a [`MessagesView`](#messagesview): each channel's threads and their messages, with how many are unread. A message's `replies` are ready-made buttons, and `replied` is the reply once it's sent. A thread's `read` and a channel's `read` are ready buttons that mark them read. Messages usually show inside an app on a [device](/docs/plugins/devices).
 
 `@ifloom/plugin-messages/react` draws a channel inside an app, for a game drawn with [`@ifloom/react`](/docs/react). List `messagesUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a [`MessagesSection`](#messagessection) is drawn wherever a [device](/docs/plugins/devices)'s app shows a messages channel. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
@@ -536,11 +542,7 @@ const messagesUi: PluginUi
 
 The plugin's [`PluginUi`](/docs/react/kit#pluginui): a [`MessagesSection`](#messagessection) is drawn wherever a [device](/docs/plugins/devices)'s app shows a messages channel.
 
-Its words are in `MESSAGES_WORDS`. A game rewords any of them with `ui.<key>` in its strings, as it does the React UI's own: `{ 'ui.allRead': '…' }`.
-
-| Key | English |
-|---|---|
-| `ui.allRead` | `Mark all read` |
+It has no words of its own: its buttons say what the view's buttons say, the plugin's [strings](#strings).
 
 ### MessagesSection
 
@@ -550,7 +552,7 @@ const MessagesSection: PluginSectionComponent
 
 A [messages](/docs/plugins/messages) channel, the one named by the section's `with.channel` (`data-channel`). Each thread (`data-thread`) shows under its sender's name and portrait, with its messages as bubbles. A message's [`beats`](/docs/plugins/messages#messageview) are drawn with [`Beat`](/docs/react/components#beat), so a picture or a clip in it shows in the bubble and opens in the viewer. Under each message is the reply the player sent, or the replies on offer as buttons. A message from a [pool](/docs/plugins/messages#messages-that-come-again) that arrives again is a new bubble each time, and each `message` carries its arrival's key as `data-message`.
 
-Opening the channel marks nothing read, so the unread count stays until the player clears it. While the channel has unread messages, a **Mark all read** button (`ui.allRead`) sends `messages/read` for the channel. It draws nothing if the channel isn't in the view.
+Opening the channel marks nothing read, so the unread count stays until the player clears it. While the channel has unread messages, the channel's **Mark all read** button from the view marks it read. It draws nothing if the channel isn't in the view.
 
 Replaceable as `MessagesSection` in [`components`](/docs/react/components#components). Parts: `channel`, `thread`, `thread-title`, `thread-portrait`, `message` (with `data-message`), `bubble` (with `data-from`) and `button`.
 

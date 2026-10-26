@@ -473,7 +473,7 @@ The menus have hooks that give you their state and actions without their look, s
 | [`useBacklog`](/docs/react/components#usebacklog) | The backlog's entries, kept current. |
 | [`useMods`](/docs/react/components#usemods) | The player's mods, and adding, toggling and removing them. |
 | [`useDevices`](/docs/plugins/devices#usedevices) | The devices in the view. |
-| [`useDevice`](/docs/plugins/devices#usedevice) | Which device is open, and how to open and close one. |
+| [`useDevice`](/docs/plugins/devices#usedevice) | Which device is out, and how to bring one out and put it away. |
 | [`useWords`](/docs/react/components#usewords) | The UI's words in the game's language. |
 
 Your own components can also join the override system, so the next game that uses them can restyle or replace them the same way. See [Your own components](/docs/react/extending#your-own-components-in-the-system).

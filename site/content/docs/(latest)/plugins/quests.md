@@ -253,6 +253,9 @@ The one line the plugin says to the player goes in the [strings table](/docs/ref
 | Key | English |
 |---|---|
 | `quests/notDoing` | `You are not doing that.` |
+| `quests/track` | `Track`, an active quest's [`track`](#questentry) button. |
+| `quests/untrack` | `Untrack`, the same button once the quest is tracked. |
+| `quests/allSeen` | `Mark all seen`, the view's [`seen`](#questsview) button. |
 
 ```ts
 const strings = { 'quests/notDoing': 'That one is not on your list.' }
@@ -262,7 +265,7 @@ const strings = { 'quests/notDoing': 'That one is not on your list.' }
 
 `view(state, game).plugins.quests` is a `QuestsView`.
 
-Its [React UI](#drawing-it) draws it with [`QuestLog`](#questlog), and [`useQuests`](#usequests) gives the same data and the track and seen commands with no markup.
+Its [React UI](#drawing-it) draws it with [`QuestLog`](#questlog), and [`useQuests`](#usequests) gives the same data and the track command with no markup.
 
 ### QuestsView
 
@@ -272,6 +275,7 @@ type QuestsView = {
   done: QuestEntry[]
   toFind: number
   updates: number
+  seen: RenderedChoice | null
 }
 ```
 
@@ -281,6 +285,7 @@ type QuestsView = {
 | `done` | Finished, most recent first. |
 | `toFind` | Quests not started yet, not counting secret ones. |
 | `updates` | How many quests have news the player hasn't looked at. |
+| `seen` | The button that marks every quest's news seen, a [`RenderedChoice`](/docs/reference/view#renderedchoice) labelled with the `quests/allSeen` string, or `null` while there is none. |
 
 ### QuestEntry
 
@@ -297,6 +302,7 @@ type QuestEntry = {
   doneOn: number | null
   tracked: boolean
   updated: boolean
+  track: RenderedChoice | null
 }
 ```
 
@@ -309,10 +315,11 @@ type QuestEntry = {
 | `startedOn`, `doneOn` | The [turn](/docs/reference/state#turn) it started, and the turn it finished, or `null`. |
 | `tracked` | Pinned with `quests/track`. |
 | `updated` | Started or moved on since the player last looked. |
+| `track` | The button that tracks it, or stops tracking it once it's tracked, labelled with the `quests/track` or `quests/untrack` string, or `null` once it's done. |
 
 ## Drawing it
 
-`view.plugins.quests` is a [`QuestsView`](#questsview): the active quests, the tracked one first, and the finished ones, each a [`QuestEntry`](#questentry) with its hint and how far along it is. `updates` counts the quests with news, for a badge. Send `quests/track` to pin one, and `quests/seen` to clear the news.
+`view.plugins.quests` is a [`QuestsView`](#questsview): the active quests, the tracked one first, and the finished ones, each a [`QuestEntry`](#questentry) with its hint and how far along it is. `updates` counts the quests with news, for a badge. Each active quest's `track` and the view's `seen` are ready buttons: draw them as any other, and send their `command`.
 
 `@ifloom/plugin-quests/react` draws the quest log, for a game drawn with [`@ifloom/react`](/docs/react). List `questsUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a Quests section (`ui.quests`) in the side column opens the [`QuestLog`](#questlog) in a dialog, with the count of news on its button, and the `quests` panel draws it too. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
@@ -339,8 +346,8 @@ Its words are in `QUESTS_WORDS`. A game rewords any of them with `ui.<key>` in i
 | `ui.questNew` | `New` |
 | `ui.questStage` | `{stage} of {stages}` |
 | `ui.quests` | `Quests` |
-| `ui.track` | `Track` |
-| `ui.untrack` | `Untrack` |
+
+The track and seen buttons say what the view's buttons say, the plugin's [strings](#strings).
 
 ### QuestsSection
 
@@ -356,7 +363,7 @@ What `questsUi` puts in the side column: a [`Section`](/docs/react/components#se
 function QuestLog(props: { className?: string; title?: string | false }): JSX.Element | null
 ```
 
-The [quests plugin](/docs/plugins/quests)'s view. Each active quest (`data-quest`) shows its description, the hint for what to do next, and how far it has got (`ui.questStage`). It has a **New** badge when it has changed, and a button to track or untrack it, which sends `quests/track`. The finished quests follow, struck through. While anything is new, the heading shows a count and a **Mark all seen** button (`ui.allSeen`) sends `quests/seen`.
+The [quests plugin](/docs/plugins/quests)'s view. Each active quest (`data-quest`) shows its description, the hint for what to do next, and how far it has got (`ui.questStage`). It has a **New** badge when it has changed, and its **Track** or **Untrack** button from the view. The finished quests follow, struck through. While anything is new, the heading shows a count and the view's **Mark all seen** button follows the list.
 
 `title` replaces the heading, `ui.quests`, for this one list, and `false` leaves it out with its count. It draws nothing in a game without the plugin.
 
@@ -369,11 +376,10 @@ function useQuests(): QuestsControls | null
 
 type QuestsControls = QuestsView & {
   track: (id: string | null) => Result<GameState>
-  seen: () => Result<GameState>
 }
 ```
 
-The [quests](/docs/plugins/quests) plugin's view ([`QuestsView`](/docs/plugins/quests#the-view): `active`, `done`, `toFind` and `updates`) with its two commands, or `null` in a game without the plugin. `track(id)` sends `quests/track`, and `track(null)` tracks none. `seen()` sends `quests/seen`. [`QuestLog`](#questlog) is drawn from it.
+The [quests](/docs/plugins/quests) plugin's view ([`QuestsView`](/docs/plugins/quests#the-view): `active`, `done`, `toFind`, `updates` and its buttons) with a command, or `null` in a game without the plugin. `track(id)` sends `quests/track`, and `track(null)` tracks none. Send the view's `seen` button to mark the news seen. [`QuestLog`](#questlog) is drawn from it.
 
 ::include[../../../../snippets/react/use-quests.tsx]
 

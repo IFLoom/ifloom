@@ -20,7 +20,6 @@ export const JOBS_WORDS = {
   jobPay: 'Pays {pay} a shift',
   jobShifts: 'Shifts worked: {n}',
   jobs: 'Jobs',
-  quitJob: 'Quit',
   shiftInDays: 'Next shift: in {n} days',
   shiftToday: 'Next shift: today',
   shiftTomorrow: 'Next shift: tomorrow',
@@ -76,6 +75,7 @@ export function useJobs(): JobsControls | null {
 }
 
 function JobBoardImpl({ className, title, jobs: only }: { className?: string; title?: string | false; jobs?: readonly string[] }) {
+  const { send } = useGame()
   const words = useWords(JOBS_WORDS)
   const board = usePart('jobs', 'flex flex-col gap-3', className)
   const heading = useKitPart('heading', 'jobs-title', 'font-heading font-semibold')
@@ -131,9 +131,9 @@ function JobBoardImpl({ className, title, jobs: only }: { className?: string; ti
               <div {...actions}>
                 {job.apply ? <ChoiceButton choice={{ ...job.apply, label: words('applyJob') }} /> : null}
                 {job.work ? <ChoiceButton choice={{ ...job.work, label: words('workShift') }} /> : null}
-                {job.hired ? (
-                  <button type="button" {...quit} onClick={() => jobs.quit(job.id)}>
-                    {words('quitJob')}
+                {job.quit ? (
+                  <button type="button" {...quit} disabled={Boolean(job.quit.disabled)} title={job.quit.disabled} onClick={() => send(job.quit!.command)}>
+                    {job.quit.label}
                   </button>
                 ) : null}
               </div>
@@ -156,9 +156,10 @@ function JobBoardImpl({ className, title, jobs: only }: { className?: string; ti
  */
 export const JobBoard = overridable('JobBoard', JobBoardImpl)
 
-function JobsPanel({ data }: { data: unknown }) {
-  const only = data && typeof data === 'object' ? (data as { job?: unknown }).job : undefined
-  return <JobBoard title={false} jobs={Array.isArray(only) ? only.filter((id): id is string => typeof id === 'string') : undefined} />
+/** The `jobs` panel: the jobs on the open board, as the view has them, already filtered by what it was opened with. */
+function JobsPanel() {
+  const board = useJobs()?.panel
+  return board ? <JobBoard title={false} jobs={board.map((job) => job.id)} /> : null
 }
 
 /**

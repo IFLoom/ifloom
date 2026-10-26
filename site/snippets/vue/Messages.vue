@@ -28,7 +28,8 @@ import { runner, view } from './runner.ts'
           </button>
         </template>
       </div>
-      <button v-if="thread.unread" @click="runner.apply({ 'messages/read': { id: thread.id } })">Mark read</button>
+      <!-- Mark read, while anything in the thread is unread. -->
+      <button v-if="thread.read" @click="runner.apply(thread.read.command)">{{ thread.read.label }}</button>
     </section>
   </template>
 </template>

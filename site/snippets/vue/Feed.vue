@@ -16,6 +16,7 @@ import { runner, view } from './runner.ts'
       <span class="likes">{{ post.likes }} likes</span>
       <p v-for="(comment, at) in post.comments" :key="at" class="comment">{{ comment.name }}: {{ comment.text }}</p>
     </article>
-    <button v-if="feed.unread" @click="runner.apply({ 'feed/seen': { id: feed.id } })">Mark seen</button>
+    <!-- Mark all seen, while anything in the feed is new. -->
+    <button v-if="feed.seen" @click="runner.apply(feed.seen.command)">{{ feed.seen.label }}</button>
   </template>
 </template>

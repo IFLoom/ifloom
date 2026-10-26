@@ -60,6 +60,7 @@ function Words({ beats, text }: { beats?: SceneBeat[]; text: string }) {
 }
 
 function FeedSectionImpl({ data, with: options }: SectionProps) {
+  const { send } = useGame()
   const feeds = useFeed()
   const words = useWords(FEED_WORDS)
   const box = usePart('feed', 'flex flex-col gap-3')
@@ -77,9 +78,9 @@ function FeedSectionImpl({ data, with: options }: SectionProps) {
   if (!feed || !feeds) return null
   return (
     <div {...box} data-feed={feed.id}>
-      {feed.unread ? (
-        <button type="button" {...seenAll} onClick={() => feeds.seen(feed.id)}>
-          {words('allSeen')}
+      {feed.seen ? (
+        <button type="button" {...seenAll} onClick={() => send(feed.seen!.command)}>
+          {feed.seen.label}
         </button>
       ) : null}
       {feed.posts.map((post) => (

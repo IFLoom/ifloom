@@ -232,6 +232,8 @@ The plugin's lines go in the [strings table](/docs/reference/strings#plugins-str
 | `wardrobe/alreadyWearing` | `You are already wearing the {thing}.` |
 | `wardrobe/haveNone` | `You have no {thing}.` |
 | `wardrobe/nothingToTakeOff` | `There is nothing to take off.` |
+| `wardrobe/takeOff` | `Take off`, a slot's [`takeOff`](#wardrobeview) button. |
+| `wardrobe/wear` | `Wear {thing}`, a spare thing's [`wear`](#wardrobeview) button. |
 
 `wardrobe/wear` also uses the engine's [`noSuchThing`](/docs/reference/strings#refusals) (`There is no such thing.`), so it reads the same as everywhere else.
 
@@ -255,21 +257,23 @@ Its [React UI](#drawing-it) draws it with [`WardrobeCard`](#wardrobecard), and [
 
 ```ts
 type WardrobeView = {
-  slots: { id: string; label: string; entity: EntityRef | null; name: string | null }[]
-  spare: { entity: EntityRef; name: string; slot: string }[]
+  slots: { id: string; label: string; entity: EntityRef | null; name: string | null; takeOff: RenderedChoice | null }[]
+  spare: { entity: EntityRef; name: string; slot: string; wear: RenderedChoice }[]
 }
 ```
 
 | Field | What it is |
 |---|---|
-| `slots` | Every slot, in the order the game declared them, on whoever the player is playing now. `entity` is what's in it and `name` is its name. Both are `null` for an empty slot. |
-| `spare` | Wearable things they hold and aren't wearing, in the game's order of its entities. `slot` is where each would go. |
+| `slots` | Every slot, in the order the game declared them, on whoever the player is playing now. `entity` is what's in it and `name` is its name. Both are `null` for an empty slot. `takeOff` is the button that takes it off, a [`RenderedChoice`](/docs/reference/view#renderedchoice) labelled with the `wardrobe/takeOff` string, or `null` for an empty slot. |
+| `spare` | Wearable things they hold and aren't wearing, in the game's order of its entities. `slot` is where each would go, and `wear` is the button that puts it on, labelled with the `wardrobe/wear` string. |
+
+Each button is greyed out in advance with the engine's reason when it can't be done now, such as a lock's.
 
 What you wear is also in the engine's [`view.held`](/docs/reference/view#held), since you still hold it. A UI that wants the bag without the clothes leaves out the refs in `slots`.
 
 ## Drawing it
 
-`view.plugins.wardrobe` is a [`WardrobeView`](#wardrobeview): each slot with what's in it, and the `spare` things you could wear. Send `wardrobe/takeOff` with a slot's id, or `wardrobe/wear` with a thing (see [Commands](#commands)).
+`view.plugins.wardrobe` is a [`WardrobeView`](#wardrobeview): each slot with what's in it, and the `spare` things you could wear. Each slot's `takeOff` and each spare thing's `wear` is a ready button: draw it as any other, and send its `command`.
 
 `@ifloom/plugin-wardrobe/react` draws what the player wears, for a game drawn with [`@ifloom/react`](/docs/react). List `wardrobeUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a Wearing section (`ui.wardrobe`) in the side column holds the [`WardrobeCard`](#wardrobecard), and the `wardrobe` panel draws it too. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
@@ -294,9 +298,9 @@ Its words are in `WARDROBE_WORDS`. A game rewords any of them with `ui.<key>` in
 | Key | English |
 |---|---|
 | `ui.nothingOn` | `Nothing` |
-| `ui.takeOff` | `Take off` |
 | `ui.wardrobe` | `Wearing` |
-| `ui.wearThing` | `Wear {thing}` |
+
+The buttons say what the view's buttons say, the plugin's [strings](#strings) `wardrobe/takeOff` and `wardrobe/wear`.
 
 ### WardrobeSection
 
@@ -312,7 +316,7 @@ What `wardrobeUi` puts in the side column: a folding [`Section`](/docs/react/com
 function WardrobeCard(props: { className?: string; title?: string | false }): JSX.Element | null
 ```
 
-The [wardrobe plugin](/docs/plugins/wardrobe)'s view. Each slot (`data-slot-id`, with `data-worn` holding the reference of what's in it) shows its label and what's in it, or `ui.nothingOn`. When something is in a slot, it has a **Take off** button (`ui.takeOff`). Each spare wearable thing for that slot gets a **Wear …** button (`ui.wearThing`, with the thing's name as `thing`). The buttons send `wardrobe/takeOff` and `wardrobe/wear`.
+The [wardrobe plugin](/docs/plugins/wardrobe)'s view. Each slot (`data-slot-id`, with `data-worn` holding the reference of what's in it) shows its label and what's in it, or `ui.nothingOn`. When something is in a slot, it has the slot's **Take off** button. Each spare wearable thing for that slot gets its **Wear …** button. Both are the view's, with its words and its refusals.
 
 A button that can't be used now is greyed out, with [`whyNot`](/docs/reference/actions#whynot)'s reason in its `title`. The heading is `ui.wardrobe`, or `title`, and `false` leaves it out. It draws nothing in a game without the plugin.
 
@@ -331,12 +335,11 @@ type WardrobeControls = Omit<WardrobeView, 'slots'> & {
   takeOff: (slot: string) => Result<GameState>
 }
 type WardrobeSlotControls = WardrobeView['slots'][number] & {
-  takeOff: RenderedChoice | null
   wear: RenderedChoice[]
 }
 ```
 
-The [wardrobe](/docs/plugins/wardrobe) plugin's view, with a button for each thing the player can do, or `null` in a game without the plugin. Each slot has `takeOff`, a [`RenderedChoice`](/docs/reference/view#renderedchoice) that takes off what's in it (`null` when it's empty), and `wear`, one for each spare wearable thing for that slot, labelled with its name. Each is greyed out with the engine's reason when it can't be done now. `wardrobe.wear(entity)` (a reference, `'clothing:scarf'`) and `wardrobe.takeOff(slot)` send the commands directly. [`WardrobeCard`](#wardrobecard) is drawn from it.
+The [wardrobe](/docs/plugins/wardrobe) plugin's view, with a button for each thing the player can do, or `null` in a game without the plugin. Each slot has the view's `takeOff` (`null` when it's empty), and `wear`, the view's `wear` button of each spare wearable thing for that slot. Each is greyed out with the engine's reason when it can't be done now. `wardrobe.wear(entity)` (a reference, `'clothing:scarf'`) and `wardrobe.takeOff(slot)` send the commands directly. [`WardrobeCard`](#wardrobecard) is drawn from it.
 
 ## The state
 

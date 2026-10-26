@@ -146,10 +146,17 @@ describe('messages', () => {
       ['post', 1],
     ])
     expect(shown(state, g).channels[1].threads[0].name).toBe('Water Board')
-    state = apply(state, g, messages.read('ava')).state
+    // Ready buttons: a thread's Mark read, and a channel's Mark all read.
+    const thread = shown(state, g).channels[0].threads[0]
+    expect(thread.read).toMatchObject({ label: 'Mark read', command: { type: 'custom', name: 'messages/read', with: { id: 'ava' } } })
+    state = apply(state, g, thread.read!.command).state
     expect(shown(state, g).unread).toBe(1)
-    state = apply(state, g, messages.read()).state
+    expect(shown(state, g).channels[0]).toMatchObject({ unread: 0, read: null })
+    const post = shown(state, g).channels[1]
+    expect(post.read).toMatchObject({ label: 'Mark all read', command: { with: { channel: 'post' } } })
+    state = apply(state, g, post.read!.command).state
     expect(shown(state, g).unread).toBe(0)
+    expect(shown(state, g).channels[1].threads[0].read).toBeNull()
   })
 
   it('give a schema 24 reply the words of its prose `<message>#<reply>` as its label', () => {

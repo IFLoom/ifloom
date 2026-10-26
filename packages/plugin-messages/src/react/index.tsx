@@ -7,12 +7,7 @@
 import type { ComponentProps } from 'react'
 import type { GameState, Result, SceneBeat } from '@ifloom/engine'
 import type { MessagesView } from '../index.ts'
-import { Beat, buttonVariants, ChoiceList, overridable, type Override, Picture, type PluginUi, useGame, usePart, useWords } from '@ifloom/react'
-
-/** The messages plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
-export const MESSAGES_WORDS = {
-  allRead: 'Mark all read',
-} as const
+import { Beat, buttonVariants, ChoiceList, overridable, type Override, Picture, type PluginUi, useGame, usePart } from '@ifloom/react'
 
 declare module '@ifloom/react' {
   interface OverridableComponents {
@@ -57,8 +52,8 @@ function Words({ beats, text }: { beats?: SceneBeat[]; text: string }) {
 }
 
 function MessagesSectionImpl({ data, with: options }: SectionProps) {
+  const { send } = useGame()
   const messages = useMessages()
-  const words = useWords(MESSAGES_WORDS)
   const box = usePart('channel', 'flex flex-col gap-4')
   const readAll = usePart('button', buttonVariants({ size: 'sm', variant: 'ghost' }))
   const threadBox = usePart('thread', 'flex flex-col gap-2')
@@ -71,9 +66,9 @@ function MessagesSectionImpl({ data, with: options }: SectionProps) {
   if (!channel || !messages) return null
   return (
     <div {...box} data-channel={channel.id}>
-      {channel.unread ? (
-        <button type="button" {...readAll} onClick={() => messages.read(channel.id)}>
-          {words('allRead')}
+      {channel.read ? (
+        <button type="button" {...readAll} onClick={() => send(channel.read!.command)}>
+          {channel.read.label}
         </button>
       ) : null}
       {channel.threads.map((thread) => (
@@ -119,6 +114,5 @@ export const MessagesSection = overridable('MessagesSection', MessagesSectionImp
  */
 export const messagesUi: PluginUi = {
   id: 'messages',
-  words: MESSAGES_WORDS,
   sections: { messages: MessagesSection },
 }

@@ -5,16 +5,14 @@
  * `wardrobe` panel; or draw it yourself from `useWardrobe`.
  */
 import type { ComponentProps } from 'react'
-import { renderAction, type GameState, type RenderedChoice, type Result } from '@ifloom/engine'
+import type { GameState, RenderedChoice, Result } from '@ifloom/engine'
 import type { WardrobeView } from '../index.ts'
 import { buttonVariants, overridable, type Override, type PluginUi, Section, useGame, useKitPart, usePart, useWords } from '@ifloom/react'
 
 /** The wardrobe plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const WARDROBE_WORDS = {
   nothingOn: 'Nothing',
-  takeOff: 'Take off',
   wardrobe: 'Wearing',
-  wearThing: 'Wear {thing}',
 } as const
 
 declare module '@ifloom/react' {
@@ -30,11 +28,9 @@ declare module '@ifloom/react' {
   }
 }
 
-/** A wardrobe slot as `useWardrobe` gives it: what's in it, and buttons to take it off or put something else on. */
+/** A wardrobe slot as `useWardrobe` gives it: what's in it, and the view's buttons to take it off or put something else on. */
 export type WardrobeSlotControls = WardrobeView['slots'][number] & {
-  /** Takes off what's in the slot, or null when it's empty. Greyed out with the engine's reason when it can't be done now. */
-  takeOff: RenderedChoice | null
-  /** One button for each spare piece of clothing for this slot, labelled with its name. */
+  /** The `wear` button of each spare thing for this slot, from the view's `spare`. */
   wear: RenderedChoice[]
 }
 
@@ -50,19 +46,14 @@ export type WardrobeControls = Omit<WardrobeView, 'slots'> & {
 
 /** The wardrobe plugin's view with its buttons and commands, or null in a game without the plugin. `WardrobeCard` is drawn from it. */
 export function useWardrobe(): WardrobeControls | null {
-  const { view, runner, send } = useGame()
+  const { view, send } = useGame()
   const data = view.plugins.wardrobe as WardrobeView | undefined
   if (!data) return null
-  const button = (id: string, label: string, name: string, with_: Record<string, string>) =>
-    renderAction(runner.state, runner.game, { id, label, command: { type: 'custom', name, with: with_ } })
   return {
     ...data,
     slots: data.slots.map((slot) => ({
       ...slot,
-      takeOff: slot.entity ? button(`takeOff.${slot.id}`, slot.name ?? slot.entity, 'wardrobe/takeOff', { id: slot.id }) : null,
-      wear: data.spare
-        .filter((entry) => entry.slot === slot.id)
-        .map((entry) => button(`wear.${entry.entity}`, entry.name, 'wardrobe/wear', { id: entry.entity })),
+      wear: data.spare.filter((entry) => entry.slot === slot.id).map((entry) => entry.wear),
     })),
     wear: (entity) => send({ type: 'custom', name: 'wardrobe/wear', with: { id: entity } }),
     takeOff: (slot) => send({ type: 'custom', name: 'wardrobe/takeOff', with: { id: slot } }),
@@ -92,8 +83,8 @@ function WardrobeCardImpl({ className, title: titleText }: { className?: string;
         <div key={slot.id} {...row} data-slot-id={slot.id} data-worn={slot.entity ?? undefined}>
           <span {...slotName}>{slot.label}</span>
           <span {...worn}>{slot.name ?? words('nothingOn')}</span>
-          {slot.takeOff ? button(words('takeOff'), slot.takeOff) : null}
-          {slot.wear.map((choice) => button(words('wearThing', { thing: choice.label }), choice))}
+          {slot.takeOff ? button(slot.takeOff.label, slot.takeOff) : null}
+          {slot.wear.map((choice) => button(choice.label, choice))}
         </div>
       ))}
     </section>

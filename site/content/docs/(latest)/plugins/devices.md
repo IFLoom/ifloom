@@ -84,7 +84,7 @@ type DeviceDef = {
 
 | Field | What it is |
 |---|---|
-| `id` | What apps name the device by in `on`, and what `devices/close` closes. |
+| `id` | What apps name the device by in `on`, and what `devices/home` and `devices/close` take. |
 | `name` | What the player reads. |
 | `frame` | How the UI draws it, such as `'phone'`, `'laptop'` or a name of the game's own. If you leave it out, it's the device's `id`. |
 | `sidebar` | Whether to offer it from the sidebar. `false` if you leave it out. |
@@ -295,7 +295,7 @@ const laptop = (state: GameState) => (view(state, game).plugins.devices as Devic
 let state = startingState(game)
 
 laptop(state)
-// { id: 'laptop', name: 'Laptop', frame: 'laptop', sidebar: false, wallpaper: null, badge: 0, open: null,
+// { id: 'laptop', name: 'Laptop', frame: 'laptop', sidebar: false, wallpaper: null, badge: 0, shown: false, open: null,
 //   apps: [{ id: 'notes', ... }, { id: 'shop', ... }, { id: 'bank', disabled: 'You have no account yet.', ... }] }
 // No Mail: it isn't installed yet.
 
@@ -331,8 +331,8 @@ laptop(state).apps[0].disabled         // 'The laptop is at home.', and the same
 
 | Content writes | Helper | Holds when |
 |---|---|---|
-| `{ 'devices/open': { app } }` | `devices.appOpen(app)` | That app is open. |
-| `{ 'devices/open': { device } }` | | Any app is open on that device. |
+| `{ 'devices/open': { app } }` | `devices.appOpen(app)` | That app is open, on a device that's out. |
+| `{ 'devices/open': { device } }` | | That device is out, on its home screen or an app. |
 
 ```ts
 import type { Block } from '@ifloom/engine'
@@ -352,10 +352,11 @@ The first `when` is the call written out. `appOpen` writes the same call for an 
 
 | Command | Helper | Does |
 |---|---|---|
-| `{ 'devices/open': { id } }` | `devices.open(app)` | Opens the app `id` on its device. Any app already open on that device closes. |
-| `{ 'devices/close': { id } }` | `devices.close(device)` | Takes the device `id` back to its home screen. |
+| `{ 'devices/open': { id } }` | `devices.open(app)` | Opens the app `id`, with its device out on it. Any app already open on that device closes. |
+| `{ 'devices/home': { id } }` | `devices.home(device)` | Brings the device `id` out on its home screen, from put away or from an app. |
+| `{ 'devices/close': { id } }` | `devices.close(device)` | Puts the device `id` away. The app that was open on it is forgotten. |
 
-Both are free, so no time passes and the player doesn't move. [Locks](/docs/reference/locks) refuse them like any other command. `deny: ['devices/*']` stops both, and `deny: ['devices/open']` stops only opening.
+Which device is out, and on what, is the game's state, kept in the save, so every UI draws the same and a replay plays the same. All three are free, so no time passes and the player doesn't move. [Locks](/docs/reference/locks) refuse them like any other command. `deny: ['devices/*']` stops all three, and `deny: ['devices/open']` stops only opening.
 
 `devices/open` is refused with the first of these that applies:
 
@@ -366,7 +367,9 @@ Both are free, so no time passes and the player doesn't move. [Locks](/docs/refe
 
 An app's `disabled` in the view is this same answer, so a lock that stops opening greys out every app with its reason.
 
-`devices/close` is refused by locks, and with `There is no such device.` for a device the plugin wasn't given.
+`devices/home` and `devices/close` are refused by locks, and with `There is no such device.` for a device the plugin wasn't given. `devices/close` is refused with `That is put away.` for a device that isn't out.
+
+**Gotcha.** Before schema 29, `devices/close` took a device back to its home screen. A pack written for an older schema has its `devices/close` carried to `devices/home`, and so does an older command log, but your game's own content isn't upgraded: write `devices.home(device)` where you meant that.
 
 You can reword the plugin's own lines (see [Strings](#strings)).
 
@@ -379,7 +382,10 @@ These are the plugin's lines in the [strings table](/docs/reference/strings#plug
 | `devices/noSuchApp` | `There is no such app.` |
 | `devices/notInstalled` | `That is not installed.` |
 | `devices/noSuchDevice` | `There is no such device.` |
+| `devices/notShown` | `That is put away.` |
 | `devices/call` | `Call`, the button on each [contact](#contacts). |
+| `devices/home` | `Home`, a device's [`home`](#deviceview) button. |
+| `devices/close` | `Close`, a device's [`close`](#deviceview) button. |
 
 ```ts
 import type { Content } from '@ifloom/engine'
@@ -418,7 +424,10 @@ type DeviceView = {
   wallpaper: string | null
   badge: number
   apps: AppView[]
+  shown: boolean
   open: AppView | null
+  home: RenderedChoice
+  close: RenderedChoice | null
 }
 ```
 
@@ -427,7 +436,10 @@ type DeviceView = {
 | `frame` | The device's `frame`, or its `id`. |
 | `badge` | What the sidebar button shows. It's every app's count added up, plus one for each dot. |
 | `apps` | The installed apps, in order: as the content gives them, then the ones packs add. |
-| `open` | The app open on this device, with its sections filled in, or `null` for the home screen. |
+| `shown` | Whether the device is out, on its home screen or an app. A UI draws a device that's shown, and none that isn't. |
+| `open` | The app open on this device while it's out, with its sections filled in, or `null` for the home screen or put away. |
+| `home` | The button that brings it out on its home screen, from put away or from an app, labelled with the `devices/home` string. |
+| `close` | The button that puts it away, labelled with the `devices/close` string, or `null` while it isn't out. |
 
 ### AppView
 
@@ -476,7 +488,7 @@ type SectionView =
 
 ## Drawing it
 
-`view.plugins.devices` is a [`DevicesView`](#devicesview): each device with its apps, and the app that's open, if one is. An app's `command` opens it, and `devices/close` takes the device back to its home screen. The open app's `sections` are words, buttons, lists, or another plugin's part, such as a messages channel.
+`view.plugins.devices` is a [`DevicesView`](#devicesview): each device with its apps, whether it's out, and the app that's open, if one is. That's the game's state, so every UI draws the same thing. An app's `command` opens it, a device's `home` button brings it out on its home screen or back from an app, and its `close` button puts it away. The open app's `sections` are words, buttons, lists, or another plugin's part, such as a messages channel.
 
 `@ifloom/plugin-devices/react` draws the devices and their apps, for a game drawn with [`@ifloom/react`](/docs/react). List `devicesUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a button for each device goes in the side column, and each app with news goes in the [`NoticeStrip`](/docs/react/components#noticestrip). An app's plugin sections are drawn by the UI of the plugin they name, so list [`messagesUi`](/docs/plugins/messages#messagesui) and [`feedUi`](/docs/plugins/feed#feedui) too. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
@@ -494,7 +506,7 @@ The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.
 const devicesUi: PluginUi
 ```
 
-The plugin's [`PluginUi`](/docs/react/kit#pluginui): a button for each device goes in the side column, and each app with news goes in the [`NoticeStrip`](/docs/react/components#noticestrip). An app's plugin sections are drawn by the UI of the plugin they name, so list [`messagesUi`](/docs/plugins/messages#messagesui) and [`feedUi`](/docs/plugins/feed#feedui) too.
+The plugin's [`PluginUi`](/docs/react/kit#pluginui): a button for each device goes in the side column, each app with news goes in the [`NoticeStrip`](/docs/react/components#noticestrip), and its provider draws the [`DeviceDialog`](#devicedialog) for the device that's out, once for the whole game. An app's plugin sections are drawn by the UI of the plugin they name, so list [`messagesUi`](/docs/plugins/messages#messagesui) and [`feedUi`](/docs/plugins/feed#feedui) too.
 
 ### DeviceStrip
 
@@ -502,7 +514,7 @@ The plugin's [`PluginUi`](/docs/react/kit#pluginui): a button for each device go
 function DeviceStrip(): JSX.Element | null
 ```
 
-What `devicesUi` adds to the [`NoticeStrip`](/docs/react/components#noticestrip): a count for each app with a badge, on any device, as a button that opens the device on that app. It draws nothing while no app has news.
+What `devicesUi` adds to the [`NoticeStrip`](/docs/react/components#noticestrip): a count for each app with a badge, on any device, as a button that opens that app, which brings its device out on it. It draws nothing while no app has news.
 
 Replaceable as `DeviceStrip` in [`components`](/docs/react/components#components). Parts: `notice-strip-item` (with `data-strip`, the device and the app) and `badge`.
 
@@ -512,17 +524,17 @@ Replaceable as `DeviceStrip` in [`components`](/docs/react/components#components
 function DeviceButtons(): JSX.Element | null
 ```
 
-A button for each device offered from the sidebar (`sidebar: true`), with its badge. Each button opens the device in a [`DeviceDialog`](#devicedialog) and carries `data-device`. Opening the dialog sends no command and costs nothing.
+A button for each device offered from the sidebar (`sidebar: true`), with its badge. Each button sends the device's `home` command, which brings it out on its home screen, free, and carries `data-device`. The [`DeviceDialog`](#devicedialog) then shows it.
 
 Replaceable as `DeviceButtons` in [`components`](/docs/react/components#components). Parts: `devices`, `device-button` (with `data-device`) and `device-badge`.
 
 ### DeviceDialog
 
 ```tsx
-function DeviceDialog(props: { deviceId: string | null; onClose: () => void }): JSX.Element
+function DeviceDialog(props: { deviceId?: string | null; onClose?: () => void }): JSX.Element
 ```
 
-The device with this id in a [`Dialog`](/docs/react/components#dialog), titled with its name and drawn as a [`DeviceScreen`](#devicescreen). It's closed while `deviceId` is `null` or matches no device. `onClose` is called when the player closes it. The content carries `data-frame` with the device's frame, and a phone's dialog is narrower.
+The device that's out, in a [`Dialog`](/docs/react/components#dialog), titled with its name and drawn as a [`DeviceScreen`](#devicescreen). With `deviceId`, only that device, while it's out. It's closed while no device is out. Closing it sends the device's `close` command, which puts it away, then calls `onClose` if you gave one. `devicesUi` draws one for you; without it, place one yourself. The content carries `data-frame` with the device's frame, and a phone's dialog is narrower.
 
 ::include[../../../../snippets/react/device-dialog.tsx]
 
@@ -536,7 +548,7 @@ function DeviceScreen(props: { device: DeviceView }): JSX.Element
 
 A device, open. With no app open, it shows the home screen: the wallpaper (through [`assetUrl`](/docs/react/components#asseturl)) and a grid of apps. Each app is a button with its name, a badge and an icon square carrying `data-icon`, and it sends the app's command (`devices/open`). A locked app is greyed out, with its reason only in its `title`, shown on hover. Unlike a [`ChoiceButton`](/docs/react/components#choicebutton), the icon doesn't print the reason.
 
-With an app open (`data-app`), it shows a **Back** button (`ui.back`, sending `devices/close`), the app's name, and each of the app's sections as an [`AppSection`](#appsection).
+With an app open (`data-app`), it shows a **Back** button (`ui.back`, sending the device's `home` command), the app's name, and each of the app's sections as an [`AppSection`](#appsection).
 
 `device` is one entry of [`useDevices`](#usedevices), a [`DeviceView`](/docs/plugins/devices#deviceview).
 
@@ -585,7 +597,7 @@ type DeviceState = {
 }
 ```
 
-Which device is open in a dialog, and how to open and close one. `device` is the open device as the view has it, or `null`, also when `openId` no longer names one. Each call keeps its own state, so call it once and share it between your buttons and the dialog. [`DeviceButtons`](#devicebuttons) uses it.
+Which device is out, from the view, and how to bring one out and put it away. `openId` and `device` are the device that's out (the first, if several are), or `null`. `open(id)` sends that device's `home` command, and `close()` the `close` command of the one that's out. Every call reads the same game state, so a button of yours and the dialog always agree.
 
 ::include[../../../../snippets/react/use-device.tsx]
 
@@ -594,14 +606,16 @@ Which device is open in a dialog, and how to open and close one. `device` is the
 ### DevicesState
 
 ```ts
-type DevicesState = { open: Record<string, string | null> }
+type DevicesState = { shown: Record<string, string | null> }
 ```
 
-This is what the plugin keeps in a save, at `state.plugins.devices`. It holds the id of the app open on each device, or `null`. A UI should read the view, not this.
+This is what the plugin keeps in a save, at `state.plugins.devices`. Each device that's out is in `shown`, with the id of the app open on it, or `null` on its home screen. A device not in `shown` is put away. A UI should read the view, not this.
+
+A save from version 1 of the plugin, which kept only the app open on each device, loads with every device put away.
 
 ## For code
 
-The helpers build the content objects for you, typed, in the [short form](/docs/reference/custom#plugincall). `devices.open` and `devices.close` return a [`CommandRef`](/docs/reference/custom#commandref), and `devices.appOpen` returns a `Condition`.
+The helpers build the content objects for you, typed, in the [short form](/docs/reference/custom#plugincall). `devices.open`, `devices.home` and `devices.close` return a [`CommandRef`](/docs/reference/custom#commandref), and `devices.appOpen` returns a `Condition`.
 
 ### Helpers
 
@@ -609,6 +623,7 @@ The helpers build the content objects for you, typed, in the [short form](/docs/
 const devices: {
   (): DefinedPlugin<DevicesState, DevicesView>
   open(app: string): CommandRef
+  home(device: string): CommandRef
   close(device: string): CommandRef
   appOpen(app: string): Condition
 }

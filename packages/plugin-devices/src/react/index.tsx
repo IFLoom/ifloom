@@ -1,13 +1,14 @@
 /**
  * @ifloom/plugin-devices/react: the devices plugin's React UI, for a game drawn
  * with `@ifloom/react`. List `devicesUi` in the game's
- * `plugins` to have a button for each device in the side column and each
- * app with news in the notice strip; or draw them yourself from
- * `useDevices`. An app's plugin section is drawn by that plugin's UI, by its
- * id, so list the messages and feed UIs too.
+ * `plugins` to have a button for each device in the side column, each
+ * app with news in the notice strip, and the device that's out in a dialog;
+ * or draw them yourself from `useDevices`. Which device is out, and on what,
+ * is the game's state, so every UI shows the same. An app's plugin section is
+ * drawn by that plugin's UI, by its id, so list the messages and feed UIs too.
  */
 import type { DevicesView, DeviceView, SectionView } from '../index.ts'
-import { useState, type ComponentProps } from 'react'
+import type { ComponentProps, ReactNode } from 'react'
 import {
   assetUrl,
   Beat,
@@ -69,31 +70,39 @@ export function useDevices(): DevicesState {
   return (view.plugins.devices as DevicesView | undefined)?.devices ?? []
 }
 
-/** Which device is open in a dialog, if any, and how to open and close one. */
+/** Which device is out, as the game's state has it, and how to bring one out and put it away. */
 export type DeviceState = {
-  /** The open device's id, or `null`. */
+  /** The id of the device that's out, the first if more than one is, or `null`. */
   openId: string | null
-  /** The open device as the view has it, or `null` (also when the id no longer names one). */
+  /** That device as the view has it, or `null`. */
   device: DeviceView | null
+  /** Brings a device out on its home screen: sends its `home` button's command. */
   open: (id: string) => void
+  /** Puts the device that's out away: sends its `close` button's command. */
   close: () => void
 }
 
-/** Which device is open, for a button row and the dialog that shows it. Each call keeps its own. */
+/** Which device is out, for a button row and the dialog that shows it. Every call reads the same, from the view. */
 export function useDevice(): DeviceState {
+  const { send } = useGame()
   const devices = useDevices()
-  const [openId, setOpenId] = useState<string | null>(null)
+  const device = devices.find((entry) => entry.shown) ?? null
   return {
-    openId,
-    device: devices.find((entry) => entry.id === openId) ?? null,
-    open: setOpenId,
-    close: () => setOpenId(null),
+    openId: device?.id ?? null,
+    device,
+    open: (id) => {
+      const home = devices.find((entry) => entry.id === id)?.home
+      if (home) send(home.command)
+    },
+    close: () => {
+      if (device?.close) send(device.close.command)
+    },
   }
 }
 
 function DeviceButtonsImpl() {
+  const { send } = useGame()
   const devices = useDevices().filter((device) => device.sidebar)
-  const { openId, open, close } = useDevice()
   const row = usePart('devices', 'flex gap-2')
   const button = useKitPart('opener', 'device-button', buttonVariants({ variant: 'outline', size: 'sm' }))
   const badge = usePart('device-badge', badgeVariants())
@@ -101,17 +110,16 @@ function DeviceButtonsImpl() {
   return (
     <div {...row}>
       {devices.map((device) => (
-        <button key={device.id} type="button" {...button} onClick={() => open(device.id)} data-device={device.id}>
+        <button key={device.id} type="button" {...button} onClick={() => send(device.home.command)} data-device={device.id}>
           {device.name}
           {device.badge ? <span {...badge}>{device.badge}</span> : null}
         </button>
       ))}
-      <DeviceDialog deviceId={openId} onClose={close} />
     </div>
   )
 }
 
-/** The sidebar's device buttons, each with its badge; a button opens the device. */
+/** The sidebar's device buttons, each with its badge; a button brings the device out on its home screen, and the `DeviceDialog` shows it. */
 export const DeviceButtons = overridable('DeviceButtons', DeviceButtonsImpl)
 
 function AppSectionImpl({ section }: { section: SectionView }) {
@@ -186,7 +194,7 @@ function DeviceScreenImpl({ device }: { device: DeviceView }) {
       <div {...screen}>
         <div {...app} data-app={device.open.id}>
           <div {...header}>
-            <button type="button" {...back} aria-label={words('back')} onClick={() => send({ type: 'custom', name: 'devices/close', with: { id: device.id } })}>
+            <button type="button" {...back} aria-label={words('back')} onClick={() => send(device.home.command)}>
               <Icon name="back" />
             </button>
             <h3 {...title}>{device.open.name}</h3>
@@ -226,12 +234,19 @@ function DeviceScreenImpl({ device }: { device: DeviceView }) {
 /** A device, open: its home screen of apps, or the app that is open, with a way back. */
 export const DeviceScreen = overridable('DeviceScreen', DeviceScreenImpl)
 
-function DeviceDialogImpl({ deviceId, onClose }: { deviceId: string | null; onClose: () => void }) {
+function DeviceDialogImpl({ deviceId, onClose }: { deviceId?: string | null; onClose?: () => void }) {
+  const { send } = useGame()
   const words = useWords()
-  const device = useDevices().find((entry) => entry.id === deviceId)
+  const devices = useDevices()
+  // The device asked for while it's out, else the one that's out.
+  const device = deviceId === undefined ? devices.find((entry) => entry.shown) : devices.find((entry) => entry.id === deviceId && entry.shown)
   const { dialog, overlay, title, close } = useDialogParts(device?.frame === 'phone' ? 'max-w-sm' : undefined)
+  const putAway = () => {
+    if (device?.close) send(device.close.command)
+    onClose?.()
+  }
   return (
-    <Dialog open={Boolean(device)} onOpenChange={(open) => (open ? undefined : onClose())}>
+    <Dialog open={Boolean(device)} onOpenChange={(open) => (open ? undefined : putAway())}>
       {device ? (
         <DialogContent
           bare
@@ -253,38 +268,31 @@ function DeviceDialogImpl({ deviceId, onClose }: { deviceId: string | null; onCl
   )
 }
 
-/** A device in a dialog, drawn in its frame (`data-frame` for the theme to style a phone or a laptop). */
+/**
+ * The device that's out, in a dialog, drawn in its frame (`data-frame` for
+ * the theme to style a phone or a laptop); `deviceId` draws only that one.
+ * Closing the dialog puts the device away, and calls `onClose` if given. The
+ * devices UI draws one for the whole game.
+ */
 export const DeviceDialog = overridable('DeviceDialog', DeviceDialogImpl)
 
 function DeviceStripImpl() {
   const { send } = useGame()
   const words = useWords()
   const devices = useDevices()
-  const device = useDevice()
   const item = usePart('notice-strip-item', buttonVariants({ size: 'sm', variant: 'outline' }))
   const badge = usePart('badge', badgeVariants())
-  // Each app with a badge, on any device: the button opens the device on that app.
+  // Each app with a badge, on any device: the button opens that app, which brings its device out on it.
   const apps = devices.flatMap((entry) => entry.apps.filter((app) => app.badge && !app.disabled).map((app) => ({ device: entry, app })))
-  // The device stays open once the news is read.
-  if (!apps.length && !device.openId) return null
+  if (!apps.length) return null
   return (
     <>
       {apps.map(({ device: entry, app }) => (
-        <button
-          key={`${entry.id}/${app.id}`}
-          type="button"
-          {...item}
-          data-strip={`${entry.id}/${app.id}`}
-          onClick={() => {
-            device.open(entry.id)
-            send(app.command)
-          }}
-        >
+        <button key={`${entry.id}/${app.id}`} type="button" {...item} data-strip={`${entry.id}/${app.id}`} onClick={() => send(app.command)}>
           {app.name}
           {typeof app.badge === 'number' ? <span {...badge}>{app.badge}</span> : <span {...badge} aria-label={words('unread')} />}
         </button>
       ))}
-      <DeviceDialog deviceId={device.openId} onClose={device.close} />
     </>
   )
 }
@@ -298,11 +306,23 @@ export const DeviceStrip = overridable('DeviceStrip', DeviceStripImpl)
 
 /**
  * The devices plugin's React UI, for `plugins` on `mountGame` or
- * `GameProvider`: the `DeviceButtons` in the side column, and each app with
- * news in the `NoticeStrip`. An app's plugin sections are drawn by the UI of
- * the plugin they name, such as `messagesUi` and `feedUi`.
+ * `GameProvider`: the `DeviceButtons` in the side column, each app with
+ * news in the `NoticeStrip`, and the `DeviceDialog` for the device that's
+ * out. An app's plugin sections are drawn by the UI of the plugin they name,
+ * such as `messagesUi` and `feedUi`.
  */
 export const devicesUi: PluginUi = {
   id: 'devices',
   layout: { sidebar: [() => <DeviceButtons />], strip: [() => <DeviceStrip />] },
+  provider: DevicesProvider,
+}
+
+/** Draws the device that's out over the game, once, wherever its buttons are. */
+function DevicesProvider({ children }: { children: ReactNode }) {
+  return (
+    <>
+      {children}
+      <DeviceDialog />
+    </>
+  )
 }

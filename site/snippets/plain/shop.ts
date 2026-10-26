@@ -4,8 +4,8 @@ import { add, drawChoices } from './runner.ts'
 
 /** The `shop` panel, from drawPanel: shop.open('counter') opens it with { vendor: 'counter' }. */
 export function drawShop(parent: HTMLElement, { view }: RunnerSnapshot): void {
-  if (view.panel?.panel !== 'shop') return
-  const vendor = view.plugins.shop?.vendors.find((one) => one.id === view.panel?.with.vendor)
+  // The vendor whose counter the open panel shows; null while it's shut.
+  const vendor = view.plugins.shop?.panel
   if (!vendor) return
   add(parent, 'h2', vendor.name)
   if (vendor.closed) add(parent, 'p', vendor.closed, 'reason')

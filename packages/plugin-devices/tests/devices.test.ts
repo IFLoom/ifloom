@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { apply, loadGame, startingState, view, whyNot, type Game, type GameState } from '@ifloom/engine'
+import { apply, commandOf, holds, loadGame, loadState, replay, startingState, upgradePack, view, whyNot, type Game, type GameState } from '@ifloom/engine'
 import { devices, type AppDef, type DevicesView } from '../src/index.ts'
 
 const apps: AppDef[] = [
@@ -71,6 +71,50 @@ describe('devices', () => {
     expect(laptop(state, g).badge).toBe(1)
     state = apply(state, g, devices.open('mail')).state
     expect(laptop(state, g).open?.sections).toEqual([{ type: 'panel', panel: 'inbox', with: { letters: 2 } }])
+  })
+
+  it('keep whether a device is out, and on what, in the save: put away, its home screen, or an app', () => {
+    const g = game()
+    const start = begin(g)
+    expect(laptop(start, g)).toMatchObject({ shown: false, open: null, close: null })
+    expect(laptop(start, g).home).toMatchObject({ label: 'Home', command: { type: 'custom', name: 'devices/home', with: { id: 'laptop' } } })
+    expect(whyNot(start, g, devices.close('laptop'))).toBe('That is put away.')
+    const home = apply(start, g, laptop(start, g).home.command).state
+    expect(home.plugins.devices.state).toEqual({ shown: { laptop: null } })
+    expect(home.turn).toBe(start.turn)
+    expect(laptop(home, g)).toMatchObject({ shown: true, open: null, close: { label: 'Close' } })
+    expect(holds(home, g, { 'devices/open': { device: 'laptop' } })).toBe(true)
+    const notes = apply(home, g, devices.open('notes')).state
+    expect(laptop(notes, g)).toMatchObject({ shown: true, open: { id: 'notes' } })
+    // Home from an app goes back to the home screen; close puts it away and forgets the app.
+    expect(laptop(apply(notes, g, devices.home('laptop')).state, g)).toMatchObject({ shown: true, open: null })
+    const away = apply(notes, g, laptop(notes, g).close!.command).state
+    expect(away.plugins.devices.state).toEqual({ shown: {} })
+    expect(laptop(away, g)).toMatchObject({ shown: false, open: null, close: null })
+    expect(holds(away, g, { 'devices/open': { device: 'laptop' } })).toBe(false)
+    // Opening an app brings its device out on it.
+    expect(laptop(apply(start, g, devices.open('notes')).state, g)).toMatchObject({ shown: true, open: { id: 'notes' } })
+  })
+
+  it('load an older save put away, and play an older log’s close as going home', () => {
+    const g = game()
+    const old = { ...begin(g), plugins: { ...begin(g).plugins, devices: { version: 1, state: { open: { laptop: 'notes' } } } } }
+    const loaded = loadState(old, g)
+    expect(loaded.ok && loaded.value.plugins.devices.state).toEqual({ shown: {} })
+    const log = {
+      game: g.id,
+      start: begin(g),
+      commands: [commandOf(devices.open('notes')), commandOf({ 'devices/close': { id: 'laptop' } })],
+      plugins: { devices: 6 },
+    }
+    const played = replay(g, log)
+    expect(played.ok && played.value.plugins.devices.state).toEqual({ shown: { laptop: null } })
+  })
+
+  it('carry an older pack’s close, which went home, to devices/home', () => {
+    const pack = { id: 'mod:back', schema: 28, actions: [{ id: 'back', label: 'Back', command: { 'devices/close': { id: 'laptop' } } }] }
+    const up = upgradePack(pack, [devices()])
+    expect(up.ok && up.value.actions).toEqual([{ id: 'back', label: 'Back', command: { 'devices/home': { id: 'laptop' } } }])
   })
 
   it('close an app that stops being installed', () => {

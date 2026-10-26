@@ -23,6 +23,7 @@ import {
   parseRef,
   PLAYER,
   protagonist,
+  renderAction,
   resolveHolder,
   stringOf,
   declaredTrait,
@@ -35,6 +36,7 @@ import {
   type Game,
   type GameState,
   type PluginProblem,
+  type RenderedChoice,
   type TraitDef,
 } from '@ifloom/engine'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
@@ -66,10 +68,18 @@ export type WardrobeSlot = {
 export type WardrobeState = { worn: Record<string, Record<string, EntityRef | null>> }
 
 export type WardrobeView = {
-  /** Every slot, in order, with what is in it on whoever the player is playing now. */
-  slots: { id: string; label: string; entity: EntityRef | null; name: string | null }[]
-  /** Wearable things you hold and aren't wearing, in the game's order of its entities. */
-  spare: { entity: EntityRef; name: string; slot: string }[]
+  /**
+   * Every slot, in order, with what is in it on whoever the player is
+   * playing now, and the button that takes it off (labelled with the
+   * `wardrobe/takeOff` string, `Take off`), or null while it's empty.
+   */
+  slots: { id: string; label: string; entity: EntityRef | null; name: string | null; takeOff: RenderedChoice | null }[]
+  /**
+   * Wearable things you hold and aren't wearing, in the game's order of its
+   * entities, each with the button that puts it on (labelled with the
+   * `wardrobe/wear` string, `Wear {thing}`).
+   */
+  spare: { entity: EntityRef; name: string; slot: string; wear: RenderedChoice }[]
 }
 
 /**
@@ -166,6 +176,9 @@ function wardrobePlugin(): DefinedPlugin<WardrobeState, WardrobeView> {
       alreadyWearing: 'You are already wearing the {thing}.',
       haveNone: 'You have no {thing}.',
       nothingToTakeOff: 'There is nothing to take off.',
+      // The view's buttons.
+      takeOff: 'Take off',
+      wear: 'Wear {thing}',
     },
     // What the player starts in. A protagonist starts in nothing until they put something on.
     start: (game) => ({
@@ -229,11 +242,20 @@ function wardrobePlugin(): DefinedPlugin<WardrobeState, WardrobeView> {
       return {
         slots: slotsOf(game).map((slot) => {
           const entity = on[slot.id] ?? null
-          return { id: slot.id, label: slot.label, entity, name: entity ? nameOf(state, game, entity) : null }
+          return {
+            id: slot.id,
+            label: slot.label,
+            entity,
+            name: entity ? nameOf(state, game, entity) : null,
+            takeOff: entity ? renderAction(state, game, { id: `takeOff.${slot.id}`, label: stringOf(game, `${ID}/takeOff`), command: takeOff(slot.id) }) : null,
+          }
         }),
         spare: heldBy(state, game, YOU).flatMap(({ ref }) => {
           const wearable = wearableOf(state, game, ref)
-          return wearable && !worn.has(ref) ? [{ entity: ref, name: nameOf(state, game, ref), slot: wearable.slot }] : []
+          if (!wearable || worn.has(ref)) return []
+          const name = nameOf(state, game, ref)
+          const button = renderAction(state, game, { id: `wear.${ref}`, label: stringOf(game, `${ID}/wear`, { thing: name }), command: wear(ref) })
+          return [{ entity: ref, name, slot: wearable.slot, wear: button }]
         }),
       }
     },

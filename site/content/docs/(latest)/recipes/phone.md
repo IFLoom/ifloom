@@ -250,7 +250,7 @@ export function phone(view: View, runner: Runner): HTMLElement | null {
   }
   const back = screen.appendChild(document.createElement('button'))
   back.textContent = 'Back'
-  back.onclick = () => runner.apply(devices.close(device.id))
+  back.onclick = () => runner.apply(device.home.command)
   screen.appendChild(document.createElement('h2')).textContent = device.open.name
   for (const section of device.open.sections) {
     if (section.type === 'plugin' && section.plugin === 'messages') {
@@ -304,7 +304,7 @@ const feed = (section: SectionView & { type: 'plugin' }) => (view.value.plugins.
       </button>
     </template>
     <template v-else>
-      <button @click="runner.apply(devices.close(device.id))">Back</button>
+      <button @click="runner.apply(device.home.command)">Back</button>
       <h2>{{ device.open.name }}</h2>
       <template v-for="(section, index) in device.open.sections" :key="index">
         <template v-if="section.type === 'plugin' && section.plugin === 'messages'">

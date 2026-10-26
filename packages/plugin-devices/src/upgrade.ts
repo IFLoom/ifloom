@@ -29,7 +29,7 @@ function valueCall(name: string): { value: string; with?: Record<string, unknown
 }
 
 /** The version of what content writes for this plugin. */
-export const CONTENT_VERSION = 27
+export const CONTENT_VERSION = 29
 
 export const contentMigrations: Record<number, ContentStep> = {
   // 5 → 6: a command's one target is `id`.
@@ -60,10 +60,13 @@ export const contentMigrations: Record<number, ContentStep> = {
           }
         : app,
     ),
+  // 28 → 29: `devices/close` puts a device away, and `devices/home` is what it did before: back to the home screen.
+  // Only a command is called `devices/close`, so its short form is one too.
+  28: (pack, tools) => tools.calls(pack, (call) => (call.name === 'devices/close' && call.form !== 'long' ? { name: 'devices/home', with: call.with } : call)),
 }
 
 /** The version of this plugin's commands. */
-export const COMMAND_VERSION = 6
+export const COMMAND_VERSION = 7
 
 export const commandMigrations: Record<number, CommandStep> = {
   // 5 → 6: a command's one target is `id`.
@@ -71,4 +74,6 @@ export const commandMigrations: Record<number, CommandStep> = {
     command.type === 'custom' && typeof command.name === 'string' && COMMANDS_6[command.name]
       ? { ...command, with: renamed(command.with, COMMANDS_6[command.name]) }
       : command,
+  // 6 → 7: `devices/close` puts a device away, and `devices/home` is what it did before: back to the home screen.
+  6: (command) => (command.type === 'custom' && command.name === 'devices/close' ? { ...command, name: 'devices/home' } : command),
 }

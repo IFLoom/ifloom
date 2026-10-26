@@ -36,6 +36,7 @@ import { minigameOf } from './features/minigames.ts'
 import { withUi, type BlockUi, type ChoiceUi, type SceneUi, type Ui } from './features/ui.ts'
 import { commandEntry, featureContext } from './core.ts'
 import type { Command, Effect, GameState } from './types.ts'
+import type { OpenPanel } from './features/panels.ts'
 import { commandOf, previewEffects } from './custom.ts'
 
 /**
@@ -256,6 +257,18 @@ function beatsOf(
     beats: [...lead, ...made.beats, ...placed.filter((item) => item.at !== 'lead').flatMap((item) => item.beats)],
     fresh: from ? lead.length + from : 0,
   }
+}
+
+/**
+ * The panel open over the story, as `view.panel` shows it: one the `panel`
+ * effect opened, else the open scene's own, else null. For a plugin's view
+ * that shows what its own panel holds, filtered by what it was opened with,
+ * as the jobs plugin's `panel` is the jobs on the open board.
+ */
+export function panelOf(state: GameState, game: Game): OpenPanel | null {
+  if (state.panel) return state.panel
+  const held = state.sceneId ? bakedScene(game, state.sceneId)?.panel : undefined
+  return held ? { panel: held.panel, with: { ...held.with }, scene: state.sceneId! } : null
 }
 
 /**

@@ -1,6 +1,6 @@
 import type { RunnerSnapshot } from '@ifloom/engine'
 // runner, add and drawChoices, as in the vanilla template's src/main.ts.
-import { add, drawChoices, runner } from './runner.ts'
+import { add, drawChoices } from './runner.ts'
 
 /** Each channel's threads, with their messages and the replies on offer, and a button that marks a thread read. */
 export function drawMessages(parent: HTMLElement, { view }: RunnerSnapshot): void {
@@ -18,7 +18,8 @@ export function drawMessages(parent: HTMLElement, { view }: RunnerSnapshot): voi
         if (message.replied) add(bubble, 'p', message.replied, 'replied')
         else drawChoices(bubble, message.replies)
       }
-      if (thread.unread) add(box, 'button', 'Mark read').onclick = () => runner.apply({ 'messages/read': { id: thread.id } })
+      // Mark read, while anything in the thread is unread.
+      if (thread.read) drawChoices(box, [thread.read])
     }
   }
 }

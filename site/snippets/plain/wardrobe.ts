@@ -1,6 +1,6 @@
 import type { RunnerSnapshot } from '@ifloom/engine'
-// runner and add, as in the vanilla template's src/main.ts.
-import { add, runner } from './runner.ts'
+// add and drawChoices, as in the vanilla template's src/main.ts.
+import { add, drawChoices } from './runner.ts'
 
 /** What you have on, slot by slot, with a button to take each thing off, and what else you could wear. */
 export function drawWardrobe(parent: HTMLElement, { view }: RunnerSnapshot): void {
@@ -9,9 +9,11 @@ export function drawWardrobe(parent: HTMLElement, { view }: RunnerSnapshot): voi
   for (const slot of wardrobe.slots) {
     const row = add(parent, 'div', '', 'slot')
     add(row, 'span', `${slot.label}: ${slot.name ?? 'nothing'}`)
-    if (slot.entity) add(row, 'button', 'Take off').onclick = () => runner.apply({ 'wardrobe/takeOff': { id: slot.id } })
+    // Ready-made buttons, worded by the plugin's strings: Take off, Wear raincoat.
+    if (slot.takeOff) drawChoices(row, [slot.takeOff])
   }
-  for (const spare of wardrobe.spare) {
-    add(parent, 'button', `Wear the ${spare.name}`).onclick = () => runner.apply({ 'wardrobe/wear': { id: spare.entity } })
-  }
+  drawChoices(
+    parent,
+    wardrobe.spare.map((spare) => spare.wear),
+  )
 }

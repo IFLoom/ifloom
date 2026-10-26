@@ -16,7 +16,7 @@ import type { Pack } from './loader.ts'
 import type { Plugin } from './plugin.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
-export const SCHEMA = 28
+export const SCHEMA = 29
 
 /** A pack as it came in: some schema's shape, not necessarily this one. */
 export type RawPack = Record<string, unknown> & { schema: number }
@@ -141,6 +141,9 @@ export const PACK_STEPS: Record<number, (pack: RawPack, context: PackContext) =>
   26: (pack) => toSchema27(pack),
   // 27 → 28: a scene's layered picture with hotspots is its `picture`, not its `stage`. See `toSchema28`.
   27: (pack) => toSchema28(pack),
+  // 28 → 29: nothing of the engine's. The devices plugin's `devices/close` puts a device away now, and its step
+  // carries an older `close`, which went back to the home screen, to `devices/home`.
+  28: (pack) => pack,
 }
 
 /** Keys of a pack's `words` table renamed, the words kept. */

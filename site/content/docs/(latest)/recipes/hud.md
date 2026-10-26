@@ -182,7 +182,8 @@ export function Unread() {
       {notices ? <button onClick={() => setShowNotices(!showNotices)}>🔔 {notices}</button> : null}
       {texts ? <button onClick={() => phone.open('phone')}>✉ {texts}</button> : null}
       {showNotices ? <Notices limit={10} /> : null}
-      <DeviceDialog deviceId={phone.openId} onClose={phone.close} />
+      {/* Without devicesUi in `plugins`, which draws it for you: the phone once it's out. */}
+      <DeviceDialog />
     </div>
   )
 }

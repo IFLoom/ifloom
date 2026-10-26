@@ -7,7 +7,7 @@ A panel is a piece of UI that content opens over the story by name: a shop's cou
 Nothing opens a panel by itself. Content opens one with the [`panel` effect](/docs/reference/effects#panel), so a place's action, a person's scene, a thing's use in the [inventory](/docs/plugins/inventory), an app's button, a choice or an inline `[[act:]]` link can each open one. Because it's an effect, saves and replays open it exactly as play did.
 
 ```ts
-import type { OpenPanel, ScenePanel } from '@ifloom/engine'
+import { panelOf, type OpenPanel, type ScenePanel } from '@ifloom/engine'
 ```
 
 ## A worked example
@@ -63,6 +63,29 @@ The panel that's open: its name and what it was opened with. `with` is `{}` when
 
 `scene` is there when the open scene holds the panel itself (see [A scene's panel](#a-scenes-panel)), and names that scene. A UI usually draws such a panel in the scene, in place of its choices.
 
+## A plugin's panel
+
+A plugin that has a panel of its own puts what that panel shows in its view, already filtered by what the panel was opened with, as its view's `panel`, and `null` while that panel isn't open. So a UI draws an open panel from one place and filters nothing itself. The [jobs](/docs/plugins/jobs#jobsview) plugin's `panel` is the jobs on the open board, only those its `with.job` lists, and the [shop](/docs/plugins/shop#shopview)'s is the vendor whose counter is open.
+
+```ts
+const board = view.plugins.jobs?.panel // null, or the jobs the board was opened with
+```
+
+### panelOf
+
+```ts
+function panelOf(state: GameState, game: Game): OpenPanel | null
+```
+
+The panel open now, as `view.panel` shows it: one the `panel` effect opened, else the open scene's own, else `null`. A plugin's `view` reads it to fill its own `panel`. A plugin of your own with a panel does the same:
+
+```ts
+view: (state, { game }) => {
+  const open = panelOf(state, game)
+  return { panel: open?.panel === 'tasks' ? tasksIn(open.with) : null }
+}
+```
+
 ## A scene's panel
 
 ```ts
@@ -98,9 +121,9 @@ Moving to another place doesn't close a panel by itself, because the engine keep
 
 ## Drawing it
 
-Read `view.panel`, an [`OpenPanel`](#openpanel), and draw it over everything else by its name, from what it was opened with. Send `{ type: 'closePanel' }` when the player closes it. A scene's own panel has `scene` set: it stays while the scene is open, so give it no Close button.
+Read `view.panel`, an [`OpenPanel`](#openpanel), and draw it over everything else by its name. A plugin's panel is drawn from its view's `panel` (see [A plugin's panel](#a-plugins-panel)), and a game's own from what it was opened with. Send `{ type: 'closePanel' }` when the player closes it. A scene's own panel has `scene` set: it stays while the scene is open, so give it no Close button.
 
-The React UI's [`PanelHost`](/docs/react/components#panelhost), in the default layout, draws the panels it knows, and a panel of your own goes in `panels` by its name. The Plain JS tab uses `runner` and `add` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+The React UI's [`PanelHost`](/docs/react/components#panelhost), in the default layout, draws the panels it knows, and a panel of your own goes in `panels` by its name. The Plain JS tab uses `runner` and `add` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
 ::include[../../../../snippets/plain/panel.ts]{meta='tab="Plain JS" tab-group="framework"'}
 

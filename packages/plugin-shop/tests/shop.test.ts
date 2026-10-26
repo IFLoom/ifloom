@@ -98,6 +98,14 @@ const shown = (state: GameState, g: Game) => view(state, g).plugins.shop as Shop
 const goods = (state: GameState, g: Game, vendor = 'counter') => shown(state, g).vendors.find((entry) => entry.id === vendor)!.goods
 
 describe('the shop, on its own', () => {
+  it('shows the counter the open shop panel names as its view’s panel, and none while it is shut', () => {
+    const g = game()
+    expect(shown(fresh(g), g).panel).toBeNull()
+    const open = { ...fresh(g), panel: { panel: 'shop', with: { vendor: 'counter' } } }
+    expect(shown(open, g).panel?.id).toBe('counter')
+    expect(shown({ ...open, panel: { panel: 'shop', with: { vendor: 'vendor:counter' } } }, g).panel?.id).toBe('counter')
+  })
+
   it('sells for prices in any spendable stat', () => {
     const g = game()
     const state = run(fresh(g), g, shop.buy('counter', 'food:sandwich'), shop.buy('counter', 'food:coffee', 2))

@@ -20,6 +20,7 @@ import {
   inRange,
   notify,
   pluginQuery,
+  renderAction,
   speakerOf,
   stringOf,
   type Block,
@@ -143,6 +144,8 @@ export type ThreadView = {
   /** Oldest first. */
   messages: MessageView[]
   unread: number
+  /** The button that marks the thread read (the `messages/markRead` string, `Mark read`), or null while nothing in it is unread. */
+  read: RenderedChoice | null
 }
 
 export type ChannelView = {
@@ -151,6 +154,8 @@ export type ChannelView = {
   /** Newest activity first. */
   threads: ThreadView[]
   unread: number
+  /** The button that marks the whole channel read (the `messages/allRead` string, `Mark all read`), or null while nothing in it is unread. */
+  read: RenderedChoice | null
 }
 
 export type MessagesView = { channels: ChannelView[]; unread: number }
@@ -279,6 +284,9 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
       noSuchMessage: 'There is no such message.',
       alreadyReplied: 'You have already replied.',
       notOnOffer: 'That is not a reply on offer.',
+      // The view's buttons.
+      markRead: 'Mark read',
+      allRead: 'Mark all read',
     },
     start: () => ({ arrived: [], replied: {}, read: {} }),
     conditions: {
@@ -423,17 +431,27 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
           })
         const list = [...threads].map(([id, shown]): ThreadView => {
           const sender = senderOf(state, game, id)
+          const unread = shown.filter((message) => !message.read).length
           return {
             id,
             name: sender.name,
             image: sender.image,
             portrait: sender.portrait,
             messages: shown,
-            unread: shown.filter((message) => !message.read).length,
+            unread,
+            read: unread ? renderAction(state, game, { id: `read.${id}`, label: stringOf(game, `${ID}/markRead`), command: readThread(id) }) : null,
           }
         })
         list.sort((a, b) => (latest.get(b.id) ?? 0) - (latest.get(a.id) ?? 0))
-        return { id: channel.id, name: channel.name, threads: list, unread: unreadIn(slice, game, channel.id) }
+        const unread = unreadIn(slice, game, channel.id)
+        const read = unread
+          ? renderAction(state, game, {
+              id: `read.${channel.id}`,
+              label: stringOf(game, `${ID}/allRead`),
+              command: { [`${ID}/read`]: { channel: channel.id } },
+            })
+          : null
+        return { id: channel.id, name: channel.name, threads: list, unread, read }
       })
       return { channels, unread: unreadIn(slice, game) }
     },

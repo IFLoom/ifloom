@@ -3,13 +3,9 @@ import { computed } from 'vue'
 import type { RenderedChoice } from '@ifloom/engine'
 import { runner, view } from './runner.ts'
 
-// The `jobs` panel, shown from Panel.vue: jobs.open() opens it, and jobs.open(['dogs']) with { job: ['dogs'] } for only those.
-const jobs = computed(() => {
-  const { panel, plugins } = view.value
-  if (panel?.panel !== 'jobs') return []
-  const only = panel.with.job
-  return (plugins.jobs?.jobs ?? []).filter((job) => !Array.isArray(only) || only.includes(job.id))
-})
+// The `jobs` panel, shown from Panel.vue: jobs.open() opens it, and jobs.open(['dogs']) with only those.
+// The view's panel is the jobs on the open board, already filtered; null while it's shut.
+const jobs = computed(() => view.value.plugins.jobs?.panel ?? [])
 const buttons = (...all: (RenderedChoice | null)[]) => all.filter((button) => button !== null)
 </script>
 
@@ -23,7 +19,7 @@ const buttons = (...all: (RenderedChoice | null)[]) => all.filter((button) => bu
     <p v-if="job.nextShift">{{ job.nextShift.inDays ? `Next shift in ${job.nextShift.inDays} days` : 'A shift today' }}</p>
     <!-- Ready-made buttons: Apply while you don't have the job, Work while you do, each with why it can't be done. -->
     <button
-      v-for="button in buttons(job.apply, job.work)"
+      v-for="button in buttons(job.apply, job.work, job.quit)"
       :key="button.id"
       :disabled="Boolean(button.disabled)"
       :title="button.disabled"

@@ -223,7 +223,7 @@ The stats in `view.stats` already include the modifiers, so a UI shows the stat 
 
 `view.plugins.statuses` is a [`StatusesView`](#statusesview): each active status with its name, its description, the turns it has left and its stacks. The stats in `view.stats` already include what the statuses add, so draw them beside the stats.
 
-`@ifloom/plugin-statuses/react` draws the statuses in play, for a game drawn with [`@ifloom/react`](/docs/react). List `statusesUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the [`StatusList`](#statuslist) goes under the stats in the side column, and the `statuses` panel draws it too. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+`@ifloom/plugin-statuses/react` draws the statuses in play, for a game drawn with [`@ifloom/react`](/docs/react). List `statusesUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the [`StatusList`](#statuslist) goes under the stats in the side column, and the `statuses` panel draws it too. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
 ::include[../../../../snippets/plain/statuses.ts]{meta='tab="Plain JS" tab-group="framework"'}
 

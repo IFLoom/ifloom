@@ -1,9 +1,9 @@
-import type { View } from '@ifloom/engine'
+import type { RunnerSnapshot } from '@ifloom/engine'
 // runner and add, as in the vanilla template's src/main.ts.
 import { add, runner } from './runner.ts'
 
 /** Each feed's posts, newest first, with their likes and comments, and a button that marks the feed seen. */
-export function drawFeed(parent: HTMLElement, view: View): void {
+export function drawFeed(parent: HTMLElement, { view }: RunnerSnapshot): void {
   for (const feed of view.plugins.feed?.feeds ?? []) {
     add(parent, 'h3', feed.unread ? `${feed.name} (${feed.unread} new)` : feed.name)
     for (const post of feed.posts) {

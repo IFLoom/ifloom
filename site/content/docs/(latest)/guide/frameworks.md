@@ -33,21 +33,21 @@ import { browserRunner } from '@ifloom/browser'
 
 const runner = await browserRunner(game)
 
-runner.view()              // View: what to draw right now
+runner.snapshot()          // RunnerSnapshot: everything to draw right now, the view, settings, backlog, undo and saves
 runner.apply(command)      // run a command, such as a choice the player pressed
-runner.subscribe(listener) // call listener after every change of state; returns a function that stops it
+runner.subscribe(listener) // hand listener each new snapshot; returns a function that stops it
 ```
 
-Draw `runner.view()`, send the `command` of whatever the player presses with `runner.apply`, and draw again when the runner calls your listener. `subscribe` hears undo, redo and loading a save too, and `runner.view()` returns the same object until the state changes, so a framework that compares values redraws exactly when there's something new.
+Draw the [snapshot](/docs/reference/runner#runnersnapshot), send the `command` of whatever the player presses with `runner.apply`, and draw again when the runner hands your listener a new one. The snapshot is a new object whenever anything in it changes (a command, undo, loading a save, a setting, a save written) and the same object until then, so a framework that compares values redraws exactly when there's something new. Its `view` is most of what you draw.
 
 ## Start the runner
 
-Each template makes the runner once, in a module of its own, and turns the view into the framework's kind of state. Components import `runner` and the view from there.
+Each template makes the runner once, in a module of its own, and turns the snapshot into the framework's kind of state. Components import `runner`, the snapshot and the view from there.
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/main.ts
 import { browserRunner, startClock, startKeys } from '@ifloom/browser'
-import type { InputView, MinigameView, SceneBeat, View } from '@ifloom/engine'
+import type { InputView, MinigameView, RunnerSnapshot, SceneBeat } from '@ifloom/engine'
 import { startAudio } from '@ifloom/audio'
 import module from './game.ts'
 import './styles.css'
@@ -66,8 +66,8 @@ startKeys(runner)
 
 // ...
 
-runner.subscribe(() => draw(runner.view()))
-draw(runner.view())
+runner.subscribe(draw)
+draw(runner.snapshot())
 ```
 
 ```ts tab="React" tab-group="framework"
@@ -85,17 +85,20 @@ export const player = startAudio(runner)
 startClock(runner)
 startKeys(runner)
 
-/** The view, drawn again after every change. `runner.view()` returns the same object until the state changes, as useSyncExternalStore needs. */
-export const useView = () => useSyncExternalStore(runner.subscribe, runner.view)
+/** The snapshot, drawn again after every change. `runner.snapshot()` returns the same object until something changes, as useSyncExternalStore needs. */
+export const useSnapshot = () => useSyncExternalStore(runner.subscribe, runner.snapshot)
+/** The view, which is most of what the components draw. */
+export const useView = () => useSnapshot().view
 ```
 
 ```ts tab="Vue" tab-group="framework"
 // src/runner.ts
 /**
- * The game's runner, and its view as Vue state. Components read `view` and
- * send commands with `runner.apply`; nothing else talks to the engine.
+ * The game's runner, and its snapshot as Vue state. Components read `view`
+ * (or the whole `snapshot`: settings, backlog, undo, saves) and send
+ * commands with `runner.apply`; nothing else talks to the engine.
  */
-import { shallowRef } from 'vue'
+import { computed, shallowRef } from 'vue'
 import { browserRunner, startClock, startKeys } from '@ifloom/browser'
 import { startAudio } from '@ifloom/audio'
 import module from './game.ts'
@@ -106,12 +109,14 @@ if (problems.length) console.warn(problems)
 // A new game with a random seed, undo, saves in localStorage and an autosave each turn.
 export const runner = await browserRunner(game)
 
-// The view is replaced whole after every change, so a shallowRef is enough:
-// Vue only needs to know that it changed, not to look inside it.
-export const view = shallowRef(runner.view())
-runner.subscribe(() => {
-  view.value = runner.view()
+// The runner hands every listener a new snapshot whenever anything in it changes, so a
+// shallowRef is enough: Vue only needs to know that it changed, not to look inside it.
+export const snapshot = shallowRef(runner.snapshot())
+runner.subscribe((next) => {
+  snapshot.value = next
 })
+// The view, which is most of what the components draw.
+export const view = computed(() => snapshot.value.view)
 
 // Plays what the game's `audio` asks for, from the first click or key press.
 // Its `play` plays a file on demand, such as a voice line again.
@@ -124,10 +129,11 @@ startKeys(runner)
 ```ts tab="Svelte" tab-group="framework"
 // src/runner.ts
 /**
- * The game's runner, and its view as a Svelte store. Components read `$view`
- * and send commands with `runner.apply`; nothing else talks to the engine.
+ * The game's runner, and its snapshot as a Svelte store. Components read
+ * `$view` (or the whole `$snapshot`: settings, backlog, undo, saves) and send
+ * commands with `runner.apply`; nothing else talks to the engine.
  */
-import { readable } from 'svelte/store'
+import { derived, readable } from 'svelte/store'
 import { browserRunner, startClock, startKeys } from '@ifloom/browser'
 import { startAudio } from '@ifloom/audio'
 import module from './game.ts'
@@ -139,8 +145,10 @@ if (problems.length) console.warn(problems)
 export const runner = await browserRunner(game)
 
 // A readable store fits the runner: it starts by subscribing, and stops with
-// the function `subscribe` returns.
-export const view = readable(runner.view(), (set) => runner.subscribe(() => set(runner.view())))
+// the function `subscribe` returns. Each listener is handed the new snapshot.
+export const snapshot = readable(runner.snapshot(), (set) => runner.subscribe(set))
+// The view, which is most of what the components draw.
+export const view = derived(snapshot, (now) => now.view)
 
 // Plays what the game's `audio` asks for, from the first click or key press.
 // Its `play` plays a file on demand, such as a voice line again.
@@ -152,10 +160,10 @@ startKeys(runner)
 
 [`browserRunner`](/docs/browser#browserrunner) gives the runner a random seed, undo 50 steps deep, saves in `localStorage` and an autosave each turn. Pass it any [`RunnerOptions`](/docs/reference/runner#runneroptions) to change those, such as `browserRunner(game, { backlog: true })`. `loadGame` returns the game and a list of problems, which `npm run check` also prints.
 
-- **Plain JS** draws the whole page again in its listener, which is fine for a page this small.
-- **React** reads it with `useSyncExternalStore`, which needs exactly what `runner.subscribe` and `runner.view` are.
-- **Vue** keeps the view in a `shallowRef`. The view is replaced whole after every change, so Vue doesn't need to look inside it.
-- **Svelte** wraps it in a `readable` store, which components read as `$view`. The store's start function subscribes to the runner and returns the runner's own stop function.
+- **Plain JS** draws the whole page again from each snapshot, which is fine for a page this small.
+- **React** reads it with `useSyncExternalStore`, which needs exactly what `runner.subscribe` and `runner.snapshot` are.
+- **Vue** keeps the snapshot in a `shallowRef`, and the view in a `computed` from it. The snapshot is replaced whole after every change, so Vue doesn't need to look inside it.
+- **Svelte** wraps it in a `readable` store, which components read as `$snapshot`, and the view in a `derived` one, read as `$view`. The store's start function subscribes to the runner and returns the runner's own stop function.
 
 Then `main.ts` mounts the app on `#root` in `index.html`. Plain JS has no app to mount, so its `draw` fills `#root` itself:
 
@@ -246,7 +254,7 @@ The app draws the title, the scene, its choices and the stats:
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/main.ts
-function draw(view: View): void {
+function draw({ view }: RunnerSnapshot): void {
   root.replaceChildren()
   add(root, 'h1', view.title)
 

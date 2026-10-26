@@ -13,6 +13,7 @@ import {
   type Content,
   type Game,
   type Pack,
+  type Runner,
 } from '@ifloom/engine'
 import {
   ITERATIONS,
@@ -22,6 +23,7 @@ import {
   lockContent,
   lockedContent,
   normaliseCode,
+  enterCode,
   startUnlocks,
   unlocksOf,
   unlockHash,
@@ -62,6 +64,19 @@ function build(unlocksOf: UnlockDef[], packs: Pack[] = []): Game {
 
 function runnerFor(game: Game, driver = memoryDriver()) {
   return createRunner(game, { ...startingState(game, { seed: 1 }), sceneId: null }, { history: true, profile: profile(game, driver) })
+}
+
+/** Settles once the codes started on the runner have checked the ones the profile remembers. */
+function ready(runner: Runner): Promise<void> {
+  const done = () => runner.snapshot().helpers.unlocks?.status !== 'checking'
+  return new Promise((resolve) => {
+    if (done()) return resolve()
+    const stop = runner.subscribe(() => {
+      if (!done()) return
+      stop()
+      resolve()
+    })
+  })
 }
 
 describe('codes and hashes', () => {
@@ -148,10 +163,10 @@ describe('entering a code', () => {
     const g = build([await def()])
     const driver = memoryDriver()
     const runner = runnerFor(g, driver)
-    const codes = startUnlocks(runner, { content: {} })
-    await codes.ready
-    expect(await codes.enter('BREAD-2027-KEY')).toEqual({ ok: false, reason: 'That code doesn’t unlock anything.' })
-    expect(await codes.enter('  -  ')).toEqual({ ok: false, reason: 'Type a code first.' })
+    startUnlocks(runner, { content: {} })
+    await ready(runner)
+    expect(await enterCode(runner, 'BREAD-2027-KEY')).toEqual({ ok: false, reason: 'That code doesn’t unlock anything.' })
+    expect(await enterCode(runner, '  -  ')).toEqual({ ok: false, reason: 'Type a code first.' })
     expect(holds(runner.state, g, unlocks.has('supporter'))).toBe(false)
     expect(await runner.profile!.get('unlocks')).toBeUndefined()
   })
@@ -160,8 +175,8 @@ describe('entering a code', () => {
     const g = build([await def()])
     const driver = memoryDriver()
     const runner = runnerFor(g, driver)
-    const codes = startUnlocks(runner, { content: {} })
-    const entered = await codes.enter('bread 2026 key')
+    startUnlocks(runner, { content: {} })
+    const entered = await enterCode(runner, 'bread 2026 key')
     expect(entered).toEqual({ ok: true, value: { unlock: 'supporter', name: 'Supporter edition', already: false, restart: false } })
     expect(holds(runner.state, g, unlocks.has('supporter'))).toBe(true)
     await runner.settled()
@@ -169,16 +184,16 @@ describe('entering a code', () => {
     expect(stored).toMatch(/"proof":"[0-9a-f]{64}"/)
     for (const form of [CODE, normaliseCode(CODE), 'bread']) expect(stored.toLowerCase()).not.toContain(form.toLowerCase())
     // Entered again, it works and changes nothing.
-    expect(await codes.enter(CODE)).toEqual({ ok: true, value: { unlock: 'supporter', name: 'Supporter edition', already: true, restart: false } })
+    expect(await enterCode(runner, CODE)).toEqual({ ok: true, value: { unlock: 'supporter', name: 'Supporter edition', already: true, restart: false } })
     expect(runner.log().commands).toEqual([{ type: 'custom', name: 'unlocks/record', with: { id: 'supporter' } }])
   })
 
   it('replays exactly: the unlock is a command in the log', async () => {
     const g = build([await def()])
     const runner = runnerFor(g)
-    const codes = startUnlocks(runner, { content: {} })
+    startUnlocks(runner, { content: {} })
     runner.apply({ type: 'action', id: 'rest' })
-    await codes.enter(CODE)
+    await enterCode(runner, CODE)
     runner.apply({ type: 'action', id: 'rest' })
     const played = replay(g, runner.log())
     expect(played.ok && played.value).toEqual(runner.state)
@@ -188,14 +203,15 @@ describe('entering a code', () => {
     const g = build([await def()])
     const driver = memoryDriver()
     const first = runnerFor(g, driver)
-    await startUnlocks(first, { content: {} }).enter(CODE)
+    startUnlocks(first, { content: {} })
+    await enterCode(first, CODE)
     await first.settled()
 
     // The next launch: a new runner on the same profile records it as soon as the profile is read.
     const next = runnerFor(g, driver)
     const codes = startUnlocks(next, { content: {} })
     expect(holds(next.state, g, unlocks.has('supporter'))).toBe(false)
-    await codes.ready
+    await ready(next)
     expect(holds(next.state, g, unlocks.has('supporter'))).toBe(true)
     await next.newGame({ seed: 2 })
     expect(holds(next.state, g, unlocks.has('supporter'))).toBe(true)
@@ -207,18 +223,43 @@ describe('entering a code', () => {
   it('forgets a remembered unlock once its code has changed: a new release, new codes', async () => {
     const driver = memoryDriver()
     const first = runnerFor(build([await def()]), driver)
-    await startUnlocks(first, { content: {} }).enter(CODE)
+    startUnlocks(first, { content: {} })
+    await enterCode(first, CODE)
     await first.settled()
     const rotated = build([await def({ salt: 'release-2' })])
     const next = runnerFor(rotated, driver)
-    await startUnlocks(next, { content: {} }).ready
+    startUnlocks(next, { content: {} })
+    await ready(next)
     expect(holds(next.state, rotated, unlocks.has('supporter'))).toBe(false)
+  })
+
+  it('says where it stands in the runner snapshot: checking, wrong, unlocked, and gone once stopped', async () => {
+    const g = build([await def()])
+    const runner = runnerFor(g)
+    expect(runner.snapshot().helpers.unlocks).toBeUndefined()
+    const stop = startUnlocks(runner, { content: {} })
+    expect(runner.snapshot().helpers.unlocks).toEqual({ status: 'checking', reason: null, entered: null })
+    await ready(runner)
+    expect(runner.snapshot().helpers.unlocks).toEqual({ status: 'idle', reason: null, entered: null })
+    const heard: string[] = []
+    runner.subscribe((snapshot) => heard.push(snapshot.helpers.unlocks?.status ?? 'none'))
+    await enterCode(runner, 'nope')
+    expect(runner.snapshot().helpers.unlocks).toEqual({ status: 'wrong', reason: 'That code doesn’t unlock anything.', entered: null })
+    await enterCode(runner, CODE)
+    expect(runner.snapshot().helpers.unlocks?.status).toBe('unlocked')
+    expect(runner.snapshot().helpers.unlocks?.entered?.name).toBe('Supporter edition')
+    expect(heard[0]).toBe('checking')
+    expect(heard).toContain('wrong')
+    stop()
+    expect(runner.snapshot().helpers.unlocks).toBeUndefined()
+    expect(await enterCode(runner, CODE)).toEqual({ ok: false, reason: 'Codes can’t be entered here.' })
   })
 
   it('needs a profile to remember the code', async () => {
     const g = build([await def()])
     const runner = createRunner(g, startingState(g))
-    expect(await startUnlocks(runner, { content: {} }).enter(CODE)).toEqual({ ok: false, reason: 'This game can’t remember codes here.' })
+    startUnlocks(runner, { content: {} })
+    expect(await enterCode(runner, CODE)).toEqual({ ok: false, reason: 'This game can’t remember codes here.' })
   })
 })
 
@@ -248,7 +289,8 @@ describe('locked content', () => {
     const { supporter, content } = await locked()
     const driver = memoryDriver()
     const runner = runnerFor(build([supporter]), driver)
-    const entered = await startUnlocks(runner, { content }).enter(CODE)
+    startUnlocks(runner, { content })
+    const entered = await enterCode(runner, CODE)
     expect(entered.ok && entered.value.restart).toBe(true)
     await runner.settled()
 
@@ -259,7 +301,9 @@ describe('locked content', () => {
     const full = build([supporter], opened.packs)
     expect(full.scenes.map((scene) => scene.id)).toContain('supporter.lounge')
     // With the content loaded, entering the code again needs no restart.
-    const again = await startUnlocks(runnerFor(full, driver), { content }).enter(CODE)
+    const later = runnerFor(full, driver)
+    startUnlocks(later, { content })
+    const again = await enterCode(later, CODE)
     expect(again.ok && again.value.restart).toBe(false)
   })
 
@@ -271,7 +315,9 @@ describe('locked content', () => {
   it('fails cleanly on tampered content, content for another game, or a code that has changed', async () => {
     const { supporter, content } = await locked()
     const driver = memoryDriver()
-    await startUnlocks(runnerFor(build([supporter]), driver), { content }).enter(CODE)
+    const later = runnerFor(build([supporter]), driver)
+    startUnlocks(later, { content })
+    await enterCode(later, CODE)
     const stored = profile({ id: GAME }, driver)
     const data = content.supporter.data
     const flipped = data[10] === 'A' ? 'B' : 'A'

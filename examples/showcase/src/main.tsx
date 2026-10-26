@@ -36,7 +36,7 @@ const runner = createRunner(game, startingState(game, { seed: Math.floor(Math.ra
 // it on <html> as `data-text-size`, now and whenever it changes, and
 // styles.css does the rest. It applies on every page, the title included.
 function showTextSize() {
-  document.documentElement.dataset.textSize = runner.settings().textSize === 'large' ? 'large' : 'normal'
+  document.documentElement.dataset.textSize = runner.snapshot().settings.textSize === 'large' ? 'large' : 'normal'
 }
 showTextSize()
 runner.subscribe(showTextSize)

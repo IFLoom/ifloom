@@ -1,9 +1,9 @@
-import type { View } from '@ifloom/engine'
+import type { RunnerSnapshot } from '@ifloom/engine'
 // add and drawChoices, as in the vanilla template's src/main.ts.
 import { add, drawChoices } from './runner.ts'
 
 /** Who's here, each with their face and their Talk button, then everyone you've met. */
-export function drawPeople(parent: HTMLElement, view: View): void {
+export function drawPeople(parent: HTMLElement, { view }: RunnerSnapshot): void {
   const cast = view.plugins.cast
   if (!cast) return
   for (const person of cast.present) {

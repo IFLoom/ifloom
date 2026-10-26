@@ -1,9 +1,9 @@
-import type { View } from '@ifloom/engine'
+import type { RunnerSnapshot } from '@ifloom/engine'
 // add, as in the vanilla template's src/main.ts.
 import { add } from './runner.ts'
 
 /** Every achievement, earned or not, with progress towards the ones that count. A secret one reads ??? until it's earned. */
-export function drawAchievements(parent: HTMLElement, view: View): void {
+export function drawAchievements(parent: HTMLElement, { view }: RunnerSnapshot): void {
   const achievements = view.plugins.achievements
   if (!achievements) return
   add(parent, 'h3', `Achievements: ${achievements.earned} of ${achievements.total}`)

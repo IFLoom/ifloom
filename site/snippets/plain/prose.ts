@@ -1,9 +1,9 @@
-import type { InlineSpan, View } from '@ifloom/engine'
+import type { InlineSpan, RunnerSnapshot } from '@ifloom/engine'
 // runner and add, as in the vanilla template's src/main.ts.
 import { add, runner } from './runner.ts'
 
 /** The scene's lines with their spans: bold and italics, inline actions, tooltips and UI pieces. */
-export function drawProse(parent: HTMLElement, view: View): void {
+export function drawProse(parent: HTMLElement, { view }: RunnerSnapshot): void {
   for (const beat of view.scene.beats) {
     if (beat.type === 'text' || beat.type === 'say') drawLine(add(parent, 'p'), beat.text, beat.spans)
   }

@@ -142,8 +142,8 @@ describe('inline actions and tooltips', () => {
     expect(runner.apply({ type: 'choose', id: 'answer' }).ok).toBe(true)
     expect(runner.apply({ type: 'choose', id: 'knock' }).ok).toBe(true)
     expect(unwrap(replay(game, runner.log()))).toEqual(runner.state)
-    expect(runner.backlog().map((entry) => entry.chose)).toEqual(['Answer', 'Knock', undefined])
-    const [entry] = runner.backlog()
+    expect(runner.snapshot().backlog.map((entry) => entry.chose)).toEqual(['Answer', 'Knock', undefined])
+    const [entry] = runner.snapshot().backlog
     const ring = entry.beats[0]
     expect(ring.type === 'text' && ring.spans?.map((span) => span.type)).toEqual(['text', 'tip', 'text'])
   })
@@ -235,7 +235,7 @@ describe('bold and italics', () => {
     expect(door).toEqual({ type: 'text', text: 'A *star* on the door.' })
     const runner = createRunner(game, start(game), { backlog: { limit: 5 } })
     expect(runner.apply({ type: 'choose', id: 'leave' }).ok).toBe(true)
-    const past = runner.backlog()[0].beats[0]
+    const past = runner.snapshot().backlog[0].beats[0]
     expect(past.type === 'text' && past.spans?.map((span) => span.type)).toEqual(['text', 'bold', 'text', 'italic', 'text'])
   })
 
@@ -316,7 +316,7 @@ describe('UI pieces', () => {
     })
     const runner = createRunner(game, start(game), { backlog: { limit: 5 } })
     expect(runner.apply({ type: 'choose', id: 'leave' }).ok).toBe(true)
-    const past = runner.backlog()[0].beats[0]
+    const past = runner.snapshot().backlog[0].beats[0]
     expect(past.type === 'text' && past.spans?.map((span) => span.type)).toEqual(['text', 'ui', 'text'])
   })
 

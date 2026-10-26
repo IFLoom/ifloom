@@ -314,7 +314,7 @@ type QuestEntry = {
 
 `view.plugins.quests` is a [`QuestsView`](#questsview): the active quests, the tracked one first, and the finished ones, each a [`QuestEntry`](#questentry) with its hint and how far along it is. `updates` counts the quests with news, for a badge. Send `quests/track` to pin one, and `quests/seen` to clear the news.
 
-`@ifloom/plugin-quests/react` draws the quest log, for a game drawn with [`@ifloom/react`](/docs/react). List `questsUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a Quests section (`ui.quests`) in the side column opens the [`QuestLog`](#questlog) in a dialog, with the count of news on its button, and the `quests` panel draws it too. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+`@ifloom/plugin-quests/react` draws the quest log, for a game drawn with [`@ifloom/react`](/docs/react). List `questsUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a Quests section (`ui.quests`) in the side column opens the [`QuestLog`](#questlog) in a dialog, with the count of news on its button, and the `quests` panel draws it too. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
 ::include[../../../../snippets/plain/quests.ts]{meta='tab="Plain JS" tab-group="framework"'}
 

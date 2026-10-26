@@ -67,7 +67,7 @@ describe('the React UI’s screens', () => {
     click(screen.getByRole('button', { name: /Wait a while/ }))
     expect(runner.state.kv.waited).toBe(1)
     click(screen.getByRole('button', { name: 'Undo' }))
-    expect(runner.canRedo).toBe(true)
+    expect(runner.snapshot().canRedo).toBe(true)
     click(screen.getByRole('button', { name: 'Backlog' }))
     expect(document.querySelector('[role="dialog"]')?.textContent).toContain('Go in')
   })

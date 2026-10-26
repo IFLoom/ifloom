@@ -1,9 +1,9 @@
-import type { View } from '@ifloom/engine'
+import type { RunnerSnapshot } from '@ifloom/engine'
 // add and drawChoices, as in the vanilla template's src/main.ts.
 import { add, drawChoices } from './runner.ts'
 
 /** The `jobs` panel, from drawPanel: jobs.open() opens it, and jobs.open(['dogs']) with { job: ['dogs'] } for only those. */
-export function drawJobs(parent: HTMLElement, view: View): void {
+export function drawJobs(parent: HTMLElement, { view }: RunnerSnapshot): void {
   if (view.panel?.panel !== 'jobs') return
   const only = view.panel.with.job
   const jobs = (view.plugins.jobs?.jobs ?? []).filter((job) => !Array.isArray(only) || only.includes(job.id))

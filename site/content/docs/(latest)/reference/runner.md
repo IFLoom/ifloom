@@ -1,14 +1,14 @@
 ---
 title: "The runner"
-description: "The runner: undo, backlog, command log, saving, loading, autosave, settings, new games, the Result it answers with, and where browserRunner fits."
+description: "The runner: its snapshot, undo, backlog, command log, saving, loading, autosave, settings, new games, the Result it answers with, and where browserRunner fits."
 ---
-The runner is the one object your UI drives. It wraps [`apply`](/docs/reference/commands#apply) with the things every game's UI would otherwise build for itself: undo and redo, a backlog of what was shown, a command log, saving, loading and autosave. It also tells listeners when the state changes.
+The runner is the one object your UI drives. It wraps [`apply`](/docs/reference/commands#apply) with the things every game's UI would otherwise build for itself: undo and redo, a backlog of what was shown, a command log, saving, loading and autosave. Everything a UI draws from it comes in one value, the [snapshot](#runnersnapshot), and it hands listeners a new one whenever anything in it changes.
 
 ```ts
 import {
   createRunner, replay,
-  type Runner, type RunnerOptions, type HistoryOptions, type BacklogOptions, type AutosaveOptions,
-  type BacklogEntry, type CommandLog, type StartOptions, type Result,
+  type Runner, type RunnerOptions, type RunnerSnapshot, type HistoryOptions, type BacklogOptions, type AutosaveOptions,
+  type BacklogEntry, type CommandLog, type StartOptions, type Result, type HelperRegistry, type HelpersIn,
 } from '@ifloom/engine'
 ```
 
@@ -36,13 +36,65 @@ const runner = createRunner(game, startingState(game, { seed: Math.floor(Math.ra
   autosave: { every: 'turn' },
 })
 
-runner.subscribe(() => render(runner.view()))
+runner.subscribe((snapshot) => render(snapshot))
+render(runner.snapshot())
 runner.apply(places.go('high-street'))
 ```
 
 ## In a browser
 
 [`browserRunner`](/docs/browser#browserrunner) from `@ifloom/browser` is `createRunner` with what most games in a browser want: a random seed, undo 50 steps deep, saves and a profile in `localStorage`, and an autosave each turn. The React UI's `mountGame` and the templates use it.
+
+## RunnerSnapshot
+
+```ts
+type RunnerSnapshot = {
+  readonly state: GameState
+  readonly view: View
+  readonly settings: Readonly<Record<string, KvValue>>
+  readonly backlog: readonly BacklogEntry[]
+  readonly canUndo: boolean
+  readonly canRedo: boolean
+  readonly saves: readonly SaveListing[]
+  readonly helpers: HelpersIn
+}
+```
+
+Everything a UI draws from the runner, in one value. `runner.snapshot()` gives the one for now, and [`subscribe`](#the-runners-members) hands each new one to its listeners.
+
+| Field | What it is |
+|---|---|
+| `state` | The state in play, as `runner.state`. |
+| `view` | The [view](/docs/reference/view) of that state, as `runner.view()`. |
+| `settings` | Every setting's value now, `play` and `ui`. See [settings](#settings). |
+| `backlog` | What was shown, oldest first, as [`BacklogEntry`](#backlogentry) values. Empty with the backlog off. Undo takes it back to where it was. |
+| `canUndo` / `canRedo` | Whether `undo()` or `redo()` would do anything, for greying out the buttons. Always `false` with history off. |
+| `saves` | Every save in the runner's [`saves`](/docs/reference/saves#saves), as [`saves.list()`](/docs/reference/saves#saves) gives them: newest first, then any that can't be read. See [The saves list](#the-saves-list). Empty without `saves`. |
+| `helpers` | What a helper started beside the runner reports, by its id, such as the unlocks plugin's [`startUnlocks`](/docs/plugins/unlocks#startunlocks) under `unlocks`. See [setHelper](#sethelper). |
+
+The snapshot is a new object whenever any part of it changes, and the same object until then. A UI that keeps it whole draws again exactly when something changed: Vue's `shallowRef`, React's `useSyncExternalStore` and a Svelte store all compare it by identity.
+
+```ts
+const shown = runner.snapshot()
+runner.snapshot() === shown  // true: nothing changed
+runner.apply({ type: 'choose', id: 'chat' })
+runner.snapshot() === shown  // false: a new state, so a new view, backlog and canUndo
+```
+
+The snapshot is frozen, and so are its parts as the runner hands them over. Change things through the runner's members.
+
+### The saves list
+
+The runner lists its saves once when it's made, in the background. [`settled()`](#the-runners-members) waits for that, and [`browserRunner`](/docs/browser#browserrunner) waits for it before it returns. After that the runner keeps the list up to date itself, with no listing again: every `save`, autosave, and every write and removal through `runner.saves` changes it, and listeners are told. A save menu reads `snapshot.saves` and never lists the saves itself.
+
+```ts
+await runner.save('1')
+runner.snapshot().saves[0].slot        // '1': newest first
+await runner.saves?.remove('1')
+runner.snapshot().saves.some((entry) => entry.slot === '1')  // false
+```
+
+A save written to the same store from somewhere else, such as another tab, shows up the next time the runner is made.
 
 ## RunnerOptions
 
@@ -137,10 +189,10 @@ import { places } from '@ifloom/plugin-places'
 const runner = createRunner(game, start, { backlog: true })
 runner.apply({ type: 'choose', id: 'chat' })
 runner.apply({ type: 'choose', id: 'bye' })
-runner.backlog().map((entry) => [entry.sceneId, entry.chose])
+runner.snapshot().backlog.map((entry) => [entry.sceneId, entry.chose])
 // [['ava.hi', 'Chat for a minute'], ['ava.hi', 'Leave her to it']]
 runner.apply(places.go('high-street'))
-runner.backlog().length // still 2
+runner.snapshot().backlog.length // still 2
 ```
 
 The choice came at the end of the scene, so in the order the player saw them, an entry's beats come first and its `chose` after.
@@ -196,26 +248,25 @@ The engine's own [`apply`](/docs/reference/commands#apply) answers in the same s
 | `view()` | [`view(state, game)`](/docs/reference/view) for the current state, built once per state, with the plugins' views shown the profile. See [The view cache](#the-view-cache). |
 | `apply(command)` | Runs a command. Returns a [`Result`](#result) with the next state as its `value`, or the `reason` it was refused. A refused command changes nothing. It adds no history or log entry and calls no listeners. A [`newGame`](/docs/reference/commands#newgame) command, on its own or sent by a choice, starts a new game as [`newGame()`](#newgame) does (see [Starting over from content](#starting-over-from-content)). |
 | `undo()` / `redo()` | Steps back or forward one command. Returns `false` when there's nothing to do. A new command after an undo clears redo. |
-| `canUndo` / `canRedo` | Whether there's anything to undo or redo, for greying out the buttons. Always `false` with history off. |
-| `backlog()` | The backlog, oldest first. Empty with the backlog off. Undo takes it back to where it was. |
+| `snapshot()` | The [`RunnerSnapshot`](#runnersnapshot): everything a UI draws, in one value. The same object until any part of it changes. |
 | `log()` | The [`CommandLog`](#commandlog): the start state and every command since. Always kept. |
-| `saves` | The [`Saves`](/docs/reference/saves#saves) store the runner was made with, or `undefined`. A save menu lists, exports and imports through it. |
+| `saves` | The [`Saves`](/docs/reference/saves#saves) store the runner was made with, or `undefined`, watched so that what it writes and removes shows in the snapshot's `saves`. A save menu deletes, exports and imports through it. |
 | `offers` | `{ undo: boolean, backlog: boolean }`: whether the game turned on `history` and `backlog`, so a menu shows only what's on offer. |
 | `played()` | Time played in milliseconds, counting from the time recorded in any save loaded. |
 | `save(slot, name?)` | Waits for any autosaves in progress, then writes the current state to a slot with the time played. Resolves to a [`Result`](#result) with its [`SaveMeta`](/docs/reference/saves#savemeta). `name` defaults to one made from when and where. It fails with `This game keeps no saves.` without `saves`, with the reason from the game's [`saveable`](/docs/reference/game#saveable) while that refuses saving (check [`view().saving`](/docs/reference/view#saving) first to grey the button out), and with `The game could not be saved.` when the driver throws, which `onSaveError` hears about too. |
 | `load(slot)` | Reads a slot through the save store, which loads its state with [`loadState`](/docs/reference/saves#loadstate), and, if it can, plays on from it with a fresh history, backlog and log, and the time played the save recorded. Resolves to a [`Result`](#result) with the [`LoadedSave`](/docs/reference/saves#loadedsave). It fails with `Nothing is saved there.` for an empty slot, `This game keeps no saves.` without `saves`, or the reason the save can't be read. On a failure the runner is unchanged. |
 | `restore(loaded)` | Plays on from a save that didn't come from a slot, such as a file the player imported with [`saves.importText`](/docs/reference/saves), exactly as `load` would. The [`LoadedSave`](/docs/reference/saves#loadedsave) has already been through `loadState`. |
-| `settled()` | Resolves when every autosave and profile write so far has been written, or has failed and been reported, and the profile has been read for the settings and the plugins' views. |
+| `settled()` | Resolves when every autosave and profile write so far has been written, or has failed and been reported, the profile has been read for the settings and the plugins' views, and the saves have been listed. |
 | `profile` | The [`Profile`](/docs/reference/profile) the runner was made with, or `undefined`. |
-| `settings()` | Every setting's value now, `play` and `ui`. See [below](#settings). |
 | `setSetting(id, to)` | Changes a setting of either kind. See [below](#setsetting). |
 | `newGame(options?)` | Starts a new game in place. See [below](#newgame). |
-| `subscribe(listener)` | Calls `listener(state)` after every change of state: a command, an undo, a redo, a load or a new game. It's also called, with the same state, when a `ui` setting changes and when what the plugins' views show of the profile changes. Returns a function that stops it. |
+| `subscribe(listener)` | Calls `listener(snapshot)` with each new [snapshot](#runnersnapshot): after every change of state (a command, an undo, a redo, a load or a new game), and with the same state when a `ui` setting changes, when what the plugins' views show of the profile changes, when the saves list changes and when a helper reports. Returns a function that stops it. |
+| `setHelper(id, value)` | Puts what a helper reports in the snapshot's `helpers`. See [below](#sethelper). |
 
 `save` and `load` are async, and answer with a [`Result`](#result) rather than throwing:
 
 ```ts
-undoButton.disabled = !runner.canUndo
+undoButton.disabled = !runner.snapshot().canUndo
 undoButton.onclick = () => runner.undo()
 
 const saved = await runner.save('quick')
@@ -232,41 +283,41 @@ else if (loaded.value.missingPacks.length) showMessage(`Made with mods you don't
 
 `runner.view()` keeps the view it built and the state it built it for. Asked again while the state is the same object, it returns the same view without building it again. After a command, an undo or a load, the state is a new object, so the next call builds a new view.
 
-This means everything that reads the view can call `runner.view()` freely. In a browser, the backlog, the [React UI](/docs/react) and the [audio player](/docs/browser/audio-player) all read it after each command, and the view is built once between them. `apply` also uses the view the UI last read to write the backlog, rather than building the one it was sent from again.
+This means everything that reads the view can call `runner.view()` freely, and `snapshot().view` is that same object. In a browser, the backlog, the [React UI](/docs/react) and the [audio player](/docs/browser/audio-player) all read it after each command, and the view is built once between them. `apply` also uses the view the UI last read to write the backlog, rather than building the one it was sent from again.
 
 ```ts
 runner.apply({ type: 'choose', id: 'open' })
 runner.view() === runner.view()  // true: one view for the new state
 ```
 
-With a `profile`, the runner also shows each plugin's view what that plugin's namespace holds, as [`context.profile`](/docs/reference/plugins#the-profile). It reads those namespaces when it's made and follows every write to the profile after that, from itself or anything else. When a namespace a view can see changes, the cached view is replaced by a new object with only that plugin's view built again. The scene isn't drawn again, and the state is the same object. Then the runner's listeners are called, so a UI that reads `runner.view()` in its listener redraws.
+With a `profile`, the runner also shows each plugin's view what that plugin's namespace holds, as [`context.profile`](/docs/reference/plugins#the-profile). It reads those namespaces when it's made and follows every write to the profile after that, from itself or anything else. When a namespace a view can see changes, the cached view is replaced by a new object with only that plugin's view built again. The scene isn't drawn again, and the state is the same object. Then the runner's listeners are called with a new snapshot, so a UI that draws from it redraws.
 
 ```ts
 await runner.profile?.set('achievements', { earned: ['regular'] })
 runner.view() === runner.view()  // still true: the new view is kept
 ```
 
-A UI that redraws only when `runner.state` changes misses these. Compare `runner.view()` instead, as the React UI does.
+A UI that redraws only when `runner.state` changes misses these. Draw from the snapshot instead, as the React UI does.
 
 **Gotcha.** Only the latest state's view is kept. Calling [`view`](/docs/reference/view#view) yourself always builds a new one, and one built without the runner has no profile, so in a UI driven by a runner, read `runner.view()`.
 
 ### settings
 
 ```ts
-runner.settings(): Readonly<Record<string, KvValue>>
+runner.snapshot().settings: Readonly<Record<string, KvValue>>
 ```
 
-Every [setting](/docs/reference/settings) the game declares, by id, with its value now. It's synchronous, so a UI can read it while it draws.
+Every [setting](/docs/reference/settings) the game declares, by id, with its value now, in the snapshot. It's synchronous, so a UI can read it while it draws.
 
 - **A `play` setting** comes from the game in play, `state.settings`.
 - **A `ui` setting** comes from the profile's `core:settings`. A stored value the setting can't take any more reads as its default. So does every `ui` setting before the profile has been read, and in a runner without a profile.
 
 ```ts
-const { textSize, hints } = runner.settings()
+const { textSize, hints } = runner.snapshot().settings
 document.body.dataset.textSize = String(textSize)
 ```
 
-It hands back the same object until a value changes, so you can compare it, or read it in React's `useSyncExternalStore`. A runner from `createRunner` reads the profile in the background, and calls its listeners when a `ui` setting turns out to differ from its default. Await `settled()` to be sure it has. [`browserRunner`](/docs/browser#browserrunner) waits for that read before it returns.
+It's the same object until a value changes, so you can compare it. A runner from `createRunner` reads the profile in the background, and calls its listeners when a `ui` setting turns out to differ from its default. Await `settled()` to be sure it has. [`browserRunner`](/docs/browser#browserrunner) waits for that read before it returns.
 
 ### setSetting
 
@@ -277,12 +328,35 @@ runner.setSetting(id: string, to: KvValue): Result<KvValue>
 Changes a setting of either kind, after checking the value against the setting's declaration. Returns a [`Result`](#result) with the value, or why it was refused, with the same lines as the [`setting`](/docs/reference/commands#setting) command.
 
 - **A `play` setting** is sent as the `setting` command, so it changes the game in play and is logged like any command. When it takes, the runner writes it to the profile's `core:settings` too, so the next new game starts with it.
-- **A `ui` setting** is written to the profile's `core:settings` and never touches the state. `settings()` shows it at once, listeners are called, and the write finishes in the background. Await `settled()` if you need it done. Without a profile it's refused with `This game keeps no settings between plays.`
+- **A `ui` setting** is written to the profile's `core:settings` and never touches the state. The snapshot's `settings` shows it at once, listeners are called, and the write finishes in the background. Await `settled()` if you need it done. Without a profile it's refused with `This game keeps no settings between plays.`
 
 ```ts
 const result = runner.setSetting('textSize', 'large')
 if (!result.ok) showMessage(result.reason)
 ```
+
+### setHelper
+
+```ts
+runner.setHelper(id: string, value: unknown): void
+
+interface HelperRegistry {}
+type HelpersIn = { readonly [K in keyof HelperRegistry]?: HelperRegistry[K] } & Readonly<Record<string, unknown>>
+```
+
+Puts what a helper started beside the runner reports in the snapshot's `helpers`, under its id, and tells listeners. `undefined` takes it out. Setting the same value again does nothing. A helper is code that works on the runner from outside it and has something for the player to see, such as the unlocks plugin's [`startUnlocks`](/docs/plugins/unlocks#startunlocks), which reports whether a code is being checked as `helpers.unlocks`. So every UI reads it the same way, from the snapshot.
+
+A helper types what it reports by adding its id to `HelperRegistry`, as a plugin types its view in [`ViewRegistry`](/docs/reference/plugins#typed-calls-queries-and-views):
+
+```ts
+declare module '@ifloom/engine' {
+  interface HelperRegistry {
+    unlocks: UnlockStatus
+  }
+}
+```
+
+`HelpersIn` is the snapshot's `helpers`: typed for each id in the registry, and `unknown` for any other.
 
 ### newGame
 
@@ -363,9 +437,9 @@ A command the game refuses is skipped, as it would have been at the time. Agains
 
 ## Drawing it
 
-Two of the runner's members put something in front of the player. [`runner.backlog()`](#backlogentry) is what was shown, oldest first, for a "what did she just say?" screen. It's empty unless the runner has the backlog on, `backlog: true`, which `browserRunner` takes too. `runner.canUndo` says whether `runner.undo()` would step back.
+A UI draws from the [snapshot](#runnersnapshot). Two of its parts are the runner's own rather than the view's. `snapshot.backlog` is what was shown, oldest first, for a "what did she just say?" screen. It's empty unless the runner has the backlog on, `backlog: true`, which `browserRunner` takes too. `snapshot.canUndo` says whether `runner.undo()` would step back.
 
-The React UI's [`GameMenu`](/docs/react/components#gamemenu) offers the backlog and undo when the runner has them. [`Backlog`](/docs/react/components#backlog) draws the backlog wherever you place it. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+The React UI's [`GameMenu`](/docs/react/components#gamemenu) offers the backlog and undo when the runner has them. [`Backlog`](/docs/react/components#backlog) draws the backlog wherever you place it. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` is handed each snapshot, and the Vue tab reads `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
 ::include[../../../../snippets/plain/backlog.ts]{meta='tab="Plain JS" tab-group="framework"'}
 

@@ -57,7 +57,7 @@ describe('mountGame', () => {
     await act(async () => {
       runner = await mountGame(loaded(), { root, runner: { saves: store, history: false } })
     })
-    expect(runner.saves).toBe(store)
+    expect(runner.saves?.driver).toBe(store.driver)
     expect(runner.offers.undo).toBe(false)
   })
 

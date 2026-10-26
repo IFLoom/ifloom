@@ -42,7 +42,7 @@ runner.subscribe(() => draw(runner.view()))
 draw(runner.view())
 ```
 
-It's async because it reads the profile before it starts. The new game gets the player's stored `play` settings, and [`runner.settings()`](/docs/reference/runner#settings) has their `ui` settings from the first frame, so a text size or a volume is right before anything is drawn. A profile that can't be read starts the game with the defaults.
+It's async because it reads the profile before it starts. The new game gets the player's stored `play` settings, and [`runner.snapshot().settings`](/docs/reference/runner#settings) has their `ui` settings from the first frame, so a text size or a volume is right before anything is drawn. A profile that can't be read starts the game with the defaults.
 
 **Gotcha.** Its saves and profile go to `localStorage`, which a test or a script in Node doesn't have. The runner still starts there, but every save, autosave and profile write fails with `localStorage is not available here`. Pass your own stores, such as `{ saves: saves(game, memoryDriver()), profile: profile(game, memoryDriver()) }` with [`memoryDriver`](/docs/reference/saves#memorydriver), or use [`createRunner`](/docs/reference/runner#createrunner).
 

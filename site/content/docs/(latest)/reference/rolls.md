@@ -87,7 +87,7 @@ Each die is a separate [seeded draw](/docs/reference/random): `draw(sides, 'roll
 
 `view.rolls` has the rolls the last command made, in order, each a [`Roll`](#roll): the dice, each die's face, what was added, the total, and with a target, whether it passed. The next command clears them, so a UI shows each roll once.
 
-The React UI's [`Scene`](/docs/react/components#scene) draws a [`DiceRoll`](/docs/react/components#diceroll) above a block whose [`dice`](/docs/react/hints#dice) hint names the roll, and the others over the scene for a moment. [`useFreshRolls`](/docs/react/components#usefreshrolls) gives the new ones to draw somewhere of your own. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+The React UI's [`Scene`](/docs/react/components#scene) draws a [`DiceRoll`](/docs/react/components#diceroll) above a block whose [`dice`](/docs/react/hints#dice) hint names the roll, and the others over the scene for a moment. [`useFreshRolls`](/docs/react/components#usefreshrolls) gives the new ones to draw somewhere of your own. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
 ::include[../../../../snippets/plain/rolls.ts]{meta='tab="Plain JS" tab-group="framework"'}
 

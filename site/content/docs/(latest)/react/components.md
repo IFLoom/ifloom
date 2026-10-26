@@ -278,6 +278,7 @@ function useGame(): GameContextValue
 type GameContextValue = {
   runner: Runner
   mods?: ModsOption
+  snapshot: RunnerSnapshot
   view: View
   send: (command: Command) => Applied
   panels: Record<string, PanelComponent>
@@ -287,7 +288,7 @@ type GameContextValue = {
 }
 ```
 
-Returns the runner, the current [`View`](/docs/reference/view) and `send`. `send` runs a command through `runner.apply` and returns what [`apply`](/docs/reference/commands#apply) returned, so you can show a refusal. `panels` are what the provider was given. `inline` and `sections` are the provider's over what the plugin UIs bring. `plugins` are the [plugin UIs](/docs/react/kit#usepluginuis) whose plugin the game has, in their order. `mods` is the provider's `mods`, if any. It throws outside a `GameProvider`.
+Returns the runner, its [snapshot](/docs/reference/runner#runnersnapshot), the current [`View`](/docs/reference/view) (the snapshot's `view`) and `send`. Every component under the provider draws again when the runner hands a new snapshot: after a command, a setting, a save written or a helper's report. `send` runs a command through `runner.apply` and returns what [`apply`](/docs/reference/commands#apply) returned, so you can show a refusal. `panels` are what the provider was given. `inline` and `sections` are the provider's over what the plugin UIs bring. `plugins` are the [plugin UIs](/docs/react/kit#usepluginuis) whose plugin the game has, in their order. `mods` is the provider's `mods`, if any. It throws outside a `GameProvider`.
 
 ```tsx
 import { useState } from 'react'
@@ -311,7 +312,7 @@ function GoHome() {
 }
 ```
 
-Use the runner for what the view doesn't cover, such as `runner.undo()`, `runner.save(...)` and `runner.backlog()`.
+Use the runner for what the view doesn't cover, such as `runner.undo()`, `runner.save(...)` and `runner.snapshot().backlog`.
 
 ### ModsOption
 
@@ -1137,7 +1138,6 @@ type SavesState = {
   saving: SavingView
   slots: SaveMeta[]
   broken: BrokenSave[]
-  refresh: () => Promise<void>
   save: (name?: string) => Promise<boolean>
   overwrite: (slot: string) => Promise<boolean>
   load: (slot: string) => Promise<boolean>
@@ -1156,9 +1156,8 @@ The [`SavesMenu`](#savesmenu) without its look: the slots, and everything the me
 |---|---|
 | `available` | `false` when the runner was made without `saves`. Everything else then does nothing. |
 | `saving` | Whether the game lets the player save now, and why not, as [`view.saving`](/docs/reference/view#saving) has it. While `allowed` is `false`, `save` and `overwrite` are refused with the reason, which `message` then holds. |
-| `slots` | Every save that can be read, newest first, as [`SaveMeta`](/docs/reference/saves#savemeta). Read again whenever the view changes. |
+| `slots` | Every save that can be read, newest first, as [`SaveMeta`](/docs/reference/saves#savemeta), from the runner's [snapshot](/docs/reference/runner#the-saves-list), which follows every save and delete. |
 | `broken` | Saves that are there but can't be read, as [`BrokenSave`](/docs/reference/saves#savelisting)s with why. They can only be deleted, with `remove`. |
-| `refresh` | Reads the slots again. |
 | `save` | Saves in a new slot, the next free number, with `name` if you give one. `true` if it was written. |
 | `overwrite` | Saves over a slot, with the default name. `true` if it was written. |
 | `load` | Loads a slot. `true` if it loaded. |
@@ -1188,7 +1187,7 @@ function QuickSave() {
 function Backlog(props: { className?: string }): JSX.Element
 ```
 
-[`runner.backlog()`](/docs/reference/runner#backlogentry), oldest first, in a [`ScrollArea`](#scrollarea). Each entry shows its title and its beats, drawn as [`Beat`](#beat)s. When the player made a choice in it, a line **You chose: …** (`ui.chose`) follows. Each entry carries `data-backlog` with its scene id. With nothing in it, it shows `ui.backlogEmpty`. It follows the view, so it stays current while open.
+[`runner.snapshot().backlog`](/docs/reference/runner#backlogentry), oldest first, in a [`ScrollArea`](#scrollarea). Each entry shows its title and its beats, drawn as [`Beat`](#beat)s. When the player made a choice in it, a line **You chose: …** (`ui.chose`) follows. Each entry carries `data-backlog` with its scene id. With nothing in it, it shows `ui.backlogEmpty`. It follows the view, so it stays current while open.
 
 **Gotcha.** The runner has to be made with `backlog`. Without it, the list is always empty.
 
@@ -1197,10 +1196,10 @@ Replaceable as `Backlog` in [`components`](#components). Parts: `backlog`, `back
 ### useBacklog
 
 ```ts
-function useBacklog(): BacklogEntry[]
+function useBacklog(): readonly BacklogEntry[]
 ```
 
-The backlog's [entries](/docs/reference/runner#backlogentry), oldest first, read again whenever the view changes. It's the [`Backlog`](#backlog) without its look. It's empty unless the runner was made with `backlog`.
+The backlog's [entries](/docs/reference/runner#backlogentry), oldest first, from the runner's [snapshot](/docs/reference/runner#runnersnapshot). It's the [`Backlog`](#backlog) without its look. It's empty unless the runner was made with `backlog`.
 
 ```tsx
 import { useBacklog } from '@ifloom/react'
@@ -1393,7 +1392,7 @@ function SettingsPage(props: { className?: string }): JSX.Element
 
 The settings, drawn from [`view.settings`](/docs/reference/view#settings): a checkbox for a toggle, radio buttons for a choice, and a slider with its value beside it for a range. It says `ui.noSettings` when the game declares none, and has a Back button (`ui.back`).
 
-Each value comes from [`runner.settings()`](/docs/reference/runner#settings), and each change goes through [`runner.setSetting`](/docs/reference/runner#setsetting):
+Each value comes from [`runner.snapshot().settings`](/docs/reference/runner#settings), and each change goes through [`runner.setSetting`](/docs/reference/runner#setsetting):
 
 - **A ui setting** is written to the profile.
 - **A play setting** is sent as a [`setting`](/docs/reference/commands#setting) command, so it changes the game in play, and the runner writes it to the profile, so the next new game starts with it. Without a profile, New game keeps the settings in play.
@@ -1457,7 +1456,7 @@ Replaceable as `GatePage` in [`components`](#components). Parts: `gate-page`, `g
 function useSetting(id: string): KvValue | undefined
 ```
 
-A setting's current value, for your own components, as [`runner.settings()`](/docs/reference/runner#settings) gives it. A play setting's is the game in play's. A ui setting's comes from the profile, and the component redraws when it changes. If the stored value doesn't suit the setting any more, you get its default. It's `undefined` for a setting the game doesn't declare. Change one with [`runner.setSetting`](/docs/reference/runner#setsetting).
+A setting's current value, for your own components, as [`runner.snapshot().settings`](/docs/reference/runner#settings) gives it. A play setting's is the game in play's. A ui setting's comes from the profile, and the component redraws when it changes. If the stored value doesn't suit the setting any more, you get its default. It's `undefined` for a setting the game doesn't declare. Change one with [`runner.setSetting`](/docs/reference/runner#setsetting).
 
 ```tsx
 import { useSetting } from '@ifloom/react'

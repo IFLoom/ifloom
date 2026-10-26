@@ -14,7 +14,7 @@ import { usePluginUis } from './plugins.tsx'
 import { uiSay, useWords } from './words.ts'
 
 function GameMenuImpl({ className }: { className?: string }) {
-  const { runner, mods, view } = useGame()
+  const { runner, mods, view, snapshot } = useGame()
   const words = useWords()
   const pages = usePage()
   // Each plugin UI's settings: on the settings page with pages on, and behind a button of their own in the menu without.
@@ -76,10 +76,10 @@ function GameMenuImpl({ className }: { className?: string }) {
       ) : null}
       {undo ? (
         <>
-          <button {...step} disabled={!runner.canUndo} onClick={() => runner.undo()}>
+          <button {...step} disabled={!snapshot.canUndo} onClick={() => runner.undo()}>
             {words('undo')}
           </button>
-          <button {...step} disabled={!runner.canRedo} onClick={() => runner.redo()}>
+          <button {...step} disabled={!snapshot.canRedo} onClick={() => runner.redo()}>
             {words('redo')}
           </button>
         </>

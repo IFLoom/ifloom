@@ -230,7 +230,7 @@ The template has no menu. Add one at the end of `draw`, before the stats:
 ```ts
   const menu = add(root, 'nav', '', 'menu')
   const undo = add(menu, 'button', 'Undo')
-  undo.disabled = !runner.canUndo
+  undo.disabled = !runner.snapshot().canUndo
   undo.onclick = () => runner.undo()
 
   add(menu, 'button', 'Save').onclick = async () => {
@@ -264,12 +264,12 @@ const showMessage = (text: string) => (message.textContent = text)
 Say the game declares a `textSize` ui setting, as in [Saves and settings](/docs/guide/saves-and-settings#settings). Draw a button for it in the menu, and copy its value onto the page where the stylesheet can use it:
 
 ```ts
-  const large = runner.settings().textSize === 'large'
+  const large = runner.snapshot().settings.textSize === 'large'
   add(menu, 'button', large ? 'Smaller text' : 'Larger text').onclick = () => {
     const result = runner.setSetting('textSize', large ? 'normal' : 'large')
     if (!result.ok) showMessage(result.reason)
   }
-  document.documentElement.dataset.textSize = String(runner.settings().textSize)
+  document.documentElement.dataset.textSize = String(runner.snapshot().settings.textSize)
 ```
 
 ```css

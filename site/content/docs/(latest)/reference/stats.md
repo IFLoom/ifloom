@@ -444,7 +444,7 @@ statLevel(state, game, 'cooking') // { level: 1, next: 30, progress: 0.5 }
 
 `view.stats` lists the player's stats that are `listed` and visible now, in the order you declared them. Each is a [`StatView`](/docs/reference/view#statview): its `label`, its value written through its [`format`](#formatstat) as `text`, its `min` and `max` for a bar, and `level` for a stat with [levels](#levels). `view.statsById` has every stat by id, listed or not, for one your UI draws its own way, such as a purse in the corner.
 
-The React UI's [`StatList`](/docs/react/components#statlist) draws them in the side column of the default layout, as bars or pips when a stat's [`display`](/docs/react/hints#display) hint asks. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+The React UI's [`StatList`](/docs/react/components#statlist) draws them in the side column of the default layout, as bars or pips when a stat's [`display`](/docs/react/hints#display) hint asks. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
 ::include[../../../../snippets/plain/stats.ts]{meta='tab="Plain JS" tab-group="framework"'}
 

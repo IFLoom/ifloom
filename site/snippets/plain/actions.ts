@@ -1,9 +1,9 @@
-import type { View } from '@ifloom/engine'
+import type { RunnerSnapshot } from '@ifloom/engine'
 // runner and add, as in the vanilla template's src/main.ts.
 import { add, runner } from './runner.ts'
 
 /** The room's buttons, while no scene is open: each with its price, greyed out with why it can't be pressed, or warned. */
-export function drawActions(parent: HTMLElement, view: View): void {
+export function drawActions(parent: HTMLElement, { view }: RunnerSnapshot): void {
   for (const action of view.actions) {
     const cost = [...(action.price?.stats ?? []).map((stat) => stat.text), ...(action.price?.notes ?? [])].join(', ')
     const button = add(parent, 'button', cost ? `${action.label} (${cost})` : action.label)

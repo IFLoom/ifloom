@@ -8,7 +8,7 @@ import { settingAffects, settingOf, settingRefusal, settingValue } from './featu
 import { runnerHooks } from './features/registry.ts'
 import { savingIn } from './features/saving.ts'
 import { fail, ok, type Result } from './result.ts'
-import type { LoadedSave, SaveMeta, Saves } from './save.ts'
+import type { LoadedSave, SaveListing, SaveMeta, Saves } from './save.ts'
 import { stringOf } from './strings.ts'
 import type { SceneBeat } from './sceneBody.ts'
 import type { Command, KvValue, GameState } from './types.ts'
@@ -119,6 +119,55 @@ export function replay(game: Game, log: CommandLog): Result<GameState> {
 type Step = { state: GameState; backlog: BacklogEntry[]; commands: Command[] }
 
 /**
+ * What a helper started beside the runner reports, by its id, for a UI to
+ * draw: `startUnlocks` from `@ifloom/plugin-unlocks` reports `unlocks`. A
+ * helper types its own by augmenting this, as a plugin types its view in
+ * `ViewRegistry`.
+ */
+export interface HelperRegistry {}
+
+/** What the helpers report, by id: typed for each helper that declares itself in `HelperRegistry`. */
+export type HelpersIn = { readonly [K in keyof HelperRegistry]?: HelperRegistry[K] } & Readonly<Record<string, unknown>>
+
+/**
+ * Everything a UI draws from the runner, in one value: the view, the
+ * settings, the backlog, whether undo and redo would do anything, the saves
+ * and what the helpers report. `runner.snapshot()` gives it, and
+ * `runner.subscribe` hands each new one to its listeners. It is a new object
+ * whenever any part of it changes, and the same object until then, so a UI
+ * that keeps it whole (Vue's `shallowRef`, React's `useSyncExternalStore`, a
+ * Svelte store) draws again exactly when something changed.
+ */
+export type RunnerSnapshot = {
+  /** The state in play, as `runner.state`. */
+  readonly state: GameState
+  /** What a UI draws for that state, as `runner.view()`. */
+  readonly view: View
+  /**
+   * Every setting the game declares, by id, with its value now. A `play`
+   * setting's comes from the game in play; a `ui` setting's from the
+   * profile, or its default until the profile has been read (`settled`) or
+   * without one. Stored values that no longer fit are read as the default.
+   */
+  readonly settings: Readonly<Record<string, KvValue>>
+  /** What was shown, oldest first. Empty unless the backlog is on. */
+  readonly backlog: readonly BacklogEntry[]
+  /** Whether `undo` would do anything. */
+  readonly canUndo: boolean
+  /** Whether `redo` would do anything. */
+  readonly canRedo: boolean
+  /**
+   * Every save in the runner's `saves`, as `saves.list()` gives them: newest
+   * first, then any that can't be read. Read once when the runner starts
+   * (`settled` waits for it), then kept up to date as the runner saves and
+   * as `runner.saves` writes and removes. Empty without `saves`.
+   */
+  readonly saves: readonly SaveListing[]
+  /** What the helpers started beside the runner report, by id, such as `unlocks`. See `setHelper`. */
+  readonly helpers: HelpersIn
+}
+
+/**
  * The one object a UI drives, as `createRunner` (or `browserRunner` from `@ifloom/browser`) gives it.
  * Anything that can fail in a way a UI should expect (a refused command, an
  * empty slot, a setting with no profile to keep it) answers with a `Result`
@@ -147,21 +196,19 @@ export interface Runner {
    * with the profile's play settings as last read.
    */
   apply(ref: CommandRef): Result<GameState>
-  /** Whether `undo` would do anything. */
-  readonly canUndo: boolean
-  /** Whether `redo` would do anything. */
-  readonly canRedo: boolean
   /** Step back one command. False when there is nothing to undo. */
   undo(): boolean
   /** Step forward again after an undo. False when there is nothing to redo. */
   redo(): boolean
-  /** What was shown, oldest first. Empty unless the backlog is on. */
-  backlog(): BacklogEntry[]
   /** The start state and every command since, for `replay`. */
   log(): CommandLog
   /** Time played, in milliseconds, counting from any save loaded. */
   played(): number
-  /** The saves this runner writes to, for a menu that lists, exports or imports them. Undefined without `saves`. */
+  /**
+   * The saves this runner writes to, for a menu that reads, exports or
+   * imports them. Undefined without `saves`. What it writes and removes
+   * shows in the snapshot's `saves`.
+   */
   readonly saves: Saves | undefined
   /** Whether the game turned on undo, and the backlog: what a menu should offer. */
   readonly offers: { undo: boolean; backlog: boolean }
@@ -190,14 +237,6 @@ export interface Runner {
   /** The profile this runner writes settings and `finished` to. Undefined without `profile`. */
   readonly profile: Profile | undefined
   /**
-   * Every setting the game declares, by id, with its value now. A `play`
-   * setting's comes from the game in play; a `ui` setting's from the
-   * profile, or its default until the profile has been read (`settled`) or
-   * without one. Stored values that no longer fit are read as the default.
-   * The same object comes back until a value changes.
-   */
-  settings(): Readonly<Record<string, KvValue>>
-  /**
    * Change a setting of either kind, checked against its declaration. A
    * `play` setting is sent as the `setting` command, so it changes the game
    * in play, and the profile keeps it for the next new game. A `ui` setting
@@ -213,11 +252,22 @@ export interface Runner {
    */
   newGame(start?: StartOptions): Promise<GameState>
   /**
-   * Hear about every change of state, of a setting, and of what the view
-   * shows of the profile (the last two leave the state as it was). Returns
-   * the way to stop.
+   * Everything a UI draws, in one value: see `RunnerSnapshot`. The same
+   * object comes back until any part of it changes.
    */
-  subscribe(listener: (state: GameState) => void): () => void
+  snapshot(): RunnerSnapshot
+  /**
+   * Hear about every new snapshot: a change of state, of a setting, of what
+   * the view shows of the profile, of the saves, or of what a helper reports.
+   * Each listener is handed the new snapshot. Returns the way to stop.
+   */
+  subscribe(listener: (snapshot: RunnerSnapshot) => void): () => void
+  /**
+   * Report what a helper started beside the runner is doing, under its id,
+   * in the snapshot's `helpers`: `startUnlocks` reports whether a code is
+   * being checked. Undefined takes it out. Listeners are told when it changes.
+   */
+  setHelper<K extends string>(id: K, value: (K extends keyof HelperRegistry ? HelperRegistry[K] : unknown) | undefined): void
 }
 
 /**
@@ -244,7 +294,13 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
   let remembering: Promise<unknown> = Promise.resolve()
   // Once `finished` is known to be recorded, it isn't looked at again.
   let finishedRecorded = false
-  const listeners = new Set<(state: GameState) => void>()
+  const listeners = new Set<(snapshot: RunnerSnapshot) => void>()
+  // The saves as last listed, kept up to date as the runner's `saves` write and remove.
+  let listed: readonly SaveListing[] = []
+  // What the helpers report, by id.
+  let helpers: HelpersIn = {}
+  // The last snapshot built: the same object until a part of it changes.
+  let built: RunnerSnapshot | null = null
   // The last view built, and the state it was built for: the same state object gives the same view.
   let cached: { state: GameState; view: View } | null = null
   // What the plugins' views are shown of the profile, by plugin id: each namespace as last read or
@@ -282,7 +338,59 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
   }
 
   const notify = () => {
-    for (const listener of listeners) listener(state)
+    if (!listeners.size) return
+    const shown = snapshotNow()
+    for (const listener of listeners) listener(shown)
+  }
+
+  /** The snapshot now: the last one built, while every part of it is the same. */
+  function snapshotNow(): RunnerSnapshot {
+    const next: RunnerSnapshot = {
+      state,
+      view: viewOf(state),
+      settings: settingsNow(),
+      backlog,
+      canUndo: undoStack.length > 0,
+      canRedo: redoStack.length > 0,
+      saves: listed,
+      helpers,
+    }
+    const last = built
+    if (last && (Object.keys(next) as (keyof RunnerSnapshot)[]).every((key) => last[key] === next[key])) return last
+    built = Object.freeze(next)
+    return built
+  }
+
+  /** A save was written: its listing replaces the slot's, and listeners are told. */
+  function listedSave(meta: SaveMeta): void {
+    listed = sortedSaves([meta, ...listed.filter((entry) => entry.slot !== meta.slot)])
+    notify()
+  }
+
+  /** A slot was removed: it leaves the listing, and listeners are told. */
+  function unlistedSave(slot: string): void {
+    if (!listed.some((entry) => entry.slot === slot)) return
+    listed = listed.filter((entry) => entry.slot !== slot)
+    notify()
+  }
+
+  // The saves the runner writes to, watched so the snapshot's listing follows every write and removal.
+  const given = options.saves
+  const store: Saves | undefined = given && {
+    driver: given.driver,
+    async write(slot, toSave, extra) {
+      const meta = await given.write(slot, toSave, extra)
+      listedSave(meta)
+      return meta
+    },
+    read: (slot) => given.read(slot),
+    list: () => given.list(),
+    async remove(slot) {
+      await given.remove(slot)
+      unlistedSave(slot)
+    },
+    exportSlot: (slot) => given.exportSlot(slot),
+    importText: (text) => given.importText(text),
   }
   const played = () => playedBefore + (now() - since)
   const snapshot = (): Step => ({ state, backlog, commands: log.commands })
@@ -312,11 +420,10 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
   /** After any change of state — a command, an undo, a load — save if the policy says so. `ticking` for a `tick`. */
   function changed(before: GameState, ticking = false): void {
     // While the game's `saveable` refuses, autosave waits for the next change that's due.
-    if (autosaveDue(before, state, ticking) && options.saves && savingIn(state, game, holds).allowed) {
+    if (autosaveDue(before, state, ticking) && store && savingIn(state, game, holds).allowed) {
       const slot = options.autosave?.slot ?? 'auto'
       const toSave = state
-      const saves = options.saves
-      void queueWrite(() => saves.write(slot, toSave, { played: played() }))
+      void queueWrite(() => store.write(slot, toSave, { played: played() }))
     }
     notify()
   }
@@ -354,6 +461,20 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
       if (!settingsHeard) settingsSeen(value)
     })
     for (const id of viewers.keys()) remember(async (profile) => profileSeen(id, await profile.get(id)))
+  }
+
+  // The saves as they are when the runner starts, before any write it queues; `settled` waits for them.
+  if (store) {
+    saving = saving
+      .then(async () => {
+        listed = await store.list()
+        notify()
+        return null
+      })
+      .catch((error: unknown) => {
+        options.onSaveError?.(error)
+        return null
+      })
   }
 
   function settingsNow(): Readonly<Record<string, KvValue>> {
@@ -512,12 +633,6 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
       return viewOf(state)
     },
     apply: run,
-    get canUndo(): boolean {
-      return undoStack.length > 0
-    },
-    get canRedo(): boolean {
-      return redoStack.length > 0
-    },
     undo(): boolean {
       const step = undoStack.at(-1)
       if (!step) return false
@@ -540,20 +655,17 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
       changed(before)
       return true
     },
-    backlog(): BacklogEntry[] {
-      return backlog
-    },
     log(): CommandLog {
       return log
     },
     played,
-    saves: options.saves,
+    saves: store,
     offers: { undo: Boolean(history), backlog: backlogLimit > 0 },
     async save(slot: string, name?: string): Promise<Result<SaveMeta>> {
-      if (!options.saves) return fail(stringOf(game, 'noSaves'))
+      if (!store) return fail(stringOf(game, 'noSaves'))
       const policy = savingIn(state, game, holds)
       if (!policy.allowed) return fail(policy.reason!)
-      const saves = options.saves
+      const saves = store
       const toSave = state
       await saving
       try {
@@ -565,8 +677,8 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     },
     restore,
     async load(slot: string): Promise<Result<LoadedSave>> {
-      if (!options.saves) return fail(stringOf(game, 'noSaves'))
-      const read = await options.saves.read(slot)
+      if (!store) return fail(stringOf(game, 'noSaves'))
+      const read = await store.read(slot)
       if (!read.ok) return read
       if (!read.value) return fail(stringOf(game, 'emptySlot'))
       restore(read.value)
@@ -577,7 +689,6 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
       await saving
     },
     profile: options.profile,
-    settings: settingsNow,
     setSetting(id: string, to: KvValue): Result<KvValue> {
       const setting = settingOf(game, id)
       if (!setting) return fail(stringOf(game, 'noSuchSetting'))
@@ -597,11 +708,25 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
       await remembering
       return startOver(start)
     },
-    subscribe(listener: (state: GameState) => void): () => void {
+    snapshot: snapshotNow,
+    subscribe(listener: (snapshot: RunnerSnapshot) => void): () => void {
       listeners.add(listener)
       return () => listeners.delete(listener)
     },
+    setHelper(id: string, value: unknown): void {
+      if (value === undefined ? !(id in helpers) : helpers[id] === value) return
+      const { [id]: _gone, ...rest } = helpers
+      helpers = value === undefined ? rest : { ...rest, [id]: value }
+      notify()
+    },
   }
+}
+
+/** Saves as `saves.list()` orders them: newest first, then the ones that can't be read, by slot. */
+function sortedSaves(entries: readonly SaveListing[]): SaveListing[] {
+  const readable = entries.filter((entry): entry is SaveMeta => !('broken' in entry)).sort((a, b) => b.savedAt - a.savedAt)
+  const broken = entries.filter((entry) => 'broken' in entry).sort((a, b) => a.slot.localeCompare(b.slot))
+  return [...readable, ...broken]
 }
 
 /** A deep, frozen copy of a JSON value from the profile, so a view can read it and never change what is stored. */

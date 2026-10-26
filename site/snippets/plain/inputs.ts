@@ -1,9 +1,9 @@
-import type { InputView, View } from '@ifloom/engine'
+import type { InputView, RunnerSnapshot } from '@ifloom/engine'
 // runner and add, as in the vanilla template's src/main.ts.
 import { add, runner } from './runner.ts'
 
 /** The inputs on offer now, such as the cat's name. What the player enters goes back as an `input` command. */
-export function drawInputs(parent: HTMLElement, view: View): void {
+export function drawInputs(parent: HTMLElement, { view }: RunnerSnapshot): void {
   for (const input of view.inputs) drawInput(add(parent, 'div', '', 'input'), input)
 }
 

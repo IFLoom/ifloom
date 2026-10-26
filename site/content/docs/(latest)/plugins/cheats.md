@@ -211,7 +211,7 @@ type CheatView = {
 
 `view.plugins.cheats` is a [`CheatsView`](#cheatsview): every cheat with its group, how often this save has used it, and a ready-made `button`, greyed out with the reason while it's refused.
 
-`@ifloom/plugin-cheats/react` draws the cheats, for a game drawn with [`@ifloom/react`](/docs/react). List `cheatsUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a [`CheatsButton`](#cheatsbutton) in the side column opens the [`CheatPanel`](#cheatpanel). The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+`@ifloom/plugin-cheats/react` draws the cheats, for a game drawn with [`@ifloom/react`](/docs/react). List `cheatsUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a [`CheatsButton`](#cheatsbutton) in the side column opens the [`CheatPanel`](#cheatpanel). The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
 ::include[../../../../snippets/plain/cheats.ts]{meta='tab="Plain JS" tab-group="framework"'}
 

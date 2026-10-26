@@ -152,7 +152,7 @@ describe('achievements', () => {
     await runner.settled()
     const before = runner.view()
     const heard: GameState[] = []
-    runner.subscribe((state) => heard.push(state))
+    runner.subscribe(({ state }) => heard.push(state))
     // Earned in another save: written to the profile by something else.
     await stored.set('achievements', { earned: ['kind'] })
     expect(heard).toEqual([runner.state])

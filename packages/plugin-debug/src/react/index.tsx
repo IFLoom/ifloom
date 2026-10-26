@@ -85,7 +85,7 @@ export type DebugControls = DebugView & {
 
 /** The debug plugin's view with its commands, or null in a game without the plugin. `DebugCard` is drawn from it. */
 export function useDebug(): DebugControls | null {
-  const { runner, view, send } = useGame()
+  const { runner, view, send, snapshot } = useGame()
   const data = view.plugins.debug as DebugView | undefined
   if (!data) return null
   const greyed = [
@@ -99,8 +99,8 @@ export function useDebug(): DebugControls | null {
     greyed,
     state: runner.state,
     log: runner.log().commands,
-    canUndo: runner.canUndo,
-    canRedo: runner.canRedo,
+    canUndo: snapshot.canUndo,
+    canRedo: snapshot.canRedo,
     undo: () => runner.undo(),
     redo: () => runner.redo(),
     run: (name, args = {}) => send(debugCommand(name, args)),

@@ -305,7 +305,7 @@ How a video layer plays, with the defaults filled in. A `video` [beat](/docs/ref
 
 A scene's layered picture is `view.scene.picture`, a [`PictureView`](#pictureview). Stack its `layers` bottom first, and put each of its `hotspots` over them as a button, placed by its `rect` (left, top, width and height, in percent of the picture). A hotspot is greyed out with `disabled` like any button, and sends its `command`. A scene with no layered picture may have a single `view.scene.image`. A place's picture is in the [places plugin's view](/docs/plugins/places#placesview), drawn the same way.
 
-The React UI's [`Scene`](/docs/react/components#scene) draws the picture above the words with [`LayeredPicture`](/docs/react/components#layeredpicture), which you can also place yourself. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+The React UI's [`Scene`](/docs/react/components#scene) draws the picture above the words with [`LayeredPicture`](/docs/react/components#layeredpicture), which you can also place yourself. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
 ::include[../../../../snippets/plain/picture.ts]{meta='tab="Plain JS" tab-group="framework"'}
 

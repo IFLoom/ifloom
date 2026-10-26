@@ -842,7 +842,7 @@ Two parts of the view show entities:
 - **`view.held`** is what you [hold](#holding-things): the protagonist's things, then the player's. Each is a [`HeldView`](/docs/reference/view#heldview) with its `name`, `description`, `image` and `count`.
 - **`view.entities`** has each [listed](#listing) kind with its entities, as [`EntitiesView`](/docs/reference/view#entitiesview-and-entityview)s. Each entity carries the stats the player can see on it and its kind's `flags`, so you can split the people you've met from the rest without hiding anything more.
 
-The React UI's [`Inventory`](/docs/react/components#inventory) draws what you hold, in the side column of the default layout. [`EntityTable`](/docs/react/components#entitytable) draws a listed kind as a table, and is yours to place. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+The React UI's [`Inventory`](/docs/react/components#inventory) draws what you hold, in the side column of the default layout. [`EntityTable`](/docs/react/components#entitytable) draws a listed kind as a table, and is yours to place. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
 ::include[../../../../snippets/plain/entities.ts]{meta='tab="Plain JS" tab-group="framework"'}
 

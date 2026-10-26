@@ -361,7 +361,7 @@ To draw blocks outside a scene, such as a message's words, a plugin uses [`conte
 
 `view.scene` is what fills the main column: the open scene, or the room while none is open. Draw its `title`, then its `beats`, then its `choices`. The beats are the prose parsed into paragraphs, spoken lines, pictures and the picks made earlier in a [flowing scene](/docs/reference/flows), each a [`SceneBeat`](/docs/reference/prose#scenebeat). Each choice is a [`RenderedChoice`](/docs/reference/view#renderedchoice) with its price, and with `disabled` set to the reason when it can't be pressed. Send its `command` when the player presses it. [The scene](/docs/reference/view#the-scene) lists every field.
 
-The React UI's [`Scene`](/docs/react/components#scene) draws all of it, and the default layout already has it. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+The React UI's [`Scene`](/docs/react/components#scene) draws all of it, and the default layout already has it. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
 ::include[../../../../snippets/plain/scene.ts]{meta='tab="Plain JS" tab-group="framework"'}
 

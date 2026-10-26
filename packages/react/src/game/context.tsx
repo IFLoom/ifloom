@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useSyncExternalStore, type ComponentType, type ReactNode } from 'react'
-import type { Command, GameState, InlineUi, InlineUiArgs, Mods, Result, Runner, View } from '@ifloom/engine'
+import type { Command, GameState, InlineUi, InlineUiArgs, Mods, Result, Runner, RunnerSnapshot, View } from '@ifloom/engine'
 import { UiProvider, type UiOptions } from './overrides.tsx'
 import { activePlugins, mergedFrom, PluginProviders, type PluginUi } from './plugins.tsx'
 import { KeysProvider } from './keys.tsx'
@@ -44,6 +44,9 @@ export type ModsOption = {
 export type GameContextValue = {
   runner: Runner
   mods?: ModsOption
+  /** Everything the runner gives a UI to draw, as `runner.snapshot()`: the view, settings, backlog, undo, saves and helpers. */
+  snapshot: RunnerSnapshot
+  /** The view, as `snapshot.view`. */
   view: View
   /** Run a command. Returns what `runner.apply` returned, so a caller can show a refusal. */
   send: (command: Command) => Result<GameState>
@@ -83,9 +86,10 @@ export type GameProviderProps = UiOptions & {
 }
 
 /**
- * Connects the UI to a runner: every component under it reads the view and
- * sends commands through `useGame`. The view is recomputed when the runner's
- * state changes, or what the plugins' views show of the profile does, and only then.
+ * Connects the UI to a runner: every component under it reads the runner's
+ * snapshot (the view, settings, backlog, undo, saves and helpers) and sends
+ * commands through `useGame`. It draws again when the runner hands a new
+ * snapshot, and only then.
  */
 const NONE = {}
 const NO_PLUGINS: readonly PluginUi[] = []
@@ -105,12 +109,12 @@ export function GameProvider({
   motion,
   children,
 }: GameProviderProps) {
-  // The view follows the runner. It builds one per state, and a new one when what the plugins'
-  // views show of the profile changes, and hands the same object to everything that reads it
-  // (the backlog, the audio player), so this builds nothing new.
-  // The same view on the server, so a test or a static page can draw the game with renderToString.
-  const current = () => runner.view()
-  const view = useSyncExternalStore((listener) => runner.subscribe(() => listener()), current, current)
+  // The snapshot follows the runner, which hands the same object until a part of it changes,
+  // and builds the view once per state for everything that reads it, so this builds nothing new.
+  // The same snapshot on the server, so a test or a static page can draw the game with renderToString.
+  const current = () => runner.snapshot()
+  const snapshot = useSyncExternalStore((listener) => runner.subscribe(() => listener()), current, current)
+  const view = snapshot.view
   const send = useCallback((command: Command) => runner.apply(command), [runner])
   // The game's clock: a tick while any timer counts down, drawn or not.
   useTicking(runner)
@@ -125,8 +129,8 @@ export function GameProvider({
     [plugins, sections, inline, components],
   )
   const value = useMemo(
-    () => ({ runner, view, send, panels, inline: merged.inline, mods, sections: merged.sections, plugins }),
-    [runner, view, send, panels, merged, mods, plugins],
+    () => ({ runner, snapshot, view, send, panels, inline: merged.inline, mods, sections: merged.sections, plugins }),
+    [runner, snapshot, view, send, panels, merged, mods, plugins],
   )
   return (
     <GameContext.Provider value={value}>
@@ -144,7 +148,7 @@ export function useGameIfAny(): GameContextValue | null {
   return useContext(GameContext)
 }
 
-/** The runner, the current view and `send`. Only inside a `GameProvider`. */
+/** The runner, its snapshot, the current view and `send`. Only inside a `GameProvider`. */
 export function useGame(): GameContextValue {
   const value = useContext(GameContext)
   if (!value) throw new Error('useGame is used outside a GameProvider.')

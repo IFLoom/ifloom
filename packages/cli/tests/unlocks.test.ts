@@ -4,7 +4,7 @@ import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { build, createServer } from 'vite'
 import { createRunner, memoryDriver, profile, startingState, type Pack } from '@ifloom/engine'
-import { startUnlocks, unlockedPacks, type LockedContent } from '@ifloom/plugin-unlocks'
+import { enterCode, startUnlocks, unlockedPacks, type LockedContent } from '@ifloom/plugin-unlocks'
 import { checkUnlocks, isLockedModule, leaks, linesOf, lockedFiles, lockedScript } from '../src/unlocks.ts'
 import fixtureGame from './fixtures/locked/src/game.ts'
 import supporter from './fixtures/locked/src/unlocks/supporter.ts'
@@ -72,9 +72,9 @@ describe('locked content in a build', () => {
     const driver = memoryDriver()
     const { game } = fixtureGame.build()
     const runner = createRunner(game, startingState(game), { profile: profile(game, driver) })
-    const codes = startUnlocks(runner, { content })
-    expect((await codes.enter('wrong code')).ok).toBe(false)
-    const entered = await codes.enter(CODE.toLowerCase())
+    startUnlocks(runner, { content })
+    expect((await enterCode(runner, 'wrong code')).ok).toBe(false)
+    const entered = await enterCode(runner, CODE.toLowerCase())
     expect(entered.ok && entered.value).toEqual({ unlock: 'supporter', name: 'Supporter edition', already: false, restart: true })
     await runner.settled()
     const opened = await unlockedPacks(game.id, profile(game, driver), content)

@@ -436,7 +436,7 @@ On a new game with the defaults:
 
 `view.plugins.calendar` is a [`CalendarView`](#calendarview): the day, the weekday, the period and the whole `label`, which is also in `view.when`. `curfew` is `true` in the last period while the curfew binds, which is your cue to send the player to bed.
 
-`@ifloom/plugin-calendar/react` marks the clock with the calendar's parts, for a game drawn with [`@ifloom/react`](/docs/react). List `calendarUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and [`CalendarClock`](#calendarclock) is drawn wherever the React UI's own [`Clock`](/docs/react/components#clock) is. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+`@ifloom/plugin-calendar/react` marks the clock with the calendar's parts, for a game drawn with [`@ifloom/react`](/docs/react). List `calendarUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and [`CalendarClock`](#calendarclock) is drawn wherever the React UI's own [`Clock`](/docs/react/components#clock) is. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
 ::include[../../../../snippets/plain/calendar.ts]{meta='tab="Plain JS" tab-group="framework"'}
 

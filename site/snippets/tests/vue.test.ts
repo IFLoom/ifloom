@@ -1,12 +1,16 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { startUnlocks } from '@ifloom/plugin-unlocks'
+import Backlog from '../vue/Backlog.vue'
+import Saves from '../vue/Saves.vue'
+import Unlocks from '../vue/Unlocks.vue'
 import { createApp, nextTick, type Component } from 'vue'
 import { runner } from '../vue/runner.ts'
 import Inputs from '../vue/Inputs.vue'
 import JobBoard from '../vue/JobBoard.vue'
 import ShopCounter from '../vue/ShopCounter.vue'
 import Timers from '../vue/Timers.vue'
-import { atTheCounter, atTheJobBoard, phoneRinging } from './play.ts'
+import { atTheCounter, atTheJobBoard, phoneRinging, unpacked } from './play.ts'
 
 let unmount = () => {}
 afterEach(() => unmount())
@@ -73,5 +77,41 @@ describe('the Vue snippets', () => {
     expect(runner.state.stats.coins).toBeLessThan(coins)
     // Bought: a sell button for it now.
     expect(buttons(box).length).toBeGreaterThan(3)
+  })
+
+  it('Backlog and Saves: follow the snapshot, so a command, a save and a delete show at once', async () => {
+    await runner.newGame()
+    const backlog = mounted(Backlog)
+    expect((backlog.querySelector('button') as HTMLButtonElement).disabled).toBe(true)
+    unpacked(runner)
+    await nextTick()
+    expect((backlog.querySelector('button') as HTMLButtonElement).disabled).toBe(false)
+    expect(backlog.querySelectorAll('li').length).toBe(runner.snapshot().backlog.length)
+    unmount()
+    const saves = mounted(Saves)
+    const before = saves.querySelectorAll('.slots li').length
+    buttons(saves)
+      .find((button) => button.textContent === 'Save')!
+      .click()
+    await runner.settled()
+    await nextTick()
+    expect(saves.querySelectorAll('.slots li').length).toBe(before + 1)
+    buttons(saves)
+      .find((button) => button.textContent === 'Delete')!
+      .click()
+    await vi.waitFor(() => expect(saves.querySelectorAll('.slots li').length).toBe(before))
+  })
+
+  it('Unlocks: a wrong code says why, from the snapshot', async () => {
+    await runner.newGame()
+    const stop = startUnlocks(runner)
+    const box = mounted(Unlocks)
+    await nextTick()
+    const field = box.querySelector('input')!
+    field.value = 'NOT-A-CODE'
+    field.dispatchEvent(new Event('input'))
+    box.querySelector('form')!.requestSubmit()
+    await vi.waitFor(() => expect(box.querySelector('.reason')?.textContent).toBe('That code doesn’t unlock anything.'))
+    stop()
   })
 })

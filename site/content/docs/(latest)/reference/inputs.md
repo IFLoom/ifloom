@@ -103,7 +103,7 @@ A text value is trimmed before it's checked and before it's written to the kv st
 
 `view.inputs` has each input on offer now, in the order you declared them, as an [`InputView`](/docs/reference/view#inputview): its `label`, its `type`, its limits, the `options` of a choice, and the `value` its kv key holds. Send what the player enters as `{ type: 'input', id, to }`. A value that breaks the input's rules is refused with [why](#why-a-value-is-refused), so show the reason by the field.
 
-The React UI's [`InputFields`](/docs/react/components#inputfields) draws a field for each, under the scene in the default layout. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+The React UI's [`InputFields`](/docs/react/components#inputfields) draws a field for each, under the scene in the default layout. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
 ::include[../../../../snippets/plain/inputs.ts]{meta='tab="Plain JS" tab-group="framework"'}
 

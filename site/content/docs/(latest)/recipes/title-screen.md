@@ -215,7 +215,7 @@ const town: Content = {
 }
 ```
 
-The React UI's settings page draws each one for you: a checkbox for a toggle, radio buttons for a choice, and a slider for a range. The player reaches it from the title screen, or from the menu during a game. With the other templates, draw `view.settings` yourself. Each [`SettingView`](/docs/reference/view#settingview) has its value and the kind of control it wants. Read every value with [`runner.settings()`](/docs/reference/runner#settings), and send a change of either kind with [`runner.setSetting`](/docs/reference/runner#setsetting).
+The React UI's settings page draws each one for you: a checkbox for a toggle, radio buttons for a choice, and a slider for a range. The player reaches it from the title screen, or from the menu during a game. With the other templates, draw `view.settings` yourself. Each [`SettingView`](/docs/reference/view#settingview) has its value and the kind of control it wants. Read every value with [`runner.snapshot().settings`](/docs/reference/runner#settings), and send a change of either kind with [`runner.setSetting`](/docs/reference/runner#setsetting).
 
 A setting is either part of the game or only part of how it looks. [Settings](/docs/reference/settings) has the details, and the next two sections show each kind in use.
 
@@ -238,11 +238,11 @@ A save keeps the settings it was made with, so loading an old save brings its ow
 
 `textSize` has `affects: 'ui'`, so it never enters the game state. Conditions can't read it. It lives only in the player's [profile](/docs/reference/profile), and your own code applies it.
 
-Read it where you draw the story, with [`runner.settings()`](/docs/reference/runner#settings). The runner calls its listeners when the player changes it, so whatever redraws on a change picks it up. In the React UI, [`useSetting`](/docs/react/components#usesetting) reads it and redraws the component:
+Read it where you draw the story, with [`runner.snapshot().settings`](/docs/reference/runner#settings). The runner calls its listeners when the player changes it, so whatever redraws on a change picks it up. In the React UI, [`useSetting`](/docs/react/components#usesetting) reads it and redraws the component:
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/main.ts, in the vanilla template. In draw():
-root.classList.toggle('large', runner.settings().textSize === 'large')
+root.classList.toggle('large', runner.snapshot().settings.textSize === 'large')
 ```
 
 ```tsx tab="React" tab-group="framework"
@@ -260,8 +260,8 @@ function Story({ children }: { children: React.ReactNode }) {
 import { onUnmounted, ref } from 'vue'
 import { runner } from './runner.ts'
 
-const size = ref(runner.settings().textSize)
-const stop = runner.subscribe(() => (size.value = runner.settings().textSize))
+const size = ref(runner.snapshot().settings.textSize)
+const stop = runner.subscribe(() => (size.value = runner.snapshot().settings.textSize))
 onUnmounted(stop)
 </script>
 
@@ -277,8 +277,8 @@ onUnmounted(stop)
   import { runner } from './runner.ts'
 
   let { children }: { children: Snippet } = $props()
-  let size = $state(runner.settings().textSize)
-  $effect(() => runner.subscribe(() => (size = runner.settings().textSize)))
+  let size = $state(runner.snapshot().settings.textSize)
+  $effect(() => runner.subscribe(() => (size = runner.snapshot().settings.textSize)))
 </script>
 
 <div class:large={size === 'large'}>{@render children()}</div>
@@ -289,7 +289,7 @@ To apply it to every page, including the title screen, put it on the page instea
 ```ts
 // src/main.tsx
 function showTextSize() {
-  document.documentElement.dataset.textSize = runner.settings().textSize === 'large' ? 'large' : 'normal'
+  document.documentElement.dataset.textSize = runner.snapshot().settings.textSize === 'large' ? 'large' : 'normal'
 }
 showTextSize()
 runner.subscribe(showTextSize)

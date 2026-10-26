@@ -1,9 +1,9 @@
-import type { View } from '@ifloom/engine'
+import type { RunnerSnapshot } from '@ifloom/engine'
 // runner and add, as in the vanilla template's src/main.ts.
 import { add, runner } from './runner.ts'
 
 /** The notices not yet dismissed, newest first, each with a button that marks it seen. */
-export function drawNotices(parent: HTMLElement, view: View): void {
+export function drawNotices(parent: HTMLElement, { view }: RunnerSnapshot): void {
   const toasts = add(parent, 'div', '', 'notices')
   toasts.setAttribute('role', 'status')
   for (const notice of view.notices.unseen) {
@@ -16,7 +16,7 @@ export function drawNotices(parent: HTMLElement, view: View): void {
 }
 
 /** A badge with how many are unseen under a tag, such as the post. */
-export function drawPostBadge(parent: HTMLElement, view: View): void {
+export function drawPostBadge(parent: HTMLElement, { view }: RunnerSnapshot): void {
   const count = view.notices.byTag.post ?? 0
   if (count) add(parent, 'span', String(count), 'badge')
 }

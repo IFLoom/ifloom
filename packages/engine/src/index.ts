@@ -194,7 +194,18 @@ export type { Profile } from './profile.ts'
 export { profile } from './profile.ts'
 
 // The runner a UI drives
-export type { AutosaveOptions, BacklogEntry, BacklogOptions, CommandLog, HistoryOptions, Runner, RunnerOptions } from './runner.ts'
+export type {
+  AutosaveOptions,
+  BacklogEntry,
+  BacklogOptions,
+  CommandLog,
+  HelperRegistry,
+  HelpersIn,
+  HistoryOptions,
+  Runner,
+  RunnerOptions,
+  RunnerSnapshot,
+} from './runner.ts'
 export { createRunner, replay } from './runner.ts'
 
 // The view a UI draws, and the screen it is built from

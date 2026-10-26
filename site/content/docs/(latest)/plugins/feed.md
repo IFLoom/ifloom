@@ -418,7 +418,7 @@ type PostView = {
 
 `view.plugins.feed` is a [`FeedsView`](#feedsview): each feed's posts, with their likes and comments, and how many are new. Send `feed/seen` with a feed's id when the player has looked. A feed usually shows inside an app on a [device](/docs/plugins/devices).
 
-`@ifloom/plugin-feed/react` draws a feed inside an app, for a game drawn with [`@ifloom/react`](/docs/react). List `feedUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a [`FeedSection`](#feedsection) is drawn wherever a [device](/docs/plugins/devices)'s app shows a feed. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+`@ifloom/plugin-feed/react` draws a feed inside an app, for a game drawn with [`@ifloom/react`](/docs/react). List `feedUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a [`FeedSection`](#feedsection) is drawn wherever a [device](/docs/plugins/devices)'s app shows a feed. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
 ::include[../../../../snippets/plain/feed.ts]{meta='tab="Plain JS" tab-group="framework"'}
 

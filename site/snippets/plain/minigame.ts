@@ -1,9 +1,9 @@
-import type { View } from '@ifloom/engine'
+import type { RunnerSnapshot } from '@ifloom/engine'
 // runner and add, as in the vanilla template's src/main.ts, which runs startClock(runner) to send the ticks.
 import { add, runner } from './runner.ts'
 
 /** The minigame being played, under the scene's title and beats (its words): a bar counting down its timer, and a button for each input that does something now. */
-export function drawMinigame(parent: HTMLElement, view: View): void {
+export function drawMinigame(parent: HTMLElement, { view }: RunnerSnapshot): void {
   const minigame = view.minigame
   if (!minigame) return
   const box = add(parent, 'section', '', 'minigame')

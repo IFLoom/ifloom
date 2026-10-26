@@ -222,7 +222,7 @@ describe('flowing scenes', () => {
     const runner = createRunner(game, startingState(game), { backlog: true })
     for (const command of [{ type: 'scene', id: 'cafe.counter' }, choose('coffee'), choose('done'), choose('leave')] as Command[])
       expect(runner.apply(command).ok).toBe(true)
-    const entries = runner.backlog()
+    const entries = runner.snapshot().backlog
     expect(entries.map((entry) => [entry.sceneId, entry.chose])).toEqual([['cafe.counter', 'Leave']])
     expect(read(entries[0].beats)).toEqual([
       'Ava looks up from the till.',

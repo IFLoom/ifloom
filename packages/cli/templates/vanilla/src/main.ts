@@ -1,9 +1,10 @@
 /**
  * The game drawn with plain DOM, no framework. The whole loop is: ask the
- * runner for the view, draw it, send a command when a button is pressed, and
- * draw again when the state changes. Any framework can do the same.
+ * runner for its snapshot (the view, the settings, the backlog, undo and the
+ * saves), draw it, send a command when a button is pressed, and draw again
+ * when the runner hands a new snapshot. Any framework can do the same.
  */
-import type { InlineSpan, InputView, MinigameView, OpenPanel, RenderedChoice, SceneBeat, View } from '@ifloom/engine'
+import type { InlineSpan, InputView, MinigameView, OpenPanel, RenderedChoice, RunnerSnapshot, SceneBeat, View } from '@ifloom/engine'
 import { startAudio } from '@ifloom/audio'
 import { browserRunner, startClock, startKeys } from '@ifloom/browser'
 import module from './game.ts'
@@ -36,7 +37,8 @@ function add<K extends keyof HTMLElementTagNameMap>(parent: HTMLElement, tag: K,
 /** The story's region, where the scene is drawn. */
 let story = root
 
-function draw(view: View): void {
+function draw(snapshot: RunnerSnapshot): void {
+  const { view } = snapshot
   const regions = layout(root)
   story = regions.story
 
@@ -83,7 +85,7 @@ function drawSaves(parent: HTMLElement, view: View): void {
     save.onclick = async () => {
       const saved = await runner.save('quick')
       said = saved.ok ? 'Saved.' : saved.reason
-      draw(runner.view())
+      draw(runner.snapshot())
     }
     if (reason) add(parent, 'p', reason, 'reason')
   }
@@ -91,7 +93,7 @@ function drawSaves(parent: HTMLElement, view: View): void {
     const loaded = await runner.load('quick')
     said = loaded.ok ? 'Loaded.' : loaded.reason
     // A load draws again by itself; a refusal doesn't.
-    if (!loaded.ok) draw(runner.view())
+    if (!loaded.ok) draw(runner.snapshot())
   }
   if (said) add(parent, 'p', said, 'said')
 }
@@ -242,5 +244,6 @@ function drawPanel(panel: OpenPanel): void {
   if (!panel.scene) add(box, 'button', 'Close').onclick = () => runner.apply({ type: 'closePanel' })
 }
 
-runner.subscribe(() => draw(runner.view()))
-draw(runner.view())
+// The runner hands every listener a new snapshot whenever anything in it changes.
+runner.subscribe(draw)
+draw(runner.snapshot())

@@ -1,9 +1,9 @@
-import type { SceneBeat, View } from '@ifloom/engine'
+import type { SceneBeat, RunnerSnapshot } from '@ifloom/engine'
 // runner, add and drawChoices, as in the vanilla template's src/main.ts.
 import { add, drawChoices } from './runner.ts'
 
 /** The story: the scene's title, its beats and its choices. With no scene open it's the room, whose buttons are view.actions. */
-export function drawScene(parent: HTMLElement, view: View): void {
+export function drawScene(parent: HTMLElement, { view }: RunnerSnapshot): void {
   if (view.scene.title) add(parent, 'h2', view.scene.title)
   const prose = add(parent, 'div', '', 'prose')
   for (const beat of view.scene.beats) drawBeat(prose, beat)

@@ -451,7 +451,7 @@ function TownApp() {
       <InputFields />
       <footer className="flex gap-3 text-sm">
         {saves.available ? <button onClick={() => void saves.save('Quick save')}>Quick save</button> : null}
-        <button disabled={!runner.canUndo} onClick={() => runner.undo()}>
+        <button disabled={!runner.snapshot().canUndo} onClick={() => runner.undo()}>
           Undo
         </button>
       </footer>

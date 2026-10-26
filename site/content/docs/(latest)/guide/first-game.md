@@ -425,7 +425,7 @@ Play the first morning again. Going to bed moves the calendar to the next mornin
 ```ts
 runner.apply({ type: 'choose', id: 'bed' })
 runner.apply(calendar.sleep())                              // Tuesday morning: turn 1
-runner.canUndo                                     // false: a new turn is a barrier
+runner.snapshot().canUndo                                     // false: a new turn is a barrier
 runner.apply(places.go('high-street'))
 runner.undo()                                      // back in the house
 runner.redo()                                      // on the high street again
@@ -735,7 +735,7 @@ runner.subscribe(() => console.log(runner.view().scene.title))
 
 runner.apply({ type: 'choose', id: 'bed' })
 runner.apply(calendar.sleep())
-console.log(runner.canUndo) // false
+console.log(runner.snapshot().canUndo) // false
 runner.apply(places.go('high-street'))
 runner.undo()
 console.log(places.where(runner.state)) // 'house'

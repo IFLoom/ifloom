@@ -9,7 +9,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, render } from '@testing-library/react'
 import { createElement, type ComponentType } from 'react'
 import { createApp, nextTick, type Component } from 'vue'
-import { createRunner, startingState, type Runner, type View } from '@ifloom/engine'
+import { createRunner, startingState, type Runner, type RunnerSnapshot } from '@ifloom/engine'
 import { GameProvider } from '@ifloom/react'
 import module from '../react/game.ts'
 import { runner as plainRunner } from '../plain/runner.ts'
@@ -26,7 +26,7 @@ afterEach(() => {
   document.body.innerHTML = ''
 })
 
-type Draw = (parent: HTMLElement, view: View) => void
+type Draw = (parent: HTMLElement, snapshot: RunnerSnapshot) => void
 const draws = Object.entries(PLAIN).flatMap(([file, exports]) =>
   Object.entries(exports)
     .filter(([name, value]) => /^draw[A-Z]/.test(name) && typeof value === 'function')
@@ -56,7 +56,7 @@ describe('every snippet', () => {
       await at(plainRunner, state)
       for (const { name, draw } of draws) {
         const box = document.createElement('div')
-        expect(() => draw(box, plainRunner.view()), name).not.toThrow()
+        expect(() => draw(box, plainRunner.snapshot()), name).not.toThrow()
       }
     })
 

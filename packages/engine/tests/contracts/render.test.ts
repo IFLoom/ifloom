@@ -130,7 +130,7 @@ describe('one render per state', () => {
     }
     expect(runner.view()).not.toBe(first)
     // Knocking stays in the porch: it is shown again, after the choice made in it.
-    expect(runner.backlog().map((entry) => entry.sceneId)).toEqual(['porch', 'porch', 'hall', 'porch'])
+    expect(runner.snapshot().backlog.map((entry) => entry.sceneId)).toEqual(['porch', 'porch', 'hall', 'porch'])
   })
 
   it('runner.view() is the same object for the same state, and a new one for a new state', () => {

@@ -1,14 +1,13 @@
-import type { View } from '@ifloom/engine'
+import type { RunnerSnapshot } from '@ifloom/engine'
 // runner and add, as in the vanilla template's src/main.ts.
 import { add, runner } from './runner.ts'
 
 /** A settings screen: every setting the game declares, with its value now. A change goes through runner.setSetting. */
-export function drawSettings(parent: HTMLElement, view: View): void {
-  // The values of both kinds: play settings from the state, ui settings from the profile.
-  const values = runner.settings()
+export function drawSettings(parent: HTMLElement, { view, settings }: RunnerSnapshot): void {
+  // settings has the values of both kinds: play settings from the state, ui settings from the profile.
   for (const setting of view.settings) {
     const label = add(parent, 'label', setting.label)
-    const value = values[setting.id] ?? setting.default
+    const value = settings[setting.id] ?? setting.default
     if (setting.type === 'toggle') {
       const box = add(label, 'input')
       Object.assign(box, { type: 'checkbox', checked: value === true })

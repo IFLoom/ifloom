@@ -199,7 +199,7 @@ The checker reports a kind the game doesn't have.
 
 `view.plugins.inventory` is an [`InventoryView`](#inventoryview): what you hold, each thing with a `use` button when it has a use and a `drop` button, ready to draw like any other button.
 
-`@ifloom/plugin-inventory/react` draws what the player carries with the plugin's buttons, for a game drawn with [`@ifloom/react`](/docs/react). List `inventoryUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and [`InventoryCard`](#inventorycard) is drawn wherever the React UI's own [`Inventory`](/docs/react/components#inventory) is, with a button that uses each usable thing. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+`@ifloom/plugin-inventory/react` draws what the player carries with the plugin's buttons, for a game drawn with [`@ifloom/react`](/docs/react). List `inventoryUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and [`InventoryCard`](#inventorycard) is drawn wherever the React UI's own [`Inventory`](/docs/react/components#inventory) is, with a button that uses each usable thing. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
 ::include[../../../../snippets/plain/inventory.ts]{meta='tab="Plain JS" tab-group="framework"'}
 

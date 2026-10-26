@@ -1,9 +1,9 @@
-import type { PictureView, View } from '@ifloom/engine'
+import type { PictureView, RunnerSnapshot } from '@ifloom/engine'
 // runner and add, as in the vanilla template's src/main.ts.
 import { add, runner } from './runner.ts'
 
 /** The scene's layered picture, else its image. */
-export function drawPicture(parent: HTMLElement, view: View): void {
+export function drawPicture(parent: HTMLElement, { view }: RunnerSnapshot): void {
   if (view.scene.picture) drawLayers(parent, view.scene.picture)
   else if (view.scene.image) Object.assign(add(parent, 'img'), { src: view.scene.image, alt: '' })
 }

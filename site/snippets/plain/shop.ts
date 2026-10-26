@@ -1,9 +1,9 @@
-import type { View } from '@ifloom/engine'
+import type { RunnerSnapshot } from '@ifloom/engine'
 // runner, add and drawChoices, as in the vanilla template's src/main.ts.
 import { add, drawChoices } from './runner.ts'
 
 /** The `shop` panel, from drawPanel: shop.open('counter') opens it with { vendor: 'counter' }. */
-export function drawShop(parent: HTMLElement, view: View): void {
+export function drawShop(parent: HTMLElement, { view }: RunnerSnapshot): void {
   if (view.panel?.panel !== 'shop') return
   const vendor = view.plugins.shop?.vendors.find((one) => one.id === view.panel?.with.vendor)
   if (!vendor) return

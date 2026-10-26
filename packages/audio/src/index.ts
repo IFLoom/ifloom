@@ -86,7 +86,7 @@ function errorName(error: unknown): string {
  * channels crossfade when their file changes and step through playlists. Each
  * cue key plays once, and the keys already in the view when the player starts
  * count as heard, so loading a save replays nothing. Volumes and muting come
- * from the game's settings, as `runner.settings()` gives them. Nothing plays until the player first
+ * from the game's settings, as the runner's snapshot has them. Nothing plays until the player first
  * clicks or presses a key, or until `unlock()`.
  */
 export function startAudio(runner: Runner, options: AudioOptions = {}): AudioPlayer {
@@ -96,7 +96,7 @@ export function startAudio(runner: Runner, options: AudioOptions = {}): AudioPla
 
   let audio: AudioView = runner.view().audio
   let lastLog: CommandLog = runner.log()
-  let settings: Readonly<Record<string, KvValue>> = runner.settings()
+  let settings: Readonly<Record<string, KvValue>> = runner.snapshot().settings
   let unlocked = false
   let stopped = false
   let timer: ReturnType<typeof setTimeout> | undefined
@@ -391,7 +391,7 @@ export function startAudio(runner: Runner, options: AudioOptions = {}): AudioPla
 
   const stopRunner = runner.subscribe(() => {
     // The runner hands back the same settings object until one changes.
-    const now = runner.settings()
+    const now = runner.snapshot().settings
     if (now !== settings && !stopped) {
       settings = now
       log(`settings changed${muted() ? ', muted' : ''}`)

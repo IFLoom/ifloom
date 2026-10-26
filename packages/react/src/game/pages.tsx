@@ -5,18 +5,7 @@
  * page, and the in-game menu leads back to `title`.
  */
 import type { KvValue, GameState, SaveMeta, SettingView } from '@ifloom/engine'
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  useSyncExternalStore,
-  type ChangeEvent,
-  type ComponentType,
-  type ReactNode,
-} from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ChangeEvent, type ComponentType, type ReactNode } from 'react'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
 import { overridable, usePart, type PartKey } from './overrides.tsx'
@@ -130,16 +119,12 @@ export function useProfile<T = unknown>(namespace: string): T | undefined {
 }
 
 /**
- * A setting's current value, as `runner.settings()` gives it, kept up to date:
+ * A setting's current value, as the runner's snapshot has it, kept up to date:
  * a play setting's from the game in play, a ui setting's from the profile.
  * Undefined for a setting the game doesn't declare.
  */
 export function useSetting(id: string): KvValue | undefined {
-  const { runner } = useGame()
-  return useSyncExternalStore(
-    (listener) => runner.subscribe(listener),
-    () => runner.settings()[id],
-  )
+  return useGame().snapshot.settings[id]
 }
 
 /** Gives the pages below it a place among the pages. `GameShell` uses it when `pages` is on. */
@@ -367,13 +352,10 @@ function SettingControl({ setting, value, change }: { setting: SettingView; valu
 }
 
 function SettingsPageImpl({ className }: { className?: string }) {
-  const { runner, view, mods } = useGame()
+  const { runner, view, mods, snapshot } = useGame()
   const words = useWords()
   const settings = usePluginUis().flatMap((ui) => (ui.settings ? [{ id: ui.id, Draw: ui.settings.component }] : []))
-  const values = useSyncExternalStore(
-    (listener) => runner.subscribe(listener),
-    () => runner.settings(),
-  )
+  const values = snapshot.settings
   const [said, setSaid] = useState<string | null>(null)
   const section = usePageParts(className, 'settings-page')
   const list = usePart('settings', 'flex flex-col gap-4')

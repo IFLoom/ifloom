@@ -261,7 +261,7 @@ describe('the runner, with a minigame', () => {
     expect(runner.state.minigame).toMatchObject({ elapsed: 300, kv: { round: 1 } })
     expect(runner.log().commands.map((command) => command.type)).toEqual(['action', 'tick'])
     expect(runner.undo()).toBe(true)
-    expect(runner.canUndo).toBe(false)
+    expect(runner.snapshot().canUndo).toBe(false)
     expect(runner.state).toBe(before)
     // Redo goes forward to where the first undo started from: the tick before the input with it.
     expect(runner.redo()).toBe(true)
@@ -276,7 +276,7 @@ describe('the runner, with a minigame', () => {
     runner.apply({ type: 'tick', ms: 50 })
     expect(runner.state.minigame).toBeNull()
     runner.apply({ type: 'choose', id: 'go' })
-    expect(runner.backlog().map((entry) => [entry.sceneId, entry.chose])).toEqual([['yard', 'Go']])
+    expect(runner.snapshot().backlog.map((entry) => [entry.sceneId, entry.chose])).toEqual([['yard', 'Go']])
   })
 
   it('autosaves on a tick only when it changes what the policy watches', async () => {

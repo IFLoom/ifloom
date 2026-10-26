@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import type { KvValue } from '@ifloom/engine'
-import { runner, view } from './runner.ts'
+import { runner, snapshot, view } from './runner.ts'
 
 // A settings screen: every setting the game declares, with its value now. A change goes through runner.setSetting.
-// runner.settings() has both kinds: play settings from the state, ui settings from the profile.
-const valueOf = (id: string, fallback: KvValue) => runner.settings()[id] ?? fallback
+// snapshot.settings has both kinds: play settings from the state, ui settings from the profile.
+const valueOf = (id: string, fallback: KvValue) => snapshot.value.settings[id] ?? fallback
 const set = (id: string, to: KvValue) => runner.setSetting(id, to)
 </script>
 

@@ -5,12 +5,9 @@ import { overridable, usePart } from './overrides.tsx'
 import { Beat } from './scene.tsx'
 import { useWords } from './words.ts'
 
-/** The backlog's entries, oldest first, read again whenever the view changes. Empty unless the runner's backlog is on. */
-export function useBacklog(): BacklogEntry[] {
-  const { runner, view } = useGame()
-  // Read on every render: the view changes after every command, so this follows it.
-  void view
-  return runner.backlog()
+/** The backlog's entries, oldest first, as the runner's snapshot has them. Empty unless the runner's backlog is on. */
+export function useBacklog(): readonly BacklogEntry[] {
+  return useGame().snapshot.backlog
 }
 
 function BacklogImpl({ className }: { className?: string }) {

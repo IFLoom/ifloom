@@ -315,7 +315,7 @@ type RankView = { id: string; name: string; pay: Price | null }
 
 Nothing about a job is drawn until content opens the board with [`jobs.open`](#opening-the-job-board). Then `view.panel` is `{ panel: 'jobs' }`, with `with: { job: [...] }` when it names only some. Each job in [`view.plugins.jobs`](#jobsview) has its pay, its rank, its next shift, and ready-made `apply` and `work` buttons.
 
-`@ifloom/plugin-jobs/react` draws the job board, for a game drawn with [`@ifloom/react`](/docs/react). List `jobsUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the `jobs` panel, which [`jobs.open`](#opening-the-job-board) opens, is drawn as the [`JobBoard`](#jobboard), only the jobs it was opened with if it names any. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+`@ifloom/plugin-jobs/react` draws the job board, for a game drawn with [`@ifloom/react`](/docs/react). List `jobsUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the `jobs` panel, which [`jobs.open`](#opening-the-job-board) opens, is drawn as the [`JobBoard`](#jobboard), only the jobs it was opened with if it names any. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
 ::include[../../../../snippets/plain/jobs.ts]{meta='tab="Plain JS" tab-group="framework"'}
 

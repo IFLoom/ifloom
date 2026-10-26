@@ -210,7 +210,7 @@ type DebugView = {
 
 `view.plugins.debug` is a [`DebugView`](#debugview): the locks that are on, how often each trigger fired, and the save's seed. Its commands, such as `debug.stat`, ignore locks (see [Commands](#commands)).
 
-`@ifloom/plugin-debug/react` draws the debug card, for a game drawn with [`@ifloom/react`](/docs/react). List `debugUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the [`DebugCard`](#debugcard) goes at the end of the story. It does nothing in a build without the plugin, so it can be listed in every build. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+`@ifloom/plugin-debug/react` draws the debug card, for a game drawn with [`@ifloom/react`](/docs/react). List `debugUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the [`DebugCard`](#debugcard) goes at the end of the story. It does nothing in a build without the plugin, so it can be listed in every build. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
 ::include[../../../../snippets/plain/debug.ts]{meta='tab="Plain JS" tab-group="framework"'}
 

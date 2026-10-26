@@ -7,7 +7,7 @@ description: "Codes the player enters to unlock cheats, scenes and whole packs o
 The game never contains a code. It has a slow hash of each one, which can check a code but can't give it back. A code that works is remembered in the player's [profile](/docs/reference/profile), so it outlives saves and new games, and is entered once.
 
 ```ts
-import { unlocks, startUnlocks, unlockedPacks, unlocksOf, unlockHash, codeFits, normaliseCode, envName, lockContent, contentScript, lockedContent, ITERATIONS, type UnlockDef, type UnlocksState, type UnlocksProfile, type UnlocksView, type UnlockView, type UnlockCodes, type Entered, type LockedContent } from '@ifloom/plugin-unlocks'
+import { unlocks, startUnlocks, enterCode, unlockedPacks, unlocksOf, unlockHash, codeFits, normaliseCode, envName, lockContent, contentScript, lockedContent, ITERATIONS, type UnlockDef, type UnlocksState, type UnlocksProfile, type UnlocksView, type UnlockView, type UnlockStatus, type Entered, type LockedContent } from '@ifloom/plugin-unlocks'
 ```
 
 [Supporter content and cheats](/docs/recipes/supporter-content) puts it together for a game funded by supporters, and says what each kind of gate protects.
@@ -148,7 +148,7 @@ export default defineGame({
 
 ## Entering codes
 
-A game with unlocks does two things at start-up. Before it builds the game, it opens the content of every unlock the player has entered a code for, with [`unlockedPacks`](#unlockedpacks). After it makes the runner, it starts taking codes with [`startUnlocks`](#startunlocks).
+A game with unlocks does two things at start-up. Before it builds the game, it opens the content of every unlock the player has entered a code for, with [`unlockedPacks`](#unlockedpacks). After it makes the runner, it starts taking codes with [`startUnlocks`](#startunlocks), and sends each code the player enters to [`enterCode`](#entercode). Where entering stands is in the runner's [snapshot](/docs/reference/runner#runnersnapshot), at `helpers.unlocks`, so every UI draws it the same way.
 
 ```mermaid
 sequenceDiagram
@@ -160,7 +160,8 @@ sequenceDiagram
   Page->>Page: decrypt the page's locked content, loadGame(content, base, { packs: unlocked })
   Page->>Runner: startUnlocks(runner)
   Note over Runner: records each remembered unlock in the game in play
-  Page->>Runner: codes.enter(code)
+  Page->>Runner: enterCode(runner, code)
+  Note over Runner: snapshot.helpers.unlocks is checking
   Runner->>Profile: remember the proof
   Runner->>Runner: apply unlocks/record
   Runner-->>Page: { unlock, restart }
@@ -171,26 +172,32 @@ sequenceDiagram
 // src/main.ts
 import { browserRunner, localStorageDriver } from '@ifloom/browser'
 import { profile } from '@ifloom/engine'
-import { startUnlocks, unlockedPacks } from '@ifloom/plugin-unlocks'
+import { enterCode, startUnlocks, unlockedPacks } from '@ifloom/plugin-unlocks'
 import module from './game.ts'
 
 // The profile browserRunner uses, opened before the game is built.
 const opened = await unlockedPacks('small-town', profile({ id: 'small-town' }, localStorageDriver()))
 const { game } = module.build({ unlocked: opened.packs })
 const runner = await browserRunner(game)
-const codes = startUnlocks(runner)
+startUnlocks(runner)
 
 const form = document.body.appendChild(document.createElement('form'))
 const input = form.appendChild(document.createElement('input'))
 input.placeholder = 'Code'
-form.appendChild(document.createElement('button')).textContent = 'Unlock'
+const button = form.appendChild(document.createElement('button'))
+button.textContent = 'Unlock'
 const said = form.appendChild(document.createElement('p'))
 form.onsubmit = async (event) => {
   event.preventDefault()
-  const result = await codes.enter(input.value)
-  said.textContent = result.ok ? `Unlocked: ${result.value.name}.` : result.reason
+  const result = await enterCode(runner, input.value)
   if (result.ok && result.value.restart) location.reload()
 }
+// Where entering stands, from each snapshot: checking, wrong or unlocked.
+runner.subscribe(({ helpers }) => {
+  const codes = helpers.unlocks
+  button.disabled = codes?.status === 'checking'
+  said.textContent = codes?.status === 'wrong' ? (codes.reason ?? '') : codes?.status === 'unlocked' ? `Unlocked: ${codes.entered?.name}.` : ''
+})
 ```
 
 ```tsx tab="React" tab-group="framework"
@@ -216,50 +223,53 @@ createRoot(document.getElementById('root')!).render(<GameShell runner={runner} p
 
 ```vue tab="Vue" tab-group="framework"
 <!-- src/CodeBox.vue. In src/runner.ts, build the game with unlockedPacks first, as the Plain JS tab does,
-     then add: export const codes = startUnlocks(runner) -->
+     then add startUnlocks(runner) beside startClock(runner). -->
 <script setup lang="ts">
 import { ref } from 'vue'
-import { codes } from './runner.ts'
+import { enterCode } from '@ifloom/plugin-unlocks'
+import { runner, snapshot } from './runner.ts'
 
 const code = ref('')
-const said = ref('')
 async function enter() {
-  const result = await codes.enter(code.value)
-  said.value = result.ok ? `Unlocked: ${result.value.name}.` : result.reason
+  const result = await enterCode(runner, code.value)
   if (result.ok && result.value.restart) location.reload()
 }
 </script>
 
 <template>
-  <form @submit.prevent="enter">
+  <form v-if="snapshot.helpers.unlocks" @submit.prevent="enter">
     <input v-model="code" placeholder="Code" />
-    <button>Unlock</button>
-    <p v-if="said">{{ said }}</p>
+    <button :disabled="snapshot.helpers.unlocks.status === 'checking'">Unlock</button>
+    <p v-if="snapshot.helpers.unlocks.status === 'wrong'">{{ snapshot.helpers.unlocks.reason }}</p>
+    <p v-if="snapshot.helpers.unlocks.status === 'unlocked'">Unlocked: {{ snapshot.helpers.unlocks.entered?.name }}.</p>
   </form>
 </template>
 ```
 
 ```svelte tab="Svelte" tab-group="framework"
 <!-- src/CodeBox.svelte. In src/runner.ts, build the game with unlockedPacks first, as the Plain JS tab does,
-     then add: export const codes = startUnlocks(runner) -->
+     then add startUnlocks(runner) beside startClock(runner). -->
 <script lang="ts">
-  import { codes } from './runner.ts'
+  import { enterCode } from '@ifloom/plugin-unlocks'
+  import { runner, snapshot } from './runner.ts'
 
   let code = $state('')
-  let said = $state('')
+  const codes = $derived($snapshot.helpers.unlocks)
   async function enter(event: SubmitEvent) {
     event.preventDefault()
-    const result = await codes.enter(code)
-    said = result.ok ? `Unlocked: ${result.value.name}.` : result.reason
+    const result = await enterCode(runner, code)
     if (result.ok && result.value.restart) location.reload()
   }
 </script>
 
-<form onsubmit={enter}>
-  <input bind:value={code} placeholder="Code" />
-  <button>Unlock</button>
-  {#if said}<p>{said}</p>{/if}
-</form>
+{#if codes}
+  <form onsubmit={enter}>
+    <input bind:value={code} placeholder="Code" />
+    <button disabled={codes.status === 'checking'}>Unlock</button>
+    {#if codes.status === 'wrong'}<p>{codes.reason}</p>{/if}
+    {#if codes.status === 'unlocked'}<p>Unlocked: {codes.entered?.name}.</p>{/if}
+  </form>
+{/if}
 ```
 
 The plugin's [React UI](#drawing-it) draws the code box for you with [`UnlocksPanel`](#unlockspanel) when the game lists `unlocksUi`, or `unlocksUiWith(...)` as above, in `plugins` on `GameShell`, `GameProvider` or `mountGame`.
@@ -283,29 +293,40 @@ Content that won't open is left out and listed in `problems` as `unlock:<id> · 
 ### startUnlocks
 
 ```ts
-function startUnlocks(runner: Runner, options?: { content?: Readonly<Record<string, LockedContent>> }): UnlockCodes
+function startUnlocks(runner: Runner, options?: { content?: Readonly<Record<string, LockedContent>> }): () => void
 ```
 
-Starts taking codes on a runner. It reads the profile, checks each remembered unlock against this release's hash, and records the ones that match in the game in play with `unlocks/record`. From then on it records them into every new game and loaded save as well, so `unlocks/has` holds wherever the player has the code. Needs the runner's `profile`.
+Starts taking codes on a runner, and returns the way to stop, as [`startClock`](/docs/browser#startclock) does. It reads the profile, checks each remembered unlock against this release's hash, and records the ones that match in the game in play with `unlocks/record`. From then on it records them into every new game and loaded save as well, so `unlocks/has` holds wherever the player has the code. It reports where it stands in the runner's snapshot as an [`UnlockStatus`](#unlockstatus), at `snapshot.helpers.unlocks`, through [`runner.setHelper`](/docs/reference/runner#sethelper). Needs the runner's `profile`. Start it once per runner.
 
-### UnlockCodes
+Stopping it ends the recording into new games and loaded saves, takes `helpers.unlocks` out of the snapshot, and makes `enterCode` refuse codes on that runner.
+
+### enterCode
 
 ```ts
-type UnlockCodes = (() => void) & {
-  ready: Promise<void>
-  enter(code: string): Promise<Result<Entered>>
+function enterCode(runner: Runner, code: string): Promise<Result<Entered>>
+```
+
+Tries a code against every unlock in turn, on a runner `startUnlocks` was started on. On a match it stores a proof made from the code in the profile, records the unlock in the game in play, and says what it unlocked as [`Entered`](#entered). It never throws. While it checks, the snapshot's `helpers.unlocks.status` is `checking`, and after, `wrong` or `unlocked`.
+
+It refuses an empty code with `Type a code first.`, a code that matches nothing with `That code doesn't unlock anything.`, a runner with no profile with `This game can't remember codes here.`, and a runner with no codes started with `Codes can't be entered here.`. Checking takes a moment on purpose: a fraction of a second per unlock on a phone.
+
+### UnlockStatus
+
+```ts
+type UnlockStatus = {
+  status: 'idle' | 'checking' | 'wrong' | 'unlocked'
+  reason: string | null
+  entered: Entered | null
 }
 ```
 
-The function that stops it, as every `start*` returns one, with `ready` and `enter` on it: `const codes = startUnlocks(runner)`, then `codes.enter('…')`, and `codes()` to stop.
+Where entering codes stands, at `snapshot.helpers.unlocks` while codes are started. The plugin adds `unlocks` to the engine's [`HelperRegistry`](/docs/reference/runner#sethelper), so it's typed.
 
-| Member | What it does |
+| Field | What it is |
 |---|---|
-| `ready` | Settles once the remembered unlocks have been checked and recorded. |
-| `enter` | Tries the code against every unlock in turn. On a match it stores a proof made from the code in the profile, records the unlock in the game in play, and says what it unlocked. It never throws. |
-| Calling it | Stops recording remembered unlocks into new games and loaded saves. |
-
-`enter` refuses an empty code with `Type a code first.`, a code that matches nothing with `That code doesn't unlock anything.`, and a runner with no profile with `This game can't remember codes here.`. Checking takes a moment on purpose: a fraction of a second per unlock on a phone.
+| `status` | `checking` while a code is checked, and while the remembered codes are as codes start. `wrong` when the last code didn't work, `unlocked` when it did, and `idle` before any code is entered. |
+| `reason` | Why the last code didn't work, while `status` is `wrong`. Otherwise `null`. |
+| `entered` | What the last code unlocked, while `status` is `unlocked`. Otherwise `null`. |
 
 ### Entered
 
@@ -355,6 +376,7 @@ It checks no code. Anyone who can run commands, from the browser's console say, 
 | `unlocks/notSaved` | `The code worked, but it couldn't be remembered. Try again.` |
 | `unlocks/unknown` | `There's no such unlock.` |
 | `unlocks/already` | `That's unlocked already.` |
+| `unlocks/notStarted` | `Codes can't be entered here.` |
 
 ## The view
 
@@ -380,9 +402,9 @@ type UnlockView = { id: string; name: string; description: string; unlocked: boo
 
 ## Drawing it
 
-`view.plugins.unlocks` is an [`UnlocksView`](#unlocksview): every unlock, with which the player has. Entering a code isn't a command, since a code is checked against a slow hash. See [Entering codes](#entering-codes).
+`view.plugins.unlocks` is an [`UnlocksView`](#unlocksview): every unlock, with which the player has. Entering a code isn't a command, since a code is checked against a slow hash: start codes once with [`startUnlocks`](#startunlocks), send each one with [`enterCode`](#entercode), and draw where it stands from the snapshot's `helpers.unlocks`, an [`UnlockStatus`](#unlockstatus). See [Entering codes](#entering-codes).
 
-`@ifloom/plugin-unlocks/react` draws the code box, for a game drawn with [`@ifloom/react`](/docs/react). List `unlocksUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and codes start on the runner, and the [`UnlocksPanel`](#unlockspanel) is on the settings page with pages on, or behind an **Enter a code** button in the menu without them. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+`@ifloom/plugin-unlocks/react` draws the code box, for a game drawn with [`@ifloom/react`](/docs/react). List `unlocksUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and codes start on the runner, and the [`UnlocksPanel`](#unlockspanel) is on the settings page with pages on, or behind an **Enter a code** button in the menu without them. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
 ::include[../../../../snippets/plain/unlocks.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
@@ -439,7 +461,7 @@ function unlocksUiWith(options?: UnlocksUiOptions): PluginUi
 type UnlocksUiOptions = {
   problems?: string[]
   onChange?: () => void
-  start?: (runner: Runner) => UnlockCodes
+  start?: (runner: Runner) => () => void
 }
 ```
 
@@ -491,9 +513,9 @@ The unlocks plugin's view ([`UnlocksView`](/docs/plugins/unlocks#unlocksview): `
 
 | Field | What it is |
 |---|---|
-| `available` | Whether codes can be entered: the game lists the unlocks UI, and its codes have started. |
-| `enter` | Tries a code with [`UnlockCodes.enter`](/docs/plugins/unlocks#unlockcodes). Resolves to whether it worked. |
-| `checking` | True while a code is being checked. |
+| `available` | Whether codes can be entered: codes have started on the runner, which the unlocks UI does. |
+| `enter` | Tries a code with [`enterCode`](/docs/plugins/unlocks#entercode). Resolves to whether it worked. |
+| `checking` | True while a code is being checked: the snapshot's `helpers.unlocks.status` is `checking`. |
 | `entered` | What the last code that worked unlocked, as [`Entered`](/docs/plugins/unlocks#entered), or `null`. |
 | `message` | Why the last code didn't work, or `null`. |
 | `restart` | `onChange` from `unlocksUiWith`, when the last code opened content that needs it. Otherwise undefined. |

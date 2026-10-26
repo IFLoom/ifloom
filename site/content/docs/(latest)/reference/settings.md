@@ -86,7 +86,7 @@ runner.setSetting('difficulty', 'hard') // a play setting: sent as the setting c
 runner.setSetting('textSize', 'large')  // a ui setting: written to the profile
 ```
 
-A play setting goes through the [`setting`](/docs/reference/commands#setting) command. It's a command like any other, so it's logged and a replay gives the same game. No lock stops it. A ui setting is written to the profile and leaves the state alone. [`runner.settings()`](/docs/reference/runner#settings) gives every setting's value now.
+A play setting goes through the [`setting`](/docs/reference/commands#setting) command. It's a command like any other, so it's logged and a replay gives the same game. No lock stops it. A ui setting is written to the profile and leaves the state alone. [`runner.snapshot().settings`](/docs/reference/runner#settings) gives every setting's value now.
 
 ## A new game
 
@@ -96,9 +96,9 @@ A save keeps the play settings it was made with. Loading it doesn't apply the pl
 
 ## Drawing it
 
-`view.settings` has every setting the game declares, as a [`SettingView`](/docs/reference/view#settingview): its `label`, its `type`, and the `options` of a choice or the range of a slider. Read the values of both kinds from [`runner.settings()`](/docs/reference/runner#settings), since a `ui` setting isn't in the state. Send a change through [`runner.setSetting`](/docs/reference/runner#setsetting).
+`view.settings` has every setting the game declares, as a [`SettingView`](/docs/reference/view#settingview): its `label`, its `type`, and the `options` of a choice or the range of a slider. Read the values of both kinds from [`runner.snapshot().settings`](/docs/reference/runner#settings), since a `ui` setting isn't in the state. Send a change through [`runner.setSetting`](/docs/reference/runner#setsetting).
 
-The React UI draws a Settings page when you turn on its [pages](/docs/react#pages), and [`useSetting`](/docs/react/components#usesetting) reads one setting for a part of your own. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+The React UI draws a Settings page when you turn on its [pages](/docs/react#pages), and [`useSetting`](/docs/react/components#usesetting) reads one setting for a part of your own. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
 ::include[../../../../snippets/plain/settings.ts]{meta='tab="Plain JS" tab-group="framework"'}
 

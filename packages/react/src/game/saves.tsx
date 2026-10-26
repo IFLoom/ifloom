@@ -1,6 +1,6 @@
 import { nextSlot } from '@ifloom/browser'
 import type { BrokenSave, LoadedSave, Result, SaveMeta, SavingView } from '@ifloom/engine'
-import { useCallback, useEffect, useState, type ChangeEvent } from 'react'
+import { useMemo, useState, type ChangeEvent } from 'react'
 import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
 import { overridable, usePart } from './overrides.tsx'
@@ -12,12 +12,10 @@ export type SavesState = {
   available: boolean
   /** Whether the game lets the player save now, and why not: `view.saving`. Loading is always allowed. */
   saving: SavingView
-  /** Every save that can be read, newest first. */
+  /** Every save that can be read, newest first, as the runner's snapshot lists them. */
   slots: SaveMeta[]
   /** Saves that are there but can't be read, with why. They can only be deleted. */
   broken: BrokenSave[]
-  /** Read the slots again. */
-  refresh: () => Promise<void>
   /** Save in a new slot (the next free number), with the player's `name` for it if given. True if it was written. */
   save: (name?: string) => Promise<boolean>
   /** Save over an existing slot. True if it was written. */
@@ -43,19 +41,18 @@ export type SavesState = {
  * exporting and importing them. Needs the runner made with `saves`.
  */
 export function useSaves(): SavesState {
-  const { runner, view } = useGame()
+  const { runner, view, snapshot } = useGame()
   const store = runner.saves
-  const [listed, setListed] = useState<{ slots: SaveMeta[]; broken: BrokenSave[] }>({ slots: [], broken: [] })
-  const { slots, broken } = listed
+  // The runner keeps the list up to date as it saves, and as its saves write and remove.
+  const { slots, broken } = useMemo(
+    () => ({
+      slots: snapshot.saves.filter((entry): entry is SaveMeta => !('broken' in entry)),
+      broken: snapshot.saves.filter((entry): entry is BrokenSave => 'broken' in entry),
+    }),
+    [snapshot.saves],
+  )
   const [message, setMessage] = useState<string | null>(null)
   const [missing, setMissing] = useState<{ packs: string[]; plugins: string[] }>({ packs: [], plugins: [] })
-  const refresh = useCallback(async () => {
-    const all = store ? await store.list() : []
-    setListed({ slots: all.filter((entry): entry is SaveMeta => !('broken' in entry)), broken: all.filter((entry): entry is BrokenSave => 'broken' in entry) })
-  }, [store])
-  useEffect(() => {
-    void refresh()
-  }, [refresh, view])
 
   const loaded = (save: LoadedSave) => {
     setMessage(null)
@@ -65,9 +62,8 @@ export function useSaves(): SavesState {
     setMessage(why)
     setMissing({ packs: [], plugins: [] })
   }
-  const written = async (result: Result<SaveMeta>) => {
+  const written = (result: Result<SaveMeta>) => {
     setMessage(result.ok ? null : result.reason)
-    await refresh()
     return result.ok
   }
   const next = nextSlot([...slots, ...broken])
@@ -77,7 +73,6 @@ export function useSaves(): SavesState {
     saving: view.saving,
     slots,
     broken,
-    refresh,
     async save(name) {
       return written(await runner.save(next, name))
     },
@@ -96,7 +91,6 @@ export function useSaves(): SavesState {
     async remove(slot) {
       if (!store) return
       await store.remove(slot)
-      await refresh()
     },
     async exportFile(slot) {
       if (!store) return

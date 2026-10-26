@@ -127,7 +127,7 @@ type FlowStep = { chose: string } | { point: string } | { minigame: string } | {
 - `view.scene.fresh` is the index of the first beat the flow's last step brought, from its `chose` beat on. A UI can animate only those. It's 0 before the visit has taken a step.
 - An `[[act:id]]` in the text names a choice of the decision the flow stopped at. In text from before a pick it's drawn as its words.
 
-A UI that only draws "beats, then choices" draws a flowing scene with no change. It can draw a `chose` beat, restyle it or leave it out. The React UI's [`Scene`](/docs/react/components#scene) draws a flowing scene like any other, and its [`reveal`](/docs/react/hints#reveal) hint brings the fresh beats in one at a time. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+A UI that only draws "beats, then choices" draws a flowing scene with no change. It can draw a `chose` beat, restyle it or leave it out. The React UI's [`Scene`](/docs/react/components#scene) draws a flowing scene like any other, and its [`reveal`](/docs/react/hints#reveal) hint brings the fresh beats in one at a time. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
 ::include[../../../../snippets/plain/flow.ts]{meta='tab="Plain JS" tab-group="framework"'}
 

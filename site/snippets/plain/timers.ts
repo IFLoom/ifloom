@@ -1,9 +1,9 @@
-import type { View } from '@ifloom/engine'
+import type { RunnerSnapshot } from '@ifloom/engine'
 // add, as in the vanilla template's src/main.ts, which runs startClock(runner) to send the ticks.
 import { add } from './runner.ts'
 
 /** A countdown for each running timer: its label, a bar that empties, and the seconds left. */
-export function drawTimers(parent: HTMLElement, view: View): void {
+export function drawTimers(parent: HTMLElement, { view }: RunnerSnapshot): void {
   for (const timer of view.timers) {
     const box = add(parent, 'div', '', 'timer')
     box.dataset.timer = timer.id

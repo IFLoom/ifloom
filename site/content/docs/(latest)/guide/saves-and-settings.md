@@ -1,6 +1,6 @@
 ---
 title: "Saves and settings"
-description: "Add saving, loading and a settings screen to a game run on the engine directly: save stores and drivers, slots, autosave, a load list, play and ui settings, runner.settings() and setSetting, all without a UI package."
+description: "Add saving, loading and a settings screen to a game run on the engine directly: save stores and drivers, slots, autosave, a load list, play and ui settings, runner.snapshot().settings and setSetting, all without a UI package."
 ---
 [Running a game](/docs/guide/running-a-game) drew the view and sent commands. A game also needs to remember where the player got to, and to let them change a few things, such as the text size. The runner handles both without a UI package, and this page adds them to that loop.
 
@@ -107,12 +107,12 @@ A setting is one of two sorts:
 - **A `play` setting**, the default, is part of the game. It's saved with it, and content reads it with the [`{ setting }`](/docs/reference/conditions#setting) condition, such as a hint that appears only with `when: { setting: 'hints' }`.
 - **A `ui` setting** only changes how the game looks or sounds. It lives in the profile, never in the game state, and only your UI reads it.
 
-Read every setting's value now with [`runner.settings()`](/docs/reference/runner#settings), and change one with [`runner.setSetting`](/docs/reference/runner#setsetting):
+Read every setting's value now with [`runner.snapshot().settings`](/docs/reference/runner#settings), and change one with [`runner.setSetting`](/docs/reference/runner#setsetting):
 
 ```ts
 // Copy the text size onto the page now, and whenever it changes.
 function showTextSize() {
-  document.documentElement.dataset.textSize = String(runner.settings().textSize)
+  document.documentElement.dataset.textSize = String(runner.snapshot().settings.textSize)
 }
 showTextSize()
 runner.subscribe(showTextSize)
@@ -121,9 +121,9 @@ const result = runner.setSetting('textSize', 'large')
 if (!result.ok) showMessage(result.reason)
 ```
 
-`settings()` is synchronous and returns the same object until a value changes, so you can call it while you draw. `setSetting` checks the value against the declaration. A play setting goes through the game as a command, so it's logged and replays the same. A ui setting is written to the profile, and needs a runner made with one. `browserRunner` has one.
+The snapshot's `settings` is the same object until a value changes, so you can read it while you draw. `setSetting` checks the value against the declaration. A play setting goes through the game as a command, so it's logged and replays the same. A ui setting is written to the profile, and needs a runner made with one. `browserRunner` has one.
 
-To draw a whole settings screen, read [`view.settings`](/docs/reference/view#settings). It lists every setting in order with its `label`, `type`, `options` or range, and `default`. Take each one's current value from `runner.settings()`, and call `setSetting` when the player changes it.
+To draw a whole settings screen, read [`view.settings`](/docs/reference/view#settings). It lists every setting in order with its `label`, `type`, `options` or range, and `default`. Take each one's current value from `runner.snapshot().settings`, and call `setSetting` when the player changes it.
 
 The player's last choices are kept in the profile, so a new game starts with them. [Settings](/docs/reference/settings) has the rest, such as ranges.
 

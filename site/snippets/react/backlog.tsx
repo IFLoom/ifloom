@@ -4,13 +4,13 @@ import { Backlog, Button, Section, useGame, useWords } from '@ifloom/react'
 // a section that opens the backlog in a dialog, and an Undo button.
 export function History() {
   const words = useWords()
-  const { runner } = useGame()
+  const { runner, snapshot } = useGame()
   return (
     <>
       <Section id="backlog" title={words('backlog')} dialog>
         <Backlog />
       </Section>
-      <Button variant="outline" disabled={!runner.canUndo} onClick={() => runner.undo()}>
+      <Button variant="outline" disabled={!snapshot.canUndo} onClick={() => runner.undo()}>
         Undo
       </Button>
     </>

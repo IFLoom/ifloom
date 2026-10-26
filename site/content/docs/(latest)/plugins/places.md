@@ -651,7 +651,7 @@ One thing lying where the player is.
 
 `view.plugins.places` is a [`PlacesView`](#placesview): where the player is, the ways out, and what lies here. Each exit, and each thing's `pickUp`, is a ready-made button, so you draw them like any other button and send their `command`. The room's own buttons are in `view.actions`, and its name and words are the room scene in `view.scene`.
 
-`@ifloom/plugin-places/react` draws where the player is and the way out, for a game drawn with [`@ifloom/react`](/docs/react). List `placesUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the [`LocationCard`](#locationcard) and the [`Exits`](#exits) go in the story, before the room's actions. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+`@ifloom/plugin-places/react` draws where the player is and the way out, for a game drawn with [`@ifloom/react`](/docs/react). List `placesUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the [`LocationCard`](#locationcard) and the [`Exits`](#exits) go in the story, before the room's actions. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
 ::include[../../../../snippets/plain/places.ts]{meta='tab="Plain JS" tab-group="framework"'}
 

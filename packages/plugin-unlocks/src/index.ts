@@ -45,6 +45,9 @@ declare module '@ifloom/engine' {
   interface ViewRegistry {
     unlocks: UnlocksView
   }
+  interface HelperRegistry {
+    unlocks: UnlockStatus
+  }
 }
 
 const ID = 'unlocks'
@@ -117,15 +120,20 @@ export type Entered = {
 }
 
 /**
- * Entering codes in a running game, as `startUnlocks` gives it: the function
- * that stops it, as every `start*` gives, with `ready` and `enter` on it.
- * Calling it stops recording remembered unlocks into new games and loaded saves.
+ * Where entering codes stands, as `startUnlocks` reports it in the runner's
+ * snapshot, at `snapshot.helpers.unlocks`, so every UI reads it the same way.
  */
-export type UnlockCodes = (() => void) & {
-  /** Settles once the codes the profile remembers have been checked and recorded in the game in play. */
-  ready: Promise<void>
-  /** Try a code against every unlock: what it unlocked, or why not. Never throws. */
-  enter(code: string): Promise<Result<Entered>>
+export type UnlockStatus = {
+  /**
+   * `checking` while a code is checked (which takes a moment on purpose) and
+   * while the codes the profile remembers are, as codes start; `wrong` when
+   * the last code didn't work; `unlocked` when it did; `idle` otherwise.
+   */
+  status: 'idle' | 'checking' | 'wrong' | 'unlocked'
+  /** Why the last code didn't work, while `status` is `wrong`; null otherwise. */
+  reason: string | null
+  /** What the last code unlocked, while `status` is `unlocked`; null otherwise. */
+  entered: Entered | null
 }
 
 /** The game's unlocks: `data.unlocks.unlocks`, from its packs. */
@@ -263,15 +271,19 @@ function sliceOf(state: { plugins?: Record<string, { state: unknown } | undefine
   return (state.plugins?.[ID]?.state as UnlocksState | undefined) ?? { unlocked: [] }
 }
 
+/** The codes started on each runner, for `enterCode`. */
+const started = new WeakMap<Runner, (code: string) => Promise<Result<Entered>>>()
+
 /**
- * Codes in a running game: checks a code the player enters against every
- * unlock, remembers one that works in the profile and records it in the
- * game in play. It also records every unlock the profile remembers into each
- * new game and loaded save, from now on, so a supporter enters a code once.
- * Needs the runner's `profile`. Pass `content` only in tests: the page's own
- * is read otherwise.
+ * Codes in a running game, shaped like `startClock`: one call that returns
+ * the way to stop. From then on it records every unlock the profile
+ * remembers into the game in play and into each new game and loaded save, so
+ * a supporter enters a code once, and `enterCode` checks the codes the player
+ * enters. Where it stands is in the runner's snapshot, as an `UnlockStatus`
+ * at `snapshot.helpers.unlocks`. Needs the runner's `profile`. Pass `content`
+ * only in tests: the page's own is read otherwise. Start it once per runner.
  */
-export function startUnlocks(runner: Runner, options: { content?: Readonly<Record<string, LockedContent>> } = {}): UnlockCodes {
+export function startUnlocks(runner: Runner, options: { content?: Readonly<Record<string, LockedContent>> } = {}): () => void {
   const game = runner.game
   const content = options.content ?? lockedContent()
   const defs = () => unlocksOf(game)
@@ -279,6 +291,14 @@ export function startUnlocks(runner: Runner, options: { content?: Readonly<Recor
   const known = new Set<string>()
   let recording = false
   let stopped = false
+  // How many codes are being checked now, the remembered ones included.
+  let checking = 0
+  let last: Pick<UnlockStatus, 'status' | 'reason' | 'entered'> = { status: 'idle', reason: null, entered: null }
+
+  const report = () => {
+    if (stopped) return
+    runner.setHelper(ID, checking > 0 ? { status: 'checking', reason: null, entered: null } : last)
+  }
 
   function record(): void {
     if (recording || stopped) return
@@ -292,45 +312,77 @@ export function startUnlocks(runner: Runner, options: { content?: Readonly<Recor
   }
 
   const unsubscribe = runner.subscribe(record)
+  checking += 1
+  report()
   const ready = (async () => {
-    const proofs = proofsIn(await runner.profile?.get(ID).catch(() => undefined))
-    for (const def of defs()) {
-      const proof = proofs[def.id]
-      if (proof && (await hashOfProof(proof)) === def.hash.toLowerCase()) known.add(def.id)
+    try {
+      const proofs = proofsIn(await runner.profile?.get(ID).catch(() => undefined))
+      for (const def of defs()) {
+        const proof = proofs[def.id]
+        if (proof && (await hashOfProof(proof)) === def.hash.toLowerCase()) known.add(def.id)
+      }
+    } finally {
+      checking -= 1
     }
     record()
+    report()
   })()
 
-  const stop = () => {
+  async function check(code: string): Promise<Result<Entered>> {
+    if (!normaliseCode(code)) return { ok: false, reason: stringOf(game, 'unlocks/empty') }
+    const profile = runner.profile
+    if (!profile) return { ok: false, reason: stringOf(game, 'unlocks/noProfile') }
+    for (const def of defs()) {
+      const proof = await proofFor(code, game.id, def)
+      if (!proof) continue
+      const already = known.has(def.id)
+      try {
+        await profile.update<UnlocksProfile>(ID, (stored) => ({ unlocked: { ...stored?.unlocked, [def.id]: { proof: toHex(proof) } } }))
+      } catch {
+        return { ok: false, reason: stringOf(game, 'unlocks/notSaved') }
+      }
+      known.add(def.id)
+      await ready
+      record()
+      const locked = content[def.id]
+      const opened = locked ? await openContent(proof, game.id, locked) : undefined
+      const restart = Boolean(opened?.some((pack) => !(game.packs ?? []).includes(pack.id)))
+      return { ok: true, value: { unlock: def.id, name: def.name, already, restart } }
+    }
+    return { ok: false, reason: stringOf(game, 'unlocks/wrong') }
+  }
+
+  const enter = async (code: string): Promise<Result<Entered>> => {
+    checking += 1
+    report()
+    try {
+      const result = await check(code)
+      last = result.ok ? { status: 'unlocked', reason: null, entered: result.value } : { status: 'wrong', reason: result.reason, entered: null }
+      return result
+    } finally {
+      checking -= 1
+      report()
+    }
+  }
+  started.set(runner, enter)
+
+  return () => {
     stopped = true
     unsubscribe()
+    if (started.get(runner) === enter) started.delete(runner)
+    runner.setHelper(ID, undefined)
   }
-  return Object.assign(stop, {
-    ready,
-    async enter(code: string): Promise<Result<Entered>> {
-      if (!normaliseCode(code)) return { ok: false, reason: stringOf(game, 'unlocks/empty') }
-      const profile = runner.profile
-      if (!profile) return { ok: false, reason: stringOf(game, 'unlocks/noProfile') }
-      for (const def of defs()) {
-        const proof = await proofFor(code, game.id, def)
-        if (!proof) continue
-        const already = known.has(def.id)
-        try {
-          await profile.update<UnlocksProfile>(ID, (stored) => ({ unlocked: { ...stored?.unlocked, [def.id]: { proof: toHex(proof) } } }))
-        } catch {
-          return { ok: false, reason: stringOf(game, 'unlocks/notSaved') }
-        }
-        known.add(def.id)
-        await ready
-        record()
-        const locked = content[def.id]
-        const opened = locked ? await openContent(proof, game.id, locked) : undefined
-        const restart = Boolean(opened?.some((pack) => !(game.packs ?? []).includes(pack.id)))
-        return { ok: true, value: { unlock: def.id, name: def.name, already, restart } }
-      }
-      return { ok: false, reason: stringOf(game, 'unlocks/wrong') }
-    },
-  })
+}
+
+/**
+ * Try a code against every unlock, on a runner `startUnlocks` was started on:
+ * what it unlocked, or why not. One that works is remembered in the profile
+ * and recorded in the game in play. While it is checked, and after, the
+ * runner's snapshot says so at `helpers.unlocks`. Never throws.
+ */
+export function enterCode(runner: Runner, code: string): Promise<Result<Entered>> {
+  const enter = started.get(runner)
+  return enter ? enter(code) : Promise.resolve({ ok: false, reason: stringOf(runner.game, 'unlocks/notStarted') })
 }
 
 /**
@@ -353,6 +405,7 @@ function unlocksPlugin(): DefinedPlugin<UnlocksState, UnlocksView> {
       notSaved: 'The code worked, but it couldn’t be remembered. Try again.',
       unknown: 'There’s no such unlock.',
       already: 'That’s unlocked already.',
+      notStarted: 'Codes can’t be entered here.',
     },
     conditions: {
       /** `{ 'unlocks/has': { unlock } }`: the unlock is recorded in this save. */

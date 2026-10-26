@@ -1,10 +1,10 @@
-import type { View } from '@ifloom/engine'
+import type { RunnerSnapshot } from '@ifloom/engine'
 import type { DeviceView } from '@ifloom/plugin-devices'
 // runner, add and drawChoices, as in the vanilla template's src/main.ts.
 import { add, drawChoices, runner } from './runner.ts'
 
 /** Each device: its open app, with a Home button, or else its home screen of apps, each with its badge. */
-export function drawDevices(parent: HTMLElement, view: View): void {
+export function drawDevices(parent: HTMLElement, { view }: RunnerSnapshot): void {
   for (const device of view.plugins.devices?.devices ?? []) {
     const screen = add(parent, 'section', '', 'device')
     screen.dataset.device = device.id

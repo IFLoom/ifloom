@@ -1,9 +1,9 @@
-import type { View } from '@ifloom/engine'
+import type { RunnerSnapshot } from '@ifloom/engine'
 // add and drawChoices, as in the vanilla template's src/main.ts.
 import { add, drawChoices } from './runner.ts'
 
 /** A flowing scene: everything up to where it stopped, the picks made on the way, and the decision it's waiting on. */
-export function drawFlow(parent: HTMLElement, view: View): void {
+export function drawFlow(parent: HTMLElement, { view }: RunnerSnapshot): void {
   const prose = add(parent, 'div', '', 'prose')
   view.scene.beats.forEach((beat, at) => {
     const shown =

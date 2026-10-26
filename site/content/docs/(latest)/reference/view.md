@@ -702,10 +702,10 @@ type SettingView = {
 
 A [setting](/docs/reference/settings) as a settings screen draws it. `options` is only there for a choice, and `min`, `max` and `step` only for a range (`step` only if declared). `affects` is `'play'` when the declaration leaves it out.
 
-`value` is the setting's value in this game for a `play` setting, from [`state.settings`](/docs/reference/state#settings). For a `ui` setting it's `null`, because a `ui` setting isn't in the state. A runner gives both kinds with [`runner.settings()`](/docs/reference/runner#settings):
+`value` is the setting's value in this game for a `play` setting, from [`state.settings`](/docs/reference/state#settings). For a `ui` setting it's `null`, because a `ui` setting isn't in the state. A runner gives both kinds with [`runner.snapshot().settings`](/docs/reference/runner#settings):
 
 ```ts
-const values = runner.settings()
+const values = runner.snapshot().settings
 for (const setting of runner.view().settings) drawSetting(setting, values[setting.id])
 ```
 

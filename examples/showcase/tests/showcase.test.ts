@@ -41,7 +41,7 @@ import { calendar } from '@ifloom/plugin-calendar'
 import { places, type PlacesState, type PlacesView } from '@ifloom/plugin-places'
 import { cast, type CastView } from '@ifloom/plugin-cast'
 import { cheats, type CheatsView } from '@ifloom/plugin-cheats'
-import { unlocks, lockContent, startUnlocks, unlocksOf, unlockedPacks } from '@ifloom/plugin-unlocks'
+import { unlocks, enterCode, lockContent, startUnlocks, unlocksOf, unlockedPacks } from '@ifloom/plugin-unlocks'
 import { checkUiHints } from '@ifloom/react'
 import { readFileSync } from 'node:fs'
 import { clock, openCamera, smallTown } from '../src/game.ts'
@@ -317,9 +317,9 @@ describe('Small Town', () => {
     const content = { supporter: await lockContent(code, game.id, supporter, [supporterPack]) }
     const driver = memoryDriver()
     const runner = createRunner(game, startingState(game, { seed: 4 }), { history: true, profile: profile(game, driver) })
-    const codes = startUnlocks(runner, { content })
-    expect(await codes.enter('SMALL-TOWN-FAN')).toEqual({ ok: false, reason: 'That code doesn’t unlock anything.' })
-    const entered = await codes.enter(code.toLowerCase())
+    startUnlocks(runner, { content })
+    expect(await enterCode(runner, 'SMALL-TOWN-FAN')).toEqual({ ok: false, reason: 'That code doesn’t unlock anything.' })
+    const entered = await enterCode(runner, code.toLowerCase())
     expect(entered).toEqual({ ok: true, value: { unlock: 'supporter', name: 'Supporter edition', already: false, restart: true } })
     expect(holds(runner.state, game, unlocks.has('supporter'))).toBe(true)
     expect(runner.apply(cheats.use('energy')).ok).toBe(true)

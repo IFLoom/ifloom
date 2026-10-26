@@ -1,9 +1,9 @@
-import type { View } from '@ifloom/engine'
+import type { RunnerSnapshot } from '@ifloom/engine'
 // add and drawChoices, as in the vanilla template's src/main.ts.
 import { add, drawChoices } from './runner.ts'
 
 /** Where you are: the place's name and picture, the ways out, and what lies here to pick up. */
-export function drawPlace(parent: HTMLElement, view: View): void {
+export function drawPlace(parent: HTMLElement, { view }: RunnerSnapshot): void {
   const places = view.plugins.places
   if (!places?.location) return
   const { location } = places

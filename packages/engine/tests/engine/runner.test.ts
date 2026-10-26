@@ -16,12 +16,12 @@ describe('the runner', () => {
     const game = fixture()
     const runner = createRunner(game, begin(game))
     const heard: string[] = []
-    runner.subscribe((state) => heard.push(String(state.kv.at)))
+    runner.subscribe(({ state }) => heard.push(String(state.kv.at)))
     expect(runner.apply({ type: 'action', id: 'go-street' }).ok).toBe(true)
     expect(heard).toEqual(['street'])
-    expect(runner.canUndo).toBe(false)
+    expect(runner.snapshot().canUndo).toBe(false)
     expect(runner.undo()).toBe(false)
-    expect(runner.backlog()).toEqual([])
+    expect(runner.snapshot().backlog).toEqual([])
   })
 
   it('undoes and redoes when the game turns history on, as deep as it says', () => {
@@ -37,14 +37,14 @@ describe('the runner', () => {
     expect(runner.redo()).toBe(true)
     expect(runner.state.kv.at).toBe('house')
     runner.apply({ type: 'action', id: 'go-street' })
-    expect(runner.canRedo).toBe(false)
+    expect(runner.snapshot().canRedo).toBe(false)
   })
 
   it('never undoes past a barrier: a new turn, an irreversible choice, or a condition', () => {
     const game = fixture()
     const night = createRunner(game, begin(game), { history: { stopAtNewTurn: true } })
     night.apply({ type: 'action', id: 'rest' })
-    expect(night.canUndo).toBe(false)
+    expect(night.snapshot().canUndo).toBe(false)
 
     const vow: Game = {
       ...fixture(),
@@ -53,13 +53,13 @@ describe('the runner', () => {
     vow.prose = proseStore(vow, { vow: 'Will you?' })
     const sworn = createRunner(vow, begin(vow, { sceneId: 'vow' }), { history: true })
     sworn.apply({ type: 'choose', id: 'swear' })
-    expect(sworn.canUndo).toBe(false)
+    expect(sworn.snapshot().canUndo).toBe(false)
 
     const marked = createRunner(game, begin(game), { history: { stopWhen: { kv: 'at', is: 'shop' } } })
     marked.apply({ type: 'action', id: 'go-street' })
-    expect(marked.canUndo).toBe(true)
+    expect(marked.snapshot().canUndo).toBe(true)
     marked.apply({ type: 'action', id: 'go-shop' })
-    expect(marked.canUndo).toBe(false)
+    expect(marked.snapshot().canUndo).toBe(false)
   })
 
   it('keeps a backlog of each scene shown, with the choice made in it', () => {
@@ -68,12 +68,12 @@ describe('the runner', () => {
     runner.apply({ type: 'choose', id: 'chat' })
     runner.apply({ type: 'choose', id: 'leave' })
     // The opening screen, the choice made on it; the screen it redrew to, left.
-    expect(runner.backlog().map((entry) => [entry.sceneId, entry.chose])).toEqual([
+    expect(runner.snapshot().backlog.map((entry) => [entry.sceneId, entry.chose])).toEqual([
       ['cafe.counter', 'Talk about the weather'],
       ['cafe.counter', 'Leave'],
     ])
     runner.apply({ type: 'action', id: 'go-street' })
-    expect(runner.backlog()).toHaveLength(2)
+    expect(runner.snapshot().backlog).toHaveLength(2)
   })
 
   it('logs every command, and the log replays to the same state', () => {
@@ -109,6 +109,63 @@ describe('the runner', () => {
     await fresh.load('auto')
     expect(fresh.state).toEqual(runner.state)
     expect(fresh.played()).toBe(60_000)
+  })
+})
+
+describe('the runner snapshot', () => {
+  it('is one value with everything a UI draws, the same object until a part of it changes', () => {
+    const game = fixture()
+    const runner = createRunner(game, begin(game), { history: true, backlog: true })
+    const first = runner.snapshot()
+    expect(runner.snapshot()).toBe(first)
+    expect(first.view).toBe(runner.view())
+    expect(first.state).toBe(runner.state)
+    expect(first).toMatchObject({ canUndo: false, canRedo: false, saves: [], helpers: {} })
+    const heard: unknown[] = []
+    runner.subscribe((snapshot) => heard.push(snapshot))
+    runner.apply({ type: 'action', id: 'go-street' })
+    const next = runner.snapshot()
+    expect(next).not.toBe(first)
+    expect(heard).toEqual([next])
+    expect(next.canUndo).toBe(true)
+    expect(next.view).toBe(runner.view())
+    runner.undo()
+    expect(runner.snapshot()).toMatchObject({ canUndo: false, canRedo: true })
+    expect(Object.isFrozen(runner.snapshot())).toBe(true)
+  })
+
+  it('lists the saves once read, and follows every save, autosave and removal', async () => {
+    const game = fixture()
+    const store = saves(game, memoryDriver())
+    await store.write('old', begin(game), { savedAt: 1 })
+    const runner = createRunner(game, begin(game), { saves: store, autosave: { every: 'command' } })
+    expect(runner.snapshot().saves).toEqual([])
+    await runner.settled()
+    expect(runner.snapshot().saves.map((entry) => entry.slot)).toEqual(['old'])
+    runner.apply({ type: 'action', id: 'go-street' })
+    await runner.settled()
+    expect(runner.snapshot().saves.map((entry) => entry.slot)).toEqual(['auto', 'old'])
+    unwrap(await runner.save('1', 'Mine'))
+    expect(runner.snapshot().saves.map((entry) => entry.slot)).toEqual(['1', 'auto', 'old'])
+    const before = runner.snapshot()
+    await runner.saves!.remove('old')
+    expect(runner.snapshot()).not.toBe(before)
+    expect(runner.snapshot().saves.map((entry) => entry.slot)).toEqual(['1', 'auto'])
+  })
+
+  it('carries what helpers report, by id, and tells listeners only when it changes', () => {
+    const game = fixture()
+    const runner = createRunner(game, begin(game))
+    let told = 0
+    runner.subscribe(() => (told += 1))
+    const status = { busy: true }
+    runner.setHelper('lamp', status)
+    runner.setHelper('lamp', status)
+    expect(runner.snapshot().helpers).toEqual({ lamp: { busy: true } })
+    runner.setHelper('lamp', undefined)
+    runner.setHelper('lamp', undefined)
+    expect(runner.snapshot().helpers).toEqual({})
+    expect(told).toBe(2)
   })
 })
 
@@ -249,8 +306,8 @@ describe('starting over from content', () => {
     expect(runner.state).toMatchObject({ turn: 0, sceneId: 'start' })
     expect(runner.state.kv.after).toBeUndefined()
     expect(runner.log()).toEqual({ game: game.id, start: runner.state, commands: [], schema: SCHEMA, plugins: {} })
-    expect(runner.canUndo).toBe(false)
-    expect(runner.backlog()).toEqual([])
+    expect(runner.snapshot().canUndo).toBe(false)
+    expect(runner.snapshot().backlog).toEqual([])
     runner.apply({ type: 'action', id: 'read' })
     expect(runner.apply({ type: 'newGame' }).ok).toBe(true)
     expect(runner.state.stats.intelligence).toBe(5)

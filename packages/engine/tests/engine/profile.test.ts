@@ -114,7 +114,7 @@ describe('the runner and the profile', () => {
     const runner = createRunner(g, begin(g), { profile: prof })
     const before = runner.state
     expect(runner.setSetting('textSize', 'large')).toEqual({ ok: true, value: 'large' })
-    expect(runner.settings().textSize).toBe('large')
+    expect(runner.snapshot().settings.textSize).toBe('large')
     expect(runner.setSetting('textSize', 'huge')).toEqual({ ok: false, reason: 'That is not one of the options.' })
     expect(runner.setSetting('volume', 3)).toEqual({ ok: false, reason: 'There is no such setting.' })
     await runner.settled()
@@ -150,17 +150,17 @@ describe('the runner and the profile', () => {
     await prof.set('core:settings', { hints: false, textSize: 'large' })
     const runner = createRunner(g, begin(g), { profile: prof })
     // Before the profile is read, a ui setting is its default; the play one is the game's.
-    expect(runner.settings()).toEqual({ hints: true, textSize: 'small' })
+    expect(runner.snapshot().settings).toEqual({ hints: true, textSize: 'small' })
     let told = 0
     runner.subscribe(() => told++)
     await runner.settled()
-    expect(runner.settings()).toEqual({ hints: true, textSize: 'large' })
+    expect(runner.snapshot().settings).toEqual({ hints: true, textSize: 'large' })
     expect(told).toBe(1)
     // The same object until something changes.
-    expect(runner.settings()).toBe(runner.settings())
+    expect(runner.snapshot().settings).toBe(runner.snapshot().settings)
     // A value stored that no longer fits reads as the default.
     await prof.set('core:settings', { textSize: 'huge' })
-    expect(runner.settings().textSize).toBe('small')
+    expect(runner.snapshot().settings.textSize).toBe('small')
   })
 
   it('records finished once, the first time it holds', async () => {
@@ -196,7 +196,7 @@ describe('the runner and the profile', () => {
     expect(fresh.seed).toBe(7)
     expect(runner.state).toBe(fresh)
     expect(runner.log().commands).toEqual([])
-    expect(runner.canUndo).toBe(false)
+    expect(runner.snapshot().canUndo).toBe(false)
     expect((await runner.newGame({ settings: { hints: true } })).settings).toEqual({ hints: true })
   })
 

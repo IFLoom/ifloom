@@ -1,9 +1,9 @@
-import type { View } from '@ifloom/engine'
+import type { RunnerSnapshot } from '@ifloom/engine'
 // runner and add, as in the vanilla template's src/main.ts.
 import { add, runner } from './runner.ts'
 
 /** The cheats under their groups, each a button that says how often it's been used, greyed out with why when it's refused. */
-export function drawCheats(parent: HTMLElement, view: View): void {
+export function drawCheats(parent: HTMLElement, { view }: RunnerSnapshot): void {
   const cheats = view.plugins.cheats?.cheats ?? []
   for (const group of new Set(cheats.map((cheat) => cheat.group))) {
     if (group) add(parent, 'h3', group)

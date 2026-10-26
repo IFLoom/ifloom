@@ -271,7 +271,7 @@ What you wear is also in the engine's [`view.held`](/docs/reference/view#held), 
 
 `view.plugins.wardrobe` is a [`WardrobeView`](#wardrobeview): each slot with what's in it, and the `spare` things you could wear. Send `wardrobe/takeOff` with a slot's id, or `wardrobe/wear` with a thing (see [Commands](#commands)).
 
-`@ifloom/plugin-wardrobe/react` draws what the player wears, for a game drawn with [`@ifloom/react`](/docs/react). List `wardrobeUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a Wearing section (`ui.wardrobe`) in the side column holds the [`WardrobeCard`](#wardrobecard), and the `wardrobe` panel draws it too. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab reads `view` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+`@ifloom/plugin-wardrobe/react` draws what the player wears, for a game drawn with [`@ifloom/react`](/docs/react). List `wardrobeUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a Wearing section (`ui.wardrobe`) in the side column holds the [`WardrobeCard`](#wardrobecard), and the `wardrobe` panel draws it too. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
 ::include[../../../../snippets/plain/wardrobe.ts]{meta='tab="Plain JS" tab-group="framework"'}
 

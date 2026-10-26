@@ -1,8 +1,9 @@
 /**
- * The game's runner, and its view as a Svelte store. Components read `$view`
- * and send commands with `runner.apply`; nothing else talks to the engine.
+ * The game's runner, and its snapshot as a Svelte store. Components read
+ * `$view` (or the whole `$snapshot`: settings, backlog, undo, saves) and send
+ * commands with `runner.apply`; nothing else talks to the engine.
  */
-import { readable } from 'svelte/store'
+import { derived, readable } from 'svelte/store'
 import { startAudio } from '@ifloom/audio'
 import { browserRunner, startClock, startKeys } from '@ifloom/browser'
 import module from './game.ts'
@@ -15,8 +16,10 @@ if (problems.length) console.warn(problems)
 export const runner = await browserRunner(game)
 
 // A readable store fits the runner: it starts by subscribing, and stops with
-// the function `subscribe` returns.
-export const view = readable(runner.view(), (set) => runner.subscribe(() => set(runner.view())))
+// the function `subscribe` returns. Each listener is handed the new snapshot.
+export const snapshot = readable(runner.snapshot(), (set) => runner.subscribe(set))
+// The view, which is most of what the components draw.
+export const view = derived(snapshot, (now) => now.view)
 
 // Plays what the game's `audio` asks for, from the first click or key press.
 // Its `play` plays a file on demand, such as a voice line again.

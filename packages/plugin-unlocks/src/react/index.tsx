@@ -8,7 +8,7 @@
 import type { Runner } from '@ifloom/engine'
 import { createContext, useContext, useEffect, useState, type ComponentProps, type ReactNode, type SyntheticEvent } from 'react'
 import { badgeVariants, buttonVariants, overridable, type Override, type PluginUi, useGame, useKitPart, usePart, useWords } from '@ifloom/react'
-import { startUnlocks, type Entered, type UnlockCodes, type UnlocksView } from '../index.ts'
+import { enterCode, startUnlocks, type Entered, type UnlocksView } from '../index.ts'
 
 /** The unlocks plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const UNLOCKS_WORDS = {
@@ -45,11 +45,11 @@ declare module '@ifloom/react' {
 
 /** What `useUnlocks` returns: the unlocks plugin's view, and entering a code. */
 export type UnlocksControls = UnlocksView & {
-  /** Whether codes can be entered: the game lists the unlocks UI, and its codes have started. */
+  /** Whether codes can be entered: codes have started on the runner (the unlocks UI starts them). */
   available: boolean
-  /** Try a code. True if it unlocked something; `message` says what, or why not. */
+  /** Try a code with `enterCode`. True if it unlocked something; `entered` says what, or `message` why not. */
   enter: (code: string) => Promise<boolean>
-  /** True while a code is being checked, which takes a moment on purpose. */
+  /** True while a code is being checked, which takes a moment on purpose: the snapshot's `helpers.unlocks.status`. */
   checking: boolean
   /** What the last code unlocked, or null. */
   entered: Entered | null
@@ -67,47 +67,39 @@ export type UnlocksUiOptions = {
   problems?: string[]
   /** Build the game again with the content a code has just opened: usually `() => location.reload()`. */
   onChange?: () => void
-  /** How codes start on the runner: `startUnlocks` if left out. */
-  start?: (runner: Runner) => UnlockCodes
+  /** How codes start on the runner: `startUnlocks` if left out. Returns the way to stop them. */
+  start?: (runner: Runner) => () => void
 }
 
-/** The codes started on the game's runner, with the module's options. Null outside the unlocks UI. */
-const Codes = createContext<(UnlocksUiOptions & { codes: UnlockCodes | null }) | null>(null)
+/** The unlocks UI's options. Null outside the unlocks UI. */
+const Options = createContext<UnlocksUiOptions | null>(null)
 
 /**
  * The unlocks plugin's view and the code box's state, or null in a game
- * without the plugin. Entering needs the unlocks UI in the game's `plugins`;
- * without it `available` is false and the list still shows. `UnlocksPanel`
- * is drawn from it.
+ * without the plugin. Where entering stands comes from the runner's
+ * snapshot (`helpers.unlocks`, which `startUnlocks` reports), so it reads the
+ * same in every component. Without codes started on the runner (the unlocks
+ * UI starts them), `available` is false and the list still shows.
+ * `UnlocksPanel` is drawn from it.
  */
 export function useUnlocks(): UnlocksControls | null {
-  const { view } = useGame()
-  const unlocks = useContext(Codes)
-  const [checking, setChecking] = useState(false)
-  const [entered, setEntered] = useState<Entered | null>(null)
-  const [message, setMessage] = useState<string | null>(null)
+  const { view, runner, snapshot } = useGame()
+  const options = useContext(Options)
   const shown = view.plugins.unlocks as UnlocksView | undefined
   if (!shown) return null
-  const codes = unlocks?.codes ?? null
+  const status = snapshot.helpers.unlocks
+  const entered = status?.entered ?? null
   return {
     ...shown,
-    available: Boolean(codes),
-    checking,
+    available: Boolean(status),
+    checking: status?.status === 'checking',
     entered,
-    message,
-    problems: unlocks?.problems ?? [],
-    restart: entered?.restart ? unlocks?.onChange : undefined,
+    message: status?.reason ?? null,
+    problems: options?.problems ?? [],
+    restart: entered?.restart ? options?.onChange : undefined,
     async enter(code) {
-      if (!codes) return false
-      setChecking(true)
-      try {
-        const result = await codes.enter(code)
-        setEntered(result.ok ? result.value : null)
-        setMessage(result.ok ? null : result.reason)
-        return result.ok
-      } finally {
-        setChecking(false)
-      }
+      const result = await enterCode(runner, code)
+      return result.ok
     },
   }
 }
@@ -206,17 +198,8 @@ function codesProvider(options: UnlocksUiOptions) {
   const start = options.start ?? ((runner: Runner) => startUnlocks(runner))
   return function UnlocksProvider({ children }: { children: ReactNode }) {
     const { runner } = useGame()
-    const [codes, setCodes] = useState<UnlockCodes | null>(null)
-    useEffect(() => {
-      const started = start(runner)
-      // A function, so it's set as the value rather than called as an update.
-      setCodes(() => started)
-      return () => {
-        started()
-        setCodes(null)
-      }
-    }, [runner])
-    return <Codes.Provider value={{ ...options, codes }}>{children}</Codes.Provider>
+    useEffect(() => start(runner), [runner])
+    return <Options.Provider value={options}>{children}</Options.Provider>
   }
 }
 

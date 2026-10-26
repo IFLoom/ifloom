@@ -40,39 +40,37 @@ const runner = createRunner(game, startingState(game), { history: true })
 A UI needs three things from the runner:
 
 ```ts
-runner.view()              // View: what to draw right now
+runner.snapshot()          // RunnerSnapshot: what to draw right now, its view and the rest
 runner.apply(command)      // run a command, such as a choice the player pressed
-runner.subscribe(listener) // call listener after every change of state; returns a function that stops it
+runner.subscribe(listener) // hand listener each new snapshot; returns a function that stops it
 ```
 
 The loop is the same whatever draws the screen:
 
-1. Draw `runner.view()`.
+1. Draw `runner.snapshot()`. Its `view` is the scene, the choices, the stats and the rest of the game. Beside it are what the runner keeps itself: the settings, the backlog, whether undo would do anything and the saves.
 2. When the player presses something, send its `command` with `runner.apply`.
-3. When the runner calls your listener, draw `runner.view()` again.
+3. When the runner hands your listener a new snapshot, draw that.
 
 ```mermaid
 sequenceDiagram
   participant UI as Your UI
   participant R as runner
   UI->>R: subscribe(listener)
-  UI->>R: view()
-  R-->>UI: View
+  UI->>R: snapshot()
+  R-->>UI: RunnerSnapshot
   Note over UI: draw it
   UI->>R: apply(command)
   alt the command took
-    R->>UI: listener(state)
-    UI->>R: view()
-    R-->>UI: the next View
+    R->>UI: listener(the next snapshot)
     Note over UI: draw it again
   else it was refused
     R-->>UI: ok false, and the reason
   end
 ```
 
-`subscribe` hears about every change, not only your own commands. Undo, redo, loading a save and a new game all call it too, so you don't need to redraw after each of those yourself.
+`subscribe` hears about every change, not only your own commands. Undo, redo, loading a save, a new game, a setting changed and a save written all call it too, so you don't need to redraw after each of those yourself.
 
-`runner.view()` returns the same object until the state changes (see [the view cache](/docs/reference/runner#the-view-cache)). You can call it as often as you like, and a framework that compares values to decide what to redraw sees a new view exactly when there's something new to draw.
+`runner.snapshot()` returns the same object until something in it changes (see [RunnerSnapshot](/docs/reference/runner#runnersnapshot)). You can call it as often as you like, and a framework that compares values to decide what to redraw sees a new snapshot exactly when there's something new to draw. `runner.view()` is its `view` alone, for code that needs nothing else.
 
 ## Send commands
 
@@ -137,7 +135,7 @@ You never read the state to decide what to draw. The view already says what can 
 With `history` on, the runner keeps the steps behind the player:
 
 ```ts
-runner.canUndo   // whether there's anything to undo, for greying out the button
+runner.snapshot().canUndo   // whether there's anything to undo, for greying out the button
 runner.undo()
 runner.redo()
 await runner.newGame() // start again in place, with a fresh history
@@ -163,7 +161,7 @@ function print(view: View): void {
   view.scene.choices.forEach((choice, at) => console.log(`${at + 1}. ${choice.label}${choice.disabled ? ` (${choice.disabled})` : ''}`))
 }
 
-runner.subscribe(() => print(runner.view()))
+runner.subscribe((snapshot) => print(snapshot.view))
 print(runner.view())
 
 runner.apply({ type: 'choose', id: 'knock' })

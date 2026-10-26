@@ -19,7 +19,7 @@ const buttons = (...all: (RenderedChoice | null)[]) => all.filter((button) => bu
       {{ job.name }}<template v-if="job.rank">: {{ job.rank.name }}</template>
     </h3>
     <p>{{ job.description }}</p>
-    <p v-if="job.pay?.stats">Pays {{ job.pay.stats.map((stat) => stat.text).join(', ') }} a shift</p>
+    <p v-if="job.pay">Pays {{ job.pay.text }} a shift</p>
     <p v-if="job.nextShift">{{ job.nextShift.inDays ? `Next shift in ${job.nextShift.inDays} days` : 'A shift today' }}</p>
     <!-- Ready-made buttons: Apply while you don't have the job, Work while you do, each with why it can't be done. -->
     <button

@@ -14,7 +14,7 @@
 import {
   reasonOf,
   definePlugin,
-  formatStat,
+  priceView,
   holds,
   inRange,
   lackingLine,
@@ -22,7 +22,6 @@ import {
   pluginQuery,
   renderAction,
   stringOf,
-  statOf,
   statValue,
   type Blocked,
   type CommandRef,
@@ -227,13 +226,6 @@ function rankOf(job: JobDef, held: HeldJob | undefined): RankDef | undefined {
 
 function payOf(job: JobDef, held: HeldJob | undefined): Record<string, number> {
   return (rankOf(job, held) ?? job.ranks[0])?.pay ?? {}
-}
-
-function priceView(game: Game, amounts: Record<string, number>): Price | null {
-  const stats = Object.entries(amounts)
-    .filter(([, amount]) => amount > 0)
-    .map(([id, amount]) => ({ id, amount, text: formatStat(statOf(game, id), amount) }))
-  return stats.length ? { stats } : null
 }
 
 /** Why the player can't apply, or undefined. */

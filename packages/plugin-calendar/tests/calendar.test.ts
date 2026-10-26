@@ -167,15 +167,21 @@ describe('the calendar', () => {
 
   it('prices a button by where the clock will be', () => {
     const { game, clock } = house()
-    expect(button(game, startingState(game), 'outing').price).toEqual({ notes: ['until evening'] })
-    expect(button(game, clock.write(startingState(game), { day: 0, period: 'night' }), 'nap').price).toEqual({ notes: ['until late'] })
-    expect(button(game, clock.write(startingState(game), { day: 0, period: 'evening' }), 'bed').price).toEqual({ notes: ['until tomorrow morning'] })
+    expect(button(game, startingState(game), 'outing').price).toEqual({ notes: ['until evening'], text: 'until evening' })
+    expect(button(game, clock.write(startingState(game), { day: 0, period: 'night' }), 'nap').price).toEqual({ notes: ['until late'], text: 'until late' })
+    expect(button(game, clock.write(startingState(game), { day: 0, period: 'evening' }), 'bed').price).toEqual({
+      notes: ['until tomorrow morning'],
+      text: 'until tomorrow morning',
+    })
     // Further than tomorrow, the day by name.
     const far = {
       ...game,
       actions: [...(game.actions ?? []).map(({ label: _label, ...action }) => action), { id: 'trek', label: 'Trek', effects: [calendar.pass(11)] }],
     }
-    expect(button(far, clock.write(startingState(far), { day: 0, period: 'morning' }), 'trek').price).toEqual({ notes: ['until Wednesday afternoon'] })
+    expect(button(far, clock.write(startingState(far), { day: 0, period: 'morning' }), 'trek').price).toEqual({
+      notes: ['until Wednesday afternoon'],
+      text: 'until Wednesday afternoon',
+    })
   })
 
   it('answers conditions on the period, the weekday, the weekend and the day', () => {

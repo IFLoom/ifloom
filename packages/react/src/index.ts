@@ -51,7 +51,7 @@ export {
 } from './hints.ts'
 export type { Reveal, RevealGroup, RevealPoint, ScreenTransition, StatDisplay, Transition, TransitionName } from './hints.ts'
 export { checkUiHints } from './check.ts'
-export { ChoiceButton, ChoiceList, PriceTag, usePriceText } from './game/choices.tsx'
+export { ChoiceButton, ChoiceList, PriceTag } from './game/choices.tsx'
 export { Clock, StatGauge, StatList, useClock } from './game/sidebar.tsx'
 export type { ClockState } from './game/sidebar.tsx'
 export { Notice, Notices } from './game/notices.tsx'

@@ -14,7 +14,7 @@ Every button in a `View` already carries its command and its price. If it can't 
 Any framework can draw from the view, or none at all. [The React UI](/docs/react), `@ifloom/react`, is a ready-made one that draws all of this. To use something else, such as Vue, Svelte or plain DOM, see [Your own UI in any framework](/docs/guide/frameworks). The rest of this page is for writing your own.
 
 ```ts
-import { renderAction, screen, view, type View } from '@ifloom/engine'
+import { renderAction, screen, view, priceView, type View, type Price } from '@ifloom/engine'
 ```
 
 ## view
@@ -270,7 +270,7 @@ const game = shown.minigame
 if (game) {
   drawText(game.label ?? '')
   if (game.timeTotal) drawCountdown(game.timeLeft! / game.timeTotal)
-  for (const input of game.inputs) addButton(input, () => send({ type: 'minigame', input }))
+  for (const input of game.inputs) addButton(input.label, () => send(input.command))
 }
 ```
 
@@ -573,19 +573,33 @@ drawGauge(energy.value / energy.max, energy.label)
 type Price = {
   stats?: { id: string; amount: number; text: string }[]
   notes?: string[] // what plugins say it costs: '2 dishes to wash', 'until evening'
+  text: string     // the whole price in one line: '2 coins · until evening'
 }
 ```
 
-What pressing a button will cost, to show on it beforehand. A `price` sits on any [`RenderedChoice`](#renderedchoice).
+What pressing a button will cost, to show on it beforehand. A `price` sits on any [`RenderedChoice`](#renderedchoice). `text` is ready to print: each stat's `text`, then the notes, joined by the [`priceSeparator`](/docs/reference/strings#buttons-and-labels) string, ` · ` in English, so a translation rewords it once for every UI.
 
 Each entry in `stats` is a stat spent, its amount, and the amount written through the stat's `format`, such as `'3 coins'`. Only amounts above zero are listed.
 
 - For an action, the stats come from its `cost`, in the order the cost lists them, then from what its command spends.
 - For a scene choice, they come from its effects. Each negative `stat` effect on one of the player's [spendable](/docs/reference/stats#statdef) stats counts, in declaration order. A `stat` effect with `of`, on an [entity](/docs/reference/entities)'s stat, never does.
 
-`notes` are every plugin's [price](/docs/reference/plugins#prices) for the button's effects, in the order `game.plugins` lists them. Time passing, for example, is the [calendar](/docs/plugins/calendar#price-notes)'s note `until evening`. A button with notes and no cost has a price of only `{ notes }`, and a button with neither has no `price`.
+`notes` are every plugin's [price](/docs/reference/plugins#prices) for the button's effects, in the order `game.plugins` lists them. Time passing, for example, is the [calendar](/docs/plugins/calendar#price-notes)'s note `until evening`. A button with notes and no cost has a price of only `{ notes, text }`, and a button with neither has no `price`.
 
 **Gotcha:** it only shows costs. What a choice pays is deliberately left off, because a payout printed on a button tells the player which button is the right one.
+
+### priceView
+
+```ts
+function priceView(game: Game, stats: Readonly<Record<string, number>>, notes?: readonly string[]): Price | null
+```
+
+A price as the view shows one, for a plugin's view that has a price of its own, such as what a [job](/docs/plugins/jobs) pays a shift or a [vendor](/docs/plugins/shop)'s full price before today's discount. The stats above 0 are worded as each stat's value is, in the order given, then come the `notes`, and `text` joins them. It's `null` when there's nothing to show.
+
+```ts
+priceView(game, { coins: 4 })                     // { stats: [{ id: 'coins', amount: 4, text: '4 coins' }], text: '4 coins' }
+priceView(game, { coins: 2 }, ['until evening'])  // ..., text: '2 coins · until evening'
+```
 
 ## EntitiesView and EntityView
 

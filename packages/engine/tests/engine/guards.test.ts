@@ -93,8 +93,15 @@ describe('plugin guards', () => {
 describe('plugin prices and labels', () => {
   it('add notes to a button’s price, and say where the game is', () => {
     const game = shore()
-    expect(action(game, 0, 'dig').price).toEqual({ stats: [{ id: 'coins', amount: 1, text: '1c' }], notes: ['the tide rises once'] })
-    expect(action(game, 0, 'paddle').price).toEqual({ notes: ['the tide rises once'] })
+    expect(action(game, 0, 'dig').price).toEqual({
+      stats: [{ id: 'coins', amount: 1, text: '1c' }],
+      notes: ['the tide rises once'],
+      text: '1c · the tide rises once',
+    })
+    expect(action(game, 0, 'paddle').price).toEqual({ notes: ['the tide rises once'], text: 'the tide rises once' })
+    // The separator is a string a game can reword.
+    const worded = { ...game, strings: { ...game.strings, priceSeparator: ', ' } }
+    expect(action(worded, 0, 'dig').price?.text).toBe('1c, the tide rises once')
     expect(view(at(game, 2), game).when).toBe('Tide 2')
     expect(view(begin(fixture()), fixture()).when).toBeNull()
   })

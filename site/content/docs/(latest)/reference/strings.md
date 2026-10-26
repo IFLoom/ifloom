@@ -114,6 +114,8 @@ Why a [setting](/docs/reference/settings) can't be changed to a value. A setting
 | Key | English | Where |
 |---|---|---|
 | `lookAround` | `Look around` | The way out of a scene the game no longer has. |
+| `priceSeparator` | ` · ` | Between the parts of a [price](/docs/reference/view#price)'s `text`: its stats, then plugins' notes. |
+| `minigame.up`, `minigame.down`, `minigame.left`, `minigame.right`, `minigame.space` | `Up`, `Down`, `Left`, `Right`, `Space` | A [minigame](/docs/reference/minigames#minigameview) input's `label`. Name any other input as `minigame.<input>`; one with no string is its name with a capital. |
 | `momentPassed` | `The moment has passed.` | The body of a scene the game no longer has. |
 | `done` | `Already done.` | A button with [`once`](/docs/reference/actions#once) once it's spent, when the `once` gives no `reason`. |
 | `you` | `You` | The name the player's [spoken lines](/docs/reference/prose#speech), `@you: "Hi."`, show when [`rules.saveName`](/docs/reference/rules#savename) gives the player none. A game in another language sets its own word. |

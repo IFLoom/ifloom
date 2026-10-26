@@ -15,7 +15,7 @@ const vendor = computed(() => {
     <p v-if="vendor.closed" class="reason">{{ vendor.closed }}</p>
     <div v-for="good in vendor.goods" :key="good.entity" class="good">
       <strong>{{ good.name }}</strong>
-      <span v-if="good.buy.price?.stats" class="price">{{ good.buy.price.stats.map((stat) => stat.text).join(', ') }}</span>
+      <span v-if="good.buy.price" class="price">{{ good.buy.price.text }}</span>
       <span v-if="good.stock !== null" class="stock">{{ good.stock }} left</span>
       <!-- Ready-made buttons, with today's price and why one can't be pressed. -->
       <button

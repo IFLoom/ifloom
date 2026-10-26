@@ -7,19 +7,7 @@
 import type { ComponentProps } from 'react'
 import type { GameState, Result } from '@ifloom/engine'
 import type { JobView, JobsView } from '../index.ts'
-import {
-  badgeVariants,
-  buttonVariants,
-  ChoiceButton,
-  overridable,
-  type Override,
-  type PluginUi,
-  useGame,
-  useKitPart,
-  usePart,
-  usePriceText,
-  useWords,
-} from '@ifloom/react'
+import { badgeVariants, buttonVariants, ChoiceButton, overridable, type Override, type PluginUi, useGame, useKitPart, usePart, useWords } from '@ifloom/react'
 
 /** The jobs plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const JOBS_WORDS = {
@@ -89,7 +77,6 @@ export function useJobs(): JobsControls | null {
 
 function JobBoardImpl({ className, title, jobs: only }: { className?: string; title?: string | false; jobs?: readonly string[] }) {
   const words = useWords(JOBS_WORDS)
-  const priceText = usePriceText()
   const board = usePart('jobs', 'flex flex-col gap-3', className)
   const heading = useKitPart('heading', 'jobs-title', 'font-heading font-semibold')
   const card = useKitPart('card', 'job', 'flex flex-col gap-2 rounded-lg border p-3')
@@ -118,7 +105,7 @@ function JobBoardImpl({ className, title, jobs: only }: { className?: string; ti
     <section {...board} data-jobs>
       {title === false ? null : <h3 {...heading}>{title ?? words('jobs')}</h3>}
       {shown.map((job) => {
-        const paid = priceText(job.pay)
+        const paid = job.pay?.text
         const promotion = nextLine(job)
         return (
           <article key={job.id} {...card} data-job={job.id} data-hired={job.hired ? '' : undefined} data-fired={job.firedOn !== null ? '' : undefined}>

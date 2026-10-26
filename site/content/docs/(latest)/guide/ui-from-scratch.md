@@ -208,7 +208,7 @@ function drawMinigame(minigame: MinigameView): void {
     add(timer, 'span').style.transform = `scaleX(${minigame.timeLeft / minigame.timeTotal})`
   }
   const inputs = add(section, 'div', '', 'choices')
-  for (const input of minigame.inputs) add(inputs, 'button', input).onclick = () => runner.apply({ type: 'minigame', input })
+  for (const input of minigame.inputs) add(inputs, 'button', input.label).onclick = () => runner.apply(input.command)
 }
 ```
 

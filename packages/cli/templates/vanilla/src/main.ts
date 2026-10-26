@@ -214,7 +214,7 @@ function drawInput(parent: HTMLElement, input: InputView): void {
   }
 }
 
-/** The minigame being played: a bar counting down its timer, and a button for each input that does something now. */
+/** The minigame being played: a bar counting down its timer, and a button for each input that does something now, in its own words. */
 function drawMinigame(minigame: MinigameView): void {
   const box = add(story, 'section', '', 'minigame')
   box.dataset.state = minigame.state
@@ -224,8 +224,8 @@ function drawMinigame(minigame: MinigameView): void {
     timer.setAttribute('aria-label', 'Time left')
     add(timer, 'span').style.transform = `scaleX(${minigame.timeLeft / minigame.timeTotal})`
   }
-  const inputs = add(box, 'div', '', 'choices')
-  for (const input of minigame.inputs) add(inputs, 'button', input).onclick = () => runner.apply({ type: 'minigame', input })
+  // Each input is a button like any other, labelled by the game's `minigame.<input>` strings.
+  drawChoices(add(box, 'div', '', 'choices'), minigame.inputs)
 }
 
 /**

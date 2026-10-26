@@ -97,6 +97,19 @@ export type MinigameState = {
   steps: number
 }
 
+/**
+ * An input of the minigame being played, as a button: drawn as any other
+ * button is, since it has what a `RenderedChoice` needs.
+ */
+export type MinigameInput = {
+  /** The input's name, as the minigame's `on` names it: `'up'`. */
+  id: string
+  /** Its words: the `minigame.<input>` string (`Up`, `Space`), or its name with a capital. */
+  label: string
+  /** What pressing it sends. */
+  command: { type: 'minigame'; input: string }
+}
+
 /** The minigame being played, as the UI draws it. */
 export type MinigameView = {
   id: string
@@ -110,8 +123,8 @@ export type MinigameView = {
   timeLeft: number | null
   /** The timer's whole length, or null with no timer. */
   timeTotal: number | null
-  /** The inputs that do something now, in the order the state lists them. */
-  inputs: string[]
+  /** The inputs that do something now, in the order the state lists them, as buttons. */
+  inputs: MinigameInput[]
   /** Its kv store now. */
   kv: Record<string, number>
   /** The keys the game maps to each input, by input name. Empty if it maps none. */
@@ -300,6 +313,13 @@ function effectVars(effects: readonly EffectRef[] | undefined): string[] {
   })
 }
 
+/** An input's words for its button: the `minigame.<input>` string, else its name with a capital. */
+function inputLabel(game: Game, input: string): string {
+  const key = `minigame.${input}`
+  const said = stringOf(game, key)
+  return said === key ? input.charAt(0).toUpperCase() + input.slice(1) : said
+}
+
 /** Everything wrong with one minigame. */
 function checkMinigame(minigame: MinigameDef, declaredAnywhere: ReadonlySet<string>, tools: FeatureCheckTools): void {
   const source = { list: 'minigame', id: minigame.id }
@@ -444,7 +464,11 @@ export const minigames = defineFeature<MinigamesShape>({
         label: current?.label !== undefined ? cx.fillTokens(state, game, current.label) : null,
         timeLeft: timer ? Math.max(0, timer.ms - running.elapsed) : null,
         timeTotal: timer ? timer.ms : null,
-        inputs: [...new Set((current?.on ?? []).filter((entry) => cx.holds(state, game, entry.when)).map((entry) => entry.input))],
+        inputs: [...new Set((current?.on ?? []).filter((entry) => cx.holds(state, game, entry.when)).map((entry) => entry.input))].map((input) => ({
+          id: input,
+          label: inputLabel(game, input),
+          command: { type: 'minigame', input },
+        })),
         kv: { ...running.kv },
         keys: def.keys ?? {},
       },

@@ -40,7 +40,7 @@ const DEFAULT_KEYS: Readonly<Record<string, readonly string[]>> = {
 export function minigameInput(minigame: MinigameView, key: string): string | undefined {
   const fold = (entry: string) => (entry.length === 1 ? entry.toLowerCase() : entry)
   const pressed = fold(key)
-  for (const input of new Set([...minigame.inputs, ...Object.keys(minigame.keys)])) {
+  for (const input of new Set([...minigame.inputs.map((entry) => entry.id), ...Object.keys(minigame.keys)])) {
     const keys = minigame.keys[input] ?? DEFAULT_KEYS[input] ?? (input.length === 1 ? [input] : [])
     if (keys.some((entry) => fold(entry) === pressed)) return input
   }
@@ -61,7 +61,7 @@ export function startMinigameKeys(runner: Runner): () => void {
     const input = minigameInput(minigame, event.key)
     if (input === undefined) return
     event.preventDefault()
-    if (minigame.inputs.includes(input)) runner.apply({ type: 'minigame', input })
+    if (minigame.inputs.some((entry) => entry.id === input)) runner.apply({ type: 'minigame', input })
   }
   window.addEventListener('keydown', onKey, { capture: true })
   return () => window.removeEventListener('keydown', onKey, { capture: true })

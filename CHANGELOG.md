@@ -10,6 +10,9 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- A [price](/docs/reference/view#price) in the view has a ready `text`, the whole price in one line (`2 coins · until evening`), joined by the new `priceSeparator` [string](/docs/reference/strings#buttons-and-labels), so a translation rewords it once for every UI. A plugin's view builds a price of its own with [`priceView(game, stats, notes?)`](/docs/reference/view#priceview), as the jobs' pay and a vendor's full price now are.
+- A minigame's live inputs are buttons, [`MinigameInput`](/docs/reference/minigames#minigameview)s with the input's name as `id`, its words as `label` and the `command` that presses it, so a UI draws them as it draws any other button. The label is the game's `minigame.<input>` string: the engine has `Up`, `Down`, `Left`, `Right` and `Space`, and any other input is its name with a capital until you name it, `{ 'minigame.jump': 'Jump' }`.
+
 - [The runner snapshot](/docs/reference/runner#runnersnapshot): `runner.snapshot()` is everything a UI draws in one value, the `view`, the `settings`, the `backlog`, `canUndo` and `canRedo`, the `saves` and what helpers report, and `runner.subscribe` hands each listener every new one. It's a new object whenever any part changes and the same object until then, so Vue's `shallowRef`, React's `useSyncExternalStore` and a Svelte store redraw exactly when something changed. The templates keep it as `snapshot` beside `view`.
 - The snapshot's `saves` lists every save, newest first. The runner reads them once when it starts (`settled()` and `browserRunner` wait for it) and keeps the list up to date as it saves and autosaves, and as `runner.saves` writes and removes, so a save menu never lists them itself.
 - [`runner.setHelper(id, value)`](/docs/reference/runner#sethelper) puts what a helper started beside the runner reports in the snapshot's `helpers`. A helper types it by adding to the engine's new `HelperRegistry`.
@@ -203,6 +206,9 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - A Life sim patterns recipe in the docs: work each new day with `rules.onTurnDone`, cooldowns with `since` and `last`, wages paid on a Friday, who's behind an exit, lines shared across places, a placeholder for missing art, and the order refusals come in, with how to put your own where you want them.
 
 ### Changed
+
+- **Breaking:** `view.minigame.inputs` is a list of `{ id, label, command }` buttons, where it was a list of input names. Read the name as `input.id`.
+- **Breaking:** the React UI's `usePriceText` is gone: read a price's `text`. Its words `ui.priceSeparator` and `ui.minigameUp` to `ui.minigameSpace` are gone too, and so is reading `ui.minigame.<input>`: the engine's `priceSeparator` and `minigame.<input>` strings word them for every UI.
 
 - **Breaking:** `runner.subscribe`'s listener is handed the new snapshot, where it was handed the state. A listener that ignored its argument works as before. Read the state as `snapshot.state`.
 - **Breaking:** `runner.canUndo`, `runner.canRedo`, `runner.backlog()` and `runner.settings()` are gone: read `canUndo`, `canRedo`, `backlog` and `settings` from `runner.snapshot()`. `runner.state` and `runner.view()` stay, for code that sends commands and needs nothing else.

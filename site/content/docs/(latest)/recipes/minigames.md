@@ -170,8 +170,8 @@ export function quickFeet(minigame: MinigameView, runner: Runner): HTMLElement {
   }
   for (const input of minigame.inputs) {
     const button = section.appendChild(document.createElement('button'))
-    button.textContent = GLYPHS[input] ?? input
-    button.onclick = () => runner.apply({ type: 'minigame', input })
+    button.textContent = GLYPHS[input.id] ?? input.label
+    button.onclick = () => runner.apply(input.command)
   }
   return section
 }
@@ -202,8 +202,8 @@ export const QuickFeet: PanelComponent = () => {
       </div>
       <div className="flex gap-2">
         {minigame.inputs.map((input) => (
-          <button key={input} type="button" className={buttonVariants({ variant: 'outline', size: 'lg' })} onClick={() => send(input)}>
-            {GLYPHS[input] ?? input}
+          <button key={input.id} type="button" className={buttonVariants({ variant: 'outline', size: 'lg' })} onClick={() => send(input.id)}>
+            {GLYPHS[input.id] ?? input.label}
           </button>
         ))}
       </div>
@@ -228,8 +228,8 @@ const GLYPHS: Record<string, string> = { up: '↑', down: '↓', left: '←', ri
     <div v-if="view.minigame.timeLeft !== null && view.minigame.timeTotal" class="timer">
       <span :style="{ transform: `scaleX(${view.minigame.timeLeft / view.minigame.timeTotal})` }" />
     </div>
-    <button v-for="input in view.minigame.inputs" :key="input" @click="runner.apply({ type: 'minigame', input })">
-      {{ GLYPHS[input] ?? input }}
+    <button v-for="input in view.minigame.inputs" :key="input.id" @click="runner.apply(input.command)">
+      {{ GLYPHS[input.id] ?? input.label }}
     </button>
   </section>
 </template>
@@ -252,8 +252,8 @@ const GLYPHS: Record<string, string> = { up: '↑', down: '↓', left: '←', ri
     {#if minigame.timeLeft !== null && minigame.timeTotal}
       <div class="timer"><span style:transform={`scaleX(${minigame.timeLeft / minigame.timeTotal})`}></span></div>
     {/if}
-    {#each minigame.inputs as input (input)}
-      <button onclick={() => runner.apply({ type: 'minigame', input })}>{GLYPHS[input] ?? input}</button>
+    {#each minigame.inputs as input (input.id)}
+      <button onclick={() => runner.apply(input.command)}>{GLYPHS[input.id] ?? input.label}</button>
     {/each}
   </section>
 {/if}

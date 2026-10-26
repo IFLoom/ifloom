@@ -26,7 +26,7 @@ import {
   entityName,
   entityOf,
   traitOf,
-  formatStat,
+  priceView,
   hash,
   heldCount,
   holderOf,
@@ -384,13 +384,6 @@ function sellPrice(state: GameState, game: Game, one: One, good: GoodDef): Recor
 
 function times(price: Record<string, number>, count: number): Record<string, number> {
   return Object.fromEntries(Object.entries(price).map(([stat, amount]) => [stat, amount * count]))
-}
-
-function priceView(game: Game, price: Record<string, number>): Price | null {
-  const stats = Object.entries(price)
-    .filter(([, amount]) => amount > 0)
-    .map(([id, amount]) => ({ id, amount, text: formatStat(statOf(game, id), amount) }))
-  return stats.length ? { stats } : null
 }
 
 /** Is the player where the vendor is? Always, without the places plugin or a vendor with no `at`. */

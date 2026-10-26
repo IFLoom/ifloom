@@ -133,7 +133,10 @@ describe('the shop, on its own', () => {
   it('buys back at the vendor’s fraction, rounded down, and only what the player has', () => {
     const g = game()
     let state = run(fresh(g), g, shop.buy('counter', 'food:sandwich'))
-    expect(goods(state, g).find((good) => good.entity === 'food:sandwich')!.sellFor).toEqual({ stats: [{ id: 'coins', amount: 2, text: '2 coins' }] })
+    expect(goods(state, g).find((good) => good.entity === 'food:sandwich')!.sellFor).toEqual({
+      stats: [{ id: 'coins', amount: 2, text: '2 coins' }],
+      text: '2 coins',
+    })
     state = run(state, g, shop.sell('counter', 'food:sandwich'))
     expect(state.stats.coins).toBe(20 - 5 + 2)
     expect(heldCount(state, g, 'food:sandwich')).toBe(0)

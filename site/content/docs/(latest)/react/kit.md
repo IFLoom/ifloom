@@ -153,7 +153,7 @@ A plugin's React UI is built from `@ifloom/react`'s own exports, the same ones a
 |---|---|
 | The game | [`useGame`](/docs/react/components#usegame) (the runner, the view and `send`), [`usePluginUis`](#usepluginuis), [`useHolds`](/docs/react/components#useholds), [`usePage`](/docs/react/components#usepage), [`useProfile`](/docs/react/components#useprofile) |
 | Words | [`useWords`](/docs/react/components#usewords) with the module's table, [`uiSay`](/docs/react/components#uisay), `Words`, `Say` |
-| Buttons and prices | [`ChoiceButton`](/docs/react/components#choicebutton), [`ChoiceList`](/docs/react/components#choicelist), [`PriceTag`](/docs/react/components#pricetag), [`usePriceText`](#usepricetext), [`buttonVariants`](/docs/react/components#button), [`badgeVariants`](/docs/react/components#badge) |
+| Buttons and prices | [`ChoiceButton`](/docs/react/components#choicebutton), [`ChoiceList`](/docs/react/components#choicelist), [`PriceTag`](/docs/react/components#pricetag), [`buttonVariants`](/docs/react/components#button), [`badgeVariants`](/docs/react/components#badge) |
 | Dialogs | [`PartDialog`](/docs/react/components#partdialog), [`useDialogParts`](#usedialogparts), [`DIALOG_CLASSES`](#usedialogparts), [`Dialog`](/docs/react/components#dialog) |
 | The page | [`Section`](/docs/react/components#section), [`PROSE`](#prose), [`ENTRY_CLASSES`](#entry_classes), [`StatGauge`](#statgauge), [`PageHeading`](#pageheading-and-backbutton), [`BackButton`](#pageheading-and-backbutton), [`usePageParts`](#pageheading-and-backbutton) |
 | Parts and overrides | [`usePart`](/docs/react/components#usepart), [`useKitPart`](#usekitpart), [`KIT_PARTS`](#kit_parts), [`overridable`](/docs/react/components#overridable), `Override`, [`OverridableComponents`](#overridablecomponents-and-partnames), [`PartNames`](#overridablecomponents-and-partnames) |
@@ -281,14 +281,6 @@ const PROSE: string
 ```
 
 The reading column's classes: as wide as `--width-prose`, placed by `--margin-prose`. Prose, choices, exits and the people here use it, so a plugin part that reads like the story lines up with it.
-
-### usePriceText
-
-```ts
-function usePriceText(): (price: Price | null | undefined) => string
-```
-
-A [price](/docs/reference/view#price) as one line of text, its stats then its notes, joined by the `priceSeparator` word, as a vendor's struck-out full price and a job's pay are written. [`PriceTag`](/docs/react/components#pricetag) draws one as a part.
 
 ### useDialogParts
 

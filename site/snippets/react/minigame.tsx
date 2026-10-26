@@ -9,9 +9,10 @@ export function ArrowPad() {
   return (
     <div className="arrows">
       <p>{minigame.label}</p>
+      {/* Each input's words come from the game's minigame.<input> strings: Up, Space. */}
       {minigame.inputs.map((input) => (
-        <button key={input} onClick={() => send(input)}>
-          {input}
+        <button key={input.id} onClick={() => send(input.id)}>
+          {input.label}
         </button>
       ))}
     </div>

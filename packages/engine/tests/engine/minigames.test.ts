@@ -109,13 +109,24 @@ describe('minigames', () => {
       timeLeft: 1500,
       timeTotal: 1500,
       // Both arrows are live: one scores, the other doesn't.
-      inputs: state.minigame!.kv.arrow === 1 ? ['up', 'down'] : ['down', 'up'],
+      inputs: (state.minigame!.kv.arrow === 1 ? ['up', 'down'] : ['down', 'up']).map((input) => ({
+        id: input,
+        label: input === 'up' ? 'Up' : 'Down',
+        command: { type: 'minigame', input },
+      })),
       kv: state.minigame!.kv,
       keys: { up: ['ArrowUp', 'w'], down: ['ArrowDown', 's'] },
     })
     expect(shown.scene).toMatchObject({ title: 'Quick feet', body: 'Quick!', choices: [] })
     expect(shown.actions).toEqual([])
     expect(view(begin(game), game).minigame).toBeNull()
+  })
+
+  it('word each input from the game’s minigame.<input> strings, else its name with a capital', () => {
+    const game = { ...withMinigames(), strings: { 'minigame.up': 'Jump' } }
+    const state = run(begin(game), game, { type: 'action', id: 'play' })
+    const labels = Object.fromEntries(view(state, game).minigame!.inputs.map((input) => [input.id, input.label]))
+    expect(labels).toEqual({ up: 'Jump', down: 'Down' })
   })
 
   it('refuse everything else while one runs, but not a notice dismissed', () => {

@@ -95,7 +95,7 @@ describe('inline actions and tooltips', () => {
           choice: {
             id: 'answer',
             label: 'Answer',
-            price: { stats: [{ id: 'coins', amount: 1, text: '1' }] },
+            price: { stats: [{ id: 'coins', amount: 1, text: '1' }], text: '1' },
             disabled: undefined,
             tags: undefined,
             irreversible: undefined,

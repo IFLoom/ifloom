@@ -10,7 +10,7 @@ import { buttonVariants } from '../components/ui/button.tsx'
 import { useGame } from './context.tsx'
 import { useTicking } from './timers.tsx'
 import { overridable, usePart } from './overrides.tsx'
-import { useWords, type UiStringKey } from './words.ts'
+import { useWords } from './words.ts'
 
 export type MinigameControls = {
   /** The minigame being played, as the view has it, or `null`. */
@@ -37,18 +37,8 @@ export function useMinigame({ keys = false }: { keys?: boolean } = {}): Minigame
   return { minigame, send }
 }
 
-/** The built-in words for the inputs the defaults know. */
-const INPUT_WORDS: Record<string, UiStringKey> = {
-  up: 'minigameUp',
-  down: 'minigameDown',
-  left: 'minigameLeft',
-  right: 'minigameRight',
-  space: 'minigameSpace',
-}
-
 function MinigameCardImpl({ className }: { className?: string }) {
   const { minigame, send } = useMinigame({ keys: true })
-  const { runner } = useGame()
   const words = useWords()
   const panel = usePart('minigame', 'flex flex-col gap-4', className)
   const title = usePart('minigame-title', 'font-heading text-scene-title font-semibold')
@@ -62,9 +52,6 @@ function MinigameCardImpl({ className }: { className?: string }) {
   if (!minigame) return null
   const { timeLeft, timeTotal } = minigame
   const share = timeLeft !== null && timeTotal ? Math.max(0, Math.min(1, timeLeft / timeTotal)) : null
-  // A game names an input in its strings as `ui.minigame.<input>`; the arrows and space have words of their own.
-  const label = (input: string) =>
-    runner.game.strings?.[`ui.minigame.${input}`] ?? (INPUT_WORDS[input] ? words(INPUT_WORDS[input]) : input.charAt(0).toUpperCase() + input.slice(1))
   return (
     <section {...panel} data-minigame={minigame.id} data-state={minigame.state}>
       {minigame.title ? <h2 {...title}>{minigame.title}</h2> : null}
@@ -80,9 +67,10 @@ function MinigameCardImpl({ className }: { className?: string }) {
       ) : null}
       {minigame.inputs.length ? (
         <div {...inputs}>
+          {/* Each input's words come with it, from the game's `minigame.<input>` strings. */}
           {minigame.inputs.map((input) => (
-            <button key={input} type="button" {...button} data-input={input} onClick={() => send(input)}>
-              {label(input)}
+            <button key={input.id} type="button" {...button} data-input={input.id} onClick={() => send(input.id)}>
+              {input.label}
             </button>
           ))}
         </div>

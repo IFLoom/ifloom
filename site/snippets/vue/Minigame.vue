@@ -11,7 +11,8 @@ import { runner, view } from './runner.ts'
       <span :style="{ transform: `scaleX(${view.minigame.timeLeft / view.minigame.timeTotal})` }" />
     </div>
     <div class="choices">
-      <button v-for="input in view.minigame.inputs" :key="input" @click="runner.apply({ type: 'minigame', input })">{{ input }}</button>
+      <!-- Each input's words come from the game's minigame.<input> strings: Up, Space. -->
+      <button v-for="input in view.minigame.inputs" :key="input.id" @click="runner.apply(input.command)">{{ input.label }}</button>
     </div>
   </section>
 </template>

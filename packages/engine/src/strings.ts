@@ -45,6 +45,18 @@ export const STRINGS = {
   inSteps: 'In steps of {step}.',
   // Buttons and labels.
   lookAround: 'Look around',
+  /** Between the parts of a price on a button, its stats and plugins' notes: `2 coins · until evening`. */
+  priceSeparator: ' · ',
+  /**
+   * A minigame input's button, by the input's name: `minigame.<input>`. A
+   * game names its own inputs the same way (`'minigame.jump': 'Jump'`); one
+   * with no line is its own name with a capital.
+   */
+  'minigame.up': 'Up',
+  'minigame.down': 'Down',
+  'minigame.left': 'Left',
+  'minigame.right': 'Right',
+  'minigame.space': 'Space',
   /** The name the player's spoken lines show (`@you: "Hi."`) when the game's `rules.saveName` gives none. A game in another language sets its own. */
   you: 'You',
   momentPassed: 'The moment has passed.',

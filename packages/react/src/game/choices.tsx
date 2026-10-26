@@ -5,23 +5,14 @@ import { Icon } from './icon.tsx'
 import { useChoiceKey } from './keys.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { cn, PROSE } from '../lib/utils.ts'
-import { useWords } from './words.ts'
 
 function PriceTagImpl({ price, className }: { price: Price; className?: string }) {
-  const words = useWords()
   const attrs = usePart('choice-price', 'text-xs font-normal text-price', className)
-  const parts = [...(price.stats ?? []).map((stat) => stat.text), ...(price.notes ?? [])]
-  if (!parts.length) return null
-  return <span {...attrs}>{parts.join(words('priceSeparator'))}</span>
+  if (!price.text) return null
+  return <span {...attrs}>{price.text}</span>
 }
 
-/** A price as one line of text: its stats, then its notes, joined by the `priceSeparator` word, as a vendor's full price or a job's pay is shown. */
-export function usePriceText(): (price: Price | null | undefined) => string {
-  const words = useWords()
-  return (price) => [...(price?.stats ?? []).map((stat) => stat.text), ...(price?.notes ?? [])].join(words('priceSeparator'))
-}
-
-/** What a button costs, as the engine wrote it: stats, then plugins' notes ("until evening"). */
+/** What a button costs, as the engine wrote it: the price's `text`, its stats, then plugins' notes ("until evening"). */
 export const PriceTag = overridable('PriceTag', PriceTagImpl)
 
 function ChoiceButtonImpl({ choice, className }: { choice: RenderedChoice; className?: string }) {

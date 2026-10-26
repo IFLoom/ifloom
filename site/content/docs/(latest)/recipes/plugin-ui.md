@@ -144,7 +144,7 @@ The shop's view lists every vendor, with `here` and `open` already worked out fr
 import type { Price, RenderedChoice, Runner, View } from '@ifloom/engine'
 import type { ShopView } from '@ifloom/plugin-shop'
 
-const priceText = (price: Price | null | undefined) => price?.stats?.map((stat) => stat.text).join(', ') ?? 'free'
+const priceText = (price: Price | null | undefined) => price?.text ?? 'free'
 
 /** A button for a RenderedChoice: greyed out with its reason, sending its command. */
 function press(runner: Runner, choice: RenderedChoice, label: string): HTMLButtonElement {
@@ -181,7 +181,7 @@ import { useGame } from '@ifloom/react'
 import type { Price } from '@ifloom/engine'
 import type { ShopView } from '@ifloom/plugin-shop'
 
-const priceText = (price: Price | null | undefined) => price?.stats?.map((stat) => stat.text).join(', ') ?? 'free'
+const priceText = (price: Price | null | undefined) => price?.text ?? 'free'
 
 export function Counter() {
   const { view, send } = useGame()
@@ -224,7 +224,7 @@ import type { Price } from '@ifloom/engine'
 import type { ShopView } from '@ifloom/plugin-shop'
 import { runner, view } from './runner.ts'
 
-const priceText = (price: Price | null | undefined) => price?.stats?.map((stat) => stat.text).join(', ') ?? 'free'
+const priceText = (price: Price | null | undefined) => price?.text ?? 'free'
 const vendor = computed(() => (view.value.plugins.shop as ShopView | undefined)?.vendors.find((entry) => entry.here))
 </script>
 
@@ -261,7 +261,7 @@ const vendor = computed(() => (view.value.plugins.shop as ShopView | undefined)?
   import type { ShopView } from '@ifloom/plugin-shop'
   import { runner, view } from './runner.ts'
 
-  const priceText = (price: Price | null | undefined) => price?.stats?.map((stat) => stat.text).join(', ') ?? 'free'
+  const priceText = (price: Price | null | undefined) => price?.text ?? 'free'
   const vendor = $derived(($view.plugins.shop as ShopView | undefined)?.vendors.find((entry) => entry.here))
 </script>
 

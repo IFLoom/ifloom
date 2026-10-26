@@ -5,7 +5,7 @@ description: "Minigames as data: states, inputs, timers and variables, for quick
 A minigame is a small game inside the story, such as a quick-time event, a lock to pick or a round of snap. You declare it as data: a few states, the inputs each one listens for, timers that move it on, and number variables it keeps while it runs. The engine runs it, and the UI draws it from [`view.minigame`](/docs/reference/view#minigame) and sends what the player presses.
 
 ```ts
-import { type MinigameDef, type MinigameStateDef, type MinigameTransition, type MinigameTarget, type MinigameState, type MinigameView, type MinigameSceneFields } from '@ifloom/engine'
+import { type MinigameDef, type MinigameStateDef, type MinigameTransition, type MinigameTarget, type MinigameState, type MinigameView, type MinigameInput, type MinigameSceneFields } from '@ifloom/engine'
 ```
 
 ## A worked example
@@ -229,9 +229,15 @@ type MinigameView = {
   label: string | null
   timeLeft: number | null
   timeTotal: number | null
-  inputs: string[]
+  inputs: MinigameInput[]
   kv: Record<string, number>
   keys: Record<string, string[]>
+}
+
+type MinigameInput = {
+  id: string    // the input's name: 'up'
+  label: string // its words: 'Up'
+  command: { type: 'minigame'; input: string }
 }
 ```
 
@@ -243,9 +249,11 @@ What [`view.minigame`](/docs/reference/view#minigame) holds while one runs.
 | `title` | Its `title`, or `null`. |
 | `label` | The running state's words, with tokens filled in, or `null` if it has no `label`. `view.scene.body` has the same words rendered with their markup. |
 | `timeLeft`, `timeTotal` | Milliseconds left on the state's timer and its whole length, or `null` for a state with no timer. |
-| `inputs` | The inputs that do something now, without repeats. |
+| `inputs` | The inputs that do something now, without repeats, as buttons: each has its name as `id`, its words as `label` and the [`minigame` command](/docs/reference/commands#minigame) that presses it, so a UI draws them as it draws any [`RenderedChoice`](/docs/reference/view#renderedchoice). |
 | `kv` | Its kv store now. |
 | `keys` | The keys the game maps to each input, or `{}`. |
+
+An input's `label` is the game's `minigame.<input>` [string](/docs/reference/strings#buttons-and-labels). The engine has `Up`, `Down`, `Left`, `Right` and `Space` for `up`, `down`, `left`, `right` and `space`. Any other input with no string is its own name with a capital, so name yours in `strings`: `{ 'minigame.jump': 'Jump' }`.
 
 A UI sends ticks while `timeLeft` isn't `null`, and also while [`view.timers`](/docs/reference/view#timers) isn't empty. A tick with nothing counting down is refused with `Nothing is counting down.`
 

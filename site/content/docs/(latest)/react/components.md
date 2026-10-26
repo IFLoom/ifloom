@@ -13,7 +13,7 @@ import {
   // the game
   GameShell, GameProvider, useGame, Icon, WithPages,
   DefaultLayout, Game, Sidebar, Story, Overlay, Section, When, useHolds, Title, RoomActions, Plugins, usePluginUis,
-  Scene, Beat, InlineAction, Tip, InlineTrigger, InlineModal, InlineImage, InlineMail, InlineProp, InlineMono, BUILT_IN_INLINE, Picture, Video, LayeredPicture, Hotspot, MediaViewer, assetUrl, ChoiceButton, ChoiceList, PriceTag, usePriceText,
+  Scene, Beat, InlineAction, Tip, InlineTrigger, InlineModal, InlineImage, InlineMail, InlineProp, InlineMono, BUILT_IN_INLINE, Picture, Video, LayeredPicture, Hotspot, MediaViewer, assetUrl, ChoiceButton, ChoiceList, PriceTag,
   Clock, StatList, StatGauge, EntityTable, Inventory, useClock,
   InputField, InputFields,
   GameMenu, SavesMenu, Backlog, ModManager, useSaves, useBacklog, useMods,
@@ -894,7 +894,7 @@ Replaceable as `ChoiceList` in [`components`](#components). Parts: `choices`, or
 function PriceTag(props: { price: Price; className?: string }): JSX.Element | null
 ```
 
-A [`Price`](/docs/reference/view#price) as the engine wrote it, in `--price`. It shows each stat's `text`, then each of the plugins' `notes` (such as the calendar's `until afternoon`), joined with `ui.priceSeparator` (` · `). It draws nothing for a price with neither.
+A [`Price`](/docs/reference/view#price) as the engine wrote it, in `--price`. It shows the price's `text`: each stat's `text`, then each of the plugins' `notes` (such as the calendar's `until afternoon`), joined by the engine's `priceSeparator` [string](/docs/reference/strings#buttons-and-labels) (` · `). It draws nothing for a price with neither.
 
 Replaceable as `PriceTag` in [`components`](#components). Parts: `choice-price`.
 
@@ -1669,7 +1669,7 @@ The [minigame](/docs/reference/minigames) being played, from [`view.minigame`](/
 - the minigame's `title`, as a heading
 - the running state's words (`label`), in a polite live region so a screen reader reads each new one
 - a bar counting down the state's timer, when it has one. It's a `progressbar` labelled `ui.timeLeft`, from 0 to `timeTotal`, and its inner `<span>` shrinks with `transform: scaleX()`, easing between ticks
-- a button for each live input, which sends [`{ type: 'minigame', input }`](/docs/reference/commands#minigame). The inputs `up`, `down`, `left`, `right` and `space` are labelled with `ui.minigameUp` and the rest. Any other input is labelled with the game's `ui.minigame.<input>` string, or its own name with a capital.
+- a button for each live input, which sends [`{ type: 'minigame', input }`](/docs/reference/commands#minigame). Each says the input's `label` from the view: the game's `minigame.<input>` [string](/docs/reference/strings#buttons-and-labels), `Up` to `Space` for the arrows and space, or its own name with a capital.
 
 It runs the clock through [`useMinigame`](#useminigame), and maps the keyboard to the inputs. Each input takes the keys the minigame lists in its [`keys`](/docs/reference/minigames#minigamedef). An input it doesn't list takes the arrow keys for `up`, `down`, `left` and `right`, the space bar for `space`, and its own letter for a one-letter input. A key held down doesn't repeat. These keys work whether the game's [`keys`](#keyoptions) are on or not, and they come before them. The keys follow the same rules as the hotkeys: nothing while typing, with a modifier held or with a dialog open.
 
@@ -1723,7 +1723,7 @@ function ArrowPad() {
   return (
     <div className="grid grid-cols-3 gap-2">
       {minigame.inputs.map((input) => (
-        <button key={input} onClick={() => send(input)}>{input}</button>
+        <button key={input.id} onClick={() => send(input.id)}>{input.label}</button>
       ))}
     </div>
   )
@@ -1833,7 +1833,7 @@ type Say<K extends string = UiStringKey> = (key: K, vars?: Record<string, string
 
 The UI's own words in English, by key without the `ui.` prefix. The full table is on [The React UI](/docs/react#words). `UiStringKey` is one of its keys. Each plugin UI has a table of its own, a `Words`, such as the shop's `SHOP_WORDS`, on the plugin's page.
 
-Among them are `close` (the dialogs' close button), `priceSeparator` (between the parts of a price) and `heldCount` (`×{n}` after a thing you hold).
+Among them are `close` (the dialogs' close button) and `heldCount` (`×{n}` after a thing you hold). The words between the parts of a price are the engine's `priceSeparator` [string](/docs/reference/strings#buttons-and-labels).
 
 ### uiSay
 

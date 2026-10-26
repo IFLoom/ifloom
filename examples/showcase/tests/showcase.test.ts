@@ -365,7 +365,13 @@ describe('Small Town', () => {
   it('plays quick feet at the park: inputs in time win coins, letting the clock run out loses', () => {
     let state = run(startingState(game), { type: 'choose', id: 'unpack' })
     state = run(on(state, 1, 'morning'), places.go('high-street'), places.go('park'), act('places/arrows'))
-    expect(view(state, game).minigame).toMatchObject({ id: 'arrows', title: 'Quick feet', timeLeft: 1500, inputs: ['up', 'down', 'left', 'right'] })
+    expect(view(state, game).minigame).toMatchObject({ id: 'arrows', title: 'Quick feet', timeLeft: 1500 })
+    expect(view(state, game).minigame?.inputs.map((input) => [input.id, input.label])).toEqual([
+      ['up', 'Up'],
+      ['down', 'Down'],
+      ['left', 'Left'],
+      ['right', 'Right'],
+    ])
     expect(apply(state, game, act('places/jog')).reason).toBe('Finish this first.')
     const coins = state.stats.coins
     // Three arrows pressed in time, after a moment's thought; the last two left to time out.

@@ -724,7 +724,7 @@ function drawMinigame(minigame: MinigameView): void {
     add(timer, 'span').style.transform = `scaleX(${minigame.timeLeft / minigame.timeTotal})`
   }
   const inputs = add(section, 'div', '', 'choices')
-  for (const input of minigame.inputs) add(inputs, 'button', input).onclick = () => runner.apply({ type: 'minigame', input })
+  for (const input of minigame.inputs) add(inputs, 'button', input.label).onclick = () => runner.apply(input.command)
 }
 ```
 
@@ -744,8 +744,8 @@ export function Minigame({ minigame }: { minigame: MinigameView }) {
       ) : null}
       <div className="choices">
         {minigame.inputs.map((input) => (
-          <button key={input} onClick={() => runner.apply({ type: 'minigame', input })}>
-            {input}
+          <button key={input.id} onClick={() => runner.apply(input.command)}>
+            {input.label}
           </button>
         ))}
       </div>
@@ -770,7 +770,7 @@ defineProps<{ minigame: MinigameView }>()
       <span :style="{ transform: `scaleX(${minigame.timeLeft / minigame.timeTotal})` }" />
     </div>
     <div class="choices">
-      <button v-for="input in minigame.inputs" :key="input" @click="runner.apply({ type: 'minigame', input })">{{ input }}</button>
+      <button v-for="input in minigame.inputs" :key="input.id" @click="runner.apply(input.command)">{{ input.label }}</button>
     </div>
   </section>
 </template>
@@ -793,8 +793,8 @@ defineProps<{ minigame: MinigameView }>()
     </div>
   {/if}
   <div class="choices">
-    {#each minigame.inputs as input (input)}
-      <button onclick={() => runner.apply({ type: 'minigame', input })}>{input}</button>
+    {#each minigame.inputs as input (input.id)}
+      <button onclick={() => runner.apply(input.command)}>{input.label}</button>
     {/each}
   </div>
 </section>

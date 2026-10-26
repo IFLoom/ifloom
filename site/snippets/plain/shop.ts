@@ -12,8 +12,7 @@ export function drawShop(parent: HTMLElement, { view }: RunnerSnapshot): void {
   for (const good of vendor.goods) {
     const row = add(parent, 'div', '', 'good')
     add(row, 'strong', good.name)
-    const price = good.buy.price?.stats?.map((stat) => stat.text).join(', ')
-    if (price) add(row, 'span', price, 'price')
+    if (good.buy.price) add(row, 'span', good.buy.price.text, 'price')
     if (good.stock !== null) add(row, 'span', `${good.stock} left`, 'stock')
     // Ready-made buttons, with today's price and why one can't be pressed.
     drawChoices(row, good.sell ? [good.buy, good.sell] : [good.buy])

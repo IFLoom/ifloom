@@ -23,7 +23,7 @@ describe('a plugin command’s spends', () => {
   it('price its button as an activity’s cost does, written through the stat’s format', () => {
     const g = game()
     const button = renderAction(begin(g), g, { id: 'apple', label: 'Buy an apple', command: { type: 'custom', name: 'stall/apple', with: { price: 2 } } })
-    expect(button.price).toEqual({ stats: [{ id: 'coins', amount: 2, text: '2c' }] })
+    expect(button.price).toEqual({ stats: [{ id: 'coins', amount: 2, text: '2c' }], text: '2c' })
   })
 
   it('leave a command that spends nothing unpriced', () => {

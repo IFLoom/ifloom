@@ -48,6 +48,11 @@ export type Price = {
   stats?: { id: string; amount: number; text: string }[]
   /** What plugins say it costs, in their words: "until evening". */
   notes?: string[]
+  /**
+   * The whole price as one line for the player: each stat's `text`, then the
+   * notes, joined by the `priceSeparator` string (`2 coins · until evening`).
+   */
+  text: string
 }
 
 export type RenderedChoice = {
@@ -407,14 +412,23 @@ function actionButton(state: GameState, game: Game, action: Action, rendered: Re
 }
 
 function priced(state: GameState, game: Game, cost: { stats?: Record<string, number> }, effects: readonly Effect[] = []): Price | undefined {
-  const out: Price = {}
-  const spent = Object.entries(cost.stats ?? {})
+  return priceView(game, cost.stats ?? {}, effects.length ? pluginPrices(game, state, effects) : []) ?? undefined
+}
+
+/**
+ * A price as the view shows one: the stats spent above 0, each worded as a
+ * stat's value is, in the order given, then `notes`, plugins' words for
+ * what else it costs, with the whole as one line in `text`. Null when it
+ * costs nothing. What a plugin's view uses for a price of its own, such as
+ * what a shift pays or a vendor's full price.
+ */
+export function priceView(game: Game, stats: Readonly<Record<string, number>>, notes: readonly string[] = []): Price | null {
+  const spent = Object.entries(stats)
     .filter(([, amount]) => amount > 0)
     .map(([id, amount]) => ({ id, amount, text: formatStat(statOf(game, id), amount) }))
-  if (spent.length) out.stats = spent
-  const notes = effects.length ? pluginPrices(game, state, effects) : []
-  if (notes.length) out.notes = notes
-  return Object.keys(out).length ? out : undefined
+  if (!spent.length && !notes.length) return null
+  const text = [...spent.map((stat) => stat.text), ...notes].join(stringOf(game, 'priceSeparator'))
+  return { ...(spent.length ? { stats: spent } : {}), ...(notes.length ? { notes: [...notes] } : {}), text }
 }
 
 /**

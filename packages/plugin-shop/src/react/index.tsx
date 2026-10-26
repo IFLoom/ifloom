@@ -15,7 +15,6 @@ import {
   useGame,
   useKitPart,
   usePart,
-  usePriceText,
   useWords,
 } from '@ifloom/react'
 import type { ShopView, VendorView } from '../index.ts'
@@ -81,7 +80,6 @@ export type ShopCounterProps = { vendor: VendorView; className?: string }
 
 function ShopCounterImpl({ vendor, className }: ShopCounterProps) {
   const words = useWords(SHOP_WORDS)
-  const priceText = usePriceText()
   const box = usePart('shop', 'flex flex-col gap-3', className)
   const closed = usePart('shop-closed', 'text-sm text-muted-foreground')
   const empty = usePart('shop-empty', 'text-sm text-muted-foreground')
@@ -109,14 +107,14 @@ function ShopCounterImpl({ vendor, className }: ShopCounterProps) {
                 {good.description ? <p {...description}>{good.description}</p> : null}
                 <p {...details}>
                   {good.off > 0 ? <span {...off}>{words('percentOff', { percent: Math.round(good.off * 100) })}</span> : null}
-                  {good.fullPrice ? <s {...full}>{priceText(good.fullPrice)}</s> : null}
+                  {good.fullPrice ? <s {...full}>{good.fullPrice.text}</s> : null}
                   {good.stock !== null ? <span {...stock}>{words('stockLeft', { n: good.stock })}</span> : null}
                   {good.owned > 0 ? <span {...owned}>{words('owned', { n: good.owned })}</span> : null}
                 </p>
               </div>
               <div {...actions}>
                 <ChoiceButton choice={{ ...good.buy, label: words('buy') }} />
-                {good.sell && good.owned > 0 ? <ChoiceButton choice={{ ...good.sell, label: words('sellFor', { price: priceText(good.sellFor) }) }} /> : null}
+                {good.sell && good.owned > 0 ? <ChoiceButton choice={{ ...good.sell, label: words('sellFor', { price: good.sellFor?.text ?? '' }) }} /> : null}
               </div>
             </li>
           ))}

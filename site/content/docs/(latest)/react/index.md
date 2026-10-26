@@ -472,7 +472,6 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/do
 | `ui.modsHint` | `Mods add to the game or change it. Add one from a file, and turn it on or off here.` | |
 | `ui.modsChanged` | `Changes to mods take effect when the game restarts.` | |
 | `ui.close` | `Close` | |
-| `ui.priceSeparator` | ` · ` | |
 | `ui.heldCount` | `×{n}` | `n` |
 | `ui.newGame` | `New game` | |
 | `ui.continue` | `Continue` | |
@@ -487,11 +486,6 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/do
 | `ui.menu` | `Menu` | |
 | `ui.timeLeft` | `Time left` | |
 | `ui.timerLeft` | `{seconds}s` | The seconds left on a [`Countdown`](/docs/react/components#countdown). |
-| `ui.minigameUp` | `Up` | |
-| `ui.minigameDown` | `Down` | |
-| `ui.minigameLeft` | `Left` | |
-| `ui.minigameRight` | `Right` | |
-| `ui.minigameSpace` | `Space` | |
 | `ui.diceNeeds` | `needs {against}` | `against`: the roll's target |
 | `ui.dicePassed` | `Passed` | |
 | `ui.diceFailed` | `Failed` | |
@@ -511,12 +505,12 @@ Which component uses which keys:
 - **[Game menu](/docs/react/components#gamemenu)**: `ui.undo` and `ui.redo`, `ui.saves`, `ui.backlog`, `ui.mods`, `ui.settings` and `ui.titlePage`, and `ui.menu` as the title of the dialog Escape opens. `ui.close` is the screen-reader label on its dialog's close button, and on every dialog's.
 - **[Stat list](/docs/react/components#statlist)**: `ui.statLevel` after a levelled stat's label, and `ui.statProgress` as the label on its bar.
 - **[Inventory](/docs/react/components#inventory)**: `ui.inventory`, and `ui.heldCount` after a thing there's more than one of.
-- **[Price tag](/docs/react/components#pricetag)**: `ui.priceSeparator`, between the parts of a price.
+- **[Price tag](/docs/react/components#pricetag)**: a price's own `text`, joined by the engine's `priceSeparator` [string](/docs/reference/strings#buttons-and-labels).
 - **[Beat](/docs/react/components#beat)**: `ui.replayVoice`, the label on a spoken line's replay button, and `ui.zoom`, the label on the button around a picture or a clip that opens the viewer.
 - **[Media viewer](/docs/react/components#mediaviewer)**: `ui.closeViewer`, the label on its close button, and `ui.zoom` as its title when the picture has no alt text.
 - **[Notices](/docs/react/components#notices)**: `ui.dismiss`, the label on each notice's dismiss button, and `ui.noticesMore` and `ui.noticesFewer` on the button that shows or hides the older notices on a phone.
 - **[Notice strip](/docs/react/components#noticestrip)**: `ui.notices` on its notices count and its dialog, `ui.unread` as its label for screen readers, and `ui.allSeen` on the dialog's button.
-- **[Minigame card](/docs/react/components#minigamecard)**: `ui.timeLeft`, the label on its countdown bar, and `ui.minigameUp` to `ui.minigameSpace` on the buttons for those inputs. Any other input's button takes the game's `ui.minigame.<input>` string.
+- **[Minigame card](/docs/react/components#minigamecard)**: `ui.timeLeft`, the label on its countdown bar. Each input's button says its `label` from the view, the engine's `minigame.<input>` [string](/docs/reference/strings#buttons-and-labels).
 - **[Dice](/docs/react/components#diceroll)**: `ui.dicePassed`, `ui.diceFailed` and `ui.diceNeeds` on a roll's outcome, `ui.diceCriticalMax` and `ui.diceCriticalMin` on a critical, `ui.diceRolled`, `ui.diceRolledPassed` and `ui.diceRolledFailed` in what a screen reader hears, and `ui.diceDismiss` on the overlay's close button.
 - **[Saves menu](/docs/react/components#savesmenu)**: `ui.saves` to `ui.missingPlugins`.
 - **[Backlog](/docs/react/components#backlog)**: `ui.backlog` to `ui.chose`.

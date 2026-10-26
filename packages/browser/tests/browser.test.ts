@@ -208,7 +208,7 @@ describe('startKeys', () => {
 
 describe('minigameInput', () => {
   it('maps a key to an input: the minigame’s keys, the arrows and space, or a one-letter name', () => {
-    const view = { inputs: ['space', 'a'], keys: { jump: ['w', 'ArrowUp'] } } as unknown as Parameters<typeof minigameInput>[0]
+    const view = { inputs: [{ id: 'space' }, { id: 'a' }], keys: { jump: ['w', 'ArrowUp'] } } as unknown as Parameters<typeof minigameInput>[0]
     expect(minigameInput(view, ' ')).toBe('space')
     expect(minigameInput(view, 'A')).toBe('a')
     expect(minigameInput(view, 'W')).toBe('jump')

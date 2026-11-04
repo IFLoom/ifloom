@@ -1068,7 +1068,7 @@ Replaceable as `InputFields` in [`components`](#components). Parts: `inputs`.
 function Changes(props: { className?: string }): JSX.Element | null
 ```
 
-The stats the last command moved, from [`view.changes`](/docs/reference/changes), as a list of [`ChangeItem`](#changeitem) pills: `+30 coins`, `+20% Energy`, `+2 Ava`. It draws nothing when the last command moved nothing. A `tick` that moved nothing keeps the list, so the pills stay while a timer runs.
+The stats the last command moved, from [`view.changes`](/docs/reference/changes), as a list of [`ChangeItem`](#changeitem) pills: `+30 coins`, `+20% Energy`, `+2 Ava`. Only the stats your content names in [`changes.stats`](/docs/reference/changes#changes) are listed, and with none named it never draws anything. It draws nothing when the last command moved nothing. A `tick` that moved nothing keeps the list, so the pills stay while a timer runs.
 
 The default layout leaves it out. Place it in yours where you want the feedback, usually after the scene:
 

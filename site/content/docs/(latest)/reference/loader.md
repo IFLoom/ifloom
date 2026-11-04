@@ -54,6 +54,7 @@ type Content = {
   minigames?: MinigameDef[]
   timers?: TimerDef[]
   phrases?: Phrases
+  changes?: { stats: string[] }
   settings?: SettingDef[]
   saveable?: Blocked[]
   finished?: Condition
@@ -86,6 +87,7 @@ export const ch1: Content = {
 | `name` | Optional. What problems call this content, such as `story.cafe`. Without one, they say `content`. |
 | `scenes`, `storylines`, `stats`, `kinds`, `actions`, `triggers`, `inputs`, `minigames`, `timers`, `settings` | By `id`, each declared once across your content. The order is the order you combine your content in. A plugin's own [`content`](/docs/reference/plugins#kinds-and-entities) comes first. |
 | `phrases` | By each phrase's full name (`outfit.verdict`), each declared once across your content. Two files can add phrases to one group. A pack's phrase replaces the one of that name whole, and a pack can add new ones to a group. See [Phrases](/docs/reference/phrases). |
+| `changes` | Added together: every file's and pack's `stats` are tracked, each once, in the order first named. See [Changes](/docs/reference/changes#changes). |
 | `introScene`, `finished`, `carryOver` | One value each, given by one file of your content. See [Game](/docs/reference/game#game). |
 | `kv`, `resets` | By key, each declared once: `kv` is what a new game's [kv store](/docs/reference/state#kv) starts with, and `resets` what goes back each turn (see [`resets`](/docs/reference/rules#resets)). |
 | `locks`, `saveable` | Added, each file's after the ones before. A [lock](/docs/reference/locks) with an `id` is declared once by it. |

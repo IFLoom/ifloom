@@ -19,4 +19,6 @@ export const stats: Content = {
     { id: 'energy', label: 'Energy', start: 80, spendable: true, format: '{n}%', lacking: 'Too tired.', round: 'round', ui: { display: 'bar' } },
     { id: 'charm', label: 'Charm', start: 1, max: 20, ui: { display: 'pips' } },
   ],
+  // The stats whose changes the layout's <Changes /> shows as pills after a choice: friendship on every character.
+  changes: { stats: ['coins', 'energy', 'charm', 'friendship'] },
 }

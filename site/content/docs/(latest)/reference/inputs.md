@@ -97,7 +97,7 @@ Each line is the engine's English from the [strings table](/docs/reference/strin
 whyNot(state, game, { type: 'input', id: 'alarm', to: 11 })  // 'Between 5 and 10.'
 ```
 
-A text value is trimmed before it's checked and before it's written to the kv store, so `'  Sam '` is kept as `'Sam'`.
+A text value is trimmed before it's checked and before it's written to the kv store, so `'  Sam '` is kept as `'Sam'`. Doubled braces in it are made single, so a name typed as `{{kv:gold}}` is kept as `{kv:gold}` and is never filled in as a [token](/docs/reference/prose#tokens) when prose prints it.
 
 ## Drawing it
 

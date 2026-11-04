@@ -18,6 +18,7 @@ import type { Game } from './game.ts'
 import type { Block, Choice, DataScene } from './scene.ts'
 import { hash } from './random.ts'
 import { callOf } from './calls.ts'
+import { isPhraseWithArgs } from './features/phrases.ts'
 
 /** One field of a game's content a translation can give other words for. */
 export type WordField = {
@@ -299,12 +300,14 @@ export function wordSpots(game: Game): WordSpot[] {
     }
   }
   // Phrases: each row's words, by the phrase's full name and the row's place.
-  for (const [name, rows] of Object.entries(game.phrases ?? {})) {
+  for (const [name, phrase] of Object.entries(game.phrases ?? {})) {
+    // A phrase with arguments keeps its rows in `rows`; its key in the table is the same.
+    const withArgs = isPhraseWithArgs(phrase)
+    const rows: unknown = withArgs ? phrase.rows : phrase
     if (!Array.isArray(rows)) continue
     walk.source = { list: 'phrase', id: name }
-    rows.forEach((row, index) =>
-      walk.field(`phrase.${name}.${index}`, isRecord(row) ? row.text : undefined, ['phrases', name, index, 'text'], `phrase ${name}`),
-    )
+    const at = withArgs ? ['phrases', name, 'rows'] : ['phrases', name]
+    rows.forEach((row, index) => walk.field(`phrase.${name}.${index}`, isRecord(row) ? row.text : undefined, [...at, index, 'text'], `phrase ${name}`))
   }
   // Each plugin's content, by the shape it gives each list of its data.
   for (const plugin of game.plugins ?? []) {

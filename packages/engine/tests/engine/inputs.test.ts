@@ -35,6 +35,12 @@ describe('inputs', () => {
     expect(view(state, game).inputs.find((input) => input.id === 'alarm')).toMatchObject({ type: 'number', min: 5, max: 10, value: 7 })
   })
 
+  it('make doubled braces single, so typed text never reads as a token', () => {
+    const game = withInputs()
+    const state = apply(begin(game), game, { type: 'input', id: 'petName', to: '{{kv:gold}}' }).state
+    expect(state.kv.petName).toBe('{kv:gold}')
+  })
+
   it('refuse what the declaration does not allow, in words the player can read', () => {
     const game = withInputs()
     const state = begin(game)

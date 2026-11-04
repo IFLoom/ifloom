@@ -6,7 +6,7 @@
  */
 import type { Game } from './game.ts'
 import type { GameState } from './types.ts'
-import { entityImage, entityUi, hasEntity, protagonist, PLAYER, YOU, type EntityRef } from './entities.ts'
+import { entityImage, entityUi, protagonist, speakerRef, PLAYER, YOU, type EntityRef } from './entities.ts'
 import type { EntityUi, Ui } from './features/ui.ts'
 import { entityName } from './prose.ts'
 import { artSrc, type SpeakerFinder } from './sceneBody.ts'
@@ -23,29 +23,6 @@ export type SpeakerView = {
   image: string | null
   /** Their presentation hints, as their entity has them; left out with none. See `EntityUi`. */
   ui?: Ui<EntityUi>
-}
-
-/** The kind a bare speaker id is read as first: the cast's. */
-const SPEAKER_KIND = 'character'
-
-/**
- * The entity a speaker id names, if it names one: a reference as written
- * (`'character:ava'`, `'you'` for whoever the player is playing), or a bare id
- * as `character:<id>`, else the one entity the game declares with that id.
- * Undefined when it names none.
- */
-export function speakerRef(state: GameState, game: Game, id: string): EntityRef | undefined {
-  if (id === YOU) {
-    const who = protagonist(state)
-    return who === PLAYER ? undefined : (who as EntityRef)
-  }
-  if (id.includes(':')) return hasEntity(state, game, id) ? (id as EntityRef) : undefined
-  const ref = `${SPEAKER_KIND}:${id}` as EntityRef
-  if (hasEntity(state, game, ref)) return ref
-  const named = (game.entities ?? []).filter((entity) => entity.id === id)
-  if (named.length !== 1) return undefined
-  const only = `${named[0].of}:${id}` as EntityRef
-  return hasEntity(state, game, only) ? only : undefined
 }
 
 /**

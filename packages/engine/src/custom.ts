@@ -125,7 +125,7 @@ export function customEffect(game: Game | undefined, name: string): ((state: Gam
 export function customValue(game: Game | undefined, name: string): ((state: GameState, args?: PluginArgs) => string | number) | undefined {
   // The game's phrases answer as its values do, before `rules.values`: `{ value: 'game/outfit.verdict' }`.
   const parts = pluginName(name)
-  if (game && parts?.plugin === GAME_ID && phraseRows(game, parts.name)) return (state) => phraseText(state, game, parts.name) ?? ''
+  if (game && parts?.plugin === GAME_ID && phraseRows(game, parts.name)) return (state, args = {}) => phraseText(state, game, parts.name, args) ?? ''
   return pluginValue(game, name)
 }
 

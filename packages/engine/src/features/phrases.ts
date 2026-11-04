@@ -16,8 +16,16 @@ import { defineFeature, type PackMerge } from './feature.ts'
 /** One row of a phrase: its words, shown while `when` holds (always, without one). Tokens in the words are filled. */
 export type PhraseRow = { when?: Condition; text: string }
 
-/** A phrase as content writes it: its rows, tried in order, or a plain string, a phrase with one row. */
-export type Phrase = string | PhraseRow[]
+/**
+ * A phrase that takes arguments: their names in `args`, and its rows. In a
+ * row's `when`, a string that is exactly `$<arg>` becomes what the token
+ * passed, as an entity reference when it names one; in its `text`, `$<arg>`
+ * becomes that entity's name, or the value as passed.
+ */
+export type PhraseWithArgs = { args: string[]; rows: PhraseRow[] }
+
+/** A phrase as content writes it: its rows, tried in order, a plain string (a phrase with one row), or rows with the arguments they take. */
+export type Phrase = string | PhraseRow[] | PhraseWithArgs
 
 /**
  * Phrases as content writes them, by name: a phrase, or a group of more by
@@ -29,8 +37,8 @@ export type Phrases = { [name: string]: Phrase | Phrases }
 /** What the phrases feature adds, as types. */
 export type PhrasesShape = {
   game: {
-    /** The game's phrases, by their full dotted name (`outfit.verdict`), each as its rows. None if left out. */
-    phrases?: Record<string, PhraseRow[]>
+    /** The game's phrases, by their full dotted name (`outfit.verdict`), each as its rows, or its rows with the arguments it takes. None if left out. */
+    phrases?: Record<string, PhraseRow[] | PhraseWithArgs>
   }
   pack: {
     /**
@@ -65,22 +73,66 @@ export const V_NAME = /^(?:[A-Za-z0-9-]+\/)?[A-Za-z0-9_-]+(?:\.[A-Za-z0-9_-]+)*$
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
 
-/** Phrases as content writes them, flattened to full dotted names, each as its rows: a plain string is one row. */
-export function flatPhrases(tree: Phrases | undefined, prefix = ''): [string, PhraseRow[]][] {
-  const out: [string, PhraseRow[]][] = []
+/** Is this a phrase with arguments, `{ args, rows }`, rather than a group? Its `rows` say so. */
+export const isPhraseWithArgs = (value: unknown): value is PhraseWithArgs => isRecord(value) && Array.isArray(value.rows)
+
+const asRows = (rows: readonly unknown[]): PhraseRow[] => rows.map((row) => (typeof row === 'string' ? { text: row } : row)) as PhraseRow[]
+
+/** Phrases as content writes them, flattened to full dotted names: a plain string is one row, and a phrase with arguments keeps them. */
+export function flatPhrases(tree: Phrases | undefined, prefix = ''): [string, PhraseRow[] | PhraseWithArgs][] {
+  const out: [string, PhraseRow[] | PhraseWithArgs][] = []
   for (const [key, value] of Object.entries(tree ?? {})) {
     const name = `${prefix}${key}`
     if (typeof value === 'string') out.push([name, [{ text: value }]])
-    else if (Array.isArray(value)) out.push([name, value.map((row) => (typeof row === 'string' ? { text: row } : row)) as PhraseRow[]])
+    else if (Array.isArray(value)) out.push([name, asRows(value)])
+    else if (isPhraseWithArgs(value)) out.push([name, { ...value, rows: asRows(value.rows) }])
     else if (isRecord(value)) out.push(...flatPhrases(value as Phrases, `${name}.`))
   }
   return out
 }
 
-/** The rows of the game's phrase by its full name, or undefined when it has none. */
-export function phraseRows(game: Game | undefined, name: string): readonly PhraseRow[] | undefined {
+/** The game's phrase by its full name, as written in `game.phrases`, or undefined when it has none. */
+function phraseOf(game: Game | undefined, name: string): PhraseRow[] | PhraseWithArgs | undefined {
   const phrases = game?.phrases
   return phrases && Object.hasOwn(phrases, name) ? phrases[name] : undefined
+}
+
+/** The rows of the game's phrase by its full name, or undefined when it has none. */
+export function phraseRows(game: Game | undefined, name: string): readonly PhraseRow[] | undefined {
+  const phrase = phraseOf(game, name)
+  return phrase === undefined ? undefined : isPhraseWithArgs(phrase) ? phrase.rows : phrase
+}
+
+/** The arguments the game's phrase by its full name takes: none for a phrase without `args`. */
+export function phraseArgs(game: Game | undefined, name: string): readonly string[] {
+  const phrase = phraseOf(game, name)
+  return isPhraseWithArgs(phrase) && Array.isArray(phrase.args) ? phrase.args : []
+}
+
+/** `$` and a name that could be an argument's: a letter, then letters, digits or `_`. A price such as `$5` isn't one. */
+export const ARG_USE = /\$([A-Za-z][A-Za-z0-9_]*)/g
+
+/** Where the declared arguments are used in a row's words: `$who`, not followed by more of a name. */
+export function argPattern(args: readonly string[]): RegExp | undefined {
+  const names = args.filter((arg) => /^[A-Za-z][A-Za-z0-9_]*$/.test(arg))
+  return names.length ? new RegExp(`\\$(${names.join('|')})(?![A-Za-z0-9_])`, 'g') : undefined
+}
+
+/**
+ * A condition with each string that is exactly `$<arg>` put back as `to`
+ * says: the argument's value, as the token passed it or the entity it names.
+ * Strings that aren't one, `'$'` included, are left as written.
+ */
+export function bindArgs<T>(value: T, args: readonly string[], to: (arg: string) => unknown): T {
+  if (!args.length) return value
+  const names = new Set(args)
+  const walk = (node: unknown): unknown => {
+    if (typeof node === 'string') return node.startsWith('$') && names.has(node.slice(1)) ? to(node.slice(1)) : node
+    if (Array.isArray(node)) return node.map(walk)
+    if (!isRecord(node)) return node
+    return Object.fromEntries(Object.entries(node).map(([key, inner]) => [key, walk(inner)]))
+  }
+  return walk(value) as T
 }
 
 /** Does the game have a value of its own, in `rules.values`, by this name? */
@@ -156,7 +208,12 @@ function tokenProblems(game: Game, text: string, warn?: (what: string) => void, 
   if (!text.includes('{{')) return []
   const out: string[] = []
   for (const match of text.matchAll(TOKEN)) {
-    const [written, prefix, name, , fallback] = match
+    const [written, prefix, name, args, fallback] = match
+    const phrase = prefix !== 'kv' ? phraseNamed(game, prefix === undefined || name.startsWith(`${GAME}/`) ? name : '') : undefined
+    if (phrase !== undefined) {
+      const wrong = argProblem(game, phrase, args)
+      if (wrong) out.push(wrong)
+    }
     if (prefix === undefined && fallback === undefined && BARE_NAME.test(name) && warn) {
       const rows = phraseRows(game, name)
       // A name with groups that nothing sets is a problem below, not a warning.
@@ -184,13 +241,50 @@ function tokenProblems(game: Game, text: string, warn?: (what: string) => void, 
   return [...new Set(out)]
 }
 
+const GAME = 'game'
+
+/** The phrase a token's name prints, as a bare name or with `game/` in front; undefined when it names none. */
+function phraseNamed(game: Game, name: string): string | undefined {
+  const short = name.startsWith(`${GAME}/`) ? name.slice(GAME.length + 1) : name
+  return BARE_NAME.test(short) && phraseRows(game, short) !== undefined ? short : undefined
+}
+
+/** What is wrong with the arguments a token passes a phrase: one it takes left out, or one it doesn't take. */
+function argProblem(game: Game, name: string, written: string | undefined): string | undefined {
+  const takes = phraseArgs(game, name)
+  const given = (written ?? '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((pair) => pair.slice(0, pair.indexOf('=')))
+  const unknown = given.filter((arg) => !takes.includes(arg))
+  const missing = takes.filter((arg) => !given.includes(arg))
+  if (!unknown.length && !missing.length) return undefined
+  const wants = takes.length ? `${name} takes ${takes.join(', ')}` : `${name} takes no arguments`
+  return unknown.length ? `${wants}, not ${unknown.join(', ')}` : wants
+}
+
+/** The `$names` a row uses, in its words and as a whole string in its `when`, that look like arguments. */
+function argsUsed(row: PhraseRow): string[] {
+  const used = new Set<string>()
+  if (typeof row.text === 'string') for (const match of row.text.matchAll(ARG_USE)) used.add(match[1])
+  const walk = (node: unknown): void => {
+    if (typeof node === 'string') {
+      if (/^\$[A-Za-z][A-Za-z0-9_]*$/.test(node)) used.add(node.slice(1))
+    } else if (Array.isArray(node)) node.forEach(walk)
+    else if (isRecord(node)) Object.values(node).forEach(walk)
+  }
+  walk(row.when)
+  return [...used]
+}
+
 /** Phrases merged by full name: a later pack's replaces an earlier one's, and new names, a group's included, are added. */
 function merge(): PackMerge<PhrasesShape['game'], PhrasesShape['pack']> {
-  const merged = new Map<string, { value: PhraseRow[]; from: string }>()
+  const merged = new Map<string, { value: PhraseRow[] | PhraseWithArgs; from: string }>()
   return {
     base: () => {},
     add: (pack, from) => {
-      for (const [name, rows] of flatPhrases(pack.phrases)) merged.set(name, { value: rows, from })
+      for (const [name, phrase] of flatPhrases(pack.phrases)) merged.set(name, { value: phrase, from })
     },
     finish: (game) => {
       if (merged.size) game.phrases = Object.fromEntries([...merged].map(([name, entry]) => [name, entry.value]))
@@ -206,9 +300,18 @@ export const phrases = defineFeature<PhrasesShape>({
   check: (game, tools) => {
     const all = Object.entries(game.phrases ?? {})
     const names = new Set(all.map(([name]) => name))
-    for (const [name, rows] of all) {
+    for (const [name, phrase] of all) {
       const source = { list: 'phrase', id: name }
       const where = `phrase ${name}`
+      const rows = isPhraseWithArgs(phrase) ? phrase.rows : phrase
+      const args: unknown = isPhraseWithArgs(phrase) ? phrase.args : []
+      if (!Array.isArray(args) || args.some((arg) => typeof arg !== 'string' || !/^[A-Za-z][A-Za-z0-9_]*$/.test(arg)))
+        tools.problem(source, where, 'args must be a list of names, each a letter then letters, digits or _')
+      else {
+        if (isPhraseWithArgs(phrase) && !args.length) tools.problem(source, where, 'args is empty; leave args out of a phrase that takes none')
+        for (const arg of new Set(args.filter((arg, at) => args.indexOf(arg) !== at))) tools.problem(source, where, `args names ${arg} twice`)
+      }
+      const declared = Array.isArray(args) ? args.filter((arg): arg is string => typeof arg === 'string') : []
       if (hasGameValue(game, name)) tools.problem(source, where, `rules.values has a value "${name}" too; {{${name}}} prints the phrase, so rename one`)
       const group = name.split('.').some((_, at, parts) => at > 0 && names.has(parts.slice(0, at).join('.')))
       if (group) tools.problem(source, where, `"${name}" is in a group that is also a phrase; a name is either a phrase or a group`)
@@ -220,7 +323,19 @@ export const phrases = defineFeature<PhrasesShape>({
       if (otherwise >= 0 && otherwise < rows.length - 1) tools.problem(source, where, `row ${otherwise + 1} has no when, so the rows after it are never shown`)
       rows.forEach((row, index) => {
         if (typeof row?.text !== 'string') tools.problem(source, where, `row ${index + 1} needs its text`)
-        else tools.check(source, `${where} row ${index + 1}`, [{ when: row.when }, { markup: row.text }])
+        else {
+          for (const arg of argsUsed(row).filter((used) => !declared.includes(used)))
+            tools.problem(
+              source,
+              where,
+              declared.length
+                ? `row ${index + 1} uses $${arg}, which isn't one of its args (${declared.join(', ')})`
+                : `row ${index + 1} uses $${arg}, but the phrase takes no args`,
+            )
+          // An argument stands for whatever a token passes, so it is checked as `'$'`, an entity named by the caller.
+          const when = bindArgs(row.when, declared, () => '$')
+          tools.check(source, `${where} row ${index + 1}`, [{ when }, { markup: row.text }])
+        }
       })
     }
   },

@@ -80,6 +80,9 @@
  * Naming (P10): `view.scene.stage` is `view.scene.picture`, "stage" being
  * only a quest's. Schema 30, save 24: `GameState.changes` and
  * `View.changes` (`Change`), and `Game.phrases` and `Pack.phrases`.
+ * Phrases with arguments and tracked changes: `Game.phrases` holds a
+ * `PhraseWithArgs` too, and `Game.changes` and `Pack.changes` name the
+ * stats `view.changes` tracks.
  */
 import type {
   Amount,
@@ -115,6 +118,7 @@ import type {
   Roll,
   Change,
   PhraseRow,
+  PhraseWithArgs,
   Phrases,
   RollsState,
   RunningTimer,
@@ -469,7 +473,9 @@ export type FrozenGame = {
   /** The game's timers. None if left out. */
   timers?: TimerDef[]
   /** The game's phrases, by full name. */
-  phrases?: Record<string, PhraseRow[]>
+  phrases?: Record<string, PhraseRow[] | PhraseWithArgs>
+  /** The stats view.changes tracks. */
+  changes?: { stats: string[] }
   /** Presentation hints for the whole game, carried as written. */
   ui?: Ui<GameUi>
   /** What the player cannot do for now, and why. */
@@ -532,6 +538,8 @@ export type FrozenPack = {
   timers?: TimerDef[]
   /** Phrases, by name, nested objects being groups. */
   phrases?: Phrases
+  /** The stats view.changes tracks, added together across packs. */
+  changes?: { stats: string[] }
   /** Actions offered in every location. A later pack's replaces an earlier one's by id. */
   actions?: ActionDef[]
   /** Locks after the ones before; one with an earlier one's `id` takes its place. */

@@ -4,7 +4,7 @@ import { startingState } from '../../src/intake.ts'
 import { fillTokens } from '../../src/prose.ts'
 import { amountOf } from '../../src/amount.ts'
 import { translatableFields } from '../../src/words.ts'
-import { upgradePack } from '../../src/upgrade.ts'
+import { SCHEMA, upgradePack } from '../../src/upgrade.ts'
 import { checkGame } from '../../src/check.ts'
 import { definePlugin } from '../../src/plugin.ts'
 import type { GameRules } from '../../src/game.ts'
@@ -206,5 +206,136 @@ describe('schema 30', () => {
       scenes: [{ id: 'hall', body: [{ text: 'Hi {{name}}.' }], choices: [{ id: 'go', label: '{{name weeks=2}}' }] }],
       words: { 'scene.hall.title': '{{places/name}}' },
     })
+  })
+})
+
+describe('phrases with arguments', () => {
+  const town: Content = {
+    name: 'town',
+    kinds: [
+      { id: 'character', label: 'Person', unique: true },
+      { id: 'place', label: 'Place', unique: true },
+    ],
+    entities: [
+      { id: 'ava', of: 'character', name: 'Ava', kv: { mood: 'cheerful' } },
+      { id: 'sam', of: 'character', name: '{{samName|Sam}}', kv: { mood: 'tired' } },
+      { id: 'cafe', of: 'place', name: 'the café' },
+    ],
+    stats: [{ id: 'bond', of: 'character', label: 'Bond' }],
+    kv: { here: 'place:cafe' },
+    phrases: {
+      mood: {
+        word: {
+          args: ['who'],
+          rows: [
+            { when: { stat: 'bond', of: '$who', gte: 20 }, text: 'beams' },
+            { when: { stat: 'bond', of: '$who', lt: 5 }, text: 'shrugs' },
+            { text: 'nods' },
+          ],
+        },
+        greeting: {
+          args: ['who', 'place'],
+          rows: [{ when: { kv: 'here', is: '$place' }, text: '$who waves from across $place' }, { text: 'no sign of $who' }],
+        },
+        feeling: { args: ['who'], rows: [{ text: '$who feels {{kv:mood of=$who}} and {{mood.word who=$who}}' }] },
+        hat: { args: ['who'], rows: [{ text: '{{kv:hat of=$who|$who has no hat}}' }] },
+        price: { args: ['n'], rows: [{ text: '$5 for $n, $9.50 for more' }] },
+      },
+      dozen: { args: ['n'], rows: [{ text: '{{times n=$n}}' }] },
+    },
+  }
+  const townRules: GameRules = { values: { times: (_state, args) => Number(args.n) * 12 } }
+  const loadTown = (content: Content[] = [town], packs: Pack[] = []) => loadGame(content, { id: 'town', title: 'Town', rules: townRules }, { packs })
+
+  it('put the argument in a row’s when, as an entity reference', () => {
+    const { game, problems } = loadTown()
+    expect(problems).toEqual([])
+    const state = startingState(game)
+    const close = { ...state, entities: { character: { ava: { stats: { bond: 25 } }, sam: { stats: { bond: 10 } } } } }
+    expect(fillTokens(close, game, 'Ava {{mood.word who=ava}}; Sam {{mood.word who=character:sam}}.')).toBe('Ava beams; Sam nods.')
+    expect(fillTokens(state, game, '{{mood.word who=ava}}')).toBe('shrugs')
+  })
+
+  it('put a bare id in as its entity, a full reference as written, and anything else as passed', () => {
+    const { game } = loadTown()
+    const state = startingState(game)
+    // `cafe` is the one entity with that id, `place:cafe`, which the kv key holds.
+    expect(fillTokens(state, game, '{{mood.greeting who=ava place=cafe}}')).toBe('Ava waves from across the café')
+    expect(fillTokens(state, game, '{{mood.greeting who=ava place=place:cafe}}')).toBe('Ava waves from across the café')
+    expect(fillTokens(state, game, '{{mood.greeting who=Robin place=park}}')).toBe('no sign of Robin')
+  })
+
+  it('show an entity’s name with its tokens filled, and pass the reference to tokens in the row', () => {
+    const { game } = loadTown()
+    const state = startingState(game, { kv: { samName: 'Samira' } })
+    expect(fillTokens(state, game, '{{mood.feeling who=sam}}')).toBe('Samira feels tired and shrugs')
+    expect(fillTokens(state, game, '{{mood.feeling who=ava}}')).toBe('Ava feels cheerful and shrugs')
+    expect(fillTokens(state, game, '{{mood.hat who=ava}}')).toBe('Ava has no hat')
+  })
+
+  it('leave a $ that is no declared argument alone', () => {
+    const { game } = loadTown()
+    expect(fillTokens(startingState(game), game, '{{mood.price n=2}}')).toBe('$5 for 2, $9.50 for more')
+  })
+
+  it('pass a token argument’s $name on, and answer a value reference with its with', () => {
+    const { game } = loadTown()
+    const state = startingState(game)
+    expect(fillTokens(state, game, '{{dozen n=3}}')).toBe('36')
+    expect(amountOf(state, game, { value: 'game/dozen', with: { n: 2 } })).toBe(24)
+  })
+
+  it('are replaced whole by a pack', () => {
+    const pack: Pack = { id: 'mod', schema: SCHEMA, phrases: { mood: { word: { args: ['who'], rows: [{ text: '$who grins' }] } } } }
+    const { game, problems } = loadTown([town], [pack])
+    expect(problems).toEqual([])
+    expect(fillTokens(startingState(game), game, '{{mood.word who=ava}}')).toBe('Ava grins')
+  })
+
+  it('name their rows’ words for a translation', () => {
+    const { game } = loadTown()
+    expect(translatableFields(game).filter((field) => field.key.startsWith('phrase.mood.word'))).toMatchObject([
+      { key: 'phrase.mood.word.0', text: 'beams' },
+      { key: 'phrase.mood.word.1', text: 'shrugs' },
+      { key: 'phrase.mood.word.2', text: 'nods' },
+    ])
+    const { game: french } = loadTown([town], [{ id: 'fr', schema: SCHEMA, words: { 'phrase.mood.word.2': 'acquiesce' } }])
+    expect(fillTokens(startingState(french), french, '{{mood.word who=ava}}')).toBe('shrugs')
+    expect(fillTokens(startingState(french), french, '{{mood.word who=nobody}}')).toBe('acquiesce')
+  })
+
+  it('are checked: a token missing an argument or passing one it doesn’t take, a row using one it doesn’t declare, empty or doubled args', () => {
+    const { problems } = loadTown([
+      {
+        ...town,
+        phrases: {
+          ...town.phrases,
+          odd: { args: ['who'], rows: [{ when: { stat: 'bond', of: '$whom', gte: 1 }, text: '$them costs $5' }, { text: '{{mood.word}}' }] },
+          none: { args: [], rows: [{ text: 'x' }] },
+          twice: { args: ['who', 'who'], rows: [{ text: '$who' }] },
+        },
+        scenes: [
+          {
+            id: 'hall',
+            body: [{ text: '{{mood.word whom=ava}} {{mood.greeting who=ava}} {{mood.word who=ava}} {{weather who=ava}}' }],
+            choices: [{ id: 'go', label: 'Go {{mood.word}}' }],
+          },
+        ],
+      },
+      { name: 'plain', phrases: { weather: 'grey' } },
+    ])
+    expect(problems.map((problem) => problem.what)).toEqual(
+      expect.arrayContaining([
+        'mood.word takes who, not whom',
+        'mood.greeting takes who, place',
+        'weather takes no arguments, not who',
+        'mood.word takes who',
+        "row 1 uses $whom, which isn't one of its args (who)",
+        "row 1 uses $them, which isn't one of its args (who)",
+        'args is empty; leave args out of a phrase that takes none',
+        'args names who twice',
+      ]),
+    )
+    expect(problems.map((problem) => problem.what).join('\n')).not.toMatch(/\$5/)
   })
 })

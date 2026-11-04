@@ -323,7 +323,7 @@ The React UI draws a roll with [`DiceRoll`](/docs/react/components#diceroll), in
 
 | Field | Type | Meaning |
 |---|---|---|
-| `changes` | [`Change`](/docs/reference/changes#change)`[]` | The stats the last command moved, the player's first and then those kept on entities, each with where it was, where it is and how far it moved. Empty when it moved none. |
+| `changes` | [`Change`](/docs/reference/changes#change)`[]` | The [tracked](/docs/reference/changes#changes) stats the last command moved, the player's first and then those kept on entities, each with where it was, where it is and how far it moved. Empty when it moved none. |
 
 It's there for feedback such as a `+30 coins` pill after a choice. A stat the player can't see (its [`visible`](/docs/reference/stats#statdef) doesn't hold) is left out. A `tick` that moved nothing keeps the list, so a clock ticking a timer doesn't wipe it. See [Changes](/docs/reference/changes#drawing-it) for drawing it.
 

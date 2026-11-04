@@ -358,7 +358,8 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
       /** `{ 'cast/at': { character: 'ava', at: ['park'] } }`: where someone is, whoever else is there. */
       at: (state, args, { game }) => {
         const them = one(state, game, who(args.character)[0])
-        return them ? ids(args.at).includes(placeOf(state, game, them)) : false
+        // A place by its id, or by its reference (`location:park`), as a phrase's argument passes it.
+        return them ? ids(args.at).some((place) => (parseRef(place)?.id ?? place) === placeOf(state, game, them)) : false
       },
       /** `{ 'cast/met': { character: 'ava' } }`: the player has met them; with a list, any of them. */
       met: (state, args, { game }) =>
@@ -366,6 +367,13 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
           const them = one(state, game, ref)
           return them ? met(state, game, them) : false
         }),
+    },
+    values: {
+      /** <code v-pre>{{cast/name character=ava}}</code>: someone's name as the player reads it; `''` for anyone not in the cast. */
+      name: (state, args, { game }) => {
+        const them = one(state, game, who(args.character)[0])
+        return them ? nameOf(state, game, them) : ''
+      },
     },
     commands: {
       /** `{ 'cast/talk': { id } }`: start a conversation with someone here. */

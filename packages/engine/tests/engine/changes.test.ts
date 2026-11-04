@@ -4,11 +4,14 @@ import { view } from '../../src/view.ts'
 import { loadGame, type Content } from '../../src/loader.ts'
 import { loadState, startingState } from '../../src/intake.ts'
 import { replay } from '../../src/runner.ts'
+import { checkGame } from '../../src/check.ts'
+import { SCHEMA } from '../../src/upgrade.ts'
 import type { Command, GameState } from '../../src/types.ts'
 import { OLD_SAVES, oldSavesGame } from '../fixtures/old-saves.ts'
 
 const cafe: Content = {
   name: 'cafe',
+  changes: { stats: ['coins', 'energy', 'luck', 'skill'] },
   kinds: [{ id: 'staff', label: 'Staff', unique: true }],
   entities: [{ id: 'ana', of: 'staff', name: 'Ana', stats: { skill: 2 } }],
   stats: [
@@ -78,6 +81,46 @@ describe('view.changes', () => {
     const rang = play(ticked, { type: 'tick', ms: 1000 })
     expect(view(rang, game).changes).toEqual([{ stat: 'energy', from: 3, to: 4, by: 1, label: 'Energy', text: '+1' }])
     expect(view(play(rang, act('look')), game).changes).toEqual([])
+  })
+
+  it('tracks nothing when no content names a stat', () => {
+    const { game: untracked } = loadGame([{ ...cafe, changes: undefined }], { id: 'cafe', title: 'Café' })
+    const state = apply(startingState(untracked), untracked, act('sell'))
+    expect(state.ok && view(state.state, untracked).changes).toEqual([])
+  })
+
+  it('tracks only the stats named, an entity stat on every entity', () => {
+    const { game: some } = loadGame(
+      [
+        { ...cafe, changes: { stats: ['energy'] } },
+        { name: 'more', changes: { stats: ['skill'] } },
+      ],
+      { id: 'cafe', title: 'Café' },
+    )
+    expect(some.changes).toEqual({ stats: ['energy', 'skill'] })
+    const run = (state: GameState, id: string) => {
+      const result = apply(state, some, act(id))
+      if (!result.ok) throw new Error(result.reason)
+      return result.state
+    }
+    expect(view(run(startingState(some), 'sell'), some).changes).toMatchObject([{ stat: 'energy', by: -1 }])
+    expect(view(run(startingState(some), 'train'), some).changes).toMatchObject([{ stat: 'skill', of: 'staff:ana', by: 3 }])
+  })
+
+  it('adds a pack’s tracked stats to the content’s', () => {
+    const { game: packed } = loadGame(
+      [{ ...cafe, changes: { stats: ['coins'] } }],
+      { id: 'cafe', title: 'Café' },
+      {
+        packs: [{ id: 'mod:energy', schema: SCHEMA, changes: { stats: ['energy', 'coins'] } }],
+      },
+    )
+    expect(packed.changes).toEqual({ stats: ['coins', 'energy'] })
+  })
+
+  it('reports a tracked id that is no stat', () => {
+    const { game: wrong } = loadGame([{ ...cafe, changes: { stats: ['coins', 'cions'] } }], { id: 'cafe', title: 'Café' })
+    expect(checkGame(wrong).problems.map((problem) => problem.what)).toContain('stats names "cions", which is no stat')
   })
 
   it('replays the same', () => {

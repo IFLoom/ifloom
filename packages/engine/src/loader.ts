@@ -142,6 +142,7 @@ const DECLARATION_KEYS: { [K in keyof Declarations | keyof FeaturePack]-?: true 
   introScene: true,
   ui: true,
   phrases: true,
+  changes: true,
 }
 
 /**
@@ -212,6 +213,8 @@ const DECLARES: { [K in keyof Content]-?: ((content: Content) => Declared[]) | n
   stats: byId('stat', (content) => content.stats),
   minigames: byId('minigame', (content) => content.minigames),
   timers: byId('timer', (content) => content.timers),
+  // Every file's tracked stats are added together.
+  changes: null,
   phrases: (content) => flatPhrases(content.phrases).map(([name]) => `phrase "${name}"`),
   kinds: byId('kind', (content) => content.kinds),
   entities: (content) => (content.entities ?? []).map((entity) => `entity "${entity.of}:${entity.id}"`),

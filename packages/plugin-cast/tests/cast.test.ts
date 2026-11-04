@@ -9,6 +9,7 @@ import {
   statValue,
   view,
   whyNot,
+  fillTokens,
   writeEntity,
   type Game,
   type GameState,
@@ -102,6 +103,23 @@ describe('the cast', () => {
         .entities.find((kind) => kind.id === 'character')!
         .entries.map((entry) => [entry.ref, entry.name]),
     ).toEqual([['character:ava', 'Ava']])
+  })
+
+  it('print a name with {{cast/name}}, and answer cast/at with a place as a phrase passes it', () => {
+    const where: Content = {
+      name: 'where',
+      phrases: {
+        sighting: {
+          args: ['who', 'place'],
+          rows: [{ when: cast.at('$who', '$place'), text: '{{cast/name character=$who}} is here' }, { text: 'no sign of $who' }],
+        },
+      },
+    }
+    const { game: g, problems } = loadGame([town, map, where], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'street' }), cast()] })
+    expect(problems).toEqual([])
+    const state = startingState(g)
+    expect(fillTokens(state, g, '{{cast/name character=ava}}, {{cast/name character=character:sam}}')).toBe('Ava, Sam')
+    expect(fillTokens(state, g, '{{sighting who=ava place=cafe}}; {{sighting who=ava place=park}}')).toBe('Ava is here; no sign of Ava')
   })
 
   it('are called what the game calls them, by redeclaring the kind', () => {

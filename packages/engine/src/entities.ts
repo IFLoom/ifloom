@@ -196,6 +196,29 @@ export const YOU = 'you'
 /** The current entity inside `each` and `where`. */
 export const CURRENT = '$'
 
+/** The kind a bare speaker id is read as first: the cast's. */
+const SPEAKER_KIND = 'character'
+
+/**
+ * The entity a speaker id names, if it names one: a reference as written
+ * (`'character:ava'`, `'you'` for whoever the player is playing), or a bare id
+ * as `character:<id>`, else the one entity the game declares with that id.
+ * Undefined when it names none. A phrase's arguments are read this way too.
+ */
+export function speakerRef(state: GameState, game: Game, id: string): EntityRef | undefined {
+  if (id === YOU) {
+    const who = protagonist(state)
+    return who === PLAYER ? undefined : (who as EntityRef)
+  }
+  if (id.includes(':')) return hasEntity(state, game, id) ? (id as EntityRef) : undefined
+  const ref = `${SPEAKER_KIND}:${id}` as EntityRef
+  if (hasEntity(state, game, ref)) return ref
+  const named = (game.entities ?? []).filter((entity) => entity.id === id)
+  if (named.length !== 1) return undefined
+  const only = `${named[0].of}:${id}` as EntityRef
+  return hasEntity(state, game, only) ? only : undefined
+}
+
 /** Split `'staff:ana'` into its kind and id; undefined if it is not one. Takes any string, as content writes them. */
 export function parseRef(ref: string): { kind: string; id: string } | undefined {
   const at = ref.indexOf(':')

@@ -27,6 +27,7 @@ function cafe() {
           { id: 'mood', label: 'Mood', start: 3, format: '{n}%' },
           { id: 'trust', label: 'Trust', of: 'character', start: 0 },
         ],
+        changes: { stats: ['coins', 'mood', 'trust'] },
         kinds: [{ id: 'character', label: 'Person', unique: true }],
         entities: [{ id: 'ava', of: 'character', name: 'Ava' }],
         inputs: [

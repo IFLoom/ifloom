@@ -12,9 +12,11 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 - A [`cases`](/docs/reference/flows#the-first-that-fits) block, written `cases([...])`: only the first of its blocks whose `when` holds is shown, so an if, else if, else is one block with an otherwise at the end. The checker reports an empty one, a block after the otherwise and a point inside one.
 - [Phrases](/docs/reference/phrases): words for the middle of a sentence that change with the state, declared in content's `phrases` as rows tried in order and grouped in nested objects, then printed as `{{outfit.verdict}}`. A translation gives each row other words under `phrase.<name>.<row>`, and a pack can replace one or add to a group.
-- [`view.changes`](/docs/reference/changes): the stats the last command moved, the player's and entities', each with `from`, `to`, `by` and a signed `text` in the stat's format (`+30 coins`), for feedback after a choice. Hidden stats are left out, and a tick that moves nothing keeps the list. Saves are version 24.
+- A phrase can take [arguments](/docs/reference/phrases#arguments): `{ args: ['who'], rows: [...] }`, printed as `{{mood.word who=ava}}`. In a row's `when`, `'$who'` is the entity the token named (`ava` is `character:ava`, as a spoken line's id is), and in its words `$who` is that entity's name. The checker reports a token that leaves out an argument or passes one the phrase doesn't take, a row that uses one the phrase doesn't declare, and empty or doubled `args`.
+- [`view.changes`](/docs/reference/changes): the stats the last command moved, the player's and entities', each with `from`, `to`, `by` and a signed `text` in the stat's format (`+30 coins`), for feedback after a choice. Only the stats your content names in [`changes: { stats }`](/docs/reference/changes#changes) are tracked, an entity stat's id covering it on every entity, with every file's and pack's lists added together; with none named, nothing is. Hidden stats are left out, and a tick that moves nothing keeps the list. Saves are version 24.
 - A message can take a moment to arrive: [`after: { ms }`](/docs/plugins/messages#messages-that-take-a-moment) makes it wait that long once its `when` holds, with its thread's `typing` on in the meantime (unless `typing: false`), so a burst of texts arrives one at a time. The wait runs on the engine's timers, so replays and saves keep it. `ifloom playtest`'s explorer now waits for a running timer when it has nothing new to do.
-- The React UI's [`Changes`](/docs/react/components#changes) draws `view.changes` as pills, each a `change` part with `data-stat`, `data-of` and `data-dir`. The default layout leaves it out; place it after `<Scene />`.
+- The React UI's [`Changes`](/docs/react/components#changes) draws `view.changes` as pills, each a `change` part with `data-stat`, `data-of` and `data-dir`. The default layout leaves it out; place it after `<Scene />`, and name the stats it shows in `changes.stats`.
+- The cast's [`{{cast/name character=ava}}`](/docs/plugins/cast#values) prints a character's name, and `cast/at` takes a place's reference (`location:park`) as well as its id.
 - A section with any ui hint is drawn as one `group` part, with each scalar hint as a `data-*` attribute (`{ card: 'result' }` is `data-card="result"`), so a hint of your own styles a whole section with CSS. See [Your own hints](/docs/react/hints#your-own-hints).
 - The wardrobe's [`closet`](/docs/plugins/wardrobe#a-place-to-change) trait gives a place a **Wardrobe** button that opens the `wardrobe` panel.
 - The messages app has an empty state, `ui.noMessages`.
@@ -480,6 +482,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Fixed
 
+- Text the player types into an input has its doubled braces made single, so a name typed as `{{kv:gold}}` is kept as `{kv:gold}` and never filled in as a token when prose or a phrase prints it.
 - A device's open app no longer grows wider than its dialog when a line in it is long, such as a message's last line in the conversation list on a phone.
 - `rules.profile` now runs after every command, and `rules.view` sees what the profile holds under `game`, as a plugin's do. The runner asked only the plugins before.
 

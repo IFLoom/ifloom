@@ -67,9 +67,12 @@ export function inputOf(game: Game, id: string): InputDef | undefined {
   return game.inputs?.find((entry) => entry.id === id)
 }
 
-/** The value as it will be written: text trimmed. */
+/**
+ * The value as it will be written: text trimmed, with doubled braces made
+ * single, so a typed name can never read as a token when prose prints it.
+ */
 export function inputValue(input: InputDef, value: KvValue): KvValue {
-  return input.type === 'text' && typeof value === 'string' ? value.trim() : value
+  return input.type === 'text' && typeof value === 'string' ? value.trim().replace(/\{\{+/g, '{').replace(/\}\}+/g, '}') : value
 }
 
 /** Why this value can't be entered, as the player reads it; undefined if it can. */

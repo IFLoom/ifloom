@@ -495,7 +495,15 @@ A [lock](/docs/reference/locks#lock) names them `cast/talk` and `cast/call`, or 
 
 Each is a call with the full name as the only key (see [plugin calls](/docs/reference/custom#plugincall)), which the helpers write for you. A single id works too, as in `{ 'cast/here': { character: 'ava' } }`, and so does a whole reference, `'character:ava'` or `'staff:ana'`, which is what `'$'` becomes. A character the game doesn't have never holds.
 
-`cast/at` reads the schedule alone, so it works without places, and you can ask it about someone the player can't see. `cast.at('ava', AWAY)` holds while she's out of town.
+`cast/at` reads the schedule alone, so it works without places, and you can ask it about someone the player can't see. `cast.at('ava', AWAY)` holds while she's out of town. A place in `at` can be its id or its reference, `location:park`, which is what a [phrase's argument](/docs/reference/phrases#arguments) passes for `place=park`.
+
+## Values
+
+| Token | Prints |
+|---|---|
+| `{{cast/name character=ava}}` | That character's name as the player reads it, with any tokens in it filled. `character` is an id or a reference. Nothing for anyone who isn't a person. |
+
+In a phrase that takes `who`, `{{cast/name character=$who}}` prints the name of whoever the token passed.
 
 ## Queries
 

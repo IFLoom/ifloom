@@ -1,11 +1,11 @@
 import { customValue } from './custom.ts'
 import { holds } from './condition.ts'
 import { GAME_ID } from './plugin.ts'
-import { BARE_NAME, KV_NAME, PLUGIN_NAME, TOKEN, V_NAME, phraseRows } from './features/phrases.ts'
+import { BARE_NAME, KV_NAME, PLUGIN_NAME, TOKEN, V_NAME, argPattern, bindArgs, phraseArgs, phraseRows } from './features/phrases.ts'
 import type { Game, ProseStore } from './game.ts'
 import { storylineOf } from './storylines.ts'
 import type { GameState } from './types.ts'
-import { entityKv, entityText, hasEntity, ownerOf, parseRef } from './entities.ts'
+import { entityKv, entityText, hasEntity, ownerOf, parseRef, speakerRef } from './entities.ts'
 import type { KvValue } from './types.ts'
 
 /**
@@ -56,7 +56,7 @@ function tokenValue(state: GameState, game: Game, prefix: string | undefined, na
   if (prefix === 'v') return V_NAME.test(name) ? customValue(game, name)?.(state, tokenArgs(args)) : undefined
   if (name.includes('/')) return PLUGIN_NAME.test(name) ? customValue(game, name)?.(state, tokenArgs(args)) : undefined
   if (!BARE_NAME.test(name)) return undefined
-  const phrase = phraseText(state, game, name)
+  const phrase = phraseText(state, game, name, tokenArgs(args))
   if (phrase !== undefined) return phrase
   const fn = customValue(game, `${GAME_ID}/${name}`)
   if (fn) return fn(state, tokenArgs(args))
@@ -68,20 +68,65 @@ function tokenValue(state: GameState, game: Game, prefix: string | undefined, na
 /**
  * A phrase's words for this state: the first of its rows whose `when` holds,
  * its tokens filled, or `''` when none does. Undefined when the game has no
- * phrase by that full name.
+ * phrase by that full name. `args` are what the token passed: each argument
+ * the phrase declares is put in for `$<arg>` (see `PhraseWithArgs`).
  */
-export function phraseText(state: GameState, game: Game, name: string): string | undefined {
+export function phraseText(state: GameState, game: Game, name: string, args: Readonly<Record<string, unknown>> = {}): string | undefined {
   const rows = phraseRows(game, name)
   if (!rows) return undefined
-  const row = rows.find((entry) => holds(state, game, entry.when))
+  const declared = phraseArgs(game, name)
+  const refs = argRefs(state, game, declared, args)
+  const row = rows.find((entry) => holds(state, game, declared.length ? bindArgs(entry.when, declared, (arg) => refs[arg]) : entry.when))
   if (!row) return ''
-  if (filling >= DEEPEST) return row.text
+  const text = declared.length ? putArgs(state, game, row.text, declared, refs) : row.text
+  if (filling >= DEEPEST) return text
   filling += 1
   try {
-    return fillTokens(state, game, row.text)
+    return fillTokens(state, game, text)
   } finally {
     filling -= 1
   }
+}
+
+/**
+ * What each declared argument stands for: the entity a value names, read
+ * as a spoken line's id is (a bare id as `character:<id>`, else the one entity
+ * with that id), or the value as passed. An argument left out is `''`.
+ */
+function argRefs(state: GameState, game: Game, declared: readonly string[], args: Readonly<Record<string, unknown>>): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  for (const arg of declared) {
+    const value = Object.hasOwn(args, arg) ? args[arg] : ''
+    out[arg] = typeof value === 'string' && value !== '' ? (speakerRef(state, game, value) ?? value) : value
+  }
+  return out
+}
+
+/**
+ * A row's words with `$<arg>` put in: inside a token, before its fallback,
+ * as the reference or value (`{{kv:mood of=$who}}`); elsewhere as the
+ * entity's name, or the value as passed.
+ */
+function putArgs(state: GameState, game: Game, text: string, declared: readonly string[], refs: Record<string, unknown>): string {
+  const pattern = argPattern(declared)
+  if (!pattern || !text.includes('$')) return text
+  const asRef = (part: string) => part.replace(pattern, (_match, arg: string) => String(refs[arg]))
+  const asName = (part: string) =>
+    part.replace(pattern, (_match, arg: string) => {
+      const value = refs[arg]
+      return typeof value === 'string' && value.includes(':') && hasEntity(state, game, value) ? entityName(state, game, value) : String(value)
+    })
+  let out = ''
+  let at = 0
+  for (const match of text.matchAll(TOKEN)) {
+    const written = match[0]
+    const start = match.index
+    out += asName(text.slice(at, start))
+    const bar = match[4] === undefined ? written.length : written.indexOf('|')
+    out += asRef(written.slice(0, bar)) + asName(written.slice(bar))
+    at = start + written.length
+  }
+  return out + asName(text.slice(at))
 }
 
 /**

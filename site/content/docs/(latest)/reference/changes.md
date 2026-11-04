@@ -1,18 +1,46 @@
 ---
 title: "Changes"
-description: "The stats the last command moved, the player's and those kept on entities, in view.changes, for feedback such as a +30 coins pill."
+description: "The tracked stats the last command moved, the player's and those kept on entities, in view.changes, for feedback such as a +30 coins pill."
 ---
-After every command the engine compares the stats as the player reads them, before and after, and lists what moved in [`view.changes`](/docs/reference/view#changes). Use it to show feedback after a choice, such as `+30 coins` or `Ava's trust -1`, without working out the difference yourself.
+After every command the engine compares the stats you track as the player reads them, before and after, and lists what moved in [`view.changes`](/docs/reference/view#changes). Use it to show feedback after a choice, such as `+30 coins` or `Ava's trust -1`, without working out the difference yourself.
+
+Name the stats to track in your content's `changes`:
 
 ```ts
-// A stat declared as { id: 'coins', label: 'Coins', format: { one: '{n} coin', other: '{n} coins' } }
+import type { Content } from '@ifloom/engine'
+
+const stats: Content = {
+  stats: [
+    { id: 'coins', label: 'Coins', start: 12, format: { one: '{n} coin', other: '{n} coins' } },
+    { id: 'energy', label: 'Energy', start: 80, format: '{n}%' },
+    { id: 'friendship', label: 'Friendship', of: 'character' },
+  ],
+  changes: { stats: ['coins', 'energy', 'friendship'] },
+}
+```
+
+Then each command leaves what it moved in the view:
+
+```ts
 runner.apply({ type: 'choose', id: 'sell' })
 runner.view().changes
 // [{ stat: 'coins', from: 10, to: 40, by: 30, label: 'Coins', text: '+30 coins' },
 //  { stat: 'energy', from: 80, to: 75, by: -5, label: 'Energy', text: '-5%' }]
 ```
 
-There's nothing to declare. Every game has it.
+## changes
+
+```ts
+changes?: { stats: string[] }
+```
+
+The `changes` key of [`Content`](/docs/reference/loader#content) and of a [`Pack`](/docs/reference/loader#pack), and of [`Game`](/docs/reference/game#game) once loaded. `stats` lists the ids of the stats whose changes are tracked.
+
+- An entity stat's id, one declared with [`of`](/docs/reference/stats#statdef), covers that stat on every entity, so `friendship` tracks Ava's and Sam's alike.
+- Every file's and every pack's lists are added together, so a mod can track a stat it adds without repeating yours.
+- With no stat named anywhere, nothing is tracked and `view.changes` is always empty.
+
+The [content checker](/docs/reference/checks) reports an id that is no stat, as `stats names "cions", which is no stat`.
 
 ## Change
 
@@ -39,6 +67,7 @@ type Change = {
 
 ## Which stats are listed
 
+- Only the stats named in [`changes.stats`](#changes) are listed.
 - The player's stats come first, in the order the game declares them. Then each entity's stats, for every entity with stats kept in the save before or after the command.
 - A stat whose [`visible`](/docs/reference/stats#statdef) condition doesn't hold after the command is left out, so the list never gives away a hidden number.
 - A stat the view doesn't list (`listed: false`) is still there, since a game that draws one its own way may want its feedback too.
@@ -63,10 +92,11 @@ The React UI has a ready list for it, [`Changes`](/docs/react/components#changes
 ::include[../../../../snippets/vue/Changes.vue]{meta='tab="Vue" tab-group="framework"'}
 
 **Gotchas.**
+- Nothing shows until you name some stats in `changes.stats`. A game that places `<Changes />` and tracks nothing draws no pills.
 - A stat that went up and back down in one command isn't listed, since only the before and after are compared.
 - An entity made or removed by the command has no change listed, because it isn't there on one side.
 - A stat that a plugin's modifier moves, such as a status starting, is listed too, since the list compares what the player reads.
 
 ## See it in an example
 
-- Small Town: every choice that pays or spends coins or energy, such as buying at the café counter, leaves its change in `view.changes`.
+- Small Town: `src/world/stats.ts` tracks coins, energy, charm and each character's friendship, so every choice that pays or spends coins or energy, such as buying at the café counter, leaves its change in `view.changes`.

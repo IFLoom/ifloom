@@ -402,6 +402,6 @@ In the React UI, your components go anywhere in your [layout](/docs/react#layout
 
 ## What just changed
 
-Feedback after a choice, such as `+30 coins` or `-5% energy`, is already worked out for you in [`view.changes`](/docs/reference/changes). Each entry has its signed `text` in the stat's format and `by`, which says whether it went up or down. The React UI has a ready list for it, [`Changes`](/docs/react/components#changes), that the default layout leaves out. Place it after the scene, and style its `change` parts by `data-dir`. [Changes](/docs/reference/changes#drawing-it) has the same list in plain DOM and Vue.
+Feedback after a choice, such as `+30 coins` or `-5% energy`, is already worked out for you in [`view.changes`](/docs/reference/changes), for the stats you name in your content's [`changes.stats`](/docs/reference/changes#changes). Each entry has its signed `text` in the stat's format and `by`, which says whether it went up or down. The React UI has a ready list for it, [`Changes`](/docs/react/components#changes), that the default layout leaves out. Place it after the scene, and style its `change` parts by `data-dir`. [Changes](/docs/reference/changes#drawing-it) has the same list in plain DOM and Vue.
 
 To draw a plugin that has no UI of its own, such as the shop or jobs, see [Building UI for plugins](/docs/recipes/plugin-ui).

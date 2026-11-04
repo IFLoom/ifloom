@@ -169,7 +169,7 @@ export type { OpenPanel, ScenePanel } from './features/panels.ts'
 export type { SavingView } from './features/saving.ts'
 export type { Dice, Roll, RollsState } from './features/rolls.ts'
 export type { Change } from './features/changes.ts'
-export type { Phrase, PhraseRow, Phrases } from './features/phrases.ts'
+export type { Phrase, PhraseRow, PhraseWithArgs, Phrases } from './features/phrases.ts'
 
 // Storylines
 export { storylineOf, storylineOpen } from './storylines.ts'

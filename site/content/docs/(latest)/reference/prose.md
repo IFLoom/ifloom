@@ -89,6 +89,7 @@ A line of prose can carry tokens, which are filled in for the save when the line
 | `{{weather}}` | A name of the game's own. It's looked up as a [phrase](/docs/reference/phrases) first, then as a [value](/docs/reference/custom#values) in the game's `rules.values`, then as a key in the player's [kv store](/docs/reference/state#kv) when that's a string or a number. So `{{playerName}}` prints `state.kv.playerName`. |
 | `{{outfit.verdict}}` | The same, for a name in a group. A `.` separates the groups. |
 | `{{coffeePrice weeks=2}}` | A value of the game's own asked with arguments, here `{ weeks: 2 }`. |
+| `{{mood.word who=ava}}` | A phrase that takes [arguments](/docs/reference/phrases#arguments), here `who`, which its rows read as `$who`. |
 | `{{quests/updates}}` | The value `updates` of the [plugin](/docs/reference/plugins#naming) `quests`, as text. The `/` says it's a plugin's. |
 | `{{messages/unread channel=texts}}` | A plugin's value asked with arguments, here `{ channel: 'texts' }`. |
 | `{{kv:playerName}}` | The key `playerName` in the player's kv store, and nothing else. |

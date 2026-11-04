@@ -1,4 +1,5 @@
 import {
+  Changes,
   Clock,
   Game,
   GameMenu,
@@ -30,7 +31,8 @@ import { WARDROBE_WORDS, WardrobeCard } from '@ifloom/plugin-wardrobe/react'
 
 /**
  * The showcase's layout: the React UI's own (`DefaultLayout`) with the
- * plugins' parts placed by hand, and three changes. The notice strip sits
+ * plugins' parts placed by hand, and four changes. What the last command
+ * changed shows as pills under the scene. The notice strip sits
  * over the story, a row of unread counts that open where they are. What
  * you're wearing shows at home only: out and about, the wardrobe is the
  * flat's "Open the wardrobe", which opens it as a panel. And the inventory
@@ -64,6 +66,8 @@ export function Layout() {
       <Story>
         <NoticeStrip />
         <Scene />
+        {/* What the last choice changed, as pills: the default layout leaves them out. */}
+        <Changes />
         <InputFields />
         <LocationCard />
         <Exits />

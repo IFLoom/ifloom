@@ -176,7 +176,7 @@ const LAUNCHER = { gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', backgroundS
 function DeviceScreenImpl({ device }: { device: DeviceView }) {
   const { send } = useGame()
   const words = useWords()
-  const screen = usePart('device-screen', '')
+  const screen = usePart('device-screen', 'min-w-0')
   const app = usePart('app', 'flex flex-col gap-3')
   const header = usePart('app-header', 'flex items-center gap-2')
   const back = usePart('app-back', buttonVariants({ variant: 'ghost', size: 'icon' }))

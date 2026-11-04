@@ -28,13 +28,12 @@ The default layout, [`DefaultLayout`](#layouts), puts these on the page. A secti
 
 - **The story.** The main column. The scene on screen, or the room when no scene is open (a plugin's [room scene](/docs/reference/plugins#scene), such as the [places](/docs/plugins/places) plugin's), with its pictures, spoken lines and choices. The prose, choices and the rest of the text keep to a readable measure (`--width-prose`), centred on a wide screen.
 - **The bottom of the story.** With the [places](/docs/plugins/places) plugin, where the player is and the exits. Then the room's and the game's actions, and who is here with what you can do with them (the [cast](/docs/plugins/cast)).
-- **Inputs**, under the scene, when the game asks for one: a name to type, a number, or options to pick from.
+- **Inputs**, when the game asks for one: a name to type, a number, or options to pick from. While a scene is open they come after its words and before its choices. Otherwise they're under the room.
 - **The side column.** The game's title and the clock, when a plugin such as the [calendar](/docs/plugins/calendar) says what time it is, then the player's menu. Under them come its sections:
   - **Stats**, which folds, with the active statuses (the [statuses plugin](/docs/plugins/statuses)) and the turns each has left.
   - **Quests**, a button that opens the [quest](/docs/plugins/quests) log in a dialog, with a count of quests with news.
   - **People**, a button that opens everyone the player has met (the [cast](/docs/plugins/cast)), with the stats the game keeps on each of them, such as friendship.
   - **Carrying**, which folds, with the things the player holds.
-  - **Wearing**, which folds, with the [wardrobe](/docs/plugins/wardrobe).
   - Buttons for the [achievements](/docs/plugins/achievements), the [cheats](/docs/plugins/cheats) and the [devices](/docs/plugins/devices).
 - **On a phone**, the side column becomes a drawer. A slim bar across the top holds the title, the clock and a button that slides the column in.
 - **Notices**, in the bottom corner (the layout's overlay), each with a button to dismiss it. On a phone only the newest shows, with a button for the rest.

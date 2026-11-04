@@ -78,7 +78,7 @@ The members counted are the ones left after a [`variants` block](/docs/reference
 
 Content or a pack that adds to a list adds its members with their weights. The [content checker](/docs/reference/checks) reports a weight of 0 or less as `"…" has a weight of …; a weight must be above 0`, against `variants <name>`.
 
-**Gotcha.** The store needs the game, because `{{v:game/name}}` reads the game's [`rules.values`](/docs/reference/custom#values) and its plugins' values. It keeps the game by reference, so declare the game first and set `prose` on it afterwards, as above. `loadGame` does this for you.
+**Gotcha.** The store needs the game, because a token such as `{{name}}` reads the game's [phrases](/docs/reference/phrases), its [`rules.values`](/docs/reference/custom#values) and its plugins' values. It keeps the game by reference, so declare the game first and set `prose` on it afterwards, as above. `loadGame` does this for you.
 
 ## Tokens
 
@@ -86,23 +86,31 @@ A line of prose can carry tokens, which are filled in for the save when the line
 
 | Token | Becomes |
 |---|---|
-| `{{playerName}}` | The key `playerName` in the player's [kv store](/docs/reference/state#kv), when it's a string or a number. Any name works the same way, so `{{catName}}` is `state.kv.catName`. |
-| `{{kv:playerName}}` | The same, written out. |
+| `{{weather}}` | A name of the game's own. It's looked up as a [phrase](/docs/reference/phrases) first, then as a [value](/docs/reference/custom#values) in the game's `rules.values`, then as a key in the player's [kv store](/docs/reference/state#kv) when that's a string or a number. So `{{playerName}}` prints `state.kv.playerName`. |
+| `{{outfit.verdict}}` | The same, for a name in a group. A `.` separates the groups. |
+| `{{coffeePrice weeks=2}}` | A value of the game's own asked with arguments, here `{ weeks: 2 }`. |
+| `{{quests/updates}}` | The value `updates` of the [plugin](/docs/reference/plugins#naming) `quests`, as text. The `/` says it's a plugin's. |
+| `{{messages/unread channel=texts}}` | A plugin's value asked with arguments, here `{ channel: 'texts' }`. |
+| `{{kv:playerName}}` | The key `playerName` in the player's kv store, and nothing else. |
+| `{{flatmateName\|Your flatmate}}` | The token, or the words after the `\|` while it's unset. Any token can end this way, `{{kv:visits of=storyline:ava\|0}}` and `{{quests/updates\|none}}` too. |
 | `{{kv:visits of=storyline:ava}}` | The key `visits` in another kv store, named as the [`kv` condition's `of`](/docs/reference/conditions#kv) names it: a storyline's (`of=storyline:ava`), the running minigame's (`of=minigame`), or an entity's (`of=character:ava`, `of=you`). |
-| `{{v:game/coffeePrice}}` | The game's own [value](/docs/reference/custom#values) `coffeePrice`, from its `rules.values`, as text. |
-| `{{v:quests/updates}}` | The value `updates` of the [plugin](/docs/reference/plugins#naming) `quests`, as text. |
-| `{{v:messages/unread channel=texts}}` | A value asked with arguments, here `{ channel: 'texts' }`. |
 
-`A coffee is {{v:game/coffeePrice}} today, {{playerName}}.`
+`A coffee is {{coffeePrice}} today, {{playerName}}. You look {{outfit.verdict}}.`
 
 The engine has no player name of its own. A game that wants one sets a kv key, with an [input](/docs/reference/inputs) or in the `kv` passed to [`startingState`](/docs/reference/commands#startingstate), and prose reads it like any other.
 
+Tokens used to name values as `{{v:game/coffeePrice}}` and `{{v:quests/updates}}`. Those still print, and [`upgradePack`](/docs/reference/loader#upgradepack) rewrites them to the short form in a pack written for schema 29 or older. In your game's own content the [content checker](/docs/reference/checks) asks you to write the short form.
+
 **Gotchas:**
-- A `{{name}}` or `{{kv:…}}` whose key is unset, or is `true` or `false`, is left in place, braces and all. Set the key before the line is shown, or keep the line behind a [`{ kv }`](/docs/reference/conditions#kv) condition.
-- A key in a token is letters, digits and `_`, and can't start with a digit. A key named `cat-name` can be set but can't be printed this way.
-- A `{{v:…}}` naming a value the game doesn't declare is left in place, so the missing name shows on screen instead of vanishing.
+- A token is unset when its kv key is unset or is `true` or `false`, its phrase has no row that fits, or its value is missing or gives `''`. Then it shows its fallback, the words after a `|`, as written. The fallback can't hold a token of its own.
+- An unset bare name with no fallback, such as `{{flatmateName}}`, prints nothing. Any other token that names nothing, such as `{{kv:visits of=storyline:nobody}}` or a plugin's value the game doesn't have, is left in place, braces and all, so the missing name shows on screen.
+- The checker warns about a bare token with no fallback that may print nothing: a kv key the game's `kv` doesn't start, or a phrase with no row that always fits. A block that shows only under a `kv` or `roll` condition on the key isn't warned about. A warning doesn't fail `ifloom check`. Give the token a fallback, start the key in `kv`, or keep the line behind a [`{ kv }`](/docs/reference/conditions#kv) condition.
+- A phrase wins over a value of the same name, and a value wins over a kv key. The checker reports a phrase and a value that share a name.
+- A bare name is letters, digits, `_` and `-`, starting with a letter or `_`, in parts joined by `.`. It has no `/`, since that names a plugin. A key named `9lives` can be set but can't be printed this way.
+- A plugin's token is the plugin's id (letters, digits and `-`), a `/`, and the value's name. Arguments follow the name as `key=value`, separated by spaces. A number or `true`/`false` is passed as one, anything else as text. Anything else isn't a token and is left as written.
 - In `{{kv:key of=…}}`, `of` comes after the key with a space between, and the store it names has no spaces in it. An `of` naming an entity that isn't there leaves the token in place.
-- A `{{v:…}}` name is the plugin's id (letters, digits and `-`), or `game` for the game's own, a `/`, and the value's name (letters, digits, `_` and `-`). A name with no `/` in front is left in place. Arguments follow the name as `key=value`, separated by spaces, as in `{{v:messages/unread channel=texts}}`. A number or `true`/`false` is passed as one, anything else as text. Anything else isn't a token and is left as written.
+- What a token prints is never read for tokens again, so a name the player typed shows as typed. A phrase's own words are filled when it's printed.
+- The checker reports a token with a group in its name (`{{outfit.verdit}}`) that names no phrase, value or key the content starts or sets, and a plugin's token whose plugin has no such value. A plain name such as `{{friend}}` isn't reported, because a start command or the game's code can set a key the checker can't see.
 - The pronoun forms on a [cast](/docs/plugins/cast#person-1) character (`pronouns`) aren't tokens. A game that wants them substitutes them itself.
 
 ## fillTokens
@@ -510,6 +518,6 @@ The React UI's [`Scene`](/docs/react/components#scene) draws every span, and its
 
 ## See it in an example
 
-- Small Town: each file in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story) holds its own lines by key, with choice labels as `<scene>#<choice>`, and Ava's and the café's are in files of their own beside them, such as [`examples/showcase/src/story/ava.prose.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/ava.prose.ts). Ava's greeting is speech, and her small talk uses named lines. The flat's line prints a custom value with `{{v:catName}}`.
+- Small Town: each file in [`examples/showcase/src/story/`](https://github.com/IFLoom/ifloom/tree/main/examples/showcase/src/story) holds its own lines by key, with choice labels as `<scene>#<choice>`, and Ava's and the café's are in files of their own beside them, such as [`examples/showcase/src/story/ava.prose.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/ava.prose.ts). Ava's greeting is speech, and her small talk uses named lines. The flat's line prints a value of the game's own with `{{catName}}`.
 - Small Town's intro has a tooltip on "launderette", and the flat's `place.flat.text` line holds `[[act:read-text|Check it]]`, the room's button that opens the phone's messages.
 - The Letter: the `prose` in [`examples/novel/src/story/ch1.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/story/ch1.ts) prints the reader's name with `{{playerName}}`.

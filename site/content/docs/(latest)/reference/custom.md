@@ -18,9 +18,9 @@ export const rules: GameRules = {
 |---|---|---|
 | `conditions` | `{ 'game/marketDay': true }` | Any [condition](/docs/reference/conditions#calls) |
 | `effects` | `{ 'game/tip': { by: 2 } }` | Any list of [effects](/docs/reference/effects#computed-effects): a choice's, an [action](/docs/reference/actions#actiondef)'s, a [trigger](/docs/reference/triggers)'s, an [`each`](/docs/reference/effects#each)'s, a thing's use in the [inventory](/docs/plugins/inventory), what another of the game's effects returns, and a plugin's [`context.apply`](/docs/reference/plugins#applying-effects) |
-| `values` | `{{v:game/breadPrice}}`, or `{ value: 'game/breadPrice' }` | [Prose](/docs/reference/prose#tokens), a stat's [`max`](/docs/reference/stats#statdef), an app's badge |
+| `values` | `{{breadPrice}}`, or `{ value: 'game/breadPrice' }` | [Prose](/docs/reference/prose#tokens), a stat's [`max`](/docs/reference/stats#statdef), an app's badge |
 
-A [plugin](/docs/reference/plugins)'s conditions, effects and values are called the same way, with the plugin's id and a `/` in front, as in `{ 'quests/done': { quest: 'bread' } }` or `{{v:quests/updates}}`. The game's own code is called as if it were a plugin whose id is `game`, which is why no plugin can have that id.
+A [plugin](/docs/reference/plugins)'s conditions, effects and values are called the same way, with the plugin's id and a `/` in front, as in `{ 'quests/done': { quest: 'bread' } }` or `{{quests/updates}}`. The game's own code is called as if it were a plugin whose id is `game`, which is why no plugin can have that id.
 
 There's no global registry. Each game owns its own functions, so two games on one page, or a test next to a game, never see each other's. Everything that reads one takes the game, and finds nothing without it.
 
@@ -200,9 +200,9 @@ export const rules: GameRules = {
 }
 ```
 
-Prose writes `A loaf is {{v:game/breadPrice}} today.`, with any arguments after the name as `key=value`: `{{v:messages/unread channel=texts}}`. Anywhere else, a value is a `ValueRef`, its name and its `with`: a stat writes `max: { value: 'game/energyCeiling', with: { per: 2 } }`.
+Prose writes `A loaf is {{breadPrice}} today.`, with any arguments after the name as `key=value`: `{{messages/unread channel=texts}}`. Anywhere else, a value is a `ValueRef`, its name and its `with`: a stat writes `max: { value: 'game/energyCeiling', with: { per: 2 } }`.
 
-**Gotcha.** An unknown name in prose is left on screen as `{{v:game/breadPrice}}`, so you can see what's missing. An unknown stat ceiling quietly gives 100, but the [content checker](/docs/reference/checks) reports it as `no game value named "…"`.
+**Gotcha.** An unknown name in prose is left on screen as `{{breadPrice}}`, so you can see what's missing. An unknown stat ceiling quietly gives 100, but the [content checker](/docs/reference/checks) reports it as `no game value named "…"`.
 
 ## Reading them in code
 
@@ -233,5 +233,5 @@ buildEffects(town, [{ 'game/tip': { by: 2 } }, { 'game/typo': true }])
 
 ## See it in an example
 
-- Small Town: [`examples/showcase/src/rules.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/rules.ts) has a value, `catName`, that the flat's prose prints as `{{v:game/catName}}`, and an effect, `postLatest`, which the phone's camera app in [`examples/showcase/src/world/phone.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/phone.ts) runs as `{ 'game/postLatest': true }`.
+- Small Town: [`examples/showcase/src/rules.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/rules.ts) has a value, `catName`, that the flat's prose prints as `{{catName}}`, and an effect, `postLatest`, which the phone's camera app in [`examples/showcase/src/world/phone.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/phone.ts) runs as `{ 'game/postLatest': true }`.
 - The Corner Café: [`examples/cafe/src/rules.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/rules.ts) works out the week's `takings` and `wages` as effects, and `payroll` as a value the hiring scene prints.

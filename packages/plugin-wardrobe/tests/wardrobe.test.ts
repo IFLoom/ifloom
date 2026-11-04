@@ -15,6 +15,7 @@ import {
   type Game,
   type GameState,
 } from '@ifloom/engine'
+import { places } from '@ifloom/plugin-places'
 import { wardrobe, type WardrobeView } from '../src/index.ts'
 
 const plugin = wardrobe()
@@ -253,5 +254,54 @@ describe('the wardrobe with a protagonist', () => {
     const loaded = loadState(JSON.parse(JSON.stringify(old)), g)
     if (!loaded.ok) throw new Error(loaded.reason)
     expect(loaded.value.plugins.wardrobe).toEqual({ version: 3, state: { worn: { 'friend:kim': { coat: null, feet: 'clothing:boots' } } } })
+  })
+})
+
+describe('a closet', () => {
+  function flat(): Game {
+    const loaded = loadGame(
+      [
+        { name: 'base', data: slots },
+        town,
+        {
+          name: 'flat',
+          entities: [
+            places.location({
+              id: 'bedroom',
+              name: 'Bedroom',
+              description: 'Home',
+              exits: ['hall'],
+              body: [{ text: 'A bed.' }],
+              traits: { ...wardrobe.closet() },
+            }),
+            places.location({
+              id: 'hall',
+              name: 'Hall',
+              description: 'Home',
+              exits: ['bedroom', 'garden'],
+              body: [{ text: 'Hooks.' }],
+              traits: { ...wardrobe.closet({ label: 'Coat hooks' }) },
+            }),
+            places.location({ id: 'garden', name: 'Garden', description: 'Out', exits: ['hall'], body: [{ text: 'Grass.' }] }),
+          ],
+        },
+      ],
+      { id: 'flat', title: 'Flat', plugins: [places({ start: 'bedroom' }), plugin] },
+    )
+    expect(loaded.problems).toEqual([])
+    return loaded.game
+  }
+  const button = (state: GameState, g: Game) => view(state, g).actions.find((action) => action.id === 'open')
+
+  it('gives a place a button that opens the wardrobe panel, worded by the trait or the plugin', () => {
+    const g = flat()
+    let state = begin(g)
+    expect(button(state, g)?.label).toBe('Wardrobe')
+    state = apply(state, g, button(state, g)!.command).state
+    expect(view(state, g).panel?.panel).toBe('wardrobe')
+    state = apply({ ...state, panel: null }, g, places.go('hall')).state
+    expect(button(state, g)?.label).toBe('Coat hooks')
+    state = apply(state, g, places.go('garden')).state
+    expect(button(state, g)).toBeUndefined()
   })
 })

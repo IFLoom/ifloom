@@ -116,13 +116,39 @@ body: [
 ],
 ```
 
-There's no `else`, so an `<<elseif>>` chain becomes blocks whose conditions don't overlap:
+An `<<elseif>>` chain is a [`cases`](/docs/reference/flows#the-first-that-fits) block. Only the first block whose `when` holds is shown, and a last block with no `when` is the `<<else>>`:
 
 ```ts
-text('You could buy the whole cake cabinet.', { when: { stat: 'coins', gte: 20 } }),
-text('Enough for a coffee and a bun.', { when: { stat: 'coins', gte: 5, lt: 20 } }),
-text('Your pockets feel light.', { when: { stat: 'coins', lt: 5 } }),
+import { cases, text } from '@ifloom/engine'
+
+cases([
+  text('You could buy the whole cake cabinet.', { when: { stat: 'coins', gte: 20 } }),
+  text('Enough for a coffee and a bun.', { when: { stat: 'coins', gte: 5 } }),
+  text('Your pockets feel light.'),
+]),
 ```
+
+### `<<if>>` in the middle of a line, `<<print>>` and `$var`
+
+```html
+The mirror says you look <<if $outfit is "suit">>sharp<<else>>fine, probably<</if>>.
+Coins: <<print $coins>>. Hello, $name.
+```
+
+A few words that change in the middle of a sentence are a [phrase](/docs/reference/phrases). Declare it once in your content's `phrases`, with rows tried in order, and print it with a token:
+
+```ts
+phrases: {
+  outfit: {
+    verdict: [{ when: { kv: 'outfit', is: 'suit' }, text: 'sharp' }, { text: 'fine, probably' }],
+  },
+},
+// 'The mirror says you look {{outfit.verdict}}.'
+```
+
+A `<<print>>` with a ternary, such as `<<print $tired ? "slowly" : "briskly">>`, is a phrase the same way. Nested objects are groups, so phrases that belong together sit together, and the token names the path.
+
+`$name` and `<<print $name>>` are a [token](/docs/reference/prose#tokens): `{{name}}` prints the kv key `name`, or a value of the game's own by that name. A stat has no token of its own, so print one with a value in `rules.values` that reads it with [`statValue`](/docs/reference/stats#statvalue).
 
 `and`, `or` and `not` are `all`, `any` and `not`:
 
@@ -585,7 +611,7 @@ const windowSeat: DataScene = {
 const sit: Effect = { scene: { from: 'cafe', otherwise: 'cafe.quiet' } }
 ```
 
-**A value worked out in code** uses [`drawOne`, `draw`, `chance` or `weighted`](/docs/reference/random), with the seed, the turn and a name for the draw. A value in the game's `rules` prints it in prose as `{{v:game/cake}}`:
+**A value worked out in code** uses [`drawOne`, `draw`, `chance` or `weighted`](/docs/reference/random), with the seed, the turn and a name for the draw. A value in the game's `rules` prints it in prose as `{{cake}}`:
 
 ```ts
 import { drawOne, type GameRules } from '@ifloom/engine'
@@ -596,7 +622,7 @@ export const rules: GameRules = {
 ```
 
 ```ts
-'cafe.special': "Today's cake is {{v:game/cake}}.",
+'cafe.special': "Today's cake is {{cake}}.",
 ```
 
 Reloading or undoing deals the same cake. That's on purpose: the player can't re-roll by reloading, and a playtest gives the same result every run.
@@ -659,7 +685,9 @@ Harlowe's macros map to the same places as SugarCube's.
 |---|---|
 | `(set: $coins to it + 2)` | `{ stat: 'coins', by: 2 }`, an [effect](/docs/reference/effects) on a choice |
 | `(set: $metAva to true)` | `{ kv: 'metAva', to: true }` |
-| `(if: $coins >= 3)[…](else:)[…]` | A block or a choice with `when: { stat: 'coins', gte: 3 }`, and one with `lt: 3` for the else |
+| `(if: $coins >= 3)[…](else:)[…]` | A [`cases`](/docs/reference/flows#the-first-that-fits) block: one with `when: { stat: 'coins', gte: 3 }`, then one with no `when` for the else. On a choice, `when` or `blocked`. |
+| `(print: $name)`, `$name` in a passage | A [token](/docs/reference/prose#tokens), `{{name}}` |
+| `(if:)` in the middle of a sentence | A [phrase](/docs/reference/phrases), printed as `{{outfit.verdict}}` |
 | `(link-goto: "Go to the café", "Cafe")` | A choice with `{ scene: 'cafe' }` and `label: 'Go to the café'` |
 | `(go-to: "Cafe")` | The `scene` effect, on a choice or a [trigger](/docs/reference/triggers) |
 | `(display: "Menu")` | A line kept by key in `prose`, `cafe.menu`, read with `{ prose: 'cafe.menu' }` in each scene that shows it |

@@ -468,11 +468,11 @@ The [cast](/docs/plugins/cast) asks `places/here` to know who's in the room, and
 
 | Prose writes | Prints |
 |---|---|
-| `{{v:places/name}}` | The current place's `name`, such as `High Street`. Empty when nowhere. |
-| `{{v:places/description}}` | The current place's `description`, such as `Small Town`. Empty when nowhere, or with none. |
+| `{{places/name}}` | The current place's `name`, such as `High Street`. Empty when nowhere. |
+| `{{places/description}}` | The current place's `description`, such as `Small Town`. Empty when nowhere, or with none. |
 
 ```ts
-const prose = { postcard: 'Greetings from the {{v:places/name}}.' }
+const prose = { postcard: 'Greetings from the {{places/name}}.' }
 // 'Greetings from the High Street.'
 ```
 

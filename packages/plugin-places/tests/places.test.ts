@@ -491,7 +491,7 @@ describe('places', () => {
       const { game: g } = game()
       expect(view(startingState(g), g).when).toBe('Day 1 · Monday morning · House')
       const { game: told } = (() => {
-        const content: Content = { ...town, prose: { ...town.prose, 'place.house': 'A {{v:places/description}} house: {{v:places/name}}.' } }
+        const content: Content = { ...town, prose: { ...town.prose, 'place.house': 'A {{places/description}} house: {{places/name}}.' } }
         return { game: loadGame([content], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'house' })] }).game }
       })()
       expect(view(startingState(told), told).scene.body).toBe('A Town house: House.')

@@ -332,7 +332,7 @@ function questsPlugin(): DefinedPlugin<QuestsState, QuestsView> {
       },
     },
     values: {
-      /** <code v-pre>{{v:quests/updates}}</code>: quests with news, for a badge. */
+      /** <code v-pre>{{quests/updates}}</code>: quests with news, for a badge. */
       updates: (state, _args, { slice, game }) => updatesIn(advance(slice, state, game), game),
     },
     onCommand: (_before, after, { slice, set, game }) => {

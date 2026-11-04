@@ -101,10 +101,13 @@ describe('media in places, messages and posts', () => {
     render(<GameShell plugins={UIS} runner={runner} />)
     act(() => void fireEvent.click(document.querySelector('[data-device="phone"]') as HTMLElement))
     act(() => void fireEvent.click(document.querySelector('[data-open-app="texts"]') as HTMLElement))
+    act(() => void fireEvent.click(document.querySelector('[data-part="conversation"]') as HTMLElement))
     const bubble = document.querySelector('[data-part="bubble"][data-from="them"]') as HTMLElement
     expect(bubble.querySelector('[data-beat="text"]')?.textContent).toBe('Look what I found.')
     expect(bubble.querySelector('img[data-beat="image"]')?.getAttribute('src')).toBe('art/photo/cat.svg')
     expect(bubble.querySelector('video[data-beat="video"]')?.getAttribute('src')).toBe('art/clips/cat.mp4')
+    // Back to the conversations, then back to the home screen.
+    act(() => void fireEvent.click(document.querySelector('[data-part="thread-back"]') as HTMLElement))
     act(() => void fireEvent.click(screen.getByRole('button', { name: /Back/ })))
     act(() => void fireEvent.click(document.querySelector('[data-open-app="town"]') as HTMLElement))
     const post = document.querySelector('[data-post="post.cafe"]') as HTMLElement

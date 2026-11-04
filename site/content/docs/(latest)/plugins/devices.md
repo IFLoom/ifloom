@@ -165,7 +165,7 @@ import type { AppDef } from '@ifloom/plugin-devices'
 const bank: AppDef = {
   id: 'bank', name: 'Bank', icon: 'bank', on: 'laptop',
   blocked: [{ when: { not: { kv: 'bankAccount' } }, reason: 'You have no account yet.' }],
-  sections: [{ blocks: [{ prose: 'bank.balance' }] }],   // 'You have {{v:game/balance}}.'
+  sections: [{ blocks: [{ prose: 'bank.balance' }] }],   // 'You have {{balance}}.'
 }
 
 const mail: AppDef = {
@@ -265,7 +265,7 @@ const town: Content = {
     'place.flat': 'Boxes, mostly.',
     'place.high-street': 'The high street.',
     'notes.top': 'Your notes, newest first.',
-    'bank.balance': 'You have {{v:game/balance}}.',
+    'bank.balance': 'You have {{balance}}.',
   },
   data: {
     devices: { devices: [{ id: 'laptop', name: 'Laptop', frame: 'laptop' }], apps },

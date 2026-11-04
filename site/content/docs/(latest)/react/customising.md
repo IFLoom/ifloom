@@ -168,7 +168,9 @@ Some parts carry a second attribute that says more:
 | `data-beat` | Every `beat`, and a video beat's `video` | The beat's type: `text`, `say`, `image` or `video`. |
 | `data-who` | A `say` beat | `character` or `player`. |
 | `data-face` | An `inline-prop` | The note's face, `sticky`, `clip` or `diary`. |
-| `data-from` | Every `bubble` | `them` or `player`. |
+| `data-from` | Every `bubble` | `them` or `player`. The typing bubble is `them`, with `data-typing` too. |
+| `data-card`, and any hint of your own | A `group` | The section's hint, as written. See [Your own hints](/docs/react/hints#your-own-hints). |
+| `data-dir` | Every `change` | `up` or `down`. With `data-stat` and, for an entity's stat, `data-of`. |
 | `data-has-sidebar` | The `page` | Present when the layout has a side column. |
 | `data-frame` | A device's `dialog` | The device's frame: `phone`, `laptop`, or a name of the game's own. |
 | `data-icon` | Every `app-icon` | The app's icon name, for a stylesheet to map to a picture. |
@@ -547,7 +549,8 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `beat` | One beat. Carries `data-beat` with its kind, and a `say` beat carries `data-who`. |
 | `speaker-name` | The name over a spoken line: the speaker's, or the player's on their own lines. Not drawn on a line that names no one. Each preset styles it, and `display: none` hides it. |
 | `reveal` | The beats from a block with a [`reveal`](/docs/react/hints#reveal) hint, which wait for it. Carries `data-reveal` with its transition. The choices waiting for the last reveal are one too, with `data-reveal-choices`. |
-| `fold` | A section with a [`fold`](/docs/react/hints#fold) hint, as a `<details>`. |
+| `group` | The beats of a section with any ui hint, drawn together. Carries a `data-*` attribute for each hint that's a string, a number or true/false, such as `data-card="result"`. See [Your own hints](/docs/react/hints#your-own-hints). |
+| `fold` | A section with a [`fold`](/docs/react/hints#fold) hint, as a `<details>`, inside its `group`. |
 | `fold-summary` | The words a fold opens by. |
 | `fold-beats` | A fold's beats. |
 | `inline-mail` | A letter, from `[[ui:mail\|…]]`. |
@@ -617,6 +620,15 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `minigame-timer` | The countdown bar, a `progressbar` holding one `<span>` scaled with `transform: scaleX()`. Only while the state has a timer. |
 | `minigame-inputs` | The row of input buttons. |
 | `minigame-input` | One input button. Carries `data-input`. |
+
+### What changed
+
+| Part | What it is |
+|---|---|
+| `changes` | [`Changes`](/docs/react/components#changes), the list of what the last command moved. |
+| `change` | One [`ChangeItem`](/docs/react/components#changeitem). Carries `data-stat`, `data-of` for an entity's stat, and `data-dir` (`up` or `down`). |
+| `change-text` | The change in the stat's format, signed: `+30 coins`. |
+| `change-label` | The entity's name, or the stat's label unless its format has words in it. |
 
 ### Timers
 
@@ -699,7 +711,7 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `entity-image` | Its picture, when it has one. |
 | `entity-desc` | Its description, when it has one. |
 | `entity-value` | One of its stats. |
-| `inputs` | Every input on offer. |
+| `inputs` | The inputs on offer: in a scene, between its words and its choices, or outside one from `InputFields`. |
 | `input` | One input. Carries `data-input`. |
 | `input-label` | Its label. |
 | `input-field` | The text or number box. |
@@ -919,11 +931,20 @@ From [`@ifloom/plugin-messages/react`](/docs/plugins/messages#drawing-it).
 | Part | What it is |
 |---|---|
 | `channel` | A messages channel. Carries `data-channel`. |
-| `thread` | One thread in it. Carries `data-thread`. |
+| `conversations` | The conversation list, one row a thread. |
+| `conversation` | One thread in the list, a button that opens it. Carries `data-thread`, and `data-unread` with the count while any is unread. |
+| `conversation-portrait` | The sender's portrait in the list. |
+| `conversation-name` | The sender's name in the list. |
+| `conversation-last` | The thread's last line, or that they're typing. |
+| `conversation-unread` | The unread dot. |
+| `messages-empty` | The line a channel with nothing in it shows. |
+| `thread` | An open thread. Carries `data-thread`. |
+| `thread-back` | The button back to the list. |
 | `thread-title` | The thread's heading, with the sender's name. |
 | `thread-portrait` | The sender's portrait. |
 | `message` | One message with the reply under it. |
-| `bubble` | A message bubble. Carries `data-from`, `them` or `player`. The message's beats are inside it. |
+| `bubble` | A message bubble. Carries `data-from`, `them` or `player`. The message's beats are inside it. The typing bubble carries `data-typing` too. |
+| `typing` | The three dots in the typing bubble. |
 
 #### Feed
 

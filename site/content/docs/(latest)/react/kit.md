@@ -41,7 +41,7 @@ A plugin UI's `layout` says what it places, and where. The [`DefaultLayout`](/do
 | Spot | Where | First-party plugin UIs that use it |
 |---|---|---|
 | `stats` | Inside the side column's Stats section, under the stats. | statuses |
-| `sidebar` | The side column, after the Stats and Carrying sections. | quests, cast (People), wardrobe, achievements, cheats, devices |
+| `sidebar` | The side column, after the Stats and Carrying sections. | quests, cast (People), achievements, cheats, devices |
 | `room` | The story, after the scene and before the room's actions. | places |
 | `story` | The end of the story, after the room's actions. | cast (who is here), debug |
 | `strip` | The [`NoticeStrip`](/docs/react/components#noticestrip)'s row of counts, after the notices. | devices |

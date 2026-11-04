@@ -55,6 +55,7 @@ export const UI_STRINGS = {
   closeViewer: 'Close',
   menu: 'Menu',
   openSidebar: 'Open the side panel',
+  changes: 'What changed',
   timeLeft: 'Time left',
   timerLeft: '{seconds}s',
   // dice

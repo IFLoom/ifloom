@@ -78,6 +78,15 @@ export type MessageDef = {
   body: Block[]
   /** What the player can send back; one, once. None if left out. */
   replies?: ReplyDef[]
+  /**
+   * How long it takes to arrive once its `when` holds: `ms` milliseconds after
+   * the thread's previous arrival, run down by the engine's `tick` as a timer
+   * is. Left out, it arrives straight away. One message waits at a time, so
+   * the next waits until this one has come.
+   */
+  after?: { ms: number }
+  /** Whether its thread shows the other side typing while it waits. True if left out. */
+  typing?: boolean
 }
 
 /**
@@ -108,6 +117,12 @@ export type MessagesState = {
   replied: Record<string, string>
   /** Arrivals the player has opened, by key. */
   read: Record<string, true>
+  /**
+   * The message waiting to arrive, if one is: its id, its thread, and whether
+   * the thread shows typing. The plugin's timer `messages.due` runs while it
+   * waits, and delivers it when it runs out.
+   */
+  due: { key: string; thread: string; typing: boolean } | null
 }
 
 export type MessageView = {
@@ -146,6 +161,8 @@ export type ThreadView = {
   unread: number
   /** The button that marks the thread read (the `messages/markRead` string, `Mark read`), or null while nothing in it is unread. */
   read: RenderedChoice | null
+  /** Whether the other side is typing: a message with `after` is waiting to arrive in this thread, and its `typing` isn't false. */
+  typing: boolean
 }
 
 export type ChannelView = {
@@ -158,7 +175,12 @@ export type ChannelView = {
   read: RenderedChoice | null
 }
 
-export type MessagesView = { channels: ChannelView[]; unread: number }
+export type MessagesView = {
+  channels: ChannelView[]
+  unread: number
+  /** Whether a message with `after` is waiting to arrive, in any thread. */
+  waiting: boolean
+}
 
 /**
  * What content writes for each of the plugin's calls, its queries' answers
@@ -173,6 +195,7 @@ declare module '@ifloom/engine' {
   }
   interface EffectRegistry {
     'messages/draw': { pool: string }
+    'messages/due': Record<string, never>
   }
   interface CommandRegistry {
     'messages/reply': { message: string; reply: string }
@@ -184,6 +207,10 @@ declare module '@ifloom/engine' {
 }
 
 const ID = 'messages'
+/** The plugin's one timer: it runs while a message with `after` waits, and delivers it when it runs out. */
+const DUE = 'messages.due'
+/** How long a notice's line can be, in characters, before it is cut. */
+const NOTICE_LENGTH = 80
 
 /** The game's messages: `data.messages.messages`, from its packs. */
 export function messagesOf(game: Game): MessageDef[] {
@@ -224,18 +251,47 @@ function messageOfKey(key: string): string {
   return key.replace(/~\d+$/, '')
 }
 
-/** Deliver a message as a new arrival, with its notice. */
+/** A message's first line, as the player reads it, cut to a notice's length. */
+function firstLine(message: MessageDef, context: PluginContext<MessagesState>, key: string): string {
+  const words = context.beats(message.body, message.id).flatMap((beat) => ('text' in beat ? [beat.text] : []))
+  const line = (words[0] ?? '').split('\n')[0]!.trim()
+  return line.length > NOTICE_LENGTH ? `${line.slice(0, NOTICE_LENGTH - 1).trimEnd()}…` : line || key
+}
+
+/** The notice ids of arrivals in a thread, by the message each names. */
+function threadNotices(game: Game, slice: MessagesState, thread: string): Set<string> {
+  const defs = new Map(messagesOf(game).map((message) => [message.id, message]))
+  return new Set(
+    slice.arrived.flatMap((arrival) => {
+      const message = defs.get(arrival.message)
+      return message && threadOf(message) === thread ? [`messages.${arrival.key}`] : []
+    }),
+  )
+}
+
+/**
+ * Deliver a message as a new arrival, with its notice: the sender's name, and
+ * the message's first line. An unseen notice for an earlier message in the
+ * same thread is replaced, so a burst raises one notice, not a stack.
+ */
 function deliver(state: GameState, message: MessageDef, context: PluginContext<MessagesState>, slice: MessagesState): GameState {
   const count = slice.arrived.filter((arrival) => arrival.message === message.id).length
   const key = count === 0 ? message.id : `${message.id}~${count + 1}`
   const arrival: Arrival = { key, message: message.id, turn: state.turn, day: dayOf(state, context.game) }
-  const next = notify(state, { id: `messages.${key}`, title: senderOf(state, context.game, message.from).name, tag: message.channel })
+  const earlier = threadNotices(context.game, slice, threadOf(message))
+  const kept: GameState = { ...state, notices: (state.notices ?? []).filter((notice) => notice.seen || !earlier.has(notice.id)) }
+  const next = notify(kept, {
+    id: `messages.${key}`,
+    title: senderOf(state, context.game, message.from).name,
+    text: firstLine(message, context, key),
+    tag: message.channel,
+  })
   return context.set({ ...slice, arrived: [...slice.arrived, arrival] }, next)
 }
 
 /** The slice of a state, or an empty one. */
 function sliceOf(state: GameState): MessagesState {
-  return (state.plugins?.[ID]?.state as MessagesState | undefined) ?? { arrived: [], replied: {}, read: {} }
+  return (state.plugins?.[ID]?.state as MessagesState | undefined) ?? { arrived: [], replied: {}, read: {}, due: null }
 }
 
 /** The game's channels, in order: `data.messages.channels`, from its packs. */
@@ -258,7 +314,7 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
 
   const plugin = definePlugin<MessagesState, MessagesView>({
     id: ID,
-    version: 2,
+    version: 3,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
     // The words a player reads in each list of the plugin's content, for a translation's `words` table.
@@ -279,7 +335,11 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
           .map(([message, turn]): Arrival => ({ key: message, message, turn, day: turn }))
         return { arrived, replied: old.replied ?? {}, read: old.read ?? {} }
       },
+      // 2 → 3: a message can wait to arrive (`after`); nothing waits in an old save.
+      2: (state) => ({ ...(state as object), due: null }),
     },
+    // The timer a waiting message runs down. Its length is set each time it starts, from the message's `after`.
+    content: { timers: [{ id: DUE, ms: 1000, effects: [{ [`${ID}/due`]: {} }] }] },
     strings: {
       noSuchMessage: 'There is no such message.',
       alreadyReplied: 'You have already replied.',
@@ -288,7 +348,7 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
       markRead: 'Mark read',
       allRead: 'Mark all read',
     },
-    start: () => ({ arrived: [], replied: {}, read: {} }),
+    start: () => ({ arrived: [], replied: {}, read: {}, due: null }),
     conditions: {
       /** `{ 'messages/arrived': { message } }`: it has arrived at least once. */
       arrived: (_state, args, { slice }) => latest(slice, String(args.message)) !== undefined,
@@ -326,6 +386,17 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
         const eligible = messagesOf(context.game).filter((message) => message.drawnFrom?.includes(pool) && holds(state, context.game, message.when))
         const drawn = weighted(eligible, (message) => message.weight, 'messages/draw', pool, state.seed, state.turn, slice.arrived.length)
         return drawn ? deliver(state, drawn, context, slice) : state
+      },
+      /**
+       * `{ 'messages/due': {} }`: the waiting message arrives. The plugin's
+       * timer runs it when the wait is over; content has no need to.
+       * Nothing when no message waits.
+       */
+      due: (state, _args, context) => {
+        const slice = sliceOf(state)
+        const message = slice.due && messagesOf(context.game).find((entry) => entry.id === slice.due!.key)
+        if (!message) return slice.due ? context.set({ ...slice, due: null }, state) : state
+        return deliver(state, message, context, { ...slice, due: null })
       },
     },
     commands: {
@@ -372,18 +443,28 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
     values: {
       /**
        * Unread messages: in every channel, or in one with `{ channel }`.
-       * <code v-pre>{{v:messages/unread channel=texts}}</code>, or a badge's
+       * <code v-pre>{{messages/unread channel=texts}}</code>, or a badge's
        * `{ value: 'messages/unread', with: { channel: 'texts' } }`.
        */
       unread: (_state, args, { slice, game }) => unreadIn(slice, game, args.channel === undefined ? undefined : String(args.channel)),
     },
     // Deliver what the story has brought due, once each, and say so. Pool messages wait to be drawn.
+    // A message with `after` waits instead: it's queued in `due` and the timer started. While one waits,
+    // the rest of its thread waits behind it, and so does any other message with `after`.
     onCommand: (_before, after, context) => {
       let next = after
       for (const message of messagesOf(context.game)) {
         if (message.drawnFrom?.length) continue
         const slice = sliceOf(next)
-        if (latest(slice, message.id) !== undefined || !holds(after, context.game, message.when)) continue
+        // A message with `after` is asked of the state as it now is, so one can wait on an arrival in this same command.
+        if (latest(slice, message.id) !== undefined || slice.due?.key === message.id || !holds(message.after ? next : after, context.game, message.when))
+          continue
+        if (slice.due && (slice.due.thread === threadOf(message) || message.after)) continue
+        if (message.after) {
+          const due = { key: message.id, thread: threadOf(message), typing: message.typing !== false }
+          next = context.apply([{ timer: DUE, to: Math.max(message.after.ms, 1) }], context.set({ ...slice, due }, next))
+          continue
+        }
         next = deliver(next, message, context, slice)
       }
       return next
@@ -440,9 +521,25 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
             messages: shown,
             unread,
             read: unread ? renderAction(state, game, { id: `read.${id}`, label: stringOf(game, `${ID}/markRead`), command: readThread(id) }) : null,
+            typing: slice.due?.thread === id && slice.due.typing,
           }
         })
         list.sort((a, b) => (latest.get(b.id) ?? 0) - (latest.get(a.id) ?? 0))
+        // A thread whose first message is still on its way shows only that someone is typing, at the top.
+        const waiting = slice.due && defs.get(slice.due.key)
+        if (slice.due && waiting && !threads.has(slice.due.thread)) {
+          const sender = senderOf(state, game, slice.due.thread)
+          list.unshift({
+            id: slice.due.thread,
+            name: sender.name,
+            image: sender.image,
+            portrait: sender.portrait,
+            messages: [],
+            unread: 0,
+            read: null,
+            typing: slice.due.typing,
+          })
+        }
         const unread = unreadIn(slice, game, channel.id)
         const read = unread
           ? renderAction(state, game, {
@@ -453,7 +550,7 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
           : null
         return { id: channel.id, name: channel.name, threads: list, unread, read }
       })
-      return { channels, unread: unreadIn(slice, game) }
+      return { channels, unread: unreadIn(slice, game), waiting: slice.due !== null }
     },
     references: {
       // The message a condition or a reply names; a reply may name a later arrival's key.
@@ -484,6 +581,8 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
       for (const message of messagesOf(game)) {
         const say = (what: string) => problems.push({ list: 'messages', id: message.id, what })
         if (message.weight !== undefined && !(message.weight >= 0)) say('weight must be 0 or more')
+        if (message.after !== undefined && !(typeof message.after.ms === 'number' && message.after.ms > 0)) say('after needs ms above 0')
+        if (message.after !== undefined && message.drawnFrom?.length) say('a message drawn from a pool arrives when drawn, so it can’t wait with after')
         const ids = new Set<string>()
         for (const reply of message.replies ?? []) {
           if (ids.has(reply.id)) say(`two replies are called "${reply.id}"`)

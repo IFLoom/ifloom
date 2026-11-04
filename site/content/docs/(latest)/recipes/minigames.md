@@ -297,6 +297,44 @@ You don't have to run the clock in your panel. In the React UI, `GameProvider` r
 
 To change every minigame's panel at once in the React UI, rather than one by id, replace `MinigameCard` in [`components`](/docs/react/customising#6-replace-a-component). A panel by id wins over it.
 
+## A quiz with its answers on the buttons
+
+A state's `on` entries can each carry a `label`, the words on that input's button while the minigame is in that state. So one set of inputs, `a`, `b` and `c`, can show different answers for each question. Here's a two-question quiz about the town that counts the right answers:
+
+```ts
+import type { MinigameDef } from '@ifloom/engine'
+
+const quiz: MinigameDef = {
+  id: 'quiz',
+  title: 'Pub quiz',
+  start: 'q1',
+  kv: { right: 0 },
+  states: {
+    q1: {
+      label: 'Which street is the café on?',
+      on: [
+        { input: 'a', label: 'High Street', go: 'q2', effects: [{ kv: 'right', of: 'minigame', by: 1 }] },
+        { input: 'b', label: 'Mill Lane', go: 'q2' },
+        { input: 'c', label: 'Station Road', go: 'q2' },
+      ],
+    },
+    q2: {
+      label: 'What day is the market?',
+      on: [
+        { input: 'a', label: 'Monday', go: 'done' },
+        { input: 'b', label: 'Saturday', go: 'done', effects: [{ kv: 'right', of: 'minigame', by: 1 }] },
+        { input: 'c', label: 'Every day', go: 'done' },
+      ],
+    },
+    done: { final: { copy: { right: 'quiz.right' } } },
+  },
+}
+```
+
+While it's on the first question, `view.minigame.inputs` is three buttons reading `High Street`, `Mill Lane` and `Station Road`, and on the second `Monday`, `Saturday` and `Every day`. Any panel draws them as it draws the arrows, from each input's `label`. The labels are words in place, so a translation's [words table](/docs/reference/words) can give them other words, and they can carry [tokens](/docs/reference/prose#tokens) such as `{{playerName}}`.
+
+Afterwards `{{quiz.right}}` prints the score, since the final state copies it to the kv key `quiz.right`.
+
 ## Testing it
 
 Ticks are ordinary commands, so a test can play a minigame with no browser and no waiting. Send the ticks yourself:

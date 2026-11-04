@@ -157,7 +157,7 @@ It works in any effect list, a thing's use in the [inventory](/docs/plugins/inve
 
 | Prose writes | Prints |
 |---|---|
-| `{{v:achievements/earned}}` | How many achievements this save has earned. |
+| `{{achievements/earned}}` | How many achievements this save has earned. |
 
 ## Strings
 
@@ -353,7 +353,7 @@ A call that names an achievement the game doesn't have gives `unknown achievemen
 - **Earned after the command, not during it.** A trigger that asks `achievements.earned` on the same command sees it on the next one.
 - **Earned stays earned.** Nothing takes an achievement back, even if its condition stops holding.
 - **`seen` counts a scene as soon as it's on screen.** An achievement with `when: { seen: 'ava.river' }` is earned when the scene opens, not when the player leaves it.
-- **A new game starts with nothing earned in its save.** The runner's view still shows everything from the profile, but `achievements.earned` and `{{v:achievements/earned}}` read this save only.
+- **A new game starts with nothing earned in its save.** The runner's view still shows everything from the profile, but `achievements.earned` and `{{achievements/earned}}` read this save only.
 
 ## See it in an example
 

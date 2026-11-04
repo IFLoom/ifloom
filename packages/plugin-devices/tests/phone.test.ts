@@ -109,7 +109,7 @@ const town: Content = {
     'ava.hi': 'Hi.',
     'ava.call': '"Hey you."',
     'ava.hey': 'Good seeing you today.',
-    'studio.stats': '{{v:game/subscribersLine}}',
+    'studio.stats': '{{subscribersLine}}',
   },
   entities: [
     places.location({ id: 'house', name: 'House', description: 'Home', exits: ['cafe', 'work'], body: [{ prose: 'place.house' }] }),

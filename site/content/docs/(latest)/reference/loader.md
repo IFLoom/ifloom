@@ -53,6 +53,7 @@ type Content = {
   inputs?: InputDef[]
   minigames?: MinigameDef[]
   timers?: TimerDef[]
+  phrases?: Phrases
   settings?: SettingDef[]
   saveable?: Blocked[]
   finished?: Condition
@@ -84,6 +85,7 @@ export const ch1: Content = {
 |---|---|
 | `name` | Optional. What problems call this content, such as `story.cafe`. Without one, they say `content`. |
 | `scenes`, `storylines`, `stats`, `kinds`, `actions`, `triggers`, `inputs`, `minigames`, `timers`, `settings` | By `id`, each declared once across your content. The order is the order you combine your content in. A plugin's own [`content`](/docs/reference/plugins#kinds-and-entities) comes first. |
+| `phrases` | By each phrase's full name (`outfit.verdict`), each declared once across your content. Two files can add phrases to one group. A pack's phrase replaces the one of that name whole, and a pack can add new ones to a group. See [Phrases](/docs/reference/phrases). |
 | `introScene`, `finished`, `carryOver` | One value each, given by one file of your content. See [Game](/docs/reference/game#game). |
 | `kv`, `resets` | By key, each declared once: `kv` is what a new game's [kv store](/docs/reference/state#kv) starts with, and `resets` what goes back each turn (see [`resets`](/docs/reference/rules#resets)). |
 | `locks`, `saveable` | Added, each file's after the ones before. A [lock](/docs/reference/locks) with an `id` is declared once by it. |
@@ -114,7 +116,7 @@ Give your content a `name` and the problem says which two files it's in:
 story.town · scene "cafe.counter" · declared twice, in story.cafe and story.town
 ```
 
-It looks at everything content declares by a key: scenes (storylets too), prose keys, strings, stats, kinds, entities, rows of the `traits` table (as in `trait "laundry/washable" on "clothing:hat"`), storylines, actions, locks with an `id`, triggers, inputs, minigames, timers, settings, kv and `resets` keys, `ui` hints, `introScene`, `finished`, `carryOver`, audio tracks, media pools and plugin content (`data`, by plugin, list and `id`, as in `quests/quests "settle"`). Content appends to a variants name, so two files adding lines to one name is fine. Only the same line listed by both is reported.
+It looks at everything content declares by a key: scenes (storylets too), prose keys, strings, stats, kinds, entities, rows of the `traits` table (as in `trait "laundry/washable" on "clothing:hat"`), storylines, actions, locks with an `id`, triggers, inputs, minigames, timers, phrases (by full name, as in `phrase "outfit.verdict"`), settings, kv and `resets` keys, `ui` hints, `introScene`, `finished`, `carryOver`, audio tracks, media pools and plugin content (`data`, by plugin, list and `id`, as in `quests/quests "settle"`). Content appends to a variants name, so two files adding lines to one name is fine. Only the same line listed by both is reported.
 
 To change something on purpose, change it where it's declared. Packs are the only way to replace what the content declares.
 
@@ -183,12 +185,12 @@ A pack written before this split may still have `overrides: true`, which told th
 ## SCHEMA
 
 ```ts
-const SCHEMA = 29
+const SCHEMA = 30
 ```
 
 The format of packs this engine reads. Write `schema: SCHEMA` in a pack you write in TypeScript so it always matches. Your content has no schema.
 
-A pack written for an older schema still loads. [`loadGame`](#loadgame) upgrades it first with [`upgradePack`](#upgradepack), mods included, so a mod file made for an earlier version of your game keeps working after you update the engine or a plugin. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 30, this engine reads 29`, and a mod like that is refused when the player adds it.
+A pack written for an older schema still loads. [`loadGame`](#loadgame) upgrades it first with [`upgradePack`](#upgradepack), mods included, so a mod file made for an earlier version of your game keeps working after you update the engine or a plugin. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 31, this engine reads 30`, and a mod like that is refused when the player adds it.
 
 ## upgradePack
 
@@ -230,6 +232,7 @@ What a plugin reads (its `data`, its calls' arguments, its strings and its trait
 | 25 to 26 | One word each: a thing's line is its `description` and a heading its `title`. An entity's `desc` (in `entities` and in a `create` effect's `with`) becomes `description`, a minigame's `label` its `title`, and the `words` table's `entity.<ref>.desc` and `minigame.<id>.label` follow. The plugins' own steps (content version 26) rename theirs: a quest's `title` and `summary` are its `name` and `description`, a status's `label` and `summary` its `name` and `description` and its `onStart`, `eachTurn` and `onEnd` its `effects: { start, turn, end }`, an achievement's, a job's and a rank's `title` and a cheat's and an unlock's `label` their `name`, a generator template's `desc` its `description`, the value `places/desc` is `places/description`, and the cast's `offstage`, where someone nowhere on the map is, is `away`. |
 | 26 to 27 | A `variants` block's `art`, the variants a member's picture is drawn from, is `image`. A trigger's `once: 'game'` or `'turn'` is `{ per: 'game' }` or `{ per: 'turn' }`, the one [`Once`](/docs/reference/actions#once) shape. A [cheat](/docs/plugins/cheats#cheatdef)'s `once: true` is `{ per: 'game' }` (content version 27). A [vendor](/docs/plugins/shop#the-vendor-trait)'s `hours`, `open` and `closed` are its `blocked` entries: `{ when: { 'shop/outside': { period: hours } }, reason }` and `{ when: { not: open }, reason }`, with `closed`, or else `{ string: 'shop/closed' }`, as the reason (content version 27).  A weighted variants member `{ text: key, weight }` is `{ prose: key, weight }`. A [device](/docs/plugins/devices#section)'s app section of words, `{ prose: [...] }`, is `{ blocks: [...] }` (content version 27). |
 | 27 to 28 | "Stage" means only a quest's stage. A data scene's layered picture with hotspots, `stage`, is its [`picture`](/docs/reference/scenes#the-picture), and the `words` table's `scene.<id>.stage.hotspots.<hotspot>.label` is `scene.<id>.picture.hotspots.<hotspot>.label`. The [places plugin](/docs/plugins/places#the-picture)'s own step (content version 28) does the same for a place's `stage`, wherever the `places/location` trait is written, and its words keys. |
+| 29 to 30 | Values print with a bare token. In every string of the pack but its code, `{{v:game/payroll}}` becomes `{{payroll}}` and `{{v:messages/unread channel=texts}}` becomes `{{messages/unread channel=texts}}` (see [Tokens](/docs/reference/prose#tokens)). A game's value whose name starts with a digit or a `-` keeps its `{{v:…}}`, which still prints. [Phrases](/docs/reference/phrases), the `cases` block and a minigame input's `label` came in this schema too, and need no step. |
 
 Schema 4 is the oldest a pack can be.
 
@@ -237,7 +240,7 @@ It returns the pack at `SCHEMA`, with `plugins` recording each plugin's version,
 
 | When | Returns |
 |---|---|
-| `schema` is newer than `SCHEMA` | `written for schema 30, this engine reads 29` |
+| `schema` is newer than `SCHEMA` | `written for schema 31, this engine reads 30` |
 | `schema` is older than the oldest schema there's a step from | `written for schema 3, too old for this engine to read (it reads 25)` |
 | `plugins` gives a newer version of a plugin's content than the game has | `written for version 14 of the shop plugin's content, this game's reads 13` |
 

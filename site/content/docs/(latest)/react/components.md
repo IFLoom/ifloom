@@ -102,7 +102,7 @@ The React UI's own layout, which a `GameShell` with no `layout` draws, and which
 - **A [`Sidebar`](#sidebar)** with the [`Title`](#title), the [`Clock`](#clock) and the [`GameMenu`](#gamemenu), then these [sections](#section), each titled with a UI word:
   - `stats` (`ui.stats`), collapsible and open, with the [`StatList`](#statlist), then what the plugin UIs place at `stats`
   - `inventory` (`ui.inventory`), collapsible, with the [`Inventory`](#inventory).
-  Then what the plugin UIs place at `sidebar`: a Quests section, a People section, a Wearing section, the Achievements and Cheats buttons and the devices' buttons, for a game that lists those plugins' UIs.
+  Then what the plugin UIs place at `sidebar`: a Quests section, a People section, the Achievements and Cheats buttons and the devices' buttons, for a game that lists those plugins' UIs.
 - **A [`Story`](#story)** with the [`Scene`](#scene) and the [`InputFields`](#inputfields), then what the plugin UIs place at `room` (where you are and the way out), the [`RoomActions`](#roomactions), and what they place at `story` (who is here, the debug card).
 - **A [`PanelHost`](#panelhost)**, and **an [`Overlay`](#overlay)** with the [`Notices`](#notices).
 
@@ -536,7 +536,8 @@ From top to bottom, it draws:
 - the speaker's portrait, unless [`view.scene.speaker`](/docs/reference/view#speakerview) or its `portrait` is `null`
 - the title
 - the scene's [`LayeredPicture`](#layeredpicture) when [`view.scene.picture`](/docs/reference/view#the-scene) has layers, or else its `image`, centred, at most `max-h-80` tall and never wider than the column, keeping its shape
-- each [`Beat`](#beat) of the body, with the beats from each block with a [`reveal`](/docs/react/hints#reveal) hint in a `reveal` part that waits for it
+- each [`Beat`](#beat) of the body, with the beats from each block with a [`reveal`](/docs/react/hints#reveal) hint in a `reveal` part that waits for it, and the beats of each section with ui hints in a `group` part (see **Groups** below)
+- the inputs on offer while the scene is open, as [`InputField`](#inputfield)s in an `inputs` part, so a scene that asks for a name shows the field under its words
 - the game's panel for the scene, if the scene names one and `panels` has it, or else the scene's choices as a [`ChoiceList`](#choicelist). With reveals to come, these wait for the last one, in a `reveal` part with `data-reveal-choices`. They can't be pressed or read out until then.
 
 While a [minigame](/docs/reference/minigames) runs, it draws that instead of all of the above: the game's panel named by the minigame's id, if `panels` has one, or else [`MinigameCard`](#minigamecard). It runs the minigame's clock either way, so your panel gets its ticks without asking. The `<article>` then also carries `data-minigame` with the minigame's id.
@@ -551,11 +552,15 @@ With [`motion`](#uioptions) off, or the player asking for reduced motion, none o
 
 **Dice.** A block with a [`dice`](/docs/react/hints#dice) hint gets the [`DiceRoll`](#diceroll) of the roll the last command made under that key, just above it. A new roll tumbles, and the block waits in a `reveal` part until the dice settle. A click or a key settles them at once. New rolls that no block on screen names show in a [`DiceOverlay`](#diceoverlay), which `Scene` draws after the scene.
 
+**Groups.** The beats of a section with any ui hint are drawn together in one `group` part. Each of the section's hints that's a string, a number or `true`/`false` becomes a `data-*` attribute on it, with a camel-case name written in dashes: `{ card: 'result' }` is `data-card="result"`, `{ wide: true }` is `data-wide`. So a section can be styled as one box with plain CSS. A fold's `<details>` sits inside its group. [Your own hints](/docs/react/hints#your-own-hints) shows a hint of a game's own, from `allow` to the CSS.
+
+**Inputs.** While a scene is open, `Scene` draws [`view.inputs`](/docs/reference/view#inputview) after its words and before its choices. With reveals to come, they wait with the choices. The layout's [`InputFields`](#inputfields) draws only the inputs on offer while no scene is open, so nothing is drawn twice.
+
 **Speakers.** While the scene's speaker has a [`hue`](/docs/react/hints#hue) hint, the article carries `data-speaker-hue` and `--ifloom-speaker-hue`, and their spoken lines are drawn in that colour.
 
 **Gotcha.** If a scene names a `panel` that the game has no component for, it shows its choices instead, with no warning.
 
-Replaceable as `Scene` in [`components`](#components). Parts: `scene-transition`, `scene` (with `data-scene`), `scene-header`, `scene-portrait`, `scene-title`, `scene-image`, `beats`, `reveal`, `fold`, `fold-summary` and `fold-beats`.
+Replaceable as `Scene` in [`components`](#components). Parts: `scene-transition`, `scene` (with `data-scene`), `scene-header`, `scene-portrait`, `scene-title`, `scene-image`, `beats`, `reveal`, `group` (with a `data-*` for each scalar hint), `fold`, `fold-summary`, `fold-beats` and `inputs`.
 
 ### useMotion
 
@@ -607,7 +612,7 @@ To hide the names, hide the part: `[data-part="speaker-name"] { display: none }`
 
 Replaceable as `Beat` in [`components`](#components). Parts: `beat` (with `data-beat`, and `data-who` on a spoken line), `speaker-name`, `voice-replay` and `viewer-open`. A letter, a note or a sign is an [inline piece](/docs/react/hints#inline-pieces) inside a paragraph: see [`InlineMail`](#inlinemail), [`InlineProp`](#inlineprop) and [`InlineMono`](#inlinemono). A video beat is a `video` part, with `data-beat="video"`.
 
-**Folds.** In `Scene`, the beats of a section with a [`fold`](/docs/react/hints#fold) hint (what `fold()` writes) are drawn together in a `fold` part, a `<details>` the player opens and shuts, shut to begin with. Its summary is the hint's words, in a `fold-summary` part, and the beats are in a `fold-beats` part.
+**Folds.** In `Scene`, the beats of a section with a [`fold`](/docs/react/hints#fold) hint (what `fold()` writes) are drawn together in a `fold` part, a `<details>` the player opens and shuts, shut to begin with, inside the section's `group` part. Its summary is the hint's words, in a `fold-summary` part, and the beats are in a `fold-beats` part.
 
 A paragraph's [bold and italics](/docs/reference/prose#bold-and-italics) are a `<strong>` with the part `bold` and an `<em>` with the part `italic`, inside the beat. Restyle them with [`classes`](#classes) or CSS on `[data-part="bold"]`.
 
@@ -1044,7 +1049,7 @@ Replaceable as `InputField` in [`components`](#components). Parts: `input` (with
 function InputFields(props: { className?: string }): JSX.Element | null
 ```
 
-An [`InputField`](#inputfield) for every input in `view.inputs`, which holds the inputs whose `when` holds now. It draws nothing when there are none. [`GameShell`](#gameshell) puts it under the scene.
+An [`InputField`](#inputfield) for every input in `view.inputs` while no scene is open. `view.inputs` holds the inputs whose `when` holds now. While a scene is open it draws nothing, because [`Scene`](#scene) draws them between its words and its choices. It also draws nothing when there are none. [`GameShell`](#gameshell) puts it under the scene, for an input a room offers.
 
 ```ts
 // The showcase asks for the cat's name on moving day, and only then.
@@ -1054,6 +1059,39 @@ inputs: [{ id: 'catName', label: 'Name your cat', type: 'text', maxLength: 16, w
 **Gotcha.** A [lock](/docs/reference/locks) that denies `'*'` denies `input` too. If a scene asks for a value while the rest of the game is locked, put `input` in the lock's `except`.
 
 Replaceable as `InputFields` in [`components`](#components). Parts: `inputs`.
+
+## What changed
+
+### Changes
+
+```tsx
+function Changes(props: { className?: string }): JSX.Element | null
+```
+
+The stats the last command moved, from [`view.changes`](/docs/reference/changes), as a list of [`ChangeItem`](#changeitem) pills: `+30 coins`, `+20% Energy`, `+2 Ava`. It draws nothing when the last command moved nothing. A `tick` that moved nothing keeps the list, so the pills stay while a timer runs.
+
+The default layout leaves it out. Place it in yours where you want the feedback, usually after the scene:
+
+::include[../../../../snippets/react/changes.tsx]
+
+Replaceable as `Changes` in [`components`](#components). Parts: `changes`, with its `aria-label` from `ui.changes` (`What changed`).
+
+### ChangeItem
+
+```tsx
+function ChangeItem(props: { change: Change }): JSX.Element
+```
+
+One [`Change`](/docs/reference/changes#change) as a pill. It shows the change's `text`, signed and in the stat's own format, then who or what it's about: the entity's name for an entity's stat, or else the stat's `label`, unless the stat's `format` already has words in it. So `+30 coins` stands alone, while `+1` reads `+1 Mood` and `+20%` reads `+20% Energy`. Its `title` says the stat's label, from what to what.
+
+It carries `data-stat` with the stat's id, `data-of` with the entity for an entity's stat, and `data-dir` set to `up` or `down`, for your CSS:
+
+```css
+[data-part='change'][data-dir='up'] { background: #e8f6ec; }
+[data-part='change'][data-stat='coins'] { font-variant-numeric: tabular-nums; }
+```
+
+Replaceable as `ChangeItem` in [`components`](#components). Parts: `change`, `change-text` and `change-label`.
 
 ## The player's menu
 

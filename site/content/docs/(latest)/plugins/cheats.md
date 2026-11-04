@@ -157,8 +157,8 @@ const honest = {
 
 | Prose writes | Prints |
 |---|---|
-| `{{v:cheats/used}}` | How many times this save has used a cheat. |
-| `{{v:cheats/used cheat=coins}}` | How many times this save has used that one. |
+| `{{cheats/used}}` | How many times this save has used a cheat. |
+| `{{cheats/used cheat=coins}}` | How many times this save has used that one. |
 
 ## Strings
 

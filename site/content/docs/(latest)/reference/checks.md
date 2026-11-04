@@ -30,7 +30,7 @@ A loaded game's problems are already in `loadGame`'s result, each pinned on the 
 ```ts
 function checkGame(game: Game, options?: { probes?: readonly Probe[] }): Checked
 
-type Checked = { problems: Problem[]; files: FileRef[] }
+type Checked = { problems: Problem[]; warnings: Problem[]; files: FileRef[] }
 type Probe = { name: string; state: GameState }
 ```
 
@@ -38,10 +38,12 @@ Walks every part of the game that is data: scenes and data scenes, actions, trig
 
 It never throws on bad content. It returns the problems in the order it found them, and an empty list when there's nothing wrong.
 
+`warnings` lists what may go wrong in play but isn't a mistake in the content, in the same shape as a problem. So far that's a token that may print nothing (see [Tokens](#tokens)). [`ifloom check`](/docs/cli#ifloom-check) prints each as `warning: …` and doesn't fail on them. [`loadGame`](/docs/reference/loader#loadgame) returns only problems, so call `checkGame(game)` for the warnings.
+
 **Gotchas:**
 - It doesn't run the game's own code. An [effect in `rules`](/docs/reference/custom#effects) that returns a broken effect, or a `rules.onTurn` that applies one, is only found in play.
 - A key content or a pack can't hold, such as `rules`, is reported by [`loadGame`](/docs/reference/loader#loadgame) as `content has no "rules", so it was left out`. So is a key your content declares twice. A hand-built game has no content files, so `checkGame` has nothing to say about these.
-- It doesn't check the tokens in prose, such as `{{v:game/breadPrice}}`. An unknown one is left on screen as written, so you can see it.
+- It checks only some [tokens](/docs/reference/prose#tokens) in prose (see [Tokens](#tokens)). A plain `{{breadPrice}}` that names nothing is left on screen as written, so you can see it.
 
 ## Probes
 
@@ -224,6 +226,7 @@ A condition, effect or command named after a plugin the game wasn't built with i
 | `input <id>` | Its `when`, `a choice with no options`, and `min is above max`. |
 | `minigame <id>` | `starts in unknown state "…"`, `no final state can be reached from its start, so it never ends`, `keys maps input "…", which no state's on uses`, `uses key "…", which is not in its kv` (one another minigame declares), and `copies key "…", which is not in its kv`. See [Minigames](/docs/reference/minigames#the-checks). |
 | `minigame <id> state <state>` | Its `label`'s prose, `a timer needs ms above 0`, `a final state ends the minigame, so its after, on and always never run`, and for each transition (`after`, `on <input>`, `always <n>`): `goes to unknown state "…"`, `to lists no states`, and `the weight of "…" must be above 0`. Each transition's `when` and `effects` are checked under `minigame <id> state <state> <transition>`, and a final state's effects under `… final`. |
+| `phrase <name>` | `rules.values has a value "…" too; {{…}} prints the phrase, so rename one`, `a phrase needs at least one row`, `row <n> has no when, so the rows after it are never shown`, `row <n> needs its text`, and `"…" is in a group that is also a phrase; a name is either a phrase or a group`. Each row's `when` and the markup in its words, under `phrase <name> row <n>`. See [Phrases](/docs/reference/phrases#the-checks). |
 | `timer <id>` | `a timer needs ms above 0`, `two timers share this id`, and its `effects`. See [Timers](/docs/reference/timers#the-checks). |
 | `setting <id>` | `a choice with no options`, `min is above max`, `step must be above 0`, and a `default` the setting can't take, such as `default 9 is not between 0 and 5`. |
 | `stat <id>` | `belongs to unknown kind "…"` for its `of`, `no game value named "…"` (or `no plugin value`) for a `max: { value }`, its `visible` condition and its `ui` (see [Presentation hints](#presentation-hints)). For a [derived stat](/docs/reference/stats#derived-stats): `derive reads unknown stat "…"`, `derive reads stat "…", which belongs to …, not …`, `a derived stat cannot be spendable: it is never written`, `a derived stat has no start: it is worked out`, and `derive goes round in a cycle: … → …`. For [levels](/docs/reference/stats#levels): `levels.at needs at least one threshold`, `levels.at must go up, each threshold above the last`, and `levels.at … outside the stat's range (… to …)`. |
@@ -341,6 +344,22 @@ A `ui` field of [presentation hints](/docs/reference/ui-hints) is checked only f
 | `choice …: a choice's command can't be another choice; put the effects on this one` | A choice's [`command`](/docs/reference/scenes#choice) is `choose`. |
 
 A choice's `command` is checked as any command is, under `choice <id>:`.
+
+## Tokens
+
+The [tokens](/docs/reference/prose#tokens) in every line of prose, every block of words and every phrase's row are checked, where the line is reported:
+
+| Problem | When |
+|---|---|
+| `{{…}} names no phrase, no value in rules.values and no kv key the content starts or sets; is the phrase's name right?` | A bare name with a group in it, such as `{{outfit.verdit}}`, that names none of these. A key counts when content starts it (`kv`, `resets`), an input writes it, an effect sets it with no `of`, a roll keeps its total under it, or a minigame's final state copies to it. A plain name such as `{{friend}}` isn't checked, since a start command or the game's code may set it. |
+| `{{…}} names no value "…"` | A plugin's token, `{{plugin/name}}`, that no plugin of the game has. |
+| `{{v:…}} is written {{…}} now: …` | The older form of a value's token in the game's own content. A pack's is rewritten for you. |
+
+And one warning, in `warnings`:
+
+| Warning | When |
+|---|---|
+| `{{…}} may be unset, and then prints nothing; give it words to show until then, as {{…\|…}}` | A bare token with no fallback that names a kv key the game's `kv` doesn't start, or a phrase with no row that always fits. A line whose block shows only under a `kv` or `roll` condition on that key, such as `when: { kv: 'playerName' }`, isn't warned about. |
 
 ## Words written as prose keys
 

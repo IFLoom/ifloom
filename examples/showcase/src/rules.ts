@@ -29,7 +29,7 @@ export const rules: GameRules = {
     // The cat's name as the player typed it, or a cat with no name yet.
     catName: (state) => (typeof state.kv.catName === 'string' ? state.kv.catName : 'The cat'),
   },
-  // Content calls these as `game/…`: `{{v:game/catName}}`, `{ 'game/postLatest': true }`.
+  // Content calls these as `game/…`: `{{catName}}`, `{ 'game/postLatest': true }`.
   effects: {
     // Post the newest photo, and roll how it does. It returns plain effects, a plugin's
     // included, and draws its dice from the save's seed, so the same save gets the same likes.

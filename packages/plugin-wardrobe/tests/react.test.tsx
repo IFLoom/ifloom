@@ -20,6 +20,7 @@ function game(): Game {
           { id: 'cape', of: 'clothing', name: 'cape', at: 'player', traits: { ...wardrobe.wearable('back') } },
         ],
         data: { wardrobe: { slots: [{ id: 'back', label: 'Back', start: 'clothing:coat' }] } },
+        actions: [{ id: 'change', label: 'Change', effects: [{ panel: 'wardrobe' }] }],
       },
     ],
     { id: 'wardrobe-ui', title: 'The Flat', plugins: [wardrobe()] },
@@ -30,10 +31,12 @@ const click = (element: Element) => act(() => void fireEvent.click(element))
 const slot = (runner: ReturnType<typeof createRunner>) => (runner.view().plugins.wardrobe as WardrobeView).slots[0].entity
 
 describe('the wardrobe UI', () => {
-  it('wears and takes off clothes in the side column', () => {
+  it('puts nothing in the side column, and wears and takes off clothes in the wardrobe panel', () => {
     const g = game()
     const runner = createRunner(g, startingState(g))
     render(<GameShell runner={runner} plugins={[wardrobeUi]} />)
+    expect(document.querySelector('[data-wardrobe]')).toBeNull()
+    act(() => void runner.apply({ type: 'action', id: 'change' }))
     const panel = document.querySelector('[data-wardrobe]') as HTMLElement
     expect(within(panel).getByText('coat')).toBeTruthy()
     click(within(panel).getByRole('button', { name: 'Wear cape' }))

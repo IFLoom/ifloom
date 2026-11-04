@@ -184,7 +184,11 @@ describe('Small Town', () => {
     // Answering her text in the evening at home: the phone rings straight after, with ten seconds on it.
     state = run(on(state, 2, 'evening'), messages.reply('ava.text', 'yes'))
     expect(state.sceneId).toBe('flat.ring')
-    expect(view(state, game).timers).toEqual([{ id: 'flat.ring', label: 'Ringing', left: 10_000, total: 10_000 }])
+    // Her P.S. is still on its way, on the messages' own timer.
+    expect(view(state, game).timers).toEqual([
+      { id: 'messages.due', label: null, left: 2000, total: 2000 },
+      { id: 'flat.ring', label: 'Ringing', left: 10_000, total: 10_000 },
+    ])
     // Picked up in time: Ava's call, and no missed call.
     const answered = run(state, { type: 'tick', ms: 6000 }, { type: 'choose', id: 'answer' })
     expect(view(answered, game).scene.title).toBe('Ava, on the phone')
@@ -196,7 +200,7 @@ describe('Small Town', () => {
     expect(missed.kv.missedAva).toBe(true)
     expect(missed.notices.map((notice) => notice.title)).toContain('Missed call: Ava')
     // It rings once.
-    expect(run(on(missed, 3, 'evening'), { type: 'action', id: 'places/wardrobe' }).sceneId).toBeNull()
+    expect(run(on(missed, 3, 'evening'), { type: 'action', id: 'wardrobe/open' }).sceneId).toBeNull()
   })
 
   it('charges rent on Sundays, and meets Ava by the river once a friendship has had time', () => {

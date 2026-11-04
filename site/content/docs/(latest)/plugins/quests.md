@@ -149,7 +149,7 @@ const town: Content = {
     'place.flat': 'Boxes, mostly.',
     'place.high-street': 'A bakery, a launderette, a bus stop.',
     'place.cafe': 'Six tables, one of them wobbly.',
-    todo: 'To do ({{v:quests/updates}})',
+    todo: 'To do ({{quests/updates}})',
   },
   data: {
     quests: { quests: [settle, scarf] },
@@ -244,7 +244,7 @@ It works in any effect list: a data scene choice's, an action's, a thing's use i
 
 | Prose writes | Prints |
 |---|---|
-| `{{v:quests/updates}}` | How many quests have news the player hasn't looked at, for a badge such as `To do ({{v:quests/updates}})`. |
+| `{{quests/updates}}` | How many quests have news the player hasn't looked at, for a badge such as `To do ({{quests/updates}})`. |
 
 ## Strings
 

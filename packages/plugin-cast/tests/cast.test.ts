@@ -228,7 +228,7 @@ describe('the cast', () => {
     // Sam is whoever the player says: an input sets the kv key, the name reads it.
     const named: Content = {
       ...town,
-      entities: [ava, cast.person({ id: 'sam', name: '{{friendName}}', fullName: '{{friendName}} Reed', home: 'park', talk: 'sam.hi' })],
+      entities: [ava, cast.person({ id: 'sam', name: '{{friendName|Your friend}}', fullName: '{{friendName}} Reed', home: 'park', talk: 'sam.hi' })],
     }
     const { game: g, problems } = loadGame([named, map], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'park' }), cast()] })
     expect(problems).toEqual([])
@@ -238,8 +238,8 @@ describe('the cast', () => {
     expect(shown(state, withSpeaker).present.find((person) => person.id === 'sam')).toMatchObject({ name: 'Robin', fullName: 'Robin Reed' })
     expect(whyNot(state, withSpeaker, cast.call('sam'))).toBe('You cannot reach Robin from here.')
     expect(view(run(withSpeaker, state, cast.talk('sam')), withSpeaker).scene.speaker).toMatchObject({ name: 'Robin' })
-    // Before the player names them, the token shows as written.
-    expect(shown(start, withSpeaker).present.find((person) => person.id === 'sam')?.name).toBe('{{friendName}}')
+    // Before the player names them, the name is the fallback after the "|", and a token with none prints nothing.
+    expect(shown(start, withSpeaker).present.find((person) => person.id === 'sam')).toMatchObject({ name: 'Your friend', fullName: ' Reed' })
   })
 
   it('are never in the room without places, but still answer the phone', () => {

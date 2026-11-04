@@ -170,6 +170,15 @@ export const ava: Content = {
             { id: 'later', label: 'Maybe later in the week' },
           ],
         },
+        // A second text a moment after the first, with her typing in between: `after` waits on the engine's timers.
+        {
+          id: 'ava.text.ps',
+          channel: 'texts',
+          from: 'ava',
+          when: messages.arrived('ava.text'),
+          after: { ms: 2000 },
+          body: [{ text: 'The café, not the one by the bus stop. Theirs is terrible.' }],
+        },
         ...smallTalk,
       ],
     },

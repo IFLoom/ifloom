@@ -1,6 +1,6 @@
 /**
  * The café's own code: the week's sums, worked out from the state. Content
- * calls them by name, `{ 'game/takings': true }` and `{{v:game/payroll}}`.
+ * calls them by name, `{ 'game/takings': true }` and `{{payroll}}`.
  */
 import { entitiesOf, statValue, type EffectRef, type Game, type GameRules, type GameState } from '@ifloom/engine'
 

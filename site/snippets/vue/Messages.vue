@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { runner, view } from './runner.ts'
 
-// Each channel's threads, with their messages and the replies on offer, and a button that marks a thread read.
+// Each channel's threads, with their messages and the replies on offer, who is typing, and a button that marks a thread read.
 </script>
 
 <template>
@@ -28,6 +28,8 @@ import { runner, view } from './runner.ts'
           </button>
         </template>
       </div>
+      <!-- A message with `after` is on its way. -->
+      <p v-if="thread.typing" class="typing">{{ thread.name }} is typing…</p>
       <!-- Mark read, while anything in the thread is unread. -->
       <button v-if="thread.read" @click="runner.apply(thread.read.command)">{{ thread.read.label }}</button>
     </section>

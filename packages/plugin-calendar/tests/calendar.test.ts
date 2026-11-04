@@ -39,7 +39,7 @@ function house(
           { id: 'walk', label: 'Long walk', effects: [calendar.pass(3)] },
           { id: 'rest', effects: [{ turn: true }] },
         ],
-        prose: { diary: 'Day {{v:calendar/day}}, a {{v:calendar/weekday}} {{v:calendar/period}}.' },
+        prose: { diary: 'Day {{calendar/day}}, a {{calendar/weekday}} {{calendar/period}}.' },
       },
     ],
     {

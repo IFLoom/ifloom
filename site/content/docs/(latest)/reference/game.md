@@ -43,6 +43,7 @@ type Game = {
   settings?: SettingDef[]
   minigames?: MinigameDef[]
   timers?: TimerDef[]
+  phrases?: Record<string, PhraseRow[]>
   saveable?: Blocked[]
   finished?: Condition
   carryOver?: CarryOver
@@ -80,6 +81,7 @@ type Game = {
 | `settings` | What the player can change from a settings screen. Nothing is built in. See [Settings](/docs/reference/settings). |
 | `minigames` | Small games inside the story, such as a quick-time event, run as states with timers and inputs. See [Minigames](/docs/reference/minigames). |
 | `timers` | Named countdowns in real time, such as a phone that rings for ten seconds, with the effects that run when one runs out. See [Timers](/docs/reference/timers). |
+| `phrases` | Words for the middle of a sentence that change with the state, printed as `{{outfit.verdict}}`. Content writes them nested in groups; the game holds them by full name, each as its rows. See [Phrases](/docs/reference/phrases). |
 | `saveable` | When saving is refused, and why. Saving is always allowed if left out. See [`saveable`](#saveable). |
 | `finished` | A [condition](/docs/reference/conditions) that says the game is finished. The runner records the first time it holds in the [profile](/docs/reference/profile), so a title screen can offer New Game+. See [New Game+](/docs/reference/state#new-game). |
 | `carryOver` | What a New Game+ takes from the game before: `{ stats?, kv?, held? }`, lists of stat ids, kv keys and the things the player holds, and `held` can be `'all'`. See [New Game+](/docs/reference/state#new-game). |
@@ -185,7 +187,7 @@ Content names things by id, and an id is letters, digits, `-` and `_`, in parts 
 | Separator | Means | Examples |
 |---|---|---|
 | `.` | A part of an id. | Scene `cafe.counter`, prose key `place.cafe.ava`, audio track `cafe.murmur` |
-| `/` | A plugin's name: its id, then the name. | `quests/done`, `statuses/apply`, `{{v:messages/unread}}`, the string `calendar/period.morning` |
+| `/` | A plugin's name: its id, then the name. | `quests/done`, `statuses/apply`, `{{messages/unread}}`, the string `calendar/period.morning` |
 | `#` | A choice in a scene, or a reply to a message. | The label key `ch1.mat#open`, and `{ chose: 'ch1.mat#open' }` |
 | `:` | A reference with what it is in front. | The entity `character:ava`, a mod's pack `mod:naps`, the profile's `core:settings` |
 

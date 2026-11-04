@@ -14,6 +14,7 @@ import { drawProse } from '../plain/prose.ts'
 import { drawRolls } from '../plain/rolls.ts'
 import { drawShop } from '../plain/shop.ts'
 import { drawTimers } from '../plain/timers.ts'
+import { drawChanges } from '../plain/changes.ts'
 import { atTheCounter, inTheCafe, inThePark, phoneRinging, readingTexts, steppedOut, unpacked } from './play.ts'
 
 /** The Plain JS snippets, drawn into a box and pressed, as the vanilla template would. */
@@ -63,6 +64,13 @@ describe('the Plain JS snippets', () => {
     phoneRinging(runner)
     const box = drawn((into) => drawTimers(into, runner.snapshot()))
     expect(box.querySelector('[data-timer="flat.ring"] .timer-left')?.textContent).toMatch(/^\d+s$/)
+  })
+
+  it('changes: a pill for the coins the last command set, marked up', async () => {
+    await runner.newGame()
+    inTheCafe(runner)
+    const box = drawn((into) => drawChanges(into, runner.snapshot()))
+    expect(box.querySelector('[data-stat="coins"]')?.getAttribute('data-dir')).toBe('up')
   })
 
   it('notices: a dismissed notice is gone from the next drawing', async () => {

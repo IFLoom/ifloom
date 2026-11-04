@@ -112,6 +112,8 @@ type MessageDef = {
   weight?: number
   body: Block[]
   replies?: ReplyDef[]
+  after?: { ms: number }
+  typing?: boolean
 }
 ```
 
@@ -126,6 +128,8 @@ type MessageDef = {
 | `weight` | How likely a draw is to pick it, against the others in the pool that can be drawn. 1 if you leave it out, and 0 is never. |
 | `body` | Its words, as [prose blocks](/docs/reference/scenes#block). They're the same blocks as a scene's body, with tokens and `when`s. A picture or a video goes in as [markup](/docs/reference/prose#videos) in the prose or as a `{ media }` block, and comes out in the view's `beats`. |
 | `replies` | What the player can send back. The player sends one, once. Leave it out for a message with no replies. |
+| `after` | How long it takes to arrive once its `when` holds, in milliseconds: `{ ms: 1500 }`. Leave it out and it arrives at once. See [Messages that take a moment](#messages-that-take-a-moment). |
+| `typing` | Whether its thread shows the sender typing while it waits. `true` if you leave it out. Only a message with `after` waits. |
 
 ### ReplyDef
 
@@ -196,6 +200,28 @@ The draw is seeded by the save, the turn and how many messages have arrived, so 
 
 Each arrival has a key. The first is the message's id, and later ones are `<id>~2`, `<id>~3` and on. The view gives each arrival's replies with the right key in their command, so a UI doesn't build it.
 
+### Messages that take a moment
+
+A text that arrives with the one before it reads like a letter. Give a message `after` and it waits that long once its `when` holds, with the thread showing the sender typing, then arrives. A burst is a chain of them, each waiting on the one before:
+
+```ts
+import { messages, type MessageDef } from '@ifloom/plugin-messages'
+
+const burst: MessageDef[] = [
+  { id: 'sam.up', channel: 'texts', from: 'sam', when: { kv: 'phase', is: ['evening'] }, body: [{ text: 'Are you up?' }] },
+  { id: 'sam.radiator', channel: 'texts', from: 'sam', when: messages.arrived('sam.up'), after: { ms: 1500 }, body: [{ text: 'The radiator is knocking again.' }] },
+  { id: 'sam.never', channel: 'texts', from: 'sam', when: messages.arrived('sam.radiator'), after: { ms: 2500 }, body: [{ text: 'Never mind, it stopped.' }] },
+]
+```
+
+The first arrives at the end of the command that sets the phase. The second's `when` holds straight away, so it starts waiting in the same command. After 1.5 seconds it arrives, and the third starts its 2.5 seconds.
+
+The wait runs on the engine's [timers](/docs/reference/timers). The plugin brings one timer of its own, `messages.due`. A message that waits is kept in the save as `due`, and the timer is started for its `ms`. When the timer runs out, its effect `messages/due` delivers it. So time passes only by the logged `tick` command, which the UI's clock sends while a timer runs ([`startClock`](/docs/browser#startclock), or the React UI's own). A replay delivers every message at the same point, and a save made while one waits keeps waiting when it loads.
+
+One message waits at a time. While one does, the rest of its thread waits behind it, and so does any other message with `after`, in any thread. Each starts once the one before has come. A message without `after` in another thread still arrives at once.
+
+The time is counted from when the message starts waiting, which is when the one before it arrived, if that's what its `when` waits on. Use `typing: false` for a message that shouldn't show anyone typing, such as a delivery update.
+
 ## A worked example
 
 A cut-down Small Town. The player meets Ava at the café, and she texts the next morning. Saying yes brings a second text. A letter from the town council lands on the mat on the second afternoon. There's no phone here. The texts and the letters are two channels, and the flat has a button to pick up the post.
@@ -251,7 +277,7 @@ const town: Content = {
     'ava.text': 'Good to meet you yesterday! Coffee’s on me next time 🙂',
     'ava.beans': 'New beans in. Tell me if they’re awful.',
     'council.bins': 'Bins go out on Thursdays from now on.',
-    'ui.inbox': 'Inbox ({{v:messages/unread}})',
+    'ui.inbox': 'Inbox ({{messages/unread}})',
   },
   data: {
     messages: {
@@ -371,6 +397,7 @@ An unknown message is false.
 | Content writes | Helper | Does |
 |---|---|---|
 | `{ 'messages/draw': { pool } }` | `messages.draw(pool)` | Draws one message from the pool, from those whose `when` holds, by `weight`, and delivers it as a new arrival with its notice. Nothing arrives when none can be drawn. See [Messages that come again](#messages-that-come-again). |
+| `{ 'messages/due': {} }` | | Delivers the message that's waiting, if one is. The plugin's `messages.due` timer runs it when the wait is over, so content never needs to. See [Messages that take a moment](#messages-that-take-a-moment). |
 
 ## Commands
 
@@ -395,8 +422,8 @@ Both are commands like any other, so triggers run after them, and so does every 
 
 | Prose writes | Prints |
 |---|---|
-| `{{v:messages/unread}}` | Unread messages in every channel. |
-| `{{v:messages/unread channel=texts}}` | Unread messages in that channel. |
+| `{{messages/unread}}` | Unread messages in every channel. |
+| `{{messages/unread channel=texts}}` | Unread messages in that channel. |
 
 The value works as a badge too, with the channel as its argument: a devices app's `badge: { value: 'messages/unread', with: { channel: 'texts' } }`. Code can read it with [`amountOf`](/docs/reference/amounts#amountof)`(state, game, { value: 'messages/unread', with: { channel: 'texts' } })`, or the game's own code with its context's `value('messages/unread', { channel: 'texts' })`.
 
@@ -431,13 +458,14 @@ Its [React UI](#drawing-it) draws a channel with [`MessagesSection`](#messagesse
 ### MessagesView
 
 ```ts
-type MessagesView = { channels: ChannelView[]; unread: number }
+type MessagesView = { channels: ChannelView[]; unread: number; waiting: boolean }
 ```
 
 | Field | What it is |
 |---|---|
 | `channels` | Every channel, in the order `data.messages.channels` lists them, including empty ones. |
 | `unread` | Unread messages in every channel. |
+| `waiting` | Whether a message with `after` is on its way, in any thread. |
 
 ### ChannelView
 
@@ -453,7 +481,7 @@ type ChannelView = {
 
 | Field | What it is |
 |---|---|
-| `threads` | The threads with at least one message that has arrived, the one with the newest message first. |
+| `threads` | The threads with at least one message that has arrived, the one with the newest message first. A thread whose first message is still on its way is listed too, first, with no messages and `typing` on. |
 | `unread` | Unread messages in the channel. |
 | `read` | The button that marks the whole channel read, a [`RenderedChoice`](/docs/reference/view#renderedchoice) labelled with the `messages/allRead` string, or `null` while nothing in it is unread. |
 
@@ -468,6 +496,7 @@ type ThreadView = {
   messages: MessageView[]
   unread: number
   read: RenderedChoice | null
+  typing: boolean
 }
 ```
 
@@ -480,6 +509,7 @@ type ThreadView = {
 | `messages` | Oldest first. |
 | `unread` | Unread messages in the thread. |
 | `read` | The button that marks the thread read, labelled with the `messages/markRead` string, or `null` while nothing in it is unread. |
+| `typing` | Whether the sender is typing: a message with [`after`](#messages-that-take-a-moment) is waiting to arrive in this thread, and its `typing` isn't `false`. Draw a typing bubble after the messages while it's on. |
 
 ### MessageView
 
@@ -522,7 +552,7 @@ The React UI's [`MessagesSection`](#messagessection) draws each message's beats 
 
 ## Drawing it
 
-`view.plugins.messages` is a [`MessagesView`](#messagesview): each channel's threads and their messages, with how many are unread. A message's `replies` are ready-made buttons, and `replied` is the reply once it's sent. A thread's `read` and a channel's `read` are ready buttons that mark them read. Messages usually show inside an app on a [device](/docs/plugins/devices).
+`view.plugins.messages` is a [`MessagesView`](#messagesview): each channel's threads and their messages, with how many are unread. A message's `replies` are ready-made buttons, and `replied` is the reply once it's sent. A thread's `read` and a channel's `read` are ready buttons that mark them read, and a thread's `typing` says whether to draw the sender typing. Messages usually show inside an app on a [device](/docs/plugins/devices), as a list of conversations that each open into a thread.
 
 `@ifloom/plugin-messages/react` draws a channel inside an app, for a game drawn with [`@ifloom/react`](/docs/react). List `messagesUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a [`MessagesSection`](#messagessection) is drawn wherever a [device](/docs/plugins/devices)'s app shows a messages channel. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
@@ -542,7 +572,15 @@ const messagesUi: PluginUi
 
 The plugin's [`PluginUi`](/docs/react/kit#pluginui): a [`MessagesSection`](#messagessection) is drawn wherever a [device](/docs/plugins/devices)'s app shows a messages channel.
 
-It has no words of its own: its buttons say what the view's buttons say, the plugin's [strings](#strings).
+Its words are in `MESSAGES_WORDS`. A game rewords any of them with `ui.<key>` in its strings, as it does the React UI's own: `{ 'ui.noMessages': 'Nothing yet.' }`. The back button is the React UI's own `ui.back`.
+
+| Key | English |
+|---|---|
+| `ui.noMessages` | `No messages yet.`, what a channel with nothing in it says. |
+| `ui.typing` | `{name} is typing`, the typing bubble's label for screen readers. |
+| `ui.typingShort` | `typing…`, a thread's last line in the list while the sender is typing. |
+
+The other buttons say what the view's buttons say, the plugin's [strings](#strings).
 
 ### MessagesSection
 
@@ -550,11 +588,15 @@ It has no words of its own: its buttons say what the view's buttons say, the plu
 const MessagesSection: PluginSectionComponent
 ```
 
-A [messages](/docs/plugins/messages) channel, the one named by the section's `with.channel` (`data-channel`). Each thread (`data-thread`) shows under its sender's name and portrait, with its messages as bubbles. A message's [`beats`](/docs/plugins/messages#messageview) are drawn with [`Beat`](/docs/react/components#beat), so a picture or a clip in it shows in the bubble and opens in the viewer. Under each message is the reply the player sent, or the replies on offer as buttons. A message from a [pool](/docs/plugins/messages#messages-that-come-again) that arrives again is a new bubble each time, and each `message` carries its arrival's key as `data-message`.
+A [messages](/docs/plugins/messages) channel, the one named by the section's `with.channel` (`data-channel`), drawn the way a phone draws one.
 
-Opening the channel marks nothing read, so the unread count stays until the player clears it. While the channel has unread messages, the channel's **Mark all read** button from the view marks it read. It draws nothing if the channel isn't in the view.
+It opens on the conversation list. Each thread is a row with the sender's portrait, their name, the last line (the newest message's first line, the reply the player sent to it, or `typing…` while they're typing) and a dot while anything in it is unread. The thread with the newest message is at the top. While the channel has unread messages, the channel's **Mark all read** button from the view is above the list. A channel with nothing in it yet shows `ui.noMessages` instead.
 
-Replaceable as `MessagesSection` in [`components`](/docs/react/components#components). Parts: `channel`, `thread`, `thread-title`, `thread-portrait`, `message` (with `data-message`), `bubble` (with `data-from`) and `button`.
+A tap on a row opens that thread. Its heading has a back arrow to the list (labelled `ui.back`), then the sender's portrait and name. Its messages follow as bubbles. A message's [`beats`](/docs/plugins/messages#messageview) are drawn with [`Beat`](/docs/react/components#beat), so a picture or a clip in it shows in the bubble and opens in the viewer. Under each message is the reply the player sent, or the replies on offer as buttons. While the thread's `typing` is on, a typing bubble with three dots comes after the last message. A message from a [pool](/docs/plugins/messages#messages-that-come-again) that arrives again is a new bubble each time, and each `message` carries its arrival's key as `data-message`.
+
+An open thread is read: opening it sends the thread's `read` command, and anything that arrives while it's open is marked read as it comes. Its notices stay until they're dismissed. It draws nothing if the channel isn't in the view.
+
+Replaceable as `MessagesSection` in [`components`](/docs/react/components#components). Parts: `channel`, `conversations`, `conversation` (with `data-thread`, and `data-unread` while any is unread), `conversation-portrait`, `conversation-name`, `conversation-last`, `conversation-unread`, `messages-empty`, `thread`, `thread-back`, `thread-title`, `thread-portrait`, `message` (with `data-message`), `bubble` (with `data-from`, and `data-typing` on the typing bubble), `typing` and `button`.
 
 ### useMessages
 
@@ -575,10 +617,13 @@ type MessagesState = {
   arrived: Arrival[]
   replied: Record<string, string>
   read: Record<string, true>
+  due: { key: string; thread: string; typing: boolean } | null
 }
 ```
 
-What the plugin keeps in a save, at `state.plugins.messages`. It holds every arrival, oldest first, and the reply sent to each and which have been read, by the arrival's key. A UI reads the view, not this.
+What the plugin keeps in a save, at `state.plugins.messages`. It holds every arrival, oldest first, and the reply sent to each and which have been read, by the arrival's key. `due` is the message waiting to arrive, if one is: its id, its thread and whether the thread shows typing. A UI reads the view, not this.
+
+A save from before `after` (the plugin's state version 2) loads with nothing waiting.
 
 A save from before pools (the plugin's state version 1) kept one arrival per message by id. It loads with each of those as an arrival keyed by the message's id, so its replies and reads carry over. Its day is taken to be its turn, because the old save didn't keep the day.
 
@@ -632,6 +677,7 @@ When the game loads, the plugin reports these problems against the content or pa
 - A reply with no label (`no prose for "<message id>#<reply id>"`).
 - Anything a reply's `when` or `effects` name, such as `reply <id>: unknown storyline "…"`.
 - A `weight` below 0 (`weight must be 0 or more`).
+- An `after` with no `ms` above 0 (`after needs ms above 0`), or on a message in a pool, which arrives when it's drawn (`a message drawn from a pool arrives when drawn, so it can’t wait with after`).
 
 ```text
 mod:summer-fete · messages fete.invite · no prose for "fete.invite#maybe"
@@ -647,8 +693,9 @@ A `messages/arrived`, `messages/since`, `messages/replied` or `messages/read` co
 - **A reply's label is its words.** Before schema 25 it was the prose line `<message>#<reply>`. A pack of an older schema gets those words as the reply's `label` when it loads, and the checker reports a reply in your own content with no label whose old prose has words.
 - **One reply, once.** After the player sends one, the others are gone and `messages/reply` refuses. To let the player say more, send a new message with replies of its own.
 - **A channel the game doesn't have counts nothing.** `messages/unread` with `{ channel: 'post' }` is 0 when there's no `post` channel, so a badge that names a renamed channel stops counting. A [devices](/docs/plugins/devices) app badge that names a value nobody has is reported when the game loads.
-- **The notice is the engine's.** Each arrival raises a [notice](/docs/reference/notices) with the id `messages.<key>`, the [arrival's key](#arrival), the sender's name as its `title` and the channel as its `tag`. So `view.notices.byTag.texts` counts arrivals the player hasn't dismissed. Reading a message doesn't dismiss its notice, and dismissing doesn't read the message. If your UI wants them to go together, send both commands.
+- **The notice is the engine's.** Each arrival raises a [notice](/docs/reference/notices) with the id `messages.<key>`, the [arrival's key](#arrival), the sender's name as its `title`, the message's first line as its `text` (cut to 80 characters) and the channel as its `tag`. A message that arrives in a thread whose last notice is still unseen replaces that notice, so a burst of five texts is one notice showing the newest line, not five. So `view.notices.byTag.texts` counts threads with news the player hasn't dismissed, rather than every message. Reading a message doesn't dismiss its notice, and dismissing doesn't read the message. If your UI wants them to go together, send both commands.
 - **The sender is matched by id.** A `from` that names an entity shows its name and picture. A typo shows the typo, and the loader doesn't report it, because any name is allowed. In a game with no `ava` entity, `from: 'ava'` shows `ava`.
+- **A waiting message needs the clock.** A message with `after` arrives only when `tick` commands run its timer out. In a test, or with a UI of your own that sends no ticks, send `{ type: 'tick', ms }` yourself. `ifloom playtest`'s explorer waits for a running timer when it has nothing new to do, so a burst arrives there too.
 - **A message doesn't need a device.** You can show `view.plugins.messages` anywhere, such as letters on the mat or a pigeonhole at work. The [devices](/docs/plugins/devices) plugin is one way to show a channel, not a requirement.
 
 ## See it in an example

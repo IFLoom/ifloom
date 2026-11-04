@@ -10,6 +10,19 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- A [`cases`](/docs/reference/flows#the-first-that-fits) block, written `cases([...])`: only the first of its blocks whose `when` holds is shown, so an if, else if, else is one block with an otherwise at the end. The checker reports an empty one, a block after the otherwise and a point inside one.
+- [Phrases](/docs/reference/phrases): words for the middle of a sentence that change with the state, declared in content's `phrases` as rows tried in order and grouped in nested objects, then printed as `{{outfit.verdict}}`. A translation gives each row other words under `phrase.<name>.<row>`, and a pack can replace one or add to a group.
+- [`view.changes`](/docs/reference/changes): the stats the last command moved, the player's and entities', each with `from`, `to`, `by` and a signed `text` in the stat's format (`+30 coins`), for feedback after a choice. Hidden stats are left out, and a tick that moves nothing keeps the list. Saves are version 24.
+- A message can take a moment to arrive: [`after: { ms }`](/docs/plugins/messages#messages-that-take-a-moment) makes it wait that long once its `when` holds, with its thread's `typing` on in the meantime (unless `typing: false`), so a burst of texts arrives one at a time. The wait runs on the engine's timers, so replays and saves keep it. `ifloom playtest`'s explorer now waits for a running timer when it has nothing new to do.
+- The React UI's [`Changes`](/docs/react/components#changes) draws `view.changes` as pills, each a `change` part with `data-stat`, `data-of` and `data-dir`. The default layout leaves it out; place it after `<Scene />`.
+- A section with any ui hint is drawn as one `group` part, with each scalar hint as a `data-*` attribute (`{ card: 'result' }` is `data-card="result"`), so a hint of your own styles a whole section with CSS. See [Your own hints](/docs/react/hints#your-own-hints).
+- The wardrobe's [`closet`](/docs/plugins/wardrobe#a-place-to-change) trait gives a place a **Wardrobe** button that opens the `wardrobe` panel.
+- The messages app has an empty state, `ui.noMessages`.
+- A minigame's `on` entries take a `label`, the input's words on its button in that state, so a quiz shows each question's answers. See [the quiz recipe](/docs/recipes/minigames#a-quiz-with-its-answers-on-the-buttons).
+- A token can end in `|` and words to show while it's unset: `{{flatmateName|Your flatmate}}`, in every form of token. A cast member's `name: '{{friendName|Your friend}}'` reads well before the player names them.
+- [`checkGame`](/docs/reference/checks#checkgame) returns `warnings` beside its problems, which `ifloom check` prints without failing: so far, a bare token with no fallback that may print nothing.
+- The content checker reports a token with a group in its name, such as `{{outfit.verdit}}`, that names nothing, and a plugin's token whose value nobody has.
+
 - Ready buttons in more plugin views, each a `RenderedChoice` greyed out in advance with the engine's reason, worded by the plugin's strings: the [wardrobe](/docs/plugins/wardrobe#wardrobeview)'s `takeOff` on each slot and `wear` on each spare thing, the [quests](/docs/plugins/quests#questentry)' `track` on each active quest and `seen` on the view, the [messages](/docs/plugins/messages#threadview)' `read` on each thread and channel, the [feed](/docs/plugins/feed#feedview)'s `seen` on each feed, a [job](/docs/plugins/jobs#jobview)'s `quit`, and a [device](/docs/plugins/devices#deviceview)'s `home` and `close`. A UI draws them as any other button, so no UI builds a plugin's command itself.
 - A plugin's panel is in its view, already filtered by what the panel was opened with: [`view.plugins.jobs.panel`](/docs/plugins/jobs#jobsview) is the jobs on the open board, only those its `with.job` lists, and [`view.plugins.shop.panel`](/docs/plugins/shop#shopview) is the vendor whose counter is open. Each is `null` while its panel is shut. [`panelOf(state, game)`](/docs/reference/panels#panelof) gives the panel open now, for a plugin of your own that does the same.
 - Which device is out, and on what, is the game's state: the new [`devices/home`](/docs/plugins/devices#commands) command (`devices.home(device)`) brings a device out on its home screen, and opening an app brings its device out on it, so every UI draws the same and a replay plays the same. A device's view says whether it's `shown`. The React UI's devices UI draws the `DeviceDialog` for the device that's out, once.
@@ -211,6 +224,15 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Changed
 
+- The React UI's `Scene` draws the inputs on offer while it's open between its words and its choices. `InputFields` in a layout now draws only the inputs on offer outside a scene.
+- `wardrobeUi` no longer puts a Wearing section in the side column. The `wardrobe` panel is opened by a closet place's button or any `{ panel: 'wardrobe' }`, and a layout can still place `WardrobeSection`.
+- The messages app opens on a list of conversations (portrait, name, last line, unread dot). A tap opens the thread, with a back button, and an open thread is marked read.
+- A message's notice has its first line as `text`, and a new message in a thread whose notice is still unseen replaces that notice instead of stacking another.
+- A fold's `<details>` now sits inside its section's `group` part.
+
+- An unset bare token with no fallback, such as `{{flatmateName}}` before the player types it, prints nothing instead of showing itself in braces. A `{{kv:…}}` or plugin token naming nothing still shows as written.
+- A save's `SaveMeta` no longer has `version`, which only repeated `state.version`. A save file that still has it loads as before. The file's `ifloom: 1` is the envelope's own format, documented on [Saves](/docs/reference/saves#savefile).
+- A bare token names anything of the game's own: `{{name}}` is a phrase, then a value in `rules.values`, then a kv key, and `{{plugin/name}}` is a plugin's value. Write `{{payroll}}` for `{{v:game/payroll}}` and `{{messages/unread channel=texts}}` for `{{v:messages/unread channel=texts}}`. The old form still prints, a pack's is rewritten when it loads (schema 30), and the checker asks for the short form in your own content.
 - Docs: the "Drawing it" tabs and the guides draw from the runner's snapshot and the views' ready buttons, words and panels, with no command built and no list filtered by hand. The Plain JS parts take the snapshot, the Vue ones read `snapshot` and `view` from `src/runner.ts`, and the subscribe examples read the snapshot each listener is handed.
 
 - **Breaking:** `devices/close` puts a device away, where it took it back to its home screen; that's `devices/home` now. A pack from before schema 29, and an older command log, have their `devices/close` carried to `devices/home`, but your game's own content isn't upgraded: write `devices.home(device)` where you meant going back. The `devices/open` condition with `{ device }` holds while the device is out, where it held while an app was open on it. A save from before this keeps every device put away. `SCHEMA` is 29.
@@ -458,6 +480,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Fixed
 
+- A device's open app no longer grows wider than its dialog when a line in it is long, such as a message's last line in the conversation list on a phone.
 - `rules.profile` now runs after every command, and `rules.view` sees what the profile holds under `game`, as a plugin's do. The runner asked only the plugins before.
 
 - The docs said saves were at version 16 while the engine wrote 17. They're at 18 now, and the docs say so.

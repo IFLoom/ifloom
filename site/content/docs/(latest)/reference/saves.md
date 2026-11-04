@@ -158,6 +158,8 @@ type SaveFile = { ifloom: 1; meta: SaveMeta; state: GameState }
 
 A save as it's written, as JSON: the tag `ifloom: 1`, the save's details, and the state. This is the text `exportSlot` returns.
 
+`ifloom` is the format of this envelope, the wrapping of `meta` around `state`. It's 1, and it's separate from [`SAVE_VERSION`](#save_version), the format of the state inside, which the state carries as `state.version` and [`loadState`](#loadstate) carries forward. A file without `ifloom: 1` isn't read as a save.
+
 ## SaveListing
 
 ```ts
@@ -181,7 +183,6 @@ type SaveMeta = {
   playerName: string | null
   packs: string[]
   plugins: Record<string, number>
-  version: number
   gameVersion: number
 }
 ```
@@ -200,7 +201,6 @@ What a save says about itself, which is enough to draw a row on a load screen wi
 | `playerName` | What [`rules.saveName`](/docs/reference/rules#savename) returns for the state, or `null` when the game has no `saveName`. A save written before version 18 called it `player`, and reading it gives it as `playerName`. The engine keeps no name of its own, so a game that asks the player's name declares `saveName` to show it on its load screen. |
 | `packs` | The ids of the [packs](/docs/reference/loader#content-and-packs) the game was loaded with ([`game.packs`](/docs/reference/game)), such as mods and unlocked content. Your own content has no id, so it isn't recorded. |
 | `plugins` | Each [plugin](/docs/reference/plugins) the game was built with, by id, and the version of its state: `{ quests: 1 }`. |
-| `version` | The state's save format, `state.version`. |
 | `gameVersion` | The game's own [version](#the-games-own-migrations) the save was made with. 1 for a game that declares none, and for a save from before game versions. |
 
 ## LoadedSave
@@ -289,6 +289,7 @@ These are the changes to the save format so far, with what loading a save from b
 - **17 → 18** folds what the player has seen and chosen into one record per id, `{ n, first, last }`, in [`seen`](/docs/reference/state#seen) and [`chosen`](/docs/reference/state#chosen). The count comes from the old `seen` or `chosen`, `first` from `seenOn` or `chosenOn`, and `last` from `lastSeenOn` or `lastChosenOn`, falling back to `first`. A record a save kept no turn for, from before the turns were kept, is dated the turn the save is at. A choice's `once` now reads `chosen`, so the `turn:<scene>#<choice>` kv keys that capped the game's choices go (and `turn:<key>` for a choice with a [`once.key`](/docs/reference/scenes#choice)). One that still caps the save's turn makes that choice's `last` the turn, so the cap holds. Other `turn:` keys, such as [`oncePerTurn`](/docs/reference/scenes#choice)'s, are kept.
 - **18 → 19** moves the phase into the kv store. The stretch of the game the player is in is the kv key `phase` now, not a field of the state, so the save's `phase` becomes `kv.phase`. A save in no phase (`''`) gets no key, and one that already has a `phase` key keeps its own.
 - **19 → 20** calls a running minigame's numbers its kv store: `minigame.vars` becomes `minigame.kv`. A flowing scene's visit, [`flow`](/docs/reference/state#flow), came in this version too, from its load default of `null`.
+- **23 → 24** gives a save [`changes`](/docs/reference/state#changes), the stats the last command moved, as an empty list. Its `SaveMeta` no longer repeats the state's version as `version`; a file that still has it reads as before, and the field is dropped from the meta it gives back.
 
 A save from version 0 doesn't load.
 
@@ -297,7 +298,7 @@ A save from version 0 doesn't load.
 ## SAVE_VERSION
 
 ```ts
-const SAVE_VERSION: 22
+const SAVE_VERSION: 24
 ```
 
 The current save format. Every new state carries it in `state.version`.

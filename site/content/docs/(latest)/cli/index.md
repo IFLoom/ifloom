@@ -331,6 +331,8 @@ No problems.
 
 It exits with `1` if there are any problems. Run it in CI beside your tests.
 
+After the problems it prints the checker's [warnings](/docs/reference/checks#checkgame), each as `warning: …`. A warning is something that may go wrong in play, such as a token that may print nothing, and doesn't change the exit code.
+
 It also looks for every file the game names in its `public/` folder, where Vite copies them from into the build. The content checker lists those files as it walks the game (see [The files a game names](/docs/reference/checks#fileref)), so the CLI doesn't guess where a game keeps them.
 
 - **Sound.** A track's `src` goes through [`audioSrc`](/docs/reference/audio#audiosrc) as the page would, so `{ src: 'music/calm' }` must be at `public/audio/music/calm.ogg`.

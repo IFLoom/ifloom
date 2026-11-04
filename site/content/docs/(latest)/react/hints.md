@@ -15,6 +15,7 @@ How a game looks and moves is the UI's business, not the engine's. Content says 
 | [`timer`](#timer) | A block | The running timer by that id counts down under the block. |
 | [`tilt`](#tilt) | A block | Its picture sits at a slight angle. |
 | [`fold`](#fold) | A section | Its beats are one part the player opens and shuts. |
+| [your own](#your-own-hints) | A section | Its beats are one `group` part, with the hint as a `data-*` attribute. |
 | [`display`](#display) | A stat | A number, a bar or pips in the sidebar. |
 | [`hue`](#hue) | An entity or a kind | The colour of their spoken lines. |
 | [`transitionNames`](#your-own-transition-names) | The game | Transition names of the game's own. |
@@ -208,7 +209,53 @@ fold('Read the postcard', [text(`Wish you were here. The sea is cold and the chi
 // { blocks: [{ text: '…' }], ui: { fold: 'Read the postcard' } }
 ```
 
-On a section, `{ blocks }`: the words the fold opens by. The engine carries a section's hints on every beat it makes, as the beat's `section`, and `Scene` draws the beats together in a `<details>` with these words as its summary, shut to begin with. A fold is presentation only and keeps no state. See [Flowing scenes](/docs/reference/flows).
+On a section, `{ blocks }`: the words the fold opens by. The engine carries a section's hints on every beat it makes, as the beat's `section`, and `Scene` draws the beats together in a `<details>` with these words as its summary, shut to begin with, inside the section's `group` part (see [Your own hints](#your-own-hints)). A fold is presentation only and keeps no state. See [Flowing scenes](/docs/reference/flows).
+
+## Your own hints
+
+A section with any hint on it, the React UI's or one of your own, is drawn as one `group` part around its beats. Each of its hints that's a string, a number or `true`/`false` is copied onto the group as a `data-*` attribute, with a camel-case name written in dashes. So a hint of your own is enough to style a whole section as a card, with no component to write.
+
+Say the café wants the end of a shift drawn as a result card. Declare the hint, so content using it is typed:
+
+```ts
+// src/rules.ts, or any file the game imports
+declare module '@ifloom/engine' {
+  interface BlockUi {
+    /** Draw the section as a card of this kind. */
+    card?: 'result' | 'nudge'
+  }
+}
+```
+
+Write it on a section:
+
+```ts
+import { text } from '@ifloom/engine'
+
+body: [
+  text('The lunch rush comes and goes.'),
+  { blocks: [text('You made 30 coins.'), text('Ava says thanks.')], ui: { card: 'result' } },
+]
+```
+
+`Scene` draws the section as `<div data-part="group" data-card="result">` holding both beats. Style it in your stylesheet:
+
+```css
+[data-part='group'][data-card='result'] {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  padding: 1rem;
+}
+```
+
+Tell [`checkUiHints`](#checkuihints) about it with `allow`, so it isn't reported as a hint the React UI doesn't read:
+
+```ts
+expect(checkUiHints(game, { allow: ['card'] })).toEqual([])
+```
+
+A hint on a single block, not a section, makes no group, since the beat is one element already. Wrap the block in `{ blocks: [...] }` to give it one. A hint that's an object or a list isn't copied, so it stays out of the markup.
 
 ## display
 

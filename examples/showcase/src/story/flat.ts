@@ -4,6 +4,7 @@ import { calendar } from '@ifloom/plugin-calendar'
 import { messages } from '@ifloom/plugin-messages'
 import { places } from '@ifloom/plugin-places'
 import { devices } from '@ifloom/plugin-devices'
+import { wardrobe } from '@ifloom/plugin-wardrobe'
 import { place } from '../place.ts'
 
 /** Ava's text has come and hasn't been read. */
@@ -67,10 +68,13 @@ export const flat: Content = {
       name: 'Your flat',
       description: 'Home',
       exits: ['high-street'],
+      // A place to change: the wardrobe's closet trait gives the flat an "Open the wardrobe" button that opens its panel.
+      // The layout also shows what you're wearing, at home only.
+      traits: { ...wardrobe.closet({ label: 'Open the wardrobe' }) },
       body: [
         // `[[ui:modal|…]]` is the React UI's: "the radiator knocks" opens Sam's welcome note, the prose `notice.welcome`, in a dialog.
         text(
-          "Boxes, mostly. The window looks over the high street, and [[ui:modal|the radiator knocks|notice.welcome|Sam's note]] when it feels like it. {{v:game/catName}} has claimed the warm spot on the sill.",
+          "Boxes, mostly. The window looks over the high street, and [[ui:modal|the radiator knocks|notice.welcome|Sam's note]] when it feels like it. {{catName}} has claimed the warm spot on the sill.",
         ),
         // Once Ava's text has come and until it's read, a line with a link that opens the phone: `[[act:read-text|…]]`
         // draws the flat's "Read your messages" action here, in the line.
@@ -78,8 +82,6 @@ export const flat: Content = {
       ],
       actions: [
         { id: 'bed', label: 'Go to bed', command: calendar.sleep() },
-        // The wardrobe opens in a panel by its name; the layout also shows what you're wearing only at home.
-        { id: 'wardrobe', label: 'Open the wardrobe', effects: [{ panel: 'wardrobe' }] },
         // Drawn inline by `[[act:read-text|…]]` in the line above, so it isn't a button as well.
         { id: 'read-text', label: 'Read your messages', when: textWaiting, command: devices.open('texts') },
       ],

@@ -56,7 +56,7 @@ type GameRules<S = any> = {
 | `onTurn`, `onTurnDone` | Hooks at the end of each turn. See [The end of a turn](#the-end-of-a-turn). |
 | `onStat` | A hook on every change to one of the player's stats. See [`onStat`](#onstat). |
 | `onCommand` | A hook after every command that took, as a plugin's [`onCommand`](/docs/reference/plugins#hooks-and-providers). |
-| `conditions`, `effects`, `values` | Functions content calls by name with `game/` in front: `{ 'game/tired': true }`, `{ 'game/payRent': {} }`, `{{v:game/catName}}`. See [Calls by name](/docs/reference/custom). |
+| `conditions`, `effects`, `values` | Functions content calls by name with `game/` in front, such as `{ 'game/tired': true }` and `{ 'game/payRent': {} }`. Prose prints a value with no prefix: `{{catName}}`. See [Calls by name](/docs/reference/custom). |
 | `queries` | Answers code can ask with `context.query('game/name')`, as a plugin's [queries](/docs/reference/plugins#queries). |
 | `commands` | Commands of the game's own, sent as `{ 'game/rest': true }`. See [`commands`](#commands). |
 | `guard`, `price`, `label` | As a plugin's: whether a command may go ahead, what a button costs in the game's words, and where the game is in a few words. See [Guards, prices and labels](/docs/reference/plugins#guards-prices-and-labels). |

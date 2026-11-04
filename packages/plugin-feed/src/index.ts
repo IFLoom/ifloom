@@ -289,7 +289,7 @@ function feedPlugin(): DefinedPlugin<FeedState, FeedsView> {
     values: {
       /**
        * Posts the player hasn't looked at: in every feed, or in one with
-       * `{ feed }`. <code v-pre>{{v:feed/unread feed=social}}</code>, or a
+       * `{ feed }`. <code v-pre>{{feed/unread feed=social}}</code>, or a
        * badge's `{ value: 'feed/unread', with: { feed: 'social' } }`.
        */
       unread: (_state, args, { slice, game }) =>

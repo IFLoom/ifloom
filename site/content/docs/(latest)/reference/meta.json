@@ -13,6 +13,7 @@
     "flows",
     "storylets",
     "prose",
+    "phrases",
     "strings",
     "words",
     "---Logic---",
@@ -43,6 +44,7 @@
     "timers",
     "random",
     "rolls",
+    "changes",
     "audio",
     "media",
     "panels"

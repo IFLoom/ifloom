@@ -1,8 +1,8 @@
 /**
  * @ifloom/plugin-wardrobe/react: the wardrobe plugin's React UI, for a game drawn
  * with `@ifloom/react`. List `wardrobeUi` in the game's
- * `plugins` to have what the player wears in the side column, and as the
- * `wardrobe` panel; or draw it yourself from `useWardrobe`.
+ * `plugins` to have what the player wears as the `wardrobe` panel, or draw
+ * it yourself from `useWardrobe`.
  */
 import type { ComponentProps } from 'react'
 import type { GameState, RenderedChoice, Result } from '@ifloom/engine'
@@ -99,7 +99,11 @@ function WardrobeCardImpl({ className, title: titleText }: { className?: string;
  */
 export const WardrobeCard = overridable('WardrobeCard', WardrobeCardImpl)
 
-/** The default layout's Wearing section: the `WardrobeCard`, folding in place. */
+/**
+ * A Wearing section for the side column: the `WardrobeCard`, folding in
+ * place. `wardrobeUi` doesn't put it anywhere; place it in your layout's
+ * `<Sidebar>` to keep what the player wears in view.
+ */
 export function WardrobeSection() {
   const words = useWords(WARDROBE_WORDS)
   return (
@@ -111,12 +115,13 @@ export function WardrobeSection() {
 
 /**
  * The wardrobe plugin's React UI, for `plugins` on `mountGame` or
- * `GameProvider`: a Wearing section in the side column with the
- * `WardrobeCard`, the `wardrobe` panel, and the wardrobe's words.
+ * `GameProvider`: the `wardrobe` panel with the `WardrobeCard`, opened by a
+ * closet place's button or any `{ panel: 'wardrobe' }`, and the wardrobe's
+ * words. It adds nothing to the side column; a layout can place
+ * `WardrobeSection` there.
  */
 export const wardrobeUi: PluginUi = {
   id: 'wardrobe',
   words: WARDROBE_WORDS,
-  layout: { sidebar: [WardrobeSection] },
   panels: { wardrobe: { component: () => <WardrobeCard title={false} />, title: 'wardrobe' } },
 }

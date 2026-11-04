@@ -99,7 +99,7 @@ const cafe: Content = {
     },
   ],
   prose: {
-    counter: 'Your card has {{v:loyalty/stamps}} stamps.',
+    counter: 'Your card has {{loyalty/stamps}} stamps.',
   },
 }
 
@@ -257,7 +257,7 @@ type Plugin<S = any, V = unknown> = {
 | `queries` | Answers other plugins can ask for by name, with their context's `query`. See [Queries](#queries). |
 | `cooperates` | Ids of plugins it works with when the game has them. Content may name their conditions, effects and commands in a game without them. See [Cooperates](#cooperates). |
 | `statModifiers` | Changes to what the player's stats read right now, such as a timed boost to energy. Nothing is written into the state. See [Stat modifiers](#stat-modifiers). |
-| `values` | Words and numbers that prose prints with `{{v:loyalty/stamps}}`, and a badge or a stat's ceiling reads as `{ value: 'loyalty/stamps', with }`. Asked with arguments, as a condition is. |
+| `values` | Words and numbers that prose prints with `{{loyalty/stamps}}`, and a badge or a stat's ceiling reads as `{ value: 'loyalty/stamps', with }`. Asked with arguments, as a condition is. |
 | `onTurn` | A hook: runs at the end of each turn. See [Hooks and providers](#hooks-and-providers). |
 | `onTurnDone` | A hook: runs at the end of each turn, once every plugin's `onTurn` and the game's `rules.onTurnDone` have run. See [Hooks and providers](#hooks-and-providers). |
 | `onStat` | A hook: runs when one of the player's stats has just changed, and can let it stand, undo it or add to it. See [Hooks and providers](#hooks-and-providers). |
@@ -388,7 +388,7 @@ Content calls a plugin by its full name: the plugin's id, a `/`, and the name in
 | condition | `{ 'loyalty/stamps': { atLeast: 3 } }` |
 | effect | `{ 'loyalty/stamp': true }`, in a data scene choice's, an action's or a trigger's effects |
 | command | `{ 'loyalty/redeem': {...} }`, or written out, `{ type: 'custom', name: 'loyalty/redeem', with: {...} }`, on an [`ActionDef`](/docs/reference/actions#actiondef)'s or a choice's `command`: a place's action, one of the content's actions or a plugin's [action](#actions) |
-| value | `{{v:loyalty/stamps}}` in prose, `{{v:loyalty/stamps card=gold}}` with arguments, or `{ value: 'loyalty/stamps', with: { card: 'gold' } }` as a badge or a stat's ceiling |
+| value | `{{loyalty/stamps}}` in prose, `{{loyalty/stamps card=gold}}` with arguments, or `{ value: 'loyalty/stamps', with: { card: 'gold' } }` as a badge or a stat's ceiling |
 
 The short form has the plugin's full name as its only key, and the call's arguments as an object as the value, or `true` for none. See [`PluginCall`](/docs/reference/custom#plugincall).
 
@@ -397,7 +397,7 @@ A name with a `/` is a call: the part before it is a plugin's id, or `game` for 
 A plugin usually gives small typed helpers that write these objects for authors who work in code, as properties of its factory named after the calls they write, such as the quests plugin's [`quests.done`](/docs/plugins/quests#helpers). Put them on the factory with `Object.assign(questsPlugin, { done, ... })`, so `quests()` still makes the plugin and the helpers' names never clash with another plugin's or the engine's.
 
 **Gotchas.**
-- A value name in prose is letters, digits, `_` and `-` after the `/`, so `{{v:loyalty/stamps-left}}` prints. Its arguments follow as `key=value`. Anything else isn't a token and is left on screen as written.
+- A value name in prose is letters, digits, `_` and `-` after the `/`, so `{{loyalty/stamps-left}}` prints. Its arguments follow as `key=value`. Anything else isn't a token and is left on screen as written.
 - Don't put an id in a value's name, such as `loyalty/stamps-gold`. Take it as an argument, so one value serves every card and a mod's new card needs no code.
 - A name nobody has fails quietly in play. A condition is false, an effect does nothing, a value is left on screen, and a command is refused with `There is no such thing to do.` The [content checker](/docs/reference/checks) reports most of them when the game loads.
 
@@ -716,7 +716,7 @@ Ways to rewrite a pack without walking it by hand. Each returns a new pack.
 |---|---|
 | `objects` | Every object the pack's content holds, from the innermost out. It skips `prose`, `strings`, `variants` and `custom`, which hold words and code. |
 | `calls` | Every call by name, however it's written. `short` is `{ 'loyalty/stamp': { by: 1 } }`, and it is handed every key with a `/` in it, so check the name. `long` is a form packs wrote before schema 18 and 21, `{ custom: 'loyalty/stamp', with }` or `{ kind: 'custom', name, with }`. `command` is `{ type: 'custom', name, with }`. Return the call's name and arguments; give a call back as it came and it stays as it was. It skips the same keys as `objects`. A value, `{ value: 'loyalty/stamps', with }`, isn't a call: reach it with `objects`. |
-| `words` | Every line of the pack's `prose` and `strings`, handed with its key, for a token such as <code v-pre>{{v:loyalty/stamps}}</code> that changed. |
+| `words` | Every line of the pack's `prose` and `strings`, handed with its key, for a token such as <code v-pre>{{loyalty/stamps}}</code> that changed. |
 | `prose` | A line of prose by key, as written: the pack's own, else the game's under it (its content's and the packs' loaded before it). `undefined` if neither has it. For a step that writes words in place that were a prose key, as the messages plugin's step to version 25 gives a reply the words of its old `<message>#<reply>` prose. |
 | `effects` | Every effect the pack holds, in plugin `data` and traits too, in the keyed form: one still written with `kind`, as before schema 21, becomes `{ stat, by }` and the rest. For a plugin whose content holds effects where the engine's own step can't see them, as the first-party plugins' steps to version 21 do. |
 | `wordKeys` | Every key of the pack's [`words` table](/docs/reference/words), renamed, the words kept: for a step that renames a field the table names, as the quests plugin's step to version 26 makes `quests/quests.settle.title` `quests/quests.settle.name`. |

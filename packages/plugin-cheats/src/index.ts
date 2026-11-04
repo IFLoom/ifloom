@@ -203,7 +203,7 @@ function cheatsPlugin(): DefinedPlugin<CheatsState, CheatsView> {
       used: (_state, args, { slice }) => timesUsed(slice, args.cheat === undefined ? undefined : String(args.cheat)) > 0,
     },
     values: {
-      /** <code v-pre>{{v:cheats/used}}</code>: how many times this save has used a cheat; with `cheat`, that one. */
+      /** <code v-pre>{{cheats/used}}</code>: how many times this save has used a cheat; with `cheat`, that one. */
       used: (_state, args, { slice }) => timesUsed(slice, args.cheat === undefined ? undefined : String(args.cheat)),
     },
     commands: {

@@ -131,7 +131,11 @@ describe('the React UI', () => {
     expect(phoneButton.textContent).toContain('1')
     act(() => void fireEvent.click(phoneButton))
     act(() => void fireEvent.click(document.querySelector('[data-open-app="texts"]') as HTMLElement))
-    expect(screen.getByText('Did you eat?')).toBeTruthy()
+    // The conversation list first, with Mum's last line; a tap opens the thread.
+    const row = document.querySelector('[data-part="conversation"][data-thread="Mum"]') as HTMLElement
+    expect(row.textContent).toContain('Did you eat?')
+    act(() => void fireEvent.click(row))
+    expect(document.querySelector('[data-part="thread"] [data-from="them"]')?.textContent).toBe('Did you eat?')
     act(() => void fireEvent.click(screen.getByRole('button', { name: /Yes, Mum/ })))
     expect(document.querySelector('[data-thread="Mum"]')?.textContent).toContain('Yes, Mum')
   })

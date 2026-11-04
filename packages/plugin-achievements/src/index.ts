@@ -206,7 +206,7 @@ function achievementsPlugin(): DefinedPlugin<AchievementsState, AchievementsView
       },
     },
     values: {
-      /** <code v-pre>{{v:achievements/earned}}</code>: how many this save has earned. */
+      /** <code v-pre>{{achievements/earned}}</code>: how many this save has earned. */
       earned: (_state, _args, { slice }) => Object.keys(slice.earned).length,
     },
     onCommand: (_before, after, { slice, set, game }) => {

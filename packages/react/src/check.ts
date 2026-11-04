@@ -106,6 +106,7 @@ export function checkUiHints(game: Game, options: { allow?: readonly string[]; i
       if ('text' in block) written.push({ where: `${where} block ${here}`, text: block.text })
       if ('say' in block) written.push({ where: `${where} block ${here}`, text: block.say })
       if ('blocks' in block) blocks(where, block.blocks, `${here}.`)
+      if ('cases' in block) blocks(where, block.cases, `${here}.`)
       if ('decide' in block)
         for (const choice of block.choices) {
           hints('choice', `${where} choice ${choice.id}`, choice.ui)

@@ -191,7 +191,7 @@ const town: Content = {
     'place.cafe': 'The espresso machine hisses.',
     'place.park': 'The river runs brown and quick.',
     'place.office': 'Strip lights and a kettle.',
-    diary: 'Day {{v:calendar/day}}, a {{v:calendar/weekday}} {{v:calendar/period}}.',
+    diary: 'Day {{calendar/day}}, a {{calendar/weekday}} {{calendar/period}}.',
   },
 }
 
@@ -325,12 +325,12 @@ const stall = definePlugin<{ stock: number }>({
 
 | Prose writes | Prints |
 |---|---|
-| `{{v:calendar/day}}` | The day as the player counts it, from `1`. |
-| `{{v:calendar/weekday}}` | The weekday's name, such as `Monday`. |
-| `{{v:calendar/period}}` | The period's word, such as `morning`, or its [`label`](#perioddef). |
+| `{{calendar/day}}` | The day as the player counts it, from `1`. |
+| `{{calendar/weekday}}` | The weekday's name, such as `Monday`. |
+| `{{calendar/period}}` | The period's word, such as `morning`, or its [`label`](#perioddef). |
 
 ```ts
-const prose = { diary: 'Day {{v:calendar/day}}, a {{v:calendar/weekday}} {{v:calendar/period}}.' }
+const prose = { diary: 'Day {{calendar/day}}, a {{calendar/weekday}} {{calendar/period}}.' }
 // On a new game: 'Day 1, a Monday morning.'
 ```
 

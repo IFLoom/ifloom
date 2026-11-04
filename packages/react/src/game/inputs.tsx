@@ -67,10 +67,9 @@ function InputFieldImpl({ input }: { input: InputView }) {
 /** One input: a text box, a number box, or the options to pick from. Shows the engine's refusal if the value won't do. */
 export const InputField = overridable('InputField', InputFieldImpl)
 
-function InputFieldsImpl({ className }: { className?: string }) {
-  const { view } = useGame()
+/** Inputs as a list, in an `inputs` part. Drawn by `InputFields` outside a scene and by `Scene` inside one. */
+export function InputList({ inputs, className }: { inputs: readonly InputView[]; className?: string }) {
   const list = usePart('inputs', cn(PROSE, 'flex flex-col gap-3'), className)
-  const inputs = view.inputs
   if (!inputs.length) return null
   return (
     <section {...list}>
@@ -81,5 +80,16 @@ function InputFieldsImpl({ className }: { className?: string }) {
   )
 }
 
-/** Every input on offer now (`view.inputs`). Draws nothing when there are none. */
+function InputFieldsImpl({ className }: { className?: string }) {
+  const { view } = useGame()
+  // While a scene is open, the scene draws its inputs between its words and its choices.
+  if (view.scene.id) return null
+  return <InputList inputs={view.inputs} className={className} />
+}
+
+/**
+ * The inputs on offer while no scene is open (`view.inputs`), such as a
+ * field a room offers. Draws nothing while a scene is open, since `Scene`
+ * draws those itself, or when there are none.
+ */
 export const InputFields = overridable('InputFields', InputFieldsImpl)

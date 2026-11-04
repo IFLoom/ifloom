@@ -11,7 +11,7 @@ You wear only what you [hold](/docs/reference/entities#holding-things). Wearing 
 What's worn is kept for each body: the player's, and each [protagonist](/docs/reference/entities#protagonists-you-and-player)'s the game plays with the `you` effect. Switching to Sam shows what Sam has on, and switching back shows the player's clothes again, as they were left. See [Who wears what](#who-wears-what).
 
 ```ts
-import { wardrobe, slotsOf, wearableOf, type Wearable, type WardrobeSlot, type WardrobeState, type WardrobeView } from '@ifloom/plugin-wardrobe'
+import { wardrobe, slotsOf, wearableOf, type Closet, type Wearable, type WardrobeSlot, type WardrobeState, type WardrobeView } from '@ifloom/plugin-wardrobe'
 ```
 
 ## Install
@@ -77,6 +77,36 @@ type Wearable = { slot: string }
 ```
 
 The slot a thing is worn in. It's a [trait](/docs/reference/entities#traits), so you can write it on a kind (every uniform goes on the body), on an entity, or in content's `traits` table, where a mod can move a piece to another slot. `wearable` writes it, to spread into `traits` beside others, such as the shop's [`sellable`](/docs/plugins/shop#the-sellable-trait). A thing made in play [`like`](/docs/reference/effects#create) a wearable one is wearable too.
+
+### A place to change
+
+```ts
+const wardrobe: {
+  closet(options?: Closet): { 'wardrobe/closet': Closet }
+}
+
+type Closet = { label?: string }
+```
+
+Give a place the `wardrobe/closet` trait and, while the player is there, it offers a button that opens the `wardrobe` [panel](/docs/reference/panels). The bedroom is the usual one:
+
+```ts
+import { places } from '@ifloom/plugin-places'
+import { wardrobe } from '@ifloom/plugin-wardrobe'
+
+places.location({
+  id: 'flat',
+  name: 'Your flat',
+  description: 'Home',
+  exits: ['high-street'],
+  body: [{ text: 'A sofa, a radiator that knocks, and a coat rack by the door.' }],
+  traits: { ...wardrobe.closet() },
+})
+```
+
+The button is among the room's actions, with the id `open` and the command `{ type: 'action', id: 'wardrobe/open' }`. It's labelled with the `wardrobe/open` string (`Wardrobe`), or the trait's own `label`, such as `wardrobe.closet({ label: 'Coat rack' })`. Its effect is `{ panel: 'wardrobe' }`, which you can also write on any choice or action to open the same panel from anywhere.
+
+Where the player is comes from the [places](/docs/plugins/places) plugin, so a closet needs it. In a game without places the trait does nothing.
 
 ### WardrobeSlot
 
@@ -234,6 +264,7 @@ The plugin's lines go in the [strings table](/docs/reference/strings#plugins-str
 | `wardrobe/nothingToTakeOff` | `There is nothing to take off.` |
 | `wardrobe/takeOff` | `Take off`, a slot's [`takeOff`](#wardrobeview) button. |
 | `wardrobe/wear` | `Wear {thing}`, a spare thing's [`wear`](#wardrobeview) button. |
+| `wardrobe/open` | `Wardrobe`, the button a [closet](#a-place-to-change) place offers. |
 
 `wardrobe/wear` also uses the engine's [`noSuchThing`](/docs/reference/strings#refusals) (`There is no such thing.`), so it reads the same as everywhere else.
 
@@ -275,7 +306,7 @@ What you wear is also in the engine's [`view.held`](/docs/reference/view#held), 
 
 `view.plugins.wardrobe` is a [`WardrobeView`](#wardrobeview): each slot with what's in it, and the `spare` things you could wear. Each slot's `takeOff` and each spare thing's `wear` is a ready button: draw it as any other, and send its `command`.
 
-`@ifloom/plugin-wardrobe/react` draws what the player wears, for a game drawn with [`@ifloom/react`](/docs/react). List `wardrobeUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a Wearing section (`ui.wardrobe`) in the side column holds the [`WardrobeCard`](#wardrobecard), and the `wardrobe` panel draws it too. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+`@ifloom/plugin-wardrobe/react` draws what the player wears, for a game drawn with [`@ifloom/react`](/docs/react). List `wardrobeUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the `wardrobe` panel draws the [`WardrobeCard`](#wardrobecard), in a dialog titled `ui.wardrobe` (`Wearing`). A [closet](#a-place-to-change) place's button opens it, and so does any `{ panel: 'wardrobe' }`. It adds nothing to the side column. To keep what the player wears in view there, place [`WardrobeSection`](#wardrobesection) in your layout's `Sidebar`. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
 ::include[../../../../snippets/plain/wardrobe.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
@@ -291,7 +322,7 @@ The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.
 const wardrobeUi: PluginUi
 ```
 
-The plugin's [`PluginUi`](/docs/react/kit#pluginui): a Wearing section (`ui.wardrobe`) in the side column holds the [`WardrobeCard`](#wardrobecard), and the `wardrobe` panel draws it too.
+The plugin's [`PluginUi`](/docs/react/kit#pluginui): the `wardrobe` panel, which draws the [`WardrobeCard`](#wardrobecard) under the title `ui.wardrobe`. It puts nothing in the side column.
 
 Its words are in `WARDROBE_WORDS`. A game rewords any of them with `ui.<key>` in its strings, as it does the React UI's own: `{ 'ui.nothingOn': '…' }`.
 
@@ -308,7 +339,11 @@ The buttons say what the view's buttons say, the plugin's [strings](#strings) `w
 function WardrobeSection(): JSX.Element
 ```
 
-What `wardrobeUi` puts in the side column: a folding [`Section`](/docs/react/components#section) with the id `wardrobe`, titled `ui.wardrobe`, holding the `WardrobeCard`. For one that shows only in some rooms, draw your own `Section` with `when` round a `WardrobeCard`, as the showcase does.
+A folding [`Section`](/docs/react/components#section) with the id `wardrobe`, titled `ui.wardrobe`, holding the `WardrobeCard`. `wardrobeUi` doesn't place it, so put it in your layout's `Sidebar` to show what the player wears all the time:
+
+::include[../../../../snippets/react/wardrobe-sidebar.tsx]
+
+For one that shows only in some rooms, draw your own `Section` with `when` round a `WardrobeCard`, as the showcase does.
 
 ### WardrobeCard
 
@@ -374,7 +409,7 @@ holds(back, game, { 'wardrobe/wearing': { entity: 'clothing:scarf', at: 'charact
 
 ## For code
 
-The helpers above are properties of `wardrobe`, the plugin's factory, and write the content objects for you, typed. `wardrobe.wearing` and `wardrobe.slotFilled` return a `Condition`, `wardrobe.wear` and `wardrobe.takeOff` return a [`CommandRef`](/docs/reference/custom#commandref), and `wardrobe.wearable` returns the trait.
+The helpers above are properties of `wardrobe`, the plugin's factory, and write the content objects for you, typed. `wardrobe.wearing` and `wardrobe.slotFilled` return a `Condition`, `wardrobe.wear` and `wardrobe.takeOff` return a [`CommandRef`](/docs/reference/custom#commandref), and `wardrobe.wearable` and `wardrobe.closet` return their traits.
 
 ### Helpers
 
@@ -382,6 +417,7 @@ The helpers above are properties of `wardrobe`, the plugin's factory, and write 
 const wardrobe: {
   (): DefinedPlugin<WardrobeState, WardrobeView>
   wearable(slot: string): { 'wardrobe/wearable': Wearable }
+  closet(options?: Closet): { 'wardrobe/closet': Closet }
   wearing(entity: EntityRef, slot?: string): Condition
   slotFilled(slot: string): Condition
   wear(entity: EntityRef): CommandRef
@@ -426,6 +462,7 @@ town · slots coat · starts with "clothing:raincoat", which the player does not
 - **Losing a thing takes it off after the command.** Whether it's sold, used up, given away or taken by an effect, once you hold none, the plugin's `onCommand` [hook](/docs/reference/plugins#hooks-and-providers) empties its slot at the end of the command. Until then, within the same command, `wardrobe/wearing` still holds. [`applyEffects`](/docs/reference/effects#applyeffects) runs no hooks, so a state made with it can show something on that you no longer hold.
 - **Worn things are still held.** `holding('clothing:raincoat')` holds while it's on. To ask whether it's on, use `wearing`.
 - **"You" is whoever the player is playing.** Switch to a [protagonist](/docs/reference/entities#protagonists-you-and-player) with the `you` effect and the wardrobe shows their clothes, not the player's. The slots are the same for everyone you play, but each body fills its own.
+- **Nothing in the side column by default.** `wardrobeUi` gives the panel only. A game with no closet place and no `{ panel: 'wardrobe' }` anywhere has no way to change, unless its layout places `WardrobeSection`.
 - **Wearing doesn't check where you are or what's on screen.** Both commands work with a scene open and in any location. To stop the player changing somewhere, add a lock, such as `{ when: places.at('office'), deny: ['wardrobe/*'], reason: 'Not at work.' }`.
 - **One of each in a slot.** The wardrobe marks a thing as on, not a count. A player with two of a stackable thing wears one, and selling one leaves it on.
 - **A slot taken out of the game stays in old saves.** Say a save was made while the game had a `hat` slot. `wardrobe.wearing(entity)` with no slot, and the view, only look at the slots the game declares now, so the hat no longer counts as worn there. But a condition that names the slot reads the save directly, so `wardrobe.slotFilled('hat')` still holds, and `wardrobe.takeOff('hat')` isn't refused and empties it.

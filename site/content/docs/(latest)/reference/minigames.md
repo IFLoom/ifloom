@@ -149,7 +149,7 @@ Declare minigames in your [content](/docs/reference/loader#content)'s `minigames
 type MinigameStateDef = {
   label?: string
   after?: { ms: number } & MinigameTransition
-  on?: ({ input: string; when?: Condition } & MinigameTransition)[]
+  on?: ({ input: string; when?: Condition; label?: string } & MinigameTransition)[]
   always?: ({ when?: Condition } & MinigameTransition)[]
   final?: { effects?: EffectRef[]; copy?: Record<string, string> }
 }
@@ -159,7 +159,7 @@ type MinigameStateDef = {
 |---|---|
 | `label` | What the player reads while the minigame is in this state, as written, with [tokens](/docs/reference/prose#tokens) filled in. Before schema 25 it was a prose key, which an older pack has rewritten to its words and the checker reports in your own content. |
 | `after` | A timer. Once `ms` milliseconds of ticks have passed in this state, its transition is taken. |
-| `on` | What each input does here. The first entry for the input whose `when` holds is taken. Several entries can share an input, each with its own `when`. |
+| `on` | What each input does here. The first entry for the input whose `when` holds is taken. Several entries can share an input, each with its own `when`. An entry's `label` is the input's words on its button in this state, with tokens filled in, such as a quiz question's answers. |
 | `always` | Taken as soon as the state is entered: the first entry whose `when` holds. |
 | `final` | Entering this state ends the minigame. `copy` maps minigame variables to kv keys, as `{ score: 'arrows.best' }`. Then `effects` apply, with the minigame already closed. |
 
@@ -253,7 +253,7 @@ What [`view.minigame`](/docs/reference/view#minigame) holds while one runs.
 | `kv` | Its kv store now. |
 | `keys` | The keys the game maps to each input, or `{}`. |
 
-An input's `label` is the game's `minigame.<input>` [string](/docs/reference/strings#buttons-and-labels). The engine has `Up`, `Down`, `Left`, `Right` and `Space` for `up`, `down`, `left`, `right` and `space`. Any other input with no string is its own name with a capital, so name yours in `strings`: `{ 'minigame.jump': 'Jump' }`.
+An input's `label` comes from the first live `on` entry for it in the running state that has a `label`. Without one it's the game's `minigame.<input>` [string](/docs/reference/strings#buttons-and-labels). The engine has `Up`, `Down`, `Left`, `Right` and `Space` for `up`, `down`, `left`, `right` and `space`. Any other input with no string is its own name with a capital, so name yours in `strings`: `{ 'minigame.jump': 'Jump' }`.
 
 A UI sends ticks while `timeLeft` isn't `null`, and also while [`view.timers`](/docs/reference/view#timers) isn't empty. A tick with nothing counting down is refused with `Nothing is counting down.`
 
@@ -281,7 +281,7 @@ The [content checker](/docs/reference/checks) reports:
 - a `to` with no states, or a weight of 0 or less
 - an unknown minigame in a `minigame` effect or a scene's `minigame` field
 - a key of a minigame's kv used in a condition or an effect that no minigame declares, one a minigame uses but another declares, and a `copy` of one that isn't declared
-- a `label` with no prose, and anything a transition's `when` or `effects` names that the game doesn't have
+- a state's `label` or an `on` entry's `label` written as a prose key, and anything a transition's `when` or `effects` names that the game doesn't have
 
 ## Gotchas
 

@@ -57,7 +57,7 @@ A second lock, in `story/office.ts`, `{ id: 'no-phone', when: places.at('office'
 
 `story/moving-day.ts`, `inputs`. On moving day the game asks for the cat's name with an [input](/docs/reference/inputs): `catName`, `type: 'text'`, `maxLength: 16`, offered only while `when: { kv: 'phase', is: ['arrival'] }` holds. The React UI draws it under the scene as an [`InputField`](/docs/react/components#inputfield). What the player types is kept, trimmed, in the kv key `catName`.
 
-`src/rules.ts` has a [value](/docs/reference/custom#values) of the same name. It reads the kv key, or says `The cat` if nothing was typed, and the flat's prose prints it: `{{v:game/catName}} has claimed the warm spot on the sill.` Once the phase is `open`, the input is gone, and a value sent anyway is refused with `Not now.`
+`src/rules.ts` has a [value](/docs/reference/custom#values) of the same name. It reads the kv key, or says `The cat` if nothing was typed, and the flat's prose prints it: `{{catName}} has claimed the warm spot on the sill.` Once the phase is `open`, the input is gone, and a value sent anyway is refused with `Not now.`
 
 ### Things you use
 

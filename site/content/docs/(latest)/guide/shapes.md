@@ -321,7 +321,7 @@ choices: [
 ],
 ```
 
-Someone created without an id gets the next number. Dev is `staff:#1`, and Fen, hired after him, is `staff:#2`. A number is never given twice, so if Dev leaves, the next person hired is `#3`. The scene's prose tells the player what they already pay, through a [value](/docs/reference/custom#values) of the game's own, printed with `{{v:game/payroll}}`: "Wages are 12 a week already."
+Someone created without an id gets the next number. Dev is `staff:#1`, and Fen, hired after him, is `staff:#2`. A number is never given twice, so if Dev leaves, the next person hired is `#3`. The scene's prose tells the player what they already pay, through a [value](/docs/reference/custom#values) of the game's own, printed with `{{payroll}}`: "Wages are 12 a week already."
 
 ### The end of the week
 

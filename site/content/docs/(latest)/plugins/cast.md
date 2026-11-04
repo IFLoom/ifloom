@@ -142,7 +142,7 @@ The entity's fields that matter most to a character:
 | Field | What it is | If left out |
 |---|---|---|
 | `id` | What content names them by, as in `cast.talk('ava')`, `cast.here('ava')` or `cast.character('ava')`. It's also how a scene names them as its [speaker](#speakers). | Required. |
-| `name` | Shown over their lines, on their card, and in refusals such as `Ava is not here.` [Prose tokens](/docs/reference/prose) in it are filled for the save wherever it's shown, so `'{{friendName}}'` is the name the player typed (see [A name the player chooses](#a-name-the-player-chooses)). | Required. |
+| `name` | Shown over their lines, on their card, and in refusals such as `Ava is not here.` [Prose tokens](/docs/reference/prose) in it are filled for the save wherever it's shown, so `'{{friendName|Your friend}}'` is the name the player typed, and `Your friend` until then (see [A name the player chooses](#a-name-the-player-chooses)). | Required. |
 | `description` | A word or two about them, such as `Runs the café`, shown under the name. | `null` in the view. |
 | `image` | Their picture, through [`artSrc`](/docs/reference/prose#artsrc). A bare name under `art/` is taken as a `.jpg`. | `art/character/<id>.jpg` in the cast's own view; none in [`view.entities`](/docs/reference/view#entities) or as a scene's speaker. |
 | `tags` | Labels for your own code. The plugin doesn't read them. | None. |
@@ -194,12 +194,17 @@ import { cast } from '@ifloom/plugin-cast'
 
 const town: Content = {
   inputs: [{ id: 'friendName', label: 'Your oldest friend is called', type: 'text', maxLength: 16 }],
-  entities: [cast.person({ id: 'sam', name: '{{friendName}}', home: 'park', talk: 'sam.hi' })],
+  entities: [cast.person({ id: 'sam', name: '{{friendName|Your oldest friend}}', home: 'park', talk: 'sam.hi' })],
   // ...
 }
 ```
 
-Once the player has typed `Robin`, the plugin shows `Robin` on Sam's card, over their lines, in `cast/contacts`, and in refusals such as `Robin is not here.`. Until then the token shows as written, so ask for the name before the player can meet them.
+Once the player has typed `Robin`, the plugin shows `Robin` on Sam's card, over their lines, in `cast/contacts`, and in refusals such as `Robin is not here.`. Until then the words after the `|` show: `Your oldest friend`. A [token](/docs/reference/prose#tokens) with no fallback prints nothing while its key is unset, so without one Sam would have no name at all.
+
+**Gotchas.**
+- The fallback is plain words. A token inside it isn't read.
+- A translation's [words table](/docs/reference/words) gives the whole `name` other words, the token and its fallback together: `'{{friendName|Ton vieil ami}}'`.
+- The content checker reads the tokens in prose and blocks of words, not in names, so it won't warn about a name with no fallback.
 
 The name is the entity's, as written, and it's filled in wherever it's read: in [`view.entities`](/docs/reference/view#entitiesview-and-entityview) and through [`entityName`](/docs/reference/entities#entityname) too.
 

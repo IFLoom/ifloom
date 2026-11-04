@@ -64,6 +64,7 @@ type Block = (
   | { media: SceneMedia; when?: Condition }
   | { say: string; speaker: string; voice?: string; id?: string; when?: Condition }
   | { blocks: Block[]; when?: Condition }
+  | { cases: Block[]; when?: Condition }
   | { decide: string; choices: FlowChoice[]; when?: Condition }
   | { point: string }
   | { minigame: string; when?: Condition }
@@ -76,12 +77,37 @@ type Block = (
 | `{ text }` | Words written in place, one paragraph or several, read as prose is: spoken lines, pictures, [inline markup](/docs/reference/prose#markup) and tokens. `id` names it for a translation's [words table](/docs/reference/words). Before schema 25 this was `{ words }`, and `{ text }` named a prose key, which is `{ prose }` now. |
 | `{ say, speaker }` | A spoken line, under who says it, by id as `@id: "…"` names them in [prose](/docs/reference/prose#speech): an entity (`'ava'`, `'character:ava'`), `'you'` for whoever the player is playing, or `'player'`. Its beat is a `say` with that `speaker` and their `name`. |
 | `{ blocks }` | A section: its blocks show together while `when` holds. A section can hold anything a body can, decisions included. Its `ui` hints go on every beat it makes, as the beat's `section`. |
+| `{ cases }` | The first that fits: only the first of its blocks whose own `when` holds, or that has none, is shown. See [The first that fits](#the-first-that-fits). |
 | `{ decide, choices }` | A decision. The flow waits here until the player picks one of `choices`, then shows the pick's `then` and carries on after the decision. Its id is unique within the scene. |
 | `{ point }` | A place a choice can jump to. It can go anywhere: at the top of the body, in a section, or in a choice's `then`. |
 | `{ minigame }` | A [minigame](/docs/reference/minigames) played where it stands. The flow starts it when it gets there, waits while it's played, and carries on once it ends. |
 | `{ panel, with }` | A [panel](/docs/reference/panels) opened where it stands, with what it needs. The flow waits until the player closes it (or the panel closes as a turn ends). |
 
 A scene whose body has none of these kinds reads exactly as it always has.
+
+### The first that fits
+
+A `{ cases }` block is an if, else if, else. Each of its blocks is tried in order, and only the first whose own `when` holds is shown. A block with no `when` always fits, so put one last as the otherwise.
+
+```ts
+import { cases, say, text, when } from '@ifloom/engine'
+
+body: [
+  text(`You come into the kitchen.`),
+  cases([
+    text(`Sam has made pancakes.`, { when: { kv: 'samUp' } }),
+    when({ kv: 'avaUp' }, [say('ava', 'Toast?')]),
+    text(`The kitchen is empty.`),
+  ]),
+  text(`The kettle clicks off.`),
+]
+```
+
+- A `when` on the `cases` block itself leaves the whole thing out while it fails: `cases([...], { when: { kv: 'rain' } })`.
+- When nothing fits, nothing is shown.
+- A block in it can be anything a body holds, a section with a decision included. The flow waits at that decision as it would anywhere.
+- Each block keeps its own place in the scene, so a picture drawn from a [pool](/docs/reference/media#pools) in one stays the same picture on every visit.
+- Which block fits is worked out each time the scene is drawn, from the state now. So a pick that changes what the conditions read can change which block shows above it, as with any `when`.
 
 ### FlowChoice
 
@@ -140,7 +166,7 @@ A UI that only draws "beats, then choices" draws a flowing scene with no change.
 `@ifloom/engine` exports a builder for each block. Each returns plain data, the same objects a pack or a mod writes by hand.
 
 ```ts
-import { choice, decide, fold, image, jump, minigame, panel, point, say, text, when } from '@ifloom/engine'
+import { cases, choice, decide, fold, image, jump, minigame, panel, point, say, text, when } from '@ifloom/engine'
 ```
 
 | Builder | Writes |
@@ -148,6 +174,7 @@ import { choice, decide, fold, image, jump, minigame, panel, point, say, text, w
 | `text(words, { id?, when?, ui? })` | `{ text }`. The indentation every line shares is taken off, and blank lines at either end go, so the words can sit indented in your code. A blank line starts a new paragraph. |
 | `say(who, words, { id?, when?, ui?, voice? })` | `{ say, speaker }`. `who` is an id: `'ava'`, `'character:ava'`, `'you'` or `'player'`. |
 | `when(condition, blocks, { ui? })` | `{ when, blocks }`: a section shown while `condition` holds. |
+| `cases(blocks, { when?, ui? })` | `{ cases: blocks }`: only the first of `blocks` that fits is shown. |
 | `decide(id, choices, { when?, ui? })` | `{ decide, choices }`. |
 | `choice(id, label, fields)` | `{ id, label, ...fields }`, a [`FlowChoice`](#flowchoice). `label` is the words. |
 | `image(src, { alt?, size?, ...media, when?, ui? })` | `{ media: { src, ... } }`. |
@@ -173,6 +200,9 @@ The [content checker](/docs/reference/checks) reports, for each data scene:
 - a decision whose every choice leaves or jumps, when something comes after it and no point after it lets a jump land there
 - a `then` on an ending choice, which is never shown
 - a `variants` block in a scene that flows (see below)
+- a `cases` block with no blocks, as `cases lists no blocks, so it shows nothing`
+- a block in a `cases` after one with no `when`, as `case <n> has no when, so the cases after it are never shown`
+- a point inside a `cases`, since a jump to it lands in a block that might not be the one shown: `point "…" is in cases, where it may not be shown; put it outside the cases`
 
 **Gotchas.**
 - `variants` don't go in a flowing scene. Each pick draws the scene again, and the draw would move on, so the player would see a line they'd read change. Use a section with a `when`, or a variants block in a scene with no decisions.

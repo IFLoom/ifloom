@@ -325,8 +325,8 @@ describe('pools', () => {
     const loaded = loadState(JSON.parse(JSON.stringify(saved)), g)
     if (!loaded.ok) throw new Error(loaded.reason)
     expect(loaded.value.plugins.messages).toEqual({
-      version: 2,
-      state: { arrived: [{ key: 'msg.hey', message: 'msg.hey', turn: 3, day: 3 }], replied: { 'msg.hey': 'yes' }, read: { 'msg.hey': true } },
+      version: 3,
+      state: { arrived: [{ key: 'msg.hey', message: 'msg.hey', turn: 3, day: 3 }], replied: { 'msg.hey': 'yes' }, read: { 'msg.hey': true }, due: null },
     })
     expect(holds(loaded.value, g, messages.replied('msg.hey', 'yes'))).toBe(true)
     expect(shown(loaded.value, g).channels[0].threads[0].messages[0]).toMatchObject({ key: 'msg.hey', replied: 'Yes!', read: true })
@@ -351,5 +351,97 @@ describe('pools', () => {
         { pack: 'mod', where: 'messages m', what: 'weight must be 0 or more' },
       ]),
     )
+  })
+})
+
+describe('a burst', () => {
+  const tick = (ms: number) => ({ type: 'tick' as const, ms })
+  const burst = (typing?: boolean) =>
+    game({
+      prose: { 'ava.hi': 'Hi.', 'b.1': 'Are you up?', 'b.2': 'The boiler is making that noise again.', 'b.3': 'Never mind, it stopped.' },
+      data: {
+        messages: {
+          messages: [
+            { id: 'b.1', channel: 'texts', from: 'ava', when: { kv: 'out' }, body: [{ prose: 'b.1' }] },
+            {
+              id: 'b.2',
+              channel: 'texts',
+              from: 'ava',
+              when: messages.arrived('b.1'),
+              after: { ms: 1500 },
+              ...(typing === undefined ? {} : { typing }),
+              body: [{ prose: 'b.2' }],
+            },
+            { id: 'b.3', channel: 'texts', from: 'ava', when: messages.arrived('b.1'), after: { ms: 2000 }, body: [{ prose: 'b.3' }] },
+          ],
+        },
+      },
+    })
+  const ids = (state: GameState, g: Game) => shown(state, g).channels[0].threads.flatMap((thread) => thread.messages.map((message) => message.id))
+
+  it('arrives one message at a time over ticks, in order, with typing while one waits', () => {
+    const g = burst()
+    let state = apply(begin(g), g, { type: 'action', id: 'goOut' }).state
+    expect(ids(state, g)).toEqual(['b.1'])
+    expect(shown(state, g).channels[0].threads[0].typing).toBe(true)
+    expect(shown(state, g).waiting).toBe(true)
+    expect(view(state, g).timers).toEqual([expect.objectContaining({ id: 'messages.due', left: 1500 })])
+    state = apply(state, g, tick(1000)).state
+    expect(ids(state, g)).toEqual(['b.1'])
+    state = apply(state, g, tick(500)).state
+    expect(ids(state, g)).toEqual(['b.1', 'b.2'])
+    // The next one starts waiting once this one has come.
+    expect(view(state, g).timers).toEqual([expect.objectContaining({ id: 'messages.due', left: 2000 })])
+    state = apply(state, g, tick(2000)).state
+    expect(ids(state, g)).toEqual(['b.1', 'b.2', 'b.3'])
+    expect(shown(state, g).channels[0].threads[0].typing).toBe(false)
+    expect(shown(state, g).waiting).toBe(false)
+    expect(view(state, g).timers).toEqual([])
+  })
+
+  it('shows no typing for a message with typing false', () => {
+    const g = burst(false)
+    const state = apply(begin(g), g, { type: 'action', id: 'goOut' }).state
+    expect(shown(state, g).channels[0].threads[0].typing).toBe(false)
+    expect(shown(state, g).waiting).toBe(true)
+  })
+
+  it('replays the same', () => {
+    const g = burst()
+    const runner = createRunner(g, begin(g))
+    for (const command of [{ type: 'action' as const, id: 'goOut' }, tick(700), tick(900), tick(5000)]) expect(runner.apply(command).ok).toBe(true)
+    expect(ids(runner.state, g)).toEqual(['b.1', 'b.2', 'b.3'])
+    expect(replay(g, runner.log())).toEqual({ ok: true, value: runner.state })
+  })
+
+  it('raises one notice for the thread, with the newest first line, until it is seen', () => {
+    const g = burst()
+    let state = apply(begin(g), g, { type: 'action', id: 'goOut' }).state
+    expect(state.notices.filter((notice) => !notice.seen)).toEqual([expect.objectContaining({ id: 'messages.b.1', title: 'Ava', text: 'Are you up?' })])
+    state = apply(state, g, tick(1500)).state
+    expect(state.notices.filter((notice) => !notice.seen)).toEqual([
+      expect.objectContaining({ id: 'messages.b.2', text: 'The boiler is making that noise again.', tag: 'texts' }),
+    ])
+    state = apply(state, g, { type: 'dismiss' }).state
+    state = apply(state, g, tick(2000)).state
+    expect(state.notices.map((notice) => [notice.id, notice.seen])).toEqual([
+      ['messages.b.2', true],
+      ['messages.b.3', false],
+    ])
+  })
+
+  it('reports an after with no length', () => {
+    const loaded = loadGame(
+      [
+        { name: 'base', data: channels },
+        {
+          name: 'mod',
+          prose: { m: 'Hi.' },
+          data: { messages: { messages: [{ id: 'm', channel: 'texts', from: 'x', after: { ms: 0 }, body: [{ prose: 'm' }] }] } },
+        },
+      ],
+      { id: 'g', title: 'g', plugins: [plugin] },
+    )
+    expect(loaded.problems).toEqual([{ pack: 'mod', where: 'messages m', what: 'after needs ms above 0' }])
   })
 })

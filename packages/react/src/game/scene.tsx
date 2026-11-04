@@ -17,6 +17,7 @@ import { InlineSpans } from './inline.tsx'
 import { lastReveal, revealGroups, revealStyle, SceneFrame, useMotion, useSkipKey } from './motion.tsx'
 import { DiceOverlay, DiceRoll, unnamedRolls, useFreshRolls } from './dice.tsx'
 import { Countdown } from './timers.tsx'
+import { InputList } from './inputs.tsx'
 
 /** A small button that plays a spoken line's voice again, when the game's sound is playing. */
 function VoiceReplay({ voice }: { voice: string }) {
@@ -133,22 +134,52 @@ function BeatImpl({ beat }: { beat: SceneBeat }) {
   }
 }
 
+type Indexed = { beat: SceneBeat; index: number }
+/** A run of beats from one section with ui hints: the section's hints, and its beats in order. */
+type Grouped = { section: NonNullable<SceneBeat['section']>; beats: Indexed[] }
+
+/** Whether a section carries any ui hint, so its beats are drawn as a group. */
+function hinted(section: SceneBeat['section']): section is NonNullable<SceneBeat['section']> {
+  return section !== undefined && section !== null && Object.keys(section).length > 0
+}
+
 /**
- * Beats in runs, each beat of a section with a `ui.fold` hint gathered with
- * the ones after it from the same section, so a fold draws them as one.
+ * Beats in runs: each beat of a section with ui hints gathered with the ones
+ * after it from the same section, so the section is drawn as one `group`.
  */
-function folded(
-  beats: readonly { beat: SceneBeat; index: number }[],
-): ({ fold: string; beats: { beat: SceneBeat; index: number }[] } | { beat: SceneBeat; index: number })[] {
-  const out: ({ fold: string; beats: { beat: SceneBeat; index: number }[] } | { beat: SceneBeat; index: number })[] = []
+function grouped(beats: readonly Indexed[]): (Grouped | Indexed)[] {
+  const out: (Grouped | Indexed)[] = []
   for (const entry of beats) {
-    const fold = entry.beat.section?.fold
+    const section = entry.beat.section
     const last = out.at(-1)
-    if (typeof fold !== 'string') out.push(entry)
-    else if (last && 'fold' in last && last.beats.at(-1)?.beat.section === entry.beat.section) last.beats.push(entry)
-    else out.push({ fold, beats: [entry] })
+    if (!hinted(section)) out.push(entry)
+    else if (last && 'section' in last && last.section === section) last.beats.push(entry)
+    else out.push({ section, beats: [entry] })
   }
   return out
+}
+
+/** A section's hints that are a string, a number or true/false, as `data-<hint>` attributes: `{ card: 'result' }` is `data-card="result"`. */
+function hintAttributes(section: NonNullable<SceneBeat['section']>): Record<string, string> {
+  const out: Record<string, string> = {}
+  for (const [name, value] of Object.entries(section)) {
+    if (!/^[a-z][\w-]*$/i.test(name)) continue
+    const attribute = `data-${name.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)}`
+    if (typeof value === 'string' || typeof value === 'number') out[attribute] = String(value)
+    else if (value === true) out[attribute] = ''
+    else if (value === false) out[attribute] = 'false'
+  }
+  return out
+}
+
+/** A section with ui hints: its beats in one `group` part, with its scalar hints as `data-*`, so a game styles the section as one box. */
+function Group({ section, children }: { section: NonNullable<SceneBeat['section']>; children: ReactNode }) {
+  const group = usePart('group', 'flex flex-col gap-(--gap-beats)')
+  return (
+    <div {...group} {...hintAttributes(section)}>
+      {children}
+    </div>
+  )
 }
 
 /** A section with a `ui.fold` hint: its beats in a `fold` part the player opens and shuts, under the hint's words in a `fold-summary` part. Shut to begin with. */
@@ -222,17 +253,18 @@ function Beats({ beats, motion, rolls, skipped }: { beats: SceneBeat[]; motion: 
       <Beat key={index} beat={entry} />
     )
   }
-  // A group's beats, a fold's gathered into one. The first may wait for dice of its own.
-  const runs = (beats: { beat: SceneBeat; index: number }[], diced: boolean) =>
-    folded(beats).map((run, n) =>
-      'fold' in run ? (
-        <Fold key={`fold-${run.beats[0].index}`} label={run.fold}>
-          {run.beats.map(({ beat: inner, index }, m) => beat(inner, index, diced && n === 0 && m === 0))}
-        </Fold>
-      ) : (
-        beat(run.beat, run.index, diced && n === 0)
-      ),
-    )
+  // A reveal's beats, each hinted section's gathered into a group, and a fold's inside its group. The first may wait for dice of its own.
+  const runs = (beats: Indexed[], diced: boolean) =>
+    grouped(beats).map((run, n) => {
+      if (!('section' in run)) return beat(run.beat, run.index, diced && n === 0)
+      const inner = run.beats.map(({ beat: entry, index }, m) => beat(entry, index, diced && n === 0 && m === 0))
+      const fold = run.section.fold
+      return (
+        <Group key={`group-${run.beats[0].index}`} section={run.section}>
+          {typeof fold === 'string' ? <Fold label={fold}>{inner}</Fold> : inner}
+        </Group>
+      )
+    })
   return (
     <div {...list}>
       {revealGroups(beats, motion ? rolls.fresh : []).map((entry, at) =>
@@ -269,7 +301,7 @@ function SceneArticle({ className, motion, transition, rolls }: { className?: st
   const portrait = usePart('scene-portrait', 'size-12 rounded-full object-cover')
   const title = usePart('scene-title', 'font-heading text-scene-title font-semibold')
   const image = usePart('scene-image', 'mx-auto max-h-80 w-auto max-w-full rounded-xl object-contain')
-  const choicesGroup = usePart('reveal', '')
+  const choicesGroup = usePart('reveal', 'flex flex-col gap-4')
   // Reveals wait until the player clicks the scene or presses a key, or they have all come in.
   const last = view.minigame ? 0 : lastReveal(scene.beats, motion ? rolls.fresh : [])
   const [revealed, setRevealed] = useState(false)
@@ -296,7 +328,14 @@ function SceneArticle({ className, motion, transition, rolls }: { className?: st
       </article>
     )
   }
-  const choices = Panel && held ? <Panel data={held.with} /> : <ChoiceList choices={scene.choices} />
+  // The inputs the scene waits on come after its words, before its choices.
+  const asked = scene.id ? <InputList inputs={view.inputs} /> : null
+  const choices = (
+    <>
+      {asked}
+      {Panel && held ? <Panel data={held.with} /> : <ChoiceList choices={scene.choices} />}
+    </>
+  )
   return (
     <article
       {...article}
@@ -395,7 +434,16 @@ function SceneImpl({ className }: { className?: string }) {
  * Timers: a block with a `ui.timer` hint gets a `Countdown` of that timer
  * after it, while it runs.
  *
- * Folds: the beats of a section with a `ui.fold` hint (what `fold()` writes)
- * are drawn as one `fold` part, a `<details>` the player opens and shuts.
+ * Groups: the beats of a section with any ui hint are drawn together in a
+ * `group` part, with each hint that's a string, a number or true/false as a
+ * `data-*` attribute (`{ card: 'result' }` is `data-card="result"`), so a
+ * game can style the section as one box. A section with a `ui.fold` hint
+ * (what `fold()` writes) has its beats in a `fold` part inside its group, a
+ * `<details>` the player opens and shuts.
+ *
+ * Inputs: the inputs on offer while the scene is open (`view.inputs`) are
+ * drawn after its words and before its choices, as `InputField`s in an
+ * `inputs` part. The layout's `InputFields` draws only those on offer while
+ * no scene is open.
  */
 export const Scene = overridable('Scene', SceneImpl)

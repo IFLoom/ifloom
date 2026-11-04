@@ -32,6 +32,7 @@ import type { CreditsPage, GatePage, LoadPage, SettingsPage, TitlePage } from '.
 import type { MinigameCard } from './minigame.tsx'
 import type { DiceOverlay, DiceRoll } from './dice.tsx'
 import type { Countdown, Timers } from './timers.tsx'
+import type { ChangeItem, Changes } from './changes.tsx'
 import type { NoticeStrip } from './strip.tsx'
 import type { KeyOptions } from './keys.tsx'
 import type { PanelHost } from './panels.tsx'
@@ -83,9 +84,15 @@ export const PART_KEYS = [
   'inline-prop',
   'inline-mono',
   'voice-replay',
+  'group',
   'fold',
   'fold-summary',
   'fold-beats',
+  // What the last command changed
+  'changes',
+  'change',
+  'change-text',
+  'change-label',
   // Inline actions, tooltips, inline pieces, bold and italics in the prose
   'inline-action',
   'tip',
@@ -299,6 +306,8 @@ export interface OverridableComponents {
   DiceOverlay: Override<PropsOf<typeof DiceOverlay>>
   Countdown: Override<PropsOf<typeof Countdown>>
   Timers: Override<PropsOf<typeof Timers>>
+  Changes: Override<PropsOf<typeof Changes>>
+  ChangeItem: Override<PropsOf<typeof ChangeItem>>
   GameMenu: Override<PropsOf<typeof GameMenu>>
   SavesMenu: Override<PropsOf<typeof SavesMenu>>
   Backlog: Override<PropsOf<typeof Backlog>>

@@ -138,6 +138,7 @@ type Block = (
   // a minigame and a panel where they stand
   | { say: string; speaker: string; voice?: string; id?: string; when?: Condition }
   | { blocks: Block[]; when?: Condition }
+  | { cases: Block[]; when?: Condition }
   | { decide: string; choices: FlowChoice[]; when?: Condition }
   | { point: string }
   | { minigame: string; when?: Condition }
@@ -152,6 +153,7 @@ Blocks render in order, and a block whose `when` fails is dropped. Rendered bloc
 - **`variants`** renders one member of a named set of variants, drawn as [How variants are drawn](#how-variants-are-drawn) says. What the draw needs to remember, so the variants rotate, is added to the effects of every choice. The members are `game.prose.variants(name)`, minus any key the same scene uses as a `prose` block and any key with no prose. So a scene's own fixed block named `ava.smalltalk/closing` is never dealt as a random line.
   - **`gate`** puts conditions on individual members, by key. A member whose gate fails is left out of the draw, so one set of variants can hold a line that only makes sense later.
   - **`image`** names, for a member, another set of variants to draw a picture from. The drawn picture's prose (usually a single image line) goes in front of the drawn member.
+- **`cases`** renders only the first of its blocks whose own `when` holds, or that has none. Leave the last without a `when` for the otherwise. It's what [`cases()`](/docs/reference/flows#the-builders) writes, and it works in any scene, flowing or not. See [The first that fits](/docs/reference/flows#the-first-that-fits).
 - **`media`** renders a picture or a video, [`SceneMedia`](#scenemedia). Without `at`, it's drawn right there in the body, between the blocks around it.
 - **`ui`**, on any block, holds [presentation hints](/docs/reference/ui-hints) for the UI, and the view puts them on the first [beat](/docs/reference/prose#scenebeat) the block makes. The React UI's [`reveal`](/docs/react/hints#reveal) makes the block wait before it appears: `{ text: 'Tonight you unpack.', ui: { reveal: { delay: 1200 } } }`. A block that isn't shown takes its hints with it.
 

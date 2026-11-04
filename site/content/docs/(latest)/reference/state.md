@@ -37,6 +37,7 @@ type GameState = {
   panel: OpenPanel | null
   rolls: RollsState
   timers: Record<string, RunningTimer>
+  changes: Change[]
   gameVersion?: number
 }
 ```
@@ -282,6 +283,14 @@ timers: Record<string, RunningTimer>   // { phone: { left: 4200, total: 10000 } 
 
 The [timers](/docs/reference/timers) running now, by id, in the order they started. Each keeps only the milliseconds `left` and the `total` it was started with (which adding time can raise). What a timer does when it runs out stays in the game's `timers`, read when it runs out, so a save stays small and an update to a timer's effects reaches saves already running it. See [`RunningTimer`](/docs/reference/timers#runningtimer). A save from before timers loads with `{}`. Like `minigame`, the field came with a load default and no new save version.
 
+### changes
+
+```ts
+changes: Change[]   // [{ stat: 'coins', from: 10, to: 40, by: 30, label: 'Coins', text: '+30 coins' }]
+```
+
+The stats the last command moved, the player's and those kept on entities, for [`view.changes`](/docs/reference/view#changes). A `tick` that moved nothing leaves it as it was, and any other command replaces it. See [Changes](/docs/reference/changes). A save from before version 24 loads with `[]`.
+
 ## New Game+
 
 When a player finishes your game, you can let them start again with some of what they had. List what carries over in your content's `carryOver`, and say when the game counts as finished with its `finished`:
@@ -328,7 +337,7 @@ The [content checker](/docs/reference/checks) reports a stat in `carryOver` that
 ### SAVE_VERSION
 
 ```ts
-const SAVE_VERSION = 23
+const SAVE_VERSION = 24
 ```
 
 The save format this engine writes. [`loadState`](/docs/reference/saves#loadstate) carries older ones forward. The version goes up only when a field older saves already have changes shape. A new field doesn't bump it: a save that lacks the field gets its load default when it loads, as [`minigame`](#minigame) does. See [SAVE_VERSION](/docs/reference/saves#save_version) for the rule.
@@ -359,8 +368,9 @@ The versions so far:
 | 21 | Made a [notice](#notices)'s `text` its words, not a prose key. |
 | 22 | Renamed what an entity made in play was given as `desc` to `description`. |
 | 23 | Kept a [pool pick](/docs/reference/media#remembered-picks) for a layered picture's layer under the slot `picture:<index>`, not `stage:<index>`. |
+| 24 | Added [`changes`](#changes), the stats the last command moved. Its step gives an older save an empty list. |
 
-The versions that only added a field (4, 7, 9, 10 and 11) are from before the rule above. A field added now gets a load default and no new version.
+The versions that only added a field (4, 7, 9, 10 and 11) are from before the rule above. Version 24 also only added one, with a step as well as a load default. A field added now usually gets a load default and no new version.
 
 ## See it in an example
 

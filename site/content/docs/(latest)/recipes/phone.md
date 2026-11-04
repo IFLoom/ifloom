@@ -117,6 +117,35 @@ The phone's own badge, on the sidebar button, is every app's count added up, so 
 
 The channel and feed names are what the apps are called, written in place like every other name in content. To call the texts app "Texts", change the channel's `name`.
 
+## Texts that arrive one at a time
+
+A friend who sends three texts in a row shouldn't land them all at once. Give each message after the first an `after` with how long it takes, and a `when` that waits on the one before. The thread shows them typing in between:
+
+```ts
+import type { Content } from '@ifloom/engine'
+import { messages, type MessageDef } from '@ifloom/plugin-messages'
+
+const burst: MessageDef[] = [
+  { id: 'ava.cafe.1', channel: 'texts', from: 'ava', when: { kv: 'phase', is: ['evening'] }, body: [{ text: 'Are you still at the café?' }] },
+  { id: 'ava.cafe.2', channel: 'texts', from: 'ava', when: messages.arrived('ava.cafe.1'), after: { ms: 1500 }, body: [{ text: 'They have the good cake in.' }] },
+  {
+    id: 'ava.cafe.3',
+    channel: 'texts',
+    from: 'ava',
+    when: messages.arrived('ava.cafe.2'),
+    after: { ms: 2500 },
+    body: [{ text: 'Save me a slice?' }],
+    replies: [{ id: 'yes', label: 'On it' }, { id: 'no', label: 'Too late, sorry' }],
+  },
+]
+
+export const evening: Content = { data: { messages: { messages: burst } } }
+```
+
+The first text arrives when the phase turns to evening. The second starts waiting in the same command, and arrives 1.5 seconds later. Then the third waits 2.5 seconds. Each raises a notice, and the newest replaces the one before while it's unseen, so the player sees one notice with the latest line.
+
+The waits run on the engine's timers, so a UI's clock has to send `tick` commands. The React UI and [`startClock`](/docs/browser#startclock) do that whenever a timer runs. See [Messages that take a moment](/docs/plugins/messages#messages-that-take-a-moment).
+
 ## Taking photos
 
 A photo is a thing made in play with [`create`](/docs/reference/effects#create) and given to the player, so the gallery has something to list. The showcase makes them from a Camera app, which is the next section.
@@ -222,7 +251,7 @@ Take out what your game doesn't need:
 
 ## Drawing the phone
 
-With the React UI, list the three plugins' UIs in [`plugins`](/docs/react/kit#the-plugins-option). `devicesUi` puts a button for the phone in the side column and opens it in a dialog. The messages and social apps' sections are drawn by `messagesUi` and `feedUi`, so list those too, or those apps open empty.
+With the React UI, list the three plugins' UIs in [`plugins`](/docs/react/kit#the-plugins-option). `devicesUi` puts a button for the phone in the side column and opens it in a dialog. The messages and social apps' sections are drawn by `messagesUi` and `feedUi`, so list those too, or those apps open empty. The messages app opens on a list of conversations, each with a portrait, a name, the last line and an unread dot, and a tap opens the thread with a back button. A thread shows a typing bubble while a text with `after` is on its way.
 
 With your own UI, read `view.plugins.devices` for the phone and its apps. The open app's sections are in `open.sections`. A `plugin` section only names a slice, so draw it from `view.plugins.messages` or `view.plugins.feed`, picking out the channel or feed in its `with`:
 

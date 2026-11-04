@@ -400,4 +400,8 @@ In plain DOM, the pieces are drawn again with the rest of the page on every chan
 
 In the React UI, your components go anywhere in your [layout](/docs/react#layouts), among the built-in parts. Here they make a bar across the top of the story, and take the place of the stat list at the side. For a HUD in a different place altogether, such as a bar fixed across the top of the window, change the [shape of the page](/docs/react/customising#7-change-the-shape-of-the-page) or [write your own root](/docs/react/customising#8-write-your-own-root). The components above work anywhere inside the game's provider.
 
+## What just changed
+
+Feedback after a choice, such as `+30 coins` or `-5% energy`, is already worked out for you in [`view.changes`](/docs/reference/changes). Each entry has its signed `text` in the stat's format and `by`, which says whether it went up or down. The React UI has a ready list for it, [`Changes`](/docs/react/components#changes), that the default layout leaves out. Place it after the scene, and style its `change` parts by `data-dir`. [Changes](/docs/reference/changes#drawing-it) has the same list in plain DOM and Vue.
+
 To draw a plugin that has no UI of its own, such as the shop or jobs, see [Building UI for plugins](/docs/recipes/plugin-ui).

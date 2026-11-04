@@ -2,7 +2,7 @@ import type { RunnerSnapshot } from '@ifloom/engine'
 // runner, add and drawChoices, as in the vanilla template's src/main.ts.
 import { add, drawChoices } from './runner.ts'
 
-/** Each channel's threads, with their messages and the replies on offer, and a button that marks a thread read. */
+/** Each channel's threads, with their messages and the replies on offer, who is typing, and a button that marks a thread read. */
 export function drawMessages(parent: HTMLElement, { view }: RunnerSnapshot): void {
   for (const channel of view.plugins.messages?.channels ?? []) {
     add(parent, 'h3', channel.unread ? `${channel.name} (${channel.unread})` : channel.name)
@@ -18,6 +18,8 @@ export function drawMessages(parent: HTMLElement, { view }: RunnerSnapshot): voi
         if (message.replied) add(bubble, 'p', message.replied, 'replied')
         else drawChoices(bubble, message.replies)
       }
+      // A message with `after` is on its way.
+      if (thread.typing) add(box, 'p', `${thread.name} is typing…`, 'typing')
       // Mark read, while anything in the thread is unread.
       if (thread.read) drawChoices(box, [thread.read])
     }

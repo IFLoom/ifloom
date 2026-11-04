@@ -280,6 +280,43 @@ describe('the flow checks', () => {
     )
   })
 
+  it('let a decision at the end of a pick’s then jump back, since the other picks carry on', () => {
+    const hub: DataScene = {
+      id: 'hub',
+      body: [
+        point('top'),
+        decide('ask', [
+          choice('a', 'Ask about the flat', {
+            then: [
+              text('Which part?'),
+              decide('inner', [choice('x', 'The rent', { effects: [jump('top')] }), choice('y', 'The garden', { effects: [jump('top')] })]),
+            ],
+          }),
+          choice('b', 'Never mind'),
+        ]),
+        text('After.'),
+      ],
+      choices: [],
+    }
+    const { game, problems } = loadGame([{ name: 'hub', scenes: [hub] }], { id: 'hub', title: 'Hub' })
+    expect(problems.map(describeProblem)).toEqual([])
+    const open = play(startingState(game), game, { type: 'scene', id: 'hub' })
+    const looped = play(open, game, choose('a'), choose('x'))
+    expect(view(looped, game).scene.choices.map((entry) => entry.label)).toEqual(['Ask about the flat', 'Never mind'])
+    const done = play(looped, game, choose('b'))
+    expect(read(view(done, game).scene.beats).at(-1)).toBe('After.')
+  })
+
+  it('still report a decision nested in a section whose every choice jumps, with blocks after the section', () => {
+    const stuck: DataScene = {
+      id: 'stuck',
+      body: [point('top'), { blocks: [decide('inner', [choice('x', 'X', { effects: [jump('top')] })])] }, text('Never reached.')],
+      choices: [],
+    }
+    const { problems } = loadGame([{ name: 'stuck', scenes: [stuck] }], { id: 'stuck', title: 'Stuck' })
+    expect(problems.map((problem) => problem.what)).toContain('decision inner: every choice leaves or jumps, so what comes after it is never reached')
+  })
+
   it('report a jump anywhere but a choice of the scene that has the point', () => {
     const { problems } = loadGame([{ name: 'odd', actions: [{ id: 'wait', label: 'Wait', effects: [jump('top')] }] }], { id: 'odd', title: 'Odd' })
     expect(problems.map((problem) => problem.what)).toContain(

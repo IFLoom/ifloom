@@ -343,6 +343,22 @@ const isChose = (when: Condition, key: string) => typeof when === 'object' && wh
 /** Does a choice leave the scene: an effect that opens another or closes it? */
 const leaves = (choice: FlowChoice) => (choice.effects ?? []).some((effect) => typeof effect === 'object' && effect !== null && 'scene' in effect)
 
+/**
+ * The blocks nothing in their own flow comes after: the last of a list, through sections and
+ * cases, when that list is a pick's `then` (whose follow-on is its decision's, which the other
+ * picks reach) or, when `end` is true, the scene's body.
+ */
+function tailBlocks(body: readonly Block[], end: boolean, into = new Set<Block>()): Set<Block> {
+  body.forEach((block, index) => {
+    const tail = end && index === body.length - 1
+    if (tail) into.add(block)
+    if (isSection(block)) tailBlocks(block.blocks, tail, into)
+    if (isCases(block)) for (const entry of block.cases) tailBlocks([entry], tail, into)
+    if (isDecide(block)) for (const choice of block.choices) tailBlocks(choice.then ?? [], true, into)
+  })
+  return into
+}
+
 /** Everything wrong with one data scene's flow. */
 function checkFlow(scene: DataScene, tools: FeatureCheckTools): void {
   const source = { list: 'scene', id: scene.id }
@@ -381,6 +397,7 @@ function checkFlow(scene: DataScene, tools: FeatureCheckTools): void {
     const point = jumpOf(choice.effects)
     if (point !== undefined && !points.has(point)) tools.problem(source, where, `${at}: jumps to point "${point}", which the scene doesn't have`)
   }
+  const tails = tailBlocks(scene.body, !scene.choices.length)
   blocks.forEach(({ block, address }, index) => {
     if (!isDecide(block)) return
     const at = `decision ${block.decide}`
@@ -392,9 +409,10 @@ function checkFlow(scene: DataScene, tools: FeatureCheckTools): void {
       if (choice.then?.length && leaves(choice))
         tools.problem(source, where, `${at} choice ${choice.id}: its then is never shown, because the choice leaves the scene`)
     }
-    // Nothing after it can be reached when every choice leaves or jumps, unless nothing comes after it,
-    // or a point after it, outside its own branches, lets a jump land there.
-    const lastThing = scene.body.at(-1) === block && !scene.choices.length
+    // Nothing after it can be reached when every choice leaves or jumps, unless nothing comes after it
+    // in its own flow (the scene's end, or the end of a pick's then), or a point after it, outside its
+    // own branches, lets a jump land there.
+    const lastThing = tails.has(block)
     const pointAfter = blocks.some((later, at) => at > index && isPoint(later.block) && !later.address.startsWith(`${address}.`))
     if (block.choices.length && !lastThing && !pointAfter && block.choices.every((choice) => leaves(choice) || jumpOf(choice.effects) !== undefined))
       tools.problem(source, where, `${at}: every choice leaves or jumps, so what comes after it is never reached`)

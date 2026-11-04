@@ -177,7 +177,7 @@ Reading a storyline that isn't in the save gives an empty one (open, nothing set
 type KvValue = boolean | number | string
 ```
 
-The kv store: keys with a true/false, number or text value, such as `metAva: true`, `visits: 3` or `playerName: 'Robin'`. It's where a game keeps anything that isn't a stat or a thing. Keys need no declaring. A key nobody has set reads as unset, which a condition treats as false, or as 0 in a range.
+The kv store: keys with a true/false, number or text value, such as `metAva: true`, `visits: 3` or `playerName: 'Robin'`. It's where a game keeps anything that isn't a stat or a thing. Keys need no declaring. A key nobody has set counts as 0: `{ kv: 'visits', is: 0 }` and `{ kv: 'visits', lt: 1 }` hold for it, and a bare `{ kv: 'visits' }` doesn't.
 
 A new game starts with the content's starting `kv`, with the `kv` given to [`startingState`](/docs/reference/commands#startingstate) over it, or `{}`. The [`kv`](/docs/reference/effects#kv) effect and [inputs](/docs/reference/inputs) set keys. [`{ kv }`](/docs/reference/conditions#kv) reads them, and so does a `{{name}}` [prose token](/docs/reference/prose#tokens), as text. The content's [`resets`](/docs/reference/rules#resets) put some back at the start of each turn. Each [storyline](#storylines) and each [entity](#entities) has a kv store of its own too, and so does a running [minigame](#minigame).
 

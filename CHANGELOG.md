@@ -482,6 +482,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Fixed
 
+- `ifloom check` no longer reports "every choice leaves or jumps" for a decision at the end of a pick's `then` whose choices jump back, as in a hub where one question opens a few follow-ups. The other picks of the decision around it still carry on to what comes after.
+- `{ kv: 'x', is: 0 }` holds for a key nobody has set, which counts as 0 as it already did in a range and for `by`. `is: false` and `is: ''` still don't.
 - A device's open app no longer grows wider than its dialog when a line in it is long, such as a message's last line in the conversation list on a phone.
 - `rules.profile` now runs after every command, and `rules.view` sees what the profile holds under `game`, as a plugin's do. The runner asked only the plugins before.
 

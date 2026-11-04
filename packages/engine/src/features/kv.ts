@@ -135,7 +135,11 @@ export const kv = defineFeature<KvShape>({
         const store = storeOf(state, game, condition.of)
         if (!store) return false
         const value = store.read[condition.kv]
-        if (condition.is !== undefined) return Array.isArray(condition.is) ? (condition.is as KvValue[]).includes(value as KvValue) : value === condition.is
+        if (condition.is !== undefined) {
+          // A key nobody has set counts as 0, as it does in a range and for `by`; it equals no other value.
+          const compared = value === undefined ? 0 : value
+          return Array.isArray(condition.is) ? (condition.is as KvValue[]).includes(compared) : compared === condition.is
+        }
         if (bounded(condition)) return inRange(asCount(value), condition)
         return Boolean(value)
       },

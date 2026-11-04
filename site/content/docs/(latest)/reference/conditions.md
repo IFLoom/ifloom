@@ -109,7 +109,7 @@ The keys that tell the engine's conditions apart: `all`, `any`, `not`, `kv`, `se
 
 Tests a key in the [kv store](/docs/reference/state#kv), the game's keys with a true/false, number or text value. What it tests depends on what you give:
 
-- **`is`** tests strict equality, so `1` and `'1'` differ. Given a list, it holds when the key equals any of them. Any range bound beside it is ignored.
+- **`is`** tests strict equality, so `1` and `'1'` differ. Given a list, it holds when the key equals any of them. A key nobody has set counts as 0, so `is: 0` holds for it, and `is: false` and `is: ''` don't. Any range bound beside it is ignored.
 - **A [range](#range) bound** (`gte`, `gt`, `lte` or `lt`) tests whether the key's number is in the range. A value that isn't a number (unset, text or `true`) counts as 0.
 - **Neither** tests whether the key is truthy. `0`, `''` and `false` aren't.
 

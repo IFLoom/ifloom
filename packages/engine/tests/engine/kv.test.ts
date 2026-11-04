@@ -46,6 +46,21 @@ describe('one kv vocabulary, with whose store in `of`', () => {
     expect(holds(state, game, { kv: 'phase', is: ['arrival'] })).toBe(false)
   })
 
+  it('reads a key nobody has set as 0 in `is`, and as nothing else', () => {
+    const game = town()
+    const state = begin(game)
+    expect(holds(state, game, { kv: 'swipe', is: 0 })).toBe(true)
+    expect(holds(state, game, { kv: 'swipe', is: [0, 1] })).toBe(true)
+    expect(holds(state, game, { kv: 'swipe', is: 1 })).toBe(false)
+    expect(holds(state, game, { kv: 'swipe', is: false })).toBe(false)
+    expect(holds(state, game, { kv: 'swipe', is: '' })).toBe(false)
+    expect(holds(state, game, { kv: 'swipe' })).toBe(false)
+    expect(holds(state, game, { kv: 'mood', of: 'staff:ana', is: 0 })).toBe(true)
+    expect(holds(state, game, { kv: 'visits', of: 'storyline:rosa', is: 0 })).toBe(true)
+    // A key set to text is that text, not 0.
+    expect(holds(state, game, { kv: 'role', of: 'staff:ana', is: 0 })).toBe(false)
+  })
+
   it('draws a whole number from `random`, seeded by the save, the same on every replay', () => {
     const game = town()
     const once = applyEffects(begin(game), game, [{ kv: 'dice', random: [1, 6] }])

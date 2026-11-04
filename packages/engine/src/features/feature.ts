@@ -181,6 +181,8 @@ export type ResolveTools = {
   resolve: (refs: readonly Reference[], where: string) => string[]
   /** Record a file the game names, as the page asks for it. */
   file: (where: string, type: 'picture' | 'video' | 'audio', path: string | null) => void
+  /** Report something at `where` that may be wrong in play but isn't a problem: a warning, which fails no check. */
+  warn: (where: string, what: string) => void
 }
 
 /** The references that have `K` as a key. */
@@ -258,7 +260,7 @@ export type FeatureSpec<T extends FeatureShape> = {
   /** The references it answers for, resolved against one game. Called once per check. */
   resolve?: (game: Game, tools: ResolveTools) => Resolvers
   /** What is wrong with prose markup it reads, such as a sound or a pool it names. It records the files the markup names. */
-  markup?: (game: Game, text: string, where: string, tools: ResolveTools) => string[]
+  markup?: (game: Game, text: string, where: string, tools: ResolveTools, shownWhen?: Condition) => string[]
   /** Its checks against one probe state. */
   probe?: (game: Game, probe: FeatureProbe, tools: FeatureCheckTools, cx: FeatureContext) => void
   /**
@@ -269,8 +271,12 @@ export type FeatureSpec<T extends FeatureShape> = {
   refuses?: (state: GameState, command: Command, game: Game, effects: () => readonly Effect[], cx: FeatureContext) => string | undefined
   /** Its piece of the view. */
   view?: (state: GameState, game: Game, shown: ShownScreen, cx: FeatureContext) => Part<T, 'view'>
-  /** A step after every command that took, before the screen is drawn, in the features' declared order. */
-  afterCommand?: { at: AfterSlot; run: (before: GameState, after: GameState, game: Game, cx: FeatureContext) => GameState }
+  /**
+   * A step after every command that took, before the screen is drawn, in the
+   * features' declared order. `command` is the one that ran, to tell a tick
+   * from a pick.
+   */
+  afterCommand?: { at: AfterSlot; run: (before: GameState, after: GameState, game: Game, cx: FeatureContext, command: Command) => GameState }
   /** What it records from the one screen of the new state. `wants` says whether the game needs a screen for it at all. */
   fromScreen?: { wants: (game: Game) => boolean; record: (state: GameState, shown: ShownScreen, game: Game, cx: FeatureContext) => GameState }
   /** What it does in a runner. */

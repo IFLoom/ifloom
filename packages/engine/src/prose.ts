@@ -1,4 +1,7 @@
 import { customValue } from './custom.ts'
+import { holds } from './condition.ts'
+import { GAME_ID } from './plugin.ts'
+import { BARE_NAME, KV_NAME, PLUGIN_NAME, TOKEN, V_NAME, phraseRows } from './features/phrases.ts'
 import type { Game, ProseStore } from './game.ts'
 import { storylineOf } from './storylines.ts'
 import type { GameState } from './types.ts'
@@ -8,34 +11,77 @@ import type { KvValue } from './types.ts'
 /**
  * Fill the tokens a line of prose may carry:
  *
- * - `{{name}}` — a key in the kv store (a name the player typed is a
- *   key like any other: `{{playerName}}`);
- * - `{{kv:key of=storyline:storyline}}` — a counter on a storyline;
- * - `{{v:game/name}}` — a value, a plugin's or the game's own (`game/…`), with any
- *   arguments after the name: `{{v:messages/unread channel=texts}}`.
+ * - `{{name}}`: a name of the game's own, looked up as a phrase (content's
+ *   `phrases`, with `.` between groups: `{{outfit.verdict}}`), then a value
+ *   in `rules.values`, then a key in the kv store (a name the player typed is
+ *   a key like any other: `{{playerName}}`);
+ * - `{{plugin/name}}`: a plugin's value, with any arguments after the name:
+ *   `{{messages/unread channel=texts}}`;
+ * - `{{kv:key of=storyline:baker}}`: a key in another kv store;
+ * - `{{v:game/name}}` and `{{v:plugin/name}}`, the older way to write a
+ *   value, which still works.
  *
- * A token naming a value the game does not have is left as it is, so the
- * missing name shows on screen instead of vanishing. The content checker
- * doesn't look at tokens.
+ * Any of them can end in `|` and words shown while the token is unset:
+ * `{{flatmateName|Your flatmate}}`. Unset is a kv key that is unset or not
+ * text or a number, a phrase no row of which holds, a value nobody has, or
+ * one that gives `''`. The fallback is shown as written, with no tokens in it.
+ * Without one, an unset bare name (`{{name}}`) prints nothing, and any other
+ * token naming nothing is left as it is, so the missing name shows on
+ * screen. Words a token prints are never read for tokens again, but a
+ * phrase's own words are filled when it is printed.
  */
 export function fillTokens(state: GameState, game: Game, text: string): string {
-  return (
-    text
-      .replace(KV_TOKEN, (match, key: string, args: string | undefined) => {
-        const of = tokenArgs(args).of
-        const value = readKv(state, game, key, of === undefined ? undefined : String(of))
-        return typeof value === 'string' || typeof value === 'number' ? String(value) : match
-      })
-      .replace(VALUE_TOKEN, (match, name, args) => {
-        const fn = customValue(game, name)
-        return fn ? String(fn(state, tokenArgs(args))) : match
-      })
-      // kv keys last: a value the player typed is shown as typed, never read as a token.
-      .replace(/\{\{([A-Za-z_][A-Za-z0-9_]*)\}\}/g, (match, key) => {
-        const value = state.kv[key]
-        return typeof value === 'string' || typeof value === 'number' ? String(value) : match
-      })
-  )
+  if (!text.includes('{{')) return text
+  return text.replace(TOKEN, (match, prefix: string | undefined, name: string, args: string | undefined, fallback: string | undefined) => {
+    const value = tokenValue(state, game, prefix, name, args)
+    if (value !== undefined && value !== '') return String(value)
+    if (fallback !== undefined) return fallback
+    if (prefix === undefined && BARE_NAME.test(name)) return ''
+    return value === '' ? '' : match
+  })
+}
+
+/** How deep phrases are being filled inside phrases right now: a phrase that prints itself stops here. */
+let filling = 0
+const DEEPEST = 20
+
+/** What one token prints, or undefined when it names nothing the game has. */
+function tokenValue(state: GameState, game: Game, prefix: string | undefined, name: string, args: string | undefined): string | number | undefined {
+  if (prefix === 'kv') {
+    if (!KV_NAME.test(name)) return undefined
+    const of = tokenArgs(args).of
+    const value = readKv(state, game, name, of === undefined ? undefined : String(of))
+    return typeof value === 'string' || typeof value === 'number' ? value : undefined
+  }
+  if (prefix === 'v') return V_NAME.test(name) ? customValue(game, name)?.(state, tokenArgs(args)) : undefined
+  if (name.includes('/')) return PLUGIN_NAME.test(name) ? customValue(game, name)?.(state, tokenArgs(args)) : undefined
+  if (!BARE_NAME.test(name)) return undefined
+  const phrase = phraseText(state, game, name)
+  if (phrase !== undefined) return phrase
+  const fn = customValue(game, `${GAME_ID}/${name}`)
+  if (fn) return fn(state, tokenArgs(args))
+  // A kv key: a value the player typed is shown as typed, never read as a token.
+  const value = state.kv[name]
+  return args?.trim() || !(typeof value === 'string' || typeof value === 'number') ? undefined : value
+}
+
+/**
+ * A phrase's words for this state: the first of its rows whose `when` holds,
+ * its tokens filled, or `''` when none does. Undefined when the game has no
+ * phrase by that full name.
+ */
+export function phraseText(state: GameState, game: Game, name: string): string | undefined {
+  const rows = phraseRows(game, name)
+  if (!rows) return undefined
+  const row = rows.find((entry) => holds(state, game, entry.when))
+  if (!row) return ''
+  if (filling >= DEEPEST) return row.text
+  filling += 1
+  try {
+    return fillTokens(state, game, row.text)
+  } finally {
+    filling -= 1
+  }
 }
 
 /**
@@ -51,12 +97,6 @@ export function entityDescription(state: GameState, game: Game, ref: string): st
   const description = entityText(state, game, ref, 'description')
   return description === undefined ? undefined : fillTokens(state, game, description)
 }
-
-/** A value token: `{{v:game/name}}`, or `{{v:game/name key=value …}}` with arguments. */
-export const VALUE_TOKEN = /\{\{v:((?:[A-Za-z0-9-]+\/)?[A-Za-z0-9_-]+)((?:\s+[A-Za-z_][A-Za-z0-9_]*=[^\s}]+)*)\s*\}\}/g
-
-/** A kv token, `{{kv:key}}` or `{{kv:key of=storyline:baker}}`: the key, and its arguments. */
-export const KV_TOKEN = /\{\{kv:([A-Za-z_][A-Za-z0-9_.:-]*)((?:\s+[A-Za-z_][A-Za-z0-9_]*=[^\s}]+)*)\s*\}\}/g
 
 /** A key in the kv store `of` names, as a kv token reads it: the player's, a storyline's, the running minigame's or an entity's. */
 function readKv(state: GameState, game: Game, key: string, of: string | undefined): KvValue | undefined {

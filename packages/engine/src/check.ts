@@ -31,7 +31,12 @@ export type FileRef = { path: string; type: 'picture' | 'video' | 'audio'; where
 export type Probe = { name: string; state: GameState }
 
 /** What `checkGame` finds. */
-export type Checked = { problems: Problem[]; files: FileRef[] }
+export type Checked = {
+  problems: Problem[]
+  /** What may go wrong in play but isn't a problem, such as a token that may be unset with no fallback. A warning fails no check. */
+  warnings: Problem[]
+  files: FileRef[]
+}
 
 /**
  * What a problem is about, for `loadGame` to name the pack it came from.
@@ -142,7 +147,15 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
   // Resolving references.
 
   const resolve = (refs: readonly Reference[], where: string): string[] => refs.flatMap((ref) => one(ref, where))
-  const resolveTools: ResolveTools = { resolve, file }
+  const warnings: Problem[] = []
+  const warned = new Set<string>()
+  const warn = (where: string, what: string) => {
+    const key = `${where}\n${what}`
+    if (warned.has(key)) return
+    warned.add(key)
+    warnings.push({ pack: packOf(undefined), where, what })
+  }
+  const resolveTools: ResolveTools = { resolve, file, warn }
   // The references each feature answers for, by the key that tells each apart.
   const leaves: Record<string, (ref: never, where: string) => string[]> = {}
   for (const step of resolverSteps) {
@@ -153,7 +166,8 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
   }
 
   // Prose with markup: what each feature reads in it (sounds, pools, files).
-  const markup = (text: string, where: string): string[] => markupChecks.flatMap((check) => check(game, text, where, resolveTools))
+  const markup = (text: string, where: string, shownWhen?: Condition): string[] =>
+    markupChecks.flatMap((check) => check(game, text, where, resolveTools, shownWhen))
 
   const call = (table: CallTable, name: string, args: Record<string, unknown>, where: string): string[] => {
     const known =
@@ -195,7 +209,7 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
     if ('when' in ref) return ref.when ? [...shapeProblems(ref.when), ...resolve(conditionReferences(ref.when), where)] : []
     if ('effects' in ref) return [...(ref.effects ?? []).flatMap(keyProblem), ...resolve((ref.effects ?? []).flatMap(effectReferences), where)]
     if ('command' in ref) return ref.command ? [...typeProblem(ref.command), ...resolve(commandReferences(ref.command), where)] : []
-    if ('markup' in ref) return markup(ref.markup, where)
+    if ('markup' in ref) return markup(ref.markup, where, ref.shownWhen)
     if ('call' in ref) return call(ref.call, ref.name, ref.with ?? {}, where)
     if ('entry' in ref) {
       if (!pluginOf(game, ref.plugin)) return []
@@ -317,5 +331,5 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
   // Each probe state, as the features check against it: every scene rendered.
   for (const probe of probes) for (const probeCheck of probeChecks) probeCheck(game, probe, tools, cx)
 
-  return { problems, files }
+  return { problems, warnings, files }
 }

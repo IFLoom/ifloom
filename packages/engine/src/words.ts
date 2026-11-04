@@ -88,7 +88,13 @@ const CORE: readonly { list: keyof Game; noun: string; shape: WordPart; name?: (
     shape: {
       title: true,
       states: {
-        '*': { label: true, after: { effects: 'effects' }, on: [{ effects: 'effects' }], always: [{ effects: 'effects' }], final: { effects: 'effects' } },
+        '*': {
+          label: true,
+          after: { effects: 'effects' },
+          on: [{ label: true, effects: 'effects' }],
+          always: [{ effects: 'effects' }],
+          final: { effects: 'effects' },
+        },
       },
     },
   },
@@ -156,6 +162,7 @@ class Walk {
       const fold = isRecord(block.ui) ? block.ui.fold : undefined
       if (typeof fold === 'string') this.field(`${entry}.fold.${hashed(fold)}`, fold, [...here, 'ui', 'fold'], where)
       if ('blocks' in block) this.blocks(block.blocks, entry, [...here, 'blocks'], where)
+      if ('cases' in block) this.blocks(block.cases, entry, [...here, 'cases'], where)
       if ('decide' in block) block.choices.forEach((choice, n) => this.choice(choice, entry, [...here, 'choices', n], where))
     })
   }
@@ -290,6 +297,14 @@ export function wordSpots(game: Game): WordSpot[] {
         if (kinds !== undefined) spot.key = kinds
       }
     }
+  }
+  // Phrases: each row's words, by the phrase's full name and the row's place.
+  for (const [name, rows] of Object.entries(game.phrases ?? {})) {
+    if (!Array.isArray(rows)) continue
+    walk.source = { list: 'phrase', id: name }
+    rows.forEach((row, index) =>
+      walk.field(`phrase.${name}.${index}`, isRecord(row) ? row.text : undefined, ['phrases', name, index, 'text'], `phrase ${name}`),
+    )
   }
   // Each plugin's content, by the shape it gives each list of its data.
   for (const plugin of game.plugins ?? []) {

@@ -145,11 +145,12 @@ export function blockReferences(blocks: readonly Block[] | undefined): Reference
       for (const pictures of Object.values(block.image ?? {})) out.push({ variants: pictures })
     }
     if ('media' in block) out.push({ media: block.media })
-    if ('text' in block) out.push({ markup: block.text }, { words: block.text, field: 'block' })
+    if ('text' in block) out.push({ markup: block.text, shownWhen: block.when }, { words: block.text, field: 'block' })
     // Before schema 25, words written in place were `{ words }`.
     if ('words' in block) out.push({ outdated: '`{ words }` is `{ text }` now: a block of words written in place is `{ text: "…" }`' })
-    if ('say' in block) out.push({ markup: block.say }, { speaker: block.speaker })
+    if ('say' in block) out.push({ markup: block.say, shownWhen: block.when }, { speaker: block.speaker })
     if ('blocks' in block) out.push({ blocks: block.blocks })
+    if ('cases' in block) out.push({ blocks: block.cases })
     if ('decide' in block)
       for (const choice of block.choices)
         out.push({ within: `decision ${block.decide} choice ${choice.id}`, refs: [...choiceReferences(choice), { blocks: choice.then }] })

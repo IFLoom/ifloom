@@ -56,12 +56,12 @@ function noteShown(state: GameState, game: Game): GameState {
  * showing is seen), those hooks, the features' steps after them (a level
  * gained is noticed), then what the new state's screen shows.
  */
-function after(before: GameState, ran: GameState, game: Game): GameState {
+function after(before: GameState, ran: GameState, game: Game, command: Command): GameState {
   const cx = featureContext()
   let next = ran
-  for (const step of afterSteps.beforePlugins) next = step(before, next, game, cx)
+  for (const step of afterSteps.beforePlugins) next = step(before, next, game, cx, command)
   next = runCommandHooks(game, before, next)
-  for (const step of afterSteps.afterPlugins) next = step(before, next, game, cx)
+  for (const step of afterSteps.afterPlugins) next = step(before, next, game, cx, command)
   return noteShown(next, game)
 }
 
@@ -82,7 +82,7 @@ export function apply(state: GameState | null, game: Game, ref: CommandRef): App
   // already in this engine's and this game's shape.
   const current = state
   try {
-    return { state: after(current, run(current, game, command), game), ok: true }
+    return { state: after(current, run(current, game, command), game, command), ok: true }
   } catch (error) {
     if (error instanceof Refused) {
       return { state: current, ok: false, reason: error.detail }

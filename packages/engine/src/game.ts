@@ -233,7 +233,7 @@ export type StorylineDef = {
  * plugin can have, for the game itself, with no plugin to write. Content
  * calls what it declares as it calls a plugin's, with `game` as the plugin's
  * id: `{ 'game/tired': true }` as a condition, `{ 'game/postLatest': {} }` as
- * an effect, `{{v:game/catName}}` in prose, `{ 'game/rest': true }` as a
+ * an effect, `{{catName}}` in prose, `{ 'game/rest': true }` as a
  * command.
  *
  * Every member is optional; leave one out and the engine does the plain
@@ -289,7 +289,7 @@ export type GameRules<S = any> = {
    * anything content can write, a plugin's effects and the game's own included.
    */
   effects?: Record<string, CustomEffect>
-  /** Words and numbers content can read by name: `{{v:game/catName}}`, a stat's `max: { value: 'game/ceiling' }`. */
+  /** Words and numbers content can read by name: `{{catName}}`, a stat's `max: { value: 'game/ceiling' }`. */
   values?: Record<string, CustomValue>
   /** Answers code can ask by name with `context.query('game/name')`. */
   queries?: Record<string, (state: GameState, args: PluginArgs, context: CustomContext) => unknown>

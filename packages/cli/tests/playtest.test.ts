@@ -93,6 +93,22 @@ describe('playtest', () => {
     const result = playtest(g, startingState(g), () => places.go('garden'), { turns: 3 })
     expect(result.refusals.length).toBe(2)
   })
+
+  it('waits for a running timer when there is nothing new to do, so what it brings happens', () => {
+    const g = loadGame(
+      [
+        {
+          name: 'oven',
+          timers: [{ id: 'oven', ms: 4000, effects: [{ kv: 'baked', to: true }] }],
+          actions: [{ id: 'bake', label: 'Bake', once: { per: 'game' }, effects: [{ timer: 'oven' }] }],
+        },
+      ],
+      { id: 'oven', title: 'Oven' },
+    ).game
+    const result = playtest(g, { ...startingState(g), sceneId: null }, explorer(), { steps: 4 })
+    expect(result.transcript).toContain('> {"type":"tick","ms":4000}')
+    expect(result.state.kv.baked).toBe(true)
+  })
 })
 
 describe('snapshot', () => {

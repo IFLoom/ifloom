@@ -65,6 +65,7 @@ describe('core features are leaves', () => {
     expect(FEATURE_FILES.map((file) => file.slice(SRC.length)).sort()).toEqual([
       'features/actions.ts',
       'features/audio.ts',
+      'features/changes.ts',
       'features/entities.ts',
       'features/feature.ts',
       'features/flows.ts',
@@ -76,6 +77,7 @@ describe('core features are leaves', () => {
       'features/minigames.ts',
       'features/notices.ts',
       'features/panels.ts',
+      'features/phrases.ts',
       'features/rolls.ts',
       'features/saving.ts',
       'features/scenes.ts',
@@ -149,6 +151,8 @@ describe('the registry', () => {
       locks: { conditions: [], effects: [], commands: [] },
       saving: { conditions: [], effects: [], commands: [] },
       rolls: { conditions: ['roll'], effects: ['roll'], commands: [] },
+      phrases: { conditions: [], effects: [], commands: [] },
+      changes: { conditions: [], effects: [], commands: [] },
     })
     // The core keeps only what is no feature's: the conditions that hold by their parts, and the plugins' seam.
     const owned = new Set(Object.values(featureKinds).flatMap((kinds) => [...kinds.conditions, ...kinds.effects, ...kinds.commands]))
@@ -166,9 +170,10 @@ describe('the registry', () => {
     // a level gained is noticed after the plugins' hooks, so a hook's reward counts.
     // A scene's minigame starts once the scene is counted as seen, and before the plugins' hooks, so they see it running.
     // A panel closes after the hooks, so a turn or a scene a hook moves on closes it too.
-    // The command's rolls are kept last, so they include any a trigger or a hook made.
+    // The command's rolls are kept after the hooks, so they include any a trigger or a hook made.
+    // The stats the command moved are compared very last, once everything has run.
     // A flow starts the minigame or opens the panel it stands at once the scene's own minigame has started, and sees one it waits on end.
-    expect(afterOrder).toEqual({ beforePlugins: ['triggers', 'scenes', 'minigames', 'flows', 'audio'], afterPlugins: ['stats', 'panels', 'rolls'] })
+    expect(afterOrder).toEqual({ beforePlugins: ['triggers', 'scenes', 'minigames', 'flows', 'audio'], afterPlugins: ['stats', 'panels', 'rolls', 'changes'] })
   })
 
   it('refuses to build when a feature requires one that is missing or comes later', () => {

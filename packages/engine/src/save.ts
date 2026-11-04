@@ -27,8 +27,6 @@ export type SaveMeta = {
   packs: string[]
   /** The plugins the game was built with, and the version of each one's state. */
   plugins: Record<string, number>
-  /** The engine's save format version, `SAVE_VERSION`. */
-  version: number
   /** The game's own version (`game.version`) the save was made with; 1 for a game that declares none. */
   gameVersion: number
 }
@@ -42,7 +40,11 @@ export type BrokenSave = { slot: string; broken: string }
 /** One entry of a game's saves, as `list()` gives them: a save's meta, or a save that can't be read. */
 export type SaveListing = SaveMeta | BrokenSave
 
-/** A save as it is written: the state, and what it says about itself. */
+/**
+ * A save as it is written: the state, and what it says about itself. `ifloom`
+ * is the format of this envelope, 1, apart from the state's own `version`
+ * (`SAVE_VERSION`), which `loadState` carries forward.
+ */
 export type SaveFile = { ifloom: 1; meta: SaveMeta; state: GameState }
 
 /** A save read back: what it says about itself, and the state, carried forward. */
@@ -121,7 +123,6 @@ export function saves(game: Game, driver: SaveDriver): Saves {
       playerName: game.rules?.saveName?.(state) ?? null,
       packs: game.packs ?? [],
       plugins: Object.fromEntries((game.plugins ?? []).map((plugin) => [plugin.id, plugin.version])),
-      version: state.version,
       gameVersion: state.gameVersion ?? game.version ?? 1,
     }
   }
@@ -145,8 +146,8 @@ export function saves(game: Game, driver: SaveDriver): Saves {
     const missingPlugins = Object.keys(data.meta.plugins ?? {}).filter((id) => !pluginOf(game, id))
     // A save from before game versions says nothing of one: it was version 1.
     const recorded = (data.state as { gameVersion?: number }).gameVersion
-    // A save from before version 18 called the player's name `player`.
-    const { player: oldName, ...given } = data.meta as SaveMeta & { player?: string | null }
+    // A save from before version 18 called the player's name `player`, and one from before 24 repeated `state.version` as `version`.
+    const { player: oldName, version: _version, ...given } = data.meta as SaveMeta & { player?: string | null; version?: number }
     const meta: SaveMeta = { ...given, playerName: given.playerName ?? oldName ?? null, gameVersion: given.gameVersion ?? recorded ?? 1 }
     return ok({ meta, state, missingPacks, missingPlugins })
   }

@@ -431,8 +431,8 @@ describe('content migrations', () => {
     expect(up(v6)).toEqual({
       id: 'phone',
       schema: SCHEMA,
-      prose: { badge: 'You have {{v:messages/unread channel=texts}} new and {{v:feed/unread feed=social}} posts; {{v:game/rentDue}} due.' },
-      strings: { hint: '{{v:messages/unread channel=post}} letters' },
+      prose: { badge: 'You have {{messages/unread channel=texts}} new and {{feed/unread feed=social}} posts; {{rentDue}} due.' },
+      strings: { hint: '{{messages/unread channel=post}} letters' },
       actions: [
         {
           id: 'jog',
@@ -599,8 +599,8 @@ describe('content migrations', () => {
     expect(up(v11)).toEqual({
       id: 'phone',
       schema: SCHEMA,
-      prose: { badge: '{{v:feed/unread}} new, {{v:feed/unread feed=social}} on social; {{v:feed/unseenish}} stays.' },
-      strings: { hint: '{{v:feed/unread feed=board}} pinned' },
+      prose: { badge: '{{feed/unread}} new, {{feed/unread feed=social}} on social; {{feed/unseenish}} stays.' },
+      strings: { hint: '{{feed/unread feed=board}} pinned' },
       stats: [{ id: 'buzz', label: 'Buzz', max: { value: 'feed/unread' } }],
       data: {
         devices: {
@@ -905,7 +905,7 @@ describe('content migrations', () => {
     const out = unwrap(upgradePack(v25, plugins)) as unknown as Record<string, unknown>
     expect(out).toMatchObject({
       schema: SCHEMA,
-      prose: { 'place.flat': 'Home, {{v:places/description}}.' },
+      prose: { 'place.flat': 'Home, {{places/description}}.' },
       entities: [
         { id: 'flat', of: 'location', name: 'Flat', description: 'Home' },
         { id: 'sam', of: 'character', name: 'Sam', traits: { 'cast/person': { home: 'away', schedule: [{ location: 'away', when: { kv: 'away' } }] } } },
@@ -914,7 +914,7 @@ describe('content migrations', () => {
       locks: [{ id: 'gone', when: { 'cast/at': { character: 'sam', at: ['away'] } }, deny: ['*'], reason: 'Sam is away.' }],
       actions: [{ id: 'snap', label: 'Snap', effects: [{ create: 'photo', with: { name: 'Pier', description: 'Gulls.' } }] }],
       scenes: [
-        { id: 'hall', body: [{ text: 'You are {{v:places/description}}.' }], choices: [{ id: 'go', label: 'Go', when: { value: 'places/description' } }] },
+        { id: 'hall', body: [{ text: 'You are {{places/description}}.' }], choices: [{ id: 'go', label: 'Go', when: { value: 'places/description' } }] },
       ],
       minigames: [{ id: 'darts', title: 'Darts', start: 'aim', states: { aim: { label: 'Aim!' } } }],
       data: {
@@ -1168,7 +1168,7 @@ describe('content migrations', () => {
           effects: [{ 'game/payRent': { weeks: 1 } }, { 'game/tidy': true }, { 'quests/start': { quest: 'rent' } }],
         },
       ],
-      prose: { due: 'Rent: {{v:game/rentDue}}, {{v:messages/unread channel=texts}} texts, {{v:game/rentDue weeks=2}} later.' },
+      prose: { due: 'Rent: {{rentDue}}, {{messages/unread channel=texts}} texts, {{rentDue weeks=2}} later.' },
     })
   })
 

@@ -32,6 +32,8 @@ import { turns, type TurnsShape } from './turns.ts'
 import { ui, type UiShape } from './ui.ts'
 import { kv, type KvShape } from './kv.ts'
 import { rolls, type RollsShape } from './rolls.ts'
+import { phrases, type PhrasesShape } from './phrases.ts'
+import { changes, type ChangesShape } from './changes.ts'
 
 /** Every core feature's shape. A new feature's goes here, and its value in `FEATURES`. */
 type Shapes =
@@ -57,6 +59,8 @@ type Shapes =
   | SavingShape
   | LocksShape
   | RollsShape
+  | PhrasesShape
+  | ChangesShape
 
 /**
  * The core features, in the order their after-command steps, views, checks,
@@ -73,7 +77,10 @@ type Shapes =
  * applies, views and checks (it sits beside entities, whose kinds it reads);
  * saving anywhere, since it only views and checks; ui anywhere, since it only
  * checks that hints are data; rolls last, after the plugins' hooks, so the
- * rolls a command keeps for the view include any a hook or a trigger made.
+ * rolls a command keeps for the view include any a hook or a trigger made;
+ * phrases anywhere, since it only merges and checks; changes very last, after
+ * the plugins' hooks and every other step, so the stats it compares are
+ * what the command left once everything had run.
  */
 export const FEATURES = [
   turns,
@@ -98,6 +105,8 @@ export const FEATURES = [
   locks,
   saving,
   rolls,
+  phrases,
+  changes,
 ] as const
 
 type UnionToIntersection<U> = (U extends unknown ? (piece: U) => void : never) extends (piece: infer I) => void ? I : never

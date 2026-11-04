@@ -7,6 +7,7 @@ import { loadState, startingState } from '../../src/intake.ts'
 import { proseStore } from '../../src/prose.ts'
 import { createRunner, replay } from '../../src/runner.ts'
 import { saves } from '../../src/save.ts'
+import { translatableFields } from '../../src/words.ts'
 import { memoryDriver } from '../../src/drivers.ts'
 import type { Game, MinigameDef } from '../../src/index.ts'
 import type { Command, GameState } from '../../src/types.ts'
@@ -127,6 +128,37 @@ describe('minigames', () => {
     const state = run(begin(game), game, { type: 'action', id: 'play' })
     const labels = Object.fromEntries(view(state, game).minigame!.inputs.map((input) => [input.id, input.label]))
     expect(labels).toEqual({ up: 'Jump', down: 'Down' })
+  })
+
+  it('word an input from its on entry’s label in this state, tokens filled, over the strings', () => {
+    const quiz: MinigameDef = {
+      id: 'quiz',
+      start: 'q1',
+      states: {
+        q1: {
+          label: 'Which street is the café on?',
+          on: [
+            { input: 'a', when: { kv: 'never' }, label: 'Not shown', go: 'done' },
+            { input: 'a', label: 'High Street, {{who}}', go: 'done' },
+            { input: 'b', label: 'Mill Lane', go: 'done' },
+            { input: 'c', go: 'done' },
+          ],
+        },
+        done: { final: {} },
+      },
+    }
+    const base = fixture()
+    const game: Game = {
+      ...base,
+      minigames: [quiz],
+      actions: [...(base.actions ?? []), { id: 'quiz', effects: [{ minigame: 'quiz' }] }],
+      strings: { 'minigame.a': 'A', 'minigame.c': 'Something else' },
+    }
+    const words = translatableFields(game).filter((field) => field.key.startsWith('minigame.quiz.'))
+    expect(words.map((field) => field.text)).toContain('Mill Lane')
+    expect(checkGame(game).problems).toEqual([])
+    const state = run({ ...begin(game), kv: { ...begin(game).kv, who: 'Sam' } }, game, { type: 'action', id: 'quiz' })
+    expect(view(state, game).minigame!.inputs.map((input) => input.label)).toEqual(['High Street, Sam', 'Mill Lane', 'Something else'])
   })
 
   it('refuse everything else while one runs, but not a notice dismissed', () => {

@@ -117,8 +117,8 @@ export type Reference =
   | { video: string }
   /** A sound file, through `audioSrc`. */
   | { audio: string }
-  /** Prose with markup in it: the sounds, pools and files it names. */
-  | { markup: string }
+  /** Prose with markup in it: the sounds, pools and files it names. `shownWhen` is the condition it shows under, if any. */
+  | { markup: string; shownWhen?: Condition }
   /** A condition, looked inside. */
   | { when: Condition | undefined }
   /** Effects, looked inside. */

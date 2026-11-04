@@ -189,7 +189,7 @@ export type Plugin<S = any, V = unknown> = {
   statModifiers?: (state: GameState, context: PluginContext<S>) => readonly StatModifier[] | undefined
   /**
    * Words and numbers content can read by name, asked with arguments as a
-   * condition is: in prose as <code v-pre>{{v:id/name channel=texts}}</code>,
+   * condition is: in prose as <code v-pre>{{id/name channel=texts}}</code>,
    * and as `{ value: 'id/name', with }` for a badge or a stat's ceiling.
    */
   values?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => string | number>

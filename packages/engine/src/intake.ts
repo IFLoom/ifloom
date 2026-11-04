@@ -321,6 +321,8 @@ const STEPS: Record<number, (state: Saved, game: Game) => Saved> = {
     const picks = Object.fromEntries(Object.entries(media.picks).map(([key, file]) => [key.replace(/\|stage:(\d+)$/, '|picture:$1'), file]))
     return { ...state, media: { ...media, picks } }
   },
+  // 23 → 24: the stats the last command moved are kept as `changes`, for `view.changes`. A save from before has none.
+  23: (state) => (Array.isArray(state.changes) ? state : { ...state, changes: [] }),
 }
 
 /** A data scene's choice, as far as the version 18 step reads it. */

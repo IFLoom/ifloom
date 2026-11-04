@@ -71,7 +71,7 @@ describe('custom functions belong to their game', () => {
     expect(applyEffects(begin(game), game, buildEffects(game, [{ 'game/wade': true }])).stats.coins).toBe(9)
     expect(seen[0]).toBe('fixture')
     expect(seen[1]).toBe(seen[2])
-    expect(fillTokens(begin(game), game, '{{v:game/tide unit=feet}} and {{v:tides/height times=2}}')).toBe('3 feet and 6')
+    expect(fillTokens(begin(game), game, '{{tide unit=feet}} and {{tides/height times=2}}')).toBe('3 feet and 6')
   })
 
   it('takes a plugin’s command in short, as content and the runner write it', () => {

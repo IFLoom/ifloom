@@ -16,7 +16,7 @@ import type { Pack } from './loader.ts'
 import type { Plugin } from './plugin.ts'
 
 /** The content format this engine reads. A pack of an older one is upgraded by `PACK_STEPS`; a newer one is refused. */
-export const SCHEMA = 29
+export const SCHEMA = 30
 
 /** A pack as it came in: some schema's shape, not necessarily this one. */
 export type RawPack = Record<string, unknown> & { schema: number }
@@ -144,6 +144,37 @@ export const PACK_STEPS: Record<number, (pack: RawPack, context: PackContext) =>
   // 28 → 29: nothing of the engine's. The devices plugin's `devices/close` puts a device away now, and its step
   // carries an older `close`, which went back to the home screen, to `devices/home`.
   28: (pack) => pack,
+  // 29 → 30: a value is printed with a bare token, `{{v:game/x}}` as `{{x}}` and `{{v:plugin/x}}` as
+  // `{{plugin/x}}`, wherever words are. See `toSchema30`. (Content's `phrases` and a `cases` block came in
+  // too, and a minigame input's `label`, which need no step.)
+  29: (pack) => toSchema30(pack),
+}
+
+/** A `{{v:…}}` token: its name and its arguments. */
+const OLD_VALUE = /\{\{v:((?:[A-Za-z0-9-]+\/)[A-Za-z0-9_.-]+)((?:\s+[A-Za-z_][A-Za-z0-9_]*=[^\s}]+)*)\s*\}\}/g
+
+/**
+ * 29 → 30: a value is printed with a bare token. `{{v:game/payroll}}` is
+ * `{{payroll}}`, and `{{v:messages/unread channel=texts}}` is
+ * `{{messages/unread channel=texts}}`, in every string of the pack but its
+ * code. A game's value whose name a bare token can't print (one starting
+ * with a digit or a `-`) keeps its `{{v:…}}`, which still works.
+ */
+function toSchema30(pack: RawPack): RawPack {
+  const rewrite = (text: string) =>
+    text.includes('{{v:')
+      ? text.replace(OLD_VALUE, (match, name: string, args: string) => {
+          const short = name.startsWith('game/') ? name.slice('game/'.length) : name
+          return /^[A-Za-z_]/.test(short) || short.includes('/') ? `{{${short}${args}}}` : match
+        })
+      : text
+  const strings = (value: unknown): unknown => {
+    if (typeof value === 'string') return rewrite(value)
+    if (Array.isArray(value)) return value.map(strings)
+    if (!isRecord(value)) return value
+    return Object.fromEntries(Object.entries(value).map(([key, inner]) => [key, strings(inner)]))
+  }
+  return Object.fromEntries(Object.entries(pack).map(([key, value]) => [key, key === 'custom' ? value : strings(value)])) as RawPack
 }
 
 /** Keys of a pack's `words` table renamed, the words kept. */

@@ -213,6 +213,7 @@ const SAMPLES: Record<string, Call> = {
   'conditions:messages/replied': messages.replied('hi', 'yes'),
   'conditions:messages/since': messages.since('hi', { lt: 3 }),
   'effects:messages/draw': messages.draw('smalltalk'),
+  'effects:messages/due': { 'messages/due': {} },
   'conditions:messages/read': { 'messages/read': { message: 'hi' } },
   'commands:messages/reply': messages.reply('hi', 'yes'),
   'commands:messages/read': messages.read('ava'),

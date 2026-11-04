@@ -186,6 +186,13 @@ const v22 = { ...v21, version: 22, media: { picks: { 'door||start|0': 'door/red.
 // A layered picture is a `picture`: the layer's pick is kept under `picture:0`.
 const v23 = { ...v22, version: 23, media: { picks: { 'door||start|0': 'door/red.jpg', 'sea||start|picture:0': 'sea/calm.jpg' } } }
 
+// The stats the last command moved are kept as `changes`: a save from before has none.
+const v24 = {
+  ...v23,
+  version: 24,
+  changes: [{ stat: 'coins', from: 7, to: 9, by: 2, label: 'Coins', text: '+2' }],
+}
+
 /** Each version's save state, by version. */
 export const OLD_SAVES: Record<number, Record<string, unknown>> = {
   1: v1,
@@ -211,4 +218,5 @@ export const OLD_SAVES: Record<number, Record<string, unknown>> = {
   21: v21,
   22: v22,
   23: v23,
+  24: v24,
 }

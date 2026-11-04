@@ -47,9 +47,12 @@ export type MinigameStateDef = {
   after?: { ms: number } & MinigameTransition
   /**
    * What the inputs do here. The first entry for the input whose `when`
-   * holds is taken; an input with none is not live.
+   * holds is taken; an input with none is not live. `label` is the input's
+   * words for its button in this state, tokens filled, such as a quiz's
+   * answer: the first live entry with one gives it, and without one the
+   * button reads the `minigame.<input>` string, else the input's name.
    */
-  on?: ({ input: string; when?: Condition } & MinigameTransition)[]
+  on?: ({ input: string; when?: Condition; label?: string } & MinigameTransition)[]
   /**
    * Taken as soon as the state is entered: the first whose `when` holds. A
    * state that only decides where to go next, such as a win or a loss.
@@ -313,6 +316,16 @@ function effectVars(effects: readonly EffectRef[] | undefined): string[] {
   })
 }
 
+/** The live inputs of a state, each once, in order, with the words the first live entry with a `label` gives it. */
+function inputsOf(on: NonNullable<MinigameStateDef['on']>, live: (entry: NonNullable<MinigameStateDef['on']>[number]) => boolean) {
+  const out = new Map<string, string | undefined>()
+  for (const entry of on) {
+    if (!live(entry)) continue
+    if (!out.has(entry.input) || (out.get(entry.input) === undefined && entry.label !== undefined)) out.set(entry.input, entry.label)
+  }
+  return [...out].map(([input, label]) => ({ input, label }))
+}
+
 /** An input's words for its button: the `minigame.<input>` string, else its name with a capital. */
 function inputLabel(game: Game, input: string): string {
   const key = `minigame.${input}`
@@ -342,7 +355,10 @@ function checkMinigame(minigame: MinigameDef, declaredAnywhere: ReadonlySet<stri
     if (state.label !== undefined) tools.check(source, at, [{ words: state.label, field: 'label' }])
     if (state.after && !(Number.isFinite(state.after.ms) && state.after.ms > 0)) tools.problem(source, at, 'a timer needs ms above 0')
     if (state.final && transitions.length) tools.problem(source, at, 'a final state ends the minigame, so its after, on and always never run')
-    for (const entry of state.on ?? []) inputs.add(entry.input)
+    for (const entry of state.on ?? []) {
+      inputs.add(entry.input)
+      if (entry.label !== undefined) tools.check(source, `${at} on ${entry.input}`, [{ words: entry.label, field: 'label' }])
+    }
     for (const [label, transition] of transitions) {
       const go = [transition.go, ...(transition.to ?? []).map((target) => (typeof target === 'string' ? target : target.state))].filter(
         (target): target is string => target !== undefined,
@@ -464,9 +480,9 @@ export const minigames = defineFeature<MinigamesShape>({
         label: current?.label !== undefined ? cx.fillTokens(state, game, current.label) : null,
         timeLeft: timer ? Math.max(0, timer.ms - running.elapsed) : null,
         timeTotal: timer ? timer.ms : null,
-        inputs: [...new Set((current?.on ?? []).filter((entry) => cx.holds(state, game, entry.when)).map((entry) => entry.input))].map((input) => ({
+        inputs: inputsOf(current?.on ?? [], (entry) => cx.holds(state, game, entry.when)).map(({ input, label }) => ({
           id: input,
-          label: inputLabel(game, input),
+          label: label !== undefined ? cx.fillTokens(state, game, label) : inputLabel(game, input),
           command: { type: 'minigame', input },
         })),
         kv: { ...running.kv },

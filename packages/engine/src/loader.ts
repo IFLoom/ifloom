@@ -1,4 +1,5 @@
 import type { PluginEntry } from './plugin.ts'
+import { flatPhrases } from './features/phrases.ts'
 import type { CarryOver, Game } from './game.ts'
 import type { Condition } from './types.ts'
 import { memberKey, proseStore, type VariantMember } from './prose.ts'
@@ -140,6 +141,7 @@ const DECLARATION_KEYS: { [K in keyof Declarations | keyof FeaturePack]-?: true 
   kv: true,
   introScene: true,
   ui: true,
+  phrases: true,
 }
 
 /**
@@ -210,6 +212,7 @@ const DECLARES: { [K in keyof Content]-?: ((content: Content) => Declared[]) | n
   stats: byId('stat', (content) => content.stats),
   minigames: byId('minigame', (content) => content.minigames),
   timers: byId('timer', (content) => content.timers),
+  phrases: (content) => flatPhrases(content.phrases).map(([name]) => `phrase "${name}"`),
   kinds: byId('kind', (content) => content.kinds),
   entities: (content) => (content.entities ?? []).map((entity) => `entity "${entity.of}:${entity.id}"`),
   traits: (content) => Object.entries(content.traits ?? {}).flatMap(([id, rows]) => Object.keys(rows ?? {}).map((ref) => `trait "${id}" on "${ref}"`)),

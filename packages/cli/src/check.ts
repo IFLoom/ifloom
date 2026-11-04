@@ -31,9 +31,10 @@ export function gameModule(module: Record<string, unknown>): GameModule {
  * `describeProblem`'s words and the files it names. `unlocked` packs go to
  * its `build` as `{ unlocked }`.
  */
-export function gameFrom(module: Record<string, unknown>, unlocked: Pack[] = []): { game: Game; problems: string[]; files: FileRef[] } {
+export function gameFrom(module: Record<string, unknown>, unlocked: Pack[] = []): { game: Game; problems: string[]; warnings: string[]; files: FileRef[] } {
   const { game, problems } = gameModule(module).build({ unlocked })
-  return { game, problems: problems.map(describeProblem), files: checkContent(game).files }
+  const checked = checkContent(game)
+  return { game, problems: problems.map(describeProblem), warnings: checked.warnings.map(describeProblem), files: checked.files }
 }
 
 /**

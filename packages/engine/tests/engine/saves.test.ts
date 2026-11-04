@@ -21,6 +21,17 @@ describe.each(drivers)('saves through the %s driver', (_name, driver) => {
     expect(await store.read('empty')).toEqual({ ok: true, value: null })
   })
 
+  it('keeps the save format in the state alone, and reads a file whose meta still repeats it', async () => {
+    const { game } = withCafe()
+    const store = saves(game, driver())
+    const meta = await store.write('1', startingState(game))
+    expect(meta).not.toHaveProperty('version')
+    const file = JSON.parse((await store.driver.get(`${game.id}.save.1`))!)
+    expect(file).toMatchObject({ ifloom: 1, state: { version: SAVE_VERSION } })
+    const older = store.importText(JSON.stringify({ ...file, meta: { ...file.meta, version: 23 } }))
+    expect(older.ok && older.value.meta).toEqual(meta)
+  })
+
   it('name a save with rules.saveName, and leave it unnamed without one', async () => {
     const { game } = withCafe()
     const named = {

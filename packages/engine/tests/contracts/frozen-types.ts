@@ -78,7 +78,8 @@
  * The rest of the API pass (P9b): `View.inputs` and `View.entities` are
  * arrays in order (each kind with its `id`), and `View.inScene` is gone.
  * Naming (P10): `view.scene.stage` is `view.scene.picture`, "stage" being
- * only a quest's.
+ * only a quest's. Schema 30, save 24: `GameState.changes` and
+ * `View.changes` (`Change`), and `Game.phrases` and `Pack.phrases`.
  */
 import type {
   Amount,
@@ -112,6 +113,9 @@ import type {
   OpenPanel,
   Dice,
   Roll,
+  Change,
+  PhraseRow,
+  Phrases,
   RollsState,
   RunningTimer,
   TimerDef,
@@ -275,6 +279,8 @@ export type FrozenGameState = {
   rolls: RollsState
   /** The running timers, by id. */
   timers: Record<string, RunningTimer>
+  /** The stats the last command moved. */
+  changes: Change[]
   /**
    * The game's own version (`game.version`) the save was made with. Only
    * there when the game declares a version; a save without it is version 1.
@@ -462,6 +468,8 @@ export type FrozenGame = {
   minigames?: MinigameDef[]
   /** The game's timers. None if left out. */
   timers?: TimerDef[]
+  /** The game's phrases, by full name. */
+  phrases?: Record<string, PhraseRow[]>
   /** Presentation hints for the whole game, carried as written. */
   ui?: Ui<GameUi>
   /** What the player cannot do for now, and why. */
@@ -522,6 +530,8 @@ export type FrozenPack = {
   minigames?: MinigameDef[]
   /** Timers. A later pack's replaces an earlier one's by id. */
   timers?: TimerDef[]
+  /** Phrases, by name, nested objects being groups. */
+  phrases?: Phrases
   /** Actions offered in every location. A later pack's replaces an earlier one's by id. */
   actions?: ActionDef[]
   /** Locks after the ones before; one with an earlier one's `id` takes its place. */
@@ -594,6 +604,8 @@ export type FrozenView = {
   rolls: Roll[]
   /** The running timers. */
   timers: TimerView[]
+  /** The stats the last command moved. */
+  changes: Change[]
   /** Whether the player can save now. */
   saving: SavingView
 }

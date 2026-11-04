@@ -1,6 +1,8 @@
 import type { Game } from './game.ts'
 import { GAME_ID, pluginCondition, pluginEffect, pluginName, pluginQuery, pluginValue, type PluginArgs } from './plugin.ts'
 import { draw } from './random.ts'
+import { phraseText } from './prose.ts'
+import { phraseRows } from './features/phrases.ts'
 import type { Effect, GameState } from './types.ts'
 import { customCall, type EffectRef, type QueryAnswer, type QueryArgs, type QueryRegistry } from './calls.ts'
 
@@ -12,7 +14,7 @@ import { customCall, type EffectRef, type QueryAnswer, type QueryArgs, type Quer
  * the game's `rules` instead, as named functions, and content calls them by
  * name with `game` in front, as it calls a plugin's: `{ 'game/canAffordRent':
  * true }` as a condition, `{ 'game/payRent': {} }` as an effect,
- * `{{v:game/rentDue}}` in prose, `max: { value: 'game/energyCeiling' }` on a
+ * `{{rentDue}}` in prose, `max: { value: 'game/energyCeiling' }` on a
  * stat.
  *
  * Each game owns its own: two games in one page, or a test next to a game,
@@ -25,7 +27,7 @@ export type CustomCondition = (state: GameState, args: PluginArgs, context: Cust
  * included. It runs in its turn, on the state the effects before it left.
  */
 export type CustomEffect = (state: GameState, args: PluginArgs, context: CustomContext) => EffectRef[]
-/** A word or a number for prose (`{{v:game/name}}`), a stat's ceiling or a badge, asked with what the content passes in `with`. */
+/** A word or a number for prose (`{{name}}`), a stat's ceiling or a badge, asked with what the content passes in `with`. */
 export type CustomValue = (state: GameState, args: PluginArgs, context: CustomContext) => string | number
 
 /**
@@ -121,6 +123,9 @@ export function customEffect(game: Game | undefined, name: string): ((state: Gam
 
 /** A value by full name, a plugin's or the game's own (`game/…`), ready to ask. */
 export function customValue(game: Game | undefined, name: string): ((state: GameState, args?: PluginArgs) => string | number) | undefined {
+  // The game's phrases answer as its values do, before `rules.values`: `{ value: 'game/outfit.verdict' }`.
+  const parts = pluginName(name)
+  if (game && parts?.plugin === GAME_ID && phraseRows(game, parts.name)) return (state) => phraseText(state, game, parts.name) ?? ''
   return pluginValue(game, name)
 }
 

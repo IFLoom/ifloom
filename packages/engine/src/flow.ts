@@ -68,6 +68,24 @@ export function when(condition: Condition, blocks: Block[], extras: Omit<BlockEx
 }
 
 /**
+ * The first block that fits: each of `blocks` is tried in order, and only the
+ * first whose own `when` holds, or that has none, is shown. Leave the last
+ * without a `when` for the otherwise. A `when` in `extras` leaves the whole
+ * thing out while it fails.
+ *
+ * ```ts
+ * cases([
+ *   text(`Rain streaks the window.`, { when: { kv: 'rain' } }),
+ *   text(`Ava's umbrella is by the door.`, { when: { kv: 'cloudy' } }),
+ *   text(`The street is dry.`),
+ * ])
+ * ```
+ */
+export function cases(blocks: Block[], extras: BlockExtras = {}): Block {
+  return { cases: blocks, ...extras }
+}
+
+/**
  * A decision: the flow waits here until the player picks one of `choices`.
  * The pick's `then` comes next, then the blocks after the decision. Its id
  * is unique within the scene.

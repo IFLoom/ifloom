@@ -120,11 +120,18 @@ function endsTurn(game: Game, state: GameState, command: Command): boolean {
   return out.ok && out.state.turn > state.turn
 }
 
+/** A tick that runs the soonest running timer out, as a player waiting would, or null while none runs. */
+function waitFor(screen: View): Command | null {
+  const soonest = Math.min(...screen.timers.map((timer) => timer.left))
+  return Number.isFinite(soonest) ? { type: 'tick', ms: Math.max(soonest, 1) } : null
+}
+
 /**
  * A policy that explores: in a scene, a choice it has not made yet; at
  * bedtime (the calendar's), bed, walking home if it must; else someone to talk
  * to and something to do, each once a turn, leaving what ends the turn till
- * last; else the nearest place it hasn't been this turn; else end the turn. It
+ * last; else the nearest place it hasn't been this turn; else, while a timer
+ * runs, wait for it (a `tick`); else end the turn. It
  * never presses a button the game warns against. It knows nothing about any
  * game, so it shows what a curious player meets — not a route through the story.
  */
@@ -140,7 +147,7 @@ export function explorer(): Policy {
       const open = [...inlineChoices(screen.scene.beats), ...screen.scene.choices].filter((choice) => !choice.disabled && !choice.warning)
       const fresh = open.find((choice) => !chosen.has(`${screen.scene.id}/${choice.id}`)) ?? open[0]
       if (fresh) chosen.add(`${screen.scene.id}/${fresh.id}`)
-      return fresh?.command ?? { type: 'leave' }
+      return fresh?.command ?? waitFor(screen) ?? { type: 'leave' }
     }
     // When the calendar says it is late enough for bed, go, walking home if need be.
     if (pluginQuery(game, 'calendar/bedtime')?.(state)) {
@@ -177,6 +184,9 @@ export function explorer(): Policy {
     const step = toward(placesIn(game, state), at, (id) => !today.has(id))
     const exit = exitsOn(screen).find((entry) => entry.id === step && !entry.disabled)
     if (exit) return exit.command
+    // Nothing new, but a timer is running (a message on its way, say): wait for the first to run out.
+    const wait = waitFor(screen)
+    if (wait) return wait
     // Nothing new: pass time, ending the turn if something does, else something not done this turn.
     const usable = screen.actions.filter((entry) => !entry.disabled && !entry.warning && !isBed(entry.command))
     const rest = usable.find((entry) => endsTurn(game, state, entry.command)) ?? usable.find((entry) => !today.has(`do:${entry.id}`)) ?? usable[0]

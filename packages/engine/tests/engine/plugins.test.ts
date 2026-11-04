@@ -127,7 +127,7 @@ describe('plugins', () => {
   it('print their values in prose by full name', () => {
     const game = withShells()
     const found = apply(begin(game), game, { type: 'action', id: 'beachcomb' }).state
-    expect(fillTokens(found, game, 'Shells: {{v:shells/count}}.')).toBe('Shells: 1.')
+    expect(fillTokens(found, game, 'Shells: {{shells/count}}.')).toBe('Shells: 1.')
   })
 
   it('run their hooks after the game’s own, and show in the view', () => {

@@ -74,11 +74,13 @@ export type FlowVisitor = {
   caughtUp?: () => void
 }
 
-type Frame = { list: readonly Block[]; at: number; prefix: string; section?: Ui<BlockUi>; jump?: string }
+/** One list a walk is in: where it stands, where its blocks' addresses start, and `stop`, where it ends short of the list's end (a `cases` shows one block). */
+type Frame = { list: readonly Block[]; at: number; prefix: string; section?: Ui<BlockUi>; jump?: string; stop?: number }
 
 /** The kinds of block that change where the flow goes, rather than showing something. */
 const isDecide = (block: Block): block is Extract<Block, { decide: string }> => 'decide' in block
 const isSection = (block: Block): block is Extract<Block, { blocks: Block[] }> => 'blocks' in block && !('decide' in block)
+const isCases = (block: Block): block is Extract<Block, { cases: Block[] }> => 'cases' in block
 const isPoint = (block: Block): block is Extract<Block, { point: string }> => 'point' in block
 const isMinigame = (block: Block): block is Extract<Block, { minigame: string }> => 'minigame' in block
 const isPanel = (block: Block): block is Extract<Block, { panel: string }> => 'panel' in block
@@ -140,7 +142,7 @@ export function walkFlow(
       }
       return { at: 'end' }
     }
-    if (top.at >= top.list.length) {
+    if (top.at >= (top.stop ?? top.list.length)) {
       frames.pop()
       if (top.jump !== undefined && !goto(top.jump)) continue
       continue
@@ -153,6 +155,13 @@ export function walkFlow(
     if (isSection(block)) {
       const section = block.ui ? { ...top.section, ...block.ui } : top.section
       frames.push({ list: block.blocks, at: 0, prefix: `${address}.`, ...(section ? { section } : {}) })
+      continue
+    }
+    if (isCases(block)) {
+      // The first block that fits, shown in place: its address is its own in the list, so pool picks keep to it.
+      const picked = block.cases.findIndex((entry) => entry.when === undefined || holds(entry.when))
+      const section = block.ui ? { ...top.section, ...block.ui } : top.section
+      if (picked >= 0) frames.push({ list: block.cases, at: picked, stop: picked + 1, prefix: `${address}.`, ...(section ? { section } : {}) })
       continue
     }
     if (isDecide(block)) {
@@ -207,6 +216,11 @@ function framesTo(list: readonly Block[], point: string, prefix: string, section
       const inner = framesTo(block.blocks, point, `${address}.`, block.ui ? { ...section, ...block.ui } : section)
       if (inner) return [here, ...inner]
     }
+    if (isCases(block)) {
+      // A point in a case: the flow reads on to the end of that case only (the checker reports the point).
+      const inner = framesTo(block.cases, point, `${address}.`, block.ui ? { ...section, ...block.ui } : section)
+      if (inner) return [here, { ...inner[0], stop: inner[0].at }, ...inner.slice(1)]
+    }
     if (isDecide(block)) {
       for (const choice of block.choices) {
         const inner = framesTo(choice.then ?? [], point, `${address}.${choice.id}.`, section)
@@ -223,6 +237,7 @@ export function everyBlock(body: readonly Block[], prefix = ''): { block: Block;
     const address = `${prefix}${index}`
     const here = { block, address, top: prefix === '' }
     if (isSection(block)) return [here, ...everyBlock(block.blocks, `${address}.`)]
+    if (isCases(block)) return [here, ...everyBlock(block.cases, `${address}.`)]
     if (isDecide(block)) return [here, ...block.choices.flatMap((choice) => everyBlock(choice.then ?? [], `${address}.${choice.id}.`))]
     return [here]
   })
@@ -344,6 +359,15 @@ function checkFlow(scene: DataScene, tools: FeatureCheckTools): void {
     if (isPoint(block)) {
       if (points.has(block.point)) tools.problem(source, where, `two points share the id "${block.point}"`)
       points.add(block.point)
+    }
+    if (isCases(block)) {
+      if (!block.cases.length) tools.problem(source, where, `block ${address}: cases lists no blocks, so it shows nothing`)
+      const otherwise = block.cases.findIndex((entry) => entry.when === undefined && !isPoint(entry))
+      if (otherwise >= 0 && otherwise < block.cases.length - 1)
+        tools.problem(source, where, `block ${address}: case ${otherwise + 1} has no when, so the cases after it are never shown`)
+      for (const inner of everyBlock(block.cases, `${address}.`))
+        if (isPoint(inner.block))
+          tools.problem(source, where, `block ${inner.address}: point "${inner.block.point}" is in cases, where it may not be shown; put it outside the cases`)
     }
     if (flowing && 'variants' in block) {
       tools.problem(

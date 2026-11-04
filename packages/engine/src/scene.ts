@@ -73,6 +73,13 @@ export type Block =
      */
     | { blocks: Block[]; when?: Condition }
     /**
+     * The first that fits: each block in `cases` is tried in order, and only
+     * the first whose own `when` holds (or that has none) is shown. A last
+     * block with no `when` is the otherwise. With `when` of its own, the
+     * whole thing is left out while that fails. What `cases()` writes.
+     */
+    | { cases: Block[]; when?: Condition }
+    /**
      * A decision: the flow waits here until the player picks one of `choices`.
      * The pick's `then` comes next, then the blocks after the decision.
      */

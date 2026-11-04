@@ -84,8 +84,9 @@ describe('a new game', () => {
     expect(startingState(game, { kv: { playerName: 'Robin' } }).kv.playerName).toBe('Robin')
     const words = proseStore(game, { hello: 'Hello, {{playerName}}. Day {{visits}}.' })
     expect(words.line('hello', { ...state, kv: { playerName: 'Robin', visits: 3 } })).toBe('Hello, Robin. Day 3.')
-    // A key the save does not have shows as written, so the gap is visible.
-    expect(words.line('hello', state)).toBe('Hello, {{playerName}}. Day {{visits}}.')
+    // A key the save does not have prints nothing, or the words after a "|" in the token.
+    expect(words.line('hello', state)).toBe('Hello, . Day .')
+    expect(proseStore(game, { hello: 'Hello, {{playerName|you}}.' }).line('hello', state)).toBe('Hello, you.')
   })
 
   it('takes its seed from the start command, or from the game when none is given', () => {
@@ -98,7 +99,7 @@ describe('a new game', () => {
   it('shows a typed value as typed, never reading it as a token', () => {
     const game = fixture()
     const words = proseStore(game, { hello: 'Hello, {{playerName}}.' })
-    expect(words.line('hello', { ...startingState(game), kv: { playerName: '{{v:game/nothing}}' } })).toBe('Hello, {{v:game/nothing}}.')
+    expect(words.line('hello', { ...startingState(game), kv: { playerName: '{{nothing}}' } })).toBe('Hello, {{nothing}}.')
   })
 
   it('carries a version-1 save’s name into the kv store', () => {

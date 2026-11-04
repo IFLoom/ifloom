@@ -130,6 +130,7 @@ async function check(entry?: string): Promise<number> {
     problems.push(...checked.problems, ...checkFiles(checked.files, 'public'))
     for (const problem of problems) console.log(problem)
     for (const note of notes) console.log(note)
+    for (const warning of checked.warnings) console.log(`warning: ${warning}`)
     console.log(problems.length ? `${problems.length} problem${problems.length === 1 ? '' : 's'}.` : 'No problems.')
     return problems.length ? 1 : 0
   })

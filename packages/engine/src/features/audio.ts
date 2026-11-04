@@ -61,8 +61,10 @@ export type GameAudio = {
   tracks: Record<string, TrackDef | PlaylistDef>
   /** Merged over the defaults: `music` and `ambience` (background), `sfx` and `voice` (cue). */
   channels?: Record<string, ChannelDef>
-  /** A ui setting (a toggle) that mutes everything while it is on. */
+  /** A ui setting (a toggle) that mutes everything while it is on: a "Mute" box. */
   mute?: string
+  /** A ui setting (a toggle) that plays sound only while it is on: a "Sound" box, the other way round from `mute`. */
+  sound?: string
   /** What each background channel plays when nothing else says, by channel. */
   default?: Record<string, string>
 }
@@ -151,8 +153,10 @@ export type AudioView = {
   channels: Record<string, AudioChannelView>
   /** Sounds from `sound` effects and the open scene's sound and voice beats, in order. */
   cues: AudioCue[]
-  /** The ui setting that mutes everything, or null for none. */
+  /** The ui setting that mutes everything while on, or null for none. */
   muteSetting: string | null
+  /** The ui setting that mutes everything while off, or null for none. */
+  soundSetting: string | null
 }
 
 const AUDIO_ROOT = 'audio/'
@@ -370,7 +374,7 @@ export function audioView(
   beats: readonly SceneBeat[] | null,
   cx: FeatureContext,
 ): AudioView {
-  if (!game.audio) return { channels: {}, cues: [], muteSetting: null }
+  if (!game.audio) return { channels: {}, cues: [], muteSetting: null, soundSetting: null }
   const channels: Record<string, AudioChannelView> = {}
   for (const [id, def] of Object.entries(audioChannels(game))) {
     channels[id] = channelView(state, game, id, def, tracks[id] ?? null, cx)
@@ -390,7 +394,7 @@ export function audioView(
       if (beat.type === 'say' && beat.voice) cue(`${key}:${beat.voice}`, beat.voice, 'voice')
     })
   }
-  return { channels, cues, muteSetting: game.audio.mute ?? null }
+  return { channels, cues, muteSetting: game.audio.mute ?? null, soundSetting: game.audio.sound ?? null }
 }
 
 // Checks, used by the content checker (check.ts).
@@ -472,13 +476,14 @@ export function manifestProblems(game: Game): { where: string; what: string }[] 
     if (def.duck && !(def.duck.to >= 0 && def.duck.to <= 1)) out.push({ where, what: 'duck.to is not between 0 and 1' })
   }
   if (audio.mute !== undefined) settingIs('audio', audio.mute, 'toggle')
+  if (audio.sound !== undefined) settingIs('audio', audio.sound, 'toggle')
   for (const what of placementProblems(game, audio.default ?? {})) out.push({ where: 'audio default', what })
   return out
 }
 
 export const audio = defineFeature<AudioShape>({
   name: 'audio',
-  // A channel's volume and the mute switch are ui settings.
+  // A channel's volume and the mute and sound switches are ui settings.
   requires: ['settings'],
   state: {
     // The opening scene is the first showing.
@@ -496,13 +501,14 @@ export const audio = defineFeature<AudioShape>({
       references: (effect) => [{ sound: effect.sound }],
     },
   },
-  // Merged by id: tracks, and channels field by field; the last `mute` and each channel's last `default` win.
+  // Merged by id: tracks, and channels field by field; the last `mute`, the last `sound` and each channel's last `default` win.
   pack: {
     merge: () => {
       const tracks = new Map<string, { value: TrackDef | PlaylistDef; from: string }>()
       const channels = new Map<string, { value: ChannelDef; from: string }>()
       const defaults: Record<string, string> = {}
       let mute: string | undefined
+      let sound: string | undefined
       let audioFrom = 'base'
       let hasAudio = false
       const add = (from: string, audio: Partial<GameAudio> | undefined) => {
@@ -510,8 +516,9 @@ export const audio = defineFeature<AudioShape>({
         hasAudio = true
         for (const [id, value] of Object.entries(audio.tracks ?? {})) tracks.set(id, { value, from })
         for (const [id, value] of Object.entries(audio.channels ?? {})) channels.set(id, { value: { ...channels.get(id)?.value, ...value }, from })
-        if (audio.mute !== undefined || audio.default !== undefined) audioFrom = from
+        if (audio.mute !== undefined || audio.sound !== undefined || audio.default !== undefined) audioFrom = from
         if (audio.mute !== undefined) mute = audio.mute
+        if (audio.sound !== undefined) sound = audio.sound
         Object.assign(defaults, audio.default ?? {})
       }
       return {
@@ -525,6 +532,7 @@ export const audio = defineFeature<AudioShape>({
           const audio: GameAudio = { tracks: Object.fromEntries([...tracks].map(([id, entry]) => [id, entry.value])) }
           if (channels.size) audio.channels = Object.fromEntries([...channels].map(([id, entry]) => [id, entry.value]))
           if (mute !== undefined) audio.mute = mute
+          if (sound !== undefined) audio.sound = sound
           if (Object.keys(defaults).length) audio.default = defaults
           game.audio = audio
         },

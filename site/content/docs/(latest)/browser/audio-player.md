@@ -81,6 +81,8 @@ audio: {
 
 A range setting is read from its `min` to its `max` as 0 to 1, so 70 of 0 to 100 is 0.7, and the calm music above plays at 0.8 × 0.7. The player reads the values from [`runner.snapshot().settings`](/docs/reference/runner#settings) and follows the runner, so moving a slider on the settings screen changes the volume at once. Until the player has stored a value, when the stored one no longer fits the setting, or when the runner has no profile, that's the setting's `default`. A play setting works too, read from the game in play.
 
+`mute` names a toggle that silences everything while it's on. For a box that reads the other way, ticked for sound, name it in `sound` instead: `{ id: 'sound', label: 'Sound', affects: 'ui', type: 'toggle', default: true }` with `audio: { sound: 'sound', … }`. The player is silent while it's off.
+
 ## AudioOptions
 
 ```ts

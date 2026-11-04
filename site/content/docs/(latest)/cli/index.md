@@ -435,9 +435,10 @@ export default defineGame({
 **Gotchas.**
 
 - **The explorer doesn't know your game.** It shows what a player poking at every button meets, and won't find a route through the story. To reach a scene that needs good choices, write a policy of your own.
-- **There's one row per turn played.** A `--turns 7` run that plays them all has seven rows, each taken as that turn ended. A run that stops early ends with a row for the turn it stopped in, which may have only just begun. A run stops early when the policy gives up, at the step limit, or in a refusal loop.
+- **There's one row per turn played.** A `--turns 7` run that plays them all has seven rows, each taken as that turn ended. A run that stops early ends with a row for the turn it stopped in, which may have only just begun. A run stops early when the policy gives up, at the step limit, in a refusal loop, or when it goes round in circles.
 - **A turn only ends when the game ends one.** The count moves on with a [`turn`](/docs/reference/effects#turn) effect, which the [calendar](/docs/plugins/calendar#what-a-turn-is) applies as time passes and when the player goes to bed. In a game that never ends a turn, the run never reaches its turns. It stops at the policy or the step limit instead.
-- **The transcript shows screens, not news.** Notices raised along the way (a payday, a promotion, rent taken) aren't in it, and nor are inputs or the stat list. Read the `.metrics` file for the numbers, or check the notices in a test with [`view(state, game).notices`](/docs/reference/notices).
+- **Notices are in the transcript once each.** A notice raised along the way (a payday, a promotion, rent taken) is written as `! <title>: <text>` under the first screen it shows on. The explorer never dismisses one, so it isn't written again. The stat list isn't in the transcript: read the `.metrics` file for the numbers.
+- **Going round in circles stops the run.** When the same screen, with the same stats, kv, holdings and plugin state, comes round with the same command three times in one turn, nothing is moving, so the run ends with `going round in circles` rather than walking between two rooms until the step limit. The explorer also counts a place as seen as soon as it sets out for it, so a place that sends the player straight back isn't headed for again that turn.
 - **A policy that keeps getting refused stops the run.** When the same command is refused on two steps in a row, with nothing in between, the play ends there rather than looping to the step limit. The same command refused twice with other steps in between isn't a loop, so the run goes on. Both refusals are still listed, and the exit code is still `1`.
 
 ## ifloom snapshot
@@ -801,8 +802,9 @@ What `ifloom playtest` runs. It plays `game` from `start`, asking `policy` (defa
 
 - `turns` turns passed since `start`'s turn
 - the policy returning `null`
-- `steps` commands, refused ones included, as a guard against a policy going round in circles
+- `steps` commands, refused ones included, as a last guard against a policy going round in circles
 - the same command refused on two steps in a row
+- the same screen, state and command coming round three times in one turn (`going round in circles` in the transcript)
 - a [`newGame`](/docs/reference/commands#newgame) command, such as an ending's "Play again" choice, since the run it was playing is over
 
 ```ts
@@ -947,6 +949,9 @@ A screen as plain text, as the transcript shows it. In order, it writes:
 - the scene's body.
 - every button: the scene's choices, then the actions, then each present person's buttons from the [cast](/docs/plugins/cast#the-view)'s `present`, labelled `<Name>: <label>`. Each is `[>]`, or `[ ]` when greyed out. Its price follows in brackets, separated by commas: the stats' text, then the plugins' [notes](/docs/reference/view#price), such as the calendar's `until afternoon`. A greyed-out button ends with `— ` and the reason.
 - each exit in the places plugin's [view](/docs/plugins/places#the-view), as `->`, with its reason if it's closed.
+- while a scene is open, each [input](/docs/reference/inputs) as `[input] <label>: <value>`, with `—` for one that holds nothing yet.
+
+`playtest` writes each new notice under the screen text, as `! <title>: <text>`; `screenText` itself doesn't, since a notice shows on every screen until it's dismissed.
 
 ```ts
 import { view } from '@ifloom/engine'

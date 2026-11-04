@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ComponentProps } from 'react'
 import type { SettingView } from '@ifloom/engine'
 import { assetUrl } from './assets.ts'
 import { useGame } from './context.tsx'
+import { usePicturesShown } from './display.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { useSetting } from './pages.tsx'
 
@@ -28,7 +29,7 @@ function rangeGain(setting: SettingView | undefined, value: unknown): number {
 
 /**
  * How loud a video with sound plays: silent while the game's mute setting is
- * on, else at the volume setting of the `video` channel, or of `sfx` when the
+ * on or its sound setting off, else at the volume setting of the `video` channel, or of `sfx` when the
  * game has no `video` channel. Full volume when the game has neither.
  */
 function useVideoSound(): { muted: boolean; volume: number } {
@@ -36,9 +37,10 @@ function useVideoSound(): { muted: boolean; volume: number } {
   const audio = view.audio
   const volumeId = (audio.channels.video ?? audio.channels.sfx)?.volumeSetting ?? ''
   const mute = useSetting(audio.muteSetting ?? '')
+  const sound = useSetting(audio.soundSetting ?? '')
   const volume = useSetting(volumeId)
   return {
-    muted: mute === true,
+    muted: mute === true || (audio.soundSetting !== null && sound === false),
     volume: rangeGain(
       view.settings.find((entry) => entry.id === volumeId),
       volume,
@@ -60,6 +62,7 @@ function VideoImpl({ src, poster, alt, autoplay, loop, muted, controls, classNam
   const part = usePart('video', 'block max-w-full', className)
   const ref = useRef<HTMLVideoElement>(null)
   const sound = useVideoSound()
+  const shown = usePicturesShown()
   const silent = muted || sound.muted
   // Without an IntersectionObserver (jsdom, an old browser), it is treated as on screen from the start.
   const watching = typeof IntersectionObserver !== 'undefined'
@@ -92,6 +95,8 @@ function VideoImpl({ src, poster, alt, autoplay, loop, muted, controls, classNam
     if (!muted) element.volume = sound.volume
   }, [silent, muted, sound.volume])
 
+  // The pictures setting off leaves videos out, as it does pictures.
+  if (!shown) return null
   return (
     <video
       ref={ref}

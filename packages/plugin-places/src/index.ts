@@ -453,7 +453,8 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
     view: (state, { slice, game, picks }): PlacesView => {
       const here = locationOf(state, game, slice.at)
       const at = here ? slice.at : null
-      const idle = !state.sceneId && !lockedOut(state, game)
+      // While a scene or a minigame is on screen, the room isn't: no exits to take and nothing lying there to pick up.
+      const idle = !state.sceneId && !state.minigame && !lockedOut(state, game)
       const exits: ExitView[] = []
       for (const id of idle && here ? here.exits : []) {
         const dest = locationOf(state, game, id)

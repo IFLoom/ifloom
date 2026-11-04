@@ -87,8 +87,18 @@ declare module '@ifloom/engine' {
     transition?: Transition | TransitionName
     /** Transition names beyond `TRANSITIONS`, which the game draws with its own CSS. */
     transitionNames?: string[]
+    /**
+     * The game's ui settings the React UI honours itself, by the setting's id:
+     * `textSize`, a choice the page is sized by (`small`, `normal`, `large` or
+     * `larger`), and `images`, a toggle that leaves the story's pictures and
+     * videos out while it's off.
+     */
+    settings?: { textSize?: string; images?: string }
   }
 }
+
+/** The text sizes the React UI's styles size the page for, from `ui.settings.textSize`. Another value needs CSS of the game's own. */
+export const TEXT_SIZES = ['small', 'normal', 'large', 'larger'] as const
 
 /** How long a transition takes when nothing says, in milliseconds. */
 export const DEFAULT_TRANSITION_MS = 300

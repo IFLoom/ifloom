@@ -15,6 +15,9 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 - `messages.messageRead(message)` writes the `messages/read` condition. `messages.read` is still the command that marks a thread read.
 - `{{jobs/rank job=…}}` prints the name of the rank the player holds at a job, or its fallback when they don't work there.
 - `useOpenApp()` in `@ifloom/plugin-devices/react`: a `{ panel }` section's component reads the app it's drawn in, with its other sections and their buttons, and its device.
+- `audio.sound`: a ui toggle that plays sound only while it's on, for a settings box ticked for sound. `audio.mute` is still the other way round. The audio player and the React UI's videos honour both, and `view.audio` has `soundSetting`.
+- The React UI honours a text size and a pictures switch of the game's own: name them in `ui: { settings: { textSize, images } }`. The text size goes on `<html data-text-size>`, which the styles size the page by (`small`, `normal`, `large`, `larger`), and with pictures off, `Picture` and `Video` draw nothing (a `LayeredPicture` stays, since its hotspots are play). `checkUiHints` checks both, and `TextSize`, `usePicturesShown`, `KeepPicturesOn` and `TEXT_SIZES` are exported. The showcase uses it in place of its own copy to `<html>`.
+- `ifloom playtest` writes each notice into the transcript once, as `! Title: text` under the screen it first shows on, and a scene's inputs as `[input] label: value`.
 
 - A [`cases`](/docs/reference/flows#the-first-that-fits) block, written `cases([...])`: only the first of its blocks whose `when` holds is shown, so an if, else if, else is one block with an otherwise at the end. The checker reports an empty one, a block after the otherwise and a point inside one.
 - [Phrases](/docs/reference/phrases): words for the middle of a sentence that change with the state, declared in content's `phrases` as rows tried in order and grouped in nested objects, then printed as `{{outfit.verdict}}`. A translation gives each row other words under `phrase.<name>.<row>`, and a pack can replace one or add to a group.
@@ -489,6 +492,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 ### Fixed
 
 - `ifloom check` no longer reports "every choice leaves or jumps" for a decision at the end of a pick's `then` whose choices jump back, as in a hub where one question opens a few follow-ups. The other picks of the decision around it still carry on to what comes after.
+- `ifloom playtest` stops when it goes round in circles: the same screen, state and command three times in one turn. Before, the explorer could walk between two rooms until the 2,000-step limit. It also counts a place as seen as soon as it sets out for it.
+- While a minigame runs, the places plugin lists no exits and nothing lying in the room, and the React UI's `room` spot (the `LocationCard` and the exits) draws nothing, as while a scene is open.
 - `{ kv: 'x', is: 0 }` holds for a key nobody has set, which counts as 0 as it already did in a range and for `by`. `is: false` and `is: ''` still don't.
 - A device's open app no longer grows wider than its dialog when a line in it is long, such as a message's last line in the conversation list on a phone.
 - `rules.profile` now runs after every command, and `rules.view` sees what the profile holds under `game`, as a plugin's do. The runner asked only the plugins before.

@@ -268,3 +268,12 @@
     }
   }
 }
+
+/*
+ * The text size: the setting a game names in `ui.settings.textSize`, copied to
+ * `data-text-size` on <html> by the React UI. Everything is sized in rem, so
+ * the root's font size scales the whole page. `normal` is the browser's own.
+ */
+:root[data-text-size="small"] { font-size: 87.5%; }
+:root[data-text-size="large"] { font-size: 118.75%; }
+:root[data-text-size="larger"] { font-size: 137.5%; }

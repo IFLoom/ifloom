@@ -122,4 +122,4 @@ The [content checker](/docs/reference/checks) and [`loadGame`](/docs/reference/l
 
 ## See it in an example
 
-Small Town: [`examples/showcase/src/world/settings.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/settings.ts) declares `hints`, a play setting the high street reads with `{ setting: 'hints' }`, and `textSize`, a ui setting that [`examples/showcase/src/main.tsx`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/main.tsx) copies onto the page.
+Small Town: [`examples/showcase/src/world/settings.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/settings.ts) declares `hints`, a play setting the high street reads with `{ setting: 'hints' }`, and `textSize`, a ui setting its [`ui.settings`](/docs/react/hints#settings) hint has the React UI size the page by.

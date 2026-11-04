@@ -280,7 +280,7 @@ While it runs, send `{ type: 'tick', ms }` about every 100 ms when `timeLeft` is
 
 | Field | Type | Meaning |
 |---|---|---|
-| `audio` | [`AudioView`](/docs/reference/audio#audioview) | What should be playing on each [channel](/docs/reference/audio#channels), and the one-shot sounds that are due. Empty (`{ channels: {}, cues: [], muteSetting: null }`) when the game has no `audio`. |
+| `audio` | [`AudioView`](/docs/reference/audio#audioview) | What should be playing on each [channel](/docs/reference/audio#channels), and the one-shot sounds that are due. Empty (`{ channels: {}, cues: [], muteSetting: null, soundSetting: null }`) when the game has no `audio`. |
 
 Each background channel has already been chosen by priority: the open scene, then an effect, then a plugin such as the place, then the game's default. Each cue has a key that stays the same across view calls and reloads, so a player plays it once:
 
@@ -291,7 +291,7 @@ channels.music.volumeSetting  // 'musicVolume': read its value from the profile
 cues.map((cue) => cue.key) // ['scene:1234:3:1:knock']
 ```
 
-The engine never reads the [profile](/docs/reference/profile), so the view gives the setting ids (`volumeSetting` on each channel, and `muteSetting`) and the player reads their values. [`@ifloom/audio`](/docs/browser/audio-player) does all of this. See [Audio](/docs/reference/audio).
+The engine never reads the [profile](/docs/reference/profile), so the view gives the setting ids (`volumeSetting` on each channel, `muteSetting` and `soundSetting`) and the player reads their values. [`@ifloom/audio`](/docs/browser/audio-player) does all of this. See [Audio](/docs/reference/audio).
 
 ### panel
 

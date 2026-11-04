@@ -6,7 +6,7 @@
  */
 import { inlineMarkup, type Block, type Game } from '@ifloom/engine'
 import type { InlineComponents } from './game/context.tsx'
-import { MAX_PIPS, TRANSITIONS } from './hints.ts'
+import { MAX_PIPS, TEXT_SIZES, TRANSITIONS } from './hints.ts'
 
 /** The inline pieces the React UI draws itself, as `BUILT_IN_INLINE` has them. */
 const INLINE = ['modal', 'image', 'mail', 'prop', 'mono']
@@ -17,7 +17,7 @@ const KNOWN = {
   block: ['reveal', 'dice', 'timer', 'tilt', 'fold'],
   stat: ['display'],
   entity: ['hue'],
-  game: ['transition', 'transitionNames'],
+  game: ['transition', 'transitionNames', 'settings'],
 } as const
 
 type Target = keyof typeof KNOWN
@@ -31,7 +31,9 @@ const isRecord = (value: unknown): value is Record<string, unknown> => typeof va
  * `delay` that isn't whole milliseconds, a `display` that isn't `number`, `bar`
  * or `pips`, pips on a stat with a range over 20, a `hue` outside 0 to 360,
  * a block's `dice` that isn't a roll's key, a block's `timer` that isn't a
- * timer the game declares, and a `tilt` that isn't true or false.
+ * timer the game declares, a `tilt` that isn't true or false, and a game's
+ * `settings` naming a setting that isn't a ui choice (`textSize`, with
+ * options the styles size) or a ui toggle (`images`).
  *
  * It also reads the prose, and the words blocks write in place, for inline pieces, `[[ui:name|…]]`: a name that is
  * neither built in (`modal`, `image`, `mail`, `prop`, `mono`) nor one of the game's own `inline`
@@ -59,6 +61,29 @@ export function checkUiHints(game: Game, options: { allow?: readonly string[]; i
         out.push(`${where}: ui.transition ${side} "${String(name)}" is not a transition the game has`)
     }
     if (pair.ms !== undefined && !(typeof pair.ms === 'number' && pair.ms >= 0)) out.push(`${where}: ui.transition ms must be 0 or more`)
+  }
+
+  /** The game's `ui.settings`: each names a ui setting of the right type. */
+  const uiSettings = (where: string, settings: unknown) => {
+    if (!isRecord(settings)) return out.push(`${where}: ui.settings is { textSize?, images? }, each a setting's id`)
+    for (const key of Object.keys(settings))
+      if (key !== 'textSize' && key !== 'images') out.push(`${where}: ui.settings.${key} is not a setting the React UI honours; it has textSize and images`)
+    const declared = (key: string, type: 'choice' | 'toggle') => {
+      const id = settings[key]
+      if (id === undefined) return undefined
+      const setting = (game.settings ?? []).find((entry) => entry.id === id)
+      if (!setting || setting.type !== type || setting.affects !== 'ui') {
+        out.push(`${where}: ui.settings.${key} "${String(id)}" is not a ui ${type} setting the game has`)
+        return undefined
+      }
+      return setting
+    }
+    const size = declared('textSize', 'choice')
+    if (size?.type === 'choice')
+      for (const option of size.options)
+        if (!(TEXT_SIZES as readonly unknown[]).includes(option.value))
+          out.push(`${where}: ui.settings.textSize option "${String(option.value)}" is not a size the styles draw (${TEXT_SIZES.join(', ')}); size it with CSS of your own`)
+    declared('images', 'toggle')
   }
 
   const hints = (target: Target, where: string, ui: unknown, extra?: { range?: number }) => {
@@ -89,6 +114,7 @@ export function checkUiHints(game: Game, options: { allow?: readonly string[]; i
     if (ui.tilt !== undefined && typeof ui.tilt !== 'boolean') out.push(`${where}: ui.tilt is true or false`)
     if (ui.fold !== undefined && !(typeof ui.fold === 'string' && ui.fold.trim())) out.push(`${where}: ui.fold is the words the fold is opened by`)
     if (ui.hue !== undefined && !(typeof ui.hue === 'number' && ui.hue >= 0 && ui.hue <= 360)) out.push(`${where}: ui.hue is a number from 0 to 360`)
+    if (ui.settings !== undefined) uiSettings(where, ui.settings)
     if (ui.transitionNames !== undefined) {
       const list = ui.transitionNames
       if (!Array.isArray(list) || list.some((name) => typeof name !== 'string' || !/^[a-z0-9-]+$/.test(name)))

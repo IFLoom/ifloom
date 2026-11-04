@@ -1,6 +1,7 @@
 import { useId, useState } from 'react'
 import type { HotspotView, PictureView } from '@ifloom/engine'
 import { useGame } from './context.tsx'
+import { KeepPicturesOn } from './display.tsx'
 import { Icon } from './icon.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { Picture } from './picture.tsx'
@@ -63,7 +64,9 @@ function LayeredPictureImpl({ picture, className }: { picture: PictureView; clas
   // The first layer's own shape, once it has loaded, when the picture gives none.
   const [natural, setNatural] = useState<string | null>(null)
   const aspect = picture.aspect ?? natural ?? '16/9'
+  // Its hotspots are play, so it stays drawn whatever the pictures setting says.
   return (
+    <KeepPicturesOn>
     <div {...box} style={{ aspectRatio: aspect }}>
       {picture.layers.map((entry, index) => {
         const key = `${index}:${entry.src}`
@@ -109,6 +112,7 @@ function LayeredPictureImpl({ picture, className }: { picture: PictureView; clas
         <Hotspot key={hotspot.id} hotspot={hotspot} />
       ))}
     </div>
+    </KeepPicturesOn>
   )
 }
 
@@ -116,6 +120,7 @@ function LayeredPictureImpl({ picture, className }: { picture: PictureView; clas
  * A layered picture with hotspots: `view.scene.picture`, or a place's
  * `location.picture`. The layers are stacked bottom first, each filling a box
  * whose shape is the picture's `aspect`, else the first layer's own, else 16/9.
- * Pictures go through `Picture` and videos through `Video`.
+ * Pictures go through `Picture` and videos through `Video`. It's drawn even
+ * while the game's pictures setting is off, since its hotspots are play.
  */
 export const LayeredPicture = overridable('LayeredPicture', LayeredPictureImpl)

@@ -132,7 +132,7 @@ describe('audio', () => {
       duck: null,
     })
     expect(shown.channels.sfx).toMatchObject({ mode: 'cue', track: null, src: null, crossfade: 0, duck: { under: ['voice'], to: 0.3 } })
-    expect(view(startingState(fixture()), fixture()).audio).toEqual({ channels: {}, cues: [], muteSetting: null })
+    expect(view(startingState(fixture()), fixture()).audio).toEqual({ channels: {}, cues: [], muteSetting: null, soundSetting: null })
   })
 
   describe('chooses each background channel', () => {

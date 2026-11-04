@@ -145,6 +145,15 @@ describe('places', () => {
     expect(shown({ ...startingState(locked), kv: { grounded: true } }, locked).exits).toEqual([])
   })
 
+  it('list no exits while a minigame runs in the room, as while a scene is open', () => {
+    const { game: base } = game()
+    const g: Game = { ...base, minigames: [{ id: 'darts', start: 'throw', states: { throw: { final: {} } } }] }
+    const street = walk(g, startingState(g), 'street')
+    expect(shown(street, g).exits.length).toBeGreaterThan(0)
+    const playing = { ...street, minigame: { id: 'darts', state: 'throw', elapsed: 0, kv: {}, steps: 0 } }
+    expect(shown(playing, g).exits).toEqual([])
+  })
+
   it('answer `at` and `within`, following a place’s parent', () => {
     const { game: g } = game()
     const back = walk(g, { ...startingState(g), kv: { staff: true } }, 'street', 'cafe', 'back')

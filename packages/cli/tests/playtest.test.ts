@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { applyEffects, loadGame, startingState, view, type Game } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
-import { explorer, metricsText, playtest, snapshot } from '../src/index.ts'
+import { explorer, metricsText, playtest, snapshot, type Policy } from '../src/index.ts'
 
 const clock = calendar()
 
@@ -108,6 +108,37 @@ describe('playtest', () => {
     const result = playtest(g, { ...startingState(g), sceneId: null }, explorer(), { steps: 4 })
     expect(result.transcript).toContain('> {"type":"tick","ms":4000}')
     expect(result.state.kv.baked).toBe(true)
+  })
+
+  it('writes each notice once, under the screen it first shows on, and a scene’s inputs with what they hold', () => {
+    const g = loadGame(
+      [
+        {
+          name: 'flat',
+          introScene: 'hello',
+          inputs: [{ id: 'name', label: 'Your name', type: 'text' }],
+          scenes: [{ id: 'hello', title: 'Hello', body: [{ prose: 'hello' }], choices: [{ id: 'in', label: 'Go in', effects: [{ scene: null }] }] }],
+          prose: { hello: 'A door.' },
+          actions: [
+            { id: 'rent', label: 'Pay rent', once: { per: 'game' }, effects: [{ notify: 'Rent paid', text: 'The landlord nods.' }] },
+            { id: 'wait', label: 'Wait', effects: [{ turn: true }] },
+          ],
+        },
+      ],
+      { id: 'flat', title: 'Flat' },
+    ).game
+    const result = playtest(g, startingState(g), explorer(), { turns: 2 })
+    expect(result.transcript).toContain('# Hello\nA door.\n  [>] Go in\n  [input] Your name: —')
+    expect(result.transcript.split('! Rent paid: The landlord nods.').length - 1).toBe(1)
+  })
+
+  it('stops going round in circles, rather than walking between two rooms until the step limit', () => {
+    const g = game()
+    const start = { ...clock.write(startingState(g), { day: 0, period: 'morning' }), sceneId: null }
+    const bounce: Policy = (_screen, state) => ((state.plugins.places.state as { at: string }).at === 'bedroom' ? places.go('hall') : places.go('bedroom'))
+    const result = playtest(g, start, bounce, { turns: 3 })
+    expect(result.transcript).toContain('going round in circles')
+    expect(result.transcript.split('\n> ').length).toBeLessThan(10)
   })
 })
 

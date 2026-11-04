@@ -93,7 +93,7 @@ None of it needs any change to the game's content.
 
 `src/main.tsx` and the `settings` in `world/settings.ts`. `GameShell` gets `pages` with a subtitle and two lines of credits, so the game opens on a title screen. The runner gets a [profile](/docs/reference/profile), which keeps the player's settings between games.
 
-The town declares two [settings](/docs/reference/settings). `hints` is a play setting, on by default, and the high street shows a hint line only `when: { setting: 'hints' }`. `textSize` is a ui setting with the options `normal` and `large`. `main.tsx` copies it from the profile to `data-text-size` on the page's `<html>`, now and whenever it changes, and `styles.css` makes the root font bigger for `large`. [The title screen and settings](/docs/recipes/title-screen) explains both.
+The town declares two [settings](/docs/reference/settings). `hints` is a play setting, on by default, and the high street shows a hint line only `when: { setting: 'hints' }`. `textSize` is a ui setting with the options `normal` and `large`. Its `ui.settings` hint names it, so the React UI copies it to `data-text-size` on the page's `<html>`, now and whenever it changes, and its styles make the root font bigger for `large`. [The title screen and settings](/docs/recipes/title-screen) explains both.
 
 ### Transitions and reveals
 

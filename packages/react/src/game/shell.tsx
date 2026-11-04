@@ -1,4 +1,5 @@
 import type { ComponentType } from 'react'
+import { TextSize } from './display.tsx'
 import { GameProvider, type GameProviderProps } from './context.tsx'
 import { DefaultLayout } from './layout.tsx'
 import type { PagesOptions } from './pages.tsx'
@@ -27,6 +28,7 @@ export function GameShell({ layout: Layout = DefaultLayout, pages, ...provider }
   return (
     <GameProvider {...provider}>
       <LayoutOptionsProvider pages={pages}>
+        <TextSize />
         <Layout />
       </LayoutOptionsProvider>
     </GameProvider>

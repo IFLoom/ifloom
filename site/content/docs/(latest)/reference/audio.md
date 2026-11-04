@@ -81,6 +81,7 @@ view(state, game).audio
 //   },
 //   cues: [{ key: 'cue:1234:1', channel: 'sfx', track: 'knock', src: 'audio/knock.ogg', volume: 1 }],
 //   muteSetting: 'muted',
+//   soundSetting: null,
 // }
 ```
 
@@ -91,6 +92,7 @@ type GameAudio = {
   tracks: Record<string, TrackDef | PlaylistDef>
   channels?: Record<string, ChannelDef>
   mute?: string
+  sound?: string
   default?: Record<string, string>
 }
 ```
@@ -101,10 +103,11 @@ type GameAudio = {
 |---|---|
 | `tracks` | Every track and playlist, by id. Content names them by these ids. |
 | `channels` | Your channels, merged over the [defaults](#channels) field by field. |
-| `mute` | A `ui` [setting](/docs/reference/settings) of kind `toggle` that mutes everything while it's on. |
+| `mute` | A `ui` [setting](/docs/reference/settings) of kind `toggle` that mutes everything while it's on: a box labelled "Mute". |
+| `sound` | A `ui` toggle the other way round, that plays sound only while it's on: a box labelled "Sound" or "Music", ticked for sound. Name whichever reads right on your settings page; with both, either one silences. |
 | `default` | What each background channel plays when nothing else says, by channel. |
 
-Your [content](/docs/reference/loader#content) and packs can carry `audio` too. A pack's track or channel replaces one with the same id (a channel is merged field by field), and its `mute` and `default` entries win.
+Your [content](/docs/reference/loader#content) and packs can carry `audio` too. A pack's track or channel replaces one with the same id (a channel is merged field by field), and its `mute`, `sound` and `default` entries win.
 
 ## TrackDef
 
@@ -232,10 +235,11 @@ type AudioView = {
   channels: Record<string, AudioChannelView>
   cues: AudioCue[]
   muteSetting: string | null
+  soundSetting: string | null
 }
 ```
 
-[`view.audio`](/docs/reference/view#audio). `channels` has every channel, background and cue, and `cues` has every effect cue kept, oldest first, then the open scene's beats in order. `muteSetting` is `game.audio.mute`. The engine never reads the [profile](/docs/reference/profile), so the player reads the setting's value there itself.
+[`view.audio`](/docs/reference/view#audio). `channels` has every channel, background and cue, and `cues` has every effect cue kept, oldest first, then the open scene's beats in order. `muteSetting` is `game.audio.mute` and `soundSetting` is `game.audio.sound`. The player is silent while the first is on or the second is off. The engine never reads the [profile](/docs/reference/profile), so the player reads the setting's value there itself.
 
 ### AudioChannelView
 
@@ -318,7 +322,7 @@ The [content checker](/docs/reference/checks) checks everything audio names. The
 - **A sound effect is kept, a scene's sound isn't.** A `sound` effect stays in `state.audio.cues` until 20 newer ones push it out, so a player that has just started marks every key it can see as already heard. Otherwise loading a save would replay old sounds.
 - **A room's prose doesn't cue.** `[[sound:id]]` in a [place's](/docs/plugins/places) body becomes a beat but no cue, because only an open scene has showings. Use the place's `audio`, or a `sound` effect on arrival.
 - **An unknown track is silence at runtime.** A mod that removes a track leaves `track` set and `src` null. The loader reports it first.
-- **`volume` and `mute` name `ui` settings.** They live in the [profile](/docs/reference/profile), never in the state, so they don't change the game.
+- **`volume`, `mute` and `sound` name `ui` settings.** They live in the [profile](/docs/reference/profile), never in the state, so they don't change the game.
 
 ## See it in an example
 

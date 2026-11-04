@@ -43,6 +43,7 @@ export {
   DEFAULT_TRANSITION_MS,
   DICE_ROLL_MS,
   MAX_PIPS,
+  TEXT_SIZES,
   TRANSITIONS,
   lastReveal,
   revealGroups,
@@ -67,6 +68,7 @@ export type { KeyOptions } from './game/keys.tsx'
 export { BUILT_IN_PANELS, PanelHost } from './game/panels.tsx'
 export { DIALOG_CLASSES, PartDialog, useDialogParts } from './game/dialog.tsx'
 export { Picture } from './game/picture.tsx'
+export { KeepPicturesOn, TextSize, usePicturesShown } from './game/display.tsx'
 export { Video } from './game/video.tsx'
 export type { VideoProps } from './game/video.tsx'
 export { Hotspot, LayeredPicture } from './game/layered.tsx'

@@ -32,15 +32,6 @@ const runner = createRunner(game, startingState(game, { seed: Math.floor(Math.ra
   autosave: { every: 'turn' },
 })
 
-// `textSize` is a ui setting: it lives in the profile, never in the game. Put
-// it on <html> as `data-text-size`, now and whenever it changes, and
-// styles.css does the rest. It applies on every page, the title included.
-function showTextSize() {
-  document.documentElement.dataset.textSize = runner.snapshot().settings.textSize === 'large' ? 'large' : 'normal'
-}
-showTextSize()
-runner.subscribe(showTextSize)
-
 const pages: PagesOptions = {
   subtitle: 'A new flat, a new town, and a cat with no name.',
   credits: ['Small Town is the IFLoom showcase.', { label: 'Made with IFLoom', href: 'https://ifloom.dev/' }],

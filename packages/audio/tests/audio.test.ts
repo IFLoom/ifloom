@@ -282,6 +282,28 @@ describe('startAudio', () => {
     again()
   })
 
+  it('is silent while a sound toggle is off, the other way round from mute', async () => {
+    const t = setup(
+      makeGame((game) => ({
+        ...game,
+        settings: [...(game.settings ?? []), { id: 'sound', label: 'Sound', affects: 'ui', type: 'toggle', default: true }],
+        audio: { ...game.audio!, mute: undefined, sound: 'sound' },
+      })),
+    )
+    const player = startAudio(t.runner, t.options)
+    t.click()
+    vi.advanceTimersByTime(1000)
+    const calm = t.last('audio/calm.ogg')
+    expect(calm.volume).toBeCloseTo(0.8)
+    t.runner.setSetting('sound', false)
+    await t.runner.settled()
+    expect(calm.volume).toBe(0)
+    t.runner.setSetting('sound', true)
+    await t.runner.settled()
+    expect(calm.volume).toBeCloseTo(0.8)
+    player()
+  })
+
   it('plays at full volume with no profile and no settings', () => {
     const game = makeGame((game) => ({ ...game, settings: [], audio: { ...game.audio!, channels: {}, mute: undefined } }))
     const runner = createRunner(game, startingState(game, { seed: 7 }))

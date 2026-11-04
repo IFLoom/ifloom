@@ -19,6 +19,7 @@ How a game looks and moves is the UI's business, not the engine's. Content says 
 | [`display`](#display) | A stat | A number, a bar or pips in the sidebar. |
 | [`hue`](#hue) | An entity or a kind | The colour of their spoken lines. |
 | [`transitionNames`](#your-own-transition-names) | The game | Transition names of the game's own. |
+| [`settings`](#settings) | The game | The ui settings the React UI honours itself: a text size and a pictures switch. |
 
 Prose can also hold [inline pieces](#inline-pieces), `[[ui:name|words|arg]]`, which the React UI draws by name: a popup with a prose line, a picture to open, a letter, a note, a sign, or a component of your own.
 
@@ -290,6 +291,43 @@ On an [entity](/docs/reference/entities#entitydef), or on a [kind](/docs/referen
 }
 ```
 
+## settings
+
+```ts
+export const settings: Content = {
+  settings: [
+    {
+      id: 'textSize',
+      label: 'Text size',
+      type: 'choice',
+      affects: 'ui',
+      options: [
+        { value: 'normal', label: 'Normal' },
+        { value: 'large', label: 'Large' },
+      ],
+      default: 'normal',
+    },
+    { id: 'pictures', label: 'Show pictures', type: 'toggle', affects: 'ui', default: true },
+  ],
+  ui: { settings: { textSize: 'textSize', images: 'pictures' } },
+}
+```
+
+On the game: which of its [ui settings](/docs/reference/settings) the React UI honours itself, by the setting's id. The settings page draws them as it draws any other, and nothing else is needed:
+
+- **`textSize`** names a ui `choice`. [`TextSize`](/docs/react/components#textsize), which `GameShell` draws, copies its value to `data-text-size` on `<html>`, now and whenever it changes, so it applies on every page, the title's included. The styles size the page from its root for `small` (87.5%), `normal` (the browser's own), `large` (118.75%) and `larger` (137.5%). Everything is sized in `rem`, so the whole page scales. An option of another name needs CSS of your own, `:root[data-text-size="huge"] { font-size: 150%; }`.
+- **`images`** names a ui `toggle`. While it's off, [`Picture`](/docs/react/components#picture) and [`Video`](/docs/react/components#video) draw nothing: a scene's picture, pictures in the prose, portraits, a place's picture. A [`LayeredPicture`](/docs/react/components#layeredpicture) stays, since its hotspots are part of play.
+
+`TEXT_SIZES` lists the sizes the styles draw:
+
+```ts
+import { TEXT_SIZES } from '@ifloom/react'
+
+TEXT_SIZES // ['small', 'normal', 'large', 'larger']
+```
+
+A sound switch is the engine's, since the audio player reads it too: name it in the game's [`audio.sound`](/docs/reference/audio#gameaudio) (on is sound) or `audio.mute` (on is silence).
+
 ## Inline pieces
 
 A [UI piece](/docs/reference/prose#ui-pieces) in prose, `[[ui:name|words|arg|…]]`, is drawn by the component of that name. The React UI has five:
@@ -375,6 +413,7 @@ What's wrong with a game's hints for the React UI, as `where: what` lines, or no
 - a `hue` outside 0 to 360
 - a block's `dice` that isn't a roll's key (letters, digits and `_`)
 - a block's `timer` that isn't one of the game's `timers`
+- a game's `settings` with a key other than `textSize` and `images`, a `textSize` that isn't a ui `choice` setting the game has or has an option the styles don't size, and an `images` that isn't a ui `toggle`
 - an [inline piece](#inline-pieces) in the prose whose name is neither built in nor in `inline` (pass the same object you give `mountGame`), a `modal` with no prose key or one whose key has no prose, an `image` with no path, and either with more than two arguments
 
 It reads the game's scenes, choices and blocks, its actions, stats, kinds and entities, the places plugin's locations, every prose line, and every block of words written in place. Put it in a test beside the engine's checks:

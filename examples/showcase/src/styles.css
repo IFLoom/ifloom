@@ -6,11 +6,3 @@
   --primary: oklch(0.55 0.12 230);
 }
 
-/*
- * The `textSize` setting. It's a ui setting, so it lives in the player's
- * profile, not the game; main.tsx copies it to `data-text-size` on <html>.
- * Everything is sized in rem, so the root font size scales the whole page.
- */
-:root[data-text-size="large"] {
-  font-size: 118.75%;
-}

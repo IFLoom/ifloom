@@ -731,12 +731,38 @@ A `Picture` remembers which `src` failed. When the same element gets a new `src`
 
 Its `src` goes through [`assetUrl`](#asseturl), so it finds a picture that `ifloom build --inline-assets` put inside the page.
 
+While the game's pictures setting is off (the [`settings`](/docs/react/hints#settings) hint's `images`), it draws nothing, except inside a [`LayeredPicture`](#layeredpicture) or [`KeepPicturesOn`](#keeppictureson).
+
 Replaceable as `Picture` in [`components`](#components). Parts: none of its own. It carries the `data-part` of the place it's drawn, such as `scene-portrait` or `notice-image`.
+
+### usePicturesShown
+
+```ts
+function usePicturesShown(): boolean
+```
+
+Whether pictures are drawn where it's called: `false` only while the setting the game names in the [`settings`](/docs/react/hints#settings) hint's `images` is off. It's `true` outside a game, in a game that names no such setting, and inside a [`KeepPicturesOn`](#keeppictureson). `Picture` and `Video` ask it, so a picture component of your own can too:
+
+```tsx
+import { usePicturesShown } from '@ifloom/react'
+
+function Postcard({ src }: { src: string }) {
+  return usePicturesShown() ? <img src={src} alt="" /> : <p>(A postcard of the pier.)</p>
+}
+```
+
+### KeepPicturesOn
+
+```tsx
+function KeepPicturesOn(props: { children: ReactNode }): JSX.Element
+```
+
+Draws the pictures inside it whatever the pictures setting says. `LayeredPicture` wraps itself in one, because its hotspots are part of play. Wrap a picture of your own the player has to click in one too.
 
 ### Video
 
 ```tsx
-function Video(props: VideoProps): JSX.Element
+function Video(props: VideoProps): JSX.Element | null
 
 type VideoProps = Omit<ComponentProps<'video'>, 'src' | 'poster' | 'autoPlay' | 'loop' | 'muted' | 'controls'> & {
   src: string
@@ -761,13 +787,15 @@ It loads nothing until it scrolls into view. Until then it has `preload="none"`.
 
 **Sound.** A clip with `muted: false` follows the game's [audio settings](/docs/reference/audio), as the audio player does:
 
-- it's muted while the ui setting named by [`view.audio.muteSetting`](/docs/reference/audio#audioview) is on
+- it's muted while the ui setting named by [`view.audio.muteSetting`](/docs/reference/audio#audioview) is on, or the one named by `view.audio.soundSetting` is off
 - its volume is the volume setting of the game's `video` channel, if the game declares one, or else of its `sfx` channel, scaled from the setting's `min` to its `max`
 - with neither setting, it plays at full volume.
 
 The values are read with [`useSetting`](#usesetting), so a change on the settings page applies at once.
 
 **Gotcha.** Browsers often refuse to start a clip with sound by itself. Give a clip with sound `controls` (the `|controls` flag), so the player presses play.
+
+While the game's pictures setting is off (the [`settings`](/docs/react/hints#settings) hint's `images`), it draws nothing, as [`Picture`](#picture) doesn't.
 
 Its `src` and `poster` go through [`assetUrl`](#asseturl). Replaceable as `Video` in [`components`](#components). Parts: `video`.
 
@@ -1504,6 +1532,14 @@ function Story({ children }: { children: React.ReactNode }) {
   return <div className={size === 'large' ? 'text-lg' : undefined}>{children}</div>
 }
 ```
+
+### TextSize
+
+```tsx
+function TextSize(): null
+```
+
+Copies the setting the game names in the [`settings`](/docs/react/hints#settings) hint's `textSize` to `data-text-size` on `<html>`, now and whenever it changes, and takes it off when it's unmounted. It draws nothing. `GameShell` has one, so you only need it under a `GameProvider` of your own.
 
 ### useProfile
 

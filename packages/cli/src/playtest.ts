@@ -40,7 +40,7 @@ export type Playtest = {
   state: GameState
 }
 
-/** A screen as plain text: where, when, the prose, and every button with its price or reason. */
+/** A screen as plain text: where, when, the prose, every button with its price or reason, and a scene's inputs with what each holds. */
 export function screenText(screen: View): string {
   const where = [`Turn ${screen.turn + 1}`, screen.when].filter(Boolean)
   const lines = [`== ${where.join(' · ')}`, `# ${screen.scene.title}`, screen.scene.body]
@@ -58,8 +58,13 @@ export function screenText(screen: View): string {
     )
   }
   for (const exit of exitsOn(screen)) lines.push(`  -> ${exit.label}${exit.disabled ? ` — ${exit.disabled}` : ''}`)
+  // Inputs are asked inside a scene, as the UIs draw them.
+  if (screen.scene.id) for (const input of screen.inputs) lines.push(`  [input] ${input.label}: ${input.value === null ? '—' : String(input.value)}`)
   return lines.join('\n')
 }
+
+/** How many times one screen, state and command may come round in a turn before the run stops as going in circles. */
+const ROUNDS = 3
 
 /** A place as the explorer walks it: its exits and its actions. */
 type Place = { id: string; exits: readonly string[]; actions?: readonly { command: CommandRef }[] }
@@ -183,7 +188,11 @@ export function explorer(): Policy {
     // Somewhere not yet seen today, by way of places already seen if it must.
     const step = toward(placesIn(game, state), at, (id) => !today.has(id))
     const exit = exitsOn(screen).find((entry) => entry.id === step && !entry.disabled)
-    if (exit) return exit.command
+    if (exit) {
+      // Counted as seen as it's set out for, so a place that sends the player straight back isn't headed for again.
+      today.add(exit.id)
+      return exit.command
+    }
     // Nothing new, but a timer is running (a message on its way, say): wait for the first to run out.
     const wait = waitFor(screen)
     if (wait) return wait
@@ -195,7 +204,11 @@ export function explorer(): Policy {
   }
 }
 
-/** Play from `start` with `policy` until the turns are up, the policy stops, the game starts over, or the step limit is hit. */
+/**
+ * Play from `start` with `policy` until the turns are up, the policy stops, the game starts over, it goes
+ * round in circles, or the step limit is hit. Each notice raised along the way is written once, under the
+ * screen it first shows on.
+ */
 export function playtest(game: Game, start: GameState, policy: Policy = explorer(), options: PlaytestOptions = {}): Playtest {
   const turns = options.turns ?? 7
   const limit = options.steps ?? 2000
@@ -206,6 +219,10 @@ export function playtest(game: Game, start: GameState, policy: Policy = explorer
   let scenes: string[] = []
   let refused = 0
   let refusedLast = false
+  // Notices already printed: the explorer never dismisses them, so each shows once, where it was raised.
+  const told = new Set<string>()
+  // Each screen, state and command this turn, and how often it has come round.
+  const rounds = new Map<string, number>()
   const close = (turn: number) => {
     // The player's stats, then how many there are of each kind of entity the game lists. A kind that's never
     // listed, such as the places' `location` or the shop's `vendor`, is the plugin's bookkeeping, not a number to watch.
@@ -219,11 +236,22 @@ export function playtest(game: Game, start: GameState, policy: Policy = explorer
   }
   for (let step = 0; step < limit && state.turn - start.turn < turns; step += 1) {
     const screen = view(state, game)
-    lines.push(screenText(screen))
+    const text = screenText(screen)
+    const news = screen.notices.unseen.filter((notice) => !told.has(notice.id)).reverse()
+    for (const notice of news) told.add(notice.id)
+    lines.push([text, ...news.map((notice) => `  ! ${notice.title}${notice.text ? `: ${notice.text}` : ''}`)].join('\n'))
     const picked = policy(screen, state, game)
     if (!picked) break
     const command = commandOf(picked)
     lines.push(`> ${JSON.stringify(command)}`)
+    // The same screen, the same state and the same command, again and again in one turn: nothing is moving, so stop.
+    const key = JSON.stringify([state.turn, text, command, state.stats, state.kv, state.held, state.plugins])
+    const round = (rounds.get(key) ?? 0) + 1
+    rounds.set(key, round)
+    if (round >= ROUNDS) {
+      lines.push('  going round in circles: the same screen and command keep coming back, so the playtest stops here')
+      break
+    }
     const out = apply(state, game, command)
     if (!out.ok) {
       refused += 1
@@ -241,7 +269,10 @@ export function playtest(game: Game, start: GameState, policy: Policy = explorer
       break
     }
     if (out.state.sceneId && out.state.sceneId !== state.sceneId) scenes.push(out.state.sceneId)
-    if (out.state.turn !== state.turn) close(state.turn)
+    if (out.state.turn !== state.turn) {
+      close(state.turn)
+      rounds.clear()
+    }
     state = out.state
   }
   // The turn it stopped in, unless that is only the start of the turn after the last one it was asked for.

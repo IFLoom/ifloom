@@ -284,12 +284,22 @@ onUnmounted(stop)
 <div class:large={size === 'large'}>{@render children()}</div>
 ```
 
-To apply it to every page, including the title screen, put it on the page instead. This works the same whatever draws the game. The showcase copies it from the runner to an attribute on `<html>`:
+To apply it to every page, including the title screen, put it on the page instead. The React UI does that for a text size and a pictures switch: name the settings in the game's [`ui.settings`](/docs/react/hints#settings) hint, and it copies the text size to `data-text-size` on `<html>`, where its styles size the page (`small`, `normal`, `large` or `larger`), and leaves the story's pictures out while the pictures toggle is off. The showcase does it so:
 
 ```ts
-// src/main.tsx
+// src/world/settings.ts
+export const settings: Content = {
+  settings: [/* … textSize, as above */],
+  ui: { settings: { textSize: 'textSize' } },
+}
+```
+
+Any other UI copies it the same way, from the runner to an attribute on `<html>`, now and whenever it changes:
+
+```ts
+// src/main.ts
 function showTextSize() {
-  document.documentElement.dataset.textSize = runner.snapshot().settings.textSize === 'large' ? 'large' : 'normal'
+  document.documentElement.dataset.textSize = String(runner.snapshot().settings.textSize)
 }
 showTextSize()
 runner.subscribe(showTextSize)

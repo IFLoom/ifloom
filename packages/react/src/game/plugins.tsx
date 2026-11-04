@@ -17,7 +17,7 @@ import type { Words } from './words.ts'
  *
  * - `stats`: inside the side column's Stats section, under the stats.
  * - `sidebar`: the side column, after the Stats section.
- * - `room`: the story, after the scene and before the room's actions.
+ * - `room`: the story, after the scene and before the room's actions. Nothing is drawn here while a minigame runs.
  * - `story`: the end of the story, after the room's actions.
  * - `strip`: the `NoticeStrip`'s row of counts, after the notices.
  */
@@ -107,10 +107,12 @@ export function PluginProviders({ plugins, children }: { plugins: readonly Plugi
  * What the game's plugin UIs place at one spot of the layout, in the order of
  * its `plugins` list: nothing for a plugin the game doesn't have. The default
  * layout has one at each `PluginSpot`; a layout of your own puts them where
- * it likes, or draws the plugins' components itself.
+ * it likes, or draws the plugins' components itself. The `room` spot draws
+ * nothing while a minigame runs, since the minigame stands where the room is.
  */
 export function Plugins({ at }: { at: PluginSpot }) {
-  const plugins = usePluginUis()
+  const { plugins, view } = useGame()
+  if (at === 'room' && view.minigame) return null
   return (
     <>
       {plugins.flatMap((ui) =>

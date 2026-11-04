@@ -1,11 +1,13 @@
 import { useState, type ComponentProps } from 'react'
 import { assetUrl } from './assets.ts'
+import { usePicturesShown } from './display.tsx'
 import { overridable } from './overrides.tsx'
 
 function PictureImpl({ onError, ...props }: ComponentProps<'img'> & { 'data-part'?: string }) {
   // Which src failed, so a new picture in the same place gets its own chance.
   const [failed, setFailed] = useState<string | null>(null)
-  if (!props.src || failed === props.src) return null
+  const shown = usePicturesShown()
+  if (!shown || !props.src || failed === props.src) return null
   return (
     <img
       loading="lazy"
@@ -24,7 +26,9 @@ function PictureImpl({ onError, ...props }: ComponentProps<'img'> & { 'data-part
  * An image that takes no space if its file is missing (a portrait the game
  * hasn't drawn yet, art left out of a build) instead of showing a broken icon.
  * It loads lazily (`loading="lazy"`, `decoding="async"`), so a picture far down
- * the page waits until the player scrolls near it. Every picture the UI draws
- * goes through it, so replacing it in `components` changes them all.
+ * the page waits until the player scrolls near it. It draws nothing while the
+ * game's pictures setting (`ui.settings.images`) is off, except in a layered
+ * picture. Every picture the UI draws goes through it, so replacing it in
+ * `components` changes them all.
  */
 export const Picture = overridable('Picture', PictureImpl)

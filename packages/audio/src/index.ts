@@ -121,9 +121,11 @@ export function startAudio(runner: Runner, options: AudioOptions = {}): AudioPla
     return setting.max > setting.min ? clamp((at - setting.min) / (setting.max - setting.min)) : 1
   }
 
+  /** Silent while the game's mute toggle is on, or its sound toggle is off. */
   function muted(): boolean {
-    const id = audio.muteSetting
-    return id ? settings[id] === true : false
+    const mute = audio.muteSetting
+    const sound = audio.soundSetting
+    return (mute ? settings[mute] === true : false) || (sound ? settings[sound] === false : false)
   }
 
   function gain(channel: string): number {

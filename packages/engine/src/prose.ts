@@ -78,14 +78,18 @@ export function phraseText(state: GameState, game: Game, name: string, args: Rea
   const refs = argRefs(state, game, declared, args)
   const row = rows.find((entry) => holds(state, game, declared.length ? bindArgs(entry.when, declared, (arg) => refs[arg]) : entry.when))
   if (!row) return ''
-  const text = declared.length ? putArgs(state, game, row.text, declared, refs) : row.text
-  if (filling >= DEEPEST) return text
-  filling += 1
-  try {
-    return fillTokens(state, game, text)
-  } finally {
-    filling -= 1
+  const text = declared.length ? argsInTokens(row.text, declared, refs) : row.text
+  let filled = text
+  if (filling < DEEPEST) {
+    filling += 1
+    try {
+      filled = fillTokens(state, game, text)
+    } finally {
+      filling -= 1
+    }
   }
+  // Names go in last, so a name (one the player typed, say) is never read for tokens.
+  return declared.length ? argNames(state, game, filled, declared, refs) : filled
 }
 
 /**
@@ -103,30 +107,27 @@ function argRefs(state: GameState, game: Game, declared: readonly string[], args
 }
 
 /**
- * A row's words with `$<arg>` put in: inside a token, before its fallback,
- * as the reference or value (`{{kv:mood of=$who}}`); elsewhere as the
- * entity's name, or the value as passed.
+ * A row's words with `$<arg>` put in inside its tokens, before any fallback,
+ * as the reference or value (`{{kv:mood of=$who}}`). The rest is left for
+ * `argNames`, once the tokens are filled.
  */
-function putArgs(state: GameState, game: Game, text: string, declared: readonly string[], refs: Record<string, unknown>): string {
+function argsInTokens(text: string, declared: readonly string[], refs: Record<string, unknown>): string {
   const pattern = argPattern(declared)
   if (!pattern || !text.includes('$')) return text
-  const asRef = (part: string) => part.replace(pattern, (_match, arg: string) => String(refs[arg]))
-  const asName = (part: string) =>
-    part.replace(pattern, (_match, arg: string) => {
-      const value = refs[arg]
-      return typeof value === 'string' && value.includes(':') && hasEntity(state, game, value) ? entityName(state, game, value) : String(value)
-    })
-  let out = ''
-  let at = 0
-  for (const match of text.matchAll(TOKEN)) {
-    const written = match[0]
-    const start = match.index
-    out += asName(text.slice(at, start))
-    const bar = match[4] === undefined ? written.length : written.indexOf('|')
-    out += asRef(written.slice(0, bar)) + asName(written.slice(bar))
-    at = start + written.length
-  }
-  return out + asName(text.slice(at))
+  return text.replace(TOKEN, (written: string, ...match: unknown[]) => {
+    const bar = match[3] === undefined ? written.length : written.indexOf('|')
+    return written.slice(0, bar).replace(pattern, (_m, arg: string) => String(refs[arg])) + written.slice(bar)
+  })
+}
+
+/** The filled words with each `$<arg>` left in them put in as the entity's name, or the value as passed. */
+function argNames(state: GameState, game: Game, text: string, declared: readonly string[], refs: Record<string, unknown>): string {
+  const pattern = argPattern(declared)
+  if (!pattern || !text.includes('$')) return text
+  return text.replace(pattern, (_match, arg: string) => {
+    const value = refs[arg]
+    return typeof value === 'string' && value.includes(':') && hasEntity(state, game, value) ? entityName(state, game, value) : String(value)
+  })
 }
 
 /**

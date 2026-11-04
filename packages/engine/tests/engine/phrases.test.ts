@@ -273,6 +273,12 @@ describe('phrases with arguments', () => {
     expect(fillTokens(state, game, '{{mood.hat who=ava}}')).toBe('Ava has no hat')
   })
 
+  it('never read a name put in for an argument as a token, such as one the player typed', () => {
+    const { game } = loadTown()
+    const state = startingState(game, { kv: { samName: '{{kv:here}}' } })
+    expect(fillTokens(state, game, '{{mood.greeting who=sam place=park}}')).toBe('no sign of {{kv:here}}')
+  })
+
   it('leave a $ that is no declared argument alone', () => {
     const { game } = loadTown()
     expect(fillTokens(startingState(game), game, '{{mood.price n=2}}')).toBe('$5 for 2, $9.50 for more')

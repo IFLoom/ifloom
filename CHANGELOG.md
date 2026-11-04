@@ -482,7 +482,6 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Fixed
 
-- Text the player types into an input has its doubled braces made single, so a name typed as `{{kv:gold}}` is kept as `{kv:gold}` and never filled in as a token when prose or a phrase prints it.
 - A device's open app no longer grows wider than its dialog when a line in it is long, such as a message's last line in the conversation list on a phone.
 - `rules.profile` now runs after every command, and `rules.view` sees what the profile holds under `game`, as a plugin's do. The runner asked only the plugins before.
 

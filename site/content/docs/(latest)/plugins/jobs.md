@@ -248,6 +248,14 @@ The board stays open while the player applies, and closes when a turn ends or th
 
 The checker reports a `job` list entry the game doesn't have (`unknown job "circus"`), and a `job` that isn't a list of ids.
 
+## Values
+
+| Prose writes | Prints |
+|---|---|
+| `{{jobs/rank job=cafe}}` | The name of the rank the player holds at the job, such as `Barista`. Nothing when they don't work there. |
+
+Give it a fallback for when they don't: `You work as {{jobs/rank job=cafe|nothing yet}}.` The name is the rank's `name`, in the game's words, so a translation's [words table](/docs/reference/words) changes it too. To test which rank they hold rather than print it, use the [`jobs/hired`](#conditions) condition with its `rank`. Code can read it with its context's `value('jobs/rank', { job: 'cafe' })`.
+
 ## Strings
 
 | Key | English |

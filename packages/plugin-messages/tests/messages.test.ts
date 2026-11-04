@@ -130,6 +130,36 @@ describe('messages', () => {
     expect(thread.unread).toBe(1)
   })
 
+  it('count whole days since a reply was sent, from the day it was sent, not the day the message came', () => {
+    const g = game()
+    let state = apply(begin(g), g, { type: 'action', id: 'goOut' }).state
+    expect(holds(state, g, messages.replied('msg.hey', undefined, { gte: 0 }))).toBe(false)
+    state = clock.write(state, { day: 3, period: 'morning' })
+    state = apply(state, g, messages.reply('msg.hey', 'yes')).state
+    expect(holds(state, g, messages.replied('msg.hey', 'yes', { lt: 1 }))).toBe(true)
+    expect(holds(state, g, messages.replied('msg.hey', 'no', { lt: 1 }))).toBe(false)
+    state = clock.write(state, { day: 5, period: 'morning' })
+    expect(holds(state, g, messages.replied('msg.hey', undefined, { gte: 2 }))).toBe(true)
+    expect(holds(state, g, messages.replied('msg.hey', undefined, { gte: 3 }))).toBe(false)
+  })
+
+  it('run a message’s effects in the command it arrives in, and tell a read one by messageRead', () => {
+    const g = game({
+      data: {
+        messages: {
+          messages: [{ id: 'msg.hey', channel: 'texts', from: 'ava', when: { kv: 'out' }, body: [{ prose: 'msg.hey' }], effects: [{ kv: 'buzzed', by: 1 }] }],
+        },
+      },
+    })
+    let state = apply(begin(g), g, { type: 'action', id: 'goOut' }).state
+    expect(holds(state, g, messages.arrived('msg.hey'))).toBe(true)
+    expect(state.kv.buzzed).toBe(1)
+    expect(holds(state, g, messages.messageRead('msg.hey'))).toBe(false)
+    state = apply(state, g, messages.read('ava')).state
+    expect(holds(state, g, messages.messageRead('msg.hey'))).toBe(true)
+    expect(state.kv.buzzed).toBe(1)
+  })
+
   it('refuse a reply that is not on offer or to a message that has not come', () => {
     const g = game()
     expect(whyNot(begin(g), g, messages.reply('msg.hey', 'yes'))).toBe('There is no such message.')
@@ -325,8 +355,15 @@ describe('pools', () => {
     const loaded = loadState(JSON.parse(JSON.stringify(saved)), g)
     if (!loaded.ok) throw new Error(loaded.reason)
     expect(loaded.value.plugins.messages).toEqual({
-      version: 3,
-      state: { arrived: [{ key: 'msg.hey', message: 'msg.hey', turn: 3, day: 3 }], replied: { 'msg.hey': 'yes' }, read: { 'msg.hey': true }, due: null },
+      version: 4,
+      state: {
+        arrived: [{ key: 'msg.hey', message: 'msg.hey', turn: 3, day: 3 }],
+        replied: { 'msg.hey': 'yes' },
+        // The reply's day is its arrival's: the old save didn't keep it.
+        repliedOn: { 'msg.hey': 3 },
+        read: { 'msg.hey': true },
+        due: null,
+      },
     })
     expect(holds(loaded.value, g, messages.replied('msg.hey', 'yes'))).toBe(true)
     expect(shown(loaded.value, g).channels[0].threads[0].messages[0]).toMatchObject({ key: 'msg.hey', replied: 'Yes!', read: true })

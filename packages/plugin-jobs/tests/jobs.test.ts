@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   apply,
+  fillTokens,
   createRunner,
   holds,
   loadGame,
@@ -132,6 +133,17 @@ describe('jobs, on their own', () => {
     expect(board(state, g).rank!.id).toBe('barista')
     state = run({ ...state, stats: { ...state.stats, manner: 15 } }, g, act('sleep'))
     expect(board(state, g).rank!.id).toBe('manager')
+  })
+
+  it('print the rank held in prose with {{jobs/rank job=…}}, and the fallback when not hired', () => {
+    const g = game()
+    const line = 'You work as {{jobs/rank job=cafe|nothing yet}}.'
+    let state: GameState = fresh(g)
+    expect(fillTokens(state, g, line)).toBe('You work as nothing yet.')
+    state = run(state, g, act('meet'), jobs.apply('cafe'))
+    expect(fillTokens(state, g, line)).toBe('You work as Weekend help.')
+    for (let n = 0; n < 3; n += 1) state = run(state, g, act('rest'), jobs.work('cafe'), act('sleep'))
+    expect(fillTokens(state, g, line)).toBe('You work as Barista.')
   })
 
   it('fire after missed shifts, or when the fire condition holds', () => {

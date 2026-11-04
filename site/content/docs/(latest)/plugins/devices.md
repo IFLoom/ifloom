@@ -568,7 +568,7 @@ One [`SectionView`](/docs/plugins/devices#sectionview) of an open app, drawn by 
 | `actions` | A [`ChoiceList`](/docs/react/components#choicelist). |
 | `list` | Each entry (`data-entry`) with its picture, title, text and actions. |
 | `plugin` | The renderer in `sections` for that plugin id, given the plugin's view and the section's `with`. Nothing if there's no renderer. |
-| `panel` | The component in `panels` with the panel's name, given the section's `with`. Nothing if there's no component. |
+| `panel` | The component in `panels` with the panel's name, given the section's `with`. Nothing if there's no component. It can read the rest of the app with [`useOpenApp`](#useopenapp). |
 
 Replaceable as `AppSection` in [`components`](/docs/react/components#components). Parts: `app-prose`, `app-entries`, `app-entry` (with `data-entry`), `app-entry-image`, `app-entry-title` and `app-entry-text`.
 
@@ -600,6 +600,31 @@ type DeviceState = {
 Which device is out, from the view, and how to bring one out and put it away. `openId` and `device` are the device that's out (the first, if several are), or `null`. `open(id)` sends that device's `home` command, and `close()` the `close` command of the one that's out. Every call reads the same game state, so a button of yours and the dialog always agree.
 
 ::include[../../../../snippets/react/use-device.tsx]
+
+### useOpenApp
+
+```ts
+function useOpenApp(): OpenAppState | null
+
+type OpenAppState = { device: DeviceView; app: AppView }
+```
+
+The app a section is being drawn in, with all of its sections, and its device. It's `null` outside an open app. A `{ panel }` section's component is given only the section's `with` as `data`, so it reads the rest of the app here. For example, a card can draw the buttons of the app's `actions` section on itself, refused buttons included:
+
+```tsx
+function MatchCard({ data }: { data: unknown }) {
+  const open = useOpenApp()
+  const buttons = open?.app.sections.flatMap((section) => (section.type === 'actions' ? section.actions : [])) ?? []
+  return (
+    <div>
+      <p>{(data as { name: string }).name}</p>
+      <ChoiceList choices={buttons} />
+    </div>
+  )
+}
+```
+
+A UI in another framework reads the same thing from the view: the device's `open.sections`.
 
 ## The state
 

@@ -501,6 +501,17 @@ function jobsPlugin(): DefinedPlugin<JobsState, JobsView> {
       },
     },
     onCommand: review,
+    values: {
+      /**
+       * <code v-pre>{{jobs/rank job=barista}}</code>: the name of the rank the player holds at
+       * the job, such as "Head barista"; '' when not hired, so a fallback shows:
+       * <code v-pre>{{jobs/rank job=barista|out of work}}</code>.
+       */
+      rank: (_state, args, { slice, game }) => {
+        const job = jobIn(game, args.job)
+        return (job && rankOf(job, slice.held[job.id])?.name) ?? ''
+      },
+    },
     view: (state, context) => jobsView(state, context),
     references: {
       calls: (table, _name, args) => jobRef(table === 'commands' ? args.id : args.job),

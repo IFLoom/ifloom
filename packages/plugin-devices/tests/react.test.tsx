@@ -6,7 +6,7 @@ import { createRunner, loadGame, startingState } from '@ifloom/engine'
 import { messages } from '@ifloom/plugin-messages'
 import { Game as GamePage, GameShell, NoticeStrip, Scene, Story } from '@ifloom/react'
 import { devices } from '../src/index.ts'
-import { devicesUi } from '../src/react/index.tsx'
+import { devicesUi, useOpenApp } from '../src/react/index.tsx'
 import { messagesUi } from '@ifloom/plugin-messages/react'
 
 /** The plugin UIs every game here is drawn with. */
@@ -101,5 +101,49 @@ describe('the notice strip, with a phone', () => {
     click('Close')
     expect(runner.state.plugins.devices.state).toEqual({ shown: {} })
     expect(screen.queryByRole('dialog', { name: 'Phone' })).toBeNull()
+  })
+})
+
+describe('an app’s panel', () => {
+  it('reads the app it is drawn in, with its other sections, from useOpenApp', () => {
+    const { game: g, problems } = loadGame(
+      [
+        {
+          name: 'phone',
+          prose: { intro: 'Home.' },
+          scenes: [{ id: 'intro', title: 'Home', body: [{ prose: 'intro' }], choices: [{ id: 'wait', label: 'Wait', effects: [] }] }],
+          data: {
+            devices: {
+              devices: [{ id: 'phone', name: 'Phone', frame: 'phone' }],
+              apps: [
+                {
+                  id: 'spark',
+                  name: 'Spark',
+                  icon: 'heart',
+                  on: 'phone',
+                  sections: [{ panel: 'card', with: { name: 'Jo' } }, { actions: [{ id: 'spark.like', label: 'Like', effects: [{ kv: 'liked', to: true }] }] }],
+                },
+              ],
+            },
+          },
+        },
+        { name: 'base', introScene: 'intro' },
+      ],
+      { id: 'panel-test', title: 'Home', plugins: [devices()] },
+    )
+    expect(problems).toEqual([])
+    const runner = createRunner(g, startingState(g))
+    expect(runner.apply(devices.open('spark')).ok).toBe(true)
+    function Card({ data }: { data: unknown }) {
+      const open = useOpenApp()
+      const like = open?.app.sections.flatMap((section) => (section.type === 'actions' ? section.actions : []))[0]
+      return (
+        <div data-testid="card">
+          {(data as { name: string }).name} on {open?.app.id}: {like?.label}
+        </div>
+      )
+    }
+    render(<GameShell plugins={UIS} runner={runner} panels={{ card: Card }} layout={storyOf(<Scene />)} />)
+    expect(screen.getByTestId('card').textContent).toBe('Jo on spark: Like')
   })
 })

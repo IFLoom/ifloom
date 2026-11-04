@@ -112,6 +112,7 @@ type MessageDef = {
   weight?: number
   body: Block[]
   replies?: ReplyDef[]
+  effects?: EffectRef[]
   after?: { ms: number }
   typing?: boolean
 }
@@ -128,6 +129,7 @@ type MessageDef = {
 | `weight` | How likely a draw is to pick it, against the others in the pool that can be drawn. 1 if you leave it out, and 0 is never. |
 | `body` | Its words, as [prose blocks](/docs/reference/scenes#block). They're the same blocks as a scene's body, with tokens and `when`s. A picture or a video goes in as [markup](/docs/reference/prose#videos) in the prose or as a `{ media }` block, and comes out in the view's `beats`. |
 | `replies` | What the player can send back. The player sends one, once. Leave it out for a message with no replies. |
+| `effects` | [Effects](/docs/reference/effects) run as it arrives, each time it does, in the same command: a counter bumped, a timer started, a kv key set. Use them rather than a [trigger](/docs/reference/triggers) on `messages/arrived`, which runs a command later (see [Gotchas](#gotchas)). |
 | `after` | How long it takes to arrive once its `when` holds, in milliseconds: `{ ms: 1500 }`. Leave it out and it arrives at once. See [Messages that take a moment](#messages-that-take-a-moment). |
 | `typing` | Whether its thread shows the sender typing while it waits. `true` if you leave it out. Only a message with `after` waits. |
 
@@ -379,8 +381,8 @@ inbox(state).unread     // 0
 |---|---|---|
 | `{ 'messages/arrived': { message } }` | `messages.arrived(message)` | The message has arrived, at least once. |
 | `{ 'messages/since': { message, gte… } }` | `messages.since(message, range)` | The whole days since the message last arrived are in the [range](/docs/reference/conditions#range). Days are the calendar's, or turns without it. False if it has never arrived. |
-| `{ 'messages/replied': { message, reply? } }` | `messages.replied(message, reply?)` | The player replied to the message's latest arrival. With `reply`, they sent that reply. |
-| `{ 'messages/read': { message } }` | | The player has read the message's latest arrival. |
+| `{ 'messages/replied': { message, reply?, gte… } }` | `messages.replied(message, reply?, range?)` | The player replied to the message's latest arrival. With `reply`, they sent that reply. With a [range](/docs/reference/conditions#range), the whole days since the reply was sent are in it too, counted as `messages/since` counts, so `{ gte: 2 }` is "two days or more after you replied". |
+| `{ 'messages/read': { message } }` | `messages.messageRead(message)` | The player has read the message's latest arrival. The helper isn't `messages.read`, which writes the [command](#commands) that marks a thread read. |
 
 You can use them anywhere a condition goes, such as another message's `when`, a scene block, a lock or a quest stage. Each is a call with the full name as the only key, as in `{ 'messages/arrived': { message: 'ava.text' } }` (see [plugin calls](/docs/reference/custom#plugincall)).
 
@@ -616,12 +618,15 @@ The [messages](/docs/plugins/messages) plugin's view (its channels, each with th
 type MessagesState = {
   arrived: Arrival[]
   replied: Record<string, string>
+  repliedOn: Record<string, number>
   read: Record<string, true>
   due: { key: string; thread: string; typing: boolean } | null
 }
 ```
 
-What the plugin keeps in a save, at `state.plugins.messages`. It holds every arrival, oldest first, and the reply sent to each and which have been read, by the arrival's key. `due` is the message waiting to arrive, if one is: its id, its thread and whether the thread shows typing. A UI reads the view, not this.
+What the plugin keeps in a save, at `state.plugins.messages`. It holds every arrival, oldest first, and the reply sent to each, the day it was sent and which have been read, by the arrival's key. `due` is the message waiting to arrive, if one is: its id, its thread and whether the thread shows typing. A UI reads the view, not this.
+
+A save from before `repliedOn` (the plugin's state version 3) loads with each reply's day taken to be its arrival's day, because the old save didn't keep when it was sent.
 
 A save from before `after` (the plugin's state version 2) loads with nothing waiting.
 
@@ -642,7 +647,7 @@ One arrival of a message. `key` is the message's id for its first arrival, then 
 
 ## For code
 
-The helpers write the content objects for you, typed. `messages.arrived`, `messages.replied` and `messages.since` return a `Condition`, `messages.draw` an `Effect`, and `messages.reply` and `messages.read` a [`CommandRef`](/docs/reference/custom#commandref).
+The helpers write the content objects for you, typed. `messages.arrived`, `messages.replied`, `messages.messageRead` and `messages.since` return a `Condition`, `messages.draw` an `Effect`, and `messages.reply` and `messages.read` a [`CommandRef`](/docs/reference/custom#commandref).
 
 ### Helpers
 
@@ -652,7 +657,8 @@ const messages: {
   reply(message: string, reply: string): CommandRef
   read(thread?: string): CommandRef
   arrived(message: string): Condition
-  replied(message: string, reply?: string): Condition
+  replied(message: string, reply?: string, range?: Range): Condition
+  messageRead(message: string): Condition
   since(message: string, range: Range): Condition
   draw(pool: string): EffectRef
 }
@@ -675,6 +681,7 @@ When the game loads, the plugin reports these problems against the content or pa
 - A body block with no prose (`no prose for "…"`), and anything the block's `when` names.
 - Two replies with the same id (`two replies are called "…"`).
 - A reply with no label (`no prose for "<message id>#<reply id>"`).
+- Anything the message's `effects` name, such as `arrival: unknown storyline "…"`.
 - Anything a reply's `when` or `effects` name, such as `reply <id>: unknown storyline "…"`.
 - A `weight` below 0 (`weight must be 0 or more`).
 - An `after` with no `ms` above 0 (`after needs ms above 0`), or on a message in a pool, which arrives when it's drawn (`a message drawn from a pool arrives when drawn, so it can’t wait with after`).
@@ -689,6 +696,7 @@ A `messages/arrived`, `messages/since`, `messages/replied` or `messages/read` co
 
 - **Messages arrive only after a command.** The plugin delivers them in its `onCommand` [hook](/docs/reference/plugins#hooks-and-providers), which runs after every command that went through, never on `start`. A message whose `when` already holds when the game starts arrives after the player's first command. To open the game with one, have the first command bring it, or put the words in the intro scene.
 - **`when` is tested at the end of each command.** A message whose `when` held only partway through a command, or only before it, waits for a later command that ends while it holds. A message with the [calendar](/docs/plugins/calendar#conditions)'s `calendar.period('morning')` as its `when` doesn't arrive if the player's first command of the day ends in the afternoon. It arrives at the end of the next command that ends in a morning, which may be days later. If it matters when a message comes, write `when` for something that stays true, such as a kv key, a day (`calendar.day({ gte: 2 })`) or a scene seen.
+- **A trigger on an arrival runs a command late.** The engine tests [triggers](/docs/reference/triggers#when-triggers-fire) before the plugins' hooks, and the plugin delivers messages in its hook, so a trigger whose `when` is `messages.arrived('ava.hi')` fires on the command after the one the message came in. To do something as a message comes, such as start a timer, put it in the message's `effects`, or in the effect that brings the message.
 - **A message arrives once, unless it's in a pool.** After that it stays, whatever `when` does. A message with `drawnFrom` never arrives by `when` alone; only a draw brings it, as often as it's drawn. See [Messages that come again](#messages-that-come-again).
 - **A reply's label is its words.** Before schema 25 it was the prose line `<message>#<reply>`. A pack of an older schema gets those words as the reply's `label` when it loads, and the checker reports a reply in your own content with no label whose old prose has words.
 - **One reply, once.** After the player sends one, the others are gone and `messages/reply` refuses. To let the player say more, send a new message with replies of its own.

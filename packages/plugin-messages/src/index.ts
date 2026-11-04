@@ -79,6 +79,12 @@ export type MessageDef = {
   /** What the player can send back; one, once. None if left out. */
   replies?: ReplyDef[]
   /**
+   * What happens as it arrives, each time it does: in the same command, after
+   * the arrival is recorded. A trigger on `messages/arrived` would run a
+   * command later, since triggers run before the plugins deliver.
+   */
+  effects?: EffectRef[]
+  /**
    * How long it takes to arrive once its `when` holds: `ms` milliseconds after
    * the thread's previous arrival, run down by the engine's `tick` as a timer
    * is. Left out, it arrives straight away. One message waits at a time, so
@@ -115,6 +121,8 @@ export type MessagesState = {
   arrived: Arrival[]
   /** The reply sent to each arrival, by its key. */
   replied: Record<string, string>
+  /** The day each reply was sent, by the arrival's key: the calendar's, or the turn without it. */
+  repliedOn: Record<string, number>
   /** Arrivals the player has opened, by key. */
   read: Record<string, true>
   /**
@@ -190,7 +198,7 @@ declare module '@ifloom/engine' {
   interface ConditionRegistry {
     'messages/arrived': { message: string }
     'messages/since': { message: string } & Range
-    'messages/replied': { message: string; reply?: string }
+    'messages/replied': { message: string; reply?: string } & Range
     'messages/read': { message: string }
   }
   interface EffectRegistry {
@@ -286,13 +294,20 @@ function deliver(state: GameState, message: MessageDef, context: PluginContext<M
     text: firstLine(message, context, key),
     tag: message.channel,
   })
-  return context.set({ ...slice, arrived: [...slice.arrived, arrival] }, next)
+  const arrived = context.set({ ...slice, arrived: [...slice.arrived, arrival] }, next)
+  return message.effects?.length ? applyRefs(arrived, context.game, message.effects) : arrived
 }
+
+/** A save's slice before anything has happened. */
+const empty = (): MessagesState => ({ arrived: [], replied: {}, repliedOn: {}, read: {}, due: null })
 
 /** The slice of a state, or an empty one. */
 function sliceOf(state: GameState): MessagesState {
-  return (state.plugins?.[ID]?.state as MessagesState | undefined) ?? { arrived: [], replied: {}, read: {}, due: null }
+  return (state.plugins?.[ID]?.state as MessagesState | undefined) ?? empty()
 }
+
+/** Whether a condition's arguments give any bound of a range. */
+const ranged = (args: Range) => args.gte !== undefined || args.gt !== undefined || args.lte !== undefined || args.lt !== undefined
 
 /** The game's channels, in order: `data.messages.channels`, from its packs. */
 export function channelsOf(game: Game): Channel[] {
@@ -314,11 +329,11 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
 
   const plugin = definePlugin<MessagesState, MessagesView>({
     id: ID,
-    version: 3,
+    version: 4,
     contentVersion: CONTENT_VERSION,
     contentMigrations,
     // The words a player reads in each list of the plugin's content, for a translation's `words` table.
-    words: { channels: { name: true }, messages: { body: 'blocks', replies: [{ label: true, effects: 'effects' }] } },
+    words: { channels: { name: true }, messages: { body: 'blocks', effects: 'effects', replies: [{ label: true, effects: 'effects' }] } },
     commandVersion: COMMAND_VERSION,
     commandMigrations,
     // Senders are the cast's characters when the game has the cast: a name and a face.
@@ -337,6 +352,14 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
       },
       // 2 → 3: a message can wait to arrive (`after`); nothing waits in an old save.
       2: (state) => ({ ...(state as object), due: null }),
+      // 3 → 4: the day of each reply is kept, for `messages/replied` with a range. An old reply's
+      // day is its arrival's: the save didn't keep when it was sent.
+      3: (state) => {
+        const old = state as Omit<MessagesState, 'repliedOn'>
+        const dayOfKey = new Map(old.arrived.map((arrival) => [arrival.key, arrival.day]))
+        const repliedOn = Object.fromEntries(Object.keys(old.replied).map((key) => [key, dayOfKey.get(key) ?? 0]))
+        return { ...old, repliedOn }
+      },
     },
     // The timer a waiting message runs down. Its length is set each time it starts, from the message's `after`.
     content: { timers: [{ id: DUE, ms: 1000, effects: [{ [`${ID}/due`]: {} }] }] },
@@ -348,7 +371,7 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
       markRead: 'Mark read',
       allRead: 'Mark all read',
     },
-    start: () => ({ arrived: [], replied: {}, read: {}, due: null }),
+    start: empty,
     conditions: {
       /** `{ 'messages/arrived': { message } }`: it has arrived at least once. */
       arrived: (_state, args, { slice }) => latest(slice, String(args.message)) !== undefined,
@@ -361,11 +384,18 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
         const last = latest(slice, String(args.message))
         return last !== undefined && inRange(state, game, dayOf(state, game) - last.day, args as Range)
       },
-      /** `{ 'messages/replied': { message, reply? } }`: its latest arrival got any reply, or that one. */
-      replied: (_state, args, { slice }) => {
+      /**
+       * `{ 'messages/replied': { message, reply?, gte… } }`: its latest arrival
+       * got any reply, or that one. With a range, the whole days since the
+       * reply was sent are in it too, counted as `messages/since` counts.
+       */
+      replied: (state, args, { slice, game }) => {
         const last = latest(slice, String(args.message))
         const sent = last && slice.replied[last.key]
-        return args.reply === undefined ? sent !== undefined : sent === args.reply
+        if (sent === undefined || (args.reply !== undefined && sent !== args.reply)) return false
+        if (!ranged(args as Range)) return true
+        const on = slice.repliedOn[last!.key] ?? last!.day
+        return inRange(state, game, dayOf(state, game) - on, args as Range)
       },
       /** `{ 'messages/read': { message } }`: its latest arrival has been read. */
       read: (_state, args, { slice }) => {
@@ -412,13 +442,14 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
           if (slice.replied[arrival.key] !== undefined) return stringOf(game, 'messages/alreadyReplied')
           return offered(state, game, slice, message, arrival.key).some((reply) => reply.id === args.reply) ? undefined : stringOf(game, 'messages/notOnOffer')
         },
-        run: (_state, args, { slice, set, game }) => {
+        run: (state, args, { slice, set, game }) => {
           const arrival = slice.arrived.find((entry) => entry.key === args.message)!
           const message = messagesOf(game).find((entry) => entry.id === arrival.message)!
           const reply = message.replies!.find((entry) => entry.id === args.reply)!
           const next = set({
             ...slice,
             replied: { ...slice.replied, [arrival.key]: reply.id },
+            repliedOn: { ...slice.repliedOn, [arrival.key]: dayOf(state, game) },
             read: { ...slice.read, [arrival.key]: true },
           })
           return applyRefs(next, game, reply.effects ?? [])
@@ -569,6 +600,7 @@ function messagesPlugin(): DefinedPlugin<MessagesState, MessagesView> {
             { entry: message.channel, plugin: ID, list: 'channels', noun: 'channel' },
             { when: message.when },
             { blocks: message.body },
+            { within: 'arrival', refs: [{ effects: message.effects }] },
             ...(message.replies ?? []).flatMap((reply) => [
               { words: reply.label, field: 'label', ...(reply.label === undefined ? { oldKey: `${message.id}#${reply.id}` } : {}) },
               { within: `reply ${reply.id}`, refs: [{ when: reply.when }, { effects: reply.effects }] },
@@ -610,8 +642,15 @@ const messageSince = (message: string, range: Range): Condition => ({ [`${ID}/si
 const readThread = (thread?: string): CommandRef => ({ [`${ID}/read`]: thread === undefined ? {} : { id: thread } })
 /** A condition: the message has arrived. */
 const messageArrived = (message: string): Condition => ({ [`${ID}/arrived`]: { message } })
-/** A condition: the player replied to the message, or with that reply. */
-const messageReplied = (message: string, reply?: string): Condition => ({ [`${ID}/replied`]: reply === undefined ? { message } : { message, reply } })
+/**
+ * A condition: the player replied to the message, or with that reply; with a
+ * range, as many whole days ago: `messages.replied('ava.hi', undefined, { gte: 2 })`.
+ */
+const messageReplied = (message: string, reply?: string, range?: Range): Condition => ({
+  [`${ID}/replied`]: { message, ...(reply === undefined ? {} : { reply }), ...range },
+})
+/** A condition: the player has read the message's latest arrival. (`messages.read` is the command that marks a thread read.) */
+const messageRead = (message: string): Condition => ({ [`${ID}/read`]: { message } })
 
 /**
  * The plugin, with its helpers on it: `messages()` makes the plugin for the
@@ -624,4 +663,5 @@ export const messages = Object.assign(messagesPlugin, {
   read: readThread,
   arrived: messageArrived,
   replied: messageReplied,
+  messageRead,
 })

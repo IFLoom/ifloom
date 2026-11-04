@@ -10,6 +10,12 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- `messages/replied` takes a range of days, counted from the day the reply was sent: `messages.replied('ava.hi', undefined, { gte: 2 })` is "two days or more after you replied". Saves keep the day of each reply (the plugin's state version 4); an older save takes each reply's day to be its arrival's.
+- A message can have `effects`, run as it arrives, in the same command. A trigger on `messages/arrived` runs a command later, since triggers are tested before the plugins deliver; the Messages page says so.
+- `messages.messageRead(message)` writes the `messages/read` condition. `messages.read` is still the command that marks a thread read.
+- `{{jobs/rank job=…}}` prints the name of the rank the player holds at a job, or its fallback when they don't work there.
+- `useOpenApp()` in `@ifloom/plugin-devices/react`: a `{ panel }` section's component reads the app it's drawn in, with its other sections and their buttons, and its device.
+
 - A [`cases`](/docs/reference/flows#the-first-that-fits) block, written `cases([...])`: only the first of its blocks whose `when` holds is shown, so an if, else if, else is one block with an otherwise at the end. The checker reports an empty one, a block after the otherwise and a point inside one.
 - [Phrases](/docs/reference/phrases): words for the middle of a sentence that change with the state, declared in content's `phrases` as rows tried in order and grouped in nested objects, then printed as `{{outfit.verdict}}`. A translation gives each row other words under `phrase.<name>.<row>`, and a pack can replace one or add to a group.
 - A phrase can take [arguments](/docs/reference/phrases#arguments): `{ args: ['who'], rows: [...] }`, printed as `{{mood.word who=ava}}`. In a row's `when`, `'$who'` is the entity the token named (`ava` is `character:ava`, as a spoken line's id is), and in its words `$who` is that entity's name. The checker reports a token that leaves out an argument or passes one the phrase doesn't take, a row that uses one the phrase doesn't declare, and empty or doubled `args`.

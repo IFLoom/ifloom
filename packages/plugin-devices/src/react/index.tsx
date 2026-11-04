@@ -7,8 +7,8 @@
  * is the game's state, so every UI shows the same. An app's plugin section is
  * drawn by that plugin's UI, by its id, so list the messages and feed UIs too.
  */
-import type { DevicesView, DeviceView, SectionView } from '../index.ts'
-import type { ComponentProps, ReactNode } from 'react'
+import type { AppView, DevicesView, DeviceView, SectionView } from '../index.ts'
+import { createContext, useContext, type ComponentProps, type ReactNode } from 'react'
 import {
   assetUrl,
   Beat,
@@ -170,6 +170,21 @@ function AppSectionImpl({ section }: { section: SectionView }) {
 /** One section of an open app, drawn by kind; a plugin section by that plugin's renderer. */
 export const AppSection = overridable('AppSection', AppSectionImpl)
 
+/** The app being drawn, and its device. */
+export type OpenAppState = { device: DeviceView; app: AppView }
+
+const OpenApp = createContext<OpenAppState | null>(null)
+
+/**
+ * The app a section is drawn in, with all its sections, and its device; null
+ * outside an open app. A `{ panel }` section's component gets only its `with`
+ * as `data`, so it reads the app's other sections here: the buttons of an
+ * `actions` section, to draw them on a card of its own.
+ */
+export function useOpenApp(): OpenAppState | null {
+  return useContext(OpenApp)
+}
+
 /** The home screen's grid: four apps to a row, over the wallpaper, if any, covering it. */
 const LAUNCHER = { gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', backgroundSize: 'cover', backgroundPosition: 'center' } as const
 
@@ -199,9 +214,11 @@ function DeviceScreenImpl({ device }: { device: DeviceView }) {
             </button>
             <h3 {...title}>{device.open.name}</h3>
           </div>
-          {device.open.sections.map((section, index) => (
-            <AppSection key={index} section={section} />
-          ))}
+          <OpenApp.Provider value={{ device, app: device.open }}>
+            {device.open.sections.map((section, index) => (
+              <AppSection key={index} section={section} />
+            ))}
+          </OpenApp.Provider>
         </div>
       </div>
     )

@@ -56,6 +56,8 @@ work/
    npm run pack
    ```
 
+   To keep the files out of the checkout, give another folder after `--`. The path is taken from the checkout, where npm runs the script: `npm run pack -- ../my-game/packs` writes them into `work/my-game/packs/`, and the `file:` paths below then read `file:./packs/ifloom-engine-0.0.0.tgz` and so on. The build still writes each package's `dist/` in the checkout, which git ignores.
+
 2. Make the game beside the checkout with the command `npm create ifloom` runs, straight from the checkout:
 
    ```sh

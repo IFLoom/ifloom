@@ -4,7 +4,7 @@ description: "Test an IFLoom game with Vitest and the engine, no browser needed:
 ---
 The engine runs the same in Node as in a browser, so you can test a game the way you'd test any other code. A test plays some commands and checks what came out, without opening a page.
 
-This page uses [Vitest](https://vitest.dev) and the two-scene game `ifloom new` makes, but any test runner works.
+This page uses [Vitest](https://vitest.dev) and the two-scene game `ifloom new` makes, but any test runner works. Only `describe`, `it` and `expect` come from Vitest, so with Node's own runner, `node:test` and `node:assert`, the rest of each test is the same.
 
 ## Set up
 
@@ -28,6 +28,8 @@ bun add --dev vitest
 
 Then add a `test` script to `package.json`: `"test": "vitest run"`. The @ifloom packages are compiled JavaScript, so Vitest needs no config for them.
 
+The templates' `tsconfig.json` covers `src` only, so `npm run typecheck` doesn't check the tests. A test that reads a field that isn't there can then pass without testing anything. Add the folder to its `include` (`"include": ["src", "tests"]`) so the tests are type-checked too. With `node:test`, add `@types/node` as well.
+
 ## Play a route and check the result
 
 A test starts a game, plays some commands, and checks the state and the view. Without a `seed`, [`startingState`](/docs/reference/commands#startingstate) uses one made from the game's id, so every run draws the same random variants.
@@ -35,13 +37,13 @@ A test starts a game, plays some commands, and checks the state and the view. Wi
 ```ts
 // tests/game.test.ts
 import { describe, expect, it } from 'vitest'
-import { createRunner, startingState, type Command } from '@ifloom/engine'
+import { createRunner, startingState, type Command, type CommandRef } from '@ifloom/engine'
 import module from '../src/game.ts'
 
 const { game, problems } = module.build()
 
 /** A runner on a new game, after the given commands. Fails the test if one is refused. */
-function play(...commands: Command[]) {
+function play(...commands: CommandRef[]) {
   const runner = createRunner(game, startingState(game))
   for (const command of commands) {
     const result = runner.apply(command)
@@ -71,6 +73,8 @@ describe('the door', () => {
   })
 })
 ```
+
+`play` takes a [`CommandRef`](/docs/reference/custom#commandref), as [`runner.apply`](/docs/reference/runner#the-runners-members) and [`apply`](/docs/reference/commands#apply) do, so a plugin helper's command goes in as it is: `play(places.go('cafe'), jobs.work('cafe'))`. A refusal's words are its `reason`.
 
 Check what the player sees through `runner.view()`, and what the game keeps through `runner.state`: [`stats`](/docs/reference/state#stats), the [kv store](/docs/reference/state#kv), [`seen`](/docs/reference/state#seen) scenes and [`chosen`](/docs/reference/state#chosen) choices. Test greyed-out buttons by their reason, because that's what the player reads. In [A game with a world](/docs/guide/first-game), a second coffee is too dear:
 

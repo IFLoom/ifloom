@@ -27,7 +27,9 @@ const porch: Content = {
     },
     { id: 'pictures', label: 'Show pictures', type: 'toggle', affects: 'ui', default: true },
   ],
-  scenes: [{ id: 'porch', title: 'The porch', body: [{ text: '[[wide:porch|The porch]]\n\nA swing creaks.' }], choices: [{ id: 'in', label: 'Go in', effects: [] }] }],
+  scenes: [
+    { id: 'porch', title: 'The porch', body: [{ text: '[[wide:porch|The porch]]\n\nA swing creaks.' }], choices: [{ id: 'in', label: 'Go in', effects: [] }] },
+  ],
 }
 
 function play() {
@@ -57,7 +59,10 @@ describe('the ui settings the React UI honours', () => {
     const { game } = loadGame([porch], { id: 'porch', title: 'Porch' })
     const odd = {
       ...game,
-      settings: [...(game.settings ?? []), { id: 'huge', label: 'Huge', type: 'choice' as const, affects: 'ui' as const, options: [{ value: 'huge', label: 'Huge' }], default: 'huge' }],
+      settings: [
+        ...(game.settings ?? []),
+        { id: 'huge', label: 'Huge', type: 'choice' as const, affects: 'ui' as const, options: [{ value: 'huge', label: 'Huge' }], default: 'huge' },
+      ],
     }
     expect(checkUiHints({ ...odd, ui: { settings: { textSize: 'huge', images: 'size' } } })).toEqual([
       'game: ui.settings.textSize option "huge" is not a size the styles draw (small, normal, large, larger); size it with CSS of your own',

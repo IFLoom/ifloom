@@ -82,7 +82,9 @@ export function checkUiHints(game: Game, options: { allow?: readonly string[]; i
     if (size?.type === 'choice')
       for (const option of size.options)
         if (!(TEXT_SIZES as readonly unknown[]).includes(option.value))
-          out.push(`${where}: ui.settings.textSize option "${String(option.value)}" is not a size the styles draw (${TEXT_SIZES.join(', ')}); size it with CSS of your own`)
+          out.push(
+            `${where}: ui.settings.textSize option "${String(option.value)}" is not a size the styles draw (${TEXT_SIZES.join(', ')}); size it with CSS of your own`,
+          )
     declared('images', 'toggle')
   }
 

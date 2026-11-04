@@ -67,51 +67,51 @@ function LayeredPictureImpl({ picture, className }: { picture: PictureView; clas
   // Its hotspots are play, so it stays drawn whatever the pictures setting says.
   return (
     <KeepPicturesOn>
-    <div {...box} style={{ aspectRatio: aspect }}>
-      {picture.layers.map((entry, index) => {
-        const key = `${index}:${entry.src}`
-        const measure = index === 0 && !picture.aspect
-        if (entry.video) {
+      <div {...box} style={{ aspectRatio: aspect }}>
+        {picture.layers.map((entry, index) => {
+          const key = `${index}:${entry.src}`
+          const measure = index === 0 && !picture.aspect
+          if (entry.video) {
+            return (
+              <Video
+                key={key}
+                {...layer}
+                data-layer={entry.id ?? undefined}
+                src={entry.src}
+                {...entry.video}
+                onLoadedMetadata={
+                  measure
+                    ? (event) => {
+                        const { videoWidth, videoHeight } = event.currentTarget
+                        if (videoWidth && videoHeight) setNatural(`${videoWidth}/${videoHeight}`)
+                      }
+                    : undefined
+                }
+              />
+            )
+          }
           return (
-            <Video
+            <Picture
               key={key}
               {...layer}
               data-layer={entry.id ?? undefined}
               src={entry.src}
-              {...entry.video}
-              onLoadedMetadata={
+              alt=""
+              onLoad={
                 measure
                   ? (event) => {
-                      const { videoWidth, videoHeight } = event.currentTarget
-                      if (videoWidth && videoHeight) setNatural(`${videoWidth}/${videoHeight}`)
+                      const { naturalWidth, naturalHeight } = event.currentTarget
+                      if (naturalWidth && naturalHeight) setNatural(`${naturalWidth}/${naturalHeight}`)
                     }
                   : undefined
               }
             />
           )
-        }
-        return (
-          <Picture
-            key={key}
-            {...layer}
-            data-layer={entry.id ?? undefined}
-            src={entry.src}
-            alt=""
-            onLoad={
-              measure
-                ? (event) => {
-                    const { naturalWidth, naturalHeight } = event.currentTarget
-                    if (naturalWidth && naturalHeight) setNatural(`${naturalWidth}/${naturalHeight}`)
-                  }
-                : undefined
-            }
-          />
-        )
-      })}
-      {picture.hotspots.map((hotspot) => (
-        <Hotspot key={hotspot.id} hotspot={hotspot} />
-      ))}
-    </div>
+        })}
+        {picture.hotspots.map((hotspot) => (
+          <Hotspot key={hotspot.id} hotspot={hotspot} />
+        ))}
+      </div>
     </KeepPicturesOn>
   )
 }

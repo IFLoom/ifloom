@@ -2,18 +2,18 @@ import { describe, expect, it } from 'vitest'
 
 /**
  * The community plugins page draws its table from
- * `site/content/community-plugins.json` (`remarkCommunityPlugins` in
- * `site/lib/remark.ts`). Entries are added by hand after a plugin is
+ * `docs/content/community-plugins.json` (`remarkCommunityPlugins` in
+ * the website's `lib/remark.ts`, in the ifloom-site repo). Entries are added by hand after a plugin is
  * reviewed, so this holds each one to the shape the page reads: a typo here
  * would otherwise show as a broken row on the site.
  */
-const FILES = import.meta.glob('../../../../site/content/community-plugins.json', {
+const FILES = import.meta.glob('../../../../docs/content/community-plugins.json', {
   query: '?raw',
   import: 'default',
   eager: true,
 }) as Record<string, string>
 
-const PAGES = import.meta.glob('../../../../site/content/docs/**/plugins/community.md', {
+const PAGES = import.meta.glob('../../../../docs/content/docs/**/plugins/community.md', {
   query: '?raw',
   import: 'default',
   eager: true,

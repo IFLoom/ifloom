@@ -5,7 +5,7 @@
  * never see it, and the CLI builds games with plain Vite.
  *
  *   npm run build      every package's dist/, each after the @ifloom packages it uses
- *   npm run typecheck  tsc on each package, example and the site, from src/
+ *   npm run typecheck  tsc on each package, example and the docs' snippets, from src/
  *   npx vp run build:engine          one package (and what it uses)
  *   npx vp run typecheck:plugin-shop one project
  *
@@ -53,56 +53,9 @@ const projects = [...packages.map(({ dir }) => `packages/${dir}`), ...['showcase
 for (const project of projects) {
   tasks[`typecheck:${project.split('/')[1]}`] = { command: `tsc --noEmit -p ${project}`, cache: { input: [{ auto: true }, '!**/dist/**'], output: [] } }
 }
-// The site generates its MDX collections and Next's route types first.
-tasks['typecheck:site'] = {
-  command: 'npm run typecheck --silent',
-  cwd: 'site',
-  cache: { input: [{ auto: true }, '!site/.next/**', '!site/.source/**', '!site/next-env.d.ts', '!site/**/*.tsbuildinfo'], output: [] },
-}
-// The docs' snippets, with vue-tsc, which checks their .vue files as well as the .ts and .tsx (site/snippets/).
-tasks['typecheck:snippets'] = { command: 'vue-tsc --noEmit -p site/snippets', cache: { input: [{ auto: true }, '!**/dist/**'], output: [] } }
+// The docs' snippets, with vue-tsc, which checks their .vue files as well as the .ts and .tsx (docs/snippets/).
+tasks['typecheck:snippets'] = { command: 'vue-tsc --noEmit -p docs/snippets', cache: { input: [{ auto: true }, '!**/dist/**'], output: [] } }
 tasks['typecheck:all'] = { command: 'echo "Every project type-checks."', dependsOn: Object.keys(tasks).filter((name) => name.startsWith('typecheck:')) }
-
-// The docs site: the link check, then `next build`. Both are cached by the files the site can read, listed by hand
-// because Next's workers and Turbopack read far more than the build depends on. That's site/ but for what it writes,
-// the source of each @ifloom package the site depends on (and those packages' own @ifloom peers,
-// as the React UI's on audio and browser), the changelog the docs include, and the root files that pick dependencies.
-// So an edit to the CLI, a test, an example or a template skips it.
-// Vercel doesn't use these tasks: it runs `next build` in site/ after a clean install.
-const siteManifest = read('site')
-const siteUses = new Set<string>()
-const addUses = (names: string[]) => {
-  for (const name of names) {
-    const dir = dirOf.get(name)
-    if (!dir || siteUses.has(dir)) continue
-    siteUses.add(dir)
-    addUses(Object.keys(packages.find((one) => one.dir === dir)?.manifest.peerDependencies ?? {}))
-  }
-}
-addUses(Object.keys({ ...siteManifest.dependencies, ...siteManifest.devDependencies }))
-const siteInput = [
-  'site/**',
-  '!site/node_modules/**',
-  '!site/.next/**',
-  '!site/.source/**',
-  '!site/next-env.d.ts',
-  '!site/**/*.tsbuildinfo',
-  ...[...siteUses].sort().flatMap((dir) => [`packages/${dir}/src/**`, `packages/${dir}/package.json`]),
-  'CHANGELOG.md',
-  'package.json',
-  'package-lock.json',
-  '.npmrc',
-]
-tasks['site:links'] = { command: 'npm run links --silent', cwd: 'site', cache: { input: siteInput, output: [] } }
-// A hit puts back the built site (all `next start` needs) and the MDX collections fumadocs-mdx generates, but not
-// Next's own build cache in .next/cache, which only speeds up the next real build.
-// Built with webpack (build:lean): Turbopack's compile takes most of a 15 GB machine. Vercel builds with Turbopack.
-tasks['site:build'] = {
-  command: 'npm run build:lean --silent',
-  cwd: 'site',
-  dependsOn: ['site:links'],
-  cache: { input: siteInput, output: ['site/.next/**', '!site/.next/cache/**', 'site/.source/**', 'site/next-env.d.ts'] },
-}
 
 // Test: one Vitest run over every package and example (vitest.config.ts).
 tasks['test:all'] = {
@@ -120,7 +73,7 @@ export default defineConfig({
     // Keep keys quoted as written: the plugin template's '__id__' is replaced by a name that may hold a dash.
     quoteProps: 'preserve',
     sortPackageJson: false,
-    ignorePatterns: ['**/*.md', '**/*.mdx', '**/*.json', '**/*.css', '**/*.html', '**/*.yml', '**/*.yaml', 'site/content/**'],
+    ignorePatterns: ['**/*.md', '**/*.mdx', '**/*.json', '**/*.css', '**/*.html', '**/*.yml', '**/*.yaml', 'docs/content/**'],
   },
   lint: {
     plugins: ['typescript', 'oxc'],

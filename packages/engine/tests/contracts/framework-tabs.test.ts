@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { codeOf, includesOf } from '../../../../site/lib/snippets.ts'
+import { codeOf, includesOf } from '../../../../docs/lib/snippets.ts'
 
 /**
  * The engine is framework-neutral, so the docs are too. A code block that
@@ -15,11 +15,11 @@ import { codeOf, includesOf } from '../../../../site/lib/snippets.ts'
  *
  * A block can be written in the page or included from a file with
  * `::include[path]{meta='tab="React" tab-group="framework"'}` (see
- * `site/lib/snippets.ts`); an include counts as the code block it becomes.
+ * `docs/lib/snippets.ts`); an include counts as the code block it becomes.
  *
  * Every feature that puts something in front of the player has a
  * `## Drawing it` section: at least one full group of tabs, and every UI
- * block in it included from `site/snippets/`, which is type-checked and
+ * block in it included from `docs/snippets/`, which is type-checked and
  * tested, never pasted. The one exception is a Svelte tab a page had before
  * Svelte was deferred, which stays as it was written. Its React-only blocks document the React UI's
  * default for the feature (a plugin's `/react` subpath, say), so they may
@@ -31,11 +31,11 @@ import { codeOf, includesOf } from '../../../../site/lib/snippets.ts'
  * frameworks are on `guide/frameworks`, and the Next.js recipe, since Next is React.
  */
 /** What a page can include: the snippets, by their URL. */
-const SNIPPET_FILES = import.meta.glob('../../../../site/snippets/**/*.{ts,tsx,vue}', { query: '?raw', import: 'default', eager: true }) as Record<
+const SNIPPET_FILES = import.meta.glob('../../../../docs/snippets/**/*.{ts,tsx,vue}', { query: '?raw', import: 'default', eager: true }) as Record<
   string,
   string
 >
-const SNIPPETS = '../../../../site/snippets/'
+const SNIPPETS = '../../../../docs/snippets/'
 
 /** `path` relative to the file `from`, both as the globs write them (this test has no URL or path module). */
 function beside(from: string, path: string): string {
@@ -47,7 +47,7 @@ function beside(from: string, path: string): string {
   return parts.join('/')
 }
 
-const PAGES = import.meta.glob('../../../../site/content/docs/**/*.{md,mdx}', {
+const PAGES = import.meta.glob('../../../../docs/content/docs/**/*.{md,mdx}', {
   query: '?raw',
   import: 'default',
   eager: true,
@@ -233,13 +233,13 @@ describe('the docs', () => {
         .filter((include) => !include.markdown)
         .flatMap((include) => {
           const code = codeOf(include, SNIPPET_FILES[beside(page.file, include.path)])
-          return code.ok ? [] : [`${page.path}:${include.line}: ${code.reason} under site/snippets/`]
+          return code.ok ? [] : [`${page.path}:${include.line}: ${code.reason} under docs/snippets/`]
         }),
     )
     expect(missing).toEqual([])
   })
 
-  it('draw each feature in a "Drawing it" section: a full group of tabs, every UI block from site/snippets/', () => {
+  it('draw each feature in a "Drawing it" section: a full group of tabs, every UI block from docs/snippets/', () => {
     const problems: string[] = []
     let sections = 0
     for (const page of pages) {
@@ -249,7 +249,7 @@ describe('the docs', () => {
       if (!groupsOf(drawing).some((group) => !groupProblem(group))) problems.push(`${page.path}: no full group of framework tabs`)
       for (const block of drawing) {
         if ((isUi(block) || TABS.includes(block.tab ?? '')) && block.tab !== 'Svelte' && !block.included?.startsWith(SNIPPETS))
-          problems.push(`${page.path}:${block.line}: written in the page, not included from site/snippets/`)
+          problems.push(`${page.path}:${block.line}: written in the page, not included from docs/snippets/`)
       }
     }
     expect(sections).toBeGreaterThan(0)

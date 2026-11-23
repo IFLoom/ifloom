@@ -9,8 +9,7 @@
   "workspaces": [
     "packages/*",
     "examples/*",
-    "site",
-    "site/snippets",
+    "docs/snippets",
     "games/*"
   ],
   "scripts": {
@@ -22,9 +21,9 @@
     "lint": "vp lint",
     "format": "vp fmt",
     "check": "vp check && vp run typecheck:all",
-    "docs:dev": "npm run dev -w @ifloom/site",
-    "docs:build": "vp run site:build",
-    "docs:links": "vp run site:links"
+    "docs:dev": "node scripts/site.ts dev",
+    "docs:build": "node scripts/site.ts check",
+    "docs:links": "node scripts/site.ts links"
   },
   "devDependencies": {
     "@tailwindcss/cli": "4.3.3",

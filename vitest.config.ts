@@ -6,13 +6,13 @@ import { defineConfig } from 'vitest/config'
 const source = 'ifloom-source'
 
 export default defineConfig({
-  // The docs' Vue snippets (site/snippets/vue/) are single-file components, which their tests mount.
+  // The docs' Vue snippets (docs/snippets/vue/) are single-file components, which their tests mount.
   plugins: [vue()],
   resolve: { conditions: [source, ...defaultClientConditions] },
   ssr: { resolve: { conditions: [source, ...defaultServerConditions] } },
   test: {
     environment: 'node',
     fsModuleCache: true,
-    include: ['packages/*/tests/**/*.test.{ts,tsx}', 'examples/*/tests/**/*.test.{ts,tsx}', 'site/snippets/tests/**/*.test.{ts,tsx}'],
+    include: ['packages/*/tests/**/*.test.{ts,tsx}', 'examples/*/tests/**/*.test.{ts,tsx}', 'docs/snippets/tests/**/*.test.{ts,tsx}'],
   },
 })

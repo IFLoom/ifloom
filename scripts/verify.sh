@@ -19,8 +19,8 @@ step "npm test"; npm test
 step "npm run check"; npm run check
 
 if (( docs )); then
-  # The link check, then next build: cached tasks (site:links, site:build in vite.config.ts) that run again only when
-  # something the site reads has changed.
+  # The website's check (its lint, typecheck, the docs' links and next build), run from its own repo beside this one
+  # (../ifloom-site, or $IFLOOM_SITE) against docs/ as it is on disk: scripts/site.ts.
   step "npm run docs:build"; npm run docs:build
 fi
 

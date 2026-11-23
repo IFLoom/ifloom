@@ -11,8 +11,8 @@ it is.
 IFLoom hasn't reached 1.0, so its API can still change. See
 [API status](https://ifloom.dev/docs/guide/status).
 
-**Docs:** in [`site/content/docs/`](site/content/docs); run `npm run docs:dev` to
-read them in a browser. They're published at https://ifloom.dev/docs, with
+**Docs:** in [`docs/content/docs/`](docs/content/docs); run `npm run docs:dev` to
+read them in a browser (it needs the website's repo beside this one, see below). They're published at https://ifloom.dev/docs, with
 [llms.txt](https://ifloom.dev/llms.txt), [llms-full.txt](https://ifloom.dev/llms-full.txt)
 and an MCP server at `https://ifloom.dev/api/mcp` for AI agents.
 
@@ -172,9 +172,11 @@ covers games inside the checkout and beside it.
 
 ## Documentation
 
-The docs are Markdown pages in [`site/content/docs/`](site/content/docs), and the
-website that shows them, with the homepage, is the Next.js app in [`site/`](site).
-Run `npm run docs:dev` to browse them locally at http://localhost:3000/. A
+The docs are Markdown pages in [`docs/content/docs/`](docs/content/docs). The
+website that shows them, with the homepage, is a Next.js app in its own repo,
+[IFLoom/ifloom-site](https://github.com/IFLoom/ifloom-site). Clone it beside this
+one (`../ifloom-site`) and run `npm run docs:dev` here to browse these docs, as
+they are on disk, at http://localhost:3000/. A
 good order for a first read is the introduction, *Installation*, *Your first
 story*, then *How the pieces fit*.
 
@@ -184,7 +186,7 @@ story*, then *How the pieces fit*.
 npm install
 npm test
 npm run check        # the format, lint and typecheck
-npm run docs:build   # checks the docs' links, then builds the site
+npm run docs:build   # checks the docs' links, then builds the site (needs ../ifloom-site)
 ```
 
 [AGENTS.md](AGENTS.md) has the conventions the code follows.

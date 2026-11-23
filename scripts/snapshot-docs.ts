@@ -2,14 +2,14 @@
 //
 //   node scripts/snapshot-docs.ts 0.1.0
 //
-// The latest docs are site/content/docs/(latest)/, served at /docs/….
-// The copy goes to site/content/docs/<version>/ and is served at
+// The latest docs are docs/content/docs/(latest)/, served at /docs/….
+// The copy goes to docs/content/docs/<version>/ and is served at
 // /docs/<version>/…. Its meta.json makes it a version root titled
 // <version>, so it shows in the docs' version dropdown next to the latest.
 import { cpSync, existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join, relative } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
-import { codeOf, includesOf } from '../site/lib/snippets.ts'
+import { codeOf, includesOf } from '../docs/lib/snippets.ts'
 
 const version = process.argv[2]
 if (!version || !/^\d+\.\d+\.\d+(-[\w.]+)?$/.test(version)) {
@@ -17,11 +17,11 @@ if (!version || !/^\d+\.\d+\.\d+(-[\w.]+)?$/.test(version)) {
   process.exit(1)
 }
 
-const docs = join(dirname(fileURLToPath(import.meta.url)), '..', 'site', 'content', 'docs')
+const docs = join(dirname(fileURLToPath(import.meta.url)), '..', 'docs', 'content', 'docs')
 const latest = join(docs, '(latest)')
 const target = join(docs, version)
 if (existsSync(target)) {
-  console.error(`site/content/docs/${version} already exists.`)
+  console.error(`docs/content/docs/${version} already exists.`)
   process.exit(1)
 }
 
@@ -46,7 +46,7 @@ function walk(dir: string): string[] {
     e.isDirectory() ? walk(join(dir, e.name)) : /\.(md|mdx|json)$/.test(e.name) ? [join(dir, e.name)] : [],
   )
 }
-// The snippets a page includes from site/snippets/ go on changing with the
+// The snippets a page includes from docs/snippets/ go on changing with the
 // latest docs, so the copy gets them written into the page as they are now.
 const snippets = join(docs, '..', '..', 'snippets')
 function inlineSnippets(text: string, file: string): string {

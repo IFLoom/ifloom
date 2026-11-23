@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest'
  * How the packages name each other (AGENTS.md, "How packages depend on each
  * other"): an `@ifloom/*` package is a peer of any other that uses it, never a
  * dependency, so a game has one copy of each; and every reference to one, in a
- * package, an example, a template or the site, is the caret range of its version.
+ * package, an example, a template or the docs' snippets, is the caret range of its version.
  */
 const root = fileURLToPath(new URL('../../../../', import.meta.url))
 
@@ -24,7 +24,7 @@ const everything = [
   ...packages,
   ...manifestsIn('examples'),
   ...manifestsIn('packages/cli/templates'),
-  ['site', JSON.parse(readFileSync(join(root, 'site/package.json'), 'utf8'))] as [string, Manifest],
+  ['docs/snippets', JSON.parse(readFileSync(join(root, 'docs/snippets/package.json'), 'utf8'))] as [string, Manifest],
 ]
 const versions = new Map(packages.map(([, pkg]) => [pkg.name!, pkg.version!]))
 

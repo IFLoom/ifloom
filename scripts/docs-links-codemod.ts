@@ -11,7 +11,7 @@
 // Fumadocs uses GitHub's names, #1-pick-a-theme and #the-runners-members. Each
 // link to a heading is pointed at the new name.
 //
-// It reads the docs pages and the meta.json files under site/content/docs/, and
+// It reads the docs pages and the meta.json files under docs/content/docs/, and
 // README.md, AGENTS.md and CHANGELOG.md for full links to the site. A link
 // already under /docs/ keeps its page, so running it twice changes nothing.
 //
@@ -22,7 +22,7 @@ import { fileURLToPath } from 'node:url'
 import GithubSlugger from 'github-slugger'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
-const content = join(root, 'site/content/docs')
+const content = join(root, 'docs/content/docs')
 const sections = 'guide|reference|plugins|react|cli|changelog'
 
 // `](/guide/x)`, `](/plugins/)`, `](/changelog)` and `](/cli/#ifloom-new)`.

@@ -27,7 +27,7 @@ const pkgDir = join(root, 'packages', `plugin-${name}`)
 const at = (path: string) => relative(root, path)
 
 /** The latest docs' plugins folder: the page goes here and its name in meta.json. */
-const docsDir = join(root, 'site', 'content', 'docs', '(latest)', 'plugins')
+const docsDir = join(root, 'docs', 'content', 'docs', '(latest)', 'plugins')
 const nav = join(docsDir, 'meta.json')
 const page = join(docsDir, `${name}.md`)
 

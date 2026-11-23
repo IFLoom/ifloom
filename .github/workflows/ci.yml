@@ -1,7 +1,8 @@
 name: CI
 
 # Run by hand while the repo is private, to save Actions minutes. Vercel builds
-# and deploys the site itself. At launch, add:
+# and deploys the site itself, from IFLoom/ifloom-site.
+# The docs' check needs that repo too: SITE_TOKEN is a secret that can read it while it's private. At launch, add:
 #   push:
 #     branches: [main]
 #   pull_request:
@@ -19,6 +20,11 @@ jobs:
         with:
           # The whole history, so the site can tell when each page last changed.
           fetch-depth: 0
+      - uses: actions/checkout@v7
+        with:
+          repository: IFLoom/ifloom-site
+          token: ${{ secrets.SITE_TOKEN }}
+          path: ifloom-site
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
@@ -28,5 +34,7 @@ jobs:
       - run: npm run build
       # Tests, the format, lint and typecheck (vp check, tsc), the docs' links and build, and the examples, all from src/.
       - run: bash scripts/verify.sh
+        env:
+          IFLOOM_SITE: ifloom-site
       # The built packages, used as their users will: plain Node, and a type-check against the .d.ts files.
       - run: bash scripts/try-dist.sh --no-build

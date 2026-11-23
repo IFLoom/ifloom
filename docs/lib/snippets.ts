@@ -13,7 +13,7 @@
  *
  * The link check (`scripts/check-links.ts`) fails on an include whose file or
  * region isn't there, and `framework-tabs.test.ts` reads includes as the code
- * blocks they become. The snippets live in `site/snippets/`.
+ * blocks they become. The snippets live in `docs/snippets/`.
  *
  * Nothing here reads a file, so the engine's tests can use it too: callers
  * resolve `path` against the page (`new URL(path, pageUrl)`) and read it.

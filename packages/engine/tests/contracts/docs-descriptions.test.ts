@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest'
  * matter. llms.txt and the MCP server's list_pages show it beside the link,
  * and it's how an agent picks which page to fetch without reading them all.
  */
-const ALL = import.meta.glob('../../../../site/content/docs/**/*.{md,mdx}', {
+const ALL = import.meta.glob('../../../../docs/content/docs/**/*.{md,mdx}', {
   query: '?raw',
   import: 'default',
   eager: true,

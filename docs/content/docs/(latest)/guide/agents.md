@@ -15,7 +15,7 @@ Every page is also published as plain Markdown, such as `https://ifloom.dev/llms
 
 `llms-full.txt` is the simplest thing to hand an agent. For an agent with a small context, give it `llms.txt` instead and let it fetch the pages it needs.
 
-The same docs are in the `site/content/docs/` folder of the [IFLoom repository](https://github.com/IFLoom/ifloom), as Markdown, for an agent that works offline in a clone of it.
+The same docs are in the `docs/content/docs/` folder of the [IFLoom repository](https://github.com/IFLoom/ifloom), as Markdown, for an agent that works offline in a clone of it.
 
 ## Connect it to the MCP server
 

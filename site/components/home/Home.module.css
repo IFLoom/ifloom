@@ -366,16 +366,130 @@
   margin: 0;
 }
 
-.group .chips li {
+/* A plugin chip is a button, with its note under it. */
+.chip {
+  position: relative;
+}
+
+.chip > button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding-left: 10px;
+  padding: 6px 12px 6px 10px;
+  border: 1px solid var(--hair);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: color 0.4s var(--ease), border-color 0.4s var(--ease), background-color 0.4s var(--ease), opacity 0.4s var(--ease);
 }
 
-.group .chips svg {
+.chip > button svg {
   flex: none;
   color: var(--ink-2);
+  transition: color 0.4s var(--ease);
+}
+
+.chip > button:focus-visible {
+  outline: 2px solid var(--ember-2);
+  outline-offset: 2px;
+}
+
+.chip.on > button {
+  border-color: rgba(255, 166, 87, 0.45);
+  background: rgba(255, 150, 60, 0.12);
+  color: var(--ember-2);
+}
+
+.chip.on > button svg {
+  color: var(--ember-2);
+}
+
+.groups:has(.chip.on) .chip:not(.on) > button {
+  opacity: 0.55;
+}
+
+/* While a note is open its card sits above its neighbours, which the tilt would otherwise paint over it. */
+.card.raised {
+  position: relative;
+  z-index: 3;
+}
+
+.note {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: max-content;
+  max-width: min(20rem, 78vw);
+  padding: 14px 16px;
+  border: 1px solid var(--hair-2);
+  border-radius: 14px;
+  background: rgba(14, 11, 9, 0.96);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.5);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ink-2);
+  animation: note-in 0.25s var(--ease);
+}
+
+/* A bridge over the gap, so the pointer can move from the chip into the note. */
+.note::before {
+  content: '';
+  position: absolute;
+  inset: -9px 0 auto;
+  height: 9px;
+}
+
+.note[hidden] {
+  display: none;
+}
+
+.note.flip {
+  right: 0;
+  left: auto;
+}
+
+.note p {
+  margin: 0;
+}
+
+.note-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ember-2);
+}
+
+.note .note-extends {
+  padding-top: 8px;
+  border-top: 1px solid var(--hair-2);
+  color: var(--ink-3);
+}
+
+.note-link {
+  font-size: 12px;
+  color: var(--ink-3);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.4s var(--ease);
+}
+
+.note-link:hover {
+  color: var(--ink);
+}
+
+@keyframes note-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
 }
 
 .tool-list {
@@ -421,44 +535,140 @@
   font-size: clamp(1.5rem, 2.6vw, 2.1rem);
 }
 
-.shapes {
+/* The example games: tabs, then a few lines of the chosen one's source. */
+.examples {
   display: flex;
   flex: 1;
   flex-direction: column;
-  justify-content: center;
-  margin: 8px 0 0;
-  padding: 0;
-  list-style: none;
+  gap: 16px;
+  margin-top: 8px;
+  min-width: 0;
 }
 
-.shapes li {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 4px 16px;
-  padding: 26px 0;
-  border-top: 1px solid var(--hair-2);
+.tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-self: flex-start;
+  padding: 4px;
+  border: 1px solid var(--hair-2);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.3);
 }
 
-.shape-name {
-  font-family: var(--display);
-  font-size: 17px;
+.tabs button {
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: color 0.5s var(--ease), background-color 0.5s var(--ease);
+}
+
+.tabs button:hover {
   color: var(--ink);
 }
 
+.tabs button:focus-visible {
+  outline: 2px solid var(--ember-2);
+  outline-offset: 2px;
+}
+
+.tabs button.on {
+  background: rgba(255, 150, 60, 0.16);
+  color: var(--ember-2);
+}
+
+.panel {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.example-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.example-detail {
+  font-size: 14px;
+  color: var(--ink-3);
+}
+
+.source {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--hair-2);
+  border-radius: 14px;
+  background: rgba(0, 0, 0, 0.4);
+  overflow: hidden;
+}
+
+.source-bar {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--hair-2);
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-3);
+}
+
+.source-bar span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source-bar a {
+  flex: none;
+  color: var(--ink-3);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color 0.4s var(--ease);
+}
+
+.source-bar a:hover {
+  color: var(--ink);
+}
+
+.listing {
+  flex: 1;
+  margin: 0;
+  padding: 14px 16px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--ink-2);
+}
+
+.line {
+  white-space: pre;
+}
+
+.listing .com { color: rgba(255, 255, 255, 0.38); font-style: italic; }
+.listing .str { color: #ffc78a; }
+.listing .kw { color: #ff8f5a; }
+.listing .ty { color: #f2d3a8; }
+.listing .num,
+.listing .bool { color: #ffb366; }
+.listing .key { color: #ece4da; }
+.listing .pun { color: rgba(255, 255, 255, 0.35); }
+
 .shape-kind {
-  grid-row: span 2;
-  align-self: center;
   padding: 5px 12px;
   border: 1px solid rgba(255, 166, 87, 0.22);
   border-radius: 999px;
   font-size: 12px;
   color: var(--ember-2);
   white-space: nowrap;
-}
-
-.shape-detail {
-  font-size: 14px;
-  color: var(--ink-3);
 }
 
 .chips {
@@ -468,15 +678,6 @@
   margin: 4px 0 0;
   padding: 0;
   list-style: none;
-}
-
-.chips li {
-  padding: 6px 12px;
-  border: 1px solid var(--hair);
-  border-radius: 999px;
-  font-family: var(--mono);
-  font-size: 12px;
-  color: var(--ink-3);
 }
 
 .term {
@@ -679,6 +880,15 @@
     padding: 22px;
   }
 
+  .tabs button {
+    padding: 6px 11px;
+    font-size: 13px;
+  }
+
+  .listing {
+    font-size: 12px;
+  }
+
 
   .closing {
     padding-bottom: 96px;
@@ -690,7 +900,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .orb {
+  .orb,
+  .note {
     animation: none;
   }
 }

@@ -21,18 +21,13 @@ import { LockKeyOpenIcon } from '@phosphor-icons/react/dist/csr/LockKeyOpen'
 import { ShuffleIcon } from '@phosphor-icons/react/dist/csr/Shuffle'
 import type { Icon } from '@phosphor-icons/react/dist/lib/types'
 import Link from 'next/link'
-import { useEffect, useRef, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { HeroDemo } from './HeroDemo'
 import { HomeNav } from './HomeNav'
 import { InstallCard } from './InstallCard'
+import { examples, sourceOf } from './examples'
 import { useTilt } from './tilt'
 import s from './Home.module.css'
-
-const shapes = [
-  { name: 'The Letter', shape: 'A linear novel', detail: 'Three chapters, no plugins' },
-  { name: 'The Corner Café', shape: 'A management game', detail: 'A turn is a week, staff are entities' },
-  { name: 'Small Town', shape: 'A life sim', detail: 'Calendar, places, cast and a phone' },
-]
 
 const pluginIcons: Record<string, Icon> = {
   calendar: CalendarBlankIcon,
@@ -54,11 +49,120 @@ const pluginIcons: Record<string, Icon> = {
   generators: ShuffleIcon,
 }
 
-const pluginGroups = [
-  { name: 'World', plugins: ['calendar', 'places', 'cast', 'inventory', 'shop', 'wardrobe'] },
-  { name: 'Progress', plugins: ['quests', 'achievements', 'jobs', 'statuses'] },
-  { name: 'Phone', plugins: ['messages', 'feed', 'devices'] },
-  { name: 'Tools', plugins: ['cheats', 'unlocks', 'debug', 'generators'] },
+type Plugin = {
+  id: string
+  /** What it brings, for a player and an author. */
+  adds: string
+  /** How it plugs into the core. */
+  extends: string
+}
+
+const pluginGroups: { name: string; plugins: Plugin[] }[] = [
+  {
+    name: 'World',
+    plugins: [
+      {
+        id: 'calendar',
+        adds: 'The periods of a day, the days of a week, sleep and a curfew.',
+        extends: 'Decides what a turn is, prices actions in time, and adds calendar/period and calendar/weekday conditions.',
+      },
+      {
+        id: 'places',
+        adds: 'Locations with exits and things to do, travel between them, and where the player is.',
+        extends: 'A places/location trait on entities, a places/at condition, and the room the screen shows when no scene is open.',
+      },
+      {
+        id: 'cast',
+        adds: 'Characters with schedules, who is in the room, talking and calling.',
+        extends: 'A cast/person trait on entities. Relationships are stats the game declares on the kind character.',
+      },
+      {
+        id: 'inventory',
+        adds: 'Using, dropping and giving away the things the player holds.',
+        extends: 'An inventory/usable trait, and use, drop and give commands over the engine’s holdings. It keeps no state of its own.',
+      },
+      {
+        id: 'shop',
+        adds: 'Vendors that sell for any spendable stat, with stock, restocking, selling back and daily discounts.',
+        extends: 'A shop/vendor trait that holds the stock as entities, and a shop panel. Opening hours with the calendar, a place with places.',
+      },
+      {
+        id: 'wardrobe',
+        adds: 'Slots the game declares, and what the player and each protagonist has on.',
+        extends: 'A wardrobe/wearable trait, worn by entity reference. Only what you hold is worn.',
+      },
+    ],
+  },
+  {
+    name: 'Progress',
+    plugins: [
+      {
+        id: 'quests',
+        adds: 'What the player is doing, how far they have got, and the hint for what comes next.',
+        extends: 'Stages done by conditions after each command, never taken back, with quests/done and quests/active to ask.',
+      },
+      {
+        id: 'achievements',
+        adds: 'Achievements earned by conditions or effects, secret ones and progress counts.',
+        extends: 'Checks after each command, and keeps its record in the profile, so it lasts across saves.',
+      },
+      {
+        id: 'jobs',
+        adds: 'Hiring, shifts that cost time or energy and pay a wage, promotions and getting fired.',
+        extends: 'Jobs as content, a jobs panel, and a jobs/rank value. Shift hours with the calendar, a workplace with places.',
+      },
+      {
+        id: 'statuses',
+        adds: 'A boost or a cold that lasts some turns.',
+        extends: 'Changes what stats read through the engine’s stat modifiers, never writing them, and runs effects each turn.',
+      },
+    ],
+  },
+  {
+    name: 'Phone',
+    plugins: [
+      {
+        id: 'messages',
+        adds: 'Threads of messages that arrive when the story allows, and replies that are choices.',
+        extends: 'Channels and messages as content, arriving by condition, with messages/arrived and messages/replied to ask.',
+      },
+      {
+        id: 'feed',
+        adds: 'Timelines of posts, the player’s own posts, and the likes and comments they get.',
+        extends: 'Feeds and posts as content, appearing by condition, with a feed/post effect for the player’s own.',
+      },
+      {
+        id: 'devices',
+        adds: 'A phone, a laptop or a desk drawer, with apps and badges.',
+        extends: 'Apps built from sections. Opening one is free and doesn’t leave the room. A phone is this, messages and feed.',
+      },
+    ],
+  },
+  {
+    name: 'Tools',
+    plugins: [
+      {
+        id: 'cheats',
+        adds: 'Effects the player can use at any time, free or kept for supporters.',
+        extends: 'Runs in any scene and through any lock, refused by a blocked condition until it holds, with a log of each use.',
+      },
+      {
+        id: 'unlocks',
+        adds: 'Codes a player enters that open cheats, scenes and whole packs of content.',
+        extends: 'Checked against a slow hash, so no code ships. The build encrypts unlocked content under the code.',
+      },
+      {
+        id: 'debug',
+        adds: 'Set a stat or a kv key, jump to a scene, set the time, go anywhere.',
+        extends: 'Commands that ignore every lock, while you test. Left out of release builds.',
+      },
+      {
+        id: 'generators',
+        adds: 'Named pools of values and templates that make new entities.',
+        extends: 'Each drawn field from a pool or a range, seeded from the save, so a replay draws the same.',
+      },
+    ],
+  },
 ]
 
 const frameworks = ['React', 'Vue', 'Svelte', 'plain DOM']
@@ -84,10 +188,10 @@ function Arrow() {
 }
 
 /** One card of the bento: a tilting shell around a core. */
-function Card({ kind, children }: { kind: string; children: ReactNode }) {
+function Card({ kind, raised, children }: { kind: string; raised?: boolean; children: ReactNode }) {
   const tilt = useTilt<HTMLDivElement>()
   return (
-    <article className={cx(s.card, s[kind], 'reveal')}>
+    <article className={cx(s.card, s[kind], raised && s.raised, 'reveal')}>
       <div className={s.shell} ref={tilt}>
         <div className={s.core}>{children}</div>
       </div>
@@ -95,8 +199,168 @@ function Card({ kind, children }: { kind: string; children: ReactNode }) {
   )
 }
 
+/** The example games as tabs, each with a few lines of its source. */
+function ExampleTabs() {
+  const [chosen, setChosen] = useState('showcase')
+  const tabs = useRef<(HTMLButtonElement | null)[]>([])
+  const id = useId()
+  const example = examples.find((e) => e.id === chosen) ?? examples[0]
+
+  // Left and right move between the tabs, Home and End to either end.
+  const onKey = (event: KeyboardEvent, index: number) => {
+    const last = examples.length - 1
+    const next = { ArrowRight: index === last ? 0 : index + 1, ArrowLeft: index === 0 ? last : index - 1, Home: 0, End: last }[event.key]
+    if (next === undefined) return
+    event.preventDefault()
+    setChosen(examples[next].id)
+    tabs.current[next]?.focus()
+  }
+
+  return (
+    <div className={s.examples}>
+      <div className={s.tabs} role="tablist" aria-label="Example games">
+        {examples.map((e, i) => (
+          <button
+            key={e.id}
+            ref={(el) => {
+              tabs.current[i] = el
+            }}
+            type="button"
+            role="tab"
+            id={`${id}-tab-${e.id}`}
+            aria-selected={e.id === chosen}
+            aria-controls={`${id}-panel`}
+            tabIndex={e.id === chosen ? 0 : -1}
+            className={e.id === chosen ? s.on : undefined}
+            onClick={() => setChosen(e.id)}
+            onKeyDown={(event) => onKey(event, i)}
+          >
+            {e.name}
+          </button>
+        ))}
+      </div>
+      <div className={s.panel} role="tabpanel" id={`${id}-panel`} aria-labelledby={`${id}-tab-${example.id}`}>
+        <div className={s['example-head']}>
+          <span className={s['shape-kind']}>{example.shape}</span>
+          <span className={s['example-detail']}>{example.detail}</span>
+        </div>
+        <div className={s.source}>
+          <div className={s['source-bar']}>
+            <span>{example.path}</span>
+            <a href={sourceOf(example)} rel="noreferrer">
+              Source
+            </a>
+          </div>
+          <pre className={s.listing}>
+            {example.tokens.map((tokens, i) => (
+              <span key={i} className={s.line}>
+                {tokens.map((token, j) =>
+                  token.c ? (
+                    <span key={j} className={s[token.c]}>
+                      {token.t}
+                    </span>
+                  ) : (
+                    token.t
+                  ),
+                )}
+                {'\n'}
+              </span>
+            ))}
+          </pre>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/** The plugin chips: each opens a note on what the plugin adds, on hover, focus or a tap. */
+function PluginChips({ onOpen }: { onOpen: (open: boolean) => void }) {
+  const [open, setOpen] = useState<{ id: string; flip: boolean } | null>(null)
+  const root = useRef<HTMLDivElement>(null)
+  const id = useId()
+
+  const show = (plugin: string, chip: HTMLElement) => {
+    const box = root.current?.getBoundingClientRect()
+    const at = chip.getBoundingClientRect()
+    // A chip in the right half opens its note leftward, so it stays in the card.
+    setOpen({ id: plugin, flip: box ? at.left - box.left > box.width / 2 : false })
+  }
+  const hide = () => setOpen(null)
+  const canHover = () => matchMedia('(hover: hover) and (pointer: fine)').matches
+
+  useEffect(() => onOpen(open !== null), [open, onOpen])
+
+  // While a note is open, Escape or a press outside the chips closes it.
+  useEffect(() => {
+    if (!open) return
+    const key = (event: globalThis.KeyboardEvent) => event.key === 'Escape' && hide()
+    const press = (event: PointerEvent) => {
+      if (!root.current?.contains(event.target as Node)) hide()
+    }
+    document.addEventListener('keydown', key)
+    document.addEventListener('pointerdown', press)
+    return () => {
+      document.removeEventListener('keydown', key)
+      document.removeEventListener('pointerdown', press)
+    }
+  }, [open])
+
+  return (
+    <div className={s.groups} ref={root}>
+      {pluginGroups.map((group) => (
+        <div key={group.name} className={s.group}>
+          <span className={s['group-name']}>{group.name}</span>
+          <ul className={s.chips}>
+            {group.plugins.map((plugin) => {
+              const PluginIcon = pluginIcons[plugin.id]
+              const on = open?.id === plugin.id
+              const note = `${id}-${plugin.id}`
+              return (
+                <li
+                  key={plugin.id}
+                  className={cx(s.chip, on && s.on)}
+                  onPointerEnter={(event) => canHover() && show(plugin.id, event.currentTarget)}
+                  onPointerLeave={() => canHover() && hide()}
+                  // Focus moving out of the chip and its note closes it.
+                  onBlur={(event) => {
+                    if (!event.currentTarget.contains(event.relatedTarget as Node)) hide()
+                  }}
+                >
+                  <button
+                    type="button"
+                    aria-expanded={on}
+                    aria-controls={note}
+                    aria-describedby={on ? note : undefined}
+                    onFocus={(event) => show(plugin.id, event.currentTarget)}
+                    onClick={(event) => (on && !canHover() ? hide() : show(plugin.id, event.currentTarget))}
+                  >
+                    <PluginIcon size={14} weight="light" aria-hidden="true" />
+                    {plugin.id}
+                  </button>
+                  <div id={note} role="tooltip" className={cx(s.note, open?.flip && s.flip)} hidden={!on}>
+                    <span className={s['note-name']}>
+                      <PluginIcon size={16} weight="light" aria-hidden="true" />
+                      {plugin.id}
+                    </span>
+                    <p>{plugin.adds}</p>
+                    <p className={s['note-extends']}>{plugin.extends}</p>
+                    <Link className={s['note-link']} href={`/docs/plugins/${plugin.id}`}>
+                      Read about {plugin.id} →
+                    </Link>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function Home() {
   const page = useRef<HTMLDivElement>(null)
+  const [pluginOpen, setPluginOpen] = useState(false)
 
   // Sections fade up as they come into view. A script in the page's head adds
   // .ifl-reveal before the first paint, unless the reader asks for less motion,
@@ -183,44 +447,19 @@ export function Home() {
                 A short novel, a business you run week by week, a town full of people with their own days. Scenes, stats and characters are yours to shape, and
                 the engine doesn&apos;t assume a genre.
               </p>
-              <ul className={s.shapes}>
-                {shapes.map((shape) => (
-                  <li key={shape.name}>
-                    <span className={s['shape-name']}>{shape.name}</span>
-                    <span className={s['shape-kind']}>{shape.shape}</span>
-                    <span className={s['shape-detail']}>{shape.detail}</span>
-                  </li>
-                ))}
-              </ul>
+              <ExampleTabs />
               <p className={cx(s.p, s.foot)}>
                 Each one is an example game in the repository, and a template for <code className={s.code}>ifloom new</code>.
               </p>
             </Card>
 
-            <Card kind="plugins">
+            <Card kind="plugins" raised={pluginOpen}>
               <span className={s.tag}>02</span>
               <h3 className={s.h3}>Plugins</h3>
               <p className={s.p}>
                 Add what your game needs and leave out the rest. Plugins work together when a game has both, but never depend on each other.
               </p>
-              <div className={s.groups}>
-                {pluginGroups.map((group) => (
-                  <div key={group.name} className={s.group}>
-                    <span className={s['group-name']}>{group.name}</span>
-                    <ul className={s.chips}>
-                      {group.plugins.map((plugin) => {
-                        const PluginIcon = pluginIcons[plugin]
-                        return (
-                          <li key={plugin}>
-                            <PluginIcon size={14} weight="light" aria-hidden="true" />
-                            {plugin}
-                          </li>
-                        )
-                      })}
-                    </ul>
-                  </div>
-                ))}
-              </div>
+              <PluginChips onOpen={setPluginOpen} />
             </Card>
 
             <Card kind="look">

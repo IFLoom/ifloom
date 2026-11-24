@@ -209,6 +209,11 @@ export const DONE: string[] = [
   'how-to/react/show-plugin-uis.md',
   'how-to/react/extend-the-react-ui.md',
   'how-to/react/write-a-plugins-react-ui.md',
+  'upgrading/index.md',
+  'upgrading/schema-history.md',
+  'upgrading/old-saves.md',
+  'upgrading/migrate-your-saves.md',
+  'upgrading/status.md',
 ]
 
 /** One problem: where it is, the rule it breaks, and the text that breaks it. */

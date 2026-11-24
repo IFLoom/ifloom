@@ -135,8 +135,6 @@ export class SceneFrame extends Component<FrameProps> {
   }
 }
 
-export { lastReveal, revealGroups } from '../hints.ts'
-
 /**
  * Show everything at once on the first key press while reveals are pending,
  * and keep that key from doing anything else, so a number key can't pick a

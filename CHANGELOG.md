@@ -10,6 +10,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- [`useScene`](/docs/react/components#usescene) in the React UI: the scene's timing and state with nothing drawn (its transition, the runs of beats that wait for a reveal or for dice, when the choices come, whether it's waiting and how to skip, and the new rolls). `Scene` is drawn from it, so a scene of your own keeps the same motion.
+- The scene's heading, a section with ui hints and a fold are replaceable in `components`, as [`SceneHeader`](/docs/react/components#sceneheader), [`BeatGroup`](/docs/react/components#beatgroup) and [`Fold`](/docs/react/components#fold), so a game restyles them without rebuilding `Scene`.
 - The runner's [snapshot](/docs/reference/runner#what-led-here) says which choice or button led to the screen on show, in `pressed` (its id, command and `ui` hints as written), and whether the state came from a command just run, in `fresh`. A UI of any framework plays a choice's transition and tumbles only new dice from them, with no replay of the command log.
 - Each of [`view.changes`](/docs/reference/changes#changeview) has a `name` when its `text` doesn't say what moved: the entity's name for an entity's stat, else the stat's label when its format has no words (`+1 Charm`, `+4 Ava`). **Breaking** only in the type: `View.changes` is now `ChangeView[]`.
 - [`proseBeats(state, game, key)`](/docs/reference/prose#prosebeats): a prose line by key as beats, formatted as a scene's body is, for a UI that shows one away from the scene. The React UI's `modal` piece draws its line with it, so speakers in it are named now.
@@ -489,6 +491,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Removed
 
+- **Breaking:** the React UI no longer exports `revealGroups`, `lastReveal`, `rollFor`, `screenTransition`, `DEFAULT_REVEAL_DELAY`, `DICE_ROLL_MS` or `useFreshRolls`. [`useScene`](/docs/react/components#usescene) gives what they worked out: the runs as `groups` (each beat with the settled roll it names), the `transition`, and the new rolls in `rolls.fresh`.
 - **Breaking:** `viewIn` on a plugin made with `definePlugin`. Read `view.plugins.<id>`, which its `ViewRegistry` entry types.
 - **Breaking:** `useDebug().run`. Send the debug plugin's helpers instead: `send(debug.stat('coins', 50))`.
 - **Breaking:** `ENTRY_CLASSES` in `@ifloom/react`. A list entry with buttons of its own is a kit `card` with `sm:flex-row sm:items-start`, its buttons a `commands` part.

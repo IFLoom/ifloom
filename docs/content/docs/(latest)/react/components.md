@@ -13,7 +13,7 @@ import {
   // the game
   GameShell, GameProvider, useGame, Icon, WithPages,
   DefaultLayout, Game, Sidebar, Story, Overlay, Section, When, useHolds, Title, RoomActions, Plugins, usePluginUis, pluginKit, usePlugin,
-  Scene, Beat, InlineAction, Tip, InlineTrigger, InlineModal, InlineImage, InlineMail, InlineProp, InlineMono, BUILT_IN_INLINE, Picture, Video, LayeredPicture, Hotspot, MediaViewer, assetUrl, ChoiceButton, ChoiceList, PriceTag,
+  Scene, Beat, SceneHeader, BeatGroup, Fold, useScene, InlineAction, Tip, InlineTrigger, InlineModal, InlineImage, InlineMail, InlineProp, InlineMono, BUILT_IN_INLINE, Picture, Video, LayeredPicture, Hotspot, MediaViewer, assetUrl, ChoiceButton, ChoiceList, PriceTag,
   Clock, StatList, StatGauge, EntityTable, Inventory, useClock,
   InputField, InputFields,
   GameMenu, SavesMenu, Backlog, ModManager, useSaves, useBacklog, useMods,
@@ -30,6 +30,7 @@ import {
   type SavesState, type ModsState, type ClockState, type InventoryProps,
   type PagesOptions, type Page, type PageDef, type PageState, type Credit, type GateOptions,
   type Classes, type Components, type OverridableComponents, type Override, type PartKey, type PartNames, type KitPart, type UiOptions, type KeyOptions, type MinigameControls, type CountdownProps,
+  type SceneTiming, type ScreenTransition, type RevealGroup, type RevealPoint, type RevealBeat, type SceneRolls,
   type VideoProps, type MediaViewerProps, type ViewerMedia,
   // shadcn/ui
   Button, buttonVariants, Badge, badgeVariants,
@@ -419,7 +420,7 @@ interface OverridableComponents {
 }
 ```
 
-Your own components in place of built-in ones, by name. Each replacement is drawn everywhere the UI draws that component, with the same props plus `Default`, the built-in one. The names are `Game`, `Sidebar`, `Story`, `Overlay`, `Section`, `When`, `Title`, `Clock`, `StatList`, `RoomActions`, `Scene`, `Beat`, `InlineAction`, `Tip`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `NoticeStrip`, `MinigameCard`, `DiceRoll`, `DiceOverlay`, `Countdown`, `Timers`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `PanelHost`, `Inventory`, `EntityTable`, `InputFields`, `InputField`, `Picture`, `Video`, `LayeredPicture`, `Hotspot`, `MediaViewer`, `Icon`, `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` and `GatePage`. A plugin's UI adds its own to [`OverridableComponents`](/docs/react/kit#overridablecomponents-and-partnames), such as `ShopCounter` and `QuestLog`, so `components` takes them typed once you import the plugin's `/react`.
+Your own components in place of built-in ones, by name. Each replacement is drawn everywhere the UI draws that component, with the same props plus `Default`, the built-in one. The names are `Game`, `Sidebar`, `Story`, `Overlay`, `Section`, `When`, `Title`, `Clock`, `StatList`, `RoomActions`, `Scene`, `Beat`, `SceneHeader`, `BeatGroup`, `Fold`, `InlineAction`, `Tip`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `NoticeStrip`, `MinigameCard`, `DiceRoll`, `DiceOverlay`, `Countdown`, `Timers`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `PanelHost`, `Inventory`, `EntityTable`, `InputFields`, `InputField`, `Picture`, `Video`, `LayeredPicture`, `Hotspot`, `MediaViewer`, `Icon`, `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` and `GatePage`. A plugin's UI adds its own to [`OverridableComponents`](/docs/react/kit#overridablecomponents-and-partnames), such as `ShopCounter` and `QuestLog`, so `components` takes them typed once you import the plugin's `/react`.
 
 ```tsx
 import type { Components } from '@ifloom/react'
@@ -535,8 +536,7 @@ The main column. It shows the scene on screen, or the room when no scene is open
 
 From top to bottom, it draws:
 
-- the speaker's portrait, unless [`view.scene.speaker`](/docs/reference/view#speakerview) or its `portrait` is `null`
-- the title
+- its heading, a [`SceneHeader`](#sceneheader): the speaker's portrait, unless [`view.scene.speaker`](/docs/reference/view#speakerview) or its `portrait` is `null`, and the title
 - the scene's [`LayeredPicture`](#layeredpicture) when [`view.scene.picture`](/docs/reference/view#the-scene) has layers, or else its `image`, centred, at most `max-h-80` tall and never wider than the column, keeping its shape
 - each [`Beat`](#beat) of the body, with the beats from each block with a [`reveal`](/docs/react/hints#reveal) hint in a `reveal` part that waits for it, and the beats of each section with ui hints in a `group` part (see **Groups** below)
 - the inputs on offer while the scene is open, as [`InputField`](#inputfield)s in an `inputs` part, so a scene that asks for a name shows the field under its words
@@ -546,7 +546,7 @@ While a [minigame](/docs/reference/minigames) runs, it draws that instead of all
 
 The `<article>` carries `data-scene` with the scene's id, or `room` when no scene is open.
 
-**Transitions.** The article sits in a `scene-transition` part, and is drawn afresh whenever [`view.scene.key`](/docs/reference/view#the-scene) changes. It carries `data-transition-in` with the new screen's `in`, from the content's [`transition`](/docs/react/hints#transition) hints (worked out by [`screenTransition`](/docs/react/hints#screentransition)), which the base styles animate. A choice with its own `transition` hint decides how the screen it leads to comes in. The scene before goes out first: a copy of its HTML stays in its place for its `ms`, with `data-leaving` and `data-transition-out`, inert and hidden from screen readers. Then the new scene is drawn and comes in. The `scene-transition` part sets `--ifloom-transition-ms` for the CSS, and `data-motion="off"` when motion is off.
+**Transitions.** The article sits in a `scene-transition` part, and is drawn afresh whenever [`view.scene.key`](/docs/reference/view#the-scene) changes. It carries `data-transition-in` with the new screen's `in`, from the content's [`transition`](/docs/react/hints#transition) hints, which the base styles animate. A choice with its own `transition` hint decides how the screen it leads to comes in. The scene before goes out first: a copy of its HTML stays in its place for its `ms`, with `data-leaving` and `data-transition-out`, inert and hidden from screen readers. Then the new scene is drawn and comes in. The `scene-transition` part sets `--ifloom-transition-ms` for the CSS, and `data-motion="off"` when motion is off.
 
 **Reveals.** Each `reveal` part carries `data-reveal` with its transition and `--ifloom-reveal-at` with its time. Its text is in the page from the start, so a screen reader reads it, and only its look waits. A click on the scene, or any key, shows the rest at once (the article gets `data-revealed`), and that key does nothing else, so a number key can't pick a choice that isn't shown yet. See [Transitions in the React UI](/docs/recipes/transitions#the-react-ui) to restyle them.
 
@@ -554,15 +554,120 @@ With [`motion`](#uioptions) off, or the player asking for reduced motion, none o
 
 **Dice.** A block with a [`dice`](/docs/react/hints#dice) hint gets the [`DiceRoll`](#diceroll) of the roll the last command made under that key, just above it. A new roll tumbles, and the block waits in a `reveal` part until the dice settle. A click or a key settles them at once. New rolls that no block on screen names show in a [`DiceOverlay`](#diceoverlay), which `Scene` draws after the scene.
 
-**Groups.** The beats of a section with any ui hint are drawn together in one `group` part. Each of the section's hints that's a string, a number or `true`/`false` becomes a `data-*` attribute on it, with a camel-case name written in dashes: `{ card: 'result' }` is `data-card="result"`, `{ wide: true }` is `data-wide`. So a section can be styled as one box with plain CSS. A fold's `<details>` sits inside its group. [Your own hints](/docs/react/hints#your-own-hints) shows a hint of a game's own, from `allow` to the CSS.
+**Groups.** The beats of a section with any ui hint are drawn together in a [`BeatGroup`](#beatgroup), and a section with a `fold` hint has its beats in a [`Fold`](#fold) inside its group. [Your own hints](/docs/react/hints#your-own-hints) shows a hint of a game's own, from `allow` to the CSS.
 
 **Inputs.** While a scene is open, `Scene` draws [`view.inputs`](/docs/reference/view#inputview) after its words and before its choices. With reveals to come, they wait with the choices. The layout's [`InputFields`](#inputfields) draws only the inputs on offer while no scene is open, so nothing is drawn twice.
 
 **Speakers.** While the scene's speaker has a [`hue`](/docs/react/hints#hue) hint, the article carries `data-speaker-hue` and `--ifloom-speaker-hue`, and their spoken lines are drawn in that colour.
 
+**Your own scene.** All of the timing above is [`useScene`](#usescene), and the heading, a group and a fold are components of their own. To restyle one of those, replace it in `components` and the motion stays. To change more, write a `Scene` of your own on `useScene`.
+
 **Gotcha.** If a scene names a `panel` that the game has no component for, it shows its choices instead, with no warning.
 
 Replaceable as `Scene` in [`components`](#components). Parts: `scene-transition`, `scene` (with `data-scene`), `scene-header`, `scene-portrait`, `scene-title`, `scene-image`, `beats`, `reveal`, `group` (with a `data-*` for each scalar hint), `fold`, `fold-summary`, `fold-beats` and `inputs`.
+
+### useScene
+
+```tsx
+function useScene(): SceneTiming
+
+type SceneTiming = {
+  view: View
+  motion: boolean
+  transition: ScreenTransition
+  leave: { out?: TransitionName; ms?: number }
+  groups: RevealGroup[]
+  last: number
+  pending: boolean
+  revealed: boolean
+  skip: () => void
+  rolls: SceneRolls
+  unnamed: readonly Roll[]
+}
+
+type ScreenTransition = { key: string; in: TransitionName; out: TransitionName; ms: number }
+type RevealPoint = { delay: number; as: TransitionName; at: number }
+type RevealBeat = { beat: SceneBeat; index: number; roll?: Roll }
+type RevealGroup = { reveal: RevealPoint | null; dice?: Roll; beats: RevealBeat[] }
+type SceneRolls = { all: readonly Roll[]; fresh: readonly Roll[]; at: number }
+```
+
+Everything [`Scene`](#scene) works out before it draws, with nothing drawn: the transition, the reveals, the dice and the wait. Write a scene of your own on it and it keeps the React UI's motion.
+
+| Field | What it is |
+|---|---|
+| `view` | The view drawn. |
+| `motion` | Whether anything moves, as [`useMotion`](#usemotion) says. With it false, nothing waits and every roll shows settled. |
+| `transition` | How this screen comes in and goes out: the screen's [`transition`](/docs/react/hints#transition) hint over the game's, with the choice that led here (the runner's [`snapshot.pressed`](/docs/reference/runner#what-led-here)) deciding how it comes in. `key` is `view.scene.key`. Key the screen's element by it so it's drawn afresh on a new screen. |
+| `leave` | How the screen before goes, when the choice that led here gives an `out` or `ms`. |
+| `groups` | The scene's beats in runs: the first, shown with the screen (its `reveal` is `null`), then one for each block with a [`reveal`](/docs/react/hints#reveal) hint or a [`dice`](/docs/react/hints#dice) hint naming a new roll. `reveal.at` is when the run comes, in milliseconds from the screen coming on. A run with `dice` waits a second more for that roll's dice to tumble. A beat whose `dice` hint names a roll that isn't new has it as its `roll`, to draw settled. Empty while a minigame runs. |
+| `last` | When the last run comes, or 0 with none. The choices come with it. |
+| `pending` | Whether runs are still to come. Until then the choices can't be pressed. |
+| `revealed` | Whether the player skipped the wait, or everything came in. Draw dice settled from then on. |
+| `skip` | Shows everything at once. `Scene` calls it on a click on the scene. The first key press while `pending` calls it too, and does nothing else, so a number key can't pick a choice that isn't shown yet. |
+| `rolls` | The rolls in [`view.rolls`](/docs/reference/view#rolls), and the new ones (`fresh`) the player just made, which tumble. A load, an undo or a redo brings none. `at` counts each new set, so key a [`DiceRoll`](#diceroll) by it to tumble again. |
+| `unnamed` | New rolls that no beat on screen names, which `Scene` shows for a moment in a [`DiceOverlay`](#diceoverlay). |
+
+It waits as long as the last run, plus the transition in and the reveal's own fade, then stops waiting by itself. Coming back to a screen, or new rolls on the same one, start the wait again.
+
+```tsx
+import { Beat, ChoiceList, useScene } from '@ifloom/react'
+
+function PlainScene() {
+  const { view, transition, groups, pending, skip } = useScene()
+  return (
+    <article key={transition.key} data-transition-in={transition.in} onClick={pending ? skip : undefined}>
+      <h2>{view.scene.title}</h2>
+      {groups.map((group, n) => (
+        <div key={n} data-reveal={group.reveal?.as} style={{ animationDelay: `${group.reveal?.at ?? 0}ms` }}>
+          {group.beats.map(({ beat, index }) => (
+            <Beat key={index} beat={beat} />
+          ))}
+        </div>
+      ))}
+      {pending ? null : <ChoiceList choices={view.scene.choices} />}
+    </article>
+  )
+}
+```
+
+### SceneHeader
+
+```tsx
+function SceneHeader(props: { scene: View['scene'] }): JSX.Element
+```
+
+The scene's heading: the speaker's portrait, when the scene has a speaker with a picture, and its title. `scene` is [`view.scene`](/docs/reference/view#the-scene). Replace it in `components` to draw the heading your own way, and it still comes in with the scene:
+
+```tsx
+const components: Components = {
+  SceneHeader: ({ scene }) => <h2 className="chapter">{scene.title}</h2>,
+}
+```
+
+Replaceable as `SceneHeader` in [`components`](#components). Parts: `scene-header`, `scene-portrait` and `scene-title`.
+
+### BeatGroup
+
+```tsx
+function BeatGroup(props: { section: Ui<BlockUi>; children: ReactNode }): JSX.Element
+```
+
+A section of the scene's body with any ui hint: its beats, as `children`, in one `group` part. `section` is the section's hints. Each that's a string, a number or `true`/`false` becomes a `data-*` attribute, with a camel-case name written in dashes: `{ card: 'result' }` is `data-card="result"`, `{ wide: true }` is `data-wide`. So a section can be styled as one box with plain CSS. [Your own hints](/docs/react/hints#your-own-hints) shows a hint of a game's own, from `allow` to the CSS.
+
+Replace it in `components` to draw a section your own way. Its beats still come in when their reveal says, since the runs are worked out around it.
+
+Replaceable as `BeatGroup` in [`components`](#components). Parts: `group`.
+
+### Fold
+
+```tsx
+function Fold(props: { label: string; children: ReactNode }): JSX.Element
+```
+
+A section with a [`fold`](/docs/react/hints#fold) hint, what [`fold()`](/docs/reference/flows#the-builders) writes, inside its `BeatGroup`. Its beats (`children`) are in a `<details>` the player opens and shuts, under `label`, the hint's words. It's shut to begin with.
+
+Replaceable as `Fold` in [`components`](#components). Parts: `fold`, `fold-summary` and `fold-beats`.
 
 ### useMotion
 
@@ -1631,7 +1736,7 @@ type DiceRollProps = { roll: Roll; animate?: boolean; className?: string }
 
 One [roll](/docs/reference/rolls#roll) from [`view.rolls`](/docs/reference/view#rolls). From left to right: the dice (`2d6`), a face for each die, what was added (`+2`), and once they settle, the total, and with a target, Passed or Failed and what it needed. A die on its top face or on 1 is marked with `data-high` or `data-low`, and a critical gets Critical! or Fumble.
 
-With `animate` (the default), the faces tumble for `DICE_ROLL_MS` milliseconds before they settle on the faces rolled. The tumbling numbers are only for show; the engine's roll was made already. With [`motion`](#uioptions) off, or the player asking for reduced motion, it shows settled at once. The result is in a `status` region, so a screen reader hears it once the dice settle, worded by `ui.diceRolled` and the strings after it. [`Scene`](#scene) draws it above a block with a [`dice`](/docs/react/hints#dice) hint, and [`DiceOverlay`](#diceoverlay) for the rest.
+With `animate` (the default), the faces tumble for a second before they settle on the faces rolled. The tumbling numbers are only for show; the engine's roll was made already. With [`motion`](#uioptions) off, or the player asking for reduced motion, it shows settled at once. The result is in a `status` region, so a screen reader hears it once the dice settle, worded by `ui.diceRolled` and the strings after it. [`Scene`](#scene) draws it above a block with a [`dice`](/docs/react/hints#dice) hint, and [`DiceOverlay`](#diceoverlay) for the rest.
 
 ```tsx
 import { DiceRoll, useGame } from '@ifloom/react'
@@ -1653,14 +1758,6 @@ function DiceOverlay(props: { rolls: readonly Roll[]; className?: string }): JSX
 Rolls the story doesn't name, shown for a moment over the scene: a `DiceRoll` for each, near the top of the window. It goes about two and a half seconds after the dice settle, or when the player presses its close button (`ui.diceDismiss`). [`Scene`](#scene) draws one for the new rolls that no block's `dice` hint names, such as Small Town's ducks, counted by a trigger as you reach the park.
 
 Replaceable as `DiceOverlay` in [`components`](#components). Parts: `dice-overlay` and `dice-dismiss`. To show these rolls somewhere else, replace it with a component that draws them where you like, or with `() => null` to show none.
-
-### useFreshRolls
-
-```ts
-function useFreshRolls(): { rolls: Roll[]; at: number }
-```
-
-The rolls the last command made, while they're new: those that came with one command more than the view before. Rolls a loaded save or an undo brings back aren't new, so they don't tumble again. `at` counts each new set, so a component can key on it to play afresh. Only inside a [`GameProvider`](#gameprovider). `Scene` uses it, and a replacement for it can too.
 
 ## Timers
 

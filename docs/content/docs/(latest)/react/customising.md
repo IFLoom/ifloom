@@ -365,7 +365,9 @@ const components: Components = { Beat: TownBeat }
 mountGame(module.build(), { components })
 ```
 
-The names you can replace are the keys of [`Components`](/docs/react/components#components): the React UI's own, such as `Game`, `Sidebar`, `Story`, `Section`, `Title`, `Clock`, `StatList`, `RoomActions`, `Scene`, `Beat`, `ChoiceButton`, `Notices`, `GameMenu`, `Inventory`, `Picture` and `Icon`, and every component a plugin's UI draws, such as `ShopCounter`, `QuestLog` and `DebugCard`, once you import that plugin's `/react`.
+The names you can replace are the keys of [`Components`](/docs/react/components#components): the React UI's own, such as `Game`, `Sidebar`, `Story`, `Section`, `Title`, `Clock`, `StatList`, `RoomActions`, `Scene`, `SceneHeader`, `BeatGroup`, `Fold`, `Beat`, `ChoiceButton`, `Notices`, `GameMenu`, `Inventory`, `Picture` and `Icon`, and every component a plugin's UI draws, such as `ShopCounter`, `QuestLog` and `DebugCard`, once you import that plugin's `/react`.
+
+To change how the scene's heading, a section with ui hints or a fold looks, replace [`SceneHeader`](/docs/react/components#sceneheader), [`BeatGroup`](/docs/react/components#beatgroup) or [`Fold`](/docs/react/components#fold). The transitions, reveals and dice stay as they were, since `Scene` times them around those parts. For a scene laid out quite differently, write your own `Scene` on [`useScene`](/docs/react/components#usescene), which gives you the same timing with nothing drawn.
 
 A replacement applies wherever the UI draws that component, not only in one spot. The `Beat` above also draws the beats in the [backlog](/docs/react/components#backlog), and a replaced `ChoiceButton` draws a scene's choices, the room's actions, and the buttons the plugins' UIs draw with it, such as each person's and the inventory's Use buttons.
 

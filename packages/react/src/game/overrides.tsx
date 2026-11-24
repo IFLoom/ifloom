@@ -12,7 +12,7 @@ import { cn } from '../lib/utils.ts'
 import type { RoomActions, Title } from './layout.tsx'
 import type { Game, Overlay, Section, Sidebar, Story, When } from './regions.tsx'
 import type { Clock, StatList } from './sidebar.tsx'
-import type { Beat, Scene } from './scene.tsx'
+import type { Beat, BeatGroup, Fold, Scene, SceneHeader } from './scene.tsx'
 import type { InlineAction, Tip } from './inline.tsx'
 import type { Hotspot, LayeredPicture } from './layered.tsx'
 import type { Video } from './video.tsx'
@@ -293,6 +293,9 @@ export interface OverridableComponents {
   RoomActions: Override<PropsOf<typeof RoomActions>>
   Scene: Override<PropsOf<typeof Scene>>
   Beat: Override<PropsOf<typeof Beat>>
+  SceneHeader: Override<PropsOf<typeof SceneHeader>>
+  BeatGroup: Override<PropsOf<typeof BeatGroup>>
+  Fold: Override<PropsOf<typeof Fold>>
   InlineAction: Override<PropsOf<typeof InlineAction>>
   Tip: Override<PropsOf<typeof Tip>>
   ChoiceList: Override<PropsOf<typeof ChoiceList>>

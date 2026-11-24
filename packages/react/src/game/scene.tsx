@@ -1,6 +1,5 @@
-import { Fragment, useCallback, useEffect, useState, type CSSProperties, type ReactNode } from 'react'
-import { audioSrc, type Roll, type SceneBeat, type View } from '@ifloom/engine'
-import { leavingOf, rollFor, screenTransition, type ScreenTransition } from '../hints.ts'
+import { Fragment, useState, type CSSProperties, type ReactNode } from 'react'
+import { audioSrc, type SceneBeat, type View } from '@ifloom/engine'
 import { cn, PROSE } from '../lib/utils.ts'
 import { usePlayer } from './audio.ts'
 import { ChoiceList } from './choices.tsx'
@@ -14,8 +13,9 @@ import { MediaViewer, type ViewerMedia } from './viewer.tsx'
 import { MinigameCard, useMinigame } from './minigame.tsx'
 import { useWords } from './words.ts'
 import { InlineSpans } from './inline.tsx'
-import { lastReveal, revealGroups, revealStyle, SceneFrame, useMotion, useSkipKey } from './motion.tsx'
-import { DiceOverlay, DiceRoll, unnamedRolls, useFreshRolls } from './dice.tsx'
+import { revealStyle, SceneFrame } from './motion.tsx'
+import { useScene, type RevealBeat, type SceneTiming } from './timing.ts'
+import { DiceOverlay, DiceRoll } from './dice.tsx'
 import { Countdown } from './timers.tsx'
 import { InputList } from './inputs.tsx'
 import { usePanel } from './panels.tsx'
@@ -135,7 +135,7 @@ function BeatImpl({ beat }: { beat: SceneBeat }) {
   }
 }
 
-type Indexed = { beat: SceneBeat; index: number }
+type Indexed = RevealBeat
 /** A run of beats from one section with ui hints: the section's hints, and its beats in order. */
 type Grouped = { section: NonNullable<SceneBeat['section']>; beats: Indexed[] }
 
@@ -173,8 +173,7 @@ function hintAttributes(section: NonNullable<SceneBeat['section']>): Record<stri
   return out
 }
 
-/** A section with ui hints: its beats in one `group` part, with its scalar hints as `data-*`, so a game styles the section as one box. */
-function Group({ section, children }: { section: NonNullable<SceneBeat['section']>; children: ReactNode }) {
+function BeatGroupImpl({ section, children }: { section: NonNullable<SceneBeat['section']>; children: ReactNode }) {
   const group = usePart('group', 'flex flex-col gap-(--gap-beats)')
   return (
     <div {...group} {...hintAttributes(section)}>
@@ -183,8 +182,7 @@ function Group({ section, children }: { section: NonNullable<SceneBeat['section'
   )
 }
 
-/** A section with a `ui.fold` hint: its beats in a `fold` part the player opens and shuts, under the hint's words in a `fold-summary` part. Shut to begin with. */
-function Fold({ label, children }: { label: string; children: ReactNode }) {
+function FoldImpl({ label, children }: { label: string; children: ReactNode }) {
   const fold = usePart('fold', 'rounded-lg border px-4 py-2 [&[open]>summary]:mb-2')
   const summary = usePart('fold-summary', 'cursor-pointer font-medium')
   const inner = usePart('fold-beats', 'flex flex-col gap-(--gap-beats)')
@@ -195,6 +193,25 @@ function Fold({ label, children }: { label: string; children: ReactNode }) {
     </details>
   )
 }
+
+/**
+ * A section of the scene's body with ui hints: its beats (`children`) in one
+ * `group` part, with each hint that's a string, a number or true/false as a
+ * `data-*` attribute (`{ card: 'result' }` is `data-card="result"`), so a
+ * game styles the section as one box. `section` is the section's hints.
+ * Replace it in `components` to draw a section your own way; the beats in
+ * it still come in on time.
+ */
+export const BeatGroup = overridable('BeatGroup', BeatGroupImpl)
+
+/**
+ * A section with a `ui.fold` hint (what `fold()` writes), inside its
+ * `BeatGroup`: its beats (`children`) in a `fold` part the player opens and
+ * shuts, a `<details>`, under `label` (the hint's words) in a `fold-summary`
+ * part, with the beats in `fold-beats`. Shut to begin with. Replace it in
+ * `components` to draw a fold your own way.
+ */
+export const Fold = overridable('Fold', FoldImpl)
 
 /**
  * One beat of a scene's body: narration, a spoken line, a picture, a video,
@@ -220,32 +237,24 @@ function MinigameSlot() {
   return Panel ? <Panel data={minigame} /> : <MinigameCard />
 }
 
-/** How long a reveal takes to come in, as `--ifloom-reveal-ms` sets it in the base styles. Only for when to stop listening for a skip. */
-const REVEAL_MS = 400
-
-/** A scene's rolls: those the last command made, and those of them that are new (`fresh`, changing `at`), which tumble and hold their block back. */
-type SceneRolls = { all: readonly Roll[]; fresh: readonly Roll[]; at: number }
-
 /**
- * A scene's beats: those shown with it, then from each beat whose block has a
- * `ui.reveal` hint, the beats to the next in a `reveal` part that waits for it
- * (`data-reveal` names how it comes in, `--ifloom-reveal-at` when). A block
- * with a `ui.dice` hint naming a roll gets that roll's `DiceRoll` before it;
- * a new roll tumbles, and its block waits in a `reveal` part until the dice
- * settle. A block with a `ui.timer` hint gets that timer's `Countdown` after
- * it, while the timer runs. With motion off, the groups are drawn but wait for nothing.
+ * A scene's beats, run by run as `useScene` times them: those shown with the
+ * screen, then each run that waits for a reveal in a `reveal` part
+ * (`data-reveal` names how it comes in, `--ifloom-reveal-at` when). A run
+ * that waits for dice gets their `DiceRoll` before it; a beat naming a roll
+ * that isn't new gets it drawn settled. A block with a `ui.timer` hint gets
+ * that timer's `Countdown` after it, while the timer runs. With motion off,
+ * the runs are drawn but wait for nothing.
  */
-function Beats({ beats, motion, rolls, skipped }: { beats: SceneBeat[]; motion: boolean; rolls: SceneRolls; skipped: boolean }) {
+function Beats({ timing }: { timing: SceneTiming }) {
   const list = usePart('beats', cn(PROSE, 'flex flex-col gap-(--gap-beats)'))
   const group = usePart('reveal', 'flex flex-col gap-(--gap-beats)')
-  const animate = motion && !skipped
-  // A roll that isn't new is drawn settled before its block, which doesn't wait. A timer the block names comes after it.
-  const beat = (entry: SceneBeat, index: number, held: boolean) => {
-    const settled = held ? undefined : rollFor(entry, rolls.all)
+  const { motion, groups, revealed, rolls } = timing
+  const beat = ({ beat: entry, index, roll }: Indexed) => {
     const timer = entry.ui?.timer
-    return settled || typeof timer === 'string' ? (
+    return roll || typeof timer === 'string' ? (
       <Fragment key={index}>
-        {settled ? <DiceRoll roll={settled} animate={false} /> : null}
+        {roll ? <DiceRoll roll={roll} animate={false} /> : null}
         <Beat beat={entry} />
         {typeof timer === 'string' ? <Countdown timer={timer} /> : null}
       </Fragment>
@@ -253,30 +262,30 @@ function Beats({ beats, motion, rolls, skipped }: { beats: SceneBeat[]; motion: 
       <Beat key={index} beat={entry} />
     )
   }
-  // A reveal's beats, each hinted section's gathered into a group, and a fold's inside its group. The first may wait for dice of its own.
-  const runs = (beats: Indexed[], diced: boolean) =>
-    grouped(beats).map((run, n) => {
-      if (!('section' in run)) return beat(run.beat, run.index, diced && n === 0)
-      const inner = run.beats.map(({ beat: entry, index }, m) => beat(entry, index, diced && n === 0 && m === 0))
+  // A run's beats, each hinted section's gathered into a group, and a fold's inside its group.
+  const runs = (beats: Indexed[]) =>
+    grouped(beats).map((run) => {
+      if (!('section' in run)) return beat(run)
+      const inner = run.beats.map(beat)
       const fold = run.section.fold
       return (
-        <Group key={`group-${run.beats[0].index}`} section={run.section}>
+        <BeatGroup key={`group-${run.beats[0].index}`} section={run.section}>
           {typeof fold === 'string' ? <Fold label={fold}>{inner}</Fold> : inner}
-        </Group>
+        </BeatGroup>
       )
     })
   return (
     <div {...list}>
-      {revealGroups(beats, motion ? rolls.fresh : []).map((entry, at) =>
+      {groups.map((entry, at) =>
         entry.reveal ? (
           <Fragment key={`reveal-${at}-${entry.dice ? rolls.at : 0}`}>
-            {entry.dice ? <DiceRoll roll={entry.dice} animate={animate} /> : null}
+            {entry.dice ? <DiceRoll roll={entry.dice} animate={motion && !revealed} /> : null}
             <div {...group} data-reveal={motion ? entry.reveal.as : undefined} style={motion ? revealStyle(entry.reveal.at) : undefined}>
-              {runs(entry.beats, entry.dice !== undefined)}
+              {runs(entry.beats)}
             </div>
           </Fragment>
         ) : (
-          runs(entry.beats, false)
+          runs(entry.beats)
         ),
       )}
     </div>
@@ -289,36 +298,36 @@ function speakerHue(view: View): CSSProperties | undefined {
   return typeof hue === 'number' && Number.isFinite(hue) ? ({ '--ifloom-speaker-hue': String(hue) } as CSSProperties) : undefined
 }
 
+function SceneHeaderImpl({ scene }: { scene: View['scene'] }) {
+  const header = usePart('scene-header', cn(PROSE, 'flex items-center gap-3'))
+  const portrait = usePart('scene-portrait', 'size-12 rounded-full object-cover')
+  const title = usePart('scene-title', 'font-heading text-scene-title font-semibold')
+  return (
+    <header {...header}>
+      {scene.speaker?.image ? <Picture {...portrait} src={scene.speaker.image} alt="" /> : null}
+      <h2 {...title}>{scene.title}</h2>
+    </header>
+  )
+}
+
+/**
+ * The scene's heading: the speaker's portrait, when the scene has a speaker
+ * with a picture (`scene-portrait`), and its title (`scene-title`), in a
+ * `scene-header` part. Gets `scene`, as `view.scene`. Replace it in
+ * `components` to draw the heading your own way; it comes in with the scene.
+ */
+export const SceneHeader = overridable('SceneHeader', SceneHeaderImpl)
+
 /** One scene, drawn once per `view.scene.key`: it comes in by `data-transition-in`, and its reveals run from then. */
-function SceneArticle({ className, motion, transition, rolls }: { className?: string; motion: boolean; transition: ScreenTransition; rolls: SceneRolls }) {
-  const { view } = useGame()
+function SceneArticle({ className, timing }: { className?: string; timing: SceneTiming }) {
+  const { view, motion, transition, last, pending, revealed, skip } = timing
   const scene = view.scene
   // A panel the open scene holds is drawn in place of its choices, found as the PanelHost finds one the `panel` effect opened.
   const held = view.panel?.scene !== undefined ? view.panel : null
   const Panel = usePanel(held?.panel)?.component
   const article = usePart('scene', 'flex flex-col gap-4', className)
-  const header = usePart('scene-header', cn(PROSE, 'flex items-center gap-3'))
-  const portrait = usePart('scene-portrait', 'size-12 rounded-full object-cover')
-  const title = usePart('scene-title', 'font-heading text-scene-title font-semibold')
   const image = usePart('scene-image', 'mx-auto max-h-80 w-auto max-w-full rounded-xl object-contain')
   const choicesGroup = usePart('reveal', 'flex flex-col gap-4')
-  // Reveals wait until the player clicks the scene or presses a key, or they have all come in.
-  const last = view.minigame ? 0 : lastReveal(scene.beats, motion ? rolls.fresh : [])
-  const [revealed, setRevealed] = useState(false)
-  // New rolls on the same screen hold their blocks back again.
-  const [rolledAt, setRolledAt] = useState(rolls.at)
-  if (rolledAt !== rolls.at) {
-    setRolledAt(rolls.at)
-    setRevealed(false)
-  }
-  const pending = motion && last > 0 && !revealed
-  const skip = useCallback(() => setRevealed(true), [])
-  useSkipKey(pending, skip)
-  useEffect(() => {
-    if (!pending) return
-    const timer = setTimeout(skip, last + transition.ms + REVEAL_MS)
-    return () => clearTimeout(timer)
-  }, [pending, last, transition.ms, skip])
   const entering = motion ? transition.in : undefined
   const hue = speakerHue(view)
   if (view.minigame) {
@@ -346,12 +355,9 @@ function SceneArticle({ className, motion, transition, rolls }: { className?: st
       style={hue}
       onClick={pending ? skip : undefined}
     >
-      <header {...header}>
-        {scene.speaker?.image ? <Picture {...portrait} src={scene.speaker.image} alt="" /> : null}
-        <h2 {...title}>{scene.title}</h2>
-      </header>
+      <SceneHeader scene={scene} />
       {scene.picture?.layers.length ? <LayeredPicture picture={scene.picture} /> : scene.image ? <Picture {...image} src={scene.image} alt="" /> : null}
-      <Beats beats={scene.beats} motion={motion} rolls={rolls} skipped={revealed} />
+      <Beats timing={timing} />
       {/* With reveals to come, the choices come with the last of them: not pressable, or read out, until then. */}
       {last > 0 && motion ? (
         <div {...choicesGroup} data-reveal="fade" data-reveal-choices="" style={revealStyle(last)}>
@@ -365,22 +371,16 @@ function SceneArticle({ className, motion, transition, rolls }: { className?: st
 }
 
 function SceneImpl({ className }: { className?: string }) {
-  const { view, runner, snapshot } = useGame()
-  const motion = useMotion()
+  const timing = useScene()
   const frame = usePart('scene-transition', '')
-  // The transition of the choice or button that led to this screen, as the runner says.
-  const pressed = snapshot.pressed?.ui?.transition
-  const transition = screenTransition(view, runner.game, pressed)
-  const fresh = useFreshRolls()
-  const rolls = { all: view.rolls, fresh: fresh.rolls, at: fresh.at }
-  // New rolls no block on screen names show for a moment over the scene.
-  const unnamed = view.minigame ? [] : unnamedRolls(fresh.rolls, view.scene.beats)
+  const { transition, motion, leave, unnamed, rolls } = timing
   return (
     <>
-      <SceneFrame transitionKey={transition.key} out={transition.out} ms={transition.ms} leave={leavingOf(pressed)} motion={motion} attrs={frame}>
-        <SceneArticle key={transition.key} className={className} motion={motion} transition={transition} rolls={rolls} />
+      <SceneFrame transitionKey={transition.key} out={transition.out} ms={transition.ms} leave={leave} motion={motion} attrs={frame}>
+        <SceneArticle key={transition.key} className={className} timing={timing} />
       </SceneFrame>
-      {unnamed.length ? <DiceOverlay key={fresh.at} rolls={unnamed} /> : null}
+      {/* New rolls no block on screen names show for a moment over the scene. */}
+      {unnamed.length ? <DiceOverlay key={rolls.at} rolls={unnamed} /> : null}
     </>
   )
 }
@@ -398,7 +398,7 @@ function SceneImpl({ className }: { className?: string }) {
  * part, with the choices after the last. A click on the scene or a key press
  * shows the rest at once. The `motion` option, or the player's reduced-motion
  * setting, turns all of it off. A speaker with a `ui.hue` gets their lines in
- * that colour.
+ * that colour. The timing is `useScene`'s; the heading is `SceneHeader`.
  *
  * Dice: a block with a `ui.dice` hint gets the `DiceRoll` of the roll the last
  * command made under that key, drawn before it, and a new roll's block waits
@@ -409,11 +409,9 @@ function SceneImpl({ className }: { className?: string }) {
  * after it, while it runs.
  *
  * Groups: the beats of a section with any ui hint are drawn together in a
- * `group` part, with each hint that's a string, a number or true/false as a
- * `data-*` attribute (`{ card: 'result' }` is `data-card="result"`), so a
- * game can style the section as one box. A section with a `ui.fold` hint
- * (what `fold()` writes) has its beats in a `fold` part inside its group, a
- * `<details>` the player opens and shuts.
+ * `BeatGroup`, and a section with a `ui.fold` hint (what `fold()` writes) has
+ * its beats in a `Fold` inside its group. Replace either, or `SceneHeader`,
+ * in `components` to restyle that part and keep the motion.
  *
  * Inputs: the inputs on offer while the scene is open (`view.inputs`) are
  * drawn after its words and before its choices, as `InputField`s in an

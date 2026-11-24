@@ -2,7 +2,7 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, render, screen } from '@testing-library/react'
 import { choice, createRunner, decide, fold, loadGame, startingState, text } from '@ifloom/engine'
-import { GameShell, checkUiHints } from '../src/index.ts'
+import { GameShell, checkUiHints, type Components } from '../src/index.ts'
 import { Reading } from './layouts.tsx'
 
 afterEach(() => {
@@ -56,5 +56,34 @@ describe('a flowing scene in the React UI', () => {
     expect([...folded.querySelectorAll('[data-beat="text"]')].map((beat) => beat.textContent)).toEqual(['Wish you were here.', 'J.'])
     expect(screen.getByText('You put the kettle on.').closest('[data-part="fold"]')).toBeNull()
     expect(screen.getByRole('button', { name: /Done/ })).toBeTruthy()
+  })
+
+  it('draws the heading, a group and a fold with a game’s own components, in the same place', () => {
+    const game = mat()
+    const runner = createRunner(game, startingState(game))
+    const components: Components = {
+      SceneHeader: ({ scene }) => <h1 data-mine="header">{scene.title.toUpperCase()}</h1>,
+      BeatGroup: ({ section, children, Default }) => (
+        <Default section={section}>
+          <hr data-mine="rule" />
+          {children}
+        </Default>
+      ),
+      Fold: ({ label, children }) => (
+        <section data-mine="fold" aria-label={label}>
+          {children}
+        </section>
+      ),
+    }
+    render(<GameShell runner={runner} layout={Reading} motion={false} components={components} />)
+    expect(document.querySelector('[data-mine="header"]')?.textContent).toBe('THE MAT')
+    act(() => {
+      runner.apply({ type: 'choose', id: 'read' })
+    })
+    const group = document.querySelector('[data-part="group"]')
+    expect(group?.querySelector('[data-mine="rule"]')).toBeTruthy()
+    expect(document.querySelector('[data-part="fold"]')).toBeNull()
+    const mine = screen.getByRole('region', { name: 'The postcard' })
+    expect([...mine.querySelectorAll('[data-beat="text"]')].map((beat) => beat.textContent)).toEqual(['Wish you were here.', 'J.'])
   })
 })

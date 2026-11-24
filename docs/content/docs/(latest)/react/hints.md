@@ -90,25 +90,13 @@ How the screen this choice leads to comes in, whatever that screen says. A bare 
 
 The runner says which choice led to the screen, in its snapshot's [`pressed`](/docs/reference/runner#what-led-here), from the command it ran, so a click, a number key, an inline action and a hotspot all count. It plays the hint once, for the screen the choice leads to. When the choice keeps the same screen, nothing plays.
 
-### screenTransition
-
-```ts
-import { screenTransition, type ScreenTransition } from '@ifloom/react'
-
-function screenTransition(view: View, game: Game, pressed?: Transition | TransitionName): ScreenTransition
-
-type ScreenTransition = { key: string; in: TransitionName; out: TransitionName; ms: number }
-```
-
-The screen in `view` and how it comes and goes, as `Scene` plays it: the scene's or room's `ui.transition` over the game's, with `pressed` (the transition of the choice that led here) deciding how it comes in. For a component of your own that animates as the scene does:
+To animate a part of your own as the scene does, read the screen's transition from [`useScene`](/docs/react/components#usescene):
 
 ```tsx
-import { screenTransition, useGame, useMotion } from '@ifloom/react'
+import { useScene } from '@ifloom/react'
 
 function Heading() {
-  const { view, runner } = useGame()
-  const motion = useMotion()
-  const transition = screenTransition(view, runner.game)
+  const { view, transition, motion } = useScene()
   return (
     <h2 key={transition.key} data-transition-in={motion ? transition.in : undefined}>
       {view.scene.title}
@@ -127,7 +115,7 @@ body: [
 ]
 ```
 
-On a [block](/docs/reference/scenes#block): it waits `delay` milliseconds after the reveal before it, or after the scene comes on, then comes in with `as`. `delay` is 800 (`DEFAULT_REVEAL_DELAY`) and `as` is `'fade'` if left out. A paragraph that should wait goes in a block of its own. The block's hint arrives on the first beat it makes, and everything from there waits, up to the next block with a reveal.
+On a [block](/docs/reference/scenes#block): it waits `delay` milliseconds after the reveal before it, or after the scene comes on, then comes in with `as`. `delay` is 800 and `as` is `'fade'` if left out. A paragraph that should wait goes in a block of its own. The block's hint arrives on the first beat it makes, and everything from there waits, up to the next block with a reveal.
 
 ```ts
 import { type Reveal } from '@ifloom/react'
@@ -137,21 +125,7 @@ type Reveal = { delay?: number; as?: TransitionName }
 
 `Scene` draws each revealed run of beats in a `reveal` part with `data-reveal` and `--ifloom-reveal-at`, and holds the choices back until the last. Every word is in the page from the start, so a screen reader reads it. A click on the scene or any key shows the rest at once, and a player who asks for reduced motion gets it all at once.
 
-### revealGroups and lastReveal
-
-```ts
-import { revealGroups, lastReveal, type RevealGroup, type RevealPoint } from '@ifloom/react'
-
-function revealGroups(beats: readonly SceneBeat[], rolled?: readonly Roll[]): RevealGroup[]
-function lastReveal(beats: readonly SceneBeat[], rolled?: readonly Roll[]): number
-
-type RevealPoint = { delay: number; as: TransitionName; at: number }
-type RevealGroup = { reveal: RevealPoint | null; dice?: Roll; beats: { beat: SceneBeat; index: number }[] }
-```
-
-`revealGroups` cuts a scene's beats into the run shown with the scene (its `reveal` is `null`) and a run for each beat with `ui.reveal`. `at` is when that reveal comes, counted from the scene coming on: its own delay added to every one before it, so delays of 800 and 1500 come at 800 and 2300. `lastReveal` is the last `at`, or 0 with none. Use them in a [`Beat`](/docs/react/components#beat) or a `Scene` of your own.
-
-With `rolled`, the rolls being shown as they land, a beat whose [`dice`](#dice) hint names one of them starts a run too. Its `dice` is that roll, and it waits `DICE_ROLL_MS` more, for the dice to settle. Leave `rolled` out and dice hints change nothing.
+[`useScene`](/docs/react/components#usescene) gives the runs as `Scene` times them, with when each comes, counted from the scene coming on: its own delay added to every one before it, so delays of 800 and 1500 come at 800 and 2300. Use it in a `Scene` of your own to keep the same timing.
 
 ## dice
 
@@ -163,21 +137,11 @@ body: [
 ]
 ```
 
-On a [block](/docs/reference/scenes#block): the key of a [roll](/docs/reference/effects#roll). When the last command rolled under that key, `Scene` draws the roll's [`DiceRoll`](/docs/react/components#diceroll) just above the block. The dice tumble for `DICE_ROLL_MS` (1000) milliseconds and settle on the faces rolled, then the total and Passed or Failed come in. The block, and anything after it, waits for them in a `reveal` part, so the words don't give the result away before the dice do. The choices wait too.
+On a [block](/docs/reference/scenes#block): the key of a [roll](/docs/reference/effects#roll). When the last command rolled under that key, `Scene` draws the roll's [`DiceRoll`](/docs/react/components#diceroll) just above the block. The dice tumble for a second and settle on the faces rolled, then the total and Passed or Failed come in. The block, and anything after it, waits for them in a `reveal` part, so the words don't give the result away before the dice do. The choices wait too.
 
 A roll the player made before the last command is drawn settled, with nothing held back. A roll no block names, such as one a [trigger](/docs/reference/triggers) made, shows for a moment over the scene in a [`DiceOverlay`](/docs/react/components#diceoverlay). With motion off, or a player who asks for reduced motion, the dice show settled at once. Either way a screen reader hears the result.
 
 The [Dice rolls and checks](/docs/recipes/dice) recipe builds the whole check.
-
-### rollFor
-
-```ts
-import { rollFor, DICE_ROLL_MS } from '@ifloom/react'
-
-function rollFor(beat: SceneBeat, rolls: readonly Roll[]): Roll | undefined
-```
-
-The roll a beat's `dice` hint names among `rolls`, such as [`view.rolls`](/docs/reference/view#rolls): the last one under that key. Undefined for a beat with no hint, or one whose roll isn't there. Use it in a [`Beat`](/docs/react/components#beat) of your own to draw dice beside a line. `DICE_ROLL_MS` is how long `DiceRoll` tumbles, in milliseconds.
 
 ## timer
 

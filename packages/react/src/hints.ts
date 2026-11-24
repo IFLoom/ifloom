@@ -24,7 +24,6 @@
  * `[[ui:image|words|path|alt]]`, and the paper the story shows:
  * `[[ui:mail|body|header|…]]`, `[[ui:prop|words|face]]` and `[[ui:mono|words]]`.
  */
-import type { Game, Roll, SceneBeat, View } from '@ifloom/engine'
 
 /** The transitions the React UI's styles draw. A game can add its own names in `game.ui.transitionNames`, with CSS of its own. */
 export const TRANSITIONS = ['fade', 'slide-up', 'slide-left', 'zoom', 'none'] as const
@@ -111,83 +110,3 @@ export const DICE_ROLL_MS = 1000
 
 /** The most pips the sidebar draws; a stat with a wider range is drawn as a bar. */
 export const MAX_PIPS = 20
-
-/** A transition as a name or a pair, as the pair. */
-function asPair(spec: Transition | TransitionName | undefined): Transition {
-  if (spec === undefined) return {}
-  return typeof spec === 'string' ? { in: spec, out: spec } : spec
-}
-
-/** The screen on show, and how it comes in and goes out, as `Scene` plays it. */
-export type ScreenTransition = { key: string; in: TransitionName; out: TransitionName; ms: number }
-
-/**
- * How the screen in `view` comes and goes: its own `ui.transition` over the
- * game's, with `pressed` (the transition of the choice or button that led
- * here) deciding how it comes in.
- */
-export function screenTransition(view: View, game: Game, pressed?: Transition | TransitionName): ScreenTransition {
-  const own = asPair(view.scene.ui?.transition)
-  const fallback = asPair(game.ui?.transition)
-  // A choice's bare name says only how the next screen comes in.
-  const lead = typeof pressed === 'string' ? { in: pressed } : (pressed ?? {})
-  return {
-    key: view.scene.key,
-    in: lead.in ?? own.in ?? fallback.in ?? 'none',
-    out: own.out ?? fallback.out ?? 'none',
-    ms: lead.ms ?? own.ms ?? fallback.ms ?? DEFAULT_TRANSITION_MS,
-  }
-}
-
-/** How a choice's transition says the screen it leaves goes off: its `out`, if it gives one. */
-export function leavingOf(pressed: Transition | TransitionName | undefined): { out?: TransitionName; ms?: number } {
-  return typeof pressed === 'object'
-    ? { ...(pressed.out !== undefined ? { out: pressed.out } : {}), ...(pressed.ms !== undefined ? { ms: pressed.ms } : {}) }
-    : {}
-}
-
-/** A reveal as the React UI plays it: where the prose holds back, and when what follows comes, from the scene coming on. */
-export type RevealPoint = { delay: number; as: TransitionName; at: number }
-
-/** A run of a scene's beats, and the reveal that holds it back (null for the first, shown with the scene). */
-export type RevealGroup = {
-  reveal: RevealPoint | null
-  /** The roll whose dice are drawn before this run, which waits for them to settle: a block's `ui.dice` naming one of `rolled`. */
-  dice?: Roll
-  /** Its beats, each with its index in the scene's beats. */
-  beats: { beat: SceneBeat; index: number }[]
-}
-
-/** The roll a beat's `ui.dice` names among `rolls`: the last one under that key. */
-export function rollFor(beat: SceneBeat, rolls: readonly Roll[]): Roll | undefined {
-  const key = beat.ui?.dice
-  return typeof key === 'string' ? rolls.findLast((roll) => roll.key === key) : undefined
-}
-
-/**
- * A scene's beats in groups: those shown with the scene, then each block with
- * `ui.reveal` and the beats after it. With `rolled`, the rolls being shown
- * as they're made, a block whose `ui.dice` names one of them starts a group
- * too, which waits `DICE_ROLL_MS` for the dice to settle.
- */
-export function revealGroups(beats: readonly SceneBeat[], rolled: readonly Roll[] = []): RevealGroup[] {
-  const groups: RevealGroup[] = [{ reveal: null, beats: [] }]
-  let at = 0
-  beats.forEach((beat, index) => {
-    const reveal = beat.ui?.reveal
-    const dice = rollFor(beat, rolled)
-    if (reveal || dice) {
-      const wait = reveal ? (typeof reveal.delay === 'number' && reveal.delay >= 0 ? reveal.delay : DEFAULT_REVEAL_DELAY) : 0
-      const delay = wait + (dice ? DICE_ROLL_MS : 0)
-      at += delay
-      groups.push({ reveal: { delay, as: reveal?.as ?? 'fade', at }, ...(dice ? { dice } : {}), beats: [] })
-    }
-    groups.at(-1)!.beats.push({ beat, index })
-  })
-  return groups
-}
-
-/** When the last reveal in these beats comes, in milliseconds from the scene coming on; 0 with none. `rolled` as for `revealGroups`. */
-export function lastReveal(beats: readonly SceneBeat[], rolled: readonly Roll[] = []): number {
-  return revealGroups(beats, rolled).reduce((last, group) => Math.max(last, group.reveal?.at ?? 0), 0)
-}

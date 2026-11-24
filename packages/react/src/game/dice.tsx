@@ -12,10 +12,9 @@
  * motion, the dice show settled at once. Either way the result is read out
  * by screen readers once it's there.
  */
-import { useEffect, useRef, useState } from 'react'
-import type { GameState, Roll, SceneBeat } from '@ifloom/engine'
+import { useEffect, useState } from 'react'
+import type { Roll } from '@ifloom/engine'
 import { DICE_ROLL_MS } from '../hints.ts'
-import { useGame } from './context.tsx'
 import { Icon } from './icon.tsx'
 import { useMotion } from './motion.tsx'
 import { overridable, usePart } from './overrides.tsx'
@@ -157,28 +156,6 @@ function DiceRollImpl({ roll, animate = true, className }: DiceRollProps) {
  */
 export const DiceRoll = overridable('DiceRoll', DiceRollImpl)
 
-/** Whether any of these beats has a `ui.dice` hint naming this roll's key. */
-function named(beats: readonly SceneBeat[], roll: Roll): boolean {
-  return beats.some((beat) => beat.ui?.dice === roll.key)
-}
-
-/**
- * The rolls the last command made, while they're new: empty for rolls a
- * loaded save, an undo or a redo brings back (the snapshot isn't `fresh`), so
- * only the rolls the player just made tumble. `at` counts each new set, to
- * start them afresh.
- */
-export function useFreshRolls(): { rolls: Roll[]; at: number } {
-  const { snapshot } = useGame()
-  const seen = useRef<{ state: GameState; rolls: Roll[]; at: number } | null>(null)
-  if (!seen.current) seen.current = { state: snapshot.state, rolls: [], at: 0 }
-  else if (seen.current.state !== snapshot.state) {
-    const fresh = snapshot.fresh && snapshot.view.rolls.length > 0
-    seen.current = { state: snapshot.state, rolls: fresh ? snapshot.view.rolls : [], at: fresh ? seen.current.at + 1 : seen.current.at }
-  }
-  return { rolls: seen.current.rolls, at: seen.current.at }
-}
-
 function DiceOverlayImpl({ rolls, className }: { rolls: readonly Roll[]; className?: string }) {
   const words = useWords()
   const [shown, setShown] = useState(true)
@@ -220,8 +197,3 @@ function DiceOverlayImpl({ rolls, className }: { rolls: readonly Roll[]; classNa
  * dismisses it (`dice-dismiss`). `Scene` draws it.
  */
 export const DiceOverlay = overridable('DiceOverlay', DiceOverlayImpl)
-
-/** The fresh rolls no beat on screen names, for `DiceOverlay`. */
-export function unnamedRolls(rolls: readonly Roll[], beats: readonly SceneBeat[]): Roll[] {
-  return rolls.filter((roll) => !named(beats, roll))
-}

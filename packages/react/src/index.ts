@@ -36,23 +36,14 @@ export type { IconName } from './game/icon.tsx'
 export { mountGame } from './game/mount.tsx'
 export { useAudio } from './game/audio.ts'
 export type { MountOptions } from './game/mount.tsx'
-export { Scene, Beat } from './game/scene.tsx'
+export { Scene, Beat, BeatGroup, Fold, SceneHeader } from './game/scene.tsx'
+export { useScene } from './game/timing.ts'
+export type { RevealBeat, RevealGroup, RevealPoint, SceneRolls, SceneTiming, ScreenTransition } from './game/timing.ts'
 export { BUILT_IN_INLINE, InlineAction, InlineImage, InlineMail, InlineModal, InlineMono, InlineProp, InlineTrigger, Tip } from './game/inline.tsx'
 export { useMotion, useReducedMotion } from './game/motion.tsx'
 // The hints the React UI reads from content's `ui` fields, typed by augmenting the engine's hint interfaces.
-export {
-  DEFAULT_REVEAL_DELAY,
-  DEFAULT_TRANSITION_MS,
-  DICE_ROLL_MS,
-  MAX_PIPS,
-  TEXT_SIZES,
-  TRANSITIONS,
-  lastReveal,
-  revealGroups,
-  rollFor,
-  screenTransition,
-} from './hints.ts'
-export type { Reveal, RevealGroup, RevealPoint, ScreenTransition, StatDisplay, Transition, TransitionName } from './hints.ts'
+export { DEFAULT_TRANSITION_MS, MAX_PIPS, TEXT_SIZES, TRANSITIONS } from './hints.ts'
+export type { Reveal, StatDisplay, Transition, TransitionName } from './hints.ts'
 export { checkUiHints } from './check.ts'
 export { ChoiceButton, ChoiceList, PriceTag } from './game/choices.tsx'
 export { Clock, StatGauge, StatList, useClock } from './game/sidebar.tsx'
@@ -60,7 +51,7 @@ export type { ClockState } from './game/sidebar.tsx'
 export { Notice, Notices } from './game/notices.tsx'
 export { NoticeStrip } from './game/strip.tsx'
 export { MinigameCard, useMinigame } from './game/minigame.tsx'
-export { DiceOverlay, DiceRoll, useFreshRolls } from './game/dice.tsx'
+export { DiceOverlay, DiceRoll } from './game/dice.tsx'
 export type { DiceRollProps } from './game/dice.tsx'
 export { Countdown, Timers, timerShare, timerUrgent, useTimer, useTimers, useTicking } from './game/timers.tsx'
 export type { CountdownProps } from './game/timers.tsx'

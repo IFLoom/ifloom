@@ -178,7 +178,7 @@ A storyline is one thread of the story, such as a friendship with Ava. It has it
 
 The engine records which scenes the player has seen, and on which turn. That lets a storyline's scenes come in order ("not until the scene before this one") and at a pace ("not until three turns after it").
 
-See [Storylines](/docs/reference/storylines) and the recipe [A friendship in stages](/docs/recipes/friendship-stages).
+See [Storylines](/docs/reference/storylines) and the recipe [A friendship in stages](/docs/how-to/build-friendships-in-stages).
 
 ## Notices, triggers and inputs
 

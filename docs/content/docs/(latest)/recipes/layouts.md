@@ -308,7 +308,7 @@ const flat = places.location({
 })
 ```
 
-The React UI's [`PanelHost`](/docs/reference/react/components#panelhost) draws the built-in `wardrobe`, `inventory`, `quests`, `people`, `stats`, `statuses`, `achievements`, `shop` and `jobs` panels, and a game's own `panels` of the same name go over them. Keep a `PanelHost` in your layout. In the prose, `[[act:wardrobe|the wardrobe]]` turns words into a button for the same action (see [Inline actions](/docs/recipes/inline-actions)). The other frameworks read `view.panel` and draw what they like for each name, as the templates' `Panel` does. [Opening a shop or a job board from anywhere](/docs/recipes/shops-and-job-boards) shows the effect in every kind of content.
+The React UI's [`PanelHost`](/docs/reference/react/components#panelhost) draws the built-in `wardrobe`, `inventory`, `quests`, `people`, `stats`, `statuses`, `achievements`, `shop` and `jobs` panels, and a game's own `panels` of the same name go over them. Keep a `PanelHost` in your layout. In the prose, `[[act:wardrobe|the wardrobe]]` turns words into a button for the same action (see [Inline actions](/docs/recipes/inline-actions)). The other frameworks read `view.panel` and draw what they like for each name, as the templates' `Panel` does. [Opening a shop or a job board from anywhere](/docs/how-to/open-a-panel) shows the effect in every kind of content.
 
 ## Where the story's text sits
 

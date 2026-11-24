@@ -173,6 +173,15 @@ export const DONE: string[] = [
   'how-to/build-a-minigame.md',
   'how-to/end-the-game.md',
   'how-to/translate-your-game.md',
+  'how-to/add-a-location.md',
+  'how-to/add-a-character.md',
+  'how-to/set-up-the-clock.md',
+  'how-to/give-the-player-things.md',
+  'how-to/open-a-panel.md',
+  'how-to/add-a-quest.md',
+  'how-to/build-friendships-in-stages.md',
+  'how-to/schedule-daily-work.md',
+  'how-to/dress-the-player.md',
 ]
 
 /** One problem: where it is, the rule it breaks, and the text that breaks it. */

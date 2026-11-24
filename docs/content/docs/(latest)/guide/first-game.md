@@ -499,15 +499,15 @@ The template you started from has a `src/game.ts`, a `src/world/stats.ts` and a 
 
 `src/world/stats.ts` declares the stats from step 3:
 
-::include[../../../../snippets/first-game/world/stats.ts]
+::include[../../../../snippets/tutorial/town/world/stats.ts]
 
 `src/world/actions.ts` holds the buttons every room offers, also from step 3:
 
-::include[../../../../snippets/first-game/world/actions.ts]
+::include[../../../../snippets/tutorial/town/world/actions.ts]
 
 `src/world/cast.ts` has Ruth from step 2. It exports `people`, because `cast` is the plugin's own name:
 
-::include[../../../../snippets/first-game/world/cast.ts]
+::include[../../../../snippets/tutorial/town/world/cast.ts]
 
 `public/art/character/ruth.svg` is her picture, her initial on a coloured disc. Vite copies `public/` into the build, so it ends up at `art/character/ruth.svg` beside the page:
 
@@ -517,19 +517,19 @@ The template you started from has a `src/game.ts`, a `src/world/stats.ts` and a 
 
 `src/story/opening.ts` has the intro from step 4 and the house the player wakes up in:
 
-::include[../../../../snippets/first-game/story/opening.ts]
+::include[../../../../snippets/tutorial/town/story/opening.ts]
 
 `src/story/high-street.ts` is the street between the house and the café:
 
-::include[../../../../snippets/first-game/story/high-street.ts]
+::include[../../../../snippets/tutorial/town/story/high-street.ts]
 
 `src/story/cafe.ts` has the café, its coffee, and Ruth's talk scene from step 4, since you talk to her at its counter:
 
-::include[../../../../snippets/first-game/story/cafe.ts]
+::include[../../../../snippets/tutorial/town/story/cafe.ts]
 
 `src/game.ts` only puts them together. Its default export is the [game module](/docs/reference/cli#the-game-module), whose `build` returns what `loadGame` returns, as in step 5. The page builds the game from it, and so do `npm run check` and `npm run playtest`:
 
-::include[../../../../snippets/first-game/game.ts]
+::include[../../../../snippets/tutorial/town/game.ts]
 
 Run `npm run check`, which prints `No problems.`, and `npm run playtest`, which plays a few days and writes what it saw to `playtest/run.txt`. The numbers it prints have a column for each stat the player has and one for each kind of entity the game lists, with how many there are: `character` is the cast's kind, so it counts Ruth. Ruth's friendship is a stat of hers, not the player's, so it has no column. See [`ifloom playtest`](/docs/reference/cli#ifloom-playtest).
 
@@ -541,15 +541,11 @@ Every runner below autosaves after every command, for the reason in step 10.
 - **React.** Replace `src/main.ts`. It lists each plugin's React UI in `plugins`, so the exits, the people with their Talk buttons and the calendar's part are drawn. Leave one out and the React UI draws nothing for that plugin, so the player couldn't leave the house. Keep `src/layout.tsx` and `src/styles.css` as they are.
 - **Vue.** Replace `src/runner.ts` and `src/App.vue`, and delete the template's other components (`Beat.vue`, `InputField.vue`, `Layout.vue`, `Line.vue`, `Minigame.vue` and `Panel.vue`), which used the parts of the old `runner.ts` this one leaves out. Keep `src/main.ts`, which mounts `App` on `#root`.
 
-::include[../../../../snippets/first-game/plain/runner.ts]{meta='tab="Plain JS" tab-group="framework"'}
+::include[../../../../snippets/tutorial/town/plain/town.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-::include[../../../../snippets/first-game/plain/main.ts]{meta='tab="Plain JS" tab-group="framework"'}
+::include[../../../../snippets/tutorial/town/react/main.ts]{meta='tab="React" tab-group="framework"'}
 
-::include[../../../../snippets/first-game/react/main.ts]{meta='tab="React" tab-group="framework"'}
-
-::include[../../../../snippets/first-game/vue/runner.ts]{meta='tab="Vue" tab-group="framework"'}
-
-::include[../../../../snippets/first-game/vue/App.vue]{meta='tab="Vue" tab-group="framework"'}
+::include[../../../../snippets/tutorial/town/vue/Town.vue]{meta='tab="Vue" tab-group="framework"'}
 
 ```ts fragment tab="Svelte" tab-group="framework"
 // src/runner.ts: replace the template's, and delete its components but App.svelte

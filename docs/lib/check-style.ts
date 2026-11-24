@@ -136,6 +136,15 @@ export const DONE: string[] = [
   'reference/browser/index.md',
   'reference/browser/audio-player.md',
   'reference/cli/index.md',
+  'tutorial/index.md',
+  'tutorial/town/create-a-game.md',
+  'tutorial/town/scenes-and-choices.md',
+  'tutorial/town/stats.md',
+  'tutorial/town/remember-what-happened.md',
+  'tutorial/town/locations.md',
+  'tutorial/town/people-and-time.md',
+  'tutorial/town/buy-something.md',
+  'tutorial/town/check-and-build.md',
 ]
 
 /** One problem: where it is, the rule it breaks, and the text that breaks it. */

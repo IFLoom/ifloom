@@ -2,6 +2,7 @@
   "title": "Latest",
   "root": "version",
   "pages": [
+    "tutorial",
     "guide",
     "recipes",
     "how-to",

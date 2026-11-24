@@ -1,0 +1,6 @@
+{
+  "title": "Tutorial",
+  "description": "Build a small game from a template, step by step",
+  "root": true,
+  "pages": ["index", "town"]
+}

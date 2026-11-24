@@ -468,7 +468,7 @@ In the React UI, the layout in `src/layout.tsx` is the closest thing to arrangin
 - **StoryMenu** is the player's menu, `GameMenu`.
 - **PassageHeader and PassageFooter** are parts above and below `Scene` in the `Story`.
 - **The title and start screen** are [pages](/docs/reference/react#pages), turned on with `pages`. [The title screen and settings](/docs/recipes/title-screen) walks through them, with a title screen of your own for the other templates.
-- **StoryInterface**, a whole interface of your own, is [your own root](/docs/reference/react/customising#8-write-your-own-root), or any of the other templates. See [Your own UI in any framework](/docs/guide/frameworks).
+- **StoryInterface**, a whole interface of your own, is [your own root](/docs/how-to/react/replace-parts#write-your-own-root), or any of the other templates. See [Your own UI in any framework](/docs/guide/frameworks).
 
 ### The `Setting` API
 
@@ -741,7 +741,7 @@ A datamap you'd keep in a variable becomes an entity when it's one of several th
 
 ## What's different
 
-- **No raw HTML or JavaScript in prose.** Prose is words with a small [markup](/docs/reference/prose#markup) for speech, pictures, video and sound. Anything that looks different is your UI's job, through [themes and CSS](/docs/reference/react/customising), and anything that computes is the game's own code, in `rules`.
+- **No raw HTML or JavaScript in prose.** Prose is words with a small [markup](/docs/reference/prose#markup) for speech, pictures, video and sound. Anything that looks different is your UI's job, through [themes and CSS](/docs/how-to/react/theme-the-react-ui), and anything that computes is the game's own code, in `rules`.
 - **Content is data in TypeScript.** There's no story file to open in a Twine editor. Scenes are objects in `.ts` files, with their words written in them. You edit them in a code editor, and you can split them across as many files as you like (see [Content and packs](/docs/explanation/content-and-packs)).
 - **State is typed and declared.** Stats, kinds, entities, settings and inputs are declared before they're used. Keys in the kv store don't need declaring, but only hold a number, a string or `true`/`false`. There's no storing objects or functions in the state, because the state is the save and must survive being written out as JSON.
 - **The whole scene redraws.** There's no changing text in place after a passage is shown. A choice changes the state, and the scene is drawn again from it.

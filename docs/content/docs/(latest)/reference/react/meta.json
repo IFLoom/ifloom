@@ -4,11 +4,9 @@
   "root": true,
   "pages": [
     "index",
-    "customising",
     "components",
     "kit",
     "hints",
-    "parts",
-    "extending"
+    "parts"
   ]
 }

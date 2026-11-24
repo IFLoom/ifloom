@@ -379,7 +379,7 @@ import './styles.css'
 mount(App, { target: document.querySelector('#root')! })
 ```
 
-Every template starts the game with [`browserRunner`](/docs/reference/browser#browserrunner), which adds undo, saves and an autosave each chapter, and draws `runner.view()` again whenever the state changes ([Running a game](/docs/guide/running-a-game) goes through it). In the Vue and Svelte templates, `src/App.vue` or `src/App.svelte` draws the view from `runner.ts`, with a component for each part: a beat, an input, the minigame. In the React template, `src/layout.tsx` is the page and `src/styles.css` its look, and [Make it your own](/docs/reference/react/customising) covers both.
+Every template starts the game with [`browserRunner`](/docs/reference/browser#browserrunner), which adds undo, saves and an autosave each chapter, and draws `runner.view()` again whenever the state changes ([Running a game](/docs/guide/running-a-game) goes through it). In the Vue and Svelte templates, `src/App.vue` or `src/App.svelte` draws the view from `runner.ts`, with a component for each part: a beat, an input, the minigame. In the React template, `src/layout.tsx` is the page and `src/styles.css` its look, and [Theme the React UI](/docs/how-to/react/theme-the-react-ui) covers both.
 
 ## 9. Check it and playtest it
 

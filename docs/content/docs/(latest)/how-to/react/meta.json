@@ -1,0 +1,4 @@
+{
+  "title": "The React UI",
+  "pages": ["set-up-the-react-ui", "theme-the-react-ui", "replace-parts", "show-plugin-uis", "extend-the-react-ui", "write-a-plugins-react-ui"]
+}

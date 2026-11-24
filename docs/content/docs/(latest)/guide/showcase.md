@@ -35,7 +35,7 @@ These are the [CLI](/docs/reference/cli)'s commands, `ifloom dev`, `build`, `che
 | `src/unlocks/supporter.ts` | The supporter content: one scene, which `ifloom build` encrypts into the page under the supporter code. The page never imports it. |
 | `.env` | The supporter code, `IFLOOM_UNLOCK_SUPPORTER`. It's public so anyone can build the showcase; a real game keeps its codes in `.env.local`, out of git. |
 | `src/main.tsx` | The page. It opens the supporter content the player's code unlocked, loads it and the player's mods over the town, makes a [runner](/docs/reference/runner) with undo, a backlog, saves, a profile and autosave, and draws it with the [React UI](/docs/reference/react)'s `GameShell`, its title screen, its mod manager and its code box. |
-| `src/styles.css` | The React UI's stylesheet with the `storybook` [preset](/docs/reference/react/customising#1-pick-a-theme-preset), and a sea-blue accent of its own. |
+| `src/styles.css` | The React UI's stylesheet with the `storybook` [preset](/docs/how-to/react/theme-the-react-ui#pick-a-preset), and a sea-blue accent of its own. |
 | `public/art/` | The pictures: a portrait each for Ava and Sam, and the two photos the camera takes. Copied into the build as `art/`. |
 | `mods/fog-season.json` | An example [mod](/docs/reference/mods) for a player to add. It isn't part of the game. |
 | `vite.config.ts` | The CLI's [Vite preset](/docs/reference/cli#the-vite-preset), and nothing else. |

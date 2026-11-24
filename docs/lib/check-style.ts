@@ -203,6 +203,12 @@ export const DONE: string[] = [
   'how-to/playtest-and-snapshot.md',
   'how-to/debug-a-game.md',
   'how-to/troubleshoot-a-missing-choice.md',
+  'how-to/react/set-up-the-react-ui.md',
+  'how-to/react/theme-the-react-ui.md',
+  'how-to/react/replace-parts.md',
+  'how-to/react/show-plugin-uis.md',
+  'how-to/react/extend-the-react-ui.md',
+  'how-to/react/write-a-plugins-react-ui.md',
 ]
 
 /** One problem: where it is, the rule it breaks, and the text that breaks it. */

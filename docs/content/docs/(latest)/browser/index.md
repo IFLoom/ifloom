@@ -96,7 +96,7 @@ const store = saves(game, indexedDbDriver())
 
 Every game can share the default database, because keys carry the game's id (see [Keys](/docs/reference/saves#keys)).
 
-**Gotcha:** the database is opened at version 1, and the store is only created along with the database. If you open an existing database with a different `store` name, there's no such store and every call rejects. Give a new store a new `database` too. If IndexedDB isn't there at all, every call rejects with `IndexedDB is not available here`.
+**Gotcha.** The driver creates its store only when it creates the database. If you open an existing database with a different `store` name, there's no such store and every call rejects. Give a new store a new `database` too. If IndexedDB isn't there at all, every call rejects with `IndexedDB is not available here`.
 
 ### IndexedDbLike
 
@@ -110,8 +110,6 @@ The part of `indexedDB` the driver needs, typed here so a test can pass its own.
 
 ```ts shape
 function startClock(runner: Runner, options?: ClockOptions): () => void
-
-type ClockOptions = { every?: number }
 ```
 
 The engine keeps no clock, so its [timers](/docs/reference/timers) and a [minigame](/docs/reference/minigames)'s timers need something to send a [`tick`](/docs/reference/commands#tick). While anything counts down (a timer in [`view.timers`](/docs/reference/view#timers), or the minigame's timer) and the page is visible, `startClock` sends one about every `every` milliseconds (100 if left out) with the real time that passed since the last.
@@ -129,27 +127,25 @@ Start it once, when the game starts, rather than only while something is on scre
 
 **Gotcha.** Start one per runner. Two clocks would each send ticks, and the timers would run twice as fast.
 
+### ClockOptions
+
+How often `startClock` ticks.
+
+```ts shape
+type ClockOptions = { every?: number }
+```
+
+| Field | Type | Default | What it is |
+|---|---|---|---|
+| `every` | `number` | `100` | Milliseconds between ticks while something counts down. Each tick carries the real time that passed, so a slower clock is as accurate, only less smooth. |
+
 ## startKeys
 
 ```ts shape
 function startKeys(runner: Runner, options?: KeysOptions): () => void
-
-type KeysOptions = {
-  choices?: boolean | ((key: number) => boolean)
-  escape?: () => boolean | void
-  map?: Record<string, CommandRef>
-  minigame?: boolean
-}
 ```
 
-The game's keyboard shortcuts, in this order:
-
-| Option | What it does | Default |
-|---|---|---|
-| `map` | Keys of the game's own, by [`KeyboardEvent.key`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) (`'m'`, `'F2'`, `' '`), each with the command it sends. They come first, so mapping `'1'` or `'Escape'` replaces what that key does. | none |
-| `escape` | What Escape does, such as opening your menu. Return `false` when it did nothing, such as with no menu to open, and the key goes on to the page untouched. | nothing |
-| `choices` | The number keys 1 to 9 pick the choices on screen, in [`numberedChoices`](#numberedchoices) order. A greyed-out choice is skipped. Pass a function to pick yourself: it gets the key's number and returns whether it picked anything. | on |
-| `minigame` | A minigame's inputs from the keyboard too, through [`startMinigameKeys`](#startminigamekeys). | on |
+The game's keyboard shortcuts: the game's own keys in `map`, then Escape, then the number keys for the choices, then a minigame's keys. [`KeysOptions`](#keysoptions) says which are on.
 
 A key the player types into a field, a key held with Ctrl, Alt, Meta or Shift, and any key while a dialog is open are left alone (see [`ignoredKey`](#ignoredkey) and [`dialogOpen`](#dialogopen)). A key it uses is kept from doing anything else.
 
@@ -208,6 +204,26 @@ onUnmounted(() => stop())
 ```
 
 The templates call `startKeys(runner)` with no options, so the number keys pick choices and a minigame's keys press its inputs. If you start it yourself with options, don't also keep the template's call, or each key is handled twice.
+
+### KeysOptions
+
+Which shortcuts `startKeys` handles, in the order it tries them.
+
+```ts shape
+type KeysOptions = {
+  choices?: boolean | ((key: number) => boolean)
+  escape?: () => boolean | void
+  map?: Record<string, CommandRef>
+  minigame?: boolean
+}
+```
+
+| Field | Type | Default | What it is |
+|---|---|---|---|
+| `map` | `Record<string, CommandRef>` | none | Keys of the game's own, by [`KeyboardEvent.key`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) (`'m'`, `'F2'`, `' '`), each with the command it sends. They come first, so mapping `'1'` or `'Escape'` replaces what that key does. |
+| `escape` | `() => boolean \| void` | nothing | What Escape does, such as opening your menu. Return `false` when it did nothing, such as with no menu to open, and the key goes on to the page untouched. |
+| `choices` | `boolean \| ((key: number) => boolean)` | `true` | The number keys 1 to 9 pick the choices on screen, in [`numberedChoices`](#numberedchoices) order. A greyed-out choice is skipped. Pass a function to pick yourself: it gets the key's number and returns whether it picked anything. |
+| `minigame` | `boolean` | `true` | A minigame's inputs from the keyboard too, through [`startMinigameKeys`](#startminigamekeys). |
 
 ## startMinigameKeys
 

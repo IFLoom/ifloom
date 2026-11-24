@@ -139,7 +139,12 @@ type PluginPanel = {
 }
 ```
 
-A panel a plugin UI draws by name. `component` gets what the panel was opened with as `data`, the panel's `with`. The dialog's title is content's `with.title` if it gave one, else `title`: a key of the module's words, or a function of `data` and the view, such as the shop's, which gives the vendor's name. A game's own panel of the same name keeps the plugin UI's title.
+A panel a plugin UI draws by name. A game's own panel of the same name keeps the plugin UI's title.
+
+| Field | Type | What it is |
+|---|---|---|
+| `component` | `PanelComponent` | Draws the panel. It gets what the panel was opened with as `data`, the panel's `with`. |
+| `title` | `string \| ((data, view) => string \| undefined)` | The dialog's title when content's `with.title` gives none: a key of the module's words, or a function of `data` and the view, such as the shop's, which gives the vendor's name. |
 
 ### PluginPage
 
@@ -165,7 +170,7 @@ These are the parts a plugin UI reaches for most.
 | Buttons and prices | [`buttonVariants`](/docs/react/components#button), [`badgeVariants`](/docs/react/components#badge) | [`ChoiceButton`](/docs/react/components#choicebutton), [`ChoiceList`](/docs/react/components#choicelist), [`PriceTag`](/docs/react/components#pricetag) |
 | Dialogs | [`PartDialog`](/docs/react/components#partdialog), [`useDialogParts`](#usedialogparts), [`Dialog`](/docs/react/components#dialog) | |
 | The page | [`PROSE`](#prose), [`PageHeading`](#pageheading-and-backbutton), [`BackButton`](#pageheading-and-backbutton), [`usePageParts`](#pageheading-and-backbutton) | [`Section`](/docs/react/components#section), [`StatGauge`](#statgauge) |
-| Parts and overrides | [`useKitPart`](#usekitpart), [`KIT_PARTS`](#kit_parts), [`KIT_LOOKS`](#kit_looks), [`KIT_LAYOUT`](#kit_layout), [`overridable`](/docs/react/components#overridable), `Override` | [`usePart`](/docs/react/components#usepart), [`OverridableComponents`](#overridablecomponents-and-partnames), [`PartNames`](#overridablecomponents-and-partnames) |
+| Parts and overrides | [`useKitPart`](#usekitpart), [`KIT_PARTS`](#kit_parts), [`KIT_LOOKS`](#kit_looks), [`KIT_LAYOUT`](#kit_layout), [`overridable`](/docs/react/components#overridable), `Override` | [`usePart`](/docs/react/components#usepart), [`OverridableComponents`](/docs/react/components#overridablecomponents-and-partnames), [`PartNames`](/docs/react/components#overridablecomponents-and-partnames) |
 | Pictures and prose | [`Icon`](/docs/react/components#icon) | [`Picture`](/docs/react/components#picture), [`Video`](/docs/react/components#video), [`Beat`](/docs/react/components#beat), [`LayeredPicture`](/docs/react/components#layeredpicture), [`assetUrl`](/docs/react/components#asseturl) |
 
 ## Writing a plugin's UI
@@ -239,24 +244,22 @@ Prefix your word keys with something of your plugin's, as the template does (`ra
 
 ```ts shape
 function pluginKit<const Id extends string, const W extends Words = Record<never, string>>(id: Id, words?: W): PluginKit<Id, W>
-
-type PluginKit<Id extends string = string, W extends Words = Words> = { readonly id: Id; readonly words: W }
 ```
 
 Declares a plugin's UI once: the plugin's id, as its engine side names it, and its words in English. Hand it to [`usePlugin`](#useplugin) in each component, and spread it into the module's `PluginUi`, `{ ...WEATHER, layout: { … } }`, so the `PluginUi`'s `id` and `words` come from the same place. A plugin UI with no words of its own leaves `words` out.
+
+#### PluginKit
+
+What `pluginKit` returns: the plugin's id and its words, typed, for `usePlugin` and the `PluginUi`.
+
+```ts shape
+type PluginKit<Id extends string = string, W extends Words = Words> = { readonly id: Id; readonly words: W }
+```
 
 ### usePlugin
 
 ```ts shape
 function usePlugin<Id extends string, W extends Words>(kit: PluginKit<Id, W>): PluginControls<Id, W>
-
-type PluginControls<Id extends string, W extends Words> = {
-  view: PluginViewOf<Id> | undefined
-  words: Say<(keyof W & string) | UiStringKey>
-  send: (command: CommandRef) => Applied
-}
-
-type PluginViewOf<Id extends string> = Id extends keyof ViewRegistry ? ViewRegistry[Id] : unknown
 ```
 
 What a component of a plugin's UI needs, inside a [`GameProvider`](/docs/react/components#gameprovider):
@@ -266,6 +269,19 @@ What a component of a plugin's UI needs, inside a [`GameProvider`](/docs/react/c
 - `send` runs a command, as [`useGame`](/docs/react/components#usegame)'s does: a button's `command` from the view, or one the plugin's helpers write, such as `send(shop.buy(vendor, entity))`.
 
 For the rest of the game, the runner, the snapshot or the whole view, use `useGame` beside it.
+
+#### PluginControls and PluginViewOf
+
+What `usePlugin` returns, and the type of its `view`: the plugin's slice as its `ViewRegistry` entry declares it, else `unknown`. The fields are described above.
+
+```ts shape
+type PluginControls<Id extends string, W extends Words> = {
+  view: PluginViewOf<Id> | undefined
+  words: Say<(keyof W & string) | UiStringKey>
+  send: (command: CommandRef) => Applied
+}
+type PluginViewOf<Id extends string> = Id extends keyof ViewRegistry ? ViewRegistry[Id] : unknown
+```
 
 ## Styling a plugin's UI
 
@@ -311,10 +327,17 @@ A preset or a game's stylesheet styles a kit part with every part like it:
 
 ```ts shape
 const KIT_PARTS: readonly KitPart[]
-type KitPart = 'card' | 'item' | 'title' | 'heading' | 'note' | 'meter' | 'commands' | 'opener' | 'form' | 'input' | 'badge' | 'thumb' | 'label'
 ```
 
-What a part can be like, as `data-kit` says.
+Every [`KitPart`](#kitpart), in a list, for a check or a stylesheet of your own.
+
+#### KitPart
+
+What a part can be like, as `data-kit` says. [`useKitPart`](#usekitpart) takes one.
+
+```ts shape
+type KitPart = 'card' | 'item' | 'title' | 'heading' | 'note' | 'meter' | 'commands' | 'opener' | 'form' | 'input' | 'badge' | 'thumb' | 'label'
+```
 
 | Kit part | What it is | First-party examples |
 |---|---|---|
@@ -411,17 +434,3 @@ function AlmanacPage() {
   )
 }
 ```
-
-### OverridableComponents and PartNames
-
-```ts shape
-interface OverridableComponents {
-  Game: Override<GameProps>
-  // …
-}
-interface PartNames {
-  // …
-}
-```
-
-The components a game's [`components`](/docs/react/components#components) can replace, and the parts a plugin UI adds to [`PartKey`](/docs/react/components#partkey). A plugin's `/react` augments both, as [above](#writing-a-plugins-ui), so `components` and `classes` take its names typed and `overridable` and `usePart` accept them.

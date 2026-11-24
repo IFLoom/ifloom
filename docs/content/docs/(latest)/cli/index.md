@@ -261,19 +261,6 @@ See https://ifloom.dev/docs/cli#the-game-module
 
 ```ts shape
 function defineGame(def: GameModuleDef): GameModule
-
-type GameModuleDef = {
-  build: (options: BuildOptions) => { game: Game; problems: Problem[] }
-  start?: (game: Game) => GameState
-  probes?: (game: Game) => Probe[]
-  policy?: Policy
-}
-
-type BuildOptions = { unlocked: Pack[] }
-
-type GameModule = Omit<GameModuleDef, 'build'> & {
-  build: (options?: Partial<BuildOptions>) => { game: Game; problems: Problem[] }
-}
 ```
 
 - **`build`** makes the game. It returns what [`loadGame`](/docs/reference/loader#loadgame) returns, or at least its `game` and its `problems`. The CLI prints each [`Problem`](/docs/reference/checks#problem-and-describeproblem) with `describeProblem` and doesn't check the game a second time. `unlocked` holds the packs to load over the content, for `loadGame`'s `{ packs: unlocked }`. `ifloom check` passes a game's [locked content](#locked-content-in-a-check) here. Otherwise it's empty. The module `defineGame` returns has a `build` you can call with no options, as a page does.
@@ -283,12 +270,27 @@ type GameModule = Omit<GameModuleDef, 'build'> & {
 
 `build` returns a loaded game, never a `Game` put together by hand. `loadGame` is the one way content becomes a game. It merges the plugins' content and the packs, lays the words tables over them and runs the content checker, and the problems it finds are what `check` prints. A game that's built more than one way, such as with a debug plugin in development, takes options of its own and calls that from `build`. Small Town's `build` is `({ unlocked }) => smallTown({ unlocked })`: the release build, with no debug plugin and no mods.
 
+#### GameModuleDef, BuildOptions and GameModule
+
+What `defineGame` takes, what its `build` is given, and what it returns: the same fields, with a `build` you can call with no options. Each field is described under [`defineGame`](#definegame).
+
+```ts shape
+type GameModuleDef = {
+  build: (options: BuildOptions) => { game: Game; problems: Problem[] }
+  start?: (game: Game) => GameState
+  probes?: (game: Game) => Probe[]
+  policy?: Policy
+}
+type BuildOptions = { unlocked: Pack[] }
+type GameModule = Omit<GameModuleDef, 'build'> & {
+  build: (options?: Partial<BuildOptions>) => { game: Game; problems: Problem[] }
+}
+```
+
 ### probe
 
 ```ts shape
 function probe(name: string, game: Game, steps: readonly ProbeStep[], from?: Probe | GameState): Probe
-
-type ProbeStep = Effect | { play: CommandRef }
 ```
 
 A probe made by playing. It starts from the game's [starting state](/docs/reference/commands#startingstate), or from `from` (another probe, or a state), and takes each step in order:
@@ -320,6 +322,14 @@ A command that's refused throws, with the probe's name and the reason, such as `
 - **Only a command counts as a viewing.** The `scene` effect opens a scene but doesn't add to `seen`, as in play, where only the scene a command leaves the player looking at is seen. To have a scene seen, play it: `{ play: { type: 'scene', id: 'ava.hi' } }`, then `{ play: { type: 'leave' } }`.
 - **Effects skip the locks; commands don't.** An effect is applied whatever the locks and guards say. A command is refused when the player's would be, so play commands in the order a player could press them.
 - **A `turn` effect runs the whole turn.** The game's `onTurn` rules and every plugin's hooks run each time, as in play, so rent is paid and messages arrive. `calendar/set` alone ends no turn and leaves the turn count where it was.
+
+#### ProbeStep
+
+One step of a probe: an effect to apply, or `{ play }` with a command to play.
+
+```ts shape
+type ProbeStep = Effect | { play: CommandRef }
+```
 
 ## ifloom check
 
@@ -584,11 +594,6 @@ It needs `@ifloom/plugin-unlocks` among the game's dependencies, since the hash 
 import type { UserConfig } from 'vite'
 
 function ifloom(options?: IfloomViteOptions): UserConfig
-
-type IfloomViteOptions = {
-  singleFile?: boolean
-  vite?: UserConfig
-}
 ```
 
 The Vite config every IFLoom game builds with, from `@ifloom/cli/vite`:
@@ -619,11 +624,6 @@ import { ifloom } from '@ifloom/cli/vite'
 export default ifloom({ vite: { plugins: [react(), tailwindcss()], resolve: { dedupe: ['react', 'react-dom'] } } })
 ```
 
-| Option | What it does | Default |
-|---|---|---|
-| `singleFile` | Puts the script and stylesheet inside `index.html`. `false` leaves them as files beside it. | `true` |
-| `vite` | Any other Vite config, merged under the preset. Its `plugins` come before the preset's single-file step. A framework's plugin goes here, such as `ifloom({ vite: { plugins: [vue()] } })`, as the `react`, `vue` and `svelte` templates do. | `{}` |
-
 ```ts
 import { ifloom } from '@ifloom/cli/vite'
 import { myPlugin } from './my-plugin.ts'
@@ -638,6 +638,24 @@ export default ifloom({ vite: { server: { port: 5180 }, plugins: [myPlugin()] } 
 - **`--out` wins over `build.outDir`.** `ifloom build` always passes an output folder (`dist` if you give none), so an `outDir` in the config is ignored. Use `--out`.
 - **`singleFile: false` won't open from disk.** The script and stylesheet are then loaded from files beside the page, which a browser refuses on a `file://` address (see [Shipping a game](/docs/guide/shipping#why-a-folder-that-opens-from-disk-is-hard)). Such a folder works when served over the web, as itch.io does. But `ifloom build`'s check reports its module script, so the build exits with `1`.
 
+### IfloomViteOptions
+
+What `ifloom()` takes.
+
+```ts shape
+import type { UserConfig } from 'vite'
+
+type IfloomViteOptions = {
+  singleFile?: boolean
+  vite?: UserConfig
+}
+```
+
+| Field | Type | Default | What it is |
+|---|---|---|---|
+| `singleFile` | `boolean` | `true` | Puts the script and stylesheet inside `index.html`. `false` leaves them as files beside it. |
+| `vite` | `UserConfig` | `{}` | Any other Vite config, merged under the preset. Its `plugins` come before the preset's single-file step. A framework's plugin goes here, such as `ifloom({ vite: { plugins: [vue()] } })`, as the `react`, `vue` and `svelte` templates do. |
+
 ## For scripts
 
 These are the parts the commands are made from, exported from `@ifloom/cli` for a build script or a test that wants them without the command line. `@ifloom/cli` also exports [`defineGame`](#definegame) and [`probe`](#probe), and their types, for a script that wants everything from one import.
@@ -651,19 +669,6 @@ import type { BuildOptions, GameModule, GameModuleDef, NewGameOptions, Playtest,
 
 ```ts shape
 function newGame(options: NewGameOptions): { dir: string; files: string[]; theme: ThemeName | null }
-
-type NewGameOptions = {
-  name: string
-  template?: TemplateName
-  into?: string
-  theme?: ThemeName | 'none'
-}
-
-type TemplateName = 'react' | 'vanilla' | 'vue' | 'svelte' | 'next' | 'novel' | 'cafe' | 'town' | 'plugin'
-const TEMPLATES: readonly TemplateName[]
-
-type ThemeName = 'paper' | 'terminal' | 'studio' | 'storybook'
-const THEMES: readonly ThemeName[]
 ```
 
 What `ifloom new` runs. It copies a template into `into` (a folder named `name` in the current folder if left out, or `games/<name>` inside a clone of the IFLoom repository), sets the package name, fills in the title (for `plugin`, the plugin's id and names too), and returns the folder and the files it wrote. Inside a clone of the repository the game's `tsconfig.json` extends the repository's `tsconfig.base.json`, and anywhere else it has those settings written out in full. It installs nothing. It throws on a name npm wouldn't accept, a template or a theme that doesn't exist, or a folder that isn't empty.
@@ -675,6 +680,38 @@ import { newGame } from '@ifloom/cli'
 
 const { dir } = newGame({ name: 'rainy-day', template: 'vanilla', into: '/tmp/rainy-day' })
 const { theme } = newGame({ name: 'market-day', theme: 'paper', into: '/tmp/market-day' }) // 'paper'
+```
+
+#### NewGameOptions
+
+What `newGame` takes.
+
+```ts shape
+type NewGameOptions = {
+  name: string
+  template?: TemplateName
+  into?: string
+  theme?: ThemeName | 'none'
+}
+```
+
+| Field | Type | Default | What it is |
+|---|---|---|---|
+| `name` | `string` | | The package name, and the folder's when there's no `into`. |
+| `template` | [`TemplateName`](#templatename-and-themename) | `'react'` | What to copy. |
+| `into` | `string` | `./<name>`, or `games/<name>` in a clone of the repository | The folder to make the game in. It must be empty or missing. |
+| `theme` | `ThemeName \| 'none'` | one at random for `react` and `next`, an example's own | The React UI's preset. `'none'` takes it out. |
+
+#### TemplateName and ThemeName
+
+The templates `ifloom new` can copy and the React UI's presets, each with the list of them all, `TEMPLATES` and `THEMES`.
+
+```ts shape
+type TemplateName = 'react' | 'vanilla' | 'vue' | 'svelte' | 'next' | 'novel' | 'cafe' | 'town' | 'plugin'
+const TEMPLATES: readonly TemplateName[]
+
+type ThemeName = 'paper' | 'terminal' | 'studio' | 'storybook'
+const THEMES: readonly ThemeName[]
 ```
 
 ### checkBuild
@@ -803,11 +840,6 @@ const { game, problems, files } = gameFrom(module)
 
 ```ts shape
 function playtest(game: Game, start: GameState, policy?: Policy, options?: PlaytestOptions): Playtest
-
-type PlaytestOptions = {
-  turns?: number  // 7
-  steps?: number  // 2000
-}
 ```
 
 What `ifloom playtest` runs. It plays `game` from `start`, asking `policy` (default [`explorer()`](#explorer)) for each command and running it with [`apply`](/docs/reference/commands#apply). It stops at the first of:
@@ -835,6 +867,22 @@ it('charges rent on Sunday', () => {
 
 **Gotcha.** A refused command still counts as a step and leaves the state as it was. So a policy that ignores refusals and asks for something else each time runs to the step limit on the same screen. The `refusals` list shows it.
 
+#### PlaytestOptions
+
+When `playtest` stops, at the latest.
+
+```ts shape
+type PlaytestOptions = {
+  turns?: number
+  steps?: number
+}
+```
+
+| Field | Type | Default | What it is |
+|---|---|---|---|
+| `turns` | `number` | `7` | How many turns to play from `start`'s turn. |
+| `steps` | `number` | `2000` | How many commands to send at most, refused ones included. |
+
 ### Playtest
 
 ```ts shape
@@ -848,9 +896,12 @@ type Playtest = {
 
 What [`playtest`](#playtest) returns.
 
-- `transcript` is every screen through [`screenText`](#screentext), each followed by `> ` and the command as JSON, then `  refused: <reason>` when it was refused. Entries are separated by blank lines.
-- `refusals` lists each refused command with its turn (counted from 1) and the engine's reason. Each one is a bug in the policy or in the game.
-- `state` is where it stopped.
+| Field | Type | What it is |
+|---|---|---|
+| `transcript` | `string` | Every screen through [`screenText`](#screentext), each followed by `> ` and the command as JSON, then `  refused: <reason>` when it was refused. Entries are separated by blank lines. |
+| `turns` | [`TurnMetrics[]`](#turnmetrics) | What each turn ended with. |
+| `refusals` | `{ turn, command, reason }[]` | Each refused command with its turn (counted from 1) and the engine's reason. Each one is a bug in the policy or in the game. |
+| `state` | `GameState` | Where it stopped. |
 
 ### TurnMetrics
 
@@ -1032,8 +1083,4 @@ it('every scene and place reads as it did', () => {
 
 ### Probe
 
-```ts shape
-type Probe = { name: string; state: GameState }
-```
-
-A state to render every scene in, made with [`probe`](#probe). It's the engine's [`Probe`](/docs/reference/checks#probes), the same shape [`checkGame`](/docs/reference/checks#checkgame) takes in its `probes`. `name` goes in each block's header, `=== <scene> @ <name>`, so keep it short and without spaces.
+A state to render every scene in, made with [`probe`](#probe): its `name` and its `state`. It's the engine's [`Probe`](/docs/reference/checks#probe), re-exported, so its fields are listed there, and it's what [`checkGame`](/docs/reference/checks#checkgame) takes in its `probes`. `name` goes in each block's header, `=== <scene> @ <name>`, so keep it short and without spaces.

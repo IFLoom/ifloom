@@ -61,7 +61,6 @@ import { TRANSITIONS, type TransitionName, type Transition } from '@ifloom/react
 
 const TRANSITIONS = ['fade', 'slide-up', 'slide-left', 'zoom', 'none'] as const
 type TransitionName = (typeof TRANSITIONS)[number] | (string & {})
-type Transition = { in?: TransitionName; out?: TransitionName; ms?: number }
 ```
 
 | Name | Coming in | Going out |
@@ -73,6 +72,20 @@ type Transition = { in?: TransitionName; out?: TransitionName; ms?: number }
 | `none` | Appears at once. | Goes at once. |
 
 A transition takes 300 milliseconds when nothing says.
+
+### Transition
+
+The value of a `transition` hint, on a scene, a choice or the game.
+
+```ts shape
+type Transition = { in?: TransitionName; out?: TransitionName; ms?: number }
+```
+
+| Field | Type | Default | What it is |
+|---|---|---|---|
+| `in` | `TransitionName` | the game's, else `'none'` | How the screen comes in. |
+| `out` | `TransitionName` | the game's, else `'none'` | How it goes out when the next one comes. |
+| `ms` | `number` | `300` | How long each takes, in milliseconds. |
 
 ### Your own transition names
 
@@ -240,6 +253,10 @@ stats: [
 
 On a [stat](/docs/reference/stats#statdef), `StatDisplay`: how the [`StatList`](/docs/react/components#statlist) and [`Relationships`](/docs/plugins/cast#relationships) draw it. `'number'` (the default) is the value as the game formats it. `'bar'` adds a bar under it from its `min` to its `max`. `'pips'` adds a row of pips, one per point, which suits a range of 20 or less. A wider range is drawn as a bar, and `checkUiHints` reports it.
 
+### StatDisplay
+
+The value of a stat's `display` hint.
+
 ```ts shape
 import type { StatDisplay } from '@ifloom/react'
 
@@ -291,12 +308,26 @@ On the game: which of its [ui settings](/docs/reference/settings) the React UI h
 - **`textSize`** names a ui `choice`. [`TextSize`](/docs/react/components#textsize), which `GameShell` draws, copies its value to `data-text-size` on `<html>`, now and whenever it changes, so it applies on every page, the title's included. The styles size the page from its root for `small` (87.5%), `normal` (the browser's own), `large` (118.75%) and `larger` (137.5%). Everything is sized in `rem`, so the whole page scales. An option of another name needs CSS of your own, `:root[data-text-size="huge"] { font-size: 150%; }`.
 - **`images`** names a ui `toggle`. While it's off, [`Picture`](/docs/react/components#picture) and [`Video`](/docs/react/components#video) draw nothing: a scene's picture, pictures in the prose, portraits, a place's picture. A [`LayeredPicture`](/docs/react/components#layeredpicture) stays, since its hotspots are part of play.
 
-`TEXT_SIZES` lists the sizes the styles draw:
+### TEXT_SIZES
+
+```ts shape
+const TEXT_SIZES: readonly ['small', 'normal', 'large', 'larger']
+```
+
+The `textSize` options the styles draw, in order. Use it for the options of your own text-size setting, so each one is a size the React UI knows:
 
 ```ts
 import { TEXT_SIZES } from '@ifloom/react'
+import type { SettingDef } from '@ifloom/engine'
 
-TEXT_SIZES // ['small', 'normal', 'large', 'larger']
+const textSize: SettingDef = {
+  id: 'textSize',
+  label: 'Text size',
+  type: 'choice',
+  affects: 'ui',
+  default: 'normal',
+  options: TEXT_SIZES.map((size) => ({ value: size, label: size })),
+}
 ```
 
 A sound switch is the engine's, since the audio player reads it too: name it in the game's [`audio.sound`](/docs/reference/audio#gameaudio) (on is sound) or `audio.mute` (on is silence).
@@ -377,12 +408,6 @@ import { checkUiHints, type CheckUiOptions } from '@ifloom/react'
 import type { Game } from '@ifloom/engine'
 
 function checkUiHints(game: Game, options?: CheckUiOptions): string[]
-
-type CheckUiOptions = {
-  plugins?: readonly PluginUi[]   // the plugin UIs you give mountGame: their hints and inline pieces are known
-  inline?: InlineComponents       // your own inline pieces, the same object you give mountGame
-  allow?: readonly string[]       // hints and inline names not to report, such as another UI's
-}
 ```
 
 What's wrong with a game's hints for the React UI, as `where: what` lines, or nothing when all is well. The engine's [content checker](/docs/reference/checks) only makes sure a hint is data, so this is where these are caught:
@@ -421,11 +446,16 @@ import type { Game } from '@ifloom/engine'
 
 type UiHint = {
   name: string
-  on: readonly UiTarget[]   // 'scene' | 'choice' | 'block' | 'stat' | 'entity' | 'game'
+  on: readonly UiTarget[]
   check?: (value: unknown, cx: HintCheckContext) => string | readonly string[] | undefined
 }
-type HintCheckContext = { game: Game; on: UiTarget; id?: string; transitions: ReadonlySet<string> }
 ```
+
+| Field | Type | What it is |
+|---|---|---|
+| `name` | `string` | The hint's key under `ui`. |
+| `on` | `readonly UiTarget[]` | Where content writes it: `'scene'`, `'choice'`, `'block'`, `'stat'`, `'entity'` or `'game'`. |
+| `check` | `(value, cx) => string \| readonly string[] \| undefined` | What's wrong with a value, or nothing. |
 
 Each hint on this page is declared once inside the React UI as a `UiHint`: its name, where content writes it, and a `check` that returns what's wrong with a value. `checkUiHints` is built from those declarations, so a hint is known only on the places its `on` names. Each inline piece is declared once the same way, with its name, its component and its check. The check is told the game, what the hint is on, that thing's `id` (a stat's, a scene's, a choice's, a kind's or an entity's reference) and the transition names the game has. Each problem it returns is worded to follow the place, such as `ui.timer "kettle" is not a timer the game has`.
 
@@ -438,6 +468,32 @@ import { expect } from 'vitest'
 
 expect(checkUiHints(game, { plugins: [shopUi] })).toEqual([])
 ```
+
+### HintCheckContext
+
+What a hint's `check` is told: the game, what the hint is on, that thing's `id` and the game's transition names.
+
+```ts shape
+type HintCheckContext = { game: Game; on: UiTarget; id?: string; transitions: ReadonlySet<string> }
+```
+
+### CheckUiOptions
+
+What `checkUiHints` is told about the game's UI, so it knows the hints and pieces that aren't built in.
+
+```ts shape
+type CheckUiOptions = {
+  plugins?: readonly PluginUi[]
+  inline?: InlineComponents
+  allow?: readonly string[]
+}
+```
+
+| Field | Type | Default | What it is |
+|---|---|---|---|
+| `plugins` | `readonly PluginUi[]` | none | The plugin UIs you give `mountGame`. Their hints and inline pieces are known. |
+| `inline` | `InlineComponents` | none | Your own inline pieces, the same object you give `mountGame`. |
+| `allow` | `readonly string[]` | none | Hint and inline piece names not to report, such as another UI's. |
 
 ## See it in the showcase
 

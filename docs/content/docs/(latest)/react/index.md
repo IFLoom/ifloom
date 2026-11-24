@@ -168,33 +168,9 @@ Here `src/layout.tsx` is the page, a copy of [the default layout](#layouts) to c
 import type { Game } from '@ifloom/engine'
 
 function mountGame(game: Game | { game: Game; problems?: readonly unknown[] }, options?: MountOptions): Promise<Runner>
-
-type MountOptions = Omit<GameShellProps, 'runner'> & {
-  root?: string | Element
-  start?: GameState
-  runner?: RunnerOptions
-}
 ```
 
-`mountGame` makes a runner for the game with `@ifloom/browser`'s [`browserRunner`](/docs/browser#browserrunner) and draws [`GameShell`](#gameshell) into the page, inside React's `StrictMode`. It's async because `browserRunner` reads the player's profile first, so the game starts with their settings. It resolves to the runner, so your own code can still send commands or read the state. Most games don't need it and call `mountGame` without waiting.
-
-It sets up what most games want:
-
-| Option | Default |
-|---|---|
-| `root` | `'#root'`. An element, or a selector for one. It rejects if nothing matches. |
-| `start` | A new game, `startingState(game, { seed, settings })`, with a random seed so each playthrough draws its own variants, and the player's stored play settings. |
-| `runner` | `browserRunner`'s defaults: `{ history: { depth: 50 }, saves: saves(game, localStorageDriver()), profile: profile(game, localStorageDriver()), autosave: { every: 'turn' } }`. Whatever you pass is merged over these. |
-| `pages` | Off, so the game starts straight away. `true`, or [`PagesOptions`](/docs/react/components#pagesoptions), opens on a title screen. See [Pages](#pages). |
-| `components` | None. Your own components in place of built-in ones, by name. See [Replace a component](/docs/react/customising#6-replace-a-component). |
-| `classes` | None. Tailwind classes for any part, by its `data-part` name. See [Change the built-in classes](/docs/react/customising#4-change-the-built-in-classes). |
-| `unstyled` | `false`. `true` drops every built-in class. |
-| `viewer` | `true`. Clicking a picture or a clip in the story opens it large in the [`MediaViewer`](/docs/react/components#mediaviewer). `false` turns that off. See [Pictures and video](#pictures-and-video). |
-| `keys` | Off. `true` turns on the keyboard shortcuts: 1 to 9 for the choices on screen, each showing its number, and Escape for the menu. [`KeyOptions`](/docs/react/components#keyoptions) adds keys of your own with `map`. A minigame's own keys work either way. |
-| `motion` | `true`. Scene transitions and prose reveals play. `false` shows every scene and every line at once. A player whose system asks for reduced motion gets them at once either way. |
-| `audio` | On when the game lists any tracks in [`game.audio`](/docs/reference/audio). `false` turns sound off, and an object is passed to [`startAudio`](/docs/browser/audio-player#startaudio) as its [options](/docs/browser/audio-player#audiooptions). See [Sound](#sound). |
-
-Any other option goes to `GameShell` as a prop, such as `layout`, `panels` or `mods`. `layout` takes any component, so a page that isn't a side column and a story at all is a layout too. See [Write your own root](/docs/react/customising#8-write-your-own-root).
+`mountGame` makes a runner for the game with `@ifloom/browser`'s [`browserRunner`](/docs/browser#browserrunner) and draws [`GameShell`](#gameshell) into the page, inside React's `StrictMode`. It's async because `browserRunner` reads the player's profile first, so the game starts with their settings. It resolves to the runner, so your own code can still send commands or read the state. Most games don't need it and call `mountGame` without waiting. `options` is a [`MountOptions`](#mountoptions), and every one has a default that suits most games.
 
 ```ts
 import { mountGame } from '@ifloom/react'
@@ -231,11 +207,47 @@ createRoot(document.getElementById('root')!).render(<GameShell runner={runner} p
 
 The shell redraws whenever the runner's state changes, so undo, loading a save and a command sent from anywhere else all show at once.
 
+### MountOptions
+
+What [`mountGame`](#mountgame) takes: every prop of [`GameShell`](#gameshellprops) but the runner, and how to make the runner.
+
+```ts shape
+type MountOptions = Omit<GameShellProps, 'runner'> & {
+  root?: string | Element
+  start?: GameState
+  runner?: RunnerOptions
+}
+```
+
+| Option | Default and what it is |
+|---|---|
+| `root` | `'#root'`. An element, or a selector for one. It rejects if nothing matches. |
+| `start` | A new game, `startingState(game, { seed, settings })`, with a random seed so each playthrough draws its own variants, and the player's stored play settings. |
+| `runner` | `browserRunner`'s defaults: `{ history: { depth: 50 }, saves: saves(game, localStorageDriver()), profile: profile(game, localStorageDriver()), autosave: { every: 'turn' } }`. Whatever you pass is merged over these. |
+| `pages` | Off, so the game starts straight away. `true`, or [`PagesOptions`](/docs/react/components#pagesoptions), opens on a title screen. See [Pages](#pages). |
+| `components` | None. Your own components in place of built-in ones, by name. See [Replace a component](/docs/react/customising#6-replace-a-component). |
+| `classes` | None. Tailwind classes for any part, by its `data-part` name. See [Change the built-in classes](/docs/react/customising#4-change-the-built-in-classes). |
+| `unstyled` | `false`. `true` drops every built-in class. |
+| `viewer` | `true`. Clicking a picture or a clip in the story opens it large in the [`MediaViewer`](/docs/react/components#mediaviewer). `false` turns that off. See [Pictures and video](#pictures-and-video). |
+| `keys` | Off. `true` turns on the keyboard shortcuts: 1 to 9 for the choices on screen, each showing its number, and Escape for the menu. [`KeyOptions`](/docs/react/components#keyoptions) adds keys of your own with `map`. A minigame's own keys work either way. |
+| `motion` | `true`. Scene transitions and prose reveals play. `false` shows every scene and every line at once. A player whose system asks for reduced motion gets them at once either way. |
+| `audio` | On when the game lists any tracks in [`game.audio`](/docs/reference/audio). `false` turns sound off, and an object is passed to [`startAudio`](/docs/browser/audio-player#startaudio) as its [options](/docs/browser/audio-player#audiooptions). See [Sound](#sound). |
+
+Any other option goes to `GameShell` as a prop, such as `layout`, `panels` or `mods`. `layout` takes any component, so a page that isn't a side column and a story at all is a layout too. See [Write your own root](/docs/react/customising#8-write-your-own-root).
+
 ## GameShell
 
 ```tsx shape
 function GameShell(props: GameShellProps): JSX.Element
+```
 
+The whole game: a [`GameProvider`](/docs/react/components#gameprovider) for the runner, the [pages](#pages) when they're on, the sound, and the layout. `mountGame` draws it for you. Render it yourself when you make the runner yourself.
+
+### GameShellProps
+
+The props of `GameShell`: the runner, what the game adds to the UI, and how it looks and behaves.
+
+```ts shape
 type GameShellProps = {
   runner: Runner
   panels?: Record<string, PanelComponent>
@@ -255,21 +267,21 @@ type GameShellProps = {
 }
 ```
 
-| Prop | What it is |
-|---|---|
-| `runner` | The game's [runner](/docs/reference/runner). |
-| `panels` | The game's own panels, by name: a scene's bespoke panel, or an app's panel section. See [Panels](/docs/react/extending#panels). |
-| `inline` | The game's own components for [UI pieces](/docs/reference/prose#ui-pieces) in its prose, `[[ui:name\|words]]`, by name. `modal` and `image` are built in. See [Inline pieces](/docs/react/hints#inline-pieces). |
-| `plugins` | The plugin UIs to draw, each from a plugin's `/react` subpath, in the order the layout places them. See [Plugins](#plugins). |
-| `sections` | Renderers for plugin sections in apps, by plugin id, over the plugin UIs' (the messages and feed UIs draw theirs). See [Plugin sections](/docs/react/extending#plugin-sections). |
-| `mods` | The player's [mods](/docs/reference/mods): the store, the loader's problems, and how to restart. It turns on Mods in the player's menu. See [`ModsOption`](/docs/react/components#modsoption). |
-| `components`, `classes`, `unstyled` | How the UI looks, below the theme. See [Make it your own](/docs/react/customising). |
-| `viewer` | Whether clicking a picture in the story opens it large. On if you leave it out. |
-| `keys` | Keyboard shortcuts for choices and the menu. Off if you leave it out. See [`KeyOptions`](/docs/react/components#keyoptions). |
-| `motion` | Whether scene transitions and prose reveals play. On if you leave it out. See [`UiOptions`](/docs/react/components#uioptions). |
-| `layout` | The page, as a component: your `layout.tsx`, or any component of your own. If you leave it out, you get [`DefaultLayout`](/docs/react/components#defaultlayout). See [Layouts](#layouts). |
-| `pages` | The title screen and the pages around the game. Off if you leave it out. The layout is drawn on the `game` page. See [Pages](#pages). |
-| `audio` | On when the game lists any tracks in [`game.audio`](/docs/reference/audio). `false` turns sound off, and an object is passed to [`startAudio`](/docs/browser/audio-player#startaudio) as its options. See [Sound](#sound). |
+| Prop | Default | What it is |
+|---|---|---|
+| `runner` | | The game's [runner](/docs/reference/runner). |
+| `panels` | none | The game's own panels, by name: a scene's bespoke panel, or an app's panel section. See [Panels](/docs/react/extending#panels). |
+| `inline` | `modal`, `image`, `mail`, `prop` and `mono` | The game's own components for [UI pieces](/docs/reference/prose#ui-pieces) in its prose, `[[ui:name\|words]]`, by name, over the built-in ones. See [Inline pieces](/docs/react/hints#inline-pieces). |
+| `plugins` | none | The plugin UIs to draw, each from a plugin's `/react` subpath, in the order the layout places them. See [Plugins](#plugins). |
+| `sections` | the plugin UIs' | Renderers for plugin sections in apps, by plugin id, over the plugin UIs' (the messages and feed UIs draw theirs). See [Plugin sections](/docs/react/extending#plugin-sections). |
+| `mods` | none | The player's [mods](/docs/reference/mods): the store, the loader's problems, and how to restart. It turns on Mods in the player's menu. See [`ModsOption`](/docs/react/components#modsoption). |
+| `components`, `classes`, `unstyled` | none, none, `false` | How the UI looks, below the theme. See [Make it your own](/docs/react/customising). |
+| `viewer` | `true` | Whether clicking a picture in the story opens it large. |
+| `keys` | `false` | Keyboard shortcuts for choices and the menu. See [`KeyOptions`](/docs/react/components#keyoptions). |
+| `motion` | `true` | Whether scene transitions and prose reveals play. See [`UiOptions`](/docs/react/components#uioptions). |
+| `layout` | [`DefaultLayout`](/docs/react/components#defaultlayout) | The page, as a component: your `layout.tsx`, or any component of your own. See [Layouts](#layouts). |
+| `pages` | `false` | The title screen and the pages around the game. The layout is drawn on the `game` page. See [Pages](#pages). |
+| `audio` | on when the game lists any tracks in [`game.audio`](/docs/reference/audio) | `false` turns sound off, and an object is passed to [`startAudio`](/docs/browser/audio-player#startaudio) as its options. See [Sound](#sound). |
 
 ### Layouts
 

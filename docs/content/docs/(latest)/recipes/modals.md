@@ -266,7 +266,7 @@ function sign() {
 </template>
 ```
 
-**Gotchas:**
+**Gotchas.**
 - Don't open a panel from a UI piece. A component can send commands, but a `[[ui:…]]` link isn't in the content's choices or buttons, so the checker, a replay of the line and a UI without that component don't know it does anything. An inline action does.
 - A popup's text is read when it's drawn. A popup that's open while the state changes shows the new words the next time it's opened, or straight away in the React UI.
 - Closing a panel is a command. Draw it from `view.panel`, not from a flag in your component, or a loaded save or an undo will disagree with the screen.

@@ -282,7 +282,7 @@ const note = (span: InlineSpan) => (span.type === 'tip' ? span.tip : span.type =
       >{#if note(span)}<span id="{id}-{at}" role="tooltip" class="note">{note(span)}</span>{/if}{/if}{/each}{/if}
 ```
 
-**Gotchas:**
+**Gotchas.**
 - Don't also draw the inline choices in your list. The view has already left them out of `view.scene.choices` and `view.actions`.
 - Keep the words in the line even when a choice can't be taken. An inline action whose choice is hidden comes as plain words, so the sentence still reads.
 - The backlog keeps inline actions as plain words, so nothing in it can be pressed. Tooltips, bold and italics stay.

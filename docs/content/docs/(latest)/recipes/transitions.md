@@ -140,18 +140,16 @@ This CSS draws `fade` and `slide-up`. Add rules for the other names you use:
 }
 ```
 
-These helpers read the hints, and are the same in every framework:
+These helpers read the hints, and are the same in every framework. A `transition` hint is a name or `{ in, out, ms }`, as the React UI's [`Transition`](/docs/react/hints#transition) says:
 
 ```ts
 // src/hints.ts
 import type { SceneBeat, View } from '@ifloom/engine'
 
-type Transition = { in?: string; out?: string; ms?: number }
-
 /** The screen in a view, and how it comes in and goes out, from its scene's `ui.transition`. */
 export function transitionOf(view: View): { key: string; in: string; out: string; ms: number } {
   const spec = view.scene.ui?.transition
-  const pair: Transition = typeof spec === 'string' ? { in: spec, out: spec } : (spec ?? {})
+  const pair: { in?: string; out?: string; ms?: number } = typeof spec === 'string' ? { in: spec, out: spec } : (spec ?? {})
   return { key: view.scene.key, in: pair.in ?? 'none', out: pair.out ?? 'none', ms: pair.ms ?? 300 }
 }
 
@@ -175,7 +173,7 @@ A game with `@ifloom/react` gets the two hints typed from there. A game without 
 ```ts fragment
 declare module '@ifloom/engine' {
   interface SceneUi {
-    transition?: Transition | string
+    transition?: { in?: string; out?: string; ms?: number } | string
   }
   interface BlockUi {
     reveal?: { delay?: number; as?: string }
@@ -395,7 +393,7 @@ watch(view, (now) => {
 
 To let a key show everything too, call [`startRevealSkip`](/docs/browser#startrevealskip) from `@ifloom/browser` while the scene has reveals to come, and set `data-revealed` as the click does. To play a choice's own `ui.transition`, note the choice when the player presses it, and use its `in` and `ms` for the next screen.
 
-**Gotchas:**
+**Gotchas.**
 - Play a transition only when `view.scene.key` changes. A choice that keeps the same scene open gives a new view with the same key, and replaying the scene's `in` there looks like a flicker.
 - Keep the words of revealed lines in the page. Hiding them with `display: none` or `visibility: hidden` until they come hides them from screen readers too.
 - Choices that come before the last reveal can be pressed before the player has read the lines. The React UI holds them back with `visibility: hidden` until the last reveal, which also keeps them from screen readers and the keyboard until then.

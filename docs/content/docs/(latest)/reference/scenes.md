@@ -256,7 +256,7 @@ The `choose` command first asks [`whyNot`](/docs/reference/actions#whynot), whic
 3. The game has its own [`rules.commands.choose`](/docs/reference/rules#commands). It's called instead of steps 4 and 5, and a string it returns is the refusal. If it returns a state, that state is the result (after step 6), and the choice's effects don't run unless the rule runs them.
 4. No scene is open, or the scene has no choice with that id, or the choice is hidden: its `when` doesn't hold, or a `blocked` entry with `hide` holds.
 5. The choice is greyed out: a `blocked` entry holds, or its `once` is spent this turn. The refusal is that reason. Then, for a choice with a `command`, that command is asked as it would be on its own: a lock on it, a plugin's guard and its own `whyNot`. A `command` that is itself `choose` is refused.
-6. A plugin's guard gives a soft warning, such as the [calendar](/docs/plugins/calendar#the-guard)'s `That would run past dawn.` This one isn't part of `whyNot`, so the button can still be pressed, but the reducer refuses the command with the warning (see [`warningOf`](/docs/reference/actions#warningof)).
+6. A plugin's guard gives a soft warning, such as the [calendar](/docs/plugins/calendar#the-guard)'s `That would run past dawn.` This one isn't part of `whyNot`, so the button can still be pressed, but the reducer refuses the command with the warning (see [guards](/docs/reference/plugins#guards)).
 
 Otherwise `choose` runs the choice's `command`, if it has one, then applies its `effects` in order. The command log holds the `choose`, so a replay runs the command again the same way. If the scene itself no longer exists, `choose` closes it. [`apply`](/docs/reference/commands#apply) says which of these happened.
 

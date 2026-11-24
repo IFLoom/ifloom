@@ -9,27 +9,18 @@
  * its `profile` provider, and the view, built by a runner with a profile, shows
  * both.
  */
+import { amountOf, artSrc, holds, notify, stringOf, type Amount, type Condition, type EffectRef, type Game, type GameState } from '@ifloom/engine'
 import {
-  amountOf,
   arg,
-  artSrc,
   defineCalls,
   defineData,
   definePlugin,
-  holds,
   list,
-  notify,
-  stringOf,
-  type Amount,
-  type Condition,
   type ConditionsOf,
   type DefinedPlugin,
-  type EffectRef,
   type EffectsOf,
-  type Game,
-  type GameState,
   type PluginProblem,
-} from '@ifloom/engine'
+} from '@ifloom/engine/plugin'
 import { CONTENT_VERSION, contentMigrations } from './upgrade.ts'
 
 /**

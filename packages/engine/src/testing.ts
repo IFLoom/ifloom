@@ -11,7 +11,8 @@
  *   for the contract tests that hold it to the plugin rules and to its docs.
  */
 import { apply, describeProblem, loadGame, startingState } from './index.ts'
-import type { CommandRef, Content, Game, GameBase, GameState, LoadOptions, Plugin, StartOptions } from './index.ts'
+import type { CommandRef, Content, Game, GameBase, GameState, LoadOptions, StartOptions } from './index.ts'
+import type { Plugin } from './plugin-api.ts'
 
 /** `loadGame`, for a test: the game, or an `Error` listing every problem the content checker found. */
 export function loadChecked(content: readonly Content[], base: GameBase, options: LoadOptions = {}): Game {
@@ -84,22 +85,25 @@ function codeOf(source: string): string {
  * one line for each, or none.
  *
  * - The main entry, everything in `src/` but `src/react/`, imports only
- *   `@ifloom/engine` and its own files beside it, never its React UI.
+ *   `@ifloom/engine`, `@ifloom/engine/plugin` and its own files beside it,
+ *   never its React UI.
  * - It uses no browser global (`window.`, `document.`) outside strings and comments.
- * - `src/react/`, the `/react` subpath, imports only the engine, `react`,
- *   `react-dom`, `@ifloom/react`'s front door, its own files and `../index.ts`.
+ * - `src/react/`, the `/react` subpath, imports only the engine's main
+ *   entry, `react`, `react-dom`, `@ifloom/react` and `@ifloom/react/kit`,
+ *   its own files and `../index.ts`.
  */
 export function boundaryProblems(sources: Readonly<Record<string, string>>): string[] {
   const files = Object.entries(sources)
   if (files.length === 0) return ['no source files to check']
   const ui = (file: string) => `/${file}`.includes('/src/react/')
-  const allowedUi = new Set(['@ifloom/engine', '@ifloom/react', 'react', 'react-dom'])
+  const allowedUi = new Set(['@ifloom/engine', '@ifloom/react', '@ifloom/react/kit', 'react', 'react-dom'])
+  const allowedEngine = new Set(['@ifloom/engine', '@ifloom/engine/plugin'])
   const problems: string[] = []
   for (const [file, source] of files) {
     for (const spec of importsOf(source)) {
       const fine = ui(file)
         ? spec.startsWith('./') || spec === '../index.ts' || allowedUi.has(spec)
-        : (spec.startsWith('./') && !spec.startsWith('./react/')) || spec === '@ifloom/engine'
+        : (spec.startsWith('./') && !spec.startsWith('./react/')) || allowedEngine.has(spec)
       if (!fine) problems.push(`${file} → ${spec}`)
     }
     if (!ui(file) && /\b(window|document)\./.test(codeOf(source))) problems.push(`${file}: uses a browser global outside src/react/`)

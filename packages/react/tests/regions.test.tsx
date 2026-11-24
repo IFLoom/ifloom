@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
-import { createRunner, definePlugin, loadGame, memoryDriver, profile, startingState, type Condition, type Game, type Profile } from '@ifloom/engine'
+import { createRunner, loadGame, memoryDriver, profile, startingState, type Condition, type Game, type Profile } from '@ifloom/engine'
+import { definePlugin } from '@ifloom/engine/plugin'
 import {
   DefaultLayout,
   Game as Page,

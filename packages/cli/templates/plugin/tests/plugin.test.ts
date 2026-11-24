@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { apply, checkGame, holds, loadGame, view, type Content, type Game, type Plugin } from '@ifloom/engine'
+import { apply, checkGame, holds, loadGame, view, type Content, type Game } from '@ifloom/engine'
+import type { Plugin } from '@ifloom/engine/plugin'
 import { freshState, loadChecked, partnerCases, play } from '@ifloom/engine/testing'
 import { __camel__, type __Pascal__Entry } from '../src/index.ts'
 

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { give, heldCount, holds, loadGame, statValue, view, whyNot, type Content, type Game, type GameState, type Plugin } from '@ifloom/engine'
+import { give, heldCount, holds, loadGame, statValue, view, whyNot, type Content, type Game, type GameState } from '@ifloom/engine'
+import type { Plugin } from '@ifloom/engine/plugin'
 import { freshState, loadChecked, play } from '@ifloom/engine/testing'
 import { cast } from '@ifloom/plugin-cast'
 import { places, type PlacesView } from '@ifloom/plugin-places'

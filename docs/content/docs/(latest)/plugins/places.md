@@ -448,7 +448,7 @@ These answer other plugins' code, through the context's [`query`](/docs/referenc
 For example, a delivery plugin that only hands over parcels at the flat, when the game has places, asks where the player is:
 
 ```ts
-import { definePlugin } from '@ifloom/engine'
+import { definePlugin } from '@ifloom/engine/plugin'
 
 const parcels = definePlugin<{ waiting: number }>({
   id: 'parcels',

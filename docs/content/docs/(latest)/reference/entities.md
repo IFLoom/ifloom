@@ -14,42 +14,8 @@ The game declares its kinds and the entities that exist at the start. In play, y
 What an entity is (its name, description, picture, tags and where its numbers start) lives in your content. The save only keeps what play has changed, so a name you fix in an update shows in every old save too. The [view](/docs/reference/view#entities) hands the UI the kinds and entities you say are [listed](#listing), with the stats the player can see on each. For a whole game built on entities, see the management game in [Shapes of game](/docs/guide/shapes#a-management-game-the-corner-café).
 
 ```ts
-import {
-  PLAYER,
-  YOU,
-  anyOf,
-  bindCurrent,
-  canHold,
-  entitiesOf,
-  entityDescription,
-  entityImage,
-  entityKv,
-  entityName,
-  entityOf,
-  entityTags,
-  give,
-  heldBy,
-  heldCount,
-  holderOf,
-  holdersOf,
-  holding,
-  isUnique,
-  kindOf,
-  move,
-  parseRef,
-  protagonist,
-  resolveHolder,
-  take,
-  writeEntity,
-  type CreatedEntity,
-  type EntityDef,
-  type EntityRef,
-  type EntityState,
-  type Holder,
-  type KindDef,
-  type Placement,
-  type Select,
-} from '@ifloom/engine'
+import { PLAYER, YOU, canHold, entitiesOf, entityDescription, entityImage, entityKv, entityName, entityOf, entityTags, give, heldBy, heldCount, holderOf, holding, isUnique, move, parseRef, protagonist, resolveHolder, take, writeEntity, type CreatedEntity, type EntityDef, type EntityRef, type EntityState, type Holder, type KindDef, type Placement, type Select } from '@ifloom/engine'
+import { bindCurrent } from '@ifloom/engine/plugin'
 ```
 
 ## A worked example
@@ -607,14 +573,6 @@ function entityImage(state: GameState, game: Game, ref: EntityRef): string | und
 
 An entity's picture as written, before [`artSrc`](/docs/reference/prose#artsrc): the one it was created with, its declaration's, or else that of the entity it was made `like`.
 
-### kindOf
-
-```ts
-function kindOf(game: Game, id: string): KindDef | undefined
-```
-
-The declaration of a kind, or `undefined` if the game declares none by that id.
-
 ### parseRef
 
 ```ts
@@ -718,7 +676,8 @@ function anyOf(kind: string): EntityRef
 Returns `'<kind>:*'`, a reference that stands for any one of a kind. It isn't a real entity, so `entityOf` finds nothing by it. Use it to check content written with `'$'` before it runs. Bind `'$'` to it with [`bindCurrent`](#bindcurrent) and hand the result to the [content checker](/docs/reference/checks), which then knows whose stats a `{ stat, of: '$' }` names. A plugin's [`references`](/docs/reference/plugins#references) do this for its own conditions written per entity:
 
 ```ts
-import { anyOf, bindCurrent, type Condition } from '@ifloom/engine'
+import { anyOf, type Condition } from '@ifloom/engine'
+import { bindCurrent } from '@ifloom/engine/plugin'
 
 // in definePlugin({ ... })
 references: {
@@ -740,7 +699,8 @@ function bindCurrent<T extends Condition | EffectRef | readonly EffectRef[] | un
 Returns a copy of a condition or of effects, with every `of`, `entity`, `at` and `like` that is `'$'` set to `ref` (and a `remove`, `move` or `you` effect's target, and a `move`'s `from` and `to`), at any depth, and every `'$'` in a call's arguments or a `create`'s `with`. A nested `each`'s effects and a nested `count`'s `where` keep their own `'$'`. This is how `each` and `count` run their `where` and `effects` for each entity, and how the view asks a kind's `listed`. A plugin or one of the game's functions can use it to run content written for "this one" on a particular entity:
 
 ```ts
-import { bindCurrent, holds } from '@ifloom/engine'
+import { holds } from '@ifloom/engine'
+import { bindCurrent } from '@ifloom/engine/plugin'
 
 holds(state, game, bindCurrent({ stat: 'morale', of: '$', gte: 75 }, 'staff:ana'))   // is Ana happy?
 ```
@@ -790,14 +750,13 @@ function heldBy(state: GameState, game: Game, at?: Holder): { ref: EntityRef; co
 
 Everything a holder holds (`'you'` if left out), with how many of each, in the game's order of its entities. Things it has none of aren't listed.
 
-### holderOf and holdersOf
+### holderOf
 
 ```ts
 function holderOf(state: GameState, game: Game, ref: EntityRef): Holder | undefined
-function holdersOf(state: GameState, game: Game, ref: EntityRef): { holder: Holder; count: number }[]
 ```
 
-Who holds a thing. `holderOf` gives one holder, which for a unique thing is the only one, and `undefined` when nobody does. `holdersOf` gives every holder with its count, in no particular order. Both read the same reverse index, worked out once for each state and never saved.
+Who holds a thing: one holder, which for a unique thing is the only one, and `undefined` when nobody does. It reads a reverse index, worked out once for each state and never saved.
 
 ### canHold
 

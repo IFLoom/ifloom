@@ -520,7 +520,7 @@ These answer other plugins' code, through the context's [`query`](/docs/referenc
 For example, a contacts plugin of your own might list them in its view:
 
 ```ts
-import { definePlugin } from '@ifloom/engine'
+import { definePlugin } from '@ifloom/engine/plugin'
 
 const contacts = definePlugin<null>({
   id: 'contacts',

@@ -4,7 +4,8 @@
  * became things and using one became this plugin's, so its one step is
  * keyed by that schema, as the engine's are.
  */
-import type { CommandStep, ContentStep, RawPack } from '@ifloom/engine'
+import type { RawPack } from '@ifloom/engine'
+import type { CommandStep, ContentStep } from '@ifloom/engine/plugin'
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
 

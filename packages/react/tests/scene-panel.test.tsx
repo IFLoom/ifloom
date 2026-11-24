@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { createRunner, definePlugin, loadGame, startingState } from '@ifloom/engine'
+import { createRunner, loadGame, startingState } from '@ifloom/engine'
+import { definePlugin } from '@ifloom/engine/plugin'
 import { GameShell, type PanelComponent, type PluginUi } from '../src/index.ts'
 
 afterEach(cleanup)

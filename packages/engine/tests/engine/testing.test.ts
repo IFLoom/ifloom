@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { Content, Plugin } from '../../src/index.ts'
+import type { Content } from '../../src/index.ts'
+import type { Plugin } from '../../src/plugin-api.ts'
 import { boundaryProblems, exportedNames, freshState, loadChecked, partnerCases, play, undocumentedExports } from '../../src/testing.ts'
 
 const town: Content = {
@@ -52,16 +53,17 @@ describe('the testing helpers', () => {
   it('report what breaks the plugin rules in a package’s source', () => {
     expect(
       boundaryProblems({
-        'src/index.ts': "import { definePlugin } from '@ifloom/engine'\nimport { helper } from './helper.ts'\nconst page = 'window.open()'",
+        'src/index.ts':
+          "import { definePlugin } from '@ifloom/engine/plugin'\nimport { holds } from '@ifloom/engine'\nimport { helper } from './helper.ts'\nconst page = 'window.open()'",
         'src/helper.ts': "import { other } from '@ifloom/plugin-places'\nimport { Ui } from './react/index.tsx'\nwindow.alert('hi')",
         'src/react/index.tsx':
-          "import { useGame } from '@ifloom/react'\nimport { x } from '@ifloom/react/kit'\nimport { y } from '../index.ts'\nimport React from 'react'",
+          "import { useGame } from '@ifloom/react'\nimport { x } from '@ifloom/react/kit'\nimport { z } from '@ifloom/react/dist/kit.js'\nimport { y } from '../index.ts'\nimport React from 'react'",
       }),
     ).toEqual([
       'src/helper.ts → @ifloom/plugin-places',
       'src/helper.ts → ./react/index.tsx',
       'src/helper.ts: uses a browser global outside src/react/',
-      'src/react/index.tsx → @ifloom/react/kit',
+      'src/react/index.tsx → @ifloom/react/dist/kit.js',
     ])
     expect(boundaryProblems({})).toEqual(['no source files to check'])
   })

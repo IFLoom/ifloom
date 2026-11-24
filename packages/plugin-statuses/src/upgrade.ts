@@ -5,7 +5,7 @@
  * keyed by the schema it upgrades from. The plugin was the timed-effects
  * plugin, `effects`, until schema 8.
  */
-import type { CommandStep, ContentStep } from '@ifloom/engine'
+import type { CommandStep, ContentStep } from '@ifloom/engine/plugin'
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
 

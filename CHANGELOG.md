@@ -256,6 +256,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Changed
 
+- **Breaking:** the engine's plugin API has its own entry, [`@ifloom/engine/plugin`](/docs/reference). `@ifloom/engine` keeps what you write and run a game with; a plugin now imports `definePlugin`, `defineCalls`, `arg`, `defineData`, `list`, `defineTraitKind`, `renderAction`, `priceView`, `pictureView`, `panelOf`, `styledBeats`, `parseBeats`, `speakerOf`, `entityUi`, `bindCurrent`, `anyOf`, `traitState`, `setTraitState`, `lockOn`, `lockedOut` and `actionReferences` from there, with the types of a plugin and its hooks (`Plugin`, `PluginContext`, `TurnContext`, `CheckTools`, `Reference`, `TraitDef`, `ContentStep` and the rest). The registries a plugin augments stay in `@ifloom/engine`.
 - **Breaking:** [`checkUiHints`](/docs/react/hints#checkuihints) takes `{ plugins, inline, allow }` and finds hints with the engine's walk, so it also reads a place's actions and every section and decision a plugin's content holds. A problem in a block names its scene (`scene park block: …`, no longer `block 2`), a hint written where the React UI doesn't read it says so (`ui.reveal is not a hint the React UI reads on a scene`), and a modal naming missing prose reads `names the prose "x", which the game doesn't have`.
 - `useGame().send` takes a [`CommandRef`](/docs/reference/custom#commandref), so a plugin's helpers go straight in: `send(shop.buy('counter', 'item:sandwich'))`.
 - `view.plugins.<id>` is typed by each plugin's `ViewRegistry` entry wherever the game imports the plugin, so the docs no longer cast it (`view.plugins.shop?.vendors`).
@@ -494,6 +495,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Removed
 
+- **Breaking:** `formatStat`, `warningOf`, `kindOf`, `holdersOf`, `storylineOf` and `readMod` are no longer exported. The view already formats a stat (`StatView.text`) and puts a guard's warning on its button (`RenderedChoice.warning`); `storylineOpen`, `holderOf` and the mod store's `add` cover the rest.
 - **Breaking:** the React UI no longer exports `revealGroups`, `lastReveal`, `rollFor`, `screenTransition`, `DEFAULT_REVEAL_DELAY`, `DICE_ROLL_MS` or `useFreshRolls`. [`useScene`](/docs/react/components#usescene) gives what they worked out: the runs as `groups` (each beat with the settled roll it names), the `transition`, and the new rolls in `rolls.fresh`.
 - **Breaking:** `viewIn` on a plugin made with `definePlugin`. Read `view.plugins.<id>`, which its `ViewRegistry` entry types.
 - **Breaking:** `useDebug().run`. Send the debug plugin's helpers instead: `send(debug.stat('coins', 50))`.

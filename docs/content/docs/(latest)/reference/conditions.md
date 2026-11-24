@@ -295,7 +295,7 @@ With `of`, it reads an [entity](/docs/reference/entities)'s level, as [`{ stat }
 { storyline: 'ava', open: false }   // closed for now
 ```
 
-Whether a [storyline](/docs/reference/storylines) is open, meaning it isn't closed or was closed until a turn that has now come (as [`storylineOpen`](/docs/reference/storylines#storylineof-and-storylineopen) says). With `open: false`, it asks whether the storyline is closed for now. `open` is `true` if you leave it out. A storyline the save doesn't have reads as open, and the [content checker](/docs/reference/checks) reports one the game doesn't declare.
+Whether a [storyline](/docs/reference/storylines) is open, meaning it isn't closed or was closed until a turn that has now come (as [`storylineOpen`](/docs/reference/storylines#storylineopen) says). With `open: false`, it asks whether the storyline is closed for now. `open` is `true` if you leave it out. A storyline the save doesn't have reads as open, and the [content checker](/docs/reference/checks) reports one the game doesn't declare.
 
 [`explain`](#explain) says `storyline ava is closed; wants it open`.
 

@@ -98,7 +98,7 @@ The engine never reads `InlineUi`. A `ui` [span](/docs/reference/prose#inlinespa
 ## entityUi
 
 ```ts
-import { entityUi } from '@ifloom/engine'
+import { entityUi } from '@ifloom/engine/plugin'
 
 function entityUi(state: GameState, game: Game, ref: EntityRef): Ui<EntityUi> | undefined
 ```

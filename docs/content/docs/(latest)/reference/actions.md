@@ -7,7 +7,8 @@ An action is something the player can do, offered as a button: buying a coffee, 
 Your game's own actions go in your content's `actions`, and each one with a `label` is a button in every room while no scene is open. Plugins offer theirs too, such as the [places plugin](/docs/plugins/places#the-buttons)'s room actions and a [device](/docs/plugins/devices#section)'s app buttons.
 
 ```ts
-import { actionOf, actionReferences, effectsOf, need, warningOf, whyNot, type ActionCost, type ActionDef, type Blocked } from '@ifloom/engine'
+import { actionOf, effectsOf, need, whyNot, type ActionCost, type ActionDef, type Blocked } from '@ifloom/engine'
+import { actionReferences } from '@ifloom/engine/plugin'
 ```
 
 ## ButtonDef
@@ -228,7 +229,7 @@ const jog: ActionDef = {
 
 If the action also costs coins, that's still checked after `blocked`, so the player hears that they can't afford it only once nothing else stands in the way. You can reword the engine's own lines here (`finishFirst`, `notOnOffer` and `notEnough`) in the [strings table](/docs/reference/strings#refusals). A lock's and a `blocked` entry's `reason` are already your game's words.
 
-**Gotcha.** A plugin guard's soft refusal isn't in this list. An action a plugin warns against, such as one the [calendar](/docs/plugins/calendar#the-guard) says `That would run past dawn.` about, isn't blocked. Its button stays pressable with the line as its `warning`, and the command is refused with it. See [`warningOf`](#warningof).
+**Gotcha.** A plugin guard's soft refusal isn't in this list. An action a plugin warns against, such as one the [calendar](/docs/plugins/calendar#the-guard) says `That would run past dawn.` about, isn't blocked. Its button stays pressable with the line as its `warning`, and the command is refused with it. See [`RenderedChoice`](/docs/reference/view#renderedchoice).
 
 ## actionReferences
 
@@ -277,7 +278,7 @@ export const town: Content = {
 The view turns each action into a [`RenderedChoice`](/docs/reference/view#renderedchoice) with [`renderAction`](/docs/reference/view#renderaction):
 
 - Its disabled text is [`whyNot`](#whynot) for the command it sends, the same function the reducer refuses with.
-- Its `warning` is [`warningOf`](#warningof), the line the reducer refuses a pressable button with.
+- Its `warning` is the first soft refusal a plugin's [guard](/docs/reference/plugins#guards) gives, the line the reducer refuses a pressable button with.
 - It carries the action's cost as its [price](/docs/reference/view#price), along with any notes [plugins' prices](/docs/reference/plugins#prices) add.
 
 ## whyNot
@@ -306,27 +307,6 @@ whyNot(state, game, places.go('cafe'))
 whyNot(state, game, cast.talk('ava'))
 // 'Finish this first.' while a scene is open, or 'Ava is not here.' when she's elsewhere
 ```
-
-## warningOf
-
-```ts
-function warningOf(state: GameState, game: Game, command: CommandRef, effects?: readonly Effect[]): string | undefined
-```
-
-A warning on a command that can still be pressed, or `undefined`. It's the `reason` of the first soft refusal a plugin's [guard](/docs/reference/plugins#guards) gives, with the plugins asked in the order `game.plugins` lists them. The engine has no warnings of its own. It isn't asked for a plugin command that sets [`ignoresLocks`](/docs/reference/plugins#commands-outside-the-story), for the [`setting`](/docs/reference/commands#setting) command, or in a game where no plugin has a `guard` or a `price`.
-
-It's kept apart from `whyNot` because it isn't a reason the thing can't be done. A UI shows the line and offers something else, as when the [calendar](/docs/plugins/calendar#the-guard) warns `That would run past dawn.` and the player goes to bed instead.
-
-The view sets it as the button's [`warning`](/docs/reference/view#renderedchoice). Once [`whyNot`](#whynot) has let a command through, the reducer refuses it with the warning, so a warned button never runs. `effects` saves working out the command's effects again when you already have them. Without it, they come from [`effectsOf`](#effectsof).
-
-```ts
-import { warningOf } from '@ifloom/engine'
-
-warningOf(state, game, { type: 'action', id: 'places/work' })
-// 'That would run past dawn.' when the shift would pass the end of the day, from the calendar's guard
-```
-
-**Gotcha.** A refusal from `whyNot` comes first. A command that's both refused and warned against is refused with the `whyNot` line.
 
 ## effectsOf
 

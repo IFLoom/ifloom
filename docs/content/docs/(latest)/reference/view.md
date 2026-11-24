@@ -14,7 +14,8 @@ Every button in a `View` already carries its command and its price. If it can't 
 Any framework can draw from the view, or none at all. [The React UI](/docs/react), `@ifloom/react`, is a ready-made one that draws all of this. To use something else, such as Vue, Svelte or plain DOM, see [Your own UI in any framework](/docs/guide/frameworks). The rest of this page is for writing your own.
 
 ```ts
-import { renderAction, screen, view, priceView, type View, type Price } from '@ifloom/engine'
+import { screen, view, type View, type Price } from '@ifloom/engine'
+import { renderAction, priceView } from '@ifloom/engine/plugin'
 ```
 
 ## view
@@ -455,7 +456,7 @@ type RenderedChoice = {
 Every pressable thing in a `View`: scene choices, the game's and plugins' buttons, the cast's Talk buttons, and the inline actions in a beat's [spans](/docs/reference/prose#inlinespan). Send `command` when it's pressed.
 
 - **`disabled`** is the reason it can't be pressed. Show it.
-- **`warning`** means the button can be pressed, but the reducer will refuse it with this line. It's a plugin [guard](/docs/reference/plugins#guards)'s soft refusal, such as the [calendar](/docs/plugins/calendar#the-guard)'s `That would run past dawn.` Show it and offer something else. It comes from [`warningOf`](/docs/reference/actions#warningof), on buttons and scene choices alike. The places plugin's exits carry one too, as [`ExitView.warning`](/docs/plugins/places#exitview). The engine sets no warnings of its own.
+- **`warning`** means the button can be pressed, but the reducer will refuse it with this line. It's a plugin [guard](/docs/reference/plugins#guards)'s soft refusal, such as the [calendar](/docs/plugins/calendar#the-guard)'s `That would run past dawn.` Show it and offer something else. It's set on buttons and scene choices alike. The places plugin's exits carry one too, as [`ExitView.warning`](/docs/plugins/places#exitview). The engine sets no warnings of its own.
 - **`irreversible`** is a warning to show before sending. The [React UI](/docs/react/components#choicebutton) prints it on the button.
 - **`tags`** are a scene choice's [`tags`](/docs/reference/scenes#choice), passed through as words to style or filter it by. The engine gives them no meaning, and other buttons have none.
 - **`price`** is what pressing it will cost. See [Price](#price).
@@ -487,10 +488,10 @@ Turns an [action](/docs/reference/actions#actiondef) into a button, exactly as t
 - its `label`
 - a `price` from its `cost` and the stats its effects and command spend, plus any notes [plugins' prices](/docs/reference/plugins#prices) give for the command's effects
 - `disabled` from the first `blocked` entry that holds, or else [`whyNot`](/docs/reference/actions#whynot) for its command
-- `warning` from [`warningOf`](/docs/reference/actions#warningof)
+- `warning` from the plugins' [guards](/docs/reference/plugins#guards)
 
 ```ts
-import { renderAction } from '@ifloom/engine'
+import { renderAction } from '@ifloom/engine/plugin'
 import { places } from '@ifloom/plugin-places'
 
 // A "go to the café" button in a map app, pressed from the flat:
@@ -503,7 +504,7 @@ button.disabled  // 'You cannot get there from here.'
 ## pictureView
 
 ```ts
-import { pictureView } from '@ifloom/engine'
+import { pictureView } from '@ifloom/engine/plugin'
 
 function pictureView(
   state: GameState,
@@ -525,7 +526,7 @@ Resolves a [picture](/docs/reference/scenes#the-picture) into what a UI draws, a
 It returns `null` when `picture` is undefined.
 
 ```ts
-import { pictureView } from '@ifloom/engine'
+import { pictureView } from '@ifloom/engine/plugin'
 
 // The café's picture, as the places plugin draws it in its view:
 const picture = pictureView(state, game, cafe.picture, 'cafe', null, context.picks)
@@ -549,7 +550,7 @@ type StatView = {
 }
 ```
 
-One stat as the UI shows it. `min` is the stat's declared `min`, or 0, so a UI can draw a bar from `min` to `max`. `ui` is the stat's [presentation hints](/docs/reference/ui-hints) as written, such as the React UI's [`display`](/docs/react/hints#display), and is left out when it has none. `value` is [`statValue`](/docs/reference/stats#statvalue), so a [derived stat](/docs/reference/stats#derived-stats) is already worked out, and a stat the save doesn't have yet shows its `start`. `max` is the stat's [`max`](/docs/reference/stats#statdef) worked out right now, so a ceiling that names a custom value is already worked out. `text` is the value through the stat's [`format`](/docs/reference/stats#formatstat), such as `'12 coins'`.
+One stat as the UI shows it. `min` is the stat's declared `min`, or 0, so a UI can draw a bar from `min` to `max`. `ui` is the stat's [presentation hints](/docs/reference/ui-hints) as written, such as the React UI's [`display`](/docs/react/hints#display), and is left out when it has none. `value` is [`statValue`](/docs/reference/stats#statvalue), so a [derived stat](/docs/reference/stats#derived-stats) is already worked out, and a stat the save doesn't have yet shows its `start`. `max` is the stat's [`max`](/docs/reference/stats#statdef) worked out right now, so a ceiling that names a custom value is already worked out. `text` is the value through the stat's [`format`](/docs/reference/stats#statdef), such as `'12 coins'`.
 
 `level` is only there for a stat that declares [`levels`](/docs/reference/stats#levels). It's what [`statLevel`](/docs/reference/stats#statlevel) gives:
 

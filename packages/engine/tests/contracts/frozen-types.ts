@@ -92,11 +92,9 @@
 import type { Block } from '../../src/scene.ts'
 import type {
   Amount,
-  CallTable,
   CommandRef,
   Condition,
   PictureDef,
-  PluginArgs,
   SceneMedia,
   EntityRef,
   ActionDef,
@@ -115,7 +113,6 @@ import type {
   InputDef,
   InputView,
   KindDef,
-  Lock,
   HeldView,
   Placement,
   Select,
@@ -143,11 +140,8 @@ import type {
   Notice,
   NoticesView,
   Patch,
-  Plugin,
   ConditionCall,
   EffectCall,
-  PluginEntry,
-  PluginSlice,
   ProseStore,
   RenderedChoice,
   SAVE_VERSION,
@@ -169,6 +163,7 @@ import type {
   TriggerDef,
   VariantMember,
 } from '../../src/index.ts'
+import type { CallTable, PluginArgs, Lock, Plugin, PluginEntry, PluginSlice } from '../../src/plugin-api.ts'
 
 export type FrozenRange = { gte?: Amount; gt?: Amount; lte?: Amount; lt?: Amount }
 

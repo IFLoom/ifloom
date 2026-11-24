@@ -7,7 +7,8 @@ A panel is a piece of UI that content opens over the story by name: a shop's cou
 Nothing opens a panel by itself. Content opens one with the [`panel` effect](/docs/reference/effects#panel), so a place's action, a person's scene, a thing's use in the [inventory](/docs/plugins/inventory), an app's button, a choice or an inline `[[act:]]` link can each open one. Because it's an effect, saves and replays open it exactly as play did.
 
 ```ts
-import { panelOf, type OpenPanel, type ScenePanel } from '@ifloom/engine'
+import type { OpenPanel, ScenePanel } from '@ifloom/engine'
+import { panelOf } from '@ifloom/engine/plugin'
 ```
 
 ## A worked example

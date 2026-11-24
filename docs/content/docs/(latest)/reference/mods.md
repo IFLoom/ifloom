@@ -5,7 +5,7 @@ description: Mod files a player adds to a built game, the store that keeps them,
 A mod is a [pack](/docs/reference/loader#pack) in a file that a player adds to a built game. It can bring new scenes and prose, more variants for a line, a choice patched into a scene, or a replacement location or character. The player picks the file, the game keeps it, and the next time the game starts the mod's pack is loaded over the game's content.
 
 ```ts
-import { mods, readMod, type Mods, type ModFile, type InstalledMod } from '@ifloom/engine'
+import { mods, type Mods, type ModFile, type InstalledMod } from '@ifloom/engine'
 ```
 
 A mod is data only. Nothing in it runs, so it can do what a pack can do and no more, and the game's code is the code the game shipped.
@@ -66,32 +66,6 @@ It adds a fourth line to the high street's weather, because a pack's `variants` 
 
 A pack in a file has only what JSON can hold: scenes, storylines, stats, the starting `kv` and `resets`, kinds, entities, traits, actions, locks, triggers, inputs, settings, timers, minigames, strings, prose, variants, patches and plugin content (`data`). The [places plugin](/docs/plugins/places#in-your-content)'s locations, the [shop](/docs/plugins/shop#writing-vendors)'s vendors and the [cast](/docs/plugins/cast#in-your-content)'s characters are entities with their plugin's trait, so a mod adds one in `entities`, and changes one by replacing the entity or with a `traits` row. A [`DataScene`](/docs/reference/scenes#datascene) is already JSON. The game's [`rules`](/docs/reference/rules) are code, so a mod file can't carry them.
 
-## readMod
-
-```ts
-function readMod(text: string, gameId: string): Result<ModFile>
-```
-
-Reads a mod file's text for the game `gameId`. It returns a [`Result`](/docs/reference/runner#result): the mod with its pack as the file wrote it and its `id` set to `mod:<id>`, or the reason it can't be used, worded for the player. The pack isn't upgraded here: [`loadGame`](/docs/reference/loader#loadgame) upgrades it with the game's other packs each time it loads, so the game's plugins carry their own content in it forward too, and a mod a player installed keeps working after you update a plugin. Here it's only checked that this engine can read its schema.
-
-| When | Reason |
-|---|---|
-| The text isn't JSON, or lacks any of `ifloomMod: 1`, a string `id`, a string `name`, a string `game`, or a `pack` with a numeric `schema` | `That is not a mod file.` |
-| `game` isn't `gameId` | `That mod is for another game (<game>).` |
-| `pack.schema` is newer than `SCHEMA`, or too old to upgrade | `That mod was written for a version this game cannot read (schema <n>).` |
-
-```ts
-import { readMod } from '@ifloom/engine'
-
-const read = readMod(text, 'small-town')
-if (!read.ok) showMessage(read.reason)
-else read.value.pack.id // 'mod:fog-season'
-```
-
-The store's `add` calls it for you. Only call it yourself to look at a file without keeping it.
-
-**Gotcha.** It checks the outside of the file, not the content. A pack that names a scene nobody wrote reads fine here. [`loadGame`](/docs/reference/checks) reports it as a problem, against `mod:<id>`.
-
 ## mods
 
 ```ts
@@ -111,10 +85,22 @@ One game's installed mods, kept in a [save driver](/docs/reference/saves#drivers
 | Member | What it does |
 |---|---|
 | `list()` | Every mod added, on or off, sorted by name. |
-| `add(text)` | Reads a file's text with [`readMod`](#readmod) and keeps the mod, switched on. Returns a `Result` with it, or the refusal. A mod with the same `id` as one already there replaces it, and is switched on again. |
+| `add(text)` | Reads a file's text and keeps the mod, switched on, as [below](#what-add-checks). Returns a `Result` with it, or the refusal. A mod with the same `id` as one already there replaces it, and is switched on again. |
 | `remove(id)` | Forgets the mod. |
 | `setEnabled(id, enabled)` | Turns a mod on or off. A mod that's off stays in the list but is left out of the game. An unknown id does nothing. |
 | `packs()` | The packs of the mods that are on, in name order. Pass them to `loadGame` as `packs`, over the game's content. |
+
+### What add checks
+
+`add` reads the file's text for the store's game. The mod keeps its pack as the file wrote it, with its `id` set to `mod:<id>`. The pack isn't upgraded here: [`loadGame`](/docs/reference/loader#loadgame) upgrades it with the game's other packs each time it loads, so the game's plugins carry their own content in it forward too, and a mod a player installed keeps working after you update a plugin. Here it's only checked that this engine can read its schema. A file it can't use is refused with a reason worded for the player:
+
+| When | Reason |
+|---|---|
+| The text isn't JSON, or lacks any of `ifloomMod: 1`, a string `id`, a string `name`, a string `game`, or a `pack` with a numeric `schema` | `That is not a mod file.` |
+| `game` isn't the store's game | `That mod is for another game (<game>).` |
+| `pack.schema` is newer than `SCHEMA`, or too old to upgrade | `That mod was written for a version this game cannot read (schema <n>).` |
+
+**Gotcha.** It checks the outside of the file, not the content. A pack that names a scene nobody wrote is added fine. [`loadGame`](/docs/reference/checks) reports it as a problem, against `mod:<id>`.
 
 ### InstalledMod
 

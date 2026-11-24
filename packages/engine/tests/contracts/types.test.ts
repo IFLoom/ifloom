@@ -1,5 +1,6 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
-import type { Command, Condition, Content, Effect, Game, GameState, Pack, Reference, View } from '../../src/index.ts'
+import type { Command, Condition, Content, Effect, Game, GameState, Pack, View } from '../../src/index.ts'
+import type { Reference } from '../../src/plugin-api.ts'
 import type { EffectKey } from '../../src/types.ts'
 import type {
   FrozenCommand,

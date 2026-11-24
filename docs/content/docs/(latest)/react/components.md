@@ -1405,7 +1405,7 @@ function ModManager(props: { className?: string }): JSX.Element | null
 
 The mods screen, over the [`ModsOption`](#modsoption) given to the provider:
 
-- **Add a mod file** (`ui.addMod`) reads a `.json` file through the store's [`add`](/docs/reference/mods#mods). If the file can't be used, it shows why in the words of [`readMod`](/docs/reference/mods#readmod), such as `That mod is for another game (corner-cafe).` A mod with the same id as one already there replaces it.
+- **Add a mod file** (`ui.addMod`) reads a `.json` file through the store's [`add`](/docs/reference/mods#mods). If the file can't be used, it shows why in the store's [words](/docs/reference/mods#what-add-checks), such as `That mod is for another game (corner-cafe).` A mod with the same id as one already there replaces it.
 - Every mod added is listed in name order (`data-mod` with its id), with its name, version and description. Each has a button to turn it **On** or **Off** (`ui.modOn`, `ui.modOff`), which reads what the mod is now and carries `aria-pressed`, and a button to **Delete** it (`ui.remove`). Under it are the `problems` that start `mod:<id> `. With no mods, it shows `ui.noMods`.
 - Once anything has changed, a line saying the change takes effect on a restart (`ui.modsChanged`) appears with **Restart with these mods** (`ui.applyMods`), which calls `onChange`.
 

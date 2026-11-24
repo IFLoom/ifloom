@@ -12,26 +12,18 @@
  *
  * Imports only @ifloom/engine and requires no other plugin (ADR 0003).
  */
+import { stringOf, upgradePack, type CommandRef, type Condition, type Game, type Pack, type Profile, type Result, type Runner } from '@ifloom/engine'
 import {
   arg,
   defineCalls,
   defineData,
   definePlugin,
   list,
-  stringOf,
-  upgradePack,
-  type CommandRef,
   type CommandsOf,
-  type Condition,
   type ConditionsOf,
   type DefinedPlugin,
-  type Game,
-  type Pack,
   type PluginProblem,
-  type Profile,
-  type Result,
-  type Runner,
-} from '@ifloom/engine'
+} from '@ifloom/engine/plugin'
 import { ITERATIONS, fromHex, hashOfProof, normaliseCode, proofOf, saltOf, seal, toHex, unseal } from './crypto.ts'
 import { CONTENT_VERSION, contentMigrations } from './upgrade.ts'
 

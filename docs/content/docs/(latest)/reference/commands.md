@@ -37,7 +37,7 @@ Use `apply` wherever the answer matters, because a refused command and one that 
 
 1. **A new game?** `{ type: 'start' }` returns a brand-new game and stops there. If `state` is `null`, any other command also returns a new game, as `startingState(game)` with no options, and the command isn't run. A [`newGame`](#newgame) command, on its own or sent by a choice, also stops at the point it runs, and `apply` returns a new game with `newGame: true`.
 2. **Can it be done?** [`whyNot`](/docs/reference/actions#whynot) answers, and if it gives a reason the command is refused with it. It checks a [lock](/docs/reference/locks) first, then a plugin's [guard](/docs/reference/plugins#guards), then the game's own handler if it has one, then what the command itself needs (described below). A plugin command marked `ignoresLocks` skips the lock and guard checks, and so does [`setting`](#setting). The view greys buttons out with the same function, so a button and its refusal always read the same.
-3. **A warning?** If [`warningOf`](/docs/reference/actions#warningof) has one, the command is refused with it. This is a plugin guard's soft refusal, such as the [calendar](/docs/plugins/calendar#the-guard)'s `That would run past dawn.` The view puts the same line on the button as its `warning`.
+3. **A warning?** If a plugin's [guard](/docs/reference/plugins#guards) gives a soft refusal, the command is refused with it. This is a plugin guard's soft refusal, such as the [calendar](/docs/plugins/calendar#the-guard)'s `That would run past dawn.` The view puts the same line on the button as its `warning`.
 4. **Run it.** If [`rules.commands`](/docs/reference/rules#commands) has a function for this type, it runs instead of the built-in handler. Otherwise the built-in handler described below runs.
 5. **Triggers.** Each [trigger](/docs/reference/triggers) that's due and whose condition now holds fires, in the order the game lists them, each on the state the one before it left. See [When triggers fire](/docs/reference/triggers#when-triggers-fire).
 6. **Seen.** If the player is now looking at a different scene than before, that scene's record in [`seen`](/docs/reference/state#seen) counts one more, with the current [turn](/docs/reference/state#turn) as its `last` (and its `first`, if it's the first time). A scene a trigger opened counts.
@@ -53,7 +53,7 @@ flowchart LR
     direction TB
     cmd(["apply(state, game, command)"]) --> isStart["A start command, or no state?<br/>Then a new game, and stop."]
     isStart --> whyNot["whyNot: a lock, a guard, the<br/>game's handler, the command.<br/>A reason refuses it."]
-    whyNot --> warning["warningOf: a guard's warning.<br/>A warning refuses it."]
+    whyNot --> warning["A guard's warning.<br/>A warning refuses it."]
     warning --> run["Run it: rules.commands or<br/>the built-in handler, which<br/>can refuse it too."]
   end
   subgraph after["After it took, in order"]
@@ -135,7 +135,7 @@ A command that names one thing names it `id`, and one that sets a value takes it
 
 The union is closed, so a game can't add a command type. Something new for the player to do is an [action](/docs/reference/actions), done with the `action` command. A [plugin](/docs/reference/plugins) adds its commands under the one type `custom`, by name, and so does the game's own code, as [`rules.commands`](/docs/reference/rules#commands) sent as `{ 'game/rest': true }`. For example, walking somewhere is the [places plugin](/docs/plugins/places#commands)'s `places/go`, which you write as `places.go('cafe')`, and talking to someone is the [cast](/docs/plugins/cast#commands)'s `cast/talk`, written `cast.talk('ava')`.
 
-Each built-in handler below runs only if no lock or [guard](/docs/reference/plugins#guards), the game's own or a plugin's, stopped the command. The refusals listed for each come after a lock's and a guard's, and before a [warning](/docs/reference/actions#warningof).
+Each built-in handler below runs only if no lock or [guard](/docs/reference/plugins#guards), the game's own or a plugin's, stopped the command. The refusals listed for each come after a lock's and a guard's, and before a [warning](/docs/reference/plugins#guards).
 
 While a [minigame](/docs/reference/minigames) runs, every command but `tick`, `minigame`, `dismiss`, `setting` and `closePanel` is refused with `Finish this first.`, and so is a plugin command that doesn't ignore locks. This comes before the locks.
 
@@ -175,7 +175,7 @@ When a choice sends it, the run ends there: the choice isn't counted in [`chosen
 
 Does the [action](/docs/reference/actions) with this id: one of the content's `actions`, or a plugin's with its id in front, found among its buttons or by its [`action`](/docs/reference/plugins#action) provider. It sends the action's `command` first, if it has one, then pays its cost and applies its effects. An action with `once` is counted in [`chosen`](/docs/reference/state#chosen) under its id before anything runs.
 
-It's refused with `There is no such thing to do.` if there's no such action. After that comes the first reason [an action is refused](/docs/reference/actions#why-an-action-is-refused) for: a scene is open, its `when` doesn't hold, a lock, a `blocked` entry (such as the places plugin's [`onlyAt`](/docs/plugins/places#helpers)), it's been done this turn with `once`, too little of a stat the cost spends, or why its command can't be sent. Last comes a guard's [warning](/docs/reference/actions#warningof).
+It's refused with `There is no such thing to do.` if there's no such action. After that comes the first reason [an action is refused](/docs/reference/actions#why-an-action-is-refused) for: a scene is open, its `when` doesn't hold, a lock, a `blocked` entry (such as the places plugin's [`onlyAt`](/docs/plugins/places#helpers)), it's been done this turn with `once`, too little of a stat the cost spends, or why its command can't be sent. Last comes a guard's [warning](/docs/reference/plugins#guards).
 
 A command log from before schema 20 sent `{ type: 'activity', id }`. [`replay`](/docs/reference/runner#replay) reads it as `action`.
 
@@ -192,7 +192,7 @@ It's refused with, in order:
 - `There is nothing to choose.` when no scene is open
 - `That is not on offer.` when there's no such choice, or it's hidden
 - the choice's own `disabled` text
-- a plugin guard's [warning](/docs/reference/actions#warningof), such as the calendar's `That would run past dawn.` for a choice that passes time over the end of the day
+- a plugin guard's [warning](/docs/reference/plugins#guards), such as the calendar's `That would run past dawn.` for a choice that passes time over the end of the day
 
 If the open scene's id no longer exists in the game, `choose` closes it instead of refusing. See [How choose checks a choice](/docs/reference/scenes#how-choose-checks-a-choice).
 

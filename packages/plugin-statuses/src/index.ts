@@ -8,27 +8,21 @@
  * ends. Applying one that is already active refreshes it or adds a stack, as
  * the status says.
  */
+import { inRange, stringOf, type Condition, type EffectRef, type Game, type GameState, type Range } from '@ifloom/engine'
 import {
   arg,
   defineCalls,
   defineData,
   definePlugin,
-  inRange,
   list,
-  stringOf,
   type CommandsOf,
-  type Condition,
   type ConditionsOf,
   type DefinedPlugin,
-  type EffectRef,
   type EffectsOf,
-  type Game,
-  type GameState,
   type PluginContext,
   type PluginProblem,
-  type Range,
   type StatModifier,
-} from '@ifloom/engine'
+} from '@ifloom/engine/plugin'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** What applying a status that is already active does: start its turns again, or add another stack. */

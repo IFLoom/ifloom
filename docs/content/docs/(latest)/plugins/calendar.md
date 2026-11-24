@@ -285,7 +285,7 @@ A lock names it `calendar/sleep`, or `calendar/*`.
 A [lock with `effect`](/docs/reference/locks#lock) stops every command that would pass time, whether it's an action, a choice or bed.
 
 ```ts
-import { type Lock } from '@ifloom/engine'
+import type { Lock } from '@ifloom/engine/plugin'
 
 const locks: Lock[] = [{ when: { kv: 'ill' }, deny: ['*'], effect: 'calendar/pass', reason: 'You feel too ill.' }]
 ```
@@ -305,7 +305,7 @@ These answer other plugins' code, through the context's [`query`](/docs/referenc
 For example, a market stall plugin that shuts at night, when the game has a calendar, can ask the time in its own condition:
 
 ```ts
-import { definePlugin } from '@ifloom/engine'
+import { definePlugin } from '@ifloom/engine/plugin'
 
 const stall = definePlugin<{ stock: number }>({
   id: 'stall',

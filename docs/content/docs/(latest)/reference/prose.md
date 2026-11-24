@@ -418,7 +418,7 @@ A UI draws an `action` as a button in the line, a `tip` as a button that shows i
 ## parseBeats
 
 ```ts
-import { parseBeats } from '@ifloom/engine'
+import { parseBeats } from '@ifloom/engine/plugin'
 
 function parseBeats(
   body: string,
@@ -431,7 +431,7 @@ The parser described above. `find` says who a line under `@id` is, and the name 
 ## styledBeats
 
 ```ts
-import { parseBeats, styledBeats } from '@ifloom/engine'
+import { parseBeats, styledBeats } from '@ifloom/engine/plugin'
 
 function styledBeats(beats: readonly SceneBeat[]): SceneBeat[]
 ```

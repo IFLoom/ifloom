@@ -5,21 +5,8 @@ description: "Pools of pictures and videos picked by tags, and layered pictures 
 Pictures and videos reach the screen in three ways. You write them into prose as [markup](/docs/reference/prose#images), put them in a data scene's body as [`{ media }` blocks](/docs/reference/scenes#scenemedia), or build a [layered picture](/docs/reference/scenes#the-picture) with hotspots on it. All three can name a file, or ask a pool for one by tags. This page covers pools, the picture's types and the rules for video. The engine draws nothing itself. It puts beats in [`view.scene.beats`](/docs/reference/view#the-scene) and the picture in `view.scene.picture`, and the [React UI](/docs/react#pictures-and-video) draws them: beats with [`Beat`](/docs/react/components#beat) and [`Video`](/docs/react/components#video), the picture with [`Picture`](/docs/react/components#layeredpicture) and its [`Hotspot`](/docs/react/components#hotspot)s, and a click on a picture opens the [`MediaViewer`](/docs/react/components#mediaviewer).
 
 ```ts
-import {
-  mediaType,
-  pictureView,
-  type GameMedia,
-  type HotspotDef,
-  type HotspotView,
-  type PictureDef,
-  type MediaState,
-  type PoolFile,
-  type PictureLayer,
-  type PictureLayerView,
-  type PictureView,
-  type VideoFlags,
-  type VideoView,
-} from '@ifloom/engine'
+import { mediaType, type GameMedia, type HotspotDef, type HotspotView, type PictureDef, type MediaState, type PoolFile, type PictureLayer, type PictureLayerView, type PictureView, type VideoFlags, type VideoView } from '@ifloom/engine'
+import { pictureView } from '@ifloom/engine/plugin'
 ```
 
 ## A worked example

@@ -16,8 +16,8 @@ import {
   type Game,
   type GameState,
   type Content,
-  type Plugin,
 } from '@ifloom/engine'
+import type { Plugin } from '@ifloom/engine/plugin'
 import { freshState, loadChecked, play } from '@ifloom/engine/testing'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'

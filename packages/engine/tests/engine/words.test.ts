@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { SCHEMA, loadGame, type Content, type Pack } from '../../src/loader.ts'
 import { definePlugin } from '../../src/plugin.ts'
-import { defineData, list, type PluginEntry } from '../../src/index.ts'
+import { defineData, list, type PluginEntry } from '../../src/plugin-api.ts'
 import { describeProblem } from '../../src/check.ts'
 import { startingState } from '../../src/intake.ts'
 import { apply } from '../../src/reduce.ts'

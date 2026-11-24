@@ -12,11 +12,8 @@
  * triggers that have fired, and the seed.
  */
 import {
-  arg,
   canHold,
   clampStat,
-  defineCalls,
-  definePlugin,
   entityOf,
   holds,
   parseRef,
@@ -27,12 +24,10 @@ import {
   writeEntity,
   YOU,
   type CommandRef,
-  type CommandsOf,
-  type DefinedPlugin,
   type Game,
   type KvValue,
-  type PluginCommand,
 } from '@ifloom/engine'
+import { arg, defineCalls, definePlugin, type CommandsOf, type DefinedPlugin, type PluginCommand } from '@ifloom/engine/plugin'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 export type DebugView = {

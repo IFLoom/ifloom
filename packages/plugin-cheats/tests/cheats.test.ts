@@ -3,7 +3,6 @@ import {
   apply,
   checkGame,
   createRunner,
-  definePlugin,
   holds,
   loadGame,
   loadState,
@@ -13,8 +12,8 @@ import {
   type Game,
   type GameState,
   type Content,
-  type Plugin,
 } from '@ifloom/engine'
+import { definePlugin, type Plugin } from '@ifloom/engine/plugin'
 import { freshState, loadChecked, play } from '@ifloom/engine/testing'
 import { cheatsOf, cheats, type CheatDef, type CheatsView } from '../src/index.ts'
 

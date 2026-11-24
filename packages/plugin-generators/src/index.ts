@@ -10,28 +10,20 @@
  * makes the same entities.
  */
 import {
-  arg,
-  defineCalls,
-  defineData,
-  definePlugin,
   draw,
-  list,
   parseRef,
   statOf,
   statValue,
   weighted,
-  type DefinedPlugin,
   type Effect,
   type EffectRef,
-  type EffectsOf,
   type EntityRef,
   type Game,
   type GameState,
   type KvValue,
   type Placement,
-  type PluginProblem,
-  type Reference,
 } from '@ifloom/engine'
+import { arg, defineCalls, defineData, definePlugin, list, type DefinedPlugin, type EffectsOf, type PluginProblem, type Reference } from '@ifloom/engine/plugin'
 import { CONTENT_VERSION, contentMigrations } from './upgrade.ts'
 
 /** One value in a pool: the value, or the value with a weight (1 if left out). */

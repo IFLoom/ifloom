@@ -257,7 +257,7 @@ if (!upgraded.ok) console.warn(`old-pack.json: ${upgraded.reason}`)
 
 You rarely call it yourself: [`loadGame`](#loadgame) upgrades every pack in `packs` with the base's plugins, mods included.
 
-You rarely call it yourself, because `loadGame` and `readMod` do. Use it when you read a pack some other way, for example a tool that edits packs and writes them back at the current schema.
+You rarely call it yourself, because `loadGame` does. Use it when you read a pack some other way, for example a tool that edits packs and writes them back at the current schema.
 
 **Gotcha.** Steps only cover packs: data scenes, plugin content and the rest of what JSON can hold. Your content is compiled against the current types, so when a schema changes, you update it by hand. See [Content and packs](#content-and-packs).
 

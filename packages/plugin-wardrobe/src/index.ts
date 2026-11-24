@@ -14,38 +14,40 @@
  * clothes and switching back the first's.
  */
 import {
-  arg,
   declaredTrait,
   declaredWithTrait,
-  defineCalls,
-  defineData,
-  definePlugin,
   entityName,
   entityOf,
   heldBy,
   heldCount,
-  list,
   parseRef,
   PLAYER,
   pluginQuery,
   protagonist,
-  renderAction,
   resolveHolder,
   stringOf,
   traitOf,
   YOU,
   type CommandRef,
-  type CommandsOf,
   type Condition,
-  type ConditionsOf,
-  type DefinedPlugin,
   type EntityRef,
   type Game,
   type GameState,
-  type PluginProblem,
   type RenderedChoice,
-  type TraitDef,
 } from '@ifloom/engine'
+import {
+  arg,
+  defineCalls,
+  defineData,
+  definePlugin,
+  list,
+  renderAction,
+  type CommandsOf,
+  type ConditionsOf,
+  type DefinedPlugin,
+  type PluginProblem,
+  type TraitDef,
+} from '@ifloom/engine/plugin'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** What the `wardrobe/wearable` trait holds: the slot a thing is worn in. */

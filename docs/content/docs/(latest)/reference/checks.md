@@ -5,7 +5,8 @@ description: "What the content checker reports, where each problem is pinned, an
 `checkGame` reads through a game's content once, reports everything it names that the game doesn't have, and lists the files it names. [`loadGame`](/docs/reference/loader#loadgame) runs it on the game it merges. A game you build by hand calls it itself, usually from a test.
 
 ```ts
-import { checkGame, describeProblem, type Checked, type FileRef, type Probe, type Problem, type Reference } from '@ifloom/engine'
+import { checkGame, describeProblem, type Checked, type FileRef, type Probe, type Problem } from '@ifloom/engine'
+import type { Reference } from '@ifloom/engine/plugin'
 ```
 
 ```ts

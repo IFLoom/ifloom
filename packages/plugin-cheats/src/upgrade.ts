@@ -3,7 +3,7 @@
  * forward. The versions follow the engine's schema, as the other
  * first-party plugins' do: each step is keyed by the schema it upgrades from.
  */
-import type { ContentStep } from '@ifloom/engine'
+import type { ContentStep } from '@ifloom/engine/plugin'
 
 /** An entry with some fields renamed, where it has them and not the new name already. */
 const withNames = (entry: Record<string, unknown>, names: Record<string, string>): Record<string, unknown> =>

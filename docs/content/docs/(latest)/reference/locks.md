@@ -5,7 +5,7 @@ description: "Locks that refuse commands while a condition holds, with one line 
 A lock stops the player doing something for a while, and says why. Use one for a stretch of the game with its own limits, such as an intro that only moves through its scenes, or a first night that keeps the player at home. Each lock is data: what it stops, while what holds, and the line the player reads.
 
 ```ts
-import { lockOn, lockedOut, type Lock, type LockTarget } from '@ifloom/engine'
+import { lockOn, lockedOut, type Lock, type LockTarget } from '@ifloom/engine/plugin'
 ```
 
 Locks are content: they go in your content's `locks`, so a mod can add one, and are checked in order. The reducer refuses a command on the first lock that stops it, and the view greys the button out (or hides it) with the same line, so the two can't disagree.

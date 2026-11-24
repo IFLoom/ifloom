@@ -275,7 +275,8 @@ reasonOf(game, { string: 'places/notHere' })  // 'Not here.', or the game's own 
 A [plugin](/docs/reference/plugins) declares its English in `strings`, keyed without its prefix. It says them with `stringOf` and the full `id/name` key:
 
 ```ts
-import { definePlugin, stringOf } from '@ifloom/engine'
+import { stringOf } from '@ifloom/engine'
+import { definePlugin } from '@ifloom/engine/plugin'
 
 const kites = definePlugin({
   id: 'kites',

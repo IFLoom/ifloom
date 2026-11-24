@@ -13,14 +13,9 @@
  * query); until then a dropped thing is gone.
  */
 import {
-  arg,
   artSrc,
-  bindCurrent,
   buildEffects,
   canHold,
-  defineCalls,
-  defineData,
-  definePlugin,
   entityDescription,
   entityImage,
   entityName,
@@ -28,27 +23,34 @@ import {
   heldBy,
   heldCount,
   holds,
-  list,
   parseRef,
   PLAYER,
   protagonist,
-  renderAction,
   stringOf,
   traitOf,
   YOU,
   type CommandRef,
-  type CommandsOf,
-  type DefinedPlugin,
   type Effect,
   type EffectRef,
   type EntityRef,
   type Game,
   type GameState,
   type Holder,
-  type PluginContext,
   type RenderedChoice,
-  type TraitDef,
 } from '@ifloom/engine'
+import {
+  arg,
+  bindCurrent,
+  defineCalls,
+  defineData,
+  definePlugin,
+  list,
+  renderAction,
+  type CommandsOf,
+  type DefinedPlugin,
+  type PluginContext,
+  type TraitDef,
+} from '@ifloom/engine/plugin'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** What the `inventory/usable` trait holds: the button's label, what using one does, and whether it is kept. */

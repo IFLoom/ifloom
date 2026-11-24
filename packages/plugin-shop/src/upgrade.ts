@@ -4,7 +4,8 @@
  * engine once carried this plugin's content forward itself: each step is
  * keyed by the schema it upgrades from.
  */
-import { hash, type CommandStep, type ContentStep, type RawPack } from '@ifloom/engine'
+import { hash, type RawPack } from '@ifloom/engine'
+import type { CommandStep, ContentStep } from '@ifloom/engine/plugin'
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
 

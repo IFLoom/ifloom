@@ -8,6 +8,8 @@ You choose a game's plugins when you build it, in [`game.plugins`](/docs/referen
 
 Do you need a plugin, or only the game's own [`rules`](/docs/reference/rules)? `rules` can have what a plugin has (conditions, effects, values, commands, hooks, a guard, a view), for this one game, and keeps its memory in the kv store. Write a plugin when the system needs a memory of its own, state that has to be saved and carried forward when its shape changes, or when more than one game should use it.
 
+A plugin is written with [`@ifloom/engine/plugin`](/docs/reference): `definePlugin`, the helpers that declare its calls and data, the types of its hooks and the helpers that build its view. Everything else it reads, such as `holds`, `GameState` or the registries it augments, comes from `@ifloom/engine` as it does for a game.
+
 A plugin can live in your game's own source, as the loyalty card below does, or in [a package of its own](#a-plugin-package) that any game can install. Plugins written by others are on [Community plugins](/docs/plugins/community), which also says how to get yours listed.
 
 ## A plugin package
@@ -54,7 +56,7 @@ This plugin keeps a loyalty card at the café. Each coffee adds a stamp, and fiv
 
 ```ts
 // loyalty.ts
-import { definePlugin } from '@ifloom/engine'
+import { definePlugin } from '@ifloom/engine/plugin'
 
 type Card = { stamps: number }
 
@@ -121,7 +123,8 @@ That's a working plugin. The engine saves its state with the game, and the [cont
 The full card also counts free coffees, and lets the player redeem one at the café. Its state gained a field, so its version goes up to 2 with a migration for saves made with version 1. Its calls are declared once in `CALLS`, so each function is handed its arguments typed and read from whatever content wrote (see [Declaring calls](#declaring-calls)).
 
 ```ts
-import { applyEffects, arg, defineCalls, definePlugin, stringOf } from '@ifloom/engine'
+import { applyEffects, stringOf } from '@ifloom/engine'
+import { arg, defineCalls, definePlugin } from '@ifloom/engine/plugin'
 
 type Card = { stamps: number; free: number }
 
@@ -196,18 +199,8 @@ On a new game the same command is refused with `Your card is not full yet.`, and
 ## Plugin
 
 ```ts
-import {
-  definePlugin, pluginQuery, speakerOf,
-  type Plugin, type DefinedPlugin, type PluginContext, type TurnContext, type Macro, type PluginArgs,
-  type PluginCommand, type PluginEntry, type PluginProblem, type PluginSlice,
-  type Asked, type Refusal, type RoomScene, type SpeakerView, type CheckTools,
-  type PluginReferences, type ContentReferences, type StatModifier,
-  type TraitDef, type TraitTools, type ContentStep, type ContentTools, type WordShape,
-  type CommandStep, type RawPack, type RawCommand,
-  type ConditionRegistry, type EffectRegistry, type CommandRegistry, type QueryRegistry, type ViewRegistry,
-  type ConditionCall, type EffectCall, type CommandCall, type Query, type ViewsIn, type PluginDef,
-  type PartnerQueries, type CastContact, type SenderView,
-} from '@ifloom/engine'
+import { pluginQuery, type SpeakerView, type WordShape, type RawPack, type ConditionRegistry, type EffectRegistry, type CommandRegistry, type QueryRegistry, type ViewRegistry, type ConditionCall, type EffectCall, type CommandCall, type Query, type ViewsIn } from '@ifloom/engine'
+import { definePlugin, speakerOf, type Plugin, type DefinedPlugin, type PluginContext, type TurnContext, type Macro, type PluginArgs, type PluginCommand, type PluginEntry, type PluginProblem, type PluginSlice, type Asked, type Refusal, type RoomScene, type CheckTools, type PluginReferences, type ContentReferences, type StatModifier, type TraitDef, type TraitTools, type ContentStep, type ContentTools, type CommandStep, type RawCommand, type PluginDef, type PartnerQueries, type CastContact, type SenderView } from '@ifloom/engine/plugin'
 
 type Plugin<S = any, V = unknown> = {
   id: string
@@ -430,7 +423,8 @@ A plugin usually gives small typed helpers that write these objects for authors 
 Declare each of the plugin's conditions, effects and commands once, with what it takes. The engine works out the rest from that one declaration: the arguments each function is handed, the type content is checked against, a writer for each call to build helpers from, and what the [content checker](/docs/reference/checks) reports.
 
 ```ts
-import { arg, defineCalls, defineData, definePlugin, list, type CommandsOf, type Condition, type ConditionsOf, type EffectsOf } from '@ifloom/engine'
+import type { Condition } from '@ifloom/engine'
+import { arg, defineCalls, defineData, definePlugin, list, type CommandsOf, type ConditionsOf, type EffectsOf } from '@ifloom/engine/plugin'
 
 type CardDef = { id: string; name: string; stamps: number }
 
@@ -608,7 +602,7 @@ type DataList<T> = {
 A plugin says what each of its calls takes, what its queries answer and what its view holds, so content written in code is checked as it's typed. Declare them in the plugin's main entry by adding to the engine's registries, the way a plugin types its [traits](#traits). The calls' entries come from their [declaration](#declaring-calls):
 
 ```ts
-import { type CommandsOf, type ConditionsOf, type EffectsOf } from '@ifloom/engine'
+import type { CommandsOf, ConditionsOf, EffectsOf } from '@ifloom/engine/plugin'
 
 export type LoyaltyView = { stamps: number; free: number }
 
@@ -866,7 +860,8 @@ What content writes for a plugin can change shape too: a call's argument is rena
 Say version 1 of the card's `loyalty/stamp` effect took `{ count }`, and version 2 takes `{ by }` as the [naming rule](#naming) asks, while `loyalty/redeem` took the card as `{ card }` and now takes `{ id }`:
 
 ```ts
-import { definePlugin, type RawPack } from '@ifloom/engine'
+import type { RawPack } from '@ifloom/engine'
+import { definePlugin } from '@ifloom/engine/plugin'
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
 
@@ -1005,7 +1000,7 @@ The full list, with the checks before a command runs, is in [What happens, in or
 A plugin that keeps a diary of the player's days might use both:
 
 ```ts
-import { definePlugin } from '@ifloom/engine'
+import { definePlugin } from '@ifloom/engine/plugin'
 
 type Diary = { days: number; places: string[]; commands: number }
 
@@ -1032,7 +1027,7 @@ export const diary = definePlugin<Diary>({
 Some things a plugin tracks should outlive a save, such as achievements the player has earned or endings they've seen. Those go in the player's [profile](/docs/reference/profile), in a namespace named after the plugin's id. A plugin can't write there itself, because its functions are pure and never do I/O. Instead, it declares a `profile` provider, and the [runner](/docs/reference/runner#finished) asks it after every command that takes:
 
 ```ts
-import { definePlugin } from '@ifloom/engine'
+import { definePlugin } from '@ifloom/engine/plugin'
 
 // Remembers every ending the player has reached, across every game they play.
 export const endings = definePlugin({
@@ -1068,7 +1063,7 @@ Only the view sees it, and only when a runner with a profile builds the view. Th
 A plugin can change what the player's stats read without writing to them. Use it for a boost that wears off, such as a coffee that adds 10 energy for a couple of turns. The plugin keeps what's active in its own state, and `statModifiers` turns that into a list of changes:
 
 ```ts
-import { definePlugin } from '@ifloom/engine'
+import { definePlugin } from '@ifloom/engine/plugin'
 
 // Reading glasses: worn, they add 4 to intelligence.
 export const glasses = definePlugin<{ on: boolean }>({
@@ -1110,7 +1105,8 @@ Three more fields let a plugin watch every command, not only its own. A guard sa
 As an example, take a sink of dirty dishes in the flat. Cooking and baking add to it, and washing up takes the rest of the turn.
 
 ```ts
-import { callOf, definePlugin, stringOf, type Effect } from '@ifloom/engine'
+import { callOf, stringOf, type Effect } from '@ifloom/engine'
+import { definePlugin } from '@ifloom/engine/plugin'
 
 type Sink = { dirty: number }
 
@@ -1197,7 +1193,7 @@ Whether a command may go ahead. `asked.command` is the [command](/docs/reference
 - A string to refuse it, as a [lock](/docs/reference/locks) does. [`whyNot`](/docs/reference/actions#whynot) returns the line, so the view greys the button out with it and the reducer refuses with it.
 - `{ reason, soft: true }` for a warning. The button can still be pressed and carries `reason` as its [`warning`](/docs/reference/view#renderedchoice), but the reducer refuses the command with `reason` all the same. The [calendar](/docs/plugins/calendar#the-guard)'s past-dawn warning works this way: the UI shows the warning and offers something else, here washing up.
 
-The game's own `rules.guard`, then every plugin's guard, is asked about every command, in the order `game.plugins` lists them, except a command that sets [`ignoresLocks`](#commands-outside-the-story). Guards are asked after the locks, and before what the command itself needs, such as an action's `blocked` entries and cost. A refusal from any plugin wins over a warning from any plugin, and among warnings the first wins. See [`warningOf`](/docs/reference/actions#warningof).
+The game's own `rules.guard`, then every plugin's guard, is asked about every command, in the order `game.plugins` lists them, except a command that sets [`ignoresLocks`](#commands-outside-the-story). Guards are asked after the locks, and before what the command itself needs, such as an action's `blocked` entries and cost. A refusal from any plugin wins over a warning from any plugin, and among warnings the first wins.
 
 **Gotchas.**
 - `effects` is empty for a built-in command whose effects can't be known before it runs, such as `scene`, `leave` or `input`. Test `command` for those. A plugin command's list is what its [`effectsOf`](#saying-what-a-command-does) says. The calendar's `calendar.sleep()` gives the `calendar/pass` it makes, but not the turns that pass ends.
@@ -1332,7 +1328,7 @@ With no plugin answering, the screen is the game's `title` and an empty body. Th
 A market stall on the high street fills the screen while it's open:
 
 ```ts
-import { definePlugin } from '@ifloom/engine'
+import { definePlugin } from '@ifloom/engine/plugin'
 
 const stall = definePlugin<{ open: boolean }>({
   id: 'stall',
@@ -1425,7 +1421,7 @@ A plugin that shows who sent something asks the same way with [`speakerOf`](#spe
 ### speakerOf
 
 ```ts
-import { speakerOf } from '@ifloom/engine'
+import { speakerOf } from '@ifloom/engine/plugin'
 
 function speakerOf(state: GameState, game: Game, id: string): SpeakerView | null
 ```
@@ -1495,7 +1491,8 @@ A plugin that works on things the game declares, such as clothes to wash or tool
 Declaring one takes three things: the data's type, added to the engine's `TraitRegistry`, the trait in `traits`, and the code that reads it.
 
 ```ts
-import { definePlugin, traitOf, type TraitDef } from '@ifloom/engine'
+import { traitOf } from '@ifloom/engine'
+import { definePlugin, type TraitDef } from '@ifloom/engine/plugin'
 
 declare module '@ifloom/engine' {
   interface TraitRegistry {
@@ -1533,7 +1530,8 @@ With the `declare module` block in the plugin's source, every game that imports 
 When each of a plugin's things is an entity of its own kind carrying its trait, as the places plugin's locations, the shop's vendors and the cast's people are, declare that once with `defineTraitKind`:
 
 ```ts
-import { defineTraitKind, defineCalls, type EntityDef, type TraitEntityDef } from '@ifloom/engine'
+import type { EntityDef } from '@ifloom/engine'
+import { defineTraitKind, defineCalls, type TraitEntityDef } from '@ifloom/engine/plugin'
 
 declare module '@ifloom/engine' {
   interface TraitRegistry {
@@ -1790,7 +1788,7 @@ A save records each plugin's version in [`meta.plugins`](/docs/reference/saves#s
 ## definePlugin
 
 ```ts
-import { definePlugin } from '@ifloom/engine'
+import { definePlugin } from '@ifloom/engine/plugin'
 
 function definePlugin<S, V = unknown, C extends AnyCalls = never>(plugin: PluginDef<S, V, C>): DefinedPlugin<S, V>
 

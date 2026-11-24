@@ -16,29 +16,31 @@
  * release build, this is part of the game the player gets.
  */
 import {
-  arg,
-  defineCalls,
-  defineData,
-  definePlugin,
   holds,
-  list,
   reasonOf,
-  renderAction,
   stringOf,
   type Blocked,
   type CommandRef,
-  type CommandsOf,
   type Condition,
-  type ConditionsOf,
-  type DefinedPlugin,
   type EffectRef,
   type Game,
   type GameState,
   type Once,
-  type PluginContext,
-  type PluginProblem,
   type RenderedChoice,
 } from '@ifloom/engine'
+import {
+  arg,
+  defineCalls,
+  defineData,
+  definePlugin,
+  list,
+  renderAction,
+  type CommandsOf,
+  type ConditionsOf,
+  type DefinedPlugin,
+  type PluginContext,
+  type PluginProblem,
+} from '@ifloom/engine/plugin'
 import { CONTENT_VERSION, contentMigrations } from './upgrade.ts'
 
 /**

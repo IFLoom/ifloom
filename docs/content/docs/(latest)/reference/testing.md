@@ -156,9 +156,9 @@ function boundaryProblems(sources: Readonly<Record<string, string>>): string[]
 
 What breaks the plugin boundary in a package's source, one line each, or none. `sources` is each file's text by its path, and any path with `src/` in it works, such as `src/index.ts` or a glob's `../src/index.ts`. Files under `src/react/` are the plugin's [React UI](/docs/react/kit), the `/react` subpath. It checks three things:
 
-- Outside `src/react/`, a file imports only `@ifloom/engine` and its own files beside it (`./x.ts`), never its React UI.
+- Outside `src/react/`, a file imports only `@ifloom/engine`, `@ifloom/engine/plugin` and its own files beside it (`./x.ts`), never its React UI.
 - Outside `src/react/`, nothing uses `window.` or `document.`, so the plugin runs in Node and in a game with no page. Strings and comments don't count, so a page's script written as text is fine.
-- In `src/react/`, a file imports only `@ifloom/engine`, `react`, `react-dom`, `@ifloom/react` itself (never a deep path into it), its own files and `../index.ts`.
+- In `src/react/`, a file imports only `@ifloom/engine`, `react`, `react-dom`, `@ifloom/react` and `@ifloom/react/kit` (never a deep path into the package), its own files and `../index.ts`.
 
 A line names the file and what it imported, such as `src/rain.ts → @ifloom/plugin-places`, or `src/rain.ts: uses a browser global outside src/react/`. An empty `sources` is a problem too, `no source files to check`, so a wrong path can't pass.
 

@@ -30,7 +30,7 @@ There's no global registry. Each game owns its own functions, so two games on on
 Every one of the game's functions gets the state and the same context a plugin's function gets, a [`PluginContext`](/docs/reference/plugins#plugincontext). A condition, an effect, a macro and a value also get their arguments as `args`, or `{}` for `true`. So the game's own code can ask a plugin's [query](/docs/reference/plugins#queries), read a plugin's value, draw a seeded number, apply effects, and read and write the game's [own state](/docs/reference/rules#the-games-own-state) as `slice`, `get` and `set`.
 
 ```ts
-import type { Macro } from '@ifloom/engine'
+import type { Macro } from '@ifloom/engine/plugin'
 
 // Tips are better in the evening, by the calendar plugin's clock.
 const tips: Macro = (state, args, { query }) => {

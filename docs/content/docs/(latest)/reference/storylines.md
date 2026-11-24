@@ -38,20 +38,18 @@ The game and its plugins decide what being closed means. The engine itself only 
 
 The core has no characters. People, who's in the room, and talking and calling come from the [cast plugin](/docs/plugins/cast), and a friendship is a [stat](/docs/reference/stats#entity-stats) on a character rather than part of a storyline.
 
-## storylineOf and storylineOpen
+## storylineOpen
 
 ```ts
-import { storylineOf, storylineOpen } from '@ifloom/engine'
+import { storylineOpen } from '@ifloom/engine'
 
-function storylineOf(state: GameState, id: string): StorylineState
 function storylineOpen(state: GameState, id: string): boolean
 ```
 
-`storylineOf` returns a storyline's state, or an empty one, `{ closedUntil: null, kv: {} }`, if the save has none, so it never returns `undefined`. `storylineOpen` is `closedUntil === null || state.turn >= closedUntil`, so a storyline closed until turn 5 is open again on turn 5.
+Whether a storyline is open: `closedUntil === null || state.turn >= closedUntil`, so a storyline closed until turn 5 is open again on turn 5. A storyline the save has no record of is open. Its kv keys are read like any others, with `{ kv: 'met', of: 'storyline:ava' }` in a condition.
 
 ```ts
-storylineOpen(state, 'ava')              // true on a new game
-storylineOf(state, 'ava').kv.met      // undefined until { kv: 'met', of: 'storyline:ava', to: true } sets it
+storylineOpen(state, 'ava') // true on a new game
 ```
 
 **Gotcha:** a storyline the game doesn't declare isn't an error here. It reads as empty and open. The [content checker](/docs/reference/checks) reports a condition, a `kv` effect with `of: 'storyline:…'` or a `closeStoryline` effect that names an unknown storyline.

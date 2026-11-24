@@ -36,7 +36,8 @@ The plugin is only in a game whose `plugins` list has it. If you add it in devel
 With Vite, `import.meta.env.DEV` is `true` under `vite` and `false` under `vite build`, and the bundler drops the branch that's never taken:
 
 ```ts
-import { loadGame, type Plugin, type Content } from '@ifloom/engine'
+import { loadGame, type Content } from '@ifloom/engine'
+import type { Plugin } from '@ifloom/engine/plugin'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { quests } from '@ifloom/plugin-quests'

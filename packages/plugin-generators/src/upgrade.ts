@@ -3,7 +3,7 @@
  * forward. The versions follow the engine's schema, as the other
  * first-party plugins' do: each step is keyed by the schema it upgrades from.
  */
-import type { ContentStep } from '@ifloom/engine'
+import type { ContentStep } from '@ifloom/engine/plugin'
 
 /** The version of what content writes for this plugin. */
 export const CONTENT_VERSION = 26

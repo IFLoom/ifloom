@@ -9,27 +9,20 @@
  * The engine word is *quest*. What the player sees it called — a journal, a
  * diary, a to-do list — is the game's choice.
  */
+import { holds, stringOf, type CommandRef, type Condition, type EffectRef, type Game, type GameState, type RenderedChoice } from '@ifloom/engine'
 import {
   arg,
   defineCalls,
   defineData,
   definePlugin,
   list,
-  holds,
   renderAction,
-  stringOf,
-  type CommandRef,
   type CommandsOf,
-  type Condition,
   type ConditionsOf,
   type DefinedPlugin,
-  type EffectRef,
   type EffectsOf,
-  type Game,
-  type GameState,
   type PluginProblem,
-  type RenderedChoice,
-} from '@ifloom/engine'
+} from '@ifloom/engine/plugin'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** One step of a quest. */

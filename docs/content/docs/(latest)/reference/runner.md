@@ -247,7 +247,7 @@ A write that fails is reported to `onSaveError`, and doesn't stop the writes aft
 type Result<T> = { ok: true; value: T } | { ok: false; reason: string }
 ```
 
-What the runner, the [save store](/docs/reference/saves#saves), the [mod store](/docs/reference/mods#mods), [`loadState`](/docs/reference/saves#loadstate), [`replay`](#replay), [`readMod`](/docs/reference/mods#readmod) and [`upgradePack`](/docs/reference/loader#upgradepack) answer with when something can fail in a way you should expect: a refused command, an empty slot, a save from a newer game, a mod for another game. Check `ok`. On success `value` is the answer. On failure `reason` says why, in words a player can read, and nothing changed. None of them throws for these.
+What the runner, the [save store](/docs/reference/saves#saves), the [mod store](/docs/reference/mods#mods), [`loadState`](/docs/reference/saves#loadstate), [`replay`](#replay) and [`upgradePack`](/docs/reference/loader#upgradepack) answer with when something can fail in a way you should expect: a refused command, an empty slot, a save from a newer game, a mod for another game. Check `ok`. On success `value` is the answer. On failure `reason` says why, in words a player can read, and nothing changed. None of them throws for these.
 
 ```ts
 const result = runner.apply({ type: 'choose', id: 'chat' })

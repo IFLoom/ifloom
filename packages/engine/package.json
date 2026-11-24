@@ -12,6 +12,12 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
+    "./plugin": {
+      "ifloom-source": "./src/plugin-api.ts",
+      "types": "./dist/plugin-api.d.ts",
+      "import": "./dist/plugin-api.js",
+      "default": "./dist/plugin-api.js"
+    },
     "./testing": {
       "ifloom-source": "./src/testing.ts",
       "types": "./dist/testing.d.ts",

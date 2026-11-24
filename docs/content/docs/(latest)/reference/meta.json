@@ -3,6 +3,7 @@
   "description": "Every export of @ifloom/engine",
   "root": true,
   "pages": [
+    "index",
     "---The game---",
     "game",
     "state",

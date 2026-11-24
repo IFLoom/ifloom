@@ -6,27 +6,18 @@
  * of its own, moves them on whenever a turn ends, and ends turns itself when
  * content passes time with `{ 'calendar/pass': n }`.
  */
+import { callOf, holds, inRange, stringOf, type CommandRef, type Condition, type Effect, type EffectRef, type GameState, type Range } from '@ifloom/engine'
 import {
   arg,
-  callOf,
   defineCalls,
   definePlugin,
-  holds,
-  inRange,
-  stringOf,
-  type CommandRef,
   type CommandsOf,
-  type Condition,
   type ConditionsOf,
   type DefinedPlugin,
-  type Effect,
-  type EffectRef,
   type EffectsOf,
-  type GameState,
   type PluginContext,
   type PluginProblem,
-  type Range,
-} from '@ifloom/engine'
+} from '@ifloom/engine/plugin'
 import { CONTENT_VERSION, contentMigrations } from './upgrade.ts'
 
 /** A period of the day: its id, and what the player reads (the id, if left out). */

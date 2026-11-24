@@ -9,35 +9,37 @@
  * Nothing here knows about phones; a device shows a feed as an app.
  */
 import {
-  arg,
   artSrc,
+  fillTokens,
+  holds,
+  pluginQuery,
+  stringOf,
+  type Block,
+  type CommandRef,
+  type Condition,
+  type EffectRef,
+  type Game,
+  type GameState,
+  type RenderedChoice,
+  type SceneBeat,
+} from '@ifloom/engine'
+import {
+  arg,
   defineCalls,
   defineData,
   definePlugin,
-  fillTokens,
-  holds,
   list,
   parseBeats,
-  pluginQuery,
   renderAction,
   speakerOf,
-  stringOf,
   styledBeats,
-  type Block,
-  type CommandRef,
   type CommandsOf,
-  type Condition,
   type ConditionsOf,
   type DefinedPlugin,
-  type EffectRef,
   type EffectsOf,
-  type Game,
-  type GameState,
   type Reference,
-  type RenderedChoice,
-  type SceneBeat,
   type SenderView,
-} from '@ifloom/engine'
+} from '@ifloom/engine/plugin'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 export type FeedDef = { id: string; name: string }

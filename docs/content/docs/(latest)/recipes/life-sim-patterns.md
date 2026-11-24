@@ -316,7 +316,7 @@ When the player can't do something, they see one reason. [`whyNot`](/docs/refere
 3. **Guards.** The game's own [`rules.guard`](/docs/reference/rules#gamerules), then each plugin's hard [guard](/docs/reference/plugins#guards-prices-and-labels), such as the calendar's curfew.
 4. **The command's own checks.** For an action, these are an open scene, a lock on it, its `blocked` entries in the order written, then its `cost`, one stat at a time. For a choice, see [How `choose` checks a choice](/docs/reference/scenes#how-choose-checks-a-choice). A plugin command has its own `whyNot`, such as jobs' "You've done today's shift." before "No shift today."
 
-A command that ignores locks, such as a setting or a [cheat](/docs/plugins/cheats), skips the first three steps. After all that, a guard's soft warning, such as "That would run past dawn.", can still refuse the command, but the button stays pressable (see [`warningOf`](/docs/reference/actions#warningof)).
+A command that ignores locks, such as a setting or a [cheat](/docs/plugins/cheats), skips the first three steps. After all that, a guard's soft warning, such as "That would run past dawn.", can still refuse the command, but the button stays pressable (see [guards](/docs/reference/plugins#guards)).
 
 To put your own reason where you want it:
 

@@ -21,12 +21,8 @@
  * plugin and never holds without it.
  */
 import {
-  arg,
   artSrc,
   declaredTrait,
-  defineCalls,
-  definePlugin,
-  defineTraitKind,
   entityDescription,
   entityImage,
   entityName,
@@ -37,12 +33,9 @@ import {
   holds,
   isUnique,
   lackingLine,
-  panelOf,
   parseRef,
   pluginQuery,
-  priceView,
   reasonOf,
-  renderAction,
   statOf,
   statValue,
   stringOf,
@@ -50,22 +43,31 @@ import {
   YOU,
   type Blocked,
   type CommandRef,
-  type CommandsOf,
   type Condition,
-  type ConditionsOf,
-  type DefinedPlugin,
   type Effect,
   type EntityDef,
   type EntityRef,
   type Game,
   type GameState,
-  type PluginContext,
   type Price,
   type Reason,
-  type Reference,
   type RenderedChoice,
-  type TraitDef,
 } from '@ifloom/engine'
+import {
+  arg,
+  defineCalls,
+  definePlugin,
+  defineTraitKind,
+  panelOf,
+  priceView,
+  renderAction,
+  type CommandsOf,
+  type ConditionsOf,
+  type DefinedPlugin,
+  type PluginContext,
+  type Reference,
+  type TraitDef,
+} from '@ifloom/engine/plugin'
 import { CONTENT_VERSION, contentMigrations, COMMAND_VERSION, commandMigrations } from './upgrade.ts'
 
 /** What the `shop/sellable` trait holds: what one is worth, by stat. */

@@ -9,23 +9,19 @@
  *
  * How each part is named: https://ifloom.dev/docs/reference/plugins#naming
  */
+import { stringOf, type CommandRef, type Condition, type EffectRef, type Game } from '@ifloom/engine'
 import {
   arg,
   defineCalls,
   defineData,
   definePlugin,
   list,
-  stringOf,
-  type CommandRef,
   type CommandsOf,
-  type Condition,
   type ConditionsOf,
   type DefinedPlugin,
-  type EffectRef,
   type EffectsOf,
-  type Game,
   type PluginProblem,
-} from '@ifloom/engine'
+} from '@ifloom/engine/plugin'
 
 const ID = '__id__'
 

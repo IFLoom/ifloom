@@ -3,7 +3,8 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { createRunner, loadGame, startingState } from '@ifloom/engine'
 import { definePlugin } from '@ifloom/engine/plugin'
-import { GameShell, type PanelComponent, type PluginUi } from '../src/index.ts'
+import { GameShell, type PanelComponent } from '../src/index.ts'
+import type { PluginUi } from '../src/kit.ts'
 
 afterEach(cleanup)
 

@@ -153,7 +153,7 @@ The React UI's [`PanelHost`](/docs/react/components#panelhost), in the default l
 
 The vanilla, Vue and Svelte templates start with a panel like this that shows the name and `with`, for you to replace with your own drawing. The shop's goods are in [`view.plugins.shop`](/docs/plugins/shop#shopview) and the jobs in [`view.plugins.jobs`](/docs/plugins/jobs#jobsview), with each button's command ready to send. The recipe [Opening a shop or a job board from anywhere](/docs/recipes/shops-and-job-boards) opens them from each kind of content.
 
-The React UI's [`PanelHost`](/docs/react/components#panelhost) draws `inventory` and `stats` itself (see [`BUILT_IN_PANELS`](/docs/react/components#built_in_panels)), and each plugin UI the game lists in [`plugins`](/docs/react/kit#the-plugins-option) brings its own: `shop`, `jobs`, `wardrobe`, `quests`, `people`, `achievements` and `statuses` from the first-party plugins.
+The React UI's [`PanelHost`](/docs/react/components#panelhost) draws `inventory` and `stats` itself (see [Built-in panels](/docs/react/components#built-in-panels)), and each plugin UI the game lists in [`plugins`](/docs/react/kit#the-plugins-option) brings its own: `shop`, `jobs`, `wardrobe`, `quests`, `people`, `achievements` and `statuses` from the first-party plugins.
 
 ## Checking a panel
 

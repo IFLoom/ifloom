@@ -5,7 +5,8 @@
  * it yourself from `useCalendar`.
  */
 import type { ComponentProps } from 'react'
-import { overridable, type Override, pluginKit, type PluginUi, useGame, usePart, usePlugin } from '@ifloom/react'
+import { useGame, usePart } from '@ifloom/react'
+import { overridable, type Override, pluginKit, type PluginUi, usePlugin } from '@ifloom/react/kit'
 import type { CalendarView } from '../index.ts'
 
 /** The calendar plugin's UI, declared once: its id, for `usePlugin` and `calendarUi`. */

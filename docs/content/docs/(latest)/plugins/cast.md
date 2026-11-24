@@ -678,7 +678,7 @@ Replaceable as `PeopleHere` in [`components`](/docs/react/components#components)
 function Relationships(props: { className?: string }): JSX.Element | null
 ```
 
-Everyone the player has met, from `view.plugins.cast.people`, each with their portrait, name and `description`, and the stats the player can see on them. Each character is an [entity](/docs/reference/entities) of the cast's kind, so those are the stats the game declares on that kind, such as friendship, read from [`view.entities`](/docs/reference/view#entities) and drawn like the [`StatList`](/docs/react/components#statlist)'s, with a bar or pips for a stat with a `display`. It draws nothing before anyone is met, and nothing without the cast. The default layout opens it from the People section, and it's the built-in `people` [panel](/docs/react/components#built_in_panels).
+Everyone the player has met, from `view.plugins.cast.people`, each with their portrait, name and `description`, and the stats the player can see on them. Each character is an [entity](/docs/reference/entities) of the cast's kind, so those are the stats the game declares on that kind, such as friendship, read from [`view.entities`](/docs/reference/view#entities) and drawn like the [`StatList`](/docs/react/components#statlist)'s, with a bar or pips for a stat with a `display`. It draws nothing before anyone is met, and nothing without the cast. The default layout opens it from the People section, and it's the built-in `people` [panel](/docs/react/components#built-in-panels).
 
 Replaceable as `Relationships` in [`components`](/docs/react/components#components). Parts: `relationships`, `relationship` (with `data-person`), `relationship-header`, `relationship-stats`, and the `person-` and `stat-` parts inside.
 

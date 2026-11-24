@@ -6,18 +6,8 @@
  */
 import type { EntityRef, GameState, Holder, Result } from '@ifloom/engine'
 import type { ComponentProps } from 'react'
-import {
-  buttonVariants,
-  ChoiceButton,
-  type InventoryProps,
-  overridable,
-  type Override,
-  pluginKit,
-  type PluginUi,
-  useGame,
-  usePart,
-  usePlugin,
-} from '@ifloom/react'
+import { ChoiceButton, type InventoryProps, useGame, usePart } from '@ifloom/react'
+import { buttonVariants, overridable, type Override, pluginKit, type PluginUi, usePlugin } from '@ifloom/react/kit'
 import { inventory, type InventoryThing, type InventoryView } from '../index.ts'
 
 /** The inventory plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */

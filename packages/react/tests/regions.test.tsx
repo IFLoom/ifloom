@@ -19,8 +19,8 @@ import {
   useHolds,
   useGame,
   type Components,
-  type PluginUi,
 } from '../src/index.ts'
+import type { PluginUi } from '../src/kit.ts'
 import { storyOf } from './layouts.tsx'
 
 /** Out in the street, or at home: a kv key the street's and the house's actions set. */

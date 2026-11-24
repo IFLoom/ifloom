@@ -7,7 +7,8 @@
 import type { ComponentProps } from 'react'
 import { statOf, stringOf } from '@ifloom/engine'
 import type { StatusesView } from '../index.ts'
-import { overridable, type Override, pluginKit, type PluginUi, useGame, useKitPart, usePart, usePlugin } from '@ifloom/react'
+import { useGame, usePart } from '@ifloom/react'
+import { overridable, type Override, pluginKit, type PluginUi, useKitPart, usePlugin } from '@ifloom/react/kit'
 
 /** The statuses plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const STATUSES_WORDS = {

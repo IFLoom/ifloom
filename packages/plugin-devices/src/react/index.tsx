@@ -9,12 +9,10 @@
  */
 import type { AppView, DeviceView, SectionView } from '../index.ts'
 import { createContext, useContext, type ComponentProps, type ReactNode } from 'react'
+import { assetUrl, Beat, ChoiceList, Picture, useGame, usePart } from '@ifloom/react'
 import {
-  assetUrl,
   badgeVariants,
-  Beat,
   buttonVariants,
-  ChoiceList,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -22,15 +20,12 @@ import {
   Icon,
   overridable,
   type Override,
-  Picture,
   pluginKit,
   type PluginUi,
   useDialogParts,
-  useGame,
   useKitPart,
-  usePart,
   usePlugin,
-} from '@ifloom/react'
+} from '@ifloom/react/kit'
 
 /** The devices plugin's UI, declared once: its id, for `usePlugin` and `devicesUi`. */
 const DEVICES = pluginKit('devices')

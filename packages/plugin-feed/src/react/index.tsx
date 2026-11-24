@@ -7,7 +7,8 @@
 import type { ComponentProps } from 'react'
 import type { GameState, Result, SceneBeat } from '@ifloom/engine'
 import { feed as feedPlugin, type FeedsView } from '../index.ts'
-import { Beat, buttonVariants, overridable, type Override, Picture, pluginKit, type PluginUi, useKitPart, usePart, usePlugin, Video } from '@ifloom/react'
+import { Beat, Picture, usePart, Video } from '@ifloom/react'
+import { buttonVariants, overridable, type Override, pluginKit, type PluginUi, useKitPart, usePlugin } from '@ifloom/react/kit'
 
 /** The feed plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const FEED_WORDS = {

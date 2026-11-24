@@ -21,7 +21,7 @@ import { useWords } from './words.ts'
 /** One clock per runner, however many components ask for it. */
 const clocks = new WeakMap<Runner, { users: number; stop: () => void }>()
 
-/** Run the game's clock while this component is mounted: one per runner, shared by everything that asks. */
+/** Run the game's clock while this component is mounted: one per runner, however many providers share it. `GameProvider` calls it. */
 export function useTicking(runner: Runner): void {
   useEffect(() => {
     let clock = clocks.get(runner)

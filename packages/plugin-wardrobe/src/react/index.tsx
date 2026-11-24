@@ -7,7 +7,8 @@
 import type { ComponentProps } from 'react'
 import type { EntityRef, GameState, RenderedChoice, Result } from '@ifloom/engine'
 import { wardrobe, type WardrobeView } from '../index.ts'
-import { buttonVariants, overridable, type Override, pluginKit, type PluginUi, Section, useKitPart, usePart, usePlugin } from '@ifloom/react'
+import { Section, usePart } from '@ifloom/react'
+import { buttonVariants, overridable, type Override, pluginKit, type PluginUi, useKitPart, usePlugin } from '@ifloom/react/kit'
 
 /** The wardrobe plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const WARDROBE_WORDS = {

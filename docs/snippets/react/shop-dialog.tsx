@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button } from '@ifloom/react'
+import { Button } from '@ifloom/react/kit'
 import { ShopDialog } from '@ifloom/plugin-shop/react'
 
 export function CounterButton() {

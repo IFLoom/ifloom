@@ -12,6 +12,12 @@
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
+    "./kit": {
+      "ifloom-source": "./src/kit.ts",
+      "types": "./dist/kit.d.ts",
+      "import": "./dist/kit.js",
+      "default": "./dist/kit.js"
+    },
     "./styles.css": "./src/styles.css",
     "./styles.min.css": "./dist/styles.min.css",
     "./theme.css": "./src/theme.css",

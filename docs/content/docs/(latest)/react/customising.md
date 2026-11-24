@@ -342,7 +342,8 @@ Here a game draws its spoken lines and letters its own way and leaves the other 
 ```tsx
 // src/main.tsx
 import type { SceneBeat } from '@ifloom/engine'
-import { mountGame, usePart, type Components, type Override } from '@ifloom/react'
+import { mountGame, usePart, type Components } from '@ifloom/react'
+import type { Override } from '@ifloom/react/kit'
 import module from './game.ts'
 import './styles.css'
 
@@ -500,7 +501,7 @@ What makes a game look like itself is mostly shape and type:
 
 ## The data-part reference
 
-Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-change-the-built-in-classes). The list is exported as [`PART_KEYS`](/docs/react/components#part_keys).
+Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-change-the-built-in-classes). Each is a [`PartKey`](/docs/react/components#partkey).
 
 ### The page
 

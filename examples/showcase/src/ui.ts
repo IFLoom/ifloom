@@ -5,7 +5,7 @@
  * layout in `layout.tsx` places the plugins' parts by hand; with the default
  * layout, they'd go where each UI says, in this order.
  */
-import type { PluginUi } from '@ifloom/react'
+import type { PluginUi } from '@ifloom/react/kit'
 import { achievementsUi } from '@ifloom/plugin-achievements/react'
 import { calendarUi } from '@ifloom/plugin-calendar/react'
 import { castUi } from '@ifloom/plugin-cast/react'

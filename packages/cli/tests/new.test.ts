@@ -247,7 +247,8 @@ describe('ifloom new', () => {
     ]) {
       expect(ui).toContain(name)
     }
-    expect(ui).not.toMatch(/@ifloom\/react\//)
+    // Only the React UI's public entries, never a path inside it.
+    expect(ui.match(/'@ifloom\/react[^']*'/g)?.every((spec) => spec === "'@ifloom/react'" || spec === "'@ifloom/react/kit'")).toBe(true)
     const readme = readFileSync(join(dir, 'README.md'), 'utf8')
     expect(readme).toContain('# Rainy Day')
     expect(readme).toContain('npm install ifloom-plugin-rainy-day')

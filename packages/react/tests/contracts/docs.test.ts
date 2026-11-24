@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
 /**
- * Everything the React UI exports is in its docs section. A developer learns
+ * Everything the React UI exports, from `@ifloom/react` and `@ifloom/react/kit`, is in its docs section. A developer learns
  * the UI from the docs site alone, so an export no page of the React UI docs
  * names is a component nobody can find.
  */
-const INDEX = import.meta.glob('../../src/index.ts', {
+const INDEX = import.meta.glob(['../../src/index.ts', '../../src/kit.ts'], {
   query: '?raw',
   import: 'default',
   eager: true,
@@ -36,8 +36,9 @@ function exportedNames(source: string): string[] {
 }
 
 describe('the docs', () => {
-  it('name every export of @ifloom/react somewhere in the React UI docs', () => {
-    const names = exportedNames(Object.values(INDEX)[0])
+  it('name every export of @ifloom/react and @ifloom/react/kit somewhere in the React UI docs', () => {
+    expect(Object.keys(INDEX)).toHaveLength(2)
+    const names = [...new Set(Object.values(INDEX).flatMap(exportedNames))]
     expect(names.length).toBeGreaterThan(30)
     const pages = Object.values(PAGES).join('\n')
     expect(pages.length).toBeGreaterThan(0)

@@ -1,7 +1,7 @@
 /// <reference types="node" />
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { KIT_LAYOUT, KIT_LOOKS, KIT_PARTS } from '../../src/index.ts'
+import { KIT_LAYOUT, KIT_LOOKS, KIT_PARTS } from '../../src/kit.ts'
 
 const CORE = import.meta.glob('../../src/**/*.{ts,tsx}', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
 const UIS = import.meta.glob('../../../plugin-*/src/react/**/*.tsx', { query: '?raw', import: 'default', eager: true }) as Record<string, string>

@@ -7,21 +7,19 @@
  */
 import type { AchievementsView } from '../index.ts'
 import { useState, type ComponentProps } from 'react'
+import { Picture, usePage, usePart } from '@ifloom/react'
 import {
   BackButton,
   overridable,
   type Override,
   PageHeading,
   PartDialog,
-  Picture,
   pluginKit,
   type PluginUi,
   useKitPart,
-  usePage,
   usePageParts,
-  usePart,
   usePlugin,
-} from '@ifloom/react'
+} from '@ifloom/react/kit'
 
 /** The achievements plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const ACHIEVEMENTS_WORDS = {

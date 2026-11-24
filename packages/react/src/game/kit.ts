@@ -61,7 +61,7 @@ export const KIT_LOOKS: Readonly<Record<KitPart, string>> = {
  * plugin's parts: flex and grid, gaps, alignment, growing and shrinking, text
  * sizes and weights, and an entry's buttons beside its words from Tailwind's
  * `sm` up. With the kit's
- * looks, `buttonVariants`, `badgeVariants`, `PROSE` and `DIALOG_CLASSES`, a
+ * looks, `buttonVariants`, `badgeVariants`, `PROSE` and `useDialogParts`, a
  * plugin's UI needs no class of its own, so it needs no stylesheet. A class
  * not here may be missing from `styles.min.css`; a UI that needs one ships
  * its own stylesheet.

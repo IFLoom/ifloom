@@ -122,7 +122,7 @@ What a plugin's `/react` exports as `<id>Ui`. Every field but `id` is optional.
 | `layout` | Components to place, by [spot](#where-the-layout-puts-them). Each is drawn with no props. |
 | `sections` | Renderers for a plugin's section in a device's app, by that plugin's id: `messagesUi` has `messages`. This is how one plugin's UI draws inside another's without importing it. |
 | `inline` | Components for [UI pieces](/docs/react/hints#inline-pieces) in prose, by name. [`checkUiHints`](/docs/react/hints#checkuihints) knows their names when it's given the module in `plugins`. |
-| `hints` | The `ui` hints its components read, each a [`UiHint`](/docs/react/hints#ui_hints): its name, where content writes it and a check. `checkUiHints` checks them when it's given the module in `plugins`. |
+| `hints` | The `ui` hints its components read, each a [`UiHint`](/docs/react/hints#uihint): its name, where content writes it and a check. `checkUiHints` checks them when it's given the module in `plugins`. |
 | `pages` | Pages it adds among the [pages around the game](/docs/react/components#pages), by id, each with a title-screen button. See [`PluginPage`](#pluginpage). A game's own page of the same id goes over it. |
 | `settings` | Something for the settings page, such as the unlocks plugin's code box: drawn there with pages on, and behind a menu button labelled `label`, a key of its words, without them. |
 | `components` | Built-in components it draws in place of the UI's own, by name, as a game's [`components`](/docs/react/components#components) do. The calendar's UI draws its `CalendarClock` for `Clock`. |
@@ -149,17 +149,22 @@ A page a plugin UI adds, as a game's [`PageDef`](/docs/react/components#pagesopt
 
 ## The kit
 
-A plugin's React UI is built from `@ifloom/react`'s own exports, the same ones a game's UI uses: never a path inside the package, and never another plugin. The first-party plugins are held to that by a contract test. Whatever the [Components](/docs/react/components) page lists is in the kit; these are the parts a plugin UI reaches for most.
+A plugin's React UI is built from the React UI's two public entries, the same ones a game's UI uses: never a path inside the package, and never another plugin. The first-party plugins are held to that by a contract test.
 
-| For | Exports |
-|---|---|
-| The game | [`usePlugin`](#useplugin) and [`pluginKit`](#pluginkit) (a plugin's view, words and commands), [`useGame`](/docs/react/components#usegame) (the runner, the view and `send`), [`usePluginUis`](#usepluginuis), [`useHolds`](/docs/react/components#useholds), [`usePage`](/docs/react/components#usepage), [`useProfile`](/docs/react/components#useprofile) |
-| Words | [`useWords`](/docs/react/components#usewords) with the module's table, [`uiSay`](/docs/react/components#uisay), `Words`, `Say` |
-| Buttons and prices | [`ChoiceButton`](/docs/react/components#choicebutton), [`ChoiceList`](/docs/react/components#choicelist), [`PriceTag`](/docs/react/components#pricetag), [`buttonVariants`](/docs/react/components#button), [`badgeVariants`](/docs/react/components#badge) |
-| Dialogs | [`PartDialog`](/docs/react/components#partdialog), [`useDialogParts`](#usedialogparts), [`DIALOG_CLASSES`](#usedialogparts), [`Dialog`](/docs/react/components#dialog) |
-| The page | [`Section`](/docs/react/components#section), [`PROSE`](#prose), [`StatGauge`](#statgauge), [`PageHeading`](#pageheading-and-backbutton), [`BackButton`](#pageheading-and-backbutton), [`usePageParts`](#pageheading-and-backbutton) |
-| Parts and overrides | [`usePart`](/docs/react/components#usepart), [`useKitPart`](#usekitpart), [`KIT_PARTS`](#kit_parts), [`KIT_LOOKS`](#kit_looks), [`KIT_LAYOUT`](#kit_layout), [`overridable`](/docs/react/components#overridable), `Override`, [`OverridableComponents`](#overridablecomponents-and-partnames), [`PartNames`](#overridablecomponents-and-partnames) |
-| Pictures and prose | [`Picture`](/docs/react/components#picture), [`Video`](/docs/react/components#video), [`Icon`](/docs/react/components#icon), [`Beat`](/docs/react/components#beat), [`LayeredPicture`](/docs/react/components#layeredpicture), [`assetUrl`](/docs/react/components#asseturl) |
+- **`@ifloom/react/kit`** has what only a component of your own needs: [`pluginKit`](#pluginkit), [`usePlugin`](#useplugin), `PluginUi` and its types, [`UiHint`](/docs/react/hints#uihint), the kit's parts, `overridable`, the dialog and page parts, `Icon` and the shadcn/ui primitives.
+- **`@ifloom/react`** has the rest, which a game's own layout uses too: `useGame`, `usePart`, `useWords`, `ChoiceButton`, `Picture`, `Section` and the other components.
+
+These are the parts a plugin UI reaches for most.
+
+| For | From `@ifloom/react/kit` | From `@ifloom/react` |
+|---|---|---|
+| The game | [`usePlugin`](#useplugin) and [`pluginKit`](#pluginkit) (a plugin's view, words and commands) | [`useGame`](/docs/react/components#usegame) (the runner, the view and `send`), [`usePluginUis`](#usepluginuis), [`useHolds`](/docs/react/components#useholds), [`usePage`](/docs/react/components#usepage), [`useProfile`](/docs/react/components#useprofile) |
+| Words | | [`useWords`](/docs/react/components#usewords) with the module's table, `Words`, `Say` |
+| Buttons and prices | [`buttonVariants`](/docs/react/components#button), [`badgeVariants`](/docs/react/components#badge) | [`ChoiceButton`](/docs/react/components#choicebutton), [`ChoiceList`](/docs/react/components#choicelist), [`PriceTag`](/docs/react/components#pricetag) |
+| Dialogs | [`PartDialog`](/docs/react/components#partdialog), [`useDialogParts`](#usedialogparts), [`Dialog`](/docs/react/components#dialog) | |
+| The page | [`PROSE`](#prose), [`PageHeading`](#pageheading-and-backbutton), [`BackButton`](#pageheading-and-backbutton), [`usePageParts`](#pageheading-and-backbutton) | [`Section`](/docs/react/components#section), [`StatGauge`](#statgauge) |
+| Parts and overrides | [`useKitPart`](#usekitpart), [`KIT_PARTS`](#kit_parts), [`KIT_LOOKS`](#kit_looks), [`KIT_LAYOUT`](#kit_layout), [`overridable`](/docs/react/components#overridable), `Override` | [`usePart`](/docs/react/components#usepart), [`OverridableComponents`](#overridablecomponents-and-partnames), [`PartNames`](#overridablecomponents-and-partnames) |
+| Pictures and prose | [`Icon`](/docs/react/components#icon) | [`Picture`](/docs/react/components#picture), [`Video`](/docs/react/components#video), [`Beat`](/docs/react/components#beat), [`LayeredPicture`](/docs/react/components#layeredpicture), [`assetUrl`](/docs/react/components#asseturl) |
 
 ## Writing a plugin's UI
 
@@ -172,7 +177,8 @@ A plugin's React UI is built from `@ifloom/react`'s own exports, the same ones a
 
 ```tsx
 import type { ComponentProps } from 'react'
-import { overridable, pluginKit, useKitPart, usePart, usePlugin, type Override, type PluginUi } from '@ifloom/react'
+import { usePart } from '@ifloom/react'
+import { overridable, pluginKit, useKitPart, usePlugin, type Override, type PluginUi } from '@ifloom/react/kit'
 import { weather } from '../index.ts'
 
 export const WEATHER_WORDS = { weather: 'Weather', rain: 'Rain later', weatherMark: 'Mark rain' } as const
@@ -252,7 +258,7 @@ For the rest of the game, the runner, the snapshot or the whole view, use `useGa
 A plugin's UI is styled the way the React UI's own parts are: by Tailwind classes on its parts, the theme's [tokens](/docs/react/customising#2-set-tokens-and-colours), and the kit's parts. The [presets](/docs/react/customising#1-pick-a-theme-preset) style the kit's parts and the tokens, and never a plugin's own parts by name, so a plugin's UI looks right in each preset as long as it marks what its parts are like.
 
 - **Mark each part with what it's like**, with [`useKitPart`](#usekitpart): a vendor's good, a job and an achievement are all `card`s, their names `title`s, a line about them a `note`. Each kit part brings its own look ([`KIT_LOOKS`](#kit_looks)), so `useKitPart('card', 'forecast-day')` is boxed like every other plugin's card with no preset loaded, and a preset that rules its cards as a book's index rules every plugin's, first-party or not.
-- **Add only layout.** What you put over a kit part's look is where it sits: `useKitPart('card', 'good', 'sm:flex-row sm:items-start')` puts a good's buttons beside its words on a wider screen. [`KIT_LAYOUT`](#kit_layout) lists the layout classes the React UI's stylesheet always has. With those, `buttonVariants`, `badgeVariants`, [`PROSE`](#prose) and [`DIALOG_CLASSES`](#usedialogparts), a plugin's UI needs no class of its own.
+- **Add only layout.** What you put over a kit part's look is where it sits: `useKitPart('card', 'good', 'sm:flex-row sm:items-start')` puts a good's buttons beside its words on a wider screen. [`KIT_LAYOUT`](#kit_layout) lists the layout classes the React UI's stylesheet always has. With those, `buttonVariants`, `badgeVariants`, [`PROSE`](#prose) and [`useDialogParts`](#usedialogparts), a plugin's UI needs no class of its own.
 - **Why it matters.** The prebuilt `styles.min.css` holds the classes `@ifloom/react`'s own source uses, and a game with Tailwind finds the same through `@ifloom/react/styles.css`. Neither looks inside a plugin, so a class only your plugin uses isn't there, and the part shows unstyled. The first-party plugins use no class of their own, and a contract test holds them to it.
 - **Anything more ships with the plugin.** If your UI needs classes or rules of its own, publish a stylesheet beside `/react`: its Tailwind source, with an `@source` line pointing at your `dist/react/`, for a game with its own Tailwind, and a prebuilt copy for a game without, as `@ifloom/react` publishes `styles.css` and `styles.min.css`. A game then imports yours after the React UI's:
 
@@ -356,10 +362,9 @@ The reading column's classes: as wide as `--width-prose`, placed by `--margin-pr
 
 ```ts
 function useDialogParts(extra?: string): { dialog; overlay; title; close }
-const DIALOG_CLASSES: { dialog: string; overlay: string; title: string; close: string }
 ```
 
-The `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close` parts every dialog of the UI is drawn with, for a [`Dialog`](/docs/react/components#dialog) of your own that should look like the rest, with `extra` classes on the dialog: the devices' UI makes a phone's narrower. `DIALOG_CLASSES` are their classes. [`PartDialog`](/docs/react/components#partdialog) is the whole dialog, done for you.
+The `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close` parts every dialog of the UI is drawn with, for a [`Dialog`](/docs/react/components#dialog) of your own that should look like the rest, with `extra` classes on the dialog: the devices' UI makes a phone's narrower. [`PartDialog`](/docs/react/components#partdialog) is the whole dialog, done for you.
 
 ### StatGauge
 
@@ -380,7 +385,7 @@ function usePageParts(className?: string, part?: PartKey): { 'data-part': PartKe
 What the built-in pages are made of, for a page a plugin UI or a game adds: a heading (the `page-heading` part), a Back button (`page-back`, `ui.back`, which calls `usePage().back()`), and the attributes for the page's outer section, centred and as wide as `--width-reading`, with `part` naming it (`title-page` if left out). The achievements page is all three:
 
 ```tsx
-import { BackButton, PageHeading, usePageParts } from '@ifloom/react'
+import { BackButton, PageHeading, usePageParts } from '@ifloom/react/kit'
 
 function AlmanacPage() {
   const section = usePageParts()
@@ -400,4 +405,4 @@ interface OverridableComponents { Game: Override<GameProps>; /* … every built-
 interface PartNames {}
 ```
 
-The components a game's [`components`](/docs/react/components#components) can replace, and the parts a plugin UI adds to [`PART_KEYS`](/docs/react/components#part_keys). A plugin's `/react` augments both, as [above](#writing-a-plugins-ui), so `components` and `classes` take its names typed and `overridable` and `usePart` accept them.
+The components a game's [`components`](/docs/react/components#components) can replace, and the parts a plugin UI adds to [`PartKey`](/docs/react/components#partkey). A plugin's `/react` augments both, as [above](#writing-a-plugins-ui), so `components` and `classes` take its names typed and `overridable` and `usePart` accept them.

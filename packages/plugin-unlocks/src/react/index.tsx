@@ -7,7 +7,8 @@
  */
 import type { Runner } from '@ifloom/engine'
 import { createContext, useContext, useEffect, useState, type ComponentProps, type ReactNode, type SyntheticEvent } from 'react'
-import { buttonVariants, overridable, type Override, pluginKit, type PluginUi, useGame, useKitPart, usePart, usePlugin } from '@ifloom/react'
+import { useGame, usePart } from '@ifloom/react'
+import { buttonVariants, overridable, type Override, pluginKit, type PluginUi, useKitPart, usePlugin } from '@ifloom/react/kit'
 import { enterCode, startUnlocks, type Entered, type UnlocksView } from '../index.ts'
 
 /** The unlocks plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */

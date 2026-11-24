@@ -12,7 +12,7 @@ function css(input: string, output: string) {
   execFileSync(process.execPath, [tailwind, '--cwd', 'src', '-i', input, '-o', `../dist/${output}`, '--minify'], { stdio: 'pipe' })
 }
 
-export default define(['src/index.ts'], {
+export default define(['src/index.ts', 'src/kit.ts'], {
   platform: 'browser',
   hooks: {
     'build:done': () => {

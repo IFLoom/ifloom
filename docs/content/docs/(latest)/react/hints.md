@@ -70,7 +70,7 @@ type Transition = { in?: TransitionName; out?: TransitionName; ms?: number }
 | `zoom` | Grows slightly into place. | Grows slightly and fades. |
 | `none` | Appears at once. | Goes at once. |
 
-`DEFAULT_TRANSITION_MS` is the 300 milliseconds a transition takes when nothing says.
+A transition takes 300 milliseconds when nothing says.
 
 ### Your own transition names
 
@@ -214,7 +214,7 @@ body: [
 }
 ```
 
-Tell [`checkUiHints`](#checkuihints) about it with `allow`, so it isn't reported as a hint the React UI doesn't read. A plugin UI that reads a hint of its own [declares it](#ui_hints) instead:
+Tell [`checkUiHints`](#checkuihints) about it with `allow`, so it isn't reported as a hint the React UI doesn't read. A plugin UI that reads a hint of its own [declares it](#uihint) instead:
 
 ```ts
 expect(checkUiHints(game, { allow: ['card'] })).toEqual([])
@@ -231,10 +231,10 @@ stats: [
 ]
 ```
 
-On a [stat](/docs/reference/stats#statdef), `StatDisplay`: how the [`StatList`](/docs/react/components#statlist) and [`Relationships`](/docs/plugins/cast#relationships) draw it. `'number'` (the default) is the value as the game formats it. `'bar'` adds a bar under it from its `min` to its `max`. `'pips'` adds a row of pips, one per point, which suits a range of `MAX_PIPS` (20) or less. A wider range is drawn as a bar, and `checkUiHints` reports it.
+On a [stat](/docs/reference/stats#statdef), `StatDisplay`: how the [`StatList`](/docs/react/components#statlist) and [`Relationships`](/docs/plugins/cast#relationships) draw it. `'number'` (the default) is the value as the game formats it. `'bar'` adds a bar under it from its `min` to its `max`. `'pips'` adds a row of pips, one per point, which suits a range of 20 or less. A wider range is drawn as a bar, and `checkUiHints` reports it.
 
 ```ts
-import { type StatDisplay, MAX_PIPS } from '@ifloom/react'
+import type { StatDisplay } from '@ifloom/react'
 
 type StatDisplay = 'number' | 'bar' | 'pips'
 ```
@@ -322,7 +322,8 @@ Give the shell or the provider an `inline` object with a component per name. Eac
 
 ```tsx
 // src/main.tsx
-import { mountGame, InlineTrigger, PartDialog, type InlineComponents, type InlineProps } from '@ifloom/react'
+import { mountGame, InlineTrigger, type InlineComponents, type InlineProps } from '@ifloom/react'
+import { PartDialog } from '@ifloom/react/kit'
 import { useState } from 'react'
 import module from './game.ts'
 
@@ -402,10 +403,10 @@ describe('the content', () => {
 })
 ```
 
-### UI_HINTS
+### UiHint
 
 ```ts
-import { UI_HINTS, type UiHint, type HintCheckContext } from '@ifloom/react'
+import type { UiHint, HintCheckContext } from '@ifloom/react/kit'
 
 type UiHint = {
   name: string
@@ -415,7 +416,7 @@ type UiHint = {
 type HintCheckContext = { game: Game; on: UiTarget; id?: string; transitions: ReadonlySet<string> }
 ```
 
-Each hint on this page is declared once in `UI_HINTS`: its name, where content writes it, and a `check` that returns what's wrong with a value. `checkUiHints` is built from that list, so a hint is known only on the places its `on` names. The check is told the game, what the hint is on, that thing's `id` (a stat's, a scene's, a choice's, a kind's or an entity's reference) and the transition names the game has. Each problem it returns is worded to follow the place, such as `ui.timer "kettle" is not a timer the game has`.
+Each hint on this page is declared once inside the React UI as a `UiHint`: its name, where content writes it, and a `check` that returns what's wrong with a value. `checkUiHints` is built from those declarations, so a hint is known only on the places its `on` names. Each inline piece is declared once the same way, with its name, its component and its check. The check is told the game, what the hint is on, that thing's `id` (a stat's, a scene's, a choice's, a kind's or an entity's reference) and the transition names the game has. Each problem it returns is worded to follow the place, such as `ui.timer "kettle" is not a timer the game has`.
 
 A plugin's React UI declares the hints its components read the same way, in its [`PluginUi`](/docs/react/kit#pluginui)'s `hints`. Give `checkUiHints` the same `plugins` list you give `mountGame` and it checks them too:
 
@@ -424,8 +425,6 @@ import { shopUi } from '@ifloom/plugin-shop/react'
 
 expect(checkUiHints(game, { plugins: [shopUi] })).toEqual([])
 ```
-
-The inline pieces are declared the same way, in [`INLINE_PIECES`](/docs/react/components#inline_pieces).
 
 ## See it in the showcase
 

@@ -7,7 +7,8 @@
 import type { GameState, Result } from '@ifloom/engine'
 import { cheats, type CheatView, type CheatsView } from '../index.ts'
 import { useState, type ComponentProps } from 'react'
-import { ChoiceButton, overridable, type Override, PartDialog, pluginKit, type PluginUi, useKitPart, usePart, usePlugin } from '@ifloom/react'
+import { ChoiceButton, usePart } from '@ifloom/react'
+import { overridable, type Override, PartDialog, pluginKit, type PluginUi, useKitPart, usePlugin } from '@ifloom/react/kit'
 
 /** The cheats plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const CHEATS_WORDS = {

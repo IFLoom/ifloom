@@ -22,6 +22,17 @@ Every component is listed, with its props, under [Components](/docs/react/compon
 
 Nothing in the engine depends on this package. The UI only reads the [view](/docs/reference/view) and sends [commands](/docs/reference/commands) through a [runner](/docs/reference/runner), as a UI of your own would, so a game that wants Vue, Svelte or a terminal leaves it out.
 
+## The two entries
+
+`@ifloom/react` has two entries.
+
+| Import | For | What's in it |
+|---|---|---|
+| `@ifloom/react` | Using the UI in a game | [`mountGame`](#mountgame), [`GameShell`](#gameshell) and [`GameProvider`](/docs/react/components#gameprovider), the layout's regions (`Game`, `Sidebar`, `Story`, `Overlay`, `Section`), every component and the hooks they read (`useGame`, `useScene`, `useWords`, ...), the options that restyle and replace them (`UiOptions`, `Components`, `Classes`, `usePart`), the pages, and [`checkUiHints`](/docs/react/hints#checkuihints). |
+| `@ifloom/react/kit` | Building components of your own | What a [plugin's UI](/docs/react/kit) is made of (`PluginUi`, `pluginKit`, `usePlugin`, the kit's parts and `overridable`), dialogs and pages that look like the UI's own (`PartDialog`, `PageHeading`), `Icon`, and the [shadcn/ui primitives](/docs/react/components#shadcnui-primitives) with `cn`. A game's own screens use it too. |
+
+A game that only mounts the UI and restyles it never imports the kit. A plugin's UI imports from both.
+
 ## What it shows
 
 The default layout, [`DefaultLayout`](#layouts), puts these on the page. A section shows only when the game has something for it. What comes from a plugin shows when the game lists that plugin's UI in [`plugins`](#plugins).
@@ -527,7 +538,7 @@ Everything else on screen comes from the view, in the game's own words: titles, 
 
 Each plugin UI's words are on its plugin's page, and in a table it exports, such as the debug card's `DEBUG_WORDS` on the [debug plugin](/docs/plugins/debug#debugui)'s page.
 
-In code, [`UI_STRINGS`](/docs/react/components#ui_strings) is this table in English, [`uiSay`](/docs/react/components#uisay) reads a word for a game, and [`useWords`](/docs/react/components#usewords) does the same inside a component.
+In code, [`UiStringKey`](/docs/react/components#uistringkey-words-and-say) is one of this table's keys, and [`useWords`](/docs/react/components#usewords) reads a word for the game inside a component.
 
 ## Next
 

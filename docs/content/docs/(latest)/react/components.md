@@ -4,43 +4,36 @@ description: "Every component and hook @ifloom/react exports, from GameShell dow
 ---
 This page is about `@ifloom/react`, the optional React UI. The engine doesn't need it. To draw a game with plain DOM, Vue, Svelte or React by hand, see [Your own UI in any framework](/docs/guide/frameworks).
 
-This page lists everything `@ifloom/react` exports, from the whole shell down to a single button. Each plugin's own React UI, such as the shop's counter, is on that plugin's page, under **Drawing it**, and [Plugin UIs and the kit](/docs/react/kit) says how they come into a game. Each game component reads the [view](/docs/reference/view) through [`useGame`](#usegame), so it has to sit inside a [`GameProvider`](#gameprovider). [`GameShell`](#gameshell) is one. The [shadcn/ui primitives](#shadcnui-primitives) at the end don't need a provider.
+This page lists everything `@ifloom/react` and `@ifloom/react/kit` export, from the whole shell down to a single button. Each plugin's own React UI, such as the shop's counter, is on that plugin's page, under **Drawing it**, and [Plugin UIs and the kit](/docs/react/kit) says how they come into a game. Each game component reads the [view](/docs/reference/view) through [`useGame`](#usegame), so it has to sit inside a [`GameProvider`](#gameprovider). [`GameShell`](#gameshell) is one. The [shadcn/ui primitives](#shadcnui-primitives) at the end don't need a provider.
 
 Every game component on this page can be replaced by its name in [`components`](#components), everywhere the UI draws it, and each entry lists the main [`data-part`](/docs/react/customising#the-data-part-reference)s it draws. [Make it your own](/docs/react/customising) shows how to use both.
 
 ```ts
 import {
-  // the game
-  GameShell, GameProvider, useGame, Icon, WithPages,
-  DefaultLayout, Game, Sidebar, Story, Overlay, Section, When, useHolds, Title, RoomActions, Plugins, usePluginUis, pluginKit, usePlugin,
-  Scene, Beat, SceneHeader, BeatGroup, Fold, useScene, InlineAction, Tip, InlineTrigger, InlineModal, InlineImage, InlineMail, InlineProp, InlineMono, INLINE_PIECES, BUILT_IN_INLINE, Picture, Video, LayeredPicture, Hotspot, MediaViewer, assetUrl, ChoiceButton, ChoiceList, PriceTag,
-  Clock, StatList, StatGauge, EntityTable, Inventory, useClock,
-  InputField, InputFields,
-  GameMenu, SavesMenu, Backlog, ModManager, useSaves, useBacklog, useMods,
-  TitlePage, SettingsPage, LoadPage, CreditsPage, GatePage, PageHeading, BackButton, usePageParts, usePage, useSetting, useProfile,
-  Notices, NoticeStrip, MinigameCard, useMinigame,
-  Countdown, Timers, useTimer, useTimers, useTicking, timerShare, timerUrgent,
-  PanelHost, BUILT_IN_PANELS, PartDialog, useDialogParts, DIALOG_CLASSES,
-  useAudio,
-  UI_STRINGS, uiSay, useWords,
-  PART_KEYS, KIT_PARTS, KIT_LOOKS, KIT_LAYOUT, UiProvider, usePart, useKitPart, overridable, PROSE,
+  GameShell, GameProvider, useGame, WithPages, DefaultLayout, Game, Sidebar, Story, Overlay, Section, When, useHolds, Title, RoomActions, Plugins, usePluginUis,
+  Scene, Beat, SceneHeader, BeatGroup, Fold, useScene, InlineAction, Tip, InlineTrigger, InlineModal, InlineImage, InlineMail, InlineProp, InlineMono,
+  Picture, Video, LayeredPicture, Hotspot, MediaViewer, assetUrl, ChoiceButton, ChoiceList, PriceTag, Clock, StatList, StatGauge, EntityTable, Inventory, useClock,
+  InputField, InputFields, GameMenu, SavesMenu, Backlog, ModManager, useSaves, useBacklog, useMods, TitlePage, SettingsPage, LoadPage, CreditsPage, GatePage,
+  usePage, useSetting, useProfile, Notices, NoticeStrip, MinigameCard, useMinigame, Countdown, Timers, useTimer, useTimers, PanelHost, useAudio, useWords, UiProvider, usePart,
   type GameShellProps, type GameProps, type SidebarProps, type StoryProps, type SectionProps, type GameProviderProps, type GameContextValue, type ModsOption,
-  type PanelComponent, type PluginSectionComponent, type InlineComponent, type InlineComponents, type InlineProps, type UiStringKey, type Words, type Say, type IconName,
-  type PluginUi, type PluginPanel, type PluginPage, type PluginSpot, type PluginKit, type PluginControls, type PluginViewOf,
-  type SavesState, type ModsState, type ClockState, type InventoryProps,
-  type PagesOptions, type Page, type PageDef, type PageState, type Credit, type GateOptions,
-  type Classes, type Components, type OverridableComponents, type Override, type PartKey, type PartNames, type KitPart, type UiOptions, type KeyOptions, type MinigameControls, type CountdownProps,
-  type SceneTiming, type ScreenTransition, type RevealGroup, type RevealPoint, type RevealBeat, type SceneRolls,
-  type VideoProps, type MediaViewerProps, type ViewerMedia,
-  // shadcn/ui
-  Button, buttonVariants, Badge, badgeVariants,
-  Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter,
-  Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose,
-  ScrollArea, Separator, Tabs, TabsList, TabsTrigger, TabsContent,
-  Tooltip, TooltipProvider, TooltipTrigger, TooltipContent, cn,
-  type ButtonProps, type BadgeProps, type DialogContentProps,
+  type PanelComponent, type PluginSectionComponent, type InlineComponent, type InlineComponents, type InlineProps, type UiStringKey, type Words, type Say,
+  type PluginSpot, type SavesState, type ModsState, type ClockState, type InventoryProps, type PagesOptions, type Page, type PageDef, type PageState, type Credit,
+  type GateOptions, type Classes, type Components, type OverridableComponents, type PartKey, type PartNames, type UiOptions, type StyleOptions, type BehaviourOptions,
+  type KeyOptions, type MinigameControls, type CountdownProps, type SceneTiming, type ScreenTransition, type RevealGroup, type RevealPoint, type RevealBeat,
+  type SceneRolls, type VideoProps, type MediaViewerProps, type ViewerMedia,
 } from '@ifloom/react'
+// The kit: what you build components of your own from, and the shadcn/ui primitives.
+import {
+  Icon, pluginKit, usePlugin, PageHeading, BackButton, usePageParts, PartDialog, useDialogParts, KIT_PARTS, KIT_LOOKS, KIT_LAYOUT, useKitPart, overridable, PROSE,
+  Button, buttonVariants, Badge, badgeVariants, Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter, Dialog, DialogTrigger, DialogContent,
+  DialogHeader, DialogTitle, DialogDescription, DialogClose, ScrollArea, Separator, Tabs, TabsList, TabsTrigger, TabsContent, Tooltip, TooltipProvider,
+  TooltipTrigger, TooltipContent, cn,
+  type IconName, type PluginUi, type PluginPanel, type PluginPage, type PluginKit, type PluginControls, type PluginViewOf, type Override, type KitPart,
+  type UiHint, type HintCheckContext, type ButtonProps, type BadgeProps, type DialogContentProps,
+} from '@ifloom/react/kit'
 ```
+
+Most of this page is `@ifloom/react`. What you build components of your own from (a plugin's UI, `overridable`, the dialogs and page parts, `Icon` and the shadcn/ui primitives) is in `@ifloom/react/kit`, and each of those entries says so in its import line. [The React UI](/docs/react#the-two-entries) says what's in each.
 
 Every component that takes `className` merges it over its own classes with [`cn`](#cn), so a later Tailwind class wins: `<Scene className="gap-8" />`.
 
@@ -296,7 +289,8 @@ Returns the runner, its [snapshot](/docs/reference/runner#runnersnapshot), the c
 ```tsx
 import { useState } from 'react'
 import { places } from '@ifloom/plugin-places'
-import { Button, useGame } from '@ifloom/react'
+import { useGame } from '@ifloom/react'
+import { Button } from '@ifloom/react/kit'
 
 function Purse() {
   const { view } = useGame()
@@ -368,17 +362,22 @@ How a game makes the UI look its own, below the theme's variables. [Make it your
 ### UiOptions
 
 ```ts
-type UiOptions = {
+type UiOptions = StyleOptions & BehaviourOptions
+
+type StyleOptions = {
   components?: Components
   classes?: Classes
   unstyled?: boolean
+}
+
+type BehaviourOptions = {
   viewer?: boolean
   keys?: boolean | KeyOptions
   motion?: boolean
 }
 ```
 
-What [`mountGame`](/docs/react#mountgame), [`GameShell`](#gameshell) and [`GameProvider`](#gameprovider) take to change the UI's look and feel. `unstyled: true` drops every built-in class, and keeps the elements, their `data-part`s and what they do. `viewer: false` turns off the [`MediaViewer`](#mediaviewer), so clicking a picture in the story does nothing. It's on if you leave it out. `keys` turns on the keyboard shortcuts: see [`KeyOptions`](#keyoptions). They're off if you leave it out. `motion: false` turns off scene transitions and prose reveals, so every scene and every line shows at once. It's on if you leave it out, and a player whose system asks for reduced motion gets everything at once either way. See [`Scene`](#scene).
+What [`mountGame`](/docs/react#mountgame), [`GameShell`](#gameshell) and [`GameProvider`](#gameprovider) take to change the UI's look and feel, written side by side in one object. `StyleOptions` are how it looks and `BehaviourOptions` how it behaves, for a wrapper of your own that passes on only one half. `unstyled: true` drops every built-in class, and keeps the elements, their `data-part`s and what they do. `viewer: false` turns off the [`MediaViewer`](#mediaviewer), so clicking a picture in the story does nothing. It's on if you leave it out. `keys` turns on the keyboard shortcuts: see [`KeyOptions`](#keyoptions). They're off if you leave it out. `motion: false` turns off scene transitions and prose reveals, so every scene and every line shows at once. It's on if you leave it out, and a player whose system asks for reduced motion gets everything at once either way. See [`Scene`](#scene).
 
 ### KeyOptions
 
@@ -462,14 +461,13 @@ const classes: Classes = {
 }
 ```
 
-### PART_KEYS
+### PartKey
 
 ```ts
-const PART_KEYS: readonly PartKey[]
 type PartKey = 'page' | 'sidebar' | 'story' | 'overlay' | 'title' | 'clock' | 'stats' | /* … */ 'gate-decline' | keyof PartNames
 ```
 
-Every `data-part` the React UI itself draws, which with the parts the plugin UIs add through [`PartNames`](/docs/react/kit#overridablecomponents-and-partnames) is every key [`Classes`](#classes) takes. `PartKey` is one of them. [The data-part reference](/docs/react/customising#the-data-part-reference) says what each one is.
+A `data-part` name: one the React UI itself draws, or one a plugin UI adds through [`PartNames`](/docs/react/kit#overridablecomponents-and-partnames). Together they're every key [`Classes`](#classes) takes. [The data-part reference](/docs/react/customising#the-data-part-reference) says what each one is.
 
 ### UiProvider
 
@@ -540,7 +538,7 @@ From top to bottom, it draws:
 - the scene's [`LayeredPicture`](#layeredpicture) when [`view.scene.picture`](/docs/reference/view#the-scene) has layers, or else its `image`, centred, at most `max-h-80` tall and never wider than the column, keeping its shape
 - each [`Beat`](#beat) of the body, with the beats from each block with a [`reveal`](/docs/react/hints#reveal) hint in a `reveal` part that waits for it, and the beats of each section with ui hints in a `group` part (see **Groups** below)
 - the inputs on offer while the scene is open, as [`InputField`](#inputfield)s in an `inputs` part, so a scene that asks for a name shows the field under its words
-- the panel the scene holds, if anything draws one of that name (the game's own `panels`, else a listed plugin UI's, else one in [`BUILT_IN_PANELS`](#built_in_panels), as [`PanelHost`](#panelhost) finds them), or else the scene's choices as a [`ChoiceList`](#choicelist). With reveals to come, these wait for the last one, in a `reveal` part with `data-reveal-choices`. They can't be pressed or read out until then.
+- the panel the scene holds, if anything draws one of that name (the game's own `panels`, else a listed plugin UI's, else a built-in one, as [`PanelHost`](#panelhost) finds them), or else the scene's choices as a [`ChoiceList`](#choicelist). With reveals to come, these wait for the last one, in a `reveal` part with `data-reveal-choices`. They can't be pressed or read out until then.
 
 While a [minigame](/docs/reference/minigames) runs, it draws that instead of all of the above: the panel named by the minigame's id, found as [`PanelHost`](#panelhost) finds one, or else [`MinigameCard`](#minigamecard). It runs the minigame's clock either way, so your panel gets its ticks without asking. The `<article>` then also carries `data-minigame` with the minigame's id.
 
@@ -796,41 +794,6 @@ function InlineMono(props: InlineProps<'mono'>): JSX.Element
 ```
 
 The built-in `mono`, from `[[ui:mono|words]]`: the words in a monospace face, the part `inline-mono`, for a sign, a screen or a thought typed out. Replace it with a `mono` of your own in `inline`.
-
-### INLINE_PIECES
-
-```ts
-const INLINE_PIECES: readonly InlinePiece[]
-
-type InlinePiece = {
-  name: string
-  draw: InlineComponent<never>
-  check?: (piece: { text: string; args: readonly string[] }, game: Game) => readonly string[]
-}
-```
-
-The inline pieces the React UI draws itself, each declared once: its name in `[[ui:name|…]]`, the component that draws it, and what [`checkUiHints`](/docs/react/hints#checkuihints) finds wrong with one as written, such as a `modal` with no prose key.
-
-### BUILT_IN_INLINE
-
-```ts
-const BUILT_IN_INLINE: Readonly<InlineComponents>
-```
-
-The inline pieces the React UI draws by name, made from `INLINE_PIECES`: `modal` ([`InlineModal`](#inlinemodal)), `image` ([`InlineImage`](#inlineimage)), `mail` ([`InlineMail`](#inlinemail)), `prop` ([`InlineProp`](#inlineprop)) and `mono` ([`InlineMono`](#inlinemono)). A game's own `inline` of the same name go over them. Use them in a component of your own to fall back on the built-in one.
-
-```tsx
-import type { Components } from '@ifloom/react'
-
-// A tooltip that's always written out in brackets instead.
-const components: Components = {
-  Tip: ({ text, tip }) => (
-    <span data-part="tip">
-      {text} ({tip})
-    </span>
-  ),
-}
-```
 
 ### Picture
 
@@ -1296,7 +1259,8 @@ If a save can't be read, the menu shows why. A save made with mods or plugins th
 
 ```tsx
 import { useState } from 'react'
-import { Dialog, DialogContent, DialogTitle, SavesMenu } from '@ifloom/react'
+import { SavesMenu } from '@ifloom/react'
+import { Dialog, DialogContent, DialogTitle } from '@ifloom/react/kit'
 
 function SavesDialog() {
   const [open, setOpen] = useState(false)
@@ -1819,29 +1783,19 @@ A `Countdown` for every running timer, in the order they started, in a `timers` 
 ```ts
 function useTimer(id: string): TimerView | null
 function useTimers(): TimerView[]
-function timerShare(timer: TimerView): number
-function timerUrgent(timer: TimerView): boolean
 ```
 
-`useTimers` is [`view.timers`](/docs/reference/view#timers), and `useTimer` one [`TimerView`](/docs/reference/timers#timerview) from it, or `null` while that timer isn't running. Only inside a [`GameProvider`](#gameprovider). `timerShare` is the share of a timer left, from 0 to 1, and `timerUrgent` whether a quarter or less is left, as `Countdown` marks it. Use them to draw a countdown of your own:
+`useTimers` is [`view.timers`](/docs/reference/view#timers), and `useTimer` one [`TimerView`](/docs/reference/timers#timerview) from it, or `null` while that timer isn't running. Only inside a [`GameProvider`](#gameprovider). Use them to draw a countdown of your own, from the timer's `left` and `total`:
 
 ```tsx
-import { timerShare, useTimer } from '@ifloom/react'
+import { useTimer } from '@ifloom/react'
 
 function RingingPhone() {
   const ringing = useTimer('flat.ring')
   if (!ringing) return null
-  return <span className="phone" style={{ opacity: 0.4 + 0.6 * timerShare(ringing) }}>☎</span>
+  return <span className="phone" style={{ opacity: 0.4 + (0.6 * ringing.left) / ringing.total }}>☎</span>
 }
 ```
-
-### useTicking
-
-```ts
-function useTicking(runner: Runner): void
-```
-
-Runs [`startClock`](/docs/browser#startclock) for the runner while the component is mounted, and stops it when the last component using it goes. There's one clock per runner however many components ask, so nothing ticks twice. `GameProvider` and `useMinigame` already call it. Call it yourself only in a UI built on the runner without `GameProvider`.
 
 ## Minigames
 
@@ -1895,9 +1849,9 @@ type MinigameControls = {
 
 The minigame being played, as [`view.minigame`](/docs/reference/minigames#minigameview) has it, or `null`, and `send`, which presses one of its inputs and returns what [`apply`](/docs/reference/commands#apply) returned. With `keys: true`, it also maps the keyboard to the inputs the way [`MinigameCard`](#minigamecard) does. Only inside a [`GameProvider`](#gameprovider).
 
-While any component that calls it is on screen, it runs the game's clock, as [`GameProvider`](#gameprovider) already does through [`useTicking`](#useticking). Every 100 ms or so, while the running state has a timer (`timeLeft` isn't `null`) or any of the game's timers runs, it sends [`{ type: 'tick', ms }`](/docs/reference/commands#tick) with the real time since the last tick, measured with `performance.now()`. So a browser that holds the timer back sends one bigger tick when it catches up, and the minigame's time stays true. The clock stops when nothing counts down, and starts again when something does. When an input moves the minigame to a new state, the clock starts afresh from that moment.
+Its timers run on the game's clock, which [`GameProvider`](#gameprovider) runs. Every 100 ms or so, while the running state has a timer (`timeLeft` isn't `null`) or any of the game's timers runs, it sends [`{ type: 'tick', ms }`](/docs/reference/commands#tick) with the real time since the last tick, measured with `performance.now()`. So a browser that holds the timer back sends one bigger tick when it catches up, and the minigame's time stays true. The clock stops when nothing counts down, and starts again when something does. When an input moves the minigame to a new state, the clock starts afresh from that moment.
 
-There's one clock per runner however many components call it, so a panel and a HUD that both use it don't tick twice. The same clock ticks the game's [timers](#timers).
+There's one clock per runner, which also ticks the game's [timers](#timers).
 
 **Time while the page is hidden is dropped.** When the player switches tab or minimises the window, the clock sends the time up to that moment and pauses, and when the page shows again it carries on from there. A minigame waits for a player who looked away, instead of running out its timers unseen.
 
@@ -1929,7 +1883,7 @@ A [panel](/docs/reference/panels) is a named piece of UI that content opens over
 function PanelHost(): JSX.Element
 ```
 
-What the `'panel'` part draws: the [panel](/docs/reference/panels) the `panel` effect opened, [`view.panel`](/docs/reference/view#panel), in a [`PartDialog`](#partdialog). A scene's own panel, one whose `view.panel` has a `scene`, isn't drawn here: the scene draws it in place of its choices. It draws the game's own [`panels`](#gameprovider) component of that name if there is one, else a listed plugin UI's panel of that name, else the one in [`BUILT_IN_PANELS`](#built_in_panels), and hands it what the panel was opened with as `data`. Closing the dialog, with its close button or Escape, sends [`closePanel`](/docs/reference/commands#closepanel).
+What the `'panel'` part draws: the [panel](/docs/reference/panels) the `panel` effect opened, [`view.panel`](/docs/reference/view#panel), in a [`PartDialog`](#partdialog). A scene's own panel, one whose `view.panel` has a `scene`, isn't drawn here: the scene draws it in place of its choices. It draws the game's own [`panels`](#gameprovider) component of that name if there is one, else a listed plugin UI's panel of that name, else a [built-in one](#built-in-panels), and hands it what the panel was opened with as `data`. Closing the dialog, with its close button or Escape, sends [`closePanel`](/docs/reference/commands#closepanel).
 
 The dialog is titled with `with.title` when content gave one, else the plugin UI's [title for the panel](/docs/react/kit#pluginpanel) (the vendor's name for the shop, `ui.jobs` for the job board), else a built-in panel's word, or else the panel's name. The panel is drawn inside a `div` with `data-panel` set to its name.
 
@@ -1948,11 +1902,7 @@ mountGame(game, { panels: { noticeboard: Noticeboard } })
 
 The default layout has it in the overlay. In a layout of your own, put it anywhere inside the `GameProvider`. Replaceable as `PanelHost` in [`components`](#components). Parts: `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close`.
 
-### BUILT_IN_PANELS
-
-```ts
-const BUILT_IN_PANELS: Readonly<Record<string, PanelComponent>>
-```
+### Built-in panels
 
 The panels [`PanelHost`](#panelhost) draws by name for what the engine itself keeps. A plugin UI's panels and a game's own `panels` of the same name go over them.
 
@@ -1973,7 +1923,7 @@ A [`Dialog`](#dialog) drawn with the UI's `dialog` parts, as the menu's, `PanelH
 
 ```tsx
 import { useState } from 'react'
-import { Button, PartDialog } from '@ifloom/react'
+import { Button, PartDialog } from '@ifloom/react/kit'
 
 function Map() {
   const [open, setOpen] = useState(false)
@@ -2016,11 +1966,10 @@ function Sound() {
 
 ## Words
 
-### UI_STRINGS
+### UiStringKey, Words and Say
 
 ```ts
-const UI_STRINGS: { stats: string; inventory: string; /* ... */ }
-type UiStringKey = keyof typeof UI_STRINGS
+type UiStringKey = 'stats' | 'inventory' | /* ... */
 type Words = Readonly<Record<string, string>>
 type Say<K extends string = UiStringKey> = (key: K, vars?: Record<string, string | number>) => string
 ```
@@ -2029,24 +1978,6 @@ The UI's own words in English, by key without the `ui.` prefix. The full table i
 
 Among them are `close` (the dialogs' close button) and `heldCount` (`×{n}` after a thing you hold). The words between the parts of a price are the engine's `priceSeparator` [string](/docs/reference/strings#buttons-and-labels).
 
-### uiSay
-
-```ts
-function uiSay(game: Game, key: UiStringKey, vars?: Record<string, string | number>): string
-function uiSay<W extends Words>(game: Game, key: keyof W | UiStringKey, vars: Record<string, string | number> | undefined, words: W): string
-```
-
-Returns the game's word for a key, `game.strings['ui.' + key]`, or the English if the game doesn't set it: from `words`, a plugin UI's table, when given, else the UI's own. Each `{name}` is filled from `vars`. One with no value is left as written, and a key nothing has is said as it is.
-
-```ts
-import { uiSay } from '@ifloom/react'
-import { QUESTS_WORDS } from '@ifloom/plugin-quests/react'
-
-uiSay(game, 'stats')                                                    // 'Stats'
-uiSay(game, 'quests', {}, QUESTS_WORDS)                                 // 'To do' in the showcase, which sets strings: { 'ui.quests': 'To do' }
-uiSay(game, 'questStage', { stage: 1, stages: 3 }, QUESTS_WORDS)         // '1 of 3'
-```
-
 ### useWords
 
 ```ts
@@ -2054,7 +1985,7 @@ function useWords(): Say
 function useWords<W extends Words>(words: W): Say<keyof W | UiStringKey>
 ```
 
-`uiSay` for the game in context, inside a [`GameProvider`](#gameprovider). Given a plugin UI's table, it says that table's keys too, typed. A plugin's own UI gets its words from [`usePlugin`](/docs/react/kit#useplugin) instead, so it names its table once.
+The game's word for a key, inside a [`GameProvider`](#gameprovider): `game.strings['ui.' + key]`, or the English if the game doesn't set it. Each `{name}` is filled from `vars`, one with no value is left as written, and a key nothing has is said as it is. Given a plugin UI's table, it says that table's keys too, typed. A plugin's own UI gets its words from [`usePlugin`](/docs/react/kit#useplugin) instead, so it names its table once.
 
 ```tsx
 import { useWords } from '@ifloom/react'
@@ -2068,7 +1999,7 @@ function JournalHeading() {
 
 ## shadcn/ui primitives
 
-These are the building blocks the components above are made from, exported so your own screens match. They're [shadcn/ui](https://ui.shadcn.com)'s components, styled by the same [theme variables](/docs/react/customising#2-set-tokens-and-colours), and shadcn/ui's documentation for each applies. To add one this package doesn't have, see [More shadcn/ui components](/docs/react/extending#more-shadcnui-components).
+These are the building blocks the components above are made from, exported from `@ifloom/react/kit` so your own screens match. They're [shadcn/ui](https://ui.shadcn.com)'s components, styled by the same [theme variables](/docs/react/customising#2-set-tokens-and-colours), and shadcn/ui's documentation for each applies. To add one this package doesn't have, see [More shadcn/ui components](/docs/react/extending#more-shadcnui-components).
 
 The game components don't use `Button` and `Badge` themselves. They draw plain `<button>` and `<span>` elements with [`buttonVariants`](#button) and [`badgeVariants`](#badge) classes, run through [`usePart`](#usepart), so `classes` and `unstyled` reach every one.
 
@@ -2088,7 +2019,7 @@ type ButtonProps = ComponentProps<'button'> & {
 A button. `asChild` puts the button's look on its one child instead, such as a link. `buttonVariants` returns the classes, for something that isn't a `Button` but should look like one.
 
 ```tsx
-import { Button, buttonVariants } from '@ifloom/react'
+import { Button, buttonVariants } from '@ifloom/react/kit'
 
 <Button variant="outline" size="sm" onClick={() => runner.undo()}>Undo</Button>
 <a className={buttonVariants({ variant: 'link' })} href="https://example.com/credits">Credits</a>
@@ -2106,7 +2037,7 @@ type BadgeProps = ComponentProps<'span'> & { variant?: 'default' | 'secondary' |
 A small pill, for a count or a status.
 
 ```tsx
-import { Badge } from '@ifloom/react'
+import { Badge } from '@ifloom/react/kit'
 
 <Badge variant="secondary">Open till 6</Badge>
 ```
@@ -2120,7 +2051,7 @@ Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter
 A bordered box and its parts. Each is a `div` taking a `div`'s props, except `CardTitle`, which is an `h3`, and `CardDescription`, which is a `p`.
 
 ```tsx
-import { Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@ifloom/react'
+import { Button, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@ifloom/react/kit'
 
 <Card>
   <CardHeader>
@@ -2161,7 +2092,7 @@ type DialogContentProps = ComponentProps<typeof DialogPrimitive.Content> & {
 The [`GameMenu`](#gamemenu) and [`DeviceDialog`](/docs/plugins/devices#devicedialog) use `bare`, with the attributes from [`usePart`](#usepart), so their dialogs follow `classes` and `unstyled` like everything else.
 
 ```tsx
-import { Button, Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@ifloom/react'
+import { Button, Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@ifloom/react/kit'
 
 <Dialog>
   <DialogTrigger asChild><Button variant="outline">Map</Button></DialogTrigger>
@@ -2184,7 +2115,7 @@ function ScrollArea(props: ComponentProps<typeof ScrollAreaPrimitive.Root>): JSX
 A box that scrolls, with a slim scrollbar. Give it a height.
 
 ```tsx
-import { ScrollArea } from '@ifloom/react'
+import { ScrollArea } from '@ifloom/react/kit'
 
 <ScrollArea className="h-64">{backlog}</ScrollArea>
 ```
@@ -2206,7 +2137,7 @@ Tabs, TabsList, TabsTrigger, TabsContent
 Tabs, built on Radix's Tabs. Each `TabsTrigger` shares a `value` with its `TabsContent`.
 
 ```tsx
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@ifloom/react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@ifloom/react/kit'
 
 <Tabs defaultValue="today">
   <TabsList>
@@ -2227,7 +2158,7 @@ Tooltip, TooltipProvider, TooltipTrigger, TooltipContent
 A hint on hover or focus, built on Radix's Tooltip. Every tooltip needs a `TooltipProvider` above it. The game components don't use tooltips, so [`GameShell`](#gameshell) doesn't add one. Wrap your page in a `TooltipProvider` when your own components use them.
 
 ```tsx
-import { Button, Tooltip, TooltipContent, TooltipTrigger } from '@ifloom/react'
+import { Button, Tooltip, TooltipContent, TooltipTrigger } from '@ifloom/react/kit'
 
 <Tooltip>
   <TooltipTrigger asChild><Button size="icon" variant="ghost">?</Button></TooltipTrigger>
@@ -2244,7 +2175,7 @@ function cn(...inputs: ClassValue[]): string
 Joins class names, skipping falsy ones, and lets a later Tailwind class win over an earlier one that sets the same thing. It's shadcn/ui's `cn`.
 
 ```ts
-import { cn } from '@ifloom/react'
+import { cn } from '@ifloom/react/kit'
 
 cn('p-4 text-sm', closed && 'opacity-50', 'p-2') // 'text-sm opacity-50 p-2' when closed
 ```

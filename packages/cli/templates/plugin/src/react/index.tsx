@@ -4,8 +4,8 @@
  * have the entries in the side column, or draws them itself from
  * `use__Pascal__`. A game with another UI never loads this file.
  *
- * It's built only from `@ifloom/react`'s public exports, the same kit a
- * game's own UI uses, and styled by the kit's parts (each with its own look),
+ * It's built only from `@ifloom/react` and `@ifloom/react/kit`, the same
+ * pieces a game's own UI uses, and styled by the kit's parts (each with its own look),
  * the kit's layout classes and the theme's tokens, so it looks right in
  * every preset with no stylesheet of its own.
  *
@@ -13,7 +13,8 @@
  */
 import type { GameState, Result } from '@ifloom/engine'
 import type { ComponentProps } from 'react'
-import { overridable, pluginKit, Section, useKitPart, usePart, usePlugin, type Override, type PluginUi } from '@ifloom/react'
+import { Section, usePart } from '@ifloom/react'
+import { overridable, pluginKit, useKitPart, usePlugin, type Override, type PluginUi } from '@ifloom/react/kit'
 import { __camel__, type __Pascal__View } from '../index.ts'
 
 /** The plugin's words, in English. A game rewords any with `ui.<key>` in its strings: `{ 'ui.__camel__Marked': 'Done' }`. */

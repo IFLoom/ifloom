@@ -1,4 +1,5 @@
-import { Badge, Game, NoticeStrip, Notices, Overlay, Scene, Sidebar, Story, useGame } from '@ifloom/react'
+import { Game, NoticeStrip, Notices, Overlay, Scene, Sidebar, Story, useGame } from '@ifloom/react'
+import { Badge } from '@ifloom/react/kit'
 
 // A layout of your own, for mountGame's `layout`. The default layout has Notices in its Overlay.
 export function Layout() {

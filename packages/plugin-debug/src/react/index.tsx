@@ -7,6 +7,7 @@
 import type { Command, CommandRef, GameState, RenderedChoice } from '@ifloom/engine'
 import { debug, type DebugView } from '../index.ts'
 import { useState, type SyntheticEvent, type ComponentProps } from 'react'
+import { useGame, usePart } from '@ifloom/react'
 import {
   buttonVariants,
   overridable,
@@ -18,10 +19,8 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
-  useGame,
-  usePart,
   usePlugin,
-} from '@ifloom/react'
+} from '@ifloom/react/kit'
 
 /** The debug plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const DEBUG_WORDS = {

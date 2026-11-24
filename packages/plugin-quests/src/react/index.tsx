@@ -8,7 +8,8 @@
 import type { ComponentProps } from 'react'
 import type { GameState, Result } from '@ifloom/engine'
 import { quests, type QuestsView } from '../index.ts'
-import { buttonVariants, overridable, type Override, pluginKit, type PluginUi, Section, useKitPart, usePart, usePlugin } from '@ifloom/react'
+import { Section, usePart } from '@ifloom/react'
+import { buttonVariants, overridable, type Override, pluginKit, type PluginUi, useKitPart, usePlugin } from '@ifloom/react/kit'
 
 /** The quests plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const QUESTS_WORDS = {

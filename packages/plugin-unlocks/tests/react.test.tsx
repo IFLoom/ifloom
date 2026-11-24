@@ -4,7 +4,8 @@ import { act, cleanup, fireEvent, render, renderHook, screen, waitFor, within } 
 import type { ReactNode } from 'react'
 import { SCHEMA, createRunner, loadGame, memoryDriver, profile, type Game, type Pack, type Runner } from '@ifloom/engine'
 import { freshState } from '@ifloom/engine/testing'
-import { GameProvider, GameShell, type PluginUi } from '@ifloom/react'
+import { GameProvider, GameShell } from '@ifloom/react'
+import type { PluginUi } from '@ifloom/react/kit'
 import { lockContent, startUnlocks, unlockHash, unlocks, type LockedContent, type UnlockDef } from '../src/index.ts'
 import { UnlocksPanel, unlocksUi, unlocksUiWith, useUnlocks, type UnlocksUiOptions } from '../src/react/index.tsx'
 

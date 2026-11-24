@@ -1,4 +1,4 @@
-import { Game, Scene, Sidebar, Story, Timers, timerShare, useTimer } from '@ifloom/react'
+import { Game, Scene, Sidebar, Story, Timers, useTimer } from '@ifloom/react'
 
 // Scene draws a Countdown under a block whose `timer` hint names a timer. A layout of your own can put them anywhere.
 export function Layout() {
@@ -20,5 +20,5 @@ export function Layout() {
 export function RingingPhone() {
   const ringing = useTimer('flat.ring')
   if (!ringing) return null
-  return <span style={{ opacity: 0.4 + 0.6 * timerShare(ringing) }}>☎</span>
+  return <span style={{ opacity: 0.4 + (0.6 * ringing.left) / ringing.total }}>☎</span>
 }

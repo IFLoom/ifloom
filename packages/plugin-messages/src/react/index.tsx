@@ -7,7 +7,8 @@
 import { useEffect, useState, type ComponentProps } from 'react'
 import type { GameState, Result, SceneBeat } from '@ifloom/engine'
 import { messages, type MessagesView, type ThreadView } from '../index.ts'
-import { Beat, buttonVariants, ChoiceList, cn, Icon, overridable, type Override, Picture, pluginKit, type PluginUi, usePart, usePlugin } from '@ifloom/react'
+import { Beat, ChoiceList, Picture, usePart } from '@ifloom/react'
+import { buttonVariants, cn, Icon, overridable, type Override, pluginKit, type PluginUi, usePlugin } from '@ifloom/react/kit'
 
 /** The messages plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const MESSAGES_WORDS = {

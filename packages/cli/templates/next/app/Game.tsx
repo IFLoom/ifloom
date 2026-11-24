@@ -7,7 +7,8 @@
 import { useEffect, useState } from 'react'
 import { browserRunner } from '@ifloom/browser'
 import type { Runner } from '@ifloom/engine'
-import { GameShell, type PluginUi } from '@ifloom/react'
+import { GameShell } from '@ifloom/react'
+import type { PluginUi } from '@ifloom/react/kit'
 import module from '../src/game.ts'
 import { Layout } from '../src/layout.tsx'
 

@@ -1,4 +1,4 @@
-import { Badge } from '@ifloom/react'
+import { Badge } from '@ifloom/react/kit'
 import { useDevices } from '@ifloom/plugin-devices/react'
 
 export function PhoneBadge() {

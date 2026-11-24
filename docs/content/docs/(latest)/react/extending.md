@@ -14,7 +14,7 @@ A panel is a screen your game draws itself, in place of the usual one. There are
 
 - **A scene's panel** is drawn instead of the scene's choices, for a market stall with prices, a card game or a map. The scene names it with [`panel`](/docs/reference/panels#a-scenes-panel).
 - **An app's panel section** is drawn inside an app, such as an inbox or a radio dial. The app has a [`{ panel }` section](/docs/plugins/devices#section).
-- **An open panel** is drawn in a dialog over the story when content opens it with the [`panel` effect](/docs/reference/effects#panel). [`PanelHost`](/docs/react/components#panelhost) draws it, and has [built-in ones](/docs/react/components#built_in_panels) such as `shop` and `jobs` that yours replace by name. See [Panels](/docs/reference/panels).
+- **An open panel** is drawn in a dialog over the story when content opens it with the [`panel` effect](/docs/reference/effects#panel). [`PanelHost`](/docs/react/components#panelhost) draws it, and has [built-in ones](/docs/react/components#built-in-panels) such as `shop` and `jobs` that yours replace by name. See [Panels](/docs/reference/panels).
 
 In each case the component is a [`PanelComponent`](/docs/react/components#panelcomponent). It gets `data`, which is what the panel was given in `with`, and it can read anything else it needs with [`useGame`](/docs/react/components#usegame). You pass your panels to the UI by name in the `panels` prop.
 
@@ -42,7 +42,8 @@ The engine shows the scene's panel as [`view.panel`](/docs/reference/panels#a-sc
 The component draws the prices its own way, then sends one of the scene's own choices. That way what happens is still content, and the engine still checks it:
 
 ```tsx
-import { Button, Card, CardContent, CardHeader, CardTitle, GameShell, useGame, type PanelComponent } from '@ifloom/react'
+import { GameShell, useGame, type PanelComponent } from '@ifloom/react'
+import { Button, Card, CardContent, CardHeader, CardTitle } from '@ifloom/react/kit'
 
 const StallPanel: PanelComponent = ({ data }) => {
   const { send } = useGame()
@@ -129,7 +130,8 @@ To draw messages or a feed your own way, register a renderer under `messages` or
 Plugin sections only work inside apps. To show a plugin's view anywhere else, such as the loyalty card in the sidebar, read it from the view in a component of your own and put that in the [layout](/docs/react#layouts). The loyalty plugin declares its view in [`ViewRegistry`](/docs/reference/plugins#typed-calls-queries-and-views), so `view.plugins.loyalty` comes typed:
 
 ```tsx
-import { Badge, Sidebar, Title, useGame } from '@ifloom/react'
+import { Sidebar, Title, useGame } from '@ifloom/react'
+import { Badge } from '@ifloom/react/kit'
 
 function StampCount() {
   const { view } = useGame()
@@ -184,7 +186,8 @@ You don't have to use the regions at all. Without `GameShell`, wrap your page in
 
 ```tsx
 import { createRoot } from 'react-dom/client'
-import { GameProvider, InputFields, Notices, Scene, StatList, TooltipProvider } from '@ifloom/react'
+import { GameProvider, InputFields, Notices, Scene, StatList } from '@ifloom/react'
+import { TooltipProvider } from '@ifloom/react/kit'
 import { QuestLog } from '@ifloom/plugin-quests/react'
 
 function MyPage() {
@@ -241,12 +244,13 @@ function Purse() {
 }
 ```
 
-The name has to be one of [`PART_KEYS`](/docs/react/components#part_keys), so pick the built-in part your element is most like. Here the purse is styled like any other stat. For a kind of element the UI doesn't have, set `data-part` yourself (`<div data-part="weather">`) and style it with CSS.
+The name has to be a [`PartKey`](/docs/react/components#partkey), so pick the built-in part your element is most like. Here the purse is styled like any other stat. For a kind of element the UI doesn't have, set `data-part` yourself (`<div data-part="weather">`) and style it with CSS.
 
 [`overridable`](/docs/react/components#overridable) makes a component replaceable by name in [`components`](/docs/react/components#components). It takes one of the built-in names, so it's for a component that stands in for a built-in one. Say you share a one-line stats bar between your games:
 
 ```tsx
-import { overridable, useGame, usePart } from '@ifloom/react'
+import { useGame, usePart } from '@ifloom/react'
+import { overridable } from '@ifloom/react/kit'
 
 function StatsBarImpl() {
   const { view } = useGame()

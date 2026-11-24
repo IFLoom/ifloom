@@ -7,7 +7,8 @@
 import type { ComponentProps } from 'react'
 import type { EntityRef, GameState, Result } from '@ifloom/engine'
 import { places, type PlacesView } from '../index.ts'
-import { buttonVariants, cn, LayeredPicture, overridable, type Override, pluginKit, type PluginUi, PROSE, usePart, usePlugin } from '@ifloom/react'
+import { LayeredPicture, usePart } from '@ifloom/react'
+import { buttonVariants, cn, overridable, type Override, pluginKit, type PluginUi, PROSE, usePlugin } from '@ifloom/react/kit'
 
 /** The places plugin's UI, declared once: its id, for `usePlugin` and `placesUi`. */
 const PLACES = pluginKit('places')

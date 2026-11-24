@@ -4,7 +4,8 @@ import { act, cleanup, fireEvent, render, screen, within } from '@testing-librar
 import { createContext, useContext, type ReactNode } from 'react'
 import { createRunner, loadGame, startingState, type Game } from '@ifloom/engine'
 import { definePlugin } from '@ifloom/engine/plugin'
-import { Clock, GameShell, NoticeStrip, Plugins, Scene, Story, Game as Page, useGame, usePage, usePluginUis, useWords, type PluginUi } from '../src/index.ts'
+import { Clock, GameShell, NoticeStrip, Plugins, Scene, Story, Game as Page, useGame, usePage, usePluginUis, useWords } from '../src/index.ts'
+import type { PluginUi } from '../src/kit.ts'
 
 afterEach(() => {
   cleanup()

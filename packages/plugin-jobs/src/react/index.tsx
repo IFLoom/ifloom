@@ -7,7 +7,8 @@
 import type { ComponentProps } from 'react'
 import type { GameState, Result } from '@ifloom/engine'
 import { jobs, type JobView, type JobsView } from '../index.ts'
-import { buttonVariants, ChoiceButton, overridable, type Override, pluginKit, type PluginUi, useKitPart, usePart, usePlugin } from '@ifloom/react'
+import { ChoiceButton, usePart } from '@ifloom/react'
+import { buttonVariants, overridable, type Override, pluginKit, type PluginUi, useKitPart, usePlugin } from '@ifloom/react/kit'
 
 /** The jobs plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const JOBS_WORDS = {

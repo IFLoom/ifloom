@@ -179,7 +179,8 @@ export function quickFeet(minigame: MinigameView, runner: Runner): HTMLElement {
 
 ```tsx tab="React" tab-group="framework"
 // src/QuickFeet.tsx
-import { buttonVariants, useMinigame, type PanelComponent } from '@ifloom/react'
+import { useMinigame, type PanelComponent } from '@ifloom/react'
+import { buttonVariants } from '@ifloom/react/kit'
 
 const GLYPHS: Record<string, string> = { up: '↑', down: '↓', left: '←', right: '→' }
 

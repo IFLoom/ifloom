@@ -336,14 +336,18 @@ export interface OverridableComponents {
 /** Replacements for any of the `OverridableComponents`, by name. */
 export type Components = Partial<OverridableComponents>
 
-/** What a game passes to make the UI its own. `GameProvider`, `GameShell` and `mountGame` all take these. */
-export type UiOptions = {
+/** How the UI looks: the components it draws and the classes on its parts. Part of `UiOptions`. */
+export type StyleOptions = {
   /** Replacements for built-in components, by name. */
   components?: Components
   /** Classes for parts, by `data-part` name. */
   classes?: Classes
   /** Drop every built-in class. The structure and the `data-part`s stay, for your own styles. */
   unstyled?: boolean
+}
+
+/** How the UI behaves: the media viewer, keyboard shortcuts and motion. Part of `UiOptions`. */
+export type BehaviourOptions = {
   /** Let the player click a picture or a video in the story to see it large. On if left out. */
   viewer?: boolean
   /**
@@ -359,6 +363,9 @@ export type UiOptions = {
    */
   motion?: boolean
 }
+
+/** What a game passes to make the UI its own: how it looks and how it behaves. `GameProvider`, `GameShell` and `mountGame` all take these. */
+export type UiOptions = StyleOptions & BehaviourOptions
 
 const NONE = {}
 const UiContext = createContext<Required<UiOptions>>({ components: NONE, classes: NONE, unstyled: false, viewer: true, keys: false, motion: true })

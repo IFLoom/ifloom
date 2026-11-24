@@ -4,7 +4,8 @@
  * panel drawn as a vendor's counter, or draw it yourself from `useShop`.
  */
 import type { EntityRef, GameState, Result } from '@ifloom/engine'
-import { ChoiceButton, overridable, type Override, PartDialog, pluginKit, type PluginUi, useKitPart, usePart, usePlugin } from '@ifloom/react'
+import { ChoiceButton, usePart } from '@ifloom/react'
+import { overridable, type Override, PartDialog, pluginKit, type PluginUi, useKitPart, usePlugin } from '@ifloom/react/kit'
 import { shop, type ShopView, type VendorView } from '../index.ts'
 
 /** The shop's words, in English. A game rewords any with `ui.<key>` in its strings: `{ 'ui.buy': 'Get' }`. */

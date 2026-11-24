@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { PluginUi } from '../../src/index.ts'
+import type { PluginUi } from '../../src/kit.ts'
 
 /**
  * Every first-party plugin with something for the player ships its own React

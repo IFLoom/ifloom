@@ -6,21 +6,8 @@
  */
 import type { ComponentProps } from 'react'
 import type { CastView } from '../index.ts'
-import {
-  ChoiceButton,
-  cn,
-  overridable,
-  type Override,
-  Picture,
-  pluginKit,
-  type PluginUi,
-  PROSE,
-  Section,
-  StatGauge,
-  useGame,
-  usePart,
-  usePlugin,
-} from '@ifloom/react'
+import { ChoiceButton, Picture, Section, StatGauge, useGame, usePart } from '@ifloom/react'
+import { cn, overridable, type Override, pluginKit, type PluginUi, PROSE, usePlugin } from '@ifloom/react/kit'
 
 /** The cast plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const CAST_WORDS = {

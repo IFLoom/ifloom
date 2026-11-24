@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { apply, startingState, view, whyNot, type Game, type GameState, type CommandRef } from '@ifloom/engine'
+import { startingState, view, whyNot, type Game } from '@ifloom/engine'
+import { play } from '@ifloom/engine/testing'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { debug, type DebugView } from '../src/index.ts'
@@ -30,17 +31,10 @@ function game(): Game {
   }
 }
 
-const run = (state: GameState, g: Game, ...commands: CommandRef[]) =>
-  commands.reduce<GameState>((s, command) => {
-    const out = apply(s, g, command)
-    expect(out.reason).toBeUndefined()
-    return out.state
-  }, state)
-
 describe('the debugger', () => {
   it('sets the state by hand, through any lock', () => {
     const g = game()
-    const state = run(
+    const state = play(
       startingState(g),
       g,
       debug.stat('luck', 50),
@@ -60,7 +54,7 @@ describe('the debugger', () => {
     })
     expect(clock.read(state, g)).toEqual({ day: 6, period: 'evening' })
     expect(places.where(state, g)).toBe('island')
-    expect(run(state, g, debug.scene()).sceneId).toBeNull()
+    expect(play(state, g, debug.scene()).sceneId).toBeNull()
   })
 
   it('refuses what the game does not have', () => {

@@ -122,9 +122,11 @@ npm test
 
 | File | What's in it |
 |---|---|
-| `package.json` | `@ifloom/engine` as a caret peer dependency, and as a dev dependency for the tests, with Vitest and TypeScript. The scripts are `test` (`vitest run`) and `typecheck` (`tsc --noEmit`). |
+| `package.json` | `@ifloom/engine` as a caret peer dependency, and as a dev dependency for the tests, with Vitest, TypeScript and Node's types for the contract test. The scripts are `test` (`vitest run`) and `typecheck` (`tsc --noEmit`). |
 | `src/index.ts` | The plugin, made with [`definePlugin`](/docs/reference/plugins#defineplugin): a declared state and view, content in your content's `data.weather.entries`, the condition `weather/marked`, the effect `weather/mark` and the command `weather/mark`, a view, and a check. Its list of entries and its calls are each [declared once](/docs/reference/plugins#declaring-calls), with `defineData` and `defineCalls`, so its functions are handed their arguments typed, the [content checker](/docs/reference/checks) reports an entry a call names that the game lacks, and the registries a game's calls are checked against come from the same declaration. Each call has a typed helper on the factory, such as `weather.mark('bread')`. |
-| `tests/weather.test.ts` | Vitest tests that play the plugin in a small game: the effect, the command and its refusal, the view, and the checker's problems. |
+| `tests/weather.test.ts` | Vitest tests that play the plugin in a small game with the engine's [testing helpers](/docs/reference/testing): the effect, the command and its refusal, the view, and the checker's problems, with the plugin alone and with each plugin it cooperates with. |
+| `tests/react.test.tsx` | A test of its React UI, drawn to a string. |
+| `tests/contracts.test.ts` | The plugin rules, read from the source: it imports only `@ifloom/engine` and its own files, its React UI only the kit, and the README names every export. |
 | `tsconfig.json` | Complete, extending nothing. |
 | `README.md` | How a game uses the plugin, how to work on it, and what [Community plugins](/docs/plugins/community) needs before it lists it. |
 

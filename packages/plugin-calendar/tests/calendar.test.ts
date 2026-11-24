@@ -14,6 +14,7 @@ import {
   type GameRules,
   type GameState,
 } from '@ifloom/engine'
+import { loadChecked, play } from '@ifloom/engine/testing'
 import { calendar, type CalendarOptions, type CalendarView } from '../src/index.ts'
 
 /** A house with no map: a nap, an afternoon out, a long walk, and bed. */
@@ -22,7 +23,7 @@ function house(
   { locks, ...rules }: GameRules & Pick<Content, 'locks'> = {},
 ): { game: Game; clock: ReturnType<typeof calendar> } {
   const clock = calendar(options)
-  const { game, problems } = loadGame(
+  const game = loadChecked(
     [
       {
         name: 'base',
@@ -50,21 +51,12 @@ function house(
       rules,
     },
   )
-  expect(problems).toEqual([])
   return { game, clock }
 }
 
 /** Apply effects as content writes them, short forms and all. */
 const applyEffects = (state: GameState, game: Game, refs: Parameters<typeof buildEffects>[1]) => applyBuilt(state, game, buildEffects(game, refs))
 const act = (id: string) => ({ type: 'action' as const, id })
-function run(game: Game, state: GameState, ...commands: Parameters<typeof apply>[2][]): GameState {
-  for (const command of commands) {
-    const out = apply(state, game, command)
-    expect(out.reason).toBeUndefined()
-    state = out.state
-  }
-  return state
-}
 const button = (game: Game, state: GameState, id: string) => view(state, game).actions.find((entry) => entry.id === id)!
 
 describe('the calendar', () => {
@@ -88,7 +80,7 @@ describe('the calendar', () => {
 
   it('passes time, ending a turn at each new day when a turn is a day', () => {
     const { game, clock } = house()
-    let state = run(game, startingState(game), act('outing'))
+    let state = play(startingState(game), game, act('outing'))
     expect(clock.read(state, game)).toEqual({ day: 0, period: 'evening' })
     expect(state.turn).toBe(0)
     state = clock.write(state, { day: 0, period: 'night' })
@@ -116,13 +108,13 @@ describe('the calendar', () => {
 
   it('moves the clock on when content ends a turn itself: a week of turns, a week on', () => {
     const { game, clock } = house({ turn: 'week' })
-    let state = run(game, startingState(game), act('nap'), act('rest'))
+    let state = play(startingState(game), game, act('nap'), act('rest'))
     expect(state.turn).toBe(1)
     expect(clock.read(state, game)).toEqual({ day: 7, period: 'morning' })
-    state = run(game, state, act('rest'))
+    state = play(state, game, act('rest'))
     expect(clock.read(state, game)).toEqual({ day: 14, period: 'morning' })
     const daily = house()
-    expect(daily.clock.read(run(daily.game, startingState(daily.game), act('nap'), act('rest')), daily.game)).toEqual({ day: 1, period: 'morning' })
+    expect(daily.clock.read(play(startingState(daily.game), daily.game, act('nap'), act('rest')), daily.game)).toEqual({ day: 1, period: 'morning' })
   })
 
   it('shows the game’s onTurn the clock as the turn ended, as `before`', () => {
@@ -136,19 +128,19 @@ describe('the calendar', () => {
         },
       },
     )
-    run(game, clock.write(startingState(game), { day: 0, period: 'night' }), calendar.sleep())
+    play(clock.write(startingState(game), { day: 0, period: 'night' }), game, calendar.sleep())
     expect(seen).toEqual(['1: {"day":0,"period":"night"}'])
   })
 
   it('goes to bed only late enough, and wakes the next morning a turn on', () => {
     const { game, clock } = house()
     expect(whyNot(startingState(game), game, calendar.sleep())).toBe('Too early.')
-    const state = run(game, clock.write(startingState(game), { day: 2, period: 'evening' }), calendar.sleep())
+    const state = play(clock.write(startingState(game), { day: 2, period: 'evening' }), game, calendar.sleep())
     expect(clock.read(state, game)).toEqual({ day: 3, period: 'morning' })
     expect(state.turn).toBe(1)
     const late = house({ sleep: { from: ['late'], wake: 'afternoon' } })
     expect(whyNot(late.clock.write(startingState(late.game), { day: 0, period: 'night' }), late.game, calendar.sleep())).toBe('Too early.')
-    const woke = run(late.game, late.clock.write(startingState(late.game), { day: 0, period: 'late' }), calendar.sleep())
+    const woke = play(late.clock.write(startingState(late.game), { day: 0, period: 'late' }), late.game, calendar.sleep())
     expect(late.clock.read(woke, late.game)).toEqual({ day: 1, period: 'afternoon' })
   })
 

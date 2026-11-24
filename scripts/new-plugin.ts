@@ -3,7 +3,9 @@
 // tests from the CLI's plugin template
 // (packages/cli/templates/plugin), and adds it to the docs navigation (the plugins
 // folder's meta.json). The root vite.config.ts finds it for npm run build and
-// npm run typecheck by itself.
+// npm run typecheck by itself, and the engine's contracts find it by glob
+// (packages/engine/tests/contracts/plugin-packages.test.ts holds it to the
+// plugin boundary and its docs page; plugin-shape and naming read it too).
 // What needs words (the AGENTS.md row, the plugins index, the CHANGELOG, the
 // showcase) is left to you: `git grep "TODO(new-plugin)"` lists the stubs.
 //
@@ -82,9 +84,6 @@ function fromTemplate(file: string): string {
     .replaceAll('TODO:', 'TODO(new-plugin):')
 }
 
-// The docs contract reads the page by a path relative to tests/contracts.
-const pageGlob = `${relative(join(pkgDir, 'tests', 'contracts'), docsDir).replace(/[()[\]{}]/g, (c) => `\\\\${c}`)}/${name}.{md,mdx}`
-
 const files: Record<string, string> = {
   'package.json': `${JSON.stringify(
     {
@@ -136,98 +135,6 @@ export default define(['src/index.ts', 'src/react/index.tsx'])
   'src/react/index.tsx': fromTemplate('src/react/index.tsx'),
 
   'tests/react.test.tsx': fromTemplate('tests/react.test.tsx'),
-
-  'tests/contracts/boundary.test.ts': `import { describe, expect, it } from 'vitest'
-
-const SOURCES = import.meta.glob(['../../src/**/*.{ts,tsx}'], {
-  query: '?raw',
-  import: 'default',
-  eager: true,
-}) as Record<string, string>
-
-/** Each file's imports, from the source as written. */
-const IMPORTS = Object.entries(SOURCES).map(([file, source]) => ({
-  file,
-  source,
-  ui: file.includes('/src/react/'),
-  specs: [...source.matchAll(/^(?:import|export)[^'"]*\\sfrom\\s['"]([^'"]+)['"]|^import\\s+['"]([^'"]+)['"]/gm)].map((match) => match[1] ?? match[2]),
-}))
-
-describe('the ${name} plugin', () => {
-  // A plugin proves the plugin API only if it uses nothing else: the engine's
-  // front door, and its own files.
-  it('imports only @ifloom/engine and its own files', () => {
-    expect(IMPORTS.length).toBeGreaterThan(0)
-    const outside = IMPORTS.filter((entry) => !entry.ui).flatMap(({ file, specs }) =>
-      specs.filter((spec) => !(spec.startsWith('./') && !spec.startsWith('./react/')) && spec !== '@ifloom/engine').map((spec) => \`\${file} → \${spec}\`),
-    )
-    expect(outside).toEqual([])
-  })
-
-  // The engine side runs anywhere, so it never reaches for a page.
-  it('uses no browser globals outside its React UI', () => {
-    // Strings and comments aside: a plugin may write a page's script as text, as unlocks does.
-    const code = (source: string) => source.replace(/\`[^\`]*\`|'[^'\\n]*'|"[^"\\n]*"|\\/\\*[\\s\\S]*?\\*\\/|\\/\\/.*$/gm, '')
-    const found = IMPORTS.filter((entry) => !entry.ui && /\\b(window|document)\\./.test(code(entry.source))).map((entry) => entry.file)
-    expect(found).toEqual([])
-  })
-
-  // Its React UI is the \`/react\` subpath. It's built only from the kit, \`@ifloom/react\`'s
-  // front door, as a game's own UI is: never a deep path, and never another plugin.
-  it('keeps React to src/react/, which imports only the engine, React, @ifloom/react and its own files', () => {
-    const allowed = new Set(['@ifloom/engine', '@ifloom/react', 'react', 'react-dom'])
-    const outside = IMPORTS.filter((entry) => entry.ui).flatMap(({ file, specs }) =>
-      specs.filter((spec) => !spec.startsWith('./') && spec !== '../index.ts' && !allowed.has(spec)).map((spec) => \`\${file} → \${spec}\`),
-    )
-    expect(outside).toEqual([])
-  })
-})
-`,
-
-  'tests/contracts/docs.test.ts': `import { describe, expect, it } from 'vitest'
-
-/**
- * Everything the ${name} plugin exports is on its docs page, its React UI's too. A developer learns
- * the plugin from the docs site alone, so an export the page does not name is
- * a feature nobody can find.
- */
-const INDEX = import.meta.glob(['../../src/index.ts', '../../src/react/index.tsx'], {
-  query: '?raw',
-  import: 'default',
-  eager: true,
-}) as Record<string, string>
-
-const PAGE = import.meta.glob('${pageGlob}', {
-  query: '?raw',
-  import: 'default',
-  eager: true,
-}) as Record<string, string>
-
-function exportedNames(source: string): string[] {
-  const names = new Set<string>()
-  for (const match of source.matchAll(/^export (?:type|function|const|let|class|interface) ([A-Za-z_$][\\w$]*)/gm)) {
-    names.add(match[1])
-  }
-  for (const match of source.matchAll(/export (?:type )?\\{([^}]*)\\}/g)) {
-    for (const part of match[1].split(',')) {
-      const name = part.trim().replace(/^type\\s+/, '').split(/\\s+as\\s+/).pop()
-      if (name) names.add(name)
-    }
-  }
-  return [...names].sort()
-}
-
-describe('the docs', () => {
-  it('name every export of @ifloom/plugin-${name} on its page', () => {
-    const names = [...new Set(Object.values(INDEX).flatMap(exportedNames))]
-    expect(names.length).toBeGreaterThan(0)
-    const page = Object.values(PAGE)[0] ?? ''
-    expect(page.length).toBeGreaterThan(0)
-    const missing = names.filter((name) => !new RegExp(\`\\\\b\${name}\\\\b\`).test(page))
-    expect(missing).toEqual([])
-  })
-})
-`,
 }
 
 for (const [file, text] of Object.entries(files)) {
@@ -246,6 +153,8 @@ writeFileSync(
 \`\`\`ts
 import { ${camel}, entriesOf, entryOf } from '@ifloom/plugin-${name}'
 import type { ${Pascal}Entry, ${Pascal}State, ${Pascal}View } from '@ifloom/plugin-${name}'
+import { ${camel}Ui, use${Pascal}, ${Pascal}List, ${Pascal}Section, ${CONSTANT}_WORDS } from '@ifloom/plugin-${name}/react'
+import type { ${Pascal}Controls } from '@ifloom/plugin-${name}/react'
 \`\`\`
 `,
 )

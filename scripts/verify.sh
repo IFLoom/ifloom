@@ -112,10 +112,10 @@ if [[ "$tier" == full ]]; then
   # vp check: the format (npm run format fixes it) and lint, then tsc on every project; each cached.
   step "npm run check"; npm run check
 else
-  # The contract tests that read the docs: each package's docs.test.ts (every export named on its page), the pages'
-  # descriptions, the framework tabs and the community plugins list.
+  # The contract tests that read the docs: each package's docs.test.ts and the plugin packages' suite (every export named
+  # on its page), the pages' descriptions, the framework tabs and the community plugins list.
   step "the docs' contract tests"
-  npx vitest run tests/contracts/docs.test.ts tests/contracts/docs-descriptions tests/contracts/framework-tabs tests/contracts/community-plugins
+  npx vitest run tests/contracts/docs.test.ts tests/contracts/plugin-packages tests/contracts/docs-descriptions tests/contracts/framework-tabs tests/contracts/community-plugins
   if [[ "$tier" == snippets ]]; then
     step "the docs' snippets: typecheck and tests"
     npx vp run typecheck:snippets

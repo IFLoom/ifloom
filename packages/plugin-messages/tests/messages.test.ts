@@ -14,6 +14,7 @@ import {
   type GameState,
   type Content,
 } from '@ifloom/engine'
+import { loadChecked } from '@ifloom/engine/testing'
 import { cast } from '@ifloom/plugin-cast'
 import { messages, type MessagesView } from '../src/index.ts'
 import { calendar } from '@ifloom/plugin-calendar'
@@ -86,9 +87,7 @@ function game(extra: Partial<Content> = {}): Game {
     },
     ...extra,
   }
-  const loaded = loadGame([{ name: 'base', data: channels }, pack], { id: 'msgs', title: 'Msgs', plugins: [clock, cast(), plugin] })
-  expect(loaded.problems).toEqual([])
-  return loaded.game
+  return loadChecked([{ name: 'base', data: channels }, pack], { id: 'msgs', title: 'Msgs', plugins: [clock, cast(), plugin] })
 }
 
 const begin = (g: Game): GameState => clock.write({ ...startingState(g, { kv: { playerFirst: 'Sam' } }), sceneId: null }, { day: 1, period: 'morning' })

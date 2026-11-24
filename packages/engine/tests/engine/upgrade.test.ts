@@ -6,14 +6,10 @@ import { mods, readMod } from '../../src/mods.ts'
 import { PACK_STEPS, SCHEMA, commandUpgrade, upgradePack, type RawPack } from '../../src/upgrade.ts'
 import type { Plugin } from '../../src/plugin.ts'
 import { achievements } from '@ifloom/plugin-achievements'
-import { calendar } from '@ifloom/plugin-calendar'
 import { cast } from '@ifloom/plugin-cast'
-import { debug } from '@ifloom/plugin-debug'
 import { devices } from '@ifloom/plugin-devices'
 import { feed } from '@ifloom/plugin-feed'
-import { inventory } from '@ifloom/plugin-inventory'
 import { jobs } from '@ifloom/plugin-jobs'
-import { messages } from '@ifloom/plugin-messages'
 import { places } from '@ifloom/plugin-places'
 import { quests } from '@ifloom/plugin-quests'
 import { shop } from '@ifloom/plugin-shop'
@@ -23,6 +19,7 @@ import { cheats } from '@ifloom/plugin-cheats'
 import { generators } from '@ifloom/plugin-generators'
 import { unlocks } from '@ifloom/plugin-unlocks'
 import { withCafe } from '../fixtures/cafe.ts'
+import { firstPartyPlugins } from '../contracts/first-party.ts'
 import { unwrap } from '../fixtures/result.ts'
 
 /**
@@ -60,26 +57,11 @@ function cafe() {
 }
 
 /**
- * Every first-party plugin whose content the engine once carried forward
- * itself. Each carries its own forward now, so these tests hold that an old
- * pack still upgrades exactly as it did when the engine did it all.
+ * Every first-party plugin, found by glob. Each carries its own content
+ * forward now, so these tests hold that an old pack still upgrades exactly as
+ * it did when the engine did it all, and that a new plugin's steps join in.
  */
-const PLUGINS: Plugin[] = [
-  achievements(),
-  calendar(),
-  cast(),
-  debug(),
-  devices(),
-  feed(),
-  inventory(),
-  jobs(),
-  messages(),
-  places(),
-  quests(),
-  shop(),
-  statuses(),
-  wardrobe(),
-]
+const PLUGINS: Plugin[] = firstPartyPlugins()
 
 /** A pack upgraded with every first-party plugin, without the plugin versions it now records. */
 function up(pack: { schema: number }): Record<string, unknown> {

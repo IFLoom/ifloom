@@ -7,7 +7,8 @@
  * writes it.
  */
 import { describe, expect, it } from 'vitest'
-import { apply, loadGame, startingState, view, type Game, type GameState, type Content, type CommandRef, type GameRules } from '@ifloom/engine'
+import { apply, view, type Game, type GameState, type Content, type GameRules } from '@ifloom/engine'
+import { freshState, loadChecked, play } from '@ifloom/engine/testing'
 import { feed, type FeedDef, type FeedsView } from '@ifloom/plugin-feed'
 import { messages, type Channel, type MessagesView } from '@ifloom/plugin-messages'
 import { calendar } from '@ifloom/plugin-calendar'
@@ -151,7 +152,7 @@ const rules: GameRules = {
 }
 
 function game(): Game {
-  const loaded = loadGame(
+  return loadChecked(
     [phone, { name: 'base', resets: { postedToday: false }, locks: [{ when: places.at('work'), deny: ['devices/*'], reason: 'Not at work.' }] }, town],
     {
       id: 'phone-town',
@@ -161,21 +162,10 @@ function game(): Game {
       plugins: [clock, places({ start: 'house' }), cast(), devices(), messages(), feed()],
     },
   )
-  expect(loaded.problems).toEqual([])
-  return loaded.game
 }
 
-const begin = (g: Game): GameState => clock.write({ ...startingState(g), sceneId: null }, { day: 1, period: 'morning' })
+const begin = (g: Game): GameState => clock.write(freshState(g), { day: 1, period: 'morning' })
 const phoneOf = (state: GameState, g: Game) => (view(state, g).plugins.devices as DevicesView).devices[0]
-
-function run(state: GameState, g: Game, ...commands: CommandRef[]): GameState {
-  for (const command of commands) {
-    const out = apply(state, g, command)
-    expect(out.reason, JSON.stringify(command)).toBeUndefined()
-    state = out.state
-  }
-  return state
-}
 
 describe('a smartphone on the sidebar', () => {
   it('is there from the start, with the stock apps and the game’s own', () => {
@@ -187,13 +177,13 @@ describe('a smartphone on the sidebar', () => {
 
   it('gets a text when the story allows, with a notice and a badge, and replies to it', () => {
     const g = game()
-    let state = run(begin(g), g, places.go('cafe'), cast.talk('ava'), { type: 'choose', id: 'bye' })
-    state = run(state, g, places.go('house'))
-    state = run(clock.write(state, { day: 1, period: 'night' }), g, calendar.sleep())
+    let state = play(begin(g), g, places.go('cafe'), cast.talk('ava'), { type: 'choose', id: 'bye' })
+    state = play(state, g, places.go('house'))
+    state = play(clock.write(state, { day: 1, period: 'night' }), g, calendar.sleep())
     expect(view(state, g).notices.byTag).toEqual({ texts: 1 })
     expect(phoneOf(state, g).badge).toBe(1)
     expect(phoneOf(state, g).apps.find((app) => app.id === 'texts')?.badge).toBe(1)
-    state = run(state, g, devices.open('texts'), messages.reply('ava.hey', 'reply'))
+    state = play(state, g, devices.open('texts'), messages.reply('ava.hey', 'reply'))
     const texts = (view(state, g).plugins.messages as MessagesView).channels[0]
     expect(texts.threads[0].messages[0].replied).toBe('You too!')
     expect(phoneOf(state, g).badge).toBe(0)
@@ -201,12 +191,12 @@ describe('a smartphone on the sidebar', () => {
 
   it('takes a photo only with someone to take, and keeps it in the gallery', () => {
     const g = game()
-    let state = run(begin(g), g, devices.open('camera'))
+    let state = play(begin(g), g, devices.open('camera'))
     expect(phoneOf(state, g).open?.sections[0]).toMatchObject({
       type: 'actions',
       actions: [{ label: 'Take a photo', disabled: 'Nobody to take a picture of.' }],
     })
-    state = run(state, g, devices.close('phone'), places.go('cafe'), devices.open('camera'), { type: 'action', id: 'photo' }, devices.open('gallery'))
+    state = play(state, g, devices.close('phone'), places.go('cafe'), devices.open('camera'), { type: 'action', id: 'photo' }, devices.open('gallery'))
     expect(phoneOf(state, g).open?.sections[0]).toMatchObject({
       type: 'list',
       entries: [{ id: 'photo:ava.cafe', title: 'Ava at the café', image: 'art/ava-cafe.jpg' }],
@@ -215,10 +205,10 @@ describe('a smartphone on the sidebar', () => {
 
   it('posts to the creator app once a day, at a price, and the post does what the game rolls', () => {
     const g = game()
-    let state = run(begin(g), g, places.go('cafe'), { type: 'action', id: 'photo' }, devices.open('studio'))
+    let state = play(begin(g), g, places.go('cafe'), { type: 'action', id: 'photo' }, devices.open('studio'))
     const post = () => phoneOf(state, g).open?.sections[1]
     expect(post()).toMatchObject({ type: 'actions', actions: [{ label: 'Post a photo', disabled: undefined }] })
-    state = run(state, g, { type: 'action', id: 'post' })
+    state = play(state, g, { type: 'action', id: 'post' })
     expect(state.stats).toMatchObject({ energy: 40, subscribers: 5 })
     expect(phoneOf(state, g).open?.sections[0]).toEqual({ type: 'prose', text: '5 subscribers', beats: [{ type: 'text', text: '5 subscribers' }] })
     expect(post()).toMatchObject({ actions: [{ disabled: 'You have posted today.' }] })
@@ -228,11 +218,11 @@ describe('a smartphone on the sidebar', () => {
 
   it('calls the people the player has met, unless they don’t pick up', () => {
     const g = game()
-    expect(phoneOf(run(begin(g), g, devices.open('contacts')), g).open?.sections[0]).toEqual({ type: 'list', entries: [] })
-    let state = run(begin(g), g, places.go('cafe'), cast.talk('ava'), { type: 'choose', id: 'bye' })
-    state = run(state, g, places.go('house'), devices.open('contacts'))
+    expect(phoneOf(play(begin(g), g, devices.open('contacts')), g).open?.sections[0]).toEqual({ type: 'list', entries: [] })
+    let state = play(begin(g), g, places.go('cafe'), cast.talk('ava'), { type: 'choose', id: 'bye' })
+    state = play(state, g, places.go('house'), devices.open('contacts'))
     expect(phoneOf(state, g).open?.sections[0]).toMatchObject({ type: 'list', entries: [{ id: 'ava', actions: [{ label: 'Call', disabled: undefined }] }] })
-    state = run(state, g, cast.call('ava'))
+    state = play(state, g, cast.call('ava'))
     expect(state.sceneId).toBe('ava.call')
     expect(places.where(state, g)).toBe('house')
     const night = clock.write(begin(g), { day: 1, period: 'night' })
@@ -241,7 +231,7 @@ describe('a smartphone on the sidebar', () => {
 
   it('stays in the pocket at work: its apps greyed out, and one left open closes', () => {
     const g = game()
-    const state = run(begin(g), g, devices.open('camera'), places.go('work'))
+    const state = play(begin(g), g, devices.open('camera'), places.go('work'))
     expect(apply(state, g, devices.open('texts')).reason).toBe('Not at work.')
     expect(phoneOf(state, g).open).toBeNull()
     expect(phoneOf(state, g).apps.every((app) => app.disabled === 'Not at work.')).toBe(true)

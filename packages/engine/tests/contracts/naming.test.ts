@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Command, Condition, Effect } from '../../src/index.ts'
 import { CONDITION_KEYS, EFFECT_KEYS } from '../../src/core.ts'
 import type { Plugin } from '../../src/plugin.ts'
+import { PLUGIN_NAMES, firstPartyPlugins } from './first-party.ts'
 import { achievements } from '@ifloom/plugin-achievements'
 import { cheats } from '@ifloom/plugin-cheats'
 import { unlocks } from '@ifloom/plugin-unlocks'
@@ -280,25 +281,8 @@ const PLUGIN_NOUNS = [
 
 const allowed = new Set<string>([...TARGETS, ...DETAILS, ...PLUGIN_NOUNS])
 
-const firstParty: Plugin<any>[] = [
-  achievements(),
-  calendar(),
-  cast(),
-  cheats(),
-  debug(),
-  devices(),
-  feed(),
-  generators(),
-  inventory(),
-  jobs(),
-  messages(),
-  places(),
-  quests(),
-  shop(),
-  statuses(),
-  unlocks(),
-  wardrobe(),
-]
+/** Every first-party plugin, found by glob (`first-party.ts`). */
+const firstParty: Plugin<any>[] = firstPartyPlugins()
 
 /** The first-party plugins' sources, by path, for the arguments they read. */
 const SOURCES = import.meta.glob('../../../plugin-*/src/*.ts', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
@@ -349,7 +333,7 @@ describe('content naming (ADR 0008)', () => {
 
   it('reads no argument in a plugin’s source that the rule doesn’t name', () => {
     const wrong: string[] = []
-    expect(Object.keys(SOURCES).length).toBeGreaterThanOrEqual(firstParty.length)
+    expect(PLUGIN_NAMES.filter((name) => !(`../../../plugin-${name}/src/index.ts` in SOURCES))).toEqual([])
     for (const [path, source] of Object.entries(SOURCES)) {
       for (const [, name] of source.matchAll(/\bargs\.([A-Za-z]+)/g)) {
         if (!allowed.has(name)) wrong.push(`${path.split('/').at(-3)}: args.${name}`)

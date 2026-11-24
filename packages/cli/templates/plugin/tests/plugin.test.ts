@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { apply, checkGame, holds, loadGame, startingState, view, type Game, type Content } from '@ifloom/engine'
+import { apply, checkGame, holds, loadGame, view, type Content, type Game, type Plugin } from '@ifloom/engine'
+import { freshState, loadChecked, partnerCases, play } from '@ifloom/engine/testing'
 import { __camel__, type __Pascal__Entry } from '../src/index.ts'
 
 const entries: __Pascal__Entry[] = [
@@ -7,41 +8,26 @@ const entries: __Pascal__Entry[] = [
   { id: 'milk', label: 'A pint of milk' },
 ]
 
-function game(extra: Partial<Content> = {}): Game {
-  const town: Content = {
-    name: 'town',
-    actions: [{ id: 'shop', effects: [__camel__.mark('bread')] }],
-    data: { '__id__': { entries } },
-    ...extra,
-  }
-  const loaded = loadGame([town], { id: '__id__-town', title: '{{title}} town', plugins: [__camel__()] })
-  expect(loaded.problems).toEqual([])
-  return loaded.game
+const town: Content = {
+  name: 'town',
+  actions: [{ id: 'shop', effects: [__camel__.mark('bread')] }],
+  data: { '__id__': { entries } },
 }
 
-const shown = (g: Game, state = startingState(g)) => __camel__().viewIn(view(state, g))!
+/** The town with these plugins, failing on any problem the content checker finds. */
+const game = (plugins: Plugin[] = [__camel__()]): Game => loadChecked([town], { id: '__id__-town', title: '{{title}} town', plugins })
 
-// TODO: replace these with the plugin's real behaviour. For each plugin it
-// cooperates with, add a describe block: the game with that plugin, and without it.
+const shown = (g: Game, state = freshState(g)) => __camel__().viewIn(view(state, g))!
+
+// TODO: replace these with the plugin's real behaviour.
 describe('__id__', () => {
-  it('marks an entry through its effect and its command, and shows it', () => {
-    const g = game()
-    const fresh = { ...startingState(g), sceneId: null }
-    expect(shown(g, fresh).entries.map((entry) => entry.marked)).toEqual([false, false])
-    const shopped = apply(fresh, g, { type: 'action', id: 'shop' })
-    expect(shopped.reason).toBeUndefined()
-    expect(holds(shopped.state, g, __camel__.marked('bread'))).toBe(true)
-    const milk = apply(shopped.state, g, __camel__.markCommand('milk'))
-    expect(shown(g, milk.state).entries.map((entry) => entry.marked)).toEqual([true, true])
-  })
-
   it('refuses to mark what is not there', () => {
     const g = game()
-    expect(apply({ ...startingState(g), sceneId: null }, g, __camel__.markCommand('cheese')).reason).toBe('There is nothing like that.')
+    expect(apply(freshState(g), g, __camel__.markCommand('cheese')).reason).toBe('There is nothing like that.')
   })
 
   it('reports an entry content names that the game lacks', () => {
-    const loaded = loadGame([{ name: 'town', actions: [{ id: 'shop', effects: [__camel__.mark('cheese')] }], data: { '__id__': { entries } } }], {
+    const loaded = loadGame([{ ...town, actions: [{ id: 'shop', effects: [__camel__.mark('cheese')] }] }], {
       id: '__id__-town',
       title: '{{title}} town',
       plugins: [__camel__()],
@@ -55,3 +41,18 @@ describe('__id__', () => {
     expect(checkGame(doubled).problems.map((problem) => problem.what)).toContain('two entries share this id')
   })
 })
+
+// The plugin alone, then with each plugin it cooperates with: list a partner here, such as
+// `places({ start: 'street' })`, once it's in the plugin's `cooperates`, and test what it changes in its own block.
+for (const { name, plugins } of partnerCases(__camel__(), [])) {
+  describe(`__id__, ${name}`, () => {
+    it('marks an entry through its effect and its command, and shows it', () => {
+      const g = game(plugins)
+      expect(shown(g).entries.map((entry) => entry.marked)).toEqual([false, false])
+      const shopped = play(freshState(g), g, { type: 'action', id: 'shop' })
+      expect(holds(shopped, g, __camel__.marked('bread'))).toBe(true)
+      const both = play(shopped, g, __camel__.markCommand('milk'))
+      expect(shown(g, both).entries.map((entry) => entry.marked)).toEqual([true, true])
+    })
+  })
+}

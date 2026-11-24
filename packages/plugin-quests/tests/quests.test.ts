@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { apply, holds, loadGame, startingState, view, whyNot, type Game, type GameState, type Content } from '@ifloom/engine'
+import { holds, loadGame, view, whyNot, type Game, type GameState, type Content } from '@ifloom/engine'
+import { freshState, loadChecked, play } from '@ifloom/engine/testing'
 import { quests, type QuestDef, type QuestsView } from '../src/index.ts'
 
 const plugin = quests()
@@ -37,23 +38,12 @@ function game(extra: QuestDef[] = []): Game {
     ],
     data: { quests: { quests: [bread, letter, secret, ...extra] } },
   }
-  const loaded = loadGame([town], {
+  return loadChecked([town], {
     id: 'bread-town',
     title: 'Bread town',
 
     plugins: [plugin],
   })
-  expect(loaded.problems).toEqual([])
-  return loaded.game
-}
-
-function run(state: GameState, g: Game, ...commands: Parameters<typeof apply>[2][]): GameState {
-  for (const command of commands) {
-    const out = apply(state, g, command)
-    expect(out.reason).toBeUndefined()
-    state = out.state
-  }
-  return state
 }
 
 const act = (id: string) => ({ type: 'action' as const, id })
@@ -62,19 +52,19 @@ const shown = (state: GameState, g: Game) => view(state, g).plugins.quests as Qu
 describe('quests', () => {
   it('start when their condition first holds, and show the first stage’s hint', () => {
     const g = game()
-    const fresh = { ...startingState(g), sceneId: null }
+    const fresh = freshState(g)
     expect(shown(fresh, g)).toMatchObject({ active: [], done: [], toFind: 2, updates: 0 })
-    const hungry = run(fresh, g, act('getHungry'))
+    const hungry = play(fresh, g, act('getHungry'))
     expect(shown(hungry, g).active).toEqual([expect.objectContaining({ id: 'bread', hint: 'Go out to the street.', stage: 0, stages: 2, updated: true })])
     expect(holds(hungry, g, quests.active('bread'))).toBe(true)
   })
 
   it('move on through each stage in order, and finish', () => {
     const g = game()
-    let state = run({ ...startingState(g), sceneId: null }, g, act('getHungry'), act('buyLoaf'))
+    let state = play(freshState(g), g, act('getHungry'), act('buyLoaf'))
     // The loaf is bought, but the street stage comes first.
     expect(shown(state, g).active[0]).toMatchObject({ stage: 0, hint: 'Go out to the street.' })
-    state = run(state, g, { type: 'action', id: 'goOut' })
+    state = play(state, g, { type: 'action', id: 'goOut' })
     expect(shown(state, g).done).toEqual([expect.objectContaining({ id: 'bread', hint: '', doneOn: state.turn })])
     expect(holds(state, g, quests.done('bread'))).toBe(true)
     expect(holds(state, g, quests.reached('bread', 'out'))).toBe(true)
@@ -82,52 +72,52 @@ describe('quests', () => {
 
   it('keep progress once it is made', () => {
     const g = game()
-    let state = run({ ...startingState(g), sceneId: null }, g, act('getHungry'), { type: 'action', id: 'goOut' })
-    state = run(state, g, { type: 'action', id: 'goIn' })
+    let state = play(freshState(g), g, act('getHungry'), { type: 'action', id: 'goOut' })
+    state = play(state, g, { type: 'action', id: 'goIn' })
     // Back in the house, the street stage stays done.
     expect(shown(state, g).active[0]).toMatchObject({ stage: 1, hint: 'Buy a loaf.' })
-    state = run(state, g, act('buyLoaf'), act('eat'))
+    state = play(state, g, act('buyLoaf'), act('eat'))
     expect(holds(state, g, quests.done('bread'))).toBe(true)
   })
 
   it('start by effect when they have no condition', () => {
     const g = game()
-    const state = run({ ...startingState(g), sceneId: null }, g, act('findLetter'))
+    const state = play(freshState(g), g, act('findLetter'))
     expect(shown(state, g).active.map((quest) => quest.id)).toEqual(['letter'])
   })
 
   it('track one quest at a time, and only one the player is doing', () => {
     const g = game()
-    const state = run({ ...startingState(g), sceneId: null }, g, act('getHungry'), act('findLetter'))
+    const state = play(freshState(g), g, act('getHungry'), act('findLetter'))
     expect(whyNot(state, g, quests.track('secret'))).toBe('You are not doing that.')
-    const tracked = run(state, g, quests.track('bread'))
+    const tracked = play(state, g, quests.track('bread'))
     expect(shown(tracked, g).active.map((quest) => [quest.id, quest.tracked])).toEqual([
       ['bread', true],
       ['letter', false],
     ])
-    expect(shown(run(tracked, g, quests.track()), g).active.every((quest) => !quest.tracked)).toBe(true)
+    expect(shown(play(tracked, g, quests.track()), g).active.every((quest) => !quest.tracked)).toBe(true)
   })
 
   it('offer ready buttons: track or untrack each active quest, and mark all seen while there is news', () => {
     const g = game()
-    const state = run({ ...startingState(g), sceneId: null }, g, act('getHungry'))
+    const state = play(freshState(g), g, act('getHungry'))
     const bread = shown(state, g).active[0]
     expect(bread.track).toMatchObject({ label: 'Track', command: { type: 'custom', name: 'quests/track', with: { id: 'bread' } } })
-    const tracked = run(state, g, bread.track!.command)
+    const tracked = play(state, g, bread.track!.command)
     expect(shown(tracked, g).active[0]).toMatchObject({ tracked: true, track: { label: 'Untrack' } })
-    expect(shown(run(tracked, g, shown(tracked, g).active[0].track!.command), g).active[0].tracked).toBe(false)
+    expect(shown(play(tracked, g, shown(tracked, g).active[0].track!.command), g).active[0].tracked).toBe(false)
     expect(shown(state, g).seen).toMatchObject({ label: 'Mark all seen' })
-    const looked = run(state, g, shown(state, g).seen!.command)
+    const looked = play(state, g, shown(state, g).seen!.command)
     expect(shown(looked, g)).toMatchObject({ updates: 0, seen: null })
   })
 
   it('count news until the player looks', () => {
     const g = game()
-    let state = run({ ...startingState(g), sceneId: null }, g, act('getHungry'), act('findLetter'))
+    let state = play(freshState(g), g, act('getHungry'), act('findLetter'))
     expect(shown(state, g).updates).toBe(2)
-    state = run(state, g, quests.seen('bread'))
+    state = play(state, g, quests.seen('bread'))
     expect(shown(state, g).updates).toBe(1)
-    state = run(state, g, quests.seen(), { type: 'action', id: 'goOut' })
+    state = play(state, g, quests.seen(), { type: 'action', id: 'goOut' })
     expect(shown(state, g).active.find((quest) => quest.id === 'bread')?.updated).toBe(true)
     expect(view(state, g).plugins.quests).toMatchObject({ updates: 1 })
   })
@@ -155,7 +145,7 @@ describe('quests', () => {
   it('can start off another quest, in the same command', () => {
     const errand: QuestDef = { id: 'errand', name: 'An errand', starts: quests.active('bread'), stages: [{ id: 'go', hint: 'Go.', done: { kv: 'never' } }] }
     const g = game([errand])
-    const state = run({ ...startingState(g), sceneId: null }, g, act('getHungry'))
+    const state = play(freshState(g), g, act('getHungry'))
     expect(shown(state, g).active.map((quest) => quest.id)).toEqual(['bread', 'errand'])
   })
 })

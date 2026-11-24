@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { apply, commandOf, holds, loadGame, loadState, replay, startingState, upgradePack, view, whyNot, type Game, type GameState } from '@ifloom/engine'
+import { apply, commandOf, holds, loadGame, loadState, replay, upgradePack, view, whyNot, type Game, type GameState } from '@ifloom/engine'
+import { freshState, loadChecked } from '@ifloom/engine/testing'
 import { devices, type AppDef, type DevicesView } from '../src/index.ts'
 
 const apps: AppDef[] = [
@@ -17,7 +18,7 @@ const apps: AppDef[] = [
 ]
 
 function game(): Game {
-  const loaded = loadGame(
+  return loadChecked(
     [
       { name: 'base', data: { devices: { devices: [{ id: 'laptop', name: 'Laptop', frame: 'laptop' }], apps } } },
       {
@@ -37,28 +38,25 @@ function game(): Game {
     ],
     { id: 'desk', title: 'Desk', plugins: [devices()] },
   )
-  expect(loaded.problems).toEqual([])
-  return loaded.game
 }
 
-const begin = (g: Game): GameState => ({ ...startingState(g), sceneId: null })
 const laptop = (state: GameState, g: Game) => (view(state, g).plugins.devices as DevicesView).devices[0]
 
 describe('devices', () => {
   it('show installed apps, greyed out with a reason while locked', () => {
     const g = game()
-    expect(laptop(begin(g), g).apps.map((app) => [app.id, app.disabled])).toEqual([
+    expect(laptop(freshState(g), g).apps.map((app) => [app.id, app.disabled])).toEqual([
       ['notes', undefined],
       ['bank', 'You have no account.'],
     ])
-    expect(whyNot(begin(g), g, devices.open('bank'))).toBe('You have no account.')
-    expect(whyNot(begin(g), g, devices.open('mail'))).toBe('That is not installed.')
-    expect(whyNot(begin(g), g, devices.open('fax'))).toBe('There is no such app.')
+    expect(whyNot(freshState(g), g, devices.open('bank'))).toBe('You have no account.')
+    expect(whyNot(freshState(g), g, devices.open('mail'))).toBe('That is not installed.')
+    expect(whyNot(freshState(g), g, devices.open('fax'))).toBe('There is no such app.')
   })
 
   it('open an app without moving the player or ending the turn, and fill in only that one', () => {
     const g = game()
-    const before = begin(g)
+    const before = freshState(g)
     const state = apply(before, g, devices.open('notes')).state
     expect(state.turn).toBe(before.turn)
     expect(laptop(state, g).open).toMatchObject({ id: 'notes', sections: [{ type: 'prose', text: 'Nothing written yet.' }] })
@@ -67,7 +65,7 @@ describe('devices', () => {
 
   it('count a dot badge as one, and hand a panel what it is opened with', () => {
     const g = game()
-    let state = apply(begin(g), g, { type: 'action', id: 'setUpMail' }).state
+    let state = apply(freshState(g), g, { type: 'action', id: 'setUpMail' }).state
     expect(laptop(state, g).badge).toBe(1)
     state = apply(state, g, devices.open('mail')).state
     expect(laptop(state, g).open?.sections).toEqual([{ type: 'panel', panel: 'inbox', with: { letters: 2 } }])
@@ -75,7 +73,7 @@ describe('devices', () => {
 
   it('keep whether a device is out, and on what, in the save: put away, its home screen, or an app', () => {
     const g = game()
-    const start = begin(g)
+    const start = freshState(g)
     expect(laptop(start, g)).toMatchObject({ shown: false, open: null, close: null })
     expect(laptop(start, g).home).toMatchObject({ label: 'Home', command: { type: 'custom', name: 'devices/home', with: { id: 'laptop' } } })
     expect(whyNot(start, g, devices.close('laptop'))).toBe('That is put away.')
@@ -98,12 +96,12 @@ describe('devices', () => {
 
   it('load an older save put away, and play an older log’s close as going home', () => {
     const g = game()
-    const old = { ...begin(g), plugins: { ...begin(g).plugins, devices: { version: 1, state: { open: { laptop: 'notes' } } } } }
+    const old = { ...freshState(g), plugins: { ...freshState(g).plugins, devices: { version: 1, state: { open: { laptop: 'notes' } } } } }
     const loaded = loadState(old, g)
     expect(loaded.ok && loaded.value.plugins.devices.state).toEqual({ shown: {} })
     const log = {
       game: g.id,
-      start: begin(g),
+      start: freshState(g),
       commands: [commandOf(devices.open('notes')), commandOf({ 'devices/close': { id: 'laptop' } })],
       plugins: { devices: 6 },
     }
@@ -119,7 +117,7 @@ describe('devices', () => {
 
   it('close an app that stops being installed', () => {
     const g = game()
-    let state = apply(apply(begin(g), g, { type: 'action', id: 'setUpMail' }).state, g, devices.open('mail')).state
+    let state = apply(apply(freshState(g), g, { type: 'action', id: 'setUpMail' }).state, g, devices.open('mail')).state
     state = apply(state, g, { type: 'action', id: 'uninstall' }).state
     expect(laptop(state, g).open).toBeNull()
     expect(apply(state, g, devices.open('notes')).ok).toBe(true)

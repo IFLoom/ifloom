@@ -2,23 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Plugin } from '../../src/plugin.ts'
 import type { GameRules } from '../../src/game.ts'
 import { PLUGIN_NAME } from './ids-rule.ts'
-import { achievements } from '@ifloom/plugin-achievements'
-import { calendar } from '@ifloom/plugin-calendar'
-import { cheats } from '@ifloom/plugin-cheats'
-import { unlocks } from '@ifloom/plugin-unlocks'
-import { cast } from '@ifloom/plugin-cast'
-import { debug } from '@ifloom/plugin-debug'
-import { devices } from '@ifloom/plugin-devices'
-import { statuses } from '@ifloom/plugin-statuses'
-import { feed } from '@ifloom/plugin-feed'
-import { generators } from '@ifloom/plugin-generators'
-import { jobs } from '@ifloom/plugin-jobs'
-import { messages } from '@ifloom/plugin-messages'
-import { places } from '@ifloom/plugin-places'
-import { quests } from '@ifloom/plugin-quests'
-import { shop } from '@ifloom/plugin-shop'
-import { wardrobe } from '@ifloom/plugin-wardrobe'
-import { inventory } from '@ifloom/plugin-inventory'
+import { PLUGIN_NAMES, firstPartyPlugins } from './first-party.ts'
 
 /**
  * The plugin shape (ADR 0009, `adr/0009-plugin-shape.md`).
@@ -54,25 +38,8 @@ const MEMBERS = {
 
 const allowed = new Set<string>(Object.values(MEMBERS).flat())
 
-const firstParty: Plugin<any>[] = [
-  achievements(),
-  calendar(),
-  cast(),
-  cheats(),
-  debug(),
-  devices(),
-  feed(),
-  generators(),
-  jobs(),
-  messages(),
-  places(),
-  quests(),
-  shop(),
-  statuses(),
-  unlocks(),
-  wardrobe(),
-  inventory(),
-]
+/** Every first-party plugin, found by glob (`first-party.ts`), so a new one is held to the shape with nothing to add here. */
+const firstParty: Plugin<any>[] = firstPartyPlugins()
 
 /** The first-party plugins' sources, by path. */
 const SOURCES = import.meta.glob('../../../plugin-*/src/*.ts', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
@@ -168,7 +135,7 @@ describe('the plugin shape (ADR 0009)', () => {
 
   it('keeps content out of options: each option is a setting, and none is a list of entries', () => {
     const found: Record<string, string[]> = {}
-    expect(Object.keys(SOURCES).length).toBeGreaterThanOrEqual(firstParty.length)
+    expect(PLUGIN_NAMES.filter((name) => !(`../../../plugin-${name}/src/index.ts` in SOURCES))).toEqual([])
     for (const source of Object.values(SOURCES)) Object.assign(found, optionTypes(source))
     // Options types, by plugin, with their fields: exactly those listed above.
     const listed = Object.fromEntries(Object.entries(OPTIONS).map(([plugin, fields]) => [plugin, Object.keys(fields).sort()]))

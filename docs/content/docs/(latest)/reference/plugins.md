@@ -44,6 +44,8 @@ bun run test
 
 That makes the plugin `loyalty` with a condition, an effect, a command and a view, a Vitest test, a complete `tsconfig.json` and a README. [A plugin package](/docs/cli#a-plugin-package) lists what's in it. The engine is a caret peer dependency, so a game brings its own copy, and a dev dependency for the tests.
 
+The tests use the engine's [testing helpers](/docs/reference/testing): they load the game with `loadChecked`, play it with `play`, and run each test alone and with each plugin yours cooperates with through `partnerCases`. A contract test, `tests/contracts.test.ts`, holds the source to the plugin boundary and the README to the exports.
+
 The scripts are `test`, `typecheck` and `build`. `build` compiles `src/` into `dist/` with [tsdown](https://tsdown.dev), as JavaScript with type declarations like IFLoom's own packages, and `npm publish` runs it first.
 
 ## Your first plugin

@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
   amountOf,
-  apply,
   createRunner,
   holds,
   loadGame,
@@ -9,12 +8,12 @@ import {
   memoryDriver,
   profile,
   replay,
-  startingState,
   view,
   type Game,
   type GameState,
   type Content,
 } from '@ifloom/engine'
+import { freshState, loadChecked, play } from '@ifloom/engine/testing'
 import { achievements, type AchievementDef, type AchievementsView } from '../src/index.ts'
 
 const defs: AchievementDef[] = [
@@ -40,28 +39,19 @@ function game(extra: Partial<Content> = {}): Game {
     data: { achievements: { achievements: defs } },
     ...extra,
   }
-  const loaded = loadGame([town], { id: 'g', title: 'g', plugins: [achievements()] })
-  expect(loaded.problems).toEqual([])
-  return loaded.game
+  return loadChecked([town], { id: 'g', title: 'g', plugins: [achievements()] })
 }
 
-function run(state: GameState, g: Game, ...ids: string[]): GameState {
-  for (const id of ids) {
-    const out = apply(state, g, { type: 'action', id })
-    expect(out.reason).toBeUndefined()
-    state = out.state
-  }
-  return state
-}
+/** Each action in turn, by id. */
+const run = (state: GameState, g: Game, ...ids: string[]): GameState => play(state, g, ...ids.map((id) => ({ type: 'action', id }) as const))
 
-const fresh = (g: Game) => ({ ...startingState(g), sceneId: null })
 const shown = (state: GameState, g: Game) => view(state, g).plugins.achievements as AchievementsView
 const coffees = (state: GameState, n: number): GameState => ({ ...state, kv: { ...state.kv, coffees: n } })
 
 describe('achievements', () => {
   it('list every achievement, secret ones as ??? until earned', () => {
     const g = game()
-    expect(shown(fresh(g), g)).toEqual({
+    expect(shown(freshState(g), g)).toEqual({
       achievements: [
         {
           id: 'regular',
@@ -84,7 +74,7 @@ describe('achievements', () => {
 
   it('are earned the first time their condition holds after a command, with a notice', () => {
     const g = game()
-    const state = run(fresh(g), g, 'dusk')
+    const state = run(freshState(g), g, 'dusk')
     expect(holds(state, g, achievements.earned('river'))).toBe(true)
     expect(shown(state, g).achievements[2]).toMatchObject({ name: 'Dusk by the river', description: 'Sit by the river at dusk.', earned: true, earnedOn: 0 })
     expect(view(state, g).notices.unseen.map((notice) => notice.title)).toEqual(['Achievement: Dusk by the river'])
@@ -95,7 +85,7 @@ describe('achievements', () => {
 
   it('count progress, and are earned at the target when they have no condition', () => {
     const g = game()
-    let state = coffees(fresh(g), 4)
+    let state = coffees(freshState(g), 4)
     expect(shown(state, g).achievements[0].progress).toEqual({ value: 4, target: 10 })
     state = run(coffees(state, 10), g, 'bank')
     expect(shown(state, g).achievements[0]).toMatchObject({ earned: true, progress: { value: 10, target: 10 } })
@@ -105,7 +95,7 @@ describe('achievements', () => {
 
   it('read progress from a stat, a formula, an entity’s stat, a kv key or a custom value', () => {
     const g = game()
-    const state = { ...fresh(g), kv: { coffees: 3, mood: 'fine' } }
+    const state = { ...freshState(g), kv: { coffees: 3, mood: 'fine' } }
     expect(amountOf(state, g, 'coins')).toBe(10)
     expect(amountOf(state, g, { sum: ['coins', { scale: 'charm', by: 5 }] })).toBe(20)
     expect(amountOf(state, g, { kv: 'coffees' })).toBe(3)
@@ -116,7 +106,7 @@ describe('achievements', () => {
 
   it('can be granted by an effect', () => {
     const g = game()
-    const state = run(fresh(g), g, 'kindness')
+    const state = run(freshState(g), g, 'kindness')
     expect(shown(state, g)).toMatchObject({ earned: 1 })
     expect(view(state, g).notices.unseen[0].title).toBe('Achievement: A kind word')
   })
@@ -124,7 +114,7 @@ describe('achievements', () => {
   it('are kept in the profile, which outlives saves, and shown earned from it', async () => {
     const g = game()
     const driver = memoryDriver()
-    const runner = createRunner(g, fresh(g), { profile: profile(g, driver) })
+    const runner = createRunner(g, freshState(g), { profile: profile(g, driver) })
     runner.apply({ type: 'action', id: 'dusk' })
     runner.apply({ type: 'action', id: 'kindness' })
     runner.apply({ type: 'action', id: 'dusk' })
@@ -140,7 +130,7 @@ describe('achievements', () => {
     // A view built without a runner has no profile: only this save's achievements.
     expect(shown(runner.state, g).earned).toBe(0)
     // A second runner on the same profile sees it once it has read it.
-    const later = createRunner(g, fresh(g), { profile: profile(g, driver) })
+    const later = createRunner(g, freshState(g), { profile: profile(g, driver) })
     await later.settled()
     expect((later.view().plugins.achievements as AchievementsView).earned).toBe(2)
   })
@@ -148,7 +138,7 @@ describe('achievements', () => {
   it('follow the profile as it changes, with a new view of the same state', async () => {
     const g = game()
     const stored = profile(g, memoryDriver())
-    const runner = createRunner(g, fresh(g), { profile: stored })
+    const runner = createRunner(g, freshState(g), { profile: stored })
     await runner.settled()
     const before = runner.view()
     const heard: GameState[] = []
@@ -169,10 +159,10 @@ describe('achievements', () => {
 
   it('replay exactly, and an old save with no state for the plugin loads', () => {
     const g = game()
-    const runner = createRunner(g, fresh(g))
+    const runner = createRunner(g, freshState(g))
     for (const id of ['earn', 'dusk', 'bank', 'kindness']) runner.apply({ type: 'action', id })
     expect(replay(g, runner.log())).toEqual({ ok: true, value: runner.state })
-    const { plugins: _none, ...old } = fresh(g)
+    const { plugins: _none, ...old } = freshState(g)
     const loadedRead = loadState(JSON.parse(JSON.stringify({ ...old, plugins: {} })), g)
     if (!loadedRead.ok) throw new Error(loadedRead.reason)
     const loaded = loadedRead.value

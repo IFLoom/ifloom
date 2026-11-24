@@ -180,6 +180,7 @@ describe('ifloom new', () => {
       'package.json',
       'src/index.ts',
       'src/react/index.tsx',
+      'tests/contracts.test.ts',
       'tests/rainy-day.test.ts',
       'tests/react.test.tsx',
       'tsconfig.json',
@@ -206,6 +207,7 @@ describe('ifloom new', () => {
     expect(Object.keys(pkg.devDependencies)).toEqual([
       '@ifloom/engine',
       '@ifloom/react',
+      '@types/node',
       '@types/react',
       '@types/react-dom',
       'react',
@@ -231,6 +233,8 @@ describe('ifloom new', () => {
       expect(source).toContain(name)
     }
     expect(readFileSync(join(dir, 'tests/rainy-day.test.ts'), 'utf8')).toContain("from '../src/index.ts'")
+    // Its contract test holds it to the plugin boundary and its README to its exports, with the engine's testing entry.
+    expect(readFileSync(join(dir, 'tests/contracts.test.ts'), 'utf8')).toContain("from '@ifloom/engine/testing'")
     // The React UI: the kit's front door only, a module named for the plugin, and its words as a constant.
     const ui = readFileSync(join(dir, 'src/react/index.tsx'), 'utf8')
     for (const name of [

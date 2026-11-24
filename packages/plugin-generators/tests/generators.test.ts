@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  apply,
   createRunner,
   entitiesOf,
   entityKv,
@@ -9,12 +8,12 @@ import {
   loadGame,
   loadState,
   replay,
-  startingState,
   statValue,
   type Game,
   type GameState,
   type Content,
 } from '@ifloom/engine'
+import { freshState, loadChecked, play } from '@ifloom/engine/testing'
 import { drawEntity, generators, templatesOf, type PoolDef, type TemplateDef } from '../src/index.ts'
 
 const pools: PoolDef[] = [
@@ -53,21 +52,13 @@ function game(): Game {
     ],
     data: { generators: { pools, templates: [visitor] } },
   }
-  const loaded = loadGame([town], { id: 'g', title: 'g', plugins: [generators()] })
-  expect(loaded.problems).toEqual([])
-  return loaded.game
+  return loadChecked([town], { id: 'g', title: 'g', plugins: [generators()] })
 }
 
-function run(state: GameState, g: Game, ...ids: string[]): GameState {
-  for (const id of ids) {
-    const out = apply(state, g, { type: 'action', id })
-    expect(out.reason).toBeUndefined()
-    state = out.state
-  }
-  return state
-}
+/** Each action in turn, by id. */
+const run = (state: GameState, g: Game, ...ids: string[]): GameState => play(state, g, ...ids.map((id) => ({ type: 'action', id }) as const))
 
-const fresh = (g: Game, seed = 7) => ({ ...startingState(g, { seed }), sceneId: null })
+const fresh = (g: Game, seed = 7) => freshState(g, { seed })
 /** Each visitor as it reads: its name, its stats and its kv store. */
 const visitors = (state: GameState, g: Game) =>
   entitiesOf(state, g, 'visitor').map((ref) => ({

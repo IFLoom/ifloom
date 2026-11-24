@@ -10,12 +10,12 @@ import {
   replay,
   startingState,
   view,
-  type CommandRef,
   type Game,
   type GameState,
   type Content,
   type Plugin,
 } from '@ifloom/engine'
+import { freshState, loadChecked, play } from '@ifloom/engine/testing'
 import { cheatsOf, cheats, type CheatDef, type CheatsView } from '../src/index.ts'
 
 const supporter = { not: { 'unlocks/has': { unlock: 'supporter' } } }
@@ -64,32 +64,21 @@ function game(options: { pack?: Partial<Content>; plugins?: Plugin<any>[] } = {}
     data: { cheats: { cheats: defs } },
     ...options.pack,
   }
-  const loaded = loadGame([{ name: 'base', locks: [{ when: { scene: ['intro'] }, deny: ['*'], reason: 'Finish the intro.' }] }, town], {
+  return loadChecked([{ name: 'base', locks: [{ when: { scene: ['intro'] }, deny: ['*'], reason: 'Finish the intro.' }] }, town], {
     id: 'g',
     title: 'g',
     plugins: [cheats(), ...(options.plugins ?? [])],
   })
-  expect(loaded.problems).toEqual([])
-  return loaded.game
 }
 
-const fresh = (g: Game): GameState => ({ ...startingState(g), sceneId: null })
 const shown = (g: Game, state: GameState): CheatsView => cheats().viewIn(view(state, g))!
-
-function run(state: GameState, g: Game, ...commands: CommandRef[]): GameState {
-  return commands.reduce<GameState>((s, command) => {
-    const out = apply(s, g, command)
-    expect(out.reason).toBeUndefined()
-    return out.state
-  }, state)
-}
 
 describe('cheats', () => {
   it('runs a cheat’s effects through a lock, in a scene, with no turn passing', () => {
     const g = game()
     const start = { ...startingState(g), sceneId: 'intro' }
     expect(apply(start, g, { type: 'action', id: 'rest' }).reason).toBe('Finish the intro.')
-    const after = run(start, g, cheats.use('coins'), cheats.use('coins'))
+    const after = play(start, g, cheats.use('coins'), cheats.use('coins'))
     expect(after.stats.coins).toBe(45)
     expect(after.turn).toBe(start.turn)
     expect(after.sceneId).toBe('intro')
@@ -97,7 +86,7 @@ describe('cheats', () => {
 
   it('logs each use with its turn, for content and a replay to read', () => {
     const g = game()
-    let state = run(fresh(g), g, cheats.use('coins'), { type: 'action', id: 'rest' }, cheats.use('coins'))
+    let state = play(freshState(g), g, cheats.use('coins'), { type: 'action', id: 'rest' }, cheats.use('coins'))
     expect(cheats().read(state, g).used).toEqual([
       { cheat: 'coins', turn: 0 },
       { cheat: 'coins', turn: 1 },
@@ -105,19 +94,19 @@ describe('cheats', () => {
     expect(holds(state, g, cheats.used())).toBe(true)
     expect(holds(state, g, cheats.used('coins'))).toBe(true)
     expect(holds(state, g, cheats.used('map'))).toBe(false)
-    state = run(state, g, cheats.use('map'))
+    state = play(state, g, cheats.use('map'))
     expect(shown(g, state).used).toBe(3)
     expect(shown(g, state).cheats.map((cheat) => [cheat.id, cheat.used])).toEqual([
       ['coins', 2],
       ['map', 1],
       ['gold', 0],
     ])
-    expect(holds(fresh(g), g, cheats.used())).toBe(false)
+    expect(holds(freshState(g), g, cheats.used())).toBe(false)
   })
 
   it('shows each cheat as a button, with its group, and refuses a once cheat used', () => {
     const g = game()
-    const before = shown(g, fresh(g))
+    const before = shown(g, freshState(g))
     expect(before.cheats.map((cheat) => cheat.id)).toEqual(['coins', 'map', 'gold'])
     expect(before.cheats[0]).toMatchObject({ name: '+20 coins', description: 'A little help.', group: null, once: null, used: 0 })
     expect(before.cheats[0].button).toMatchObject({
@@ -128,7 +117,7 @@ describe('cheats', () => {
     expect(before.cheats[0].button.disabled).toBeUndefined()
     expect(before.cheats[0].button.price).toBeUndefined()
     expect(before.cheats[1]).toMatchObject({ group: 'Story', once: 'game' })
-    const used = run(fresh(g), g, cheats.use('map'))
+    const used = play(freshState(g), g, cheats.use('map'))
     expect(shown(g, used).cheats[1].button.disabled).toBe('Already used.')
     expect(apply(used, g, cheats.use('map')).reason).toBe('Already used.')
   })
@@ -136,35 +125,35 @@ describe('cheats', () => {
   it('refuses a cheat once a turn until the turn ends, with its own reason', () => {
     const daily: CheatDef = { id: 'nap', name: 'Nap', once: { per: 'turn', reason: 'Once a day.' }, effects: [{ stat: 'coins', by: 1 }] }
     const g = game({ pack: { data: { cheats: { cheats: [...defs, daily] } } } })
-    const used = run(fresh(g), g, cheats.use('nap'))
+    const used = play(freshState(g), g, cheats.use('nap'))
     expect(apply(used, g, cheats.use('nap')).reason).toBe('Once a day.')
     expect(apply(apply(used, g, { type: 'action', id: 'rest' }).state, g, cheats.use('nap')).ok).toBe(true)
   })
 
   it('refuses a cheat that isn’t there', () => {
     const g = game()
-    expect(apply(fresh(g), g, cheats.use('nothing')).reason).toBe('There’s no such cheat.')
+    expect(apply(freshState(g), g, cheats.use('nothing')).reason).toBe('There’s no such cheat.')
   })
 
   it('replays exactly, and an old save with no state for the plugin loads', () => {
     const g = game()
-    const runner = createRunner(g, fresh(g))
+    const runner = createRunner(g, freshState(g))
     runner.apply(cheats.use('coins'))
     runner.apply({ type: 'action', id: 'rest' })
     runner.apply(cheats.use('map'))
     runner.apply(cheats.use('coins'))
     expect(replay(g, runner.log())).toEqual({ ok: true, value: runner.state })
-    const { plugins: _none, ...old } = fresh(g)
+    const { plugins: _none, ...old } = freshState(g)
     const loaded = loadState(JSON.parse(JSON.stringify({ ...old, plugins: {} })), g)
     if (!loaded.ok) throw new Error(loaded.reason)
     expect(shown(g, loaded.value).used).toBe(0)
-    expect(cheats().read(run(loaded.value, g, cheats.use('coins')), g).used).toHaveLength(1)
+    expect(cheats().read(play(loaded.value, g, cheats.use('coins')), g).used).toHaveLength(1)
   })
 
   it('lets content react to a cheat being used', () => {
     const g = game({ pack: { actions: [{ id: 'honest', blocked: [{ when: cheats.used(), reason: 'You cheated.' }], effects: [] }] } })
-    expect(apply(fresh(g), g, { type: 'action', id: 'honest' }).reason).toBeUndefined()
-    expect(apply(run(fresh(g), g, cheats.use('coins')), g, { type: 'action', id: 'honest' }).reason).toBe('You cheated.')
+    expect(apply(freshState(g), g, { type: 'action', id: 'honest' }).reason).toBeUndefined()
+    expect(apply(play(freshState(g), g, cheats.use('coins')), g, { type: 'action', id: 'honest' }).reason).toBe('You cheated.')
   })
 
   it('reports a cheat content names that the game lacks, and what a cheat names', () => {
@@ -202,17 +191,17 @@ describe('cheats', () => {
 describe('cheats with an unlocks plugin (a stand-in)', () => {
   it('keeps a supporter cheat greyed out, or hidden, until the unlock holds', () => {
     const g = game({ plugins: [unlocksStub] })
-    const locked = shown(g, fresh(g))
+    const locked = shown(g, freshState(g))
     expect(locked.cheats.map((cheat) => cheat.id)).toEqual(['coins', 'map', 'gold'])
     expect(locked.cheats[2].button.disabled).toBe('For supporters.')
-    expect(apply(fresh(g), g, cheats.use('gold')).reason).toBe('For supporters.')
-    expect(apply(fresh(g), g, cheats.use('secret')).reason).toBe('For supporters.')
+    expect(apply(freshState(g), g, cheats.use('gold')).reason).toBe('For supporters.')
+    expect(apply(freshState(g), g, cheats.use('secret')).reason).toBe('For supporters.')
 
-    const unlocked = run(fresh(g), g, { type: 'action', id: 'support' })
+    const unlocked = play(freshState(g), g, { type: 'action', id: 'support' })
     const open = shown(g, unlocked)
     expect(open.cheats.map((cheat) => cheat.id)).toEqual(['coins', 'map', 'gold', 'secret'])
     expect(open.cheats.every((cheat) => cheat.button.disabled === undefined)).toBe(true)
-    const rich = run(unlocked, g, cheats.use('gold'), cheats.use('secret'))
+    const rich = play(unlocked, g, cheats.use('gold'), cheats.use('secret'))
     expect(rich.stats.coins).toBe(505)
     expect(rich.sceneId).toBe('ending')
   })
@@ -220,6 +209,6 @@ describe('cheats with an unlocks plugin (a stand-in)', () => {
   it('without the plugin, the condition is false, so a supporter cheat stays refused', () => {
     const g = game()
     expect(g.plugins?.some((plugin) => plugin.id === 'unlocks')).toBe(false)
-    expect(apply(run(fresh(g), g, { type: 'action', id: 'support' }), g, cheats.use('gold')).reason).toBe('For supporters.')
+    expect(apply(play(freshState(g), g, { type: 'action', id: 'support' }), g, cheats.use('gold')).reason).toBe('For supporters.')
   })
 })

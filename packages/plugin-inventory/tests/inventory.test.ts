@@ -1,20 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import {
-  apply,
-  give,
-  heldCount,
-  holds,
-  loadGame,
-  startingState,
-  statValue,
-  view,
-  whyNot,
-  type CommandRef,
-  type Content,
-  type Game,
-  type GameState,
-  type Plugin,
-} from '@ifloom/engine'
+import { give, heldCount, holds, loadGame, statValue, view, whyNot, type Content, type Game, type GameState, type Plugin } from '@ifloom/engine'
+import { freshState, loadChecked, play } from '@ifloom/engine/testing'
 import { cast } from '@ifloom/plugin-cast'
 import { places, type PlacesView } from '@ifloom/plugin-places'
 import { shop, type ShopView } from '@ifloom/plugin-shop'
@@ -46,26 +32,14 @@ const picnic: Content = {
 }
 
 function game(extra: Content[] = [], plugins: Plugin[] = [inventory()]): Game {
-  const loaded = loadGame([picnic, ...extra], { id: 'picnic', title: 'Picnic', plugins })
-  expect(loaded.problems).toEqual([])
-  return loaded.game
+  return loadChecked([picnic, ...extra], { id: 'picnic', title: 'Picnic', plugins })
 }
 
-const begin = (g: Game): GameState => ({ ...startingState(g), sceneId: null })
 const shown = (g: Game, state: GameState) => inventory().viewIn(view(state, g))!
-function run(state: GameState, g: Game, ...commands: CommandRef[]): GameState {
-  for (const command of commands) {
-    const out = apply(state, g, command)
-    expect(out.reason, JSON.stringify(command)).toBeUndefined()
-    state = out.state
-  }
-  return state
-}
-
 describe('the inventory alone', () => {
   it('shows what you hold, with a button for each thing that does something', () => {
     const g = game()
-    const things = shown(g, begin(g)).things
+    const things = shown(g, freshState(g)).things
     expect(things.map((thing) => [thing.ref, thing.count, thing.use?.label ?? null])).toEqual([
       ['food:apple', 2, 'Eat the apple'],
       ['gear:torch', 1, 'Switch it on'],
@@ -77,22 +51,22 @@ describe('the inventory alone', () => {
 
   it('uses one: its effects run and one is spent, unless it is kept', () => {
     const g = game()
-    const ate = run(begin(g), g, inventory.use('food:apple'))
+    const ate = play(freshState(g), g, inventory.use('food:apple'))
     expect(statValue(ate, g, 'energy')).toBe(15)
     expect(heldCount(ate, g, 'food:apple')).toBe(1)
-    const lit = run(ate, g, inventory.use('gear:torch'))
+    const lit = play(ate, g, inventory.use('gear:torch'))
     expect(lit.kv.lit).toBe(true)
     expect(heldCount(lit, g, 'gear:torch')).toBe(1)
-    const gone = run(ate, g, inventory.use('food:apple'))
+    const gone = play(ate, g, inventory.use('food:apple'))
     expect(shown(g, gone).things.map((thing) => thing.ref)).toEqual(['gear:torch', 'gear:stone'])
   })
 
   it('says why it can’t', () => {
     const g = game()
-    const state = begin(g)
+    const state = freshState(g)
     expect(whyNot(state, g, inventory.use('gear:stone'))).toBe('The stone does not do anything.')
     expect(whyNot(state, g, inventory.use('food:pear'))).toBe('There is no such thing.')
-    const none = run(state, g, inventory.drop('gear:stone'))
+    const none = play(state, g, inventory.drop('gear:stone'))
     expect(whyNot(none, g, inventory.drop('gear:stone'))).toBe('You have no stone.')
     expect(whyNot(state, g, inventory.give('food:apple', 'food:apple'))).toBe('You can’t give things to apple.')
     expect(whyNot(state, g, inventory.give('food:apple', 'you'))).toBe('You already have it.')
@@ -100,13 +74,13 @@ describe('the inventory alone', () => {
 
   it('drops one, which is gone with nowhere to put it', () => {
     const g = game()
-    const dropped = run(begin(g), g, inventory.drop('food:apple'))
+    const dropped = play(freshState(g), g, inventory.drop('food:apple'))
     expect(heldCount(dropped, g, 'food:apple')).toBe(1)
   })
 
   it('gives one to someone who can hold things', () => {
     const g = game()
-    const given = run(begin(g), g, inventory.give('food:apple', 'friend:kim'))
+    const given = play(freshState(g), g, inventory.give('food:apple', 'friend:kim'))
     expect(heldCount(given, g, 'food:apple')).toBe(1)
     expect(heldCount(given, g, 'food:apple', 'friend:kim')).toBe(1)
     expect(shown(g, given).things[0].count).toBe(1)
@@ -114,15 +88,15 @@ describe('the inventory alone', () => {
 
   it('shows only the kinds the content asks for', () => {
     const g = game([{ name: 'gear only', data: { inventory: { kinds: [{ id: 'gear' }] } } }])
-    expect(shown(g, begin(g)).things.map((thing) => thing.ref)).toEqual(['gear:torch', 'gear:stone'])
+    expect(shown(g, freshState(g)).things.map((thing) => thing.ref)).toEqual(['gear:torch', 'gear:stone'])
   })
 
   it('works on a thing made in play like another, through its trait', () => {
     const g = game([{ name: 'bag', actions: [{ id: 'pick', effects: [{ create: 'food', like: 'food:apple', with: { id: 'windfall' }, at: 'player' }] }] }])
-    const picked = run(begin(g), g, { type: 'action', id: 'pick' })
+    const picked = play(freshState(g), g, { type: 'action', id: 'pick' })
     const windfall = shown(g, picked).things.find((thing) => thing.ref === 'food:windfall')
     expect(windfall?.use?.label).toBe('Eat the apple')
-    expect(statValue(run(picked, g, inventory.use('food:windfall')), g, 'energy')).toBe(15)
+    expect(statValue(play(picked, g, inventory.use('food:windfall')), g, 'energy')).toBe(15)
   })
 
   it('reports what content gets wrong', () => {
@@ -161,14 +135,14 @@ describe('the inventory with places', () => {
 
   it('drops a thing where you are, where it lies until it is picked up again', () => {
     const g = game([park], [inventory(), places({ start: 'lawn' })])
-    const dropped = run(begin(g), g, inventory.drop('gear:stone'))
+    const dropped = play(freshState(g), g, inventory.drop('gear:stone'))
     expect(heldCount(dropped, g, 'gear:stone')).toBe(0)
     expect(heldCount(dropped, g, 'gear:stone', places.locationRef('lawn'))).toBe(1)
     const lying = (state: GameState) => (view(state, g).plugins.places as PlacesView).things.map((thing) => thing.ref)
     expect(lying(dropped)).toEqual(['gear:stone'])
     // Somewhere else it isn't there; back on the lawn, it is.
-    expect(lying(run(dropped, g, places.go('pond')))).toEqual([])
-    const back = run(dropped, g, places.go('pond'), places.go('lawn'), places.pickUp('gear:stone'))
+    expect(lying(play(dropped, g, places.go('pond')))).toEqual([])
+    const back = play(dropped, g, places.go('pond'), places.go('lawn'), places.pickUp('gear:stone'))
     expect(heldCount(back, g, 'gear:stone')).toBe(1)
     expect(lying(back)).toEqual([])
   })
@@ -185,13 +159,13 @@ describe('the inventory with the cast', () => {
 
   it('gives a thing to a character, who holds it', () => {
     const g = game([town], [inventory(), cast()])
-    const given = run(begin(g), g, inventory.give('food:apple', cast.character('ava')))
+    const given = play(freshState(g), g, inventory.give('food:apple', cast.character('ava')))
     expect(heldCount(given, g, 'food:apple', cast.character('ava'))).toBe(1)
   })
 
   it('hands what a protagonist holds over to them as you', () => {
     const g = game([{ ...town, actions: [{ id: 'be', effects: [{ you: cast.character('ava') }, give('food:apple')] }] }], [inventory(), cast()])
-    const played = run(begin(g), g, { type: 'action', id: 'be' })
+    const played = play(freshState(g), g, { type: 'action', id: 'be' })
     expect(shown(g, played).things.map((thing) => [thing.ref, thing.at])).toEqual([
       ['food:apple', 'character:ava'],
       ['food:apple', 'player'],
@@ -199,7 +173,7 @@ describe('the inventory with the cast', () => {
       ['gear:stone', 'player'],
     ])
     // Using it spends the protagonist's.
-    const ate = run(played, g, inventory.use('food:apple'))
+    const ate = play(played, g, inventory.use('food:apple'))
     expect(heldCount(ate, g, 'food:apple', cast.character('ava'))).toBe(0)
     expect(heldCount(ate, g, 'food:apple', 'player')).toBe(2)
   })
@@ -222,14 +196,14 @@ describe('the inventory with the shop and the wardrobe', () => {
 
   it('buys a thing, wears it, uses another, and gives the first away, each plugin knowing nothing of the others', () => {
     const g = game([market], [inventory(), shop(), wardrobe()])
-    let state = run(begin(g), g, shop.buy('stall', 'clothing:scarf'), shop.buy('stall', 'food:pie'), wardrobe.wear('clothing:scarf'))
+    let state = play(freshState(g), g, shop.buy('stall', 'clothing:scarf'), shop.buy('stall', 'food:pie'), wardrobe.wear('clothing:scarf'))
     expect(state.stats.coins).toBe(9)
     expect(holds(state, g, wardrobe.wearing('clothing:scarf'))).toBe(true)
     expect(shown(g, state).things.find((thing) => thing.ref === 'food:pie')?.use?.label).toBe('Eat the pie')
-    state = run(state, g, inventory.use('food:pie'))
+    state = play(state, g, inventory.use('food:pie'))
     expect(statValue(state, g, 'energy')).toBe(30)
     // Given away, it comes off; the stall sells what it holds, and the scarf isn't there.
-    state = run(state, g, inventory.give('clothing:scarf', 'vendor:stall'))
+    state = play(state, g, inventory.give('clothing:scarf', 'vendor:stall'))
     expect(holds(state, g, wardrobe.wearing('clothing:scarf'))).toBe(false)
     expect((view(state, g).plugins.shop as ShopView).vendors[0].goods[0].stock).toBe(1)
   })

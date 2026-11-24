@@ -5,7 +5,6 @@ import {
   holds,
   loadGame,
   loadState,
-  startingState,
   translatableFields,
   upgradePack,
   view,
@@ -14,6 +13,7 @@ import {
   type Content,
   type GameRules,
 } from '@ifloom/engine'
+import { freshState, loadChecked } from '@ifloom/engine/testing'
 import { feed, type FeedsView } from '../src/index.ts'
 import { calendar } from '@ifloom/plugin-calendar'
 
@@ -54,12 +54,10 @@ function game(): Game {
   }
   // The game's own roll for how a post does; here, always the same.
   const rules: GameRules = { macros: { roll: () => [feed.react('sunset', { likes: 12, from: 'Ava', text: 'Wow' })] } }
-  const loaded = loadGame([{ name: 'base', data: feeds }, pack], { id: 'feeds', title: 'Feeds', plugins: [clock, plugin], rules })
-  expect(loaded.problems).toEqual([])
-  return loaded.game
+  return loadChecked([{ name: 'base', data: feeds }, pack], { id: 'feeds', title: 'Feeds', plugins: [clock, plugin], rules })
 }
 
-const begin = (g: Game): GameState => clock.write({ ...startingState(g), sceneId: null }, { day: 1, period: 'morning' })
+const begin = (g: Game): GameState => clock.write(freshState(g), { day: 1, period: 'morning' })
 const shown = (state: GameState, g: Game) => view(state, g).plugins.feed as FeedsView
 
 describe('feeds', () => {

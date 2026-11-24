@@ -76,6 +76,8 @@ describe('the door', () => {
 
 `play` takes a [`CommandRef`](/docs/reference/custom#commandref), as [`runner.apply`](/docs/reference/runner#the-runners-members) and [`apply`](/docs/reference/commands#apply) do, so a plugin helper's command goes in as it is: `play(places.go('cafe'), jobs.work('cafe'))`. A refusal's words are its `reason`.
 
+A test that works on states rather than a runner can take these ready-made from [`@ifloom/engine/testing`](/docs/reference/testing): `loadChecked` loads content and fails on any problem the checker finds, and `play(state, game, ...commands)` returns the state after the commands and fails on the first one refused, with its reason.
+
 Check what the player sees through `runner.view()`, and what the game keeps through `runner.state`: [`stats`](/docs/reference/state#stats), the [kv store](/docs/reference/state#kv), [`seen`](/docs/reference/state#seen) scenes and [`chosen`](/docs/reference/state#chosen) choices. Test greyed-out buttons by their reason, because that's what the player reads. In [A game with a world](/docs/guide/first-game), a second coffee is too dear:
 
 ```ts

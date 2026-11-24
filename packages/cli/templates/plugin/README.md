@@ -43,11 +43,23 @@ mountGame(game, { plugins: [__camel__Ui] })
 
 It puts the entries in the side column. A game can draw them itself instead, from `use__Pascal__()` or `view.plugins.__id__`, and a game with another UI never loads `{{name}}/react`: React and `@ifloom/react` are optional peers. It's built only from `@ifloom/react`'s exports and styled by its classes, parts and theme tokens, so it looks right in every preset with no stylesheet. [Plugin UIs and the kit](https://ifloom.dev/docs/react/kit) explains each part.
 
+## What it exports
+
+| Export | What it is |
+|---|---|
+| `__camel__` | The plugin's factory, with its helpers: `__camel__.marked`, `__camel__.mark` and `__camel__.markCommand`. |
+| `entriesOf`, `entryOf` | The game's entries, and one by id. |
+| `__Pascal__Entry`, `__Pascal__State`, `__Pascal__View` | An entry as content writes it, what the plugin keeps in a save, and what a UI reads. |
+| `__camel__Ui` | From `{{name}}/react`: the React UI, for `mountGame`'s `plugins`. |
+| `use__Pascal__`, `__Pascal__Controls` | From `{{name}}/react`: the hook that reads the view in a React UI, and what it returns. |
+| `__Pascal__List`, `__Pascal__Section` | From `{{name}}/react`: the list of entries, which a game can replace, and the section it sits in. |
+| `__CONSTANT___WORDS` | From `{{name}}/react`: the React UI's words, for a game to reword. |
+
 ## Work on it
 
 ```sh
 npm install
-npm test            # vitest, the plugin's test and its React UI's
+npm test            # vitest: the plugin's test, its React UI's, and its contract test
 npm run typecheck   # tsc --noEmit
 npm run build       # dist/, what npm publish packs
 ```

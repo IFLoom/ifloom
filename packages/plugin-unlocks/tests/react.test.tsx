@@ -2,7 +2,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { act, cleanup, fireEvent, render, renderHook, screen, waitFor, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
-import { SCHEMA, createRunner, loadGame, memoryDriver, profile, startingState, type Game, type Pack, type Runner } from '@ifloom/engine'
+import { SCHEMA, createRunner, loadGame, memoryDriver, profile, type Game, type Pack, type Runner } from '@ifloom/engine'
+import { freshState } from '@ifloom/engine/testing'
 import { GameProvider, GameShell, type PluginUi } from '@ifloom/react'
 import { lockContent, startUnlocks, unlockHash, unlocks, type LockedContent, type UnlockDef } from '../src/index.ts'
 import { UnlocksPanel, unlocksUi, unlocksUiWith, useUnlocks, type UnlocksUiOptions } from '../src/react/index.tsx'
@@ -31,7 +32,7 @@ function game(withPlugin = true): Game {
 }
 
 function runnerFor(g = game()): Runner {
-  return createRunner(g, { ...startingState(g), sceneId: null }, { profile: profile(g, memoryDriver()) })
+  return createRunner(g, freshState(g), { profile: profile(g, memoryDriver()) })
 }
 
 /** The unlocks UI, its codes started with this file's locked content. */

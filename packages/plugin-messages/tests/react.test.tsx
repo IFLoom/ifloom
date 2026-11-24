@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render } from '@testing-library/react'
-import { createRunner, loadGame, startingState, type Game } from '@ifloom/engine'
+import { createRunner, loadGame, type Game } from '@ifloom/engine'
+import { freshState } from '@ifloom/engine/testing'
 import { GameProvider } from '@ifloom/react'
 import { messages } from '../src/index.ts'
 import { MessagesSection, messagesUi } from '../src/react/index.tsx'
@@ -34,7 +35,7 @@ const click = (element: Element) => act(() => void fireEvent.click(element))
 
 function draw() {
   const g = game()
-  const runner = createRunner(g, { ...startingState(g), sceneId: null })
+  const runner = createRunner(g, freshState(g))
   render(
     <GameProvider runner={runner} plugins={[messagesUi]}>
       <MessagesSection data={undefined} with={{ channel: 'texts' }} />

@@ -17,6 +17,7 @@ import {
   type Content,
   type Pack,
 } from '@ifloom/engine'
+import { loadChecked } from '@ifloom/engine/testing'
 import { calendar } from '@ifloom/plugin-calendar'
 import { locationOf, locationsOf, places, type PlaceDef, type PlacesOptions, type PlacesView } from '../src/index.ts'
 
@@ -65,12 +66,11 @@ const town: Content = {
 
 function game(options: PlacesOptions = { start: 'house' }, locks: Content['locks'] = []) {
   const clock = calendar()
-  const { game, problems } = loadGame([{ name: 'base', locks }, town], {
+  const game = loadChecked([{ name: 'base', locks }, town], {
     id: 'town',
     title: 'Town',
     plugins: [clock, places(options)],
   })
-  expect(problems).toEqual([])
   return { game, clock }
 }
 

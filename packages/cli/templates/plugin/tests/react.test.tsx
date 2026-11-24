@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { renderToString } from 'react-dom/server'
-import { createRunner, loadGame, startingState, type Content } from '@ifloom/engine'
+import { createRunner, loadGame, type Content } from '@ifloom/engine'
+import { freshState } from '@ifloom/engine/testing'
 import { GameProvider } from '@ifloom/react'
 import { __camel__ } from '../src/index.ts'
 import { __camel__Ui, __Pascal__List } from '../src/react/index.tsx'
@@ -20,7 +21,7 @@ function runner() {
     },
   }
   const { game } = loadGame([town], { id: '__id__-town', title: '{{title}} town', plugins: [__camel__()] })
-  return createRunner(game, { ...startingState(game), sceneId: null })
+  return createRunner(game, freshState(game))
 }
 
 // TODO: test what your UI draws and sends. Drawn to a string here, so it needs no browser;

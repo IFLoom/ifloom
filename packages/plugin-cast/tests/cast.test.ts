@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  apply,
   entitiesOf,
   holds,
   pluginQuery,
@@ -14,8 +13,8 @@ import {
   type Game,
   type GameState,
   type Content,
-  type CommandRef,
 } from '@ifloom/engine'
+import { loadChecked, play } from '@ifloom/engine/testing'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { cast, peopleOf, personOf, type CastView } from '../src/index.ts'
@@ -68,22 +67,12 @@ const map: Content = {
 function game(withPlaces = true): { game: Game; clock: ReturnType<typeof calendar> } {
   const clock = calendar()
   // Without places, the town's map goes too: nobody is anywhere the player can be.
-  const { game, problems } = loadGame(withPlaces ? [town, map] : [town], {
+  const game = loadChecked(withPlaces ? [town, map] : [town], {
     id: 'town',
     title: 'Town',
     plugins: [clock, ...(withPlaces ? [places({ start: 'street' })] : []), cast()],
   })
-  expect(problems).toEqual([])
   return { game, clock }
-}
-
-function run(g: Game, state: GameState, ...commands: CommandRef[]): GameState {
-  for (const command of commands) {
-    const out = apply(state, g, command)
-    expect(out.reason, JSON.stringify(command)).toBeUndefined()
-    state = out.state
-  }
-  return state
 }
 
 const shown = (state: GameState, g: Game) => view(state, g).plugins.cast as CastView
@@ -97,7 +86,7 @@ describe('the cast', () => {
     expect([statValue(state, g, 'friendship', cast.character('ava')), statValue(state, g, 'friendship', cast.character('sam'))]).toEqual([0, 5])
     // Listed in the view once met, so nobody is given away before then.
     expect(view(state, g).entities.find((kind) => kind.id === 'character')).toMatchObject({ plural: 'People', unique: true, entries: [] })
-    const met = run(g, run(g, state, places.go('cafe')), cast.talk('ava'))
+    const met = play(state, g, places.go('cafe'), cast.talk('ava'))
     expect(
       view(met, g)
         .entities.find((kind) => kind.id === 'character')!
@@ -142,7 +131,7 @@ describe('the cast', () => {
     expect(peopleOf(state, g)).toEqual(['character:ava', 'character:sam'])
     expect(personOf(state, g, 'character:sam')).toEqual({ home: 'park', talk: 'sam.hi' })
     // Their description is the line under their name, their image their portrait.
-    const cafe = run(g, state, places.go('cafe'))
+    const cafe = play(state, g, places.go('cafe'))
     expect(shown(cafe, g).present[0]).toMatchObject({
       id: 'ava',
       ref: 'character:ava',
@@ -155,7 +144,7 @@ describe('the cast', () => {
   it('show a face for avatars beside their picture: the trait’s portrait, else their image', () => {
     const faced: Content = { name: 'faces', traits: { 'cast/person': { 'character:sam': { home: 'park', talk: 'sam.hi', portrait: 'faces/sam.png' } } } }
     const { game: g } = loadGame([town, map, faced], { id: 'town', title: 'Town', plugins: [calendar(), places({ start: 'street' }), cast()] })
-    const park = run(g, startingState(g), places.go('park'))
+    const park = play(startingState(g), g, places.go('park'))
     expect(shown(park, g).present.find((one) => one.id === 'sam')).toMatchObject({ image: 'art/character/sam.jpg', portrait: 'art/faces/sam.png' })
     const portrait = pluginQuery(g, 'cast/portrait')!
     expect([portrait(park, { character: 'sam' }), portrait(park, { character: 'ava' }), portrait(park, { character: 'nobody' })]).toEqual([
@@ -172,7 +161,7 @@ describe('the cast', () => {
 
   it('include anyone with the trait, of any kind or made in play, named by reference', () => {
     const { game: g } = game()
-    const next = run(g, startingState(g), places.go('park'))
+    const next = play(startingState(g), g, places.go('park'))
     const created = { ...next, entities: { ...next.entities, character: { '#1': { name: 'Rook', like: 'character:sam' as const } } } }
     expect(peopleOf(created, g)).toEqual(['character:ava', 'character:sam', 'character:#1'])
     expect(shown(created, g).present.map((one) => one.name)).toEqual(['Sam', 'Rook'])
@@ -181,7 +170,7 @@ describe('the cast', () => {
 
   it('are where their schedule puts them, and in the room when that is where the player is', () => {
     const { game: g, clock } = game()
-    const cafe = run(g, startingState(g), places.go('cafe'))
+    const cafe = play(startingState(g), g, places.go('cafe'))
     expect(shown(cafe, g).present.map((person) => person.id)).toEqual(['ava'])
     expect(holds(cafe, g, cast.here('ava'))).toBe(true)
     expect(holds(cafe, g, cast.here('sam'))).toBe(false)
@@ -192,11 +181,11 @@ describe('the cast', () => {
 
   it('talk in the first scene whose condition holds, `$` being them', () => {
     const { game: g, clock } = game()
-    const park = clock.write(run(g, startingState(g), places.go('park')), { day: 0, period: 'evening' })
-    expect(run(g, park, cast.talk('ava')).sceneId).toBe('ava.hi')
+    const park = clock.write(play(startingState(g), g, places.go('park')), { day: 0, period: 'evening' })
+    expect(play(park, g, cast.talk('ava')).sceneId).toBe('ava.hi')
     const friends = writeEntity(park, cast.character('ava'), { stats: { friendship: 30 } })
     expect(shown(friends, g).present.find((person) => person.id === 'ava')?.actions[0].label).toBe('Walk with Ava')
-    expect(run(g, friends, cast.talk('ava')).sceneId).toBe('ava.river')
+    expect(play(friends, g, cast.talk('ava')).sceneId).toBe('ava.river')
     expect(holds(friends, g, { stat: 'friendship', of: cast.character('ava'), gte: 25 })).toBe(true)
   })
 
@@ -205,7 +194,7 @@ describe('the cast', () => {
     const street = startingState(g)
     expect(whyNot(street, g, cast.talk('ava'))).toBe('Ava is not here.')
     expect(whyNot(street, g, cast.talk('nobody'))).toBe('There is no such person.')
-    const cafe = run(g, street, places.go('cafe'))
+    const cafe = play(street, g, places.go('cafe'))
     expect(whyNot({ ...cafe, sceneId: 'ava.hi' }, g, cast.talk('ava'))).toBe('Finish this first.')
     const closed = { ...cafe, storylines: { ...cafe.storylines, ava: { ...cafe.storylines.ava, closedUntil: 9 } } }
     expect(whyNot(closed, g, cast.talk('ava'))).toBe('Ava is not taking this right now.')
@@ -218,14 +207,14 @@ describe('the cast', () => {
     expect(whyNot(day, g, cast.call('ava'))).toBe('She’s at the counter. Try this evening.')
     expect(whyNot(day, g, cast.call('sam'))).toBe('You cannot reach Sam from here.')
     const evening = clock.write(day, { day: 0, period: 'evening' })
-    expect(run(g, evening, cast.call('ava')).sceneId).toBe('ava.call')
+    expect(play(evening, g, cast.call('ava')).sceneId).toBe('ava.call')
   })
 
   it('are met by seeing their scenes, and listed as contacts once met', () => {
     const { game: g, clock } = game()
     const state = startingState(g)
     expect(holds(state, g, cast.met('ava'))).toBe(false)
-    const met = run(g, state, places.go('cafe'), cast.talk('ava'), { type: 'choose', id: 'bye' })
+    const met = play(state, g, places.go('cafe'), cast.talk('ava'), { type: 'choose', id: 'bye' })
     expect(holds(met, g, cast.met('ava'))).toBe(true)
     expect(shown(met, g).people.map((person) => person.id)).toEqual(['ava'])
     expect(view(clock.write(met, { day: 0, period: 'evening' }), g).plugins.cast).toBeDefined()
@@ -233,7 +222,7 @@ describe('the cast', () => {
 
   it('answer queries about whoever is named as character', () => {
     const { game: g } = game()
-    const cafe = run(g, startingState(g), places.go('cafe'))
+    const cafe = play(startingState(g), g, places.go('cafe'))
     const where = pluginQuery(g, 'cast/where')!
     expect(where(cafe, { character: 'ava' })).toBe('cafe')
     expect(where(cafe, { character: 'nobody' })).toBeUndefined()
@@ -242,7 +231,7 @@ describe('the cast', () => {
   it('are who is speaking in their scenes, as their entity is', () => {
     const { game: g } = game()
     const withSpeaker = { ...g, scenes: g.scenes.map((entry) => (entry.id === 'ava.hi' ? { ...entry, speaker: 'ava' } : entry)) }
-    const state = run(withSpeaker, startingState(withSpeaker), places.go('cafe'), cast.talk('ava'))
+    const state = play(startingState(withSpeaker), withSpeaker, places.go('cafe'), cast.talk('ava'))
     // The core reads the entity: no picture of her own, so none is guessed.
     expect(view(state, withSpeaker).scene.speaker).toEqual({ id: 'ava', ref: 'character:ava', name: 'Ava', image: null, ui: { hue: 20 } })
   })
@@ -260,7 +249,7 @@ describe('the cast', () => {
     const state = { ...start, kv: { ...start.kv, friendName: 'Robin' } }
     expect(shown(state, withSpeaker).present.find((person) => person.id === 'sam')).toMatchObject({ name: 'Robin', fullName: 'Robin Reed' })
     expect(whyNot(state, withSpeaker, cast.call('sam'))).toBe('You cannot reach Robin from here.')
-    expect(view(run(withSpeaker, state, cast.talk('sam')), withSpeaker).scene.speaker).toMatchObject({ name: 'Robin' })
+    expect(view(play(state, withSpeaker, cast.talk('sam')), withSpeaker).scene.speaker).toMatchObject({ name: 'Robin' })
     // Before the player names them, the name is the fallback after the "|", and a token with none prints nothing.
     expect(shown(start, withSpeaker).present.find((person) => person.id === 'sam')).toMatchObject({ name: 'Your friend', fullName: ' Reed' })
   })
@@ -270,7 +259,7 @@ describe('the cast', () => {
     const state = clock.write(startingState(g), { day: 0, period: 'evening' })
     expect(shown(state, g).present).toEqual([])
     expect(whyNot(state, g, cast.talk('ava'))).toBe('Ava is not here.')
-    expect(run(g, state, cast.call('ava')).sceneId).toBe('ava.call')
+    expect(play(state, g, cast.call('ava')).sceneId).toBe('ava.call')
   })
 
   it('report what their content names that the game does not have', () => {

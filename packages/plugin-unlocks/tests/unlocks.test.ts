@@ -15,6 +15,7 @@ import {
   type Pack,
   type Runner,
 } from '@ifloom/engine'
+import { freshState, loadChecked } from '@ifloom/engine/testing'
 import {
   ITERATIONS,
   codeFits,
@@ -57,13 +58,11 @@ function build(unlocksOf: UnlockDef[], packs: Pack[] = []): Game {
     actions: [{ id: 'rest', effects: [{ turn: true }] }],
     data: { unlocks: { unlocks: unlocksOf } },
   }
-  const loaded = loadGame([town], { id: GAME, title: 'Unlocks town', plugins: [unlocks()] }, { packs })
-  expect(loaded.problems).toEqual([])
-  return loaded.game
+  return loadChecked([town], { id: GAME, title: 'Unlocks town', plugins: [unlocks()] }, { packs })
 }
 
 function runnerFor(game: Game, driver = memoryDriver()) {
-  return createRunner(game, { ...startingState(game, { seed: 1 }), sceneId: null }, { history: true, profile: profile(game, driver) })
+  return createRunner(game, freshState(game, { seed: 1 }), { history: true, profile: profile(game, driver) })
 }
 
 /** Settles once the codes started on the runner have checked the ones the profile remembers. */
@@ -113,7 +112,7 @@ describe('codes and hashes', () => {
 describe('the plugin', () => {
   it('records an unlock through its command, and unlocks/has reads the save', async () => {
     const g = build([await def()])
-    const fresh = { ...startingState(g), sceneId: null }
+    const fresh = freshState(g)
     expect(holds(fresh, g, unlocks.has('supporter'))).toBe(false)
     const recorded = apply(fresh, g, unlocks.record('supporter'))
     expect(recorded.reason).toBeUndefined()
@@ -134,7 +133,7 @@ describe('the plugin', () => {
       title: 't',
       plugins: [unlocks()],
     })
-    expect(apply({ ...startingState(g), sceneId: null }, g, unlocks.record('supporter')).reason).toBeUndefined()
+    expect(apply(freshState(g), g, unlocks.record('supporter')).reason).toBeUndefined()
   })
 
   it('reports an unlock content names that the game lacks, and a bad entry', async () => {

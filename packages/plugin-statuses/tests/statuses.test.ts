@@ -6,7 +6,6 @@ import {
   loadGame,
   loadState,
   replay,
-  startingState,
   statValue,
   view,
   whyNot,
@@ -15,6 +14,7 @@ import {
   type GameState,
   type Content,
 } from '@ifloom/engine'
+import { freshState, loadChecked, play } from '@ifloom/engine/testing'
 import { statuses, type StatusDef, type StatusesView } from '../src/index.ts'
 
 const caffeinated: StatusDef = {
@@ -56,27 +56,18 @@ function game(extra: StatusDef[] = []): Game {
     ],
     data: { statuses: { statuses: [caffeinated, cold, ...extra] } },
   }
-  const loaded = loadGame([town], { id: 'g', title: 'g', plugins: [statuses()] })
-  expect(loaded.problems).toEqual([])
-  return loaded.game
+  return loadChecked([town], { id: 'g', title: 'g', plugins: [statuses()] })
 }
 
-function run(state: GameState, g: Game, ...ids: string[]): GameState {
-  for (const id of ids) {
-    const out = apply(state, g, { type: 'action', id })
-    expect(out.reason).toBeUndefined()
-    state = out.state
-  }
-  return state
-}
+/** Each action in turn, by id. */
+const run = (state: GameState, g: Game, ...ids: string[]): GameState => play(state, g, ...ids.map((id) => ({ type: 'action', id }) as const))
 
-const fresh = (g: Game) => ({ ...startingState(g), sceneId: null })
 const shown = (state: GameState, g: Game) => view(state, g).plugins.statuses as StatusesView
 
 describe('timed statuses', () => {
   it('change what a stat reads while they last, and never write it', () => {
     const g = game()
-    const state = run(fresh(g), g, 'coffee')
+    const state = run(freshState(g), g, 'coffee')
     expect(statValue(state, g, 'energy')).toBe(60)
     expect(state.stats.energy).toBe(50)
     expect(holds(state, g, { stat: 'energy', gte: 60 })).toBe(true)
@@ -85,7 +76,7 @@ describe('timed statuses', () => {
     expect(statValue(state, g, 'stamina')).toBe(120)
     // A cost is checked against what the stat reads.
     expect(whyNot(state, g, { type: 'action', id: 'climb' })).toBeUndefined()
-    expect(whyNot(fresh(g), g, { type: 'action', id: 'climb' })).toBeTruthy()
+    expect(whyNot(freshState(g), g, { type: 'action', id: 'climb' })).toBeTruthy()
     // Effects write the kept value underneath.
     const tired = run(state, g, 'tire')
     expect(tired.stats.energy).toBe(40)
@@ -94,7 +85,7 @@ describe('timed statuses', () => {
 
   it('run their start effects, count down at the end of each turn, and run their end effects when they run out', () => {
     const g = game()
-    let state = run(fresh(g), g, 'coffee')
+    let state = run(freshState(g), g, 'coffee')
     expect(state.kv.buzzing).toBe(true)
     expect(shown(state, g).active).toEqual([
       { id: 'caffeinated', name: 'Caffeinated', description: '', turnsLeft: 2, stacks: 1, modifiers: [{ stat: 'energy', add: 10 }] },
@@ -111,7 +102,7 @@ describe('timed statuses', () => {
 
   it('refresh by default: applied again, the turns start over and its start effects do not run again', () => {
     const g = game([{ id: 'count', name: 'Counted', turns: 2, effects: { start: [{ stat: 'sneezes', by: 1 }] } }])
-    let state = run(fresh(g), g, 'rest')
+    let state = run(freshState(g), g, 'rest')
     state = apply(state, g, { type: 'custom', name: 'statuses/apply', with: { id: 'count' } }).state
     state = run(state, g, 'rest')
     state = apply(state, g, { type: 'custom', name: 'statuses/apply', with: { id: 'count' } }).state
@@ -121,7 +112,7 @@ describe('timed statuses', () => {
 
   it('stack up to their max, each stack with its own turns, modifiers and hooks', () => {
     const g = game()
-    let state = run(fresh(g), g, 'sneeze', 'rest', 'sneeze')
+    let state = run(freshState(g), g, 'sneeze', 'rest', 'sneeze')
     expect(shown(state, g).active[0]).toMatchObject({ stacks: 2, turnsLeft: 3, modifiers: [{ stat: 'energy', multiply: 0.8 * 0.8 }] })
     expect(statValue(state, g, 'energy')).toBeCloseTo(32)
     expect(state.stats.sneezes).toBe(2)
@@ -144,7 +135,7 @@ describe('timed statuses', () => {
 
   it('come off with statuses/remove, running the end effects only when asked', () => {
     const g = game()
-    const sick = run(fresh(g), g, 'sneeze', 'sneeze')
+    const sick = run(freshState(g), g, 'sneeze', 'sneeze')
     const cured = run(sick, g, 'cure')
     expect(holds(cured, g, statuses.active('cold'))).toBe(false)
     expect(cured.stats.recovered).toBe(0)
@@ -155,22 +146,22 @@ describe('timed statuses', () => {
   it('take commands, refused for an unknown status or one that is not active', () => {
     const g = game()
     const remove: Command = { type: 'custom', name: 'statuses/remove', with: { id: 'cold' } }
-    expect(whyNot(fresh(g), g, remove)).toBe('That isn’t affecting you.')
-    expect(whyNot(fresh(g), g, { type: 'custom', name: 'statuses/apply', with: { id: 'flu' } })).toBe('Nothing like that can happen.')
-    const sick = run(fresh(g), g, 'sneeze')
+    expect(whyNot(freshState(g), g, remove)).toBe('That isn’t affecting you.')
+    expect(whyNot(freshState(g), g, { type: 'custom', name: 'statuses/apply', with: { id: 'flu' } })).toBe('Nothing like that can happen.')
+    const sick = run(freshState(g), g, 'sneeze')
     expect(holds(apply(sick, g, remove).state, g, statuses.active('cold'))).toBe(false)
   })
 
   it('replay exactly from a command log', () => {
     const g = game()
-    const runner = createRunner(g, fresh(g))
+    const runner = createRunner(g, freshState(g))
     for (const id of ['sneeze', 'coffee', 'rest', 'sneeze', 'rest', 'rest']) runner.apply({ type: 'action', id })
     expect(replay(g, runner.log())).toEqual({ ok: true, value: runner.state })
   })
 
   it('load an old save that has no state for the plugin', () => {
     const g = game()
-    const { plugins: _none, ...old } = fresh(g)
+    const { plugins: _none, ...old } = freshState(g)
     const loadedRead = loadState(JSON.parse(JSON.stringify({ ...old, plugins: {} })), g)
     if (!loadedRead.ok) throw new Error(loadedRead.reason)
     const loaded = loadedRead.value

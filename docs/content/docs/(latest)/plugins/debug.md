@@ -178,7 +178,6 @@ These are the plugin's lines in the [strings table](/docs/reference/strings#plug
 | `debug/noSuchPlace` | `There is no location called {id}.` |
 | `debug/noPlaces` | `This game has no places.` |
 | `debug/noSuchScene` | `There is no scene called {id}.` |
-| `debug/badValue` | `A kv key holds true, false, a number or a word.` |
 | `debug/notANumber` | `That needs a number.` |
 | `debug/badTime` | `A day is a whole number from 0, and a period one of {periods}.` |
 | `debug/noCalendar` | `This game has no calendar.` |

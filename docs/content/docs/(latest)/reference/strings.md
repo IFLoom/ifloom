@@ -61,6 +61,7 @@ Why a [command](/docs/reference/commands) can't be done.
 | `nothingToChoose` | `There is nothing to choose.` | |
 | `notOnOffer` | `That is not on offer.` | |
 | `noSuchThing` | `There is no such thing.` | |
+| `badArgument` | `That can’t be done: "{arg}" must be {kind}.` | A plugin command sent with an argument its [declaration](/docs/reference/plugins#declaring-calls) doesn't take that way. |
 
 ### Input
 

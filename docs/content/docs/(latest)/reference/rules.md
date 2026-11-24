@@ -24,13 +24,13 @@ type GameRules<S = any> = Omit<
   Plugin<S>,
   | 'id' | 'version' | 'migrations' | 'cooperates'
   | 'contentVersion' | 'contentMigrations' | 'commandVersion' | 'commandMigrations'
-  | 'content' | 'strings' | 'words' | 'callWords'
+  | 'content' | 'strings' | 'calls' | 'data'
 > & {
   migrations?: Record<number, (state: GameState, tools: MigrationTools) => GameState>
 }
 ```
 
-`GameRules` is a [`Plugin`](/docs/reference/plugins#plugin) without what makes a plugin a package of its own: its id and versions, its content and its words, which are the game's own content. Only `migrations` means something else. A plugin's carry its own state forward, and the game's carry the whole save from one version of the game to the next.
+`GameRules` is a [`Plugin`](/docs/reference/plugins#plugin) without what makes a plugin a package of its own: its id and versions, its content and its words, and its declared calls and data lists, which are the game's own content and its registry declarations. Only `migrations` means something else. A plugin's carry its own state forward, and the game's carry the whole save from one version of the game to the next.
 
 | Member | What it is |
 |---|---|

@@ -271,7 +271,7 @@ A count that isn't a number passes nothing, a fraction is rounded down, and a ne
 |---|---|---|
 | `{ 'calendar/sleep': true }` | `calendar.sleep()` | Goes to bed. It passes time to the [`wake`](#calendaroptions) period of the next day, ending a turn as [`calendar/pass`](#effects) does. |
 
-A calendar built with `sleep: false` has no `calendar/sleep` command at all. The engine treats it as any unknown command and refuses it with `There is no such thing to do.` ([`noSuchAction`](/docs/reference/strings#refusals)). With a sleep command, `calendar/sleep` is refused, in this order, with:
+A calendar built with `sleep: false` has no bed. It refuses `calendar/sleep` with `There is no such thing to do.` ([`noSuchAction`](/docs/reference/strings#refusals)), and the [content checker](/docs/reference/checks) reports content that names it. With a sleep command, `calendar/sleep` is refused, in this order, with:
 
 - `Finish this first.` (the engine's [`finishFirst`](/docs/reference/strings#refusals)) while a scene is open.
 - `Too early.` ([`calendar/tooEarly`](#strings)) in a period that isn't in `sleep.from`.

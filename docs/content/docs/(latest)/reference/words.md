@@ -43,7 +43,7 @@ A key is the path to the field, as your content writes it, with each list entry 
 | A hotspot on a scene's picture | `scene.flat.picture.hotspots.door.label` |
 | A notice an effect raises | `action.wait.notify.<id or hash>.title` and `.text` |
 | What a `create` effect names the thing it makes | `action.sketch.create.<hash>.name` and `.description` |
-| Words in a plugin's effect, as its [`callWords`](/docs/reference/plugins#words) declare | `action.snap.feed/post.<hash>.text` |
+| Words in a plugin's effect, as its calls declare with [`arg.words()`](/docs/reference/plugins#arg) | `action.snap.feed/post.<hash>.text` |
 | An entity's name and description | `entity.character:ava.name`, `entity.character:ava.description` |
 | A kind's label and plural | `kind.staff.label`, `kind.staff.plural` |
 | A trait's words on an entity | `entity.location:cafe.traits.places/location.blocked.<hash>.reason` |
@@ -76,7 +76,7 @@ Two blocks with the same words in one scene share a key, and a translation gives
 - **Lines read by key**: `{ prose }` blocks, `variants`, the lines a pool or a `[[tip:…]]` names, and the prose a `[[ui:modal|…]]` piece shows. Translate them in the pack's own `prose`, under the same keys.
 - **Strings**: the engine's and plugins' own words, in the pack's `strings`.
 - **UI hints**, which are carried as written, except a `fold()`'s label, which is the player's words.
-- **A plugin call's arguments its plugin doesn't declare** in [`callWords`](/docs/reference/plugins#words). The feed's post and comment text are in the table; a call's ids aren't.
+- **A plugin call's arguments its plugin doesn't declare** with [`arg.words()`](/docs/reference/plugins#arg). The feed's post and comment text are in the table; a call's ids aren't.
 - **A generator's pools.** Their values can be names, but also kv values a condition reads, so translating one could change what the game decides. Give a translated game its own pools in a pack instead.
 
 ## translatableFields
@@ -131,13 +131,17 @@ Which fields of a piece of content are words, for a plugin to say of its own con
 | `[part]` | A list of entries, each named by its id. |
 | `{ '*': part }` | A record of entries, each named by its key. |
 
-A plugin gives one for each list of its `data` in its [`words`](/docs/reference/plugins#words), and a trait gives one for its data in its [`TraitDef.words`](/docs/reference/entities#traits):
+A plugin gives one for each list of its `data` in its [data lists](/docs/reference/plugins#data-lists), and a trait gives one for its data in its [`TraitDef.words`](/docs/reference/entities#traits):
 
 ```ts
+const DATA = defineData('quests', {
+  quests: list<QuestDef>({ noun: 'quest', words: { name: true, description: true, stages: [{ hint: true }] } }),
+})
+
 definePlugin({
   id: 'quests',
   version: 1,
-  words: { quests: { name: true, description: true, stages: [{ hint: true }] } },
+  data: DATA,
   traits: [{ id: 'quests/giver', words: { greeting: true } }],
 })
 ```

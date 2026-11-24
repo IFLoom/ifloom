@@ -251,7 +251,7 @@ Take out what your game doesn't need:
 
 ## Drawing the phone
 
-With the React UI, list the three plugins' UIs in [`plugins`](/docs/react/kit#the-plugins-option). `devicesUi` puts a button for the phone in the side column and opens it in a dialog. The messages and social apps' sections are drawn by `messagesUi` and `feedUi`, so list those too, or those apps open empty. The messages app opens on a list of conversations, each with a portrait, a name, the last line and an unread dot, and a tap opens the thread with a back button. A thread shows a typing bubble while a text with `after` is on its way.
+With the React UI, list the three plugins' UIs in [`plugins`](/docs/reference/react/kit#the-plugins-option). `devicesUi` puts a button for the phone in the side column and opens it in a dialog. The messages and social apps' sections are drawn by `messagesUi` and `feedUi`, so list those too, or those apps open empty. The messages app opens on a list of conversations, each with a portrait, a name, the last line and an unread dot, and a tap opens the thread with a back button. A thread shows a typing bubble while a text with `after` is on its way.
 
 With your own UI, read `view.plugins.devices` for the phone and its apps. The open app's sections are in `open.sections`. A `plugin` section only names a slice, so draw it from `view.plugins.messages` or `view.plugins.feed`, picking out the channel or feed in its `with`:
 

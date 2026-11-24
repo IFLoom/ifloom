@@ -2,7 +2,7 @@
 title: "Your own UI in any framework"
 description: Draw an IFLoom game yourself in plain JS, React by hand, Vue or Svelte. The vanilla, vue and svelte templates each draw the scene, choices, inputs, stats and minigames and play sound; this page shows their code side by side.
 ---
-The engine has no DOM and no framework, so you can draw a game with Vue, Svelte, plain DOM or anything else that can show text and buttons. The [React UI](/docs/react) is one ready-made way, and this page is the other: a UI of your own on the [runner](/docs/guide/running-a-game). Three templates start you off:
+The engine has no DOM and no framework, so you can draw a game with Vue, Svelte, plain DOM or anything else that can show text and buttons. The [React UI](/docs/reference/react) is one ready-made way, and this page is the other: a UI of your own on the [runner](/docs/guide/running-a-game). Three templates start you off:
 
 | Template | Draws with | Type-check |
 |---|---|---|
@@ -246,7 +246,7 @@ import { ifloom } from '@ifloom/cli/vite'
 export default ifloom({ vite: { plugins: [svelte()] } })
 ```
 
-React by hand starts from the `vanilla` template: add `react`, `react-dom` and `@vitejs/plugin-react` to its `package.json`, and React's plugin to `vite.plugins`. The [React UI](/docs/react) also needs Tailwind's plugin, as the `react` template has.
+React by hand starts from the `vanilla` template: add `react`, `react-dom` and `@vitejs/plugin-react` to its `package.json`, and React's plugin to `vite.plugins`. The [React UI](/docs/reference/react) also needs Tailwind's plugin, as the `react` template has.
 
 ## Draw the scene and its choices
 
@@ -926,7 +926,7 @@ function cancel(event: Event) {
 </dialog>
 ```
 
-The React UI draws panels itself with [`PanelHost`](/docs/react/components#panelhost), which knows the shop's and the jobs' panels by name.
+The React UI draws panels itself with [`PanelHost`](/docs/reference/react/components#panelhost), which knows the shop's and the jobs' panels by name.
 
 ## What else to draw
 

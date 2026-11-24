@@ -2,7 +2,7 @@
 title: "API"
 description: "Every export of every IFLoom package, with its exact signature and fields, generated from the source and its TSDoc."
 ---
-These pages list every export of every entry point, with its signature and, for an object type, each field with its type, whether it's optional, its default and its TSDoc. They're generated from the source by `npm run api-docs`, so they can't drift from it. The [Reference](/docs/reference), [React UI](/docs/react), [Browser](/docs/browser), [CLI](/docs/cli) and [Plugins](/docs/reference/plugins) sections explain when and how to use each one, and each export here links to its explanation.
+These pages list every export of every entry point, with its signature and, for an object type, each field with its type, whether it's optional, its default and its TSDoc. They're generated from the source by `npm run api-docs`, so they can't drift from it. The [Reference](/docs/reference), [React UI](/docs/reference/react), [Browser](/docs/browser), [CLI](/docs/cli) and [Plugins](/docs/reference/plugins) sections explain when and how to use each one, and each export here links to its explanation.
 
 | Page | Entries | Exports |
 |---|---|---|

@@ -34,6 +34,6 @@ Start with [Installation](/docs/guide/installation), then write [your first stor
 - **Reference.** Everything the engine exports, starting at [the game](/docs/reference/game).
 - **Plugins.** The [first-party plugins](/docs/reference/plugins), such as the calendar, places and the cast.
 - **Browser.** [`@ifloom/browser`](/docs/browser) and the [audio player](/docs/browser/audio-player), helpers for any UI.
-- **React UI.** The ready-made [React UI](/docs/react) and how to make it your own.
+- **React UI.** The ready-made [React UI](/docs/reference/react) and how to make it your own.
 - **CLI.** The [`ifloom` command](/docs/cli) and its Vite preset.
 - **Changelog.** [What changed](/docs/changelog) in each release.

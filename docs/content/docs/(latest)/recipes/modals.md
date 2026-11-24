@@ -21,7 +21,7 @@ const prose = {
 
 The popup's text is a prose line like any other, so a translation or a mod can change it and its [tokens](/docs/reference/prose#tokens) are filled in. It can have several paragraphs, bold and italics.
 
-`[[ui:image|words|path]]` works the same way for a picture: the words open it large. The React UI draws both with no code from you. See [Inline pieces](/docs/react/hints#inline-pieces).
+`[[ui:image|words|path]]` works the same way for a picture: the words open it large. The React UI draws both with no code from you. See [Inline pieces](/docs/reference/react/hints#inline-pieces).
 
 ### Draw it yourself
 
@@ -159,7 +159,7 @@ The button is drawn in the line, not in the room's list. The panel stays open wh
 
 [`view.panel`](/docs/reference/view#panel) is `{ panel, with }` while a panel is open, and `null` otherwise. Draw a dialog for the names you know, send the button's command, and send `closePanel` when the player closes it. A refused command comes back with its reason, which is worth showing.
 
-With the React UI, give `mountGame` a `panels` entry by name. [`PanelHost`](/docs/react/components#panelhost) draws it in a dialog titled with `with.title`, and closing the dialog sends `closePanel`:
+With the React UI, give `mountGame` a `panels` entry by name. [`PanelHost`](/docs/reference/react/components#panelhost) draws it in a dialog titled with `with.title`, and closing the dialog sends `closePanel`:
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/panel.ts: call drawPanel(runner) once, beside the runner.

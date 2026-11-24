@@ -2,7 +2,7 @@
 title: "Browser helpers"
 description: "@ifloom/browser: a runner with saves in the browser, the localStorage and IndexedDB save drivers, the clock for timers and minigames, keyboard shortcuts, the number for a new save slot and a key that shows held-back prose."
 ---
-The engine has no DOM, so a few things a game needs from the page live in `@ifloom/browser`: a runner with saves and settings kept in the browser, the save drivers for `localStorage` and IndexedDB, a clock for [timers](/docs/reference/timers) and minigames, keyboard shortcuts, the number for a new save slot, and a key press that shows prose a UI is holding back. They're plain DOM, so they work with Vue, Svelte, plain JS or React. The [React UI](/docs/react) uses them itself, and the templates make their runner with `browserRunner` and start the clock and the keys beside it.
+The engine has no DOM, so a few things a game needs from the page live in `@ifloom/browser`: a runner with saves and settings kept in the browser, the save drivers for `localStorage` and IndexedDB, a clock for [timers](/docs/reference/timers) and minigames, keyboard shortcuts, the number for a new save slot, and a key press that shows prose a UI is holding back. They're plain DOM, so they work with Vue, Svelte, plain JS or React. The [React UI](/docs/reference/react) uses them itself, and the templates make their runner with `browserRunner` and start the clock and the keys beside it.
 
 ```ts
 import {
@@ -31,7 +31,7 @@ A runner with what most games in a browser want. It's the engine's [`createRunne
 | `profile` | `profile(game, localStorageDriver())`, the [profile](/docs/reference/profile) at `<game id>.profile` in the same `localStorage`. |
 | `autosave` | `{ every: 'turn' }`, to the `auto` slot. |
 
-Pass `start` to begin from another state, and any [`RunnerOptions`](/docs/reference/runner#runneroptions) to change the rest. They're merged over the defaults, one option at a time. [`mountGame`](/docs/react#mountgame) uses it, and so do the `vanilla`, `vue`, `svelte` and `next` templates:
+Pass `start` to begin from another state, and any [`RunnerOptions`](/docs/reference/runner#runneroptions) to change the rest. They're merged over the defaults, one option at a time. [`mountGame`](/docs/reference/react#mountgame) uses it, and so do the `vanilla`, `vue`, `svelte` and `next` templates:
 
 ```ts given
 import { browserRunner } from '@ifloom/browser'
@@ -231,7 +231,7 @@ type KeysOptions = {
 function startMinigameKeys(runner: Runner): () => void
 ```
 
-Presses the minigame's inputs from the keyboard while one is being played, as [`minigameInput`](#minigameinput) maps keys to inputs. A key that belongs to an input is kept from scrolling the page or doing anything else, even while that input does nothing. It listens before other shortcuts, so a minigame's keys win over the number keys. `startKeys` starts it for you unless you pass `minigame: false`. The React UI's [`MinigameCard`](/docs/react/components#minigamecard) uses it on its own.
+Presses the minigame's inputs from the keyboard while one is being played, as [`minigameInput`](#minigameinput) maps keys to inputs. A key that belongs to an input is kept from scrolling the page or doing anything else, even while that input does nothing. It listens before other shortcuts, so a minigame's keys win over the number keys. `startKeys` starts it for you unless you pass `minigame: false`. The React UI's [`MinigameCard`](/docs/reference/react/components#minigamecard) uses it on its own.
 
 ## minigameInput
 
@@ -271,7 +271,7 @@ const saved = await runner.save(nextSlot(runner.snapshot().saves), 'Before the c
 
 ## Revealed prose
 
-How and when prose reveals is a UI's to decide, from [presentation hints](/docs/reference/ui-hints) such as the React UI's [`reveal`](/docs/react/hints#reveal). The [Transitions recipe](/docs/recipes/transitions#draw-them-yourself) times them in each framework. This helper does the part every UI shares: letting a key show everything at once.
+How and when prose reveals is a UI's to decide, from [presentation hints](/docs/reference/ui-hints) such as the React UI's [`reveal`](/docs/reference/react/hints#reveal). The [Transitions recipe](/docs/recipes/transitions#draw-them-yourself) times them in each framework. This helper does the part every UI shares: letting a key show everything at once.
 
 ### startRevealSkip
 

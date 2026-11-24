@@ -9,7 +9,7 @@
  * the kit's layout classes and the theme's tokens, so it looks right in
  * every preset with no stylesheet of its own.
  *
- * How a plugin UI is made: https://ifloom.dev/docs/react/kit
+ * How a plugin UI is made: https://ifloom.dev/docs/reference/react/kit
  */
 import type { GameState, Result } from '@ifloom/engine'
 import type { ComponentProps } from 'react'

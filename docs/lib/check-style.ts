@@ -128,6 +128,7 @@ export const DONE: string[] = [
   'how-to/render/things-plugins.md',
   'how-to/render/phone-plugins.md',
   'how-to/render/player-tools.md',
+  'reference/react/components.md',
 ]
 
 /** One problem: where it is, the rule it breaks, and the text that breaks it. */

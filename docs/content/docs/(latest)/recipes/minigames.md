@@ -135,7 +135,7 @@ A scene can also start one as it opens, with a `minigame` field. See [`MinigameS
 
 That's all the page needs. Every template draws a running minigame for you:
 
-- In the React UI, [`Scene`](/docs/react/components#scene) draws [`MinigameCard`](/docs/react/components#minigamecard) in place of the scene: the title, the shout, a bar counting down the 1.5 seconds, and a button for each arrow. The arrow keys (and W, A, S and D) press them too.
+- In the React UI, [`Scene`](/docs/reference/react/components#scene) draws [`MinigameCard`](/docs/reference/react/components#minigamecard) in place of the scene: the title, the shout, a bar counting down the 1.5 seconds, and a button for each arrow. The arrow keys (and W, A, S and D) press them too.
 - In the `vanilla`, `vue` and `svelte` templates, the scene shows the minigame's words, and a [minigame panel](/docs/guide/frameworks#minigames) draws the timer and a button for each input. `startKeys` from [`@ifloom/browser`](/docs/browser) maps the arrow keys and space to the inputs.
 
 The engine has no clock of its own. The React UI, or [`startClock`](/docs/browser#startclock) in the other templates, sends a [`tick`](/docs/reference/commands#tick) command about ten times a second while a timer runs, with the real time that passed. If the player switches to another tab, the clock pauses, so the round is still there when they come back.
@@ -144,7 +144,7 @@ While it runs, the player can't do anything else. Every other command is refused
 
 ## Your own panel
 
-The built-in panels are plain on purpose. To draw quick feet your own way, read the running minigame from `view.minigame` and send its inputs as `{ type: 'minigame', input }`. In the React UI, [`useMinigame`](/docs/react/components#useminigame) reads it and sends for you:
+The built-in panels are plain on purpose. To draw quick feet your own way, read the running minigame from `view.minigame` and send its inputs as `{ type: 'minigame', input }`. In the React UI, [`useMinigame`](/docs/reference/react/components#useminigame) reads it and sends for you:
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/quickFeet.ts
@@ -295,7 +295,7 @@ What the panels use:
 
 You don't have to run the clock in your panel. In the React UI, `GameProvider` runs it for the whole game, which also ticks the game's [timers](/docs/reference/timers), and `useMinigame` would run it too. There's only ever one clock per game, however many components ask. In the other templates, `startClock` runs beside the runner.
 
-To change every minigame's panel at once in the React UI, rather than one by id, replace `MinigameCard` in [`components`](/docs/react/customising#6-replace-a-component). A panel by id wins over it.
+To change every minigame's panel at once in the React UI, rather than one by id, replace `MinigameCard` in [`components`](/docs/reference/react/customising#6-replace-a-component). A panel by id wins over it.
 
 ## A quiz with its answers on the buttons
 

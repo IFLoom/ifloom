@@ -32,7 +32,7 @@ A UI reads `view.plugins.__id__`, typed as `__Pascal__View` through the `ViewReg
 
 ## Its React UI
 
-A game drawn with [`@ifloom/react`](https://ifloom.dev/docs/react) lists the plugin's React UI, from the `{{name}}/react` subpath:
+A game drawn with [`@ifloom/react`](https://ifloom.dev/docs/reference/react) lists the plugin's React UI, from the `{{name}}/react` subpath:
 
 ```tsx
 import { mountGame } from '@ifloom/react'
@@ -41,7 +41,7 @@ import { __camel__Ui } from '{{name}}/react'
 mountGame(game, { plugins: [__camel__Ui] })
 ```
 
-It puts the entries in the side column. A game can draw them itself instead, from `use__Pascal__()` or `view.plugins.__id__`, and a game with another UI never loads `{{name}}/react`: React and `@ifloom/react` are optional peers. It's built only from `@ifloom/react`'s exports, declared once with `pluginKit` and read with `usePlugin`, and styled by the kit's parts and theme tokens, so it looks right in every preset with no stylesheet. [Plugin UIs and the kit](https://ifloom.dev/docs/react/kit) explains each part.
+It puts the entries in the side column. A game can draw them itself instead, from `use__Pascal__()` or `view.plugins.__id__`, and a game with another UI never loads `{{name}}/react`: React and `@ifloom/react` are optional peers. It's built only from `@ifloom/react`'s exports, declared once with `pluginKit` and read with `usePlugin`, and styled by the kit's parts and theme tokens, so it looks right in every preset with no stylesheet. [Plugin UIs and the kit](https://ifloom.dev/docs/reference/react/kit) explains each part.
 
 ## What it exports
 

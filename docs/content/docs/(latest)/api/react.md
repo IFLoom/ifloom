@@ -11,7 +11,7 @@ Generated from the source of `@ifloom/react` and its TSDoc by `npm run api-docs`
 
 ## assetUrl
 
-Function. Explained in [Components](/docs/react/components#asseturl).
+Function. Explained in [Components](/docs/reference/react/components#asseturl).
 
 Returns the URL to load a file from, the data URL in the page when there is one, else the path unchanged. A leading
 `./` is ignored in the lookup.
@@ -26,7 +26,7 @@ function assetUrl(src: string): string
 
 ## Backlog
 
-Const. Explained in [Components](/docs/react/components#backlog).
+Const. Explained in [Components](/docs/reference/react/components#backlog).
 
 Renders the backlog as the `backlog` part, the scenes the player has seen oldest first, each followed by the choice
 made in it. It needs the runner's backlog on.
@@ -38,7 +38,7 @@ const Backlog: ComponentType<{ className?: string; }>
 
 ## Beat
 
-Const. Explained in [Components](/docs/react/components#beat).
+Const. Explained in [Components](/docs/reference/react/components#beat).
 
 Renders one beat of a scene's body, such as a paragraph, a spoken line or a picture. It's a `beat` part with
 `data-beat` naming its type, or a `video` part for a video.
@@ -59,7 +59,7 @@ Uses: [`SceneBeat`](/docs/api/engine#scenebeat).
 
 ## BeatGroup
 
-Const. Explained in [Components](/docs/react/components#beatgroup).
+Const. Explained in [Components](/docs/reference/react/components#beatgroup).
 
 Renders the beats of a body section with ui hints in one `group` part, so a game styles the section as one box.
 `section` is the section's hints, and `children` its beats.
@@ -77,7 +77,7 @@ Uses: [`BlockUi`](/docs/api/engine#blockui).
 
 ## BehaviourOptions
 
-Type. Explained in [Components](/docs/react/components#behaviouroptions).
+Type.
 
 The options that change how the UI behaves, part of `UiOptions`. They turn the media viewer, keyboard shortcuts
 and motion on or off.
@@ -99,7 +99,7 @@ type BehaviourOptions = {
 
 ## ChangeItem
 
-Const. Explained in [Components](/docs/react/components#changeitem).
+Const. Explained in [Components](/docs/reference/react/components#changeitem).
 
 Renders one stat change from `view.changes` as a `change` part, its signed text in the stat's format (`change-text`)
 and then the change's `name` (`change-label`) when the view gives one.
@@ -116,7 +116,7 @@ Uses: [`ChangeView`](/docs/api/engine#changeview).
 
 ## Changes
 
-Const. Explained in [Components](/docs/react/components#changes).
+Const. Explained in [Components](/docs/reference/react/components#changes).
 
 Renders the stats the last command changed, `view.changes`, as a `changes` list of `ChangeItem`s, and nothing when
 none changed. The default layout leaves it out, so place it in yours, such as after `<Scene />`.
@@ -128,7 +128,7 @@ const Changes: ComponentType<{ className?: string; }>
 
 ## checkUiHints
 
-Function. Explained in [Presentation hints](/docs/react/hints#checkuihints).
+Function. Explained in [Presentation hints](/docs/reference/react/hints#checkuihints).
 
 Returns each problem with a game's `ui` hints and UI pieces for the React UI, as `where: what`. An empty list means
 there are none.
@@ -151,7 +151,7 @@ Uses: [`Game`](/docs/api/engine#game), [`CheckUiOptions`](#checkuioptions).
 
 ## CheckUiOptions
 
-Type. Explained in [Presentation hints](/docs/react/hints#checkuioptions).
+Type. Explained in [Presentation hints](/docs/reference/react/hints#checkuioptions).
 
 Settings for `checkUiHints`. Each is optional.
 
@@ -172,7 +172,7 @@ type CheckUiOptions = {
 
 ## ChoiceButton
 
-Const. Explained in [Components](/docs/react/components#choicebutton).
+Const. Explained in [Components](/docs/reference/react/components#choicebutton).
 
 Renders a choice or an action from its `RenderedChoice` as a `choice` button with its label and price. A disabled
 button shows its reason on the button itself, not on hover.
@@ -189,7 +189,7 @@ Uses: [`RenderedChoice`](/docs/api/engine#renderedchoice).
 
 ## ChoiceList
 
-Const. Explained in [Components](/docs/react/components#choicelist).
+Const. Explained in [Components](/docs/reference/react/components#choicelist).
 
 Renders a list of choices or actions as `ChoiceButton`s, one per row, and nothing for an empty list. `part` names it
 `'choices'`, or `'actions'` for the room's actions.
@@ -203,7 +203,7 @@ Uses: [`RenderedChoice`](/docs/api/engine#renderedchoice).
 
 ## Classes
 
-Type. Explained in [Components](/docs/react/components#classes).
+Type. Explained in [Components](/docs/reference/react/components#classes).
 
 Tailwind classes for the UI's parts, by `data-part` name. A string merges over the built-in classes and wins where
 they clash.
@@ -566,7 +566,7 @@ Its fields are the keys of `Partial<Record<PartKey, string | ((defaults: string)
 
 ## Clock
 
-Const. Explained in [Components](/docs/react/components#clock).
+Const. Explained in [Components](/docs/reference/react/components#clock).
 
 Renders the game's time from `view.when` as the `clock` part, and nothing when no plugin writes one. The calendar
 plugin's UI has fuller parts.
@@ -578,7 +578,7 @@ const Clock: ComponentType<object>
 
 ## ClockState
 
-Type. Explained in [Components](/docs/react/components#clockstate).
+Type.
 
 The game's time that `useClock` returns.
 
@@ -595,7 +595,7 @@ type ClockState = {
 
 ## Components
 
-Type. Explained in [Components](/docs/react/components#components).
+Type. Explained in [Components](/docs/reference/react/components#components).
 
 Replacements for any of the `OverridableComponents`, by name.
 
@@ -713,7 +713,7 @@ Plugins add fields of their own to it, which their pages list.
 
 ## Countdown
 
-Const. Explained in [Components](/docs/react/components#countdown).
+Const. Explained in [Components](/docs/reference/react/components#countdown).
 
 Renders a running timer by id as the `timer` part, with its label, a bar that empties and the seconds left. It
 renders nothing once the timer has run out or stopped.
@@ -730,7 +730,7 @@ Uses: [`CountdownProps`](#countdownprops).
 
 ## CountdownProps
 
-Type. Explained in [Components](/docs/react/components#countdownprops).
+Type.
 
 The props of `Countdown`.
 
@@ -751,7 +751,7 @@ type CountdownProps = {
 
 ## Credit
 
-Type. Explained in [Components](/docs/react/components#credit-gateoptions-and-pagedef).
+Type.
 
 One line of the credits page, as text or as a link with its label.
 
@@ -762,7 +762,7 @@ type Credit = string | { label: string; href: string }
 
 ## CreditsPage
 
-Const. Explained in [Components](/docs/react/components#creditspage).
+Const. Explained in [Components](/docs/reference/react/components#creditspage).
 
 Renders the credits page from `PagesOptions.credits`, a line each. Its links open in a new tab.
 
@@ -773,7 +773,7 @@ const CreditsPage: ComponentType<{ className?: string; }>
 
 ## DefaultLayout
 
-Component. Explained in [Components](/docs/react/components#defaultlayout).
+Component. Explained in [Components](/docs/reference/react/components#defaultlayout).
 
 Renders the React UI's own layout, which `GameShell` and `mountGame` render when you give them none. The `react` and
 `next` templates start you with a copy of it in `src/layout.tsx`.
@@ -788,7 +788,7 @@ function DefaultLayout(): JSX.Element
 
 ## DiceOverlay
 
-Const. Explained in [Components](/docs/react/components#diceoverlay).
+Const. Explained in [Components](/docs/reference/react/components#diceoverlay).
 
 Renders the last command's rolls that no block's `ui.dice` hint names, for a moment over the scene, such as a roll a
 trigger made. Each is a `DiceRoll` inside the `dice-overlay` part.
@@ -804,7 +804,7 @@ Uses: [`Roll`](/docs/api/engine#roll).
 
 ## DiceRoll
 
-Const. Explained in [Components](/docs/react/components#diceroll).
+Const. Explained in [Components](/docs/reference/react/components#diceroll).
 
 Renders one roll from `view.rolls`, its dice tumbling for a second and then settling on the rolled faces. It shows
 the bonus, the total and, with a target, the outcome and the number needed.
@@ -822,7 +822,7 @@ Uses: [`DiceRollProps`](#dicerollprops).
 
 ## DiceRollProps
 
-Type. Explained in [Components](/docs/react/components#dicerollprops).
+Type.
 
 The props of `DiceRoll`.
 
@@ -843,7 +843,7 @@ type DiceRollProps = {
 
 ## EntityTable
 
-Const. Explained in [Components](/docs/react/components#entitytable).
+Const. Explained in [Components](/docs/reference/react/components#entitytable).
 
 Renders the listed entities in `view.entities` as a table per kind, one row each, with the entity's picture,
 description and stats. It renders nothing when every kind is empty.
@@ -857,7 +857,7 @@ const EntityTable: ComponentType<{ kinds?: string[]; className?: string; }>
 
 ## Fold
 
-Const. Explained in [Components](/docs/react/components#fold).
+Const. Explained in [Components](/docs/reference/react/components#fold).
 
 Renders a fold, a body section with a `ui.fold` hint that `fold()` writes, as a `<details>` the player opens and
 shuts. It starts shut, inside its `BeatGroup`.
@@ -872,7 +872,7 @@ const Fold: ComponentType<{ label: string; children: ReactNode; }>
 
 ## Game
 
-Const. Explained in [Components](/docs/react/components#game).
+Const. Explained in [Components](/docs/reference/react/components#game).
 
 Renders the page, the root of a layout inside the game's provider, as the `page` part. With a `Sidebar` it's a grid
 of the side column and the story, and carries `data-has-sidebar`.
@@ -889,7 +889,7 @@ Uses: [`GameProps`](#gameprops).
 
 ## GameContextValue
 
-Type. Explained in [Components](/docs/react/components#gamecontextvalue).
+Type.
 
 The running game that `useGame` returns, with the runner, its snapshot, the view and `send`.
 
@@ -922,7 +922,7 @@ type GameContextValue = {
 
 ## GameMenu
 
-Const. Explained in [Components](/docs/react/components#gamemenu).
+Const. Explained in [Components](/docs/reference/react/components#gamemenu).
 
 Renders the player's menu as the `menu` part, with buttons for saves, the backlog, undo and redo when the runner has
 them. With `keys` on, Escape opens the same buttons in a dialog.
@@ -938,7 +938,7 @@ const GameMenu: ComponentType<{ className?: string; }>
 
 ## GameProps
 
-Type. Explained in [Components](/docs/react/components#gameprops).
+Type.
 
 The props of `Game`.
 
@@ -957,7 +957,7 @@ type GameProps = {
 
 ## GameProvider
 
-Component. Explained in [Components](/docs/react/components#gameprovider).
+Component. Explained in [Components](/docs/reference/react/components#gameprovider).
 
 Renders its children connected to a runner, so every component under it reads the runner's snapshot and sends
 commands through `useGame`. It re-renders when the runner has a new snapshot, and only then.
@@ -971,7 +971,7 @@ Uses: [`GameProviderProps`](#gameproviderprops).
 
 ## GameProviderProps
 
-Type. Explained in [Components](/docs/react/components#gameproviderprops).
+Type.
 
 The props of `GameProvider`, the runner and the plugin UIs with the game's own panels, UI pieces, sections and mods.
 
@@ -1012,7 +1012,7 @@ type GameProviderProps = {
 
 ## GameShell
 
-Component. Explained in [The React UI](/docs/react#gameshell).
+Component. Explained in [The React UI](/docs/reference/react#gameshell).
 
 Renders the whole React UI for a runner, the root that `mountGame` renders too. It renders the layout,
 `DefaultLayout` unless you give your own, inside the game's provider.
@@ -1029,7 +1029,7 @@ Uses: [`GameShellProps`](#gameshellprops).
 
 ## GameShellProps
 
-Type. Explained in [The React UI](/docs/react#gameshellprops).
+Type. Explained in [The React UI](/docs/reference/react#gameshellprops).
 
 The props of `GameShell`, the `GameProviderProps` without `children`, with a layout, pages and sound.
 
@@ -1074,7 +1074,7 @@ type GameShellProps = {
 
 ## GateOptions
 
-Type. Explained in [Components](/docs/react/components#credit-gateoptions-and-pagedef).
+Type.
 
 A notice the player confirms once before the title screen, in `PagesOptions.gate`. The game writes every word of it.
 
@@ -1097,7 +1097,7 @@ type GateOptions = {
 
 ## GatePage
 
-Const. Explained in [Components](/docs/react/components#gatepage).
+Const. Explained in [Components](/docs/reference/react/components#gatepage).
 
 Renders the gate from `PagesOptions.gate`, a notice the player confirms before the title screen. The profile's
 `ui:gate` namespace remembers the confirmation, so the gate shows once per device.
@@ -1111,7 +1111,7 @@ const GatePage: ComponentType<{ className?: string; }>
 
 ## Hotspot
 
-Const. Explained in [Components](/docs/react/components#hotspot).
+Const. Explained in [Components](/docs/reference/react/components#hotspot).
 
 Renders one hotspot of a layered picture as a `hotspot` button over it, placed by its `rect` in percent. Its
 `aria-label` is the hotspot's label.
@@ -1128,7 +1128,7 @@ Uses: [`HotspotView`](/docs/api/engine#hotspotview).
 
 ## InlineAction
 
-Const. Explained in [Components](/docs/react/components#inlineaction).
+Const. Explained in [Components](/docs/reference/react/components#inlineaction).
 
 Renders an inline action from `[[act:id|words]]` as an `inline-action` button that sends its command, with its
 price after the words. It has no number key, since the number keys choose the listed choices.
@@ -1145,7 +1145,7 @@ Uses: [`RenderedChoice`](/docs/api/engine#renderedchoice).
 
 ## InlineComponent
 
-Type. Explained in [Components](/docs/react/components#inlinecomponent-and-inlineprops).
+Type.
 
 A component that renders the UI piece named `N` in prose.
 
@@ -1158,7 +1158,7 @@ Uses: [`InlineProps`](#inlineprops).
 
 ## InlineComponents
 
-Type. Explained in [Components](/docs/react/components#inlinecomponents).
+Type. Explained in [Components](/docs/reference/react/components#inlinecomponents).
 
 A game's or a plugin UI's components for UI pieces in prose, by name. A name the engine's `InlineUi` declares gets its
 arguments typed, and any other name takes them as text.
@@ -1189,7 +1189,7 @@ Its fields are the keys of `{ [N in keyof InlineUi]?: InlineComponent<N> } & { [
 
 ## InlineImage
 
-Component. Explained in [Components](/docs/react/components#inlineimage).
+Component. Explained in [Components](/docs/reference/react/components#inlineimage).
 
 Renders the built-in `image` UI piece from `[[ui:image|words|path|alt]]`, the words as an `InlineTrigger` that opens
 the picture at `path` in the `MediaViewer`. `alt` describes the picture, else the words do.
@@ -1206,7 +1206,7 @@ Uses: [`InlineProps`](#inlineprops).
 
 ## InlineMail
 
-Component. Explained in [Components](/docs/react/components#inlinemail).
+Component. Explained in [Components](/docs/reference/react/components#inlinemail).
 
 Renders the built-in `mail` UI piece from `[[ui:mail|body|From: Ava|Subject: Hello]]`, a letter or an email as an
 `inline-mail` card. Each header line is a `mail-header` part, and the body a `mail-body` part.
@@ -1222,7 +1222,7 @@ Uses: [`InlineProps`](#inlineprops).
 
 ## InlineModal
 
-Component. Explained in [Components](/docs/react/components#inlinemodal).
+Component. Explained in [Components](/docs/reference/react/components#inlinemodal).
 
 Renders the built-in `modal` UI piece from `[[ui:modal|words|key|title]]`, the words as an `InlineTrigger` that
 opens a dialog with the prose key's line. A key with no prose shows only the words.
@@ -1240,7 +1240,7 @@ Uses: [`InlineProps`](#inlineprops).
 
 ## InlineMono
 
-Component. Explained in [Components](/docs/react/components#inlinemono).
+Component. Explained in [Components](/docs/reference/react/components#inlinemono).
 
 Renders the built-in `mono` UI piece from `[[ui:mono|words]]`, the words in a typewriter face as an `inline-mono`
 part. Replace it with a `mono` of your own in `inline`.
@@ -1254,7 +1254,7 @@ Uses: [`InlineProps`](#inlineprops).
 
 ## InlineProp
 
-Component. Explained in [Components](/docs/react/components#inlineprop).
+Component. Explained in [Components](/docs/reference/react/components#inlineprop).
 
 Renders the built-in `prop` UI piece from `[[ui:prop|words|face]]`, a note in the story's world, as an `inline-prop`
 part. `data-face` carries the face, such as `sticky`, `clip` or `diary`.
@@ -1270,7 +1270,7 @@ Uses: [`InlineProps`](#inlineprops).
 
 ## InlineProps
 
-Type. Explained in [Components](/docs/react/components#inlinecomponent-and-inlineprops).
+Type.
 
 The props a UI piece's component gets from `[[ui:name|words|arg|…]]` in prose. The `args` are typed by the name's
 entry in the engine's `InlineUi`.
@@ -1292,7 +1292,7 @@ type InlineProps<N extends string = string> = {
 
 ## InlineTrigger
 
-Component. Explained in [Components](/docs/react/components#inlinetrigger).
+Component. Explained in [Components](/docs/reference/react/components#inlinetrigger).
 
 Renders a UI piece's words as a button that opens a dialog over the page, the `inline-ui` part with `data-ui` set to
 the piece's name. Focus returns to it when `open` goes back to false.
@@ -1306,7 +1306,7 @@ function InlineTrigger(props: { name: string; open: boolean; onOpen: () => void;
 
 ## InputField
 
-Const. Explained in [Components](/docs/react/components#inputfield).
+Const. Explained in [Components](/docs/reference/react/components#inputfield).
 
 Renders one input from `view.inputs` as a text box, a number box or its options to choose from. It shows the engine's
 refusal when the value won't do.
@@ -1320,7 +1320,7 @@ Uses: [`InputView`](/docs/api/engine#inputview).
 
 ## InputFields
 
-Const. Explained in [Components](/docs/react/components#inputfields).
+Const. Explained in [Components](/docs/reference/react/components#inputfields).
 
 Renders the inputs in `view.inputs` while no scene is open, such as a field the room offers. It renders nothing
 while a scene is open, since `Scene` renders those inputs itself.
@@ -1332,7 +1332,7 @@ const InputFields: ComponentType<{ className?: string; }>
 
 ## Inventory
 
-Const. Explained in [Components](/docs/react/components#inventory).
+Const. Explained in [Components](/docs/reference/react/components#inventory).
 
 Renders the things the player holds, `view.held`, as the `inventory` part, each with its count and its description.
 It renders nothing while the player holds nothing.
@@ -1349,7 +1349,7 @@ Uses: [`InventoryProps`](#inventoryprops).
 
 ## InventoryProps
 
-Type. Explained in [Components](/docs/react/components#inventoryprops).
+Type.
 
 The props of `Inventory`.
 
@@ -1370,7 +1370,7 @@ type InventoryProps = {
 
 ## KeepPicturesOn
 
-Component. Explained in [Components](/docs/react/components#keeppictureson).
+Component. Explained in [Components](/docs/reference/react/components#keeppictureson).
 
 Renders its children with their pictures shown even while the game's pictures setting is off. A layered picture uses
 it, since its hotspots are play.
@@ -1382,7 +1382,7 @@ function KeepPicturesOn(props: { children: ReactNode }): JSX.Element
 
 ## KeyOptions
 
-Type. Explained in [Components](/docs/react/components#keyoptions).
+Type. Explained in [Components](/docs/reference/react/components#keyoptions).
 
 Settings for the `keys` option, given as an object in place of `true`.
 
@@ -1399,7 +1399,7 @@ type KeyOptions = {
 
 ## LayeredPicture
 
-Const. Explained in [Components](/docs/react/components#layeredpicture).
+Const. Explained in [Components](/docs/reference/react/components#layeredpicture).
 
 Renders a layered picture with its hotspots, from `view.scene.picture` or a location's `location.picture`. It renders
 even while the game's pictures setting is off, since its hotspots are play.
@@ -1416,7 +1416,7 @@ Uses: [`PictureView`](/docs/api/engine#pictureview).
 
 ## LoadPage
 
-Const. Explained in [Components](/docs/react/components#loadpage).
+Const. Explained in [Components](/docs/reference/react/components#loadpage).
 
 Renders the load page, which lists every save newest first to load, any that can't be read to delete, and a button to
 import a save file. It needs a runner made with `saves`.
@@ -1428,7 +1428,7 @@ const LoadPage: ComponentType<{ className?: string; }>
 
 ## MediaViewer
 
-Const. Explained in [Components](/docs/react/components#mediaviewer).
+Const. Explained in [Components](/docs/reference/react/components#mediaviewer).
 
 Renders a picture or video from the story large over the page, as the `viewer` part. A `Beat` opens it when the
 player clicks its picture or clip, and `viewer: false` turns it off.
@@ -1444,7 +1444,7 @@ Uses: [`MediaViewerProps`](#mediaviewerprops).
 
 ## MediaViewerProps
 
-Type. Explained in [Components](/docs/react/components#mediaviewerprops-and-viewermedia).
+Type.
 
 The props of `MediaViewer`.
 
@@ -1465,7 +1465,7 @@ type MediaViewerProps = {
 
 ## MinigameCard
 
-Const. Explained in [Components](/docs/react/components#minigamecard).
+Const. Explained in [Components](/docs/reference/react/components#minigamecard).
 
 Renders the running minigame from `view.minigame` as the `minigame` part, with its title, its words, its timer's
 bar and a button for each live input. `Scene` renders it in place of the scene.
@@ -1479,7 +1479,7 @@ const MinigameCard: ComponentType<{ className?: string; }>
 
 ## MinigameControls
 
-Type. Explained in [Components](/docs/react/components#minigamecontrols).
+Type.
 
 The running minigame and its `send`, which `useMinigame` returns.
 
@@ -1498,7 +1498,7 @@ type MinigameControls = {
 
 ## ModManager
 
-Const. Explained in [Components](/docs/react/components#modmanager).
+Const. Explained in [Components](/docs/reference/react/components#modmanager).
 
 Renders the mod manager as the `mods` part, which lists the player's mods to turn on, off or remove, and adds one
 from a file. It needs `mods` on the provider.
@@ -1515,7 +1515,7 @@ const ModManager: ComponentType<{ className?: string; }>
 
 ## ModsOption
 
-Type. Explained in [Components](/docs/react/components#modsoption).
+Type. Explained in [Components](/docs/reference/react/components#modsoption).
 
 The game's mods for the mod manager, with the store, the loader's problems and the function that applies a change.
 
@@ -1536,7 +1536,7 @@ type ModsOption = {
 
 ## ModsState
 
-Type. Explained in [Components](/docs/react/components#modsstate).
+Type.
 
 The player's mods and the functions that change them, which `useMods` returns to a mod manager.
 
@@ -1569,7 +1569,7 @@ type ModsState = {
 
 ## mountGame
 
-Function. Explained in [The React UI](/docs/react#mountgame).
+Function. Explained in [The React UI](/docs/reference/react#mountgame).
 
 Starts a game in the page and returns its runner once the game renders. It throws when nothing in the page matches
 `root`.
@@ -1587,7 +1587,7 @@ Uses: [`Game`](/docs/api/engine#game), [`MountOptions`](#mountoptions), [`Runner
 
 ## MountOptions
 
-Type. Explained in [The React UI](/docs/react#mountoptions).
+Type. Explained in [The React UI](/docs/reference/react#mountoptions).
 
 Settings for `mountGame`, the `GameShellProps` without `runner`, with where to render and how to start.
 
@@ -1636,7 +1636,7 @@ type MountOptions = {
 
 ## Notice
 
-Const. Explained in [Components](/docs/react/components#notice).
+Const. Explained in [Components](/docs/reference/react/components#notice).
 
 Renders one notice from `view.notices` as the `notice` part, with its picture, title, text and a button that dismisses it.
 
@@ -1649,7 +1649,7 @@ Uses: [`NoticeView`](/docs/api/engine#noticeview).
 
 ## Notices
 
-Const. Explained in [Components](/docs/react/components#notices).
+Const. Explained in [Components](/docs/reference/react/components#notices).
 
 Renders the unseen notices from `view.notices.unseen`, up to `limit`, as the `notices` part. The default layout puts
 it in the overlay.
@@ -1663,7 +1663,7 @@ const Notices: ComponentType<{ className?: string; limit?: number; }>
 
 ## NoticeStrip
 
-Const. Explained in [Components](/docs/react/components#noticestrip).
+Const. Explained in [Components](/docs/reference/react/components#noticestrip).
 
 Renders a row of unread counts as the `notice-strip` part. It starts with the unseen notices, then the plugin UIs'
 components at the `strip` spot, such as each device app with a badge.
@@ -1678,7 +1678,7 @@ const NoticeStrip: ComponentType<{ className?: string; }>
 
 ## Overlay
 
-Const. Explained in [Components](/docs/react/components#overlay).
+Const. Explained in [Components](/docs/reference/react/components#overlay).
 
 Renders the `overlay` part, which sticks to the bottom of the window over the page and sits after it at the end. The
 default layout puts the notices in it.
@@ -1692,7 +1692,7 @@ const Overlay: ComponentType<{ className?: string; children?: ReactNode; }>
 
 ## OverridableComponents
 
-Type. Explained in [Components](/docs/react/components#overridablecomponents-and-partnames).
+Type. Explained in [Components](/docs/reference/react/components#overridablecomponents-and-partnames).
 
 The built-in components a game can replace, by name, each typed by the props it takes. A plugin's React UI adds its
 own by augmenting this interface.
@@ -1815,7 +1815,7 @@ Plugins add fields of their own to it, which their pages list.
 
 ## Page
 
-Type. Explained in [Components](/docs/react/components#page-and-pagestate).
+Type.
 
 The name of a page, either a built-in one or the id of one a game or a plugin UI adds.
 
@@ -1826,7 +1826,7 @@ type Page = 'gate' | 'title' | 'game' | 'load' | 'settings' | 'credits' | (strin
 
 ## PageDef
 
-Type. Explained in [Components](/docs/react/components#credit-gateoptions-and-pagedef).
+Type.
 
 A page a game adds in `PagesOptions.pages`, with its button on the title screen. A plugin UI adds one as a `PluginPage`.
 
@@ -1847,7 +1847,7 @@ type PageDef = {
 
 ## PagesOptions
 
-Type. Explained in [Components](/docs/react/components#pagesoptions).
+Type. Explained in [Components](/docs/reference/react/components#pagesoptions).
 
 Settings for the title screen and the pages around the game, the `pages` option. Each is optional.
 
@@ -1872,7 +1872,7 @@ type PagesOptions = {
 
 ## PageState
 
-Type. Explained in [Components](/docs/react/components#page-and-pagestate).
+Type.
 
 The page the player is on among the pages around the game, with the functions that move between them.
 
@@ -1901,7 +1901,7 @@ type PageState = {
 
 ## PanelComponent
 
-Type. Explained in [Components](/docs/react/components#panelcomponent).
+Type. Explained in [Components](/docs/reference/react/components#panelcomponent).
 
 A component that renders a panel, for a scene's panel, an app's panel section or the `panel` effect. Its `data`
 prop is the data the game's own panel returned, else the panel's `with`.
@@ -1913,7 +1913,7 @@ type PanelComponent = ComponentType<{ data: unknown }>
 
 ## PanelHost
 
-Const. Explained in [Components](/docs/react/components#panelhost).
+Const. Explained in [Components](/docs/reference/react/components#panelhost).
 
 Renders the open panel, `view.panel`, in a `PartDialog`, and sends `closePanel` when the player closes it. The panel
 gets its `with` as `data`.
@@ -1928,7 +1928,7 @@ const PanelHost: ComponentType<object>
 
 ## PartKey
 
-Type. Explained in [Components](/docs/react/components#partkey).
+Type. Explained in [Components](/docs/reference/react/components#partkey).
 
 A `data-part` name, either one the React UI renders or one a plugin's UI adds through `PartNames`.
 
@@ -2131,7 +2131,7 @@ Uses: [`PartNames`](#partnames).
 
 ## PartNames
 
-Type. Explained in [Components](/docs/react/components#overridablecomponents-and-partnames).
+Type. Explained in [Components](/docs/reference/react/components#overridablecomponents-and-partnames).
 
 The `data-part` names that plugin UIs add, as keys of an interface each UI augments. `classes` and `usePart` then
 take them typed.
@@ -2152,7 +2152,7 @@ Plugins add fields of their own to it, which their pages list.
 
 ## Picture
 
-Const. Explained in [Components](/docs/react/components#picture).
+Const. Explained in [Components](/docs/reference/react/components#picture).
 
 Renders a picture as an `<img>` that takes no space when its file is missing. Every picture the UI renders goes
 through it, so replacing it in `components` changes them all.
@@ -2167,7 +2167,7 @@ const Picture: ComponentType<ClassAttributes<HTMLImageElement> & ImgHTMLAttribut
 
 ## Plugins
 
-Component. Explained in [The React UI](/docs/react#plugins).
+Component. Explained in [The React UI](/docs/reference/react#plugins).
 
 Renders the components the game's plugin UIs place at one spot of the layout, in `plugins` order. The `room` spot
 renders nothing while a minigame runs, since the minigame replaces the room.
@@ -2183,7 +2183,7 @@ Uses: [`PluginSpot`](#pluginspot).
 
 ## PluginSectionComponent
 
-Type. Explained in [Components](/docs/react/components#pluginsectioncomponent).
+Type. Explained in [Components](/docs/reference/react/components#pluginsectioncomponent).
 
 A component that renders another plugin's view as a section of a device's app, such as a messages channel or a feed.
 It gets the plugin's slice of the view and the section's `with`.
@@ -2195,7 +2195,7 @@ type PluginSectionComponent = ComponentType<{ data: unknown; with: Record<string
 
 ## PluginSpot
 
-Type. Explained in [Plugin UIs and the kit](/docs/react/kit#pluginspot).
+Type. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#pluginspot).
 
 A spot in the layout where plugin UIs place their components, in the order of the game's `plugins` list. Each spot
 is one of these:
@@ -2213,7 +2213,7 @@ type PluginSpot = 'stats' | 'sidebar' | 'room' | 'story' | 'strip'
 
 ## PriceTag
 
-Const. Explained in [Components](/docs/react/components#pricetag).
+Const. Explained in [Components](/docs/reference/react/components#pricetag).
 
 Renders a choice's or action's price as the `choice-price` part, from the price's `text`, which names its stats and
 then plugins' notes such as "until evening".
@@ -2246,7 +2246,7 @@ type Reveal = {
 
 ## RevealBeat
 
-Type. Explained in [Components](/docs/react/components#revealpoint-revealgroup-and-revealbeat).
+Type.
 
 One beat of a run, with its index in the scene's beats and the settled roll its `ui.dice` names, if any.
 
@@ -2267,7 +2267,7 @@ type RevealBeat = {
 
 ## RevealGroup
 
-Type. Explained in [Components](/docs/react/components#revealpoint-revealgroup-and-revealbeat).
+Type.
 
 A run of a scene's beats with the reveal that holds it back. The first run shows with the screen and has no reveal.
 
@@ -2288,7 +2288,7 @@ type RevealGroup = {
 
 ## RevealPoint
 
-Type. Explained in [Components](/docs/react/components#revealpoint-revealgroup-and-revealbeat).
+Type.
 
 A reveal the React UI plays, a point where the body holds back its next run of beats. It gives the run's delay, transition and time.
 
@@ -2309,7 +2309,7 @@ type RevealPoint = {
 
 ## RoomActions
 
-Const. Explained in [Components](/docs/react/components#roomactions).
+Const. Explained in [Components](/docs/reference/react/components#roomactions).
 
 Renders the room's actions from `view.actions`, the game's own and its plugins', such as a location's. Its list is
 the `actions` part.
@@ -2321,7 +2321,7 @@ const RoomActions: ComponentType<{ className?: string; }>
 
 ## SavesMenu
 
-Const. Explained in [Components](/docs/react/components#savesmenu).
+Const. Explained in [Components](/docs/reference/react/components#savesmenu).
 
 Renders the save and load menu as the `saves` part from `useSaves`. It needs a runner made with `saves`.
 
@@ -2337,7 +2337,7 @@ const SavesMenu: ComponentType<{ className?: string; onLoaded?: (() => void); }>
 
 ## SavesState
 
-Type. Explained in [Components](/docs/react/components#savesstate).
+Type.
 
 The saves and the functions that change them, which `useSaves` returns to a save menu. Each function resolves to true when it worked.
 
@@ -2378,7 +2378,7 @@ type SavesState = {
 
 ## Say
 
-Type. Explained in [Components](/docs/react/components#uistringkey-words-and-say).
+Type. Explained in [Components](/docs/reference/react/components#uistringkey-words-and-say).
 
 A function that returns a word by its key, with each `{name}` in it filled from `vars`.
 
@@ -2389,7 +2389,7 @@ type Say<K extends string = UiStringKey> = (key: K, vars?: Record<string, string
 
 ## Scene
 
-Const. Explained in [Components](/docs/react/components#scene).
+Const. Explained in [Components](/docs/reference/react/components#scene).
 
 Renders `view.scene`, the open scene or the room, with its picture, body and choices. While a minigame runs it
 renders the panel named by the minigame's id, else `MinigameCard`.
@@ -2419,7 +2419,7 @@ const Scene: ComponentType<{ className?: string; }>
 
 ## SceneHeader
 
-Const. Explained in [Components](/docs/react/components#sceneheader).
+Const. Explained in [Components](/docs/reference/react/components#sceneheader).
 
 Renders the scene's heading from `view.scene`, passed as `scene`, in a `scene-header` part. It holds the speaker's
 portrait (`scene-portrait`) when the speaker has a picture, and the title (`scene-title`).
@@ -2435,7 +2435,7 @@ Uses: [`SceneBeat`](/docs/api/engine#scenebeat), [`SpeakerView`](/docs/api/engin
 
 ## SceneRolls
 
-Type. Explained in [Components](/docs/react/components#scenerolls).
+Type.
 
 The rolls on screen, both all the last command made and the new ones whose dice tumble.
 
@@ -2456,7 +2456,7 @@ type SceneRolls = {
 
 ## SceneTiming
 
-Type. Explained in [Components](/docs/react/components#scenetiming).
+Type.
 
 The scene's timing that `useScene` returns and `Scene` renders from, with its transitions, runs of beats, wait and rolls.
 
@@ -2493,7 +2493,7 @@ type SceneTiming = {
 
 ## ScreenTransition
 
-Type. Explained in [Components](/docs/react/components#screentransition).
+Type.
 
 The transitions of the screen showing, how it comes in and goes out.
 
@@ -2516,7 +2516,7 @@ type ScreenTransition = {
 
 ## Section
 
-Const. Explained in [Components](/docs/react/components#section).
+Const. Explained in [Components](/docs/reference/react/components#section).
 
 Renders a titled section of a layout, in the side column or the story, as the `section` part. It hides itself when
 its children render nothing, such as a missing plugin or an empty list.
@@ -2537,7 +2537,7 @@ Uses: [`SectionProps`](#sectionprops).
 
 ## SectionProps
 
-Type. Explained in [Components](/docs/react/components#sectionprops).
+Type.
 
 The props of `Section`.
 
@@ -2570,7 +2570,7 @@ type SectionProps = {
 
 ## SettingsPage
 
-Const. Explained in [Components](/docs/react/components#settingspage).
+Const. Explained in [Components](/docs/reference/react/components#settingspage).
 
 Renders the settings page from `view.settings`, with a checkbox for a toggle, radio buttons for a choice and a slider
 for a range. Its root is the `settings-page` part.
@@ -2586,7 +2586,7 @@ const SettingsPage: ComponentType<{ className?: string; }>
 
 ## Sidebar
 
-Const. Explained in [Components](/docs/react/components#sidebar).
+Const. Explained in [Components](/docs/reference/react/components#sidebar).
 
 Renders the side column, the `sidebar` part, with its children. Below Tailwind's `md` (48rem) it becomes a drawer
 behind a `top-bar` with the game's title, the clock and a `drawer-button`.
@@ -2603,7 +2603,7 @@ Uses: [`SidebarProps`](#sidebarprops).
 
 ## SidebarProps
 
-Type. Explained in [Components](/docs/react/components#sidebarprops).
+Type.
 
 The props of `Sidebar`.
 
@@ -2622,7 +2622,7 @@ type SidebarProps = {
 
 ## StatDisplay
 
-Type. Explained in [Presentation hints](/docs/react/hints#statdisplay).
+Type. Explained in [Presentation hints](/docs/reference/react/hints#statdisplay).
 
 The value of a stat's `ui.display` hint, which renders it as its number, a bar from `min` to `max`, or pips, one per point.
 
@@ -2633,7 +2633,7 @@ type StatDisplay = 'number' | 'bar' | 'pips'
 
 ## StatGauge
 
-Component. Explained in [Plugin UIs and the kit](/docs/react/kit#statgauge).
+Component. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#statgauge).
 
 Renders a stat's value as a bar from its `min` to its `max`, or as one pip per point, by its `ui.display` hint.
 `StatList` renders it as the `<dd>` under each stat.
@@ -2650,7 +2650,7 @@ Uses: [`StatView`](/docs/api/engine#statview).
 
 ## StatList
 
-Const. Explained in [Components](/docs/react/components#statlist).
+Const. Explained in [Components](/docs/reference/react/components#statlist).
 
 Renders the stats in `view.stats` as the `stats` list, each value formatted by the game. A stat with levels also
 shows its level and a bar towards the next one.
@@ -2665,7 +2665,7 @@ const StatList: ComponentType<object>
 
 ## Story
 
-Const. Explained in [Components](/docs/react/components#story).
+Const. Explained in [Components](/docs/reference/react/components#story).
 
 Renders the story, the main column, as the `story` part with its children. It fills the width the side column
 leaves.
@@ -2682,7 +2682,7 @@ Uses: [`StoryProps`](#storyprops).
 
 ## StoryProps
 
-Type. Explained in [Components](/docs/react/components#storyprops).
+Type.
 
 The props of `Story`.
 
@@ -2703,7 +2703,7 @@ type StoryProps = {
 
 ## StyleOptions
 
-Type. Explained in [Components](/docs/react/components#styleoptions).
+Type.
 
 The options that change how the UI looks, part of `UiOptions`. They replace components and restyle parts.
 
@@ -2724,7 +2724,7 @@ type StyleOptions = {
 
 ## TEXT_SIZES
 
-Const. Explained in [Presentation hints](/docs/react/hints#text_sizes).
+Const. Explained in [Presentation hints](/docs/reference/react/hints#text_sizes).
 
 The text sizes the React UI's styles size the page for, the values of the `ui.settings.textSize` setting. Another
 value needs CSS of the game's own.
@@ -2736,7 +2736,7 @@ const TEXT_SIZES: readonly ['small', 'normal', 'large', 'larger']
 
 ## TextSize
 
-Function. Explained in [Components](/docs/react/components#textsize).
+Function. Explained in [Components](/docs/reference/react/components#textsize).
 
 Renders nothing, and copies the setting the game names in `ui.settings.textSize` to `data-text-size` on `<html>`
 whenever it changes. The styles size every page from there, the title screen's included.
@@ -2750,7 +2750,7 @@ function TextSize(): null
 
 ## Timers
 
-Const. Explained in [Components](/docs/react/components#timers).
+Const. Explained in [Components](/docs/reference/react/components#timers).
 
 Renders a `Countdown` for every running timer in `view.timers`, in the order they started, and nothing while none runs.
 
@@ -2761,7 +2761,7 @@ const Timers: ComponentType<{ className?: string; }>
 
 ## Tip
 
-Const. Explained in [Components](/docs/react/components#tip).
+Const. Explained in [Components](/docs/reference/react/components#tip).
 
 Renders a tooltip in prose from `[[tip:key|words]]`, the words as a `tip` button with the note in a `tip-content`
 bubble. The bubble shows on hover, keyboard focus or a tap.
@@ -2775,7 +2775,7 @@ const Tip: ComponentType<{ text: string; tip: string; className?: string; }>
 
 ## Title
 
-Const. Explained in [Components](/docs/react/components#title).
+Const. Explained in [Components](/docs/reference/react/components#title).
 
 Renders the game's title from `view.title`, the `title` part.
 
@@ -2786,7 +2786,7 @@ const Title: ComponentType<{ className?: string; }>
 
 ## TitlePage
 
-Const. Explained in [Components](/docs/react/components#titlepage).
+Const. Explained in [Components](/docs/reference/react/components#titlepage).
 
 Renders the title screen, with the game's title, the subtitle and art when given, and a button for each page. Its
 root is the `title-page` part.
@@ -2801,7 +2801,7 @@ const TitlePage: ComponentType<{ className?: string; }>
 
 ## Transition
 
-Type. Explained in [Presentation hints](/docs/react/hints#transition-1).
+Type. Explained in [Presentation hints](/docs/reference/react/hints#transition-1).
 
 A pair of transitions for a screen coming in and going out, the value of a `ui.transition` hint. A name on its own sets `in`.
 
@@ -2822,7 +2822,7 @@ type Transition = {
 
 ## TransitionName
 
-Type. Explained in [Presentation hints](/docs/react/hints#transitionname).
+Type. Explained in [Presentation hints](/docs/reference/react/hints#transitionname).
 
 The name of a transition, one of `TRANSITIONS` or one the game adds.
 
@@ -2845,7 +2845,7 @@ const TRANSITIONS: readonly ['fade', 'slide-up', 'slide-left', 'zoom', 'none']
 
 ## UiOptions
 
-Type. Explained in [Components](/docs/react/components#uioptions).
+Type. Explained in [Components](/docs/reference/react/components#uioptions).
 
 The options that make the React UI a game's own, how it looks and how it behaves. `GameProvider`, `GameShell` and
 `mountGame` all take them.
@@ -2873,7 +2873,7 @@ type UiOptions = {
 
 ## UiProvider
 
-Component. Explained in [Components](/docs/react/components#uiprovider).
+Component. Explained in [Components](/docs/reference/react/components#uiprovider).
 
 Renders its children with a game's `UiOptions`. A provider inside another adds to the outer one's options, so a
 screen can restyle its own corner.
@@ -2889,7 +2889,7 @@ Uses: [`UiOptions`](#uioptions).
 
 ## UiStringKey
 
-Type. Explained in [Components](/docs/react/components#uistringkey-words-and-say).
+Type. Explained in [Components](/docs/reference/react/components#uistringkey-words-and-say).
 
 The key of one of the React UI's own words, such as `'stats'` or `'newGame'`.
 
@@ -2962,7 +2962,7 @@ type UiStringKey =
 
 ## useAudio
 
-Function. Explained in [Components](/docs/react/components#useaudio).
+Function. Explained in [Components](/docs/reference/react/components#useaudio).
 
 Returns the audio player once it has started, and plays the game's sound with `@ifloom/audio` while mounted. Outside
 a `GameProvider` it throws unless you pass `runner`.
@@ -2979,7 +2979,7 @@ Uses: [`AudioOptions`](/docs/api/audio#audiooptions), [`Runner`](/docs/api/engin
 
 ## useBacklog
 
-Function. Explained in [Components](/docs/react/components#usebacklog).
+Function. Explained in [Components](/docs/reference/react/components#usebacklog).
 
 Returns the backlog's entries from the runner's snapshot, oldest first, and re-renders when they change. It's empty
 unless the runner's backlog is on.
@@ -2993,7 +2993,7 @@ Uses: [`BacklogEntry`](/docs/api/engine#backlogentry).
 
 ## useClock
 
-Function. Explained in [Components](/docs/react/components#useclock).
+Function. Explained in [Components](/docs/reference/react/components#useclock).
 
 Returns the game's time from the running game, as the plugins' `label`s write it in `view.when`. It re-renders with
 each new view, and `Clock` renders from it.
@@ -3007,7 +3007,7 @@ Uses: [`ClockState`](#clockstate).
 
 ## useGame
 
-Function. Explained in [Components](/docs/react/components#usegame).
+Function. Explained in [Components](/docs/reference/react/components#usegame).
 
 Returns the running game, with the runner, its snapshot, the view and `send`. It throws outside a `GameProvider`, and
 re-renders with each new snapshot.
@@ -3021,7 +3021,7 @@ Uses: [`GameContextValue`](#gamecontextvalue).
 
 ## useHolds
 
-Function. Explained in [Components](/docs/react/components#useholds).
+Function. Explained in [Components](/docs/reference/react/components#useholds).
 
 Returns true while a condition holds in the running game's state, and re-renders with each new state. It takes any
 condition content can write, such as `{ 'places/at': { location: 'home' } }`, and returns true for none.
@@ -3039,7 +3039,7 @@ Uses: [`Condition`](/docs/api/engine#condition).
 
 ## useMinigame
 
-Function. Explained in [Components](/docs/react/components#useminigame).
+Function. Explained in [Components](/docs/reference/react/components#useminigame).
 
 Returns the running minigame and a `send` for its inputs from the running game, re-rendering with each new view.
 With `keys: true` it also maps the keyboard to the inputs, as `MinigameCard` does.
@@ -3055,7 +3055,7 @@ Uses: [`MinigameControls`](#minigamecontrols).
 
 ## useMods
 
-Function. Explained in [Components](/docs/react/components#usemods).
+Function. Explained in [Components](/docs/reference/react/components#usemods).
 
 Returns the player's mods and the functions that add, toggle, remove and restart them, for a mod manager of your own.
 It needs `mods` on the provider.
@@ -3069,7 +3069,7 @@ Uses: [`ModsState`](#modsstate).
 
 ## useMotion
 
-Function. Explained in [Components](/docs/react/components#usemotion).
+Function. Explained in [Components](/docs/reference/react/components#usemotion).
 
 Returns true when the UI plays transitions and reveals. That's the `motion` option, unless the player's system asks
 for reduced motion.
@@ -3081,7 +3081,7 @@ function useMotion(): boolean
 
 ## usePage
 
-Function. Explained in [Components](/docs/react/components#usepage).
+Function. Explained in [Components](/docs/reference/react/components#usepage).
 
 Returns the page the player is on and the functions that move between pages. With `pages` off, `enabled` is false and
 the page is always `game`.
@@ -3095,7 +3095,7 @@ Uses: [`PageState`](#pagestate).
 
 ## usePart
 
-Function. Explained in [Components](/docs/react/components#usepart).
+Function. Explained in [Components](/docs/reference/react/components#usepart).
 
 Returns the `data-part` and `className` attributes for one part. `defaults` are its built-in classes, and `extra` is
 a caller's `className`, added last.
@@ -3111,7 +3111,7 @@ Uses: [`PartKey`](#partkey).
 
 ## usePicturesShown
 
-Function. Explained in [Components](/docs/react/components#usepicturesshown).
+Function. Explained in [Components](/docs/reference/react/components#usepicturesshown).
 
 Returns false while the setting the game names in `ui.settings.images` is off, and true otherwise. It's true outside
 a game, in a game that names no setting and inside `KeepPicturesOn`.
@@ -3123,7 +3123,7 @@ function usePicturesShown(): boolean
 
 ## usePluginUis
 
-Function. Explained in [Plugin UIs and the kit](/docs/react/kit#usepluginuis).
+Function. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#usepluginuis).
 
 Returns the running game's plugin UIs, those whose plugin the game has, in the order of its `plugins` list.
 
@@ -3136,7 +3136,7 @@ Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
 
 ## useProfile
 
-Function. Explained in [Components](/docs/react/components#useprofile).
+Function. Explained in [Components](/docs/reference/react/components#useprofile).
 
 Returns the value the profile holds in a namespace, and re-renders when it changes. It's undefined without a profile
 or before the first read.
@@ -3159,7 +3159,7 @@ function useReducedMotion(): boolean
 
 ## useSaves
 
-Function. Explained in [Components](/docs/react/components#usesaves).
+Function. Explained in [Components](/docs/reference/react/components#usesaves).
 
 Returns the saves and the functions that save, load, delete, export and import them, for a save menu of your own. It
 re-renders when the saves change, and needs a runner made with `saves`.
@@ -3173,7 +3173,7 @@ Uses: [`SavesState`](#savesstate).
 
 ## useScene
 
-Function. Explained in [Components](/docs/react/components#usescene).
+Function. Explained in [Components](/docs/reference/react/components#usescene).
 
 Returns the scene's timing from the running game, which `Scene` renders from. Use it in a scene component of your
 own to keep the React UI's motion.
@@ -3204,7 +3204,7 @@ Uses: [`SceneTiming`](#scenetiming).
 
 ## useSetting
 
-Function. Explained in [Components](/docs/react/components#usesetting).
+Function. Explained in [Components](/docs/reference/react/components#usesetting).
 
 Returns a setting's value from the runner's snapshot, and re-renders when it changes. It's undefined for a setting
 the game doesn't declare.
@@ -3220,7 +3220,7 @@ Uses: [`KvValue`](/docs/api/engine#kvvalue).
 
 ## useTimer
 
-Function. Explained in [Components](/docs/react/components#usetimer-and-usetimers).
+Function. Explained in [Components](/docs/reference/react/components#usetimer-and-usetimers).
 
 Returns one running timer by id from `view.timers`, or null when it isn't running because it hasn't started, has
 stopped or has run out.
@@ -3234,7 +3234,7 @@ Uses: [`TimerView`](/docs/api/engine#timerview).
 
 ## useTimers
 
-Function. Explained in [Components](/docs/react/components#usetimer-and-usetimers).
+Function. Explained in [Components](/docs/reference/react/components#usetimer-and-usetimers).
 
 Returns the running timers from `view.timers`, in the order they started, and re-renders with each new view.
 
@@ -3247,7 +3247,7 @@ Uses: [`TimerView`](/docs/api/engine#timerview).
 
 ## useWords
 
-Function. Explained in [Components](/docs/react/components#usewords).
+Function. Explained in [Components](/docs/reference/react/components#usewords).
 
 Returns a `Say` for the running game's UI words, each the game's `ui.<key>` string over the English. Given a
 plugin UI's own `words`, it returns those keys too.
@@ -3262,7 +3262,7 @@ Uses: [`Say`](#say), [`Words`](#words), [`UiStringKey`](#uistringkey).
 
 ## Video
 
-Const. Explained in [Components](/docs/react/components#video).
+Const. Explained in [Components](/docs/reference/react/components#video).
 
 Renders a video clip inline, from a `video` beat, a layered picture's layer or a post. By default it plays like a GIF,
 by itself, looping and muted.
@@ -3280,7 +3280,7 @@ Uses: [`VideoProps`](#videoprops).
 
 ## VideoProps
 
-Type. Explained in [Components](/docs/react/components#videoprops).
+Type.
 
 The props of `Video`, a `<video>`'s props with the fields a `video` beat gives.
 
@@ -3312,7 +3312,7 @@ Plugins add fields of their own to it, which their pages list.
 
 ## ViewerMedia
 
-Type. Explained in [Components](/docs/react/components#mediaviewerprops-and-viewermedia).
+Type.
 
 A picture or video beat, which the media viewer shows large.
 
@@ -3325,7 +3325,7 @@ Uses: [`SceneBeat`](/docs/api/engine#scenebeat).
 
 ## When
 
-Const. Explained in [Components](/docs/react/components#when).
+Const. Explained in [Components](/docs/reference/react/components#when).
 
 Renders its children while `condition` holds, and nothing otherwise. `useHolds` does the same as a hook.
 
@@ -3338,7 +3338,7 @@ Uses: [`Condition`](/docs/api/engine#condition).
 
 ## WithPages
 
-Component. Explained in [Components](/docs/react/components#withpages).
+Component. Explained in [Components](/docs/reference/react/components#withpages).
 
 Renders its children, the game, or with `pages` on, the pages around it, with the game on the `game` page only. It
 renders inside a `GameProvider`.
@@ -3354,7 +3354,7 @@ Uses: [`PagesOptions`](#pagesoptions).
 
 ## Words
 
-Type. Explained in [Components](/docs/react/components#words).
+Type. Explained in [Components](/docs/reference/react/components#words).
 
 A table of words in English by key, such as a plugin UI's `{ buy: 'Buy' }`. A game rewords any of them with
 `ui.<key>` in its strings, as it rewords the UI's own.

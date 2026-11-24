@@ -107,7 +107,7 @@ How the screen this choice leads to comes in, whatever that screen says. A bare 
 
 The runner says which choice led to the screen, in its snapshot's [`pressed`](/docs/reference/runner#what-led-here), from the command it ran, so a click, a number key, an inline action and a hotspot all count. It plays the hint once, for the screen the choice leads to. When the choice keeps the same screen, nothing plays.
 
-To animate a part of your own as the scene does, read the screen's transition from [`useScene`](/docs/react/components#usescene):
+To animate a part of your own as the scene does, read the screen's transition from [`useScene`](/docs/reference/react/components#usescene):
 
 ```tsx
 import { useScene } from '@ifloom/react'
@@ -142,7 +142,7 @@ type Reveal = { delay?: number; as?: TransitionName }
 
 `Scene` draws each revealed run of beats in a `reveal` part with `data-reveal` and `--ifloom-reveal-at`, and holds the choices back until the last. Every word is in the page from the start, so a screen reader reads it. A click on the scene or any key shows the rest at once, and a player who asks for reduced motion gets it all at once.
 
-[`useScene`](/docs/react/components#usescene) gives the runs as `Scene` times them, with when each comes, counted from the scene coming on: its own delay added to every one before it, so delays of 800 and 1500 come at 800 and 2300. Use it in a `Scene` of your own to keep the same timing.
+[`useScene`](/docs/reference/react/components#usescene) gives the runs as `Scene` times them, with when each comes, counted from the scene coming on: its own delay added to every one before it, so delays of 800 and 1500 come at 800 and 2300. Use it in a `Scene` of your own to keep the same timing.
 
 ## dice
 
@@ -154,9 +154,9 @@ body: [
 ]
 ```
 
-On a [block](/docs/reference/scenes#block): the key of a [roll](/docs/reference/effects#roll). When the last command rolled under that key, `Scene` draws the roll's [`DiceRoll`](/docs/react/components#diceroll) just above the block. The dice tumble for a second and settle on the faces rolled, then the total and Passed or Failed come in. The block, and anything after it, waits for them in a `reveal` part, so the words don't give the result away before the dice do. The choices wait too.
+On a [block](/docs/reference/scenes#block): the key of a [roll](/docs/reference/effects#roll). When the last command rolled under that key, `Scene` draws the roll's [`DiceRoll`](/docs/reference/react/components#diceroll) just above the block. The dice tumble for a second and settle on the faces rolled, then the total and Passed or Failed come in. The block, and anything after it, waits for them in a `reveal` part, so the words don't give the result away before the dice do. The choices wait too.
 
-A roll the player made before the last command is drawn settled, with nothing held back. A roll no block names, such as one a [trigger](/docs/reference/triggers) made, shows for a moment over the scene in a [`DiceOverlay`](/docs/react/components#diceoverlay). With motion off, or a player who asks for reduced motion, the dice show settled at once. Either way a screen reader hears the result.
+A roll the player made before the last command is drawn settled, with nothing held back. A roll no block names, such as one a [trigger](/docs/reference/triggers) made, shows for a moment over the scene in a [`DiceOverlay`](/docs/reference/react/components#diceoverlay). With motion off, or a player who asks for reduced motion, the dice show settled at once. Either way a screen reader hears the result.
 
 The [Dice rolls and checks](/docs/recipes/dice) recipe builds the whole check.
 
@@ -168,7 +168,7 @@ body: [
 ]
 ```
 
-On a [block](/docs/reference/scenes#block): the id of one of the game's [timers](/docs/reference/timers). While that timer runs, `Scene` draws its [`Countdown`](/docs/react/components#countdown) just under the block: the timer's label, a bar that empties with each tick, and the seconds left. With a quarter or less to go, the countdown is marked `data-urgent`. With motion off, or a player who asks for reduced motion, it shows only the seconds. Once the timer runs out or is stopped, the countdown goes.
+On a [block](/docs/reference/scenes#block): the id of one of the game's [timers](/docs/reference/timers). While that timer runs, `Scene` draws its [`Countdown`](/docs/reference/react/components#countdown) just under the block: the timer's label, a bar that empties with each tick, and the seconds left. With a quarter or less to go, the countdown is marked `data-urgent`. With motion off, or a player who asks for reduced motion, it shows only the seconds. Once the timer runs out or is stopped, the countdown goes.
 
 The hint only draws the timer. The game's clock runs whether or not anything draws it, so a timer no block names still runs out on time. To show one elsewhere, put `Countdown` or `Timers` in your layout.
 
@@ -251,7 +251,7 @@ stats: [
 ]
 ```
 
-On a [stat](/docs/reference/stats#statdef), `StatDisplay`: how the [`StatList`](/docs/react/components#statlist) and [`Relationships`](/docs/reference/plugins/cast#relationships) draw it. `'number'` (the default) is the value as the game formats it. `'bar'` adds a bar under it from its `min` to its `max`. `'pips'` adds a row of pips, one per point, which suits a range of 20 or less. A wider range is drawn as a bar, and `checkUiHints` reports it.
+On a [stat](/docs/reference/stats#statdef), `StatDisplay`: how the [`StatList`](/docs/reference/react/components#statlist) and [`Relationships`](/docs/reference/plugins/cast#relationships) draw it. `'number'` (the default) is the value as the game formats it. `'bar'` adds a bar under it from its `min` to its `max`. `'pips'` adds a row of pips, one per point, which suits a range of 20 or less. A wider range is drawn as a bar, and `checkUiHints` reports it.
 
 ### StatDisplay
 
@@ -305,8 +305,8 @@ export const settings: Content = {
 
 On the game: which of its [ui settings](/docs/reference/settings) the React UI honours itself, by the setting's id. The settings page draws them as it draws any other, and nothing else is needed:
 
-- **`textSize`** names a ui `choice`. [`TextSize`](/docs/react/components#textsize), which `GameShell` draws, copies its value to `data-text-size` on `<html>`, now and whenever it changes, so it applies on every page, the title's included. The styles size the page from its root for `small` (87.5%), `normal` (the browser's own), `large` (118.75%) and `larger` (137.5%). Everything is sized in `rem`, so the whole page scales. An option of another name needs CSS of your own, `:root[data-text-size="huge"] { font-size: 150%; }`.
-- **`images`** names a ui `toggle`. While it's off, [`Picture`](/docs/react/components#picture) and [`Video`](/docs/react/components#video) draw nothing: a scene's picture, pictures in the prose, portraits, a place's picture. A [`LayeredPicture`](/docs/react/components#layeredpicture) stays, since its hotspots are part of play.
+- **`textSize`** names a ui `choice`. [`TextSize`](/docs/reference/react/components#textsize), which `GameShell` draws, copies its value to `data-text-size` on `<html>`, now and whenever it changes, so it applies on every page, the title's included. The styles size the page from its root for `small` (87.5%), `normal` (the browser's own), `large` (118.75%) and `larger` (137.5%). Everything is sized in `rem`, so the whole page scales. An option of another name needs CSS of your own, `:root[data-text-size="huge"] { font-size: 150%; }`.
+- **`images`** names a ui `toggle`. While it's off, [`Picture`](/docs/reference/react/components#picture) and [`Video`](/docs/reference/react/components#video) draw nothing: a scene's picture, pictures in the prose, portraits, a place's picture. A [`LayeredPicture`](/docs/reference/react/components#layeredpicture) stays, since its hotspots are part of play.
 
 ### TEXT_SIZES
 
@@ -338,11 +338,11 @@ A [UI piece](/docs/reference/prose#ui-pieces) in prose, `[[ui:name|words|arg|…
 
 | Markup | What the player sees |
 |---|---|
-| `[[ui:modal\|words\|key]]`, `[[ui:modal\|words\|key\|title]]` | The words as a link that opens a dialog with the prose line `key`, titled `title` or the words. See [`InlineModal`](/docs/react/components#inlinemodal). |
-| `[[ui:image\|words\|path]]`, `[[ui:image\|words\|path\|alt]]` | The words as a link that opens the picture at `path` in the viewer, as a story's pictures open. See [`InlineImage`](/docs/react/components#inlineimage). |
-| `[[ui:mail\|body\|From: Ava\|Subject: Hello]]` | A letter or an email as a card: the header lines as written, then the body. See [`InlineMail`](/docs/react/components#inlinemail). |
-| `[[ui:prop\|words\|sticky]]` | A note in the story's world in a dashed box, by its face: `sticky`, `clip` or `diary`. See [`InlineProp`](/docs/react/components#inlineprop). |
-| `[[ui:mono\|words]]` | The words in a monospace face, for a sign or a screen. See [`InlineMono`](/docs/react/components#inlinemono). |
+| `[[ui:modal\|words\|key]]`, `[[ui:modal\|words\|key\|title]]` | The words as a link that opens a dialog with the prose line `key`, titled `title` or the words. See [`InlineModal`](/docs/reference/react/components#inlinemodal). |
+| `[[ui:image\|words\|path]]`, `[[ui:image\|words\|path\|alt]]` | The words as a link that opens the picture at `path` in the viewer, as a story's pictures open. See [`InlineImage`](/docs/reference/react/components#inlineimage). |
+| `[[ui:mail\|body\|From: Ava\|Subject: Hello]]` | A letter or an email as a card: the header lines as written, then the body. See [`InlineMail`](/docs/reference/react/components#inlinemail). |
+| `[[ui:prop\|words\|sticky]]` | A note in the story's world in a dashed box, by its face: `sticky`, `clip` or `diary`. See [`InlineProp`](/docs/reference/react/components#inlineprop). |
+| `[[ui:mono\|words]]` | The words in a monospace face, for a sign or a screen. See [`InlineMono`](/docs/reference/react/components#inlinemono). |
 
 ```ts
 const prose = {
@@ -352,7 +352,7 @@ const prose = {
 }
 ```
 
-`mail`, `prop` and `mono` draw words and open nothing, and a `mail` or `prop` written as a paragraph of its own draws as one. A letter's body can run over blank lines. The modal and the image are buttons in the line, with the part [`inline-ui`](/docs/react/customising#scenes) and `data-ui` set to the name, so a screen reader announces them as buttons that open a dialog. Escape, the close button or a click outside closes what they opened, and focus goes back to the words. Each preset styles the words differently from an inline action or a tooltip, and the dialog's text has the part `inline-modal`.
+`mail`, `prop` and `mono` draw words and open nothing, and a `mail` or `prop` written as a paragraph of its own draws as one. A letter's body can run over blank lines. The modal and the image are buttons in the line, with the part [`inline-ui`](/docs/reference/react/customising#scenes) and `data-ui` set to the name, so a screen reader announces them as buttons that open a dialog. Escape, the close button or a click outside closes what they opened, and focus goes back to the words. Each preset styles the words differently from an inline action or a tooltip, and the dialog's text has the part `inline-modal`.
 
 A modal shows words and nothing else. It can't change the game, so it suits a note, a letter or a sign. For a dialog with buttons that do something, open a [panel](/docs/reference/panels) from an [inline action](/docs/reference/prose#inline-actions-and-tooltips). [Popups and modals](/docs/recipes/modals) shows both.
 
@@ -397,7 +397,7 @@ mountGame(module.build(), { inline })
 
 The `declare module` block types `args` for `map`. A name nothing declares still works, with `args` as text. A name that neither `inline` nor the built-ins have shows its words as plain text, so the line still reads.
 
-Nothing about a piece goes in a save or the log: the engine carries the markup and never sees it open. A piece's words are what the backlog and a screen reader keep. A piece can read the game with [`useGame`](/docs/react/components#usegame), but anything it sends with `send` is a command like any other, so a piece that changes the game is better written as an inline action.
+Nothing about a piece goes in a save or the log: the engine carries the markup and never sees it open. A piece's words are what the backlog and a screen reader keep. A piece can read the game with [`useGame`](/docs/reference/react/components#usegame), but anything it sends with `send` is a command like any other, so a piece that changes the game is better written as an inline action.
 
 **Gotcha.** The picture an `image` piece opens is only a piece of text to the engine, so `ifloom build` doesn't check the file is there, as it does for `[[img:…]]`. Open it once in the game.
 
@@ -459,7 +459,7 @@ type UiHint = {
 
 Each hint on this page is declared once inside the React UI as a `UiHint`: its name, where content writes it, and a `check` that returns what's wrong with a value. `checkUiHints` is built from those declarations, so a hint is known only on the places its `on` names. Each inline piece is declared once the same way, with its name, its component and its check. The check is told the game, what the hint is on, that thing's `id` (a stat's, a scene's, a choice's, a kind's or an entity's reference) and the transition names the game has. Each problem it returns is worded to follow the place, such as `ui.timer "kettle" is not a timer the game has`.
 
-A plugin's React UI declares the hints its components read the same way, in its [`PluginUi`](/docs/react/kit#pluginui)'s `hints`. Give `checkUiHints` the same `plugins` list you give `mountGame` and it checks them too:
+A plugin's React UI declares the hints its components read the same way, in its [`PluginUi`](/docs/reference/react/kit#pluginui)'s `hints`. Give `checkUiHints` the same `plugins` list you give `mountGame` and it checks them too:
 
 ```ts given
 import { checkUiHints } from '@ifloom/react'

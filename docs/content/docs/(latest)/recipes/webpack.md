@@ -80,7 +80,7 @@ Add the scripts:
 
 ## Mount the game
 
-The entry is the template's `src/main.ts`, unchanged. With the React UI, it's [`mountGame`](/docs/react#mountgame). With your own UI, it's the runner and your drawing code, which webpack bundles like anything else. The `vanilla` template's `main.ts` awaits the runner at the top level, which webpack 5 supports.
+The entry is the template's `src/main.ts`, unchanged. With the React UI, it's [`mountGame`](/docs/reference/react#mountgame). With your own UI, it's the runner and your drawing code, which webpack bundles like anything else. The `vanilla` template's `main.ts` awaits the runner at the top level, which webpack 5 supports.
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/main.ts: the vanilla template's, cut down

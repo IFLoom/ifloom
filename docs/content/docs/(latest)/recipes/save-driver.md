@@ -190,7 +190,7 @@ await moveSaves(game.id, localStorageDriver(), driver).catch(() => {})
 const runner = await browserRunner(game, { saves: saves(game, driver), profile: profile(game, driver) })
 ```
 
-The React UI's [`mountGame`](/docs/react#mountgame) takes the same two inside its `runner` option, as [Shipping](/docs/guide/shipping) shows for IndexedDB. A game with [mods](/docs/reference/mods) passes the driver to `mods(game.id, driver)` too.
+The React UI's [`mountGame`](/docs/reference/react#mountgame) takes the same two inside its `runner` option, as [Shipping](/docs/guide/shipping) shows for IndexedDB. A game with [mods](/docs/reference/mods) passes the driver to `mods(game.id, driver)` too.
 
 ## Test it
 

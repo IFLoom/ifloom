@@ -29,5 +29,5 @@ module, on their own, through the CLI's own Vite, so they work beside Next.
 ## Docs
 
 - Running a game in Next: https://ifloom.dev/docs/recipes/next
-- The React UI: https://ifloom.dev/docs/react
+- The React UI: https://ifloom.dev/docs/reference/react
 - Everything else: https://ifloom.dev/docs

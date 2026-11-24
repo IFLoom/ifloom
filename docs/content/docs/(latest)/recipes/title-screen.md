@@ -2,11 +2,11 @@
 title: "The title screen and settings"
 description: Open your game on a title screen, give the player settings, and offer New Game+ once they've finished.
 ---
-The [React UI](/docs/react) has a title screen, a settings page and New Game+ built in, and you turn them on with an option. A game drawn with plain DOM, Vue or Svelte builds the same screens from the [runner](/docs/reference/runner), the engine's [settings](/docs/reference/settings) and the player's [profile](/docs/reference/profile). Each code block has a tab for each.
+The [React UI](/docs/reference/react) has a title screen, a settings page and New Game+ built in, and you turn them on with an option. A game drawn with plain DOM, Vue or Svelte builds the same screens from the [runner](/docs/reference/runner), the engine's [settings](/docs/reference/settings) and the player's [profile](/docs/reference/profile). Each code block has a tab for each.
 
 ## Turn on the title screen
 
-In the React UI, pass `pages` to [`mountGame`](/docs/react#mountgame). With the other templates, draw a title screen of your own before the game. This one offers New game, and Continue once there's a save to go on from:
+In the React UI, pass `pages` to [`mountGame`](/docs/reference/react#mountgame). With the other templates, draw a title screen of your own before the game. This one offers New game, and Continue once there's a save to go on from:
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/title.ts
@@ -199,7 +199,7 @@ const runner = createRunner(game, startingState(game), {
 })
 ```
 
-In the React UI, draw [`GameShell`](/docs/react#gameshell) with that runner and pass it the same `pages` prop, as in `<GameShell runner={runner} pages={{ subtitle: 'A new flat, a new town' }} />`.
+In the React UI, draw [`GameShell`](/docs/reference/react#gameshell) with that runner and pass it the same `pages` prop, as in `<GameShell runner={runner} pages={{ subtitle: 'A new flat, a new town' }} />`.
 
 ## Add settings
 
@@ -250,7 +250,7 @@ A save keeps the settings it was made with, so loading an old save brings its ow
 
 `textSize` has `affects: 'ui'`, so it never enters the game state. Conditions can't read it. It lives only in the player's [profile](/docs/reference/profile), and your own code applies it.
 
-Read it where you draw the story, with [`runner.snapshot().settings`](/docs/reference/runner#settings). The runner calls its listeners when the player changes it, so whatever redraws on a change picks it up. In the React UI, [`useSetting`](/docs/react/components#usesetting) reads it and redraws the component:
+Read it where you draw the story, with [`runner.snapshot().settings`](/docs/reference/runner#settings). The runner calls its listeners when the player changes it, so whatever redraws on a change picks it up. In the React UI, [`useSetting`](/docs/reference/react/components#usesetting) reads it and redraws the component:
 
 ```ts fragment tab="Plain JS" tab-group="framework"
 // src/main.ts, in the vanilla template. In draw():
@@ -296,7 +296,7 @@ onUnmounted(stop)
 <div class:large={size === 'large'}>{@render children()}</div>
 ```
 
-To apply it to every page, including the title screen, put it on the page instead. The React UI does that for a text size and a pictures switch: name the settings in the game's [`ui.settings`](/docs/react/hints#settings) hint, and it copies the text size to `data-text-size` on `<html>`, where its styles size the page (`small`, `normal`, `large` or `larger`), and leaves the story's pictures out while the pictures toggle is off. The showcase does it so:
+To apply it to every page, including the title screen, put it on the page instead. The React UI does that for a text size and a pictures switch: name the settings in the game's [`ui.settings`](/docs/reference/react/hints#settings) hint, and it copies the text size to `data-text-size` on `<html>`, where its styles size the page (`small`, `normal`, `large` or `larger`), and leaves the story's pictures out while the pictures toggle is off. The showcase does it so:
 
 ```ts
 // src/world/settings.ts
@@ -530,8 +530,8 @@ onMounted(async () => {
 </section>
 ```
 
-In the React UI, the component is drawn as the whole page, with no props. Use [`usePage`](/docs/react/components#usepage) to move between pages and [`useProfile`](/docs/react/components#useprofile) to read what outlives a save. Set `showOnTitle: false` to leave its button off the title screen, and open it yourself with `usePage().go('endings')`. A plugin package can add a page the same way.
+In the React UI, the component is drawn as the whole page, with no props. Use [`usePage`](/docs/reference/react/components#usepage) to move between pages and [`useProfile`](/docs/reference/react/components#useprofile) to read what outlives a save. Set `showOnTitle: false` to leave its button off the title screen, and open it yourself with `usePage().go('endings')`. A plugin package can add a page the same way.
 
 ## Make it look like your game
 
-Your own title screen looks however your stylesheet says. In the React UI, each of the four [presets](/docs/react/customising#1-pick-a-theme-preset) gives the title screen its own look. To change it, style its parts, such as `title-name` for the title and `title-button` for each button. [The pages](/docs/react/customising#the-pages) lists them all. To replace a page entirely, pass your own `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` or `GatePage` in [`components`](/docs/react/customising#6-replace-a-component).
+Your own title screen looks however your stylesheet says. In the React UI, each of the four [presets](/docs/reference/react/customising#1-pick-a-theme-preset) gives the title screen its own look. To change it, style its parts, such as `title-name` for the title and `title-button` for each button. [The pages](/docs/reference/react/customising#the-pages) lists them all. To replace a page entirely, pass your own `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` or `GatePage` in [`components`](/docs/reference/react/customising#6-replace-a-component).

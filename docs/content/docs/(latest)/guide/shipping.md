@@ -35,7 +35,7 @@ import { ifloom } from '@ifloom/cli/vite'
 export default ifloom()
 ```
 
-It builds with `base: './'` and puts the script and the stylesheet inside `index.html`. Your UI framework's Vite plugin goes in the preset's `vite.plugins`: a game on the [React UI](/docs/react) adds React's and Tailwind's, as the `react` template does (see [The Vite preset](/docs/cli#the-vite-preset) and [Your own UI in any framework](/docs/guide/frameworks)). Then build:
+It builds with `base: './'` and puts the script and the stylesheet inside `index.html`. Your UI framework's Vite plugin goes in the preset's `vite.plugins`: a game on the [React UI](/docs/reference/react) adds React's and Tailwind's, as the `react` template does (see [The Vite preset](/docs/cli#the-vite-preset) and [Your own UI in any framework](/docs/guide/frameworks)). Then build:
 
 ```sh
 ifloom build
@@ -78,7 +78,7 @@ Other bundlers can make the same single file. The [esbuild](/docs/recipes/esbuil
 
 ## Saves
 
-A game decides where its saves live by picking a driver. The engine has no default, because the right answer depends on how the game ships. [`browserRunner`](/docs/browser#browserrunner), which every template uses (the React UI's [`mountGame`](/docs/react#mountgame) calls it), picks `localStorage` unless you pass another:
+A game decides where its saves live by picking a driver. The engine has no default, because the right answer depends on how the game ships. [`browserRunner`](/docs/browser#browserrunner), which every template uses (the React UI's [`mountGame`](/docs/reference/react#mountgame) calls it), picks `localStorage` unless you pass another:
 
 | Shipped as | Driver |
 |---|---|

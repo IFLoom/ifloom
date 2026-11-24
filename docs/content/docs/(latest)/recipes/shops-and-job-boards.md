@@ -93,7 +93,7 @@ The player can buy several things or apply for a job with the panel open. It clo
 
 ## Drawing it
 
-The shop's and the jobs' React UIs draw both panels for you, as a [`ShopCounter`](/docs/reference/plugins/shop#shopcounter) and a [`JobBoard`](/docs/reference/plugins/jobs#jobboard) in a dialog, when the game lists `shopUi` and `jobsUi` in [`plugins`](/docs/react/kit#the-plugins-option). In Vue, Svelte or plain JS, the templates start with a panel that shows its name, and [Drawing it](/docs/reference/panels#drawing-it) shows how to draw it by name in each.
+The shop's and the jobs' React UIs draw both panels for you, as a [`ShopCounter`](/docs/reference/plugins/shop#shopcounter) and a [`JobBoard`](/docs/reference/plugins/jobs#jobboard) in a dialog, when the game lists `shopUi` and `jobsUi` in [`plugins`](/docs/reference/react/kit#the-plugins-option). In Vue, Svelte or plain JS, the templates start with a panel that shows its name, and [Drawing it](/docs/reference/panels#drawing-it) shows how to draw it by name in each.
 
 ## Checking it
 

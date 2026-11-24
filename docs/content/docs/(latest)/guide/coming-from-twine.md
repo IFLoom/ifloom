@@ -366,7 +366,7 @@ Entities are kept in the save, can be created and removed in play, and the check
 
 SugarCube draws the UI bar, and the special passages (StoryCaption, StoryMenu, PassageHeader, PassageFooter and StoryInterface) let you add to it or replace it. IFLoom's engine draws nothing. It hands a UI a [view](/docs/reference/view) of what to show.
 
-With the `vanilla`, `vue` and `svelte` [templates](/docs/guide/frameworks), the page is yours, so you put each part where SugarCube's UI bar and passage would go. The [React UI](/docs/react) is the ready-made one, and its [layouts](/docs/react#layouts) name the parts of the screen and where they go:
+With the `vanilla`, `vue` and `svelte` [templates](/docs/guide/frameworks), the page is yours, so you put each part where SugarCube's UI bar and passage would go. The [React UI](/docs/reference/react) is the ready-made one, and its [layouts](/docs/reference/react#layouts) name the parts of the screen and where they go:
 
 ```ts fragment tab="Plain JS" tab-group="framework"
 // src/main.ts, in the vanilla template: a bar at the side and the passage beside it
@@ -464,11 +464,11 @@ import Beat from './Beat.vue'
 
 In the React UI, the layout in `src/layout.tsx` is the closest thing to arranging the UI bar:
 
-- **StoryCaption** is a part in the `Sidebar`, such as `StatList`, or a component of your own beside it. See [Layouts](/docs/react#layouts).
+- **StoryCaption** is a part in the `Sidebar`, such as `StatList`, or a component of your own beside it. See [Layouts](/docs/reference/react#layouts).
 - **StoryMenu** is the player's menu, `GameMenu`.
 - **PassageHeader and PassageFooter** are parts above and below `Scene` in the `Story`.
-- **The title and start screen** are [pages](/docs/react#pages), turned on with `pages`. [The title screen and settings](/docs/recipes/title-screen) walks through them, with a title screen of your own for the other templates.
-- **StoryInterface**, a whole interface of your own, is [your own root](/docs/react/customising#8-write-your-own-root), or any of the other templates. See [Your own UI in any framework](/docs/guide/frameworks).
+- **The title and start screen** are [pages](/docs/reference/react#pages), turned on with `pages`. [The title screen and settings](/docs/recipes/title-screen) walks through them, with a title screen of your own for the other templates.
+- **StoryInterface**, a whole interface of your own, is [your own root](/docs/reference/react/customising#8-write-your-own-root), or any of the other templates. See [Your own UI in any framework](/docs/guide/frameworks).
 
 ### The `Setting` API
 
@@ -523,7 +523,7 @@ export default defineGame({ build: () => loadGame([cafe], { id: 'corner-cafe', t
 
 The engine runs every step from the save's version up to the game's when the save loads, so a save from two versions ago runs both. See [The game's own migrations](/docs/reference/saves#the-games-own-migrations).
 
-Saving itself needs no setup. [`mountGame`](/docs/react#mountgame) keeps saves in the browser's `localStorage` and autosaves to the `auto` slot each turn. The React UI's menu saves and loads, and undo goes 50 steps back. To change any of that, pass [`RunnerOptions`](/docs/reference/runner#runneroptions) as `runner`. What should outlive a save, such as the player's settings or that they've finished the game once, goes in the [profile](/docs/reference/profile).
+Saving itself needs no setup. [`mountGame`](/docs/reference/react#mountgame) keeps saves in the browser's `localStorage` and autosaves to the `auto` slot each turn. The React UI's menu saves and loads, and undo goes 50 steps back. To change any of that, pass [`RunnerOptions`](/docs/reference/runner#runneroptions) as `runner`. What should outlive a save, such as the player's settings or that they've finished the game once, goes in the [profile](/docs/reference/profile).
 
 `Config.saves.isAllowed` is the content's [`saveable`](/docs/reference/game#saveable): a list of conditions, each with the reason the player reads, and saving is refused while one holds. The React UI greys out its Save button with that reason, and the runner skips its autosave too.
 
@@ -741,7 +741,7 @@ A datamap you'd keep in a variable becomes an entity when it's one of several th
 
 ## What's different
 
-- **No raw HTML or JavaScript in prose.** Prose is words with a small [markup](/docs/reference/prose#markup) for speech, pictures, video and sound. Anything that looks different is your UI's job, through [themes and CSS](/docs/react/customising), and anything that computes is the game's own code, in `rules`.
+- **No raw HTML or JavaScript in prose.** Prose is words with a small [markup](/docs/reference/prose#markup) for speech, pictures, video and sound. Anything that looks different is your UI's job, through [themes and CSS](/docs/reference/react/customising), and anything that computes is the game's own code, in `rules`.
 - **Content is data in TypeScript.** There's no story file to open in a Twine editor. Scenes are objects in `.ts` files, with their words written in them. You edit them in a code editor, and you can split them across as many files as you like (see [Content and packs](/docs/explanation/content-and-packs)).
 - **State is typed and declared.** Stats, kinds, entities, settings and inputs are declared before they're used. Keys in the kv store don't need declaring, but only hold a number, a string or `true`/`false`. There's no storing objects or functions in the state, because the state is the save and must survive being written out as JSON.
 - **The whole scene redraws.** There's no changing text in place after a passage is shown. A choice changes the state, and the scene is drawn again from it.

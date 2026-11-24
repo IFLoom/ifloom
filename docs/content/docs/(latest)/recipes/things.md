@@ -12,7 +12,7 @@ A thing in IFLoom is an [entity](/docs/reference/entities) that someone [holds](
 | Wear things in slots | [wardrobe](/docs/reference/plugins/wardrobe) | `wardrobe/wearable` with its slot |
 | Find things in rooms and pick them up | [places](/docs/reference/plugins/places) | nothing: put it `at` a `location:<id>` |
 
-Without any of them, the React UI's [`Inventory`](/docs/react/components#inventory) still lists what you hold from [`view.held`](/docs/reference/view#held).
+Without any of them, the React UI's [`Inventory`](/docs/reference/react/components#inventory) still lists what you hold from [`view.held`](/docs/reference/view#held).
 
 ## One thing, every plugin
 

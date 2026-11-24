@@ -26,7 +26,8 @@ import { codeOf, includesOf } from '../../../../docs/lib/snippets.ts'
  * the plugin (its `/react` subpath), so its React-only blocks may stand
  * outside a group.
  *
- * Pages under `react/` document the optional React UI, so they stay React.
+ * Pages under `reference/react/` and `how-to/react/` document the optional
+ * React UI, so they stay React.
  * Two more pages are about one framework by design: the guide's worked
  * example of a UI in plain JS (`guide/ui-from-scratch`), whose other
  * frameworks are on `guide/frameworks`, and the Next.js recipe, since Next is React.
@@ -66,7 +67,7 @@ const GROUP = 'framework'
 const DRAWING = ['React UI']
 
 /** Pages that may show a UI snippet in one framework only. */
-const ALLOWED = [/\/react\//, /\/guide\/ui-from-scratch\.md$/, /\/recipes\/next\.md$/, /\/api\//]
+const ALLOWED = [/\/(?:reference|how-to)\/react\//, /\/guide\/ui-from-scratch\.md$/, /\/recipes\/next\.md$/, /\/api\//]
 
 const IMPORTS_UI = /from\s+['"](?:@ifloom\/react|react|react-dom|vue|svelte)(?:\/[^'"]*)?['"]/
 const CALLS_UI = /\bmountGame\(|\bdocument\.(?:createElement|querySelector|getElementById)\b/

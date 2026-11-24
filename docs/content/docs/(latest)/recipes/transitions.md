@@ -4,7 +4,7 @@ description: "Fade between scenes, slide a room in, and reveal a scene's lines o
 ---
 A scene can fade in, the next room can slide in from the side, and a paragraph can wait a moment before it appears. This page shows how to ask for each in your content, how the React UI draws them, and how to draw the same hints with another framework.
 
-None of this is the engine's. How a screen moves doesn't change the game, so content writes it as [presentation hints](/docs/reference/ui-hints): a `ui` field the engine passes to the view untouched. The names on this page (`ui.transition`, `ui.reveal`) are the React UI's, listed in [Presentation hints](/docs/react/hints). Tests, `ifloom playtest` and replays ignore them.
+None of this is the engine's. How a screen moves doesn't change the game, so content writes it as [presentation hints](/docs/reference/ui-hints): a `ui` field the engine passes to the view untouched. The names on this page (`ui.transition`, `ui.reveal`) are the React UI's, listed in [Presentation hints](/docs/reference/react/hints). Tests, `ifloom playtest` and replays ignore them.
 
 ## Ask for a transition
 
@@ -26,7 +26,7 @@ Or say how it comes in and goes out separately, and how long each takes in milli
 ui: { transition: { in: 'slide-up', out: 'fade', ms: 500 } }
 ```
 
-The built-in names are `fade`, `slide-up`, `slide-left`, `zoom` and `none`, listed in [`TRANSITIONS`](/docs/react/hints#transitionname).
+The built-in names are `fade`, `slide-up`, `slide-left`, `zoom` and `none`, listed in [`TRANSITIONS`](/docs/reference/react/hints#transitionname).
 
 A place takes one too, for the room while no scene is open, so walking between places can slide:
 
@@ -71,7 +71,7 @@ A paragraph that should wait goes in a block of its own. The block's hints arriv
 
 The React UI plays all of this with no code from you. Its base styles animate each built-in name, let the scene before go out before the next comes in, and reveal the held-back lines in order, with the choices after the last one. A click on the scene, or any key, shows the rest at once.
 
-A player whose system asks for reduced motion gets every scene and every line at once. To turn transitions off for everyone, pass `motion: false` to `mountGame`, `GameShell` or `GameProvider`, beside the other [UI options](/docs/react/components#uioptions).
+A player whose system asks for reduced motion gets every scene and every line at once. To turn transitions off for everyone, pass `motion: false` to `mountGame`, `GameShell` or `GameProvider`, beside the other [UI options](/docs/reference/react/components#uioptions).
 
 To change how one looks, write CSS against the attributes the React UI sets. The new scene's `<article>` carries `data-transition-in`, the copy of the scene before carries `data-leaving` and `data-transition-out`, and each held-back group of lines carries `data-reveal`. The times are CSS variables: `--ifloom-transition-ms`, `--ifloom-reveal-at` and `--ifloom-reveal-ms`. A slower, softer fade for every reveal:
 
@@ -85,11 +85,11 @@ To change how one looks, write CSS against the attributes the React UI sets. The
 }
 ```
 
-Your rules win over the base styles, which sit in a cascade layer. [Components](/docs/react/components#scene) has the details.
+Your rules win over the base styles, which sit in a cascade layer. [Components](/docs/reference/react/components#scene) has the details.
 
 ### Your own names
 
-List a name in the content's `ui.transitionNames`, use it like a built-in one, and draw it with CSS. [`checkUiHints`](/docs/react/hints#checkuihints) reports a name that is neither built in nor listed, which catches typos.
+List a name in the content's `ui.transitionNames`, use it like a built-in one, and draw it with CSS. [`checkUiHints`](/docs/reference/react/hints#checkuihints) reports a name that is neither built in nor listed, which catches typos.
 
 ```ts
 import type { Content } from '@ifloom/engine'
@@ -140,7 +140,7 @@ This CSS draws `fade` and `slide-up`. Add rules for the other names you use:
 }
 ```
 
-These helpers read the hints, and are the same in every framework. A `transition` hint is a name or `{ in, out, ms }`, as the React UI's [`Transition`](/docs/react/hints#transition) says:
+These helpers read the hints, and are the same in every framework. A `transition` hint is a name or `{ in, out, ms }`, as the React UI's [`Transition`](/docs/reference/react/hints#transition) says:
 
 ```ts
 // src/hints.ts

@@ -118,7 +118,7 @@ A flowing scene comes to your UI as beats and choices, like any other, so a UI t
 - a beat `{ type: 'chose', label }` where each past pick was
 - a beat's `section`, the hints of the section it's in, which is how a fold's beats say they belong together: `section.fold` is the fold's words
 
-`view.scene.fresh` is the index of the first beat the last pick brought, if you want to animate only those. The [React UI](/docs/react/components#beat) draws all of this for you. To draw it yourself, add the `chose` beat and gather a fold's beats into a `<details>`:
+`view.scene.fresh` is the index of the first beat the last pick brought, if you want to animate only those. The [React UI](/docs/reference/react/components#beat) draws all of this for you. To draw it yourself, add the `chose` beat and gather a fold's beats into a `<details>`:
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/main.ts: draw the beats in runs, a fold's together.

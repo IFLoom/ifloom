@@ -15,12 +15,12 @@ The engine has no UI. Something has to draw the [view](/docs/reference/view) and
 
 ## The React UI
 
-`@ifloom/react` draws the whole game. The `react` template's `src/main.ts` is a single call to [`mountGame`](/docs/react#mountgame), which makes the runner, starts the audio player when the game has sound, and draws everything into the page. From there, these pages take it further:
+`@ifloom/react` draws the whole game. The `react` template's `src/main.ts` is a single call to [`mountGame`](/docs/reference/react#mountgame), which makes the runner, starts the audio player when the game has sound, and draws everything into the page. From there, these pages take it further:
 
-- [The React UI](/docs/react) covers `mountGame`, `GameShell`, layouts, the title screen and other pages, sound and its words.
-- [Make it your own](/docs/react/customising) goes from a theme preset (`paper`, `terminal`, `studio` or `storybook`) and a few CSS variables, through styling any part by its `data-part`, to replacing a component or the whole frame.
-- [Extending](/docs/react/extending) adds your own panels and screens.
-- [Components](/docs/react/components) lists every part, with its props.
+- [The React UI](/docs/reference/react) covers `mountGame`, `GameShell`, layouts, the title screen and other pages, sound and its words.
+- [Make it your own](/docs/reference/react/customising) goes from a theme preset (`paper`, `terminal`, `studio` or `storybook`) and a few CSS variables, through styling any part by its `data-part`, to replacing a component or the whole frame.
+- [Extending](/docs/reference/react/extending) adds your own panels and screens.
+- [Components](/docs/reference/react/components) lists every part, with its props.
 
 It needs React and Tailwind in your build. The `react` template sets both up on the `ifloom` CLI, and the [Next](/docs/recipes/next), [webpack](/docs/recipes/webpack) and [esbuild](/docs/recipes/esbuild) recipes show the same with those tools.
 
@@ -37,6 +37,6 @@ Two packages do the browser jobs every UI needs, so you don't write them again. 
 
 ## Mixing the two
 
-The React UI is made of parts, and each part is a React component reading the same view. In React you can use the parts you like inside a page of your own, such as its [`ChoiceList`](/docs/react/components#choicelist) under your own scene drawing. See [Write your own root](/docs/react/customising#8-write-your-own-root).
+The React UI is made of parts, and each part is a React component reading the same view. In React you can use the parts you like inside a page of your own, such as its [`ChoiceList`](/docs/reference/react/components#choicelist) under your own scene drawing. See [Write your own root](/docs/reference/react/customising#8-write-your-own-root).
 
-Next: [A UI from scratch](/docs/guide/ui-from-scratch), or [The React UI](/docs/react).
+Next: [A UI from scratch](/docs/guide/ui-from-scratch), or [The React UI](/docs/reference/react).

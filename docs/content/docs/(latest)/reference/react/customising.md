@@ -16,7 +16,7 @@ You can change how the React UI looks at any depth, from swapping one colour to 
 8. [Write your own root](#8-write-your-own-root)
 9. [Use another framework](#9-use-another-framework)
 
-The first three steps are CSS only. The rest are options you pass to [`mountGame`](/docs/react#mountgame) (or to [`GameShell`](/docs/react#gameshell) and [`GameProvider`](/docs/react/components#gameprovider), which take the same ones).
+The first three steps are CSS only. The rest are options you pass to [`mountGame`](/docs/reference/react#mountgame) (or to [`GameShell`](/docs/reference/react#gameshell) and [`GameProvider`](/docs/reference/react/components#gameprovider), which take the same ones).
 
 ## 1. Pick a theme preset
 
@@ -39,7 +39,7 @@ A preset is a stylesheet that changes the fonts, the sizes, the colours and the 
 
 Without a preset, you get the UI's plain default look: a system sans-serif, neutral colours and the side column on the left.
 
-Each preset is plain CSS that sets the [tokens](#2-set-tokens-and-colours) and styles a few [parts](#3-style-parts-with-plain-css). It styles the React UI's own parts and the [kit's parts](/docs/react/kit#kit_parts), never a plugin's own by name, so every plugin's UI, first-party or not, looks right in each preset. Read the one you picked in `node_modules/@ifloom/react/src/themes/` to see what it changes. It's a good starting point for a preset of your own.
+Each preset is plain CSS that sets the [tokens](#2-set-tokens-and-colours) and styles a few [parts](#3-style-parts-with-plain-css). It styles the React UI's own parts and the [kit's parts](/docs/reference/react/kit#kit_parts), never a plugin's own by name, so every plugin's UI, first-party or not, looks right in each preset. Read the one you picked in `node_modules/@ifloom/react/src/themes/` to see what it changes. It's a good starting point for a preset of your own.
 
 ## 2. Set tokens and colours
 
@@ -68,7 +68,7 @@ These are the design tokens:
 | `--leading-prose` | The line height of a scene's text. | `1.625` |
 | `--shadow-card` | The shadow under notices. The presets use it for their cards too. | A soft drop shadow |
 | `--width-prose` | The width of the story's reading column: the scene's title and prose, the choices, the inputs, the exits and the people here. Pictures and panels use the whole column. | `70ch` |
-| `--margin-prose` | Where the reading column sits when the story is wider than it, as `margin-inline`. `auto` centres it, `0 auto` keeps it to the start. [`Story`'s `align`](/docs/react/components#story) wins over it. | `auto` |
+| `--margin-prose` | Where the reading column sits when the story is wider than it, as `margin-inline`. `auto` centres it, `0 auto` keeps it to the start. [`Story`'s `align`](/docs/reference/react/components#story) wins over it. | `auto` |
 | `--width-reading` | How wide the page grows without a side column. With one, the page is as wide as the window. | `42rem` |
 | `--width-sidebar` | The side column's width on a wide screen. | `18rem` |
 | `--width-notice` | The width of the notices in the bottom corner. | `20rem` |
@@ -169,20 +169,20 @@ Some parts carry a second attribute that says more:
 | `data-who` | A `say` beat | `character` or `player`. |
 | `data-face` | An `inline-prop` | The note's face, `sticky`, `clip` or `diary`. |
 | `data-from` | Every `bubble` | `them` or `player`. The typing bubble is `them`, with `data-typing` too. |
-| `data-card`, and any hint of your own | A `group` | The section's hint, as written. See [Your own hints](/docs/react/hints#your-own-hints). |
+| `data-card`, and any hint of your own | A `group` | The section's hint, as written. See [Your own hints](/docs/reference/react/hints#your-own-hints). |
 | `data-dir` | Every `change` | `up` or `down`. With `data-stat` and, for an entity's stat, `data-of`. |
 | `data-has-sidebar` | The `page` | Present when the layout has a side column. |
 | `data-frame` | A device's `dialog` | The device's frame: `phone`, `laptop`, or a name of the game's own. |
 | `data-icon` | Every `app-icon` | The app's icon name, for a stylesheet to map to a picture. |
 | `data-layer` | Every `picture-layer` | The layer's id, when it has one. |
 | `data-hotspot` | Every `hotspot` | The hotspot's id. |
-| `data-transition-in` | The `scene` | How it comes in: a [transition name](/docs/react/hints#transitionname). Not set with motion off. |
+| `data-transition-in` | The `scene` | How it comes in: a [transition name](/docs/reference/react/hints#transitionname). Not set with motion off. |
 | `data-transition-out`, `data-leaving` | The copy of the scene before | How it goes out. |
 | `data-reveal` | Every `reveal` | How its beats come in. |
 | `data-revealed` | The `scene` | Present once the player has shown every reveal at once. |
-| `data-speaker-hue` | The `scene` | Present while the speaker has a [`hue`](/docs/react/hints#hue), which is in `--ifloom-speaker-hue`. |
+| `data-speaker-hue` | The `scene` | Present while the speaker has a [`hue`](/docs/reference/react/hints#hue), which is in `--ifloom-speaker-hue`. |
 
-A part that a plugin's UI draws carries `data-kit` too when it's like one of the [kit's parts](/docs/react/kit#kit_parts): a vendor's good, a job and an achievement are each a `card`, their names a `title`. Style the kit's part to restyle all of them at once, whatever plugin drew them:
+A part that a plugin's UI draws carries `data-kit` too when it's like one of the [kit's parts](/docs/reference/react/kit#kit_parts): a vendor's good, a job and an achievement are each a `card`, their names a `title`. Style the kit's part to restyle all of them at once, whatever plugin drew them:
 
 ```css
 [data-kit="card"] {
@@ -196,7 +196,7 @@ A part that a plugin's UI draws carries `data-kit` too when it's like one of the
 }
 ```
 
-The older identity attributes are still there too: `data-choice`, `data-stat`, `data-person`, `data-exit`, `data-thing`, `data-quest` and the rest, each holding the id of what it shows. [Components](/docs/react/components#identity-attributes) lists them all. The full list of parts is in the [reference](#the-data-part-reference) at the end of this page.
+The older identity attributes are still there too: `data-choice`, `data-stat`, `data-person`, `data-exit`, `data-thing`, `data-quest` and the rest, each holding the id of what it shows. [Components](/docs/reference/react/components#identity-attributes) lists them all. The full list of parts is in the [reference](#the-data-part-reference) at the end of this page.
 
 ### Why your CSS wins
 
@@ -224,7 +224,7 @@ const classes: Classes = {
 mountGame(module.build(), { classes })
 ```
 
-A string is merged with [tailwind-merge](https://github.com/dcastil/tailwind-merge), the same way [`cn`](/docs/react/components#cn) works. `rounded-none` replaces the button's `rounded-md`, and every other class stays. A function `(defaults) => string` is given the built-in classes as one string and returns what to use instead. Return a new string to replace them, or build on the old one.
+A string is merged with [tailwind-merge](https://github.com/dcastil/tailwind-merge), the same way [`cn`](/docs/reference/react/components#cn) works. `rounded-none` replaces the button's `rounded-md`, and every other class stays. A function `(defaults) => string` is given the built-in classes as one string and returns what to use instead. Return a new string to replace them, or build on the old one.
 
 Every part named in the [reference](#the-data-part-reference) takes classes. When several elements share a name, such as `button` or `beat`, the classes go on all of them.
 
@@ -293,7 +293,7 @@ The first-party plugins' UIs need no stylesheet of their own here either: every 
 
 ## 5. Rearrange the parts in layout.tsx
 
-The page is a component, the layout. The react and next templates start you with `src/layout.tsx`, a copy of the UI's own [`DefaultLayout`](/docs/react/components#defaultlayout), and pass it to `mountGame` as `layout`. Everything on the page is a component in it, so you rearrange the page by editing JSX:
+The page is a component, the layout. The react and next templates start you with `src/layout.tsx`, a copy of the UI's own [`DefaultLayout`](/docs/reference/react/components#defaultlayout), and pass it to `mountGame` as `layout`. Everything on the page is a component in it, so you rearrange the page by editing JSX:
 
 ```tsx
 // src/layout.tsx
@@ -326,7 +326,7 @@ export function Layout() {
 }
 ```
 
-This puts the notices at the top of the story instead of in the bottom corner, moves the inventory under the story in a section that starts folded, and leaves the quests and the wardrobe out. The regions and the default layout are on [The React UI](/docs/react#layouts). Your own components go anywhere among the built-in ones.
+This puts the notices at the top of the story instead of in the bottom corner, moves the inventory under the story in a section that starts folded, and leaves the quests and the wardrobe out. The regions and the default layout are on [The React UI](/docs/reference/react#layouts). Your own components go anywhere among the built-in ones.
 
 **Gotchas.**
 
@@ -369,13 +369,13 @@ const components: Components = { Beat: TownBeat }
 mountGame(module.build(), { components })
 ```
 
-The names you can replace are the keys of [`Components`](/docs/react/components#components): the React UI's own, such as `Game`, `Sidebar`, `Story`, `Section`, `Title`, `Clock`, `StatList`, `RoomActions`, `Scene`, `SceneHeader`, `BeatGroup`, `Fold`, `Beat`, `ChoiceButton`, `Notices`, `GameMenu`, `Inventory`, `Picture` and `Icon`, and every component a plugin's UI draws, such as `ShopCounter`, `QuestLog` and `DebugCard`, once you import that plugin's `/react`.
+The names you can replace are the keys of [`Components`](/docs/reference/react/components#components): the React UI's own, such as `Game`, `Sidebar`, `Story`, `Section`, `Title`, `Clock`, `StatList`, `RoomActions`, `Scene`, `SceneHeader`, `BeatGroup`, `Fold`, `Beat`, `ChoiceButton`, `Notices`, `GameMenu`, `Inventory`, `Picture` and `Icon`, and every component a plugin's UI draws, such as `ShopCounter`, `QuestLog` and `DebugCard`, once you import that plugin's `/react`.
 
-To change how the scene's heading, a section with ui hints or a fold looks, replace [`SceneHeader`](/docs/react/components#sceneheader), [`BeatGroup`](/docs/react/components#beatgroup) or [`Fold`](/docs/react/components#fold). The transitions, reveals and dice stay as they were, since `Scene` times them around those parts. For a scene laid out quite differently, write your own `Scene` on [`useScene`](/docs/react/components#usescene), which gives you the same timing with nothing drawn.
+To change how the scene's heading, a section with ui hints or a fold looks, replace [`SceneHeader`](/docs/reference/react/components#sceneheader), [`BeatGroup`](/docs/reference/react/components#beatgroup) or [`Fold`](/docs/reference/react/components#fold). The transitions, reveals and dice stay as they were, since `Scene` times them around those parts. For a scene laid out quite differently, write your own `Scene` on [`useScene`](/docs/reference/react/components#usescene), which gives you the same timing with nothing drawn.
 
-A replacement applies wherever the UI draws that component, not only in one spot. The `Beat` above also draws the beats in the [backlog](/docs/react/components#backlog), and a replaced `ChoiceButton` draws a scene's choices, the room's actions, and the buttons the plugins' UIs draw with it, such as each person's and the inventory's Use buttons.
+A replacement applies wherever the UI draws that component, not only in one spot. The `Beat` above also draws the beats in the [backlog](/docs/reference/react/components#backlog), and a replaced `ChoiceButton` draws a scene's choices, the room's actions, and the buttons the plugins' UIs draw with it, such as each person's and the inventory's Use buttons.
 
-[`Icon`](/docs/react/components#icon) is the smallest one to replace. It draws every icon the UI uses, such as close, back and warning, so one component swaps the UI's whole icon set:
+[`Icon`](/docs/reference/react/components#icon) is the smallest one to replace. It draws every icon the UI uses, such as close, back and warning, so one component swaps the UI's whole icon set:
 
 ```tsx
 import type { Components } from '@ifloom/react'
@@ -390,13 +390,13 @@ const components: Components = {
 
 **Gotchas.**
 
-- **Keep the `data-part`.** Spread [`usePart`](/docs/react/components#usepart)'s result onto your element, as above, so plain CSS, `classes` and `unstyled` still reach it. Add the second attributes (`data-beat`, `data-who`) yourself if your CSS uses them.
+- **Keep the `data-part`.** Spread [`usePart`](/docs/reference/react/components#usepart)'s result onto your element, as above, so plain CSS, `classes` and `unstyled` still reach it. Add the second attributes (`data-beat`, `data-who`) yourself if your CSS uses them.
 - **Define `components` once**, outside any component, as with `panels`. A new object on every render redraws everything under the provider.
 - **Don't draw the built-in one by importing it.** Inside your `Beat`, importing `Beat` from `@ifloom/react` gives you your own replacement again, and it calls itself forever. Use `Default`.
 
 ## 7. Change the shape of the page
 
-The regions are components too, so the shape of the page is yours. [`Game`](/docs/react/components#game) draws the `page` part, a grid with the side column and the story when it has a `Sidebar`, and passes `className` on. Anything inside it is drawn in order, so a header bar is a `<header>` before the story:
+The regions are components too, so the shape of the page is yours. [`Game`](/docs/reference/react/components#game) draws the `page` part, a grid with the side column and the story when it has a `Sidebar`, and passes `className` on. Anything inside it is drawn in order, so a header bar is a `<header>` before the story:
 
 ```tsx
 // src/layout.tsx
@@ -429,7 +429,7 @@ With no `Sidebar`, `Game` is one centred column, so the header sits over the sto
 
 **On a phone** (below Tailwind's `md`, 48rem), `Sidebar` draws a slim `top-bar` with the title, the clock and a `drawer-button`. The button opens the side column as a `drawer`, a dialog that slides in from the left. Focus stays inside it, Escape closes it, and it closes by itself after the player picks something, unless a dialog it opened (a phone, a section's dialog) is still open. Style it with those parts. To keep the side column as a column on phones too, leave `Sidebar` out and draw your own `<aside>` with the parts in it.
 
-**Sections** are how the side column stays short. [`Section`](/docs/react/components#section) is a titled block with three ways to show:
+**Sections** are how the side column stays short. [`Section`](/docs/reference/react/components#section) is a titled block with three ways to show:
 
 - **As it is.** A heading and its children.
 - **`collapsible`.** A button on its title folds it in place. The player's choice is remembered per `id` in the profile, so a folded section stays folded next time. `open={false}` starts it folded.
@@ -439,7 +439,7 @@ A section hides itself when nothing in it draws anything, and `when` shows it on
 
 ## 8. Write your own root
 
-For a page that isn't a side column and a story at all, give `mountGame` your own component as `layout`. Any component works. It's drawn inside the game's provider, with the sound, the text size and the pages as the default layout has them, so [`useGame`](/docs/react/components#usegame), the hooks and every built-in component work in it. `components`, `classes` and `unstyled` still apply to any built-in part you use:
+For a page that isn't a side column and a story at all, give `mountGame` your own component as `layout`. Any component works. It's drawn inside the game's provider, with the sound, the text size and the pages as the default layout has them, so [`useGame`](/docs/reference/react/components#usegame), the hooks and every built-in component work in it. `components`, `classes` and `unstyled` still apply to any built-in part you use:
 
 ```tsx
 // src/main.tsx
@@ -478,14 +478,14 @@ The menus have hooks that give you their state and actions without their look, s
 
 | Hook | What it gives you |
 |---|---|
-| [`useSaves`](/docs/react/components#usesaves) | The save slots, and saving, loading, deleting, exporting and importing them. |
-| [`useBacklog`](/docs/react/components#usebacklog) | The backlog's entries, kept current. |
-| [`useMods`](/docs/react/components#usemods) | The player's mods, and adding, toggling and removing them. |
+| [`useSaves`](/docs/reference/react/components#usesaves) | The save slots, and saving, loading, deleting, exporting and importing them. |
+| [`useBacklog`](/docs/reference/react/components#usebacklog) | The backlog's entries, kept current. |
+| [`useMods`](/docs/reference/react/components#usemods) | The player's mods, and adding, toggling and removing them. |
 | [`useDevices`](/docs/reference/plugins/devices#usedevices) | The devices in the view. |
 | [`useDevice`](/docs/reference/plugins/devices#usedevice) | Which device is out, and how to bring one out and put it away. |
-| [`useWords`](/docs/react/components#usewords) | The UI's words in the game's language. |
+| [`useWords`](/docs/reference/react/components#usewords) | The UI's words in the game's language. |
 
-Your own components can also join the override system, so the next game that uses them can restyle or replace them the same way. See [Your own components](/docs/react/extending#your-own-components-in-the-system).
+Your own components can also join the override system, so the next game that uses them can restyle or replace them the same way. See [Your own components](/docs/reference/react/extending#your-own-components-in-the-system).
 
 ## 9. Use another framework
 
@@ -505,19 +505,19 @@ What makes a game look like itself is mostly shape and type:
 
 ## The data-part reference
 
-Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-change-the-built-in-classes). Each is a [`PartKey`](/docs/react/components#partkey).
+Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-change-the-built-in-classes). Each is a [`PartKey`](/docs/reference/react/components#partkey).
 
 ### The page
 
 | Part | What it is |
 |---|---|
-| `page` | The whole page, drawn by [`Game`](/docs/react/components#game). Carries `data-has-sidebar` when there's a side column. |
+| `page` | The whole page, drawn by [`Game`](/docs/reference/react/components#game). Carries `data-has-sidebar` when there's a side column. |
 | `sidebar` | The side column, an `<aside>`. On a phone it's inside the `drawer`. |
 | `story` | The `<main>` that holds the story's parts. It carries `data-align` when `Story` has `align`. |
 | `overlay` | The box after the story that sticks to the bottom of the window, holding the notices by default. It's hidden while it's empty. |
 | `title` | The game's title. |
 | `clock` | Where the game is in time. |
-| `section` | A [`Section`](/docs/react/components#section). Carries `data-section` with its id, `data-open` (`true` or `false`) when it folds, and `data-dialog` when it opens in a dialog. |
+| `section` | A [`Section`](/docs/reference/react/components#section). Carries `data-section` with its id, `data-open` (`true` or `false`) when it folds, and `data-dialog` when it opens in a dialog. |
 | `section-title` | A section's title. |
 | `section-toggle` | The button that folds a section (with `aria-expanded`), or opens its dialog. |
 | `section-body` | What's in a section. It has `hidden` while the section is folded. |
@@ -555,9 +555,9 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `beats` | The scene's text, holding every beat. |
 | `beat` | One beat. Carries `data-beat` with its kind, and a `say` beat carries `data-who`. |
 | `speaker-name` | The name over a spoken line: the speaker's, or the player's on their own lines. Not drawn on a line that names no one. Each preset styles it, and `display: none` hides it. |
-| `reveal` | The beats from a block with a [`reveal`](/docs/react/hints#reveal) hint, which wait for it. Carries `data-reveal` with its transition. The choices waiting for the last reveal are one too, with `data-reveal-choices`. |
-| `group` | The beats of a section with any ui hint, drawn together. Carries a `data-*` attribute for each hint that's a string, a number or true/false, such as `data-card="result"`. See [Your own hints](/docs/react/hints#your-own-hints). |
-| `fold` | A section with a [`fold`](/docs/react/hints#fold) hint, as a `<details>`, inside its `group`. |
+| `reveal` | The beats from a block with a [`reveal`](/docs/reference/react/hints#reveal) hint, which wait for it. Carries `data-reveal` with its transition. The choices waiting for the last reveal are one too, with `data-reveal-choices`. |
+| `group` | The beats of a section with any ui hint, drawn together. Carries a `data-*` attribute for each hint that's a string, a number or true/false, such as `data-card="result"`. See [Your own hints](/docs/reference/react/hints#your-own-hints). |
+| `fold` | A section with a [`fold`](/docs/reference/react/hints#fold) hint, as a `<details>`, inside its `group`. |
 | `fold-summary` | The words a fold opens by. |
 | `fold-beats` | A fold's beats. |
 | `inline-mail` | A letter, from `[[ui:mail\|…]]`. |
@@ -566,10 +566,10 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `inline-prop` | A note, from `[[ui:prop\|…]]`. Carries `data-face`. |
 | `inline-mono` | Words in a monospace face, from `[[ui:mono\|…]]`. |
 | `voice-replay` | The button after a spoken line that plays its voice again. |
-| `inline-action` | An [inline action](/docs/react/components#inlineaction) in the prose, a button inside the line. Carries `data-choice`, and `data-disabled` while it's greyed out (it stays focusable, with `aria-disabled`). Each preset styles it as its own kind of link. |
-| `tip` | A [tooltip](/docs/react/components#tip)'s words in the prose, a button underlined with dots. |
+| `inline-action` | An [inline action](/docs/reference/react/components#inlineaction) in the prose, a button inside the line. Carries `data-choice`, and `data-disabled` while it's greyed out (it stays focusable, with `aria-disabled`). Each preset styles it as its own kind of link. |
+| `tip` | A [tooltip](/docs/reference/react/components#tip)'s words in the prose, a button underlined with dots. |
 | `tip-content` | The bubble with a tooltip's note, or an inline action's reason. It's put in the page's `body`, with `role="tooltip"`, and carries `data-open` while it shows. |
-| `inline-ui` | The words of an [inline piece](/docs/react/hints#inline-pieces), `[[ui:modal\|…]]` or `[[ui:image\|…]]`, a button inside the line. Carries `data-ui` with the piece's name, `aria-haspopup="dialog"` and `aria-expanded`. Each preset styles it apart from inline actions and tooltips. |
+| `inline-ui` | The words of an [inline piece](/docs/reference/react/hints#inline-pieces), `[[ui:modal\|…]]` or `[[ui:image\|…]]`, a button inside the line. Carries `data-ui` with the piece's name, `aria-haspopup="dialog"` and `aria-expanded`. Each preset styles it apart from inline actions and tooltips. |
 | `inline-modal` | The text inside the dialog a `modal` piece opens, below the `dialog-title`. |
 | `bold` | Words in [bold](/docs/reference/prose#bold-and-italics) in the prose, a `<strong>`. The presets give it their own weight or colour, and the terminal preset makes it glow. |
 | `italic` | Words in [italics](/docs/reference/prose#bold-and-italics) in the prose, an `<em>`. |
@@ -578,13 +578,13 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 
 | Part | What it is |
 |---|---|
-| `video` | A video clip, drawn by [`Video`](/docs/react/components#video). A video beat's carries `data-beat="video"`. |
-| `picture` | A [`LayeredPicture`](/docs/react/components#layeredpicture)'s box, with the picture's `aspect-ratio`. |
+| `video` | A video clip, drawn by [`Video`](/docs/reference/react/components#video). A video beat's carries `data-beat="video"`. |
+| `picture` | A [`LayeredPicture`](/docs/reference/react/components#layeredpicture)'s box, with the picture's `aspect-ratio`. |
 | `picture-layer` | One layer in it, a picture or a video. Carries `data-layer` with the layer's id. |
 | `hotspot` | A hotspot button over the picture. Carries `data-hotspot`, and `aria-disabled` when it's greyed out. |
 | `hotspot-warning` | The warning icon in a hotspot's corner. |
 | `viewer-open` | The button around a picture or a clip in the story that opens the viewer. |
-| `viewer` | The [`MediaViewer`](/docs/react/components#mediaviewer) dialog, holding the picture or the clip. |
+| `viewer` | The [`MediaViewer`](/docs/reference/react/components#mediaviewer) dialog, holding the picture or the clip. |
 | `viewer-close` | The viewer's close button. |
 
 ### Choices and buttons
@@ -593,7 +593,7 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 |---|---|
 | `choices` | A scene's list of choices, or an app's. |
 | `actions` | The room's and the game's buttons, when no scene is open. |
-| `choice` | One choice or action button. Carries `data-choice`, and `data-choice-key` with its number when [keys](/docs/react/components#keyoptions) are on. |
+| `choice` | One choice or action button. Carries `data-choice`, and `data-choice-key` with its number when [keys](/docs/reference/react/components#keyoptions) are on. |
 | `choice-key` | The number key that picks a choice, a `<kbd>` at the start of its label. Only with keys on. |
 | `choice-label` | The button's label, with the warning icon. |
 | `choice-warning` | The warning written under a button that can be pressed but would be refused. |
@@ -614,14 +614,14 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `notice-title` | Its title. |
 | `notice-text` | Its text. |
 | `notice-dismiss` | Its dismiss button. |
-| `notice-strip` | The [`NoticeStrip`](/docs/react/components#noticestrip), a `<nav>` of unread counts. |
+| `notice-strip` | The [`NoticeStrip`](/docs/reference/react/components#noticestrip), a `<nav>` of unread counts. |
 | `notice-strip-item` | One count in it, a button. Carries `data-strip`: `notices`, or the device and app as `phone/texts`. |
 
 ### Minigames
 
 | Part | What it is |
 |---|---|
-| `minigame` | The [`MinigameCard`](/docs/react/components#minigamecard), a `<section>`. Carries `data-minigame` and `data-state`. |
+| `minigame` | The [`MinigameCard`](/docs/reference/react/components#minigamecard), a `<section>`. Carries `data-minigame` and `data-state`. |
 | `minigame-title` | The minigame's title. |
 | `minigame-state` | The running state's words. |
 | `minigame-timer` | The countdown bar, a `progressbar` holding one `<span>` scaled with `transform: scaleX()`. Only while the state has a timer. |
@@ -632,8 +632,8 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 
 | Part | What it is |
 |---|---|
-| `changes` | [`Changes`](/docs/react/components#changes), the list of what the last command moved. |
-| `change` | One [`ChangeItem`](/docs/react/components#changeitem). Carries `data-stat`, `data-of` for an entity's stat, and `data-dir` (`up` or `down`). |
+| `changes` | [`Changes`](/docs/reference/react/components#changes), the list of what the last command moved. |
+| `change` | One [`ChangeItem`](/docs/reference/react/components#changeitem). Carries `data-stat`, `data-of` for an entity's stat, and `data-dir` (`up` or `down`). |
 | `change-text` | The change in the stat's format, signed: `+30 coins`. |
 | `change-label` | The entity's name, or the stat's label unless its format has words in it. |
 
@@ -641,8 +641,8 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 
 | Part | What it is |
 |---|---|
-| `timers` | [`Timers`](/docs/react/components#timers-1), a list of every running timer's countdown. |
-| `timer` | One [`Countdown`](/docs/react/components#countdown). Carries `data-timer` (its id) and `data-urgent` with a quarter or less left. |
+| `timers` | [`Timers`](/docs/reference/react/components#timers-1), a list of every running timer's countdown. |
+| `timer` | One [`Countdown`](/docs/reference/react/components#countdown). Carries `data-timer` (its id) and `data-urgent` with a quarter or less left. |
 | `timer-label` | The timer's label. |
 | `timer-bar` | The bar, a `progressbar` holding one `<span>` scaled with `transform: scaleX()`. Carries `data-urgent`. Left out with motion off. |
 | `timer-left` | The seconds left, a `timer` region. Carries `data-urgent`. |
@@ -651,7 +651,7 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 
 | Part | What it is |
 |---|---|
-| `dice` | One [`DiceRoll`](/docs/react/components#diceroll). Carries `data-roll` (its key), `data-state` (`rolling` or `settled`), and once settled `data-passed` and `data-critical`. |
+| `dice` | One [`DiceRoll`](/docs/reference/react/components#diceroll). Carries `data-roll` (its key), `data-state` (`rolling` or `settled`), and once settled `data-passed` and `data-critical`. |
 | `dice-label` | The dice thrown, such as `2d6`. |
 | `dice-faces` | The row of faces. |
 | `dice-face` | One die. Carries `data-rolling` while it tumbles, and `data-high` or `data-low` on its top face or on 1. |
@@ -659,7 +659,7 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 | `dice-total` | The total, once the dice settle. |
 | `dice-outcome` | Passed or Failed, and what it needed. Carries `data-passed`. |
 | `dice-critical` | Critical! or Fumble. |
-| `dice-overlay` | The [`DiceOverlay`](/docs/react/components#diceoverlay) over the scene, for rolls no block names. |
+| `dice-overlay` | The [`DiceOverlay`](/docs/reference/react/components#diceoverlay) over the scene, for rolls no block names. |
 | `dice-dismiss` | The overlay's close button. |
 
 ### The menu and its dialogs
@@ -728,7 +728,7 @@ Every `data-part` the UI draws. Each name is also a key for [`classes`](#4-chang
 
 ### The plugins' parts
 
-Each plugin's React UI, from its `/react`, draws parts of its own when the game lists it in [`plugins`](/docs/react/kit#the-plugins-option). Importing that `/react` adds its parts to `PartKey`, so `classes` takes them typed. Each one that's like a part of the kit carries `data-kit` too, which is what the presets style: see [Plugin UIs and the kit](/docs/react/kit#kit_parts).
+Each plugin's React UI, from its `/react`, draws parts of its own when the game lists it in [`plugins`](/docs/reference/react/kit#the-plugins-option). Importing that `/react` adds its parts to `PartKey`, so `classes` takes them typed. Each one that's like a part of the kit carries `data-kit` too, which is what the presets style: see [Plugin UIs and the kit](/docs/reference/react/kit#kit_parts).
 
 #### Places
 
@@ -992,7 +992,7 @@ From [`@ifloom/plugin-debug/react`](/docs/reference/plugins/debug#drawing-it).
 
 ### The pages
 
-These are drawn only when `pages` is on. See [Pages](/docs/react/components#pages).
+These are drawn only when `pages` is on. See [Pages](/docs/reference/react/components#pages).
 
 | Part | What it is |
 |---|---|

@@ -53,7 +53,7 @@ What each piece does:
 1. **The roll.** The [`roll` effect](/docs/reference/effects#roll) throws `2d6`, keeps the total under `skim` and records the roll. `against: 8` makes it a check that passes on 8 or more. Each try rolls afresh, and a replay rolls the same.
 2. **The link.** `[[act:skim|Try to skim a stone]]` draws the park's `skim` action in the line instead of as a button. See [Actions and tooltips in the text](/docs/recipes/inline-actions).
 3. **The outcome.** Each block's `when` reads the roll with the [`roll` condition](/docs/reference/conditions#roll): `passed`, and `critical: 'max'` for a double six. The `skimmed` key keeps them to the day of the throw, because a roll is kept until the next one under its key. Print the total in a line with `{{skim}}`.
-4. **The dice.** `ui: { dice: 'skim' }` is a [hint](/docs/react/hints#dice) for the React UI. It draws the dice just above that block, tumbling, then settled on the faces rolled, with the total and Passed or Failed. The block waits until they settle.
+4. **The dice.** `ui: { dice: 'skim' }` is a [hint](/docs/reference/react/hints#dice) for the React UI. It draws the dice just above that block, tumbling, then settled on the faces rolled, with the total and Passed or Failed. The block waits until they settle.
 
 Without a target, a roll is just a number. Leave out `against` and branch on the total with `{ kv: 'skim', gte: 10 }`.
 

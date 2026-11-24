@@ -34,8 +34,8 @@ These are the [CLI](/docs/cli)'s commands, `ifloom dev`, `build`, `check`, `play
 | `src/game.ts` | The game put together: the content in order, with the phone's first, the plugins and the rules. Its default export is the [game module](/docs/cli#the-game-module): the release build, and the `probes` the snapshot reads. |
 | `src/unlocks/supporter.ts` | The supporter content: one scene, which `ifloom build` encrypts into the page under the supporter code. The page never imports it. |
 | `.env` | The supporter code, `IFLOOM_UNLOCK_SUPPORTER`. It's public so anyone can build the showcase; a real game keeps its codes in `.env.local`, out of git. |
-| `src/main.tsx` | The page. It opens the supporter content the player's code unlocked, loads it and the player's mods over the town, makes a [runner](/docs/reference/runner) with undo, a backlog, saves, a profile and autosave, and draws it with the [React UI](/docs/react)'s `GameShell`, its title screen, its mod manager and its code box. |
-| `src/styles.css` | The React UI's stylesheet with the `storybook` [preset](/docs/react/customising#1-pick-a-theme-preset), and a sea-blue accent of its own. |
+| `src/main.tsx` | The page. It opens the supporter content the player's code unlocked, loads it and the player's mods over the town, makes a [runner](/docs/reference/runner) with undo, a backlog, saves, a profile and autosave, and draws it with the [React UI](/docs/reference/react)'s `GameShell`, its title screen, its mod manager and its code box. |
+| `src/styles.css` | The React UI's stylesheet with the `storybook` [preset](/docs/reference/react/customising#1-pick-a-theme-preset), and a sea-blue accent of its own. |
 | `public/art/` | The pictures: a portrait each for Ava and Sam, and the two photos the camera takes. Copied into the build as `art/`. |
 | `mods/fog-season.json` | An example [mod](/docs/reference/mods) for a player to add. It isn't part of the game. |
 | `vite.config.ts` | The CLI's [Vite preset](/docs/cli#the-vite-preset), and nothing else. |
@@ -43,7 +43,7 @@ These are the [CLI](/docs/cli)'s commands, `ifloom dev`, `build`, `check`, `play
 | `tests/build.test.ts` | `ifloom check`, the build check and the snapshot comparison, as tests. |
 | `snapshots/scenes.txt` | Every scene and place in three states, as `ifloom snapshot` last wrote it. It's committed. |
 
-The other examples start with one call to [`mountGame`](/docs/react#mountgame) in `src/main.ts`. Small Town writes `src/main.tsx` by hand instead, because it has to load the supporter content and the player's mods before it can make the game.
+The other examples start with one call to [`mountGame`](/docs/reference/react#mountgame) in `src/main.ts`. Small Town writes `src/main.tsx` by hand instead, because it has to load the supporter content and the player's mods before it can make the game.
 
 ## Feature by feature
 
@@ -55,7 +55,7 @@ A second lock, in `story/office.ts`, `{ id: 'no-phone', when: places.at('office'
 
 ### Inputs, and a value the prose prints
 
-`story/moving-day.ts`, `inputs`. On moving day the game asks for the cat's name with an [input](/docs/reference/inputs): `catName`, `type: 'text'`, `maxLength: 16`, offered only while `when: { kv: 'phase', is: ['arrival'] }` holds. The React UI draws it under the scene as an [`InputField`](/docs/react/components#inputfield). What the player types is kept, trimmed, in the kv key `catName`.
+`story/moving-day.ts`, `inputs`. On moving day the game asks for the cat's name with an [input](/docs/reference/inputs): `catName`, `type: 'text'`, `maxLength: 16`, offered only while `when: { kv: 'phase', is: ['arrival'] }` holds. The React UI draws it under the scene as an [`InputField`](/docs/reference/react/components#inputfield). What the player types is kept, trimmed, in the kv key `catName`.
 
 `src/rules.ts` has a [value](/docs/reference/custom#values) of the same name. It reads the kv key, or says `The cat` if nothing was typed, and the flat's prose prints it: `{{catName}} has claimed the warm spot on the sill.` Once the phase is `open`, the input is gone, and a value sent anyway is refused with `Not now.`
 
@@ -81,7 +81,7 @@ Each character's `image` in `world/cast.ts` names its `.svg` file. If it were le
 
 ### Saves, the backlog and undo
 
-`src/main.tsx`. The runner is made with `history: { depth: 50 }`, `backlog: { limit: 200 }`, `saves` on `localStorage` and `autosave: { every: 'turn' }`. Each one turns on a part of the React UI's [`GameMenu`](/docs/react/components#gamemenu) in the sidebar:
+`src/main.tsx`. The runner is made with `history: { depth: 50 }`, `backlog: { limit: 200 }`, `saves` on `localStorage` and `autosave: { every: 'turn' }`. Each one turns on a part of the React UI's [`GameMenu`](/docs/reference/react/components#gamemenu) in the sidebar:
 
 - Undo and Redo buttons
 - a Backlog of every scene shown, with the choice made in it
@@ -97,11 +97,11 @@ The town declares two [settings](/docs/reference/settings). `hints` is a play se
 
 ### Transitions and reveals
 
-`intro` in `story/moving-day.ts` and `ava.river` in `story/ava.ts`, written as the React UI's [presentation hints](/docs/react/hints). The moving-day scene has `ui: { transition: { in: 'fade', out: 'fade', ms: 500 } }`, so it fades in from the title page, and its second block has `ui: { reveal: { delay: 1200 } }`, so the line about the cat comes a moment after the first. Its Unpack choice has `ui: { transition: { in: 'slide-up', ms: 400 } }`, and the flat rises into view. By the river, the scene fades, and Ava's answer is a block of its own, `ava.river.2`, revealed with `slide-up`. The rest of the town swaps screens at once. See [Transitions](/docs/recipes/transitions).
+`intro` in `story/moving-day.ts` and `ava.river` in `story/ava.ts`, written as the React UI's [presentation hints](/docs/reference/react/hints). The moving-day scene has `ui: { transition: { in: 'fade', out: 'fade', ms: 500 } }`, so it fades in from the title page, and its second block has `ui: { reveal: { delay: 1200 } }`, so the line about the cat comes a moment after the first. Its Unpack choice has `ui: { transition: { in: 'slide-up', ms: 400 } }`, and the flat rises into view. By the river, the scene fades, and Ava's answer is a block of its own, `ava.river.2`, revealed with `slide-up`. The rest of the town swaps screens at once. See [Transitions](/docs/recipes/transitions).
 
 ### Stat bars and speakers' colours
 
-`world/stats.ts` and `world/cast.ts`. Energy has `ui: { display: 'bar' }` and charm `ui: { display: 'pips' }`, so the sidebar draws a bar and a row of pips under them. Ava has `ui: { hue: 20 }` and Sam `ui: { hue: 200 }`, so their lines come in their own colours. The tests run [`checkUiHints`](/docs/react/hints#checkuihints) over the whole town.
+`world/stats.ts` and `world/cast.ts`. Energy has `ui: { display: 'bar' }` and charm `ui: { display: 'pips' }`, so the sidebar draws a bar and a row of pips under them. Ava has `ui: { hue: 20 }` and Sam `ui: { hue: 200 }`, so their lines come in their own colours. The tests run [`checkUiHints`](/docs/reference/react/hints#checkuihints) over the whole town.
 
 ### Actions and tooltips in the text
 
@@ -305,7 +305,7 @@ The player's own post is the camera's `post` action. Its `{ 'game/postLatest': t
 
 ### Strings
 
-`src/game.ts`, `strings`. One override, `'ui.quests': 'To do'`, renames the quest list. See [Overriding](/docs/reference/strings#overriding) and the [React UI's words](/docs/react#words).
+`src/game.ts`, `strings`. One override, `'ui.quests': 'To do'`, renames the quest list. See [Overriding](/docs/reference/strings#overriding) and the [React UI's words](/docs/reference/react#words).
 
 ### Cheats and the supporter code
 

@@ -2,7 +2,7 @@
 title: "Running a game"
 description: "The engine as a library: make a runner with browserRunner or createRunner, read runner.view(), send the player's commands, redraw when it changes, and what the view holds. Works in a browser, in Node and in a test."
 ---
-Here you drive the engine directly, with no UI package in between. The code works the same in a browser, in Node and in a test, and it's what every UI, including the [React UI](/docs/react), does underneath.
+Here you drive the engine directly, with no UI package in between. The code works the same in a browser, in Node and in a test, and it's what every UI, including the [React UI](/docs/reference/react), does underneath.
 
 You'll need a game to run. The one `ifloom new` makes is enough, or the one from [Your first story](/docs/guide/first-story).
 

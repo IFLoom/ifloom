@@ -47,7 +47,7 @@ npm install
 npm run dev
 ```
 
-The default `react` template draws the game with the [React UI](/docs/react). The others draw it themselves with no React. Pick the tab you want here and the rest of the docs show the same one.
+The default `react` template draws the game with the [React UI](/docs/reference/react). The others draw it themselves with no React. Pick the tab you want here and the rest of the docs show the same one.
 
 That gives you a folder `my-story` with a two-scene game and the code that draws it. The game is in three files: `src/story/opening.ts` has the scenes and their words, `src/world/stats.ts` a stat, and `src/game.ts` puts them together. Open the address Vite prints, and keep `npm run dev` running in a terminal. The game reloads each time you save a file.
 
@@ -379,7 +379,7 @@ import './styles.css'
 mount(App, { target: document.querySelector('#root')! })
 ```
 
-Every template starts the game with [`browserRunner`](/docs/browser#browserrunner), which adds undo, saves and an autosave each chapter, and draws `runner.view()` again whenever the state changes ([Running a game](/docs/guide/running-a-game) goes through it). In the Vue and Svelte templates, `src/App.vue` or `src/App.svelte` draws the view from `runner.ts`, with a component for each part: a beat, an input, the minigame. In the React template, `src/layout.tsx` is the page and `src/styles.css` its look, and [Make it your own](/docs/react/customising) covers both.
+Every template starts the game with [`browserRunner`](/docs/browser#browserrunner), which adds undo, saves and an autosave each chapter, and draws `runner.view()` again whenever the state changes ([Running a game](/docs/guide/running-a-game) goes through it). In the Vue and Svelte templates, `src/App.vue` or `src/App.svelte` draws the view from `runner.ts`, with a component for each part: a beat, an input, the minigame. In the React template, `src/layout.tsx` is the page and `src/styles.css` its look, and [Make it your own](/docs/reference/react/customising) covers both.
 
 ## 9. Check it and playtest it
 

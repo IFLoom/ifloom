@@ -14,11 +14,11 @@ mountGame(module.build())
 [`mountGame`](#mountgame) starts the game and draws it into the page. Underneath, [`GameShell`](#gameshell) is the whole UI in one component. Every part it's made of is exported too, as are the shadcn/ui primitives it's built from, so you can:
 
 - **Use it as it is**, with your own words. That's this page.
-- **Give it a look of its own**, from a theme preset and a few CSS variables up to replacing any component. See [Make it your own](/docs/react/customising).
-- **Add your own screens**, such as a scene's bespoke panel, an app's screen or a plugin's view. See [Extending](/docs/react/extending).
-- **Lay it out your own way** in a `layout.tsx`: the side column, the story and its sections, written as JSX ([Layouts](#layouts)), or a different page altogether from the same parts ([Your own layout](/docs/react/extending#your-own-layout)).
+- **Give it a look of its own**, from a theme preset and a few CSS variables up to replacing any component. See [Make it your own](/docs/reference/react/customising).
+- **Add your own screens**, such as a scene's bespoke panel, an app's screen or a plugin's view. See [Extending](/docs/reference/react/extending).
+- **Lay it out your own way** in a `layout.tsx`: the side column, the story and its sections, written as JSX ([Layouts](#layouts)), or a different page altogether from the same parts ([Your own layout](/docs/reference/react/extending#your-own-layout)).
 
-Every component is listed, with its props, under [Components](/docs/react/components).
+Every component is listed, with its props, under [Components](/docs/reference/react/components).
 
 Nothing in the engine depends on this package. The UI only reads the [view](/docs/reference/view) and sends [commands](/docs/reference/commands) through a [runner](/docs/reference/runner), as a UI of your own would, so a game that wants Vue, Svelte or a terminal leaves it out.
 
@@ -28,8 +28,8 @@ Nothing in the engine depends on this package. The UI only reads the [view](/doc
 
 | Import | For | What's in it |
 |---|---|---|
-| `@ifloom/react` | Using the UI in a game | [`mountGame`](#mountgame), [`GameShell`](#gameshell) and [`GameProvider`](/docs/react/components#gameprovider), the layout's regions (`Game`, `Sidebar`, `Story`, `Overlay`, `Section`), every component and the hooks they read (`useGame`, `useScene`, `useWords`, ...), the options that restyle and replace them (`UiOptions`, `Components`, `Classes`, `usePart`), the pages, and [`checkUiHints`](/docs/react/hints#checkuihints). |
-| `@ifloom/react/kit` | Building components of your own | What a [plugin's UI](/docs/react/kit) is made of (`PluginUi`, `pluginKit`, `usePlugin`, the kit's parts and `overridable`), dialogs and pages that look like the UI's own (`PartDialog`, `PageHeading`), `Icon`, and the [shadcn/ui primitives](/docs/react/components#shadcnui-primitives) with `cn`. A game's own screens use it too. |
+| `@ifloom/react` | Using the UI in a game | [`mountGame`](#mountgame), [`GameShell`](#gameshell) and [`GameProvider`](/docs/reference/react/components#gameprovider), the layout's regions (`Game`, `Sidebar`, `Story`, `Overlay`, `Section`), every component and the hooks they read (`useGame`, `useScene`, `useWords`, ...), the options that restyle and replace them (`UiOptions`, `Components`, `Classes`, `usePart`), the pages, and [`checkUiHints`](/docs/reference/react/hints#checkuihints). |
+| `@ifloom/react/kit` | Building components of your own | What a [plugin's UI](/docs/reference/react/kit) is made of (`PluginUi`, `pluginKit`, `usePlugin`, the kit's parts and `overridable`), dialogs and pages that look like the UI's own (`PartDialog`, `PageHeading`), `Icon`, and the [shadcn/ui primitives](/docs/reference/react/components#shadcnui-primitives) with `cn`. A game's own screens use it too. |
 
 A game that only mounts the UI and restyles it never imports the kit. A plugin's UI imports from both.
 
@@ -75,7 +75,7 @@ import module from './game.ts'
 mountGame(module.build(), { plugins: [placesUi, questsUi, shopUi] })
 ```
 
-Each brings its panels, its words, a page or settings if it has them, and the parts the default layout places, in the order of the list. One for a plugin the game doesn't have does nothing. A plugin you leave out of the list draws nothing of ours, so you can draw it yourself: from `view.plugins.<id>`, or from the hook its UI exports, such as [`useShop`](/docs/reference/plugins/shop#useshop), which gives the same data and actions with no markup. That's as much a way to use a plugin as ours. [Plugin UIs and the kit](/docs/react/kit) has the whole of it, and each plugin's page has its React UI under **Drawing it**, beside the same thing drawn in plain JS and Vue. So does every engine page for something the player sees, such as [stats](/docs/reference/stats#drawing-it) and [notices](/docs/reference/notices#drawing-it).
+Each brings its panels, its words, a page or settings if it has them, and the parts the default layout places, in the order of the list. One for a plugin the game doesn't have does nothing. A plugin you leave out of the list draws nothing of ours, so you can draw it yourself: from `view.plugins.<id>`, or from the hook its UI exports, such as [`useShop`](/docs/reference/plugins/shop#useshop), which gives the same data and actions with no markup. That's as much a way to use a plugin as ours. [Plugin UIs and the kit](/docs/reference/react/kit) has the whole of it, and each plugin's page has its React UI under **Drawing it**, beside the same thing drawn in plain JS and Vue. So does every engine page for something the player sees, such as [stats](/docs/reference/stats#drawing-it) and [notices](/docs/reference/notices#drawing-it).
 
 ## Install
 
@@ -97,7 +97,7 @@ yarn add @ifloom/react
 bun add @ifloom/react
 ```
 
-On top of the engine, the UI needs React 19 and react-dom, and Tailwind CSS v4 with its Vite plugin, unless you use the [prebuilt stylesheet](/docs/react/customising#without-tailwind). The `react` template's `vite.config.ts` adds React's and Tailwind's Vite plugins beside the [CLI's preset](/docs/cli#the-vite-preset). Like the engine, the UI is compiled JavaScript with type declarations. Add the plugins your game uses beside it, such as `@ifloom/plugin-quests` (see [Adding one](/docs/reference/plugins#adding-one)).
+On top of the engine, the UI needs React 19 and react-dom, and Tailwind CSS v4 with its Vite plugin, unless you use the [prebuilt stylesheet](/docs/reference/react/customising#without-tailwind). The `react` template's `vite.config.ts` adds React's and Tailwind's Vite plugins beside the [CLI's preset](/docs/cli#the-vite-preset). Like the engine, the UI is compiled JavaScript with type declarations. Add the plugins your game uses beside it, such as `@ifloom/plugin-quests` (see [Adding one](/docs/reference/plugins#adding-one)).
 
 Your `tsconfig.json` needs JSX, the DOM and Vite's client types, beside the settings the [`react` template](/docs/guide/installation#whats-in-the-new-game) starts with:
 
@@ -134,7 +134,7 @@ The [CLI's preset](/docs/cli#the-vite-preset) builds one HTML file that opens fr
 @import "@ifloom/react/themes/paper.css";
 ```
 
-The UI's stylesheet imports Tailwind itself and tells it to scan the UI's components, so the first line is all the UI needs. Don't `@import "tailwindcss"` a second time. Tailwind also finds the classes in your own files, so you can use its utilities in your own components. The second line is optional and picks a theme preset. A game without Tailwind imports the prebuilt `@ifloom/react/styles.min.css` instead (see [Without Tailwind](/docs/react/customising#without-tailwind)). See [Make it your own](/docs/react/customising) for the presets and everything else you can change.
+The UI's stylesheet imports Tailwind itself and tells it to scan the UI's components, so the first line is all the UI needs. Don't `@import "tailwindcss"` a second time. Tailwind also finds the classes in your own files, so you can use its utilities in your own components. The second line is optional and picks a theme preset. A game without Tailwind imports the prebuilt `@ifloom/react/styles.min.css` instead (see [Without Tailwind](/docs/reference/react/customising#without-tailwind)). See [Make it your own](/docs/reference/react/customising) for the presets and everything else you can change.
 
 ```ts
 // src/main.ts
@@ -225,16 +225,16 @@ type MountOptions = Omit<GameShellProps, 'runner'> & {
 | `root` | `'#root'`. An element, or a selector for one. It rejects if nothing matches. |
 | `start` | A new game, `startingState(game, { seed, settings })`, with a random seed so each playthrough draws its own variants, and the player's stored play settings. |
 | `runner` | `browserRunner`'s defaults: `{ history: { depth: 50 }, saves: saves(game, localStorageDriver()), profile: profile(game, localStorageDriver()), autosave: { every: 'turn' } }`. Whatever you pass is merged over these. |
-| `pages` | Off, so the game starts straight away. `true`, or [`PagesOptions`](/docs/react/components#pagesoptions), opens on a title screen. See [Pages](#pages). |
-| `components` | None. Your own components in place of built-in ones, by name. See [Replace a component](/docs/react/customising#6-replace-a-component). |
-| `classes` | None. Tailwind classes for any part, by its `data-part` name. See [Change the built-in classes](/docs/react/customising#4-change-the-built-in-classes). |
+| `pages` | Off, so the game starts straight away. `true`, or [`PagesOptions`](/docs/reference/react/components#pagesoptions), opens on a title screen. See [Pages](#pages). |
+| `components` | None. Your own components in place of built-in ones, by name. See [Replace a component](/docs/reference/react/customising#6-replace-a-component). |
+| `classes` | None. Tailwind classes for any part, by its `data-part` name. See [Change the built-in classes](/docs/reference/react/customising#4-change-the-built-in-classes). |
 | `unstyled` | `false`. `true` drops every built-in class. |
-| `viewer` | `true`. Clicking a picture or a clip in the story opens it large in the [`MediaViewer`](/docs/react/components#mediaviewer). `false` turns that off. See [Pictures and video](#pictures-and-video). |
-| `keys` | Off. `true` turns on the keyboard shortcuts: 1 to 9 for the choices on screen, each showing its number, and Escape for the menu. [`KeyOptions`](/docs/react/components#keyoptions) adds keys of your own with `map`. A minigame's own keys work either way. |
+| `viewer` | `true`. Clicking a picture or a clip in the story opens it large in the [`MediaViewer`](/docs/reference/react/components#mediaviewer). `false` turns that off. See [Pictures and video](#pictures-and-video). |
+| `keys` | Off. `true` turns on the keyboard shortcuts: 1 to 9 for the choices on screen, each showing its number, and Escape for the menu. [`KeyOptions`](/docs/reference/react/components#keyoptions) adds keys of your own with `map`. A minigame's own keys work either way. |
 | `motion` | `true`. Scene transitions and prose reveals play. `false` shows every scene and every line at once. A player whose system asks for reduced motion gets them at once either way. |
 | `audio` | On when the game lists any tracks in [`game.audio`](/docs/reference/audio). `false` turns sound off, and an object is passed to [`startAudio`](/docs/browser/audio-player#startaudio) as its [options](/docs/browser/audio-player#audiooptions). See [Sound](#sound). |
 
-Any other option goes to `GameShell` as a prop, such as `layout`, `panels` or `mods`. `layout` takes any component, so a page that isn't a side column and a story at all is a layout too. See [Write your own root](/docs/react/customising#8-write-your-own-root).
+Any other option goes to `GameShell` as a prop, such as `layout`, `panels` or `mods`. `layout` takes any component, so a page that isn't a side column and a story at all is a layout too. See [Write your own root](/docs/reference/react/customising#8-write-your-own-root).
 
 ## GameShell
 
@@ -242,7 +242,7 @@ Any other option goes to `GameShell` as a prop, such as `layout`, `panels` or `m
 function GameShell(props: GameShellProps): JSX.Element
 ```
 
-The whole game: a [`GameProvider`](/docs/react/components#gameprovider) for the runner, the [pages](#pages) when they're on, the sound, and the layout. `mountGame` draws it for you. Render it yourself when you make the runner yourself.
+The whole game: a [`GameProvider`](/docs/reference/react/components#gameprovider) for the runner, the [pages](#pages) when they're on, the sound, and the layout. `mountGame` draws it for you. Render it yourself when you make the runner yourself.
 
 ### GameShellProps
 
@@ -273,16 +273,16 @@ type GameShellProps = {
 | Prop | Default | What it is |
 |---|---|---|
 | `runner` | | The game's [runner](/docs/reference/runner). |
-| `panels` | none | The game's own panels, by name: a scene's bespoke panel, or an app's panel section. See [Panels](/docs/react/extending#panels). |
-| `inline` | `modal`, `image`, `mail`, `prop` and `mono` | The game's own components for [UI pieces](/docs/reference/prose#ui-pieces) in its prose, `[[ui:name\|words]]`, by name, over the built-in ones. See [Inline pieces](/docs/react/hints#inline-pieces). |
+| `panels` | none | The game's own panels, by name: a scene's bespoke panel, or an app's panel section. See [Panels](/docs/reference/react/extending#panels). |
+| `inline` | `modal`, `image`, `mail`, `prop` and `mono` | The game's own components for [UI pieces](/docs/reference/prose#ui-pieces) in its prose, `[[ui:name\|words]]`, by name, over the built-in ones. See [Inline pieces](/docs/reference/react/hints#inline-pieces). |
 | `plugins` | none | The plugin UIs to draw, each from a plugin's `/react` subpath, in the order the layout places them. See [Plugins](#plugins). |
-| `sections` | the plugin UIs' | Renderers for plugin sections in apps, by plugin id, over the plugin UIs' (the messages and feed UIs draw theirs). See [Plugin sections](/docs/react/extending#plugin-sections). |
-| `mods` | none | The player's [mods](/docs/reference/mods): the store, the loader's problems, and how to restart. It turns on Mods in the player's menu. See [`ModsOption`](/docs/react/components#modsoption). |
-| `components`, `classes`, `unstyled` | none, none, `false` | How the UI looks, below the theme. See [Make it your own](/docs/react/customising). |
+| `sections` | the plugin UIs' | Renderers for plugin sections in apps, by plugin id, over the plugin UIs' (the messages and feed UIs draw theirs). See [Plugin sections](/docs/reference/react/extending#plugin-sections). |
+| `mods` | none | The player's [mods](/docs/reference/mods): the store, the loader's problems, and how to restart. It turns on Mods in the player's menu. See [`ModsOption`](/docs/reference/react/components#modsoption). |
+| `components`, `classes`, `unstyled` | none, none, `false` | How the UI looks, below the theme. See [Make it your own](/docs/reference/react/customising). |
 | `viewer` | `true` | Whether clicking a picture in the story opens it large. |
-| `keys` | `false` | Keyboard shortcuts for choices and the menu. See [`KeyOptions`](/docs/react/components#keyoptions). |
-| `motion` | `true` | Whether scene transitions and prose reveals play. See [`UiOptions`](/docs/react/components#uioptions). |
-| `layout` | [`DefaultLayout`](/docs/react/components#defaultlayout) | The page, as a component: your `layout.tsx`, or any component of your own. See [Layouts](#layouts). |
+| `keys` | `false` | Keyboard shortcuts for choices and the menu. See [`KeyOptions`](/docs/reference/react/components#keyoptions). |
+| `motion` | `true` | Whether scene transitions and prose reveals play. See [`UiOptions`](/docs/reference/react/components#uioptions). |
+| `layout` | [`DefaultLayout`](/docs/reference/react/components#defaultlayout) | The page, as a component: your `layout.tsx`, or any component of your own. See [Layouts](#layouts). |
 | `pages` | `false` | The title screen and the pages around the game. The layout is drawn on the `game` page. See [Pages](#pages). |
 | `audio` | on when the game lists any tracks in [`game.audio`](/docs/reference/audio) | `false` turns sound off, and an object is passed to [`startAudio`](/docs/browser/audio-player#startaudio) as its options. See [Sound](#sound). |
 
@@ -336,20 +336,20 @@ import { Layout } from './layout.tsx'
 mountGame(module.build(), { layout: Layout, pages: true, plugins: [] })
 ```
 
-Each [`Plugins`](/docs/react/kit#plugins) is where the plugin UIs in `plugins` put what they bring: the quests' section and the cast's People in the side column, where you are and the way out before the room's actions. Replace one with the plugin's own components, in any order, to place them yourself.
+Each [`Plugins`](/docs/reference/react/kit#plugins) is where the plugin UIs in `plugins` put what they bring: the quests' section and the cast's People in the side column, where you are and the way out before the room's actions. Replace one with the plugin's own components, in any order, to place them yourself.
 
 The regions are components:
 
-- [`Game`](/docs/react/components#game) is the page. With a `Sidebar` in it, it's a grid: the side column `--width-sidebar` wide and the story filling the rest of the window, however wide. Without one it's a single column, up to `--width-reading` wide, centred.
-- [`Sidebar`](/docs/react/components#sidebar) is the side column. Below 48rem it becomes a drawer behind a slim top bar.
-- [`Story`](/docs/react/components#story) is the main column.
-- [`Overlay`](/docs/react/components#overlay) comes after everything else and sticks to the bottom right of the window (across its width on a phone). It floats over the page while you scroll, and at the end of the page it sits after the content, so nothing is left under it.
-- [`Section`](/docs/react/components#section) is a titled part that folds (`collapsible`) or opens in a dialog (`dialog`), and shows only while its `when` condition holds.
-- [`PanelHost`](/docs/react/components#panelhost) draws the [panel](/docs/reference/panels) content opened, such as a shop's counter, in a dialog. Keep one in any layout whose content opens panels.
+- [`Game`](/docs/reference/react/components#game) is the page. With a `Sidebar` in it, it's a grid: the side column `--width-sidebar` wide and the story filling the rest of the window, however wide. Without one it's a single column, up to `--width-reading` wide, centred.
+- [`Sidebar`](/docs/reference/react/components#sidebar) is the side column. Below 48rem it becomes a drawer behind a slim top bar.
+- [`Story`](/docs/reference/react/components#story) is the main column.
+- [`Overlay`](/docs/reference/react/components#overlay) comes after everything else and sticks to the bottom right of the window (across its width on a phone). It floats over the page while you scroll, and at the end of the page it sits after the content, so nothing is left under it.
+- [`Section`](/docs/reference/react/components#section) is a titled part that folds (`collapsible`) or opens in a dialog (`dialog`), and shows only while its `when` condition holds.
+- [`PanelHost`](/docs/reference/react/components#panelhost) draws the [panel](/docs/reference/panels) content opened, such as a shop's counter, in a dialog. Keep one in any layout whose content opens panels.
 
 Each built-in part draws nothing when the game has nothing for it, and a `Section` with nothing in it hides itself. So a game without a calendar shows no clock, and one without the cast has no People button. The same layout suits a novel and a town.
 
-The layout is a React component inside the game's [`GameProvider`](/docs/react/components#gameprovider), so it can use [`useGame`](/docs/react/components#usegame) and every hook, and hold components of your own beside the built-in ones. [Layouts: sections, drawers and showing things in some rooms](/docs/recipes/layouts) shows the common changes. Each example's layout is in [Shapes of game](/docs/guide/shapes).
+The layout is a React component inside the game's [`GameProvider`](/docs/reference/react/components#gameprovider), so it can use [`useGame`](/docs/reference/react/components#usegame) and every hook, and hold components of your own beside the built-in ones. [Layouts: sections, drawers and showing things in some rooms](/docs/recipes/layouts) shows the common changes. Each example's layout is in [Shapes of game](/docs/guide/shapes).
 
 **Gotchas.**
 
@@ -380,9 +380,9 @@ mountGame(module.build(), {
 
 A plugin UI can add a page of its own: with `achievementsUi` listed, the title screen also has an Achievements button, which goes to a page listing them. List `{ ...achievementsUi, pages: undefined }` instead to leave it out, and the achievements open in a dialog.
 
-The runner exists from the start, whichever page is showing. New game replaces its state with [`runner.newGame`](/docs/reference/runner#newgame), and Continue and Load load a save into it. The player's [game menu](/docs/react/components#gamemenu) gains Settings and Title screen buttons.
+The runner exists from the start, whichever page is showing. New game replaces its state with [`runner.newGame`](/docs/reference/runner#newgame), and Continue and Load load a save into it. The player's [game menu](/docs/reference/react/components#gamemenu) gains Settings and Title screen buttons.
 
-Each button shows only when it has something to do. Continue needs a save, Settings needs a [setting](/docs/reference/settings), Credits needs `credits`, and New Game+ needs a game that has been [finished](/docs/how-to/offer-new-game-plus) and declares `carryOver`. You can also add pages of your own, and a notice the player confirms once before the title screen. [The title screen and settings](/docs/recipes/title-screen) walks through it all, and [Pages](/docs/react/components#pages) lists every option and component.
+Each button shows only when it has something to do. Continue needs a save, Settings needs a [setting](/docs/reference/settings), Credits needs `credits`, and New Game+ needs a game that has been [finished](/docs/how-to/offer-new-game-plus) and declares `carryOver`. You can also add pages of your own, and a notice the player confirms once before the title screen. [The title screen and settings](/docs/recipes/title-screen) walks through it all, and [Pages](/docs/reference/react/components#pages) lists every option and component.
 
 ## Sound
 
@@ -407,7 +407,7 @@ A spoken line with a voice, `@ava: "Morning!" [[voice:ava.morning]]`, gets a sma
 function useAudio(options?: AudioOptions & { runner?: Runner }): AudioPlayer | null
 ```
 
-`GameShell` and `mountGame` play the sound themselves, so you need `useAudio` only for a page built on a [`GameProvider`](/docs/react/components#gameprovider) of your own. It starts when the component mounts and stops when it unmounts. Inside a `GameProvider` it plays that game. Outside one, pass the `runner`. The other options go to [`startAudio`](/docs/browser/audio-player#audiooptions), and are read once, when the player starts.
+`GameShell` and `mountGame` play the sound themselves, so you need `useAudio` only for a page built on a [`GameProvider`](/docs/reference/react/components#gameprovider) of your own. It starts when the component mounts and stops when it unmounts. Inside a `GameProvider` it plays that game. Outside one, pass the `runner`. The other options go to [`startAudio`](/docs/browser/audio-player#audiooptions), and are read once, when the player starts.
 
 ```tsx given
 import { GameProvider, useAudio } from '@ifloom/react'
@@ -432,13 +432,13 @@ It returns the [player](/docs/browser/audio-player#audioplayer) once it has star
 
 The UI draws every picture and clip the engine puts in the view, with no setup:
 
-- `image` and `video` [beats](/docs/reference/prose#images) in a scene, a message or a post, through [`Beat`](/docs/react/components#beat)
-- a scene's or a place's [layered picture](/docs/reference/media#layered-pictures) with hotspots, through [`LayeredPicture`](/docs/react/components#layeredpicture)
-- a post's `video`, through [`Video`](/docs/react/components#video)
+- `image` and `video` [beats](/docs/reference/prose#images) in a scene, a message or a post, through [`Beat`](/docs/reference/react/components#beat)
+- a scene's or a place's [layered picture](/docs/reference/media#layered-pictures) with hotspots, through [`LayeredPicture`](/docs/reference/react/components#layeredpicture)
+- a post's `video`, through [`Video`](/docs/reference/react/components#video)
 
-Clips play like GIFs unless their flags say otherwise. They load and start only when they scroll into view, and pause when they scroll out. A clip with sound follows the game's mute and volume settings, as the [`Video`](/docs/react/components#video) entry explains. Pictures load lazily too.
+Clips play like GIFs unless their flags say otherwise. They load and start only when they scroll into view, and pause when they scroll out. A clip with sound follows the game's mute and volume settings, as the [`Video`](/docs/reference/react/components#video) entry explains. Pictures load lazily too.
 
-Clicking a picture or a clip in the story opens it large in the [`MediaViewer`](/docs/react/components#mediaviewer). Escape or the close button closes it. To turn that off:
+Clicking a picture or a clip in the story opens it large in the [`MediaViewer`](/docs/reference/react/components#mediaviewer). Escape or the close button closes it. To turn that off:
 
 ```ts
 import { mountGame } from '@ifloom/react'
@@ -451,7 +451,7 @@ mountGame(module.build(), { viewer: false })
 
 ## Theming
 
-The look comes from a theme preset, CSS variables for the fonts, sizes and colours, and a `data-part` attribute on every element for your own CSS. Below that you can change the built-in Tailwind classes, replace any component, or replace the page's frame. [Make it your own](/docs/react/customising) covers all of it, from the smallest change to the biggest.
+The look comes from a theme preset, CSS variables for the fonts, sizes and colours, and a `data-part` attribute on every element for your own CSS. Below that you can change the built-in Tailwind classes, replace any component, or replace the page's frame. [Make it your own](/docs/reference/react/customising) covers all of it, from the smallest change to the biggest.
 
 ```css
 @import "@ifloom/react/styles.css";
@@ -528,7 +528,7 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/do
 | `ui.closeViewer` | `Close` | |
 | `ui.menu` | `Menu` | |
 | `ui.timeLeft` | `Time left` | |
-| `ui.timerLeft` | `{seconds}s` | The seconds left on a [`Countdown`](/docs/react/components#countdown). |
+| `ui.timerLeft` | `{seconds}s` | The seconds left on a [`Countdown`](/docs/reference/react/components#countdown). |
 | `ui.diceNeeds` | `needs {against}` | `against`: the roll's target |
 | `ui.dicePassed` | `Passed` | |
 | `ui.diceFailed` | `Failed` | |
@@ -545,32 +545,32 @@ The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/do
 
 Which component uses which keys:
 
-- **[Game menu](/docs/react/components#gamemenu)**: `ui.undo` and `ui.redo`, `ui.saves`, `ui.backlog`, `ui.mods`, `ui.settings` and `ui.titlePage`, and `ui.menu` as the title of the dialog Escape opens. `ui.close` is the screen-reader label on its dialog's close button, and on every dialog's.
-- **[Stat list](/docs/react/components#statlist)**: `ui.statLevel` after a levelled stat's label, and `ui.statProgress` as the label on its bar.
-- **[Inventory](/docs/react/components#inventory)**: `ui.inventory`, and `ui.heldCount` after a thing there's more than one of.
-- **[Price tag](/docs/react/components#pricetag)**: a price's own `text`, joined by the engine's `priceSeparator` [string](/docs/reference/strings#buttons-and-labels).
-- **[Beat](/docs/react/components#beat)**: `ui.replayVoice`, the label on a spoken line's replay button, and `ui.zoom`, the label on the button around a picture or a clip that opens the viewer.
-- **[Media viewer](/docs/react/components#mediaviewer)**: `ui.closeViewer`, the label on its close button, and `ui.zoom` as its title when the picture has no alt text.
-- **[Notices](/docs/react/components#notices)**: `ui.dismiss`, the label on each notice's dismiss button, and `ui.noticesMore` and `ui.noticesFewer` on the button that shows or hides the older notices on a phone.
-- **[Notice strip](/docs/react/components#noticestrip)**: `ui.notices` on its notices count and its dialog, `ui.unread` as its label for screen readers, and `ui.allSeen` on the dialog's button.
-- **[Minigame card](/docs/react/components#minigamecard)**: `ui.timeLeft`, the label on its countdown bar. Each input's button says its `label` from the view, the engine's `minigame.<input>` [string](/docs/reference/strings#buttons-and-labels).
-- **[Dice](/docs/react/components#diceroll)**: `ui.dicePassed`, `ui.diceFailed` and `ui.diceNeeds` on a roll's outcome, `ui.diceCriticalMax` and `ui.diceCriticalMin` on a critical, `ui.diceRolled`, `ui.diceRolledPassed` and `ui.diceRolledFailed` in what a screen reader hears, and `ui.diceDismiss` on the overlay's close button.
-- **[Saves menu](/docs/react/components#savesmenu)**: `ui.saves` to `ui.missingPlugins`.
-- **[Backlog](/docs/react/components#backlog)**: `ui.backlog` to `ui.chose`.
-- **[Input fields](/docs/react/components#inputfield)**: `ui.enter`.
-- **[Mod manager](/docs/react/components#modmanager)**: `ui.mods` to `ui.modsChanged`, plus `ui.remove` from the saves menu for its Delete button. On the settings page, `ui.mods` heads its section and `ui.modsHint` is the line under it.
-- **[Title screen](/docs/react/components#titlepage)**: `ui.continue`, `ui.newGame`, `ui.newGamePlus`, `ui.load`, `ui.settings` and `ui.credits`. A page a plugin UI adds has its button labelled by its own word, such as `ui.achievements`.
-- **[Panels](/docs/react/components#panelhost)**: the built-in panels' dialogs are titled `ui.inventory` and `ui.stats`. A plugin UI's panel is titled by its own word, such as `ui.jobs`, and the shop's by the vendor's name.
-- **[Settings](/docs/react/components#settingspage), [load](/docs/react/components#loadpage) and [credits](/docs/react/components#creditspage) pages**: their headings `ui.settings`, `ui.load` and `ui.credits`, `ui.back` on their Back button, and `ui.noSettings`. The load page also uses `ui.noSaves`, `ui.brokenSave`, `ui.remove` and `ui.importSave`.
+- **[Game menu](/docs/reference/react/components#gamemenu)**: `ui.undo` and `ui.redo`, `ui.saves`, `ui.backlog`, `ui.mods`, `ui.settings` and `ui.titlePage`, and `ui.menu` as the title of the dialog Escape opens. `ui.close` is the screen-reader label on its dialog's close button, and on every dialog's.
+- **[Stat list](/docs/reference/react/components#statlist)**: `ui.statLevel` after a levelled stat's label, and `ui.statProgress` as the label on its bar.
+- **[Inventory](/docs/reference/react/components#inventory)**: `ui.inventory`, and `ui.heldCount` after a thing there's more than one of.
+- **[Price tag](/docs/reference/react/components#pricetag)**: a price's own `text`, joined by the engine's `priceSeparator` [string](/docs/reference/strings#buttons-and-labels).
+- **[Beat](/docs/reference/react/components#beat)**: `ui.replayVoice`, the label on a spoken line's replay button, and `ui.zoom`, the label on the button around a picture or a clip that opens the viewer.
+- **[Media viewer](/docs/reference/react/components#mediaviewer)**: `ui.closeViewer`, the label on its close button, and `ui.zoom` as its title when the picture has no alt text.
+- **[Notices](/docs/reference/react/components#notices)**: `ui.dismiss`, the label on each notice's dismiss button, and `ui.noticesMore` and `ui.noticesFewer` on the button that shows or hides the older notices on a phone.
+- **[Notice strip](/docs/reference/react/components#noticestrip)**: `ui.notices` on its notices count and its dialog, `ui.unread` as its label for screen readers, and `ui.allSeen` on the dialog's button.
+- **[Minigame card](/docs/reference/react/components#minigamecard)**: `ui.timeLeft`, the label on its countdown bar. Each input's button says its `label` from the view, the engine's `minigame.<input>` [string](/docs/reference/strings#buttons-and-labels).
+- **[Dice](/docs/reference/react/components#diceroll)**: `ui.dicePassed`, `ui.diceFailed` and `ui.diceNeeds` on a roll's outcome, `ui.diceCriticalMax` and `ui.diceCriticalMin` on a critical, `ui.diceRolled`, `ui.diceRolledPassed` and `ui.diceRolledFailed` in what a screen reader hears, and `ui.diceDismiss` on the overlay's close button.
+- **[Saves menu](/docs/reference/react/components#savesmenu)**: `ui.saves` to `ui.missingPlugins`.
+- **[Backlog](/docs/reference/react/components#backlog)**: `ui.backlog` to `ui.chose`.
+- **[Input fields](/docs/reference/react/components#inputfield)**: `ui.enter`.
+- **[Mod manager](/docs/reference/react/components#modmanager)**: `ui.mods` to `ui.modsChanged`, plus `ui.remove` from the saves menu for its Delete button. On the settings page, `ui.mods` heads its section and `ui.modsHint` is the line under it.
+- **[Title screen](/docs/reference/react/components#titlepage)**: `ui.continue`, `ui.newGame`, `ui.newGamePlus`, `ui.load`, `ui.settings` and `ui.credits`. A page a plugin UI adds has its button labelled by its own word, such as `ui.achievements`.
+- **[Panels](/docs/reference/react/components#panelhost)**: the built-in panels' dialogs are titled `ui.inventory` and `ui.stats`. A plugin UI's panel is titled by its own word, such as `ui.jobs`, and the shop's by the vendor's name.
+- **[Settings](/docs/reference/react/components#settingspage), [load](/docs/reference/react/components#loadpage) and [credits](/docs/reference/react/components#creditspage) pages**: their headings `ui.settings`, `ui.load` and `ui.credits`, `ui.back` on their Back button, and `ui.noSettings`. The load page also uses `ui.noSaves`, `ui.brokenSave`, `ui.remove` and `ui.importSave`.
 
 Everything else on screen comes from the view, in the game's own words: titles, prose, labels, the reasons on greyed-out buttons, warnings, price notes and the clock. Those come from the game, the engine's [strings](/docs/reference/strings) and its plugins' strings.
 
 Each plugin UI's words are on its plugin's page, and in a table it exports, such as the debug card's `DEBUG_WORDS` on the [debug plugin](/docs/reference/plugins/debug#debugui)'s page.
 
-In code, [`UiStringKey`](/docs/react/components#uistringkey-words-and-say) is one of this table's keys, and [`useWords`](/docs/react/components#usewords) reads a word for the game inside a component.
+In code, [`UiStringKey`](/docs/reference/react/components#uistringkey-words-and-say) is one of this table's keys, and [`useWords`](/docs/reference/react/components#usewords) reads a word for the game inside a component.
 
 ## Next
 
-- [Make it your own](/docs/react/customising): presets, tokens, parts, classes and replacing components.
-- [Components](/docs/react/components): every export, with its props.
-- [Extending](/docs/react/extending): your own panels, plugin sections, your own layout, and more shadcn/ui components.
+- [Make it your own](/docs/reference/react/customising): presets, tokens, parts, classes and replacing components.
+- [Components](/docs/reference/react/components): every export, with its props.
+- [Extending](/docs/reference/react/extending): your own panels, plugin sections, your own layout, and more shadcn/ui components.

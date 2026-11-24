@@ -19,7 +19,7 @@ import module from './game.ts'
 mountGame(module.build(), { plugins: [questsUi, shopUi] })
 ```
 
-`plugins` is the same on [`mountGame`](/docs/react#mountgame), [`GameShell`](/docs/react#gameshell) and [`GameProvider`](/docs/react/components#gameprovider). It's a plain list, in the order you want things placed. Nothing is found by itself: a plugin UI you don't list is never drawn.
+`plugins` is the same on [`mountGame`](/docs/reference/react#mountgame), [`GameShell`](/docs/reference/react#gameshell) and [`GameProvider`](/docs/reference/react/components#gameprovider). It's a plain list, in the order you want things placed. Nothing is found by itself: a plugin UI you don't list is never drawn.
 
 - **One for a plugin the game doesn't have does nothing.** The [debug plugin](/docs/reference/plugins/debug)'s `debugUi` can be listed in every build, and draws nothing in a release built without the plugin.
 - **The game's own go over a plugin UI's.** Your `panels`, `sections`, `inline` and `components` win over what a plugin UI brings under the same name.
@@ -39,7 +39,7 @@ mountGame(module.build(), { pages: true, plugins: [{ ...achievementsUi, pages: u
 
 ## Where the layout puts them
 
-A plugin UI's `layout` says what it places, and where. The [`DefaultLayout`](/docs/react/components#defaultlayout), and the copy of it the react and next templates give you, has a [`Plugins`](#plugins) at each spot, which draws what each listed plugin UI has for it, in the order of the list.
+A plugin UI's `layout` says what it places, and where. The [`DefaultLayout`](/docs/reference/react/components#defaultlayout), and the copy of it the react and next templates give you, has a [`Plugins`](#plugins) at each spot, which draws what each listed plugin UI has for it, in the order of the list.
 
 | Spot | Where | First-party plugin UIs that use it |
 |---|---|---|
@@ -47,7 +47,7 @@ A plugin UI's `layout` says what it places, and where. The [`DefaultLayout`](/do
 | `sidebar` | The side column, after the Stats and Carrying sections. | quests, cast (People), achievements, cheats, devices |
 | `room` | The story, after the scene and before the room's actions. | places |
 | `story` | The end of the story, after the room's actions. | cast (who is here), debug |
-| `strip` | The [`NoticeStrip`](/docs/react/components#noticestrip)'s row of counts, after the notices. | devices |
+| `strip` | The [`NoticeStrip`](/docs/reference/react/components#noticestrip)'s row of counts, after the notices. | devices |
 
 A layout of your own puts a `Plugins` wherever it likes, or draws a plugin's components itself, in any order, as [the showcase's layout](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/layout.tsx) does:
 
@@ -71,7 +71,7 @@ export function Layout() {
 }
 ```
 
-A panel, a page, a section in an app and the settings a plugin UI brings don't need a spot: [`PanelHost`](/docs/react/components#panelhost), the pages, the devices' apps and the menu draw them by name.
+A panel, a page, a section in an app and the settings a plugin UI brings don't need a spot: [`PanelHost`](/docs/reference/react/components#panelhost), the pages, the devices' apps and the menu draw them by name.
 
 ### Plugins
 
@@ -126,11 +126,11 @@ What a plugin's `/react` exports as `<id>Ui`. Every field but `id` is optional.
 | `panels` | [Panels](/docs/reference/panels) by name, which `PanelHost` draws when content opens one. See [`PluginPanel`](#pluginpanel). |
 | `layout` | Components to place, by [spot](#where-the-layout-puts-them). Each is drawn with no props. |
 | `sections` | Renderers for a plugin's section in a device's app, by that plugin's id: `messagesUi` has `messages`. This is how one plugin's UI draws inside another's without importing it. |
-| `inline` | Components for [UI pieces](/docs/react/hints#inline-pieces) in prose, by name. [`checkUiHints`](/docs/react/hints#checkuihints) knows their names when it's given the module in `plugins`. |
-| `hints` | The `ui` hints its components read, each a [`UiHint`](/docs/react/hints#uihint): its name, where content writes it and a check. `checkUiHints` checks them when it's given the module in `plugins`. |
-| `pages` | Pages it adds among the [pages around the game](/docs/react/components#pages), by id, each with a title-screen button. See [`PluginPage`](#pluginpage). A game's own page of the same id goes over it. |
+| `inline` | Components for [UI pieces](/docs/reference/react/hints#inline-pieces) in prose, by name. [`checkUiHints`](/docs/reference/react/hints#checkuihints) knows their names when it's given the module in `plugins`. |
+| `hints` | The `ui` hints its components read, each a [`UiHint`](/docs/reference/react/hints#uihint): its name, where content writes it and a check. `checkUiHints` checks them when it's given the module in `plugins`. |
+| `pages` | Pages it adds among the [pages around the game](/docs/reference/react/components#pages), by id, each with a title-screen button. See [`PluginPage`](#pluginpage). A game's own page of the same id goes over it. |
 | `settings` | Something for the settings page, such as the unlocks plugin's code box: drawn there with pages on, and behind a menu button labelled `label`, a key of its words, without them. |
-| `components` | Built-in components it draws in place of the UI's own, by name, as a game's [`components`](/docs/react/components#components) do. The calendar's UI draws its `CalendarClock` for `Clock`. |
+| `components` | Built-in components it draws in place of the UI's own, by name, as a game's [`components`](/docs/reference/react/components#components) do. The calendar's UI draws its `CalendarClock` for `Clock`. |
 | `provider` | Wraps the game, for state the module keeps beside the runner. The unlocks plugin's starts its codes on the runner. |
 
 ### PluginPanel
@@ -155,26 +155,26 @@ A panel a plugin UI draws by name. A game's own panel of the same name keeps the
 type PluginPage = { label: string; component: ComponentType; showOnTitle?: boolean }
 ```
 
-A page a plugin UI adds, as a game's [`PageDef`](/docs/react/components#pagesoptions) does, except that `label`, the title-screen button's words, is a key of the module's words. Every page added, the plugin UIs' and the game's, is in [`usePage`](/docs/react/components#usepage)`().added`.
+A page a plugin UI adds, as a game's [`PageDef`](/docs/reference/react/components#pagesoptions) does, except that `label`, the title-screen button's words, is a key of the module's words. Every page added, the plugin UIs' and the game's, is in [`usePage`](/docs/reference/react/components#usepage)`().added`.
 
 ## The kit
 
 A plugin's React UI is built from the React UI's two public entries, the same ones a game's UI uses: never a path inside the package, and never another plugin. The first-party plugins are held to that by a contract test.
 
-- **`@ifloom/react/kit`** has what only a component of your own needs: [`pluginKit`](#pluginkit), [`usePlugin`](#useplugin), `PluginUi` and its types, [`UiHint`](/docs/react/hints#uihint), the kit's parts, `overridable`, the dialog and page parts, `Icon` and the shadcn/ui primitives.
+- **`@ifloom/react/kit`** has what only a component of your own needs: [`pluginKit`](#pluginkit), [`usePlugin`](#useplugin), `PluginUi` and its types, [`UiHint`](/docs/reference/react/hints#uihint), the kit's parts, `overridable`, the dialog and page parts, `Icon` and the shadcn/ui primitives.
 - **`@ifloom/react`** has the rest, which a game's own layout uses too: `useGame`, `usePart`, `useWords`, `ChoiceButton`, `Picture`, `Section` and the other components.
 
 These are the parts a plugin UI reaches for most.
 
 | For | From `@ifloom/react/kit` | From `@ifloom/react` |
 |---|---|---|
-| The game | [`usePlugin`](#useplugin) and [`pluginKit`](#pluginkit) (a plugin's view, words and commands) | [`useGame`](/docs/react/components#usegame) (the runner, the view and `send`), [`usePluginUis`](#usepluginuis), [`useHolds`](/docs/react/components#useholds), [`usePage`](/docs/react/components#usepage), [`useProfile`](/docs/react/components#useprofile) |
-| Words | | [`useWords`](/docs/react/components#usewords) with the module's table, `Words`, `Say` |
-| Buttons and prices | [`buttonVariants`](/docs/react/components#button), [`badgeVariants`](/docs/react/components#badge) | [`ChoiceButton`](/docs/react/components#choicebutton), [`ChoiceList`](/docs/react/components#choicelist), [`PriceTag`](/docs/react/components#pricetag) |
-| Dialogs | [`PartDialog`](/docs/react/components#partdialog), [`useDialogParts`](#usedialogparts), [`Dialog`](/docs/react/components#dialog) | |
-| The page | [`PROSE`](#prose), [`PageHeading`](#pageheading-and-backbutton), [`BackButton`](#pageheading-and-backbutton), [`usePageParts`](#pageheading-and-backbutton) | [`Section`](/docs/react/components#section), [`StatGauge`](#statgauge) |
-| Parts and overrides | [`useKitPart`](#usekitpart), [`KIT_PARTS`](#kit_parts), [`KIT_LOOKS`](#kit_looks), [`KIT_LAYOUT`](#kit_layout), [`overridable`](/docs/react/components#overridable), `Override` | [`usePart`](/docs/react/components#usepart), [`OverridableComponents`](/docs/react/components#overridablecomponents-and-partnames), [`PartNames`](/docs/react/components#overridablecomponents-and-partnames) |
-| Pictures and prose | [`Icon`](/docs/react/components#icon) | [`Picture`](/docs/react/components#picture), [`Video`](/docs/react/components#video), [`Beat`](/docs/react/components#beat), [`LayeredPicture`](/docs/react/components#layeredpicture), [`assetUrl`](/docs/react/components#asseturl) |
+| The game | [`usePlugin`](#useplugin) and [`pluginKit`](#pluginkit) (a plugin's view, words and commands) | [`useGame`](/docs/reference/react/components#usegame) (the runner, the view and `send`), [`usePluginUis`](#usepluginuis), [`useHolds`](/docs/reference/react/components#useholds), [`usePage`](/docs/reference/react/components#usepage), [`useProfile`](/docs/reference/react/components#useprofile) |
+| Words | | [`useWords`](/docs/reference/react/components#usewords) with the module's table, `Words`, `Say` |
+| Buttons and prices | [`buttonVariants`](/docs/reference/react/components#button), [`badgeVariants`](/docs/reference/react/components#badge) | [`ChoiceButton`](/docs/reference/react/components#choicebutton), [`ChoiceList`](/docs/reference/react/components#choicelist), [`PriceTag`](/docs/reference/react/components#pricetag) |
+| Dialogs | [`PartDialog`](/docs/reference/react/components#partdialog), [`useDialogParts`](#usedialogparts), [`Dialog`](/docs/reference/react/components#dialog) | |
+| The page | [`PROSE`](#prose), [`PageHeading`](#pageheading-and-backbutton), [`BackButton`](#pageheading-and-backbutton), [`usePageParts`](#pageheading-and-backbutton) | [`Section`](/docs/reference/react/components#section), [`StatGauge`](#statgauge) |
+| Parts and overrides | [`useKitPart`](#usekitpart), [`KIT_PARTS`](#kit_parts), [`KIT_LOOKS`](#kit_looks), [`KIT_LAYOUT`](#kit_layout), [`overridable`](/docs/reference/react/components#overridable), `Override` | [`usePart`](/docs/reference/react/components#usepart), [`OverridableComponents`](/docs/reference/react/components#overridablecomponents-and-partnames), [`PartNames`](/docs/reference/react/components#overridablecomponents-and-partnames) |
+| Pictures and prose | [`Icon`](/docs/reference/react/components#icon) | [`Picture`](/docs/reference/react/components#picture), [`Video`](/docs/reference/react/components#video), [`Beat`](/docs/reference/react/components#beat), [`LayeredPicture`](/docs/reference/react/components#layeredpicture), [`assetUrl`](/docs/reference/react/components#asseturl) |
 
 ## Writing a plugin's UI
 
@@ -265,11 +265,11 @@ type PluginKit<Id extends string = string, W extends Words = Words> = { readonly
 function usePlugin<Id extends string, W extends Words>(kit: PluginKit<Id, W>): PluginControls<Id, W>
 ```
 
-What a component of a plugin's UI needs, inside a [`GameProvider`](/docs/react/components#gameprovider):
+What a component of a plugin's UI needs, inside a [`GameProvider`](/docs/reference/react/components#gameprovider):
 
 - `view` is the plugin's slice of the view, `view.plugins[id]`, typed as its engine side declares it in [`ViewRegistry`](/docs/reference/plugins#typed-calls-queries-and-views). It's `undefined` in a game without the plugin, and `unknown` for a plugin that declares no view type.
-- `words` says the plugin's words or the UI's by key, the game's `ui.<key>` over the English, as [`useWords`](/docs/react/components#usewords) does with the table.
-- `send` runs a command, as [`useGame`](/docs/react/components#usegame)'s does: a button's `command` from the view, or one the plugin's helpers write, such as `send(shop.buy(vendor, entity))`.
+- `words` says the plugin's words or the UI's by key, the game's `ui.<key>` over the English, as [`useWords`](/docs/reference/react/components#usewords) does with the table.
+- `send` runs a command, as [`useGame`](/docs/reference/react/components#usegame)'s does: a button's `command` from the view, or one the plugin's helpers write, such as `send(shop.buy(vendor, entity))`.
 
 For the rest of the game, the runner, the snapshot or the whole view, use `useGame` beside it.
 
@@ -288,7 +288,7 @@ type PluginViewOf<Id extends string> = Id extends keyof ViewRegistry ? ViewRegis
 
 ## Styling a plugin's UI
 
-A plugin's UI is styled the way the React UI's own parts are: by Tailwind classes on its parts, the theme's [tokens](/docs/react/customising#2-set-tokens-and-colours), and the kit's parts. The [presets](/docs/react/customising#1-pick-a-theme-preset) style the kit's parts and the tokens, and never a plugin's own parts by name, so a plugin's UI looks right in each preset as long as it marks what its parts are like.
+A plugin's UI is styled the way the React UI's own parts are: by Tailwind classes on its parts, the theme's [tokens](/docs/reference/react/customising#2-set-tokens-and-colours), and the kit's parts. The [presets](/docs/reference/react/customising#1-pick-a-theme-preset) style the kit's parts and the tokens, and never a plugin's own parts by name, so a plugin's UI looks right in each preset as long as it marks what its parts are like.
 
 - **Mark each part with what it's like**, with [`useKitPart`](#usekitpart): a vendor's good, a job and an achievement are all `card`s, their names `title`s, a line about them a `note`. Each kit part brings its own look ([`KIT_LOOKS`](#kit_looks)), so `useKitPart('card', 'forecast-day')` is boxed like every other plugin's card with no preset loaded, and a preset that rules its cards as a book's index rules every plugin's, first-party or not.
 - **Add only layout.** What you put over a kit part's look is where it sits: `useKitPart('card', 'good', 'sm:flex-row sm:items-start')` puts a good's buttons beside its words on a wider screen. [`KIT_LAYOUT`](#kit_layout) lists the layout classes the React UI's stylesheet always has. With those, `buttonVariants`, `badgeVariants`, [`PROSE`](#prose) and [`useDialogParts`](#usedialogparts), a plugin's UI needs no class of its own.
@@ -311,7 +311,7 @@ A plugin's UI is styled the way the React UI's own parts are: by Tailwind classe
 function useKitPart(kit: KitPart, name: PartKey, layout?: string, className?: string): { 'data-part': PartKey; 'data-kit': KitPart; className: string }
 ```
 
-The attributes for a part that's one of the kit's: its `data-part`, its `data-kit` and its classes. The classes are the kit part's look from [`KIT_LOOKS`](#kit_looks), then `layout` over it, then the game's [`classes`](/docs/react/components#classes) for the part, then `className`, a caller's. Where two clash, the later one wins, as in [`cn`](/docs/react/components#cn). With [`unstyled`](/docs/react/customising#unstyled) on, the look and the layout go, as every built-in class does, and `className` stays.
+The attributes for a part that's one of the kit's: its `data-part`, its `data-kit` and its classes. The classes are the kit part's look from [`KIT_LOOKS`](#kit_looks), then `layout` over it, then the game's [`classes`](/docs/reference/react/components#classes) for the part, then `className`, a caller's. Where two clash, the later one wins, as in [`cn`](/docs/reference/react/components#cn). With [`unstyled`](/docs/reference/react/customising#unstyled) on, the look and the layout go, as every built-in class does, and `className` stays.
 
 ```tsx fragment
 const day = useKitPart('card', 'forecast-day')                               // a card, as every plugin's
@@ -378,7 +378,7 @@ How each kit part looks with no preset, in the theme's tokens: the classes [`use
 | `commands` | A column of buttons with a small gap. |
 | `opener` | A small outlined button, at the start of its row. |
 | `form`, `input` | A row that wraps; a box with a border, as tall as a small button. |
-| `badge` | A secondary [badge](/docs/react/components#badge). |
+| `badge` | A secondary [badge](/docs/reference/react/components#badge). |
 | `thumb` | A 3rem square picture, rounded, cropped to fit. |
 | `label` | Muted text. |
 
@@ -404,7 +404,7 @@ The reading column's classes: as wide as `--width-prose`, placed by `--margin-pr
 function useDialogParts(extra?: string): Record<'dialog' | 'overlay' | 'title' | 'close', { 'data-part': PartKey; className: string }>
 ```
 
-The attributes for the `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close` parts every dialog of the UI is drawn with, for a [`Dialog`](/docs/react/components#dialog) of your own that should look like the rest, with `extra` classes on the dialog: the devices' UI makes a phone's narrower. [`PartDialog`](/docs/react/components#partdialog) is the whole dialog, done for you.
+The attributes for the `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close` parts every dialog of the UI is drawn with, for a [`Dialog`](/docs/reference/react/components#dialog) of your own that should look like the rest, with `extra` classes on the dialog: the devices' UI makes a phone's narrower. [`PartDialog`](/docs/reference/react/components#partdialog) is the whole dialog, done for you.
 
 ### StatGauge
 
@@ -412,7 +412,7 @@ The attributes for the `dialog`, `dialog-overlay`, `dialog-title` and `dialog-cl
 function StatGauge(props: { stat: StatView }): JSX.Element
 ```
 
-A stat's value as a bar from its `min` to its `max`, or as pips, one per point in rows of ten at most, by its [`ui.display`](/docs/react/hints#display) hint: the `<dd>` [`StatList`](/docs/react/components#statlist) draws under a stat. The cast's UI draws it under each relationship. Parts: `stat-bar`, `stat-pips` and `stat-pip`.
+A stat's value as a bar from its `min` to its `max`, or as pips, one per point in rows of ten at most, by its [`ui.display`](/docs/reference/react/hints#display) hint: the `<dd>` [`StatList`](/docs/reference/react/components#statlist) draws under a stat. The cast's UI draws it under each relationship. Parts: `stat-bar`, `stat-pips` and `stat-pip`.
 
 ### PageHeading and BackButton
 

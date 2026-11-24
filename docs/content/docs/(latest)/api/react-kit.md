@@ -11,7 +11,7 @@ Generated from the source of `@ifloom/react/kit` and its TSDoc by `npm run api-d
 
 ## BackButton
 
-Component. Explained in [Plugin UIs and the kit](/docs/react/kit#pageheading-and-backbutton).
+Component. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#pageheading-and-backbutton).
 
 Renders a page's Back button, the `page-back` part, which calls `usePage().back()`.
 
@@ -22,7 +22,7 @@ function BackButton(): JSX.Element
 
 ## Badge
 
-Component. Explained in [Components](/docs/react/components#badge).
+Component. Explained in [Components](/docs/reference/react/components#badge).
 
 Renders shadcn/ui's badge, a small rounded label in a `<span>`.
 
@@ -35,7 +35,7 @@ Uses: [`BadgeProps`](#badgeprops).
 
 ## BadgeProps
 
-Type. Explained in [Components](/docs/react/components#badgeprops).
+Type.
 
 The props of `Badge`, a `<span>`'s props and a `variant`.
 
@@ -65,7 +65,7 @@ function badgeVariants(props?: (ConfigVariants<{ variant: { default: string; sec
 
 ## Button
 
-Component. Explained in [Components](/docs/react/components#button).
+Component. Explained in [Components](/docs/reference/react/components#button).
 
 Renders shadcn/ui's button, a `<button>` styled by `buttonVariants`.
 
@@ -78,7 +78,7 @@ Uses: [`ButtonProps`](#buttonprops).
 
 ## ButtonProps
 
-Type. Explained in [Components](/docs/react/components#buttonprops).
+Type.
 
 The props of `Button`, a `<button>`'s props with a `variant`, a `size` and `asChild`.
 
@@ -112,7 +112,7 @@ function buttonVariants(props?: (ConfigVariants<{ variant: { default: string; se
 
 ## Card
 
-Component. Explained in [Components](/docs/react/components#card).
+Component. Explained in [Components](/docs/reference/react/components#card).
 
 Renders shadcn/ui's card, a bordered `<div>` on the card colour.
 
@@ -178,7 +178,7 @@ function CardTitle(props: ComponentProps<'h3'>): JSX.Element
 
 ## cn
 
-Function. Explained in [Components](/docs/react/components#cn).
+Function. Explained in [Components](/docs/reference/react/components#cn).
 
 Returns class names joined into one string, a later Tailwind class winning over an earlier one that conflicts. It's shadcn/ui's `cn`.
 
@@ -188,7 +188,7 @@ function cn(...inputs: ClassValue[]): string
 
 ## Dialog
 
-Component. Explained in [Components](/docs/react/components#dialog).
+Component. Explained in [Components](/docs/reference/react/components#dialog).
 
 Renders a dialog's root, Radix's `Dialog.Root`, which holds whether the dialog is open.
 
@@ -221,7 +221,7 @@ Uses: [`DialogContentProps`](#dialogcontentprops).
 
 ## DialogContentProps
 
-Type. Explained in [Components](/docs/react/components#dialogcontentprops).
+Type.
 
 The props of `DialogContent`, Radix's `Dialog.Content` props with the options below.
 
@@ -289,7 +289,7 @@ function DialogTrigger(props: DialogTriggerProps & RefAttributes<HTMLButtonEleme
 
 ## HintCheckContext
 
-Type. Explained in [Presentation hints](/docs/react/hints#hintcheckcontext).
+Type. Explained in [Presentation hints](/docs/reference/react/hints#hintcheckcontext).
 
 The context a `UiHint`'s check receives, with the game, the target the hint is on and the game's transition names.
 
@@ -312,7 +312,7 @@ type HintCheckContext = {
 
 ## Icon
 
-Const. Explained in [Components](/docs/react/components#icon).
+Const. Explained in [Components](/docs/reference/react/components#icon).
 
 Renders one of the UI's icons by name, with `label` as its accessible name. Replace `Icon` in `components` to use
 your own set everywhere.
@@ -326,7 +326,7 @@ Uses: [`IconName`](#iconname).
 
 ## IconName
 
-Type. Explained in [Components](/docs/react/components#iconname).
+Type.
 
 The name of an icon the UI renders, named by its use.
 
@@ -337,7 +337,7 @@ type IconName = 'close' | 'back' | 'warning' | 'voice' | 'zoom' | 'menu' | 'chev
 
 ## KIT_LAYOUT
 
-Const. Explained in [Plugin UIs and the kit](/docs/react/kit#kit_layout).
+Const. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#kit_layout).
 
 The layout classes the React UI's built stylesheet always has, for laying out a plugin's parts. A class not listed
 here may be missing from `styles.min.css`.
@@ -355,7 +355,7 @@ const KIT_LAYOUT: readonly ['flex', 'inline-flex', 'grid', 'contents', 'hidden',
 
 ## KIT_LOOKS
 
-Const. Explained in [Plugin UIs and the kit](/docs/react/kit#kit_looks).
+Const. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#kit_looks).
 
 The Tailwind classes each kit part has with no preset, in the theme's tokens, which `useKitPart` starts from. A preset
 restyles them by `data-kit`, and a game by `classes` or its own CSS.
@@ -372,7 +372,7 @@ Uses: [`KitPart`](#kitpart).
 
 ## KIT_PARTS
 
-Const. Explained in [Plugin UIs and the kit](/docs/react/kit#kit_parts).
+Const. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#kit_parts).
 
 The kit's parts, the sorts of part any component can mark itself as with `data-kit` beside its own `data-part`. A
 vendor's goods, a job and an achievement are all `card`s.
@@ -401,7 +401,7 @@ const KIT_PARTS: readonly ['card', 'item', 'title', 'heading', 'note', 'meter', 
 
 ## KitPart
 
-Type. Explained in [Plugin UIs and the kit](/docs/react/kit#kitpart).
+Type. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#kitpart).
 
 The name of a kit part in `KIT_PARTS`.
 
@@ -412,7 +412,7 @@ type KitPart = (typeof KIT_PARTS)[number]
 
 ## overridable
 
-Function. Explained in [Components](/docs/react/components#overridable).
+Function. Explained in [Components](/docs/reference/react/components#overridable).
 
 Returns a component that renders `Default`, or the game's replacement registered under `name` in `components`. Every
 component the UI exports is one.
@@ -426,7 +426,7 @@ Uses: [`OverridableComponents`](/docs/api/react#overridablecomponents).
 
 ## Override
 
-Type. Explained in [Components](/docs/react/components#override).
+Type. Explained in [Components](/docs/reference/react/components#override).
 
 A component that replaces a built-in one. It gets the same props, and the built-in component as `Default`.
 
@@ -437,7 +437,7 @@ type Override<P> = ComponentType<P & { Default: ComponentType<P> }>
 
 ## PageHeading
 
-Component. Explained in [Plugin UIs and the kit](/docs/react/kit#pageheading-and-backbutton).
+Component. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#pageheading-and-backbutton).
 
 Renders a page's heading, the `page-heading` part, as the built-in pages have. A page a plugin or a game adds uses it too.
 
@@ -448,7 +448,7 @@ function PageHeading(props: { children: ReactNode }): JSX.Element
 
 ## PartDialog
 
-Component. Explained in [Components](/docs/react/components#partdialog).
+Component. Explained in [Components](/docs/reference/react/components#partdialog).
 
 Renders a dialog with the UI's `dialog` parts, open while `open` is true and titled `title`. It calls `onClose` when
 the player closes it.
@@ -462,7 +462,7 @@ function PartDialog(props: { open: boolean; onClose: () => void; title: string; 
 
 ## PluginControls
 
-Type. Explained in [Plugin UIs and the kit](/docs/react/kit#plugincontrols-and-pluginviewof).
+Type. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#plugincontrols-and-pluginviewof).
 
 The plugin's view, words and `send` that `usePlugin` returns to a component.
 
@@ -483,7 +483,7 @@ type PluginControls<Id extends string, W extends Words> = {
 
 ## PluginKit
 
-Type. Explained in [Plugin UIs and the kit](/docs/react/kit#pluginkit-1).
+Type. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#pluginkit-1).
 
 A plugin UI's id and words, declared once with `pluginKit`. Spread it into the `PluginUi` and pass it to
 `usePlugin` in each component, so every component reads the same words and a typed view.
@@ -503,7 +503,7 @@ type PluginKit<Id extends string = string, W extends Words = Words> = {
 
 ## pluginKit
 
-Function. Explained in [Plugin UIs and the kit](/docs/react/kit#pluginkit).
+Function. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#pluginkit).
 
 Returns the `PluginKit` for a plugin's id and its words, for `usePlugin` and the UI's `PluginUi`. The
 words are empty if left out.
@@ -521,7 +521,7 @@ Uses: [`Words`](/docs/api/react#words), [`PluginKit`](#pluginkit).
 
 ## PluginPage
 
-Type. Explained in [Plugin UIs and the kit](/docs/react/kit#pluginpage).
+Type. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#pluginpage).
 
 A page a plugin UI adds among the pages around the game, as a game's `PageDef` does.
 
@@ -542,7 +542,7 @@ type PluginPage = {
 
 ## PluginPanel
 
-Type. Explained in [Plugin UIs and the kit](/docs/react/kit#pluginpanel).
+Type. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#pluginpanel).
 
 A panel a plugin UI renders by name, which content opens with the `panel` effect.
 
@@ -561,7 +561,7 @@ type PluginPanel = {
 
 ## PluginUi
 
-Type. Explained in [Plugin UIs and the kit](/docs/react/kit#pluginui).
+Type. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#pluginui).
 
 A plugin's React UI, which its `/react` subpath exports (`shopUi`) for a game's `plugins` list. Every field but `id`
 is optional.
@@ -602,7 +602,7 @@ type PluginUi = {
 
 ## PluginViewOf
 
-Type. Explained in [Plugin UIs and the kit](/docs/react/kit#plugincontrols-and-pluginviewof).
+Type. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#plugincontrols-and-pluginviewof).
 
 The type of a plugin's slice of the view, `view.plugins[id]`, by the plugin's id. It's the plugin's entry in the
 engine's `ViewRegistry`, or `unknown` for a plugin that declares none.
@@ -616,7 +616,7 @@ Uses: [`ViewRegistry`](/docs/api/engine#viewregistry).
 
 ## PROSE
 
-Const. Explained in [Plugin UIs and the kit](/docs/react/kit#prose).
+Const. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#prose).
 
 The Tailwind classes for the story's reading column, as wide as `--width-prose` and placed by `--margin-prose`. The
 column is centred unless `Story`'s `align` moves it.
@@ -631,7 +631,7 @@ const PROSE: 'w-full max-w-(--width-prose) mx-(--margin-prose)'
 
 ## ScrollArea
 
-Component. Explained in [Components](/docs/react/components#scrollarea).
+Component. Explained in [Components](/docs/reference/react/components#scrollarea).
 
 Renders shadcn/ui's scroll area, a box that scrolls its children vertically with a thin styled scrollbar.
 
@@ -641,7 +641,7 @@ function ScrollArea(props: ScrollAreaProps & RefAttributes<HTMLDivElement>): JSX
 
 ## Separator
 
-Component. Explained in [Components](/docs/react/components#separator).
+Component. Explained in [Components](/docs/reference/react/components#separator).
 
 Renders shadcn/ui's separator, a one-pixel line. It's horizontal and decorative unless the props say otherwise.
 
@@ -651,7 +651,7 @@ function Separator(props: SeparatorProps & RefAttributes<HTMLDivElement>): JSX.E
 
 ## Tabs
 
-Component. Explained in [Components](/docs/react/components#tabs).
+Component. Explained in [Components](/docs/reference/react/components#tabs).
 
 Renders a set of tabs, Radix's `Tabs.Root`, which holds the open tab's value.
 
@@ -691,7 +691,7 @@ function TabsTrigger(props: TabsTriggerProps & RefAttributes<HTMLButtonElement>)
 
 ## Tooltip
 
-Component. Explained in [Components](/docs/react/components#tooltip).
+Component. Explained in [Components](/docs/reference/react/components#tooltip).
 
 Renders a tooltip's root, Radix's `Tooltip.Root`, which holds whether it's open.
 
@@ -731,7 +731,7 @@ function TooltipTrigger(props: TooltipTriggerProps & RefAttributes<HTMLButtonEle
 
 ## UiHint
 
-Type. Explained in [Presentation hints](/docs/react/hints#uihint).
+Type. Explained in [Presentation hints](/docs/reference/react/hints#uihint).
 
 A `ui` hint a UI reads, declared once with its name, its targets and a check of its value. `checkUiHints` reports a
 hint that no declaration names for its target, and runs each declaration's check.
@@ -755,7 +755,7 @@ type UiHint = {
 
 ## useDialogParts
 
-Function. Explained in [Plugin UIs and the kit](/docs/react/kit#usedialogparts).
+Function. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#usedialogparts).
 
 Returns the attributes for a dialog's `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close` parts, with
 `extra` classes on the dialog. Every dialog of the UI uses them, so they all look alike.
@@ -769,7 +769,7 @@ Uses: [`PartKey`](/docs/api/react#partkey).
 
 ## useKitPart
 
-Function. Explained in [Plugin UIs and the kit](/docs/react/kit#usekitpart).
+Function. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#usekitpart).
 
 Returns the `data-part`, `data-kit` and `className` attributes for a part marked as one of the kit's. The game's
 `unstyled` option drops the kit's look and `layout`, as it drops every built-in class.
@@ -801,7 +801,7 @@ Uses: [`PartKey`](/docs/api/react#partkey).
 
 ## usePlugin
 
-Function. Explained in [Plugin UIs and the kit](/docs/react/kit#useplugin).
+Function. Explained in [Plugin UIs and the kit](/docs/reference/react/kit#useplugin).
 
 Returns a plugin's view, words and `send` from the running game, for a component of the plugin's UI. It re-renders
 whenever the view changes.

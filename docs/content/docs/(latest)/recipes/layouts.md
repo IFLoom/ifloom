@@ -2,11 +2,11 @@
 title: "Layouts: sections, drawers and showing things in some rooms"
 description: "Arrange the page in layout.tsx: sections that fold or open in a dialog, the side column as a drawer on phones, parts shown only in some rooms, panels opened from content, and where the story's text sits."
 ---
-The page's layout lives in one file. In the React UI it's `src/layout.tsx`, a component made of regions (`Game`, `Sidebar`, `Story`, `Overlay`) with the parts inside them, passed to `mountGame` as `layout`. The vue, svelte and vanilla templates have the same regions in their own markup: `src/Layout.vue`, `src/Layout.svelte` and `src/layout.ts`. This page shows the changes most games make. [The React UI](/docs/react#layouts) has the whole default layout.
+The page's layout lives in one file. In the React UI it's `src/layout.tsx`, a component made of regions (`Game`, `Sidebar`, `Story`, `Overlay`) with the parts inside them, passed to `mountGame` as `layout`. The vue, svelte and vanilla templates have the same regions in their own markup: `src/Layout.vue`, `src/Layout.svelte` and `src/layout.ts`. This page shows the changes most games make. [The React UI](/docs/reference/react#layouts) has the whole default layout.
 
 ## Sections that fold
 
-A long side column is easier to read when the player can fold away what they don't need. In React, wrap the parts in a [`Section`](/docs/react/components#section) with `collapsible`. The player's choice is kept in the profile, per `id`, so a folded section stays folded next time. The other templates use a `<details>`, which folds with no code.
+A long side column is easier to read when the player can fold away what they don't need. In React, wrap the parts in a [`Section`](/docs/reference/react/components#section) with `collapsible`. The player's choice is kept in the profile, per `id`, so a folded section stays folded next time. The other templates use a `<details>`, which folds with no code.
 
 ```ts fragment tab="Plain JS" tab-group="framework"
 // src/main.ts, with section() from the vanilla template's src/layout.ts
@@ -164,7 +164,7 @@ const dialog = ref<HTMLDialogElement | null>(null)
 
 ## Showing something only in some rooms
 
-A wardrobe is something you look in at home. To show a section only in some rooms, give it `when`, any [condition](/docs/reference/conditions) content could write. [`When`](/docs/react/components#when) does the same for anything else, and [`useHolds`](/docs/react/components#useholds) answers in a hook. They read the state and change nothing, so saves and replays aren't affected. In the other frameworks, ask the engine's [`holds`](/docs/reference/conditions#holds) when you draw.
+A wardrobe is something you look in at home. To show a section only in some rooms, give it `when`, any [condition](/docs/reference/conditions) content could write. [`When`](/docs/reference/react/components#when) does the same for anything else, and [`useHolds`](/docs/reference/react/components#useholds) answers in a hook. They read the state and change nothing, so saves and replays aren't affected. In the other frameworks, ask the engine's [`holds`](/docs/reference/conditions#holds) when you draw.
 
 ```ts fragment tab="Plain JS" tab-group="framework"
 import { holds } from '@ifloom/engine'
@@ -308,13 +308,13 @@ const flat = places.location({
 })
 ```
 
-The React UI's [`PanelHost`](/docs/react/components#panelhost) draws the built-in `wardrobe`, `inventory`, `quests`, `people`, `stats`, `statuses`, `achievements`, `shop` and `jobs` panels, and a game's own `panels` of the same name go over them. Keep a `PanelHost` in your layout. In the prose, `[[act:wardrobe|the wardrobe]]` turns words into a button for the same action (see [Inline actions](/docs/recipes/inline-actions)). The other frameworks read `view.panel` and draw what they like for each name, as the templates' `Panel` does. [Opening a shop or a job board from anywhere](/docs/recipes/shops-and-job-boards) shows the effect in every kind of content.
+The React UI's [`PanelHost`](/docs/reference/react/components#panelhost) draws the built-in `wardrobe`, `inventory`, `quests`, `people`, `stats`, `statuses`, `achievements`, `shop` and `jobs` panels, and a game's own `panels` of the same name go over them. Keep a `PanelHost` in your layout. In the prose, `[[act:wardrobe|the wardrobe]]` turns words into a button for the same action (see [Inline actions](/docs/recipes/inline-actions)). The other frameworks read `view.panel` and draw what they like for each name, as the templates' `Panel` does. [Opening a shop or a job board from anywhere](/docs/recipes/shops-and-job-boards) shows the effect in every kind of content.
 
 ## Where the story's text sits
 
 On a wide screen the story is much wider than a comfortable line of text. The React UI keeps the scene's title, its prose, the choices, the inputs, the exits and the people here to a reading column `--width-prose` wide, and centres that column in the story. Pictures, a place's layered picture and panels still use the whole width.
 
-To keep the column to the start of the story instead, give [`Story`](/docs/react/components#story) `align="start"`. The vue, svelte and vanilla templates keep their text to the start already, and a few lines in `src/styles.css` centre it:
+To keep the column to the start of the story instead, give [`Story`](/docs/reference/react/components#story) `align="start"`. The vue, svelte and vanilla templates keep their text to the start already, and a few lines in `src/styles.css` centre it:
 
 ```css tab="Plain JS" tab-group="framework"
 /* src/styles.css: the story's text in a column in the middle, as the React UI draws it */
@@ -368,7 +368,7 @@ export function Layout() {
 }
 ```
 
-In the React UI you can also leave the layout alone and set the [`--margin-prose`](/docs/react/customising#2-set-tokens-and-colours) token, which is the column's `margin-inline`. That suits a preset or a game's stylesheet. `auto` centres the column and `0 auto` keeps it to the start. An `align` on `Story` wins over the token.
+In the React UI you can also leave the layout alone and set the [`--margin-prose`](/docs/reference/react/customising#2-set-tokens-and-colours) token, which is the column's `margin-inline`. That suits a preset or a game's stylesheet. `auto` centres the column and `0 auto` keeps it to the start. An `align` on `Story` wins over the token.
 
 ```css
 :root {

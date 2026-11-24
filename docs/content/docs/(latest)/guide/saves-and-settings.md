@@ -141,7 +141,7 @@ const result = runner.setSetting('textSize', 'large')
 if (!result.ok) showMessage(result.reason)
 ```
 
-The React UI does that copy for you: name the setting in the game's [`ui.settings`](/docs/react/hints#settings) hint, and it sizes the page by it. It switches pictures off the same way.
+The React UI does that copy for you: name the setting in the game's [`ui.settings`](/docs/reference/react/hints#settings) hint, and it sizes the page by it. It switches pictures off the same way.
 
 The snapshot's `settings` is the same object until a value changes, so you can read it while you draw. `setSetting` checks the value against the declaration. A play setting goes through the game as a command, so it's logged and replays the same. A ui setting is written to the profile, and needs a runner made with one. `browserRunner` has one.
 

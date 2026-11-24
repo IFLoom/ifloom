@@ -41,14 +41,14 @@ yarn add --dev @ifloom/cli
 bun add --dev @ifloom/cli
 ```
 
-`@ifloom/cli` brings Vite and `vite-plugin-singlefile` as its dependencies. It knows no UI framework: your game lists its framework's Vite plugin itself (React's and Tailwind's for the [React UI](/docs/react)) and adds it in `vite.config.ts` (see [The Vite preset](#the-vite-preset)).
+`@ifloom/cli` brings Vite and `vite-plugin-singlefile` as its dependencies. It knows no UI framework: your game lists its framework's Vite plugin itself (React's and Tailwind's for the [React UI](/docs/reference/react)) and adds it in `vite.config.ts` (see [The Vite preset](#the-vite-preset)).
 
 To use a different version of Vite or `vite-plugin-singlefile`:
 
 - **Inside the CLI's range,** such as a newer Vite 8.x: add it to your own `package.json`. Your package manager uses your version, because it satisfies the CLI's range.
 - **Outside the range:** force it with npm's [`overrides`](https://docs.npmjs.com/cli/configuring-npm/package-json#overrides) (`pnpm.overrides` in pnpm). It may not work.
 
-Tailwind and your framework's Vite plugin are your game's own dependencies, so you pick their versions. The React UI's Tailwind source is written for Tailwind 4. With another version, or none, import the [prebuilt stylesheet](/docs/react/customising#without-tailwind) instead.
+Tailwind and your framework's Vite plugin are your game's own dependencies, so you pick their versions. The React UI's Tailwind source is written for Tailwind 4. With another version, or none, import the [prebuilt stylesheet](/docs/reference/react/customising#without-tailwind) instead.
 
 Then add scripts to your `package.json`. These are Small Town's:
 
@@ -85,7 +85,7 @@ npm create ifloom@latest ifloom-plugin-weather -- --template plugin
 
 | Template | What you get |
 |---|---|
-| `react` | A two-scene game, its scenes in `src/story/opening.ts` and its stat in `src/world/stats.ts` with `src/game.ts` putting them together, drawn with the [React UI](/docs/react) in its reading layout, opening on a [title screen](/docs/recipes/title-screen), with React's and Tailwind's Vite plugins in its `vite.config.ts`. The default. |
+| `react` | A two-scene game, its scenes in `src/story/opening.ts` and its stat in `src/world/stats.ts` with `src/game.ts` putting them together, drawn with the [React UI](/docs/reference/react) in its reading layout, opening on a [title screen](/docs/recipes/title-screen), with React's and Tailwind's Vite plugins in its `vite.config.ts`. The default. |
 | `vanilla` | The same game drawn with plain DOM and no framework. |
 | `vue` | The same game drawn with Vue 3 single-file components, with `@vitejs/plugin-vue` in its `vite.config.ts` and a `typecheck` script that runs `vue-tsc`. |
 | `svelte` | The same game drawn with Svelte 5 components, with `@sveltejs/vite-plugin-svelte` in its `vite.config.ts` and a `typecheck` script that runs `svelte-check`. |
@@ -97,7 +97,7 @@ npm create ifloom@latest ifloom-plugin-weather -- --template plugin
 
 The `vanilla`, `vue` and `svelte` templates draw the scene, its choices with the reason one is greyed out, inputs, stats and a running minigame, and play sound with `@ifloom/audio`. Every game template has the same game in the same files, laid out as [Organising a game](/docs/guide/organising) explains. The three share it and `src/styles.css`, and run a minigame's clock and the keyboard with [`@ifloom/browser`](/docs/browser). [Your own UI in any framework](/docs/guide/frameworks) walks through them.
 
-`--theme` picks the [React UI's preset](/docs/react/customising#1-pick-a-theme-preset): `paper`, `terminal`, `studio` or `storybook`. It goes in `src/styles.css` as an `@import` under the UI's stylesheet, and you can change it there later. Without `--theme`, a `react` or `next` game gets one of the four at random, so two new games don't start out looking the same. A copy of an example keeps the preset the example uses, unless you pass `--theme`. `--theme none` leaves the preset out, so the game starts with the React UI's plain default look. The `vanilla`, `vue` and `svelte` templates have no React UI and ignore it. The command says which theme it used.
+`--theme` picks the [React UI's preset](/docs/reference/react/customising#1-pick-a-theme-preset): `paper`, `terminal`, `studio` or `storybook`. It goes in `src/styles.css` as an `@import` under the UI's stylesheet, and you can change it there later. Without `--theme`, a `react` or `next` game gets one of the four at random, so two new games don't start out looking the same. A copy of an example keeps the preset the example uses, unless you pass `--theme`. `--theme none` leaves the preset out, so the game starts with the React UI's plain default look. The `vanilla`, `vue` and `svelte` templates have no React UI and ignore it. The command says which theme it used.
 
 Every new game has the scripts `dev`, `build`, `check`, `playtest` and `typecheck`. It also has an `AGENTS.md` that tells a coding agent where the docs are and how to check its work (see [Using IFLoom with an AI agent](/docs/guide/agents)). Its `package.json` depends on the `@ifloom/*` packages and on what its UI needs:
 
@@ -168,7 +168,7 @@ With the preset, that's the whole game: one HTML file with the script and styles
 
 ### One file, pictures and all
 
-`--inline-assets` turns the folder into a single `index.html`. Each picture is written into the page as a `data:` URL and removed from `art/`. Videos stay in `art/` beside the page, so a game with no video and no sound has nothing beside it at all. The base UI looks up every picture it draws in the page first, with [`assetUrl`](/docs/react/components#asseturl), so the game needs no change. Small Town's `build:one-file` script is `ifloom build --inline-assets --out dist-one`.
+`--inline-assets` turns the folder into a single `index.html`. Each picture is written into the page as a `data:` URL and removed from `art/`. Videos stay in `art/` beside the page, so a game with no video and no sound has nothing beside it at all. The base UI looks up every picture it draws in the page first, with [`assetUrl`](/docs/reference/react/components#asseturl), so the game needs no change. Small Town's `build:one-file` script is `ifloom build --inline-assets --out dist-one`.
 
 ```
 Put 4 files from art/ into index.html.
@@ -178,9 +178,9 @@ index.html  440.6 kB
 
 **Gotchas.**
 
-- **Only pictures the base UI draws are looked up.** That covers a [`Picture`](/docs/react/components#picture) (and so every portrait, layered picture and image in the prose) and a device's wallpaper. A component of your own that sets an `<img src>` or a CSS `url()` from a path must pass it through [`assetUrl`](/docs/react/components#asseturl). Otherwise it points at a file that's no longer there.
+- **Only pictures the base UI draws are looked up.** That covers a [`Picture`](/docs/reference/react/components#picture) (and so every portrait, layered picture and image in the prose) and a device's wallpaper. A component of your own that sets an `<img src>` or a CSS `url()` from a path must pass it through [`assetUrl`](/docs/reference/react/components#asseturl). Otherwise it points at a file that's no longer there.
 - **Sound is never inlined.** The `audio/` folder stays beside `index.html`, and the command says so. Music and voices run to megabytes, and the page would have to read all of it before the game first draws. A game with sound ships as a folder, so `--inline-assets` gives a page with the pictures inside and `audio/` beside it.
-- **Videos are never inlined either.** A `.mp4` or `.webm` file stays in `art/`, and the command says how many it left. [`Video`](/docs/react/components#video) asks [`assetUrl`](/docs/react/components#asseturl) too, finds nothing in the page, and plays the file beside it. An animated `.gif` or `.webp` is a picture, so it does go in.
+- **Videos are never inlined either.** A `.mp4` or `.webm` file stays in `art/`, and the command says how many it left. [`Video`](/docs/reference/react/components#video) asks [`assetUrl`](/docs/reference/react/components#asseturl) too, finds nothing in the page, and plays the file beside it. An animated `.gif` or `.webp` is a picture, so it does go in.
 - **Inline only a small game.** Every picture goes in the page, a third bigger than the file because of base64, and is read before the game first draws. A game with a few hundred kilobytes of art is fine as one file. One with megabytes of art is better as a folder.
 
 ### Locked content
@@ -613,7 +613,7 @@ It sets up three things, and knows no UI framework:
 
 Inside the IFLoom checkout, for a game whose folder is in it, it also reads the @ifloom packages' TypeScript source instead of their built files (see [Working from the repository](/docs/guide/from-the-repository)). Anywhere else it does nothing more.
 
-A game adds its framework's Vite plugin itself, in `vite.plugins`. The `react` template and the examples add React's and Tailwind's, which the [React UI](/docs/react) needs, and keep one copy of React for a game in the checkout's workspaces:
+A game adds its framework's Vite plugin itself, in `vite.plugins`. The `react` template and the examples add React's and Tailwind's, which the [React UI](/docs/reference/react) needs, and keep one copy of React for a game in the checkout's workspaces:
 
 ```ts
 // vite.config.ts
@@ -761,7 +761,7 @@ function inlineAssets(dir: string, folder?: string): { files: number; bytes: num
 
 What `ifloom build --inline-assets` runs on the built folder `dir`. Every file under `dir/<folder>` (default `art`), including subfolders, goes into `dir/index.html` as a `data:` URL, except videos (`.mp4` and `.webm`, as the engine's `mediaType` decides). They go in one `<script>` at the top of `<head>` that sets `window.__ifloomAssets` to a map such as `{ "art/place/cafe.jpg": "data:image/jpeg;base64,…" }`. Then each file that went in is removed, along with any folder that leaves empty. It returns how many files went in, the size of the page afterwards in bytes, and how many videos it left in the folder.
 
-The type in each URL comes from the picture's extension: `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.avif` or `.svg`. Anything else is `application/octet-stream`. The script goes before every other script, so the map is there when the game first draws, and the base UI's [`assetUrl`](/docs/react/components#asseturl) reads it.
+The type in each URL comes from the picture's extension: `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.avif` or `.svg`. Anything else is `application/octet-stream`. The script goes before every other script, so the map is there when the game first draws, and the base UI's [`assetUrl`](/docs/reference/react/components#asseturl) reads it.
 
 ```ts
 import { checkBuild, inlineAssets } from '@ifloom/cli'

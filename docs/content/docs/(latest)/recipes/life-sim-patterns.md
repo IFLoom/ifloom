@@ -206,7 +206,7 @@ const people = computed(() => whoIsWhere(runner, view.value))
 </ul>
 ```
 
-Only people the player has met are listed, so the labels don't give away a stranger. To list everyone, read [`peopleOf(runner.state, runner.game)`](/docs/reference/plugins/cast#helpers) instead of `people`, and each one's name with [`entityName`](/docs/reference/entities#entityname). For a line in the room's prose instead of a label, use the cast's `cast.at` condition in a block (see [Who's where](/docs/reference/plugins/places#whos-where)). In the React UI you can also put this in place of the built-in exits, as `Exits` in [`components`](/docs/react/components#components).
+Only people the player has met are listed, so the labels don't give away a stranger. To list everyone, read [`peopleOf(runner.state, runner.game)`](/docs/reference/plugins/cast#helpers) instead of `people`, and each one's name with [`entityName`](/docs/reference/entities#entityname). For a line in the room's prose instead of a label, use the cast's `cast.at` condition in a block (see [Who's where](/docs/reference/plugins/places#whos-where)). In the React UI you can also put this in place of the built-in exits, as `Exits` in [`components`](/docs/reference/react/components#components).
 
 ## Shared header lines across places
 

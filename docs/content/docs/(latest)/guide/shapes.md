@@ -8,17 +8,17 @@ IFLoom is one engine for several shapes of game. The repository has an example o
 - **A management game.** Money, and several of a thing (staff, dishes, rooms), each with numbers of its own, run a week at a time.
 - **A life sim.** People who keep their own hours, friendships that grow, and a town to wander.
 
-They all use the same core: the turn, scenes and choices, conditions and effects, stats, entities and what holds them, the kv store, storylines, saves, the view and the plugin API. What sets them apart is how much world a game declares, and how the [React UI](/docs/react) lays it out:
+They all use the same core: the turn, scenes and choices, conditions and effects, stats, entities and what holds them, the kv store, storylines, saves, the view and the plugin API. What sets them apart is how much world a game declares, and how the [React UI](/docs/reference/react) lays it out:
 
 | Shape | The game | Plugins | Layout | Example |
 |---|---|---|---|---|
 | A linear novel | the core alone | none | its own: a `Story` with no side column, one column to read | [The Letter](#a-linear-novel-the-letter), `examples/novel` |
 | A management game | the core, with [entities](/docs/reference/entities) | none, or [`calendar({ turn: 'week' })`](/docs/reference/plugins/calendar) for days and weeks | its own: the tables in the story | [The Corner Café](#a-management-game-the-corner-café), `examples/cafe` |
-| A life sim | the core | [calendar](/docs/reference/plugins/calendar), [places](/docs/reference/plugins/places) and the [cast](/docs/reference/plugins/cast) | [`DefaultLayout`](/docs/react/components#defaultlayout)'s, the side column and the story, with the wardrobe shown at home | [Small Town](#a-life-sim-small-town), `examples/showcase` |
+| A life sim | the core | [calendar](/docs/reference/plugins/calendar), [places](/docs/reference/plugins/places) and the [cast](/docs/reference/plugins/cast) | [`DefaultLayout`](/docs/reference/react/components#defaultlayout)'s, the side column and the story, with the wardrobe shown at home | [Small Town](#a-life-sim-small-town), `examples/showcase` |
 
 Each example is a whole game you can play and ship. In its folder, `npm run dev` serves it in a browser, `npm run check` lists any problems in its content, and `npm run build` makes it one HTML file that opens from disk (see the [CLI](/docs/cli)).
 
-Each has a `src/game.ts` that puts the game together from its content in `src/world/` and `src/story/`, and in the [repository](https://github.com/IFLoom/ifloom) tests that play it and check its build. The Letter and The Corner Café draw it from `src/main.ts` with one call to [`mountGame`](/docs/react#mountgame). Small Town's `src/main.tsx` builds its runner by hand and renders [`GameShell`](/docs/react#gameshell), because it loads the player's mods before it makes the game.
+Each has a `src/game.ts` that puts the game together from its content in `src/world/` and `src/story/`, and in the [repository](https://github.com/IFLoom/ifloom) tests that play it and check its build. The Letter and The Corner Café draw it from `src/main.ts` with one call to [`mountGame`](/docs/reference/react#mountgame). Small Town's `src/main.tsx` builds its runner by hand and renders [`GameShell`](/docs/reference/react#gameshell), because it loads the player's mods before it makes the game.
 
 To start a game of your own from one of them, use `--template novel`, `cafe` or `town`:
 
@@ -55,7 +55,7 @@ The base handed to [`loadGame`](/docs/reference/content) needs only an `id` and 
 loadGame([stats, ch1, ch2, ch3], { id: 'the-letter', title: 'The Letter', version: 2, rules: { migrations, saveName } })
 ```
 
-With no [places plugin](/docs/reference/plugins/places) there's no map, so there are no exits and nobody present. The only buttons are plugins' and the game's own `actions`, and The Letter has none of either. The [React UI](/docs/react)'s location panel draws nothing. If you leave out `introScene` too, a new game opens with no scene at all, and the screen is the game's title with an empty body.
+With no [places plugin](/docs/reference/plugins/places) there's no map, so there are no exits and nobody present. The only buttons are plugins' and the game's own `actions`, and The Letter has none of either. The [React UI](/docs/reference/react)'s location panel draws nothing. If you leave out `introScene` too, a new game opens with no scene at all, and the screen is the game's title with an empty body.
 
 ### A name the player types
 
@@ -131,7 +131,7 @@ The example's `playtest` script is `ifloom playtest --turns 3 --out playtest/rea
 
 ### Drawing it: a page to read
 
-The example draws the story with the React UI. Its `src/main.ts` starts the game with [`mountGame`](/docs/react#mountgame), which makes a [runner](/docs/reference/runner) with undo, saves and autosave, and draws it with a layout of its own, a single column to read. The other tabs draw the same page to read with plain DOM, Vue or Svelte, from the [templates](/docs/guide/frameworks) for each:
+The example draws the story with the React UI. Its `src/main.ts` starts the game with [`mountGame`](/docs/reference/react#mountgame), which makes a [runner](/docs/reference/runner) with undo, saves and autosave, and draws it with a layout of its own, a single column to read. The other tabs draw the same page to read with plain DOM, Vue or Svelte, from the [templates](/docs/guide/frameworks) for each:
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/main.ts
@@ -244,7 +244,7 @@ The page to read needs no clock, room or people, because the game has none. The 
 
 In the React UI, with `pages` on, the game opens on a title screen. Reaching either ending finishes the game (`finished: { scene: ['end.kept', 'end.posted'] }`), and both endings set a `readBefore` kv key that `carryOver` keeps. So once a reader has finished, the title screen offers New Game+, and chapter one has an extra line for a second read. [The title screen and settings](/docs/recipes/title-screen) covers how it works.
 
-In React, the novel's [layout](/docs/react#layouts) has no `Sidebar`, so the page is one narrow column, like a book's. It has the title over the chapter, then the name to type, any buttons, the courage stat and the player's menu. You don't need to leave anything out by hand. With no calendar the title has no clock under it, and with no places there's no room, exits or people to draw. Its stylesheet imports the `paper` [preset](/docs/react/customising#1-pick-a-theme-preset), a serif page in one centred column. `npm run dev` in `examples/novel` plays it, and `npm run build` makes it one file.
+In React, the novel's [layout](/docs/reference/react#layouts) has no `Sidebar`, so the page is one narrow column, like a book's. It has the title over the chapter, then the name to type, any buttons, the courage stat and the player's menu. You don't need to leave anything out by hand. With no calendar the title has no clock under it, and with no places there's no room, exits or people to draw. Its stylesheet imports the `paper` [preset](/docs/reference/react/customising#1-pick-a-theme-preset), a serif page in one centred column. `npm run dev` in `examples/novel` plays it, and `npm run build` makes it one file.
 
 ## A management game: The Corner Café
 
@@ -284,7 +284,7 @@ entities: [
 ],
 ```
 
-So a new game has `state.stats` of `{ coins: 120, reputation: 20 }`, and Ana has a skill of 5, a morale of 60 and a wage of 12. The save keeps nothing about her until one of those changes: they're read from the content. Content names her `'staff:ana'`. The [view](/docs/reference/view#entities) hands the UI each kind with its entries, and the [React UI](/docs/react/components#entitytable) draws a table of staff and one of the menu. The café puts them in the story (see [Drawing it](#drawing-it-the-books-in-the-story)).
+So a new game has `state.stats` of `{ coins: 120, reputation: 20 }`, and Ana has a skill of 5, a morale of 60 and a wage of 12. The save keeps nothing about her until one of those changes: they're read from the content. Content names her `'staff:ana'`. The [view](/docs/reference/view#entities) hands the UI each kind with its entries, and the [React UI](/docs/reference/react/components#entitytable) draws a table of staff and one of the menu. The café puts them in the story (see [Drawing it](#drawing-it-the-books-in-the-story)).
 
 ### Reaching one of them
 
@@ -535,7 +535,7 @@ import { runner, view } from './runner.ts'
 {/each}
 ```
 
-In the React layout, the [`EntityTable`](/docs/react/components#entitytable) draws a table for the staff and one for the menu, and [`RoomActions`](/docs/react/components#roomactions) the game's own buttons, from Count the till and end the week to Put a card in the window. Any part the game has nothing for draws nothing, so the same layout would do for a café with a calendar, whose clock would show under the title. Its stylesheet imports the `studio` [preset](/docs/react/customising#1-pick-a-theme-preset) in the café's green. `npm run dev` in `examples/cafe` plays it, and `npm run build` makes it one file.
+In the React layout, the [`EntityTable`](/docs/reference/react/components#entitytable) draws a table for the staff and one for the menu, and [`RoomActions`](/docs/reference/react/components#roomactions) the game's own buttons, from Count the till and end the week to Put a card in the window. Any part the game has nothing for draws nothing, so the same layout would do for a café with a calendar, whose clock would show under the title. Its stylesheet imports the `studio` [preset](/docs/reference/react/customising#1-pick-a-theme-preset) in the café's green. `npm run dev` in `examples/cafe` plays it, and `npm run build` makes it one file.
 
 ### A calendar, if the game wants one
 
@@ -573,7 +573,7 @@ A place is an [entity](/docs/reference/entities) you write with [`places.locatio
 
 Each character is an [entity](/docs/reference/entities) of the kind `character`, so a relationship is a stat the game declares on that kind, `{ id: 'friendship', label: 'Friendship', of: 'character' }`. Content reads it with `{ stat: 'friendship', of: cast.character('ava'), gte: 25 }`. [Small Town](/docs/guide/showcase) is a small life sim made that way, where a turn is a day. [A game with a world](/docs/guide/first-game) builds a smaller one step by step.
 
-The React UI's default layout is made for a life sim, so Small Town's `src/layout.tsx` is [`DefaultLayout`](/docs/react#layouts) with the plugins' parts placed by hand and two changes. It puts the [notice strip](/docs/react/components#noticestrip) at the top of the story, and it shows what you're wearing only at home, with `when`:
+The React UI's default layout is made for a life sim, so Small Town's `src/layout.tsx` is [`DefaultLayout`](/docs/reference/react#layouts) with the plugins' parts placed by hand and two changes. It puts the [notice strip](/docs/reference/react/components#noticestrip) at the top of the story, and it shows what you're wearing only at home, with `when`:
 
 ```tsx fragment
 // WardrobeCard and WARDROBE_WORDS come from '@ifloom/plugin-wardrobe/react', with const words = useWords(WARDROBE_WORDS)

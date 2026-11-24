@@ -11,7 +11,7 @@ Most games want their heads-up display to look like nothing else, so this page b
 The view is the same whatever draws it, so each piece reads the same fields in every framework. Each code block has a tab for plain DOM, React, Vue and Svelte:
 
 - **Plain JS** pieces are functions that return an element, called from the `draw` function in the [`vanilla` template](/docs/guide/frameworks)'s `src/main.ts`.
-- **React** pieces are components that read the view with [`useGame`](/docs/react/components#usegame) from the [React UI](/docs/react), whose stat list, [`NoticeStrip`](/docs/react/components#noticestrip) and quest log are basic on purpose.
+- **React** pieces are components that read the view with [`useGame`](/docs/reference/react/components#usegame) from the [React UI](/docs/reference/react), whose stat list, [`NoticeStrip`](/docs/reference/react/components#noticestrip) and quest log are basic on purpose.
 - **Vue** and **Svelte** pieces are components that read the view from the [`vue` or `svelte` template](/docs/guide/frameworks)'s `src/runner.ts`.
 
 The examples use Small Town's stats and plugins, but the pattern is the same for any game.
@@ -128,7 +128,7 @@ const share = computed(() => (stat.value && stat.value.max > stat.value.min ? (s
 
 `max` is the stat's ceiling right now, so a ceiling that grows during the game is already worked out. Give the bar `role="meter"` and the values, so a screen reader can say how full it is.
 
-If you use the React UI and a plain bar is all you need, you don't have to write one. Give the stat the hint [`ui: { display: 'bar' }`](/docs/react/hints#display) or `'pips'`, and the built-in [`StatList`](/docs/react/components#statlist) draws it.
+If you use the React UI and a plain bar is all you need, you don't have to write one. Give the stat the hint [`ui: { display: 'bar' }`](/docs/reference/react/hints#display) or `'pips'`, and the built-in [`StatList`](/docs/reference/react/components#statlist) draws it.
 
 ## A strip of unread counts
 
@@ -390,10 +390,10 @@ import Unread from './Unread.vue'
 
 In plain DOM, the pieces are drawn again with the rest of the page on every change. In Vue and Svelte, each component redraws itself when the view changes.
 
-In the React UI, your components go anywhere in your [layout](/docs/react#layouts), among the built-in parts. Here they make a bar across the top of the story, and take the place of the stat list at the side. For a HUD in a different place altogether, such as a bar fixed across the top of the window, change the [shape of the page](/docs/react/customising#7-change-the-shape-of-the-page) or [write your own root](/docs/react/customising#8-write-your-own-root). The components above work anywhere inside the game's provider.
+In the React UI, your components go anywhere in your [layout](/docs/reference/react#layouts), among the built-in parts. Here they make a bar across the top of the story, and take the place of the stat list at the side. For a HUD in a different place altogether, such as a bar fixed across the top of the window, change the [shape of the page](/docs/reference/react/customising#7-change-the-shape-of-the-page) or [write your own root](/docs/reference/react/customising#8-write-your-own-root). The components above work anywhere inside the game's provider.
 
 ## What just changed
 
-Feedback after a choice, such as `+30 coins` or `-5% energy`, is already worked out for you in [`view.changes`](/docs/reference/changes), for the stats you name in your content's [`changes.stats`](/docs/reference/changes#changes). Each entry has its signed `text` in the stat's format and `by`, which says whether it went up or down. The React UI has a ready list for it, [`Changes`](/docs/react/components#changes), that the default layout leaves out. Place it after the scene, and style its `change` parts by `data-dir`. [Changes](/docs/reference/changes#drawing-it) has the same list in plain DOM and Vue.
+Feedback after a choice, such as `+30 coins` or `-5% energy`, is already worked out for you in [`view.changes`](/docs/reference/changes), for the stats you name in your content's [`changes.stats`](/docs/reference/changes#changes). Each entry has its signed `text` in the stat's format and `by`, which says whether it went up or down. The React UI has a ready list for it, [`Changes`](/docs/reference/react/components#changes), that the default layout leaves out. Place it after the scene, and style its `change` parts by `data-dir`. [Changes](/docs/reference/changes#drawing-it) has the same list in plain DOM and Vue.
 
 To draw a plugin that has no UI of its own, such as the shop or jobs, see [Building UI for plugins](/docs/recipes/plugin-ui).

@@ -96,12 +96,12 @@ An `action` span's `choice` is a full [`RenderedChoice`](/docs/reference/view#re
 
 ## The React UI
 
-The React UI draws both with no code from you. An inline action is an [`InlineAction`](/docs/react/components#inlineaction): a button in the line, styled as a link by each preset. A tooltip is a [`Tip`](/docs/react/components#tip). Their parts are `inline-action`, `tip` and `tip-content`, for [`classes`](/docs/react/customising#4-change-the-built-in-classes) or plain CSS.
+The React UI draws both with no code from you. An inline action is an [`InlineAction`](/docs/reference/react/components#inlineaction): a button in the line, styled as a link by each preset. A tooltip is a [`Tip`](/docs/reference/react/components#tip). Their parts are `inline-action`, `tip` and `tip-content`, for [`classes`](/docs/reference/react/customising#4-change-the-built-in-classes) or plain CSS.
 
 - **Greyed out.** An inline action that can't be taken has `data-disabled` and `aria-disabled="true"`. It stays focusable, and hovering it, focusing it or tapping it shows the reason in a small bubble.
 - **Tooltips.** The note opens on hover with a mouse, on keyboard focus and on a tap, and closes on Escape or a tap elsewhere.
 - **Screen readers.** The bubble is the button's description (`aria-describedby`), so it's read with the words.
-- **Number keys.** Inline actions have none. With [`keys`](/docs/react/components#keyoptions) on, 1 to 9 go on picking the choices in the list, and Tab reaches the inline ones in reading order.
+- **Number keys.** Inline actions have none. With [`keys`](/docs/reference/react/components#keyoptions) on, 1 to 9 go on picking the choices in the list, and Tab reaches the inline ones in reading order.
 
 ## Draw them yourself
 

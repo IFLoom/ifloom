@@ -6,7 +6,7 @@ Use Next when your game lives on a website: a page of a site you already run on 
 
 Next builds a website for a server to host. It can't make the single `index.html` that opens from disk, which [`ifloom build`](/docs/cli#ifloom-build) makes for a game players download. Even a static export (`output: 'export'`) loads its scripts in chunks from absolute paths, so it needs a web server. If you want both, keep the game in its own package with the CLI, and import it into the site too.
 
-Next is React, so everything below uses React, either the [React UI](/docs/react) or your own UI written in React.
+Next is React, so everything below uses React, either the [React UI](/docs/reference/react) or your own UI written in React.
 
 ## Start from the template
 
@@ -101,7 +101,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 }
 ```
 
-`styles.css` brings Tailwind itself, so don't import `tailwindcss` again. If the app already has Tailwind v4 of its own, import `@ifloom/react/theme.css` after your `@import "tailwindcss"` instead (see [Bringing your own Tailwind](/docs/react/customising#bringing-your-own-tailwind)). The second line picks a [theme preset](/docs/react/customising#1-pick-a-theme-preset), and is optional.
+`styles.css` brings Tailwind itself, so don't import `tailwindcss` again. If the app already has Tailwind v4 of its own, import `@ifloom/react/theme.css` after your `@import "tailwindcss"` instead (see [Bringing your own Tailwind](/docs/reference/react/customising#bringing-your-own-tailwind)). The second line picks a [theme preset](/docs/reference/react/customising#1-pick-a-theme-preset), and is optional.
 
 To go without Tailwind, import the prebuilt `@ifloom/react/styles.min.css` from the root layout instead, and a preset as `@ifloom/react/themes/paper.min.css`, then leave out the PostCSS config. If you don't use the React UI, you don't need Tailwind at all, and you can style your own UI however the app already does.
 
@@ -154,7 +154,7 @@ export default function Page() {
 
 `browserRunner` is async, because it reads the player's settings before the first frame, so the effect waits for it. The `live` flag drops a runner that arrives after the component has gone, which happens in development, where React mounts each component twice.
 
-This draws [`GameShell`](/docs/react#gameshell) rather than calling [`mountGame`](/docs/react#mountgame). `mountGame` starts a React root of its own in an element, which a React app doesn't need. `GameShell` plays the game's sound and takes the same options as `mountGame`, such as `layout`, `pages`, `audio` and `components`.
+This draws [`GameShell`](/docs/reference/react#gameshell) rather than calling [`mountGame`](/docs/reference/react#mountgame). `mountGame` starts a React root of its own in an element, which a React app doesn't need. `GameShell` plays the game's sound and takes the same options as `mountGame`, such as `layout`, `pages`, `audio` and `components`.
 
 The page around the game is an ordinary Next page. Put the game on any route, beside the rest of the site.
 

@@ -74,7 +74,7 @@ To give the player more time, add some with `{ timer: 'phone', by: 5000 }`. A ne
 
 ## The countdown, in the React UI
 
-With the React UI there's nothing more to write. `ui: { timer: 'phone' }` on a block is a [hint](/docs/react/hints#timer): `Scene` draws a [`Countdown`](/docs/react/components#countdown) under that block while the timer runs, with its label, a bar that empties and the seconds left. In the last quarter it's marked `data-urgent`, which the presets colour. A player who asks for reduced motion gets the seconds only. The UI runs the clock itself, so the timer ticks whether or not anything draws it.
+With the React UI there's nothing more to write. `ui: { timer: 'phone' }` on a block is a [hint](/docs/reference/react/hints#timer): `Scene` draws a [`Countdown`](/docs/reference/react/components#countdown) under that block while the timer runs, with its label, a bar that empties and the seconds left. In the last quarter it's marked `data-urgent`, which the presets colour. A player who asks for reduced motion gets the seconds only. The UI runs the clock itself, so the timer ticks whether or not anything draws it.
 
 To show a timer somewhere else, such as the sidebar, put `Countdown` in your [layout](/docs/recipes/layouts), or `Timers` for every running timer:
 

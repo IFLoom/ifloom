@@ -1,8 +1,28 @@
 ---
 title: "Rules and hooks"
-description: "rules: the game's own code, run as the first plugin. The end of a turn and a day's rollover (onTurn, onTurnDone), onStat, the game's commands and providers, migrations and saveName."
+description: "Reference for GameRules, the game's own code run as the first plugin: its state, commands, turn hooks, onStat, saveName and migrations, with TurnContext and content's resets."
 ---
-`rules` is the game's own code: what the end of a turn does, how a stat may change, the commands and functions content calls by name, and the save's name and migrations. You pass it on the base you give [`loadGame`](/docs/reference/content#loadgame), beside the plugins. The engine calls these functions instead of knowing about your game. Every member is optional. Leave one out and the engine does the plain thing listed under it.
+`rules` is the game's own code, a [`GameRules`](#gamerules) you pass on the base to [`loadGame`](/docs/reference/content#loadgame), beside the plugins. The engine calls its functions in place of knowing about your game, and content calls its conditions, effects, macros and values by name with `game/` in front. [Content, packs and the base](/docs/explanation/content-and-packs#rules-are-the-games-code) explains why the game's code is a plugin, and [Run code at the end of a turn](/docs/how-to/run-code-at-the-end-of-a-turn) writes a turn hook.
+
+In the showcase: `examples/showcase/src/rules.ts`, whose `onTurn` puts energy back to 100.
+
+```ts
+import type { GameRules } from '@ifloom/engine'
+import type { TurnContext } from '@ifloom/engine/plugin'
+```
+
+## GameRules
+
+The game's own code, a plain object with the members a plugin has. Every member is in [`GameRules`](/docs/api/engine#gamerules).
+
+The engine runs it as the first plugin, with the id `game`, so no plugin can take that id. Its providers answer before every plugin's, its hooks run before theirs, and each function gets the same [`PluginContext`](/docs/reference/plugin-api#plugincontext) a plugin's does. Every member is optional, and each means what a plugin's member of that name means, except `migrations`. A plugin's id, versions, content, strings, declared calls and data lists are the game's own content, so `GameRules` leaves them out. Content's [`locks`](/docs/reference/locks) and [`resets`](#resets) are data, so a mod can change them.
+
+| Field | Meaning |
+|---|---|
+| `conditions`, `macros`, `effects`, `values` | The functions content calls by name with `game/` in front, described in [Calls by name](/docs/reference/custom). |
+| `guard`, `price`, `label`, `scene`, `actions`, `action`, `statModifiers`, `audio`, `view`, `profile`, `queries`, `traits`, `references`, `check`, `onCommand` | The same members as a plugin's, described in the [Plugin API](/docs/reference/plugin-api). The game's view is at `view.plugins.game`. |
+
+Each hook returns a new state and never changes the one it's given. A game whose `onTurn` puts energy back to full overnight, and whose prose prints the cat's name, has these rules:
 
 ```ts
 import type { GameRules } from '@ifloom/engine'
@@ -13,57 +33,9 @@ export const rules: GameRules = {
 }
 ```
 
-`rules` is a plain object with no helper to write it. It has what a [plugin](/docs/reference/plugins) can have, for the game itself, and each member means what a plugin's does. The engine runs it as the first plugin, with the id `game`, so its hooks and providers run before every plugin's and get the same [context](#the-context). Hooks are plain functions of the state. Don't mutate the state you're given. Return a new object instead.
+### start
 
-What is data stays out of `rules`, so a mod can reach it: what's locked is content's [`locks`](/docs/reference/locks), and what goes back each turn is content's [`resets`](#resets).
-
-## GameRules
-
-```ts shape
-type GameRules<S = any> = Omit<
-  Plugin<S>,
-  | 'id' | 'version' | 'migrations' | 'cooperates'
-  | 'contentVersion' | 'contentMigrations' | 'commandVersion' | 'commandMigrations'
-  | 'content' | 'strings' | 'calls' | 'data'
-> & {
-  migrations?: Record<number, (state: GameState, tools: MigrationTools) => GameState>
-}
-```
-
-`GameRules` is a [`Plugin`](/docs/reference/plugins#plugin) without what makes a plugin a package of its own: its id and versions, its content and its words, and its declared calls and data lists, which are the game's own content and its registry declarations. Only `migrations` means something else. A plugin's carry its own state forward, and the game's carry the whole save from one version of the game to the next.
-
-| Member | What it is |
-|---|---|
-| `migrations` | Steps that carry an old save to the game's current `version`. See [The game's own migrations](/docs/reference/saves#the-games-own-migrations). |
-| `saveName` | The name a save is listed under. See [`saveName`](#savename). |
-| `onTurn`, `onTurnDone` | Hooks at the end of each turn. See [The end of a turn](#the-end-of-a-turn). |
-| `onStat` | A hook on every change to one of the player's stats. See [`onStat`](#onstat). |
-| `onCommand` | A hook after every command that took, as a plugin's [`onCommand`](/docs/reference/plugins#hooks-and-providers). |
-| `conditions`, `macros`, `effects`, `values` | Functions content calls by name with `game/` in front, such as `{ 'game/tired': true }` and `{ 'game/payRent': {} }`. A macro returns the effects it stands for, and an effect returns the next state. Prose prints a value with no prefix: `{{catName}}`. See [Calls by name](/docs/reference/custom). |
-| `queries` | Answers code can ask with `context.query('game/name')`, as a plugin's [queries](/docs/reference/plugins#queries). |
-| `commands` | Commands of the game's own, sent as `{ 'game/rest': true }`. See [`commands`](#commands). |
-| `guard`, `price`, `label` | As a plugin's: whether a command may go ahead, what a button costs in the game's words, and where the game is in a few words. See [Guards, prices and labels](/docs/reference/plugins#guards-prices-and-labels). |
-| `scene` | What the screen shows while no scene is open. See [Scene](/docs/reference/plugins#scene). |
-| `actions`, `action` | Actions offered as buttons while no scene is open, and an action that isn't in content, by id, done with `{ type: 'action', id: 'game/<id>' }`. See [Actions](/docs/reference/plugins#actions). |
-| `statModifiers` | Changes to what the player's stats read right now. See [Stat modifiers](/docs/reference/plugins#stat-modifiers). |
-| `audio` | What plays on background channels. See [Audio](/docs/reference/plugins#audio). |
-| `view` | What the UI needs from the game's own code, at `view.plugins.game`. See [The view](/docs/reference/plugins#the-view). |
-| `profile` | What the game keeps in the player's [profile](/docs/reference/profile), under `game`. See [The profile](/docs/reference/plugins#the-profile). |
-| `start` | The game's own state in a new game, kept in saves at `state.plugins.game`. See [The game's own state](#the-games-own-state). |
-| `traits` | The game's own [traits](/docs/reference/entities#traits), each with an id that has no `/`, with the `check`, `references` and `words` a plugin's trait has. See [Traits](/docs/reference/plugins#traits). |
-| `references`, `check` | What the game's own calls and panels name, and rules of its own, for the [content checker](/docs/reference/checks), as a plugin's [`references`](/docs/reference/plugins#references) and [`check`](/docs/reference/plugins#check) are. Their problems are reported against the base. |
-
-To have content written in code checked against your functions, declare what each `game/` call takes, as a plugin does: see [The game's own calls](/docs/reference/plugins#the-games-own-calls).
-
-The engine runs the game's code as a plugin whose id is `game`, which is why no plugin can have that id. It comes first, before every plugin, so its providers answer before theirs and its hooks run before theirs. Its state is started and carried with the plugins' too.
-
-## The game's own state
-
-```ts fragment
-start?: (game: Game) => S
-```
-
-Something your code keeps that isn't a stat, a kv key or an entity, such as a history it builds up, goes in the game's own state, as a plugin keeps its. `start` gives what a new game begins with. The engine keeps it in saves at `state.plugins.game`, and each of your hooks, commands and providers reads it as `context.slice` and writes it with `context.set`. Name its type as `GameRules<S>`:
+Returns the game's own state in a new game, kept in saves at `state.plugins.game`. Every function in `rules` reads it as `context.slice` and writes it with `context.set`, and `GameRules<S>` names its type.
 
 ```ts
 import type { GameRules } from '@ifloom/engine'
@@ -79,38 +51,19 @@ export const rules: GameRules<Diary> = {
 }
 ```
 
-A save from before the game had a `start` loads with it fresh. To reshape it later, rewrite `state.plugins.game.state` in one of your [migrations](/docs/reference/saves#the-games-own-migrations). Every function in `rules` gets `slice`, `get` and `set`, its conditions, macros and values included.
+The game's own state holds what isn't a stat, a kv key or an entity, such as a history the game's code builds up. A save made before the game had a `start` loads with it fresh.
 
-## The context
+### commands
 
-Every function in `rules` is handed what a plugin's is, a [`PluginContext`](/docs/reference/plugins#plugincontext), besides the state:
+The game's own commands by name, each a [`PluginCommand`](/docs/reference/plugin-api#plugincommand) as a plugin's is. A choice or an action sends one as `{ 'game/nap': true }`, and the runner's log keeps it as `{ type: 'custom', name: 'game/nap' }`.
 
-- `game`, `query`, `value` and a seeded `roll`, as every [called function](/docs/reference/custom#customcontext) has.
-- `apply`, which applies effects as content would.
-- `slice`, `get` and `set`, which read and write the game's [own state](#the-games-own-state). `get(on?)` and `set(next, on?)` work on `on` when you pass one, else on the state the function was handed.
-- `beats`, and in `view` the `picks` and `profile` a plugin's view gets.
-
-The turn hooks get a [`TurnContext`](#turncontext), which adds `before`. Name the type of the game's own state as `GameRules<S>`, and `slice` has that type everywhere.
-
-## commands
-
-```ts fragment
-commands?: Record<string, PluginCommand<S>>
-```
-
-A command of the game's own, by name, a [`PluginCommand`](/docs/reference/plugins#plugincommand) as a plugin's is. A button or a choice sends it as `{ 'game/rest': true }`, and the runner's log keeps it as `{ type: 'custom', name: 'game/rest' }`.
-
-- `run` returns the next state.
-- `whyNot` says why it can't be done now, in the player's words, or `undefined` if it can. The view greys out a button that sends it with that reason.
-- `effectsOf` gives the effects it would apply, so [guards](/docs/reference/plugins#guards), [prices](/docs/reference/plugins#prices) and [locks](/docs/reference/locks) can see what it does. `spends` gives the stats it spends, for its button's price.
-- `ignoresLocks` runs it through any lock. Keep it for tools outside the story.
+`run` returns the next state, and `whyNot` returns the refusal in the player's words, or `undefined`. `effectsOf` lists the effects it would apply, for guards, prices and [locks](/docs/reference/locks), and `spends` lists the stats it spends, for its button's price. `ignoresLocks` runs it through any lock, for tools outside the story. The engine calls `run` and `whyNot` more than once for one command, so both must be pure.
 
 ```ts
 import type { ActionDef, GameRules } from '@ifloom/engine'
 
 export const rules: GameRules = {
   commands: {
-    // A nap: refused once you're rested, else an hour's rest.
     nap: {
       whyNot: (state) => ((state.stats.energy ?? 0) >= 80 ? 'You are not tired.' : undefined),
       effectsOf: () => [{ stat: 'energy', by: 20 }],
@@ -119,205 +72,56 @@ export const rules: GameRules = {
   },
 }
 
-// An action that sends it
-const nap: ActionDef = { id: 'nap', label: 'Take a nap', command: { 'game/nap': true } }
+export const nap: ActionDef = { id: 'nap', label: 'Take a nap', command: { 'game/nap': true } }
 ```
 
-**Gotchas.**
-- `run` and `whyNot` must be pure. The engine calls them more than once for one command: to see whether it refuses, to run it, and each time a button that sends it is drawn.
-- A command of your own can't take over one of the engine's, such as `leave`. To refuse those, use a [lock](/docs/reference/locks) or a [`guard`](/docs/reference/plugins#guards).
-
-## The end of a turn
-
-A turn is the engine's one clock, [`state.turn`](/docs/reference/state#turn). A turn ends each time a [`turn`](/docs/reference/effects#turn) effect applies, whether a choice, an action or a plugin applies it. The [calendar](/docs/plugins/calendar#what-a-turn-is), for example, ends one each time passing time crosses into a new day (or a new period or week, if you set it up that way). Each time a turn ends, these steps run in order:
-
-1. The turn counter goes up by one, and the content's [`resets`](#resets) are written into the kv store.
-2. [`onTurn`](#onturn) runs, with that state and the state the turn ended on as `before`. When the player goes to bed with the calendar, `before` is the state as they went to bed, with the clock still at night and the `resets` keys still holding what they held that day.
-3. Each [plugin](/docs/reference/plugins#hooks-and-providers)'s `onTurn` hook runs, in the order `game.plugins` lists them, with the same `before`. This is where the [calendar](/docs/plugins/calendar) moves its clock on.
-4. [`onTurnDone`](#onturndone) runs, with the state the plugins left and the same `before`.
-5. Each plugin's `onTurnDone` hook runs, in the same order.
-
-Steps 2 and 3 are one list, the game first and then the plugins, and so are steps 4 and 5. Each hook gets what the one before it returned.
-
-Use `onTurn` for what should happen before the plugins move on, and `onTurnDone` for what depends on what they did, such as the new day.
+A command of the game's own can't take over one of the engine's, such as `leave`. A lock or a `guard` refuses those.
 
 ### onTurn
 
-```ts fragment
-onTurn?: (state: GameState, context: TurnContext<S>) => GameState
-```
+A hook that runs at the end of each turn and returns the next state. It gets a [`TurnContext`](#turncontext), whose `before` is the state the turn ended on.
 
-**When:** at the end of each turn, once the counter has moved on and [`resets`](#resets) are written. `state.turn` is the turn that's beginning. Each plugin's `onTurn` hook runs after it, and then [`onTurnDone`](#onturndone).
+A turn ends each time a [`turn`](/docs/reference/effects#turn) effect applies, from a choice, an action or a plugin such as the [calendar](/docs/reference/plugins/calendar). The engine then runs these steps in order:
 
-**Does:** returns the next state. `context.apply` applies effects as content would, in order, each on the state the one before it left, and returns the state they leave. It takes any [`EffectRef`](/docs/reference/custom#macros), so a plugin's effect in [short](/docs/reference/custom#plugincall) or one of the game's own, `{ 'game/payRent': {} }`, works too. `context.before` is the state the turn ended on, from before the counter moved on and before `resets` were written, so it can still read a once-a-day key such as `before.kv.hadCoffee` that `resets` has just put back. The rest is [the context](#the-context) every function in `rules` gets, with the game's own state as `slice`.
+1. The turn counter goes up by one, and the engine writes content's [`resets`](#resets) into the kv store.
+2. The game's `onTurn` runs.
+3. Each plugin's `onTurn` runs, in the order `game.plugins` lists them. The calendar moves its clock on here.
+4. The game's [`onTurnDone`](#onturndone) runs.
+5. Each plugin's `onTurnDone` runs, in the same order.
 
-Ending a turn doesn't touch any stat by itself, so a game whose energy fills up overnight says so here with a [`stat`](/docs/reference/effects#setting-a-stat) effect that sets it `to` a value. It can also change what isn't an effect, such as a part of the story ending, by returning a changed state.
-
-**Without it:** nothing, and every stat stays as it was.
+Each hook gets the state the one before it returned, and all of them get the same `before`. `state.turn` is the turn that's beginning. `before` is from before the counter moved and `resets` were written, so `before.kv.hadCoffee` still holds what it held that day. Without `onTurn`, ending a turn changes no stat.
 
 ```ts
 import type { GameRules } from '@ifloom/engine'
 
 export const rules: GameRules = {
-  onTurn: (state, { apply, before }) => {
-    const rested = apply([
-      // A late coffee costs a fifth of the night's rest.
+  onTurn: (state, { apply, before }) =>
+    apply([
       { stat: 'energy', to: before.kv.lateCoffee ? 80 : 100 },
       { kv: 'lateCoffee', to: false },
-      // In this game a turn is a day, and market day comes every seventh.
-      { kv: 'marketOpen', to: state.turn % 7 === 5 },
-    ])
-    // Moving-in week ends on the second day.
-    return rested.kv.phase === 'arrival' && rested.turn > 1 ? apply([{ kv: 'phase', to: 'open' }], rested) : rested
-  },
+    ]),
 }
 ```
 
-**Gotchas.**
-- A [`turn`](/docs/reference/effects#turn) effect applied here does nothing. A turn's own rules can't end another turn.
-- `apply` with no `on` applies to the state the hook was handed. When you've changed the state yourself first, pass it as `on`, or apply to the result of the last `apply`, as a plugin's [`set`](/docs/reference/plugins#plugincontext) does.
-- The end of a turn doesn't deliver messages. Those come from the [messages](/docs/plugins/messages) and [feed](/docs/plugins/feed) plugins, which deliver by condition after any command.
-- It's a function, so the [content checker](/docs/reference/checks) can't look inside it. A stat, scene or plugin effect it names with a typo isn't reported. Test it with the real [`calendar.sleep()`](/docs/plugins/calendar#commands) or a `turn` effect.
+`apply` with no `on` applies to the state the hook was handed. A hook that has changed the state itself passes that state as `on`.
 
 ### onTurnDone
 
-```ts fragment
-onTurnDone?: (state: GameState, context: TurnContext<S>) => GameState
-```
-
-**When:** at the end of each turn, after every plugin's `onTurn` hook and before any plugin's `onTurnDone`, so the state it's handed has the calendar's new day, a [status](/docs/plugins/statuses) that has just worn off, and anything else the plugins did as the turn ended.
-
-**Does:** the same as [`onTurn`](#onturn). It gets the same `TurnContext`: `before` is still the state the turn ended on, `apply` applies effects in order, and `query` asks a plugin about the state it was handed.
-
-**Without it:** nothing.
-
-**Gotchas.**
-- A `turn` effect applied here does nothing, as in `onTurn`.
-- Like `onTurn`, it's a function the [content checker](/docs/reference/checks) can't look inside.
-
-### TurnContext
-
-```ts shape
-type TurnContext<S = any> = PluginContext<S> & {
-  before: GameState
-}
-```
-
-What every `onTurn` and `onTurnDone` hook is handed, the game's and each plugin's: [the context](#the-context), with `before`, the state the turn ended on. Its `apply` ends no turn, so a `turn` effect applied through it does nothing.
-
-### Each new day
-
-The engine has no idea of a day. A turn is whatever your game makes it, and with the [calendar](/docs/plugins/calendar) set to `turn: 'period'` a turn ends five times a day. To do something once each new day, ask the calendar for the day in `onTurnDone` and compare it with the last day you acted on, kept in the kv store:
+A hook that runs at the end of each turn after every plugin's `onTurn`, so the state it's handed has the calendar's new day and any [status](/docs/reference/plugins/statuses) that has just worn off. It gets the same `TurnContext` as `onTurn`. Without it, nothing happens.
 
 ```ts
 import type { GameRules } from '@ifloom/engine'
 
-const rules: GameRules = {
-  onTurnDone: (state, { apply, query }) => {
-    const day = query('calendar/now')?.day ?? 0
-    // Day 0 is the one the game opens on, so it counts as done.
-    if ((state.kv.lastNewDay ?? 0) === day) return state
-    return apply([
-      { kv: 'lastNewDay', to: day },
-      // The market restocks and the rent goes up a little.
-      { kv: 'marketStocked', to: true },
-      { stat: 'rent', by: 1 },
-    ])
-  },
+export const rules: GameRules = {
+  onTurnDone: (state, { apply, query }) => (query('calendar/now')?.period === 'morning' ? apply([{ kv: 'marketStocked', to: true }]) : state),
 }
 ```
-
-- **It works for any length of turn.** With `turn: 'day'` the check passes every turn. With `turn: 'period'` it passes on the first turn of each day. With a `calendar/pass` that skips several days, it runs once for each turn the pass ends.
-- **The kv key is your own.** The engine doesn't keep `lastNewDay`, so name it what you like. A game that opens on another day reads that day in place of the `0`.
-- **It doesn't need the calendar.** A game with its own clock can read a stat or a kv key the same way. The hook only promises to run after the plugins.
-
-### A day's end, step by step
-
-Twine life sims often run one long widget when the player goes to bed: pay the wages on Friday, take the rent on Sunday, check whether a friendship has soured, then pick which scene the morning opens with. In IFLoom that's `rules.onTurn`.
-
-With the [calendar](/docs/plugins/calendar)'s default `turn: 'day'`, a game that starts on day 0 and only ends turns by going to bed has one turn per day, so `state.turn` is the number of the day that's starting. The calendar's clock hasn't moved yet when the game's `onTurn` runs (see [What the game's turn rules see](/docs/plugins/calendar#what-the-games-turn-rules-see)), so this example works the new weekday out from `state.turn` rather than from the clock. To read the clock instead, write the same steps in [`onTurnDone`](#onturndone). In a seven-day week starting on Monday, `state.turn % 7` is 0 on a Monday and 6 on a Sunday.
-
-Each `apply` runs on the state the one before it left, so a later step sees an earlier one: the rent comes out of the money the wages just paid in.
-
-```ts
-import type { GameRules } from '@ifloom/engine'
-
-const RENT = 30
-
-// In content: resets: { calledAva: false, hadCoffee: false }
-const rules: GameRules = {
-  onTurn: (state, { apply, before, roll }) => {
-    const weekday = state.turn % 7
-    let next = state
-
-    // Friday night: the week's wages, kept in a stat that each shift adds to.
-    if ((state.turn - 1) % 7 === 4) {
-      next = apply([{ stat: 'coins', by: next.stats.owed ?? 0 }, { stat: 'owed', to: 0 }, { notify: 'Payday', id: 'payday', tag: 'money' }], next)
-    }
-    // Sunday morning: the rent, out of what the wages left.
-    const evicted = weekday === 6 && (next.stats.coins ?? 0) < RENT
-    if (weekday === 6 && !evicted) next = apply([{ stat: 'coins', by: -RENT }], next)
-
-    // Exactly one morning scene, by priority.
-    if (evicted) next = apply([{ kv: 'phase', to: 'over' }, { scene: 'ending.evicted' }], next)
-    else if (!before.kv.calledAva && roll(3, 'ava.sulk') === 0) next = apply([{ scene: 'ava.sulk' }], next)
-    else next = apply([{ scene: { from: 'morning', otherwise: 'morning.plain' } }], next)
-
-    return apply([{ stat: 'energy', to: 9999 }], next)
-  },
-}
-```
-
-- **It reads the day's keys from `before`.** `before.kv.calledAva` is what it was that day, even though `calledAva` is in `resets` and `state.kv.calledAva` is already back to `false`.
-- **The order is yours.** The steps run top to bottom, as a Twine widget's would, and a scene effect at the end decides what's on screen in the morning. A `{ scene: { from } }` storylet draw works here like anywhere else.
-- **Draws are seeded.** `roll(3, 'ava.sulk')` draws from the save's seed, the turn and the name, so a replay draws the same.
-- **Count days, not the clock.** If something else can end a turn (a `turn` effect on a choice, or a calendar with `turn: 'period'`), turns and days drift apart. Then move the steps to [`onTurnDone`](#onturndone) and read the day from the calendar, as [Each new day](#each-new-day) does.
-- **Testing it.** The [debug plugin](/docs/plugins/debug)'s `debug/time` moves the clock but not the turn, so set both (`debug/time` and `debug/turn`) before going to bed in a test that relies on `state.turn`.
-
-### resets
-
-```ts fragment
-// in content
-resets?: Record<string, KvValue>
-```
-
-`resets` is content, not a member of `rules`, so a mod can add a key of its own. A pack's keys replace the content's key by key.
-
-**When:** at the end of each turn, as the counter moves on and before [`onTurn`](#onturn).
-
-**Does:** writes each of these values into `state.kv`. Use it for the kv keys that count "once this turn".
-
-**Without it:** nothing is put back.
-
-```ts
-import type { Content } from '@ifloom/engine'
-
-export const actions: Content = {
-  resets: { hadCoffee: false, postedToday: false },
-}
-```
-
-See it in the showcase: [Small Town](/docs/guide/showcase#resets-each-turn) resets a post a day.
-
-A curfew isn't a rule here, because the engine keeps no time of day. It's the [calendar plugin](/docs/plugins/calendar#the-guard)'s `curfew` option. What the player can't do for now is content's [`locks`](/docs/reference/locks), and what happens when the player arrives somewhere is a place's [`arrive`](/docs/plugins/places#arrival).
-
-## The player
-
-A stat's ceiling is part of its declaration, not a rule. A ceiling that moves is a stat whose [`max`](/docs/reference/stats#statdef) names a value of the game's own, `{ value: 'game/ceiling' }`.
 
 ### onStat
 
-```ts fragment
-onStat?: (before: GameState, after: GameState, stat: string, by: number, context: PluginContext<S>) => GameState
-```
+A hook that runs after every [`stat`](/docs/reference/effects#stat) effect on one of the player's stats, with the state before and after it. It returns `before` to veto the change, `after` to let it stand, or `after` with changes of its own made through `context.apply`. Each plugin's `onStat` runs after it, on what it returned.
 
-A hook, named as the others are: it runs at an event and returns the next state.
-
-**When:** after every [`stat`](/docs/reference/effects#stat) effect on one of the player's stats, with the state before and after it. `after` is already held to the stat's declared range. For an effect with `by`, `by` is the effect's own `by`, even when the range cut it short. For one with `to`, `by` is the change it made. It isn't called for an [entity's stat](/docs/reference/stats#entity-stats) (an effect with `of`), or when an action's `cost` is paid.
-
-**Does:** return `before` to veto the change, `after` to let it stand, or `after` with more changes of your own (`context.apply` applies effects to it). Each plugin's `onStat` runs after it, on what it returned.
-
-**Without it:** the change stands.
+`after` is already held to the stat's range. With `by`, its `by` is the effect's own, even when the range cut it short, and with `to` it's the change the effect made. It isn't called for an entity's stat or when an action's `cost` is paid. Without it, the change stands.
 
 ```ts
 import type { GameRules } from '@ifloom/engine'
@@ -327,19 +131,11 @@ export const rules: GameRules = {
 }
 ```
 
-What the player is called, and what they're like, isn't a rule either. Keep it in [stats](/docs/reference/stats) and the [kv store](/docs/reference/state#kv), and print it in prose.
-
-The core has no characters, so it has no hooks for them. Which scene talking to someone opens is the [cast](/docs/plugins/cast#talkoption)'s `talk` option.
-
-## The save
-
 ### saveName
 
-```ts fragment
-saveName?: (state: GameState, context: PluginContext<S>) => string | undefined
-```
+Returns the name a save is listed under, or `undefined` for none. Each save records it as [`SaveMeta.playerName`](/docs/reference/saves#savemeta), and a spoken line under `@you` or `@player` shows it.
 
-The name a save is listed under, usually the name the player typed. Each save records what it returns as [`SaveMeta.playerName`](/docs/reference/saves#savemeta), so a load screen can show whose save it is. Return `undefined` for no name. A plugin can have a `saveName` too, and the first that answers names the save, the game's before any plugin's. With none, every save's `playerName` is `null`. A spoken line under `@you` or `@player` shows this name too, or the string `you` when nothing names the save (see [Speech](/docs/reference/prose#speech)).
+A plugin can have a `saveName` too, and the first that answers names the save, the game's before any plugin's. With none, every save's `playerName` is `null`. The engine keeps no player name of its own, so a game keeps one in the kv store, written by an [input](/docs/reference/inputs).
 
 ```ts
 import type { GameRules } from '@ifloom/engine'
@@ -349,17 +145,49 @@ export const rules: GameRules = {
 }
 ```
 
-The engine doesn't keep a player name of its own. The usual place is a `playerName` key in the [kv store](/docs/reference/state#kv), written by an [input](/docs/reference/inputs), and The Letter reads it from there. A name kept anywhere else works too, because `saveName` can read any part of the state.
-
 ### migrations
 
-```ts fragment
-migrations?: Record<number, (state: GameState, tools: MigrationTools) => GameState>
+Steps that carry a save from one version of the game to the next, keyed by the version each upgrades from, so step 1 takes a version-1 save to version 2. The version is the base's `version`. Each step gets the whole state and the [`MigrationTools`](/docs/api/engine#migrationtools), and returns the next state.
+
+They run when an older save loads, after the engine's and the plugins' own steps. A plugin's `migrations` carry only its own state, so this is the one member that means something else on the game. [Saves](/docs/reference/saves) describes how a save loads.
+
+```ts
+import type { GameRules } from '@ifloom/engine'
+
+export const rules: GameRules = {
+  migrations: { 1: (state) => ({ ...state, kv: { ...state.kv, catName: state.kv.catName ?? 'Biscuit' } }) },
+}
 ```
 
-Steps that carry a save from one version of the game to the next, keyed by the version each upgrades from: step 1 takes a version-1 save to version 2. The version is the base's `version`. They run when an older save loads, after the engine's and the plugins' own steps, on the whole state. This is the one member that means something else on a plugin, whose `migrations` carry only its own state. See [The game's own migrations](/docs/reference/saves#the-games-own-migrations).
+## TurnContext
 
-## See it in an example
+The context every `onTurn` and `onTurnDone` hook gets, the game's and each plugin's, with `before` added. Every field is in [`TurnContext`](/docs/api/engine-plugin#turncontext).
 
-- Small Town: [`examples/showcase/src/rules.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/rules.ts) has an `onTurn` that puts energy back to 100, a value, `catName`, and a macro, `postLatest`. Its `resets` are in [`world/actions.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/actions.ts) and its lock in [`story/moving-day.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/moving-day.ts).
-- The Letter: [`examples/novel/src/game.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/src/game.ts) has `saveName` and `migrations`.
+`before` is the state the turn ended on. Its `apply` ends no turn, so a `turn` effect applied through it does nothing. Its other fields are the [`PluginContext`](/docs/reference/plugin-api#plugincontext)'s, with the game's own state as `slice` and the seeded `roll` that [`CustomContext`](/docs/reference/custom#customcontext) describes.
+
+```ts
+import type { GameState } from '@ifloom/engine'
+import type { TurnContext } from '@ifloom/engine/plugin'
+
+export const hadCoffee = (_state: GameState, { before }: TurnContext) => before.kv.hadCoffee === true
+```
+
+## resets
+
+A content key that lists the kv keys the engine puts back at the end of each turn, with the value each goes back to. It's content, not a member of `rules`, so a mod can add a key, and a pack's keys replace content's key by key.
+
+The engine writes them into `state.kv` as the counter moves on, before `onTurn`. Without `resets`, no key goes back. A once-a-turn key is the usual entry.
+
+```ts
+import type { Content } from '@ifloom/engine'
+
+export const actions: Content = {
+  resets: { hadCoffee: false, postedToday: false },
+}
+```
+
+## Caveats
+
+- A `turn` effect applied in `onTurn` or `onTurnDone` does nothing, so a turn's hooks can never end another turn.
+- The content checker can't look inside a function, so a stat, scene or call that `onTurn` names with a typo isn't reported.
+- The game's `onTurn` runs before the calendar moves its clock, so it reads the day that's ending. `onTurnDone` reads the new one.

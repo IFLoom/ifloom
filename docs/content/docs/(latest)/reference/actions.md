@@ -1,357 +1,204 @@
 ---
-title: "Actions and buttons"
-description: "Actions: what the player can do, with a cost, reasons it's refused, effects and a command, offered as buttons; the order refusals come in, whyNot, warnings and effectsOf."
+title: "Actions"
+description: "Reference for ActionDef and ButtonDef, the fields a choice and an action share (cost, blocked, once), and actionOf, need, whyNot, effectsOf and actionReferences."
 ---
-An action is something the player can do, offered as a button: buying a coffee, doing a shift, going for a jog, waiting a while. It's an [`ActionDef`](#actiondef), with the same fields a scene's [choice](/docs/reference/scenes#choice) has: a label, a cost, the reasons it's refused, effects and a command it sends.
+An action is something the player can do outside a scene's choices, such as buying a coffee, doing a shift or waiting a while. Your content declares the game's own in `actions`, and plugins offer theirs, such as a location's actions in the [places plugin](/docs/reference/plugins/places) and an app's in the [devices plugin](/docs/reference/plugins/devices). [State, commands and the view](/docs/explanation/state-and-commands#locks-and-blocked-reasons) explains how refusals work, and [Give the player things to hold and use](/docs/how-to/give-the-player-things) offers actions in a game.
 
-Your game's own actions go in your content's `actions`, and each one with a `label` is a button in every room while no scene is open. Plugins offer theirs too, such as the [places plugin](/docs/plugins/places#the-buttons)'s room actions and a [device](/docs/plugins/devices#section)'s app buttons.
+In the showcase: `examples/showcase/src/story/cafe.ts`, whose `coffee` action costs 3 coins and is refused once you've had one today.
 
 ```ts
-import { actionOf, effectsOf, need, whyNot, type ActionCost, type ActionDef, type Blocked } from '@ifloom/engine'
+import { actionOf, effectsOf, need, whyNot, type ActionCost, type ActionDef, type Blocked, type ButtonDef, type Once, type Reason } from '@ifloom/engine'
 import { actionReferences } from '@ifloom/engine/plugin'
 ```
 
 ## ButtonDef
 
-```ts shape
-type ButtonDef = {
-  id: string
-  label?: string
-  labels?: { when?: Condition; label: string }[]
-  when?: Condition
-  blocked?: Blocked[]
-  cost?: ActionCost
-  effects?: EffectRef[]
-  command?: CommandRef
-  once?: Once
-  tags?: string[]
-  irreversible?: string
-  ui?: Ui<ChoiceUi>
-}
-```
+The fields a scene's [`Choice`](/docs/reference/scenes#choice) and an [`ActionDef`](#actiondef) share, so the two are written and read the same way. Every field is in [`ButtonDef`](/docs/api/engine#buttondef).
 
-Something the player can press. A scene's [`Choice`](/docs/reference/scenes#choice) and an [`ActionDef`](#actiondef) are both one, so a choice and a room's button are written and read the same way. Pressing one runs its command, then pays its cost, then applies its effects.
+When the player chooses a choice or does an action, the engine runs its `command`, then pays its `cost`, then applies its `effects`. A `label` and its `labels` are words in place, with tokens filled in, and the first entry of `labels` whose `when` holds wins over `label`. `tags` reach the [`RenderedChoice`](/docs/reference/view#renderedchoice) for a UI to style or filter by, and the engine gives them no meaning. `irreversible` is a warning the UI shows, and `ui` holds [presentation hints](/docs/reference/ui-hints).
 
 ## ActionDef
 
-```ts shape
-type ActionDef = ButtonDef
-```
+An action the game declares in `actions`, or a plugin offers, with a choice's fields. Every field is in [`ActionDef`](/docs/api/engine#actiondef).
 
-| Field | What it does |
+While no scene is open, each action with a `label` is a button in the room. An action with no label is never rendered, and a choice's `command`, another action or a hotspot does it with `{ type: 'action', id }`. The engine adds no action of its own, so the showcase declares a `wait` action in its content.
+
+| Field | Meaning |
 |---|---|
-| `id` | Unique among the game's actions. The view passes it on as the [`RenderedChoice`](/docs/reference/view#renderedchoice)'s `id`, and `[[act:id]]` in a room's prose names it. |
-| `label` | The button's words, as written, with tokens filled in. An action with no label is never drawn as a button. A choice's command, another button or a hotspot does it with `{ type: 'action', id }`. |
-| `labels` | Words that depend on state, each `{ when, label }`. The first whose `when` holds wins over `label`. |
-| `when` | Only offered, and only done, while this holds. Without it, it's always there. |
-| `blocked` | [Conditions](/docs/reference/conditions) that refuse it while they hold, each with the line the player reads. See [`Blocked`](#blocked). |
-| `cost` | The stats it spends. See [`ActionCost`](#actioncost). |
-| `effects` | [Effects](/docs/reference/effects) applied in order after the cost is paid. A plugin's effect or one of the game's own is written [in short](/docs/reference/custom#plugincall), as in `{ 'game/countCoffee': true }`. |
-| `command` | A [command](/docs/reference/commands) it sends, before its cost and effects: a plugin's in short, such as `{ 'places/go': { id: 'cafe' } }`, or the engine's. Any command but `choose`. |
-| `once` | Once in the game or once a turn, as a [`Once`](#once): `{ per: 'turn', reason: 'Once a day is plenty.' }`. Once it's spent it's refused with `reason`, which shows on its button. It's counted in [`state.chosen`](/docs/reference/state#chosen) under its id. |
-| `tags` | Words the UI can style or filter the button by, passed to its [`RenderedChoice`](/docs/reference/view#renderedchoice). The engine gives them no meaning. |
-| `irreversible` | A warning that it can't be undone, which the UI shows on it. |
-| `ui` | [Presentation hints](/docs/reference/ui-hints) for the UI, passed to the button as written, such as the React UI's [`transition`](/docs/react/hints#transition-on-a-choice) for the screen it leads to. |
+| `id` | The action's id, unique among the game's actions. The view passes it on as the `RenderedChoice`'s `id`, and `[[act:id]]` in a room's prose names it. |
+| `when` | The condition the action is offered and done under. Without it, the action is always there. |
+| `command` | A [`CommandRef`](/docs/reference/custom#commandref) the action sends before its cost and effects, any command but `choose` and never the action itself. |
+| `once` | How often the action can be done, a [`Once`](#once), counted in [`state.chosen`](/docs/reference/state#chosen) under its id. |
 
-This is the showcase's coffee, a room action of the café, with a [macro](/docs/reference/custom#macros) of the game's own added to count the cups:
+Doing an action sends one command, which is the one the runner's log keeps. An action with only a `command` sends that command, so a lock on the command stops it. An action with a cost, effects or `once` sends [`{ type: 'action', id }`](/docs/reference/commands#action), which runs its `command` first.
+
+A plugin's action is named with the plugin's id in front, such as `{ type: 'action', id: 'places/coffee' }`. The engine asks that plugin for it, through its `action` provider or else the actions it offers in this state, so the café's coffee can be bought only while the café's actions are offered.
+
+This is the showcase's coffee, with a [macro](/docs/reference/custom#macros) of the game's own that counts the cups:
 
 ```ts
-import type { ActionDef, GameRules } from '@ifloom/engine'
+import type { ActionDef } from '@ifloom/engine'
 
-const coffee: ActionDef = {
+export const coffee: ActionDef = {
   id: 'coffee',
   label: 'Buy a coffee',
   cost: { stats: { coins: 3 }, reasons: { coins: 'Not even for a small one.' } },
   blocked: [{ when: { kv: 'hadCoffee' }, reason: 'One is enough for today.' }],
   effects: [{ stat: 'energy', by: 15 }, { kv: 'hadCoffee', to: true }, { 'game/countCoffee': true }],
 }
-
-// The game's own code, in its rules.
-const rules: GameRules = {
-  macros: {
-    countCoffee: () => [{ kv: 'coffees', by: 1 }],
-  },
-}
 ```
 
-`coins` and `energy` are stats the game declares. The engine has none of its own (see [Stats](/docs/reference/stats)).
-
-### What a button sends
-
-Pressing a button sends one command, which is what the player's log keeps:
-
-- An action with only a `command` sends that command, so a lock on the command stops the button, and the log reads `{ type: 'custom', name: 'places/go', … }`.
-- An action with a cost, effects or `once` sends [`{ type: 'action', id }`](/docs/reference/commands#action). That command runs its `command` first, if it has one, then pays its cost and applies its effects.
-
-A plugin's action is named with the plugin's id in front, `{ type: 'action', id: 'places/coffee' }`. The engine asks that plugin for it: its [`action`](/docs/reference/plugins#action), else its buttons in this state. So the café's coffee can only be bought while the café's buttons are offered, which is while you're there.
-
-The engine adds no button of its own. To let the player wait in any room, add a `wait` action to your content, as the showcase does:
-
-```ts
-import { calendar } from '@ifloom/plugin-calendar'
-
-actions: [{ id: 'wait', label: 'Wait a while', effects: [calendar.pass(1)] }]
-```
-
-The engine keeps no time of day. An action that takes time says so in its `effects`, with the [calendar plugin](/docs/plugins/calendar)'s [`pass`](/docs/plugins/calendar#effects), as in `effects: [calendar.pass(2), ...]`.
-
-**Gotchas.**
-- One of the game's own macros sees the state before the cost was paid.
-- The [content checker](/docs/reference/checks) checks what an action names. It doesn't look inside the game's code, and an effect nobody declares does nothing.
-- An action's `command` can't be the action itself. The checker says so, and the engine leaves such a command out.
+A macro of the game's own in `effects` sees the state before the cost was paid. The [content checker](/docs/reference/checks) checks what an action names, and doesn't look inside the game's code.
 
 ## ActionCost
 
-```ts shape
-type ActionCost = {
-  stats?: Record<string, number>
-  reasons?: Record<string, string>
-}
+The [stats](/docs/reference/stats) an action spends, by id, with the words for a player who has too little. Every field is in [`ActionCost`](/docs/api/engine#actioncost).
+
+The engine refuses the action when the player has less of any stat in `stats` than it costs. The refusal is the entry in `reasons` for that stat, or else the stat's [`lackingLine`](/docs/reference/stats#lackingline). The view shows the cost on the button before it's pressed, as its [`Price`](/docs/reference/view#price), listing the stats in the order `stats` gives them.
+
+A negative amount pays the player, so `{ coins: -5 }` adds 5 coins. It isn't checked against what the player has and isn't shown in the price, and [`effectsOf`](#effectsof) lists it as `{ stat: 'coins', by: 5 }`. An amount of 0 does nothing.
+
+```ts fragment
+cost: { stats: { coins: 3, energy: 10 }, reasons: { coins: 'Not even for a small one.' } }
 ```
-
-| Field | What it does |
-|---|---|
-| `stats` | The [stats](/docs/reference/stats) it spends, by id, as in `{ coins: 3, energy: 10 }`. The action is refused if the player has less of any of them. Write them in the order the button should list them. |
-| `reasons` | Refusal lines by stat id, for when this action should say it differently from the stat. Without one, the player reads the stat's [`lacking`](/docs/reference/stats#lackingline) line. |
-
-The cost shows on the button before it's pressed, as its [`Price`](/docs/reference/view#price).
-
-**Gotcha.** A negative amount pays the player. `{ coins: -5 }` adds 5 coins when the action is done, and [`effectsOf`](#effectsof) lists it as `{ stat: 'coins', by: 5 }`. It isn't checked against what the player has, and it isn't shown in the price, so the button gives no hint of it. An amount of 0 does nothing. For a payment the player should see coming in your code, a [`stat` effect](/docs/reference/effects#stat) in `effects` is clearer.
 
 ## Blocked
 
-```ts shape
-type Blocked = {
-  when: Condition
-  reason: Reason
-  hide?: boolean
-}
-```
+A reason something the player could do is refused for now, while its `when` holds. Every field is in [`Blocked`](/docs/api/engine#blocked).
 
-Why something the player could do is refused for now. Everything that can be refused takes a `blocked` list of these: an action, a scene's [choice](/docs/reference/scenes#choice), a [place](/docs/plugins/places#the-location-trait), a device's [app](/docs/plugins/devices#appdef) and a [job](/docs/plugins/jobs#jobdef). The entries are checked in order, and the first whose `when` [holds](/docs/reference/conditions) refuses it. Its `reason` is both the refusal and the button's disabled text.
-
-| Field | What it does |
-|---|---|
-| `when` | Refused while this holds. |
-| `reason` | What the player reads, on the greyed-out button and as the refusal: words written in place, or a line of the strings table by key. See [`Reason`](#reason). |
-| `hide` | Leave the button off the screen while `when` holds, rather than greyed out. |
-
-The reducer refuses an action on its `blocked` list and the view greys the button out with it, so the two can't disagree.
+An action, a scene's choice, a location, a device's app and a job each take a `blocked` list. The engine tests the entries in order, and the first whose `when` holds refuses with its `reason`, which is also the button's disabled text. With `hide: true`, the button leaves the screen while `when` holds, in place of being greyed out. The reducer and the view read the same list, so the two can't disagree.
 
 ```ts
+import type { Blocked } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 
-blocked: [
+export const opening: Blocked[] = [
   { when: calendar.weekday(6), reason: 'The café is shut on Sundays.' },
   { when: { kv: 'barred' }, reason: 'Rosa won’t serve you.', hide: true },
 ]
 ```
 
-### Reason
+A [lock](/docs/reference/locks) in content's `locks` is the other way to refuse things. A lock covers a rule across many commands, such as a stretch of the game that keeps the player at home, and `blocked` covers a reason that belongs to one thing.
 
-```ts shape
-type Reason = string | { string: string }
+## Reason
+
+The words a player reads when something is refused, written in place or named by key in the [strings table](/docs/reference/strings). Every form is in [`Reason`](/docs/api/engine#reason).
+
+A reason written in place, such as `'Too tired.'`, is the game's own words. `{ string: 'shop/closed' }` names a line of the strings table, so a game rewords it once for every place it's used. The helpers that write a `blocked` entry use this form, such as `places.onlyAt()` with `places/notHere` and `shop.hours()` with `shop/closed`. [`reasonOf`](/docs/reference/strings#reasonof) reads one, and the checker reports `no string named "…"` for a key no table has.
+
+## Once
+
+How often something can be done, once in the whole game or once a turn. Every field is in [`Once`](/docs/api/engine#once).
+
+A choice, an action and a [cheat](/docs/reference/plugins/cheats) take one as `once`, and a [trigger](/docs/reference/triggers#triggerdef) takes its `per`. `per: 'game'` is spent once it has been done, and `per: 'turn'` is spent until the turn ends. A spent one is refused with `reason`, which shows on its button, or with the engine's `done` string, `Already done.`, when `reason` is left out.
+
+```ts fragment
+once: { per: 'turn', reason: 'Once a day is plenty.' }
 ```
 
-The words a player reads when something is refused. Most are written in place, such as `'Too tired.'`. A reason can also name a line of the [strings table](/docs/reference/strings) by its key, `{ string: 'shop/closed' }`, so a game rewords it once for everywhere it's used. The helpers that write a `blocked` entry for you do this: [`places.onlyAt()`](/docs/plugins/places#helpers)'s is `{ string: 'places/notHere' }` and [`shop.hours()`](/docs/plugins/shop#helpers)'s is `{ string: 'shop/closed' }` unless you give one. The [checker](/docs/reference/checks) reports `no string named "…"` for a key that no table has. Read one yourself with [`reasonOf`](/docs/reference/strings#reasonof).
+## View
 
-### Once
+While no scene is open, `view.actions` lists the room's actions, each a [`RenderedChoice`](/docs/reference/view#renderedchoice) made by [`renderAction`](/docs/reference/view#renderaction). It lists the game's own first, then each plugin's, then content's actions with a label. A lock that denies `'*'` empties it (see [`lockedOut`](/docs/reference/locks#lockedout)). The view leaves out an action whose command a lock with `hide` stops, and one whose own `blocked` entry with `hide` holds.
 
-```ts shape
-type Once = { per: 'game' | 'turn'; reason?: Reason }
+A rendered action's `disabled` text is [`whyNot`](#whynot) for the command it sends, the function the reducer refuses with. Its `warning` is the first soft refusal a plugin's guard gives, on a button the player can still press, and its `price` is the action's cost with the notes plugins' prices add.
+
+To render the room's actions, see [Render the room's actions](/docs/how-to/render/scene#render-the-rooms-actions).
+
+## Functions
+
+### actionOf
+
+Returns the action that `{ type: 'action', id }` does in a state, or `undefined`. Its signature is in [`actionOf`](/docs/api/engine#actionof).
+
+An id with no plugin in front is one of content's `actions`. An id with a plugin's id in front, such as `'places/coffee'`, is that plugin's, from its `action` provider or else the action of that id it offers now.
+
+```ts given
+import { actionOf } from '@ifloom/engine'
+
+actionOf(state, game, 'wait')?.label // 'Wait a while'
 ```
-
-How often something can happen: once in the whole game, or once a turn. A choice, an action and a [cheat](/docs/plugins/cheats#cheatdef) take one as `once`, and a [trigger](/docs/reference/triggers#triggerdef) takes its `per`.
-
-| Field | What it does |
-|---|---|
-| `per` | `'game'`: spent for good once it's been pressed. `'turn'`: spent until the turn ends. |
-| `reason` | What the player reads on the button once it's spent. The engine's `done` string, `Already done.`, if left out. |
-
-A button counts in [`state.chosen`](/docs/reference/state#chosen), so `per: 'game'` reads its count and `per: 'turn'` the turn it was last pressed.
-
-A [lock](/docs/reference/locks) in your content's `locks` is the other way to refuse things. Use a lock for a rule that spans many commands at once, such as a stretch of the game where the player can't leave the house, and `blocked` for a reason that belongs to one thing.
 
 ### need
 
-```ts shape
-function need(reason: Reason, when: Condition): Blocked
-```
+Returns a [`Blocked`](#blocked) entry written the other way round, refused with `reason` unless `when` holds. Its signature is in [`need`](/docs/api/engine#need).
 
-A `blocked` entry written the other way round: refused with `reason` unless `when` holds. It's `{ when: { not: when }, reason }`, for when it reads better to say what the action needs.
+`need(reason, when)` is `{ when: { not: when }, reason }`, for a refusal that reads better as what the action needs.
 
 ```ts
-import { need } from '@ifloom/engine'
+import { need, type Blocked } from '@ifloom/engine'
 
-blocked: [need('You need a scarf for this.', { entity: 'clothing:scarf', at: 'you' })]
+export const scarfNeeded: Blocked[] = [need('You need a scarf for this.', { entity: 'clothing:scarf', at: 'you' })]
 ```
 
-For a test worked out from several values, use a [condition of your game's own](/docs/reference/rules#gamerules): `{ when: { 'game/marketDay': true }, reason: 'Not on market day.' }`.
+### whyNot
 
-## actionOf
+Returns the line a command is refused with in a state, or `undefined` when it would go ahead. Its signature is in [`whyNot`](/docs/api/engine#whynot).
 
-```ts shape
-function actionOf(state: GameState, game: Game, id: string): ActionDef | undefined
-```
+It answers for every command, actions, choices, inputs and plugin commands included. The reducer refuses with this line and the view greys out buttons with it. It tests a [lock](/docs/reference/locks) first, then a plugin's guard or the game's own [`guard`](/docs/reference/rules#gamerules), then what the command itself needs, whose lines are under [Commands](/docs/reference/commands#command). A plugin command that sets `ignoresLocks` skips the first two, and so does the [`setting`](/docs/reference/commands#setting) command.
 
-The action `{ type: 'action', id }` does, in this state, or `undefined`. An id with no plugin in front is one of the game's `actions`. One with a plugin's id in front, `'places/coffee'`, is that plugin's: what its [`action`](/docs/reference/plugins#action) answers, else the button of that id it offers now.
-
-## Why an action is refused
-
-An action the player can't do right now is refused with one line, which is also its button's disabled text. The engine checks in this order, and the first that fails gives the line:
+For an action, the engine tests in this order and refuses with the first that fails:
 
 1. A scene is open: `Finish this first.`
 2. Its `when` doesn't hold: `That is not on offer.`
-3. A [lock](/docs/reference/locks) stops `{ type: 'action', id }`: the lock's `reason`.
-4. Each entry in `blocked`, in order, whose `when` holds: its `reason`.
-5. It has `once` and it's spent, done once in the game or this turn: `once.reason`, or `Already done.`.
-6. Each stat in `cost.stats`, in the order written, that the player has less of than the cost: `cost.reasons[id]`, or the stat's [`lackingLine`](/docs/reference/stats#lackingline).
+3. A lock stops `{ type: 'action', id }`: the lock's `reason`.
+4. An entry of `blocked` holds: its `reason`.
+5. Its `once` is spent: `once.reason`, or `Already done.`
+6. A stat in `cost.stats`, in the order written, is short: `cost.reasons[id]`, or the stat's `lackingLine`.
 7. Its `command` would be refused: that command's reason.
 
-Because `blocked` comes before `cost`, a player short of energy is told `Too late for that.` before `Not enough energy.` when both hold. To have the energy line come first, give it a `blocked` entry of its own, ahead of the others, and keep the cost for spending it:
-
-```ts
-import type { ActionDef } from '@ifloom/engine'
-import { calendar } from '@ifloom/plugin-calendar'
-
-const jog: ActionDef = {
-  id: 'jog',
-  label: 'Go for a jog',
-  cost: { stats: { energy: 10 } },
-  blocked: [
-    { when: { stat: 'energy', lt: 10 }, reason: 'Too tired.' },
-    { when: calendar.period('night'), reason: 'Too late for that.' },
-  ],
-  once: { per: 'turn', reason: 'Once a day is plenty.' },
-  effects: [calendar.pass(1)],
-}
-```
-
-If the action also costs coins, that's still checked after `blocked`, so the player hears that they can't afford it only once nothing else stands in the way. You can reword the engine's own lines here (`finishFirst`, `notOnOffer` and `notEnough`) in the [strings table](/docs/reference/strings#refusals). A lock's and a `blocked` entry's `reason` are already your game's words.
-
-**Gotcha.** A plugin guard's soft refusal isn't in this list. An action a plugin warns against, such as one the [calendar](/docs/plugins/calendar#the-guard) says `That would run past dawn.` about, isn't blocked. Its button stays pressable with the line as its `warning`, and the command is refused with it. See [`RenderedChoice`](/docs/reference/view#renderedchoice).
-
-## actionReferences
-
-```ts shape
-function actionReferences(action: ActionDef): Reference[]
-```
-
-What an action names, for the [content checker](/docs/reference/checks): its conditions, effects, command and hints. A plugin whose content holds actions, as a place's or an app's do, hands these to its [`references`](/docs/reference/plugins#references), so they're checked as the game's own are.
-
-## Offering buttons
-
-While no scene is open, the view shows the plugins' buttons first and then the game's actions that have a label. It shows none at all while a [lock](/docs/reference/locks) that denies `'*'` is on (see [`lockedOut`](/docs/reference/locks#lockedout)). It leaves off any button whose command is stopped by a lock with `hide`, or whose own `blocked` entry with `hide` holds.
-
-```ts
-import type { ActionDef } from '@ifloom/engine'
-import { calendar } from '@ifloom/plugin-calendar'
-
-const actions: ActionDef[] = [
-  {
-    id: 'chat',
-    label: 'Chat with Ava',
-    command: { type: 'scene', id: 'ava.hi' },
-    when: { seen: 'intro' },
-    blocked: [{ when: calendar.period('afternoon'), reason: 'The afternoon queue is out the door.' }],
-  },
-]
-```
-
-### A "go home" button
-
-The engine offers no travel shortcuts of its own. With the [places plugin](/docs/plugins/places), you can add an action that walks home, so every room offers it:
-
-```ts
-import type { Content } from '@ifloom/engine'
-import { places } from '@ifloom/plugin-places'
-
-export const town: Content = {
-  actions: [{ id: 'home', label: 'Go home', command: places.go('flat'), when: { not: places.at('flat') } }],
-}
-```
-
-`places/go` only goes to an exit of where the player stands, so further away the button is greyed out with `You cannot get there from here.` For a button that works from anywhere, give the action effects that hold the plugin's [`places.move('flat')`](/docs/plugins/places#effects) instead. That doesn't run the place's [`arrive`](/docs/plugins/places#arrival).
-
-### How a button and the reducer agree
-
-The view turns each action into a [`RenderedChoice`](/docs/reference/view#renderedchoice) with [`renderAction`](/docs/reference/view#renderaction):
-
-- Its disabled text is [`whyNot`](#whynot) for the command it sends, the same function the reducer refuses with.
-- Its `warning` is the first soft refusal a plugin's [guard](/docs/reference/plugins#guards) gives, the line the reducer refuses a pressable button with.
-- It carries the action's cost as its [price](/docs/reference/view#price), along with any notes [plugins' prices](/docs/reference/plugins#prices) add.
-
-## whyNot
-
-```ts shape
-function whyNot(state: GameState, game: Game, command: CommandRef): string | undefined
-```
-
-Why the player can't do this right now, or `undefined` if they can. It answers for every command: actions, choices, inputs and plugin commands such as the [cast](/docs/plugins/cast#commands)'s talking and calling. The reducer refuses with this line and the view greys buttons out with it, so the two can't disagree, and every refusal is a sentence a UI can show as it is.
-
-It checks in this order:
-
-1. A [lock](/docs/reference/locks).
-2. A refusal from a plugin's [guard](/docs/reference/plugins#guards), or the game's own in [`rules.guard`](/docs/reference/rules#gamerules).
-3. What the command itself needs. The lines for each command are under [Commands](/docs/reference/commands#command).
-
-A plugin command that sets [`ignoresLocks`](/docs/reference/plugins#commands-outside-the-story) skips the first two, and so does the [`setting`](/docs/reference/commands#setting) command. The engine's own lines come from the [strings table](/docs/reference/strings), so a game can reword them.
+The engine's own lines come from the [strings table](/docs/reference/strings) (`finishFirst`, `notOnOffer`, `done` and `notEnough`), so a game can reword them.
 
 ```ts given
 import { whyNot } from '@ifloom/engine'
-import { places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
 
-whyNot(state, game, places.go('cafe'))
-// a `blocked` reason on the café, such as 'Closed. Opens tomorrow morning.', while it holds
-whyNot(state, game, cast.talk('ava'))
-// 'Finish this first.' while a scene is open, or 'Ava is not here.' when she's elsewhere
+whyNot(state, game, cast.talk('ava')) // 'Ava is not here.' while she's elsewhere
 ```
 
-## effectsOf
+### effectsOf
 
-```ts shape
-function effectsOf(state: GameState, game: Game, command: CommandRef): Effect[]
-```
+Returns the effects a command would apply, worked out before it runs. Its signature is in [`effectsOf`](/docs/api/engine#effectsof).
 
-What a command would apply, worked out before it runs, as plain [effects](/docs/reference/effects). [Plugins' guards and prices](/docs/reference/plugins#guards-prices-and-labels) and [locks with `effect`](/docs/reference/locks#lock) look at this. The game's own effects among them are worked out against `state`, so a guard sees what they'd do.
+Plugins' guards and prices, and [locks with `effect`](/docs/reference/locks#lock), read it. The game's own macros among the effects are worked out against the state given.
 
-| Command | Effects |
+| Kind | Meaning |
 |---|---|
-| `action` | What its `command` would apply, then its cost, as a `stat` effect of minus the amount for each stat in `cost.stats`, then its `effects`, with the game's own worked out against `state`. |
+| `action` | The effects its `command` would apply, then a `stat` effect of minus the amount for each stat in `cost.stats`, then its `effects`. |
 | `choose` | The effects of that choice in the open scene, as it renders now. |
-| `custom` | The plugin command's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), or none if it has none. |
-| anything else | None. |
-
-An unknown action or choice gives none.
+| `custom` | The plugin command's own `effectsOf`, or none when it has none. |
+| Any other | None, so `scene` gives none, and an unknown action or choice gives none. |
 
 ```ts given
 import { effectsOf } from '@ifloom/engine'
 
-// the showcase's office action { id: 'work', label: 'Do a shift', cost: { stats: { energy: 30 } }, effects: [calendar.pass(2), { stat: 'coins', by: 20 }] }
 effectsOf(state, game, { type: 'action', id: 'places/work' })
-// [{ stat: 'energy', by: -30 },
-//  { 'calendar/pass': { by: 2 } },
-//  { stat: 'coins', by: 20 }]
+// [{ stat: 'energy', by: -30 }, { 'calendar/pass': { by: 2 } }, { stat: 'coins', by: 20 }]
 ```
 
-**Gotchas.**
-- `scene` gives none. Look at the command itself for that. The places plugin's `places/go` and the cast's `cast/talk` give none either, though one moves the player and the other opens a scene. A plugin command such as the calendar's [`sleep`](/docs/plugins/calendar#commands) gives what its own `effectsOf` says.
-- It's only the list the command applies directly. What a plugin's effect applies in turn, through its context's [`apply`](/docs/reference/plugins#applying-effects), isn't in it.
+### actionReferences
 
-## Drawing it
+Returns what an action names, for the [content checker](/docs/reference/checks): its conditions, effects, command, reasons and hints. Its signature is in [`actionReferences`](/docs/api/engine-plugin#actionreferences).
 
-While no scene is open, the buttons are in `view.actions`: the game's own, then each plugin's (the places plugin's for the room, say), then your content's. Each is a [`RenderedChoice`](/docs/reference/view#renderedchoice). Show its `price` with the label, and grey it out with `disabled`, which is [why it's refused](#why-an-action-is-refused). Show a `warning` too: the button can be pressed, but the command will be refused with that line. Send `command` when it's pressed.
+A plugin whose content holds actions, as a location's or an app's do, returns these from its `references`, so the checker checks them as it checks the game's own.
 
-The React UI's [`RoomActions`](/docs/react/components#roomactions) draws them at the bottom of the story in the default layout, and [`ChoiceList`](/docs/react/components#choicelist) draws any list of them the same way. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+```ts
+import { actionReferences } from '@ifloom/engine/plugin'
 
-::include[../../../../snippets/plain/actions.ts]{meta='tab="Plain JS" tab-group="framework"'}
+export const named = actionReferences({ id: 'wait', label: 'Wait a while', effects: [{ turn: true }] })
+```
 
-::include[../../../../snippets/react/actions.tsx]{meta='tab="React" tab-group="framework"'}
+## Checks
 
-::include[../../../../snippets/vue/Actions.vue]{meta='tab="Vue" tab-group="framework"'}
+The [content checker](/docs/reference/checks) checks every action:
 
-## See it in an example
+| Problem | Cause |
+|---|---|
+| `no string named "shop/close"` | A `reason` names a key no strings table has. |
+| `spends unknown stat "gold"` | `cost.stats` names a stat the game doesn't declare. |
+| `an action's command can't be the action itself; give it the effects` | The action's `command` sends the action, and the engine leaves the command out. |
 
-- Small Town: the café's `coffee` in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts) is one of the café's room actions. It costs 3 coins and is refused once you've had one today. "Wait a while" is in the content's `actions` in [`examples/showcase/src/world/actions.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/actions.ts), and the camera's buttons are an app's in [`examples/showcase/src/world/phone.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/phone.ts).
-- The Corner Café: its four buttons are the content's `actions` in [`examples/cafe/src/world/actions.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/world/actions.ts). Buying the staff lunch costs 25 coins and is blocked when there's nobody to feed.
+## Caveats
+
+- A plugin guard's soft refusal isn't in the order `whyNot` tests for an action. The button stays pressable with the line as its `warning`, and the engine refuses the command with it.
+- `effectsOf` lists only the effects the command applies directly. It leaves out what a plugin's effect applies in turn, and what `places/go` and `cast/talk` do, since neither lists effects.
+- `blocked` comes before `cost`, so a player short of energy reads a `blocked` line first when both hold. A `blocked` entry on the stat itself, ahead of the others, puts the energy line first.

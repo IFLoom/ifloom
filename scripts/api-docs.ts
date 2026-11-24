@@ -9,7 +9,7 @@
 // (docs/lib/check-blocks.ts) holds it to the export as well; one whose types name something no package exports is a
 // `fragment`.
 import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
-import { dirname, join, relative, resolve } from 'node:path'
+import { basename, dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import GithubSlugger from 'github-slugger'
 import ts from 'typescript'
@@ -197,7 +197,9 @@ function explained(headings: Map<string, Heading[]>, name: string, spec: PageSpe
     const home = spec.home.findIndex((prefix) => heading.page === prefix || (prefix.endsWith('/') && heading.page.startsWith(prefix)))
     return home < 0 ? spec.home.length : home
   }
-  return [...all].sort((a, b) => rank(a) - rank(b) || a.depth - b.depth)[0]
+  // A page named after the export comes first, so a reference page's fixed `## View` section never takes `View` from `reference/view.md`.
+  const named = (heading: Heading) => (basename(heading.page, '.md') === name.toLowerCase() ? 0 : 1)
+  return [...all].sort((a, b) => rank(a) - rank(b) || named(a) - named(b) || a.depth - b.depth)[0]
 }
 
 const printer = ts.createPrinter({ removeComments: true, newLine: ts.NewLineKind.LineFeed })

@@ -1,72 +1,56 @@
 ---
 title: "Calls by name"
-description: "Conditions, effects, macros and values worked out in code, the game's own in rules or a plugin's, that content calls by name, and what they're given."
+description: "Reference for the game's own conditions, macros, effects and values in rules, called by name from content, with CustomContext, Macro, PluginCall, CommandRef, EffectRef, ValueRef, callOf, commandOf and buildEffects."
 ---
-Most content is data, such as conditions, effects and prose, which a tool can read, a mod can ship and the [content checker](/docs/reference/checks) can check. When something has to be worked out in code, such as whether it's market day or what a loaf costs today, you declare a function in the game's [`rules`](/docs/reference/rules) and content calls it by name, with `game/` in front.
+A call by name is a condition, effect, macro, value or command written in code and named from content, such as `{ 'game/marketDay': true }`. The game declares its own in its [`rules`](/docs/reference/rules) and content calls them with `game/` in front, while a plugin's take the plugin's id in front, as in `{ 'quests/done': { quest: 'bread' } }`. [Content, packs and the base](/docs/explanation/content-and-packs#rules-are-the-games-code) explains why the game's code is called this way, and [Write your own condition, effect or macro](/docs/how-to/write-your-own-condition-or-effect) writes one.
+
+In the showcase: `examples/showcase/src/rules.ts`, whose value `catName` the flat's prose prints and whose macro `postLatest` the phone's camera runs.
 
 ```ts
-import type { GameRules } from '@ifloom/engine'
-
-export const rules: GameRules = {
-  conditions: { marketDay: (state) => state.turn % 7 === 5 },
-  macros: { tip: (state, args) => [{ stat: 'coins', by: -Number(args.by ?? 1) }] },
-  values: { breadPrice: (state) => (state.kv.marketDay ? 4 : 5) },
-}
+import { buildEffects, callOf, commandOf, type CommandRef, type CustomContext, type EffectRef, type PluginCall, type ValueRef } from '@ifloom/engine'
+import type { Macro } from '@ifloom/engine/plugin'
 ```
 
-| In `rules` | Content writes | Where |
-|---|---|---|
-| `conditions` | `{ 'game/marketDay': true }` | Any [condition](/docs/reference/conditions#conditioncall) |
-| `macros` | `{ 'game/tip': { by: 2 } }` | Any list of [effects](/docs/reference/effects#computed-effects): a choice's, an [action](/docs/reference/actions#actiondef)'s, a [trigger](/docs/reference/triggers)'s, an [`each`](/docs/reference/effects#each)'s, a thing's use in the [inventory](/docs/plugins/inventory), what another macro returns, and a plugin's [`context.apply`](/docs/reference/plugins#applying-effects) |
-| `effects` | `{ 'game/keepDiary': {} }` | The same places as a macro |
-| `values` | `{{breadPrice}}`, or `{ value: 'game/breadPrice' }` | [Prose](/docs/reference/prose#tokens), a stat's [`max`](/docs/reference/stats#statdef), an app's badge |
+Each game owns its functions, with no registry shared between games, so two games on one page never see each other's. Every function that reads a call takes the game, and finds nothing without it.
 
-A [plugin](/docs/reference/plugins)'s conditions, effects, macros and values are called the same way, with the plugin's id and a `/` in front, as in `{ 'quests/done': { quest: 'bread' } }` or `{{quests/updates}}`. The game's own code is called as if it were a plugin whose id is `game`, which is why no plugin can have that id.
+| Key | Meaning |
+|---|---|
+| `conditions` | Tests content writes as `{ 'game/marketDay': true }` in any [condition](/docs/reference/conditions#conditioncall). |
+| `macros` | Effects that stand for other effects, written as `{ 'game/tip': { by: 2 } }` in any list of [effects](/docs/reference/effects#effectcall). |
+| `effects` | Effects that return the next state, written in the same places as a macro. |
+| `values` | Numbers or words, printed in prose as `{{breadPrice}}` and named elsewhere as `{ value: 'game/breadPrice' }`. |
 
-There's no global registry. Each game owns its own functions, so two games on one page, or a test next to a game, never see each other's. Everything that reads one takes the game, and finds nothing without it.
+## CustomContext
 
-## What a function is given
+The part of every function's context that needs no plugin: the game, queries, values and seeded draws. Every field is in [`CustomContext`](/docs/api/engine#customcontext).
 
-Every one of the game's functions gets the state and the same context a plugin's function gets, a [`PluginContext`](/docs/reference/plugins#plugincontext). A condition, an effect, a macro and a value also get their arguments as `args`, or `{}` for `true`. So the game's own code can ask a plugin's [query](/docs/reference/plugins#queries), read a plugin's value, draw a seeded number, apply effects, and read and write the game's [own state](/docs/reference/rules#the-games-own-state) as `slice`, `get` and `set`.
+Every condition, macro, effect and value of the game's gets the state, its arguments as `args` (`{}` for `true`), and a [`PluginContext`](/docs/reference/plugin-api#plugincontext), which extends `CustomContext` with `slice`, `get`, `set`, `apply` and `beats`.
+
+| Field | Meaning |
+|---|---|
+| `query` | The function that asks a plugin's query by its full name, `undefined` when the game lacks that plugin. `query('calendar/now')` answers a `{ day, period }`, since the engine declares the queries first-party plugins ask each other in [`PartnerQueries`](/docs/reference/plugin-queries#partnerqueries). |
+| `value` | The function that reads a [value](#values) by its full name, a plugin's (`messages/unread`) or the game's (`game/breadPrice`), or `undefined` when nobody has one. |
+| `roll` | The function that draws a whole number from 0 to `max - 1` from the save's seed, the turn and `name`, so a replay draws the same. Each draw takes its own `name`. |
+
+This macro reads the calendar's clock through `query`:
 
 ```ts
 import type { Macro } from '@ifloom/engine/plugin'
 
-// Tips are better in the evening, by the calendar plugin's clock.
-const tips: Macro = (state, args, { query }) => {
+export const tips: Macro = (_state, _args, { query }) => {
   const evening = query('calendar/now')?.period === 'evening'
   return [{ stat: 'coins', by: evening ? 4 : 2 }]
 }
 ```
 
-## CustomContext
+## conditions
 
-```ts shape
-type CustomContext = {
-  game: Game
-  query: Query
-  value: (name: string, args?: PluginArgs) => string | number | undefined
-  roll: (max: number, name: string) => number
-}
-```
+The game's own conditions, each a function that returns whether it holds. Content calls one as `{ 'game/name': true }`, or with arguments in place of `true`, anywhere a [`Condition`](/docs/reference/conditions#condition) goes, such as a block's `when`, a lock or a schedule entry.
 
-- `game` is the game the function was called for, so it can call [`holds`](/docs/reference/conditions#holds) or [`statValue`](/docs/reference/stats#statvalue) with it.
-- `query` asks a plugin's [query](/docs/reference/plugins#queries) by its full name, and gives `undefined` when the game doesn't have that plugin. A query the plugin [declares](/docs/reference/plugins#typed-calls-queries-and-views) takes its arguments and answers its type: `query('calendar/now')` is a `{ day, period }`, typed in any program, since the engine declares the queries first-party plugins ask each other in [`PartnerQueries`](/docs/reference/plugins#partner-queries). For any other, name the type yourself: `query<number>('loyalty/stamps')`.
-- `value` reads a [value](#values) by its full name, a plugin's (`messages/unread`) or the game's own (`game/breadPrice`), asked with `args`. It's `undefined` when nobody has one by that name.
-- `roll(max, name)` draws a whole number from 0 to `max - 1`, from the save's seed, the turn and `name`. The same save on the same turn always draws the same number, so a replay plays the same. Use a different `name` for each draw.
-
-This is the part of every context that needs no plugin. A [`PluginContext`](/docs/reference/plugins#plugincontext) has all of it, and adds `slice`, `get`, `set`, `apply` and `beats`.
-
-## Conditions
-
-```ts fragment
-conditions?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => boolean>
-```
-
-A test worked out from several values rather than read from one. Content calls it as `{ 'game/name': true }` anywhere a [`Condition`](/docs/reference/conditions) goes, such as a block's `when`, a lock or a schedule entry. Its arguments arrive as `args`, so one function can serve several tests.
+A name the game doesn't declare is false, so a broken mod hides content in place of crashing, and the checker reports it.
 
 ```ts
-import type { Block, GameRules } from '@ifloom/engine'
+import type { GameRules } from '@ifloom/engine'
 
 export const rules: GameRules = {
   conditions: {
@@ -74,25 +58,15 @@ export const rules: GameRules = {
     visitedAtLeast: (state, args) => (state.seen['ava.hi']?.n ?? 0) >= Number(args.times ?? 1),
   },
 }
-
-// in a data scene's body
-const body: Block[] = [
-  { prose: 'ava.hi.regular', when: { 'game/isRegular': true } },
-  { prose: 'ava.hi.usual', when: { 'game/visitedAtLeast': { times: 10 } } },
-]
 ```
 
-**Gotcha.** A name the game doesn't declare is false rather than an error, so a broken mod hides content instead of crashing. The [content checker](/docs/reference/checks) reports it.
+## macros
 
-## Macros
+The game's own macros, each a [`Macro`](#macro) that returns the effects it stands for. Content calls one as any effect, `{ 'game/tip': { by: 2 } }`.
 
-```ts fragment
-macros?: Record<string, Macro<S>>
-```
+A macro runs in its turn. When the effects before it have applied, the engine calls its function with the state they left, and the effects it returns apply there. It can return any effect content can write, a plugin's call or another macro included, so two macros in a row compose.
 
-A macro is an effect that stands for other effects. Its function works out from the state which effects to apply and returns them. Content calls it as any effect, `{ 'game/tip': { by: 2 } }`. Most of the game's own effects are macros, because what they return can be seen before they run.
-
-One runs in its turn: when the effects before it in the list have applied, its function is called with the state they left, and the effects it returns apply there and then. The list it returns can hold anything content can write: plain effects, a plugin's effect such as `{ 'quests/start': { quest: 'letter' } }`, or another macro.
+A button's price, a guard and a [lock](/docs/reference/locks) see a macro before it runs. For those the engine calls it with the state on screen, so a macro that ends a turn is priced as one. In play the engine calls it again in its turn, and it can return something different there. Inside an [`each`](/docs/reference/effects#each), it runs once per entity.
 
 ```ts
 import type { Effect, GameRules } from '@ifloom/engine'
@@ -106,52 +80,20 @@ export const rules: GameRules = {
   },
 }
 
-// a choice's effects
-const effects: Effect[] = [{ 'game/bumpVisits': { by: 1 } }, { scene: null }]
+export const effects: Effect[] = [{ 'game/bumpVisits': { by: 1 } }, { scene: null }]
 ```
 
-Because each one sees the effects before it, two in a row compose. Here the second `double` doubles what the first left:
+## Macro
 
-```ts
-import type { Effect, GameRules } from '@ifloom/engine'
+The function behind a macro, in the game's or a plugin's `macros`, which returns the effects the macro stands for. Its signature is in [`Macro`](/docs/api/engine-plugin#macro).
 
-export const rules: GameRules = {
-  macros: { double: (state) => [{ stat: 'coins', by: state.stats.coins }] },
-}
+It gets the state, the arguments content wrote, and the `PluginContext`. A macro that returns a call to another macro runs it too, up to 10 deep, so a macro that names itself stops there in place of hanging.
 
-const effects: Effect[] = [{ stat: 'coins', by: 4 }, { 'game/double': true }, { 'game/double': true }]
-```
+## effects
 
-**Gotchas.**
-- A button's price, and what a [guard](/docs/reference/plugins#guards-prices-and-labels) or a [lock](/docs/reference/locks) sees, is worked out before the button is pressed. For those, the macro is called with the state on screen and they see the effects it returns, so a macro that ends a turn is priced as one. When the effects run, it's called again in its turn, so it can return something different if the effects before it changed what it reads.
-- Inside an [`each`](/docs/reference/effects#each), the function runs once per entity, on the state the entities before it left.
-- A macro that returns another runs that one in its turn too. This stops at 10 deep, so a macro that names itself does nothing past that rather than hanging.
+The game's own effects, each a function that returns the next state, as a plugin's effect does. Content calls one as any effect, `{ 'game/keepDiary': { text: 'Met Ava.' } }`.
 
-The showcase has one: [`postLatest`](/docs/guide/showcase#feeds-and-an-effect-worked-out-in-code) posts the newest photo and rolls its likes.
-
-### Macro
-
-The function behind a macro, in the game's or a plugin's `macros`. It's handed the state, the arguments content wrote and the [context](/docs/reference/plugins#plugincontext), and returns the effects the macro stands for.
-
-```ts shape
-type Macro<S = any> = (state: GameState, args: PluginArgs, context: PluginContext<S>) => EffectRef[]
-```
-
-### EffectRef
-
-Another name for [`Effect`](/docs/reference/effects#effect), kept for code written when the two differed.
-
-```ts shape
-type EffectRef = Effect
-```
-
-## Effects
-
-```ts fragment
-effects?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => GameState>
-```
-
-An effect that changes the state itself and returns the next one, as a plugin's [effect](/docs/reference/plugins#effects-run-in-order) does. Use one when what it does isn't a list of effects, such as writing the game's [own state](/docs/reference/rules#the-games-own-state) with `context.set`. It can still apply effects with `context.apply`.
+An effect suits a change that isn't a list of effects, such as writing the game's own state with `context.set`. It can still apply effects with `context.apply`. Prices, guards and locks can't see inside it, since it returns a state, so one that stands only for other effects is better as a macro.
 
 ```ts
 import type { GameRules } from '@ifloom/engine'
@@ -161,89 +103,16 @@ type Diary = { entries: string[] }
 export const rules: GameRules<Diary> = {
   start: () => ({ entries: [] }),
   effects: {
-    // Write a line in the diary, and the evening's quiet does you good.
     keepDiary: (state, args, { slice, set, apply }) => apply([{ stat: 'energy', by: 5 }], set({ entries: [...slice.entries, String(args.text ?? '')] })),
   },
 }
-
-// a choice
-effects: [{ 'game/keepDiary': { text: 'Met Ava at the café.' } }]
 ```
 
-**Gotchas.**
-- Prices, guards and locks can't see inside it, because it returns a state, not effects. Here a guard sees `{ 'game/keepDiary': … }` and not the energy it adds. Write it as a [macro](#macros) if it only stands for other effects.
-- A name is an effect's or a macro's, never both. The [content checker](/docs/reference/checks) reports `"game/tip" is both an effect and a macro`.
+## values
 
-## PluginCall
+The game's own values, each a function that returns a number or a word. Prose prints one as `{{breadPrice}}`, with arguments after the name as `key=value`, such as `{{messages/unread channel=texts}}`. Anywhere else a value is a [`ValueRef`](#valueref), such as a stat's `max`, an app's badge or an achievement's progress.
 
-```ts shape
-type PluginCall = { [name: `${string}/${string}`]: PluginArgs | true }
-```
-
-A call by name: a plugin's condition, effect or command, or the game's own, with its full name as the only key and its arguments as the value. It works anywhere a [condition](/docs/reference/conditions), an [effect](/docs/reference/effects) or a [`CommandRef`](#commandref) goes, and the [content checker](/docs/reference/checks) checks the name. Plugins' helpers, such as `quests.done('bread')`, write this form.
-
-In code, a call whose name a plugin or the game [declares](/docs/reference/plugins#typed-calls-queries-and-views) is checked against what it declares, so `{ 'quests/done': { qeust: 'bread' } }` fails to compile. A call nobody declares takes any arguments, as `PluginCall` says. `Condition`, `Effect` and `CommandRef` hold these as a [`ConditionCall`](/docs/reference/plugins#conditioncall-effectcall-and-commandcall), an `EffectCall` and a `CommandCall`.
-
-The value is always the arguments as an object, named as the [content naming rule](/docs/reference/effects#effect) names them. A call that takes none is written `true`:
-
-| Written | Asked with |
-|---|---|
-| `{ 'quests/done': { quest: 'bread' } }` | `with: { quest: 'bread' }` |
-| `{ 'places/at': { location: ['cafe', 'park'] } }` | `with: { location: ['cafe', 'park'] }` |
-| `{ 'calendar/weekend': true }` | no `with`, so `{}` |
-| `{ 'game/marketDay': true }` | the game's own, no `with` |
-
-```ts fragment
-// in a data scene: Ava thanks you once the bread quest is done
-{ prose: 'ava.hi.thanks', when: { 'quests/done': { quest: 'bread' } } }
-// a choice that starts it
-{ id: 'offer-help', effects: [{ 'quests/start': { quest: 'bread' } }, { scene: null }] }
-```
-
-**Gotchas.**
-- Anything else as the value, such as a list, a string, a number or `false`, is a problem the [content checker](/docs/reference/checks) reports as `"places/at" takes its arguments as an object, …`. The call is still made, with no arguments.
-- It's read as a call only when the object has exactly one key and that key has a `/`. If you add a second key, such as a typo or a stray `when`, it's no longer a call. As a condition it's false, and as an effect it does nothing.
-- A name with no `/` isn't a call. The checker reports one and says to write it with `game/` in front.
-- Packs written before schema 7 passed a bare value, as in `{ 'places/at': ['cafe'] }`. The [content migration](/docs/reference/content#upgradepack) names it for the first-party plugins' calls when the pack loads.
-
-## callOf
-
-```ts shape
-function callOf(entry: object): { name: string; with: Record<string, unknown> } | undefined
-```
-
-The name and arguments of a call, or `undefined` for one of the engine's own effects or conditions. See [`callOf`](/docs/reference/plugins#callof) on the plugins page.
-
-## CommandRef
-
-```ts shape
-type CommandRef = Command | CommandCall
-```
-
-A command as content and code write it: any [command](/docs/reference/commands), or a call by name. `{ 'places/go': { id: 'cafe' } }` is `{ type: 'custom', name: 'places/go', with: { id: 'cafe' } }`. An [action](/docs/reference/actions#actiondef)'s and a choice's `command` take one, and so do [`apply`](/docs/reference/commands#apply), [`whyNot`](/docs/reference/actions#whynot), [`effectsOf`](/docs/reference/actions#effectsof) and the runner's `apply`. The [view](/docs/reference/view) always shows the long form, so a UI that reads `command.type` still can.
-
-## commandOf
-
-```ts shape
-function commandOf(ref: CommandRef): Command
-```
-
-A command in the long form: a short call becomes `{ type: 'custom', name, with }`, and anything else comes back as it is. Use it when your own code reads `type` on a command that content wrote.
-
-```ts
-import { commandOf } from '@ifloom/engine'
-
-commandOf({ 'places/go': { id: 'cafe' } })
-// { type: 'custom', name: 'places/go', with: { id: 'cafe' } }
-```
-
-## Values
-
-```ts fragment
-values?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => string | number>
-```
-
-A number or a word the prose needs to print, such as a price that moves or today's special. A value can also be the ceiling of a stat that grows, an app's [badge](/docs/plugins/devices#appdef) or an achievement's [progress](/docs/plugins/achievements). Like a condition, it's asked with arguments.
+An unknown name in prose stays on screen as `{{breadPrice}}`. An unknown name in a stat's `max` reads as 100, and the checker reports it.
 
 ```ts
 import type { GameRules } from '@ifloom/engine'
@@ -256,46 +125,79 @@ export const rules: GameRules = {
 }
 ```
 
-Prose writes `A loaf is {{breadPrice}} today.`, with any arguments after the name as `key=value`: `{{messages/unread channel=texts}}`. Anywhere else, a value is a `ValueRef`, its name and its `with`: a stat writes `max: { value: 'game/energyCeiling', with: { per: 2 } }`.
+## ValueRef
 
-**Gotcha.** An unknown name in prose is left on screen as `{{breadPrice}}`, so you can see what's missing. An unknown stat ceiling quietly gives 100, but the [content checker](/docs/reference/checks) reports it as `no game value named "…"`.
+A value named outside prose, by its full name and its arguments. Every field is in [`ValueRef`](/docs/api/engine#valueref).
 
-### ValueRef
-
-A value named outside prose: the value's full name and its arguments.
-
-```ts shape
-type ValueRef = { value: string; with?: PluginArgs }
+```ts fragment
+max: { value: 'game/energyCeiling', with: { per: 2 } }
 ```
 
-## Reading them in code
+## PluginCall
 
-To ask one of these from your own code, such as a tool or a test, go through the functions content goes through. [`holds`](/docs/reference/conditions#holds) asks a condition, [`amountOf`](/docs/reference/amounts#amountof) works out a value, and [`applyEffects`](/docs/reference/effects#applyeffects) runs effects:
+A call by name, with its full name as the only key and its arguments as the value. Every form is in [`PluginCall`](/docs/api/engine#plugincall).
 
-```ts given
-import { amountOf, holds } from '@ifloom/engine'
+It works anywhere a condition, an effect or a [`CommandRef`](#commandref) goes, and a plugin's helpers write it, such as `quests.done('bread')`. The value is the arguments as an object, named by the [content naming rule](/docs/reference/effects#effect), or `true` for none. In code, a call whose name a plugin or the game declares is checked against that declaration, so `{ 'quests/done': { qeust: 'bread' } }` fails to compile. `Condition`, `Effect` and `CommandRef` hold calls as a `ConditionCall`, an `EffectCall` and a `CommandCall`.
 
-holds(state, game, { 'game/marketDay': true })                                  // true on market day
-amountOf(state, game, { value: 'game/breadPrice' })                             // 4
-amountOf(state, game, { value: 'messages/unread', with: { channel: 'texts' } }) // 2
+```ts fragment
+{ 'quests/done': { quest: 'bread' } }
+{ 'places/at': { location: ['cafe', 'park'] } }
+{ 'calendar/weekend': true }
 ```
 
-## buildEffects
+The engine reads an object as a call only when it has exactly one key and that key has a `/`. A second key, such as a stray `when`, makes it no call, so it's false as a condition and does nothing as an effect. A name with no `/` isn't a call either, and the checker says to write it with `game/` in front.
 
-```ts shape
-function buildEffects(game: Game, refs: readonly EffectRef[]): Effect[]
+## CommandRef
+
+A command in either form, the long [`Command`](/docs/reference/commands#command) or a call by name. Every form is in [`CommandRef`](/docs/api/engine#commandref).
+
+`{ 'places/go': { id: 'cafe' } }` is `{ type: 'custom', name: 'places/go', with: { id: 'cafe' } }`. An action's and a choice's `command` take one, and so do [`apply`](/docs/reference/commands#apply), [`whyNot`](/docs/reference/actions#whynot), [`effectsOf`](/docs/reference/actions#effectsof) and the runner's `apply`. The [view](/docs/reference/view) always gives the long form.
+
+## EffectRef
+
+An effect in content, the same type as [`Effect`](/docs/reference/effects#effect). Every form is in [`EffectRef`](/docs/api/engine#effectref).
+
+## Functions
+
+### callOf
+
+Returns the name and arguments of a call by name, or `undefined` for one of the engine's own conditions or effects. Its signature is in [`callOf`](/docs/api/engine#callof).
+
+```ts
+import { callOf } from '@ifloom/engine'
+
+callOf({ 'quests/done': { quest: 'bread' } }) // { name: 'quests/done', with: { quest: 'bread' } }
 ```
 
-The effects the reducer would run: a call to an effect or a macro that neither the game nor its plugins declare is left out, since it would do nothing, and everything else is kept as written. Nothing is worked out yet, so it needs no state.
+### commandOf
+
+Returns a command in the long form. A call becomes `{ type: 'custom', name, with }`, and any other command comes back as it is. Its signature is in [`commandOf`](/docs/api/engine#commandof).
+
+```ts
+import { commandOf } from '@ifloom/engine'
+
+commandOf({ 'places/go': { id: 'cafe' } }) // { type: 'custom', name: 'places/go', with: { id: 'cafe' } }
+```
+
+### buildEffects
+
+Returns the effects the reducer would run, leaving out a call to an effect or macro that neither the game nor its plugins declare. Its signature is in [`buildEffects`](/docs/api/engine#buildeffects).
+
+It works nothing out, so it needs no state, and keeps every other effect as written.
 
 ```ts given
 import { buildEffects } from '@ifloom/engine'
 
-buildEffects(game, [{ 'game/tip': { by: 2 } }, { 'game/typo': true }])
-// [{ 'game/tip': { by: 2 } }]
+buildEffects(game, [{ 'game/tip': { by: 2 } }, { 'game/typo': true }]) // [{ 'game/tip': { by: 2 } }]
 ```
 
-## See it in an example
+## Checks
 
-- Small Town: [`examples/showcase/src/rules.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/rules.ts) has a value, `catName`, that the flat's prose prints as `{{catName}}`, and a macro, `postLatest`, which the phone's camera app in [`examples/showcase/src/world/phone.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/phone.ts) runs as `{ 'game/postLatest': true }`.
-- The Corner Café: [`examples/cafe/src/rules.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/cafe/src/rules.ts) works out the week's `takings` and `wages` as macros, and `payroll` as a value the hiring scene prints.
+The [content checker](/docs/reference/checks) checks every call content writes:
+
+| Problem | Cause |
+|---|---|
+| `no game condition named "game/marketDy"` | A call names a function the game doesn't declare. |
+| `no game value named "marketDay"; the game's own code is called with "game/" in front, as "game/marketDay"` | A call's name has no `game/` or plugin id in front. |
+| `"places/at" takes its arguments as an object, such as { "places/at": { … } }, or true for none; this one has ["cafe"]` | A call's value is a list, a string, a number or `false`. The engine still makes the call, with no arguments. |
+| `"game/tip" is both an effect and a macro; give one of them another name` | The same name is in `effects` and in `macros`. |

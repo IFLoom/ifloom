@@ -10,7 +10,7 @@ Generated from the source of `@ifloom/engine/plugin` and its TSDoc by `npm run a
 
 ## actionReferences
 
-Function. Explained in [Actions and buttons](/docs/reference/actions#actionreferences).
+Function. Explained in [Actions](/docs/reference/actions#actionreferences).
 
 Returns the references an action makes, for the content checker. They cover its words, conditions, effects, command
 and hints.

@@ -10,7 +10,7 @@ Generated from the source of `@ifloom/engine` and its TSDoc by `npm run api-docs
 
 ## ActionCost
 
-Type. Explained in [Actions and buttons](/docs/reference/actions#actioncost).
+Type. Explained in [Actions](/docs/reference/actions#actioncost).
 
 A cost a choice or an action declares in its `cost`, the stats it spends. The engine refuses it while the player has too little of one.
 
@@ -29,7 +29,7 @@ type ActionCost = {
 
 ## ActionDef
 
-Type. Explained in [Actions and buttons](/docs/reference/actions#actiondef).
+Type. Explained in [Actions](/docs/reference/actions#actiondef).
 
 An action the game declares in `actions`, or one a plugin offers (a location's, an app's). It has the fields of a
 `ButtonDef`, the same as a choice.
@@ -74,7 +74,7 @@ type ActionDef = {
 
 ## actionOf
 
-Function. Explained in [Actions and buttons](/docs/reference/actions#actionof).
+Function. Explained in [Actions](/docs/reference/actions#actionof).
 
 Returns the action that `{ type: 'action', id }` runs in this state. Returns undefined when there is none.
 
@@ -402,7 +402,7 @@ Uses: [`Condition`](#condition), [`SceneMedia`](#scenemedia), [`FlowChoice`](#fl
 
 ## Blocked
 
-Type. Explained in [Actions and buttons](/docs/reference/actions#blocked).
+Type. Explained in [Actions](/docs/reference/actions#blocked).
 
 A rule that refuses a choice, an action, a location or an app while its `when` holds. The first entry of a `blocked`
 list whose `when` holds gives the `reason` the button shows.
@@ -495,7 +495,7 @@ Uses: [`Game`](#game), [`EffectRef`](#effectref), [`Effect`](#effect).
 
 ## ButtonDef
 
-Type. Explained in [Actions and buttons](/docs/reference/actions#buttondef).
+Type. Explained in [Actions](/docs/reference/actions#buttondef).
 
 The fields a scene's choice (`Choice`) and an action (`ActionDef`) share, read the same way for both. Taking one
 runs its command, then pays its cost, then applies its effects.
@@ -1392,7 +1392,7 @@ Uses: [`KvValue`](#kvvalue), [`Amount`](#amount), [`Dice`](#dice), [`CreateField
 
 ## EffectCall
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#conditioncall-effectcall-and-commandcall).
+Type. Explained in [Effects](/docs/reference/effects#effectcall).
 
 A plugin's or the game's effect in the short form, type-checked against `EffectRegistry`.
 
@@ -1434,7 +1434,7 @@ Plugins add fields of their own to it, which their pages list.
 
 ## effectsOf
 
-Function. Explained in [Actions and buttons](/docs/reference/actions#effectsof).
+Function. Explained in [Actions](/docs/reference/actions#effectsof).
 
 Returns the effects a command would apply, worked out before it runs. Plugins' guards and prices, and locks on an
 effect, read them.
@@ -3258,7 +3258,7 @@ Uses: [`Holder`](#holder), [`Effect`](#effect).
 
 ## need
 
-Function. Explained in [Actions and buttons](/docs/reference/actions#need).
+Function. Explained in [Actions](/docs/reference/actions#need).
 
 Returns a `blocked` entry written the other way round, refused with `reason` unless `when` holds. For example
 `need('Not on an empty stomach.', { stat: 'energy', gte: 2 })`.
@@ -3363,7 +3363,7 @@ Uses: [`GameState`](#gamestate), [`Notice`](#notice).
 
 ## Once
 
-Type. Explained in [Storylets](/docs/reference/storylets#once-at-most-and-only-while).
+Type. Explained in [Actions](/docs/reference/actions#once).
 
 A limit of once a game or once a turn on a choice, an action or a plugin's entry, such as a cheat. The engine counts
 a choice's or an action's uses in `state.chosen`.
@@ -4068,7 +4068,7 @@ It also takes any other key: `[key: string]: unknown`.
 
 ## Reason
 
-Type. Explained in [Actions and buttons](/docs/reference/actions#reason).
+Type. Explained in [Actions](/docs/reference/actions#reason).
 
 The words a player reads when something is refused, written in place (`'Closed.'`) or as a strings key
 (`{ string: 'shop/closed' }`). Read one with `reasonOf`.
@@ -6092,7 +6092,7 @@ Uses: [`Condition`](#condition), [`Block`](#block), [`BlockExtras`](#blockextras
 
 ## whyNot
 
-Function. Explained in [Actions and buttons](/docs/reference/actions#whynot).
+Function. Explained in [Actions](/docs/reference/actions#whynot).
 
 Returns the reason the player can't send this command now, or undefined when they can.
 

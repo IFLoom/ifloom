@@ -1,88 +1,57 @@
 ---
 title: "Randomness"
-description: "Seeded randomness: the save's seed, and draw, drawOne, chance and weighted for draws that replay the same."
+description: "Reference for the save's seed and the seeded draws hash, draw, drawOne, chance and weighted, which give the same values for the same save and turn."
 ---
-To get a value that looks random, such as today's cake at the café, you draw it from parts you name, usually the save's seed, the [turn](/docs/reference/state#turn) and what the draw is for. In the game's own code, the context's `roll(max, name)` does this for you (see [`CustomContext`](/docs/reference/custom#customcontext), part of every plugin's and the game's context). The functions here are for code that names its own parts, such as a plugin's. The engine hashes those parts into a number. Nothing is random at runtime, so the same save in the same turn always gives the same draws.
+The engine draws every value that looks random, such as today's cake at the café, by hashing parts the code names: usually the save's seed, the [turn](/docs/reference/state#turn) and what the draw is for. Nothing is random at runtime, so the same save in the same turn always gives the same draws. [Why IFLoom works this way](/docs/explanation/design#the-same-save-gives-the-same-draws) explains why, and [`CustomContext`](/docs/reference/custom#customcontext)'s `roll(max, name)` draws for the game's own code without naming the parts.
+
+In the showcase: `examples/showcase/src/rules.ts`, whose `postLatest` macro draws a post's likes with `roll(10, 'likes')`.
 
 ```ts
-import { hash, draw, drawOne, chance, weighted } from '@ifloom/engine'
+import { chance, draw, drawOne, hash, weighted } from '@ifloom/engine'
 ```
 
-## Why deterministic
+## State
 
-- **Undo and snapshots.** A state is the whole game. Replaying a command from a saved state gives the same result, so undo goes back to the previous state, and a test can pin a screen exactly.
-- **No save-scumming.** Reloading and trying again deals the same draw. The player can't re-roll today's market prices by walking out and back in.
-- **Rendering is pure.** A scene is drawn every time the view is built and again when a choice is picked. With `Math.random`, the screen the player read and the choice they picked could disagree.
+[`state.seed`](/docs/reference/state#seed) is a number fixed for the life of a save. A new game takes the `seed` given to [`startingState`](/docs/reference/commands#startingstate) or the [`start`](/docs/reference/commands#start) command, and `hash(game.id)` when none is given. A draw that should differ between saves puts the seed in its parts.
 
-Don't call `Math.random` in content.
-
-## The seed
-
-`state.seed` is a number fixed for the life of a save. A new game takes the `seed` passed to [`startingState`](/docs/reference/commands#startingstate) or the [`start`](/docs/reference/commands#start) command. If you leave it out, it's `hash(game.id)`. Put the seed in your draws when a draw should differ between saves.
+A UI picks a fresh seed for each new game outside the game, once, and the save fixes every draw after it. [`mountGame`](/docs/reference/react#mountgame) in the React UI does this. A test leaves the seed out, so every run draws the same.
 
 ```ts given
 import { startingState } from '@ifloom/engine'
 
-// A UI: a fresh seed for every new game, so each playthrough deals its own variants.
-const state = startingState(game, { seed: Math.floor(Math.random() * 2 ** 31) })
-
-// A test: no seed, so every run deals the same.
+const fresh = startingState(game, { seed: Math.floor(Math.random() * 2 ** 31) })
 const fixed = startingState(game)
 ```
 
-That one `Math.random` is outside the game. It picks the seed once, and the save fixes every draw after it. [`mountGame`](/docs/react#mountgame) in the React UI does this for you.
-
-**Gotcha.** A UI that leaves the seed out deals every new game the same cards, because they all share the game's id.
-
-## The rule: one named draw per value
-
-Draw each value from its own named parts. Don't draw one number and slice several values out of it.
+Each value takes its own named draw. Values sliced out of one number can move together, so turn 4 and turn 5 come out alike, while `hash` gives unrelated numbers for near-identical parts. A count added to an index and taken modulo a list's length lines up with a weekly calendar, so a list dealt on fixed weekdays repeats.
 
 ```ts given
-import { chance, draw, drawOne, hash } from '@ifloom/engine'
+import { chance, draw, drawOne } from '@ifloom/engine'
 
-const CAKES = ['lemon drizzle', 'carrot', 'chocolate']
-
-// Right: each value has its own draw.
-const special = drawOne(CAKES, state.seed, state.turn, 'cafe.special')
-const price   = 3 + draw(3, state.seed, state.turn, 'cafe.price')
-const queue   = chance(1, 4, state.seed, state.turn, 'cafe.queue')
-
-// Wrong: one number, carved up.
-const n = hash(`${state.seed}:${state.turn}`)
-const badSpecial = CAKES[n % CAKES.length]
-const badPrice   = 3 + ((n >> 8) % 3)
+const special = drawOne(['lemon drizzle', 'carrot', 'chocolate'], state.seed, state.turn, 'cafe.special')
+const price = 3 + draw(3, state.seed, state.turn, 'cafe.price')
+const queue = chance(1, 4, state.seed, state.turn, 'cafe.queue')
 ```
 
-Near-identical inputs, such as turn 4 and turn 5, must give unrelated outputs. `hash` makes sure of that for whole numbers, but values carved from parts of one number can move together and come out the same turn after turn.
+## Functions
 
-The same goes for rotating through a list. To deal a different member each time, hash the turn into a starting offset and walk the list from there, remembering which ones you've used. Don't add the turn number to an index and take a remainder. A count inside a remainder lines up with a weekly calendar. In a game whose turn is a day, a three-item list dealt on two fixed weekdays can give the same item every week.
+### hash
 
-## hash
+Returns a 32-bit unsigned whole number for a string, where strings that differ in one character give unrelated numbers. Its signature is in [`hash`](/docs/api/engine#hash).
 
-```ts shape
-import { hash } from '@ifloom/engine'
-
-function hash(text: string): number
-```
-
-Turns a string into a 32-bit unsigned whole number, using FNV-1a followed by the murmur3 finaliser. Changing one character changes every bit. `draw`, `drawOne` and `chance` are built on it.
+It runs FNV-1a, then the murmur3 finaliser. `draw`, `drawOne`, `chance` and `weighted` are built on it.
 
 ```ts
 import { hash } from '@ifloom/engine'
 
-hash('market') // a number in [0, 2^32)
+export const n = hash('market') // a number from 0 to 2^32 - 1
 ```
 
-## draw
+### draw
 
-```ts shape
-import { draw } from '@ifloom/engine'
+Returns a whole number from 0 up to but not including `max`, drawn from the parts joined with `:`. Its signature is in [`draw`](/docs/api/engine#draw).
 
-function draw(max: number, ...parts: (string | number)[]): number
-```
-
-A whole number in `[0, max)`, from the parts joined with `:`. Returns `0` when `max` is `0` or less.
+It returns 0 when `max` is 0 or less. The engine joins the parts into one string, so `draw(6, 'a:b')` and `draw(6, 'a', 'b')` are the same draw. A dice roll in content is the [`roll` effect](/docs/reference/rolls), which draws each die this way and records the roll for the view.
 
 ```ts given
 import { draw } from '@ifloom/engine'
@@ -90,19 +59,11 @@ import { draw } from '@ifloom/engine'
 draw(6, state.seed, state.turn, 'dice') // 0 to 5
 ```
 
-For dice in content, a check against a target or a total the prose prints, use the [`roll` effect](/docs/reference/effects#roll) instead. It draws its dice this way and records the roll for the view. See [Dice rolls](/docs/reference/rolls).
+### drawOne
 
-**Gotcha.** The parts are joined into one string, so `draw(6, 'a:b')` and `draw(6, 'a', 'b')` are the same draw. Keep `:` out of the names you draw with.
+Returns one entry of a list, drawn from the parts, with every entry equally likely. Its signature is in [`drawOne`](/docs/api/engine#drawone).
 
-## drawOne
-
-```ts shape
-import { drawOne } from '@ifloom/engine'
-
-function drawOne<T>(items: readonly T[], ...parts: (string | number)[]): T
-```
-
-One item from the list. It returns `undefined` for an empty list, though the type doesn't say so.
+It returns `undefined` for an empty list, though its type doesn't say so.
 
 ```ts given
 import { drawOne } from '@ifloom/engine'
@@ -110,15 +71,11 @@ import { drawOne } from '@ifloom/engine'
 drawOne(['rye', 'sourdough', 'brioche'], state.seed, state.turn, 'bakery.loaf')
 ```
 
-## chance
+### chance
 
-```ts shape
-import { chance } from '@ifloom/engine'
+Returns true `numerator` times in `outOf`, drawn from the parts. Its signature is in [`chance`](/docs/api/engine#chance).
 
-function chance(numerator: number, outOf: number, ...parts: (string | number)[]): boolean
-```
-
-Returns `true` `numerator` times in `outOf`.
+The same parts give the same answer every time. A chance that comes up fresh on each visit puts a count of visits in its parts.
 
 ```ts given
 import { chance } from '@ifloom/engine'
@@ -126,56 +83,25 @@ import { chance } from '@ifloom/engine'
 chance(1, 3, state.seed, state.turn, 'park.ducks') // one turn in three
 ```
 
-**Gotcha.** The same parts give the same answer every time. If you want a chance to come up fresh on each visit, put something in its parts that changes per visit, such as a count of visits.
+### weighted
 
-## weighted
+Returns one entry of a list, drawn from the parts by each entry's weight, or `undefined` when no entry can be drawn. Its signature is in [`weighted`](/docs/api/engine#weighted).
 
-```ts shape
-import { weighted } from '@ifloom/engine'
-
-function weighted<T>(
-  items: readonly T[],
-  weightOf: (item: T) => number | undefined,
-  ...parts: (string | number)[]
-): T | undefined
-```
-
-One item from the list, drawn by weight from the parts you name. `weightOf` says how much each item weighs, and an item of weight 3 comes up three times as often as one of weight 1.
+`weightOf` gives each entry's weight, and an entry of weight 3 comes up three times as often as one of weight 1. A weight left out counts as 1, and fractions count too, so 0.5 is half as likely as 1. An entry whose weight is 0 or less, or not a finite number, is never drawn, and a list with no entry above 0 draws nothing.
 
 ```ts given
 import { weighted } from '@ifloom/engine'
 
-const cakes = [
-  { id: 'lemon', weight: 3 },
-  { id: 'carrot' },              // no weight: 1
-  { id: 'walnut', weight: 0 },   // never drawn
-]
+const cakes = [{ id: 'lemon', weight: 3 }, { id: 'carrot' }, { id: 'walnut', weight: 0 }]
 
-const cake = weighted(cakes, (cake) => cake.weight, state.seed, state.turn, 'cafe.cake')
-// lemon three times in four, carrot once in four
+weighted(cakes, (cake) => cake.weight, state.seed, state.turn, 'cafe.cake') // lemon three times in four
 ```
 
-The rules for a weight:
+With every weight a whole number, the draw is `hash(parts) % total`, walking the list in order. So a list where every weight is 1 draws the entry [`drawOne`](#drawone) would, and weights added later leave a list without them drawing as before. The engine draws with it for [storylets](/docs/reference/storylets), [variants](/docs/reference/prose) with a weight, [pool files](/docs/reference/media) and shuffled [playlists](/docs/reference/audio).
 
-- A weight that's left out (`undefined`) counts as 1.
-- A weight of 0 or less is never drawn. So is one that isn't a finite number, such as `NaN`.
-- Weights don't have to be whole numbers. `0.5` is half as likely as 1.
+## Caveats
 
-It returns `undefined` when nothing can be drawn: an empty list, or one where every weight is 0 or less. Check for that before you use the result.
-
-When every weight is a whole number, the draw is `hash(parts) % total`, walking the list in order. So a list where every weight is 1 draws exactly what [`drawOne`](#drawone) would draw from the same parts, and you can add weights to a list later without changing the draws of a list that has none. With a weight that isn't whole, the hash is scaled to the total instead.
-
-The engine draws with it wherever content has weights:
-
-- [storylets](/docs/reference/storylets), the scenes a `{ scene: { from } }` effect draws
-- [variants](/docs/reference/prose#variantmember) with a weight on any member
-- [pool files](/docs/reference/media#poolfile), when a pool request picks a file
-- shuffled [playlists](/docs/reference/audio#playlistdef), drawn without replacement
-
-**Gotchas.**
-- The order of `items` matters. The same parts and the same weights in another order can draw a different item.
-- Like every draw here, the same parts give the same item. Put a count in the parts if you draw more than once in a turn, as the engine does for storylets and variants.
-
-## See it in an example
-
-Small Town: `postLatest` in [`examples/showcase/src/rules.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/rules.ts) rolls a post's likes with its context's `roll(10, 'likes')`, which draws from the save's seed and the turn for you.
+- A UI that leaves the seed out gives every new game the same draws, since they all share the game's id.
+- `Math.random` in content or in the game's code breaks undo, replays and tests, since a state no longer gives one screen.
+- The order of a list matters to `weighted` and `drawOne`, so the same parts and weights in another order can draw another entry.
+- The same parts give the same entry, so code that draws twice in one turn puts a count in the parts, as the engine does for storylets and variants.

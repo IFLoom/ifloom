@@ -1,111 +1,82 @@
 ---
 title: "Dice rolls"
-description: "The roll effect: dice in notation or as a count and sides, a number or a stat added, a target, criticals, the roll condition, and view.rolls for a UI to show the dice."
+description: "Reference for the roll effect, Dice, Roll and RollsState: dice in notation or as a count and sides, a number added, a target, criticals, state.rolls and view.rolls."
 ---
-A dice roll is an effect. It throws the dice, keeps the total in the [kv store](/docs/reference/state#kv) under a key, and records the roll, so a condition can branch on how it went and a UI can show the dice landing.
+A dice roll is the `roll` effect, which throws dice, keeps the total in the [kv store](/docs/reference/glossary#kv) under a key, and records the roll. A condition then branches on how it went, prose prints the total, and a UI shows the dice landing. Any list of effects can hold one, a choice's, an action's, a trigger's or a plugin's. [Roll dice for a check](/docs/how-to/roll-dice) builds a whole check, and [Why IFLoom works this way](/docs/explanation/design#the-same-save-gives-the-same-draws) explains why a roll can't be thrown again by reloading.
+
+In the showcase: `examples/showcase/src/story/park.ts`, whose `skim` action rolls `2d6` against 8 and whose trigger rolls `1d6+2` ducks.
+
+```ts
+import type { Dice, Roll, RollsState } from '@ifloom/engine'
+```
+
+## Dice
+
+The dice a `roll` effect throws, in notation or as a count and sides. Every form is in [`Dice`](/docs/api/engine#dice).
+
+Notation is a count, `d`, the sides, and an optional number to add or take away, such as `'2d6'`, `'1d20'`, `'d100'` or `'3d8-2'`. Upper case and spaces are allowed, and a missing count means one die. The object form, `{ count: 2, sides: 6 }`, adds no number, and its `count` is 1 when left out. A roll throws 1 to 100 dice of at least 2 sides.
+
+```ts fragment
+dice: '2d6+1'
+dice: { count: 2, sides: 6 }
+```
+
+## Roll
+
+One roll as it was made: the dice, each die's face, what was added, the total, and the outcome against a target. Every field is in [`Roll`](/docs/api/engine#roll).
+
+A roll holds only what happened, so a UI can show all of it. `critical` is `'max'` when every die showed its top face and `'min'` when every die showed 1, such as a natural 20 or a natural 1 on a d20, or a double six or a double one on `2d6`. A critical doesn't change `passed`. `passed` and `against` are left out when the effect gave no target.
+
+```ts fragment
+{ key: 'skim', dice: '2d6', faces: [5, 4], plus: 0, total: 9, against: 8, passed: true }
+```
+
+## RollsState
+
+The rolls a save keeps, as [`state.rolls`](/docs/reference/state#rolls). Every field is in [`RollsState`](/docs/api/engine#rollsstate).
+
+`made` counts the rolls the save has made, and goes into each new roll's draw. `last` holds the rolls the last command made, and the next command replaces it, with an empty list when it rolls nothing. `latest` holds the latest roll under each key, which the [`roll` condition](/docs/reference/conditions#roll) reads, kept until another roll under the same key replaces it.
+
+## Conditions
+
+### roll
+
+The latest roll made under a key: whether one was made, whether it `passed`, and whether it was a `critical`. The [conditions page](/docs/reference/conditions#roll) describes it, and `{ kv: 'skim', gte: 11 }` tests the total.
+
+## Effects
+
+### roll
+
+Throws `dice`, adds `plus`, and keeps the total in the kv store under the key `roll` names. Every field is in the `roll` form of [`Effect`](/docs/api/engine#effect).
 
 ```ts
 import type { Content } from '@ifloom/engine'
 
 export const park: Content = {
-  actions: [
-    // Two dice against 8: the total is the kv key `skim`.
-    { id: 'skim', label: 'Skim a stone', effects: [{ roll: 'skim', dice: '2d6', against: 8 }] },
-  ],
+  actions: [{ id: 'skim', label: 'Skim a stone', effects: [{ roll: 'skim', dice: '2d6', against: 8 }] }],
 }
-```
-
-Then `{ roll: 'skim', passed: true }` holds when the total was 8 or more, `{ kv: 'skim', gte: 11 }` when it was 11 or more, and `{{skim}}` prints the total in prose. The [Dice rolls and checks](/docs/recipes/dice) recipe builds a whole check: an inline action in the prose, the roll, a line for each outcome, and the dice drawn above it.
-
-```ts
-import { type Dice, type Roll, type RollsState } from '@ifloom/engine'
-```
-
-## Where a roll can happen
-
-Anywhere effects run. A player makes one with a choice, an [action](/docs/reference/actions) or an inline `[[act:]]` link whose effects include it. The game makes one by itself in a [trigger](/docs/reference/triggers), a [storylet](/docs/reference/storylets)'s choice, a minigame's final state or a plugin's effects. Either way the roll lands in [`view.rolls`](/docs/reference/view#rolls) for the command that made it.
-
-## The effect
-
-```ts fragment
-{ roll: string, dice: Dice, plus?: Amount, against?: Amount }
 ```
 
 | Field | Meaning |
 |---|---|
-| `roll` | The kv key the total goes in, and the key the [`roll` condition](/docs/reference/conditions#roll) reads. Letters, digits and `_`, not starting with a digit, so `{{skim}}` prints it. |
-| `dice` | What to throw: notation or `{ count, sides }`. See [`Dice`](#dice). |
-| `plus` | Added to the total: an [`Amount`](/docs/reference/amounts#amount), such as a number or `{ stat: 'strength' }` for the player's stat as [`statValue`](/docs/reference/stats#statvalue) reads it. |
-| `against` | A target, also an `Amount`. The roll passes when the total is at least this. The [`Roll`](#roll) keeps the number it read. |
+| `roll` | The kv key the total goes in, of letters, digits and `_` and not starting with a digit, so `{{skim}}` prints it. |
+| `plus` | An [`Amount`](/docs/reference/amounts#amount) added to the total, such as `{ stat: 'strength' }` for the player's stat as [`statValue`](/docs/reference/stats#statvalue) reads it, modifiers included. |
+| `against` | The target, also an `Amount`, read as the dice are thrown. The roll passes when the total reaches it, so `2d6` against 8 passes on 8 or more. |
 
-The [effects reference](/docs/reference/effects#roll) has the details, and [Checks](/docs/reference/checks#in-an-effect) lists what the content checker reports.
+Each die is a [seeded draw](/docs/reference/random#draw), `draw(sides, 'roll', seed, turn, made, key, die)` plus 1. `made` goes up with every roll, so two rolls in one command never share a draw, even under one key, and trying a check again in the same turn rolls afresh. A [replay](/docs/reference/runner#replay) of the same commands makes the same rolls, and reloading a save and trying again rolls what it rolled before.
 
-## Dice
+## View
 
-```ts shape
-type Dice = string | { count?: number; sides: number }
-```
+`view.rolls` lists the rolls the last command made, in order, each a [`Roll`](#roll). The next command clears it, so a UI shows each roll once. To render it, see [Render dice rolls](/docs/how-to/render/stats-and-things#render-dice-rolls).
 
-Notation is a count, `d`, the sides, and an optional number to add or take away: `'2d6'`, `'1d20'`, `'d100'` (one die), `'3d8-2'`. Upper case and spaces are fine. The object form is the same without the number: `{ count: 2, sides: 6 }`, where `count` is 1 if left out. A roll throws 1 to 100 dice of at least 2 sides.
+## Checks
 
-## Roll
+The [content checker](/docs/reference/checks) checks every `roll` effect:
 
-```ts shape
-type Roll = {
-  key: string
-  dice: string
-  faces: number[]
-  plus: number
-  total: number
-  against?: number
-  passed?: boolean
-  critical?: 'max' | 'min'
-}
-```
+| Problem | Cause |
+|---|---|
+| `dice "2x6" is not dice notation such as "2d6+1", "1d20" or "d100"` | `dice` is text the engine can't read, and the effect rolls nothing. |
+| `dice have 1 sides; a die needs at least 2` | A die has fewer than 2 sides. |
+| `unknown stat "strenght"` | `plus` or `against` names a stat the game doesn't declare. |
 
-| Field | Type | Meaning |
-|---|---|---|
-| `key` | `string` | The key the roll was made under, which the kv store keeps its total at. |
-| `dice` | `string` | The dice thrown, such as `'2d6'`, without what's added. |
-| `faces` | `number[]` | What each die showed, in order. |
-| `plus` | `number` | The notation's own number and the effect's `plus`, together. |
-| `total` | `number` | The faces added up, plus `plus`. |
-| `against` | `number`, optional | The target, when the effect gave one. |
-| `passed` | `boolean`, optional | Whether the total reached the target. Only there with one. |
-| `critical` | `'max' \| 'min'`, optional | Every die on its top face, or every die on 1. |
-
-One roll as it was made. [`view.rolls`](/docs/reference/view#rolls) lists the last command's, and `state.rolls.latest` keeps the latest under each key. It holds only what happened, so it's safe to show: the faces, what was added, the total, the target and the outcome.
-
-A critical is every die on its top face (`'max'`) or every die on 1 (`'min'`). With one die it's a natural 20 or a natural 1 on a d20, and with two six-sided dice it's a double six or a double one. It doesn't change `passed`.
-
-## RollsState
-
-```ts shape
-type RollsState = { made: number; last: Roll[]; latest: Record<string, Roll> }
-```
-
-What a save keeps of its rolls, as [`state.rolls`](/docs/reference/state#rolls). `made` is how many rolls the save has made. `last` is the rolls the last command made. The next command replaces it, with nothing when it rolls nothing. `latest` is the latest under each key.
-
-## How a roll is drawn
-
-Each die is a separate [seeded draw](/docs/reference/random): `draw(sides, 'roll', seed, turn, made, key, die)`, plus 1. `made` goes up with every roll, so:
-
-- two rolls in one command never share a draw, even under the same key
-- trying a check again in the same turn rolls afresh
-- a [replay](/docs/reference/runner#replay) of the same commands makes the same rolls, and reloading a save and trying again rolls what it rolled before
-
-## Drawing it
-
-`view.rolls` has the rolls the last command made, in order, each a [`Roll`](#roll): the dice, each die's face, what was added, the total, and with a target, whether it passed. The next command clears them, so a UI shows each roll once.
-
-The React UI's [`Scene`](/docs/react/components#scene) draws a [`DiceRoll`](/docs/react/components#diceroll) above a block whose [`dice`](/docs/react/hints#dice) hint names the roll, and the others over the scene for a moment. [`useScene`](/docs/react/components#usescene) gives the new ones, in `rolls.fresh`, to draw somewhere of your own. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
-
-::include[../../../../snippets/plain/rolls.ts]{meta='tab="Plain JS" tab-group="framework"'}
-
-::include[../../../../snippets/react/rolls.tsx]{meta='tab="React" tab-group="framework"'}
-
-::include[../../../../snippets/vue/Rolls.vue]{meta='tab="Vue" tab-group="framework"'}
-
-## See it in an example
-
-Small Town's park, in [`examples/showcase/src/story/park.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/park.ts). Its stones line holds `[[act:skim|Try to skim a stone]]`, whose action rolls `2d6` against 8, and three blocks after it show how the stone went, each with the React UI's `ui: { dice: 'skim' }`. A trigger rolls `1d6+2` ducks as you arrive, and the line after the river prints `{{ducks}}`.
+The checker also reports more than 100 dice, a key that `{{key}}` couldn't print, and a `plus` or `against` that isn't an amount.

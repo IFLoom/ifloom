@@ -1,26 +1,24 @@
 ---
 title: "Testing helpers"
-description: "@ifloom/engine/testing: load a game that fails on content problems, start with no scene open, play commands that fail on a refusal, run a plugin alone and with each partner, and check a plugin package's imports and docs."
+description: "Reference for @ifloom/engine/testing: loadChecked, freshState, play, partnerCases and PartnerCase, and the package checks boundaryProblems, exportedNames and undocumentedExports."
 ---
-`@ifloom/engine/testing` has the few helpers every plugin test and most game tests write for themselves. They're in the engine package, at their own subpath, so a game's page never loads them.
+`@ifloom/engine/testing` holds the helpers that plugin tests and game tests would otherwise each write for themselves. They sit at their own subpath of the engine package, so a game's page never loads them, and none of them uses a test runner. Each returns a value or throws a plain `Error`, so they work the same with [Vitest](https://vitest.dev), `node:test` or anything else. [Test a route through your game](/docs/how-to/test-a-route) tests a whole game, and [Write a plugin](/docs/how-to/write-a-plugin) tests a plugin.
+
+In the showcase: none, since its tests play a whole game. The `plugin` template's `tests/` uses these helpers, and so does each first-party plugin's, such as `packages/plugin-shop/tests/shop.test.ts`.
 
 ```ts
 import { boundaryProblems, exportedNames, freshState, loadChecked, partnerCases, play, undocumentedExports, type PartnerCase } from '@ifloom/engine/testing'
 ```
 
-None of them uses a test runner. Each returns a value or throws a plain `Error`, so they work the same with [Vitest](https://vitest.dev), `node:test` or anything else. A failed `loadChecked` or `play` fails the test with the problem or the refusal in its message.
-
-Here's the loyalty card from [Writing a plugin](/docs/reference/plugins#your-first-plugin), tested in a small café:
+This test loads a café whose action stamps a loyalty card, a plugin of the game's own, and plays five coffees:
 
 ```ts
-// tests/loyalty.test.ts
 import { describe, expect, it } from 'vitest'
 import { holds, type Command, type Content } from '@ifloom/engine'
 import { freshState, loadChecked, play } from '@ifloom/engine/testing'
 import { loyalty } from '../src/loyalty.ts'
 
 const cafe: Content = {
-  name: 'cafe',
   actions: [{ id: 'coffee', label: 'Buy a coffee', effects: [{ 'loyalty/stamp': true }] }],
 }
 
@@ -30,60 +28,55 @@ const coffee: Command = { type: 'action', id: 'coffee' }
 describe('the loyalty card', () => {
   it('fills after five coffees', () => {
     const state = play(freshState(game), game, coffee, coffee, coffee, coffee, coffee)
-    expect(loyalty.read(state, game)).toEqual({ stamps: 5 })
     expect(holds(state, game, { 'loyalty/full': true })).toBe(true)
   })
 })
 ```
 
-[Testing your game](/docs/guide/testing) covers testing a whole game, with routes, saves, playtests and snapshots.
+## PartnerCase
 
-## loadChecked
+One way [`partnerCases`](#partnercases) loads a plugin for a test, alone or with one partner. Every field is in [`PartnerCase`](/docs/api/engine-testing#partnercase).
 
-```ts shape
-function loadChecked(content: readonly Content[], base: GameBase, options?: LoadOptions): Game
-```
+`name` is `alone` or `with <id>`, such as `with places`, for the test's name. `partner` is the partner's id, or `null` alone. `plugins` is the list for `loadGame`'s `plugins`, the partner first when there is one, then the plugin under test. `has(id)` says whether the case loads the plugin `id`, for content that makes sense only with a partner.
 
-[`loadGame`](/docs/reference/content#loadgame), for a test. It returns the game, or throws an `Error` listing every problem the [content checker](/docs/reference/checks) found, one per line as [`describeProblem`](/docs/reference/checks#problem-and-describeproblem) writes it:
+## Functions
+
+### loadChecked
+
+Returns the game [`loadGame`](/docs/reference/content#loadgame) makes from the content and base, or throws an `Error` listing every problem the [content checker](/docs/reference/checks) found. Every parameter is in [`loadChecked`](/docs/api/engine-testing#loadchecked).
+
+The error has one problem per line, as [`describeProblem`](/docs/reference/checks#describeproblem) writes it:
 
 ```text
 The game has 1 content problem(s):
-  cafe · action coffee · no plugin effect named "loyalty/stomp"
+  content · action coffee · no plugin effect named "loyalty/stomp"
 ```
 
-A test of what the checker reports needs the problems themselves, so it calls `loadGame` and reads `problems`.
+A test of the checker's own problems calls `loadGame` and reads `problems` instead.
 
-## freshState
+### freshState
 
-```ts shape
-function freshState(game: Game, options?: StartOptions): GameState
-```
+Returns a new game as [`startingState`](/docs/reference/commands#startingstate) makes it, with no scene open. Every parameter is in [`freshState`](/docs/api/engine-testing#freshstate).
 
-A new game, as [`startingState`](/docs/reference/commands#startingstate) makes it, with no scene open. That's the room, where a plugin's actions and panels are. A game with an `introScene` starts in it, and the intro's locks or choices would get in the way of a plugin's test. `options` is `startingState`'s, such as `{ seed: 7 }` for a test that depends on a random draw.
+With no scene open the player is in the room, where a plugin's actions and panels are. A game with an `introScene` would start in it, and the intro's locks or choices would get in the way of a plugin's test. The options are `startingState`'s, such as `{ seed: 7 }` for a test that depends on a draw.
 
-## play
+### play
 
-```ts shape
-function play(state: GameState, game: Game, ...commands: readonly CommandRef[]): GameState
-```
+Returns the state after applying each command in turn with [`apply`](/docs/reference/commands#apply), or throws on the first one refused. Every parameter is in [`play`](/docs/api/engine-testing#play).
 
-Applies each command in turn with [`apply`](/docs/reference/commands#apply) and returns the state after the last. If one is refused it throws, naming the command, its place in the list and the reason the player would read:
+The error names the command, its place in the list and the reason the player would read:
 
 ```text
 Command 2, {"jobs/work":{"id":"cafe"}}, was refused: You aren’t at work.
 ```
 
-A command can be any [`CommandRef`](/docs/reference/custom#commandref), so a plugin helper's command goes in as it is: `play(state, game, places.go('cafe'), jobs.work('cafe'))`. To test a refusal, call `apply` or [`whyNot`](/docs/reference/actions#whynot) instead and check the reason.
+A command can be any [`CommandRef`](/docs/reference/custom#commandref), so a plugin helper's command goes in as it is, such as `play(state, game, places.go('cafe'), jobs.work('cafe'))`. A test of a refusal calls `apply` or [`whyNot`](/docs/reference/actions#whynot) instead and checks the reason.
 
-## partnerCases
+### partnerCases
 
-```ts shape
-function partnerCases(plugin: Plugin, partners: readonly Plugin[]): PartnerCase[]
-```
+Returns the ways to load a plugin for a test, alone and then with each partner in turn, as a list of [`PartnerCase`](#partnercase)s. Every parameter is in [`partnerCases`](/docs/api/engine-testing#partnercases).
 
-The ways to load a plugin for a test: alone, then with each partner in turn. A plugin that [cooperates](/docs/reference/plugins#cooperates) with another has to work both with it and without it, so its tests run the same block in each case.
-
-Suppose the loyalty card cooperates with places, and stamps only in the café when the game has places:
+A plugin that [cooperates](/docs/reference/plugin-queries) with another has to work both with it and without it, so its tests run the same block in each case. It throws on a partner the plugin's `cooperates` doesn't list, and on one listed twice. This runs one test alone and once with places, giving `the loyalty card, alone` and `the loyalty card, with places`:
 
 ```ts continues
 import { partnerCases } from '@ifloom/engine/testing'
@@ -92,89 +85,67 @@ import { places } from '@ifloom/plugin-places'
 for (const { name, plugins, has } of partnerCases(loyalty, [places({ start: 'cafe' })])) {
   describe(`the loyalty card, ${name}`, () => {
     it('stamps a coffee', () => {
-      const map: Content = { name: 'map', entities: has('places') ? [places.location({ id: 'cafe', name: 'Café', exits: [], body: [] })] : [] }
+      const map: Content = { entities: has('places') ? [places.location({ id: 'cafe', name: 'Café', exits: [], body: [] })] : [] }
       const game = loadChecked([cafe, map], { id: 'corner-cafe', title: 'The Corner Café', plugins })
-      expect(loyalty.read(play(freshState(game), game, coffee), game).stamps).toBe(1)
+      expect(holds(play(freshState(game), game, coffee), game, { 'loyalty/full': true })).toBe(false)
     })
   })
 }
 ```
 
-That makes `the loyalty card, alone` and `the loyalty card, with places`. What a partner changes gets a block of its own, with the partner set up as that test needs.
+[Make plugins work together](/docs/how-to/make-plugins-work-together) tests a partner's part in its own block.
 
-Every partner has to be in the plugin's `cooperates`, since a plugin reaches no other. `partnerCases` throws on one that isn't, or on one listed twice.
+### boundaryProblems
 
-### PartnerCase
+Returns each break of the plugin boundary in a package's source, one line each, or none. Every parameter is in [`boundaryProblems`](/docs/api/engine-testing#boundaryproblems).
 
-```ts shape
-type PartnerCase = {
-  name: string
-  partner: string | null
-  plugins: Plugin[]
-  has: (id: string) => boolean
-}
-```
+`sources` is each file's text by its path, and any path with `src/` in it works, such as `src/index.ts` or `../src/index.ts`. Files under `src/react/` are the plugin's [React UI](/docs/reference/react/kit), its `/react` subpath. It checks three rules:
 
-| Field | What it is |
-|---|---|
-| `name` | `alone`, or `with <id>`, such as `with places`, for the test's name. |
-| `partner` | The partner's id, or `null` alone. |
-| `plugins` | The plugins to load, for `loadGame`'s `plugins`: the partner, if there is one, then the plugin under test. |
-| `has` | Whether this case loads the plugin `id`, the partner or the plugin under test, for content that only makes sense with a partner. |
+- Outside `src/react/`, a file imports only `@ifloom/engine`, `@ifloom/engine/plugin` and its own files beside it, never its React UI.
+- Outside `src/react/`, no code uses `window.` or `document.`, so the plugin runs in Node and in a game with no page. Strings and comments don't count.
+- In `src/react/`, a file imports only `@ifloom/engine`, `react`, `react-dom`, `@ifloom/react`, `@ifloom/react/kit`, its own files and `../index.ts`, never a deep path into a package.
 
-## Checking a plugin package
-
-Two helpers read a plugin package's source as text, for a contract test that holds it to the rules [Community plugins](/docs/plugins/community) lists. The [plugin template](/docs/cli#a-plugin-package) has that test in `tests/contracts.test.ts`, and IFLoom's own plugins are held to the same checks.
+A line names the file and what broke the rule, such as `src/rain.ts → @ifloom/plugin-places` or `src/rain.ts: uses a browser global outside src/react/`. An empty `sources` gives `no source files to check`, so a wrong path can't pass. The [plugin template](/docs/reference/cli#ifloom-new) runs it in `tests/contracts.test.ts`, and IFLoom's own plugins are held to the same rules:
 
 ```ts
 /// <reference types="node" />
 import { readFileSync, readdirSync } from 'node:fs'
 import { expect, it } from 'vitest'
-import { boundaryProblems, undocumentedExports } from '@ifloom/engine/testing'
+import { boundaryProblems } from '@ifloom/engine/testing'
 
 const root = new URL('../', import.meta.url)
-const read = (path: string) => readFileSync(new URL(path, root), 'utf8')
 const sources = Object.fromEntries(
   readdirSync(new URL('src/', root), { recursive: true, encoding: 'utf8' })
     .filter((path) => /\.tsx?$/.test(path))
-    .map((path) => [`src/${path.replaceAll('\\', '/')}`, read(`src/${path}`)]),
+    .map((path) => [`src/${path.replaceAll('\\', '/')}`, readFileSync(new URL(`src/${path}`, root), 'utf8')]),
 )
 
 it('keeps to the plugin boundary', () => {
   expect(boundaryProblems(sources)).toEqual([])
 })
+```
+
+### exportedNames
+
+Returns every name a source exports, sorted. Every parameter is in [`exportedNames`](/docs/api/engine-testing#exportednames).
+
+It finds each `export function`, `const`, `let`, `class`, `type` and `interface` at the start of a line, and each name in an `export { … }` or `export type { … }`, after any `as`. It reads the text, so it finds no name a module re-exports with `export *`.
+
+### undocumentedExports
+
+Returns each name the sources export that a page never has as a whole word, sorted. Every parameter is in [`undocumentedExports`](/docs/api/engine-testing#undocumentedexports).
+
+It reads the names with [`exportedNames`](#exportednames). A plugin passes its entries, `src/index.ts` and `src/react/index.tsx` when it has one, and its docs page or README. An export the docs never name is one nobody finds.
+
+```ts
+/// <reference types="node" />
+import { readFileSync } from 'node:fs'
+import { expect, it } from 'vitest'
+import { undocumentedExports } from '@ifloom/engine/testing'
+
+const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8')
 
 it('names every export in the README', () => {
   expect(undocumentedExports([read('src/index.ts'), read('src/react/index.tsx')], read('README.md'))).toEqual([])
 })
 ```
-
-### boundaryProblems
-
-```ts shape
-function boundaryProblems(sources: Readonly<Record<string, string>>): string[]
-```
-
-What breaks the plugin boundary in a package's source, one line each, or none. `sources` is each file's text by its path, and any path with `src/` in it works, such as `src/index.ts` or a glob's `../src/index.ts`. Files under `src/react/` are the plugin's [React UI](/docs/react/kit), the `/react` subpath. It checks three things:
-
-- Outside `src/react/`, a file imports only `@ifloom/engine`, `@ifloom/engine/plugin` and its own files beside it (`./x.ts`), never its React UI.
-- Outside `src/react/`, nothing uses `window.` or `document.`, so the plugin runs in Node and in a game with no page. Strings and comments don't count, so a page's script written as text is fine.
-- In `src/react/`, a file imports only `@ifloom/engine`, `react`, `react-dom`, `@ifloom/react` and `@ifloom/react/kit` (never a deep path into the package), its own files and `../index.ts`.
-
-A line names the file and what it imported, such as `src/rain.ts → @ifloom/plugin-places`, or `src/rain.ts: uses a browser global outside src/react/`. An empty `sources` is a problem too, `no source files to check`, so a wrong path can't pass.
-
-### exportedNames
-
-```ts shape
-function exportedNames(source: string): string[]
-```
-
-Every name a source exports, sorted: each `export function`, `const`, `let`, `class`, `type` and `interface` at the start of a line, and each name in an `export { … }` or `export type { … }`, after any `as`. It reads the text, so it finds no name a module re-exports with `export *`.
-
-### undocumentedExports
-
-```ts shape
-function undocumentedExports(sources: readonly string[], page: string): string[]
-```
-
-Each name the sources export, by `exportedNames`, that `page` never has as a whole word, sorted. Pass the package's entries (`src/index.ts`, and `src/react/index.tsx` if it has one) and its docs page or README. An export the docs don't name is one nobody finds.

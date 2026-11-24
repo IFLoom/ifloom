@@ -1,26 +1,29 @@
 ---
 title: "Media"
-description: "Pools of pictures and videos picked by tags, and layered pictures with hotspots on a scene or a place."
+description: "Reference for GameMedia and its pools, PictureDef with its layers and hotspots, video flags, MediaState and the picture's view: the pictures and videos a game picks and shows."
 ---
-Pictures and videos reach the screen in three ways. You write them into prose as [markup](/docs/reference/prose#images), put them in a data scene's body as [`{ media }` blocks](/docs/reference/scenes#scenemedia), or build a [layered picture](/docs/reference/scenes#the-picture) with hotspots on it. All three can name a file, or ask a pool for one by tags. This page covers pools, the picture's types and the rules for video. The engine draws nothing itself. It puts beats in [`view.scene.beats`](/docs/reference/view#the-scene) and the picture in `view.scene.picture`, and the [React UI](/docs/react#pictures-and-video) draws them: beats with [`Beat`](/docs/react/components#beat) and [`Video`](/docs/react/components#video), the picture with [`Picture`](/docs/react/components#layeredpicture) and its [`Hotspot`](/docs/react/components#hotspot)s, and a click on a picture opens the [`MediaViewer`](/docs/react/components#mediaviewer).
+A game shows pictures and videos three ways: [markup](/docs/reference/prose#images) in prose, a [`{ media }`](/docs/reference/scenes#scenemedia) block in a scene's body, and a [layered picture](/docs/reference/glossary#picture) with hotspots on a scene or a location. Each can name a file or ask a pool, a named list of files in the content's `media`, for one by its tags. [Add pictures and backgrounds](/docs/how-to/add-pictures-and-backgrounds) uses all three.
+
+In the showcase: `examples/showcase/src/story/cafe.ts`, whose café has a layered picture with a hotspot on Ava. No example uses pools or video yet.
 
 ```ts
-import { mediaType, type GameMedia, type HotspotDef, type HotspotView, type PictureDef, type MediaState, type PoolFile, type PictureLayer, type PictureLayerView, type PictureView, type VideoFlags, type VideoView } from '@ifloom/engine'
-import { pictureView } from '@ifloom/engine/plugin'
+import type { GameMedia, HotspotDef, HotspotView, MediaState, PictureDef, PictureLayer, PictureLayerView, PictureView, PoolFile, VideoFlags, VideoView } from '@ifloom/engine'
 ```
 
-## A worked example
+## GameMedia
 
-Say someone knocks at the showcase's flat in the evening. (Small Town has no pools or video yet, so this is an example of what one would look like.) The front door is picked from a pool of doors, the window behind it is a short clip of rain, and the door itself is a hotspot that takes the scene's `answer` choice.
+The game's media, declared in its content's `media`. Every field is in [`GameMedia`](/docs/api/engine#gamemedia).
+
+[`loadGame`](/docs/reference/content#loadgame) merges the content's and every pack's pools by id, and a pack's pool replaces one with the same id whole. A game with no `media` has no pools.
 
 ```ts
-import type { Content, DataScene } from '@ifloom/engine'
+import type { Content } from '@ifloom/engine'
 
-export const flat: Content = {
+export const doors: Content = {
   media: {
     pools: {
       door: [
-        { src: 'door/blue-day.jpg', tags: ['blue', 'day'] },
+        { src: 'door/blue-day.jpg', tags: ['blue', 'day'], weight: 4 },
         { src: 'door/blue-night.jpg', tags: ['blue', 'night'] },
         { src: 'door/red-day.jpg', tags: ['red', 'day'] },
         { src: 'door/red-night.jpg', tags: ['red', 'night'] },
@@ -29,354 +32,150 @@ export const flat: Content = {
     },
   },
 }
-
-const knock: DataScene = {
-  id: 'flat.knock',
-  picture: {
-    aspect: '16/9',
-    layers: [
-      { id: 'hall', src: 'flat/hall' },
-      { id: 'rain', pool: 'window', tags: ['rain'], when: { kv: 'raining' } },
-    ],
-    hotspots: [{ id: 'door', rect: [60, 10, 25, 85], label: 'The front door', choice: 'answer' }],
-  },
-  body: [{ prose: 'flat.knock' }, { media: { pool: 'door', tags: ['red', 'night'], alt: 'The front door' } }],
-  choices: [
-    { id: 'answer', effects: [{ scene: 'flat.visitor' }] },
-    { id: 'ignore', effects: [{ scene: null }] },
-  ],
-}
 ```
 
-The prose at `flat.knock` can ask the pool too:
+### pools
 
-```md
-Someone knocks, three times, not loud.
+Each pool is a list of [`PoolFile`](#poolfile)s by id. Content asks a pool for a file in three places:
 
-[[img:@door|red,night|The front door]]
-```
+- Markup, as `[[img:@door|red,night]]`, `[[wide:@door]]` or `[[video:@window|rain]]`.
+- A `{ media }` block, as `{ pool: 'door', tags: ['red', 'night'] }`.
+- A picture layer, as `{ pool: 'window', tags: ['rain'] }`.
 
-With the scene open, the view has the picked door among the beats and the picture resolved:
+The engine picks a file in three steps:
 
-```ts given
-import { view } from '@ifloom/engine'
+1. It looks for the files that have every tag asked for.
+2. With none, it drops the last tag and looks again, down to no tags, which is any file in the pool. So the tag that matters most goes first.
+3. Among the files that fit, it draws one by their weights, from the save's seed and the pick's key, with [`weighted`](/docs/reference/random#weighted).
 
-view(state, game).scene.picture
-// {
-//   aspect: '16/9',
-//   layers: [
-//     { id: 'hall', src: 'art/flat/hall.jpg' },
-//     { id: 'rain', src: 'art/flat/window-rain.mp4',
-//       video: { autoplay: true, loop: true, muted: true, controls: false } },
-//   ],
-//   hotspots: [
-//     { id: 'door', rect: [60, 10, 25, 85], label: 'The front door', command: { type: 'choose', id: 'answer' } },
-//   ],
-// }
-```
-
-## GameMedia
-
-```ts shape
-type GameMedia = {
-  pools?: Record<string, PoolFile[]>
-}
-```
-
-The game's `media` field. A pool is a named list of files content can pick from. [`loadGame`](/docs/reference/content#loadgame) merges the content's and every pack's pools by id, and a pack's pool replaces one with the same id whole. Leave `media` out and the game has no pools.
+A request for `['blue', 'red']` finds no door that is both, drops `red`, and draws from the two blue doors. The save keeps each pick in [`MediaState`](#mediastate), so the same request in the same place shows the same file every time.
 
 ## PoolFile
 
-```ts shape
-type PoolFile = { src: string; tags?: string[]; weight?: number }
-```
+One file in a pool. Every field is in [`PoolFile`](/docs/api/engine#poolfile).
 
-| Field | Type | Default | What it is |
-|---|---|---|---|
-| `src` | `string` | | The file, through [`artSrc`](/docs/reference/prose#artsrc). |
-| `tags` | `string[]` | `[]` | The words a request picks it by. |
-| `weight` | `number` | `1` | How often it's picked against the other files that fit. |
+`src` is a path through [`artSrc`](/docs/reference/prose#artsrc), as any picture's is, and a `.mp4` or `.webm` file is a video. `tags` are whatever words the game sorts its files by, such as a colour, the time of day or who's in it. `weight` is how often the file is drawn against the other files that fit, 1 unless set, so a file of weight 4 comes up four times as often as one of weight 1. A weight never makes a file fit a request whose tags it lacks. A pool whose files all weigh 1 draws as an unweighted pick would, so weights added later change only the picks not yet made.
 
-One file in a pool. `src` is a path, as any picture's, through [`artSrc`](/docs/reference/prose#artsrc). A `.mp4` or `.webm` file is drawn as a video. `tags` are whatever words your game sorts its files by: a colour, the time of day, who's in it.
+## PictureDef
 
-`weight` is how often the file is picked against the other files that fit a request, 1 if left out. A file of weight 3 is picked three times as often as one of weight 1:
+A layered picture with hotspots, in a [data scene](/docs/reference/scenes#picture)'s or a location's `picture`. Every field is in [`PictureDef`](/docs/api/engine#picturedef).
 
-```ts fragment
-media: {
-  pools: {
-    // The usual blue door most days, the red one now and then.
-    door: [
-      { src: 'door/blue-day.jpg', tags: ['blue', 'day'], weight: 4 },
-      { src: 'door/red-day.jpg', tags: ['red', 'day'] },
-    ],
-  },
+A UI stacks `layers` bottom first. `aspect` is the width over the height as CSS writes it, such as `'16/9'`, and the UI picks one when it's left out. The showcase's café shows Ava's photo while she's on shift, with a hotspot on her that sends the cast plugin's talk command:
+
+```ts
+import type { PictureDef } from '@ifloom/engine'
+import { cast } from '@ifloom/plugin-cast'
+
+export const cafePicture: PictureDef = {
+  aspect: '16/10',
+  layers: [{ id: 'counter', src: 'photo/ava.svg', when: cast.here('ava') }],
+  hotspots: [{ id: 'ava', rect: [36, 22, 28, 44], label: 'Talk to Ava', command: cast.talk('ava'), layer: 'counter' }],
 }
 ```
 
-A weight only matters among the files that fit. It doesn't make a file fit a request whose tags it lacks. The loader reports a weight of 0 or less.
+The layer has a `when`, and the hotspot names the layer, so both go when Ava does. With no layer shown, the location has no picture.
 
-## Pools
+## PictureLayer
 
-You ask a pool for a file in three places:
+One layer of a picture, a file or a pool's pick, shown while its `when` holds. Every field is in [`PictureLayer`](/docs/api/engine#picturelayer).
 
-- markup, as `[[img:@door|red,night]]`, `[[wide:@door]]` or `[[video:@window|rain]]`
-- a `{ media }` block, as `{ pool: 'door', tags: ['red', 'night'] }`
-- a picture layer, as `{ pool: 'window', tags: ['rain'] }`
+Give `src` or `pool` with its `tags`, never both. `id` is what a hotspot's `layer` names. A layer is a video when `video` is `true` or its file ends in `.mp4` or `.webm`, and then the [video flags](#videoflags) apply.
 
-The engine picks a file in three steps.
+## HotspotDef
 
-1. It looks for the files that have every tag you asked for.
-2. If there are none, it drops the last tag and looks again, down to no tags at all, which is any file in the pool. So put the tag that matters most first.
-3. Among the files that fit, it draws one by their [weights](#poolfile) from the save's seed and the pick's key, with [`weighted`](/docs/reference/random#weighted). A pool with no weights draws exactly as an unweighted pick would, so adding weights to some files later only changes picks that haven't been made yet.
+A clickable area on a picture. Every field is in [`HotspotDef`](/docs/api/engine#hotspotdef).
 
-A request for `['blue', 'red']` from the pool above finds no door that's both, drops `red`, and draws from the two blue doors.
+`rect` is `[x, y, width, height]` in percent of the picture, from the top left, so `[0, 0, 100, 100]` is the whole picture. `label` is what a screen reader reads and the tooltip shows. A hotspot gives exactly one of these:
 
-### Remembered picks
+- **`command`**: any [command](/docs/reference/commands#command), greyed out by the same rules as an [action's button](/docs/reference/view#renderaction).
+- **`choice`**: a choice of the open scene by id, which takes that choice's command, `disabled` and `warning`. Only a scene's picture can name one.
 
-After every command, the reducer records each pick that's on screen in [`state.media.picks`](/docs/reference/state#media), under its key. It reads them from [`screen`](/docs/reference/view#screen) of the new state, which collects the picks from the scene, the room and every plugin's view. The view reads it back, so the same request in the same place shows the same file on every visit, after a reload, and after an update that adds files to the pool. If the recorded file has gone from the pool, a new one is drawn.
+The view leaves a hotspot out while its `when` fails or its `layer` isn't shown.
 
-The view never writes the state. Before the first command (a new game's first frame), nothing is recorded yet, and the view draws the pick from the seed and the key, which gives the same file the reducer will then record. [`replay`](/docs/reference/runner#replay) records the same picks in the same order, so a replayed game shows the same files.
+## VideoFlags
 
-### Pick keys
+The flags a video can carry on a `{ media }` block or a picture layer, the same as the [markup's](/docs/reference/prose#videos). Every field is in [`VideoFlags`](/docs/api/engine#videoflags).
 
-A key is the pool, the tags, the owner and the slot, joined with `|`:
+Without flags, a video plays by itself, loops, is muted and has no controls, like a GIF. `controls` shows the player's controls and waits for a press, `once` plays it once, `sound` plays it with sound, and `poster` is a still shown before it plays, through `artSrc`.
 
-```text
-door|red,night|flat.knock|1
-```
+## State
 
-| Where | Owner | Slot |
-|---|---|---|
-| A data scene's `{ media }` block | the scene's id | the block's index in `body`, such as `1` |
-| Markup in a data scene's block | the scene's id | the block's index and the request's place in that block's text, such as `0.0` |
-| A place's body (and any plugin [room scene](/docs/reference/plugins#scene)'s body) | the place's id | as for a data scene |
-| A message's or a post's body | the message's or post's id | as for a data scene |
-| A picture layer | the scene's or place's id | `picture:0`, `picture:1`, ... by the layer's index |
+### MediaState
 
-The visit isn't part of the key. A scene shows the same door every time it opens, and that's on purpose: a picture that changes each time you look reads as a mistake.
+The pool picks a save keeps in [`state.media`](/docs/reference/state#media). Every field is in [`MediaState`](/docs/api/engine#mediastate).
 
-**Gotchas.**
-- Reordering a scene's blocks, or a picture's layers, changes their slots, so they're drawn again.
-- A pool with nothing to give (an unknown or empty pool) leaves its markup, block or layer out. The loader reports both.
-- Tags that no file in the pool has are reported, even though the pick would fall back. A tag nothing has is usually a typo.
+`picks` holds the file each pick key was given, as its pool's `src`. After every command, the reducer records each pick on screen, which it reads from [`screen`](/docs/reference/view#screen-1) of the new state, covering the scene, the room and every plugin's view. The view reads the picks back and never writes them, so the same request shows the same file on every visit, after a reload, and after an update that adds files to the pool. If the recorded file has gone from the pool, the engine draws a new one. On a new game's first screen, before any command, the view draws each pick from the seed and the key, which gives the file the reducer then records, and [`replay`](/docs/reference/runner#replay) records the same picks in the same order.
 
-## MediaState
+A pick key is the pool, the tags, the owner and the slot, joined with `|`, such as `door|red,night|flat.knock|1`:
 
-```ts shape
-type MediaState = { picks: Record<string, string> }
-```
+| Key | Meaning |
+|---|---|
+| A data scene's `{ media }` block | The owner is the scene's id and the slot the block's index in `body`, such as `1`. |
+| Markup in a data scene's block | The owner is the scene's id and the slot the block's index and the request's place in its text, such as `0.0`. |
+| A location's body, or any plugin [room scene](/docs/reference/plugin-views)'s | The owner is the location's id, and the slot is as for a data scene. |
+| A message's or a post's body | The owner is the message's or post's id, and the slot is as for a data scene. |
+| A picture layer | The owner is the scene's or location's id and the slot `picture:0`, `picture:1` and so on, by the layer's index. |
 
-| Field | Type | What it holds |
-|---|---|---|
-| `picks` | `Record<string, string>` | The file each [pick key](#pick-keys) was given, as its pool's `src`. |
+The visit isn't part of the key, so a scene shows the same door every time it opens.
 
-What a save keeps at `state.media`: the file (as its pool's `src`) each pick key was given. A new game starts with `{ picks: {} }`, and so does an older save that [loads](/docs/reference/saves#loadstate) without it.
-
-## Layered pictures
-
-### PictureDef
-
-```ts shape
-type PictureDef = {
-  layers: PictureLayer[]
-  hotspots?: HotspotDef[]
-  aspect?: string
-}
-```
-
-| Field | Type | Default | What it is |
-|---|---|---|---|
-| `layers` | `PictureLayer[]` | | The layers, bottom first. |
-| `hotspots` | `HotspotDef[]` | `[]` | The clickable areas. |
-| `aspect` | `string` | the UI's choice | Width over height, as CSS writes it, such as `'16/9'`. |
-
-A layered picture with hotspots. A [data scene](/docs/reference/scenes#the-picture) and a [place](/docs/plugins/places#the-picture) can each have one. `layers` are drawn bottom first. `aspect` is the width over the height as CSS writes it, such as `'16/9'`. Leave it out and the UI picks one.
-
-### PictureLayer
-
-```ts shape
-type PictureLayer = {
-  id?: string
-  src?: string
-  pool?: string
-  tags?: string[]
-  when?: Condition
-  video?: boolean
-  controls?: boolean
-  once?: boolean
-  sound?: boolean
-  poster?: string
-}
-```
-
-| Field | Type | Default | What it is |
-|---|---|---|---|
-| `id` | `string` | | What a hotspot's `layer` names to go with this layer. |
-| `src` | `string` | | The file, through `artSrc`. |
-| `pool`, `tags` | `string`, `string[]` | | A pool to pick the file from instead, and the tags the pick should have. |
-| `when` | `Condition` | always | Shown while it holds. |
-| `video` | `boolean` | by the file's extension | Draw it as a video. |
-| `controls`, `once`, `sound`, `poster` | | | The [video flags](#videoflags). |
-
-One layer. Give a file as `src`, or a pool and tags. It's shown while `when` holds. `id` is what a hotspot names to go with this layer. A layer is a video when `video` is `true` or its file is a `.mp4` or `.webm`, and the [video flags](#videoflags) apply.
-
-### HotspotDef
-
-```ts shape
-type HotspotDef = {
-  id: string
-  rect: [number, number, number, number]
-  label: string
-  command?: CommandRef
-  choice?: string
-  when?: Condition
-  layer?: string
-}
-```
-
-| Field | Type | Default | What it is |
-|---|---|---|---|
-| `id` | `string` | | The hotspot's id. |
-| `rect` | `[number, number, number, number]` | | `[x, y, width, height]` in percent of the picture, from the top left. |
-| `label` | `string` | | What a screen reader reads and the tooltip shows. |
-| `command` | `CommandRef` | | The command it sends. Give this or `choice`. |
-| `choice` | `string` | | A choice of the open scene, by id. Give this or `command`. |
-| `when` | `Condition` | always | Shown while it holds. |
-| `layer` | `string` | | A layer's `id`: shown only while that layer is. |
-
-A clickable area. `rect` is `[x, y, width, height]` in percent of the picture, from the top left, so `[0, 0, 100, 100]` is the whole picture. `label` is what a screen reader reads and the tooltip shows. Give exactly one of:
-
-- **`command`**, any [command](/docs/reference/commands), greyed out by the same rules as an [action's button](/docs/reference/view#renderaction).
-- **`choice`**, a choice of the open scene by id, which takes that choice's command, `disabled` and `warning`.
-
-It's left out while its `when` fails, and while its `layer` isn't shown.
+## View
 
 ### PictureView
 
-```ts shape
-type PictureView = {
-  aspect: string | null
-  layers: PictureLayerView[]
-  hotspots: HotspotView[]
-}
-```
+A picture as the player sees it, from [`pictureView`](/docs/reference/view#pictureview). Every field is in [`PictureView`](/docs/api/engine#pictureview).
 
-| Field | Type | What it holds |
-|---|---|---|
-| `aspect` | `string \| null` | The picture's `aspect`, or `null` for the UI to choose. |
-| `layers` | `PictureLayerView[]` | The layers shown now, bottom first. |
-| `hotspots` | `HotspotView[]` | The hotspots that can be shown, each a button. |
-
-A picture as the UI draws it, from [`pictureView`](/docs/reference/view#pictureview). It's in [`view.scene.picture`](/docs/reference/view#the-scene) for the open scene, and in a place's `location.picture` in [`PlacesView`](/docs/plugins/places#placesview). `layers` has only the layers shown now, bottom first. `hotspots` has only the ones that can be shown, each resolved to a button.
+The open scene's is in `view.scene.picture`, and a location's is in the [places plugin](/docs/reference/plugins/places)'s view. `aspect` is `null` for the UI to choose. `layers` holds only the layers shown now, bottom first, and `hotspots` only the ones shown now, each resolved to a button. To render one, see [Render the scene's picture](/docs/how-to/render/pictures-and-sound#render-the-scenes-picture).
 
 ### PictureLayerView
 
-```ts shape
-type PictureLayerView = {
-  id: string | null
-  src: string
-  video?: VideoView
-}
-```
+One layer that's shown. Every field is in [`PictureLayerView`](/docs/api/engine#picturelayerview).
 
-| Field | Type | What it holds |
-|---|---|---|
-| `id` | `string \| null` | The layer's `id`, or `null` when it has none. |
-| `src` | `string` | The file, through `artSrc`, or the pool's pick. |
-| `video` | `VideoView`, optional | How it plays. Only there for a video layer. |
-
-A layer that's shown. `src` has been through [`artSrc`](/docs/reference/prose#artsrc), and a pool layer's is the pick. `video` is there only for a video layer.
+`src` has been through [`artSrc`](/docs/reference/prose#artsrc), and a pool layer's is the pick. `id` is `null` for a layer with none, and `video` is set only for a video layer.
 
 ### HotspotView
 
-```ts shape
-type HotspotView = {
-  id: string
-  rect: [number, number, number, number]
-  label: string
-  command: Command
-  disabled?: string
-  warning?: string
-  layer?: string
-}
-```
+A hotspot as a button. Every field is in [`HotspotView`](/docs/api/engine#hotspotview).
 
-| Field | Type | What it holds |
-|---|---|---|
-| `id` | `string` | The hotspot's id. |
-| `rect` | `[number, number, number, number]` | Where it is, in percent of the picture. |
-| `label` | `string` | Its words, for a screen reader and the tooltip. |
-| `command` | `Command` | What to send when it's pressed. |
-| `disabled` | `string`, optional | Why it can't be pressed now. |
-| `warning` | `string`, optional | A warning to show, though it can be pressed. |
-| `layer` | `string`, optional | The layer it goes with. |
-
-A hotspot as a button. Send `command` when it's pressed. `disabled` and `warning` mean what they do on a [`RenderedChoice`](/docs/reference/view#renderedchoice): greyed out with a reason, or pressable with a warning the reducer refuses all the same.
-
-## Video
-
-### VideoFlags
-
-```ts shape
-type VideoFlags = {
-  controls?: boolean
-  once?: boolean
-  sound?: boolean
-  poster?: string
-}
-```
-
-| Field | Type | Default | What it is |
-|---|---|---|---|
-| `controls` | `boolean` | `false` | Shows the player's controls, and waits for a press to play. |
-| `once` | `boolean` | `false` | Plays once instead of looping. |
-| `sound` | `boolean` | `false` | Plays with sound instead of muted. |
-| `poster` | `string` | | A still shown before it plays, through `artSrc`. |
-
-The flags a video can carry, on a `{ media }` block or a picture layer. They're the same as the [markup flags](/docs/reference/prose#videos): `controls` shows the player's controls, `once` plays once, `sound` plays with sound, and `poster` is a still shown before it plays.
+A UI sends `command` when the player presses it. `disabled` and `warning` mean what they do on a [`RenderedChoice`](/docs/reference/view#renderedchoice): greyed out with a reason, or pressable with a warning that the reducer refuses all the same.
 
 ### VideoView
 
-```ts shape
-type VideoView = {
-  autoplay: boolean
-  loop: boolean
-  muted: boolean
-  controls: boolean
-  poster?: string
-}
-```
+How a video layer or a video beat plays, with the defaults filled in. Every field is in [`VideoView`](/docs/api/engine#videoview).
 
-| Field | Type | What it holds |
-|---|---|---|
-| `autoplay` | `boolean` | Whether it starts by itself: `false` with `controls`. |
-| `loop` | `boolean` | Whether it loops: `false` with `once`. |
-| `muted` | `boolean` | Whether it's muted: `false` with `sound`. |
-| `controls` | `boolean` | Whether it shows the player's controls. |
-| `poster` | `string`, optional | The still, through `artSrc`. |
-
-How a video layer plays, with the defaults filled in. A `video` [beat](/docs/reference/prose#scenebeat) carries the same fields. Without flags, a video plays by itself, loops, is muted and has no controls, like a GIF. `controls` turns `autoplay` off, so a clip with controls waits for the player. `poster` has been through `artSrc`.
-
-**Gotchas.**
-- `muted: false` asks for sound. Browsers often refuse to start a video with sound by itself, so a UI may need the player to press play. The React UI's [`Video`](/docs/react/components#video) also follows the game's mute and volume settings for a video with sound.
-- `mediaType` decides picture or video by the file's extension alone. A file in `art/` with no extension is a picture (`.jpg`), unless its markup says `video` (`.mp4`).
-
-## Drawing it
-
-A scene's layered picture is `view.scene.picture`, a [`PictureView`](#pictureview). Stack its `layers` bottom first, and put each of its `hotspots` over them as a button, placed by its `rect` (left, top, width and height, in percent of the picture). A hotspot is greyed out with `disabled` like any button, and sends its `command`. A scene with no layered picture may have a single `view.scene.image`. A place's picture is in the [places plugin's view](/docs/plugins/places#placesview), drawn the same way.
-
-The React UI's [`Scene`](/docs/react/components#scene) draws the picture above the words with [`LayeredPicture`](/docs/react/components#layeredpicture), which you can also place yourself. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
-
-::include[../../../../snippets/plain/picture.ts]{meta='tab="Plain JS" tab-group="framework"'}
-
-::include[../../../../snippets/react/picture.tsx]{meta='tab="React" tab-group="framework"'}
-
-::include[../../../../snippets/vue/Picture.vue]{meta='tab="Vue" tab-group="framework"'}
+`autoplay` is `false` with `controls`, so a clip with controls waits for the player. `loop` is `false` with `once`, `muted` is `false` with `sound`, and `poster` has been through `artSrc`. A `video` [beat](/docs/reference/prose#scenebeat) carries the same fields.
 
 ## Checks
 
-The [content checker](/docs/reference/checks) reports unknown pools, tags no file has, empty pools, unknown markup flags, video flags on a picture, and everything wrong with a picture's hotspots and layers. The full list is under [Media](/docs/reference/checks#media). It also lists every picture and video file the game names, in [`files`](/docs/reference/checks#fileref).
+The [content checker](/docs/reference/checks) checks every picture and video content asks for against `game.media`: the markup in every line of prose, a data scene's `{ media }` blocks and `picture`, and a location's `picture`.
 
-## See it in an example
+| Problem | Cause |
+|---|---|
+| `unknown pool "…"` | Markup, a `{ media }` block or a picture layer names a pool `game.media.pools` doesn't have. |
+| `no file in pool "…" is tagged "…"` | A request asks for a tag no file in the pool has. The pick falls back, but a tag nothing has is a typo more often than not. |
+| `a pool with no files` | A pool is empty, reported as `pool <id>`. |
+| `file <n> has no src` | A file in a pool has no `src`, reported as `pool <id>`. |
+| `file <n> has a weight of …; a weight must be above 0` | A file's `weight` is 0 or less, reported as `pool <id>`. |
+| `unknown flag "…" in …` | Markup has a `name=value` part whose name isn't a flag, such as `speed=2`. |
+| `"…" and "…" can't all be alt text in …; is one a misspelt flag?` | Markup has more than one part that isn't a flag. |
+| `video flag "…" on a picture` | Markup, a `{ media }` block or a picture layer puts `controls`, `once`, `sound` or `poster` on a picture file. A pool with a video in it may take them. |
+| `flag "rot" turns a picture, not a video, in …` | Video markup has `rot`. |
+| `media: needs a src or a pool`, `media: has both a src and a pool` | A `{ media }` block has neither or both. A picture layer gets the same after `picture layer <id>:`. |
+| `picture layer <id>: two layers share this id` | Two layers of one picture have the same `id`. A layer with no `id` is named by its index. |
+| `hotspot <id>: needs exactly one of command and choice` | A hotspot has both, or neither. |
+| `hotspot <id>: no choice "…" in this scene` | A hotspot's `choice` isn't one of the scene's choices. |
+| `hotspot <id>: names choice "…", but only a scene has choices` | A location's hotspot has a `choice`. |
+| `hotspot <id>: rect must be four numbers: [x, y, width, height]` | A hotspot's `rect` isn't four numbers. |
+| `hotspot <id>: rect is outside 0 to 100` | A number in the rect is below 0 or above 100. |
+| `hotspot <id>: rect has no width or height` | The width or the height is 0. |
+| `hotspot <id>: rect runs off the picture: x + width and y + height must be 100 or less` | The rect goes past the right or bottom edge. |
+| `hotspot <id>: two hotspots share this id` | Two hotspots of one picture have the same `id`. |
+| `hotspot <id>: unknown layer "…"` | A hotspot's `layer` names no layer of its picture. |
 
-Small Town: the café's `picture` in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts) has one layer, Ava's photo, shown while she's there, and a hotspot on her that sends `cast.talk('ava')`. No example uses picture pools or video yet.
+The checker reads a hotspot's `command` and `when`, and a layer's `when`, as it reads any command and condition, with `hotspot <id>:` or `picture layer <id>:` in front. It also lists every picture and video file the game names in its [`files`](/docs/reference/checks#fileref).
+
+## Caveats
+
+- Reordering a scene's blocks or a picture's layers changes their slots, so the engine draws their picks again.
+- A pool with nothing to give, unknown or empty, leaves its markup, block or layer out of the view.
+- Browsers refuse to start a video with sound by itself, so a UI may need the player to press play when `muted` is `false`.
+- [`mediaType`](/docs/reference/prose#mediatype) tells a picture from a video by the file's extension alone. A file with no extension is a picture, `.jpg`, unless its markup says `video`.

@@ -1,26 +1,25 @@
 ---
 title: "Audio"
-description: "Tracks, playlists and channels, what plays on a background channel, sounds and voices, and the volume settings."
+description: "Reference for GameAudio, TrackDef, PlaylistDef and ChannelDef, the audio and sound effects, AudioState, AudioView and audioSrc: the music and sounds a game declares and the view lists."
 ---
-You give a game sound by listing its tracks in `game.audio` and naming them from content: a scene's `audio`, a place's `audio`, the [`audio`](/docs/reference/effects#audio) and [`sound`](/docs/reference/effects#sound) effects, and the [`[[sound:id]]` and `[[voice:id]]` markup](/docs/reference/prose#sound-and-voice). The engine never plays anything itself. It works out what should be playing on each channel and which one-shot sounds are due, and puts that in [`view.audio`](/docs/reference/view#audio). The [audio player](/docs/browser/audio-player), `@ifloom/audio`, reads that and does the playing in the browser. The [React UI](/docs/react#sound) starts it for you.
+A game's audio is the tracks, playlists and channels it declares in its content's `audio`, which scenes, locations, effects and prose name by id. The engine plays nothing itself. It works out what each channel should play and which one-shot sounds are due, and lists them in `view.audio` for an audio player such as [`@ifloom/audio`](/docs/reference/browser/audio-player) to play. [Add music and sound](/docs/how-to/add-music-and-sound) gives the café music and a doorbell.
+
+In the showcase: none yet. The showcase, The Letter and The Corner Café declare no tracks, so [Add music and sound](/docs/how-to/add-music-and-sound) is the example.
 
 ```ts
 import {
   audioSrc,
-  type AudioChannelView,
-  type AudioCue,
-  type AudioState,
-  type AudioView,
-  type ChannelDef,
-  type GameAudio,
-  type PlaylistDef,
-  type TrackDef,
+  type AudioChannelView, type AudioCue, type AudioState, type AudioView, type ChannelDef, type GameAudio, type PlaylistDef, type TrackDef,
 } from '@ifloom/engine'
 ```
 
-## A worked example
+## GameAudio
 
-Say you gave the showcase's town sound: calm music by default, a murmur of its own in the café, a knock when you get back to the flat, and Ava's first line read aloud. (Small Town itself has no audio yet.)
+The game's audio, declared in its content's `audio`. Every field is in [`GameAudio`](/docs/api/engine#gameaudio).
+
+`tracks` holds every [track](#trackdef) and [playlist](#playlistdef) by id, and `channels` the game's [channels](#channeldef), merged over the four defaults field by field. `default` says what each background channel plays when nothing else names one. `mute` names a `ui` toggle [setting](/docs/reference/settings) that silences everything while it's on, and `sound` names one that plays sound only while it's on, so a settings page can offer whichever reads right. With both, either one silences. A game with no `audio` has no tracks, and `view.audio` lists no channels and no cues.
+
+[`loadGame`](/docs/reference/content#loadgame) merges the content's and every pack's `audio`. A pack's track replaces one with the same id, a pack's channel is merged field by field, and its `mute`, `sound` and `default` entries win. This content gives the town calm music, a café murmur, a knock and a voiced line, with volume and mute settings:
 
 ```ts
 import type { Content } from '@ifloom/engine'
@@ -28,7 +27,6 @@ import type { Content } from '@ifloom/engine'
 export const sound: Content = {
   settings: [
     { id: 'musicVolume', label: 'Music', affects: 'ui', type: 'range', min: 0, max: 100, default: 70 },
-    { id: 'sfxVolume', label: 'Sounds', affects: 'ui', type: 'range', min: 0, max: 100, default: 90 },
     { id: 'muted', label: 'Mute', affects: 'ui', type: 'toggle', default: false },
   ],
   audio: {
@@ -38,163 +36,55 @@ export const sound: Content = {
       radio: { playlist: ['calm', 'evening'], order: 'shuffle' },
       'cafe.murmur': { src: 'cafe-murmur.ogg', channel: 'ambience' },
       knock: { src: 'knock.ogg' },
-      buzz: { src: 'phone-buzz.ogg' },
       'ava.hello': { src: 'voice/ava-hello.ogg', channel: 'voice' },
     },
-    channels: {
-      music: { mode: 'background', volume: 'musicVolume' },
-      sfx: { mode: 'cue', volume: 'sfxVolume' },
-    },
+    channels: { music: { mode: 'background', volume: 'musicVolume' } },
     mute: 'muted',
     default: { music: 'calm' },
   },
 }
 ```
 
-The café names its ambience in its [location](/docs/plugins/places#the-location-trait):
-
-```ts fragment
-{ id: 'cafe', name: 'The Corner Café', /* ... */ audio: { ambience: 'cafe.murmur' } }
-```
-
-The knock is a `sound` effect on arriving at the flat, and Ava's line carries its voice in the prose:
-
-```ts
-{ sound: 'knock' }
-```
-
-```md
-@ava: "Hi! You must be the new neighbour." [[voice:ava.hello]]
-```
-
-Then the view says what's due:
-
-```ts given
-import { view } from '@ifloom/engine'
-
-view(state, game).audio
-// {
-//   channels: {
-//     music: { mode: 'background', track: 'calm', src: 'audio/music/calm.ogg', loop: true, volume: 1,
-//              volumeSetting: 'musicVolume', crossfade: 1000, duck: null },
-//     ambience: { mode: 'background', track: 'cafe.murmur', src: 'audio/cafe-murmur.ogg', ... },
-//     sfx: { mode: 'cue', track: null, src: null, ... },
-//     voice: { mode: 'cue', track: null, src: null, ... },
-//   },
-//   cues: [{ key: 'cue:1234:1', channel: 'sfx', track: 'knock', src: 'audio/knock.ogg', volume: 1 }],
-//   muteSetting: 'muted',
-//   soundSetting: null,
-// }
-```
-
-## GameAudio
-
-```ts shape
-type GameAudio = {
-  tracks: Record<string, TrackDef | PlaylistDef>
-  channels?: Record<string, ChannelDef>
-  mute?: string
-  sound?: string
-  default?: Record<string, string>
-}
-```
-
-`game.audio`. Leave it out and the game has no audio, and `view.audio` is empty.
-
-| Field | What it holds |
-|---|---|
-| `tracks` | Every track and playlist, by id. Content names them by these ids. |
-| `channels` | Your channels, merged over the [defaults](#channels) field by field. |
-| `mute` | A `ui` [setting](/docs/reference/settings) of kind `toggle` that mutes everything while it's on: a box labelled "Mute". |
-| `sound` | A `ui` toggle the other way round, that plays sound only while it's on: a box labelled "Sound" or "Music", ticked for sound. Name whichever reads right on your settings page; with both, either one silences. |
-| `default` | What each background channel plays when nothing else says, by channel. |
-
-Your [content](/docs/reference/content#content) and packs can carry `audio` too. A pack's track or channel replaces one with the same id (a channel is merged field by field), and its `mute`, `sound` and `default` entries win.
-
 ## TrackDef
 
-```ts shape
-type TrackDef = { src: string; channel?: string; loop?: boolean; volume?: number }
-```
+One sound file the game ships, in `audio.tracks`. Every field is in [`TrackDef`](/docs/api/engine#trackdef).
 
-One sound file.
-
-| Field | What it does | Default |
-|---|---|---|
-| `src` | The file, relative to the game's `public/audio/` folder. It goes through [`audioSrc`](#audiosrc). [`ifloom check`](/docs/cli#ifloom-check) reports a file that isn't there. | |
-| `channel` | The channel it belongs to. A `sound` effect and `[[sound:id]]` play it there. A background channel only takes tracks whose channel is a background one. | `'sfx'` |
-| `loop` | Whether it repeats while it's on a background channel. | `true` |
-| `volume` | Its own volume, from 0 to 1. | `1` |
-
-Give music and ambience a `channel`. A track with none is a sound effect, and the loader reports it if you put it on the music channel.
+`src` is the file, relative to the game's `public/audio/` folder, through [`audioSrc`](#audiosrc). A track plays on the `sfx` channel unless `channel` names another, so give music and ambience a `channel`, and the checker reports a track with none that a background placement names. `loop` is `true` unless set, and it matters only on a background channel. `volume` is the track's own, from 0 to 1, and 1 unless set.
 
 ## PlaylistDef
 
-```ts shape
-type PlaylistDef = {
-  playlist: (string | { track: string; weight?: number })[]
-  order?: 'inOrder' | 'loop' | 'shuffle'
-}
-```
+Several background tracks played one after another, in `audio.tracks`, named anywhere a background track can be. Every field is in [`PlaylistDef`](/docs/api/engine#playlistdef).
 
-Several background tracks played one after another. Name it anywhere you'd name a background track.
+`order` says how the list plays:
 
-| `order` | What happens |
+| Key | Meaning |
 |---|---|
 | `'inOrder'` | The list plays once, then the channel is quiet. |
-| `'loop'` (the default) | The list plays over and over. |
-| `'shuffle'` | The list plays over and over in an order drawn from the save's seed. |
+| `'loop'` | The list plays over and over. It's the default. |
+| `'shuffle'` | The list plays over and over in an order drawn from the save's seed, the channel, the playlist's id and the turn it started playing. |
 
-A shuffled order is drawn from the seed, the channel, the playlist's id and the turn it started playing (kept in [`state.audio.started`](#audiostate)). It stays the same for as long as the playlist plays, and a [replay](/docs/reference/runner#replay) of the same commands draws the same order.
-
-### Weights in a shuffle
-
-In a shuffled playlist, an entry can be `{ track, weight }` instead of a plain id, to make a track more likely to come early in the order:
+A shuffled order stays the same for as long as the playlist plays, and a [replay](/docs/reference/runner#replay) of the same commands draws the same order. In a shuffle, an entry can be `{ track, weight }` instead of a plain id, which weighs 1. The engine draws the order without replacement, the first track by weight from all of them, the next from the ones left, and so on. Every track still plays once in each pass, so weight only changes how early a track tends to come. This playlist puts `calm` first more often than not:
 
 ```ts fragment
-tracks: {
-  calm: { src: 'music/calm.ogg', channel: 'music' },
-  evening: { src: 'music/evening.ogg', channel: 'music', volume: 0.8 },
-  bandstand: { src: 'music/bandstand.ogg', channel: 'music' },
-  // calm comes first more often than not, then the other two in either order.
-  radio: { playlist: [{ track: 'calm', weight: 3 }, 'evening', 'bandstand'], order: 'shuffle' },
-}
+radio: { playlist: [{ track: 'calm', weight: 3 }, 'evening', 'bandstand'], order: 'shuffle' }
 ```
-
-A plain id weighs 1. The order is drawn without replacement: the first track by weight from all of them, the next by weight from the ones left, and so on. Every track still plays once in each pass, and weight only changes how early it tends to come.
-
-A playlist whose entries all weigh 1 shuffles exactly as it would with plain ids. Weights only mean something in a `'shuffle'` playlist. The loader reports a weight on a playlist that doesn't shuffle, and a weight of 0 or less.
 
 ## ChannelDef
 
-```ts shape
-type ChannelDef = {
-  mode: 'background' | 'cue'
-  crossfade?: number
-  volume?: string
-  duck?: { under: string[]; to: number }
-}
-```
+A channel the game declares in `audio.channels`, which sets whether its sounds replace each other or overlap, and how they fade. Every field is in [`ChannelDef`](/docs/api/engine#channeldef).
 
-| Field | What it does |
+A `'background'` channel plays one thing until it changes, and a `'cue'` channel plays each sound once, overlapping. `crossfade` is the milliseconds a background channel takes to fade from one track to the next. `volume` names a `ui` range setting for the channel's volume, and nothing has one until the game names it, so a game with no audio settings plays at full volume. `duck` quietens the channel to `to`, from 0 to 1, while any channel in `under` plays.
+
+Every game has four channels, and the game's are merged over them field by field:
+
+| Key | Meaning |
 |---|---|
-| `mode` | `'background'` plays one thing until it changes. `'cue'` plays each sound once, and sounds can overlap. |
-| `crossfade` | Milliseconds to fade from one track to the next, on a background channel. |
-| `volume` | A `ui` setting of kind `range` that sets this channel's volume. |
-| `duck` | Quieten this channel to `to` (0 to 1) while any channel in `under` is playing. Off unless you declare it. |
+| `music` | A background channel with a crossfade of 1000. |
+| `ambience` | A background channel with a crossfade of 600. |
+| `sfx` | A cue channel, where a track with no `channel` plays. |
+| `voice` | A cue channel, where every `[[voice:id]]` plays. |
 
-### Channels
-
-Every game has four channels, and yours are merged over them:
-
-| Channel | `mode` | `crossfade` |
-|---|---|---|
-| `music` | `'background'` | 1000 |
-| `ambience` | `'background'` | 600 |
-| `sfx` | `'cue'` | |
-| `voice` | `'cue'` | |
-
-A channel you add needs a `mode`. A new background channel's crossfade is 1000 if you don't give one. Nothing has a volume setting until you name one, so a game with no audio settings plays at full volume.
+A channel the game adds needs a `mode`, and a new background channel's crossfade is 1000 unless set. This ducks the music under a voice and adds a radio channel:
 
 ```ts fragment
 channels: {
@@ -203,131 +93,105 @@ channels: {
 }
 ```
 
-## What plays on a background channel
+## Effects
 
-Each background channel plays the first of these that names it:
+### audio
 
-1. The open scene's [`audio`](/docs/reference/scenes#datascene).
-2. An [`audio` effect](/docs/reference/effects#audio), kept in the save.
-3. A plugin's [`audio` provider](/docs/reference/plugins#audio), such as the place the player is at.
-4. The game's `default`.
+Sets a background channel `to` a track or playlist, kept in the save, or silences it with `to: null`. The [`audio` effect](/docs/reference/effects#audio) entry has its rules.
 
-`null` at any of these levels is silence, and nothing below it is asked. A scene that sets `{ music: null }` stops the music while it's open, and the music comes back when it closes. A level that doesn't name a channel passes it down.
+### sound
 
-## Sounds and voices
+Plays a track once on its own channel, kept among the save's last 20 cues. The [`sound` effect](/docs/reference/effects#sound) entry has its rules.
 
-A one-shot sound is a cue. Cues come from two places:
+## State
 
-- **A [`sound` effect](/docs/reference/effects#sound).** The state keeps the last 20 in `state.audio.cues`, each with its number in a running count.
-- **The open scene's `[[sound:id]]` and `[[voice:id]]` beats.** They're due while the scene is open. A voice always goes to the `voice` channel.
+### AudioState
 
-Each cue has a `key`, and a player plays each key once. The keys are worked out from the state, so they're the same across view calls, after a choice that keeps the scene open, and after a save is loaded:
+The music and sounds a save keeps in [`state.audio`](/docs/reference/state#audio). Every field is in [`AudioState`](/docs/api/engine#audiostate).
 
-| Cue | Key |
-|---|---|
-| A `sound` effect | `cue:<seed>:<count>` |
-| A scene's sound or voice beat | `scene:<seed>:<showing>:<beat index>:<track>` |
+`channels` holds what `audio` effects put on channels, and a channel not listed is left to the location and the default. `cues` holds the last 20 `sound` effects, each numbered by `seq`, the running count of them. `shown` counts every time a scene is entered, and `started` holds what each background channel is playing and the turn it started, which a shuffle is drawn from. The engine updates `started` after every command.
 
-`<showing>` counts every time a scene is entered (`state.audio.shown`), so a scene entered again gets new keys and its sounds play again. Redrawing the scene you're already in, after a choice, isn't a new showing.
+## View
 
-## AudioView
+### AudioView
 
-```ts shape
-type AudioView = {
-  channels: Record<string, AudioChannelView>
-  cues: AudioCue[]
-  muteSetting: string | null
-  soundSetting: string | null
-}
-```
+The game's audio as [`view.audio`](/docs/reference/view#view) lists it, for an audio player to play. Every field is in [`AudioView`](/docs/api/engine#audioview).
 
-[`view.audio`](/docs/reference/view#audio). `channels` has every channel, background and cue, and `cues` has every effect cue kept, oldest first, then the open scene's beats in order. `muteSetting` is `game.audio.mute` and `soundSetting` is `game.audio.sound`. The player is silent while the first is on or the second is off. The engine never reads the [profile](/docs/reference/profile), so the player reads the setting's value there itself.
+`channels` holds every channel, background and cue, as an [`AudioChannelView`](#audiochannelview). `cues` holds every kept `sound` effect, oldest first, then the open scene's sound and voice beats in order, each an [`AudioCue`](#audiocue). `muteSetting` is `game.audio.mute` and `soundSetting` is `game.audio.sound`. The engine never reads the [profile](/docs/reference/profile), so the player reads those settings' values there itself. To play it, see [Play sound](/docs/how-to/render/pictures-and-sound#play-sound).
 
 ### AudioChannelView
 
-```ts shape
-type AudioChannelView = {
-  mode: 'background' | 'cue'
-  track: string | null
-  src: string | null
-  loop: boolean
-  volume: number
-  volumeSetting: string | null
-  crossfade: number
-  duck: { under: string[]; to: number } | null
-  playlist?: { tracks: string[]; srcs: string[]; volumes: number[]; order: 'inOrder' | 'loop' | 'shuffle' }
-}
-```
+One channel as `view.audio.channels` lists it, with what it plays now. Every field is in [`AudioChannelView`](/docs/api/engine#audiochannelview).
 
-| Field | What it holds |
-|---|---|
-| `track` | The track or playlist chosen. Null for silence, and always null on a cue channel. |
-| `src` | Its file, or a playlist's first file. Null for silence or an unknown track. |
-| `loop` | Whether it repeats. For a playlist, whether the list repeats. |
-| `volume` | The track's own volume, or a playlist's first track's. The player multiplies it by the setting's value. |
-| `volumeSetting` | The channel's `volume` setting id, or null. |
-| `crossfade` | The channel's crossfade. 0 on a cue channel. |
-| `duck` | The channel's `duck`, or null. |
-| `playlist` | For a playlist, its tracks, files and volumes in playing order, already shuffled if it shuffles. |
+A background channel plays the first of these that names it:
+
+1. The open scene's [`audio`](/docs/reference/scenes#audio).
+2. An [`audio`](/docs/reference/effects#audio) effect, kept in the save.
+3. A plugin's `audio` provider, such as the [places plugin](/docs/reference/plugins/places)'s for the location the player is at.
+4. The game's `default`.
+
+`null` at any of these is silence, and nothing below it is asked, so a scene that sets `{ music: null }` stops the music until it closes. `track` is always `null` on a cue channel. `src` is `null` for silence or an unknown track, and for a playlist it's the first file, with every file, volume and the played order in `playlist`. The player multiplies `volume` by the value of the setting `volumeSetting` names.
 
 ### AudioCue
 
-```ts shape
-type AudioCue = { key: string; channel: string; track: string; src: string; volume: number }
-```
+One sound that's due, for a player to play once per `key`. Every field is in [`AudioCue`](/docs/api/engine#audiocue).
 
-One sound that's due. Play it once per `key`.
+The engine works each key out from the state, so it's the same across view calls, after a choice that keeps the scene open, and after a save is loaded:
 
-## AudioState
-
-```ts shape
-type AudioState = {
-  channels: Record<string, string | null>
-  cues: { seq: number; track: string }[]
-  seq: number
-  shown: number
-  started: Record<string, { track: string; turn: number }>
-}
-```
-
-`state.audio`, part of the save.
-
-| Field | What it holds |
+| Key | Meaning |
 |---|---|
-| `channels` | What `audio` effects have put on channels. A channel not listed is left to the place and the default. |
-| `cues` | The last 20 `sound` effects. |
-| `seq` | How many `sound` effects there have been. |
-| `shown` | How many times a scene has been entered. |
-| `started` | What each background channel is playing and the turn it started. The engine updates it after every command. |
+| `cue:<seed>:<count>` | A `sound` effect, numbered by its place in the running count. |
+| `scene:<seed>:<showing>:<beat index>:<track>` | A scene's `[[sound:id]]` or `[[voice:id]]` beat, due while the scene is open. |
 
-## audioSrc
+`<showing>` counts every time a scene is entered, so a scene entered again gets new keys and its sounds play again. Rendering the scene the player is already in, after a choice, isn't a new showing. A voice always plays on the `voice` channel.
 
-```ts shape
-function audioSrc(path: string): string
-```
+## Functions
 
-Where a sound file is, relative to the page. Works like [`artSrc`](/docs/reference/prose#artsrc): the path goes under `audio/`, a leading `/` or `audio/` is dropped, and a name with no extension is an `.ogg`.
+### audioSrc
+
+Returns where a sound file is, relative to the page. Every parameter is in [`audioSrc`](/docs/api/engine#audiosrc).
+
+It works as [`artSrc`](/docs/reference/prose#artsrc) does for pictures. The path goes under `audio/`, a leading `/` or `audio/` is dropped, and a name with no extension gets `.ogg`.
 
 ```ts
 import { audioSrc } from '@ifloom/engine'
 
-audioSrc('cafe-murmur.ogg')   // 'audio/cafe-murmur.ogg'
-audioSrc('/audio/knock.mp3')  // 'audio/knock.mp3'
-audioSrc('music/calm')        // 'audio/music/calm.ogg'
+audioSrc('cafe-murmur.ogg') // 'audio/cafe-murmur.ogg'
+audioSrc('/audio/knock.mp3') // 'audio/knock.mp3'
+audioSrc('music/calm') // 'audio/music/calm.ogg'
 ```
 
 ## Checks
 
-The [content checker](/docs/reference/checks) checks everything audio names. The list is under [Audio](/docs/reference/checks#audio). It also lists every track's file in [`files`](/docs/reference/checks#fileref).
+The [content checker](/docs/reference/checks) checks everything content names against `game.audio`. A background placement is a scene's `audio`, a location's `audio`, an `audio` effect or `game.audio.default`. A sound is a `sound` effect, `[[sound:id]]` or `[[voice:id]]`.
 
-## Gotchas
+| Problem | Cause |
+|---|---|
+| `unknown track "…"` | A placement, a sound, markup or a playlist names a track that `game.audio.tracks` doesn't have. |
+| `unknown channel "…"` | A placement names a channel that is neither declared nor one of the four defaults. |
+| `channel "…" plays sounds, not background audio` | A placement names a cue channel, such as `sfx`. |
+| `track "…" is a sound on channel "…", not background audio` | A placement or a playlist names a track on a cue channel. A track with no `channel` is on `sfx`. |
+| `track "…" is background audio on channel "…", not a sound` | A sound names a track on a background channel, such as `music`. |
+| `"…" is a playlist, not a sound` | A sound names a playlist. |
+| `on undeclared channel "…"` | A track's `channel` names a channel the game doesn't have. |
+| `volume is not between 0 and 1` | A track's `volume` is out of range. |
+| `a playlist with no tracks` | A playlist's list is empty. |
+| `"…" is a playlist; a playlist holds tracks` | A playlist names another playlist. |
+| `"…" has a weight of …; a weight must be above 0` | A playlist entry's `weight` is 0 or less. |
+| `"…" has a weight, but only a shuffled playlist uses weights` | A playlist entry has a `weight` in a playlist that doesn't shuffle. |
+| `unknown setting "…"` | A channel's `volume`, or `game.audio.mute`, names a setting the game doesn't declare. |
+| `setting "…" is not a ui range setting` | A channel's `volume` names a setting that isn't a `ui` range. |
+| `setting "…" is not a ui toggle setting` | `game.audio.mute` names a setting that isn't a `ui` toggle. |
+| `ducks under unknown channel "…"` | A channel's `duck.under` names a channel the game doesn't have. |
+| `duck.to is not between 0 and 1` | A channel's `duck.to` is out of range. |
+| `mode is not "background" or "cue"` | A channel's `mode` is neither. |
 
-- **The engine plays nothing.** Without a player such as [`@ifloom/audio`](/docs/browser/audio-player), `view.audio` is only data.
-- **A sound effect is kept, a scene's sound isn't.** A `sound` effect stays in `state.audio.cues` until 20 newer ones push it out, so a player that has just started marks every key it can see as already heard. Otherwise loading a save would replay old sounds.
-- **A room's prose doesn't cue.** `[[sound:id]]` in a [place's](/docs/plugins/places) body becomes a beat but no cue, because only an open scene has showings. Use the place's `audio`, or a `sound` effect on arrival.
-- **An unknown track is silence at runtime.** A mod that removes a track leaves `track` set and `src` null. The loader reports it first.
-- **`volume`, `mute` and `sound` name `ui` settings.** They live in the [profile](/docs/reference/profile), never in the state, so they don't change the game.
+The checker reports these at `track <id>`, `channel <id>`, `audio` and `audio default`, or where the placement or sound is written. It also lists every track's file in its [`files`](/docs/reference/checks#fileref).
 
-## See it in an example
+## Caveats
 
-None of the examples declares tracks, playlists or channels yet.
+- Without a player such as `@ifloom/audio`, `view.audio` is only data, and nothing sounds.
+- A `sound` effect stays in `state.audio.cues` until 20 newer ones push it out. A player that has just started marks every key it can see as heard, or loading a save would replay old sounds.
+- `[[sound:id]]` in a location's body becomes a beat but no cue, because only an open scene has showings. Use the location's `audio`, or a `sound` effect on arrival.
+- A mod that removes a track leaves `track` set and `src` null, so the channel is silent. The checker reports the track first.
+- `volume`, `mute` and `sound` name `ui` settings, which the [profile](/docs/reference/profile) keeps and the state never does, so they don't change the game.

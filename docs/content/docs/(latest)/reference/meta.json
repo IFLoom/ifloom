@@ -6,6 +6,7 @@
     "index",
     "common",
     "glossary",
+    "examples",
     "---The game---",
     "content",
     "game",
@@ -51,6 +52,8 @@
     "changes",
     "audio",
     "media",
-    "panels"
+    "panels",
+    "---Other tools---",
+    "twine-phrasebook"
   ]
 }

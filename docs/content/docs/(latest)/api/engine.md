@@ -1291,7 +1291,7 @@ Uses: [`TraitSource`](#traitsource), [`EntityRef`](#entityref).
 
 ## describeProblem
 
-Function. Explained in [Checking content](/docs/reference/checks#problem-and-describeproblem).
+Function. Explained in [Checking content](/docs/reference/checks#describeproblem).
 
 Returns a `Problem` as one line, `pack · where · what`.
 
@@ -3851,7 +3851,7 @@ type Probe = {
 
 ## Problem
 
-Type. Explained in [Checking content](/docs/reference/checks#problem-and-describeproblem).
+Type. Explained in [Checking content](/docs/reference/checks#problem).
 
 A fault the content checker finds in a game's content, with the pack it came from and the place in it.
 
@@ -5753,7 +5753,7 @@ type TriggerDef = {
 
 ## Ui
 
-Type. Explained in [Presentation hints](/docs/reference/ui-hints#ui-and-the-hint-interfaces).
+Type. Explained in [Presentation hints](/docs/reference/ui-hints#ui).
 
 A `ui` field of ui hints, typed by the hints a UI package declared for that target. It also takes undeclared hints,
 which the engine carries all the same.
@@ -5790,7 +5790,7 @@ type UiField = {
 
 ## UiInContent
 
-Type. Explained in [Presentation hints](/docs/reference/ui-hints#uiincontent-1).
+Type. Explained in [Presentation hints](/docs/reference/ui-hints#uiincontent).
 
 The `ui` fields and lines of words `uiInContent` finds, in the order the content checker walks them.
 
@@ -5809,7 +5809,7 @@ type UiInContent = {
 
 ## uiInContent
 
-Function. Explained in [Presentation hints](/docs/reference/ui-hints#uiincontent).
+Function. Explained in [Presentation hints](/docs/reference/ui-hints#uiincontent-1).
 
 Returns the `UiInContent` of a game, every `ui` field and every line that could hold a UI piece. A UI package's
 checker reads it to check its own hints.

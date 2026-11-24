@@ -227,7 +227,7 @@ describe('inline pieces', () => {
     const problems = checkUiHints(game, { allow: ['mood'] })
     expect(problems).toEqual([
       'prose a: [[ui:stamp|stamp]] is not an inline piece the React UI draws, so it shows only its words; add it to inline',
-      'prose a: [[ui:modal|note]]: no prose for "nope"',
+      'prose a: [[ui:modal|note]] names the prose "nope", which the game doesn\'t have',
       'prose a: [[ui:modal|bare]] needs a prose key: [[ui:modal|words|key]]',
       "prose a: [[ui:image|image]] needs a picture's path: [[ui:image|words|path]]",
       'prose a: [[ui:image|more]] takes two arguments at most',

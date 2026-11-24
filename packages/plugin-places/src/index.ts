@@ -355,7 +355,7 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
       { actionsIn: place?.body, offers: [...(place?.actions ?? []), ...(game.actions ?? [])].map((action) => action.id) },
       { within: 'audio', refs: Object.entries(place?.audio ?? {}).map(([channel, track]) => ({ channel, track })) },
       { layered: place?.picture, choices: null },
-      { ui: place?.ui },
+      { ui: place?.ui, on: 'scene' },
       ...(place?.blocked ?? []).flatMap((entry): Reference[] => [{ when: entry.when }, { reason: entry.reason }]),
       ...(place?.arrive ? [{ within: 'arrive', refs: [{ when: place.arrive.when }, { effects: place.arrive.effects }] }] : []),
       ...(place?.actions ?? []).map((action) => ({ within: `action ${action.id}`, refs: actionReferences(action) })),

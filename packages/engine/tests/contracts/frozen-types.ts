@@ -86,7 +86,8 @@
  * `Reference` is built from the core's kinds and each feature's, and
  * `FrozenReference` holds it to the union it was written as before.
  * The view words what it can: `View.changes` is a `ChangeView`, each change
- * with the `name` that says what moved.
+ * with the `name` that says what moved. A `{ ui }` reference says what
+ * it's written on (`on`) and that thing's `id`, for `uiInContent`.
  */
 import type { Block } from '../../src/scene.ts'
 import type {
@@ -708,7 +709,7 @@ export type FrozenReference =
   /** A roll effect's dice and key, which must be well formed. */
   | { dice: unknown; key?: unknown }
   /** A `ui` field of presentation hints, which must be data. */
-  | { ui: unknown }
+  | { ui: unknown; on: 'scene' | 'choice' | 'block' | 'stat' | 'entity' | 'game'; id?: string }
   /** A pool, with the tags asked of it. */
   | { pool: string; tags?: readonly string[] }
   /** A call to a plugin's condition, effect or command by name, or the game's own (`game/…`). */

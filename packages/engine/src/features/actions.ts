@@ -245,6 +245,6 @@ export function actionReferences(action: ActionDef): Reference[] {
     { reason: action.once?.reason },
     { effects: action.effects },
     { command: action.command },
-    { ui: action.ui },
+    { ui: action.ui, on: 'choice', id: action.id },
   ]
 }

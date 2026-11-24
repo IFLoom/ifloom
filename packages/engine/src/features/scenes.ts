@@ -166,7 +166,7 @@ export function blockReferences(blocks: readonly Block[] | undefined): Reference
       for (const choice of block.choices)
         out.push({ within: `decision ${block.decide} choice ${choice.id}`, refs: [...choiceReferences(choice), { blocks: choice.then }] })
     out.push(...flowBlockReferences(block))
-    if (block.ui !== undefined) out.push({ ui: block.ui })
+    if (block.ui !== undefined) out.push({ ui: block.ui, on: 'block' })
     out.push({ when: block.when })
     if ('variants' in block) for (const gate of Object.values(block.gate ?? {})) out.push({ when: gate })
   }
@@ -188,7 +188,7 @@ function choiceReferences(choice: Choice, oldKey?: string): Reference[] {
   for (const entry of choice.blocked ?? []) out.push({ when: entry.when }, { reason: entry.reason })
   out.push({ reason: choice.once?.reason })
   out.push({ effects: withoutJump(choice.effects) })
-  if (choice.ui !== undefined) out.push({ ui: choice.ui })
+  if (choice.ui !== undefined) out.push({ ui: choice.ui, on: 'choice', id: choice.id })
   return out
 }
 
@@ -554,7 +554,7 @@ export const scenes = defineFeature<ScenesShape>({
       if (scene.weight !== undefined && !(scene.weight > 0)) tools.problem(source, where, 'weight must be above 0')
       if (scene.weight !== undefined && !drawn) tools.problem(source, where, 'has a weight but no drawnFrom, so it is never drawn')
       if (scene.when !== undefined && !drawn) tools.problem(source, where, 'has a when but no drawnFrom; when only gates draws')
-      tools.check(source, where, [{ when: scene.when }, { ui: scene.ui }])
+      tools.check(source, where, [{ when: scene.when }, { ui: scene.ui, on: 'scene', id: scene.id }])
     }
   },
   // Render every scene against a probe state: a scene that throws for it is a problem. Its content is checked already.

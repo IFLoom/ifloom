@@ -103,7 +103,7 @@ export { artSrc, inlineMarkup, mediaType, parseBeats, styledBeats } from './scen
 export type { GameMedia, HotspotDef, HotspotView, PictureDef, MediaState, PoolFile, PictureLayer, PictureLayerView, PictureView } from './features/media.ts'
 
 // Presentation hints: carried to the view as written, given meaning by a UI package
-export type { BlockUi, ChoiceUi, EntityUi, GameUi, InlineUi, InlineUiArgs, SceneUi, StatUi, Ui } from './features/ui.ts'
+export type { BlockUi, ChoiceUi, EntityUi, GameUi, InlineUi, InlineUiArgs, SceneUi, StatUi, Ui, UiTarget } from './features/ui.ts'
 
 // Audio
 export type { AudioChannelView, AudioCue, AudioState, AudioView, ChannelDef, GameAudio, PlaylistDef, TrackDef } from './features/audio.ts'
@@ -210,8 +210,8 @@ export type { CommandStep, ContentStep, ContentTools, PackContext, RawCommand, R
 export { upgradePack } from './upgrade.ts'
 export type { WordField, WordPart, WordShape } from './words.ts'
 export { translatableFields } from './words.ts'
-export type { Checked, FileRef, Probe, Problem } from './check.ts'
-export { checkGame, describeProblem } from './check.ts'
+export type { Checked, FileRef, Probe, Problem, UiField, UiInContent, TextLine } from './check.ts'
+export { checkGame, describeProblem, uiInContent } from './check.ts'
 export type { Reference } from './references.ts'
 export type { BrokenSave, LoadedSave, SaveExtra, SaveFile, SaveListing, SaveMeta, Saves } from './save.ts'
 export { saves } from './save.ts'

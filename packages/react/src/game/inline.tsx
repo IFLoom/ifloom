@@ -23,7 +23,7 @@ import {
   type ReactNode,
 } from 'react'
 import { createPortal } from 'react-dom'
-import { artSrc, proseBeats, type InlineSpan } from '@ifloom/engine'
+import { artSrc, proseBeats, type Game, type InlineSpan } from '@ifloom/engine'
 import { useGame, useGameIfAny, type InlineComponent, type InlineComponents, type InlineProps } from './context.tsx'
 import { PriceTag } from './choices.tsx'
 import { PartDialog } from './dialog.tsx'
@@ -369,14 +369,51 @@ export function InlineMono({ text }: InlineProps<'mono'>) {
   )
 }
 
-/** The inline pieces the React UI draws by name. A game's own `inline` of the same name go over these. */
-export const BUILT_IN_INLINE: Readonly<InlineComponents> = {
-  modal: InlineModal,
-  image: InlineImage,
-  mail: InlineMail,
-  prop: InlineProp,
-  mono: InlineMono,
+/**
+ * An inline piece a UI draws, declared once: its name in `[[ui:name|…]]`,
+ * the component that draws it, and what's wrong with one as written (each
+ * problem worded as it follows the piece, `takes no arguments`).
+ */
+export type InlinePiece = {
+  name: string
+  draw: InlineComponent<never>
+  check?: (piece: { text: string; args: readonly string[] }, game: Game) => readonly string[]
 }
+
+/** At most two arguments, for the pieces that take a key or path and words. */
+const twoAtMost = (args: readonly string[]) => (args.length > 2 ? ['takes two arguments at most'] : [])
+
+/** The inline pieces the React UI draws itself, each declared once. */
+export const INLINE_PIECES: readonly InlinePiece[] = [
+  {
+    name: 'modal',
+    draw: InlineModal,
+    check: ({ args: [key, ...rest] }, game) => [
+      ...(!key
+        ? ['needs a prose key: [[ui:modal|words|key]]']
+        : game.prose?.line(key) === undefined
+          ? [`names the prose "${key}", which the game doesn't have`]
+          : []),
+      ...twoAtMost([key, ...rest]),
+    ],
+  },
+  {
+    name: 'image',
+    draw: InlineImage,
+    check: ({ args }) => [...(!args[0] ? ["needs a picture's path: [[ui:image|words|path]]"] : []), ...twoAtMost(args)],
+  },
+  { name: 'mail', draw: InlineMail },
+  {
+    name: 'prop',
+    draw: InlineProp,
+    check: ({ args }) =>
+      args.length > 1 || (args[0] !== undefined && !['sticky', 'clip', 'diary'].includes(args[0])) ? ['takes one face: sticky, clip or diary'] : [],
+  },
+  { name: 'mono', draw: InlineMono, check: ({ args }) => (args.length ? ['takes no arguments'] : []) },
+]
+
+/** The inline pieces the React UI draws by name. A game's own `inline` of the same name go over these. */
+export const BUILT_IN_INLINE: Readonly<InlineComponents> = Object.fromEntries(INLINE_PIECES.map((piece) => [piece.name, piece.draw]))
 
 /** An inline piece: the game's component by its name, else a built-in one, else its words. */
 function InlinePiece({ span }: { span: Extract<InlineSpan, { type: 'ui' }> }) {

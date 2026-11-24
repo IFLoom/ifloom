@@ -144,6 +144,6 @@ describe('checkUiHints and timers', () => {
     expect(checkUiHints(hallway())).toEqual([])
     const game = hallway()
     const bad = { ...game, scenes: [{ id: 'x', title: 'X', body: [{ prose: 'hall', ui: { timer: 'kettle' } }], choices: [] }] } as unknown as Game
-    expect(checkUiHints(bad)).toEqual(['scene x block 1: ui.timer "kettle" is not a timer the game has'])
+    expect(checkUiHints(bad)).toEqual(['scene x block: ui.timer "kettle" is not a timer the game has'])
   })
 })

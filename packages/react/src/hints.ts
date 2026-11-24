@@ -23,7 +23,11 @@
  * augmenting `InlineUi`: `[[ui:modal|words|key|title]]`,
  * `[[ui:image|words|path|alt]]`, and the paper the story shows:
  * `[[ui:mail|body|header|…]]`, `[[ui:prop|words|face]]` and `[[ui:mono|words]]`.
+ *
+ * Each hint is declared once more as data, in `UI_HINTS`: where content
+ * writes it and what a good value is. `checkUiHints` is built from those.
  */
+import type { Game, UiTarget } from '@ifloom/engine'
 
 /** The transitions the React UI's styles draw. A game can add its own names in `game.ui.transitionNames`, with CSS of its own. */
 export const TRANSITIONS = ['fade', 'slide-up', 'slide-left', 'zoom', 'none'] as const
@@ -110,3 +114,137 @@ export const DICE_ROLL_MS = 1000
 
 /** The most pips the sidebar draws; a stat with a wider range is drawn as a bar. */
 export const MAX_PIPS = 20
+
+/** What a hint's check is told: the game, what the hint is written on (and its id, where it has one), and the transition names the game has. */
+export type HintCheckContext = {
+  game: Game
+  on: UiTarget
+  /** The id of what it's written on: a stat's, a scene's, a choice's, a kind's or an entity's reference. */
+  id?: string
+  /** `TRANSITIONS` and the game's own `ui.transitionNames`. */
+  transitions: ReadonlySet<string>
+}
+
+/**
+ * A `ui` hint a UI reads, declared once: its name, where content writes it,
+ * and what's wrong with a value (each problem worded as it follows the place,
+ * `ui.timer "kettle" is not a timer the game has`). `checkUiHints` reports a
+ * hint no declaration names for that place, and runs each one's check. A
+ * plugin UI brings its own in `PluginUi.hints`.
+ */
+export type UiHint = {
+  /** The key content writes under `ui`. */
+  name: string
+  /** Where it's written. */
+  on: readonly UiTarget[]
+  /** The problems with a value, if any. */
+  check?: (value: unknown, cx: HintCheckContext) => string | readonly string[] | undefined
+}
+
+const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
+
+/** A transition, by name or `{ in, out, ms }`: each name one the game has, `ms` 0 or more. */
+function checkTransition(spec: unknown, { transitions }: HintCheckContext): string[] {
+  const pair = typeof spec === 'string' ? { in: spec } : spec
+  if (!isRecord(pair)) return ['ui.transition is a name or { in, out, ms }']
+  const out: string[] = []
+  for (const side of ['in', 'out'] as const) {
+    const name = pair[side]
+    if (name !== undefined && (typeof name !== 'string' || !transitions.has(name)))
+      out.push(`ui.transition ${side} "${String(name)}" is not a transition the game has`)
+  }
+  if (pair.ms !== undefined && !(typeof pair.ms === 'number' && pair.ms >= 0)) out.push('ui.transition ms must be 0 or more')
+  return out
+}
+
+/** The game's `ui.settings`: each names a ui setting of the right type, and a text size's options are sizes the styles draw. */
+function checkSettings(settings: unknown, { game }: HintCheckContext): string[] {
+  if (!isRecord(settings)) return ["ui.settings is { textSize?, images? }, each a setting's id"]
+  const out: string[] = []
+  for (const key of Object.keys(settings))
+    if (key !== 'textSize' && key !== 'images') out.push(`ui.settings.${key} is not a setting the React UI honours; it has textSize and images`)
+  const declared = (key: string, type: 'choice' | 'toggle') => {
+    const id = settings[key]
+    if (id === undefined) return undefined
+    const setting = (game.settings ?? []).find((entry) => entry.id === id)
+    if (!setting || setting.type !== type || setting.affects !== 'ui') {
+      out.push(`ui.settings.${key} "${String(id)}" is not a ui ${type} setting the game has`)
+      return undefined
+    }
+    return setting
+  }
+  const size = declared('textSize', 'choice')
+  if (size?.type === 'choice')
+    for (const option of size.options)
+      if (!(TEXT_SIZES as readonly unknown[]).includes(option.value))
+        out.push(`ui.settings.textSize option "${String(option.value)}" is not a size the styles draw (${TEXT_SIZES.join(', ')}); size it with CSS of your own`)
+  declared('images', 'toggle')
+  return out
+}
+
+/** A stat's range, when both bounds are numbers in content. A bound worked out in play isn't known until then. */
+function statRange(game: Game, id: string | undefined): number | undefined {
+  const stat = (game.stats ?? []).find((entry) => entry.id === id)
+  if (!stat) return undefined
+  const max = stat.max ?? 100
+  const min = stat.min ?? 0
+  return typeof max === 'number' && typeof min === 'number' ? max - min : undefined
+}
+
+/** The hints the React UI reads, each declared once. */
+export const UI_HINTS: readonly UiHint[] = [
+  { name: 'transition', on: ['scene', 'choice', 'game'], check: checkTransition },
+  {
+    name: 'reveal',
+    on: ['block'],
+    check: (reveal, { transitions }) => {
+      if (!isRecord(reveal)) return 'ui.reveal is { delay, as }'
+      const out: string[] = []
+      if (reveal.delay !== undefined && !(Number.isInteger(reveal.delay) && (reveal.delay as number) >= 0))
+        out.push('ui.reveal delay must be whole milliseconds, 0 or more')
+      if (reveal.as !== undefined && (typeof reveal.as !== 'string' || !transitions.has(reveal.as)))
+        out.push(`ui.reveal as "${String(reveal.as)}" is not a transition the game has`)
+      return out
+    },
+  },
+  {
+    name: 'dice',
+    on: ['block'],
+    check: (dice) => (typeof dice === 'string' && /^[A-Za-z_][A-Za-z0-9_]*$/.test(dice) ? undefined : "ui.dice names a roll's key: letters, digits and _"),
+  },
+  {
+    name: 'timer',
+    on: ['block'],
+    check: (timer, { game }) =>
+      typeof timer === 'string' && (game.timers ?? []).some((entry) => entry.id === timer)
+        ? undefined
+        : `ui.timer "${String(timer)}" is not a timer the game has`,
+  },
+  { name: 'tilt', on: ['block'], check: (tilt) => (typeof tilt === 'boolean' ? undefined : 'ui.tilt is true or false') },
+  { name: 'fold', on: ['block'], check: (fold) => (typeof fold === 'string' && fold.trim() ? undefined : 'ui.fold is the words the fold is opened by') },
+  {
+    name: 'display',
+    on: ['stat'],
+    check: (display, { game, id }) => {
+      if (display !== 'number' && display !== 'bar' && display !== 'pips') return "ui.display is 'number', 'bar' or 'pips'"
+      const range = statRange(game, id)
+      return display === 'pips' && range !== undefined && range > MAX_PIPS
+        ? `ui.display pips needs a range of ${MAX_PIPS} or less; this one is ${range}`
+        : undefined
+    },
+  },
+  {
+    name: 'hue',
+    on: ['entity'],
+    check: (hue) => (typeof hue === 'number' && hue >= 0 && hue <= 360 ? undefined : 'ui.hue is a number from 0 to 360'),
+  },
+  {
+    name: 'transitionNames',
+    on: ['game'],
+    check: (list) =>
+      Array.isArray(list) && list.every((name) => typeof name === 'string' && /^[a-z0-9-]+$/.test(name))
+        ? undefined
+        : 'ui.transitionNames lists names of lower-case letters, digits and "-"',
+  },
+  { name: 'settings', on: ['game'], check: checkSettings },
+]

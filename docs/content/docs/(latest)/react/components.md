@@ -13,7 +13,7 @@ import {
   // the game
   GameShell, GameProvider, useGame, Icon, WithPages,
   DefaultLayout, Game, Sidebar, Story, Overlay, Section, When, useHolds, Title, RoomActions, Plugins, usePluginUis, pluginKit, usePlugin,
-  Scene, Beat, SceneHeader, BeatGroup, Fold, useScene, InlineAction, Tip, InlineTrigger, InlineModal, InlineImage, InlineMail, InlineProp, InlineMono, BUILT_IN_INLINE, Picture, Video, LayeredPicture, Hotspot, MediaViewer, assetUrl, ChoiceButton, ChoiceList, PriceTag,
+  Scene, Beat, SceneHeader, BeatGroup, Fold, useScene, InlineAction, Tip, InlineTrigger, InlineModal, InlineImage, InlineMail, InlineProp, InlineMono, INLINE_PIECES, BUILT_IN_INLINE, Picture, Video, LayeredPicture, Hotspot, MediaViewer, assetUrl, ChoiceButton, ChoiceList, PriceTag,
   Clock, StatList, StatGauge, EntityTable, Inventory, useClock,
   InputField, InputFields,
   GameMenu, SavesMenu, Backlog, ModManager, useSaves, useBacklog, useMods,
@@ -797,13 +797,27 @@ function InlineMono(props: InlineProps<'mono'>): JSX.Element
 
 The built-in `mono`, from `[[ui:mono|words]]`: the words in a monospace face, the part `inline-mono`, for a sign, a screen or a thought typed out. Replace it with a `mono` of your own in `inline`.
 
+### INLINE_PIECES
+
+```ts
+const INLINE_PIECES: readonly InlinePiece[]
+
+type InlinePiece = {
+  name: string
+  draw: InlineComponent<never>
+  check?: (piece: { text: string; args: readonly string[] }, game: Game) => readonly string[]
+}
+```
+
+The inline pieces the React UI draws itself, each declared once: its name in `[[ui:name|…]]`, the component that draws it, and what [`checkUiHints`](/docs/react/hints#checkuihints) finds wrong with one as written, such as a `modal` with no prose key.
+
 ### BUILT_IN_INLINE
 
 ```ts
 const BUILT_IN_INLINE: Readonly<InlineComponents>
 ```
 
-The inline pieces the React UI draws by name: `modal` ([`InlineModal`](#inlinemodal)), `image` ([`InlineImage`](#inlineimage)), `mail` ([`InlineMail`](#inlinemail)), `prop` ([`InlineProp`](#inlineprop)) and `mono` ([`InlineMono`](#inlinemono)). A game's own `inline` of the same name go over them. Use them in a component of your own to fall back on the built-in one.
+The inline pieces the React UI draws by name, made from `INLINE_PIECES`: `modal` ([`InlineModal`](#inlinemodal)), `image` ([`InlineImage`](#inlineimage)), `mail` ([`InlineMail`](#inlinemail)), `prop` ([`InlineProp`](#inlineprop)) and `mono` ([`InlineMono`](#inlinemono)). A game's own `inline` of the same name go over them. Use them in a component of your own to fall back on the built-in one.
 
 ```tsx
 import type { Components } from '@ifloom/react'

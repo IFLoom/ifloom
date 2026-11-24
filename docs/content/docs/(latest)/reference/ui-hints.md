@@ -105,6 +105,30 @@ function entityUi(state: GameState, game: Game, ref: EntityRef): Ui<EntityUi> | 
 
 An entity's hints as the view gives them: its kind's, then the one it was made `like`, then its own declaration's, each laid over the one before. Undefined when none has any. A plugin uses it to pass someone's hints on in its own view, as the cast does for a [speaker](/docs/reference/view#speakerview).
 
+## uiInContent
+
+```ts
+import { uiInContent, type UiInContent, type UiField, type TextLine, type UiTarget } from '@ifloom/engine'
+
+function uiInContent(game: Game): UiInContent
+
+type UiInContent = { fields: UiField[]; lines: TextLine[] }
+type UiField = { on: UiTarget; id?: string; where: string; ui: unknown }
+type TextLine = { where: string; text: string }
+type UiTarget = 'scene' | 'choice' | 'block' | 'stat' | 'entity' | 'game'
+```
+
+Every `ui` field in a game's content, and every line of words a player reads, found by the [content checker](/docs/reference/checks)'s own walk. It's for a UI package's checker, so it can check its own hints without walking the content itself. The React UI's [`checkUiHints`](/docs/react/hints#checkuihints) is built on it.
+
+Each field says what it's written on (`on`), that thing's `id` where it has one, and `where` it is, as a problem would name it (`scene park`, `scene park choice skim`, `stat energy`). A hint on a place's room is `on: 'scene'`, an action's is `on: 'choice'`, and a kind's is `on: 'entity'`, since a kind's hints are each entity's. A block's or a section's `where` is its scene's. The walk reaches whatever a plugin's content holds as well, such as a place's room and body.
+
+`lines` holds every prose line and every block of words written in place, with where it is, for a UI to read its [UI pieces](/docs/reference/prose#ui-pieces) in. The same hints or line reached twice are listed once.
+
+```ts
+const { fields } = uiInContent(game)
+const reveals = fields.filter((field) => field.on === 'block' && 'reveal' in (field.ui as object))
+```
+
 ## What the engine does with them
 
 Nothing else, and the same goes for [UI pieces](/docs/reference/prose#ui-pieces) in prose. It doesn't read a hint, give one a default, merge a scene's with the game's, or check a hint's name or value against any list. That's all the UI's job. The checker only makes sure each `ui` is data, so a pack or a mod with hints can be saved and loaded as JSON.

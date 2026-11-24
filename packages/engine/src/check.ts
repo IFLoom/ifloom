@@ -17,6 +17,7 @@ import { carryChecks, featureChecks, markupChecks, probeChecks, resolverSteps, t
 import type { FeatureCheckTools, ResolveTools } from './features/feature.ts'
 import { COMMAND_TYPES, conditionKeys, effectKeys, featureContext } from './core.ts'
 import type { Condition, GameState } from './types.ts'
+import type { UiTarget } from './features/ui.ts'
 
 /** Something wrong with a game's content: the pack it came from (`game` for a hand-built game), where, and what. */
 export type Problem = {
@@ -47,6 +48,29 @@ export type Source = { list: CoreList; id: string } | { list: FeatureList; id?: 
 
 /** The lists the core keeps itself. The features' lists are their own (`FeatureList`). */
 export type CoreList = 'prose'
+
+/** A `ui` field in a game's content: what it's written on, that thing's id where it has one, where it is (as a problem names it), and the hints as written. */
+export type UiField = { on: UiTarget; id?: string; where: string; ui: unknown }
+
+/** A line of words a player reads, with where it is: a prose line, or words written in place. Any `[[ui:…]]` pieces in it are a UI's to check. */
+export type TextLine = { where: string; text: string }
+
+/** What `uiInContent` finds: every `ui` field and every line of words, in the order the content checker walks them. */
+export type UiInContent = { fields: UiField[]; lines: TextLine[] }
+
+/**
+ * Every `ui` field in a game's content and every line of words that could
+ * hold a UI piece, found by the content checker's own walk: scenes, the
+ * blocks and decisions in their flows, choices, actions, stats, kinds,
+ * entities, the game's, and whatever a plugin's content holds (a place's
+ * room and body). A UI package's checker reads it, so it checks its own
+ * hints without walking the content itself.
+ */
+export function uiInContent(game: Game): UiInContent {
+  const found: UiInContent = { fields: [], lines: [] }
+  checkContent(game, [], () => 'game', found)
+  return found
+}
 
 /** A problem as a line: `pack · where · what`. */
 export function describeProblem(problem: Problem): string {
@@ -128,8 +152,8 @@ function pagePath(path: string): string | null {
   return path.replace(/^\.?\//, '')
 }
 
-/** The content checker, with how to name the pack a problem came from. `loadGame` passes its own. */
-export function checkContent(game: Game, probes: readonly Probe[], packOf: (source: Source) => string): Checked {
+/** The content checker, with how to name the pack a problem came from. `loadGame` passes its own. `found` collects the `ui` fields and lines of words, for `uiInContent`. */
+export function checkContent(game: Game, probes: readonly Probe[], packOf: (source: Source) => string, found?: UiInContent): Checked {
   const problems: Problem[] = []
   const files: FileRef[] = []
   const fileSeen = new Set<string>()
@@ -167,9 +191,19 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
     }
   }
 
+  /** The labels of the `within` references being resolved, innermost last, so a found field says where it is as a problem would. */
+  const withins: string[] = []
+  const here = (where: string) => [where, ...withins].join(' ')
+  const foundSeen = new Set<string>()
+  const uiSeen = new Set<unknown>()
+
   // Prose with markup: what each feature reads in it (sounds, pools, files).
-  const markup = (text: string, where: string, shownWhen?: Condition): string[] =>
-    markupChecks.flatMap((check) => check(game, text, where, resolveTools, shownWhen))
+  const markup = (text: string, where: string, shownWhen?: Condition): string[] => {
+    const line = `${here(where)}\n${text}`
+    if (found && !foundSeen.has(line)) found.lines.push({ where: here(where), text })
+    foundSeen.add(line)
+    return markupChecks.flatMap((check) => check(game, text, where, resolveTools, shownWhen))
+  }
 
   const call = (table: CallTable, name: string, args: Record<string, unknown>, where: string): string[] => {
     const known =
@@ -207,7 +241,10 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
 
   const one = (ref: Reference, where: string): string[] => {
     if ('within' in ref) {
-      return resolve(ref.refs, where).map((what) => (ref.within.startsWith('in each ') && what.startsWith('in each ') ? what : `${ref.within}: ${what}`))
+      withins.push(ref.within)
+      const inner = resolve(ref.refs, where)
+      withins.pop()
+      return inner.map((what) => (ref.within.startsWith('in each ') && what.startsWith('in each ') ? what : `${ref.within}: ${what}`))
     }
     if ('amount' in ref) return [...amountProblems(ref.amount), ...resolve(amountReferences(ref.amount), where)]
     if ('when' in ref) return ref.when ? [...shapeProblems(ref.when), ...resolve(conditionReferences(ref.when), where)] : []
@@ -244,6 +281,12 @@ export function checkContent(game: Game, probes: readonly Probe[], packOf: (sour
     if ('video' in ref) {
       file(where, 'video', pagePath(artSrc(ref.video, 'video')))
       return []
+    }
+    if ('ui' in ref && ref.ui !== undefined) {
+      const field: UiField = { on: ref.on, ...(ref.id !== undefined ? { id: ref.id } : {}), where: here(where), ui: ref.ui }
+      // The same hints reached twice (an action a place and the game both offer, say) are found once.
+      if (found && !uiSeen.has(ref.ui)) found.fields.push(field)
+      uiSeen.add(ref.ui)
     }
     // A feature's: the first key of the reference that a feature resolves.
     for (const key of Object.keys(ref)) if (Object.hasOwn(leaves, key)) return leaves[key](ref as never, where)

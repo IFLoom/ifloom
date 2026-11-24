@@ -576,14 +576,17 @@ export const entities = defineFeature<EntitiesShape>({
         ...Object.keys(entity.stats ?? {}).map((stat) => ({ stat, starts: entity.of })),
         { when: bindCurrent(entity.visible, `${entity.of}:${entity.id}`) },
         ...(entity.image !== undefined ? [{ picture: entity.image }] : []),
-        { ui: entity.ui },
+        { ui: entity.ui, on: 'entity', id: `${entity.of}:${entity.id}` },
       ])
     }
     // A kind's `listed` and `flags` are asked of each of its entities, so `'$'` is any one of them.
     for (const kind of game.kinds ?? []) {
       const one = anyOf(kind.id)
       const asked = [...(typeof kind.listed === 'object' ? [kind.listed] : []), ...Object.values(kind.flags ?? {})]
-      tools.check({ list: 'kind', id: kind.id }, `kind ${kind.id}`, [...asked.map((when) => ({ when: bindCurrent(when, one) })), { ui: kind.ui }])
+      tools.check({ list: 'kind', id: kind.id }, `kind ${kind.id}`, [
+        ...asked.map((when) => ({ when: bindCurrent(when, one) })),
+        { ui: kind.ui, on: 'entity', id: kind.id },
+      ])
     }
     checkTraits(game, tools)
   },

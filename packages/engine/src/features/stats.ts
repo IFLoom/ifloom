@@ -601,7 +601,7 @@ export const stats = defineFeature<StatsShape>({
         ...(stat.min !== undefined ? [{ amount: stat.min }] : []),
         ...(stat.max !== undefined ? [{ amount: stat.max }] : []),
         { when: stat.visible },
-        { ui: stat.ui },
+        { ui: stat.ui, on: 'stat', id: stat.id },
       ])
     }
     // Derived stats and levels: formulas, cycles, thresholds.

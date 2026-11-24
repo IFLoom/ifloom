@@ -219,14 +219,34 @@ describe('checkUiHints', () => {
       { id: 'odd', title: 'Odd' },
     )
     expect(checkUiHints(game, { allow: ['mood'] })).toEqual([
+      'scene door block: ui.reveal delay must be whole milliseconds, 0 or more',
       'scene door: ui.transiton is not a hint the React UI reads',
       'scene door: ui.transition in "spin" is not a transition the game has',
       'scene door: ui.transition ms must be 0 or more',
-      'scene door block 1: ui.reveal delay must be whole milliseconds, 0 or more',
       'stat energy: ui.display pips needs a range of 20 or less; this one is 100',
       "stat charm: ui.display is 'number', 'bar' or 'pips'",
       'kind cat: ui.hue is a number from 0 to 360',
     ])
+  })
+
+  it("checks a plugin UI's own hints, and a hint written where it isn't read", () => {
+    const { game } = loadGame(
+      [
+        { name: 'base', introScene: 'door' },
+        {
+          name: 'odd',
+          scenes: [{ id: 'door', ui: { badge: 'wide', reveal: {} }, body: [{ prose: 'door', ui: { badge: 'tall' } }], choices: [] }],
+          prose: { door: 'A door.' },
+        },
+      ],
+      { id: 'odd', title: 'Odd' },
+    )
+    const badge = { name: 'badge', on: ['scene'] as const, check: (value: unknown) => (value === 'wide' ? undefined : 'ui.badge is wide') }
+    expect(checkUiHints(game, { plugins: [{ id: 'badges', hints: [badge] }] })).toEqual([
+      'scene door block: ui.badge is not a hint the React UI reads on a block',
+      'scene door: ui.reveal is not a hint the React UI reads on a scene',
+    ])
+    expect(checkUiHints(game)).toContain('scene door: ui.badge is not a hint the React UI reads')
   })
 })
 

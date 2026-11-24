@@ -148,6 +148,6 @@ describe('checkUiHints and dice', () => {
     expect(checkUiHints(river())).toEqual([])
     const game = river()
     const bad = { ...game, scenes: [{ id: 'x', title: 'X', body: [{ prose: 'bank', ui: { dice: 3 } }], choices: [] }] } as unknown as Game
-    expect(checkUiHints(bad)).toEqual(["scene x block 1: ui.dice names a roll's key: letters, digits and _"])
+    expect(checkUiHints(bad)).toEqual(["scene x block: ui.dice names a roll's key: letters, digits and _"])
   })
 })

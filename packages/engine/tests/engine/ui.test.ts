@@ -1,6 +1,6 @@
 import { describe, expect, expectTypeOf, it } from 'vitest'
 import { loadGame, type Content } from '../../src/loader.ts'
-import { describeProblem } from '../../src/check.ts'
+import { describeProblem, uiInContent } from '../../src/check.ts'
 import { apply } from '../../src/reduce.ts'
 import { startingState } from '../../src/intake.ts'
 import { view } from '../../src/view.ts'
@@ -116,5 +116,18 @@ describe('ui hints', () => {
   it('are typed by what a UI package declares, and let anything else through', () => {
     expectTypeOf<Ui<SceneUi>['mood']>().toEqualTypeOf<'calm' | 'tense' | undefined>()
     expectTypeOf<{ mood: 'calm'; other: number }>().toExtend<Ui<SceneUi>>()
+  })
+
+  it('are listed by uiInContent with what they are on and where, beside every line of words', () => {
+    const { fields, lines } = uiInContent(make().game)
+    expect(fields.map(({ on, id, where }) => ({ on, id, where }))).toEqual(
+      expect.arrayContaining([
+        { on: 'scene', id: 'porch', where: 'scene porch' },
+        { on: 'block', id: undefined, where: 'scene porch' },
+        { on: 'choice', id: 'in', where: 'scene porch choice in' },
+      ]),
+    )
+    expect(fields.find((field) => field.on === 'choice')?.ui).toEqual({ transition: 'zoom' })
+    expect(lines).toContainEqual({ where: 'prose porch.text', text: 'A porch.' })
   })
 })

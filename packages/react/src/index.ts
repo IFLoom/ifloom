@@ -39,12 +39,24 @@ export type { MountOptions } from './game/mount.tsx'
 export { Scene, Beat, BeatGroup, Fold, SceneHeader } from './game/scene.tsx'
 export { useScene } from './game/timing.ts'
 export type { RevealBeat, RevealGroup, RevealPoint, SceneRolls, SceneTiming, ScreenTransition } from './game/timing.ts'
-export { BUILT_IN_INLINE, InlineAction, InlineImage, InlineMail, InlineModal, InlineMono, InlineProp, InlineTrigger, Tip } from './game/inline.tsx'
+export {
+  BUILT_IN_INLINE,
+  INLINE_PIECES,
+  InlineAction,
+  InlineImage,
+  InlineMail,
+  InlineModal,
+  InlineMono,
+  InlineProp,
+  InlineTrigger,
+  Tip,
+} from './game/inline.tsx'
 export { useMotion, useReducedMotion } from './game/motion.tsx'
 // The hints the React UI reads from content's `ui` fields, typed by augmenting the engine's hint interfaces.
-export { DEFAULT_TRANSITION_MS, MAX_PIPS, TEXT_SIZES, TRANSITIONS } from './hints.ts'
-export type { Reveal, StatDisplay, Transition, TransitionName } from './hints.ts'
-export { checkUiHints } from './check.ts'
+export { DEFAULT_TRANSITION_MS, MAX_PIPS, TEXT_SIZES, TRANSITIONS, UI_HINTS } from './hints.ts'
+export type { HintCheckContext, Reveal, StatDisplay, Transition, TransitionName, UiHint } from './hints.ts'
+export type { InlinePiece } from './game/inline.tsx'
+export { checkUiHints, type CheckUiOptions } from './check.ts'
 export { ChoiceButton, ChoiceList, PriceTag } from './game/choices.tsx'
 export { Clock, StatGauge, StatList, useClock } from './game/sidebar.tsx'
 export type { ClockState } from './game/sidebar.tsx'

@@ -9,6 +9,7 @@ import { Fragment, type ComponentType, type ReactNode } from 'react'
 import type { CommandRef, Game, GameState, Result, View, ViewRegistry } from '@ifloom/engine'
 import { useGame, type InlineComponents, type PanelComponent, type PluginSectionComponent } from './context.tsx'
 import type { Components } from './overrides.tsx'
+import type { UiHint } from '../hints.ts'
 import { uiSay, type Say, type UiStringKey, type Words } from './words.ts'
 
 /**
@@ -61,8 +62,10 @@ export type PluginUi = {
   layout?: Readonly<Partial<Record<PluginSpot, readonly ComponentType[]>>>
   /** Renderers for a plugin's section in a device's app, by that plugin's id. The game's own `sections` go over these. */
   sections?: Readonly<Record<string, PluginSectionComponent>>
-  /** Inline pieces it draws, for `[[ui:name|…]]` in prose. The game's own `inline` go over these. */
+  /** Inline pieces it draws, for `[[ui:name|…]]` in prose. The game's own `inline` go over these. `checkUiHints` knows their names. */
   inline?: InlineComponents
+  /** The `ui` hints its components read, declared as `UI_HINTS` declares the React UI's, so `checkUiHints` checks them. */
+  hints?: readonly UiHint[]
   /** Pages it adds among the pages around the game, by id. A game's own page of the same id goes over it. */
   pages?: Readonly<Record<string, PluginPage>>
   /**

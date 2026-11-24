@@ -104,6 +104,7 @@ type PluginUi = {
   layout?: Readonly<Partial<Record<PluginSpot, readonly ComponentType[]>>>
   sections?: Readonly<Record<string, PluginSectionComponent>>
   inline?: InlineComponents
+  hints?: readonly UiHint[]
   pages?: Readonly<Record<string, PluginPage>>
   settings?: { label: string; component: ComponentType }
   components?: Components
@@ -120,7 +121,8 @@ What a plugin's `/react` exports as `<id>Ui`. Every field but `id` is optional.
 | `panels` | [Panels](/docs/reference/panels) by name, which `PanelHost` draws when content opens one. See [`PluginPanel`](#pluginpanel). |
 | `layout` | Components to place, by [spot](#where-the-layout-puts-them). Each is drawn with no props. |
 | `sections` | Renderers for a plugin's section in a device's app, by that plugin's id: `messagesUi` has `messages`. This is how one plugin's UI draws inside another's without importing it. |
-| `inline` | Components for [UI pieces](/docs/react/hints#inline-pieces) in prose, by name. |
+| `inline` | Components for [UI pieces](/docs/react/hints#inline-pieces) in prose, by name. [`checkUiHints`](/docs/react/hints#checkuihints) knows their names when it's given the module in `plugins`. |
+| `hints` | The `ui` hints its components read, each a [`UiHint`](/docs/react/hints#ui_hints): its name, where content writes it and a check. `checkUiHints` checks them when it's given the module in `plugins`. |
 | `pages` | Pages it adds among the [pages around the game](/docs/react/components#pages), by id, each with a title-screen button. See [`PluginPage`](#pluginpage). A game's own page of the same id goes over it. |
 | `settings` | Something for the settings page, such as the unlocks plugin's code box: drawn there with pages on, and behind a menu button labelled `label`, a key of its words, without them. |
 | `components` | Built-in components it draws in place of the UI's own, by name, as a game's [`components`](/docs/react/components#components) do. The calendar's UI draws its `CalendarClock` for `Clock`. |

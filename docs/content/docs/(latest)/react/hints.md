@@ -214,7 +214,7 @@ body: [
 }
 ```
 
-Tell [`checkUiHints`](#checkuihints) about it with `allow`, so it isn't reported as a hint the React UI doesn't read:
+Tell [`checkUiHints`](#checkuihints) about it with `allow`, so it isn't reported as a hint the React UI doesn't read. A plugin UI that reads a hint of its own [declares it](#ui_hints) instead:
 
 ```ts
 expect(checkUiHints(game, { allow: ['card'] })).toEqual([])
@@ -363,14 +363,20 @@ Nothing about a piece goes in a save or the log: the engine carries the markup a
 ## checkUiHints
 
 ```ts
-import { checkUiHints } from '@ifloom/react'
+import { checkUiHints, type CheckUiOptions } from '@ifloom/react'
 
-function checkUiHints(game: Game, options?: { allow?: readonly string[]; inline?: InlineComponents }): string[]
+function checkUiHints(game: Game, options?: CheckUiOptions): string[]
+
+type CheckUiOptions = {
+  plugins?: readonly PluginUi[]   // the plugin UIs you give mountGame: their hints and inline pieces are known
+  inline?: InlineComponents       // your own inline pieces, the same object you give mountGame
+  allow?: readonly string[]       // hints and inline names not to report, such as another UI's
+}
 ```
 
 What's wrong with a game's hints for the React UI, as `where: what` lines, or nothing when all is well. The engine's [content checker](/docs/reference/checks) only makes sure a hint is data, so this is where these are caught:
 
-- a hint the React UI doesn't read, such as `ui.transiton` (pass another UI's hints in `allow`)
+- a hint the React UI doesn't read, such as `ui.transiton`, or one written where it isn't read, such as a `reveal` on a scene
 - a transition name that is neither built in nor in the game's `ui.transitionNames`, or a negative `ms`
 - a reveal `delay` that isn't whole milliseconds
 - a `display` that isn't `'number'`, `'bar'` or `'pips'`, or pips on a range over 20
@@ -378,9 +384,9 @@ What's wrong with a game's hints for the React UI, as `where: what` lines, or no
 - a block's `dice` that isn't a roll's key (letters, digits and `_`)
 - a block's `timer` that isn't one of the game's `timers`
 - a game's `settings` with a key other than `textSize` and `images`, a `textSize` that isn't a ui `choice` setting the game has or has an option the styles don't size, and an `images` that isn't a ui `toggle`
-- an [inline piece](#inline-pieces) in the prose whose name is neither built in nor in `inline` (pass the same object you give `mountGame`), a `modal` with no prose key or one whose key has no prose, an `image` with no path, and either with more than two arguments
+- an [inline piece](#inline-pieces) in the prose whose name is neither built in, nor a plugin UI's, nor in `inline`, a `modal` with no prose key or one whose key has no prose, an `image` with no path, and either with more than two arguments
 
-It reads the game's scenes, choices and blocks, its actions, stats, kinds and entities, the places plugin's locations, every prose line, and every block of words written in place. Put it in a test beside the engine's checks:
+It finds every `ui` field and line of words with the engine's [`uiInContent`](/docs/reference/ui-hints#uiincontent), the same walk the content checker makes. So it reads scenes, choices, blocks and sections, actions, stats, kinds, entities, the game's own hints, whatever a plugin's content holds (a place's room and its body), every prose line, and every block of words written in place. A problem in a block names its scene, as `scene park block: ui.dice …`. Put it in a test beside the engine's checks:
 
 ```ts
 import { describe, expect, it } from 'vitest'
@@ -395,6 +401,31 @@ describe('the content', () => {
   })
 })
 ```
+
+### UI_HINTS
+
+```ts
+import { UI_HINTS, type UiHint, type HintCheckContext } from '@ifloom/react'
+
+type UiHint = {
+  name: string
+  on: readonly UiTarget[]   // 'scene' | 'choice' | 'block' | 'stat' | 'entity' | 'game'
+  check?: (value: unknown, cx: HintCheckContext) => string | readonly string[] | undefined
+}
+type HintCheckContext = { game: Game; on: UiTarget; id?: string; transitions: ReadonlySet<string> }
+```
+
+Each hint on this page is declared once in `UI_HINTS`: its name, where content writes it, and a `check` that returns what's wrong with a value. `checkUiHints` is built from that list, so a hint is known only on the places its `on` names. The check is told the game, what the hint is on, that thing's `id` (a stat's, a scene's, a choice's, a kind's or an entity's reference) and the transition names the game has. Each problem it returns is worded to follow the place, such as `ui.timer "kettle" is not a timer the game has`.
+
+A plugin's React UI declares the hints its components read the same way, in its [`PluginUi`](/docs/react/kit#pluginui)'s `hints`. Give `checkUiHints` the same `plugins` list you give `mountGame` and it checks them too:
+
+```ts
+import { shopUi } from '@ifloom/plugin-shop/react'
+
+expect(checkUiHints(game, { plugins: [shopUi] })).toEqual([])
+```
+
+The inline pieces are declared the same way, in [`INLINE_PIECES`](/docs/react/components#inline_pieces).
 
 ## See it in the showcase
 

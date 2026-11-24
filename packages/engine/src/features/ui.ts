@@ -51,6 +51,14 @@ export interface GameUi {}
  */
 export interface InlineUi {}
 
+/**
+ * What a `ui` field is written on, as a UI package's checker reads it: a
+ * scene or a place's room (`scene`), a choice, an action or a room's button
+ * (`choice`), a block or a section (`block`), a stat, a kind or an entity
+ * (`entity`), or the game.
+ */
+export type UiTarget = 'scene' | 'choice' | 'block' | 'stat' | 'entity' | 'game'
+
 /** The arguments of a UI piece named `N`: what a UI package declared in `InlineUi`, else any text. */
 export type InlineUiArgs<N extends string> = N extends keyof InlineUi ? InlineUi[N] : readonly string[]
 
@@ -72,8 +80,8 @@ export type UiShape = {
   }
   lists: 'ui'
   references: {
-    /** A `ui` field of presentation hints, which must be data. */
-    ui: { ui: unknown }
+    /** A `ui` field of presentation hints, which must be data, with what it's written on and that thing's id where it has one. */
+    ui: { ui: unknown; on: UiTarget; id?: string }
   }
 }
 
@@ -147,7 +155,7 @@ export const ui = defineFeature<UiShape>({
   ),
   content: { ui: { declares: byKey('ui hint'), words: null } },
   lists: ['ui'],
-  check: (game, tools) => tools.check({ list: 'ui' }, 'ui', [{ ui: game.ui }]),
+  check: (game, tools) => tools.check({ list: 'ui' }, 'ui', [{ ui: game.ui, on: 'game' }]),
   resolve: () => ({ ui: (ref) => uiProblems(ref.ui) }),
   // `[[reveal]]` was prose markup once. It is a block's hint now, so one left in prose would be shown as written.
   markup: (_game, text) => [

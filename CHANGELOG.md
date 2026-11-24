@@ -10,6 +10,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- [`uiInContent(game)`](/docs/reference/ui-hints#uiincontent): every `ui` field in a game's content, with what it's on and where, and every line of words, found by the content checker's own walk. A UI package's checker reads it instead of walking the content itself.
+- A plugin's React UI can declare the `ui` hints its components read, in its `PluginUi`'s `hints`, and [`checkUiHints`](/docs/react/hints#checkuihints) checks them when you pass the same `plugins` list you give `mountGame`. It knows the plugin UIs' inline pieces too. The React UI's own hints are declared the same way, in [`UI_HINTS`](/docs/react/hints#ui_hints), and its inline pieces in [`INLINE_PIECES`](/docs/react/components#inline_pieces).
 - [`useScene`](/docs/react/components#usescene) in the React UI: the scene's timing and state with nothing drawn (its transition, the runs of beats that wait for a reveal or for dice, when the choices come, whether it's waiting and how to skip, and the new rolls). `Scene` is drawn from it, so a scene of your own keeps the same motion.
 - The scene's heading, a section with ui hints and a fold are replaceable in `components`, as [`SceneHeader`](/docs/react/components#sceneheader), [`BeatGroup`](/docs/react/components#beatgroup) and [`Fold`](/docs/react/components#fold), so a game restyles them without rebuilding `Scene`.
 - The runner's [snapshot](/docs/reference/runner#what-led-here) says which choice or button led to the screen on show, in `pressed` (its id, command and `ui` hints as written), and whether the state came from a command just run, in `fresh`. A UI of any framework plays a choice's transition and tumbles only new dice from them, with no replay of the command log.
@@ -254,6 +256,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Changed
 
+- **Breaking:** [`checkUiHints`](/docs/react/hints#checkuihints) takes `{ plugins, inline, allow }` and finds hints with the engine's walk, so it also reads a place's actions and every section and decision a plugin's content holds. A problem in a block names its scene (`scene park block: …`, no longer `block 2`), a hint written where the React UI doesn't read it says so (`ui.reveal is not a hint the React UI reads on a scene`), and a modal naming missing prose reads `names the prose "x", which the game doesn't have`.
 - `useGame().send` takes a [`CommandRef`](/docs/reference/custom#commandref), so a plugin's helpers go straight in: `send(shop.buy('counter', 'item:sandwich'))`.
 - `view.plugins.<id>` is typed by each plugin's `ViewRegistry` entry wherever the game imports the plugin, so the docs no longer cast it (`view.plugins.shop?.vendors`).
 - **Breaking:** the first-party hooks take entity references typed as `EntityRef`: `useShop().buy` and `sell`, `useInventory().use`, `drop` and `give` (whose `to` is a `Holder`), `useWardrobe().wear` and `usePlaces().pickUp`.

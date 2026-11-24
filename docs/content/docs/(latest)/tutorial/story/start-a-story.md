@@ -1,0 +1,86 @@
+---
+title: "1. Start a story"
+description: "Step 1 of the story tutorial. Creates a game from a template with npm, then writes the first three chapters of a short story as scenes, with choices that move between them."
+---
+By the end of this step you'll have a new game running in your browser, with three chapters of a story called The Last Bus and choices that lead from one to the next.
+
+The story is short. You wait for the last bus in the rain beside a stranger, find your bus pass has run out, and walk home. Over four steps, what you do at the stop changes what happens on the bus, and how kind you've been decides how the evening ends. The story uses no plugins, so there's no map or clock to set up.
+
+## Check your Node version
+
+The `ifloom` command needs Node 20.19 or later, or 22.12 or later, and Node 24 is the one to pick if you're installing it now. Run this to see the version you have:
+
+```sh
+node --version
+```
+
+## Create the game
+
+Pick the tab for the way you want to render the game. The React tab's template renders it with the ready-made React UI. The Plain JS and Vue templates render it with their own code, and this tutorial never needs you to change it. Your choice follows you through the rest of the docs.
+
+```sh tab="Plain JS" tab-group="framework"
+npm create ifloom@latest last-bus -- --template vanilla
+cd last-bus
+npm install
+npm run dev
+```
+
+```sh tab="React" tab-group="framework"
+npm create ifloom@latest last-bus
+cd last-bus
+npm install
+npm run dev
+```
+
+```sh tab="Vue" tab-group="framework"
+npm create ifloom@latest last-bus -- --template vue
+cd last-bus
+npm install
+npm run dev
+```
+
+`npm create ifloom` makes a folder `last-bus` with a two-scene game in it. `npm run dev` starts a dev server and prints its address. Open that address in your browser, and leave the server running in its terminal while you work. The page reloads by itself each time you save a file. [Create a game](/docs/how-to/create-a-game) has the same commands for pnpm, yarn and bun.
+
+The game opens on a scene called "The door". The React template opens on a title screen first, so press **New game** there.
+
+## Find your way around
+
+The game's own files are in `src/`, and this tutorial changes three of them:
+
+- `src/game.ts` assembles the game from the other files. Its default export is the game module, which the page and the CLI both build the game from.
+- `src/world/stats.ts` declares the numbers the whole game keeps.
+- `src/story/opening.ts` holds the first scenes of the story and their words.
+
+The rest of `src/` renders the game, and you can leave it alone. [Organise your game's files](/docs/how-to/organise-your-files) says how a longer story splits into more files.
+
+## Name the game
+
+The template named the game after its folder. Replace everything in `src/game.ts` with this, which gives it the title The Last Bus:
+
+::include[../../../../../snippets/tutorial/story/game.ts]
+
+`loadGame` merges the files in its list, `stats` and `opening`, into one game. Its second argument holds the game's `id` and its `title`, and the browser keeps the game's saves under the `id`. The template's `game.ts` also had `probes`, which named a choice from its own story, so this file leaves them out. [Playtest and snapshot from the command line](/docs/how-to/playtest-and-snapshot) says what probes are for.
+
+## Write three chapters
+
+A scene is one screen of story: a title, the words the player reads, and the choices under them. This story gives each chapter one scene. Replace everything in `src/story/opening.ts` with this:
+
+::include[../../../../../snippets/tutorial/story/steps/1/opening.ts]
+
+`introScene` names the scene a new game opens on. Each scene has an `id`, which the rest of the game uses to name it, a `title` and a `body`. The body is a list of blocks read top to bottom, and `text('…')` is a block of words written in the place the player reads them. The words can use `**bold**` and `*italic*` as in Markdown, and a blank line starts a new paragraph ([Prose](/docs/reference/prose#markup)).
+
+The scene ids `ch1.stop`, `ch2.bus` and `ch3.home` use a `.` to group the scenes by chapter. The engine reads an id as one name, so the grouping is only for you.
+
+## Move on with choices
+
+Each choice has an `id`, a `label` for its button, and a list of `effects` that run when the player chooses it. `{ scene: 'ch2.bus' }` is an effect that opens the scene with that id. Both choices at the stop open the bus for now, and both choices on the bus open the walk home. Step 3 makes them lead to different places.
+
+The third chapter has `choices: []`, so the story stops there with nothing to press. Step 3 gives it a way to an ending.
+
+An effect is plain data, which is why the engine can check a choice before anyone plays it. [State, commands and the view](/docs/explanation/state-and-commands#effects-and-conditions-are-data) says why, and [Scenes](/docs/reference/scenes#datascene) lists every field a scene has.
+
+The template's stat, Courage, stays in the side column until step 2 replaces it.
+
+:::tip[Checkpoint]
+The page shows "Chapter one: the stop" with two choices. Press **Keep the umbrella to yourself**, and the page shows "Chapter two: the bus". Press **Count out the fare in coins**, and the page shows "Chapter three: home" with no choices under it.
+:::

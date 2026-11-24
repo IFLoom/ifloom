@@ -18,6 +18,7 @@ import { lastReveal, revealGroups, revealStyle, SceneFrame, useMotion, useSkipKe
 import { DiceOverlay, DiceRoll, unnamedRolls, useFreshRolls } from './dice.tsx'
 import { Countdown } from './timers.tsx'
 import { InputList } from './inputs.tsx'
+import { usePanel } from './panels.tsx'
 
 /** A small button that plays a spoken line's voice again, when the game's sound is playing. */
 function VoiceReplay({ voice }: { voice: string }) {
@@ -211,12 +212,11 @@ function Fold({ label, children }: { label: string; children: ReactNode }) {
  */
 export const Beat = overridable('Beat', BeatImpl)
 
-/** The minigame being played: the game's own panel for it if `panels` has one by its id, else `MinigameCard`. Its clock runs while it's here. */
+/** The minigame being played: the panel of its id if anything draws one (the game's, a plugin UI's), else `MinigameCard`. Its clock runs while it's here. */
 function MinigameSlot() {
-  const { panels } = useGame()
   const { minigame } = useMinigame()
+  const Panel = usePanel(minigame?.id)?.component
   if (!minigame) return null
-  const Panel = panels[minigame.id]
   return Panel ? <Panel data={minigame} /> : <MinigameCard />
 }
 
@@ -291,11 +291,11 @@ function speakerHue(view: View): CSSProperties | undefined {
 
 /** One scene, drawn once per `view.scene.key`: it comes in by `data-transition-in`, and its reveals run from then. */
 function SceneArticle({ className, motion, transition, rolls }: { className?: string; motion: boolean; transition: ScreenTransition; rolls: SceneRolls }) {
-  const { view, panels } = useGame()
+  const { view } = useGame()
   const scene = view.scene
-  // A panel the open scene holds is drawn in place of its choices; one the `panel` effect opened, by the PanelHost.
+  // A panel the open scene holds is drawn in place of its choices, found as the PanelHost finds one the `panel` effect opened.
   const held = view.panel?.scene !== undefined ? view.panel : null
-  const Panel = held ? panels[held.panel] : undefined
+  const Panel = usePanel(held?.panel)?.component
   const article = usePart('scene', 'flex flex-col gap-4', className)
   const header = usePart('scene-header', cn(PROSE, 'flex items-center gap-3'))
   const portrait = usePart('scene-portrait', 'size-12 rounded-full object-cover')

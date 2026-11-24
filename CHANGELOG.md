@@ -492,6 +492,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Fixed
 
+- A scene that holds a plugin UI's panel, such as `{ panel: 'shop' }` with `shopUi` listed, draws that panel in place of its choices; it used to draw only the game's own `panels`. A scene's panel and a minigame's are found as `PanelHost` finds a panel: the game's own, else a listed plugin UI's, else a built-in one.
 - `ifloom check` no longer reports "every choice leaves or jumps" for a decision at the end of a pick's `then` whose choices jump back, as in a hub where one question opens a few follow-ups. The other picks of the decision around it still carry on to what comes after.
 - `ifloom playtest` stops when it goes round in circles: the same screen, state and command three times in one turn. Before, the explorer could walk between two rooms until the 2,000-step limit. It also counts a place as seen as soon as it sets out for it.
 - While a minigame runs, the places plugin lists no exits and nothing lying in the room, and the React UI's `room` spot (the `LocationCard` and the exits) draws nothing, as while a scene is open.

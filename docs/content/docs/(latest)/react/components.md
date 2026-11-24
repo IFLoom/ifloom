@@ -538,9 +538,9 @@ From top to bottom, it draws:
 - the scene's [`LayeredPicture`](#layeredpicture) when [`view.scene.picture`](/docs/reference/view#the-scene) has layers, or else its `image`, centred, at most `max-h-80` tall and never wider than the column, keeping its shape
 - each [`Beat`](#beat) of the body, with the beats from each block with a [`reveal`](/docs/react/hints#reveal) hint in a `reveal` part that waits for it, and the beats of each section with ui hints in a `group` part (see **Groups** below)
 - the inputs on offer while the scene is open, as [`InputField`](#inputfield)s in an `inputs` part, so a scene that asks for a name shows the field under its words
-- the game's panel for the scene, if the scene names one and `panels` has it, or else the scene's choices as a [`ChoiceList`](#choicelist). With reveals to come, these wait for the last one, in a `reveal` part with `data-reveal-choices`. They can't be pressed or read out until then.
+- the panel the scene holds, if anything draws one of that name (the game's own `panels`, else a listed plugin UI's, else one in [`BUILT_IN_PANELS`](#built_in_panels), as [`PanelHost`](#panelhost) finds them), or else the scene's choices as a [`ChoiceList`](#choicelist). With reveals to come, these wait for the last one, in a `reveal` part with `data-reveal-choices`. They can't be pressed or read out until then.
 
-While a [minigame](/docs/reference/minigames) runs, it draws that instead of all of the above: the game's panel named by the minigame's id, if `panels` has one, or else [`MinigameCard`](#minigamecard). It runs the minigame's clock either way, so your panel gets its ticks without asking. The `<article>` then also carries `data-minigame` with the minigame's id.
+While a [minigame](/docs/reference/minigames) runs, it draws that instead of all of the above: the panel named by the minigame's id, found as [`PanelHost`](#panelhost) finds one, or else [`MinigameCard`](#minigamecard). It runs the minigame's clock either way, so your panel gets its ticks without asking. The `<article>` then also carries `data-minigame` with the minigame's id.
 
 The `<article>` carries `data-scene` with the scene's id, or `room` when no scene is open.
 

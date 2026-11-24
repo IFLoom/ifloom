@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import type { OpenPanel } from '@ifloom/engine'
 import { useGame, type PanelComponent } from './context.tsx'
 import { PartDialog } from './dialog.tsx'
@@ -24,11 +25,39 @@ const TITLES: Record<string, UiStringKey> = {
   stats: 'stats',
 }
 
-/** Each plugin UI's panel by name, with the module it came from, later modules over earlier ones. */
-function pluginPanels(plugins: readonly PluginUi[]): Record<string, PluginPanel & { from: PluginUi }> {
-  return mergedFrom(plugins, (ui) =>
+/** What draws a panel of one name, and where its dialog's title comes from. */
+type PanelEntry = {
+  component: PanelComponent
+  /** The plugin UI with a panel of this name, whose title the dialog takes even when the game draws the panel itself. */
+  plugin?: PluginPanel & { from: PluginUi }
+}
+
+/**
+ * Every panel by name, in one table: the game's own `panels` over the plugin
+ * UIs' (later modules over earlier ones) over `BUILT_IN_PANELS`.
+ */
+export function panelTable(own: Readonly<Record<string, PanelComponent>>, plugins: readonly PluginUi[]): Record<string, PanelEntry> {
+  const fromPlugins = mergedFrom(plugins, (ui) =>
     ui.panels ? Object.fromEntries(Object.entries(ui.panels).map(([name, panel]) => [name, { ...panel, from: ui }])) : undefined,
   )
+  const table: Record<string, PanelEntry> = {}
+  for (const [name, component] of Object.entries(BUILT_IN_PANELS)) table[name] = { component }
+  for (const [name, plugin] of Object.entries(fromPlugins)) table[name] = { component: plugin.component, plugin }
+  for (const [name, component] of Object.entries(own)) table[name] = { component, plugin: fromPlugins[name] }
+  return table
+}
+
+/**
+ * The panel of one name, as the game in context draws it: the game's own,
+ * else a plugin UI's, else a built-in one. Undefined when nothing draws it.
+ * `PanelHost`, a scene that holds a panel and a minigame's slot all find
+ * theirs here.
+ */
+export function usePanel(name: string | undefined): PanelEntry | undefined {
+  const { panels } = useGame()
+  const plugins = usePluginUis()
+  const table = useMemo(() => panelTable(panels, plugins), [panels, plugins])
+  return name === undefined ? undefined : table[name]
 }
 
 /**
@@ -37,7 +66,7 @@ function pluginPanels(plugins: readonly PluginUi[]): Record<string, PluginPanel 
  * even when the game draws the panel itself, else a built-in panel's word,
  * else the panel's name.
  */
-function usePanelTitle(open: OpenPanel | null, plugin: (PluginPanel & { from: PluginUi }) | undefined): string {
+function usePanelTitle(open: OpenPanel | null, plugin: PanelEntry['plugin']): string {
   const { runner, view } = useGame()
   const words = useWords()
   if (!open) return ''
@@ -51,15 +80,12 @@ function usePanelTitle(open: OpenPanel | null, plugin: (PluginPanel & { from: Pl
 }
 
 function PanelHostImpl() {
-  const { view, panels, send } = useGame()
-  const plugins = usePluginUis()
+  const { view, send } = useGame()
   // A panel the open scene holds is drawn in the scene, in place of its choices.
   const open = view.panel?.scene === undefined ? view.panel : null
-  const fromPlugins = pluginPanels(plugins)
-  const own = open ? panels[open.panel] : undefined
-  const plugin = open ? fromPlugins[open.panel] : undefined
-  const title = usePanelTitle(open, plugin)
-  const Panel = open ? (own ?? plugin?.component ?? BUILT_IN_PANELS[open.panel]) : undefined
+  const entry = usePanel(open?.panel)
+  const title = usePanelTitle(open, entry?.plugin)
+  const Panel = entry?.component
   // A name nothing draws shows nothing: the panel closes as the story moves on, or with `closePanel`.
   return (
     <PartDialog open={Boolean(open && Panel)} onClose={() => send({ type: 'closePanel' })} title={title}>

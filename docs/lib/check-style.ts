@@ -160,6 +160,19 @@ export const DONE: string[] = [
   'how-to/build-with-next.md',
   'how-to/build-with-webpack.md',
   'how-to/build-with-esbuild.md',
+  'how-to/write-a-flowing-scene.md',
+  'how-to/gate-a-choice-on-a-thing.md',
+  'how-to/ask-for-a-name.md',
+  'how-to/offer-a-random-scene.md',
+  'how-to/put-a-choice-in-a-line.md',
+  'how-to/show-a-popup.md',
+  'how-to/show-a-notice.md',
+  'how-to/add-a-transition.md',
+  'how-to/roll-dice.md',
+  'how-to/add-a-countdown.md',
+  'how-to/build-a-minigame.md',
+  'how-to/end-the-game.md',
+  'how-to/translate-your-game.md',
 ]
 
 /** One problem: where it is, the rule it breaks, and the text that breaks it. */

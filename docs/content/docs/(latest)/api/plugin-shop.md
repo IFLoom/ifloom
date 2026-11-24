@@ -215,7 +215,7 @@ type StockRecord = {
 
 ### Vendor
 
-Type. Explained in [Shop](/docs/reference/plugins/shop#vendor-1).
+Type. Explained in [Shop](/docs/reference/plugins/shop#vendor).
 
 The data of the `shop/vendor` trait, which makes an entity a vendor the player buys from. The vendor's name, such as "The counter", is the entity's.
 
@@ -266,7 +266,7 @@ Plugins add fields of their own to it, which their pages list.
 
 ### vendorOf
 
-Function. Explained in [Shop](/docs/reference/plugins/shop#vendorsof-vendorof-and-vendorref).
+Function. Explained in [Shop](/docs/reference/plugins/shop#vendorof).
 
 Returns the `shop/vendor` trait of a vendor, named by its id (`'counter'`) or reference, without any good that names
 no thing. Returns undefined for anything that isn't a vendor.
@@ -280,7 +280,7 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 ### vendorsOf
 
-Function. Explained in [Shop](/docs/reference/plugins/shop#vendorsof-vendorof-and-vendorref).
+Function. Explained in [Shop](/docs/reference/plugins/shop#vendorsof).
 
 Returns the references of every vendor in the game now, each entity with the `shop/vendor` trait. Those content
 declares come first in its order, then those made in play.
@@ -329,7 +329,7 @@ type VendorView = {
 
 ### SHOP_WORDS
 
-Const.
+Const. Explained in [Shop](/docs/reference/plugins/shop#shop_words).
 
 The shop plugin's UI words, in English. A game rewords any of them with `ui.<key>` in its strings, such as `{ 'ui.buy': 'Get' }`.
 
@@ -356,7 +356,7 @@ const SHOP_WORDS: {
 
 ### ShopControls
 
-Type.
+Type. Explained in [Shop](/docs/reference/plugins/shop#shopcontrols).
 
 The shop plugin's view with the vendors here and functions that send its commands, as `useShop` returns it.
 

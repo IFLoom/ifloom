@@ -273,7 +273,7 @@ type PostView = {
 
 ### FEED_WORDS
 
-Const.
+Const. Explained in [Feed](/docs/reference/plugins/feed#feed_words).
 
 The feed plugin's words in English, keyed by name. A game rewords any of them with `ui.<key>` in its strings.
 
@@ -284,7 +284,7 @@ const FEED_WORDS: { readonly likes: '♥ {n}'; }
 
 ### FeedControls
 
-Type.
+Type. Explained in [Feed](/docs/reference/plugins/feed#feedcontrols).
 
 The feed plugin's view with a way to mark a feed seen, as `useFeed` returns it.
 

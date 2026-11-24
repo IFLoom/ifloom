@@ -88,7 +88,7 @@ type JobDef = {
 
 ### jobOf
 
-Function. Explained in [Jobs](/docs/reference/plugins/jobs#jobsof-and-jobof).
+Function. Explained in [Jobs](/docs/reference/plugins/jobs#jobof).
 
 Returns the job with this id, or undefined when the game has none.
 
@@ -128,7 +128,7 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`JobsState`](#j
 
 ### jobsOf
 
-Function. Explained in [Jobs](/docs/reference/plugins/jobs#jobsof-and-jobof).
+Function. Explained in [Jobs](/docs/reference/plugins/jobs#jobsof).
 
 Returns the game's jobs, from `data.jobs.jobs` in its content and packs.
 
@@ -312,7 +312,7 @@ const JobBoard: ComponentType<{ className?: string; title?: string | false; jobs
 
 ### JOBS_WORDS
 
-Const.
+Const. Explained in [Jobs](/docs/reference/plugins/jobs#jobs_words).
 
 The jobs plugin's UI words, in English. A game rewords any of them with `ui.<key>` in its strings.
 
@@ -353,7 +353,7 @@ const JOBS_WORDS: {
 
 ### JobsControls
 
-Type.
+Type. Explained in [Jobs](/docs/reference/plugins/jobs#jobscontrols).
 
 The jobs plugin's view with the jobs held and functions that send its commands, as `useJobs` returns it.
 

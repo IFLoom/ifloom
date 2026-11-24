@@ -309,7 +309,7 @@ type ThreadView = {
 
 ### MESSAGES_WORDS
 
-Const.
+Const. Explained in [Messages](/docs/reference/plugins/messages#messages_words).
 
 The messages plugin's UI words, in English. A game rewords any of them with `ui.<key>` in its strings.
 
@@ -330,7 +330,7 @@ const MESSAGES_WORDS: {
 
 ### MessagesControls
 
-Type.
+Type. Explained in [Messages](/docs/reference/plugins/messages#messagescontrols).
 
 The messages plugin's view with a function that sends its read command, as `useMessages` returns it. Each reply is a
 `RenderedChoice` whose `command` sends it.

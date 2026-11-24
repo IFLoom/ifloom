@@ -333,7 +333,7 @@ import { places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
 import { messages, type MessagesView } from '@ifloom/plugin-messages'
 
-const inbox = (state: GameState) => view(state, game).plugins.messages as MessagesView
+const inbox = (state: GameState) => view(state, game).plugins.messages!
 const wait = { type: 'action', id: 'wait' } as const
 let state = startingState(game)
 
@@ -371,7 +371,7 @@ inbox(state).channels[1]
 // { id: 'letters', name: 'Letters', unread: 1, threads: [{ id: 'Town council', name: 'Town council', image: null, portrait: null, ... }] }
 
 // The flat's button picks up the post
-state = apply(state, game, { type: 'custom', name: 'messages/read', with: { channel: 'letters' } }).state
+state = apply(state, game, messages.read({ channel: 'letters' })).state
 inbox(state).unread     // 0
 ```
 
@@ -406,7 +406,7 @@ An unknown message is false.
 | Command | Helper | Does |
 |---|---|---|
 | `{ 'messages/reply': { message, reply } }` | `messages.reply(message, reply)` | Sends the reply: marks the arrival replied and read, then runs the reply's effects. `message` is the [arrival's key](#arrival), which for a message that arrives once is its id. |
-| `{ 'messages/read': { id?, channel? } }` | `messages.read(thread?)` | Marks every message that has arrived in the thread `id` read. With `channel`, only that channel's. Leave both out to mark everything read. |
+| `{ 'messages/read': { id?, channel? } }` | `messages.read(thread?)`, `messages.read({ channel })` | Marks every message that has arrived in the thread `id` read. With `channel`, only that channel's. Leave both out to mark everything read. |
 
 `messages/reply` is refused, in this order, with:
 
@@ -416,7 +416,7 @@ An unknown message is false.
 
 You can reword each line (see [Strings](#strings)).
 
-Only a [lock](/docs/reference/locks) can refuse `messages/read`. A UI usually sends `messages.read(thread)` when the player opens a thread. `messages.read` only takes a thread, so to mark a whole channel read you write the command yourself with `channel`, as the flat's button does above.
+Only a [lock](/docs/reference/locks) can refuse `messages/read`. A UI usually sends `messages.read(thread)` when the player opens a thread. To mark a whole channel read, write `messages.read({ channel: 'letters' })`, as the flat's button does above.
 
 Both are commands like any other, so triggers run after them, and so does every plugin's `onCommand` hook. If a reply's effects make another message's `when` true, that message arrives in the same command.
 

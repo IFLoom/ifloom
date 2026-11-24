@@ -13,14 +13,17 @@
  */
 import type { GameState, Result } from '@ifloom/engine'
 import type { ComponentProps } from 'react'
-import { overridable, Section, useGame, useKitPart, usePart, useWords, type Override, type PluginUi } from '@ifloom/react'
-import type { __Pascal__View } from '../index.ts'
+import { overridable, pluginKit, Section, useKitPart, usePart, usePlugin, type Override, type PluginUi } from '@ifloom/react'
+import { __camel__, type __Pascal__View } from '../index.ts'
 
 /** The plugin's words, in English. A game rewords any with `ui.<key>` in its strings: `{ 'ui.__camel__Marked': 'Done' }`. */
 export const __CONSTANT___WORDS = {
   __camel__Title: '{{title}}',
   __camel__Marked: 'Marked',
 } as const
+
+// The UI declared once, its id and its words: `usePlugin` reads the plugin's view, typed, and says its words; `__camel__Ui` spreads it.
+const __CONSTANT__ = pluginKit('__id__', __CONSTANT___WORDS)
 
 // The component and its parts, for a game's `components` and `classes`.
 declare module '@ifloom/react' {
@@ -42,14 +45,13 @@ export type __Pascal__Controls = __Pascal__View & {
 
 /** The plugin's view with its command, or null in a game without the plugin. `__Pascal__List` is drawn from it. */
 export function use__Pascal__(): __Pascal__Controls | null {
-  const { view, send } = useGame()
-  const data = view.plugins['__id__'] as __Pascal__View | undefined
-  if (!data) return null
-  return { ...data, mark: (entry) => send({ type: 'custom', name: '__id__/mark', with: { id: entry } }) }
+  const { view, send } = usePlugin(__CONSTANT__)
+  if (!view) return null
+  return { ...view, mark: (entry) => send(__camel__.markCommand(entry)) }
 }
 
 function __Pascal__ListImpl({ className }: { className?: string }) {
-  const words = useWords(__CONSTANT___WORDS)
+  const { words } = usePlugin(__CONSTANT__)
   const data = use__Pascal__()
   const list = usePart('__id__', 'flex flex-col gap-2 text-sm', className)
   // Kit parts bring their own look, so a preset styles them as it does every plugin's: add only layout.
@@ -73,7 +75,7 @@ export const __Pascal__List = overridable('__Pascal__List', __Pascal__ListImpl)
 
 /** The default layout's section for it: the list, folding in place, hidden while there's nothing in it. */
 export function __Pascal__Section() {
-  const words = useWords(__CONSTANT___WORDS)
+  const { words } = usePlugin(__CONSTANT__)
   return (
     <Section id="__id__" title={words('__camel__Title')} collapsible>
       <__Pascal__List />
@@ -87,7 +89,6 @@ export function __Pascal__Section() {
  * name, pages, settings and inline pieces: see `PluginUi`.
  */
 export const __camel__Ui: PluginUi = {
-  id: '__id__',
-  words: __CONSTANT___WORDS,
+  ...__CONSTANT__,
   layout: { sidebar: [__Pascal__Section] },
 }

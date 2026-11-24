@@ -239,9 +239,9 @@ Replaceable as `InventoryCard` in [`components`](/docs/react/components#componen
 function useInventory(): InventoryControls | null
 
 type InventoryControls = InventoryView & {
-  use: (ref: string) => Result<GameState>
-  drop: (ref: string) => Result<GameState>
-  give: (ref: string, to: string) => Result<GameState>
+  use: (ref: EntityRef) => Result<GameState>
+  drop: (ref: EntityRef) => Result<GameState>
+  give: (ref: EntityRef, to: Holder) => Result<GameState>
 }
 ```
 

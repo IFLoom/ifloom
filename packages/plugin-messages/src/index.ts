@@ -658,8 +658,9 @@ const replyTo = (message: string, reply: string): CommandRef => CALLS.commands.r
 const drawMessage = (pool: string): EffectRef => CALLS.effects.draw({ pool })
 /** A condition: whole days since the message last arrived, in this range; false if it never has. */
 const messageSince = (message: string, range: Range): Condition => CALLS.conditions.since({ message, ...range })
-/** A command: mark a thread read, or every message with no thread given. */
-const readThread = (thread?: string): CommandRef => CALLS.commands.read(thread === undefined ? undefined : { id: thread })
+/** A command: mark a thread read, by its id; a whole channel's, with `{ channel }`; or every message, with neither. */
+const readThread = (thread?: string | { channel: string }): CommandRef =>
+  CALLS.commands.read(thread === undefined ? undefined : typeof thread === 'string' ? { id: thread } : { channel: thread.channel })
 /** A condition: the message has arrived. */
 const messageArrived = (message: string): Condition => CALLS.conditions.arrived({ message })
 /**

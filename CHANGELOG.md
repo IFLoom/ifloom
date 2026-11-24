@@ -10,6 +10,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- A plugin's React UI declares itself once with [`pluginKit(id, words)`](/docs/react/kit#pluginkit) and reads the plugin in each component with [`usePlugin`](/docs/react/kit#useplugin): the plugin's view typed by its `ViewRegistry` entry, its words with the game's rewording over them, and a `send` for the commands its helpers write. Spread the kit into the `PluginUi`, `{ ...SHOP, panels }`, and the words are written in one place. Every first-party plugin's `/react` is built this way, and the plugin template too.
+- `messages.read({ channel })` writes the command that marks a whole channel read.
 - Each of the React UI's [kit parts](/docs/react/kit#kit_looks) has a look of its own, `KIT_LOOKS`, so a `card` from any plugin is boxed the same way with no preset loaded, a `note` is small and muted, and a done card is edged in the primary colour. [`KIT_LAYOUT`](/docs/react/kit#kit_layout) lists the layout classes the React UI's stylesheet always has, so a plugin's UI built from the kit needs no stylesheet of its own.
 - [`@ifloom/engine/testing`](/docs/reference/testing), helpers for a plugin's or a game's tests that name no test runner: `loadChecked` loads a game and fails on any content problem, `freshState` starts one with no scene open, `play` applies commands and fails on the first one refused with its reason, and `partnerCases` runs a plugin alone and with each plugin it cooperates with. `boundaryProblems` and `undocumentedExports` read a plugin package's source for a contract test. A plugin made with `--template plugin` uses them, and has a `tests/contracts.test.ts` that holds it to the plugin boundary and its README to its exports.
 - [`defineTraitKind`](/docs/reference/plugins#trait-kinds), for a plugin whose things are entities of its own kind carrying its trait: from the kind, the trait and the trait's fields it gives the reference a bare id names, the list in play, the trait of one in play or as content declares it, the definer that writes the entity's fields and the trait's side by side, and the checked argument naming one. The places, shop and cast plugins are built on it.
@@ -246,6 +248,9 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Changed
 
+- `useGame().send` takes a [`CommandRef`](/docs/reference/custom#commandref), so a plugin's helpers go straight in: `send(shop.buy('counter', 'item:sandwich'))`.
+- `view.plugins.<id>` is typed by each plugin's `ViewRegistry` entry wherever the game imports the plugin, so the docs no longer cast it (`view.plugins.shop?.vendors`).
+- **Breaking:** the first-party hooks take entity references typed as `EntityRef`: `useShop().buy` and `sell`, `useInventory().use`, `drop` and `give` (whose `to` is a `Holder`), `useWardrobe().wear` and `usePlaces().pickUp`.
 - **Breaking:** [`useKitPart(kit, name, layout?, className?)`](/docs/react/kit#usekitpart) starts from the kit part's look, so a plugin's UI passes only layout: `useKitPart('card', 'job')` is a card. It no longer takes a part's default classes. The first-party plugins' cards, titles, notes, badges and headings now look alike: quests, posts and an app's entries are `card`s too, every kit badge is a secondary one, and the inventory's Drop button is no longer a `label`.
 - **Breaking:** a vendor's and a job's `at` are gone. Say where a vendor stands with [`places.onlyAt()`](/docs/plugins/shop#where-it-stands) in its `blocked`, with `{ hide: true }` so it isn't `here` elsewhere: `blocked: [places.onlyAt(['cafe'], { string: 'shop/notHere' }, { hide: true })]`. A job's workplace goes in its shift's new [`blocked`](/docs/plugins/jobs#shiftdef): `shift: { ..., blocked: [places.onlyAt(['cafe'], { string: 'jobs/notHere' })] }`. A vendor's `here` and its `closed` read its `blocked` entries: one with `hide` that holds makes it not `here`, and any other closes it. Without places, neither restricts anything, as before.
 - **Breaking:** [`places.onlyAt()`](/docs/plugins/places#helpers) writes the new `places.away()` condition (`{ 'places/away': { location } }`, the player is in none of these places) in place of `{ not: places.at(...) }`, and takes `{ hide: true }` as a third argument. In a game without the places plugin it now refuses nothing, where it used to refuse everywhere.
@@ -480,6 +485,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Removed
 
+- **Breaking:** `viewIn` on a plugin made with `definePlugin`. Read `view.plugins.<id>`, which its `ViewRegistry` entry types.
+- **Breaking:** `useDebug().run`. Send the debug plugin's helpers instead: `send(debug.stat('coins', 50))`.
 - **Breaking:** `ENTRY_CLASSES` in `@ifloom/react`. A list entry with buttons of its own is a kit `card` with `sm:flex-row sm:items-start`, its buttons a `commands` part.
 - The places, shop and cast plugins no longer report places, vendors or characters written in their old `data` lists (`locations are entities now`). A pack written that way is still carried forward.
 - **Breaking:** [`parseBeats`](/docs/reference/prose#parsebeats) no longer takes `hints`: its second argument is `find`, who a line under `@id` is. A block's `ui` hints reach its beats through the scene's view, so nothing needed them.

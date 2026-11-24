@@ -222,10 +222,9 @@ type CheatView = {
 ```svelte tab="Svelte" tab-group="framework"
 <!-- src/Cheats.svelte -->
 <script lang="ts">
-  import type { CheatsView } from '@ifloom/plugin-cheats'
   import { runner, view } from './runner.ts'
 
-  const cheats = $derived(($view.plugins.cheats as CheatsView | undefined)?.cheats ?? [])
+  const cheats = $derived($view.plugins.cheats?.cheats ?? [])
   const groups = $derived([...new Set(cheats.map((cheat) => cheat.group))])
 </script>
 

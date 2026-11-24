@@ -5,9 +5,9 @@
  * yourself from `useCheats`.
  */
 import type { GameState, Result } from '@ifloom/engine'
-import type { CheatView, CheatsView } from '../index.ts'
+import { cheats, type CheatView, type CheatsView } from '../index.ts'
 import { useState, type ComponentProps } from 'react'
-import { ChoiceButton, overridable, type Override, PartDialog, type PluginUi, useGame, useKitPart, usePart, useWords } from '@ifloom/react'
+import { ChoiceButton, overridable, type Override, PartDialog, pluginKit, type PluginUi, useKitPart, usePart, usePlugin } from '@ifloom/react'
 
 /** The cheats plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const CHEATS_WORDS = {
@@ -15,6 +15,9 @@ export const CHEATS_WORDS = {
   cheatUsedTimes: 'Used {n} times',
   cheats: 'Cheats',
 } as const
+
+/** The cheats plugin's UI, declared once: its id and its words, for `usePlugin` and `cheatsUi`. */
+const CHEATS = pluginKit('cheats', CHEATS_WORDS)
 
 declare module '@ifloom/react' {
   interface OverridableComponents {
@@ -56,29 +59,28 @@ function grouped(cheats: readonly CheatView[]): CheatGroup[] {
 
 /** The cheats plugin's view with its command, or null in a game without the plugin. `CheatPanel` is drawn from it. */
 export function useCheats(): CheatsControls | null {
-  const { view, send } = useGame()
-  const cheats = view.plugins.cheats as CheatsView | undefined
-  if (!cheats) return null
+  const { view, send } = usePlugin(CHEATS)
+  if (!view) return null
   return {
-    ...cheats,
-    groups: grouped(cheats.cheats),
-    use: (cheat) => send({ type: 'custom', name: 'cheats/use', with: { id: cheat } }),
+    ...view,
+    groups: grouped(view.cheats),
+    use: (cheat) => send(cheats.use(cheat)),
   }
 }
 
 function CheatPanelImpl({ className }: { className?: string }) {
-  const words = useWords(CHEATS_WORDS)
+  const { words } = usePlugin(CHEATS)
   const panel = useKitPart('commands', 'cheats', 'gap-4', className)
   const section = usePart('cheats-group', 'flex flex-col gap-2')
   const heading = useKitPart('heading', 'cheats-group-title')
   const card = useKitPart('card', 'cheat', 'gap-1')
   const text = useKitPart('note', 'cheat-text')
   const used = useKitPart('badge', 'cheat-used')
-  const cheats = useCheats()
-  if (!cheats?.cheats.length) return null
+  const shown = useCheats()
+  if (!shown?.cheats.length) return null
   return (
     <div {...panel} data-cheats>
-      {cheats.groups.map((group) => (
+      {shown.groups.map((group) => (
         <section key={group.name ?? ''} {...section} data-cheats-group={group.name ?? ''}>
           {group.name ? <h3 {...heading}>{group.name}</h3> : null}
           {group.cheats.map((cheat) => (
@@ -103,12 +105,12 @@ function CheatPanelImpl({ className }: { className?: string }) {
 export const CheatPanel = overridable('CheatPanel', CheatPanelImpl)
 
 function CheatsButtonImpl({ className }: { className?: string }) {
-  const words = useWords(CHEATS_WORDS)
-  const cheats = useCheats()
+  const { words } = usePlugin(CHEATS)
+  const shown = useCheats()
   const [open, setOpen] = useState(false)
   const button = useKitPart('opener', 'cheats-button', '', className)
   // Nothing to open in a game without the plugin, or while every cheat is hidden.
-  if (!cheats?.cheats.length) return null
+  if (!shown?.cheats.length) return null
   return (
     <>
       <button type="button" {...button} data-cheats-button onClick={() => setOpen(true)}>
@@ -134,7 +136,6 @@ export const CheatsButton = overridable('CheatsButton', CheatsButtonImpl)
  * `CheatPanel`, and the cheats' words.
  */
 export const cheatsUi: PluginUi = {
-  id: 'cheats',
-  words: CHEATS_WORDS,
+  ...CHEATS,
   layout: { sidebar: [() => <CheatsButton />] },
 }

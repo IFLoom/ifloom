@@ -7,12 +7,12 @@
  * is the game's state, so every UI shows the same. An app's plugin section is
  * drawn by that plugin's UI, by its id, so list the messages and feed UIs too.
  */
-import type { AppView, DevicesView, DeviceView, SectionView } from '../index.ts'
+import type { AppView, DeviceView, SectionView } from '../index.ts'
 import { createContext, useContext, type ComponentProps, type ReactNode } from 'react'
 import {
   assetUrl,
-  Beat,
   badgeVariants,
+  Beat,
   buttonVariants,
   ChoiceList,
   Dialog,
@@ -23,13 +23,17 @@ import {
   overridable,
   type Override,
   Picture,
+  pluginKit,
   type PluginUi,
   useDialogParts,
   useGame,
   useKitPart,
   usePart,
-  useWords,
+  usePlugin,
 } from '@ifloom/react'
+
+/** The devices plugin's UI, declared once: its id, for `usePlugin` and `devicesUi`. */
+const DEVICES = pluginKit('devices')
 
 declare module '@ifloom/react' {
   interface OverridableComponents {
@@ -66,8 +70,7 @@ export type DevicesState = DeviceView[]
 
 /** The devices in the view, if the game has the devices plugin. */
 export function useDevices(): DevicesState {
-  const { view } = useGame()
-  return (view.plugins.devices as DevicesView | undefined)?.devices ?? []
+  return usePlugin(DEVICES).view?.devices ?? []
 }
 
 /** Which device is out, as the game's state has it, and how to bring one out and put it away. */
@@ -84,7 +87,7 @@ export type DeviceState = {
 
 /** Which device is out, for a button row and the dialog that shows it. Every call reads the same, from the view. */
 export function useDevice(): DeviceState {
-  const { send } = useGame()
+  const { send } = usePlugin(DEVICES)
   const devices = useDevices()
   const device = devices.find((entry) => entry.shown) ?? null
   return {
@@ -101,7 +104,7 @@ export function useDevice(): DeviceState {
 }
 
 function DeviceButtonsImpl() {
-  const { send } = useGame()
+  const { send } = usePlugin(DEVICES)
   const devices = useDevices().filter((device) => device.sidebar)
   const row = usePart('devices', 'flex gap-2')
   const button = useKitPart('opener', 'device-button')
@@ -189,8 +192,7 @@ export function useOpenApp(): OpenAppState | null {
 const LAUNCHER = { gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', backgroundSize: 'cover', backgroundPosition: 'center' } as const
 
 function DeviceScreenImpl({ device }: { device: DeviceView }) {
-  const { send } = useGame()
-  const words = useWords()
+  const { words, send } = usePlugin(DEVICES)
   const screen = usePart('device-screen', 'min-w-0')
   const app = usePart('app', 'flex flex-col gap-3')
   const header = usePart('app-header', 'flex items-center gap-2')
@@ -252,8 +254,7 @@ function DeviceScreenImpl({ device }: { device: DeviceView }) {
 export const DeviceScreen = overridable('DeviceScreen', DeviceScreenImpl)
 
 function DeviceDialogImpl({ deviceId, onClose }: { deviceId?: string | null; onClose?: () => void }) {
-  const { send } = useGame()
-  const words = useWords()
+  const { words, send } = usePlugin(DEVICES)
   const devices = useDevices()
   // The device asked for while it's out, else the one that's out.
   const device = deviceId === undefined ? devices.find((entry) => entry.shown) : devices.find((entry) => entry.id === deviceId && entry.shown)
@@ -294,8 +295,7 @@ function DeviceDialogImpl({ deviceId, onClose }: { deviceId?: string | null; onC
 export const DeviceDialog = overridable('DeviceDialog', DeviceDialogImpl)
 
 function DeviceStripImpl() {
-  const { send } = useGame()
-  const words = useWords()
+  const { words, send } = usePlugin(DEVICES)
   const devices = useDevices()
   const item = usePart('notice-strip-item', buttonVariants({ size: 'sm', variant: 'outline' }))
   const badge = usePart('badge', badgeVariants())
@@ -329,7 +329,7 @@ export const DeviceStrip = overridable('DeviceStrip', DeviceStripImpl)
  * such as `messagesUi` and `feedUi`.
  */
 export const devicesUi: PluginUi = {
-  id: 'devices',
+  ...DEVICES,
   layout: { sidebar: [() => <DeviceButtons />], strip: [() => <DeviceStrip />] },
   provider: DevicesProvider,
 }

@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useSyncExternalStore, type ComponentType, type ReactNode } from 'react'
-import type { Command, GameState, InlineUi, InlineUiArgs, Mods, Result, Runner, RunnerSnapshot, View } from '@ifloom/engine'
+import type { CommandRef, GameState, InlineUi, InlineUiArgs, Mods, Result, Runner, RunnerSnapshot, View } from '@ifloom/engine'
 import { UiProvider, type UiOptions } from './overrides.tsx'
 import { activePlugins, mergedFrom, PluginProviders, type PluginUi } from './plugins.tsx'
 import { KeysProvider } from './keys.tsx'
@@ -48,8 +48,12 @@ export type GameContextValue = {
   snapshot: RunnerSnapshot
   /** The view, as `snapshot.view`. */
   view: View
-  /** Run a command. Returns what `runner.apply` returned, so a caller can show a refusal. */
-  send: (command: Command) => Result<GameState>
+  /**
+   * Run a command, a plain one or a plugin's in short as its helpers write it
+   * (`shop.buy('counter', 'food:bun')`). Returns what `runner.apply` returned,
+   * so a caller can show a refusal.
+   */
+  send: (command: CommandRef) => Result<GameState>
   panels: Record<string, PanelComponent>
   /** The game's own inline pieces, by name; the built-in ones are in `BUILT_IN_INLINE`. */
   inline: InlineComponents
@@ -115,7 +119,7 @@ export function GameProvider({
   const current = () => runner.snapshot()
   const snapshot = useSyncExternalStore((listener) => runner.subscribe(() => listener()), current, current)
   const view = snapshot.view
-  const send = useCallback((command: Command) => runner.apply(command), [runner])
+  const send = useCallback((command: CommandRef) => runner.apply(command), [runner])
   // The game's clock: a tick while any timer counts down, drawn or not.
   useTicking(runner)
   const plugins = useMemo(() => activePlugins(runner.game, given), [runner, given])

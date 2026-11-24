@@ -7,7 +7,7 @@
 import type { ComponentProps } from 'react'
 import { statOf, stringOf } from '@ifloom/engine'
 import type { StatusesView } from '../index.ts'
-import { overridable, type Override, type PluginUi, useGame, useKitPart, usePart, useWords } from '@ifloom/react'
+import { overridable, type Override, pluginKit, type PluginUi, useGame, useKitPart, usePart, usePlugin } from '@ifloom/react'
 
 /** The statuses plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const STATUSES_WORDS = {
@@ -18,6 +18,9 @@ export const STATUSES_WORDS = {
   turnLeft: '1 turn left',
   turnsLeft: '{n} turns left',
 } as const
+
+/** The statuses plugin's UI, declared once: its id and its words, for `usePlugin` and `statusesUi`. */
+const STATUSES = pluginKit('statuses', STATUSES_WORDS)
 
 declare module '@ifloom/react' {
   interface OverridableComponents {
@@ -37,13 +40,12 @@ declare module '@ifloom/react' {
 
 /** The statuses plugin's view: the active statuses, each with its turns left and what it does to the stats, or null in a game without the plugin. `StatusList` is drawn from it. */
 export function useStatuses(): StatusesView | null {
-  const { view } = useGame()
-  return (view.plugins.statuses as StatusesView | undefined) ?? null
+  return usePlugin(STATUSES).view ?? null
 }
 
 function StatusListImpl({ className, title }: { className?: string; title?: string | false }) {
   const { runner } = useGame()
-  const words = useWords(STATUSES_WORDS)
+  const { words } = usePlugin(STATUSES)
   const section = usePart('statuses', 'flex flex-col gap-2 text-sm', className)
   const heading = useKitPart('heading', 'statuses-title')
   const row = useKitPart('item', 'status')
@@ -98,8 +100,7 @@ export const StatusList = overridable('StatusList', StatusListImpl)
  * `statuses` panel, and the statuses' words.
  */
 export const statusesUi: PluginUi = {
-  id: 'statuses',
-  words: STATUSES_WORDS,
+  ...STATUSES,
   layout: { stats: [() => <StatusList />] },
   panels: { statuses: { component: () => <StatusList title={false} />, title: 'statuses' } },
 }

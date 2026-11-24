@@ -323,8 +323,6 @@ apply(state, game, { type: 'choose', id: 'chat' }).reason // 'She has a queue.'
 
 ```ts
 import { view } from '@ifloom/engine'
-import type { CastView } from '@ifloom/plugin-cast'
-import type { PlacesView } from '@ifloom/plugin-places'
 
 const screen = view(state, game)
 
@@ -335,8 +333,8 @@ screen.scene.beats            // [{ type: 'say', who: 'character', text: 'Mornin
 screen.scene.choices          // [{ id: 'chat', label: 'Ask how the bread is going',
                               //    disabled: 'She has a queue.', command: { type: 'choose', id: 'chat' } }, …]
 // Each plugin's part of the view is typed `unknown`, so cast it to the plugin's view type.
-;(screen.plugins.places as PlacesView).exits // where you can walk, each with its `command`, and `disabled` if you can't (none while a scene is open)
-;(screen.plugins.cast as CastView).present   // who is here, each with a Talk button (none while a scene is open)
+screen.plugins.places!.exits // where you can walk, each with its `command`, and `disabled` if you can't (none while a scene is open)
+screen.plugins.cast!.present   // who is here, each with a Talk button (none while a scene is open)
 screen.actions                // the room's buttons, then the game's, each with its `price` and `disabled` (none while a scene is open)
 screen.statsById.coins.text   // '5c'
 ```
@@ -382,7 +380,7 @@ Wait another period and it's evening. Ruth has gone for the day and the café ha
 ```ts
 state = apply(state, game, { type: 'action', id: 'wait' }).state   // evening
 view(state, game).when       // 'Day 2 · Tuesday evening · The corner café'
-;(view(state, game).plugins.cast as CastView).present // []
+view(state, game).plugins.cast!.present // []
 view(state, game).scene.body // 'Steam on the windows.\n\nThe counter is empty.'
 
 state = apply(state, game, places.go('high-street')).state
@@ -438,7 +436,6 @@ To see it in a browser, put steps 1 to 5 in `src/game.ts`, and make its default 
 ```ts tab="Plain JS" tab-group="framework"
 // src/main.ts
 import type { View } from '@ifloom/engine'
-import type { PlacesView } from '@ifloom/plugin-places'
 import { runner } from './runner.ts'
 import './styles.css'
 
@@ -457,7 +454,7 @@ function draw(view: View): void {
   for (const beat of view.scene.beats) if (beat.type === 'text') add('p', beat.text)
 
   // The scene's choices, or the room's buttons and its exits when no scene is open.
-  const exits = (view.plugins.places as PlacesView | undefined)?.exits ?? []
+  const exits = view.plugins.places?.exits ?? []
   for (const button of [...view.scene.choices, ...view.actions, ...exits]) {
     const element = add('button', 'label' in button ? button.label : `Go to ${button.name}`)
     element.disabled = Boolean(button.disabled)
@@ -487,7 +484,6 @@ createRoot(document.getElementById('root')!).render(<GameShell runner={runner} /
 <!-- src/App.vue -->
 <script setup lang="ts">
 import { computed, onUnmounted, shallowRef } from 'vue'
-import type { PlacesView } from '@ifloom/plugin-places'
 import { runner } from './runner.ts'
 
 // The view, replaced whole after every change of state.
@@ -495,7 +491,7 @@ const view = shallowRef(runner.view())
 onUnmounted(runner.subscribe((snapshot) => (view.value = snapshot.view)))
 
 // The room's exits, while no scene is open.
-const exits = computed(() => (view.value.plugins.places as PlacesView | undefined)?.exits ?? [])
+const exits = computed(() => view.value.plugins.places?.exits ?? [])
 </script>
 
 <template>
@@ -523,7 +519,6 @@ const exits = computed(() => (view.value.plugins.places as PlacesView | undefine
 ```svelte tab="Svelte" tab-group="framework"
 <!-- src/App.svelte -->
 <script lang="ts">
-  import type { PlacesView } from '@ifloom/plugin-places'
   import { runner } from './runner.ts'
 
   // The view, replaced whole after every change of state.
@@ -531,7 +526,7 @@ const exits = computed(() => (view.value.plugins.places as PlacesView | undefine
   $effect(() => runner.subscribe((snapshot) => (view = snapshot.view)))
 
   // The room's exits, while no scene is open.
-  const exits = $derived((view.plugins.places as PlacesView | undefined)?.exits ?? [])
+  const exits = $derived(view.plugins.places?.exits ?? [])
 </script>
 
 {#if view.when}<p>{view.when}</p>{/if}

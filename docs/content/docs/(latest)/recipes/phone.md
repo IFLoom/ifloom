@@ -259,11 +259,9 @@ With your own UI, read `view.plugins.devices` for the phone and its apps. The op
 // src/phone.ts
 import type { Runner, View } from '@ifloom/engine'
 import { devices, type DevicesView } from '@ifloom/plugin-devices'
-import type { MessagesView } from '@ifloom/plugin-messages'
-import type { FeedsView } from '@ifloom/plugin-feed'
 
 export function phone(view: View, runner: Runner): HTMLElement | null {
-  const device = (view.plugins.devices as DevicesView | undefined)?.devices.find((one) => one.id === 'phone')
+  const device = view.plugins.devices?.devices.find((one) => one.id === 'phone')
   if (!device) return null
   const screen = document.createElement('section')
   screen.className = 'phone'
@@ -283,12 +281,12 @@ export function phone(view: View, runner: Runner): HTMLElement | null {
   screen.appendChild(document.createElement('h2')).textContent = device.open.name
   for (const section of device.open.sections) {
     if (section.type === 'plugin' && section.plugin === 'messages') {
-      const channel = (view.plugins.messages as MessagesView).channels.find((one) => one.id === section.with.channel)
+      const channel = view.plugins.messages!.channels.find((one) => one.id === section.with.channel)
       for (const thread of channel?.threads ?? [])
         for (const message of thread.messages) screen.appendChild(document.createElement('p')).textContent = `${message.name}: ${message.text}`
     }
     if (section.type === 'plugin' && section.plugin === 'feed') {
-      const feed = (view.plugins.feed as FeedsView).feeds.find((one) => one.id === section.with.feed)
+      const feed = view.plugins.feed!.feeds.find((one) => one.id === section.with.feed)
       for (const post of feed?.posts ?? []) screen.appendChild(document.createElement('p')).textContent = `${post.name}: ${post.text} ♥ ${post.likes}`
     }
     if (section.type === 'list')
@@ -315,14 +313,12 @@ mountGame(module.build(), { plugins: [devicesUi, messagesUi, feedUi] })
 <script setup lang="ts">
 import { computed } from 'vue'
 import { devices, type DevicesView, type SectionView } from '@ifloom/plugin-devices'
-import type { MessagesView } from '@ifloom/plugin-messages'
-import type { FeedsView } from '@ifloom/plugin-feed'
 import { runner, view } from './runner.ts'
 
-const device = computed(() => (view.value.plugins.devices as DevicesView | undefined)?.devices.find((one) => one.id === 'phone'))
+const device = computed(() => view.value.plugins.devices?.devices.find((one) => one.id === 'phone'))
 const channel = (section: SectionView & { type: 'plugin' }) =>
-  (view.value.plugins.messages as MessagesView).channels.find((one) => one.id === section.with.channel)
-const feed = (section: SectionView & { type: 'plugin' }) => (view.value.plugins.feed as FeedsView).feeds.find((one) => one.id === section.with.feed)
+  view.value.plugins.messages!.channels.find((one) => one.id === section.with.channel)
+const feed = (section: SectionView & { type: 'plugin' }) => view.value.plugins.feed!.feeds.find((one) => one.id === section.with.feed)
 </script>
 
 <template>

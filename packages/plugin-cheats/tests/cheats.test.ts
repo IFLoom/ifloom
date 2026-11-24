@@ -71,7 +71,7 @@ function game(options: { pack?: Partial<Content>; plugins?: Plugin<any>[] } = {}
   })
 }
 
-const shown = (g: Game, state: GameState): CheatsView => cheats().viewIn(view(state, g))!
+const shown = (g: Game, state: GameState): CheatsView => view(state, g).plugins.cheats!
 
 describe('cheats', () => {
   it('runs a cheat’s effects through a lock, in a scene, with no turn passing', () => {

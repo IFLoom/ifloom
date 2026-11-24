@@ -291,7 +291,7 @@ import { places } from '@ifloom/plugin-places'
 
 declare const game: Game // the game above
 
-const laptop = (state: GameState) => (view(state, game).plugins.devices as DevicesView).devices[0]
+const laptop = (state: GameState) => view(state, game).plugins.devices!.devices[0]
 let state = startingState(game)
 
 laptop(state)

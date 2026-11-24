@@ -6,12 +6,29 @@
  */
 import type { ComponentProps } from 'react'
 import type { CastView } from '../index.ts'
-import { ChoiceButton, cn, overridable, type Override, Picture, type PluginUi, PROSE, Section, StatGauge, useGame, usePart, useWords } from '@ifloom/react'
+import {
+  ChoiceButton,
+  cn,
+  overridable,
+  type Override,
+  Picture,
+  pluginKit,
+  type PluginUi,
+  PROSE,
+  Section,
+  StatGauge,
+  useGame,
+  usePart,
+  usePlugin,
+} from '@ifloom/react'
 
 /** The cast plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const CAST_WORDS = {
   people: 'People',
 } as const
+
+/** The cast plugin's UI, declared once: its id and its words, for `usePlugin` and `castUi`. */
+const CAST = pluginKit('cast', CAST_WORDS)
 
 declare module '@ifloom/react' {
   interface OverridableComponents {
@@ -34,8 +51,7 @@ declare module '@ifloom/react' {
 
 /** The cast plugin's view: who is here (`present`, each with their buttons) and everyone met (`people`), or null in a game without the plugin. `PeopleHere` and `Relationships` are drawn from it. */
 export function usePeople(): CastView | null {
-  const { view } = useGame()
-  return (view.plugins.cast as CastView | undefined) ?? null
+  return usePlugin(CAST).view ?? null
 }
 
 function PeopleHereImpl({ className }: { className?: string }) {
@@ -130,7 +146,7 @@ export const Relationships = overridable('Relationships', RelationshipsImpl)
 
 /** The default layout's People section: a button that opens `Relationships` in a dialog. */
 export function PeopleSection() {
-  const words = useWords(CAST_WORDS)
+  const { words } = usePlugin(CAST)
   return (
     <Section id="people" title={words('people')} dialog>
       <Relationships />
@@ -145,8 +161,7 @@ export function PeopleSection() {
  * `people` panel, and the cast's words.
  */
 export const castUi: PluginUi = {
-  id: 'cast',
-  words: CAST_WORDS,
+  ...CAST,
   layout: { sidebar: [PeopleSection], story: [() => <PeopleHere />] },
   panels: { people: { component: () => <Relationships />, title: 'people' } },
 }

@@ -3,9 +3,9 @@
  * `@ifloom/react`. List `shopUi` in the game's `plugins` to have the `shop`
  * panel drawn as a vendor's counter, or draw it yourself from `useShop`.
  */
-import type { GameState, Result } from '@ifloom/engine'
-import { ChoiceButton, overridable, type Override, PartDialog, type PluginUi, useGame, useKitPart, usePart, useWords } from '@ifloom/react'
-import type { ShopView, VendorView } from '../index.ts'
+import type { EntityRef, GameState, Result } from '@ifloom/engine'
+import { ChoiceButton, overridable, type Override, PartDialog, pluginKit, type PluginUi, useKitPart, usePart, usePlugin } from '@ifloom/react'
+import { shop, type ShopView, type VendorView } from '../index.ts'
 
 /** The shop's words, in English. A game rewords any with `ui.<key>` in its strings: `{ 'ui.buy': 'Get' }`. */
 export const SHOP_WORDS = {
@@ -16,6 +16,9 @@ export const SHOP_WORDS = {
   percentOff: '{percent}% off',
   noGoods: 'Nothing for sale.',
 } as const
+
+/** The shop's UI, declared once: its id and its words, for `usePlugin` and `shopUi`. */
+const SHOP = pluginKit('shop', SHOP_WORDS)
 
 declare module '@ifloom/react' {
   interface OverridableComponents {
@@ -45,29 +48,27 @@ export type ShopControls = ShopView & {
   /** The vendors at the player's location (every vendor, in a game without places): what a layout of your own can show where the player is. */
   here: VendorView[]
   /** Buy `count` (1 if left out) of a thing, by its reference: sends `shop/buy`, refused with its reason as the buy button says. */
-  buy: (vendor: string, entity: string, count?: number) => Result<GameState>
+  buy: (vendor: string, entity: EntityRef, count?: number) => Result<GameState>
   /** Sell `count` (1 if left out) of a thing back: sends `shop/sell`. */
-  sell: (vendor: string, entity: string, count?: number) => Result<GameState>
+  sell: (vendor: string, entity: EntityRef, count?: number) => Result<GameState>
 }
 
 /** The shop plugin's view with its commands, or null in a game without the plugin. `ShopDialog`, `ShopCounter` and the `shop` panel are drawn from it. */
 export function useShop(): ShopControls | null {
-  const { view, send } = useGame()
-  const shop = view.plugins.shop as ShopView | undefined
-  if (!shop) return null
-  const args = (vendor: string, entity: string, count?: number) => (count === undefined ? { vendor, entity } : { vendor, entity, count })
+  const { view, send } = usePlugin(SHOP)
+  if (!view) return null
   return {
-    ...shop,
-    here: shop.vendors.filter((vendor) => vendor.here),
-    buy: (vendor, entity, count) => send({ type: 'custom', name: 'shop/buy', with: args(vendor, entity, count) }),
-    sell: (vendor, entity, count) => send({ type: 'custom', name: 'shop/sell', with: args(vendor, entity, count) }),
+    ...view,
+    here: view.vendors.filter((vendor) => vendor.here),
+    buy: (vendor, entity, count) => send(shop.buy(vendor, entity, count)),
+    sell: (vendor, entity, count) => send(shop.sell(vendor, entity, count)),
   }
 }
 
 export type ShopCounterProps = { vendor: VendorView; className?: string }
 
 function ShopCounterImpl({ vendor, className }: ShopCounterProps) {
-  const words = useWords(SHOP_WORDS)
+  const { words } = usePlugin(SHOP)
   const box = usePart('shop', 'flex flex-col gap-3', className)
   const closed = usePart('shop-closed', 'text-sm text-muted-foreground')
   const empty = usePart('shop-empty', 'text-sm text-muted-foreground')
@@ -138,14 +139,9 @@ function ShopDialogImpl({ vendorId, onClose }: ShopDialogProps) {
 /** The vendor with this id in a dialog, titled with its name and drawn as a `ShopCounter`. Closed while `vendorId` is null or names no vendor. */
 export const ShopDialog = overridable('ShopDialog', ShopDialogImpl)
 
-/** The vendor whose counter the open `shop` panel shows: the view's `panel`. */
-function counterIn(view: { plugins: Record<string, unknown> }): VendorView | null {
-  return (view.plugins.shop as ShopView | undefined)?.panel ?? null
-}
-
+/** The `shop` panel: the vendor whose counter it shows, the view's `panel`. */
 function ShopPanel() {
-  const { view } = useGame()
-  const vendor = counterIn(view)
+  const vendor = usePlugin(SHOP).view?.panel
   return vendor ? <ShopCounter vendor={vendor} /> : null
 }
 
@@ -156,9 +152,8 @@ function ShopPanel() {
  * nothing in the layout by itself: content opens a vendor.
  */
 export const shopUi: PluginUi = {
-  id: 'shop',
-  words: SHOP_WORDS,
+  ...SHOP,
   panels: {
-    shop: { component: ShopPanel, title: (_data, view) => counterIn(view)?.name ?? '' },
+    shop: { component: ShopPanel, title: (_data, view) => view.plugins.shop?.panel?.name ?? '' },
   },
 }

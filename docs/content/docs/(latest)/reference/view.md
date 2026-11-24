@@ -163,18 +163,16 @@ Otherwise `actions` is the game's own [`rules.actions`](/docs/reference/rules#ga
 The engine keeps no places, so the view has no location or exits of its own. With the [places plugin](/docs/plugins/places), the room is at `view.plugins.places`, a [`PlacesView`](/docs/plugins/places#placesview), with its `location` and its `exits`. Each exit is an [`ExitView`](/docs/plugins/places#exitview) carrying the command that takes it. The room's own actions are the plugin's buttons, so they come first in `actions`. Its name is in `when`, and its description is the picture.
 
 ```ts
-import type { PlacesView } from '@ifloom/plugin-places'
 
-const room = shown.plugins.places as PlacesView | undefined
+const room = shown.plugins.places
 for (const exit of room?.exits ?? []) addButton(exit.label, exit.disabled, exit.command)
 ```
 
 The engine keeps no characters either, so the view has no people of its own. With the [cast plugin](/docs/plugins/cast), who's in the room is at `view.plugins.cast`, a [`CastView`](/docs/plugins/cast#castview). Each of its `present` is a [`PersonView`](/docs/plugins/cast#personview) with a Talk button in its `actions`. Like the view's `actions`, these are empty while a scene is open or a lock stops everything.
 
 ```ts
-import type { CastView } from '@ifloom/plugin-cast'
 
-const people = (shown.plugins.cast as CastView | undefined)?.present ?? []
+const people = shown.plugins.cast?.present ?? []
 for (const person of people) for (const talk of person.actions) addButton(`${person.name}: ${talk.label}`, talk.disabled, talk.command)
 ```
 

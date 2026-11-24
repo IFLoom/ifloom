@@ -318,19 +318,18 @@ The game's achievements, merged from its content and packs: `game.data.achieveme
 
 ### Reading the view yourself
 
-The plugin's view is at `view.plugins.achievements`, typed through the factory's [`viewIn`](/docs/reference/plugins#defineplugin). For a state the runner isn't playing, such as a save's preview, build its view with the profile's `achievements` namespace, an [`AchievementsProfile`](#achievementsprofile), so what was earned in other saves shows as earned:
+The plugin's view is at `view.plugins.achievements`, typed as an `AchievementsView` once your game imports the plugin, since the plugin declares it in [`ViewRegistry`](/docs/reference/plugins#typed-calls-queries-and-views). For a state the runner isn't playing, such as a save's preview, build its view with the profile's `achievements` namespace, an [`AchievementsProfile`](#achievementsprofile), so what was earned in other saves shows as earned:
 
 ```ts
 import { view, type Game, type GameState, type Runner } from '@ifloom/engine'
-import { achievements } from '@ifloom/plugin-achievements'
+import '@ifloom/plugin-achievements'
 
 declare const runner: Runner
 declare const game: Game
 declare const state: GameState
 
-const plugin = achievements()
 const stored = await runner.profile?.get('achievements')
-const ever = plugin.viewIn(view(state, game, { profile: { achievements: stored } }))
+const ever = view(state, game, { profile: { achievements: stored } }).plugins.achievements
 ```
 
 Each achievement the profile holds shows as earned, with `earnedOn` `null` unless this save earned it too. For the current game, read `runner.view()`.

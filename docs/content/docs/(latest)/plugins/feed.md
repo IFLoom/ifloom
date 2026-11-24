@@ -260,7 +260,7 @@ import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { feed, type FeedsView } from '@ifloom/plugin-feed'
 
-const feeds = (state: GameState) => view(state, game).plugins.feed as FeedsView
+const feeds = (state: GameState) => view(state, game).plugins.feed!
 let state = startingState(game)
 
 // To the park, and post a photo of the river

@@ -126,14 +126,14 @@ To draw messages or a feed your own way, register a renderer under `messages` or
 
 ## A plugin's view anywhere
 
-Plugin sections only work inside apps. To show a plugin's view anywhere else, such as the loyalty card in the sidebar, read it from the view in a component of your own and put that in the [layout](/docs/react#layouts):
+Plugin sections only work inside apps. To show a plugin's view anywhere else, such as the loyalty card in the sidebar, read it from the view in a component of your own and put that in the [layout](/docs/react#layouts). The loyalty plugin declares its view in [`ViewRegistry`](/docs/reference/plugins#typed-calls-queries-and-views), so `view.plugins.loyalty` comes typed:
 
 ```tsx
 import { Badge, Sidebar, Title, useGame } from '@ifloom/react'
 
 function StampCount() {
   const { view } = useGame()
-  const card = view.plugins.loyalty as { stamps: number } | undefined
+  const card = view.plugins.loyalty
   return card ? <Badge variant="outline">{card.stamps} stamps</Badge> : null
 }
 

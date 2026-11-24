@@ -452,8 +452,8 @@ function useShop(): ShopControls | null
 
 type ShopControls = ShopView & {
   here: VendorView[]
-  buy: (vendor: string, entity: string, count?: number) => Result<GameState>
-  sell: (vendor: string, entity: string, count?: number) => Result<GameState>
+  buy: (vendor: string, entity: EntityRef, count?: number) => Result<GameState>
+  sell: (vendor: string, entity: EntityRef, count?: number) => Result<GameState>
 }
 ```
 

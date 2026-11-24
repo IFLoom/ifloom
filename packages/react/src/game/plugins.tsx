@@ -6,10 +6,10 @@
  * `view.plugins.<id>` or the plugin's hooks.
  */
 import { Fragment, type ComponentType, type ReactNode } from 'react'
-import type { Game, View } from '@ifloom/engine'
+import type { CommandRef, Game, GameState, Result, View, ViewRegistry } from '@ifloom/engine'
 import { useGame, type InlineComponents, type PanelComponent, type PluginSectionComponent } from './context.tsx'
 import type { Components } from './overrides.tsx'
-import type { Words } from './words.ts'
+import { uiSay, type Say, type UiStringKey, type Words } from './words.ts'
 
 /**
  * Where the layout puts what plugin UIs bring, in the order of the game's
@@ -75,6 +75,66 @@ export type PluginUi = {
   components?: Components
   /** Wraps the game, for state the module keeps beside the runner, such as codes being entered. */
   provider?: ComponentType<{ children: ReactNode }>
+}
+
+/**
+ * A plugin's slice of the view, by its id: the type its engine side declares
+ * in the engine's `ViewRegistry`, or `unknown` for a plugin that declares none.
+ */
+export type PluginViewOf<Id extends string> = Id extends keyof ViewRegistry ? ViewRegistry[Id] : unknown
+
+/**
+ * One plugin's UI, declared once: its id and its words. Spread it into the
+ * module's `PluginUi`, and hand it to `usePlugin` in each component, so the
+ * words are written in one place and the view comes typed.
+ */
+export type PluginKit<Id extends string = string, W extends Words = Words> = {
+  /** The plugin's id, as its engine side names it. */
+  readonly id: Id
+  /** Its words in English, by key. A game rewords any with `ui.<key>` in its strings. */
+  readonly words: W
+}
+
+/**
+ * Declare a plugin's UI once, by the plugin's id and its words, for
+ * `usePlugin` and the module's `PluginUi`:
+ *
+ *   const SHOP = pluginKit('shop', SHOP_WORDS)
+ *   export const shopUi: PluginUi = { ...SHOP, panels: { ... } }
+ *   // in a component: const { view, words, send } = usePlugin(SHOP)
+ */
+export function pluginKit<const Id extends string, const W extends Words = Record<never, string>>(id: Id, words?: W): PluginKit<Id, W> {
+  return { id, words: words ?? ({} as W) }
+}
+
+/** What `usePlugin` gives a component: the plugin's view, its words and a way to send its commands. */
+export type PluginControls<Id extends string, W extends Words> = {
+  /** The plugin's slice of the view, `view.plugins[id]`, typed; undefined in a game without the plugin. */
+  view: PluginViewOf<Id> | undefined
+  /** Say one of the plugin's words, or the UI's, by key: the game's `ui.<key>` over the English. */
+  words: Say<(keyof W & string) | UiStringKey>
+  /**
+   * Run a command, as the plugin's helpers write it: `send(shop.buy(vendor,
+   * entity))`, or a button's `command` from the view. Returns what
+   * `runner.apply` returned, so a caller can show a refusal.
+   */
+  send: (command: CommandRef) => Result<GameState>
+}
+
+/**
+ * A plugin's view, words and commands, for a component of its UI: what
+ * `pluginKit` declared, bound to the game in context. The view is typed by
+ * the plugin's `ViewRegistry` entry, the words are its table with the game's
+ * rewording over them, and `send` takes the commands its helpers write.
+ */
+export function usePlugin<Id extends string, W extends Words>(kit: PluginKit<Id, W>): PluginControls<Id, W> {
+  const { runner, view, send } = useGame()
+  const plugins: Readonly<Record<string, unknown>> = view.plugins
+  return {
+    view: plugins[kit.id] as PluginViewOf<Id> | undefined,
+    words: (key, vars) => uiSay(runner.game, key, vars, kit.words),
+    send,
+  }
 }
 
 /** The modules that apply to a game: those whose plugin it has, in the order given, each id once. */

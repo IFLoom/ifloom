@@ -5,15 +5,18 @@
  * it yourself from `useWardrobe`.
  */
 import type { ComponentProps } from 'react'
-import type { GameState, RenderedChoice, Result } from '@ifloom/engine'
-import type { WardrobeView } from '../index.ts'
-import { buttonVariants, overridable, type Override, type PluginUi, Section, useGame, useKitPart, usePart, useWords } from '@ifloom/react'
+import type { EntityRef, GameState, RenderedChoice, Result } from '@ifloom/engine'
+import { wardrobe, type WardrobeView } from '../index.ts'
+import { buttonVariants, overridable, type Override, pluginKit, type PluginUi, Section, useKitPart, usePart, usePlugin } from '@ifloom/react'
 
 /** The wardrobe plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const WARDROBE_WORDS = {
   nothingOn: 'Nothing',
   wardrobe: 'Wearing',
 } as const
+
+/** The wardrobe plugin's UI, declared once: its id and its words, for `usePlugin` and `wardrobeUi`. */
+const WARDROBE = pluginKit('wardrobe', WARDROBE_WORDS)
 
 declare module '@ifloom/react' {
   interface OverridableComponents {
@@ -39,30 +42,28 @@ export type WardrobeControls = Omit<WardrobeView, 'slots'> & {
   /** Every slot, in order, with what is in it and its buttons. */
   slots: WardrobeSlotControls[]
   /** Put on a thing you hold, by its reference (`'clothing:scarf'`): sends `wardrobe/wear`. */
-  wear: (entity: string) => Result<GameState>
+  wear: (entity: EntityRef) => Result<GameState>
   /** Empty a slot by its id: sends `wardrobe/takeOff`. */
   takeOff: (slot: string) => Result<GameState>
 }
 
 /** The wardrobe plugin's view with its buttons and commands, or null in a game without the plugin. `WardrobeCard` is drawn from it. */
 export function useWardrobe(): WardrobeControls | null {
-  const { view, send } = useGame()
-  const data = view.plugins.wardrobe as WardrobeView | undefined
-  if (!data) return null
+  const { view, send } = usePlugin(WARDROBE)
+  if (!view) return null
   return {
-    ...data,
-    slots: data.slots.map((slot) => ({
+    ...view,
+    slots: view.slots.map((slot) => ({
       ...slot,
-      wear: data.spare.filter((entry) => entry.slot === slot.id).map((entry) => entry.wear),
+      wear: view.spare.filter((entry) => entry.slot === slot.id).map((entry) => entry.wear),
     })),
-    wear: (entity) => send({ type: 'custom', name: 'wardrobe/wear', with: { id: entity } }),
-    takeOff: (slot) => send({ type: 'custom', name: 'wardrobe/takeOff', with: { id: slot } }),
+    wear: (entity) => send(wardrobe.wear(entity)),
+    takeOff: (slot) => send(wardrobe.takeOff(slot)),
   }
 }
 
 function WardrobeCardImpl({ className, title: titleText }: { className?: string; title?: string | false }) {
-  const { send } = useGame()
-  const words = useWords(WARDROBE_WORDS)
+  const { words, send } = usePlugin(WARDROBE)
   const section = usePart('wardrobe', 'flex flex-col gap-2 text-sm', className)
   const title = useKitPart('heading', 'wardrobe-title')
   const row = usePart('wardrobe-slot', 'flex flex-wrap items-center gap-2')
@@ -105,7 +106,7 @@ export const WardrobeCard = overridable('WardrobeCard', WardrobeCardImpl)
  * `<Sidebar>` to keep what the player wears in view.
  */
 export function WardrobeSection() {
-  const words = useWords(WARDROBE_WORDS)
+  const { words } = usePlugin(WARDROBE)
   return (
     <Section id="wardrobe" title={words('wardrobe')} collapsible>
       <WardrobeCard title={false} />
@@ -121,7 +122,6 @@ export function WardrobeSection() {
  * `WardrobeSection` there.
  */
 export const wardrobeUi: PluginUi = {
-  id: 'wardrobe',
-  words: WARDROBE_WORDS,
+  ...WARDROBE,
   panels: { wardrobe: { component: () => <WardrobeCard title={false} />, title: 'wardrobe' } },
 }

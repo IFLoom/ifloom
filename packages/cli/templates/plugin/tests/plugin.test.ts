@@ -17,7 +17,7 @@ const town: Content = {
 /** The town with these plugins, failing on any problem the content checker finds. */
 const game = (plugins: Plugin[] = [__camel__()]): Game => loadChecked([town], { id: '__id__-town', title: '{{title}} town', plugins })
 
-const shown = (g: Game, state = freshState(g)) => __camel__().viewIn(view(state, g))!
+const shown = (g: Game, state = freshState(g)) => view(state, g).plugins['__id__']!
 
 // TODO: replace these with the plugin's real behaviour.
 describe('__id__', () => {

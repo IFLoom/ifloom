@@ -5,9 +5,12 @@
  * draw them yourself from `usePlaces`.
  */
 import type { ComponentProps } from 'react'
-import type { GameState, Result } from '@ifloom/engine'
-import type { ExitView, PlacesView } from '../index.ts'
-import { buttonVariants, cn, overridable, type Override, type PluginUi, PROSE, LayeredPicture, useGame, usePart } from '@ifloom/react'
+import type { EntityRef, GameState, Result } from '@ifloom/engine'
+import { places, type PlacesView } from '../index.ts'
+import { buttonVariants, cn, LayeredPicture, overridable, type Override, pluginKit, type PluginUi, PROSE, usePart, usePlugin } from '@ifloom/react'
+
+/** The places plugin's UI, declared once: its id, for `usePlugin` and `placesUi`. */
+const PLACES = pluginKit('places')
 
 declare module '@ifloom/react' {
   interface OverridableComponents {
@@ -32,29 +35,22 @@ export type PlacesControls = PlacesView & {
   /** Take an exit by the id of the place it leads to: sends that exit's command. Refused, as any command is, when it's greyed out or not there. */
   go: (exit: string) => Result<GameState>
   /** Pick up one of a thing lying here, by its reference (`'item:paper'`): sends its `pickUp` command. */
-  pickUp: (thing: string) => Result<GameState>
+  pickUp: (thing: EntityRef) => Result<GameState>
 }
 
 /** The places plugin's view with a way to travel, or null in a game without the plugin. `LocationCard` is drawn from it. */
 export function usePlaces(): PlacesControls | null {
-  const { view, send } = useGame()
-  const places = view.plugins.places as PlacesView | undefined
-  if (!places) return null
+  const { view, send } = usePlugin(PLACES)
+  if (!view) return null
   return {
-    ...places,
-    go: (exit) => {
-      const found: ExitView | undefined = places.exits.find((entry) => entry.id === exit)
-      return found ? send(found.command) : send({ type: 'custom', name: 'places/go', with: { id: exit } })
-    },
-    pickUp: (thing) => {
-      const found = places.things.find((entry) => entry.ref === thing)
-      return found ? send(found.pickUp.command) : send({ type: 'custom', name: 'places/pickUp', with: { id: thing } })
-    },
+    ...view,
+    go: (exit) => send(view.exits.find((entry) => entry.id === exit)?.command ?? places.go(exit)),
+    pickUp: (thing) => send(view.things.find((entry) => entry.ref === thing)?.pickUp.command ?? places.pickUp(thing)),
   }
 }
 
 function LocationCardImpl() {
-  const places = usePlaces()
+  const here = usePlaces()
   const section = usePart('location', 'flex flex-col gap-2')
   const name = usePart('location-name', 'font-heading font-semibold')
   const tag = usePart('location-text', 'text-xs text-muted-foreground')
@@ -63,9 +59,9 @@ function LocationCardImpl() {
   const thingName = usePart('location-thing-name', 'flex-1')
   const pick = usePart('location-thing-pick', buttonVariants({ size: 'sm', variant: 'outline' }))
   // A game without the places plugin has nothing to show here.
-  const location = places?.location
+  const location = here?.location
   if (!location) return null
-  const things = places.things ?? []
+  const things = here.things ?? []
   return (
     <section {...section}>
       {location.picture?.layers.length ? <LayeredPicture picture={location.picture} /> : null}
@@ -80,7 +76,7 @@ function LocationCardImpl() {
                   {thing.name}
                   {thing.count > 1 ? ` ×${thing.count}` : ''}
                 </span>
-                <button {...pick} disabled={Boolean(thing.pickUp.disabled)} title={thing.pickUp.disabled} onClick={() => places.pickUp(thing.ref)}>
+                <button {...pick} disabled={Boolean(thing.pickUp.disabled)} title={thing.pickUp.disabled} onClick={() => here.pickUp(thing.ref)}>
                   {thing.pickUp.label}
                 </button>
               </li>
@@ -100,11 +96,11 @@ function LocationCardImpl() {
 export const LocationCard = overridable('LocationCard', LocationCardImpl)
 
 function ExitsImpl({ className }: { className?: string }) {
-  const places = usePlaces()
+  const here = usePlaces()
   const list = usePart('exits', cn(PROSE, 'flex flex-wrap gap-1.5'), className)
   const button = usePart('exit', buttonVariants({ size: 'sm', variant: 'outline' }))
-  const exits = places?.exits ?? []
-  if (!places?.location || !exits.length) return null
+  const exits = here?.exits ?? []
+  if (!here?.location || !exits.length) return null
   return (
     <nav {...list}>
       {exits.map((exit) => (
@@ -114,7 +110,7 @@ function ExitsImpl({ className }: { className?: string }) {
           {...button}
           disabled={Boolean(exit.disabled)}
           title={exit.disabled ?? exit.warning}
-          onClick={() => places.go(exit.id)}
+          onClick={() => here.go(exit.id)}
           data-exit={exit.id}
         >
           {exit.label}
@@ -133,6 +129,6 @@ export const Exits = overridable('Exits', ExitsImpl)
  * the room's actions.
  */
 export const placesUi: PluginUi = {
-  id: 'places',
+  ...PLACES,
   layout: { room: [() => <LocationCard />, () => <Exits />] },
 }

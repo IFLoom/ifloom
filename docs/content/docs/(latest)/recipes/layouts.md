@@ -95,9 +95,8 @@ Some things are looked at now and then, not all the time: the quest log, the peo
 
 ```ts tab="Plain JS" tab-group="framework"
 // A button that opens a <dialog> with the quests' titles.
-import type { QuestsView } from '@ifloom/plugin-quests'
 
-const quests = view.plugins.quests as QuestsView | undefined
+const quests = view.plugins.quests
 if (quests) {
   const dialog = add(sidebar, 'dialog')
   for (const quest of quests.active) add(dialog, 'p', quest.title)
@@ -129,10 +128,9 @@ function JournalSections() {
 ```vue tab="Vue" tab-group="framework"
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import type { QuestsView } from '@ifloom/plugin-quests'
 import { view } from './runner.ts'
 
-const quests = computed(() => view.value.plugins.quests as QuestsView | undefined)
+const quests = computed(() => view.value.plugins.quests)
 const dialog = ref<HTMLDialogElement | null>(null)
 </script>
 
@@ -149,10 +147,9 @@ const dialog = ref<HTMLDialogElement | null>(null)
 
 ```svelte tab="Svelte" tab-group="framework"
 <script lang="ts">
-  import type { QuestsView } from '@ifloom/plugin-quests'
   import { view } from './runner.ts'
 
-  const quests = $derived($view.plugins.quests as QuestsView | undefined)
+  const quests = $derived($view.plugins.quests)
   let dialog: HTMLDialogElement | undefined = $state()
 </script>
 
@@ -234,7 +231,7 @@ const atHome = computed(() => view.value && holds(runner.state, runner.game, pla
 You can also decide in plain code, from a hook. This draws the exits as a list only outdoors, using the [places](/docs/plugins/places) plugin's view through [`usePlaces`](/docs/plugins/places#useplaces):
 
 ```ts tab="Plain JS" tab-group="framework"
-const places = view.plugins.places as PlacesView | undefined
+const places = view.plugins.places
 if (places?.location?.tags.includes('outdoors')) {
   const list = add(story, 'ul')
   for (const exit of places.exits) add(add(list, 'li'), 'button', exit.label).onclick = () => runner.apply(exit.command)
@@ -262,10 +259,9 @@ function StreetMap() {
 ```vue tab="Vue" tab-group="framework"
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { PlacesView } from '@ifloom/plugin-places'
 import { runner, view } from './runner.ts'
 
-const places = computed(() => view.value.plugins.places as PlacesView | undefined)
+const places = computed(() => view.value.plugins.places)
 </script>
 
 <template>
@@ -279,10 +275,9 @@ const places = computed(() => view.value.plugins.places as PlacesView | undefine
 
 ```svelte tab="Svelte" tab-group="framework"
 <script lang="ts">
-  import type { PlacesView } from '@ifloom/plugin-places'
   import { runner, view } from './runner.ts'
 
-  const places = $derived($view.plugins.places as PlacesView | undefined)
+  const places = $derived($view.plugins.places)
 </script>
 
 {#if places?.location?.tags.includes('outdoors')}

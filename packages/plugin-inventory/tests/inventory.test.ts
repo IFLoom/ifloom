@@ -35,7 +35,7 @@ function game(extra: Content[] = [], plugins: Plugin[] = [inventory()]): Game {
   return loadChecked([picnic, ...extra], { id: 'picnic', title: 'Picnic', plugins })
 }
 
-const shown = (g: Game, state: GameState) => inventory().viewIn(view(state, g))!
+const shown = (g: Game, state: GameState) => view(state, g).plugins.inventory!
 describe('the inventory alone', () => {
   it('shows what you hold, with a button for each thing that does something', () => {
     const g = game()

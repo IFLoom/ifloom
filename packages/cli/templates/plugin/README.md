@@ -28,7 +28,7 @@ const { game } = loadGame([town], { id: 'my-game', title: 'My Game', plugins: [_
 | `__id__/mark` (`__camel__.mark`) | effect | `{ '__id__/mark': { entry } }` marks the entry. |
 | `__id__/mark` (`__camel__.markCommand`) | command | `{ '__id__/mark': { id } }` marks the entry `id`, or says why not. |
 
-A UI reads `view.plugins.__id__`, typed as `__Pascal__View`, or `__camel__().viewIn(view)`.
+A UI reads `view.plugins.__id__`, typed as `__Pascal__View` through the `ViewRegistry` entry in `src/index.ts`.
 
 ## Its React UI
 
@@ -41,7 +41,7 @@ import { __camel__Ui } from '{{name}}/react'
 mountGame(game, { plugins: [__camel__Ui] })
 ```
 
-It puts the entries in the side column. A game can draw them itself instead, from `use__Pascal__()` or `view.plugins.__id__`, and a game with another UI never loads `{{name}}/react`: React and `@ifloom/react` are optional peers. It's built only from `@ifloom/react`'s exports and styled by its classes, parts and theme tokens, so it looks right in every preset with no stylesheet. [Plugin UIs and the kit](https://ifloom.dev/docs/react/kit) explains each part.
+It puts the entries in the side column. A game can draw them itself instead, from `use__Pascal__()` or `view.plugins.__id__`, and a game with another UI never loads `{{name}}/react`: React and `@ifloom/react` are optional peers. It's built only from `@ifloom/react`'s exports, declared once with `pluginKit` and read with `usePlugin`, and styled by the kit's parts and theme tokens, so it looks right in every preset with no stylesheet. [Plugin UIs and the kit](https://ifloom.dev/docs/react/kit) explains each part.
 
 ## What it exports
 

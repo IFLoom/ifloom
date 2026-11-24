@@ -10,6 +10,13 @@ import { saves } from '../../src/save.ts'
 import { memoryDriver } from '../../src/drivers.ts'
 import type { Content } from '../../src/loader.ts'
 import { problemsOf } from '../fixtures/checked.ts'
+
+// The shells' view, typed in every view as a plugin's own declares it.
+declare module '../../src/calls.ts' {
+  interface ViewRegistry {
+    shells: { count: number }
+  }
+}
 import { fillTokens } from '../../src/prose.ts'
 import type { Game } from '../../src/game.ts'
 import { begin, fixture, loadWhole } from '../fixtures/town.ts'
@@ -64,14 +71,14 @@ function withShells(): Game {
 }
 
 describe('plugins', () => {
-  it('read their own slice of a view back, typed', () => {
+  it('put their slice in the view, typed by ViewRegistry', () => {
     const game = withShells()
-    const shown = shells.viewIn(view(begin(game), game))
+    const shown = view(begin(game), game).plugins.shells
     expect(shown).toEqual({ count: 0 })
     // The type comes with it: a number, not unknown.
     expect(shown!.count + 1).toBe(1)
     const without = fixture()
-    expect(shells.viewIn(view(begin(without), without))).toBeUndefined()
+    expect(view(begin(without), without).plugins.shells).toBeUndefined()
   })
 
   it('start with their own state in a new game', () => {

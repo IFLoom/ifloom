@@ -14,13 +14,13 @@ import {
   PageHeading,
   PartDialog,
   Picture,
+  pluginKit,
   type PluginUi,
-  useGame,
   useKitPart,
   usePage,
   usePageParts,
   usePart,
-  useWords,
+  usePlugin,
 } from '@ifloom/react'
 
 /** The achievements plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
@@ -31,6 +31,9 @@ export const ACHIEVEMENTS_WORDS = {
   achievementsCount: '{earned} of {total}',
   noAchievements: 'No achievements yet.',
 } as const
+
+/** The achievements plugin's UI, declared once: its id and its words, for `usePlugin` and `achievementsUi`. */
+const ACHIEVEMENTS = pluginKit('achievements', ACHIEVEMENTS_WORDS)
 
 declare module '@ifloom/react' {
   interface OverridableComponents {
@@ -62,12 +65,11 @@ declare module '@ifloom/react' {
  * `AchievementList` is drawn from it.
  */
 export function useAchievements(): AchievementsView | null {
-  const { view } = useGame()
-  return (view.plugins.achievements as AchievementsView | undefined) ?? null
+  return usePlugin(ACHIEVEMENTS).view ?? null
 }
 
 function AchievementListImpl({ className, title }: { className?: string; title?: string | false }) {
-  const words = useWords(ACHIEVEMENTS_WORDS)
+  const { words } = usePlugin(ACHIEVEMENTS)
   const list = usePart('achievements', 'flex flex-col gap-3', className)
   const heading = useKitPart('heading', 'achievements-title')
   const count = usePart('achievements-count', 'text-sm font-normal text-muted-foreground tabular-nums')
@@ -147,7 +149,7 @@ function AchievementListImpl({ className, title }: { className?: string; title?:
 export const AchievementList = overridable('AchievementList', AchievementListImpl)
 
 function AchievementsPageImpl({ className }: { className?: string }) {
-  const words = useWords(ACHIEVEMENTS_WORDS)
+  const { words } = usePlugin(ACHIEVEMENTS)
   const data = useAchievements()
   const section = usePageParts(className, 'achievements-page')
   return (
@@ -165,7 +167,7 @@ function AchievementsPageImpl({ className }: { className?: string }) {
 export const AchievementsPage = overridable('AchievementsPage', AchievementsPageImpl)
 
 function AchievementsButtonImpl({ className }: { className?: string }) {
-  const words = useWords(ACHIEVEMENTS_WORDS)
+  const { words } = usePlugin(ACHIEVEMENTS)
   const pages = usePage()
   const data = useAchievements()
   const [open, setOpen] = useState(false)
@@ -205,8 +207,7 @@ export const AchievementsButton = overridable('AchievementsButton', Achievements
  * dialog with pages on, leave the page out: `{ ...achievementsUi, pages: undefined }`.
  */
 export const achievementsUi: PluginUi = {
-  id: 'achievements',
-  words: ACHIEVEMENTS_WORDS,
+  ...ACHIEVEMENTS,
   layout: { sidebar: [() => <AchievementsButton />] },
   pages: { achievements: { label: 'achievements', component: () => <AchievementsPage /> } },
   panels: { achievements: { component: () => <AchievementList title={false} />, title: 'achievements' } },

@@ -187,7 +187,7 @@ These are the plugin's lines in the [strings table](/docs/reference/strings#plug
 
 `view(state, game).plugins.debug` is a `DebugView`, with what a debugger wants on screen.
 
-Its [React UI](#drawing-it) draws it with [`DebugCard`](#debugcard), and [`useDebug`](#usedebug) gives the same data and the debug commands with no markup.
+Its [React UI](#drawing-it) draws it with [`DebugCard`](#debugcard), and [`useDebug`](#usedebug) gives the same data with no markup.
 
 ### DebugView
 
@@ -291,11 +291,10 @@ type DebugControls = DebugView & {
   canRedo: boolean
   undo: () => void
   redo: () => void
-  run: (name: string, args?: Record<string, unknown>) => Result<GameState>
 }
 ```
 
-The [debug](/docs/plugins/debug) plugin's view (the locks on, the triggers fired and the seed) with what the debug card shows, or `null` in a game built without the plugin. `greyed` is every greyed-out action, choice and person's button on screen. `run(name, args)` sends `debug/<name>`, so `run('stat', { stat: 'coins', to: 50 })` sets a stat. [`DebugCard`](#debugcard) is drawn from it.
+The [debug](/docs/plugins/debug) plugin's view (the locks on, the triggers fired and the seed) with what the debug card shows, or `null` in a game built without the plugin. `greyed` is every greyed-out action, choice and person's button on screen. The debug commands are the plugin's helpers: send one with [`useGame`](/docs/react/components#usegame)'s `send`, so `send(debug.stat('coins', 50))` sets a stat. [`DebugCard`](#debugcard) is drawn from it.
 
 ## Gotchas
 

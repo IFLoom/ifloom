@@ -4,13 +4,14 @@
  * to have the debug card at the end of the story in a game built with the
  * debug plugin, or draw it yourself from `useDebug`.
  */
-import type { Command, GameState, RenderedChoice, Result } from '@ifloom/engine'
-import type { DebugView } from '../index.ts'
+import type { Command, CommandRef, GameState, RenderedChoice } from '@ifloom/engine'
+import { debug, type DebugView } from '../index.ts'
 import { useState, type SyntheticEvent, type ComponentProps } from 'react'
 import {
   buttonVariants,
   overridable,
   type Override,
+  pluginKit,
   type PluginUi,
   ScrollArea,
   Tabs,
@@ -19,7 +20,7 @@ import {
   TabsTrigger,
   useGame,
   usePart,
-  useWords,
+  usePlugin,
 } from '@ifloom/react'
 
 /** The debug plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
@@ -46,6 +47,9 @@ export const DEBUG_WORDS = {
   set: 'Set',
 } as const
 
+/** The debug plugin's UI, declared once: its id and its words, for `usePlugin` and `debugUi`. */
+const DEBUG = pluginKit('debug', DEBUG_WORDS)
+
 declare module '@ifloom/react' {
   interface OverridableComponents {
     DebugCard: Override<ComponentProps<typeof DebugCard>>
@@ -67,7 +71,11 @@ declare module '@ifloom/react' {
   }
 }
 
-/** What `useDebug` returns: the debug plugin's view, what's greyed out, the state and the log, and the commands. */
+/**
+ * What `useDebug` returns: the debug plugin's view, what's greyed out, the
+ * state and the log, and undo and redo. Its commands are the plugin's
+ * helpers, sent with `useGame().send`: `send(debug.stat('coins', 50))`.
+ */
 export type DebugControls = DebugView & {
   /** Every greyed-out button on screen: the actions, the scene's choices and each person's buttons. */
   greyed: RenderedChoice[]
@@ -79,14 +87,12 @@ export type DebugControls = DebugView & {
   canRedo: boolean
   undo: () => void
   redo: () => void
-  /** Send a debug command: `run('stat', { stat: 'coins', to: 50 })` sends `debug/stat`. */
-  run: (name: string, args?: Record<string, unknown>) => Result<GameState>
 }
 
 /** The debug plugin's view with its commands, or null in a game without the plugin. `DebugCard` is drawn from it. */
 export function useDebug(): DebugControls | null {
-  const { runner, view, send, snapshot } = useGame()
-  const data = view.plugins.debug as DebugView | undefined
+  const { runner, view, snapshot } = useGame()
+  const data = usePlugin(DEBUG).view
   if (!data) return null
   const greyed = [
     ...view.actions,
@@ -103,16 +109,12 @@ export function useDebug(): DebugControls | null {
     canRedo: snapshot.canRedo,
     undo: () => runner.undo(),
     redo: () => runner.redo(),
-    run: (name, args = {}) => send(debugCommand(name, args)),
   }
 }
 
-const debugCommand = (name: string, args: Record<string, unknown>): Command => ({ type: 'custom', name: `debug/${name}`, with: args })
-
 /** A one-line form that sends a debug command built from what was typed. */
-function CommandForm({ label, fields, build }: { label: string; fields: string[]; build: (values: string[]) => Command }) {
-  const { send } = useGame()
-  const words = useWords(DEBUG_WORDS)
+function CommandForm({ label, fields, build }: { label: string; fields: string[]; build: (values: string[]) => CommandRef }) {
+  const { words, send } = usePlugin(DEBUG)
   const [values, setValues] = useState(fields.map(() => ''))
   const form = usePart('debug-form', 'flex flex-wrap items-center gap-2 text-sm')
   const name = usePart('debug-label', 'min-w-8 font-medium')
@@ -159,7 +161,7 @@ function parse(value: string): string | number | boolean {
 
 function DebugCardImpl({ className }: { className?: string }) {
   const { view } = useGame()
-  const words = useWords(DEBUG_WORDS)
+  const { words, send } = usePlugin(DEBUG)
   const panel = usePart('debug', 'flex flex-col gap-2 rounded-lg border bg-card p-3 text-sm', className)
   const header = usePart('debug-header', 'flex items-center gap-2')
   const title = usePart('debug-title', 'font-heading font-semibold')
@@ -175,7 +177,6 @@ function DebugCardImpl({ className }: { className?: string }) {
   const log = usePart('debug-log', 'flex flex-col gap-1 pl-3 font-mono text-xs')
   const data = useDebug()
   if (!data) return null
-  const debug = debugCommand
   const greyed = data.greyed
   return (
     <section {...panel} data-debug>
@@ -201,21 +202,21 @@ function DebugCardImpl({ className }: { className?: string }) {
           <TabsTrigger value="log">{words('debugLog')}</TabsTrigger>
         </TabsList>
         <TabsContent value="set" {...setSection}>
-          <CommandForm label={words('debugStat')} fields={['stat', 'value']} build={([stat, to]) => debug('stat', { stat, to: num(to) })} />
-          <CommandForm label={words('debugKv')} fields={['key', 'to']} build={([key, to]) => debug('kv', { key, to: parse(to) })} />
-          <CommandForm label={words('debugHeld')} fields={['entity', 'count']} build={([entity, count]) => debug('held', { entity, to: num(count) })} />
-          <CommandForm label={words('debugStatOf')} fields={['stat', 'of', 'value']} build={([stat, of, to]) => debug('stat', { stat, of, to: num(to) })} />
-          {view.plugins.places ? <CommandForm label={words('debugGo')} fields={['location']} build={([location]) => debug('go', { id: location })} /> : null}
-          <CommandForm label={words('debugScene')} fields={['scene']} build={([scene]) => debug('scene', { id: scene || undefined })} />
+          <CommandForm label={words('debugStat')} fields={['stat', 'value']} build={([stat, to]) => debug.stat(stat, num(to))} />
+          <CommandForm label={words('debugKv')} fields={['key', 'to']} build={([key, to]) => debug.kv(key, parse(to))} />
+          <CommandForm label={words('debugHeld')} fields={['entity', 'count']} build={([entity, count]) => debug.held(entity, num(count))} />
+          <CommandForm label={words('debugStatOf')} fields={['stat', 'of', 'value']} build={([stat, of, to]) => debug.stat(stat, num(to), of)} />
+          {view.plugins.places ? <CommandForm label={words('debugGo')} fields={['location']} build={([location]) => debug.go(location)} /> : null}
+          <CommandForm label={words('debugScene')} fields={['scene']} build={([scene]) => debug.scene(scene || undefined)} />
           {view.plugins.calendar ? (
             <CommandForm
               label={words('debugTime')}
               fields={['day', 'period']}
-              build={([day, period]) => debug('time', { day: day === '' ? undefined : num(day), period: period || undefined })}
+              build={([day, period]) => debug.time({ day: day === '' ? undefined : num(day), period: period || undefined })}
             />
           ) : null}
-          <CommandForm label={words('debugTurn')} fields={['turn']} build={([turn]) => debug('turn', { to: num(turn) })} />
-          <button type="button" {...closeScene} onClick={() => data.run('scene')}>
+          <CommandForm label={words('debugTurn')} fields={['turn']} build={([turn]) => debug.turn(num(turn))} />
+          <button type="button" {...closeScene} onClick={() => send(debug.scene())}>
             {words('closeScene')}
           </button>
         </TabsContent>
@@ -281,7 +282,6 @@ export const DebugCard = overridable('DebugCard', DebugCardImpl)
  * listed in every build.
  */
 export const debugUi: PluginUi = {
-  id: 'debug',
-  words: DEBUG_WORDS,
+  ...DEBUG,
   layout: { story: [() => <DebugCard />] },
 }

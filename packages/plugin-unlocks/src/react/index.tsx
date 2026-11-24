@@ -7,7 +7,7 @@
  */
 import type { Runner } from '@ifloom/engine'
 import { createContext, useContext, useEffect, useState, type ComponentProps, type ReactNode, type SyntheticEvent } from 'react'
-import { buttonVariants, overridable, type Override, type PluginUi, useGame, useKitPart, usePart, useWords } from '@ifloom/react'
+import { buttonVariants, overridable, type Override, pluginKit, type PluginUi, useGame, useKitPart, usePart, usePlugin } from '@ifloom/react'
 import { enterCode, startUnlocks, type Entered, type UnlocksView } from '../index.ts'
 
 /** The unlocks plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
@@ -22,6 +22,9 @@ export const UNLOCKS_WORDS = {
   unlockedAlready: '{label} was unlocked already.',
   unlockedNow: 'Unlocked: {label}.',
 } as const
+
+/** The unlocks plugin's UI, declared once: its id and its words, for `usePlugin` and `unlocksUi`. */
+const UNLOCKS = pluginKit('unlocks', UNLOCKS_WORDS)
 
 declare module '@ifloom/react' {
   interface OverridableComponents {
@@ -83,9 +86,9 @@ const Options = createContext<UnlocksUiOptions | null>(null)
  * `UnlocksPanel` is drawn from it.
  */
 export function useUnlocks(): UnlocksControls | null {
-  const { view, runner, snapshot } = useGame()
+  const { runner, snapshot } = useGame()
+  const shown = usePlugin(UNLOCKS).view
   const options = useContext(Options)
-  const shown = view.plugins.unlocks as UnlocksView | undefined
   if (!shown) return null
   const status = snapshot.helpers.unlocks
   const entered = status?.entered ?? null
@@ -105,7 +108,7 @@ export function useUnlocks(): UnlocksControls | null {
 }
 
 function UnlocksPanelImpl({ className }: { className?: string }) {
-  const words = useWords(UNLOCKS_WORDS)
+  const { words } = usePlugin(UNLOCKS)
   const unlocks = useUnlocks()
   const [code, setCode] = useState('')
   const section = usePart('unlocks', 'flex flex-col gap-3 text-sm', className)
@@ -210,8 +213,7 @@ function codesProvider(options: UnlocksUiOptions) {
  */
 export function unlocksUiWith(options: UnlocksUiOptions = {}): PluginUi {
   return {
-    id: 'unlocks',
-    words: UNLOCKS_WORDS,
+    ...UNLOCKS,
     settings: { label: 'enterCode', component: () => <UnlocksPanel /> },
     provider: codesProvider(options),
   }

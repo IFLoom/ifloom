@@ -6,8 +6,8 @@
  */
 import { useEffect, useState, type ComponentProps } from 'react'
 import type { GameState, Result, SceneBeat } from '@ifloom/engine'
-import type { MessagesView, ThreadView } from '../index.ts'
-import { Beat, buttonVariants, ChoiceList, cn, Icon, overridable, type Override, Picture, type PluginUi, useGame, usePart, useWords } from '@ifloom/react'
+import { messages, type MessagesView, type ThreadView } from '../index.ts'
+import { Beat, buttonVariants, ChoiceList, cn, Icon, overridable, type Override, Picture, pluginKit, type PluginUi, usePart, usePlugin } from '@ifloom/react'
 
 /** The messages plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const MESSAGES_WORDS = {
@@ -15,6 +15,9 @@ export const MESSAGES_WORDS = {
   typing: '{name} is typing',
   typingShort: 'typing…',
 } as const
+
+/** The messages plugin's UI, declared once: its id and its words, for `usePlugin` and `messagesUi`. */
+const MESSAGES = pluginKit('messages', MESSAGES_WORDS)
 
 declare module '@ifloom/react' {
   interface OverridableComponents {
@@ -49,10 +52,9 @@ export type MessagesControls = MessagesView & {
 
 /** The messages plugin's view with its command, or null in a game without the plugin. `MessagesSection` is drawn from it. */
 export function useMessages(): MessagesControls | null {
-  const { view, send } = useGame()
-  const data = view.plugins.messages as MessagesView | undefined
-  if (!data) return null
-  return { ...data, read: (channel) => send({ type: 'custom', name: 'messages/read', with: { channel } }) }
+  const { view, send } = usePlugin(MESSAGES)
+  if (!view) return null
+  return { ...view, read: (channel) => send(messages.read({ channel })) }
 }
 
 /** A message's or a post's words: its beats, as a scene's are drawn, or its text when the plugin gives none. */
@@ -77,7 +79,7 @@ function lastLine(thread: ThreadView, typing: string): string {
 
 /** The other side typing: a `bubble` with `data-typing`, holding three dots in a `typing` part. */
 function Typing({ name }: { name: string }) {
-  const words = useWords(MESSAGES_WORDS)
+  const { words } = usePlugin(MESSAGES)
   const bubble = usePart('bubble', 'flex self-start rounded-xl bg-secondary px-3 py-2 text-sm')
   const dots = usePart('typing', 'flex items-center gap-1')
   // Each dot fades in and out on the theme's own fade, a little after the one before.
@@ -95,8 +97,7 @@ function Typing({ name }: { name: string }) {
 
 /** One thread, opened: who it's with under a back button, the messages, and a typing bubble while the next is on its way. Marks itself read. */
 function Thread({ thread, onBack }: { thread: ThreadView; onBack: () => void }) {
-  const { send } = useGame()
-  const words = useWords(MESSAGES_WORDS)
+  const { words, send } = usePlugin(MESSAGES)
   const threadBox = usePart('thread', 'flex flex-col gap-2')
   const back = usePart('thread-back', buttonVariants({ size: 'icon', variant: 'ghost' }))
   const title = usePart('thread-title', 'flex items-center gap-2 font-medium')
@@ -137,10 +138,8 @@ function Thread({ thread, onBack }: { thread: ThreadView; onBack: () => void }) 
   )
 }
 
-function MessagesSectionImpl({ data, with: options }: SectionProps) {
-  const { send } = useGame()
-  const words = useWords(MESSAGES_WORDS)
-  const messages = useMessages()
+function MessagesSectionImpl({ with: options }: SectionProps) {
+  const { view: shown, words, send } = usePlugin(MESSAGES)
   const [open, setOpen] = useState<string | null>(null)
   const box = usePart('channel', 'flex min-w-0 flex-col gap-4')
   const readAll = usePart('button', buttonVariants({ size: 'sm', variant: 'ghost' }))
@@ -151,8 +150,8 @@ function MessagesSectionImpl({ data, with: options }: SectionProps) {
   const name = usePart('conversation-name', 'font-medium')
   const last = usePart('conversation-last', 'truncate text-sm text-muted-foreground')
   const dot = usePart('conversation-unread', 'size-2.5 shrink-0 rounded-full bg-primary')
-  const channel = ((data as MessagesView | undefined) ?? messages)?.channels.find((entry) => entry.id === options.channel)
-  if (!channel || !messages) return null
+  const channel = shown?.channels.find((entry) => entry.id === options.channel)
+  if (!channel) return null
   const thread = open === null ? undefined : channel.threads.find((entry) => entry.id === open)
   if (thread) {
     return (
@@ -212,7 +211,6 @@ export const MessagesSection = overridable('MessagesSection', MessagesSectionImp
  * messages channel, and the messages' words.
  */
 export const messagesUi: PluginUi = {
-  id: 'messages',
-  words: MESSAGES_WORDS,
+  ...MESSAGES,
   sections: { messages: MessagesSection },
 }

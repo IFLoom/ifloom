@@ -4,15 +4,29 @@
  * have what the player carries drawn with a button that uses each thing, or
  * draw it yourself from `useInventory`.
  */
-import type { GameState, Result } from '@ifloom/engine'
+import type { EntityRef, GameState, Holder, Result } from '@ifloom/engine'
 import type { ComponentProps } from 'react'
-import { buttonVariants, ChoiceButton, type InventoryProps, overridable, type Override, type PluginUi, useGame, usePart, useWords } from '@ifloom/react'
-import type { InventoryThing, InventoryView } from '../index.ts'
+import {
+  buttonVariants,
+  ChoiceButton,
+  type InventoryProps,
+  overridable,
+  type Override,
+  pluginKit,
+  type PluginUi,
+  useGame,
+  usePart,
+  usePlugin,
+} from '@ifloom/react'
+import { inventory, type InventoryThing, type InventoryView } from '../index.ts'
 
 /** The inventory plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const INVENTORY_WORDS = {
   drop: 'Drop',
 } as const
+
+/** The inventory plugin's UI, declared once: its id and its words, for `usePlugin` and `inventoryUi`. */
+const INVENTORY = pluginKit('inventory', INVENTORY_WORDS)
 
 declare module '@ifloom/react' {
   interface OverridableComponents {
@@ -26,23 +40,22 @@ declare module '@ifloom/react' {
 /** What `useInventory` returns: the inventory plugin's view, and its commands. */
 export type InventoryControls = InventoryView & {
   /** Use one of a thing you hold: sends `inventory/use`, refused with its reason as the button says. */
-  use: (ref: string) => Result<GameState>
+  use: (ref: EntityRef) => Result<GameState>
   /** Drop one of a thing you hold: sends `inventory/drop`. */
-  drop: (ref: string) => Result<GameState>
+  drop: (ref: EntityRef) => Result<GameState>
   /** Give one of a thing you hold to someone who can hold things: sends `inventory/give`. */
-  give: (ref: string, to: string) => Result<GameState>
+  give: (ref: EntityRef, to: Holder) => Result<GameState>
 }
 
 /** The inventory plugin's view with its commands, or null in a game without the plugin. `InventoryCard` is drawn from it. */
 export function useInventory(): InventoryControls | null {
-  const { view, send } = useGame()
-  const data = view.plugins.inventory as InventoryView | undefined
-  if (!data) return null
+  const { view, send } = usePlugin(INVENTORY)
+  if (!view) return null
   return {
-    ...data,
-    use: (ref) => send({ type: 'custom', name: 'inventory/use', with: { id: ref } }),
-    drop: (ref) => send({ type: 'custom', name: 'inventory/drop', with: { id: ref } }),
-    give: (ref, to) => send({ type: 'custom', name: 'inventory/give', with: { id: ref, to } }),
+    ...view,
+    use: (ref) => send(inventory.use(ref)),
+    drop: (ref) => send(inventory.drop(ref)),
+    give: (ref, to) => send(inventory.give(ref, to)),
   }
 }
 
@@ -50,8 +63,8 @@ export function useInventory(): InventoryControls | null {
 type Shown = Pick<InventoryThing, 'ref' | 'name' | 'description' | 'count' | 'at'> & Partial<Pick<InventoryThing, 'use' | 'drop'>>
 
 function InventoryCardImpl({ className, title: titleText, drop: showDrop = false }: InventoryProps) {
-  const { view, send } = useGame()
-  const words = useWords(INVENTORY_WORDS)
+  const { view } = useGame()
+  const { words, send } = usePlugin(INVENTORY)
   const plugin = useInventory()
   const section = usePart('inventory', 'flex flex-col gap-2 text-sm', className)
   const title = usePart('inventory-title', 'font-heading font-semibold')
@@ -101,7 +114,6 @@ export const InventoryCard = overridable('InventoryCard', InventoryCardImpl)
  * in the side column and the `inventory` panel, and the inventory's words.
  */
 export const inventoryUi: PluginUi = {
-  id: 'inventory',
-  words: INVENTORY_WORDS,
+  ...INVENTORY,
   components: { Inventory: ({ Default: _default, ...props }) => <InventoryCard {...props} /> },
 }

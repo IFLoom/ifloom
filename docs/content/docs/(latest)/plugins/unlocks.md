@@ -414,10 +414,9 @@ type UnlockView = { id: string; name: string; description: string; unlocked: boo
 
 ```svelte tab="Svelte" tab-group="framework"
 <script lang="ts">
-  import type { UnlocksView } from '@ifloom/plugin-unlocks'
   import { view } from './runner.ts'
 
-  const shown = $derived($view.plugins.unlocks as UnlocksView | undefined)
+  const shown = $derived($view.plugins.unlocks)
 </script>
 
 {#if shown?.total}

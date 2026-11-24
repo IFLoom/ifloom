@@ -20,7 +20,7 @@ A plugin's slice is plain data, so each piece reads the same fields in every fra
 - **React** pieces are components of the [React UI](/docs/react) that read the view with [`useGame`](/docs/react/components#usegame) and send commands with its `send`. The hooks (`useAchievements`, `useShop`, `useJobs`) would save a line or two, but these read the view directly so they look like the other tabs.
 - **Vue** and **Svelte** pieces are components that read the view from the [`vue` or `svelte` template](/docs/guide/frameworks)'s `src/runner.ts` and send commands with `runner.apply`.
 
-Add each plugin's package to the game's `package.json` for its types. The examples use [Small Town](/docs/guide/showcase)'s content, but the pattern is the same for any game.
+Each plugin declares the type of its slice in the engine's [`ViewRegistry`](/docs/reference/plugins#typed-calls-queries-and-views), so once your game imports the plugin, `view.plugins.shop` is typed as the shop's view with no cast. The examples use [Small Town](/docs/guide/showcase)'s content, but the pattern is the same for any game.
 
 ## An achievements page
 
@@ -29,10 +29,9 @@ The plugin's view lists every achievement, and shows as earned each one the play
 ```ts tab="Plain JS" tab-group="framework"
 // src/achievements.ts
 import type { View } from '@ifloom/engine'
-import type { AchievementsView } from '@ifloom/plugin-achievements'
 
 export function achievements(view: View): HTMLElement | null {
-  const all = view.plugins.achievements as AchievementsView | undefined
+  const all = view.plugins.achievements
   if (!all) return null
   const page = document.createElement('section')
   page.appendChild(document.createElement('h1')).textContent = `Achievements · ${all.earned} of ${all.total}`
@@ -51,12 +50,11 @@ export function achievements(view: View): HTMLElement | null {
 ```tsx tab="React" tab-group="framework"
 // src/pages/Achievements.tsx
 import { useGame, usePage } from '@ifloom/react'
-import type { AchievementsView } from '@ifloom/plugin-achievements'
 
 export function Achievements() {
   const { view } = useGame()
   const { back } = usePage()
-  const all = view.plugins.achievements as AchievementsView | undefined
+  const all = view.plugins.achievements
   if (!all) return null
   return (
     <section className="mx-auto max-w-xl space-y-4 p-6">
@@ -86,10 +84,9 @@ export function Achievements() {
 <!-- src/Achievements.vue -->
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { AchievementsView } from '@ifloom/plugin-achievements'
 import { view } from './runner.ts'
 
-const all = computed(() => view.value.plugins.achievements as AchievementsView | undefined)
+const all = computed(() => view.value.plugins.achievements)
 </script>
 
 <template>
@@ -109,10 +106,9 @@ const all = computed(() => view.value.plugins.achievements as AchievementsView |
 ```svelte tab="Svelte" tab-group="framework"
 <!-- src/Achievements.svelte -->
 <script lang="ts">
-  import type { AchievementsView } from '@ifloom/plugin-achievements'
   import { view } from './runner.ts'
 
-  const all = $derived($view.plugins.achievements as AchievementsView | undefined)
+  const all = $derived($view.plugins.achievements)
 </script>
 
 {#if all}
@@ -142,7 +138,6 @@ The shop's view lists every vendor, with `here` and `open` already worked out fr
 ```ts tab="Plain JS" tab-group="framework"
 // src/counter.ts
 import type { Price, RenderedChoice, Runner, View } from '@ifloom/engine'
-import type { ShopView } from '@ifloom/plugin-shop'
 
 const priceText = (price: Price | null | undefined) => price?.text ?? 'free'
 
@@ -157,7 +152,7 @@ function press(runner: Runner, choice: RenderedChoice, label: string): HTMLButto
 }
 
 export function counter(view: View, runner: Runner): HTMLElement | null {
-  const vendor = (view.plugins.shop as ShopView | undefined)?.vendors.find((entry) => entry.here)
+  const vendor = view.plugins.shop?.vendors.find((entry) => entry.here)
   if (!vendor) return null
   if (vendor.closed) return Object.assign(document.createElement('p'), { textContent: `${vendor.name}: ${vendor.closed}` })
   const section = document.createElement('section')
@@ -179,13 +174,12 @@ export function counter(view: View, runner: Runner): HTMLElement | null {
 // src/hud/Counter.tsx
 import { useGame } from '@ifloom/react'
 import type { Price } from '@ifloom/engine'
-import type { ShopView } from '@ifloom/plugin-shop'
 
 const priceText = (price: Price | null | undefined) => price?.text ?? 'free'
 
 export function Counter() {
   const { view, send } = useGame()
-  const shop = view.plugins.shop as ShopView | undefined
+  const shop = view.plugins.shop
   const vendor = shop?.vendors.find((entry) => entry.here)
   if (!vendor) return null
   if (vendor.closed) return <p className="text-sm text-muted-foreground">{vendor.name}: {vendor.closed}</p>
@@ -221,11 +215,10 @@ export function Counter() {
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Price } from '@ifloom/engine'
-import type { ShopView } from '@ifloom/plugin-shop'
 import { runner, view } from './runner.ts'
 
 const priceText = (price: Price | null | undefined) => price?.text ?? 'free'
-const vendor = computed(() => (view.value.plugins.shop as ShopView | undefined)?.vendors.find((entry) => entry.here))
+const vendor = computed(() => view.value.plugins.shop?.vendors.find((entry) => entry.here))
 </script>
 
 <template>
@@ -258,11 +251,10 @@ const vendor = computed(() => (view.value.plugins.shop as ShopView | undefined)?
 <!-- src/Counter.svelte -->
 <script lang="ts">
   import type { Price } from '@ifloom/engine'
-  import type { ShopView } from '@ifloom/plugin-shop'
   import { runner, view } from './runner.ts'
 
   const priceText = (price: Price | null | undefined) => price?.text ?? 'free'
-  const vendor = $derived(($view.plugins.shop as ShopView | undefined)?.vendors.find((entry) => entry.here))
+  const vendor = $derived($view.plugins.shop?.vendors.find((entry) => entry.here))
 </script>
 
 {#if vendor?.closed}
@@ -303,7 +295,7 @@ The jobs view lists every job, held or not. A job not held has an `apply` button
 ```ts tab="Plain JS" tab-group="framework"
 // src/jobs.ts
 import type { Price, RenderedChoice, Runner, View } from '@ifloom/engine'
-import type { JobView, JobsView } from '@ifloom/plugin-jobs'
+import type { JobView } from '@ifloom/plugin-jobs'
 
 const payText = (pay: Price | null) => pay?.text ?? 'nothing'
 
@@ -334,7 +326,7 @@ function jobCard(runner: Runner, job: JobView): HTMLElement {
 }
 
 export function jobBoard(view: View, runner: Runner): HTMLElement | null {
-  const board = view.plugins.jobs as JobsView | undefined
+  const board = view.plugins.jobs
   if (!board?.jobs.length) return null
   const section = document.createElement('section')
   section.appendChild(document.createElement('h2')).textContent = 'Jobs'
@@ -347,7 +339,6 @@ export function jobBoard(view: View, runner: Runner): HTMLElement | null {
 // src/hud/JobBoard.tsx
 import { useGame } from '@ifloom/react'
 import type { RenderedChoice } from '@ifloom/engine'
-import type { JobsView } from '@ifloom/plugin-jobs'
 
 function Press({ choice, label }: { choice: RenderedChoice; label: string }) {
   const { send } = useGame()
@@ -360,7 +351,7 @@ function Press({ choice, label }: { choice: RenderedChoice; label: string }) {
 
 export function JobBoard() {
   const { view } = useGame()
-  const board = view.plugins.jobs as JobsView | undefined
+  const board = view.plugins.jobs
   if (!board?.jobs.length) return null
   return (
     <section className="space-y-3 rounded-lg border p-3">
@@ -396,11 +387,10 @@ export function JobBoard() {
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { Price } from '@ifloom/engine'
-import type { JobsView } from '@ifloom/plugin-jobs'
 import { runner, view } from './runner.ts'
 
 const payText = (pay: Price | null) => pay?.text ?? 'nothing'
-const jobs = computed(() => (view.value.plugins.jobs as JobsView | undefined)?.jobs ?? [])
+const jobs = computed(() => view.value.plugins.jobs?.jobs ?? [])
 </script>
 
 <template>
@@ -430,11 +420,10 @@ const jobs = computed(() => (view.value.plugins.jobs as JobsView | undefined)?.j
 <!-- src/JobBoard.svelte -->
 <script lang="ts">
   import type { Price, RenderedChoice } from '@ifloom/engine'
-  import type { JobsView } from '@ifloom/plugin-jobs'
   import { runner, view } from './runner.ts'
 
   const payText = (pay: Price | null) => pay?.text ?? 'nothing'
-  const jobs = $derived(($view.plugins.jobs as JobsView | undefined)?.jobs ?? [])
+  const jobs = $derived($view.plugins.jobs?.jobs ?? [])
 </script>
 
 {#snippet press(choice: RenderedChoice, label: string)}
@@ -578,6 +567,6 @@ In the React UI, the counter and the board go in your [layout](/docs/react#layou
 
 ## The same for any plugin
 
-Every first-party plugin works this way. Read its slice of `view.plugins` by the type its package exports, draw it, and send the commands it gives you. Where a slice offers a [`RenderedChoice`](/docs/reference/view#renderedchoice), use its `disabled` and `price` rather than working them out again, so your buttons say what the engine will do. The [HUD recipe](/docs/recipes/hud) builds an objective line from the quests plugin the same way, and [Statuses](/docs/plugins/statuses#the-view) has a view to list active statuses beside the stats. [Cheats](/docs/plugins/cheats#drawing-it) builds a cheat panel, with its groups, in all four frameworks.
+Every first-party plugin works this way. Read its slice of `view.plugins`, typed by the plugin's `ViewRegistry` entry, draw it, and send the commands it gives you. Where a slice offers a [`RenderedChoice`](/docs/reference/view#renderedchoice), use its `disabled` and `price` rather than working them out again, so your buttons say what the engine will do. The [HUD recipe](/docs/recipes/hud) builds an objective line from the quests plugin the same way, and [Statuses](/docs/plugins/statuses#the-view) has a view to list active statuses beside the stats. [Cheats](/docs/plugins/cheats#drawing-it) builds a cheat panel, with its groups, in all four frameworks.
 
 In the React UI, a piece that should look like the plugins' own in every preset marks its parts with the kit's, through [`useKitPart`](/docs/react/kit#usekitpart). Each kit part brings its own look, so a job drawn as `useKitPart('card', 'job')` is boxed like a vendor's good or an achievement with no preset loaded, and each preset restyles all of them at once. You add only where the part sits, from the layout classes in [`KIT_LAYOUT`](/docs/react/kit#kit_layout). [Styling a plugin's UI](/docs/react/kit#styling-a-plugins-ui) lists the kit's parts and their looks.

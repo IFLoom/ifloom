@@ -194,7 +194,7 @@ const { game } = loadGame([town], {
   ],
 })
 
-const closet = (state: GameState) => view(state, game).plugins.wardrobe as WardrobeView
+const closet = (state: GameState) => view(state, game).plugins.wardrobe!
 let state = startingState(game)
 
 closet(state).slots   // [{ id: 'coat', label: 'Coat', entity: 'clothing:raincoat', name: 'raincoat' }, { id: 'neck', label: 'Neck', entity: null, name: null }]
@@ -366,7 +366,7 @@ function useWardrobe(): WardrobeControls | null
 
 type WardrobeControls = Omit<WardrobeView, 'slots'> & {
   slots: WardrobeSlotControls[]
-  wear: (entity: string) => Result<GameState>
+  wear: (entity: EntityRef) => Result<GameState>
   takeOff: (slot: string) => Result<GameState>
 }
 type WardrobeSlotControls = WardrobeView['slots'][number] & {

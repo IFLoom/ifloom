@@ -116,7 +116,7 @@ What a plugin's `/react` exports as `<id>Ui`. Every field but `id` is optional.
 | Field | What it is |
 |---|---|
 | `id` | The plugin's id, as its engine side names it. The module does nothing in a game without that plugin. |
-| `words` | Its words in English, by key. A game rewords any with `ui.<key>` in its strings, as it does the UI's own. See [`useWords`](/docs/react/components#usewords). |
+| `words` | Its words in English, by key. A game rewords any with `ui.<key>` in its strings, as it does the UI's own. The panels' and pages' titles and the settings button's label are keys of it. Declare it with [`pluginKit`](#pluginkit) and spread that in, so the module and its components share one table. |
 | `panels` | [Panels](/docs/reference/panels) by name, which `PanelHost` draws when content opens one. See [`PluginPanel`](#pluginpanel). |
 | `layout` | Components to place, by [spot](#where-the-layout-puts-them). Each is drawn with no props. |
 | `sections` | Renderers for a plugin's section in a device's app, by that plugin's id: `messagesUi` has `messages`. This is how one plugin's UI draws inside another's without importing it. |
@@ -151,7 +151,7 @@ A plugin's React UI is built from `@ifloom/react`'s own exports, the same ones a
 
 | For | Exports |
 |---|---|
-| The game | [`useGame`](/docs/react/components#usegame) (the runner, the view and `send`), [`usePluginUis`](#usepluginuis), [`useHolds`](/docs/react/components#useholds), [`usePage`](/docs/react/components#usepage), [`useProfile`](/docs/react/components#useprofile) |
+| The game | [`usePlugin`](#useplugin) and [`pluginKit`](#pluginkit) (a plugin's view, words and commands), [`useGame`](/docs/react/components#usegame) (the runner, the view and `send`), [`usePluginUis`](#usepluginuis), [`useHolds`](/docs/react/components#useholds), [`usePage`](/docs/react/components#usepage), [`useProfile`](/docs/react/components#useprofile) |
 | Words | [`useWords`](/docs/react/components#usewords) with the module's table, [`uiSay`](/docs/react/components#uisay), `Words`, `Say` |
 | Buttons and prices | [`ChoiceButton`](/docs/react/components#choicebutton), [`ChoiceList`](/docs/react/components#choicelist), [`PriceTag`](/docs/react/components#pricetag), [`buttonVariants`](/docs/react/components#button), [`badgeVariants`](/docs/react/components#badge) |
 | Dialogs | [`PartDialog`](/docs/react/components#partdialog), [`useDialogParts`](#usedialogparts), [`DIALOG_CLASSES`](#usedialogparts), [`Dialog`](/docs/react/components#dialog) |
@@ -164,15 +164,18 @@ A plugin's React UI is built from `@ifloom/react`'s own exports, the same ones a
 `ifloom new my-plugin --template plugin` starts a plugin package with its `/react` subpath already there, and a test that draws it. In short, a plugin's UI:
 
 - **Lives in `src/react/`**, exported as `./react` beside `.` in its `package.json`, built to `dist/react/`. `react`, `react-dom` and `@ifloom/react` are optional peers, so a game that draws the plugin another way installs none of them for it.
+- **Declares itself once**, with [`pluginKit`](#pluginkit): the plugin's id and its words. Each component reads the plugin through [`usePlugin`](#useplugin), which gives its view typed, its words with the game's rewording over them, and a `send` that takes the commands the plugin's helpers write. The `<id>Ui` spreads the same declaration, so the words are written in one place.
 - **Exports `<id>Ui`**, a `PluginUi`, with its components and hooks as named exports beside it: a default component a game gets by listing the module, and a hook that gives the same data and the plugin's commands with no markup.
 - **Names its parts and components** by augmenting the React UI's interfaces, so a game's `classes` and `components` take them typed:
 
 ```tsx
 import type { ComponentProps } from 'react'
-import { overridable, useGame, useKitPart, usePart, useWords, type Override, type PluginUi } from '@ifloom/react'
-import type { WeatherView } from '../index.ts'
+import { overridable, pluginKit, useKitPart, usePart, usePlugin, type Override, type PluginUi } from '@ifloom/react'
+import { weather } from '../index.ts'
 
-export const WEATHER_WORDS = { weather: 'Weather', rain: 'Rain later' } as const
+export const WEATHER_WORDS = { weather: 'Weather', rain: 'Rain later', weatherMark: 'Mark rain' } as const
+
+const WEATHER = pluginKit('weather', WEATHER_WORDS)
 
 declare module '@ifloom/react' {
   interface OverridableComponents {
@@ -185,17 +188,16 @@ declare module '@ifloom/react' {
 }
 
 function ForecastImpl({ className }: { className?: string }) {
-  const words = useWords(WEATHER_WORDS)
-  const weather = useGame().view.plugins.weather as WeatherView | undefined
+  const { view, words, send } = usePlugin(WEATHER)
   const list = usePart('forecast', 'flex flex-col gap-2 text-sm', className)
   const day = useKitPart('card', 'forecast-day')
-  if (!weather) return null
+  if (!view) return null
   return (
     <ul {...list}>
-      {weather.days.map((entry) => (
+      {view.days.map((entry) => (
         <li key={entry.day} {...day}>
           {entry.label}
-          {entry.rain ? ` · ${words('rain')}` : null}
+          {entry.rain ? ` · ${words('rain')}` : <button onClick={() => send(weather.markRain(entry.day))}>{words('weatherMark')}</button>}
         </li>
       ))}
     </ul>
@@ -204,10 +206,44 @@ function ForecastImpl({ className }: { className?: string }) {
 
 export const Forecast = overridable('Forecast', ForecastImpl)
 
-export const weatherUi: PluginUi = { id: 'weather', words: WEATHER_WORDS, layout: { sidebar: [Forecast] } }
+export const weatherUi: PluginUi = { ...WEATHER, layout: { sidebar: [Forecast] } }
 ```
 
+`view` is the weather plugin's slice, typed by the `ViewRegistry` entry its engine side declares, and `weather.markRain` is one of its helpers, so nothing is cast and no command is written by hand.
+
 Prefix your word keys with something of your plugin's, as the template does (`rainyDayMarked`), so they don't meet another plugin's under `ui.`.
+
+### pluginKit
+
+```ts
+function pluginKit<const Id extends string, const W extends Words = Record<never, string>>(id: Id, words?: W): PluginKit<Id, W>
+
+type PluginKit<Id extends string = string, W extends Words = Words> = { readonly id: Id; readonly words: W }
+```
+
+Declares a plugin's UI once: the plugin's id, as its engine side names it, and its words in English. Hand it to [`usePlugin`](#useplugin) in each component, and spread it into the module's `PluginUi`, `{ ...WEATHER, layout: { … } }`, so the `PluginUi`'s `id` and `words` come from the same place. A plugin UI with no words of its own leaves `words` out.
+
+### usePlugin
+
+```ts
+function usePlugin<Id extends string, W extends Words>(kit: PluginKit<Id, W>): PluginControls<Id, W>
+
+type PluginControls<Id extends string, W extends Words> = {
+  view: PluginViewOf<Id> | undefined
+  words: Say<(keyof W & string) | UiStringKey>
+  send: (command: CommandRef) => Applied
+}
+
+type PluginViewOf<Id extends string> = Id extends keyof ViewRegistry ? ViewRegistry[Id] : unknown
+```
+
+What a component of a plugin's UI needs, inside a [`GameProvider`](/docs/react/components#gameprovider):
+
+- `view` is the plugin's slice of the view, `view.plugins[id]`, typed as its engine side declares it in [`ViewRegistry`](/docs/reference/plugins#typed-calls-queries-and-views). It's `undefined` in a game without the plugin, and `unknown` for a plugin that declares no view type.
+- `words` says the plugin's words or the UI's by key, the game's `ui.<key>` over the English, as [`useWords`](/docs/react/components#usewords) does with the table.
+- `send` runs a command, as [`useGame`](/docs/react/components#usegame)'s does: a button's `command` from the view, or one the plugin's helpers write, such as `send(shop.buy(vendor, entity))`.
+
+For the rest of the game, the runner, the snapshot or the whole view, use `useGame` beside it.
 
 ## Styling a plugin's UI
 

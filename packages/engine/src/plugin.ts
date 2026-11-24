@@ -333,7 +333,11 @@ export type Plugin<S = any, V = unknown> = {
    * the default's. The first plugin that names a channel wins it.
    */
   audio?: (state: GameState, context: PluginContext<S>) => Record<string, string | null> | undefined
-  /** What the UI needs from this plugin, at `view.plugins[id]`. `V` is its type, which `viewIn` reads back. */
+  /**
+   * What the UI needs from this plugin, at `view.plugins[id]`. `V` is its
+   * type; declare it in `ViewRegistry` under the plugin's id, and every view
+   * types `view.plugins[id]` as `V`.
+   */
   view?: (state: GameState, context: PluginContext<S>) => V
   /**
    * What the plugin keeps in the player's profile, which outlives saves and
@@ -458,12 +462,6 @@ export type DefinedPlugin<S, V = unknown> = Plugin<S, V> & {
   read(state: GameState, game: Game): S
   /** The game state with this plugin's state replaced. */
   write(state: GameState, next: S): GameState
-  /**
-   * This plugin's slice of a view, `view.plugins[id]`, typed as its `view`
-   * returns it. Undefined when the view has none: a game without the plugin,
-   * or a plugin with no `view`.
-   */
-  viewIn(view: { readonly plugins: Readonly<Record<string, unknown>> }): V | undefined
 }
 
 function readSlice<S>(plugin: Plugin<S>, state: GameState, game: Game): S {
@@ -546,9 +544,9 @@ export type PluginDef<S, V, C extends AnyCalls> = Omit<Plugin<S, V>, CallTables 
       })
 
 /**
- * Declare a plugin. Returns it with `read` and `write` for its own state, and
- * `viewIn` for its slice of a view, for code outside the plugin (tests, a UI)
- * that needs them typed. Name the types, `definePlugin<State, View, typeof
+ * Declare a plugin. Returns it with `read` and `write` for its own state, for
+ * code outside the plugin (tests, a UI) that needs it typed. Its slice of a
+ * view is typed by its `ViewRegistry` entry. Name the types, `definePlugin<State, View, typeof
  * CALLS>`, so the view's type is kept and each call's implementation is
  * handed its arguments as `CALLS` (`defineCalls`) declares them.
  *
@@ -562,7 +560,6 @@ export function definePlugin<S, V = unknown, C extends AnyCalls = never>(def: Pl
     ...plugin,
     read: (state, game) => readSlice(plugin, state, game),
     write: (state, next) => writeSlice(plugin, state, next),
-    viewIn: (view) => view.plugins[plugin.id] as V | undefined,
   }
 }
 

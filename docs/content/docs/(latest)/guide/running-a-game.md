@@ -119,12 +119,10 @@ The [view](/docs/reference/view) is one plain object. These are the parts most s
 | `audio` | What should be playing. [`@ifloom/audio`](/docs/browser/audio-player) plays it for you. |
 | `plugins` | Each plugin's own part, by plugin id. |
 
-A plugin's part is typed `unknown` in the view, because the engine doesn't know which plugins a game has. Read it with the plugin's own type, or with `viewIn` on a plugin made with [`definePlugin`](/docs/reference/plugins#defineplugin):
+Each plugin declares the type of its part in the engine's [`ViewRegistry`](/docs/reference/plugins#typed-calls-queries-and-views), so once your game imports the plugin, `view.plugins.places` is typed as the places plugin's view, or `undefined` in a game without it. A plugin that declares nothing is `unknown`.
 
 ```ts
-import type { PlacesView } from '@ifloom/plugin-places'
-
-const room = runner.view().plugins.places as PlacesView | undefined
+const room = runner.view().plugins.places
 for (const exit of room?.exits ?? []) console.log(exit.label, exit.disabled ?? '')
 ```
 

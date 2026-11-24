@@ -1797,25 +1797,24 @@ function definePlugin<S, V = unknown, C extends AnyCalls = never>(plugin: Plugin
 type DefinedPlugin<S, V = unknown> = Plugin<S, V> & {
   read(state: GameState, game: Game): S
   write(state: GameState, next: S): GameState
-  viewIn(view: { readonly plugins: Readonly<Record<string, unknown>> }): V | undefined
 }
 ```
 
-Declares a plugin, and returns it with typed `read` and `write` for its own state and `viewIn` for its slice of the view. These are for code outside the plugin, such as tests or a UI. Inside the plugin, use the context's `slice`, `get` and `set`, which need no game. `S` is the plugin's state and `V` what its `view` returns. `C` is its [declared calls](#declaring-calls), `typeof CALLS`: `PluginDef<S, V, C>` is a `Plugin` whose conditions, effects, macros and commands are then exactly the declared ones, each handed its arguments typed. Name all three, `definePlugin<LoyaltyState, LoyaltyView, typeof CALLS>(...)`, since TypeScript can't work out one when you give the others.
+Declares a plugin, and returns it with typed `read` and `write` for its own state. These are for code outside the plugin, such as tests or a UI. Inside the plugin, use the context's `slice`, `get` and `set`, which need no game. `S` is the plugin's state and `V` what its `view` returns. `C` is its [declared calls](#declaring-calls), `typeof CALLS`: `PluginDef<S, V, C>` is a `Plugin` whose conditions, effects, macros and commands are then exactly the declared ones, each handed its arguments typed. Name all three, `definePlugin<LoyaltyState, LoyaltyView, typeof CALLS>(...)`, since TypeScript can't work out one when you give the others.
 
 It throws when a declared call has no function, a function has no declaration, or the declaration's id isn't the plugin's: a mistake in the plugin's code, never in content.
 
 `read` returns the plugin's state, or its starting state if the save has none yet. `write` returns the game state with the plugin's state replaced, labelled with the plugin's current version.
 
-`viewIn` returns `view.plugins[id]`, typed as `V`, or `undefined` when the view has none: a game without the plugin, or a plugin with no `view`.
+The plugin's slice of a view is `view.plugins[id]`, typed by its [`ViewRegistry`](#typed-calls-queries-and-views) entry, so `definePlugin` adds nothing for it.
 
 ```ts
 loyalty.read(state, game).stamps
 const full = loyalty.write(state, { stamps: 0, free: 1 }) // a test that starts with a free coffee
-loyalty.viewIn(runner.view())?.stamps                       // a number, typed, in a UI or a test
+runner.view().plugins.loyalty?.stamps                       // a number, typed by ViewRegistry, in a UI or a test
 ```
 
-A plugin is a plain object, so `definePlugin` is optional, but it types `S` and `V` throughout and gives you `read`, `write` and `viewIn`. A plugin package usually exports a factory that returns one, such as [`quests()`](/docs/plugins/quests#quests).
+A plugin is a plain object, so `definePlugin` is optional, but it types `S` and `V` throughout and gives you `read` and `write`. A plugin package usually exports a factory that returns one, such as [`quests()`](/docs/plugins/quests#quests).
 
 ## Gotchas
 

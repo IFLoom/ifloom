@@ -137,7 +137,6 @@ Unseen notices are in `view.notices.unseen`, newest first. A plugin's counts are
 ```ts tab="Plain JS" tab-group="framework"
 // src/hud.ts
 import type { View } from '@ifloom/engine'
-import type { MessagesView } from '@ifloom/plugin-messages'
 
 let showNotices = false
 
@@ -146,7 +145,7 @@ export function unread(view: View, redraw: () => void): HTMLElement {
   const strip = document.createElement('div')
   strip.className = 'unread'
   const notices = view.notices.unseen
-  const texts = (view.plugins.messages as MessagesView | undefined)?.unread ?? 0
+  const texts = view.plugins.messages?.unread ?? 0
   if (notices.length) {
     const bell = strip.appendChild(document.createElement('button'))
     bell.textContent = `🔔 ${notices.length}`
@@ -167,7 +166,6 @@ export function unread(view: View, redraw: () => void): HTMLElement {
 ```tsx tab="React" tab-group="framework"
 // src/hud/Unread.tsx
 import { useState } from 'react'
-import type { MessagesView } from '@ifloom/plugin-messages'
 import { Notices, useGame } from '@ifloom/react'
 import { DeviceDialog, useDevice } from '@ifloom/plugin-devices/react'
 
@@ -176,7 +174,7 @@ export function Unread() {
   const phone = useDevice()
   const [showNotices, setShowNotices] = useState(false)
   const notices = view.notices.unseen.length
-  const texts = (view.plugins.messages as MessagesView | undefined)?.unread ?? 0
+  const texts = view.plugins.messages?.unread ?? 0
   return (
     <div className="flex gap-3 text-sm">
       {notices ? <button onClick={() => setShowNotices(!showNotices)}>🔔 {notices}</button> : null}
@@ -193,12 +191,11 @@ export function Unread() {
 <!-- src/Unread.vue -->
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import type { MessagesView } from '@ifloom/plugin-messages'
 import { view } from './runner.ts'
 
 const showNotices = ref(false)
 const notices = computed(() => view.value.notices.unseen)
-const texts = computed(() => (view.value.plugins.messages as MessagesView | undefined)?.unread ?? 0)
+const texts = computed(() => view.value.plugins.messages?.unread ?? 0)
 </script>
 
 <template>
@@ -215,12 +212,11 @@ const texts = computed(() => (view.value.plugins.messages as MessagesView | unde
 ```svelte tab="Svelte" tab-group="framework"
 <!-- src/Unread.svelte -->
 <script lang="ts">
-  import type { MessagesView } from '@ifloom/plugin-messages'
   import { view } from './runner.ts'
 
   let showNotices = $state(false)
   const notices = $derived($view.notices.unseen)
-  const texts = $derived(($view.plugins.messages as MessagesView | undefined)?.unread ?? 0)
+  const texts = $derived($view.plugins.messages?.unread ?? 0)
 </script>
 
 <div class="unread">
@@ -243,11 +239,10 @@ The [quests](/docs/plugins/quests) plugin lists the active quests in `view.plugi
 ```ts tab="Plain JS" tab-group="framework"
 // src/hud.ts
 import type { View } from '@ifloom/engine'
-import type { QuestsView } from '@ifloom/plugin-quests'
 
 /** The tracked quest's title and hint, or null when none is tracked. */
 export function objective(view: View): HTMLElement | null {
-  const quest = (view.plugins.quests as QuestsView | undefined)?.active.find((entry) => entry.tracked)
+  const quest = view.plugins.quests?.active.find((entry) => entry.tracked)
   if (!quest) return null
   const line = document.createElement('p')
   line.className = 'objective'
@@ -259,12 +254,11 @@ export function objective(view: View): HTMLElement | null {
 
 ```tsx tab="React" tab-group="framework"
 // src/hud/Objective.tsx
-import type { QuestsView } from '@ifloom/plugin-quests'
 import { useGame } from '@ifloom/react'
 
 export function Objective() {
   const { view } = useGame()
-  const quest = (view.plugins.quests as QuestsView | undefined)?.active.find((entry) => entry.tracked)
+  const quest = view.plugins.quests?.active.find((entry) => entry.tracked)
   if (!quest) return null
   return (
     <p className="text-sm">
@@ -279,10 +273,9 @@ export function Objective() {
 <!-- src/Objective.vue -->
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { QuestsView } from '@ifloom/plugin-quests'
 import { view } from './runner.ts'
 
-const quest = computed(() => (view.value.plugins.quests as QuestsView | undefined)?.active.find((entry) => entry.tracked))
+const quest = computed(() => view.value.plugins.quests?.active.find((entry) => entry.tracked))
 </script>
 
 <template>
@@ -296,10 +289,9 @@ const quest = computed(() => (view.value.plugins.quests as QuestsView | undefine
 ```svelte tab="Svelte" tab-group="framework"
 <!-- src/Objective.svelte -->
 <script lang="ts">
-  import type { QuestsView } from '@ifloom/plugin-quests'
   import { view } from './runner.ts'
 
-  const quest = $derived(($view.plugins.quests as QuestsView | undefined)?.active.find((entry) => entry.tracked))
+  const quest = $derived($view.plugins.quests?.active.find((entry) => entry.tracked))
 </script>
 
 {#if quest}

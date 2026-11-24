@@ -235,12 +235,13 @@ describe('ifloom new', () => {
     expect(readFileSync(join(dir, 'tests/rainy-day.test.ts'), 'utf8')).toContain("from '../src/index.ts'")
     // Its contract test holds it to the plugin boundary and its README to its exports, with the engine's testing entry.
     expect(readFileSync(join(dir, 'tests/contracts.test.ts'), 'utf8')).toContain("from '@ifloom/engine/testing'")
-    // The React UI: the kit's front door only, a module named for the plugin, and its words as a constant.
+    // The React UI: the kit's front door only, a module named for the plugin, declared once with its words as a constant.
     const ui = readFileSync(join(dir, 'src/react/index.tsx'), 'utf8')
     for (const name of [
       "from '@ifloom/react'",
       'export const rainyDayUi: PluginUi',
-      "id: 'rainy-day'",
+      "const RAINY_DAY = pluginKit('rainy-day', RAINY_DAY_WORDS)",
+      '...RAINY_DAY,',
       'export const RAINY_DAY_WORDS',
       'export function useRainyDay()',
     ]) {

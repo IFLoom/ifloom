@@ -6,13 +6,16 @@
  */
 import type { ComponentProps } from 'react'
 import type { GameState, Result, SceneBeat } from '@ifloom/engine'
-import type { FeedsView } from '../index.ts'
-import { Beat, buttonVariants, overridable, type Override, Picture, type PluginUi, useGame, useKitPart, usePart, useWords, Video } from '@ifloom/react'
+import { feed as feedPlugin, type FeedsView } from '../index.ts'
+import { Beat, buttonVariants, overridable, type Override, Picture, pluginKit, type PluginUi, useKitPart, usePart, usePlugin, Video } from '@ifloom/react'
 
 /** The feed plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const FEED_WORDS = {
   likes: '♥ {n}',
 } as const
+
+/** The feed plugin's UI, declared once: its id and its words, for `usePlugin` and `feedUi`. */
+const FEED = pluginKit('feed', FEED_WORDS)
 
 declare module '@ifloom/react' {
   interface OverridableComponents {
@@ -41,10 +44,9 @@ export type FeedControls = FeedsView & {
 
 /** The feed plugin's view with its command, or null in a game without the plugin. `FeedSection` is drawn from it. */
 export function useFeed(): FeedControls | null {
-  const { view, send } = useGame()
-  const data = view.plugins.feed as FeedsView | undefined
-  if (!data) return null
-  return { ...data, seen: (feed) => send({ type: 'custom', name: 'feed/seen', with: { id: feed } }) }
+  const { view, send } = usePlugin(FEED)
+  if (!view) return null
+  return { ...view, seen: (feed) => send(feedPlugin.seen(feed)) }
 }
 
 /** A message's or a post's words: its beats, as a scene's are drawn, or its text when the plugin gives none. */
@@ -59,10 +61,8 @@ function Words({ beats, text }: { beats?: SceneBeat[]; text: string }) {
   )
 }
 
-function FeedSectionImpl({ data, with: options }: SectionProps) {
-  const { send } = useGame()
-  const feeds = useFeed()
-  const words = useWords(FEED_WORDS)
+function FeedSectionImpl({ with: options }: SectionProps) {
+  const { view: feeds, words, send } = usePlugin(FEED)
   const box = usePart('feed', 'flex flex-col gap-3')
   const seenAll = usePart('button', buttonVariants({ size: 'sm', variant: 'ghost' }))
   const card = useKitPart('card', 'post')
@@ -74,8 +74,8 @@ function FeedSectionImpl({ data, with: options }: SectionProps) {
   const meta = useKitPart('note', 'post-meta', 'text-xs')
   const comment = usePart('post-comment', 'text-xs')
   const commenter = usePart('post-comment-name', 'font-medium')
-  const feed = ((data as FeedsView | undefined) ?? feeds)?.feeds.find((entry) => entry.id === options.feed)
-  if (!feed || !feeds) return null
+  const feed = feeds?.feeds.find((entry) => entry.id === options.feed)
+  if (!feed) return null
   return (
     <div {...box} data-feed={feed.id}>
       {feed.seen ? (
@@ -120,7 +120,6 @@ export const FeedSection = overridable('FeedSection', FeedSectionImpl)
  * a `FeedSection` wherever a device's app shows a feed, and the feed's words.
  */
 export const feedUi: PluginUi = {
-  id: 'feed',
-  words: FEED_WORDS,
+  ...FEED,
   sections: { feed: FeedSection },
 }

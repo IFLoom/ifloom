@@ -117,7 +117,7 @@ describe('the plugin', () => {
     const recorded = apply(fresh, g, unlocks.record('supporter'))
     expect(recorded.reason).toBeUndefined()
     expect(holds(recorded.state, g, unlocks.has('supporter'))).toBe(true)
-    expect(unlocks().viewIn(view(recorded.state, g))).toEqual({
+    expect(view(recorded.state, g).plugins.unlocks).toEqual({
       unlocks: [{ id: 'supporter', name: 'Supporter edition', description: '', unlocked: true }],
       unlocked: 1,
       total: 1,

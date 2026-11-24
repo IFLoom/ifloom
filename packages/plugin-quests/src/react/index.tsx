@@ -7,8 +7,8 @@
  */
 import type { ComponentProps } from 'react'
 import type { GameState, Result } from '@ifloom/engine'
-import type { QuestsView } from '../index.ts'
-import { buttonVariants, overridable, type Override, type PluginUi, Section, useGame, useKitPart, usePart, useWords } from '@ifloom/react'
+import { quests, type QuestsView } from '../index.ts'
+import { buttonVariants, overridable, type Override, pluginKit, type PluginUi, Section, useKitPart, usePart, usePlugin } from '@ifloom/react'
 
 /** The quests plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const QUESTS_WORDS = {
@@ -16,6 +16,9 @@ export const QUESTS_WORDS = {
   questStage: '{stage} of {stages}',
   quests: 'Quests',
 } as const
+
+/** The quests plugin's UI, declared once: its id and its words, for `usePlugin` and `questsUi`. */
+const QUESTS = pluginKit('quests', QUESTS_WORDS)
 
 declare module '@ifloom/react' {
   interface OverridableComponents {
@@ -42,19 +45,17 @@ export type QuestsControls = QuestsView & {
 
 /** The quests plugin's view with its buttons and commands, or null in a game without the plugin. `QuestLog` is drawn from it. */
 export function useQuests(): QuestsControls | null {
-  const { view, send } = useGame()
-  const quests = view.plugins.quests as QuestsView | undefined
-  if (!quests) return null
+  const { view, send } = usePlugin(QUESTS)
+  if (!view) return null
   return {
-    ...quests,
-    track: (id) => send({ type: 'custom', name: 'quests/track', with: id === null ? {} : { id } }),
+    ...view,
+    track: (id) => send(quests.track(id ?? undefined)),
   }
 }
 
 function QuestLogImpl({ className, title }: { className?: string; title?: string | false }) {
-  const { send } = useGame()
-  const words = useWords(QUESTS_WORDS)
-  const log = usePart('quests', 'flex flex-col gap-3', className)
+  const { words, send } = usePlugin(QUESTS)
+  const list = usePart('quests', 'flex flex-col gap-3', className)
   const heading = useKitPart('heading', 'quests-title')
   const updates = useKitPart('badge', 'badge')
   const card = useKitPart('card', 'quest', 'gap-1')
@@ -68,17 +69,17 @@ function QuestLogImpl({ className, title }: { className?: string; title?: string
   const doneList = usePart('quests-done', 'text-sm text-muted-foreground')
   const done = usePart('quest-done', '')
   const seen = usePart('button', buttonVariants({ size: 'sm', variant: 'ghost' }))
-  const quests = useQuests()
-  if (!quests) return null
+  const log = useQuests()
+  if (!log) return null
   return (
-    <section {...log} data-quests>
+    <section {...list} data-quests>
       {title === false ? null : (
         <h3 {...heading}>
           {title ?? words('quests')}
-          {quests.updates ? <span {...updates}>{quests.updates}</span> : null}
+          {log.updates ? <span {...updates}>{log.updates}</span> : null}
         </h3>
       )}
-      {quests.active.map((quest) => (
+      {log.active.map((quest) => (
         <div key={quest.id} {...card} data-quest={quest.id}>
           <p {...questTitle}>
             {quest.name}
@@ -100,18 +101,18 @@ function QuestLogImpl({ className, title }: { className?: string; title?: string
           ) : null}
         </div>
       ))}
-      {quests.done.length ? (
+      {log.done.length ? (
         <ul {...doneList}>
-          {quests.done.map((quest) => (
+          {log.done.map((quest) => (
             <li key={quest.id} {...done}>
               <s>{quest.name}</s>
             </li>
           ))}
         </ul>
       ) : null}
-      {quests.seen ? (
-        <button type="button" {...seen} onClick={() => send(quests.seen!.command)}>
-          {quests.seen.label}
+      {log.seen ? (
+        <button type="button" {...seen} onClick={() => send(log.seen!.command)}>
+          {log.seen.label}
         </button>
       ) : null}
     </section>
@@ -127,7 +128,7 @@ export const QuestLog = overridable('QuestLog', QuestLogImpl)
 
 /** The default layout's Quests section: a button with the count of news that opens the `QuestLog` in a dialog. */
 export function QuestsSection() {
-  const words = useWords(QUESTS_WORDS)
+  const { words } = usePlugin(QUESTS)
   const news = useQuests()?.updates
   return (
     <Section id="quests" title={words('quests')} dialog badge={news || null}>
@@ -143,8 +144,7 @@ export function QuestsSection() {
  * panel; and the quests' words.
  */
 export const questsUi: PluginUi = {
-  id: 'quests',
-  words: QUESTS_WORDS,
+  ...QUESTS,
   layout: { sidebar: [QuestsSection] },
   panels: { quests: { component: () => <QuestLog title={false} />, title: 'quests' } },
 }

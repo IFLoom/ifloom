@@ -428,7 +428,7 @@ const { game } = loadGame([town], {
   title: 'Small Town',
   plugins: [clock, places({ start: 'high-street' }), cast()],
 })
-const people = (state: GameState) => view(state, game).plugins.cast as CastView
+const people = (state: GameState) => view(state, game).plugins.cast!
 ```
 
 In play:

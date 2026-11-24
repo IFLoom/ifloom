@@ -6,8 +6,8 @@
  */
 import type { ComponentProps } from 'react'
 import type { GameState, Result } from '@ifloom/engine'
-import type { JobView, JobsView } from '../index.ts'
-import { buttonVariants, ChoiceButton, overridable, type Override, type PluginUi, useGame, useKitPart, usePart, useWords } from '@ifloom/react'
+import { jobs, type JobView, type JobsView } from '../index.ts'
+import { buttonVariants, ChoiceButton, overridable, type Override, pluginKit, type PluginUi, useKitPart, usePart, usePlugin } from '@ifloom/react'
 
 /** The jobs plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const JOBS_WORDS = {
@@ -25,6 +25,9 @@ export const JOBS_WORDS = {
   shiftTomorrow: 'Next shift: tomorrow',
   workShift: 'Work a shift',
 } as const
+
+/** The jobs plugin's UI, declared once: its id and its words, for `usePlugin` and `jobsUi`. */
+const JOBS = pluginKit('jobs', JOBS_WORDS)
 
 declare module '@ifloom/react' {
   interface OverridableComponents {
@@ -61,23 +64,20 @@ export type JobsControls = JobsView & {
 
 /** The jobs plugin's view with its commands, or null in a game without the plugin. `JobBoard` is drawn from it. */
 export function useJobs(): JobsControls | null {
-  const { view, send } = useGame()
-  const jobs = view.plugins.jobs as JobsView | undefined
-  if (!jobs) return null
-  const command = (name: string, id: string) => send({ type: 'custom', name: `jobs/${name}`, with: { id } })
+  const { view, send } = usePlugin(JOBS)
+  if (!view) return null
   return {
-    ...jobs,
-    held: jobs.jobs.filter((job) => job.hired),
-    apply: (job) => command('apply', job),
-    work: (job) => command('work', job),
-    quit: (job) => command('quit', job),
+    ...view,
+    held: view.jobs.filter((job) => job.hired),
+    apply: (job) => send(jobs.apply(job)),
+    work: (job) => send(jobs.work(job)),
+    quit: (job) => send(jobs.quit(job)),
   }
 }
 
 function JobBoardImpl({ className, title, jobs: only }: { className?: string; title?: string | false; jobs?: readonly string[] }) {
-  const { send } = useGame()
-  const words = useWords(JOBS_WORDS)
-  const board = usePart('jobs', 'flex flex-col gap-3', className)
+  const { words, send } = usePlugin(JOBS)
+  const list = usePart('jobs', 'flex flex-col gap-3', className)
   const heading = useKitPart('heading', 'jobs-title')
   const card = useKitPart('card', 'job')
   const jobTitle = useKitPart('title', 'job-title')
@@ -91,9 +91,9 @@ function JobBoardImpl({ className, title, jobs: only }: { className?: string; ti
   const record = useKitPart('note', 'job-record')
   const actions = useKitPart('commands', 'job-actions')
   const quit = usePart('button', `${buttonVariants({ size: 'sm', variant: 'ghost' })} self-start`)
-  const jobs = useJobs()
-  const shown = only ? (jobs?.jobs ?? []).filter((job) => only.includes(job.id)) : (jobs?.jobs ?? [])
-  if (!jobs || !shown.length) return null
+  const board = useJobs()
+  const shown = only ? (board?.jobs ?? []).filter((job) => only.includes(job.id)) : (board?.jobs ?? [])
+  if (!board || !shown.length) return null
   const shiftLine = (inDays: number) => (inDays === 0 ? words('shiftToday') : inDays === 1 ? words('shiftTomorrow') : words('shiftInDays', { n: inDays }))
   const nextLine = (job: JobView) => {
     const up = job.next
@@ -102,7 +102,7 @@ function JobBoardImpl({ className, title, jobs: only }: { className?: string; ti
     return up.shiftsToGo === 1 ? words('jobNextRankOne', { title: up.name }) : words('jobNextRank', { title: up.name, n: up.shiftsToGo })
   }
   return (
-    <section {...board} data-jobs>
+    <section {...list} data-jobs>
       {title === false ? null : <h3 {...heading}>{title ?? words('jobs')}</h3>}
       {shown.map((job) => {
         const paid = job.pay?.text
@@ -169,7 +169,6 @@ function JobsPanel() {
  * It puts nothing in the layout by itself: content opens the board.
  */
 export const jobsUi: PluginUi = {
-  id: 'jobs',
-  words: JOBS_WORDS,
+  ...JOBS,
   panels: { jobs: { component: JobsPanel, title: 'jobs' } },
 }

@@ -33,7 +33,7 @@ const MEMBERS = {
   // What the content checker asks.
   checks: ['references', 'check'],
   // What `definePlugin` adds for code outside the plugin.
-  defined: ['read', 'write', 'viewIn'],
+  defined: ['read', 'write'],
 } as const
 
 const allowed = new Set<string>(Object.values(MEMBERS).flat())

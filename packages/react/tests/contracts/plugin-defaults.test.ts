@@ -40,6 +40,7 @@ const NO_UI: Record<string, string> = {
 
 const SOURCES = import.meta.glob('../../../plugin-*/src/index.ts', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
 const UIS = import.meta.glob('../../../plugin-*/src/react/index.tsx', { eager: true }) as Record<string, Record<string, unknown>>
+const UI_SOURCES = import.meta.glob('../../../plugin-*/src/react/**/*.tsx', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
 const MANIFESTS = import.meta.glob('../../../plugin-*/package.json', { import: 'default', eager: true }) as Record<string, Manifest>
 
 type Manifest = {
@@ -109,6 +110,28 @@ describe('the React UI for first-party plugins', () => {
         expect(manifest.peerDependenciesMeta, `${plugin.id}: ${name}`).toHaveProperty([name, 'optional'], true)
       }
       expect(manifest.devDependencies, `${plugin.id}: @ifloom/react for the workspace`).toHaveProperty(['@ifloom/react'])
+    }
+  })
+
+  // A plugin UI declares itself once (`pluginKit`) and reads the plugin through `usePlugin`: its view typed by the
+  // engine's ViewRegistry, its words from that one table, and its commands from the plugin's own helpers.
+  it('declares each plugin UI once and reads its plugin through usePlugin: no casts, word tables or hand-built commands', () => {
+    const wrong = Object.entries(UI_SOURCES).flatMap(([file, source]) => {
+      const where = file.replace(/^(\.\.\/)+/, '')
+      return [
+        ...[...source.matchAll(/view\.plugins\.(\w+) as /g)]
+          // The debug card reads the people here by the cast's id, not its types: debug imports no other plugin.
+          .filter((match) => !(match[1] === 'cast' && where.startsWith('plugin-debug')))
+          .map((match) => `${where}: casts view.plugins.${match[1]}`),
+        ...(source.includes("type: 'custom'") ? [`${where}: builds a command by hand`] : []),
+        ...(/useWords\(\w+_WORDS\)/.test(source) ? [`${where}: names its word table again`] : []),
+        ...(/\bwords: \w+_WORDS\b/.test(source) ? [`${where}: puts its word table in the PluginUi by hand`] : []),
+      ]
+    })
+    expect(wrong).toEqual([])
+    for (const plugin of PLUGINS.filter((entry) => DEFAULTS[entry.id])) {
+      const source = UI_SOURCES[`${plugin.dir}/src/react/index.tsx`] ?? ''
+      expect(source, `${plugin.id} declares its UI with pluginKit`).toContain(`pluginKit('${plugin.id}'`)
     }
   })
 })

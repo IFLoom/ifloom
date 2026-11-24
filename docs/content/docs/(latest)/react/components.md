@@ -12,7 +12,7 @@ Every game component on this page can be replaced by its name in [`components`](
 import {
   // the game
   GameShell, GameProvider, useGame, Icon, WithPages,
-  DefaultLayout, Game, Sidebar, Story, Overlay, Section, When, useHolds, Title, RoomActions, Plugins, usePluginUis,
+  DefaultLayout, Game, Sidebar, Story, Overlay, Section, When, useHolds, Title, RoomActions, Plugins, usePluginUis, pluginKit, usePlugin,
   Scene, Beat, InlineAction, Tip, InlineTrigger, InlineModal, InlineImage, InlineMail, InlineProp, InlineMono, BUILT_IN_INLINE, Picture, Video, LayeredPicture, Hotspot, MediaViewer, assetUrl, ChoiceButton, ChoiceList, PriceTag,
   Clock, StatList, StatGauge, EntityTable, Inventory, useClock,
   InputField, InputFields,
@@ -26,7 +26,7 @@ import {
   PART_KEYS, KIT_PARTS, KIT_LOOKS, KIT_LAYOUT, UiProvider, usePart, useKitPart, overridable, PROSE,
   type GameShellProps, type GameProps, type SidebarProps, type StoryProps, type SectionProps, type GameProviderProps, type GameContextValue, type ModsOption,
   type PanelComponent, type PluginSectionComponent, type InlineComponent, type InlineComponents, type InlineProps, type UiStringKey, type Words, type Say, type IconName,
-  type PluginUi, type PluginPanel, type PluginPage, type PluginSpot,
+  type PluginUi, type PluginPanel, type PluginPage, type PluginSpot, type PluginKit, type PluginControls, type PluginViewOf,
   type SavesState, type ModsState, type ClockState, type InventoryProps,
   type PagesOptions, type Page, type PageDef, type PageState, type Credit, type GateOptions,
   type Classes, type Components, type OverridableComponents, type Override, type PartKey, type PartNames, type KitPart, type UiOptions, type KeyOptions, type MinigameControls, type CountdownProps,
@@ -280,7 +280,7 @@ type GameContextValue = {
   mods?: ModsOption
   snapshot: RunnerSnapshot
   view: View
-  send: (command: Command) => Applied
+  send: (command: CommandRef) => Applied
   panels: Record<string, PanelComponent>
   inline: InlineComponents
   sections: Record<string, PluginSectionComponent>
@@ -288,7 +288,7 @@ type GameContextValue = {
 }
 ```
 
-Returns the runner, its [snapshot](/docs/reference/runner#runnersnapshot), the current [`View`](/docs/reference/view) (the snapshot's `view`) and `send`. Every component under the provider draws again when the runner hands a new snapshot: after a command, a setting, a save written or a helper's report. `send` runs a command through `runner.apply` and returns what [`apply`](/docs/reference/commands#apply) returned, so you can show a refusal. `panels` are what the provider was given. `inline` and `sections` are the provider's over what the plugin UIs bring. `plugins` are the [plugin UIs](/docs/react/kit#usepluginuis) whose plugin the game has, in their order. `mods` is the provider's `mods`, if any. It throws outside a `GameProvider`.
+Returns the runner, its [snapshot](/docs/reference/runner#runnersnapshot), the current [`View`](/docs/reference/view) (the snapshot's `view`) and `send`. Every component under the provider draws again when the runner hands a new snapshot: after a command, a setting, a save written or a helper's report. `send` runs a command through `runner.apply` and returns what [`apply`](/docs/reference/commands#apply) returned, so you can show a refusal. It takes a plain command or a plugin's as its helpers write it, a [`CommandRef`](/docs/reference/custom#commandref), so `send(shop.buy('counter', 'item:sandwich'))` works. `panels` are what the provider was given. `inline` and `sections` are the provider's over what the plugin UIs bring. `plugins` are the [plugin UIs](/docs/react/kit#usepluginuis) whose plugin the game has, in their order. `mods` is the provider's `mods`, if any. It throws outside a `GameProvider`.
 
 ```tsx
 import { useState } from 'react'
@@ -1941,7 +1941,7 @@ function useWords(): Say
 function useWords<W extends Words>(words: W): Say<keyof W | UiStringKey>
 ```
 
-`uiSay` for the game in context, inside a [`GameProvider`](#gameprovider). Given a plugin UI's table, it says that table's keys too, typed.
+`uiSay` for the game in context, inside a [`GameProvider`](#gameprovider). Given a plugin UI's table, it says that table's keys too, typed. A plugin's own UI gets its words from [`usePlugin`](/docs/react/kit#useplugin) instead, so it names its table once.
 
 ```tsx
 import { useWords } from '@ifloom/react'

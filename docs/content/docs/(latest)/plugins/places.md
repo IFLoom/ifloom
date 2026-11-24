@@ -331,7 +331,7 @@ import { places, type PlacesView } from '@ifloom/plugin-places'
 declare const game: Game   // starts in the hall, with the parcel above
 const state = startingState(game)
 
-;(view(state, game).plugins.places as PlacesView).things
+view(state, game).plugins.places!.things
 // [{ ref: 'item:parcel', name: 'parcel', image: null, count: 1, pickUp: { id: 'pickUp.item:parcel', label: 'Pick up', command: places.pickUp('item:parcel') } }]
 apply(state, game, places.pickUp('item:parcel')).state.held.player   // { 'item:parcel': 1 }
 ```
@@ -376,7 +376,7 @@ state = apply(state, game, places.go('high-street')).state
 whyNot(state, game, { type: 'action', id: 'phoneHome' })  // 'The phone is at home.'
 state = apply(state, game, places.go('cafe')).state
 view(state, game).actions.map((a) => a.id)                 // ['coffee', 'phoneHome']
-const room = view(state, game).plugins.places as PlacesView
+const room = view(state, game).plugins.places!
 room.exits.map((e) => e.id)                                // ['high-street']
 
 const evening = clock.write(apply(state, game, places.go('high-street')).state, { day: 0, period: 'evening' })
@@ -705,7 +705,7 @@ function usePlaces(): PlacesControls | null
 
 type PlacesControls = PlacesView & {
   go: (exit: string) => Result<GameState>
-  pickUp: (thing: string) => Result<GameState>
+  pickUp: (thing: EntityRef) => Result<GameState>
 }
 ```
 

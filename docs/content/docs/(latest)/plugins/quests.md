@@ -169,7 +169,7 @@ const { game } = loadGame([town], {
   title: 'Small Town',
   plugins: [places({ start: 'flat' }), quests()],
 })
-const journal = (state: GameState) => view(state, game).plugins.quests as QuestsView
+const journal = (state: GameState) => view(state, game).plugins.quests!
 const run = (state: GameState, id: string) => apply(state, game, { type: 'action', id: `places/${id}` }).state
 ```
 

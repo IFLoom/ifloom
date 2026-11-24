@@ -5,8 +5,11 @@
  * it yourself from `useCalendar`.
  */
 import type { ComponentProps } from 'react'
-import { overridable, useGame, usePart, type Override, type PluginUi } from '@ifloom/react'
+import { overridable, type Override, pluginKit, type PluginUi, useGame, usePart, usePlugin } from '@ifloom/react'
 import type { CalendarView } from '../index.ts'
+
+/** The calendar plugin's UI, declared once: its id, for `usePlugin` and `calendarUi`. */
+const CALENDAR = pluginKit('calendar')
 
 declare module '@ifloom/react' {
   interface OverridableComponents {
@@ -16,8 +19,7 @@ declare module '@ifloom/react' {
 
 /** The calendar plugin's view, piece by piece: the day, the weekday, the period and the curfew, or null in a game without the plugin. `CalendarClock` is drawn from it. */
 export function useCalendar(): CalendarView | null {
-  const { view } = useGame()
-  return (view.plugins.calendar as CalendarView | undefined) ?? null
+  return usePlugin(CALENDAR).view ?? null
 }
 
 function CalendarClockImpl({ className }: { className?: string }) {
@@ -49,6 +51,6 @@ export const CalendarClock = overridable('CalendarClock', CalendarClockImpl)
  * column and the top bar on a phone.
  */
 export const calendarUi: PluginUi = {
-  id: 'calendar',
+  ...CALENDAR,
   components: { Clock: ({ Default: _default, ...props }) => <CalendarClock {...props} /> },
 }

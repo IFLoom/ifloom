@@ -99,12 +99,11 @@ The places plugin knows the exits, and the cast plugin knows where each characte
 ```ts
 // src/behind.ts
 import { pluginQuery, type Runner, type View } from '@ifloom/engine'
-import type { CastView } from '@ifloom/plugin-cast'
 
 /** The names of the people the player has met, by the id of the place they're in now. */
 export function whoIsWhere(runner: Runner, view: View): Map<string, string[]> {
   const where = pluginQuery(runner.game, 'cast/where')
-  const people = (view.plugins.cast as CastView | undefined)?.people ?? []
+  const people = view.plugins.cast?.people ?? []
   const found = new Map<string, string[]>()
   for (const person of people) {
     const at = where?.(runner.state, { character: person.id })
@@ -119,13 +118,12 @@ An exit's `id` is the id of the place it leads to, so the map's keys line up wit
 ```ts tab="Plain JS" tab-group="framework"
 // src/exits.ts: call it from the vanilla template's draw(view).
 import type { Runner, View } from '@ifloom/engine'
-import type { PlacesView } from '@ifloom/plugin-places'
 import { whoIsWhere } from './behind.ts'
 
 export function exitList(runner: Runner, view: View): HTMLElement {
   const list = document.createElement('ul')
   const people = whoIsWhere(runner, view)
-  for (const exit of (view.plugins.places as PlacesView | undefined)?.exits ?? []) {
+  for (const exit of view.plugins.places?.exits ?? []) {
     const item = list.appendChild(document.createElement('li'))
     const button = item.appendChild(document.createElement('button'))
     button.type = 'button'
@@ -169,11 +167,10 @@ export function ExitsWithPeople() {
 <!-- src/ExitsWithPeople.vue -->
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { PlacesView } from '@ifloom/plugin-places'
 import { runner, view } from './runner.ts'
 import { whoIsWhere } from './behind.ts'
 
-const exits = computed(() => (view.value.plugins.places as PlacesView | undefined)?.exits ?? [])
+const exits = computed(() => view.value.plugins.places?.exits ?? [])
 const people = computed(() => whoIsWhere(runner, view.value))
 </script>
 
@@ -192,11 +189,10 @@ const people = computed(() => whoIsWhere(runner, view.value))
 ```svelte tab="Svelte" tab-group="framework"
 <!-- src/ExitsWithPeople.svelte -->
 <script lang="ts">
-  import type { PlacesView } from '@ifloom/plugin-places'
   import { runner, view } from './runner.ts'
   import { whoIsWhere } from './behind.ts'
 
-  const exits = $derived(($view.plugins.places as PlacesView | undefined)?.exits ?? [])
+  const exits = $derived($view.plugins.places?.exits ?? [])
   const people = $derived(whoIsWhere(runner, $view))
 </script>
 

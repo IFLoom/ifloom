@@ -70,8 +70,9 @@ import { mountGame } from '@ifloom/react'
 import { placesUi } from '@ifloom/plugin-places/react'
 import { questsUi } from '@ifloom/plugin-quests/react'
 import { shopUi } from '@ifloom/plugin-shop/react'
+import module from './game.ts'
 
-mountGame(game, { plugins: [placesUi, questsUi, shopUi] })
+mountGame(module.build(), { plugins: [placesUi, questsUi, shopUi] })
 ```
 
 Each brings its panels, its words, a page or settings if it has them, and the parts the default layout places, in the order of the list. One for a plugin the game doesn't have does nothing. A plugin you leave out of the list draws nothing of ours, so you can draw it yourself: from `view.plugins.<id>`, or from the hook its UI exports, such as [`useShop`](/docs/plugins/shop#useshop), which gives the same data and actions with no markup. That's as much a way to use a plugin as ours. [Plugin UIs and the kit](/docs/react/kit) has the whole of it, and each plugin's page has its React UI under **Drawing it**, beside the same thing drawn in plain JS and Vue. So does every engine page for something the player sees, such as [stats](/docs/reference/stats#drawing-it) and [notices](/docs/reference/notices#drawing-it).
@@ -145,7 +146,7 @@ import './styles.css'
 mountGame(module.build(), { layout: Layout })
 ```
 
-Here `src/layout.tsx` is the page, a copy of [the default layout](#layouts) to change as you like (leave `layout` out to use the default as it is), and `src/game.ts` exports what [`loadGame`](/docs/reference/loader#loadgame) returned, `{ game, problems }`. `mountGame` logs any problems as warnings.
+Here `src/layout.tsx` is the page, a copy of [the default layout](#layouts) to change as you like (leave `layout` out to use the default as it is), and `src/game.ts` default-exports the [game module](/docs/cli#the-game-module). Its `build()` returns what [`loadGame`](/docs/reference/loader#loadgame) returns, `{ game, problems }`, which is what `mountGame` takes. `mountGame` logs any problems as warnings.
 
 ```html
 <!-- index.html -->
@@ -389,8 +390,9 @@ To see what it's doing, pass it a log:
 
 ```ts
 import { mountGame } from '@ifloom/react'
+import module from './game.ts'
 
-mountGame(game, { audio: { log: console.debug } })
+mountGame(module.build(), { audio: { log: console.debug } })
 ```
 
 `audio: false` leaves sound off, for a game that plays it some other way.
@@ -438,8 +440,9 @@ Clicking a picture or a clip in the story opens it large in the [`MediaViewer`](
 
 ```ts
 import { mountGame } from '@ifloom/react'
+import module from './game.ts'
 
-mountGame(game, { viewer: false })
+mountGame(module.build(), { viewer: false })
 ```
 
 `GameShell` and `GameProvider` take the same `viewer` prop.

@@ -141,10 +141,10 @@ export const stats: Content = {
 }
 ```
 
-Sharing the umbrella raises it. Back in `src/story/opening.ts`, put the stat effect before the scene change:
+Sharing the umbrella raises it. Back in `src/story/opening.ts`, put the stat effect before the scene change in the `share` choice:
 
 ```ts fragment
-{ id: 'share', effects: [{ stat: 'warmth', by: 1 }, { scene: 'ch2.bus' }] },
+{ id: 'share', label: 'Hold the umbrella over both of you', effects: [{ stat: 'warmth', by: 1 }, { scene: 'ch2.bus' }] },
 ```
 
 A stat stays between its `min` (0 unless you say) and its `max`. Every template shows it in the side column, beside the story.
@@ -167,7 +167,7 @@ A choice can have a `when` too. A choice whose condition doesn't hold isn't offe
 
 ## 5. A counter
 
-Now the driver. The player can pay, make an excuse, or, if they shared the umbrella, claim the stranger is paying. Each excuse adds to a count called `excuses`, kept in the kv store: keys with a true/false, number or text value, in `state.kv`. The `kv` effect sets a key `to` a value, or changes its number `by` an amount:
+Now the driver. The player can pay, make an excuse, or, if they shared the umbrella, claim the stranger is paying. Each excuse adds to a count called `excuses`, kept in the kv store. The kv store is where a game keeps named values of its own, each a true/false, a number or a text. It's part of the game's state, the one object that holds everything about a game in progress, and you'll see it written `state.kv` in code. ([The state is one plain object](/docs/guide/concepts#the-state-is-one-plain-object) says more.) The `kv` effect sets a key `to` a value, or changes its number `by` an amount:
 
 ```ts fragment
 choices: [
@@ -199,18 +199,36 @@ The third chapter reads the count back with a range. `lt`, `is` and `gte` are th
     { id: 'door', label: 'Let yourself in', effects: [{ scene: 'end.door' }] },
   ],
 },
-{ id: 'end.wave', title: 'The end', body: [text('He turns out to live two doors down. He brings biscuits next time.')], choices: [] },
-{ id: 'end.door', title: 'The end', body: [text('The kettle, the radiator, the rain on the window. You sleep well enough.')], choices: [] },
+{
+  id: 'end.wave',
+  title: 'The end',
+  body: [text('He turns out to live two doors down. He brings biscuits next time.')],
+  choices: [{ id: 'again', label: 'Start again', command: { type: 'newGame' }, effects: [] }],
+},
+{
+  id: 'end.door',
+  title: 'The end',
+  body: [text('The kettle, the radiator, the rain on the window. You sleep well enough.')],
+  choices: [{ id: 'again', label: 'Start again', command: { type: 'newGame' }, effects: [] }],
+},
 ```
 
 A key that was never set counts as 0, so the honest player's line needs nothing written first. The `wave` ending uses the stat. Only a player who shared the umbrella and paid the fare has a warmth of 2.
 
+The two `end.` scenes are endings. The player reads the ending's words and sees its one button. A choice with a `command` sends that command when it's picked, and [`newGame`](/docs/reference/commands#newgame) starts the story over from the first scene, keeping the player's settings. An ending with `choices: []` works too, but then the page shows no button at all, and the player has to know to start again from a menu. [Endings](/docs/reference/scenes#endings) has more. A story like this one always has a scene on screen. In a game with places, closing a scene shows the room the player is in instead, as [The scene and the room](/docs/guide/concepts#the-scene-and-the-room) shows.
+
 ## 6. A name the player types
 
-An [input](/docs/reference/inputs) asks the player for a value and writes it to a key in the kv store. It goes in `src/story/opening.ts`, beside the first scene, since that's where it's asked. This one asks for a name, writes it to `playerName` (the input's id), and is only offered until a name has been given:
+An [input](/docs/reference/inputs) asks the player for a value and writes it to a key in the kv store. Inputs aren't part of a scene. They're a list of their own in the content, beside `scenes`, and the page shows each one while its `when` holds, whatever is on screen. This one asks for a name, writes it to `playerName` (the input's id), and is only offered until a name has been given. It goes in `src/story/opening.ts`, since the first scene is where it's asked:
 
 ```ts fragment
-inputs: [{ id: 'playerName', label: 'Your name', type: 'text', maxLength: 20, when: { not: { kv: 'playerName' } } }],
+export const opening: Content = {
+  introScene: 'ch1.stop',
+  inputs: [{ id: 'playerName', label: 'Your name', type: 'text', maxLength: 20, when: { not: { kv: 'playerName' } } }],
+  scenes: [
+    // … the scenes, as before
+  ],
+}
 ```
 
 `{ kv: 'playerName' }` holds once the key has a value, so `{ not: … }` hides the input after that. Words print any key by name with a token, `{{playerName}}`. Add a line that uses it, shown once the name is in, and hold the first chapter's choices back until then:
@@ -249,22 +267,24 @@ export default defineGame({
 
 ## 7. A chapter is a turn
 
-The engine dates things in turns. `state.turn` starts at 0, and the `turn` effect, `{ turn: true }`, ends one. Your game decides how long a turn is. In this story it's a chapter, so every choice that moves to the next chapter ends a turn before it changes the scene:
+The engine dates things in turns. The turn is a number in the state, `state.turn`, that starts at 0, and the `turn` effect, `{ turn: true }`, ends one. Your game decides how long a turn is. In this story it's a chapter, so every choice that moves to the next chapter ends a turn before it changes the scene:
 
 ```ts fragment
 { id: 'keep', label: 'Keep the umbrella to yourself', when: { kv: 'playerName' }, effects: [{ turn: true }, { scene: 'ch2.bus' }] },
 ```
 
+Effects run in the order they're written. Ending the turn first means the next chapter opens on the new turn, so whatever the new scene does or asks as it opens counts in its own chapter. Add `{ turn: true }` the same way to `share`, and to `pay`, `excuse` and `blame` in the second chapter.
+
 Now `state.turn` is the chapter the player has reached, counting from 0. Anything else the engine dates, such as how many turns have passed [`since`](/docs/reference/conditions#since) a scene was seen, counts chapters. A save made with no name of its own is named by its turn, such as `Turn 2`, and [`ifloom playtest`](/docs/cli#ifloom-playtest) writes its transcript a turn at a time.
 
 ## 8. Draw it
 
-The engine has no UI of its own. Your template already has the code that draws the game, and you don't need to change it:
+The engine has no UI of its own. Your template already has the code that draws the game, and you don't need to change it. Here's what it does, cut down to what this story uses:
 
 ```ts tab="Plain JS" tab-group="framework"
-// src/main.ts in the vanilla template, cut down to the scene and its choices
+// src/main.ts in the vanilla template, cut down to the scene, the name input and the choices
 import { browserRunner } from '@ifloom/browser'
-import type { View } from '@ifloom/engine'
+import type { InputView, View } from '@ifloom/engine'
 import module from './game.ts'
 import './styles.css'
 
@@ -273,17 +293,37 @@ const { game } = module.build()
 const runner = await browserRunner(game)
 const root = document.querySelector<HTMLElement>('#root')!
 
+/** An element with some text, added to `parent`. */
+function add<K extends keyof HTMLElementTagNameMap>(parent: HTMLElement, tag: K, text = ''): HTMLElementTagNameMap[K] {
+  const element = parent.appendChild(document.createElement(tag))
+  element.textContent = text
+  return element
+}
+
+/** A value the game asks for, such as the player's name. What they type goes back as an `input` command. */
+function drawInput(input: InputView): void {
+  const form = add(root, 'form')
+  const field = add(add(form, 'label', input.label), 'input')
+  add(form, 'button', 'OK')
+  form.onsubmit = (event) => {
+    event.preventDefault()
+    runner.apply({ type: 'input', id: input.id, to: field.value })
+  }
+}
+
 function draw(view: View): void {
   root.replaceChildren()
+  add(root, 'h2', view.scene.title)
   for (const beat of view.scene.beats) {
-    if (beat.type === 'text') root.append(Object.assign(document.createElement('p'), { textContent: beat.text }))
+    // Narration, and a spoken line: a paragraph that is all one quote.
+    if (beat.type === 'text') add(root, 'p', beat.text)
+    if (beat.type === 'say') add(root, 'p', `“${beat.text}”`)
   }
+  for (const input of view.inputs) drawInput(input)
   for (const choice of [...view.scene.choices, ...view.actions]) {
-    const button = document.createElement('button')
-    button.textContent = choice.label
+    const button = add(root, 'button', choice.label)
     button.disabled = Boolean(choice.disabled)
     button.onclick = () => runner.apply(choice.command)
-    root.append(button)
   }
 }
 
@@ -301,25 +341,28 @@ import './styles.css'
 
 // `layout` is the page, in `layout.tsx`. `pages` opens on a title screen
 // with New game, Continue, Load and Settings. Leave it out to start straight
-// in the story.
-mountGame(module.build(), { layout: Layout, pages: true })
+// in the story. `plugins` lists the UIs of the plugins in game.ts; this story has none.
+mountGame(module.build(), { layout: Layout, pages: true, plugins: [] })
 ```
 
 ```ts tab="Vue" tab-group="framework"
-// src/runner.ts
-import { shallowRef } from 'vue'
+// src/runner.ts, cut down to the runner and the view
+import { computed, shallowRef } from 'vue'
 import { browserRunner } from '@ifloom/browser'
 import module from './game.ts'
 
 const { game } = module.build()
 export const runner = await browserRunner(game)
 
-// The view as Vue state, replaced after every change of state.
-export const view = shallowRef(runner.view())
-runner.subscribe(() => {
-  view.value = runner.view()
+// The runner's snapshot as Vue state, replaced after every change of state.
+export const snapshot = shallowRef(runner.snapshot())
+runner.subscribe((next) => {
+  snapshot.value = next
 })
+export const view = computed(() => snapshot.value.view)
+```
 
+```ts tab="Vue" tab-group="framework"
 // src/main.ts
 import { createApp } from 'vue'
 import App from './App.vue'
@@ -329,27 +372,29 @@ createApp(App).mount('#root')
 ```
 
 ```ts fragment tab="Svelte" tab-group="framework"
-// src/runner.ts
-import { readable } from 'svelte/store'
+// src/runner.ts, cut down to the runner and the view
+import { derived, readable } from 'svelte/store'
 import { browserRunner } from '@ifloom/browser'
 import module from './game.ts'
 
+const { game } = module.build()
 export const runner = await browserRunner(game)
 
-// The view as a store, set again after every change of state.
-export const view = readable(runner.view(), (set) => runner.subscribe((snapshot) => set(snapshot.view)))
+// The runner's snapshot as a store, set again after every change of state.
+export const snapshot = readable(runner.snapshot(), (set) => runner.subscribe(set))
+export const view = derived(snapshot, (now) => now.view)
+```
 
+```ts fragment tab="Svelte" tab-group="framework"
 // src/main.ts
 import { mount } from 'svelte'
 import App from './App.svelte'
 import './styles.css'
 
-const { game } = module.build()
-
 mount(App, { target: document.querySelector('#root')! })
 ```
 
-Every template starts the game with [`browserRunner`](/docs/browser#browserrunner), which adds undo, saves and an autosave each chapter, and draws `runner.view()` again whenever the state changes ([Running a game](/docs/guide/running-a-game) goes through it). In the React template, `src/layout.tsx` is the page and `src/styles.css` its look, and [Make it your own](/docs/react/customising) covers both.
+Every template starts the game with [`browserRunner`](/docs/browser#browserrunner), which adds undo, saves and an autosave each chapter, and draws `runner.view()` again whenever the state changes ([Running a game](/docs/guide/running-a-game) goes through it). In the Vue and Svelte templates, `src/App.vue` or `src/App.svelte` draws the view from `runner.ts`, with a component for each part: a beat, an input, the minigame. In the React template, `src/layout.tsx` is the page and `src/styles.css` its look, and [Make it your own](/docs/react/customising) covers both.
 
 ## 9. Check it and playtest it
 
@@ -359,7 +404,7 @@ npm run check   # No problems.
 
 If you misspelled a scene id or a key along the way, `check` names it.
 
-A playtest plays the game with no one at the keyboard. It needs somewhere to start, and a new game would stop at the name input. So give the game module a `start`, a player who has already typed a name:
+A playtest plays the game with no one at the keyboard. It needs somewhere to start, and a new game would stop at the name input. So give the game module a `start`, a player who has already typed a name. `startingState` builds a new game, and its `kv` writes keys to the kv store before the first scene:
 
 ```ts
 // src/game.ts
@@ -369,7 +414,14 @@ import { stats } from './world/stats.ts'
 import { opening } from './story/opening.ts'
 
 export default defineGame({
-  build: () => loadGame([stats, opening], { id: 'last-bus', title: 'The Last Bus' }),
+  build: () =>
+    loadGame([stats, opening], {
+      id: 'last-bus',
+      title: 'The Last Bus',
+      rules: {
+        saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : undefined),
+      },
+    }),
   // Where `ifloom playtest` starts: a player who has already typed a name.
   start: (game) => startingState(game, { kv: { playerName: 'Sam' } }),
 })
@@ -483,8 +535,18 @@ export const opening: Content = {
         { id: 'door', label: 'Let yourself in', effects: [{ scene: 'end.door' }] },
       ],
     },
-    { id: 'end.wave', title: 'The end', body: [text('He turns out to live two doors down. He brings biscuits next time.')], choices: [] },
-    { id: 'end.door', title: 'The end', body: [text('The kettle, the radiator, the rain on the window. You sleep well enough.')], choices: [] },
+    {
+      id: 'end.wave',
+      title: 'The end',
+      body: [text('He turns out to live two doors down. He brings biscuits next time.')],
+      choices: [{ id: 'again', label: 'Start again', command: { type: 'newGame' }, effects: [] }],
+    },
+    {
+      id: 'end.door',
+      title: 'The end',
+      body: [text('The kettle, the radiator, the rain on the window. You sleep well enough.')],
+      choices: [{ id: 'again', label: 'Start again', command: { type: 'newGame' }, effects: [] }],
+    },
   ],
 }
 ```

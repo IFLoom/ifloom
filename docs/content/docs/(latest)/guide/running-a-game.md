@@ -109,9 +109,9 @@ The [view](/docs/reference/view) is one plain object. These are the parts most s
 |---|---|
 | `title` | The game's title. |
 | `when` | Where the game is in time and place, in the plugins' words, such as `'Day 2 · Tuesday morning · The corner café'`. `null` without a plugin that says. |
-| `scene.title`, `scene.beats` | The open scene's title and its paragraphs, already parsed into [beats](/docs/reference/prose#scenebeat): narration, a spoken line, a picture, a letter. With no scene open, it's the room the player is in, when a plugin such as places shows one. |
+| `scene.title`, `scene.beats` | The open scene's title and its paragraphs, already parsed into [beats](#the-beats): narration, spoken lines and pictures. With no scene open, it's the room the player is in, when a plugin such as places shows one. |
 | `scene.choices` | The scene's choices, each with its `label`, `command`, and `disabled` reason when it can't be picked. |
-| `actions` | The buttons on the idle screen, with no scene open: the plugins' and the game's own, each with its `price`. |
+| `actions` | The buttons on the idle screen, with no scene open (see [The scene and the room](/docs/guide/concepts#the-scene-and-the-room)): the plugins' and the game's own, each with its `price`. |
 | `stats`, `statsById` | The player's stats, as text ready to show, such as `'5c'`. `stats` lists the visible ones in order, and `statsById` has every one by id. |
 | `inputs` | The values the game is asking for now, such as the player's name. |
 | `minigame` | The minigame being played, or `null`. |
@@ -120,14 +120,31 @@ The [view](/docs/reference/view) is one plain object. These are the parts most s
 | `audio` | What should be playing. [`@ifloom/audio`](/docs/browser/audio-player) plays it for you. |
 | `plugins` | Each plugin's own part, by plugin id. |
 
+You never read the state to decide what to draw. The view already says what can be pressed and why not, and the engine refuses commands with the same reasons, so the screen and the rules can't disagree.
+
+### The beats
+
+`scene.beats` is the scene's body, already split into pieces a UI draws one after another. Each has a `type`, and a UI switches on it:
+
+| `type` | What it is | What to draw |
+|---|---|---|
+| `text` | A paragraph of narration, in `text` | A paragraph. `spans` is there when it has bold, italics, a tooltip or an inline button |
+| `say` | A spoken line: a paragraph that is all one quote, or one written under who says it | The line in `text`, under `name` when there is one. A bare quote has no name, and the scene's `speaker` is who the scene is with |
+| `image` | A picture, `src` and `alt` | An image |
+| `video` | A clip, with `autoplay`, `loop`, `muted` and `controls` | A video |
+| `sound` | A sound played as the scene is shown | Nothing. The [audio player](/docs/browser/audio-player) plays it |
+| `chose` | A pick the player made earlier in a [flowing scene](/docs/recipes/flowing-scenes), its words in `label` | The pick, styled as the player's, or nothing |
+
+A UI that draws only `text` beats loses every spoken line, so draw `say` beats from the start. [SceneBeat](/docs/reference/prose#scenebeat) has every field, and [Speech](/docs/reference/prose#speech) how a line is written.
+
+### Each plugin's part
+
 Each plugin declares the type of its part in the engine's [`ViewRegistry`](/docs/reference/plugins#typed-calls-queries-and-views), so once your game imports the plugin, `view.plugins.places` is typed as the places plugin's view, or `undefined` in a game without it. A plugin that declares nothing is `unknown`.
 
 ```ts
 const room = runner.view().plugins.places
 for (const exit of room?.exits ?? []) console.log(exit.label, exit.disabled ?? '')
 ```
-
-You never read the state to decide what to draw. The view already says what can be pressed and why not, and the engine refuses commands with the same reasons, so the screen and the rules can't disagree.
 
 ## Undo, redo and a new game
 

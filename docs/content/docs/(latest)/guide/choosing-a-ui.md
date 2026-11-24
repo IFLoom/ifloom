@@ -26,7 +26,7 @@ It needs React and Tailwind in your build. The `react` template sets both up on 
 
 ## Your own UI
 
-A UI of your own is a loop: draw `runner.view()`, send the `command` on whatever the player presses, and draw again when the runner says something changed. The `vanilla` template's whole UI is about 170 lines of plain JS.
+A UI of your own is a loop: draw `runner.view()`, send the `command` on whatever the player presses, and draw again when the runner says something changed. The `vanilla` template's whole UI is one file of plain JS, `src/main.ts`.
 
 - [A UI from scratch](/docs/guide/ui-from-scratch) explains that plain JS UI a piece at a time, then adds undo, saves and a setting.
 - [Your own UI in any framework](/docs/guide/frameworks) shows the same UI in plain JS, React by hand, Vue and Svelte, side by side.

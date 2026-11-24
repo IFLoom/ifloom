@@ -140,7 +140,11 @@ const root = document.querySelector<HTMLElement>('#game')!
 function draw(): void {
   const view = runner.view()
   root.replaceChildren()
-  for (const beat of view.scene.beats) if (beat.type === 'text') root.append(Object.assign(document.createElement('p'), { textContent: beat.text }))
+  for (const beat of view.scene.beats) {
+    // Narration, and a spoken line. A game with pictures has image beats too.
+    if (beat.type === 'text') root.append(Object.assign(document.createElement('p'), { textContent: beat.text }))
+    if (beat.type === 'say') root.append(Object.assign(document.createElement('p'), { textContent: `“${beat.text}”` }))
+  }
   for (const choice of view.scene.choices) {
     const button = Object.assign(document.createElement('button'), { textContent: choice.label, disabled: Boolean(choice.disabled) })
     button.onclick = () => runner.apply(choice.command)
@@ -185,6 +189,7 @@ import { runner, view } from './runner.ts'
 <template>
   <template v-for="(beat, at) in view.scene.beats" :key="at">
     <p v-if="beat.type === 'text'">{{ beat.text }}</p>
+    <p v-else-if="beat.type === 'say'">“{{ beat.text }}”</p>
   </template>
   <button v-for="choice in view.scene.choices" :key="choice.id" :disabled="Boolean(choice.disabled)" @click="runner.apply(choice.command)">
     {{ choice.label }}
@@ -212,11 +217,14 @@ export const view = readable(runner.view(), (set) => runner.subscribe((snapshot)
 
 {#each $view.scene.beats as beat}
   {#if beat.type === 'text'}<p>{beat.text}</p>{/if}
+  {#if beat.type === 'say'}<p>“{beat.text}”</p>{/if}
 {/each}
 {#each $view.scene.choices as choice (choice.id)}
   <button disabled={Boolean(choice.disabled)} onclick={() => runner.apply(choice.command)}>{choice.label}</button>
 {/each}
 ```
+
+The runner holds the game in play. `runner.view()` is the [view](/docs/reference/view), everything there is to draw right now, worked out from the game's state. Its `scene.beats` is the scene's words, split into pieces such as a paragraph or a spoken line, each with a `type` (see [The beats](/docs/guide/running-a-game#the-beats)). Every choice carries the `command` it sends, and `runner.apply(choice.command)` plays it. The runner then calls what you gave `runner.subscribe`, so the page draws again. [Running a game](/docs/guide/running-a-game) goes through all of it.
 
 [`browserRunner`](/docs/browser#browserrunner) starts a new game with undo, saves in `localStorage` and an autosave each turn. The snippets import with `.ts` extensions, as the templates do. Drop them if your project's TypeScript settings don't allow it. To build with your project's own bundler, see the recipes for [Next.js](/docs/recipes/next), [webpack](/docs/recipes/webpack) and [esbuild](/docs/recipes/esbuild).
 

@@ -2,7 +2,7 @@
 title: "A UI from scratch"
 description: "The worked example of the Engine track: a whole game UI in plain JS and DOM, with no framework, explained line by line from the vanilla template, then given undo, saves and a text-size setting, with @ifloom/browser and @ifloom/audio."
 ---
-You'll build a complete UI for a game in plain JS, with no framework and no UI package. The code is the `vanilla` template's `src/main.ts`, about 170 lines, taken a piece at a time. At the end you'll add an undo button, saves and a setting to it.
+You'll build a complete UI for a game in plain JS, with no framework and no UI package. The code is the `vanilla` template's `src/main.ts`, taken a piece at a time. At the end you'll add an undo button, saves and a setting to it.
 
 It uses only what [Running a game](/docs/guide/running-a-game) and [Saves and settings](/docs/guide/saves-and-settings) covered, plus two small helper packages that work with any UI:
 

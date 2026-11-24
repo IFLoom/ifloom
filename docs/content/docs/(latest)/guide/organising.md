@@ -46,6 +46,10 @@ export const stats: Content = {
 }
 ```
 
+`build` is handed `unlocked`, which `loadGame` lays over the content as packs. It's the content in `src/unlocks/` that a player opens with a code, such as a supporter's scenes (see [Locked content](/docs/cli#locked-content)). `ifloom check` passes it so the locked content is checked too, and it's empty otherwise. A game with no locked content can leave it out and write `build: () => loadGame([…], base)`.
+
+The template's `game.ts` also has `probes`: the states, each made by playing from a new game, that [`ifloom snapshot`](/docs/cli#ifloom-snapshot) reads every scene in. Leave them out and it reads each scene from the start. See [Probes](/docs/reference/checks#probes).
+
 `game.ts` holds no content. Its job is the list of files and the base: the game's `id`, `title` and `version`, its `plugins` and its own code in `rules`. Everything a mod could change, actions, locks and the scene it opens on included, is [content](/docs/reference/loader#content) and goes in a file of its own.
 
 ### World by kind, story by area
@@ -105,6 +109,7 @@ export const cafe: Content = {
       choices: [{ id: 'leave', label: 'Finish your cup', effects: [{ scene: null }] }],
     },
   ],
+  actions: [{ id: 'coffee', label: 'Buy a coffee', cost: { stats: { coins: 3 } }, effects: [{ scene: 'cafe.window' }] }],
 }
 ```
 
@@ -126,9 +131,12 @@ const { game } = module.build()
 
 describe('the café', () => {
   it('sells a coffee for 3 coins', () => {
-    const runner = createRunner(game, { ...startingState(game), sceneId: null })
+    const runner = createRunner(game, startingState(game))
+    // A new game opens on the first scene, and a button is only offered with no scene open, so close it.
+    runner.apply({ type: 'leave' })
     runner.apply({ type: 'action', id: 'coffee' })
     expect(runner.state.stats.coins).toBe(9)
+    expect(runner.state.sceneId).toBe('cafe.window')
   })
 })
 ```
@@ -137,7 +145,12 @@ When a test fails, its file names the area, and the area's file is where the fix
 
 ## Mods are packs
 
-A [mod](/docs/reference/mods) is a [pack](/docs/reference/loader#content-and-packs): content from outside your code, with an id that starts with `mod:`. Packs go in `loadGame`'s third argument, over your content:
+A pack is content from outside your code. It has an `id` that saves record, and goes over your content, so it can replace a scene or add new ones. Two sorts come into a game:
+
+- A [mod](/docs/reference/mods) is a pack in a file that a player adds to a built game. Its id starts with `mod:`.
+- Unlocked content is the packs in `src/unlocks/`, which the player opens with a code. They're the `unlocked` that `build` is handed.
+
+Both go in `loadGame`'s third argument, over your content:
 
 ```ts
 // src/game.ts
@@ -147,15 +160,16 @@ import { stats } from './world/stats.ts'
 import { opening } from './story/opening.ts'
 import { cafe } from './story/cafe.ts'
 
-/** The game, with the player's mods over its content. The page passes them; the CLI checks it without. */
-export function myGame(mods: Pack[] = []) {
-  return loadGame([stats, opening, cafe], { id: 'my-game', title: 'My Game' }, { packs: mods })
+/** The game, with packs over its content: the player's mods, or content unlocked with a code. */
+export function myGame(packs: Pack[] = []) {
+  return loadGame([stats, opening, cafe], { id: 'my-game', title: 'My Game' }, { packs })
 }
 
+// The CLI builds it with the unlocked content, so `ifloom check` checks that too.
 export default defineGame({ build: ({ unlocked }) => myGame(unlocked) })
 ```
 
-A pack replaces whatever it repeats, since changing your game is what it's for, and the problems it causes are pinned on `mod:<id>`, not on your files. Saves record the ids of the mods they were made with, so a player who removes one is told when they load such a save.
+A page that loads the player's mods at start-up calls `myGame` with them, as [Mods](/docs/reference/mods) shows. A pack replaces whatever it repeats, since changing your game is what it's for, and the problems it causes are pinned on `mod:<id>`, not on your files. Saves record the ids of the mods they were made with, so a player who removes one is told when they load such a save.
 
 ## See it in the examples
 

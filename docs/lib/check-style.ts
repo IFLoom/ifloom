@@ -191,6 +191,18 @@ export const DONE: string[] = [
   'how-to/offer-new-game-plus.md',
   'how-to/build-a-hud.md',
   'how-to/arrange-the-layout.md',
+  'how-to/run-a-game-in-code.md',
+  'how-to/write-your-own-condition-or-effect.md',
+  'how-to/run-code-at-the-end-of-a-turn.md',
+  'how-to/write-a-plugin.md',
+  'how-to/make-plugins-work-together.md',
+  'how-to/write-a-save-driver.md',
+  'how-to/let-players-add-mods.md',
+  'how-to/sell-supporter-content.md',
+  'how-to/test-a-route.md',
+  'how-to/playtest-and-snapshot.md',
+  'how-to/debug-a-game.md',
+  'how-to/troubleshoot-a-missing-choice.md',
 ]
 
 /** One problem: where it is, the rule it breaks, and the text that breaks it. */

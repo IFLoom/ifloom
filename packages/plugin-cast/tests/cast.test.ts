@@ -289,9 +289,6 @@ describe('the cast', () => {
         }),
         places.location({ id: 'yard', name: 'Yard', exits: [], body: [] }),
       ],
-      data: {
-        cast: { characters: [{ id: 'old', name: 'Old' }] },
-      },
     }
     const { problems } = loadGame([broken], { id: 'b', title: 'B', plugins: [places(), cast()] })
     expect(problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
@@ -299,7 +296,6 @@ describe('the cast', () => {
       'trait cast/person on character:mole: unknown location "burrow"',
       'trait cast/person on character:mole: talk: opens unknown scene "mole.hi"',
       'trait cast/person on character:mole: unknown storyline "tunnels"',
-      'characters old: characters are entities now: write them in entities with cast.person({ id, name, ... })',
     ])
   })
 })

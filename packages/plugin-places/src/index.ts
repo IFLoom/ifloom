@@ -24,27 +24,23 @@ import {
   bindCurrent,
   commandOf,
   defineCalls,
+  defineTraitKind,
   definePlugin,
   entityDescription,
   entityImage,
   entityName,
   entityOf,
   entityTags,
-  traitOf,
   heldBy,
   heldCount,
   holds,
   lockOn,
   lockedOut,
-  parseRef,
   pluginQuery,
   reasonOf,
   stringOf,
   renderAction,
   pictureView,
-  declaredTrait,
-  declaredWithTrait,
-  withTrait,
   type ActionDef,
   type Blocked,
   type CommandsOf,
@@ -62,7 +58,6 @@ import {
   type Game,
   type GameState,
   type PictureDef,
-  type PluginProblem,
   type RenderedChoice,
   type Reference,
   type PictureView,
@@ -203,25 +198,29 @@ export type PlacesView = {
 }
 
 const ID = 'places'
-const TRAIT = 'places/location'
 
 /** The kind the plugin brings for its places, so each can hold things: `'location:park'`. */
 export const LOCATION = 'location'
+
+/** The places: entities carrying the `places/location` trait, a bare id naming one of the `location` kind. */
+const PLACES = defineTraitKind({
+  kind: LOCATION,
+  trait: 'places/location',
+  fields: { parent: true, exits: true, picture: true, blocked: true, body: true, actions: true, audio: true, ui: true, arrive: true },
+})
+const TRAIT = PLACES.trait
 
 /**
  * How content names a place's entity, for `at` and `entity`: a bare id is
  * one of the plugin's kind (`places.locationRef('park')` is `'location:park'`), and
  * a reference is as written.
  */
-const locationRef = (id: string): EntityRef => (id.includes(':') ? id : `${LOCATION}:${id}`) as EntityRef
-
-/** A reference to one of the game's places, which must carry the trait. */
-const placeEntry = (id: string): Reference => ({ entity: locationRef(id), carrying: TRAIT })
+const locationRef = (id: string): EntityRef => PLACES.ref(id)
 
 /** A place by id or reference, `'park'` or `'location:park'`, named to the checker. */
-const place = () => arg.string().naming((id) => (id ? [placeEntry(id)] : []))
+const place = () => PLACES.arg()
 /** One place or several, `'park'` or `['cafe', 'park']`. */
-const placeList = () => arg.strings().naming((ids) => ids.map(placeEntry))
+const placeList = () => PLACES.args()
 
 /** The plugin's calls, and what each takes. */
 const CALLS = defineCalls(ID, {
@@ -265,23 +264,7 @@ declare module '@ifloom/engine' {
 }
 
 /** How the plugin names a place back: its id for one of its kind, else the whole reference. */
-const short = (ref: EntityRef): string => (parseRef(ref)?.kind === LOCATION ? parseRef(ref)!.id : ref)
-
-const declaredCache = new WeakMap<object, Map<EntityRef, Place>>()
-
-/** The places content declares, by reference, with their traits. */
-function declared(game: Game): Map<EntityRef, Place> {
-  let found = declaredCache.get(game)
-  if (!found) {
-    found = new Map()
-    for (const ref of declaredWithTrait(game, TRAIT)) {
-      const data = declaredTrait(game, ref, TRAIT)
-      if (data) found.set(ref, data)
-    }
-    declaredCache.set(game, found)
-  }
-  return found
-}
+const short = (ref: EntityRef): string => PLACES.id(ref)
 
 /**
  * Every place in the game now, as references: every entity with the
@@ -289,7 +272,7 @@ function declared(game: Game): Map<EntityRef, Place> {
  * those made in play.
  */
 export function locationsOf(state: GameState, game: Game): EntityRef[] {
-  return withTrait(state, game, TRAIT)
+  return PLACES.all(state, game)
 }
 
 /**
@@ -298,15 +281,11 @@ export function locationsOf(state: GameState, game: Game): EntityRef[] {
  * it was made `like`. Undefined for anything else.
  */
 export function locationOf(state: GameState, game: Game, ref: string | null | undefined): Place | undefined {
-  if (ref === null || ref === undefined) return undefined
-  const full = locationRef(ref)
-  const own = declared(game).get(full)
-  if (own) return own
-  return entityOf(state, game, full) ? traitOf(state, game, full, TRAIT) : undefined
+  return PLACES.get(state, game, ref)
 }
 
 /** A place content declares, by id or reference, for a check, which has no state. */
-const declaredLocation = (game: Game, id: string): Place | undefined => declared(game).get(locationRef(id))
+const declaredLocation = (game: Game, id: string): Place | undefined => PLACES.declaredGet(game, id)
 
 /** A place as the plugin keeps it: `'park'` and `'location:park'` are both `'park'`. */
 const placeId = (id: string): string => short(locationRef(id))
@@ -513,24 +492,10 @@ function placesPlugin(options: PlacesOptions = {}): DefinedPlugin<PlacesState, P
       }
     },
     references: {
-      content: () => (options.start !== undefined ? [{ list: 'options', id: 'start', refs: [placeEntry(options.start)] }] : []),
-    },
-    check: (game) => {
-      const problems: PluginProblem[] = []
-      // Locations were a list in the plugin's content; now each is an entity with the location trait.
-      for (const entry of (game.data?.[ID] as { locations?: { id?: string }[] } | undefined)?.locations ?? []) {
-        problems.push({
-          list: 'locations',
-          id: String(entry?.id ?? ''),
-          what: 'locations are entities now: write them in entities with places.location({ id, name, exits, body, ... })',
-        })
-      }
-      return problems
+      content: () => (options.start !== undefined ? [{ list: 'options', id: 'start', refs: [PLACES.entry(options.start)] }] : []),
     },
   })
 }
-
-const LOCATION_FIELDS = ['parent', 'exits', 'picture', 'blocked', 'body', 'actions', 'audio', 'ui', 'arrive'] as const
 
 /**
  * A place, for content's `entities`: an entity of the kind `location` (or
@@ -542,15 +507,7 @@ const LOCATION_FIELDS = ['parent', 'exits', 'picture', 'blocked', 'body', 'actio
  * ```
  */
 function location(def: PlaceDef): EntityDef {
-  const { of, traits, ...rest } = def
-  const entity: Record<string, unknown> = {}
-  const trait: Record<string, unknown> = {}
-  for (const [field, value] of Object.entries(rest)) {
-    if (value === undefined) continue
-    if ((LOCATION_FIELDS as readonly string[]).includes(field)) trait[field] = value
-    else entity[field] = value
-  }
-  return { ...(entity as Omit<EntityDef, 'of'>), of: of ?? LOCATION, traits: { ...traits, [TRAIT]: trait as Place } }
+  return PLACES.define(def)
 }
 
 /** The command that picks up one of a thing lying where the player is. */

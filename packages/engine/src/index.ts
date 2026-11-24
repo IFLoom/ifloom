@@ -83,6 +83,8 @@ export type {
   WrittenAs,
 } from './pluginCalls.ts'
 export { arg, defineCalls, defineData, list } from './pluginCalls.ts'
+export type { TraitEntityDef, TraitKind, TraitKindSpec } from './traitKinds.ts'
+export { defineTraitKind } from './traitKinds.ts'
 export type { SpeakerView } from './speakers.ts'
 export { speakerOf } from './speakers.ts'
 export type { CastContact, PartnerQueries, SenderView } from './partners.ts'

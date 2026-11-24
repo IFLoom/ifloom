@@ -1444,7 +1444,7 @@ content?: Content
 A plugin can bring the [kinds](/docs/reference/entities#kinddef) of thing it keeps, and the [entities](/docs/reference/entities#entitydef) of those kinds there at the start, in its `content`. Each entity then has stats and a kv store that content works on with `of`, `each` and `count`, like any the game declares. The cast does this: each character is an entity of the kind `character`, which is how the showcase's `friendship` stat belongs to Ava and Sam.
 
 - **`content`** is a [`Content`](/docs/reference/loader#content) the plugin brings, merged by the [loader](/docs/reference/loader#loadgame) first, plugin by plugin in the order `game.plugins` lists them, under the game's content and packs. It can hold anything content can: kinds, entities, scenes, prose, actions or `data`. A plugin's kind isn't [listed](/docs/reference/entities#listing) in the view unless it sets `listed`, so its entities don't show before the plugin says. A kind the game's content declares with the same id replaces the plugin's, and keeps the plugin's fields it leaves out. That's how a game renames one. A pack can replace anything in it by id. A plugin with options builds it in its factory, from those options.
-- **An entity the game writes** is the way to give a plugin something per entity, such as a place or a vendor: the plugin declares a [trait](#traits), content writes the entity with it (often through a helper of the plugin's, as the places plugin's [`places.location()`](/docs/plugins/places#location) is), and the plugin finds them with [`withTrait`](/docs/reference/entities#withtrait). A mod then adds one as it adds any entity.
+- **An entity the game writes** is the way to give a plugin something per entity, such as a place or a vendor: the plugin declares a [trait](#traits), content writes the entity with it (often through a helper of the plugin's, as the places plugin's [`places.location()`](/docs/plugins/places#location) is), and the plugin finds them with [`withTrait`](/docs/reference/entities#withtrait), or with a [trait kind](#trait-kinds). A mod then adds one as it adds any entity.
 
 Content that puts several plugins together, such as a phone with an app for each messages channel and feed, is the game's own. The game lists the plugins in `plugins` and writes the content beside the rest, as [A phone](/docs/recipes/phone) shows.
 
@@ -1525,6 +1525,59 @@ With the `declare module` block in the plugin's source, every game that imports 
 **Ids.** A trait's id is the plugin's id, a `/` and a name, like its conditions and effects. The [content checker](/docs/reference/checks#traits) reports a trait named otherwise, and two with one id.
 
 **Checks.** The checker asks the plugin's trait about the data on every declared entity that has it, after the kind's default and the entity's own are combined. If the game has the plugin but content names a trait it doesn't declare, such as `laundry/washabel`, that's a problem too, so a typo doesn't go quietly unread. A game without the plugin can carry its traits unchecked, as with any [cooperating](#cooperates) plugin's content.
+
+### Trait kinds
+
+When each of a plugin's things is an entity of its own kind carrying its trait, as the places plugin's locations, the shop's vendors and the cast's people are, declare that once with `defineTraitKind`:
+
+```ts
+import { defineTraitKind, defineCalls, type EntityDef, type TraitEntityDef } from '@ifloom/engine'
+
+declare module '@ifloom/engine' {
+  interface TraitRegistry {
+    'laundry/machine': { capacity: number; noisy?: boolean }
+  }
+}
+
+const MACHINES = defineTraitKind({ kind: 'machine', trait: 'laundry/machine', fields: { capacity: true, noisy: true } })
+
+const CALLS = defineCalls('laundry', {
+  commands: { load: { id: MACHINES.arg() } },
+})
+
+// The definer, on the factory: laundry.machine({ id: 'big', name: 'The big one', capacity: 8 }).
+const machine = (def: TraitEntityDef<'laundry/machine'>): EntityDef => MACHINES.define(def)
+```
+
+```ts
+function defineTraitKind<K extends string>(spec: TraitKindSpec<K>): TraitKind<K>
+
+type TraitKindSpec<K extends string> = {
+  kind: string
+  trait: K
+  fields: { readonly [F in keyof Required<TraitData<K>>]: true }
+}
+
+type TraitEntityDef<K extends string> = Omit<EntityDef, 'of' | keyof TraitData<K>> & TraitData<K> & { of?: string }
+```
+
+`fields` lists every field of the trait, so the definer knows which of what it's given go in the trait and which stay on the entity. It's typed complete, so adding a field to the trait without listing it is a type error. A field both have, such as a place's `ui`, is the trait's.
+
+The `TraitKind` it returns has:
+
+| Member | What it is |
+|---|---|
+| `kind`, `trait` | The kind's id and the trait's. |
+| `ref(id)` | The entity an id names. A bare id is one of the kind (`'big'` is `'machine:big'`), and a reference is returned as written, for one of another kind. |
+| `id(ref)` | How the plugin names one back: its bare id for one of the kind, else its whole reference. |
+| `all(state, game)` | Every entity in the game now with the trait, as [`withTrait`](/docs/reference/entities#withtrait) reads them. |
+| `get(state, game, id)` | The trait of the entity an id or reference names, as [`traitOf`](/docs/reference/entities#traitof) reads it, or `undefined` for one the game doesn't have now or that doesn't carry it. |
+| `declaredAll(game)`, `declaredGet(game, id)` | The same from content alone, for a check, which has no state. Worked out once per game. |
+| `define(def)` | An [`EntityDef`](/docs/reference/entities#entitydef) of the kind (or `def.of`), with the trait's fields in `traits[trait]`. |
+| `entry(id)` | The [reference](#references) to one, `{ entity, carrying: trait }`, so the checker reports `unknown entity "machine:tiny"` or `"…" has no laundry/machine trait`. |
+| `arg()`, `args()` | A call's argument naming one, or one or several, by id or reference, checked as `entry`. See [`arg`](#arg). |
+
+The kind itself is still yours to declare in the plugin's [`content.kinds`](#kinds-and-entities), with its label and whether it's listed.
 
 ### TraitDef
 

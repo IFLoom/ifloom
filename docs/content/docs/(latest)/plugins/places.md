@@ -806,7 +806,7 @@ A place named by something that isn't one is reported as `"item:paper" has no pl
 
 A place's `image`, as any entity's, and a picture layer's file are listed in the checker's [`files`](/docs/reference/checks#fileref).
 
-Places still written as a list in `data.places.locations`, as content did before schema 24, are reported one by one (`locations yard · locations are entities now: …`). A pack written then is [carried forward](#older-content) for you.
+A pack that still lists places in `data.places.locations`, as content did before schema 24, is [carried forward](#older-content) for you. Your own content isn't, so write each place with `places.location()`.
 
 ```text
 base · options start · unknown entity "location:nowhere"

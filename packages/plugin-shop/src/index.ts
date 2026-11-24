@@ -24,9 +24,9 @@ import {
   arg,
   artSrc,
   declaredTrait,
-  declaredWithTrait,
   defineCalls,
   definePlugin,
+  defineTraitKind,
   entityDescription,
   entityImage,
   entityName,
@@ -47,7 +47,6 @@ import {
   statValue,
   stringOf,
   traitOf,
-  withTrait,
   YOU,
   type Blocked,
   type CommandRef,
@@ -61,7 +60,6 @@ import {
   type Game,
   type GameState,
   type PluginContext,
-  type PluginProblem,
   type Price,
   type Reason,
   type Reference,
@@ -226,16 +224,15 @@ declare module '@ifloom/engine' {
 const ID = 'shop'
 /** The kind of entity vendors are, unless one says otherwise. */
 const KIND = 'vendor'
-const VENDOR = 'shop/vendor'
+/** The vendors: entities carrying the `shop/vendor` trait, a bare id naming one of the `vendor` kind. */
+const VENDORS = defineTraitKind({ kind: KIND, trait: 'shop/vendor', fields: { blocked: true, goods: true, buysBack: true, discounts: true } })
+const VENDOR = VENDORS.trait
 const SELLABLE = 'shop/sellable'
 /** The panel a UI draws a vendor's counter in. */
 const PANEL = 'shop'
 
-/** A reference to one of the game's vendors, which must carry the trait. */
-const vendorEntry = (id: string): Reference => ({ entity: vendorRef(id), carrying: VENDOR })
-
 /** A vendor by id or reference, named to the checker. */
-const vendorArg = () => arg.string().naming((id): Reference[] => (id ? [vendorEntry(id)] : []))
+const vendorArg = () => VENDORS.arg()
 /** How many: a whole number, 1 or more; 1 if left out. */
 const countArg = () =>
   arg
@@ -273,11 +270,8 @@ function emptyState(): ShopState {
  * `'vendor:counter'`. A reference is as written, for a vendor of another kind.
  */
 function vendorRef(vendor: string): EntityRef {
-  return (vendor.includes(':') ? vendor : `${KIND}:${vendor}`) as EntityRef
+  return VENDORS.ref(vendor)
 }
-
-/** How the plugin names a vendor back: its id for one of its kind, else the whole reference. */
-const short = (ref: EntityRef): string => (parseRef(ref)?.kind === KIND ? parseRef(ref)!.id : ref)
 
 const goodsCache = new WeakMap<object, Vendor>()
 
@@ -297,7 +291,7 @@ function usable(vendor: Vendor): Vendor {
  * made in play.
  */
 export function vendorsOf(state: GameState, game: Game): EntityRef[] {
-  return withTrait(state, game, VENDOR)
+  return VENDORS.all(state, game)
 }
 
 /**
@@ -309,18 +303,14 @@ export function vendorOf(state: GameState, game: Game, ref: string | null | unde
   return vendorIn(state, game, ref)
 }
 
-/** `vendorsOf`, or with no state (for a check), the vendors content declares. */
+/** `vendorsOf`, or with no state (for a migration), the vendors content declares. */
 function vendorsIn(state: GameState | undefined, game: Game): EntityRef[] {
-  return state ? withTrait(state, game, VENDOR) : declaredWithTrait(game, VENDOR)
+  return state ? VENDORS.all(state, game) : VENDORS.declaredAll(game)
 }
 
-/** `vendorOf`, or with no state (for a check), only the vendors content declares. */
+/** `vendorOf`, or with no state (for a migration), only the vendors content declares. */
 function vendorIn(state: GameState | undefined, game: Game, id: string | null | undefined): Vendor | undefined {
-  if (id === null || id === undefined || id === '') return undefined
-  const ref = vendorRef(id)
-  let data: Vendor | undefined
-  if (state) data = entityOf(state, game, ref) ? traitOf(state, game, ref, VENDOR) : undefined
-  else data = declaredWithTrait(game, VENDOR).includes(ref) ? declaredTrait(game, ref, VENDOR) : undefined
+  const data = state ? VENDORS.get(state, game, id) : VENDORS.declaredGet(game, id)
   return data ? usable(data) : undefined
 }
 
@@ -334,7 +324,7 @@ function oneOf(state: GameState | undefined, game: Game, id: unknown): One | und
   if (typeof id !== 'string' || id === '') return undefined
   const ref = vendorRef(id)
   const vendor = vendorIn(state, game, ref)
-  return vendor ? { id: short(ref), ref, vendor } : undefined
+  return vendor ? { id: VENDORS.id(ref), ref, vendor } : undefined
 }
 
 /** Every vendor in the game now, or, with no state, every one content declares. */
@@ -723,25 +713,11 @@ function shopPlugin(): DefinedPlugin<ShopState, ShopView> {
       // The `shop` panel draws one vendor's counter, so it needs a vendor the game has.
       panels: (panel, args): Reference[] => {
         if (panel !== PANEL) return []
-        return typeof args.vendor === 'string' ? [vendorEntry(args.vendor)] : [{ problem: 'the shop panel needs a vendor: { vendor: "<id>" }' }]
+        return typeof args.vendor === 'string' ? [VENDORS.entry(args.vendor)] : [{ problem: 'the shop panel needs a vendor: { vendor: "<id>" }' }]
       },
-    },
-    check: (game) => {
-      const problems: PluginProblem[] = []
-      // Vendors were a list in the plugin's content; now each is an entity with the vendor trait.
-      for (const entry of (game.data?.[ID] as { vendors?: { id?: string }[] } | undefined)?.vendors ?? []) {
-        problems.push({
-          list: 'vendors',
-          id: String(entry?.id ?? ''),
-          what: 'vendors are entities now: write them in entities with shop.vendor({ id, name, goods, ... })',
-        })
-      }
-      return problems
     },
   })
 }
-
-const VENDOR_FIELDS = ['blocked', 'goods', 'buysBack', 'discounts'] as const
 
 /**
  * A vendor, for content's `entities`: an entity of the kind `vendor` (or
@@ -753,15 +729,7 @@ const VENDOR_FIELDS = ['blocked', 'goods', 'buysBack', 'discounts'] as const
  * ```
  */
 function vendor(def: VendorDef): EntityDef {
-  const { of, traits, ...rest } = def
-  const entity: Record<string, unknown> = {}
-  const trait: Record<string, unknown> = {}
-  for (const [field, value] of Object.entries(rest)) {
-    if (value === undefined) continue
-    if ((VENDOR_FIELDS as readonly string[]).includes(field)) trait[field] = value
-    else entity[field] = value
-  }
-  return { ...(entity as Omit<EntityDef, 'of'>), of: of ?? KIND, traits: { ...traits, [VENDOR]: trait as Vendor } }
+  return VENDORS.define(def)
 }
 
 /**

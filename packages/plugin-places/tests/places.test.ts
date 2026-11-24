@@ -509,14 +509,6 @@ describe('places', () => {
       })()
       expect(view(startingState(told), told).scene.body).toBe('A Town house: House.')
     })
-
-    it('reports locations still written in data', () => {
-      const old = { name: 'old', data: { places: { locations: [{ id: 'yard' }] } } } as unknown as Content
-      const { problems } = loadGame([old], { id: 't', title: 'T', plugins: [places()] })
-      expect(problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
-        'locations yard: locations are entities now: write them in entities with places.location({ id, name, exits, body, ... })',
-      ])
-    })
   })
 
   it('carries an older pack’s locations forward into entities, art as the image and tag as the description', () => {

@@ -446,14 +446,6 @@ describe('a vendor is an entity with the vendor trait', () => {
     })
     expect(loaded.game.data?.shop).toBeUndefined()
   })
-
-  it('reports vendors still written in data', () => {
-    const old = { name: 'old', data: { shop: { vendors: [{ id: 'kiosk' }] } } } as unknown as Content
-    const { problems } = loadGame([old], { id: 'g', title: 'g', plugins: [shop()] })
-    expect(problems.map((problem) => `${problem.where}: ${problem.what}`)).toEqual([
-      'vendors kiosk: vendors are entities now: write them in entities with shop.vendor({ id, name, goods, ... })',
-    ])
-  })
 })
 
 describe('the shop with content written for items', () => {

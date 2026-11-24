@@ -745,7 +745,7 @@ town · trait cast/person on character:mole · unknown storyline "tunnels"
 town · trait cast/person on character:vole · can be called, but a call opens no scene: give call a scene, or them a talk
 ```
 
-**Characters written the old way.** A `data.cast.characters` list in content is reported once per entry, `characters <id> · characters are entities now: write them in entities with cast.person({ id, name, ... })`. A pack written for an older schema has its characters moved for it (see [`upgradePack`](/docs/reference/loader#upgradepack)): `role` becomes `desc`, `portrait` becomes `image`, and the rest the trait.
+**Characters written the old way.** A pack written for an older schema, with a `data.cast.characters` list, has its characters moved for it (see [`upgradePack`](/docs/reference/loader#upgradepack)): `role` becomes `desc`, `portrait` becomes `image`, and the rest the trait.
 
 The places in `cast/at` aren't checked. An `image` the game gives is listed in the checker's [`files`](/docs/reference/checks#fileref), so `ifloom check` looks for it. The default one, `art/character/<id>.jpg`, isn't.
 

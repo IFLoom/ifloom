@@ -535,7 +535,7 @@ When the game loads, the plugin checks the `shop/vendor` trait on each vendor, a
 
 A command that names a vendor or thing the game doesn't have gives `unknown entity "vendor:…"` or `unknown entity "…"` where it's written, and one that names an entity that isn't a vendor gives `"…" has no shop/vendor trait`. The `shop/sellable` trait's price is checked on each entity that has it.
 
-Vendors still written as a list in `data.shop.vendors`, as content did before schema 24, are reported one by one (`vendors kiosk · vendors are entities now: …`). A pack written then is carried forward by [`upgradePack`](/docs/reference/loader#upgradepack): each vendor becomes an entity of the kind `vendor`, with its `id` and `name`, and the rest in the `shop/vendor` trait. Saves need nothing, because a vendor's entity was `vendor:<id>` before too.
+A pack that still lists vendors in `data.shop.vendors`, as content did before schema 24, is carried forward by [`upgradePack`](/docs/reference/loader#upgradepack): each vendor becomes an entity of the kind `vendor`, with its `id` and `name`, and the rest in the `shop/vendor` trait. Saves need nothing, because a vendor's entity was `vendor:<id>` before too.
 
 ## Gotchas
 

@@ -21,10 +21,10 @@ import {
   bindCurrent,
   defineCalls,
   definePlugin,
+  defineTraitKind,
   entityDescription,
   entityImage,
   entityName,
-  entityOf,
   entityUi,
   fillTokens,
   holds,
@@ -36,9 +36,7 @@ import {
   startingState,
   storylineOpen,
   stringOf,
-  traitOf,
   whyNot,
-  withTrait,
   type CommandRef,
   type CommandsOf,
   type Condition,
@@ -50,7 +48,6 @@ import {
   type Game,
   type GameState,
   type PluginContext,
-  type PluginProblem,
   type Reference,
   type RenderedChoice,
   type TraitDef,
@@ -158,8 +155,22 @@ declare module '@ifloom/engine' {
 }
 
 const ID = 'cast'
-const PERSON = 'cast/person'
 const KIND = 'character'
+/** Every field of the `cast/person` trait, which `cast.person()` puts in the trait. */
+const PERSON_FIELDS = {
+  fullName: true,
+  pronouns: true,
+  home: true,
+  schedule: true,
+  talk: true,
+  call: true,
+  storyline: true,
+  met: true,
+  portrait: true,
+} as const
+/** The people: entities carrying the `cast/person` trait, a bare id naming one of the `character` kind. A cast with another kind makes its own. */
+const PEOPLE = defineTraitKind({ kind: KIND, trait: 'cast/person', fields: PERSON_FIELDS })
+const PERSON = PEOPLE.trait
 
 /** The plugin's calls, and what each takes. Each names someone by id (one of the cast's kind) or by reference. */
 const CALLS = defineCalls(ID, {
@@ -187,12 +198,12 @@ export const AWAY = 'away'
  * people content declares, in its order, then those made in play.
  */
 export function peopleOf(state: GameState, game: Game): EntityRef[] {
-  return withTrait(state, game, PERSON)
+  return PEOPLE.all(state, game)
 }
 
 /** The `cast/person` trait of someone in the game, read through what they were made `like`; undefined for anyone else. */
 export function personOf(state: GameState, game: Game, ref: EntityRef): Person | undefined {
-  return entityOf(state, game, ref) ? traitOf(state, game, ref, PERSON) : undefined
+  return PEOPLE.get(state, game, ref)
 }
 
 /** Someone's presentation hints, as a view's `ui` field: left out with none. */
@@ -201,18 +212,17 @@ function uiOf(state: GameState, game: Game, ref: EntityRef): { ui?: Ui<EntityUi>
   return ui ? { ui } : {}
 }
 
-const PERSON_FIELDS = ['fullName', 'pronouns', 'home', 'schedule', 'talk', 'call', 'storyline', 'met', 'portrait'] as const
-
 const talkOptions = (person: Person): TalkOption[] => (typeof person.talk === 'string' ? [{ scene: person.talk }] : (person.talk ?? []))
 
 /** Build the plugin. It asks the places plugin where the player is, by name, wherever each is listed. */
 function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
   const kind = options.kind ?? KIND
-  /** Who a call names: a bare id is one of the cast's kind, a reference (what `'$'` becomes) is as written. */
-  const refOf = (id: string): EntityRef => (id.includes(':') || id === '$' ? id : `${kind}:${id}`) as EntityRef
+  const people = kind === KIND ? PEOPLE : defineTraitKind({ kind, trait: PERSON, fields: PERSON_FIELDS })
+  /** Who a call names: a bare id is one of the cast's kind, a reference (and `'$'`, which becomes one) is as written. */
+  const refOf = (id: string): EntityRef => (id === '$' ? (id as EntityRef) : people.ref(id))
   const who = (ids: readonly string[]) => ids.map(refOf)
   /** How the plugin names someone back: their id for one of its kind, else the whole reference. */
-  const short = (ref: EntityRef) => (parseRef(ref)?.kind === kind ? parseRef(ref)!.id : ref)
+  const short = (ref: EntityRef) => people.id(ref)
 
   type One = { ref: EntityRef; person: Person }
   const one = (state: GameState, game: Game, ref: EntityRef | undefined): One | undefined => {
@@ -454,18 +464,6 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
       calls: (table, _name, args) =>
         who(CALLS.conditions.met.read({ character: table === 'conditions' ? args.character : args.id }).character).map((entity): Reference => ({ entity })),
     },
-    check: (game) => {
-      const problems: PluginProblem[] = []
-      // Characters were a list in the plugin's content; now each is an entity with the person trait.
-      for (const entry of (game.data?.[ID] as { characters?: { id?: string }[] } | undefined)?.characters ?? []) {
-        problems.push({
-          list: 'characters',
-          id: String(entry?.id ?? ''),
-          what: `characters are entities now: write them in entities with cast.person({ id, name, ... })`,
-        })
-      }
-      return problems
-    },
   })
 }
 
@@ -479,15 +477,7 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
  * ```
  */
 function person(def: PersonDef): EntityDef {
-  const { of, traits, ...rest } = def
-  const entity: Record<string, unknown> = {}
-  const trait: Record<string, unknown> = {}
-  for (const [field, value] of Object.entries(rest)) {
-    if (value === undefined) continue
-    if ((PERSON_FIELDS as readonly string[]).includes(field)) trait[field] = value
-    else entity[field] = value
-  }
-  return { ...(entity as Omit<EntityDef, 'of'>), of: of ?? KIND, traits: { ...traits, [PERSON]: trait as Person } }
+  return PEOPLE.define(def)
 }
 
 /** The command that starts a conversation. */
@@ -501,7 +491,7 @@ const isAt = (who: string, ...places: string[]): Condition => CALLS.conditions.a
 /** True once the player has met any of these. */
 const hasMet = (...who: string[]): Condition => CALLS.conditions.met({ character: who })
 /** How content names a character's entity, for `of`, `at` and `entity`: `cast.character('ava')` is `'character:ava'`. */
-const character = (who: string, kind = KIND): EntityRef => `${kind}:${who}`
+const character = (who: string, kind = KIND): EntityRef => (kind === KIND ? PEOPLE.ref(who) : (`${kind}:${who}` as EntityRef))
 
 /**
  * The plugin, with its helpers on it: `cast()` makes the plugin for the

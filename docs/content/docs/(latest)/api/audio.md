@@ -9,7 +9,7 @@ Generated from the source of `@ifloom/audio` and its TSDoc by `npm run api-docs`
 
 ## AudioLike
 
-Type. Explained in [The audio player](/docs/browser/audio-player#audiolike).
+Type. Explained in [The audio player](/docs/reference/browser/audio-player#audiolike).
 
 The part of an `HTMLAudioElement` that the audio player uses. Tests pass a fake through `AudioOptions.createAudio`.
 
@@ -40,7 +40,7 @@ type AudioLike = {
 
 ## AudioOptions
 
-Type. Explained in [The audio player](/docs/browser/audio-player#audiooptions).
+Type. Explained in [The audio player](/docs/reference/browser/audio-player#audiooptions).
 
 Settings for `startAudio`. Each is optional.
 
@@ -61,7 +61,7 @@ type AudioOptions = {
 
 ## AudioPlayer
 
-Type. Explained in [The audio player](/docs/browser/audio-player#audioplayer).
+Type. Explained in [The audio player](/docs/reference/browser/audio-player#audioplayer).
 
 The audio player `startAudio` returns, a function that stops it with two methods on it. Calling it stops following
 the runner and the page's clicks and key presses, and pauses every sound.
@@ -73,7 +73,7 @@ type AudioPlayer = (() => void) & { unlock(): void; play(src: string, channel?: 
 
 ## startAudio
 
-Function. Explained in [The audio player](/docs/browser/audio-player#startaudio).
+Function. Explained in [The audio player](/docs/reference/browser/audio-player#startaudio).
 
 Starts playing a runner's `view.audio` in the browser, and returns the `AudioPlayer` that stops it. Nothing
 plays until the player first clicks or presses a key, or until `unlock()`.

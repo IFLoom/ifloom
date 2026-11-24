@@ -133,6 +133,9 @@ export const DONE: string[] = [
   'reference/react/kit.md',
   'reference/react/hints.md',
   'reference/react/parts.md',
+  'reference/browser/index.md',
+  'reference/browser/audio-player.md',
+  'reference/cli/index.md',
 ]
 
 /** One problem: where it is, the rule it breaks, and the text that breaks it. */

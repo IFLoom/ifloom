@@ -51,7 +51,7 @@ That makes a small game in the folder `my-game` and serves it in the browser, re
 | A copy of an example: [The Letter, The Corner Café or Small Town](/docs/guide/shapes) | `novel`, `cafe` or `town` |
 | A plugin package of your own, to publish on npm | `plugin`. See [Writing a plugin](/docs/reference/plugins). |
 
-A `react` or `next` game gets one of the React UI's presets at random. Choose one with `--theme paper`, `terminal`, `studio` or `storybook`, or `--theme none` for the plain look. [How the pieces fit](/docs/guide/how-it-fits#which-pieces-you-need) says more about which pieces each one uses, and [`ifloom new`](/docs/cli#ifloom-new) has every option.
+A `react` or `next` game gets one of the React UI's presets at random. Choose one with `--theme paper`, `terminal`, `studio` or `storybook`, or `--theme none` for the plain look. [How the pieces fit](/docs/guide/how-it-fits#which-pieces-you-need) says more about which pieces each one uses, and [`ifloom new`](/docs/reference/cli#ifloom-new) has every option.
 
 ### What's in the new game
 
@@ -76,9 +76,9 @@ my-game/
     └── styles.css    imports the React UI's styles and a theme preset
 ```
 
-Your content goes in `src/world/` and `src/story/`. Each file there exports [`Content`](/docs/reference/content#content), and `src/game.ts` only lists them for [`loadGame`](/docs/reference/content#loadgame), in its [game module](/docs/cli#the-game-module), which the page and the CLI both build the game from. Things the whole game shares, such as stats and things, go in `world/`, a file for each kind. The story goes in `story/`, a file for each place, chapter or character's arc, with its scenes and words together. [Organising a game](/docs/guide/organising) explains the layout and when to split a file. `src/main.ts` hands the game to [`mountGame`](/docs/reference/react#mountgame) with `layout: Layout` and `pages: true`, so it opens on a [title screen](/docs/recipes/title-screen) and draws the page from `src/layout.tsx`.
+Your content goes in `src/world/` and `src/story/`. Each file there exports [`Content`](/docs/reference/content#content), and `src/game.ts` only lists them for [`loadGame`](/docs/reference/content#loadgame), in its [game module](/docs/reference/cli#the-game-module), which the page and the CLI both build the game from. Things the whole game shares, such as stats and things, go in `world/`, a file for each kind. The story goes in `story/`, a file for each place, chapter or character's arc, with its scenes and words together. [Organising a game](/docs/guide/organising) explains the layout and when to split a file. `src/main.ts` hands the game to [`mountGame`](/docs/reference/react#mountgame) with `layout: Layout` and `pages: true`, so it opens on a [title screen](/docs/recipes/title-screen) and draws the page from `src/layout.tsx`.
 
-`package.json` depends on `@ifloom/engine`, `@ifloom/react`, React and react-dom. Its dev dependencies are `@ifloom/cli`, `@vitejs/plugin-react`, `@tailwindcss/vite`, `tailwindcss`, `typescript`, `@types/react` and `@types/react-dom`. Its scripts are `dev`, `build`, `check`, `playtest` and `typecheck`, which run the [CLI](/docs/cli) and TypeScript.
+`package.json` depends on `@ifloom/engine`, `@ifloom/react`, React and react-dom. Its dev dependencies are `@ifloom/cli`, `@vitejs/plugin-react`, `@tailwindcss/vite`, `tailwindcss`, `typescript`, `@types/react` and `@types/react-dom`. Its scripts are `dev`, `build`, `check`, `playtest` and `typecheck`, which run the [CLI](/docs/reference/cli) and TypeScript.
 
 ## Add IFLoom to an existing project
 
@@ -104,9 +104,9 @@ bun add @ifloom/engine @ifloom/browser
 bun add --dev @ifloom/cli
 ```
 
-In a React app, add `@ifloom/react` too if you want the ready-made [React UI](/docs/reference/react). A plugin you install brings its React UI in the same package, as `@ifloom/plugin-<name>/react`, so there's nothing more to install for it: list it in [`plugins`](/docs/reference/react/kit#the-plugins-option). With any other framework, or none, the engine and [`@ifloom/browser`](/docs/browser) are all you need: `@ifloom/browser` has the runner that keeps saves in the browser, a minigame's clock and keyboard shortcuts. Add [`@ifloom/audio`](/docs/browser/audio-player) for sound.
+In a React app, add `@ifloom/react` too if you want the ready-made [React UI](/docs/reference/react). A plugin you install brings its React UI in the same package, as `@ifloom/plugin-<name>/react`, so there's nothing more to install for it: list it in [`plugins`](/docs/reference/react/kit#the-plugins-option). With any other framework, or none, the engine and [`@ifloom/browser`](/docs/reference/browser) are all you need: `@ifloom/browser` has the runner that keeps saves in the browser, a minigame's clock and keyboard shortcuts. Add [`@ifloom/audio`](/docs/reference/browser/audio-player) for sound.
 
-A game is one module, its [game module](/docs/cli#the-game-module). Its default export is made with `defineGame`, and its `build` returns what [`loadGame`](/docs/reference/content#loadgame) returns. The page and the CLI both build the game from it:
+A game is one module, its [game module](/docs/reference/cli#the-game-module). Its default export is made with `defineGame`, and its `build` returns what [`loadGame`](/docs/reference/content#loadgame) returns. The page and the CLI both build the game from it:
 
 ```ts
 // src/game.ts
@@ -226,7 +226,7 @@ export const view = readable(runner.view(), (set) => runner.subscribe((snapshot)
 
 The runner holds the game in play. `runner.view()` is the [view](/docs/reference/view), everything there is to draw right now, worked out from the game's state. Its `scene.beats` is the scene's words, split into pieces such as a paragraph or a spoken line, each with a `type` (see [The beats](/docs/guide/running-a-game#the-beats)). Every choice carries the `command` it sends, and `runner.apply(choice.command)` plays it. The runner then calls what you gave `runner.subscribe`, so the page draws again. [Running a game](/docs/guide/running-a-game) goes through all of it.
 
-[`browserRunner`](/docs/browser#browserrunner) starts a new game with undo, saves in `localStorage` and an autosave each turn. The snippets import with `.ts` extensions, as the templates do. Drop them if your project's TypeScript settings don't allow it. To build with your project's own bundler, see the recipes for [Next.js](/docs/recipes/next), [webpack](/docs/recipes/webpack) and [esbuild](/docs/recipes/esbuild).
+[`browserRunner`](/docs/reference/browser#browserrunner) starts a new game with undo, saves in `localStorage` and an autosave each turn. The snippets import with `.ts` extensions, as the templates do. Drop them if your project's TypeScript settings don't allow it. To build with your project's own bundler, see the recipes for [Next.js](/docs/recipes/next), [webpack](/docs/recipes/webpack) and [esbuild](/docs/recipes/esbuild).
 
 ## Check it works
 

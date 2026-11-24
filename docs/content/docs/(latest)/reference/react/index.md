@@ -23,7 +23,7 @@ The React UI's reference has five pages:
 
 `mountGame` starts a game in the page and resolves to its runner once the game renders. Its signature is in [`mountGame`](/docs/api/react#mountgame).
 
-It takes a `Game`, or the `{ game, problems }` a [game module](/docs/reference/game)'s `build()` returns, and logs any problems as warnings. It makes the runner with [`browserRunner`](/docs/browser#browserrunner), so the game has undo, saves, an autosave and the player's stored settings. It then renders a [`GameShell`](#gameshell) inside React's `StrictMode` into `#root`, unless `root` names another element. It rejects when nothing in the page matches `root`.
+It takes a `Game`, or the `{ game, problems }` a [game module](/docs/reference/game)'s `build()` returns, and logs any problems as warnings. It makes the runner with [`browserRunner`](/docs/reference/browser#browserrunner), so the game has undo, saves, an autosave and the player's stored settings. It then renders a [`GameShell`](#gameshell) inside React's `StrictMode` into `#root`, unless `root` names another element. It rejects when nothing in the page matches `root`.
 
 `mountGame` is async because `browserRunner` reads the player's profile first, so the game starts with their settings. A game that never sends a command from outside the UI calls it without `await`.
 
@@ -62,7 +62,7 @@ It renders a [`GameProvider`](/docs/reference/react/components#gameprovider) wit
 |---|---|
 | `layout` | The page as a component, such as your `src/layout.tsx`. [`DefaultLayout`](/docs/reference/react/components#defaultlayout) if left out. Any component works, since every hook and built-in component works inside it. |
 | `pages` | The title screen and the pages around the game, `true` or a [`PagesOptions`](/docs/reference/react/components#pagesoptions). Off if left out, and the game starts at once. With pages on, the layout renders on the `game` page. |
-| `audio` | The game's sound through the [audio player](/docs/browser/audio-player). It starts when [`game.audio`](/docs/reference/audio) lists any tracks, and `false` turns it off. An object goes to [`startAudio`](/docs/browser/audio-player#audiooptions) as its options. |
+| `audio` | The game's sound through the [audio player](/docs/reference/browser/audio-player). It starts when [`game.audio`](/docs/reference/audio) lists any tracks, and `false` turns it off. An object goes to [`startAudio`](/docs/reference/browser/audio-player#audiooptions) as its options. |
 
 The shell renders again whenever the runner's snapshot changes, so an undo, a loaded save and a command sent from outside the UI all show at once. Render it yourself when you make the runner yourself, as the showcase does to load the player's mods before it builds the game:
 

@@ -125,7 +125,7 @@ it('can reach the room inside', () => {
 
 The `key` decides when two states count as the same place, so the search doesn't go round in circles. Put in it whatever your game's choices depend on. A game with plugins might add `state.plugins`.
 
-[`ifloom check`](/docs/cli#ifloom-check) already catches a scene that names one that doesn't exist. A search like this catches the other mistake: a scene that exists but that no choice leads to under the conditions you set.
+[`ifloom check`](/docs/reference/cli#ifloom-check) already catches a scene that names one that doesn't exist. A search like this catches the other mistake: a scene that exists but that no choice leads to under the conditions you set.
 
 ## Replay a bug from a save
 
@@ -165,10 +165,10 @@ expect(played.ok && played.value.sceneId).toBe('inside')
 
 Two of the CLI's commands are tests of a kind, and they run from the game's folder whatever builds it:
 
-- [`ifloom playtest`](/docs/cli#ifloom-playtest) plays the game for some turns with no one at the keyboard, writes every screen to a transcript, and exits with an error if the game offered a button and then refused it. The [explorer](/docs/cli#explorer) picks a choice it hasn't tried yet each time, or you give it a policy of your own.
-- [`ifloom snapshot`](/docs/cli#ifloom-snapshot) writes how every scene reads to a file, and fails when one reads differently from last time. Commit the file, and a change you didn't mean shows up in review.
+- [`ifloom playtest`](/docs/reference/cli#ifloom-playtest) plays the game for some turns with no one at the keyboard, writes every screen to a transcript, and exits with an error if the game offered a button and then refused it. The [explorer](/docs/reference/cli#explorer) picks a choice it hasn't tried yet each time, or you give it a policy of your own.
+- [`ifloom snapshot`](/docs/reference/cli#ifloom-snapshot) writes how every scene reads to a file, and fails when one reads differently from last time. Commit the file, and a change you didn't mean shows up in review.
 
-Both read what they need from the game module in `src/game.ts`: playtest its `start` and `policy`, snapshot its `probes`, the states every scene is read in. Make each probe with [`probe`](/docs/cli#probe), by playing commands and effects from the start, so it's a state a player could be in:
+Both read what they need from the game module in `src/game.ts`: playtest its `start` and `policy`, snapshot its `probes`, the states every scene is read in. Make each probe with [`probe`](/docs/reference/cli#probe), by playing commands and effects from the start, so it's a state a player could be in:
 
 ```ts
 // src/game.ts
@@ -208,4 +208,4 @@ In CI, run your tests, then `ifloom check`, `ifloom playtest` and `ifloom snapsh
 ## Next
 
 - [`examples/novel/tests/novel.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/novel/tests/novel.test.ts) tests The Letter this way, and [`examples/showcase/tests/showcase.test.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/tests/showcase.test.ts) tests Small Town with every plugin.
-- [The CLI](/docs/cli#for-scripts) lists `playtest`, `snapshot` and the rest for scripts.
+- [The CLI](/docs/reference/cli#functions) lists `playtest`, `snapshot` and the rest for scripts.

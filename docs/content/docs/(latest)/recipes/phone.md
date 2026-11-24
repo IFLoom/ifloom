@@ -144,7 +144,7 @@ export const evening: Content = { data: { messages: { messages: burst } } }
 
 The first text arrives when the phase turns to evening. The second starts waiting in the same command, and arrives 1.5 seconds later. Then the third waits 2.5 seconds. Each raises a notice, and the newest replaces the one before while it's unseen, so the player sees one notice with the latest line.
 
-The waits run on the engine's timers, so a UI's clock has to send `tick` commands. The React UI and [`startClock`](/docs/browser#startclock) do that whenever a timer runs. See [Messages that take a moment](/docs/reference/plugins/messages#messages-that-take-a-moment).
+The waits run on the engine's timers, so a UI's clock has to send `tick` commands. The React UI and [`startClock`](/docs/reference/browser#startclock) do that whenever a timer runs. See [Messages that take a moment](/docs/reference/plugins/messages#messages-that-take-a-moment).
 
 ## Taking photos
 

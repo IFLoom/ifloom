@@ -549,7 +549,7 @@ Parts: `viewer`, `viewer-close` and `dialog-overlay`.
 
 ### assetUrl
 
-`assetUrl` returns where a picture is: its `data:` URL in a build made with [`ifloom build --inline-assets`](/docs/cli#one-file-pictures-and-all), and the path unchanged anywhere else. Its signature is in [`assetUrl`](/docs/api/react#asseturl). It ignores a leading `./`.
+`assetUrl` returns where a picture is: its `data:` URL in a build made with [`ifloom build --inline-assets`](/docs/reference/cli#ifloom-build), and the path unchanged anywhere else. Its signature is in [`assetUrl`](/docs/api/react#asseturl). It ignores a leading `./`.
 
 [`Picture`](#picture), [`Video`](#video) and [`DeviceScreen`](/docs/reference/plugins/devices#devicescreen) call it. A component of your own that renders a picture from a path must call it too, or use a `Picture`, because a one-file build has no `art/` folder.
 
@@ -1106,9 +1106,9 @@ Parts: `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close`.
 
 ### useAudio
 
-`useAudio` plays the game's sound with the [audio player](/docs/browser/audio-player) while the component is mounted, and returns the player, or `null` until it starts. Its signature is in [`useAudio`](/docs/api/react#useaudio).
+`useAudio` plays the game's sound with the [audio player](/docs/reference/browser/audio-player) while the component is mounted, and returns the player, or `null` until it starts. Its signature is in [`useAudio`](/docs/api/react#useaudio).
 
-Inside a [`GameProvider`](#gameprovider) it uses that runner, and outside one it takes `runner`. The other options go to [`startAudio`](/docs/browser/audio-player#audiooptions). [`GameShell`](#gameshell) and `mountGame` start a player themselves, so you need it only under a `GameProvider` of your own, and one beside theirs takes over from it. [Add music and sound](/docs/how-to/add-music-and-sound) starts one.
+Inside a [`GameProvider`](#gameprovider) it uses that runner, and outside one it takes `runner`. The other options go to [`startAudio`](/docs/reference/browser/audio-player#audiooptions). [`GameShell`](#gameshell) and `mountGame` start a player themselves, so you need it only under a `GameProvider` of your own, and one beside theirs takes over from it. [Add music and sound](/docs/how-to/add-music-and-sound) starts one.
 
 ```tsx given
 import { GameProvider, useAudio } from '@ifloom/react'

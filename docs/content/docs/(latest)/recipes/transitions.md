@@ -391,7 +391,7 @@ watch(view, (now) => {
 {/if}
 ```
 
-To let a key show everything too, call [`startRevealSkip`](/docs/browser#startrevealskip) from `@ifloom/browser` while the scene has reveals to come, and set `data-revealed` as the click does. To play a choice's own `ui.transition`, note the choice when the player presses it, and use its `in` and `ms` for the next screen.
+To let a key show everything too, call [`startRevealSkip`](/docs/reference/browser#startrevealskip) from `@ifloom/browser` while the scene has reveals to come, and set `data-revealed` as the click does. To play a choice's own `ui.transition`, note the choice when the player presses it, and use its `in` and `ms` for the next screen.
 
 **Gotchas.**
 - Play a transition only when `view.scene.key` changes. A choice that keeps the same scene open gives a new view with the same key, and replaying the scene's `in` there looks like a flicker.

@@ -129,7 +129,7 @@ A timer that no block or layout draws still runs, unseen. That's how to make one
 
 [`view.timers`](/docs/reference/view#timers) lists each running timer with its `id`, `label`, the milliseconds `left` and the `total`. Draw a bar from `left / total` and the seconds from `left`, and find the block to draw it under by its hint, `beat.ui?.timer`. The engine carries every hint to the view, so your UI can read the React UI's word too.
 
-The clock is [`startClock`](/docs/browser#startclock) from `@ifloom/browser`, which sends a tick about every 100 ms while any timer runs. The `vanilla`, `vue` and `svelte` templates already start it. Start it once, beside the runner, not inside a component that comes and goes.
+The clock is [`startClock`](/docs/reference/browser#startclock) from `@ifloom/browser`, which sends a tick about every 100 ms while any timer runs. The `vanilla`, `vue` and `svelte` templates already start it. Start it once, beside the runner, not inside a component that comes and goes.
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/timers.ts: call drawTimer(box, view, beat) after drawing a beat whose block names a timer.

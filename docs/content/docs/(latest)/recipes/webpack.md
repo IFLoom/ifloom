@@ -138,7 +138,7 @@ declare module '*.css'
 
 ## Check and playtest it
 
-`ifloom check` and `ifloom playtest` load `src/game.ts` with the CLI's own Vite, not with webpack, so they work unchanged. Add `@ifloom/cli` as a dev dependency and keep the game in `src/game.ts`, its [game module](/docs/cli#the-game-module) the default export, made with `defineGame`. The page imports the same module and calls its `build`. Pictures and sound go in `public/`, where `ifloom check` looks for them. Copy that folder into the build yourself, with [copy-webpack-plugin](https://github.com/webpack-contrib/copy-webpack-plugin), say.
+`ifloom check` and `ifloom playtest` load `src/game.ts` with the CLI's own Vite, not with webpack, so they work unchanged. Add `@ifloom/cli` as a dev dependency and keep the game in `src/game.ts`, its [game module](/docs/reference/cli#the-game-module) the default export, made with `defineGame`. The page imports the same module and calls its `build`. Pictures and sound go in `public/`, where `ifloom check` looks for them. Copy that folder into the build yourself, with [copy-webpack-plugin](https://github.com/webpack-contrib/copy-webpack-plugin), say.
 
 `import.meta.env.DEV`, which the docs use to leave the [debug plugin](/docs/reference/plugins/debug#leave-it-out-of-release-builds) out of a release, is Vite's. Under webpack, use `process.env.NODE_ENV !== 'production'`, which webpack sets from `--mode` (TypeScript needs `@types/node` to know `process`).
 
@@ -169,4 +169,4 @@ export default {
 }
 ```
 
-Add `style-loader` and `html-inline-script-webpack-plugin` as dev dependencies, and build with `webpack --mode production -c webpack.single.config.js`. `dist-one/index.html` then plays from disk. Pictures and sound aren't inside it, so copy `public/` beside it, where `ifloom build` would leave them too. To check the folder as `ifloom build` does, call [`checkBuild`](/docs/cli#checkbuild) from a script.
+Add `style-loader` and `html-inline-script-webpack-plugin` as dev dependencies, and build with `webpack --mode production -c webpack.single.config.js`. `dist-one/index.html` then plays from disk. Pictures and sound aren't inside it, so copy `public/` beside it, where `ifloom build` would leave them too. To check the folder as `ifloom build` does, call [`checkBuild`](/docs/api/cli#checkbuild) from a script.

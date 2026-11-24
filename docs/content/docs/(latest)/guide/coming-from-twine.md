@@ -71,7 +71,7 @@ A Twine story is one file of passages. An IFLoom game is a few files, each expor
 | `StoryInit`, the variables every passage uses | `src/world/`, a file per kind: `stats.ts`, `things.ts`, `cast.ts` for the people |
 | The passages of one place, chapter or character | A file in `src/story/`, such as `story/cafe.ts`, with those scenes, their words and anything else that belongs there |
 | Passages tagged `widget`, and JavaScript in the Story JavaScript | `src/rules.ts`: the game's own code, its hooks and the functions content calls by name |
-| The story's title and its start passage | `src/game.ts`, the [game module](/docs/cli#the-game-module), which lists the files' content for `loadGame` and holds the title. The start passage is `introScene`, in the content that holds it. |
+| The story's title and its start passage | `src/game.ts`, the [game module](/docs/reference/cli#the-game-module), which lists the files' content for `loadGame` and holds the title. The start passage is `introScene`, in the content that holds it. |
 
 So the café above would be `src/story/cafe.ts`, with its scenes and their words, and `coins` would go in `src/world/stats.ts`, where every other area can use it.
 
@@ -564,7 +564,7 @@ audio: {
 { audio: 'music', to: null }
 ```
 
-The engine works out what should be playing, and the [audio player](/docs/browser/audio-player) plays it. The React UI starts it for you, and its settings page gets volume and mute when you declare those settings. See [Audio](/docs/reference/audio).
+The engine works out what should be playing, and the [audio player](/docs/reference/browser/audio-player) plays it. The React UI starts it for you, and its settings page gets volume and mute when you declare those settings. See [Audio](/docs/reference/audio).
 
 ### Images and video
 
@@ -732,12 +732,12 @@ A datamap you'd keep in a variable becomes an entity when it's one of several th
 ## What IFLoom does for you
 
 - **Rules written once.** A condition that greys out a choice carries its reason, and the same check runs when the button is drawn and when it's pressed. The player sees `You need 3 coins.` on the button, and the button and the refusal never disagree. In Twine you'd write the `<<if>>` around the link and the line explaining it separately.
-- **`ifloom check` before anyone plays.** Every scene, stat, kind and prose key that content names is checked, so a typo shows up as a line like `cafe · scene cafe · goes to unknown scene "stret"` instead of a broken link in play. See [`ifloom check`](/docs/cli#ifloom-check).
+- **`ifloom check` before anyone plays.** Every scene, stat, kind and prose key that content names is checked, so a typo shows up as a line like `cafe · scene cafe · goes to unknown scene "stret"` instead of a broken link in play. See [`ifloom check`](/docs/reference/cli#ifloom-check).
 - **Typed content.** Scenes, conditions and effects are TypeScript types, so your editor completes `stat: 'coins'` and underlines a missing field as you type.
 - **Seeded randomness that replays.** Every draw comes from the save's seed. Undo can't re-roll, a bug report's save reproduces exactly, and tests give the same result every run. See [Randomness](/docs/reference/random).
 - **Versioned saves.** Give the game a `version` and `migrations`, and saves from older releases load into the new one. See [Saves](/docs/reference/saves#the-games-own-migrations).
-- **Playtests and snapshots.** [`ifloom playtest`](/docs/cli#ifloom-playtest) plays the game with no one at the keyboard and writes every screen to a transcript. [`ifloom snapshot`](/docs/cli#ifloom-snapshot) records how every scene reads, and tells you which ones a change altered.
-- **One-file builds.** [`ifloom build`](/docs/cli#ifloom-build) makes one HTML file that opens from disk, like a Twine story, with your pictures beside it or inside it.
+- **Playtests and snapshots.** [`ifloom playtest`](/docs/reference/cli#ifloom-playtest) plays the game with no one at the keyboard and writes every screen to a transcript. [`ifloom snapshot`](/docs/reference/cli#ifloom-snapshot) records how every scene reads, and tells you which ones a change altered.
+- **One-file builds.** [`ifloom build`](/docs/reference/cli#ifloom-build) makes one HTML file that opens from disk, like a Twine story, with your pictures beside it or inside it.
 
 ## What's different
 

@@ -243,7 +243,7 @@ See [Randomness](/docs/reference/random).
 
 `apply`, `view` and the state are enough to play a game, but every UI ends up wanting the same extras: undo, a backlog of what was said, saving and autosave, and a log to replay a bug from. `createRunner(game, state, options)` puts them in one object. The UI sends commands to `runner.apply`, draws `runner.view()`, and subscribes to hear when to draw again.
 
-Every UI uses one. In a browser, [`browserRunner`](/docs/browser#browserrunner) makes one with saves and undo already on. Undo, the backlog and autosave are off until the game turns them on. Undo never goes back past a barrier the game sets, such as a new turn. The command log is always kept, and because the engine is deterministic, the start state and the commands replay to the same state every time.
+Every UI uses one. In a browser, [`browserRunner`](/docs/reference/browser#browserrunner) makes one with saves and undo already on. Undo, the backlog and autosave are off until the game turns them on. Undo never goes back past a barrier the game sets, such as a new turn. The command log is always kept, and because the engine is deterministic, the start state and the commands replay to the same state every time.
 
 See [Running a game](/docs/guide/running-a-game) for the loop, and [The runner](/docs/reference/runner) for every option.
 

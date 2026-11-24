@@ -187,7 +187,7 @@ In the React UI, the page opens on a title screen with the game's title and a Ne
 
 A credit is a line of text, or a link with a `label` and an `href`. A missing `art` file takes no space, so you can add the picture later.
 
-Settings are kept between games in the player's profile, so the runner needs one. [`browserRunner`](/docs/browser#browserrunner) and `mountGame` make one for you. If you build your runner by hand, give it a profile:
+Settings are kept between games in the player's profile, so the runner needs one. [`browserRunner`](/docs/reference/browser#browserrunner) and `mountGame` make one for you. If you build your runner by hand, give it a profile:
 
 ```ts given
 import { localStorageDriver } from '@ifloom/browser'

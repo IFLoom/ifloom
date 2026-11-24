@@ -8,13 +8,13 @@ The words in your content stay where you wrote them. The pack only lays other wo
 
 ## 1. List what to translate
 
-[`ifloom words`](/docs/cli#ifloom-words) lists every field a player reads, each with its key, its words and where it is. Write them out as a table to start the translation from:
+[`ifloom words`](/docs/reference/cli#ifloom-words) lists every field a player reads, each with its key, its words and where it is. Write them out as a table to start the translation from:
 
 ```sh
 npx ifloom words --out words.en.json
 ```
 
-The command builds the game from its [game module](/docs/cli#the-game-module), with no translation loaded, and asks the engine's [`translatableFields(game)`](/docs/reference/words#translatablefields) for the fields. A script can do the same:
+The command builds the game from its [game module](/docs/reference/cli#the-game-module), with no translation loaded, and asks the engine's [`translatableFields(game)`](/docs/reference/words#translatablefields) for the fields. A script can do the same:
 
 ```ts
 // scripts/words.ts: run with `node scripts/words.ts`

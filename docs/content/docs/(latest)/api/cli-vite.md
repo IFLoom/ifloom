@@ -25,7 +25,7 @@ Uses: [`IfloomViteOptions`](#ifloomviteoptions).
 
 ## IfloomViteOptions
 
-Type. Explained in [The CLI](/docs/cli#ifloomviteoptions).
+Type. Explained in [The CLI](/docs/reference/cli#ifloomviteoptions).
 
 Settings for `ifloom()`, the Vite preset. Each is optional.
 

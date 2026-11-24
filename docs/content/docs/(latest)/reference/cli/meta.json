@@ -1,0 +1,17 @@
+{
+  "title": "CLI",
+  "description": "@ifloom/cli",
+  "pages": [
+    "index",
+    "[ifloom new](/docs/reference/cli#ifloom-new)",
+    "[ifloom dev](/docs/reference/cli#ifloom-dev)",
+    "[ifloom build](/docs/reference/cli#ifloom-build)",
+    "[The game module](/docs/reference/cli#the-game-module)",
+    "[ifloom check](/docs/reference/cli#ifloom-check)",
+    "[ifloom playtest](/docs/reference/cli#ifloom-playtest)",
+    "[ifloom snapshot](/docs/reference/cli#ifloom-snapshot)",
+    "[ifloom words](/docs/reference/cli#ifloom-words)",
+    "[ifloom unlock-hash](/docs/reference/cli#ifloom-unlock-hash)",
+    "[The Vite preset](/docs/reference/cli#the-vite-preset)"
+  ]
+}

@@ -6,8 +6,8 @@ You'll build a complete UI for a game in plain JS, with no framework and no UI p
 
 It uses only what [Running a game](/docs/guide/running-a-game) and [Saves and settings](/docs/guide/saves-and-settings) covered, plus two small helper packages that work with any UI:
 
-- [`@ifloom/audio`](/docs/browser/audio-player) plays the game's music and sounds.
-- [`@ifloom/browser`](/docs/browser) runs a minigame's clock and the keyboard shortcuts, and numbers new save slots.
+- [`@ifloom/audio`](/docs/reference/browser/audio-player) plays the game's music and sounds.
+- [`@ifloom/browser`](/docs/reference/browser) runs a minigame's clock and the keyboard shortcuts, and numbers new save slots.
 
 The same UI in React, Vue and Svelte is in [Your own UI in any framework](/docs/guide/frameworks). Read this page first if you want to know what each part is for.
 
@@ -45,13 +45,13 @@ startClock(runner)
 startKeys(runner)
 ```
 
-`module.build()` is what [`loadGame`](/docs/reference/content#loadgame) returns in `src/game.ts`'s [game module](/docs/cli#the-game-module): the game, and anything wrong with its content. `npm run check` prints the same problems, so the warning is only a reminder.
+`module.build()` is what [`loadGame`](/docs/reference/content#loadgame) returns in `src/game.ts`'s [game module](/docs/reference/cli#the-game-module): the game, and anything wrong with its content. `npm run check` prints the same problems, so the warning is only a reminder.
 
 The three `start…` calls each follow the runner by themselves, so you call them once and forget them:
 
-- [`startAudio`](/docs/browser/audio-player#startaudio) reads `view.audio` after every change and plays what it asks for. Browsers don't allow sound before the player has clicked or pressed a key, so nothing plays until then.
-- [`startClock`](/docs/browser#startclock) sends a [`tick`](/docs/reference/commands#tick) about every 100 ms while a [timer](/docs/reference/timers) or a minigame's timer runs. The engine keeps no clock of its own.
-- [`startKeys`](/docs/browser#startkeys) maps the number keys to the choices on screen, and a minigame's keys to its inputs.
+- [`startAudio`](/docs/reference/browser/audio-player#startaudio) reads `view.audio` after every change and plays what it asks for. Browsers don't allow sound before the player has clicked or pressed a key, so nothing plays until then.
+- [`startClock`](/docs/reference/browser#startclock) sends a [`tick`](/docs/reference/commands#tick) about every 100 ms while a [timer](/docs/reference/timers) or a minigame's timer runs. The engine keeps no clock of its own.
+- [`startKeys`](/docs/reference/browser#startkeys) maps the number keys to the choices on screen, and a minigame's keys to its inputs.
 
 Each returns a function that stops it, if you ever need to.
 
@@ -293,7 +293,7 @@ const track = beat.voice ? game.audio?.tracks[beat.voice] : undefined
 if (track && 'src' in track) add(root, 'button', 'Play again').onclick = () => player.play(audioSrc(track.src), 'voice', track.volume ?? 1)
 ```
 
-The player also reads the game's volume and mute settings from the runner, so a volume setting works with no code of yours. See [The audio player](/docs/browser/audio-player).
+The player also reads the game's volume and mute settings from the runner, so a volume setting works with no code of yours. See [The audio player](/docs/reference/browser/audio-player).
 
 ## Where next
 

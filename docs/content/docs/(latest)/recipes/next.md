@@ -4,7 +4,7 @@ description: "Run an IFLoom game in a Next.js app: the packages as they are, Tai
 ---
 Use Next when your game lives on a website: a page of a site you already run on Next, or a game you host on Vercel or Netlify. `npm create ifloom@latest my-site -- --template next` starts a Next app with the game in it, or you can add a game to an app you have.
 
-Next builds a website for a server to host. It can't make the single `index.html` that opens from disk, which [`ifloom build`](/docs/cli#ifloom-build) makes for a game players download. Even a static export (`output: 'export'`) loads its scripts in chunks from absolute paths, so it needs a web server. If you want both, keep the game in its own package with the CLI, and import it into the site too.
+Next builds a website for a server to host. It can't make the single `index.html` that opens from disk, which [`ifloom build`](/docs/reference/cli#ifloom-build) makes for a game players download. Even a static export (`output: 'export'`) loads its scripts in chunks from absolute paths, so it needs a web server. If you want both, keep the game in its own package with the CLI, and import it into the site too.
 
 Next is React, so everything below uses React, either the [React UI](/docs/reference/react) or your own UI written in React.
 
@@ -202,7 +202,7 @@ The CLI's `check` and `playtest` don't use Next. They load `src/game.ts` with th
 }
 ```
 
-Keep the game in `src/game.ts`, its [game module](/docs/cli#the-game-module) the default export, made with `defineGame`, or pass its path: `ifloom check app/game/module.ts`. Pictures and sound go in `public/`, as for any Next app, and `ifloom check` looks for them there. In a Next app, use Next's own `dev` and `build` in place of `ifloom dev` and `ifloom build`.
+Keep the game in `src/game.ts`, its [game module](/docs/reference/cli#the-game-module) the default export, made with `defineGame`, or pass its path: `ifloom check app/game/module.ts`. Pictures and sound go in `public/`, as for any Next app, and `ifloom check` looks for them there. In a Next app, use Next's own `dev` and `build` in place of `ifloom dev` and `ifloom build`.
 
 ## Can it make the single offline file?
 

@@ -170,10 +170,10 @@ writeFileSync('dist/index.html', html)
 console.log(`dist/index.html  ${(html.length / 1024).toFixed(1)} kB`)
 ```
 
-`npm run build` runs it, and `dist/index.html` plays from disk. A module script inside the page runs from `file://` too, because it loads nothing. Pictures and sound aren't inside it, so copy `public/` beside it, where `ifloom build` would leave them too. To check the folder as `ifloom build` does, call [`checkBuild`](/docs/cli#checkbuild) from the same script.
+`npm run build` runs it, and `dist/index.html` plays from disk. A module script inside the page runs from `file://` too, because it loads nothing. Pictures and sound aren't inside it, so copy `public/` beside it, where `ifloom build` would leave them too. To check the folder as `ifloom build` does, call [`checkBuild`](/docs/api/cli#checkbuild) from the same script.
 
 ## Check and playtest it
 
-`ifloom check` and `ifloom playtest` load `src/game.ts` with the CLI's own Vite, not with esbuild, so they work unchanged. Add `@ifloom/cli` as a dev dependency and keep the game in `src/game.ts`, its [game module](/docs/cli#the-game-module) the default export, made with `defineGame`. The page imports the same module and calls its `build`. Pictures and sound go in `public/`, where `ifloom check` looks for them.
+`ifloom check` and `ifloom playtest` load `src/game.ts` with the CLI's own Vite, not with esbuild, so they work unchanged. Add `@ifloom/cli` as a dev dependency and keep the game in `src/game.ts`, its [game module](/docs/reference/cli#the-game-module) the default export, made with `defineGame`. The page imports the same module and calls its `build`. Pictures and sound go in `public/`, where `ifloom check` looks for them.
 
 `import.meta.env.DEV`, which the docs use to leave the [debug plugin](/docs/reference/plugins/debug#leave-it-out-of-release-builds) out of a release, is Vite's. Under esbuild, set your own with `--define:DEV=true` in `dev` and `false` in `build.js` (`define: { DEV: 'false' }`), and declare it in TypeScript with `declare const DEV: boolean`.

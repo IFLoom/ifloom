@@ -26,7 +26,7 @@ Pictures are different. An `<img>` or `<video>` may load from a neighbouring fol
 
 ## Build it with `ifloom build`
 
-The [CLI](/docs/cli) keeps these rules for you. A game made with [`npm create ifloom`](/docs/cli#ifloom-new) already has the [Vite preset](/docs/cli#the-vite-preset) in its `vite.config.ts`. Otherwise, add it:
+The [CLI](/docs/reference/cli) keeps these rules for you. A game made with [`npm create ifloom`](/docs/reference/cli#ifloom-new) already has the [Vite preset](/docs/reference/cli#the-vite-preset) in its `vite.config.ts`. Otherwise, add it:
 
 ```ts
 // vite.config.ts
@@ -35,21 +35,21 @@ import { ifloom } from '@ifloom/cli/vite'
 export default ifloom()
 ```
 
-It builds with `base: './'` and puts the script and the stylesheet inside `index.html`. Your UI framework's Vite plugin goes in the preset's `vite.plugins`: a game on the [React UI](/docs/reference/react) adds React's and Tailwind's, as the `react` template does (see [The Vite preset](/docs/cli#the-vite-preset) and [Your own UI in any framework](/docs/guide/frameworks)). Then build:
+It builds with `base: './'` and puts the script and the stylesheet inside `index.html`. Your UI framework's Vite plugin goes in the preset's `vite.plugins`: a game on the [React UI](/docs/reference/react) adds React's and Tailwind's, as the `react` template does (see [The Vite preset](/docs/reference/cli#the-vite-preset) and [Your own UI in any framework](/docs/guide/frameworks)). Then build:
 
 ```sh
 ifloom build
 ```
 
-The game lands in `dist/` (or the folder `--out` names), and the command checks it: there is an `index.html`, every script and stylesheet it loads is beside it, and every picture, video and sound the game names has its file there. It prints what is wrong and exits with `1`, so a CI job fails on a build that would not open from disk. Run [`ifloom check`](/docs/cli#ifloom-check) beside it to catch content problems before you build.
+The game lands in `dist/` (or the folder `--out` names), and the command checks it: there is an `index.html`, every script and stylesheet it loads is beside it, and every picture, video and sound the game names has its file there. It prints what is wrong and exits with `1`, so a CI job fails on a build that would not open from disk. Run [`ifloom check`](/docs/reference/cli#ifloom-check) beside it to catch content problems before you build.
 
 Leave the [debug plugin](/docs/reference/plugins/debug#leave-it-out-of-release-builds) out of the build: `import.meta.env.DEV` is `false` under `ifloom build`.
 
 Put pictures in `public/art/`. Vite copies `public/` into the build as it is, so they land in `dist/art/` beside the page.
 
-Sound files go in `public/audio/` the same way, and land in `dist/audio/`. A browser plays them from beside a page opened from disk. `ifloom check` reports any track whose file is missing (see [The audio player](/docs/browser/audio-player)).
+Sound files go in `public/audio/` the same way, and land in `dist/audio/`. A browser plays them from beside a page opened from disk. `ifloom check` reports any track whose file is missing (see [The audio player](/docs/reference/browser/audio-player)).
 
-A small game can be a single file, pictures and all, to attach to a message or upload where only one file goes. Build it with `ifloom build --inline-assets`, which puts the pictures inside `index.html` and removes `art/`. Sound stays in `audio/` beside it, so a game with sound is always a folder. See [One file, pictures and all](/docs/cli#one-file-pictures-and-all) for what it costs.
+A small game can be a single file, pictures and all, to attach to a message or upload where only one file goes. Build it with `ifloom build --inline-assets`, which puts the pictures inside `index.html` and removes `art/`. Sound stays in `audio/` beside it, so a game with sound is always a folder. See [One file, pictures and all](/docs/reference/cli#ifloom-build) for what it costs.
 
 Then open `dist/index.html` straight from disk to check it. Testing only through `vite preview` hides the problem, because a local server is not `file://`.
 
@@ -72,13 +72,13 @@ export default defineConfig({
 })
 ```
 
-Build with `vite build`. Nothing then checks the folder for you, but [`checkBuild`](/docs/cli#checkbuild) from `@ifloom/cli` runs the same check from a script of your own.
+Build with `vite build`. Nothing then checks the folder for you, but [`checkBuild`](/docs/api/cli#checkbuild) from `@ifloom/cli` runs the same check from a script of your own.
 
 Other bundlers can make the same single file. The [esbuild](/docs/recipes/esbuild#the-single-offline-file) and [webpack](/docs/recipes/webpack#the-single-offline-file) recipes show how. [Next.js](/docs/recipes/next) can't, so a game built with Next is played on its website.
 
 ## Saves
 
-A game decides where its saves live by picking a driver. The engine has no default, because the right answer depends on how the game ships. [`browserRunner`](/docs/browser#browserrunner), which every template uses (the React UI's [`mountGame`](/docs/reference/react#mountgame) calls it), picks `localStorage` unless you pass another:
+A game decides where its saves live by picking a driver. The engine has no default, because the right answer depends on how the game ships. [`browserRunner`](/docs/reference/browser#browserrunner), which every template uses (the React UI's [`mountGame`](/docs/reference/react#mountgame) calls it), picks `localStorage` unless you pass another:
 
 | Shipped as | Driver |
 |---|---|
@@ -96,7 +96,7 @@ const runner = createRunner(game, state, {
 })
 ```
 
-The templates make their runner with [`browserRunner`](/docs/browser#browserrunner), which takes the same options over its defaults. With the React UI's `mountGame`, pass them as `runner`:
+The templates make their runner with [`browserRunner`](/docs/reference/browser#browserrunner), which takes the same options over its defaults. With the React UI's `mountGame`, pass them as `runner`:
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/main.ts

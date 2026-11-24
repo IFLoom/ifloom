@@ -17,7 +17,7 @@ npm install
 npm run dev
 ```
 
-Each plays the same two-scene game as the `react` template, with no React. Each draws the scene and its beats, the choices with the reason a greyed-out one can't be pressed, any inputs the game asks for, the stats and a running minigame, and plays the game's sound with [`@ifloom/audio`](/docs/browser/audio-player). The clock for timers and minigames and the keyboard shortcuts come from [`@ifloom/browser`](/docs/browser) (see [Minigames](#minigames)). They share the game and its stylesheet:
+Each plays the same two-scene game as the `react` template, with no React. Each draws the scene and its beats, the choices with the reason a greyed-out one can't be pressed, any inputs the game asks for, the stats and a running minigame, and plays the game's sound with [`@ifloom/audio`](/docs/reference/browser/audio-player). The clock for timers and minigames and the keyboard shortcuts come from [`@ifloom/browser`](/docs/reference/browser) (see [Minigames](#minigames)). They share the game and its stylesheet:
 
 - `src/game.ts`, which puts the game together from `src/world/stats.ts` and `src/story/opening.ts` (see [Organising a game](/docs/guide/organising)).
 - `src/styles.css`, a plain stylesheet.
@@ -158,7 +158,7 @@ startClock(runner)
 startKeys(runner)
 ```
 
-[`browserRunner`](/docs/browser#browserrunner) gives the runner a random seed, undo 50 steps deep, saves in `localStorage` and an autosave each turn. Pass it any [`RunnerOptions`](/docs/reference/runner#runneroptions) to change those, such as `browserRunner(game, { backlog: true })`. `loadGame` returns the game and a list of problems, which `npm run check` also prints.
+[`browserRunner`](/docs/reference/browser#browserrunner) gives the runner a random seed, undo 50 steps deep, saves in `localStorage` and an autosave each turn. Pass it any [`RunnerOptions`](/docs/reference/runner#runneroptions) to change those, such as `browserRunner(game, { backlog: true })`. `loadGame` returns the game and a list of problems, which `npm run check` also prints.
 
 - **Plain JS** draws the whole page again from each snapshot, which is fine for a page this small.
 - **React** reads it with `useSyncExternalStore`, which needs exactly what `runner.subscribe` and `runner.snapshot` are.
@@ -210,7 +210,7 @@ mount(App, { target: document.querySelector('#root')! })
 
 ## Add the framework's Vite plugin
 
-The [Vite preset](/docs/cli#the-vite-preset) knows no framework. React, Vue and Svelte each need their Vite plugin, which goes in its `vite.plugins`. The templates do this already:
+The [Vite preset](/docs/reference/cli#the-vite-preset) knows no framework. React, Vue and Svelte each need their Vite plugin, which goes in its `vite.plugins`. The templates do this already:
 
 ```ts tab="Plain JS" tab-group="framework"
 // vite.config.ts
@@ -800,10 +800,10 @@ defineProps<{ minigame: MinigameView }>()
 </section>
 ```
 
-Pressing an input sends `{ type: 'minigame', input }`. A minigame with timers needs something more, because the engine has no clock. Something has to send a [`tick`](/docs/reference/commands#tick) with the time that passed. The templates start two helpers from [`@ifloom/browser`](/docs/browser) once, beside the runner, as [Start the runner](#start-the-runner) shows:
+Pressing an input sends `{ type: 'minigame', input }`. A minigame with timers needs something more, because the engine has no clock. Something has to send a [`tick`](/docs/reference/commands#tick) with the time that passed. The templates start two helpers from [`@ifloom/browser`](/docs/reference/browser) once, beside the runner, as [Start the runner](#start-the-runner) shows:
 
-- [`startClock(runner)`](/docs/browser#startclock) sends a `tick` about every 100 ms while a [timer](/docs/reference/timers) or a minigame's timer runs and the page is visible, with the real time that passed. Time while the page is hidden is dropped, so the round waits for the player.
-- [`startKeys(runner)`](/docs/browser#startkeys) maps the keyboard: a minigame's own `keys`, or the arrow keys and space, press its inputs, and 1 to 9 pick the choices on screen.
+- [`startClock(runner)`](/docs/reference/browser#startclock) sends a `tick` about every 100 ms while a [timer](/docs/reference/timers) or a minigame's timer runs and the page is visible, with the real time that passed. Time while the page is hidden is dropped, so the round waits for the player.
+- [`startKeys(runner)`](/docs/reference/browser#startkeys) maps the keyboard: a minigame's own `keys`, or the arrow keys and space, press its inputs, and 1 to 9 pick the choices on screen.
 
 They're plain DOM, so every framework uses them the same way, and the React UI runs the same code. Each returns a function that stops it.
 
@@ -942,9 +942,9 @@ The [view reference](/docs/reference/view) lists every field. Beyond what the te
 
 ## Sound
 
-If your game lists tracks in [`game.audio`](/docs/reference/audio), the templates already play them. [`startAudio`](/docs/browser/audio-player#startaudio) follows the runner, not your components, so it works the same whatever draws the page. Start it once, next to the runner, as each template's runner module does. Nothing plays until the player first clicks or presses a key, because browsers don't allow it sooner. Pass `{ log: console.debug }` to see what the player is doing in the console.
+If your game lists tracks in [`game.audio`](/docs/reference/audio), the templates already play them. [`startAudio`](/docs/reference/browser/audio-player#startaudio) follows the runner, not your components, so it works the same whatever draws the page. Start it once, next to the runner, as each template's runner module does. Nothing plays until the player first clicks or presses a key, because browsers don't allow it sooner. Pass `{ log: console.debug }` to see what the player is doing in the console.
 
-A spoken line with a voice is a `say` [beat](/docs/reference/prose#scenebeat) with a `voice` track id. To offer a button that plays it again, keep the player `startAudio` returned and call its [`play`](/docs/browser/audio-player#audioplayer) with the track's file:
+A spoken line with a voice is a `say` [beat](/docs/reference/prose#scenebeat) with a `voice` track id. To offer a button that plays it again, keep the player `startAudio` returned and call its [`play`](/docs/reference/browser/audio-player#audioplayer) with the track's file:
 
 ```ts fragment
 import { audioSrc } from '@ifloom/engine'

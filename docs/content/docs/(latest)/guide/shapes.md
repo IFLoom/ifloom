@@ -16,7 +16,7 @@ They all use the same core: the turn, scenes and choices, conditions and effects
 | A management game | the core, with [entities](/docs/reference/entities) | none, or [`calendar({ turn: 'week' })`](/docs/reference/plugins/calendar) for days and weeks | its own: the tables in the story | [The Corner Café](#a-management-game-the-corner-café), `examples/cafe` |
 | A life sim | the core | [calendar](/docs/reference/plugins/calendar), [places](/docs/reference/plugins/places) and the [cast](/docs/reference/plugins/cast) | [`DefaultLayout`](/docs/reference/react/components#defaultlayout)'s, the side column and the story, with the wardrobe shown at home | [Small Town](#a-life-sim-small-town), `examples/showcase` |
 
-Each example is a whole game you can play and ship. In its folder, `npm run dev` serves it in a browser, `npm run check` lists any problems in its content, and `npm run build` makes it one HTML file that opens from disk (see the [CLI](/docs/cli)).
+Each example is a whole game you can play and ship. In its folder, `npm run dev` serves it in a browser, `npm run check` lists any problems in its content, and `npm run build` makes it one HTML file that opens from disk (see the [CLI](/docs/reference/cli)).
 
 Each has a `src/game.ts` that puts the game together from its content in `src/world/` and `src/story/`, and in the [repository](https://github.com/IFLoom/ifloom) tests that play it and check its build. The Letter and The Corner Café draw it from `src/main.ts` with one call to [`mountGame`](/docs/reference/react#mountgame). Small Town's `src/main.tsx` builds its runner by hand and renders [`GameShell`](/docs/reference/react#gameshell), because it loads the player's mods before it makes the game.
 
@@ -26,7 +26,7 @@ To start a game of your own from one of them, use `--template novel`, `cafe` or 
 npm create ifloom@latest my-cafe -- --template cafe
 ```
 
-That copies the example into `my-cafe`, without its tests. See [`ifloom new`](/docs/cli#ifloom-new).
+That copies the example into `my-cafe`, without its tests. See [`ifloom new`](/docs/reference/cli#ifloom-new).
 
 This page walks through the smallest shape first, then a management game, then a life sim.
 
@@ -114,7 +114,7 @@ So `state.turn` is the chapter the reader has reached, counting from 0. Anything
 
 ### Playing it
 
-`src/game.ts`'s default export is its [game module](/docs/cli#the-game-module). Its `build` is `theLetter`, and its `start` gives [`ifloom playtest`](/docs/cli#ifloom-playtest) a reader who has already typed a name:
+`src/game.ts`'s default export is its [game module](/docs/reference/cli#the-game-module). Its `build` is `theLetter`, and its `start` gives [`ifloom playtest`](/docs/reference/cli#ifloom-playtest) a reader who has already typed a name:
 
 ```ts
 import { defineGame } from '@ifloom/cli/game'
@@ -383,7 +383,7 @@ With `where`, `count` only counts those the condition holds for, with `'$'` agai
 
 ### Playing it
 
-As with The Letter, `start` gives [`ifloom playtest`](/docs/cli#ifloom-playtest) a game with the doors already open, and the example's `playtest` script is `ifloom playtest --turns 8 --out playtest/season.txt`. Its numbers have a column for each of the player's stats, then one for each kind with how many there are, so the weeks the staff dwindled stand out. The [explorer](/docs/cli#explorer) runs each week's errands first and ends the week last. It finds the button that ends the turn by trying each one on the state.
+As with The Letter, `start` gives [`ifloom playtest`](/docs/reference/cli#ifloom-playtest) a game with the doors already open, and the example's `playtest` script is `ifloom playtest --turns 8 --out playtest/season.txt`. Its numbers have a column for each of the player's stats, then one for each kind with how many there are, so the weeks the staff dwindled stand out. The [explorer](/docs/reference/cli#explorer) runs each week's errands first and ends the week last. It finds the button that ends the turn by trying each one on the state.
 
 ### Drawing it: the books in the story
 

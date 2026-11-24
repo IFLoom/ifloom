@@ -75,17 +75,17 @@ A UI does two things. It draws the view, and it sends a command when the player 
 
 - [`@ifloom/react`](/docs/reference/react) is one ready-made UI. It draws the whole game in the browser with React, Tailwind and shadcn/ui: the scene, the choices, the stats, saves, menus, a title screen and settings. [`mountGame`](/docs/reference/react#mountgame) starts it in one call, and you can restyle it with presets and plain CSS or replace any part. It names no plugin: each plugin's React UI comes from that plugin, built from the same [kit](/docs/reference/react/kit) a game's own UI uses. Nothing else in IFLoom depends on it.
 - Your own UI can use any framework, or none. The `vanilla`, `vue` and `svelte` templates each draw the game themselves with no React. [A UI from scratch](/docs/guide/ui-from-scratch) explains the plain JS one line by line, and [Your own UI in any framework](/docs/guide/frameworks) shows the same code in React, Vue and Svelte.
-- [`@ifloom/browser`](/docs/browser) and [`@ifloom/audio`](/docs/browser/audio-player) are helpers for any UI. The first runs a minigame's clock, the keyboard shortcuts, numbers for new save slots and a key that shows held-back prose. The second plays the game's music and sounds. Both are plain DOM, import only the engine, and work the same under every framework. The React UI uses them itself.
+- [`@ifloom/browser`](/docs/reference/browser) and [`@ifloom/audio`](/docs/reference/browser/audio-player) are helpers for any UI. The first runs a minigame's clock, the keyboard shortcuts, numbers for new save slots and a key that shows held-back prose. The second plays the game's music and sounds. Both are plain DOM, import only the engine, and work the same under every framework. The React UI uses them itself.
 
 [Choosing a UI](/docs/guide/choosing-a-ui) helps you pick.
 
 ## The toolchain
 
-The packages are compiled JavaScript with type declarations, so any bundler can build your page with them, with no special settings. The `ifloom` [CLI](/docs/cli) is the easiest way, but you don't have to use it.
+The packages are compiled JavaScript with type declarations, so any bundler can build your page with them, with no special settings. The `ifloom` [CLI](/docs/reference/cli) is the easiest way, but you don't have to use it.
 
 The CLI is a convenience built on Vite. `ifloom dev` serves the game while you edit, and `ifloom new` starts a game from a template, which is what `npm create ifloom` runs. The main reason it exists is `ifloom build`, which makes the game into one `index.html` with relative paths and checks that it opens from disk with no server. A player can download that file and play it offline, which is what most interactive fiction is expected to do. See [Shipping a game](/docs/guide/shipping).
 
-[`ifloom check`](/docs/cli#ifloom-check), [`playtest`](/docs/cli#ifloom-playtest) and [`snapshot`](/docs/cli#ifloom-snapshot) load `src/game.ts` with the CLI's own Vite, so they work whatever builds your page.
+[`ifloom check`](/docs/reference/cli#ifloom-check), [`playtest`](/docs/reference/cli#ifloom-playtest) and [`snapshot`](/docs/reference/cli#ifloom-snapshot) load `src/game.ts` with the CLI's own Vite, so they work whatever builds your page.
 
 [Next.js](/docs/recipes/next), [webpack](/docs/recipes/webpack) and [esbuild](/docs/recipes/esbuild) each have a recipe, and only Next can't make the single offline file.
 

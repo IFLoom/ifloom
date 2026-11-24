@@ -32,7 +32,7 @@ npm install
 npm run dev -w my-game
 ```
 
-`npm run new` runs [`ifloom new`](/docs/cli#ifloom-new), with the same `--template` and `--theme` as `npm create ifloom`, and makes the game in `games/my-game`. The `games/` folder is an npm workspace, so `npm install` links the new game to the packages. Git ignores `games/`, so your game stays out of IFLoom's history and pulling a newer IFLoom leaves it alone.
+`npm run new` runs [`ifloom new`](/docs/reference/cli#ifloom-new), with the same `--template` and `--theme` as `npm create ifloom`, and makes the game in `games/my-game`. The `games/` folder is an npm workspace, so `npm install` links the new game to the packages. Git ignores `games/`, so your game stays out of IFLoom's history and pulling a newer IFLoom leaves it alone.
 
 Run the game's scripts from the root with `-w`, as in `npm run check -w my-game`. The checkout's workspaces are npm's, so use npm here.
 

@@ -45,7 +45,7 @@ npm install @ifloom/plugin-calendar @ifloom/plugin-places @ifloom/plugin-cast
 
 The React tab's template draws the game with the [React UI](/docs/reference/react). Each plugin brings its React UI in the same package, so there's nothing more to install for it. The others draw the game themselves, with no React. Most of this page is the engine on its own, which is the same in all four. [Installation](/docs/guide/installation) has the same commands for pnpm, yarn and bun.
 
-If you'd rather see a finished game of this shape first, `--template town` copies [Small Town](/docs/guide/showcase). See [`ifloom new`](/docs/cli#ifloom-new).
+If you'd rather see a finished game of this shape first, `--template town` copies [Small Town](/docs/guide/showcase). See [`ifloom new`](/docs/reference/cli#ifloom-new).
 :::
 
 ## 1. Places
@@ -332,7 +332,7 @@ state = apply(state, game, { type: 'choose', id: 'chat' }).state
 statValue(state, game, 'friendship', cast.character('ruth')) // 5
 ```
 
-`state.turn` counts from 0, so moving day is turn 0 and Tuesday, after the first night's sleep, is turn 1. What the player reads counts from 1, like the calendar's `Day 2`, and the [playtest](/docs/cli#ifloom-playtest) transcript heads Tuesday's screens `Turn 2`.
+`state.turn` counts from 0, so moving day is turn 0 and Tuesday, after the first night's sleep, is turn 1. What the player reads counts from 1, like the calendar's `Day 2`, and the [playtest](/docs/reference/cli#ifloom-playtest) transcript heads Tuesday's screens `Turn 2`.
 
 `go(id)` is the places plugin's command for walking through an exit, one step at a time. From the house, going to the café is refused with `You cannot get there from here.` `cast.talk(id)` is the cast's [command](/docs/reference/plugins/cast#commands) for talking to someone in the room. Anywhere Ruth isn't, it's refused with `Ruth is not here.`
 
@@ -527,11 +527,11 @@ The template you started from has a `src/game.ts`, a `src/world/stats.ts` and a 
 
 ::include[../../../../snippets/first-game/story/cafe.ts]
 
-`src/game.ts` only puts them together. Its default export is the [game module](/docs/cli#the-game-module), whose `build` returns what `loadGame` returns, as in step 5. The page builds the game from it, and so do `npm run check` and `npm run playtest`:
+`src/game.ts` only puts them together. Its default export is the [game module](/docs/reference/cli#the-game-module), whose `build` returns what `loadGame` returns, as in step 5. The page builds the game from it, and so do `npm run check` and `npm run playtest`:
 
 ::include[../../../../snippets/first-game/game.ts]
 
-Run `npm run check`, which prints `No problems.`, and `npm run playtest`, which plays a few days and writes what it saw to `playtest/run.txt`. The numbers it prints have a column for each stat the player has and one for each kind of entity the game lists, with how many there are: `character` is the cast's kind, so it counts Ruth. Ruth's friendship is a stat of hers, not the player's, so it has no column. See [`ifloom playtest`](/docs/cli#ifloom-playtest).
+Run `npm run check`, which prints `No problems.`, and `npm run playtest`, which plays a few days and writes what it saw to `playtest/run.txt`. The numbers it prints have a column for each stat the player has and one for each kind of entity the game lists, with how many there are: `character` is the cast's kind, so it counts Ruth. Ruth's friendship is a stat of hers, not the player's, so it has no column. See [`ifloom playtest`](/docs/reference/cli#ifloom-playtest).
 
 Then draw it. The page needs more than the scene and its choices now. With no scene open, the room's buttons are in `view.actions`, the ways out are in `view.plugins.places.exits`, labelled with where they go, and each person here has a Talk button in `view.plugins.cast.present`. Ruth's line is a `say` beat, and who she is is in `view.scene.speaker`. Each tab below is every file to change in that template:
 
@@ -599,7 +599,7 @@ export const view = derived(snapshot, (now) => now.view)
 
 Then run `npm run dev` and play. Go to bed twice, once to close the intro and once to sleep, then walk to the café and talk to Ruth. Reload the page at any point and the game carries on from the autosave, made after the last thing you did: in Plain JS, Vue and Svelte, `src/runner.ts` loads the `auto` slot as it starts, and in React the title screen's Continue does. `npm run build` makes the one HTML file to ship (see [Shipping a game](/docs/guide/shipping)).
 
-The runner here is [`browserRunner`](/docs/browser#browserrunner), from `@ifloom/browser`. It makes the runner of step 10 with what a browser game wants by default: a random seed, saves and the player's settings in `localStorage`, 50 steps of undo and an autosave each turn. The options you pass go over those, here an undo that stops at a new turn and an autosave after every command. React's [`mountGame`](/docs/reference/react#mountgame) makes one the same way, from its `runner` option.
+The runner here is [`browserRunner`](/docs/reference/browser#browserrunner), from `@ifloom/browser`. It makes the runner of step 10 with what a browser game wants by default: a random seed, saves and the player's settings in `localStorage`, 50 steps of undo and an autosave each turn. The options you pass go over those, here an undo that stops at a new turn and an autosave after every command. React's [`mountGame`](/docs/reference/react#mountgame) makes one the same way, from its `runner` option.
 
 The page draws text, spoken lines and buttons, which is all this game needs. [Your own UI in any framework](/docs/guide/frameworks) draws the rest of the view, such as inputs, pictures and notices, and [Building UI for plugins](/docs/recipes/plugin-ui) draws the plugins' parts in more detail.
 

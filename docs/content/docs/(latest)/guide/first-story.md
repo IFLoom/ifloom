@@ -94,7 +94,7 @@ The words are plain text, with `**bold**` and `*italic*` as in Markdown (see [Pr
 
 `loadGame` takes your content, in a list, and a base with the game's `id` and `title`. Everything the story holds, its first scene included, is content. The base holds only what says which game this is, its plugins and its own code.
 
-The default export is the [game module](/docs/cli#the-game-module), made with `defineGame`. Its `build` returns what `loadGame` returns, `{ game, problems }`. The page calls it to start the game, and `npm run check` calls it too and prints each problem, or `No problems.` when there are none.
+The default export is the [game module](/docs/reference/cli#the-game-module), made with `defineGame`. Its `build` returns what `loadGame` returns, `{ game, problems }`. The page calls it to start the game, and `npm run check` calls it too and prints each problem, or `No problems.` when there are none.
 
 The template's `game.ts` also had `probes`, and a `build` that takes `({ unlocked })`. This story needs neither yet, so the file above leaves them out. [Organising a game](/docs/guide/organising#the-layout) explains both.
 
@@ -260,7 +260,7 @@ The engine dates things in turns. The turn is a number in the state, `state.turn
 
 Effects run in the order they're written. Ending the turn first means the next chapter opens on the new turn, so whatever the new scene does or asks as it opens counts in its own chapter. Add `{ turn: true }` the same way to `share`, and to `pay`, `excuse` and `blame` in the second chapter.
 
-Now `state.turn` is the chapter the player has reached, counting from 0, so the first chapter is turn 0 and the third is turn 2. What the player reads counts from 1: a save named by its turn says `Turn 1` in the first chapter, and the playtest transcript heads the chapters `Turn 1`, `Turn 2` and `Turn 3`. Anything else the engine dates, such as how many turns have passed [`since`](/docs/reference/conditions#since) a scene was seen, counts chapters. A save made with no name of its own is named by its turn, and [`ifloom playtest`](/docs/cli#ifloom-playtest) writes its transcript a turn at a time.
+Now `state.turn` is the chapter the player has reached, counting from 0, so the first chapter is turn 0 and the third is turn 2. What the player reads counts from 1: a save named by its turn says `Turn 1` in the first chapter, and the playtest transcript heads the chapters `Turn 1`, `Turn 2` and `Turn 3`. Anything else the engine dates, such as how many turns have passed [`since`](/docs/reference/conditions#since) a scene was seen, counts chapters. A save made with no name of its own is named by its turn, and [`ifloom playtest`](/docs/reference/cli#ifloom-playtest) writes its transcript a turn at a time.
 
 ## 8. Draw it
 
@@ -379,7 +379,7 @@ import './styles.css'
 mount(App, { target: document.querySelector('#root')! })
 ```
 
-Every template starts the game with [`browserRunner`](/docs/browser#browserrunner), which adds undo, saves and an autosave each chapter, and draws `runner.view()` again whenever the state changes ([Running a game](/docs/guide/running-a-game) goes through it). In the Vue and Svelte templates, `src/App.vue` or `src/App.svelte` draws the view from `runner.ts`, with a component for each part: a beat, an input, the minigame. In the React template, `src/layout.tsx` is the page and `src/styles.css` its look, and [Make it your own](/docs/reference/react/customising) covers both.
+Every template starts the game with [`browserRunner`](/docs/reference/browser#browserrunner), which adds undo, saves and an autosave each chapter, and draws `runner.view()` again whenever the state changes ([Running a game](/docs/guide/running-a-game) goes through it). In the Vue and Svelte templates, `src/App.vue` or `src/App.svelte` draws the view from `runner.ts`, with a component for each part: a beat, an input, the minigame. In the React template, `src/layout.tsx` is the page and `src/styles.css` its look, and [Make it your own](/docs/reference/react/customising) covers both.
 
 ## 9. Check it and playtest it
 
@@ -415,7 +415,7 @@ Then run it:
 npm run playtest
 ```
 
-The template's `playtest` script runs `ifloom playtest --turns 5 --out playtest/run.txt`. Read `playtest/run.txt`. It has every screen the [explorer](/docs/cli#explorer) saw, a turn at a time, and the commands it sent. Since a turn is a chapter here, that's chapter by chapter. Change `--turns` in `package.json` as your story grows.
+The template's `playtest` script runs `ifloom playtest --turns 5 --out playtest/run.txt`. Read `playtest/run.txt`. It has every screen the [explorer](/docs/reference/cli#explorer) saw, a turn at a time, and the commands it sent. Since a turn is a chapter here, that's chapter by chapter. Change `--turns` in `package.json` as your story grows.
 
 When you're happy with it, `npm run build` makes one HTML file in `dist/` that opens from disk. See [Shipping a game](/docs/guide/shipping).
 

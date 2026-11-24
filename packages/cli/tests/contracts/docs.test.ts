@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest'
 const read = (path: string) => readFileSync(new URL(path, import.meta.url), 'utf8')
 const SOURCES = ['../../src/index.ts', '../../src/game.ts', '../../src/vite.ts'].map(read)
 const PAGE = Object.values(
-  import.meta.glob('../../../../docs/content/docs/\\(latest\\)/cli/index.{md,mdx}', {
+  import.meta.glob('../../../../docs/content/docs/\\(latest\\)/reference/cli/index.{md,mdx}', {
     query: '?raw',
     import: 'default',
     eager: true,

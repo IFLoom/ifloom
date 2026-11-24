@@ -35,7 +35,7 @@ A preset is a stylesheet that changes the fonts, the sizes, the colours and the 
 | `studio` | A clean, modern app. Cards on a soft grey page, the side column on the right, generous spacing, bold headings and choices as raised cards, with the reading column kept to the start of the story. The Corner Café (`examples/cafe`) uses it. |
 | `storybook` | Soft and friendly. Rounded type, a warm tinted page, big pill buttons, and dialogue in speech bubbles. Small Town (`examples/showcase`) uses it. |
 
-[`ifloom new`](/docs/cli#ifloom-new) writes this import for you. Pass `--theme paper` (or any of the four) to choose one. Leave it out and a `react` game gets one at random, so two new games don't start out looking the same.
+[`ifloom new`](/docs/reference/cli#ifloom-new) writes this import for you. Pass `--theme paper` (or any of the four) to choose one. Leave it out and a `react` game gets one at random, so two new games don't start out looking the same.
 
 Without a preset, you get the UI's plain default look: a system sans-serif, neutral colours and the side column on the left.
 

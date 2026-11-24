@@ -33,7 +33,7 @@ Start with [Installation](/docs/guide/installation), then write [your first stor
 - **Recipes.** How to build one piece, such as a [title screen](/docs/recipes/title-screen) or a HUD, and how to build with [Next](/docs/recipes/next), webpack or esbuild.
 - **Reference.** Everything the engine exports, starting at [the game](/docs/reference/game).
 - **Plugins.** The [first-party plugins](/docs/reference/plugins), such as the calendar, places and the cast.
-- **Browser.** [`@ifloom/browser`](/docs/browser) and the [audio player](/docs/browser/audio-player), helpers for any UI.
+- **Browser.** [`@ifloom/browser`](/docs/reference/browser) and the [audio player](/docs/reference/browser/audio-player), helpers for any UI.
 - **React UI.** The ready-made [React UI](/docs/reference/react) and how to make it your own.
-- **CLI.** The [`ifloom` command](/docs/cli) and its Vite preset.
+- **CLI.** The [`ifloom` command](/docs/reference/cli) and its Vite preset.
 - **Changelog.** [What changed](/docs/changelog) in each release.

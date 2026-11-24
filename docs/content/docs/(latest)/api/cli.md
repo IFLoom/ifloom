@@ -10,7 +10,7 @@ Generated from the source of `@ifloom/cli` and its TSDoc by `npm run api-docs`. 
 
 ## buildFiles
 
-Function. Explained in [The CLI](/docs/cli#buildfiles).
+Function. Explained in [The CLI](/docs/reference/cli#buildfiles).
 
 Returns every file in a built folder with its size in bytes, largest first. `at` names a subfolder to list instead.
 
@@ -21,7 +21,7 @@ function buildFiles(dir: string, at?: string): { file: string; bytes: number }[]
 
 ## BuildOptions
 
-Type. Explained in [The CLI](/docs/cli#gamemoduledef-buildoptions-and-gamemodule).
+Type. Explained in [The CLI](/docs/reference/cli#gamemoduledef-buildoptions-and-gamemodule).
 
 The options a game module's `build` receives. They name the packs to load over the content, such as the locked
 content a player's codes opened.
@@ -39,7 +39,7 @@ type BuildOptions = {
 
 ## checkBuild
 
-Function. Explained in [The CLI](/docs/cli#checkbuild).
+Function. Explained in [The CLI](/docs/reference/cli#checkbuild).
 
 Returns a line for each reason a built folder won't open from disk, or an empty list when it will. Its `index.html`
 must load files only from beside it, with no module script.
@@ -59,7 +59,7 @@ Uses: [`FileRef`](/docs/api/engine#fileref).
 
 ## checkFiles
 
-Function. Explained in [The CLI](/docs/cli#checkfiles).
+Function. Explained in [The CLI](/docs/reference/cli#checkfiles).
 
 Returns a line for each file in `files` that isn't in `dir`, as `<where>: no file <dir>/<path>`. An empty list means
 every file is there.
@@ -77,7 +77,7 @@ Uses: [`FileRef`](/docs/api/engine#fileref).
 
 ## checkGame
 
-Function. Explained in [The CLI](/docs/cli#checkgame).
+Function. Explained in [The CLI](/docs/reference/cli#checkgame).
 
 Returns a line for each problem with a game module's game, the loader's problems first. Given the game's public
 folder, it adds each sound, picture and video file that isn't in it.
@@ -89,7 +89,7 @@ function checkGame(module: Record<string, unknown>, publicDir?: string): string[
 
 ## defineGame
 
-Function. Explained in [The CLI](/docs/cli#definegame).
+Function. Explained in [The CLI](/docs/reference/cli#definegame).
 
 Returns the game module for a definition, the default export of `src/game.ts`. It throws when `build` is missing.
 
@@ -109,7 +109,7 @@ Uses: [`GameModuleDef`](#gamemoduledef), [`GameModule`](#gamemodule).
 
 ## explorer
 
-Function. Explained in [The CLI](/docs/cli#explorer).
+Function. Explained in [The CLI](/docs/reference/cli#explorer).
 
 Returns a policy that explores the game as a curious player would, rather than following a route through the story.
 It never chooses a choice or action that carries a warning.
@@ -128,7 +128,7 @@ Uses: [`Policy`](#policy).
 
 ## gameFrom
 
-Function. Explained in [The CLI](/docs/cli#gamefrom).
+Function. Explained in [The CLI](/docs/reference/cli#gamefrom).
 
 Returns the game a game module builds, with its problems and warnings as sentences and the files its content names.
 It throws when the module's default export isn't made with `defineGame`.
@@ -145,7 +145,7 @@ Uses: [`Pack`](/docs/api/engine#pack), [`Game`](/docs/api/engine#game), [`FileRe
 
 ## GameModule
 
-Type. Explained in [The CLI](/docs/cli#gamemoduledef-buildoptions-and-gamemodule).
+Type. Explained in [The CLI](/docs/reference/cli#gamemoduledef-buildoptions-and-gamemodule).
 
 The game module `defineGame` returns, the default export of `src/game.ts`. Its `build` takes its options as optional, so a page calls `game.build()`.
 
@@ -168,7 +168,7 @@ type GameModule = {
 
 ## GameModuleDef
 
-Type. Explained in [The CLI](/docs/cli#gamemoduledef-buildoptions-and-gamemodule).
+Type. Explained in [The CLI](/docs/reference/cli#gamemoduledef-buildoptions-and-gamemodule).
 
 The definition a game passes to `defineGame`. Only `build` is required.
 
@@ -191,7 +191,7 @@ type GameModuleDef = {
 
 ## inlineAssets
 
-Function. Explained in [The CLI](/docs/cli#inlineassets).
+Function. Explained in [The CLI](/docs/reference/cli#inlineassets).
 
 Moves every file in a built folder's `art/` into its `index.html` as data URLs, except videos, and returns the
 counts. It suits a small game, and a large one is better left as a folder.
@@ -208,7 +208,7 @@ function inlineAssets(dir: string, folder?: string): { files: number; bytes: num
 
 ## metricsText
 
-Function. Explained in [The CLI](/docs/cli#metricstext).
+Function. Explained in [The CLI](/docs/reference/cli#metricstext).
 
 Returns a playtest's turn numbers as a tab-separated table, with a header row and one row a turn.
 
@@ -221,7 +221,7 @@ Uses: [`TurnMetrics`](#turnmetrics).
 
 ## newGame
 
-Function. Explained in [The CLI](/docs/cli#newgame).
+Function. Explained in [The CLI](/docs/reference/cli#newgame).
 
 Makes a new game from a template, and returns its folder, the files written there and the theme it chose. It installs
 nothing.
@@ -237,7 +237,7 @@ Uses: [`NewGameOptions`](#newgameoptions), [`ThemeName`](#themename).
 
 ## NewGameOptions
 
-Type. Explained in [The CLI](/docs/cli#newgameoptions).
+Type.
 
 Settings for `newGame`. Only `name` is required.
 
@@ -260,7 +260,7 @@ type NewGameOptions = {
 
 ## Playtest
 
-Type. Explained in [The CLI](/docs/cli#playtest-1).
+Type. Explained in [The CLI](/docs/reference/cli#playtest-and-playtest).
 
 The result of a `playtest` run, with its transcript, each turn's numbers and the refusals.
 
@@ -283,7 +283,7 @@ type Playtest = {
 
 ## playtest
 
-Function. Explained in [The CLI](/docs/cli#playtest).
+Function. Explained in [The CLI](/docs/reference/cli#playtest-and-playtest).
 
 Returns the result of playing from `start` with `policy`, the explorer by default. It stops when `turns` or `steps`
 run out, the policy returns null, the game restarts or a screen keeps repeating.
@@ -299,7 +299,7 @@ Uses: [`Game`](/docs/api/engine#game), [`GameState`](/docs/api/engine#gamestate)
 
 ## PlaytestOptions
 
-Type. Explained in [The CLI](/docs/cli#playtestoptions).
+Type.
 
 Settings for `playtest`. Each is optional.
 
@@ -318,7 +318,7 @@ type PlaytestOptions = {
 
 ## Policy
 
-Type. Explained in [The CLI](/docs/cli#policy).
+Type. Explained in [The CLI](/docs/reference/cli#policy).
 
 A function that chooses the next command for `playtest` from the view, the state and the game. It returns null to stop the run.
 
@@ -331,7 +331,7 @@ Uses: [`View`](/docs/api/engine#view), [`GameState`](/docs/api/engine#gamestate)
 
 ## Probe
 
-Type. Explained in [The CLI](/docs/cli#probe-1).
+Type. Explained in [The CLI](/docs/reference/cli#probe-1).
 
 A state the content checker renders every scene against, named for the problems it finds. Make one with `probe`, by playing.
 
@@ -350,7 +350,7 @@ type Probe = {
 
 ## probe
 
-Function. Explained in [The CLI](/docs/cli#probe).
+Function. Explained in [The CLI](/docs/reference/cli#probe).
 
 Returns a probe made by playing each step in order, from the game's starting state or from `from`. It throws when
 the game refuses a command, with the reason.
@@ -370,7 +370,7 @@ Uses: [`Game`](/docs/api/engine#game), [`ProbeStep`](#probestep), [`Probe`](/doc
 
 ## ProbeStep
 
-Type. Explained in [The CLI](/docs/cli#probestep).
+Type. Explained in [The CLI](/docs/reference/cli#probestep).
 
 One step of a probe, either an effect or `{ play: command }`. The probe applies an effect as content's effects
 apply, and sends a command as the player would.
@@ -384,7 +384,7 @@ Uses: [`Effect`](/docs/api/engine#effect), [`CommandRef`](/docs/api/engine#comma
 
 ## screenText
 
-Function. Explained in [The CLI](/docs/cli#screentext).
+Function. Explained in [The CLI](/docs/reference/cli#screentext).
 
 Returns a view as plain text, as `ifloom playtest` writes it. The text has the turn, the time, the body, each choice
 and action with its price or reason, and the inputs.
@@ -398,7 +398,7 @@ Uses: [`View`](/docs/api/engine#view).
 
 ## snapshot
 
-Function. Explained in [The CLI](/docs/cli#snapshot).
+Function. Explained in [The CLI](/docs/reference/cli#snapshot).
 
 Returns every scene and every location rendered as text in every probe state. It's what `ifloom snapshot` writes.
 
@@ -416,7 +416,7 @@ Uses: [`Game`](/docs/api/engine#game), [`Probe`](/docs/api/engine#probe).
 
 ## TemplateName
 
-Type. Explained in [The CLI](/docs/cli#templatename-and-themename).
+Type.
 
 The name of a template in `TEMPLATES`.
 
@@ -438,7 +438,7 @@ const TEMPLATES: readonly ['react', 'vanilla', 'vue', 'svelte', 'next', 'novel',
 
 ## ThemeName
 
-Type. Explained in [The CLI](/docs/cli#templatename-and-themename).
+Type.
 
 The name of a theme preset in `THEMES`.
 
@@ -460,7 +460,7 @@ const THEMES: readonly ['paper', 'terminal', 'studio', 'storybook']
 
 ## TurnMetrics
 
-Type. Explained in [The CLI](/docs/cli#turnmetrics).
+Type.
 
 One turn's numbers in a playtest, taken as the turn ended. They hold the player's stats and the number of entities of
 each listed kind.

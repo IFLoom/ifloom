@@ -13,7 +13,7 @@ export const GAME_MODULE_HELP = `Export the game with defineGame:
     build: ({ unlocked }) => loadGame(content, { id: 'my-story', title: 'My Story' }, { packs: unlocked }),
   })
 
-See https://ifloom.dev/docs/cli#the-game-module`
+See https://ifloom.dev/docs/reference/cli#the-game-module`
 
 /** A game module the CLI can't read: the command line prints its message alone, with no stack. */
 export class GameModuleError extends Error {

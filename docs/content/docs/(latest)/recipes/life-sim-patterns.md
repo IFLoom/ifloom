@@ -305,7 +305,7 @@ const missing = ref<string>()
 {/if}
 ```
 
-Every picture the React UI draws is a `Picture`, so the replacement covers scenes, portraits, notices and layered pictures. Draw the built-in one through `Default`: importing `Picture` from `@ifloom/react` inside the replacement gives you the replacement again. [`ifloom check`](/docs/cli#ifloom-check) lists the missing files too, so you can see what's left to draw.
+Every picture the React UI draws is a `Picture`, so the replacement covers scenes, portraits, notices and layered pictures. Draw the built-in one through `Default`: importing `Picture` from `@ifloom/react` inside the replacement gives you the replacement again. [`ifloom check`](/docs/reference/cli#ifloom-check) lists the missing files too, so you can see what's left to draw.
 
 ## The order refusals come in
 

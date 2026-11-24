@@ -33,7 +33,7 @@ A UI of your own is a loop: draw `runner.view()`, send the `command` on whatever
 - Every reference and plugin page for something the player sees, such as [stats](/docs/reference/stats#drawing-it), [timers](/docs/reference/timers#drawing-it) or [the shop](/docs/reference/plugins/shop#drawing-it), has a **Drawing it** section. It says what the view hands a UI, then draws it in plain JS, with the React UI's ready-made part, and in Vue. That code is type-checked and tested against Small Town, so it runs as shown.
 - The recipes build the pieces most games want in each framework: a [title screen](/docs/recipes/title-screen), a [HUD](/docs/recipes/hud), [plugin panels](/docs/recipes/plugin-ui), [minigames](/docs/recipes/minigames), [transitions](/docs/recipes/transitions) and [actions inside the text](/docs/recipes/inline-actions).
 
-Two packages do the browser jobs every UI needs, so you don't write them again. [`@ifloom/browser`](/docs/browser) runs a minigame's clock and the keyboard shortcuts, numbers new save slots and gives a key that shows held-back prose. [`@ifloom/audio`](/docs/browser/audio-player) plays the game's music and sounds. Both are plain DOM and work under any framework.
+Two packages do the browser jobs every UI needs, so you don't write them again. [`@ifloom/browser`](/docs/reference/browser) runs a minigame's clock and the keyboard shortcuts, numbers new save slots and gives a key that shows held-back prose. [`@ifloom/audio`](/docs/reference/browser/audio-player) plays the game's music and sounds. Both are plain DOM and work under any framework.
 
 ## Mixing the two
 

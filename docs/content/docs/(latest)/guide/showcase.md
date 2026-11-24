@@ -6,7 +6,7 @@ Small Town is the game in `examples/showcase` of the IFLoom repository. It's a f
 
 When a page in these docs says "see it in the showcase", this is the source it means. Its tests play it through every system it uses.
 
-To start a game of your own from a copy of it, run `npm create ifloom@latest my-town -- --template town` (see [`ifloom new`](/docs/cli#ifloom-new)).
+To start a game of your own from a copy of it, run `npm create ifloom@latest my-town -- --template town` (see [`ifloom new`](/docs/reference/cli#ifloom-new)).
 
 ## Run it
 
@@ -21,7 +21,7 @@ npm run snapshot          # compare every scene with snapshots/scenes.txt
 npm run build:one-file    # build dist-one/index.html, the pictures inside it
 ```
 
-These are the [CLI](/docs/cli)'s commands, `ifloom dev`, `build`, `check`, `playtest` and `snapshot`. A copy leaves out the tests, the recorded snapshots and the example mod, so its first `snapshot` records the scenes afresh. Open the built `dist/index.html` straight from disk. It's one file beside an `art/` folder, and it runs with no server. `dist-one/index.html` is the same game with its pictures inside it and nothing beside it.
+These are the [CLI](/docs/reference/cli)'s commands, `ifloom dev`, `build`, `check`, `playtest` and `snapshot`. A copy leaves out the tests, the recorded snapshots and the example mod, so its first `snapshot` records the scenes afresh. Open the built `dist/index.html` straight from disk. It's one file beside an `art/` folder, and it runs with no server. `dist-one/index.html` is the same game with its pictures inside it and nothing beside it.
 
 ## The files
 
@@ -31,14 +31,14 @@ These are the [CLI](/docs/cli)'s commands, `ifloom dev`, `build`, `check`, `play
 | `src/story/` | The story, one file per place or arc: `moving-day.ts`, `ava.ts`, `flat.ts`, `high-street.ts`, `cafe.ts`, `park.ts`, `office.ts` and `sam.ts`. Each holds its scenes, its actions, its locks and resets, its slice of the plugins' content (the place, its vendor, its jobs), and their words, written in place. The lines read by key (variants, tooltips, Ava's small talk by text) are in each file's `prose`, and Ava's are in `ava.prose.ts` beside her arc. All of it is data. |
 | `src/rules.ts` | The game's own code, its [`rules`](/docs/reference/rules): energy back overnight, an effect worked out from the state, and a value the prose prints. |
 | `src/place.ts` | A small helper each place's file uses, which fills in the place's tag, picture and words. |
-| `src/game.ts` | The game put together: the content in order, with the phone's first, the plugins and the rules. Its default export is the [game module](/docs/cli#the-game-module): the release build, and the `probes` the snapshot reads. |
+| `src/game.ts` | The game put together: the content in order, with the phone's first, the plugins and the rules. Its default export is the [game module](/docs/reference/cli#the-game-module): the release build, and the `probes` the snapshot reads. |
 | `src/unlocks/supporter.ts` | The supporter content: one scene, which `ifloom build` encrypts into the page under the supporter code. The page never imports it. |
 | `.env` | The supporter code, `IFLOOM_UNLOCK_SUPPORTER`. It's public so anyone can build the showcase; a real game keeps its codes in `.env.local`, out of git. |
 | `src/main.tsx` | The page. It opens the supporter content the player's code unlocked, loads it and the player's mods over the town, makes a [runner](/docs/reference/runner) with undo, a backlog, saves, a profile and autosave, and draws it with the [React UI](/docs/reference/react)'s `GameShell`, its title screen, its mod manager and its code box. |
 | `src/styles.css` | The React UI's stylesheet with the `storybook` [preset](/docs/reference/react/customising#1-pick-a-theme-preset), and a sea-blue accent of its own. |
 | `public/art/` | The pictures: a portrait each for Ava and Sam, and the two photos the camera takes. Copied into the build as `art/`. |
 | `mods/fog-season.json` | An example [mod](/docs/reference/mods) for a player to add. It isn't part of the game. |
-| `vite.config.ts` | The CLI's [Vite preset](/docs/cli#the-vite-preset), and nothing else. |
+| `vite.config.ts` | The CLI's [Vite preset](/docs/reference/cli#the-vite-preset), and nothing else. |
 | `tests/showcase.test.ts` | The first days, played command by command. |
 | `tests/build.test.ts` | `ifloom check`, the build check and the snapshot comparison, as tests. |
 | `snapshots/scenes.txt` | Every scene and place in three states, as `ifloom snapshot` last wrote it. It's committed. |
@@ -319,9 +319,9 @@ The unlock holds the hash of the code `SMALL-TOWN-SUPPORTER`, which is in `.env`
 
 ### Playtest and snapshot
 
-`src/game.ts`'s default export is its [game module](/docs/cli#the-game-module), what the [CLI](/docs/cli)'s commands read. It has no `start`, so both testing commands begin from `startingState(game)`. That's moving day, with the seed made from the game's id, so every run deals the same.
+`src/game.ts`'s default export is its [game module](/docs/reference/cli#the-game-module), what the [CLI](/docs/reference/cli)'s commands read. It has no `start`, so both testing commands begin from `startingState(game)`. That's moving day, with the seed made from the game's id, so every run deals the same.
 
-`probes` is three states for [`ifloom snapshot`](/docs/cli#ifloom-snapshot), each made with [`probe`](/docs/cli#probe) by playing from the start:
+`probes` is three states for [`ifloom snapshot`](/docs/reference/cli#ifloom-snapshot), each made with [`probe`](/docs/reference/cli#probe) by playing from the start:
 
 - `moving-day`, the start
 - `first-morning`: unpack, then go to bed, played as commands
@@ -329,15 +329,15 @@ The unlock holds the hash of the code `SMALL-TOWN-SUPPORTER`, which is in `.env`
 
 The days go by with the `turn` effect, so the calendar, the turn count and every plugin's turn (Ava's text arriving, the rent) agree. Pick probes like these, far enough apart that the content's conditions come out differently in each.
 
-`package.json` has `"playtest": "ifloom playtest --turns 7 --out playtest/week.txt"` and `"snapshot": "ifloom snapshot"`. The playtest uses the [explorer](/docs/cli#explorer). Read its week before and after you change a price or a condition.
+`package.json` has `"playtest": "ifloom playtest --turns 7 --out playtest/week.txt"` and `"snapshot": "ifloom snapshot"`. The playtest uses the [explorer](/docs/reference/cli#explorer). Read its week before and after you change a price or a condition.
 
 The snapshot is committed in `snapshots/scenes.txt`, and `tests/build.test.ts` compares it on every run. If you change how any scene or place reads, the tests fail until you look. Run `npm run snapshot -w @ifloom/showcase -- --update`, then read the diff before committing.
 
 ### The build
 
-`vite.config.ts` is `export default ifloom()`. The scripts in `package.json` are the [CLI](/docs/cli)'s five commands, and `build:one-file`, which is `ifloom build --inline-assets --out dist-one` ([one file, pictures and all](/docs/cli#one-file-pictures-and-all)).
+`vite.config.ts` is `export default ifloom()`. The scripts in `package.json` are the [CLI](/docs/reference/cli)'s five commands, and `build:one-file`, which is `ifloom build --inline-assets --out dist-one` ([one file, pictures and all](/docs/reference/cli#ifloom-build)).
 
-The game module's `build` returns the release build, `smallTown({ unlocked })`, and that's what `ifloom check` loads. `tests/build.test.ts` runs [`checkGame`](/docs/cli#checkgame) on it, and once the showcase has been built, [`checkBuild`](/docs/cli#checkbuild) on `dist/`.
+The game module's `build` returns the release build, `smallTown({ unlocked })`, and that's what `ifloom check` loads. `tests/build.test.ts` runs [`checkGame`](/docs/api/cli#checkgame) on it, and once the showcase has been built, [`checkBuild`](/docs/api/cli#checkbuild) on `dist/`.
 
 ## What it doesn't show yet
 

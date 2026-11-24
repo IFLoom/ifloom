@@ -22,7 +22,7 @@ src/
     └── cafe.ts       ...and one more for each place, chapter or arc
 ```
 
-Each file in `world/` and `story/` exports one `Content` object, and `game.ts` lists them. It only assembles: its default export is the [game module](/docs/cli#the-game-module), made with `defineGame`, whose `build` loads the content. The page and the CLI both build the game from it.
+Each file in `world/` and `story/` exports one `Content` object, and `game.ts` lists them. It only assembles: its default export is the [game module](/docs/reference/cli#the-game-module), made with `defineGame`, whose `build` loads the content. The page and the CLI both build the game from it.
 
 ```ts
 // src/game.ts
@@ -46,9 +46,9 @@ export const stats: Content = {
 }
 ```
 
-`build` is handed `unlocked`, which `loadGame` lays over the content as packs. It's the content in `src/unlocks/` that a player opens with a code, such as a supporter's scenes (see [Locked content](/docs/cli#locked-content)). `ifloom check` passes it so the locked content is checked too, and it's empty otherwise. A game with no locked content can leave it out and write `build: () => loadGame([…], base)`.
+`build` is handed `unlocked`, which `loadGame` lays over the content as packs. It's the content in `src/unlocks/` that a player opens with a code, such as a supporter's scenes (see [Locked content](/docs/reference/cli#locked-content)). `ifloom check` passes it so the locked content is checked too, and it's empty otherwise. A game with no locked content can leave it out and write `build: () => loadGame([…], base)`.
 
-The template's `game.ts` also has `probes`: the states, each made by playing from a new game, that [`ifloom snapshot`](/docs/cli#ifloom-snapshot) reads every scene in. Leave them out and it reads each scene from the start. See [Probes](/docs/reference/checks#probes).
+The template's `game.ts` also has `probes`: the states, each made by playing from a new game, that [`ifloom snapshot`](/docs/reference/cli#ifloom-snapshot) reads every scene in. Leave them out and it reads each scene from the start. See [Probes](/docs/reference/checks#probes).
 
 `game.ts` holds no content. Its job is the list of files and the base: the game's `id`, `title` and `version`, its `plugins` and its own code in `rules`. Everything a mod could change, actions, locks and the scene it opens on included, is [content](/docs/reference/content#content) and goes in a file of its own.
 

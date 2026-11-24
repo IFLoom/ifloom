@@ -12,13 +12,13 @@ A save is the whole [game state](/docs/reference/state), written to a slot with 
 
   | Driver | Keeps saves in | Use it for |
   |---|---|---|
-  | [`localStorageDriver()`](/docs/browser#localstoragedriver) | The browser's `localStorage`, about 5MB shared. | Short games. |
-  | [`indexedDbDriver()`](/docs/browser#indexeddbdriver) | IndexedDB, with far more room. | Long games and big backlogs. |
+  | [`localStorageDriver()`](/docs/reference/browser#localstoragedriver) | The browser's `localStorage`, about 5MB shared. | Short games. |
+  | [`indexedDbDriver()`](/docs/reference/browser#indexeddbdriver) | IndexedDB, with far more room. | Long games and big backlogs. |
   | [`memoryDriver()`](/docs/reference/saves#memorydriver) | A `Map`, gone with the page or the process. | Tests and previews. |
 
 - **A save store**, [`saves(game, driver)`](/docs/reference/saves#saves), keeps one game's slots on that driver, and carries old saves forward when the game changes.
 
-[`browserRunner`](/docs/browser#browserrunner) uses `localStorage` for you. To choose, pass the store to the runner:
+[`browserRunner`](/docs/reference/browser#browserrunner) uses `localStorage` for you. To choose, pass the store to the runner:
 
 ```ts given
 import { indexedDbDriver } from '@ifloom/browser'
@@ -80,7 +80,7 @@ for (const entry of listing) {
 await runner.save(nextSlot(listing))
 ```
 
-[`nextSlot`](/docs/browser#nextslot) comes from [`@ifloom/browser`](/docs/browser), the helpers for any UI. It skips named slots such as `auto` and `quick`.
+[`nextSlot`](/docs/reference/browser#nextslot) comes from [`@ifloom/browser`](/docs/reference/browser), the helpers for any UI. It skips named slots such as `auto` and `quick`.
 
 To delete a save, or export one as text for the player to keep, go through [`runner.saves`](/docs/reference/runner#the-runners-members), the store the runner was made with, so the snapshot's list follows. Each of its calls answers a [`Result`](/docs/reference/common#result) and never rejects, so a browser that refuses storage gives you a reason to show rather than an error:
 

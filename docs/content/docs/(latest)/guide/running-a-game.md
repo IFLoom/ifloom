@@ -10,7 +10,7 @@ You'll need a game to run. The one `ifloom new` makes is enough, or the one from
 
 A [runner](/docs/reference/runner) holds the game in play and is the one object your code talks to. There are two ways to make one.
 
-In a browser, use [`browserRunner`](/docs/browser#browserrunner). It starts a new game with a random seed, keeps 50 steps of undo, saves to `localStorage` and autosaves each turn:
+In a browser, use [`browserRunner`](/docs/reference/browser#browserrunner). It starts a new game with a random seed, keeps 50 steps of undo, saves to `localStorage` and autosaves each turn:
 
 ```ts
 import { browserRunner } from '@ifloom/browser'
@@ -96,7 +96,7 @@ A few commands come from things that aren't buttons. You build those yourself:
 |---|---|
 | `{ type: 'input', id, to }` | The player entered a value the game asked for, such as a name. See [Inputs](/docs/reference/inputs). |
 | `{ type: 'minigame', input }` | The player pressed one of a running minigame's inputs. |
-| `{ type: 'tick', ms }` | Time passed during a minigame. [`startClock`](/docs/browser#startclock) sends it for you in a browser. |
+| `{ type: 'tick', ms }` | Time passed during a minigame. [`startClock`](/docs/reference/browser#startclock) sends it for you in a browser. |
 | `{ type: 'dismiss' }` | The player cleared the notices. |
 
 [Commands](/docs/reference/commands) lists them all. A plugin's own commands are made by its helpers, such as `places.go('cafe')` from the [places plugin](/docs/reference/plugins/places#commands), and its buttons in the view carry them like any other.
@@ -119,7 +119,7 @@ The [view](/docs/reference/view) is one plain object. These are the parts most s
 | `minigame` | The minigame being played, or `null`. |
 | `notices` | News the player hasn't dismissed, with counts by tag for badges. |
 | `settings` | Every setting the game declares, to draw a settings screen. See [Saves and settings](/docs/guide/saves-and-settings). |
-| `audio` | What should be playing. [`@ifloom/audio`](/docs/browser/audio-player) plays it for you. |
+| `audio` | What should be playing. [`@ifloom/audio`](/docs/reference/browser/audio-player) plays it for you. |
 | `plugins` | Each plugin's own part, by plugin id. |
 
 You never read the state to decide what to draw. The view already says what can be pressed and why not, and the engine refuses commands with the same reasons, so the screen and the rules can't disagree.
@@ -134,7 +134,7 @@ You never read the state to decide what to draw. The view already says what can 
 | `say` | A spoken line: a paragraph that is all one quote, or one written under who says it | The line in `text`, under `name` when there is one. A bare quote has no name, and the scene's `speaker` is who the scene is with |
 | `image` | A picture, `src` and `alt` | An image |
 | `video` | A clip, with `autoplay`, `loop`, `muted` and `controls` | A video |
-| `sound` | A sound played as the scene is shown | Nothing. The [audio player](/docs/browser/audio-player) plays it |
+| `sound` | A sound played as the scene is shown | Nothing. The [audio player](/docs/reference/browser/audio-player) plays it |
 | `chose` | A pick the player made earlier in a [flowing scene](/docs/recipes/flowing-scenes), its words in `label` | The pick, styled as the player's, or nothing |
 
 A UI that draws only `text` beats loses every spoken line, so draw `say` beats from the start. [SceneBeat](/docs/reference/prose#scenebeat) has every field, and [Speech](/docs/reference/prose#speech) how a line is written.

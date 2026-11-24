@@ -103,10 +103,10 @@ It's yours to edit. Add your game's own conventions to it, such as how you name 
 
 - **Point it at an example.** The three examples in the repository are whole, working games. Ask the agent to follow `examples/novel` for a story in chapters, `examples/cafe` for a game built on [entities](/docs/reference/entities), or `examples/showcase` for places, characters and a calendar.
 - **Have it run `npm run check`** after every change. It loads the game and lists every problem the loader finds, such as a scene, prose key or id that the content names but nothing declares. It prints `No problems.` when there are none, and exits with an error when there are some, so an agent can tell the difference.
-- **Have it run `npm run playtest`** to see the game played. The [playtest](/docs/cli#ifloom-playtest) plays a few turns with no one at the keyboard and writes every screen and every command to a text file. An agent can read that file to find a scene that never shows up, a choice that's always greyed out, or a number that never moves.
+- **Have it run `npm run playtest`** to see the game played. The [playtest](/docs/reference/cli#ifloom-playtest) plays a few turns with no one at the keyboard and writes every screen and every command to a text file. An agent can read that file to find a scene that never shows up, a choice that's always greyed out, or a number that never moves.
 - **Ask for content as data.** Scenes, conditions and effects are plain objects that `check` can read. A rule written as code is harder for the agent, and for `check`, to verify.
 
 ## Next
 
 - [Your first story](/docs/guide/first-story) builds a short game step by step, which is also a good thing to hand an agent as an example of the format.
-- [The CLI](/docs/cli) documents `check`, `playtest` and the other commands in full.
+- [The CLI](/docs/reference/cli) documents `check`, `playtest` and the other commands in full.

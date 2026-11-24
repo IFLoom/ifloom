@@ -9,7 +9,7 @@ Generated from the source of `@ifloom/cli/game` and its TSDoc by `npm run api-do
 
 ## BuildOptions
 
-Type. Explained in [The CLI](/docs/cli#gamemoduledef-buildoptions-and-gamemodule).
+Type. Explained in [The CLI](/docs/reference/cli#gamemoduledef-buildoptions-and-gamemodule).
 
 The options a game module's `build` receives. They name the packs to load over the content, such as the locked
 content a player's codes opened.
@@ -27,7 +27,7 @@ type BuildOptions = {
 
 ## defineGame
 
-Function. Explained in [The CLI](/docs/cli#definegame).
+Function. Explained in [The CLI](/docs/reference/cli#definegame).
 
 Returns the game module for a definition, the default export of `src/game.ts`. It throws when `build` is missing.
 
@@ -47,7 +47,7 @@ Uses: [`GameModuleDef`](/docs/api/cli#gamemoduledef), [`GameModule`](/docs/api/c
 
 ## explorer
 
-Function. Explained in [The CLI](/docs/cli#explorer).
+Function. Explained in [The CLI](/docs/reference/cli#explorer).
 
 Returns a policy that explores the game as a curious player would, rather than following a route through the story.
 It never chooses a choice or action that carries a warning.
@@ -66,7 +66,7 @@ Uses: [`Policy`](/docs/api/cli#policy).
 
 ## GameModule
 
-Type. Explained in [The CLI](/docs/cli#gamemoduledef-buildoptions-and-gamemodule).
+Type. Explained in [The CLI](/docs/reference/cli#gamemoduledef-buildoptions-and-gamemodule).
 
 The game module `defineGame` returns, the default export of `src/game.ts`. Its `build` takes its options as optional, so a page calls `game.build()`.
 
@@ -89,7 +89,7 @@ type GameModule = {
 
 ## GameModuleDef
 
-Type. Explained in [The CLI](/docs/cli#gamemoduledef-buildoptions-and-gamemodule).
+Type. Explained in [The CLI](/docs/reference/cli#gamemoduledef-buildoptions-and-gamemodule).
 
 The definition a game passes to `defineGame`. Only `build` is required.
 
@@ -112,7 +112,7 @@ type GameModuleDef = {
 
 ## Policy
 
-Type. Explained in [The CLI](/docs/cli#policy).
+Type. Explained in [The CLI](/docs/reference/cli#policy).
 
 A function that chooses the next command for `playtest` from the view, the state and the game. It returns null to stop the run.
 
@@ -125,7 +125,7 @@ Uses: [`View`](/docs/api/engine#view), [`GameState`](/docs/api/engine#gamestate)
 
 ## Probe
 
-Type. Explained in [The CLI](/docs/cli#probe-1).
+Type. Explained in [The CLI](/docs/reference/cli#probe-1).
 
 A state the content checker renders every scene against, named for the problems it finds. Make one with `probe`, by playing.
 
@@ -144,7 +144,7 @@ type Probe = {
 
 ## probe
 
-Function. Explained in [The CLI](/docs/cli#probe).
+Function. Explained in [The CLI](/docs/reference/cli#probe).
 
 Returns a probe made by playing each step in order, from the game's starting state or from `from`. It throws when
 the game refuses a command, with the reason.
@@ -164,7 +164,7 @@ Uses: [`Game`](/docs/api/engine#game), [`ProbeStep`](/docs/api/cli#probestep), [
 
 ## ProbeStep
 
-Type. Explained in [The CLI](/docs/cli#probestep).
+Type. Explained in [The CLI](/docs/reference/cli#probestep).
 
 One step of a probe, either an effect or `{ play: command }`. The probe applies an effect as content's effects
 apply, and sends a command as the player would.

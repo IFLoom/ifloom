@@ -62,6 +62,8 @@
     "---Packages---",
     "plugins",
     "react",
+    "browser",
+    "cli",
     "---Other tools---",
     "twine-phrasebook"
   ]

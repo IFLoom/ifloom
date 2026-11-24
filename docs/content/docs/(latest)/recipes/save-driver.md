@@ -2,7 +2,7 @@
 title: "A save driver of your own"
 description: "Change how a game in the browser keeps its saves: compress them to fit in localStorage, fall back when the browser refuses storage, and move saves when you switch. What a driver must do, and a test that checks yours."
 ---
-Most games never need a driver of their own. A game opened from disk or played on a site like itch.io keeps its saves in the browser, and [`@ifloom/browser`](/docs/browser#save-drivers) has a driver for each place it can: `localStorageDriver()`, which [`browserRunner`](/docs/browser#browserrunner) uses by default, and `indexedDbDriver()` for more room. [Shipping](/docs/guide/shipping#saves) helps you pick one.
+Most games never need a driver of their own. A game opened from disk or played on a site like itch.io keeps its saves in the browser, and [`@ifloom/browser`](/docs/reference/browser#save-drivers) has a driver for each place it can: `localStorageDriver()`, which [`browserRunner`](/docs/reference/browser#browserrunner) uses by default, and `indexedDbDriver()` for more room. [Shipping](/docs/guide/shipping#saves) helps you pick one.
 
 You write a driver when the browser's storage needs handling the built-in drivers don't do:
 
@@ -175,7 +175,7 @@ It copies only your game's keys, and never overwrites a key the new driver alrea
 
 ## Use it
 
-Hand the driver to the save store and the profile, and pass both to the runner. [`browserRunner`](/docs/browser#browserrunner) uses them in place of its `localStorage` default:
+Hand the driver to the save store and the profile, and pass both to the runner. [`browserRunner`](/docs/reference/browser#browserrunner) uses them in place of its `localStorage` default:
 
 ```ts given
 import { browserRunner, indexedDbDriver, localStorageDriver } from '@ifloom/browser'
@@ -225,7 +225,7 @@ test('the compressed driver keeps the rules', async () => {
 })
 ```
 
-Node has no `localStorage` or IndexedDB, so test a wrapping driver over `memoryDriver()`, or over [`localStorageDriver(storage)`](/docs/browser#localstoragedriver) with a storage object of your own. Then write and read a real save through [`saves`](/docs/reference/saves#saves) with your game, as in [Testing](/docs/guide/testing), to catch a driver that changes what it stores.
+Node has no `localStorage` or IndexedDB, so test a wrapping driver over `memoryDriver()`, or over [`localStorageDriver(storage)`](/docs/reference/browser#localstoragedriver) with a storage object of your own. Then write and read a real save through [`saves`](/docs/reference/saves#saves) with your game, as in [Testing](/docs/guide/testing), to catch a driver that changes what it stores.
 
 ## In a desktop app
 
@@ -273,5 +273,5 @@ In Electron, the page can't use `fs` itself. Run the driver in the main process,
 ## See also
 
 - [Saves](/docs/reference/saves): the save store, the `SaveDriver` type and the memory driver.
-- [Save drivers](/docs/browser#save-drivers) in `@ifloom/browser`: the `localStorage` and IndexedDB drivers, whose source is a short read.
+- [Save drivers](/docs/reference/browser#save-drivers) in `@ifloom/browser`: the `localStorage` and IndexedDB drivers, whose source is a short read.
 - [Shipping](/docs/guide/shipping): a game as one folder, opened from disk or uploaded, and choosing its driver.

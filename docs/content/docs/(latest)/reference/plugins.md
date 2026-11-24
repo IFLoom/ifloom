@@ -182,7 +182,7 @@ A button sends the command, here as one of the café's actions in the places plu
 
 Five coffees later:
 
-```ts
+```ts given
 import { apply, holds, view, whyNot } from '@ifloom/engine'
 import { loyalty } from './loyalty.ts'
 
@@ -198,6 +198,8 @@ view(out.state, game).plugins.loyalty                           // { stamps: 0, 
 On a new game the same command is refused with `Your card is not full yet.`, and the view greys out its button with the same line. A game that wants different wording gives `strings: { 'loyalty/notFull': 'Five stamps first.' }`. See [Strings](/docs/reference/strings#plugins-strings).
 
 ## Plugin
+
+All fields: [`Plugin` in the API](/docs/api/engine-plugin#plugin).
 
 ```ts shape
 import { pluginQuery, type SpeakerView, type WordShape, type RawPack, type ConditionRegistry, type EffectRegistry, type CommandRegistry, type QueryRegistry, type ViewRegistry, type ConditionCall, type EffectCall, type CommandCall, type Query, type ViewsIn } from '@ifloom/engine'
@@ -287,6 +289,8 @@ type Plugin<S = any, V = unknown> = {
 | `check` | Rules of its own about its content, checked with the rest of the game. See [check](#check). |
 
 ## PluginContext
+
+All fields: [`PluginContext` in the API](/docs/api/engine-plugin#plugincontext).
 
 ```ts shape
 type PluginContext<S> = CustomContext & {
@@ -827,7 +831,7 @@ Each registry is keyed by the call's full name, and each entry is what content w
 
 Once a game imports the plugin's package, those calls are checked wherever a [`Condition`](/docs/reference/conditions#condition), an [`Effect`](/docs/reference/effects#effect) or a [`CommandRef`](/docs/reference/custom#commandref) goes:
 
-```ts
+```ts given
 import { pluginQuery, type Condition } from '@ifloom/engine'
 
 const full: Condition = { 'loyalty/stamps': { card: 'cafe', gte: 5 } }
@@ -997,7 +1001,7 @@ function pluginQuery<T = unknown>(game: Game | undefined, name: string): ((state
 
 A plugin's query by its full name, for code outside any plugin, such as a tool, a test or the [CLI](/docs/cli). It returns a function to ask it with, which runs with the owning plugin's own context for that state. It returns `undefined` when the game lacks the plugin or the query. `args` is `{}` if left out. A plugin's own code uses its context's `query` instead.
 
-```ts
+```ts given
 import { pluginQuery } from '@ifloom/engine'
 import '@ifloom/plugin-calendar'
 
@@ -1510,7 +1514,7 @@ Cook dinner and Bake bread carry effects, so they send `{ type: 'action', id: 'p
 
 With two dishes in the sink:
 
-```ts
+```ts given
 import { apply, view } from '@ifloom/engine'
 
 const screen = view(state, game)
@@ -1619,7 +1623,7 @@ wash: (_state, _args, { set, apply }) => apply([{ turn: true }], set({ dirty: 0 
 
 `view(state, context)` returns whatever the plugin's UI needs, whether that's your own code or a React UI the plugin ships in its `/react` subpath (see [Plugin UIs and the kit](/docs/react/kit)). The engine's [`view()`](/docs/reference/view#plugins) collects each one at `plugins[id]`, and a plugin without `view` has no entry. The engine never looks inside it. Declare its type in [`ViewRegistry`](#typed-calls-queries-and-views) and code that imports your package reads it typed:
 
-```ts
+```ts given
 import { view } from '@ifloom/engine'
 
 const card = view(state, game).plugins.loyalty // LoyaltyView | undefined, once the plugin declares it
@@ -1692,7 +1696,7 @@ export const market: Content = {
 }
 ```
 
-```ts continues
+```ts given continues
 import { view } from '@ifloom/engine'
 
 view(state, game).scene
@@ -1738,7 +1742,7 @@ actions?: (state: GameState, context: PluginContext<S>) => readonly ActionDef[] 
 
 Actions the plugin offers as buttons while no scene is open, such as the stall's Haggle. Each is an [`ActionDef`](/docs/reference/actions#actiondef), the same shape as the content's actions, so a button can carry a cost and effects of its own. The view puts the game's own `rules.actions` first, then every plugin's, in the order `game.plugins` lists them, then the content's [`actions`](/docs/reference/actions#actiondef). The [places plugin](/docs/plugins/places#the-buttons)'s are the current location's `actions`. All of them are drawn alike with [`renderAction`](/docs/reference/view#renderaction), which gives each a price, `blocked`, a [guard](#guards)'s warning and [`whyNot`](/docs/reference/actions#whynot)'s reason.
 
-```ts
+```ts given
 import { view } from '@ifloom/engine'
 
 // The stall above, with an action of the content's to buy bread:
@@ -1799,7 +1803,7 @@ function speakerOf(state: GameState, game: Game, id: string): SpeakerView | null
 
 Who an id is, as the view draws a scene's speaker: a [`SpeakerView`](/docs/reference/view#speakerview) with the entity's name (tokens filled), picture and hints, or `null` when the id names no entity. A bare id is `character:<id>`, else the one entity the game declares with that id. A reference is read as written, and `'you'` is whoever the player is playing.
 
-```ts
+```ts given
 import { speakerOf } from '@ifloom/engine/plugin'
 
 speakerOf(state, game, 'ava')      // { id: 'ava', ref: 'character:ava', name: 'Ava', image: 'art/character/ava.svg', ui: { hue: 20 } }
@@ -1840,7 +1844,7 @@ stats: [{ id: 'fondness', label: 'Fondness', of: 'regular', start: 3 }],
 entities: [{ id: 'mo', of: 'regular', name: 'Mo from next door', stats: { fondness: 8 } }],
 ```
 
-```ts
+```ts given
 import { startingState, view } from '@ifloom/engine'
 
 const state = startingState(game)
@@ -2239,7 +2243,7 @@ It throws when a declared call has no function, a function has no declaration, o
 
 The plugin's slice of a view is `view.plugins[id]`, typed by its [`ViewRegistry`](#typed-calls-queries-and-views) entry, so `definePlugin` adds nothing for it.
 
-```ts
+```ts given
 import { loyalty } from './loyalty.ts'
 
 loyalty.read(state, game).stamps

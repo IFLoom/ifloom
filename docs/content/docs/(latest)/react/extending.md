@@ -41,7 +41,7 @@ The engine shows the scene's panel as [`view.panel`](/docs/reference/panels#a-sc
 
 The component draws the prices its own way, then sends one of the scene's own choices. That way what happens is still content, and the engine still checks it:
 
-```tsx
+```tsx given
 import { GameShell, useGame, type PanelComponent } from '@ifloom/react'
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@ifloom/react/kit'
 
@@ -108,7 +108,7 @@ data: {
 }
 ```
 
-```tsx
+```tsx given
 import { GameShell, type PluginSectionComponent } from '@ifloom/react'
 
 const LoyaltyCard: PluginSectionComponent = ({ data }) => {
@@ -185,7 +185,7 @@ A layout is a React component inside the game's provider, so it can hold anythin
 
 You don't have to use the regions at all. Without `GameShell`, wrap your page in a [`GameProvider`](/docs/react/components#gameprovider), and add a [`TooltipProvider`](/docs/react/components#tooltip) if anything in it uses tooltips:
 
-```tsx
+```tsx given
 import { createRoot } from 'react-dom/client'
 import { GameProvider, InputFields, Notices, Scene, StatList } from '@ifloom/react'
 import { TooltipProvider } from '@ifloom/react/kit'

@@ -28,7 +28,7 @@ function applyEffects(state: GameState, game: Game, effects: readonly EffectRef[
 
 Runs a list of effects against a state and returns the new state, without a command around it. Nothing is refused, no turn ends unless an effect ends one, and no scene is counted as seen. It's useful in tests and tools, for example to put the player in a scene or give them coins, and in one of the game's own effects that wants to see where its own list leads.
 
-```ts
+```ts given
 import { applyEffects } from '@ifloom/engine'
 import { quests } from '@ifloom/plugin-quests'
 

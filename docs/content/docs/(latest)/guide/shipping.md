@@ -86,7 +86,7 @@ A game decides where its saves live by picking a driver. The engine has no defau
 | A long game, or one with big backlogs or mods | `indexedDbDriver()`. It has much more room. |
 | A desktop wrapper (Tauri, Electron) | One of your own over the wrapper's file system. |
 
-```ts
+```ts given
 import { indexedDbDriver } from '@ifloom/browser'
 import { createRunner, saves } from '@ifloom/engine'
 

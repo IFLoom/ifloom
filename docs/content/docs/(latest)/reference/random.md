@@ -20,7 +20,7 @@ Don't call `Math.random` in content.
 
 `state.seed` is a number fixed for the life of a save. A new game takes the `seed` passed to [`startingState`](/docs/reference/commands#startingstate) or the [`start`](/docs/reference/commands#start) command. If you leave it out, it's `hash(game.id)`. Put the seed in your draws when a draw should differ between saves.
 
-```ts
+```ts given
 import { startingState } from '@ifloom/engine'
 
 // A UI: a fresh seed for every new game, so each playthrough deals its own variants.
@@ -38,7 +38,7 @@ That one `Math.random` is outside the game. It picks the seed once, and the save
 
 Draw each value from its own named parts. Don't draw one number and slice several values out of it.
 
-```ts
+```ts given
 import { chance, draw, drawOne, hash } from '@ifloom/engine'
 
 const CAKES = ['lemon drizzle', 'carrot', 'chocolate']
@@ -84,7 +84,7 @@ function draw(max: number, ...parts: (string | number)[]): number
 
 A whole number in `[0, max)`, from the parts joined with `:`. Returns `0` when `max` is `0` or less.
 
-```ts
+```ts given
 import { draw } from '@ifloom/engine'
 
 draw(6, state.seed, state.turn, 'dice') // 0 to 5
@@ -104,7 +104,7 @@ function drawOne<T>(items: readonly T[], ...parts: (string | number)[]): T
 
 One item from the list. It returns `undefined` for an empty list, though the type doesn't say so.
 
-```ts
+```ts given
 import { drawOne } from '@ifloom/engine'
 
 drawOne(['rye', 'sourdough', 'brioche'], state.seed, state.turn, 'bakery.loaf')
@@ -120,7 +120,7 @@ function chance(numerator: number, outOf: number, ...parts: (string | number)[])
 
 Returns `true` `numerator` times in `outOf`.
 
-```ts
+```ts given
 import { chance } from '@ifloom/engine'
 
 chance(1, 3, state.seed, state.turn, 'park.ducks') // one turn in three
@@ -142,7 +142,7 @@ function weighted<T>(
 
 One item from the list, drawn by weight from the parts you name. `weightOf` says how much each item weighs, and an item of weight 3 comes up three times as often as one of weight 1.
 
-```ts
+```ts given
 import { weighted } from '@ifloom/engine'
 
 const cakes = [

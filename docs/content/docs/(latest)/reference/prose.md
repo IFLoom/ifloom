@@ -123,7 +123,7 @@ function fillTokens(state: GameState, game: Game, text: string): string
 
 Fills in the [tokens](#tokens) in one string. The engine calls it on every block of words, label and line it shows. Call it yourself for text of your own, such as a panel's.
 
-```ts
+```ts given
 import { fillTokens } from '@ifloom/engine'
 
 fillTokens(state, game, '{{playerName}} has been here {{kv:visits of=storyline:ava}} times.')
@@ -481,7 +481,7 @@ function proseBeats(state: GameState, game: Game, key: string): SceneBeat[] | nu
 
 The prose line `key` as beats, formatted as a scene's body is: its tokens filled for this save, cut into paragraphs and spoken lines with each speaker named from their entity, and its bold, italics and [UI pieces](#ui-pieces) in [spans](#inlinespan). Use it when your UI shows a line by key away from the scene, such as the dialog a UI piece opens. `null` when the game has no line by that key.
 
-```ts
+```ts given
 import { proseBeats } from '@ifloom/engine'
 
 // prose: { 'notice.welcome': 'Welcome to **{{town}}**.' }

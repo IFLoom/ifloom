@@ -75,6 +75,8 @@ It's a video when `video` is `true` or the file ends in `.mp4` or `.webm`. `cont
 
 ## DataScene
 
+All fields: [`DataScene` in the API](/docs/api/engine#datascene).
+
 ```ts shape
 import type { DataScene, Block, Choice } from '@ifloom/engine'
 
@@ -233,6 +235,8 @@ The view resolves the picture into [`view.scene.picture`](/docs/reference/view#t
 - `view.scene.image` is still set as before, next to `picture`. A UI decides which to draw.
 
 ### Choice
+
+All fields: [`Choice` in the API](/docs/api/engine#choice).
 
 ```ts shape
 type Choice = ButtonDef & {

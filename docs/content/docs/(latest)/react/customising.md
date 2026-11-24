@@ -234,8 +234,9 @@ To start from nothing, pass `unstyled: true`. Every built-in class goes. The ele
 
 ```ts
 import { mountGame } from '@ifloom/react'
+import module from './game.ts'
 
-mountGame(game, {
+mountGame(module.build(), {
   unstyled: true,
   classes: {
     page: 'mx-auto max-w-prose p-6',

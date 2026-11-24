@@ -165,7 +165,7 @@ export async function moveSaves(gameId: string, from: SaveDriver, to: SaveDriver
 }
 ```
 
-```ts continues
+```ts given continues
 import { indexedDbDriver, localStorageDriver } from '@ifloom/browser'
 
 await moveSaves(game.id, localStorageDriver(), indexedDbDriver()).catch(() => {})
@@ -177,7 +177,7 @@ It copies only your game's keys, and never overwrites a key the new driver alrea
 
 Hand the driver to the save store and the profile, and pass both to the runner. [`browserRunner`](/docs/browser#browserrunner) uses them in place of its `localStorage` default:
 
-```ts
+```ts given
 import { browserRunner, indexedDbDriver, localStorageDriver } from '@ifloom/browser'
 import { memoryDriver, profile, saves } from '@ifloom/engine'
 // The three functions above, each in a file of its own.

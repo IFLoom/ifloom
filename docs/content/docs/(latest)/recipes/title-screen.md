@@ -61,8 +61,9 @@ mountGame(module.build(), { layout: Layout, pages: true })
 // Or, instead of `true`, a subtitle, a picture and credits:
 import { mountGame } from '@ifloom/react'
 import { Layout } from './layout.tsx'
+import module from './game.ts'
 
-mountGame(game, {
+mountGame(module.build(), {
   layout: Layout,
   pages: {
     subtitle: 'A new flat, a new town, and a cat with no name.',
@@ -186,7 +187,7 @@ A credit is a line of text, or a link with a `label` and an `href`. A missing `a
 
 Settings are kept between games in the player's profile, so the runner needs one. [`browserRunner`](/docs/browser#browserrunner) and `mountGame` make one for you. If you build your runner by hand, give it a profile:
 
-```ts
+```ts given
 import { localStorageDriver } from '@ifloom/browser'
 import { createRunner, profile, saves, startingState } from '@ifloom/engine'
 
@@ -307,7 +308,7 @@ export const settings: Content = {
 
 Any other UI copies it the same way, from the runner to an attribute on `<html>`, now and whenever it changes:
 
-```ts
+```ts given
 // src/main.ts
 function showTextSize() {
   document.documentElement.dataset.textSize = String(runner.snapshot().settings.textSize)
@@ -378,8 +379,9 @@ export async function gate(root: HTMLElement, runner: Runner, next: () => void):
 
 ```ts tab="React" tab-group="framework"
 import { mountGame } from '@ifloom/react'
+import module from './game.ts'
 
-mountGame(game, {
+mountGame(module.build(), {
   pages: {
     gate: {
       title: 'Before you start',
@@ -467,6 +469,7 @@ export async function endings(root: HTMLElement, runner: Runner, back: () => voi
 
 ```tsx tab="React" tab-group="framework"
 import { mountGame, useProfile, usePage } from '@ifloom/react'
+import module from './game.ts'
 
 function Endings() {
   const { back } = usePage()
@@ -480,7 +483,7 @@ function Endings() {
   )
 }
 
-mountGame(game, {
+mountGame(module.build(), {
   pages: { pages: { endings: { label: 'Endings', component: Endings } } },
 })
 ```

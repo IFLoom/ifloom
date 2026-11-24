@@ -24,7 +24,7 @@ function createRunner(game: Game, start: GameState, options?: RunnerOptions): Ru
 
 Starts a runner on `start`, which is usually [`startingState`](/docs/reference/commands#startingstate) or a state from a save. A state from anywhere else goes through [`loadState`](/docs/reference/saves#loadstate) first, since the runner doesn't check its shape. This is how the showcase makes its runner:
 
-```ts
+```ts given
 import { localStorageDriver } from '@ifloom/browser'
 import { createRunner, saves, startingState, type RunnerSnapshot } from '@ifloom/engine'
 import { places } from '@ifloom/plugin-places'
@@ -50,6 +50,8 @@ runner.apply(places.go('high-street'))
 [`browserRunner`](/docs/browser#browserrunner) from `@ifloom/browser` is `createRunner` with what most games in a browser want: a random seed, undo 50 steps deep, saves and a profile in `localStorage`, and an autosave each turn. The React UI's `mountGame` and the templates use it.
 
 ## RunnerSnapshot
+
+All fields: [`RunnerSnapshot` in the API](/docs/api/engine#runnersnapshot).
 
 ```ts shape
 type RunnerSnapshot = {
@@ -82,7 +84,7 @@ Everything a UI draws from the runner, in one value. `runner.snapshot()` gives t
 
 The snapshot is a new object whenever any part of it changes, and the same object until then. A UI that keeps it whole draws again exactly when something changed: Vue's `shallowRef`, React's `useSyncExternalStore` and a Svelte store all compare it by identity.
 
-```ts
+```ts given
 const shown = runner.snapshot()
 runner.snapshot() === shown  // true: nothing changed
 runner.apply({ type: 'choose', id: 'chat' })
@@ -95,7 +97,7 @@ The snapshot is frozen, and so are its parts as the runner hands them over. Chan
 
 A UI often wants to know how the player got to the screen it's drawing, such as to play the transition a choice's `ui` hints ask for. `snapshot.pressed` says so. When a command the runner runs changes the screen (its [`view.scene.key`](/docs/reference/view#the-scene)), the runner finds the choice, inline action or button in the view the command was sent from that sends the same command, and keeps it until the screen changes again.
 
-```ts
+```ts given
 runner.apply({ type: 'choose', id: 'leave' })
 runner.snapshot().pressed  // { id: 'leave', label: 'Leave', command: { type: 'choose', id: 'leave' }, ui: { transition: 'fade' } }
 runner.apply({ type: 'action', id: 'wait' })
@@ -110,7 +112,7 @@ It's `null` when nothing the player pressed led to the screen: a command no choi
 
 The runner lists its saves once when it's made, in the background. [`settled()`](#the-runners-members) waits for that, and [`browserRunner`](/docs/browser#browserrunner) waits for it before it returns. After that the runner keeps the list up to date itself, with no listing again: every `save`, autosave, and every write and removal through `runner.saves` changes it, and listeners are told. A save menu reads `snapshot.saves` and never lists the saves itself.
 
-```ts
+```ts given
 await runner.save('1')
 runner.snapshot().saves[0].slot        // '1': newest first
 await runner.saves?.remove('1')
@@ -213,7 +215,7 @@ This is how the backlog grows, command by command:
 - **Ticks add nothing**, and nor does a [minigame](/docs/reference/minigames) drawn over a scene. The scene a minigame's ending opens goes in with the next command that isn't a tick, as the scene on screen.
 - **Leaving adds nothing.** A choice that closes the scene adds no entry, and neither does walking between places with no scene open (the [places plugin](/docs/plugins/places)'s `go`).
 
-```ts
+```ts given
 import { createRunner, startingState } from '@ifloom/engine'
 import { places } from '@ifloom/plugin-places'
 
@@ -262,7 +264,7 @@ type Result<T> = { ok: true; value: T } | { ok: false; reason: string }
 
 What the runner, the [save store](/docs/reference/saves#saves), the [mod store](/docs/reference/mods#mods), [`loadState`](/docs/reference/saves#loadstate), [`replay`](#replay) and [`upgradePack`](/docs/reference/loader#upgradepack) answer with when something can fail in a way you should expect: a refused command, an empty slot, a save from a newer game, a mod for another game. Check `ok`. On success `value` is the answer. On failure `reason` says why, in words a player can read, and nothing changed. None of them throws for these.
 
-```ts
+```ts given
 const result = runner.apply({ type: 'choose', id: 'chat' })
 if (!result.ok) alert(result.reason) // 'She has a queue.'
 ```
@@ -272,6 +274,8 @@ The engine's own [`apply`](/docs/reference/commands#apply) answers in the same s
 ## The runner's members
 
 ### Runner
+
+All fields: [`Runner` in the API](/docs/api/engine#runner).
 
 What [`createRunner`](#createrunner) and [`browserRunner`](/docs/browser#browserrunner) return. `Runner` is an interface, and these are all its members:
 
@@ -324,7 +328,7 @@ interface Runner {
 
 `save` and `load` are async, and answer with a [`Result`](#result) rather than throwing:
 
-```ts
+```ts given
 declare const undoButton: HTMLButtonElement // your page's undo button
 undoButton.disabled = !runner.snapshot().canUndo
 undoButton.onclick = () => runner.undo()
@@ -345,14 +349,14 @@ else if (loaded.value.missingPacks.length) alert(`Made with mods you don't have:
 
 This means everything that reads the view can call `runner.view()` freely, and `snapshot().view` is that same object. In a browser, the backlog, the [React UI](/docs/react) and the [audio player](/docs/browser/audio-player) all read it after each command, and the view is built once between them. `apply` also uses the view the UI last read to write the backlog, rather than building the one it was sent from again.
 
-```ts
+```ts given
 runner.apply({ type: 'choose', id: 'open' })
 runner.view() === runner.view()  // true: one view for the new state
 ```
 
 With a `profile`, the runner also shows each plugin's view what that plugin's namespace holds, as [`context.profile`](/docs/reference/plugins#the-profile). It reads those namespaces when it's made and follows every write to the profile after that, from itself or anything else. When a namespace a view can see changes, the cached view is replaced by a new object with only that plugin's view built again. The scene isn't drawn again, and the state is the same object. Then the runner's listeners are called with a new snapshot, so a UI that draws from it redraws.
 
-```ts
+```ts given
 await runner.profile?.set('achievements', { earned: ['regular'] })
 runner.view() === runner.view()  // still true: the new view is kept
 ```
@@ -372,7 +376,7 @@ Every [setting](/docs/reference/settings) the game declares, by id, with its val
 - **A `play` setting** comes from the game in play, `state.settings`.
 - **A `ui` setting** comes from the profile's `core:settings`. A stored value the setting can't take any more reads as its default. So does every `ui` setting before the profile has been read, and in a runner without a profile.
 
-```ts
+```ts given
 const { textSize, hints } = runner.snapshot().settings
 document.body.dataset.textSize = String(textSize)
 ```
@@ -390,7 +394,7 @@ Changes a setting of either kind, after checking the value against the setting's
 - **A `play` setting** is sent as the `setting` command, so it changes the game in play and is logged like any command. When it takes, the runner writes it to the profile's `core:settings` too, so the next new game starts with it.
 - **A `ui` setting** is written to the profile's `core:settings` and never touches the state. The snapshot's `settings` shows it at once, listeners are called, and the write finishes in the background. Await `settled()` if you need it done. Without a profile it's refused with `This game keeps no settings between plays.`
 
-```ts
+```ts given
 const result = runner.setSetting('textSize', 'large')
 if (!result.ok) alert(result.reason)
 ```
@@ -439,7 +443,7 @@ runner.newGame(start?: StartOptions): Promise<GameState>
 
 Starts a new game in place, with a fresh history, backlog and log and no time played, and tells listeners. It takes the same options as [`startingState`](/docs/reference/commands#startingstate). If you leave out `settings`, it uses the player's: the profile's, or without a profile the ones in the game in play. If you leave out `seed`, it picks a random one.
 
-```ts
+```ts given
 declare const newGameButton: HTMLButtonElement // your page's buttons
 declare const newGamePlusButton: HTMLButtonElement
 newGameButton.onclick = () => runner.newGame()
@@ -493,7 +497,7 @@ Plays a command log back and returns the state it leads to, as a [`Result`](#res
 
 The log's `start` goes through [`loadState`](/docs/reference/saves#loadstate) first, so a log made with an older engine or an older version of the game still plays. Its commands are carried forward from the versions the log records: the engine's own steps from its `schema`, and each plugin's [`commandMigrations`](/docs/reference/plugins#content-and-command-migrations) from its version, so only the steps the log needs run. A log with no versions is read as the oldest, so every step runs, and commands written with names an older engine used are read with today's: `{ type: 'use', itemId: 'tea' }`, from when items were the engine's, is the [inventory plugin](/docs/plugins/inventory)'s `inventory/use` on `item:tea`. If the start can't be loaded, or the log was written for a newer engine or a newer version of a plugin than the game has, `replay` fails with the reason, such as `written for version 7 of the cast plugin's commands, this game's reads 6`.
 
-```ts
+```ts given
 import { readFileSync } from 'node:fs'
 import { replay, type CommandLog } from '@ifloom/engine'
 import lastWeek from './old/src/game.ts'

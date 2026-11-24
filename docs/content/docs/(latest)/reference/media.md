@@ -58,7 +58,7 @@ Someone knocks, three times, not loud.
 
 With the scene open, the view has the picked door among the beats and the picture resolved:
 
-```ts
+```ts given
 import { view } from '@ifloom/engine'
 
 view(state, game).scene.picture

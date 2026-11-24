@@ -78,7 +78,7 @@ With the React UI there's nothing more to write. `ui: { timer: 'phone' }` on a b
 
 To show a timer somewhere else, such as the sidebar, put `Countdown` in your [layout](/docs/recipes/layouts), or `Timers` for every running timer:
 
-```ts tab="Plain JS" tab-group="framework"
+```ts given tab="Plain JS" tab-group="framework"
 // src/main.ts: a box in the side column that lists every running timer.
 const side = document.querySelector<HTMLElement>('#side')!
 runner.subscribe(() => {
@@ -200,7 +200,7 @@ A `<progress>` element moves in steps with each tick. For a smooth bar, draw a `
 
 The engine only moves a timer on a tick, so a test sends the ticks itself and gets the same result every time:
 
-```ts
+```ts given
 import { apply, startingState } from '@ifloom/engine'
 
 let state = startingState(game)

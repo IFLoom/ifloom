@@ -47,7 +47,7 @@ const corner: Content = {
 
 A new game has the player's stats in `state.stats`. `state.entities` starts empty, because nothing about Ana or the dishes has changed yet. Read them through the functions below, which look at the save first and then at your content:
 
-```ts
+```ts given
 import { entitiesOf, entityName, startingState, statValue } from '@ifloom/engine'
 
 const state = startingState(game)
@@ -219,7 +219,7 @@ export const clothes: Content = {
 }
 ```
 
-```ts
+```ts given
 import { traitOf, withTrait } from '@ifloom/engine'
 
 traitOf(state, game, 'clothing:scarf', 'laundry/washable')   // { temp: 40, gentle: true }
@@ -455,7 +455,7 @@ A declared entity is in the game unless it was removed, whether or not a save ha
 
 The exception is an entity that left in play. A [`remove`](/docs/reference/effects#remove) effect on a declared entity records it in [`state.removed`](/docs/reference/state#removed), and it stays gone. If Ben quit, he doesn't come back. An entity created in play isn't recorded there: once its record goes, nothing would bring it back.
 
-```ts
+```ts given
 import { applyEffects, entitiesOf } from '@ifloom/engine'
 
 entitiesOf(state, game, 'staff')  // ['staff:ana', 'staff:ben']: Ben is there, record or not
@@ -486,7 +486,7 @@ function entitiesOf(state: GameState, game: Game, kind: string): EntityRef[]
 
 Every entity of a kind in the game, as references: the declared ones in the order your content lists them, leaving out any removed, then the ones created in play, in the order they came. It's `[]` for a kind with none, or a kind the game has never heard of.
 
-```ts
+```ts given
 import { entitiesOf } from '@ifloom/engine'
 
 entitiesOf(state, game, 'staff')   // ['staff:ana', 'staff:#1']
@@ -517,7 +517,7 @@ function entityOf(state: GameState, game: Game, ref: EntityRef): EntityState | u
 
 What play has changed about the entity a reference names: its record in the save, or `{}` for a declared entity nothing has changed yet. It's `undefined` if the entity isn't in the game (removed, never created, or not declared), or if `ref` isn't `kind:id` at all, `'$'` included. Use it to ask whether an entity is there, and with [`writeEntity`](#writeentity) to change its record. To read a value, use `statValue`, `entityKv` or `entityName`, which fall back to your content.
 
-```ts
+```ts given
 import { entityOf } from '@ifloom/engine'
 
 entityOf(state, game, 'staff:ana')    // {} on a new game
@@ -532,7 +532,7 @@ function entityName(state: GameState, game: Game, ref: EntityRef): string
 
 An entity's name as the player reads it: the name it was created with, or its declaration's, with [prose tokens](/docs/reference/prose#tokens) filled for this save. It's the entity's id if it has no name at all.
 
-```ts
+```ts given
 import { entityName } from '@ifloom/engine'
 
 entityName(state, game, 'staff:ana')        // 'Ana'
@@ -555,7 +555,7 @@ function entityKv(state: GameState, game: Game, ref: EntityRef): Record<string, 
 
 An entity's kv store as it reads: the keys of the entity it was made `like`, then its declaration's `kv`, with every key play has set laid over them. It's `{}` for an entity with none.
 
-```ts
+```ts given
 import { entityKv } from '@ifloom/engine'
 
 entityKv(state, game, 'staff:ana')   // { role: 'cook', learning: true }
@@ -600,7 +600,7 @@ function writeEntity(state: GameState, ref: EntityRef, next: EntityState): GameS
 
 Returns the state with the record of the entity `ref` names set to `next`, whole. Whatever `next` leaves out reads from your content again. If there's no such entity, one is added after the rest of its kind. If `ref` isn't `kind:id`, the state comes back unchanged. Use it in a plugin effect or a custom effect that changes an entity in a way the built-in effects can't.
 
-```ts
+```ts given
 import { entityOf, writeEntity } from '@ifloom/engine'
 
 const ana = entityOf(state, game, 'staff:ana')!
@@ -617,7 +617,7 @@ function traitOf<K extends string>(state: GameState, game: Game, ref: EntityRef,
 
 One trait's data on one entity as play reads it, worked out as [Traits](#traits) says: a table row, else the entity's own, over its kind's default. For one [created](/docs/reference/effects#create) in play, it's the trait data the `create` gave, laid over the trait of the entity it was made `like`, or over its kind's default. `undefined` when it doesn't have the trait.
 
-```ts
+```ts given
 import { traitOf } from '@ifloom/engine'
 
 traitOf(state, game, 'clothing:coat', 'laundry/washable')?.temp   // 30
@@ -720,7 +720,7 @@ function bindCurrent<T extends Condition | EffectRef | readonly EffectRef[] | un
 
 Returns a copy of a condition or of effects, with every `of`, `entity`, `at` and `like` that is `'$'` set to `ref` (and a `remove`, `move` or `you` effect's target, and a `move`'s `from` and `to`), at any depth, and every `'$'` in a call's arguments or a `create`'s `with`. A nested `each`'s effects and a nested `count`'s `where` keep their own `'$'`. This is how `each` and `count` run their `where` and `effects` for each entity, and how the view asks a kind's `listed`. A plugin or one of the game's functions can use it to run content written for "this one" on a particular entity:
 
-```ts
+```ts given
 import { holds } from '@ifloom/engine'
 import { bindCurrent } from '@ifloom/engine/plugin'
 
@@ -757,7 +757,7 @@ function heldCount(state: GameState, game: Game, ref: EntityRef, at?: Holder): n
 
 How many of a thing a holder holds, `'you'` if `at` is left out. It's 0 for a thing held elsewhere or not in the game, and for a holder that can't hold.
 
-```ts
+```ts given
 import { heldCount } from '@ifloom/engine'
 
 heldCount(state, game, 'food:apple')                   // 2

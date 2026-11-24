@@ -3,7 +3,8 @@ import { blocksOf, checkBlocks, docBlocks } from '../../lib/check-blocks.ts'
 
 /**
  * Every TypeScript block the latest docs write in the page compiles against the
- * packages as they are, and every block that shows a type's or function's shape
+ * packages as they are (one marked `given` has `game`, `state`, `runner` and
+ * `view` without making them), and every block that shows a type's or function's shape
  * matches the real export, field by field. A block is skipped only when its
  * fence says so (`fragment`). `docs/lib/check-blocks.ts` explains the markers.
  */
@@ -11,7 +12,7 @@ import { blocksOf, checkBlocks, docBlocks } from '../../lib/check-blocks.ts'
 /** A page of blocks that are each wrong in one way, checked with the docs so the checker is seen to catch them. */
 const WRONG = blocksOf(
   [
-    '```ts',
+    '```ts given',
     "import { createRunner } from '@ifloom/engine'",
     'createRunner(game)',
     '```',
@@ -39,8 +40,11 @@ const WRONG = blocksOf(
     '```ts fragment',
     '{ stat: 1 }',
     '```',
-    '```ts continues',
+    '```ts continues given',
     'runner.nothing()',
+    '```',
+    '```ts',
+    'runner.view()',
     '```',
   ].join('\n'),
   'wrong.md',
@@ -77,5 +81,7 @@ describe('the docs code blocks', () => {
     // The fragment is skipped, and the block that continues it goes on from the first block.
     expect(lines(27)).toEqual([])
     expect(lines(30).join()).toMatch(/Property 'nothing' does not exist/)
+    // Without `given`, the runner is a name like any other: the block makes it or imports it.
+    expect(lines(33).join()).toMatch(/Cannot find name 'runner'/)
   })
 })

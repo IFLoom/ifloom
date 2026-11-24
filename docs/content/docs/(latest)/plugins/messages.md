@@ -327,7 +327,7 @@ const { game } = loadGame([town], {
 
 A new game starts in the flat on Monday morning. Played through:
 
-```ts
+```ts given
 import { apply, startingState, view, whyNot, type GameState } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'

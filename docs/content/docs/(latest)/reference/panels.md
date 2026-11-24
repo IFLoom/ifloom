@@ -68,7 +68,7 @@ The panel that's open: its name and what it was opened with. `with` is `{}` when
 
 A plugin that has a panel of its own puts what that panel shows in its view, already filtered by what the panel was opened with, as its view's `panel`, and `null` while that panel isn't open. So a UI draws an open panel from one place and filters nothing itself. The [jobs](/docs/plugins/jobs#jobsview) plugin's `panel` is the jobs on the open board, only those its `with.job` lists, and the [shop](/docs/plugins/shop#shopview)'s is the vendor whose counter is open.
 
-```ts
+```ts given
 const board = view.plugins.jobs?.panel // null, or the jobs the board was opened with
 ```
 

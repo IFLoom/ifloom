@@ -81,7 +81,7 @@ A UI reads every setting, play and ui alike, from [`view.settings`](/docs/refere
 
 Change either kind with [`runner.setSetting`](/docs/reference/runner#setsetting). It checks the value against the declaration, and refuses an unknown id or a value the setting can't take.
 
-```ts
+```ts given
 runner.setSetting('difficulty', 'hard') // a play setting: sent as the setting command
 runner.setSetting('textSize', 'large')  // a ui setting: written to the profile
 ```

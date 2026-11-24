@@ -388,7 +388,7 @@ function holds(state: GameState, game: Game, condition: Condition | undefined): 
 
 Evaluates a condition. `undefined` is true, so a `when` you leave out always applies.
 
-```ts
+```ts given
 import { holds } from '@ifloom/engine'
 import { places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
@@ -425,7 +425,7 @@ export const dishes = definePlugin<{ dirty: number }>({
 })
 ```
 
-```ts
+```ts given
 import { inRange } from '@ifloom/engine'
 
 inRange(state, game, 4, { gte: 3 })   // true
@@ -446,7 +446,7 @@ function explain(state: GameState, game: Game, condition: Condition | undefined)
 
 Walks the whole condition against the state. Every part of an `all`, `any` or `not` is marked as holding or not, and every leaf says what it read and what it wanted. The top-level `holds` always agrees with [`holds`](#holds).
 
-```ts
+```ts given
 import { explain } from '@ifloom/engine'
 import { places } from '@ifloom/plugin-places'
 

@@ -21,7 +21,7 @@ const stats: Content = {
 
 Then each command leaves what it moved in the view:
 
-```ts
+```ts given
 runner.apply({ type: 'choose', id: 'sell' })
 runner.view().changes
 // [{ stat: 'coins', from: 10, to: 40, by: 30, label: 'Coins', text: '+30 coins' },

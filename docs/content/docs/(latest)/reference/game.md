@@ -16,6 +16,8 @@ The core has no places and no characters. Locations, exits, walking and where th
 
 ## Game
 
+All fields: [`Game` in the API](/docs/api/engine#game).
+
 ```ts shape
 type Game = {
   // From the base
@@ -175,7 +177,7 @@ Every lookup is named the same way. One definition by id is `xOf(game, id)`: `sc
 
 ### sceneOf
 
-```ts
+```ts given
 import { sceneOf } from '@ifloom/engine'
 
 sceneOf(game, 'ava.hi')?.title // 'Ava'

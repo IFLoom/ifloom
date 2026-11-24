@@ -118,7 +118,7 @@ Add `hide: true` to leave the cheat off the panel instead of greyed out. A gate 
 
 The player uses a cheat with the `cheats/use` command. Its button in the [view](#the-view) sends it, and `cheats.use(id)` writes it:
 
-```ts
+```ts given
 import { cheats } from '@ifloom/plugin-cheats'
 
 runner.apply(cheats.use('coins'))

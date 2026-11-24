@@ -84,7 +84,7 @@ function amountOf(state: GameState, game: Game, amount: Amount): number
 
 An amount worked out in this state, as the engine reads one. Use it in a plugin's code for a field of its own that takes an amount, and hand the field to the [content checker](/docs/reference/checks) as `{ amount }` in its [references](/docs/reference/plugins#references).
 
-```ts
+```ts given
 import { amountOf } from '@ifloom/engine'
 
 amountOf(state, game, { stat: 'rent' })               // 10

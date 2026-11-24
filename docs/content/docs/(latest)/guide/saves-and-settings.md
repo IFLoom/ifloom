@@ -20,7 +20,7 @@ A save is the whole [game state](/docs/reference/state), written to a slot with 
 
 [`browserRunner`](/docs/browser#browserrunner) uses `localStorage` for you. To choose, pass the store to the runner:
 
-```ts
+```ts given
 import { indexedDbDriver } from '@ifloom/browser'
 import { createRunner, profile, saves, startingState } from '@ifloom/engine'
 
@@ -39,7 +39,7 @@ The [profile](/docs/reference/profile) keeps what outlives a single save, such a
 
 ## Save and load
 
-```ts
+```ts given
 import { showMessage } from './messages.ts' // your own
 
 const saved = await runner.save('quick')
@@ -55,7 +55,7 @@ Both are async and answer with a [`Result`](/docs/reference/runner#result) rathe
 
 A game can refuse saving for a while, such as until the player has typed a name, with [`saveable`](/docs/reference/game#saveable). `runner.save` then fails with the game's reason, and autosave waits. [`view.saving`](/docs/reference/view#saving) says so before the player presses anything, so grey the button out with it:
 
-```ts
+```ts given
 import { saveButton } from './menu.ts' // your own save button
 
 const { allowed, reason } = runner.view().saving
@@ -67,7 +67,7 @@ saveButton.title = reason ?? ''
 
 [`runner.saves`](/docs/reference/runner#the-runners-members) is the store the runner was made with. Its `list()` gives every save, newest first, with the details a load screen shows. A save that can't be read is still listed, as `{ slot, broken }`, so the player can delete it.
 
-```ts
+```ts given
 import { nextSlot } from '@ifloom/browser'
 
 const listing = await runner.saves!.list()
@@ -115,7 +115,7 @@ A setting is one of two sorts:
 
 Read every setting's value now with [`runner.snapshot().settings`](/docs/reference/runner#settings), and change one with [`runner.setSetting`](/docs/reference/runner#setsetting):
 
-```ts
+```ts given
 import { showMessage } from './messages.ts' // your own
 
 // Copy the text size onto the page now, and whenever it changes.

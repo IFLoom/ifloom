@@ -31,7 +31,7 @@ const town: Content = {
 
 The UI reads what to draw from [`view.inputs`](/docs/reference/view#inputs), and sends what the player entered:
 
-```ts
+```ts given
 import { apply, view } from '@ifloom/engine'
 
 view(state, game).inputs.find((input) => input.id === 'alarm')
@@ -93,7 +93,7 @@ An `input` command whose value can't be entered is refused with one line, as the
 
 Each line is the engine's English from the [strings table](/docs/reference/strings#input) (`noSuchInput`, `notNow`, `enterSomething`, `tooLong`, `enterNumber`, `between`, `atLeast`, `atMost`, `notAnOption`), and a game can reword it.
 
-```ts
+```ts given
 import { whyNot } from '@ifloom/engine'
 
 whyNot(state, game, { type: 'input', id: 'alarm', to: 11 })  // 'Between 5 and 10.'

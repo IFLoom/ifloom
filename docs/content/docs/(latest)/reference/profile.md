@@ -4,7 +4,7 @@ description: "The player's profile: settings, a finished flag and other records 
 ---
 The profile holds what should outlive a save: the player's settings, whether they've finished the game, and whatever plugins keep across games, such as achievements. A new game, or a different save, still sees it.
 
-```ts
+```ts given
 import { localStorageDriver } from '@ifloom/browser'
 import { profile, type Profile } from '@ifloom/engine'
 

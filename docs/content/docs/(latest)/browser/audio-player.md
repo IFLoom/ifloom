@@ -4,7 +4,7 @@ description: Play a game's sound in the browser with @ifloom/audio. startAudio f
 ---
 The engine works out what should be playing, in [`view.audio`](/docs/reference/audio#audioview), but plays nothing itself. `@ifloom/audio` does the playing in the browser. It follows a runner, and it doesn't need React or any other framework.
 
-```ts
+```ts given
 import { startAudio } from '@ifloom/audio'
 
 const player = startAudio(runner)
@@ -131,7 +131,7 @@ type AudioPlayer = (() => void) & {
 
 `play` is for sounds the view doesn't ask for, such as the React UI's button that plays a spoken line again. Its `src` is a path from the page, as [`audioSrc`](/docs/reference/audio#audiosrc) returns:
 
-```ts
+```ts given
 import { startAudio } from '@ifloom/audio'
 import { audioSrc } from '@ifloom/engine'
 
@@ -143,7 +143,7 @@ player.play(audioSrc('voice/ava-hello.ogg'), 'voice')
 
 The React UI puts a button on each spoken line that has a voice. With the other [templates](/docs/guide/frameworks), keep the player `startAudio` returned and do the same. The `vue` and `svelte` templates' `src/runner.ts` exports it as `player`:
 
-```ts tab="Plain JS" tab-group="framework"
+```ts given tab="Plain JS" tab-group="framework"
 // src/main.ts, in the vanilla template: keep the player
 import { startAudio } from '@ifloom/audio'
 import { audioSrc } from '@ifloom/engine'
@@ -277,7 +277,7 @@ type AudioLike = {
 
 The parts of an `HTMLAudioElement` the player uses. A fake for tests needs only these, and calls `onended` when its file would have finished:
 
-```ts
+```ts given
 import { startAudio, type AudioLike } from '@ifloom/audio'
 
 const made: AudioLike[] = []

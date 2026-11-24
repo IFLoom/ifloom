@@ -33,7 +33,7 @@ A runner with what most games in a browser want. It's the engine's [`createRunne
 
 Pass `start` to begin from another state, and any [`RunnerOptions`](/docs/reference/runner#runneroptions) to change the rest. They're merged over the defaults, one option at a time. [`mountGame`](/docs/react#mountgame) uses it, and so do the `vanilla`, `vue`, `svelte` and `next` templates:
 
-```ts
+```ts given
 import { browserRunner } from '@ifloom/browser'
 import { draw } from './draw.ts' // your own drawing
 
@@ -87,7 +87,7 @@ function indexedDbDriver(options?: {
 
 Saves in IndexedDB, which has far more room. It opens one database, `database` (default `'ifloom'`), creating it if needed. That database holds one object store of strings by key, `store` (default `'saves'`). `indexedDB` defaults to `globalThis.indexedDB`. Pass another for tests, such as `fake-indexeddb`.
 
-```ts
+```ts given
 import { indexedDbDriver } from '@ifloom/browser'
 import { saves } from '@ifloom/engine'
 
@@ -114,7 +114,7 @@ function startClock(runner: Runner, options?: ClockOptions): () => void
 
 The engine keeps no clock, so its [timers](/docs/reference/timers) and a [minigame](/docs/reference/minigames)'s timers need something to send a [`tick`](/docs/reference/commands#tick). While anything counts down (a timer in [`view.timers`](/docs/reference/view#timers), or the minigame's timer) and the page is visible, `startClock` sends one about every `every` milliseconds (100 if left out) with the real time that passed since the last.
 
-```ts
+```ts given
 import { browserRunner, startClock } from '@ifloom/browser'
 
 const runner = await browserRunner(game)
@@ -151,7 +151,7 @@ A key the player types into a field, a key held with Ctrl, Alt, Meta or Shift, a
 
 Here a game opens its own menu with Escape and saves with F5:
 
-```ts tab="Plain JS" tab-group="framework"
+```ts given tab="Plain JS" tab-group="framework"
 // src/main.ts
 import { startKeys } from '@ifloom/browser'
 
@@ -241,7 +241,7 @@ function minigameInput(minigame: MinigameView, key: string): string | undefined
 
 The input a key presses, by `KeyboardEvent.key`, whether or not it does anything now. It's the minigame's own [`keys`](/docs/reference/minigames#minigamedef) if it gives the input any. Otherwise it's the arrow keys and space for inputs named `up`, `down`, `left`, `right` and `space`, and failing that the input's own name when it's one letter. One-letter keys match either case.
 
-```ts
+```ts given
 import { minigameInput } from '@ifloom/browser'
 
 minigameInput(runner.view().minigame!, 'ArrowLeft') // 'left'
@@ -263,7 +263,7 @@ function nextSlot(listing: readonly SaveListing[]): string
 
 The slot for a new save: one more than the highest numbered slot in the listing from [`saves.list()`](/docs/reference/saves#saves), as a string, so `'1'` for the first save. Slots with other names, such as `'auto'` and `'quick'`, are passed over. A save that can't be read still holds its number, so a new save never writes over it.
 
-```ts
+```ts given
 import { nextSlot } from '@ifloom/browser'
 
 const saved = await runner.save(nextSlot(await runner.saves!.list()), 'Before the café')

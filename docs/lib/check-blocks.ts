@@ -7,9 +7,11 @@
  * its fence's meta:
  *
  *   ```ts            compiled. The block is a module of its own, so it imports
- *                    what it uses, as a reader copying it would need. The four
- *                    names every page means the same thing by are in scope
- *                    without an import: see PRELUDE.
+ *                    what it uses, as a reader copying it would need. With
+ *                    `given` (```` ```ts given ````), the four names every page
+ *                    means the same thing by are in scope without an import:
+ *                    `game`, `state`, `runner` and `view` (see GIVEN). Without
+ *                    it, a block that uses one must make it or import it.
  *   ```ts shape      a type's or function's shape, shown for reading:
  *                    `type X = { … }`, `interface X { … }`, `function f(…): R`,
  *                    with `import` lines saying where they come from if it
@@ -58,6 +60,8 @@ export type Block = {
   marker: Marker
   /** Compiled after the blocks before it on the page that it continues. */
   continues: boolean
+  /** `game`, `state`, `runner` and `view` are in scope without an import: see `GIVEN`. */
+  given: boolean
   meta: string
   code: string
 }
@@ -85,6 +89,7 @@ export function blocksOf(source: string, page: string): Block[] {
         lang: LANGS[lang],
         marker: words.includes('shape') ? 'shape' : words.includes('fragment') ? 'fragment' : null,
         continues: words.includes('continues'),
+        given: words.includes('given'),
         meta,
         code: lines
           .slice(at + 1, end)
@@ -119,22 +124,41 @@ export function docBlocks(): Block[] {
 }
 
 /**
- * The names a compiled block may use without importing them, each what every
- * page means by it: the loaded game, a state of it, the runner and its view.
+ * The names a compiled block marked `given` may use without importing them,
+ * each what every page means by it: the loaded game, a state of it, the runner
+ * and its view. Put at the top of the block's module, under names of its own,
+ * so the block's own imports of the types don't clash.
  */
-export const PRELUDE = `import type { Game, GameState, Runner, View } from '@ifloom/engine'
-declare global {
-  /** The game, as \`loadGame\` or a game module's \`build()\` gives it. */
-  const game: Game
-  /** A state of the game. */
-  const state: GameState
-  /** The game's runner. */
-  const runner: Runner
-  /** A view of the game. */
-  const view: View
+export const GIVEN: Record<string, string> = {
+  game: "/** The game, as `loadGame` or a game module's `build()` gives it. */\ndeclare const game: import('@ifloom/engine').Game",
+  state: "/** A state of the game. */\ndeclare const state: import('@ifloom/engine').GameState",
+  runner: "/** The game's runner. */\ndeclare const runner: import('@ifloom/engine').Runner",
+  view: "/** A view of the game. */\ndeclare const view: import('@ifloom/engine').View",
 }
-export {}
-`
+
+/** The `GIVEN` names a module doesn't make or import itself, declared, to go at its top. */
+function givenFor(text: string, lang: 'ts' | 'tsx'): string {
+  const source = ts.createSourceFile(`given.${lang}`, text, ts.ScriptTarget.Latest, false, lang === 'tsx' ? ts.ScriptKind.TSX : ts.ScriptKind.TS)
+  const own = new Set<string>()
+  for (const statement of source.statements) {
+    const names = (name: ts.BindingName): string[] =>
+      ts.isIdentifier(name) ? [name.text] : name.elements.flatMap((element) => (ts.isOmittedExpression(element) ? [] : names(element.name)))
+    if (ts.isVariableStatement(statement))
+      for (const declaration of statement.declarationList.declarations) for (const name of names(declaration.name)) own.add(name)
+    if ((ts.isFunctionDeclaration(statement) || ts.isClassDeclaration(statement)) && statement.name) own.add(statement.name.text)
+    if (ts.isImportDeclaration(statement)) {
+      const clause = statement.importClause
+      if (clause?.name) own.add(clause.name.text)
+      const bindings = clause?.namedBindings
+      if (bindings && ts.isNamedImports(bindings)) for (const element of bindings.elements) own.add(element.name.text)
+      if (bindings && ts.isNamespaceImport(bindings)) own.add(bindings.name.text)
+    }
+  }
+  return Object.entries(GIVEN)
+    .filter(([name]) => !own.has(name))
+    .map(([, line]) => line + '\n')
+    .join('')
+}
 
 /** The entries a shape block's names are looked up in, in order. */
 export const ENTRIES = [
@@ -385,11 +409,15 @@ export function checkBlocks(blocks: Block[] = docBlocks()): Problem[] {
   const orphans: Block[] = []
   const units = unitsOf(blocks, orphans)
   const files = new Map<string, string>()
-  const prelude = join(HOME, 'prelude.d.ts')
   const probe = join(HOME, 'entries.ts')
-  files.set(prelude, PRELUDE)
   files.set(probe, [...ENTRIES, 'react'].map((entry, index) => `import * as e${index} from '${entry}'`).join('\n') + '\nexport {}\n')
   for (const unit of units) {
+    // A unit any of whose blocks is `given` has the four names, at its top, before the first block's line.
+    if (unit.blocks.some((block) => block.given)) {
+      const header = givenFor(unit.text, unit.file.endsWith('x') ? 'tsx' : 'ts')
+      unit.text = header + unit.text
+      for (const offset of unit.offsets) offset.start += header.length
+    }
     files.set(unit.file, unit.text)
     for (const match of unit.text.matchAll(/^\s*import\s+(type\s+)?([^'"]*?)\s*from\s*['"](\.{1,2}\/[^'"]+)['"]/gm)) {
       const target = resolve(dirname(unit.file), match[3])
@@ -408,7 +436,7 @@ export function checkBlocks(blocks: Block[] = docBlocks()): Problem[] {
     const text = files.get(path)
     return text !== undefined ? ts.createSourceFile(path, text, language, true) : disk.getSourceFile(path, language, onError, create)
   }
-  const roots = [prelude, probe, ...units.map((unit) => unit.file)]
+  const roots = [probe, ...units.map((unit) => unit.file)]
   const first = ts.createProgram({ rootNames: roots, options, host })
   const names = exportsOf(first, probe)
   const globals = new Set(
@@ -496,7 +524,7 @@ export function checkBlocks(blocks: Block[] = docBlocks()): Problem[] {
     const source = program.getSourceFile(unit.file)!
     for (const diagnostic of diagnosticsOf(source)) {
       const start = diagnostic.start ?? 0
-      const at = unit.offsets.findLast((offset) => offset.start <= start)!
+      const at = unit.offsets.findLast((offset) => offset.start <= start) ?? unit.offsets[0]
       const { line } = source.getLineAndCharacterOfPosition(start)
       const top = source.getLineAndCharacterOfPosition(at.start).line
       problems.push({

@@ -233,7 +233,7 @@ body: [
 
 Tell [`checkUiHints`](#checkuihints) about it with `allow`, so it isn't reported as a hint the React UI doesn't read. A plugin UI that reads a hint of its own [declares it](#uihint) instead:
 
-```ts
+```ts given
 import { checkUiHints } from '@ifloom/react'
 import { expect } from 'vitest'
 
@@ -461,7 +461,7 @@ Each hint on this page is declared once inside the React UI as a `UiHint`: its n
 
 A plugin's React UI declares the hints its components read the same way, in its [`PluginUi`](/docs/react/kit#pluginui)'s `hints`. Give `checkUiHints` the same `plugins` list you give `mountGame` and it checks them too:
 
-```ts
+```ts given
 import { checkUiHints } from '@ifloom/react'
 import { shopUi } from '@ifloom/plugin-shop/react'
 import { expect } from 'vitest'

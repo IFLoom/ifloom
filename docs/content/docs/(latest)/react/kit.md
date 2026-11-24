@@ -31,9 +31,10 @@ A plugin UI is a plain object, so to leave out one thing it brings, spread it wi
 import { achievementsUi } from '@ifloom/plugin-achievements/react'
 
 import { mountGame } from '@ifloom/react'
+import module from './game.ts'
 
 // The achievements in a dialog even with pages on: no achievements page.
-mountGame(game, { pages: true, plugins: [{ ...achievementsUi, pages: undefined }] })
+mountGame(module.build(), { pages: true, plugins: [{ ...achievementsUi, pages: undefined }] })
 ```
 
 ## Where the layout puts them
@@ -97,6 +98,8 @@ function usePluginUis(): readonly PluginUi[]
 The plugin UIs the game in context has: the provider's `plugins` whose plugin is in the game, each id once, in their order. It's also `useGame().plugins`.
 
 ## PluginUi
+
+All fields: [`PluginUi` in the API](/docs/api/react-kit#pluginui).
 
 ```ts shape
 type PluginUi = {

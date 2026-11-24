@@ -62,7 +62,7 @@ Use `view` to draw a game. Reach for `screen` when you need something the view l
 - **What each choice would apply.** A UI that previews a choice's outcome, or a tool that maps where choices lead, reads `choices[i].effects`.
 - **The picks and tracks.** A plugin or a tool that wants to know which pool files a state shows, or which track each channel resolves to, reads `picks` and `audio.tracks`.
 
-```ts
+```ts given
 import { screen } from '@ifloom/engine'
 
 const shown = screen(state, game)
@@ -82,7 +82,7 @@ type ViewOptions = { profile?: Readonly<Record<string, unknown>> }
 
 What a view or a screen is drawn with besides the state. `profile` is what the player's [profile](/docs/reference/profile) holds, by namespace. Each plugin's view is handed only its own namespace, as [`context.profile`](/docs/reference/plugins#plugincontext). A runner with a profile passes it for you.
 
-```ts
+```ts given
 import { view } from '@ifloom/engine'
 
 // What a runner does: the plugins' views see what's stored under their ids.
@@ -146,6 +146,8 @@ type ScreenScene = {
 `view` drops `effects` from each choice, `tracks` from the audio and `picks` altogether. Everything else it takes as it is.
 
 ## View
+
+All fields: [`View` in the API](/docs/api/engine#view).
 
 ```ts shape
 type View = {
@@ -291,7 +293,7 @@ What the player carries is in [`held`](#held). The [inventory plugin](/docs/plug
 |---|---|---|
 | `entities` | [`EntitiesView`](#entitiesview-and-entityview)`[]` | Every [listed](/docs/reference/entities#listing) [kind](/docs/reference/entities), in the order the kinds are declared, each with its `id` and the entities whose `listed` and `visible` hold, declared ones first, and the stats the player can see on each. A listed kind with none to show is there, with no entries. A kind whose `listed` is `false` isn't here, and neither are a plugin's kinds unless the plugin lists them. |
 
-```ts
+```ts given
 import { view } from '@ifloom/engine'
 
 const staff = view(state, game).entities.find((kind) => kind.id === 'staff')!
@@ -306,7 +308,7 @@ staff.entries[0].stats.map((stat) => stat.text) // ['5', '60', '£12']
 |---|---|---|
 | `held` | [`HeldView[]`](#heldview) | What you [hold](/docs/reference/entities#holding-things): what the [protagonist](/docs/reference/entities#protagonists-you-and-player) being played holds, then what the player holds. With nobody played, just the player's. Things held by nobody else are never here, so it gives nothing away. |
 
-```ts
+```ts given
 import { view } from '@ifloom/engine'
 
 view(state, game).held.map((thing) => `${thing.name} ×${thing.count}`)   // ['Apple ×2', 'A red scarf ×1']
@@ -363,7 +365,7 @@ While it runs, send `{ type: 'tick', ms }` about every 100 ms when `timeLeft` is
 
 Each background channel has already been chosen by priority: the open scene, then an effect, then a plugin such as the place, then the game's default. Each cue has a key that stays the same across view calls and reloads, so a player plays it once:
 
-```ts
+```ts given
 const { channels, cues, muteSetting } = runner.view().audio
 channels.ambience.src      // 'audio/cafe-murmur.ogg' at the café
 channels.music.volumeSetting  // 'musicVolume': read its value from the profile
@@ -562,7 +564,7 @@ function inlineChoices(beats: readonly SceneBeat[]): RenderedChoice[]
 
 The choices or buttons a body's beats draw inline, in the order they come. With `view.scene.choices` (or `view.actions` in a room) it's everything the player can press on the screen, which a test, a bot or a text UI may want in one list.
 
-```ts
+```ts given
 import { inlineChoices, view } from '@ifloom/engine'
 
 const shown = view(state, game)
@@ -584,7 +586,7 @@ Turns an [action](/docs/reference/actions#actiondef) into a button, exactly as t
 
 `owner` is the id of the plugin whose action it is. A button for an action with a cost, effects or `once` sends `{ type: 'action', id }`, and with an owner that id is `'<owner>/<id>'`, so the plugin's [`action`](/docs/reference/plugins#actions) finds it. Leave it out for one of the game's own actions.
 
-```ts
+```ts given
 import { renderAction } from '@ifloom/engine/plugin'
 import { places } from '@ifloom/plugin-places'
 
@@ -654,7 +656,7 @@ One stat as the UI shows it. `min` is the stat's declared `min`, or 0, so a UI c
 | `next` | The value the next level starts at, or `null` at the top level. |
 | `progress` | How far the value is from this level's start to `next`, from 0 to 1. It's 1 at the top level. Level 0 starts at the stat's `min`. |
 
-```ts
+```ts given
 import { view } from '@ifloom/engine'
 
 // levels: { at: [10, 30, 60] }, cooking at 20
@@ -705,7 +707,7 @@ function priceView(game: Game, stats: Readonly<Record<string, number>>, notes?: 
 
 A price as the view shows one, for a plugin's view that has a price of its own, such as what a [job](/docs/plugins/jobs) pays a shift or a [vendor](/docs/plugins/shop)'s full price before today's discount. The stats above 0 are worded as each stat's value is, in the order given, then come the `notes`, and `text` joins them. It's `null` when there's nothing to show.
 
-```ts
+```ts given
 import { priceView } from '@ifloom/engine/plugin'
 
 priceView(game, { coins: 4 })                     // { stats: [{ id: 'coins', amount: 4, text: '4 coins' }], text: '4 coins' }

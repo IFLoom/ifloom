@@ -45,7 +45,7 @@ const town: Content = {
 
 `welcome` fires after the first command that leaves the player on the high street, and never again. `rent` fires at most once a turn. A turn is a day in the showcase, so it fires once each Sunday. Its fixed notice id means the next Sunday's notice replaces the last one instead of adding another.
 
-```ts
+```ts given
 state.fired  // { welcome: 1, rent: 6 }: the turn each one last fired in
 ```
 

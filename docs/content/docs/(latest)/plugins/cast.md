@@ -543,7 +543,7 @@ const contacts = definePlugin<null>({
 
 A scene whose [`speaker`](/docs/reference/scenes#speakers) is a character's id is drawn as them. A character is an entity, so the engine reads their `name`, their `image` and their entity's `ui` hints itself, and puts them at `view.scene.speaker`. In the worked example, once Ava's talk scene is open:
 
-```ts
+```ts given
 import { view } from '@ifloom/engine'
 
 view(state, game).scene.speaker   // { id: 'ava', ref: 'character:ava', name: 'Ava', image: 'art/character/ava.svg', ui: { hue: 20 } }

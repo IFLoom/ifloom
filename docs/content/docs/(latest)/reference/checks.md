@@ -63,7 +63,7 @@ What `checkGame` finds.
 
 A probe is a state to draw every scene in, with a name for the problems it finds.
 
-```ts
+```ts given
 import { checkGame, startingState } from '@ifloom/engine'
 
 const later = { ...startingState(game), turn: 5 }

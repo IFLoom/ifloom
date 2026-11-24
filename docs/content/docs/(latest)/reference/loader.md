@@ -35,6 +35,8 @@ Because content has no schema, it isn't upgraded when you update the engine. In 
 
 ## Content
 
+All fields: [`Content` in the API](/docs/api/engine#content).
+
 ```ts shape
 type Content = {
   name?: string
@@ -244,7 +246,7 @@ It returns the pack at `SCHEMA`, with `plugins` recording each plugin's version,
 
 A pack with nothing to do comes back unchanged, as the same object. The pack you pass in is never changed, so keep the result.
 
-```ts
+```ts given
 import { readFileSync } from 'node:fs'
 import { upgradePack } from '@ifloom/engine'
 

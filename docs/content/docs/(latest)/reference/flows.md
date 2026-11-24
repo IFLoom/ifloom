@@ -38,7 +38,7 @@ const counter: DataScene = {
 
 After the player picks the tea and asks about the beans, the view reads:
 
-```ts
+```ts given
 import { view } from '@ifloom/engine'
 
 view(state, game).scene.beats

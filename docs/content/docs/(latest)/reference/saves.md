@@ -9,7 +9,7 @@ Saving has two parts:
 - **The driver** decides where saves are kept: `localStorage`, IndexedDB, memory, or somewhere of your own.
 - **The save store**, [`saves(game, driver)`](#saves), handles slots, the details for a load screen, export and import, and carrying old saves forward.
 
-```ts
+```ts given
 import { indexedDbDriver } from '@ifloom/browser'
 import {
   saves, memoryDriver, loadState, SAVE_VERSION,
@@ -73,7 +73,7 @@ function memoryDriver(): SaveDriver
 
 Saves in memory, gone when the page is. Each call is a new, empty store.
 
-```ts
+```ts given
 import { memoryDriver, saves } from '@ifloom/engine'
 
 const store = saves(game, memoryDriver())
@@ -256,7 +256,7 @@ function loadState(raw: unknown, game: Game): Result<GameState>
 
 Makes a state from anywhere ready to play in this game: a save's state, the start of a [command log](/docs/reference/runner#commandlog), or a state you parsed yourself. It returns a [`Result`](/docs/reference/runner#result) with the state, or the reason it can't, as one of the [refusals](#saves) above.
 
-```ts
+```ts given
 import { readFileSync } from 'node:fs'
 import { createRunner, loadState } from '@ifloom/engine'
 

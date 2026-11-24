@@ -190,7 +190,7 @@ The refusal for a cost of `amount` of the stat `id` that the player can't cover.
 
 The `notEnough` line is the game's wording, if it rewords it. A stat's `lacking` always wins over `notEnough`. [An action's refusal](/docs/reference/actions#why-an-action-is-refused) uses this unless the action's `cost.reasons` has a line for that stat.
 
-```ts
+```ts given
 import { lackingLine } from '@ifloom/engine'
 
 lackingLine(game, 'energy', 10) // 'Need 10 energy.'
@@ -408,7 +408,7 @@ function statValue(state: GameState, game: Game, id: string, of?: string): numbe
 
 A stat's value as conditions and the view read it: the player's, or with `of`, an entity's (`'staff:ana'`). A [derived stat](#derived-stats) is worked out from its formula and held to its range. A kept stat the save doesn't have yet reads as its `start`. An entity that isn't there reads 0. A player's stat reads with any plugin's [stat modifiers](/docs/reference/plugins#stat-modifiers) applied, so it can differ from `state.stats`. Then the stat's [`round`](#rounding) is applied, and the value is held to its range once more.
 
-```ts
+```ts given
 import { statValue } from '@ifloom/engine'
 
 statValue(state, game, 'service', 'staff:ana')
@@ -427,7 +427,7 @@ function statLevel(
 
 Where a stat with [`levels`](#statlevels) stands: its level, the value the next level starts at (`null` at the top) and how far it is from this level's start to the next, from 0 to 1 (1 at the top). Level 0 counts from the stat's `min`. It's `undefined` for a stat with no levels.
 
-```ts
+```ts given
 import { statLevel } from '@ifloom/engine'
 
 // levels: { at: [10, 30, 60] }, cooking at 20

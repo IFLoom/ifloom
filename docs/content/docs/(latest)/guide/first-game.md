@@ -283,7 +283,7 @@ New in this step: a starting state, and how the calendar numbers its days.
 
 `startingState` builds a fresh save from the game. It is a plain object you can serialise as it is.
 
-```ts
+```ts given
 import { startingState } from '@ifloom/engine'
 
 let state = startingState(game)
@@ -299,7 +299,7 @@ New in this step: commands sent from code, and the plugins' commands.
 
 Everything the player does is a [command](/docs/reference/commands). `apply` runs one and tells you whether it took:
 
-```ts continues
+```ts given continues
 import { apply } from '@ifloom/engine'
 
 const tried = apply(state, game, { type: 'action', id: 'wait' })
@@ -311,7 +311,7 @@ A refused command leaves the state untouched, so `apply` is how you tell a refus
 
 When you don't need to know, take the next state from what `apply` returns:
 
-```ts continues
+```ts given continues
 import { statValue } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
@@ -331,7 +331,7 @@ statValue(state, game, 'friendship', cast.character('ruth')) // 5
 
 Try the same choice twice in one day and it is refused:
 
-```ts continues
+```ts given continues
 state = apply(state, game, cast.talk('ruth')).state
 apply(state, game, { type: 'choose', id: 'chat' }).reason // 'She has a queue.'
 ```
@@ -342,7 +342,7 @@ New in this step: the plugins' parts of the view.
 
 `view` turns the state into everything a UI needs to draw. You never read the state to decide what's on screen. You read the view.
 
-```ts continues
+```ts given continues
 import { view } from '@ifloom/engine'
 
 const screen = view(state, game)
@@ -362,7 +362,7 @@ screen.statsById.coins.text   // '5c'
 
 Every button in the view carries the `command` it sends. Your UI's whole loop is to render the view, and when a button is pressed, `apply` its command and render again.
 
-```ts continues
+```ts given continues
 import type { Command } from '@ifloom/engine'
 import { render } from './ui.ts' // your UI: React, Svelte, plain DOM, a terminal
 
@@ -380,7 +380,7 @@ New in this step: prices on buttons, and a world that changes as the clock moves
 
 Leave the counter and the room comes back. The places plugin puts its body on screen while no scene is open, with its buttons: the café's coffee, then the game's Wait a while and Go to bed. The coffee button carries its price, written for the player, before anything is spent:
 
-```ts continues
+```ts given continues
 state = apply(state, game, { type: 'choose', id: 'bye' }).state
 const room = view(state, game)
 room.scene.body                // 'Steam on the windows.\n\nRuth is behind the counter, flour to the elbows.'
@@ -394,7 +394,7 @@ The stats in the price are the engine's, and the note is the calendar's, which p
 
 A button sends its action by id. The game's own actions, `wait` and `bed`, keep the ids you gave them. The coffee is the café's, and the places plugin is what offers a room's actions, so its id has the plugin's id in front: `places/coffee`. That's the same rule as a plugin's conditions and commands, which keeps a room's action apart from a game action with the same id. You rarely type it, since the button in `room.actions` carries its command already:
 
-```ts continues
+```ts given continues
 state = apply(state, game, { type: 'action', id: 'places/coffee' }).state // afternoon
 state.stats                                                           // { coins: 2, energy: 70 }
 apply(state, game, { type: 'action', id: 'places/coffee' }).reason   // 'Not enough on you.'
@@ -402,7 +402,7 @@ apply(state, game, { type: 'action', id: 'places/coffee' }).reason   // 'Not eno
 
 Wait another period and it's evening. Ruth has gone for the day and the café has shut.
 
-```ts continues
+```ts given continues
 state = apply(state, game, { type: 'action', id: 'wait' }).state   // evening
 view(state, game).when       // 'Day 2 · Tuesday evening · The corner café'
 view(state, game).plugins.cast!.present // []
@@ -423,7 +423,7 @@ Calling `apply` and `view` by hand is how the engine works, and it's enough for 
 
 Saves need somewhere to live. A driver says where, and the engine has no default, so the game picks one. In a browser, `localStorageDriver()` is the simplest and `indexedDbDriver()` has more room. In a test, use `memoryDriver()`.
 
-```ts
+```ts given
 import { localStorageDriver } from '@ifloom/browser'
 import { createRunner, saves, startingState, type Command } from '@ifloom/engine'
 import { render } from './ui.ts'
@@ -448,7 +448,7 @@ function press(button: { command: Command }) {
 
 Play the first morning again. Going to bed moves the calendar to the next morning and ends the turn. A new turn is a barrier, which means undo stops there: with `stopAtNewTurn`, the player can take back what they did today but not yesterday.
 
-```ts
+```ts given
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 
@@ -464,7 +464,7 @@ Undo can't be used to re-roll anything. Every draw is seeded, so the same comman
 
 Save to a slot of your own, and load it back. Slots are names you pick:
 
-```ts
+```ts given
 import { places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
 

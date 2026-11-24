@@ -339,7 +339,7 @@ Afterwards `{{quiz.right}}` prints the score, since the final state copies it to
 
 Ticks are ordinary commands, so a test can play a minigame with no browser and no waiting. Send the ticks yourself:
 
-```ts
+```ts given
 import { apply, view } from '@ifloom/engine'
 
 // `state` is a game with the player in the park.

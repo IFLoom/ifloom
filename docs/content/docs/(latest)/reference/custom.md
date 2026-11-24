@@ -272,7 +272,7 @@ type ValueRef = { value: string; with?: PluginArgs }
 
 To ask one of these from your own code, such as a tool or a test, go through the functions content goes through. [`holds`](/docs/reference/conditions#holds) asks a condition, [`amountOf`](/docs/reference/amounts#amountof) works out a value, and [`applyEffects`](/docs/reference/effects#applyeffects) runs effects:
 
-```ts
+```ts given
 import { amountOf, holds } from '@ifloom/engine'
 
 holds(state, game, { 'game/marketDay': true })                                  // true on market day
@@ -288,7 +288,7 @@ function buildEffects(game: Game, refs: readonly EffectRef[]): Effect[]
 
 The effects the reducer would run: a call to an effect or a macro that neither the game nor its plugins declare is left out, since it would do nothing, and everything else is kept as written. Nothing is worked out yet, so it needs no state.
 
-```ts
+```ts given
 import { buildEffects } from '@ifloom/engine'
 
 buildEffects(game, [{ 'game/tip': { by: 2 } }, { 'game/typo': true }])

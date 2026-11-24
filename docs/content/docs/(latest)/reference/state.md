@@ -10,6 +10,8 @@ import type { GameState } from '@ifloom/engine'
 
 ## GameState
 
+All fields: [`GameState` in the API](/docs/api/engine#gamestate).
+
 ```ts shape
 type GameState = {
   version: typeof SAVE_VERSION
@@ -296,7 +298,7 @@ export const ending: Content = {
 
 The [runner](/docs/reference/runner#finished) watches `finished`. After each command that takes, if the condition holds and the [profile](/docs/reference/profile) has no `core:finished` yet, it records `{ at }`, the time in milliseconds. A title screen checks it to decide whether to offer New Game+:
 
-```ts
+```ts given
 const done = await runner.profile?.get<{ at: number }>('core:finished')
 if (done) await runner.newGame({ carry: runner.state })
 ```

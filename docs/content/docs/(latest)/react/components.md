@@ -74,7 +74,7 @@ function GameShell(props: GameShellProps): JSX.Element
 
 The whole UI, and the one root every entry draws: `mountGame` draws it too. It's a [`GameProvider`](#gameprovider) with the game's sound, its [text size](#textsize) and, with `pages` on, the [pages](#pages), around the `layout` component, or [`DefaultLayout`](#defaultlayout) if you leave it out. The props, `GameShellProps`, are described on [The React UI](/docs/react#gameshell). It passes [`components`](#components), [`classes`](#classes), `unstyled` and the rest to the provider.
 
-```tsx
+```tsx given
 import { GameShell } from '@ifloom/react'
 import { Layout } from './layout.tsx'
 import { panels } from './panels.tsx'
@@ -454,6 +454,8 @@ How a game makes the UI look its own, below the theme's variables. [Make it your
 
 ### UiOptions
 
+All fields: [`UiOptions` in the API](/docs/api/react#uioptions).
+
 ```ts shape
 type UiOptions = StyleOptions & BehaviourOptions
 ```
@@ -512,8 +514,9 @@ Keyboard shortcuts for the game. Pass `keys: true` for the built-in ones, or an 
 
 ```tsx
 import { mountGame } from '@ifloom/react'
+import module from './game.ts'
 
-mountGame(game, {
+mountGame(module.build(), {
   keys: { map: { w: { type: 'action', id: 'wait' } } },  // 1 to 9, Escape, and W to wait
 })
 ```
@@ -1464,7 +1467,7 @@ Settings and Title screen switch to those [pages](#pages). Settings opened from 
 
 So you choose what the player sees when you make the runner:
 
-```ts
+```ts given
 import { localStorageDriver } from '@ifloom/browser'
 import { createRunner, saves, startingState } from '@ifloom/engine'
 
@@ -1708,6 +1711,7 @@ What `pages` takes on [`mountGame`](/docs/react#mountgame) and [`GameShell`](/do
 
 ```tsx
 import { mountGame, usePage } from '@ifloom/react'
+import module from './game.ts'
 
 function Postcards() {
   const { back } = usePage()
@@ -1719,7 +1723,7 @@ function Postcards() {
   )
 }
 
-mountGame(game, {
+mountGame(module.build(), {
   pages: {
     subtitle: 'A new flat, a new town',
     credits: ['Written by you', { label: 'Made with IFLoom', href: 'https://ifloom.dev/' }],
@@ -1855,8 +1859,9 @@ A notice the player has to confirm before they reach the title screen, from `Pag
 
 ```ts
 import { mountGame } from '@ifloom/react'
+import module from './game.ts'
 
-mountGame(game, {
+mountGame(module.build(), {
   pages: {
     gate: {
       title: 'Before you start',
@@ -2118,7 +2123,7 @@ There are two ways to draw a minigame your own way:
 - **One minigame.** Put a component in `panels` under the minigame's id. [`Scene`](#scene) draws it instead, given the [`MinigameView`](/docs/reference/minigames#minigameview) as `data`, and runs the clock for it. Call `useMinigame()` in it for `send`.
 - **Every minigame.** Replace `MinigameCard` in [`components`](#components).
 
-```tsx
+```tsx given
 import { GameShell, type Components, type PanelComponent } from '@ifloom/react'
 import { CoconutShy } from './coconut-shy.tsx'
 
@@ -2201,13 +2206,14 @@ A name nothing draws shows nothing. The panel stays open in the state until it's
 
 ```tsx
 import { mountGame } from '@ifloom/react'
+import module from './game.ts'
 
 // { panel: 'noticeboard', with: { title: 'The noticeboard' } } opens this.
 function Noticeboard({ data }: { data: unknown }) {
   return <p>Lost: one grey cat, answers to Biscuit.</p>
 }
 
-mountGame(game, { panels: { noticeboard: Noticeboard } })
+mountGame(module.build(), { panels: { noticeboard: Noticeboard } })
 ```
 
 The default layout has it in the overlay. In a layout of your own, put it anywhere inside the `GameProvider`. Replaceable as `PanelHost` in [`components`](#components). Parts: `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close`.
@@ -2262,7 +2268,7 @@ Plays the game's sound with the [audio player](/docs/browser/audio-player) while
 
 [`GameShell`](/docs/react#gameshell) and [`mountGame`](/docs/react#mountgame) start a player themselves, set with their `audio` option, so you need this only under a `GameProvider` of your own. One beside them takes over from theirs, so nothing plays twice. See [Sound](/docs/react#sound).
 
-```tsx
+```tsx given
 import { GameProvider, useAudio } from '@ifloom/react'
 import { MyPage } from './my-page.tsx'
 
@@ -2327,7 +2333,7 @@ const buttonVariants: (options?: { variant?: ...; size?: ... }) => string
 
 A button. `buttonVariants` returns the classes, for something that isn't a `Button` but should look like one.
 
-```tsx
+```tsx given
 import { Button, buttonVariants } from '@ifloom/react/kit'
 
 <>
@@ -2457,7 +2463,7 @@ function ScrollArea(props: ComponentProps<typeof ScrollAreaPrimitive.Root>): JSX
 
 A box that scrolls, with a slim scrollbar. Give it a height.
 
-```tsx
+```tsx given
 import { ScrollArea } from '@ifloom/react/kit'
 
 <ScrollArea className="h-64">{runner.snapshot().backlog.map((entry, index) => <p key={index}>{entry.title}</p>)}</ScrollArea>

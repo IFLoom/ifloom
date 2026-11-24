@@ -76,7 +76,7 @@ sequenceDiagram
 
 Every button in the view carries the command it sends, so most of the time you pass it straight back:
 
-```ts
+```ts given
 for (const choice of runner.view().scene.choices) {
   // choice.label: 'Knock'
   // choice.command: { type: 'choose', id: 'knock' }
@@ -141,7 +141,7 @@ A UI that draws only `text` beats loses every spoken line, so draw `say` beats f
 
 Each plugin declares the type of its part in the engine's [`ViewRegistry`](/docs/reference/plugins#typed-calls-queries-and-views), so once your game imports the plugin, `view.plugins.places` is typed as the places plugin's view, or `undefined` in a game without it. A plugin that declares nothing is `unknown`.
 
-```ts
+```ts given
 const room = runner.view().plugins.places
 for (const exit of room?.exits ?? []) console.log(exit.label, exit.disabled ?? '')
 ```
@@ -150,7 +150,7 @@ for (const exit of room?.exits ?? []) console.log(exit.label, exit.disabled ?? '
 
 With `history` on, the runner keeps the steps behind the player:
 
-```ts
+```ts given
 runner.snapshot().canUndo   // whether there's anything to undo, for greying out the button
 runner.undo()
 runner.redo()

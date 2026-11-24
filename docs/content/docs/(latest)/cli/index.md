@@ -728,7 +728,7 @@ Returns what's wrong with a built folder as a game that opens from disk, or an e
 
 With no `index.html`, the one problem is `no index.html in <dir>`.
 
-```ts
+```ts given
 import { checkBuild } from '@ifloom/cli'
 import { checkGame } from '@ifloom/engine'
 
@@ -805,7 +805,7 @@ function checkFiles(files: readonly FileRef[], dir: string, inlined?: ReadonlySe
 
 Every file in `files` that isn't in `dir`. The files are the ones the [content checker](/docs/reference/checks#fileref) lists in `checkGame(game).files`, each with its path as the page asks for it. Pass the folder the page sits in: `public` before a build, or the built folder after one. Each problem says where the file is named, then `no file` and the path it looked for.
 
-```ts
+```ts given
 import { checkGame } from '@ifloom/engine'
 import { checkFiles } from '@ifloom/cli'
 
@@ -1016,7 +1016,7 @@ A screen as plain text, as the transcript shows it. In order, it writes:
 
 `playtest` writes each new notice under the screen text, as `! <title>: <text>`; `screenText` itself doesn't, since a notice shows on every screen until it's dismissed.
 
-```ts
+```ts given
 import { view } from '@ifloom/engine'
 import { screenText } from '@ifloom/cli'
 

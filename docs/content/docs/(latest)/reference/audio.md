@@ -69,7 +69,7 @@ The knock is a `sound` effect on arriving at the flat, and Ava's line carries it
 
 Then the view says what's due:
 
-```ts
+```ts given
 import { view } from '@ifloom/engine'
 
 view(state, game).audio

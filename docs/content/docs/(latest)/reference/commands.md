@@ -16,7 +16,7 @@ function apply(state: GameState | null, game: Game, command: CommandRef): Applie
 
 Runs a command and says whether it took. On a refusal, `ok` is `false`, `state` is the state you passed in, and `reason` says why. It's the shape of a [`Result`](/docs/reference/runner#result), with the state on both sides. The runner's `apply` gives a plain `Result` with the new state as its `value`.
 
-```ts
+```ts given
 import { apply } from '@ifloom/engine'
 import { places } from '@ifloom/plugin-places'
 
@@ -95,7 +95,7 @@ See [Game state](/docs/reference/state) for the other starting values. The optio
 | `settings` | The player's stored values for the game's `play` [settings](/docs/reference/settings), usually the [profile](/docs/reference/profile)'s `core:settings`. Unknown ids, `ui` settings and values a setting can't take are ignored. | Each setting's default. |
 | `carry` | The state a finished game ended on, for a [New Game+](/docs/reference/state#new-game). What the content's `carryOver` lists is copied from it. | Nothing carried. |
 
-```ts
+```ts given
 import { startingState } from '@ifloom/engine'
 
 // A UI starting a new game: a fresh seed, and the name from the title screen.

@@ -58,7 +58,7 @@ function storylineOpen(state: GameState, id: string): boolean
 
 Whether a storyline is open: `closedUntil === null || state.turn >= closedUntil`, so a storyline closed until turn 5 is open again on turn 5. A storyline the save has no record of is open. Its kv keys are read like any others, with `{ kv: 'met', of: 'storyline:ava' }` in a condition.
 
-```ts
+```ts given
 import { storylineOpen } from '@ifloom/engine'
 
 storylineOpen(state, 'ava') // true on a new game

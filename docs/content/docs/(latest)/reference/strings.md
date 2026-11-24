@@ -20,7 +20,7 @@ Lines your game writes itself aren't in the table, because they're already your 
 
 Say you want the town to sound a little friendlier:
 
-```ts
+```ts given
 import { apply, whyNot, type Content } from '@ifloom/engine'
 import { places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
@@ -241,7 +241,7 @@ Returns the words for a key. It looks in this order and takes the first it finds
 
 Each `{name}` in the line is then replaced from `vars`.
 
-```ts
+```ts given
 import { stringOf } from '@ifloom/engine'
 
 stringOf(game, 'notEnough', { stat: 'coins' })  // 'Not enough coins.'
@@ -264,7 +264,7 @@ function reasonOf(game: Game | undefined, reason: Reason): string
 
 The words of a [`Reason`](/docs/reference/actions#reason), a refusal's: one written in place is returned as it is, and one by key, `{ string: 'shop/closed' }`, is read with `stringOf`. Use it in a plugin or a UI of your own that reads a [`Blocked`](/docs/reference/actions#blocked) entry or a [`Once`](/docs/reference/actions#once) itself; the engine's own refusals and the view already give the words.
 
-```ts
+```ts given
 import { reasonOf } from '@ifloom/engine'
 
 reasonOf(game, 'Too tired.')                // 'Too tired.'
@@ -275,7 +275,7 @@ reasonOf(game, { string: 'places/notHere' })  // 'Not here.', or the game's own 
 
 A [plugin](/docs/reference/plugins) declares its English in `strings`, keyed without its prefix. It says them with `stringOf` and the full `id/name` key:
 
-```ts
+```ts given
 import { stringOf } from '@ifloom/engine'
 import { definePlugin } from '@ifloom/engine/plugin'
 

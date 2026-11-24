@@ -297,7 +297,7 @@ It checks in this order:
 
 A plugin command that sets [`ignoresLocks`](/docs/reference/plugins#commands-outside-the-story) skips the first two, and so does the [`setting`](/docs/reference/commands#setting) command. The engine's own lines come from the [strings table](/docs/reference/strings), so a game can reword them.
 
-```ts
+```ts given
 import { whyNot } from '@ifloom/engine'
 import { places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
@@ -325,7 +325,7 @@ What a command would apply, worked out before it runs, as plain [effects](/docs/
 
 An unknown action or choice gives none.
 
-```ts
+```ts given
 import { effectsOf } from '@ifloom/engine'
 
 // the showcase's office action { id: 'work', label: 'Do a shift', cost: { stats: { energy: 30 } }, effects: [calendar.pass(2), { stat: 'coins', by: 20 }] }

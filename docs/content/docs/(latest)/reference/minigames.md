@@ -66,7 +66,7 @@ export const park: Content = {
 
 The park offers it as a room action whose effects apply [`{ minigame: 'arrows' }`](/docs/reference/effects#minigame). From then on the UI reads `view.minigame` and sends two commands:
 
-```ts
+```ts given
 import { apply, view } from '@ifloom/engine'
 
 let next = apply(state, game, { type: 'action', id: 'places/arrows' }).state

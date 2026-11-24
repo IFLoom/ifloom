@@ -246,6 +246,8 @@ The whole game: a [`GameProvider`](/docs/react/components#gameprovider) for the 
 
 ### GameShellProps
 
+All fields: [`GameShellProps` in the API](/docs/api/react#gameshellprops).
+
 The props of `GameShell`: the runner, what the game adds to the UI, and how it looks and behaves.
 
 ```ts shape
@@ -407,7 +409,7 @@ function useAudio(options?: AudioOptions & { runner?: Runner }): AudioPlayer | n
 
 `GameShell` and `mountGame` play the sound themselves, so you need `useAudio` only for a page built on a [`GameProvider`](/docs/react/components#gameprovider) of your own. It starts when the component mounts and stops when it unmounts. Inside a `GameProvider` it plays that game. Outside one, pass the `runner`. The other options go to [`startAudio`](/docs/browser/audio-player#audiooptions), and are read once, when the player starts.
 
-```tsx
+```tsx given
 import { GameProvider, useAudio } from '@ifloom/react'
 import { MyPage } from './my-page.tsx'
 

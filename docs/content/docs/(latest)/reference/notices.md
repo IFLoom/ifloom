@@ -30,7 +30,7 @@ const town: Content = {
 }
 ```
 
-```ts
+```ts given
 import { apply, view } from '@ifloom/engine'
 
 let next = apply(state, game, { type: 'action', id: 'pay-rent' }).state
@@ -88,7 +88,7 @@ Returns the state with a notice raised. It goes in as the newest, unseen, and st
 - **Without an `id`**, one is made from the turn: `notice.<turn>.<n>`, with the first `n` not already in the list.
 - **Only the newest 50 are kept.** When a 51st is raised, the oldest goes, seen or not.
 
-```ts
+```ts given
 import { notify } from '@ifloom/engine'
 
 const next = notify(state, { title: 'A parcel at the post office', tag: 'post' })

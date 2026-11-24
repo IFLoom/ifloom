@@ -135,7 +135,7 @@ Each field says what it's written on (`on`), that thing's `id` where it has one,
 
 `lines` holds every prose line and every block of words written in place, with where it is, for a UI to read its [UI pieces](/docs/reference/prose#ui-pieces) in. The same hints or line reached twice are listed once.
 
-```ts
+```ts given
 import { uiInContent } from '@ifloom/engine'
 
 const { fields } = uiInContent(game)

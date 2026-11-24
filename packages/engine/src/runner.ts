@@ -1,50 +1,27 @@
-import { holds, type Condition } from './condition.ts'
 import type { Game } from './game.ts'
 import { apply } from './reduce.ts'
 import { loadState, startingState, type StartOptions } from './intake.ts'
-import { pluginContext, pluginView, pluginsOf } from './plugin.ts'
+import { pluginView } from './plugin.ts'
 import type { Profile } from './profile.ts'
-import { settingAffects, settingOf, settingRefusal, settingValue } from './features/settings.ts'
+import { featureContext } from './core.ts'
 import { runnerHooks } from './features/registry.ts'
-import { savingIn } from './features/saving.ts'
 import { fail, ok, type Result } from './result.ts'
 import type { LoadedSave, SaveListing, SaveMeta, Saves } from './save.ts'
 import { stringOf } from './strings.ts'
-import type { SceneBeat } from './sceneBody.ts'
 import type { Command, KvValue, GameState } from './types.ts'
 import { view, type View } from './view.ts'
-import { inlineChoices, pastBeats, type RenderedChoice } from './screen.ts'
+import { inlineChoices, type RenderedChoice } from './screen.ts'
 import { commandUpgrade, commandVersions } from './upgrade.ts'
 import { commandOf, type CommandRef } from './custom.ts'
+import { backlogAfter, backlogLimit, type BacklogEntry, type BacklogOptions } from './runner/backlog.ts'
+import { history as historyOf, type HistoryOptions, type Step } from './runner/history.ts'
+import { profileKeeper } from './runner/profile.ts'
+import { saveKeeper, type AutosaveOptions } from './runner/saves.ts'
+import { settingsKeeper } from './runner/settings.ts'
 
-/**
- * Undo and redo. Off unless the game asks for it; when on, `depth` steps deep,
- * and never back past a barrier.
- */
-export type HistoryOptions = {
-  /** How many steps back undo reaches. 50 if left out. */
-  depth?: number
-  /** No undo past a choice the game marks `irreversible`. On unless set false. */
-  stopAtIrreversible?: boolean
-  /** No undo past the start of a new turn. */
-  stopAtNewTurn?: boolean
-  /** No undo past any state where this holds, tested after each command. */
-  stopWhen?: Condition
-}
-
-/** What was shown, turn by turn, for a "what did she just say" screen. Off unless asked for. */
-export type BacklogOptions = {
-  /** How many entries to keep. 200 if left out. */
-  limit?: number
-}
-
-/** When the runner saves on its own. Off unless the game sets it. */
-export type AutosaveOptions = {
-  /** The slot it writes to. `'auto'` if left out. */
-  slot?: string
-  /** After every command, or only when the scene or the turn changes. Skipped while the game's `saveable` refuses saving. */
-  every: 'command' | 'scene' | 'turn'
-}
+export type { AutosaveOptions } from './runner/saves.ts'
+export type { BacklogEntry, BacklogOptions } from './runner/backlog.ts'
+export type { HistoryOptions } from './runner/history.ts'
 
 export type RunnerOptions = {
   /** Where `save`, `load` and autosave write. Needed for any of them. */
@@ -64,19 +41,6 @@ export type RunnerOptions = {
    * one, nothing is written there, and a `ui` setting can't be changed.
    */
   profile?: Profile
-}
-
-/** One scene as the player saw it. */
-export type BacklogEntry = {
-  /** The turn it was shown in. */
-  turn: number
-  /** Where the game was in time, in plugins' words (`view.when`), or null if none says. */
-  when: string | null
-  sceneId: string
-  title: string
-  beats: SceneBeat[]
-  /** The label of the choice the player made in this scene, once they made one. */
-  chose?: string
 }
 
 /**
@@ -115,8 +79,6 @@ export function replay(game: Game, log: CommandLog): Result<GameState> {
   for (const command of log.commands) state = apply(state, game, upgrade.value(command)).state
   return ok(state)
 }
-
-type Step = { state: GameState; backlog: BacklogEntry[]; commands: Command[] }
 
 /**
  * What a helper started beside the runner reports, by its id, for a UI to
@@ -294,67 +256,26 @@ export interface Runner {
  */
 export function createRunner(game: Game, start: GameState, options: RunnerOptions = {}): Runner {
   const now = options.now ?? Date.now
-  const history: HistoryOptions | null = options.history === true ? {} : options.history ? options.history : null
-  const depth = history?.depth ?? 50
-  const backlogLimit = options.backlog === true ? 200 : options.backlog ? (options.backlog.limit ?? 200) : 0
+  const cx = featureContext()
+  const versions = commandVersions(game.plugins ?? [])
+  const limit = backlogLimit(options.backlog)
+  const steps = historyOf(game, options.history)
 
   let state = start
-  const versions = commandVersions(game.plugins ?? [])
   let log: CommandLog = { game: game.id, start, commands: [], ...versions }
   let backlog: BacklogEntry[] = []
-  let undoStack: Step[] = []
-  let redoStack: Step[] = []
   let playedBefore = 0
   let since = now()
-  let saving: Promise<SaveMeta | null> = Promise.resolve(null)
-  let remembering: Promise<unknown> = Promise.resolve()
-  // Once `finished` is known to be recorded, it isn't looked at again.
-  let finishedRecorded = false
-  const listeners = new Set<(snapshot: RunnerSnapshot) => void>()
-  // The saves as last listed, kept up to date as the runner's `saves` write and remove.
-  let listed: readonly SaveListing[] = []
-  // What the helpers report, by id.
-  let helpers: HelpersIn = {}
   // The choice or button that led to the screen on show, and whether the state came from a command just run.
   let pressed: RenderedChoice | null = null
   let fresh = false
+  // What the helpers report, by id.
+  let helpers: HelpersIn = {}
+  const listeners = new Set<(snapshot: RunnerSnapshot) => void>()
   // The last snapshot built: the same object until a part of it changes.
   let built: RunnerSnapshot | null = null
   // The last view built, and the state it was built for: the same state object gives the same view.
   let cached: { state: GameState; view: View } | null = null
-  // What the plugins' views are shown of the profile, by plugin id: each namespace as last read or
-  // written, frozen. Only plugins with a view, and only with a profile.
-  const viewers = new Map((options.profile ? pluginsOf(game) : []).filter((plugin) => plugin.view).map((plugin) => [plugin.id, plugin]))
-  let shownProfile: Readonly<Record<string, unknown>> = {}
-  // The profile's `core:settings` as last read or written, and `settings()` as last built.
-  let storedSettings: Record<string, unknown> | undefined
-  let settingsHeard = false
-  let builtSettings: { state: GameState['settings']; stored: typeof storedSettings; value: Readonly<Record<string, KvValue>> } | null = null
-
-  /** The view of a state, built once per state object and kept for the latest one. */
-  function viewOf(of: GameState): View {
-    if (cached?.state !== of) cached = { state: of, view: view(of, game, { profile: shownProfile }) }
-    return cached.view
-  }
-
-  /**
-   * A plugin's profile namespace was read or written. If its views would see
-   * something new, the cached view gets that plugin's view built again (the
-   * scene is not drawn again) as a new object, and listeners are told.
-   */
-  function profileSeen(namespace: string, value: unknown): void {
-    const plugin = viewers.get(namespace)
-    if (!plugin) return
-    const before = shownProfile[namespace]
-    if (JSON.stringify(before) === JSON.stringify(value)) return
-    shownProfile = { ...shownProfile, [namespace]: frozenCopy(value) }
-    if (cached) {
-      const shown = cached.view
-      const plugins = { ...shown.plugins, [namespace]: pluginView(plugin, cached.state, game, {}, shownProfile[namespace]) }
-      cached = { state: cached.state, view: { ...shown, plugins } }
-    }
-    notify()
-  }
 
   const notify = () => {
     if (!listeners.size) return
@@ -362,16 +283,46 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     for (const listener of listeners) listener(shown)
   }
 
+  // The profile: a plugin's namespace read or written gives the cached view that plugin's view built again
+  // (the scene is not drawn again), as a new object, and listeners are told.
+  const kept = profileKeeper(game, {
+    profile: options.profile,
+    now,
+    onError: options.onSaveError,
+    onShown: (plugin) => {
+      if (cached) {
+        const shown = cached.view
+        const plugins = { ...shown.plugins, [plugin.id]: pluginView(plugin, cached.state, game, {}, kept.shown()[plugin.id]) }
+        cached = { state: cached.state, view: { ...shown, plugins } }
+      }
+      notify()
+    },
+  })
+  const settings = settingsKeeper(game, kept, notify)
+  const saving = saveKeeper(game, {
+    saves: options.saves,
+    autosave: options.autosave,
+    onError: options.onSaveError,
+    refuses: (of) => runnerHooks.map((hooks) => hooks.refusesSave?.(of, game, cx)).find((reason) => reason !== undefined),
+    changedList: notify,
+  })
+
+  /** The view of a state, built once per state object and kept for the latest one. */
+  function viewOf(of: GameState): View {
+    if (cached?.state !== of) cached = { state: of, view: view(of, game, { profile: kept.shown() }) }
+    return cached.view
+  }
+
   /** The snapshot now: the last one built, while every part of it is the same. */
   function snapshotNow(): RunnerSnapshot {
     const next: RunnerSnapshot = {
       state,
       view: viewOf(state),
-      settings: settingsNow(),
+      settings: settings.values(state),
       backlog,
-      canUndo: undoStack.length > 0,
-      canRedo: redoStack.length > 0,
-      saves: listed,
+      canUndo: steps.canUndo,
+      canRedo: steps.canRedo,
+      saves: saving.listed(),
       helpers,
       pressed,
       fresh,
@@ -382,151 +333,23 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     return built
   }
 
-  /** A save was written: its listing replaces the slot's, and listeners are told. */
-  function listedSave(meta: SaveMeta): void {
-    listed = sortedSaves([meta, ...listed.filter((entry) => entry.slot !== meta.slot)])
-    notify()
-  }
-
-  /** A slot was removed: it leaves the listing, and listeners are told. */
-  function unlistedSave(slot: string): void {
-    if (!listed.some((entry) => entry.slot === slot)) return
-    listed = listed.filter((entry) => entry.slot !== slot)
-    notify()
-  }
-
-  // The saves the runner writes to, watched so the snapshot's listing follows every write and removal.
-  const given = options.saves
-  const store: Saves | undefined = given && {
-    driver: given.driver,
-    async write(slot, toSave, extra) {
-      const meta = await given.write(slot, toSave, extra)
-      listedSave(meta)
-      return meta
-    },
-    read: (slot) => given.read(slot),
-    list: () => given.list(),
-    async remove(slot) {
-      await given.remove(slot)
-      unlistedSave(slot)
-    },
-    exportSlot: (slot) => given.exportSlot(slot),
-    importText: (text) => given.importText(text),
-  }
   const played = () => playedBefore + (now() - since)
-  const snapshot = (): Step => ({ state, backlog, commands: log.commands })
+  const here = (): Step => ({ state, backlog, commands: log.commands })
 
-  function barrier(before: GameState, after: GameState, command: Command, shown: () => View): boolean {
-    if (!history) return false
-    if (history.stopAtIrreversible !== false && command.type === 'choose') {
-      const scene = shown().scene
-      const choice = [...scene.choices, ...inlineChoices(scene.beats)].find((entry) => entry.id === command.id)
-      if (choice?.irreversible) return true
-    }
-    if (history.stopAtNewTurn && after.turn !== before.turn) return true
-    if (history.stopWhen && holds(after, game, history.stopWhen)) return true
-    return false
-  }
-
-  /** Queue a write. A failure is reported and does not stop the ones after it. */
-  function queueWrite(write: () => Promise<SaveMeta>): Promise<SaveMeta | null> {
-    const next = saving.then(write).catch((error: unknown) => {
-      options.onSaveError?.(error)
-      return null
-    })
-    saving = next
-    return next
-  }
-
-  /** After any change of state — a command, an undo, a load — save if the policy says so. `ticking` for a `tick`. */
+  /** After any change of state (a command, an undo, a load): autosave if the policy says so, and tell listeners. `ticking` for a `tick`. */
   function changed(before: GameState, ticking = false): void {
-    // While the game's `saveable` refuses, autosave waits for the next change that's due.
-    if (autosaveDue(before, state, ticking) && store && savingIn(state, game, holds).allowed) {
-      const slot = options.autosave?.slot ?? 'auto'
-      const toSave = state
-      void queueWrite(() => store.write(slot, toSave, { played: played() }))
-    }
+    saving.changed(before, state, ticking, played)
     notify()
   }
 
-  /** Queue a profile write. A failure is reported and does not stop the ones after it. */
-  function remember(write: (profile: Profile) => Promise<unknown>): void {
-    const profile = options.profile
-    if (!profile) return
-    remembering = remembering.then(() => write(profile)).catch((error: unknown) => options.onSaveError?.(error))
-  }
-
-  /** The ui settings' values as stored settings give them. */
-  const uiValues = (stored: Record<string, unknown> | undefined) =>
-    JSON.stringify((game.settings ?? []).filter((setting) => settingAffects(setting) === 'ui').map((setting) => settingValue(game, stored, setting.id)))
-
-  /** The profile's settings were read or written. Listeners are told if a ui setting now reads differently. */
-  function settingsSeen(value: unknown): void {
-    const next = value && typeof value === 'object' && !Array.isArray(value) ? (value as Record<string, unknown>) : undefined
-    const before = uiValues(storedSettings)
-    storedSettings = next
-    if (uiValues(next) !== before) notify()
-  }
-
-  // The settings and the plugins' views see the profile: read it now, and follow every write after.
-  if (options.profile) {
-    options.profile.subscribe((namespace, value) => {
-      if (namespace === 'core:settings') {
-        settingsHeard = true
-        settingsSeen(value)
-      } else profileSeen(namespace, value)
-    })
-    remember(async (profile) => {
-      const value = await profile.get('core:settings')
-      // A write heard while this was being read is newer.
-      if (!settingsHeard) settingsSeen(value)
-    })
-    for (const id of viewers.keys()) remember(async (profile) => profileSeen(id, await profile.get(id)))
-  }
-
-  // The saves as they are when the runner starts, before any write it queues; `settled` waits for them.
-  if (store) {
-    saving = saving
-      .then(async () => {
-        listed = await store.list()
-        notify()
-        return null
-      })
-      .catch((error: unknown) => {
-        options.onSaveError?.(error)
-        return null
-      })
-  }
-
-  function settingsNow(): Readonly<Record<string, KvValue>> {
-    if (builtSettings && builtSettings.state === state.settings && builtSettings.stored === storedSettings) return builtSettings.value
-    const value: Record<string, KvValue> = {}
-    for (const setting of game.settings ?? []) {
-      value[setting.id] =
-        settingAffects(setting) === 'play'
-          ? (state.settings?.[setting.id] ?? setting.default)
-          : (settingValue(game, storedSettings, setting.id) ?? setting.default)
-    }
-    builtSettings = { state: state.settings, stored: storedSettings, value: Object.freeze(value) }
-    return builtSettings.value
-  }
-
-  /** After a command took: what it changes in the profile. */
-  function recordInProfile(before: GameState, after: GameState, command: Command): void {
-    if (!options.profile) return
-    // The features' first: a play setting changed is written for the next game.
-    for (const hooks of runnerHooks) hooks.afterCommand?.(command, remember)
-    if (game.finished && !finishedRecorded && holds(after, game, game.finished)) {
-      finishedRecorded = true
-      const at = now()
-      remember((profile) => profile.update('core:finished', (stored) => stored ?? { at }))
-    }
-    // The game's own rules first, under `game`, then each plugin under its id.
-    for (const plugin of pluginsOf(game)) {
-      const keep = plugin.profile
-      if (!keep) continue
-      remember((profile) => profile.update(plugin.id, (stored) => keep(after, before, stored, pluginContext(plugin, after, game))))
-    }
+  /** Go to a step of history: its state, backlog and log, with nothing pressed. */
+  function goTo(step: Step): void {
+    const before = state
+    ;({ state, backlog } = step)
+    log = { ...log, commands: step.commands }
+    pressed = null
+    fresh = false
+    changed(before)
   }
 
   /** Put a state in play from scratch: fresh history, backlog and log, and this much time already played. */
@@ -535,8 +358,7 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     state = next
     log = { game: game.id, start: state, commands: [], ...versions }
     backlog = []
-    undoStack = []
-    redoStack = []
+    steps.clear()
     playedBefore = playedAlready
     since = now()
     pressed = null
@@ -549,9 +371,9 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
    * read, or the game in play's without one), a random seed unless given,
    * and fresh history, backlog and log.
    */
-  function startOver(start: StartOptions): GameState {
-    const settings = start.settings ?? (options.profile ? storedSettings : state.settings)
-    const started = startingState(game, { seed: randomSeed(), ...start, settings })
+  function startOver(given: StartOptions): GameState {
+    const playSettings = given.settings ?? (kept.profile ? settings.stored() : state.settings)
+    const started = startingState(game, { seed: randomSeed(), ...given, settings: playSettings })
     begin(started, 0)
     return started
   }
@@ -559,23 +381,6 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
   /** Put a loaded save in play: fresh history, backlog and log, and its time played. */
   function restore(loaded: LoadedSave): void {
     begin(loaded.state, loaded.meta.played)
-  }
-
-  /** Whether a timer ran out (or started again) between two states. */
-  function ranOut(before: GameState, after: GameState): boolean {
-    return Object.entries(before.timers).some(([id, timer]) => {
-      const now = after.timers[id]
-      return !now || now.left > timer.left
-    })
-  }
-
-  /** Whether the autosave policy wants a save now. A tick is not a command for `'command'`: a minigame sends ten a second. */
-  function autosaveDue(before: GameState, after: GameState, ticking: boolean): boolean {
-    const every = options.autosave?.every
-    if (!every || !options.saves) return false
-    if (every === 'command') return !ticking
-    if (every === 'scene') return before.sceneId !== after.sceneId
-    return before.turn !== after.turn
   }
 
   /** Run a command: the runner's `apply`. */
@@ -591,63 +396,17 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     if (!result.ok) return fail(result.reason)
     // A `newGame`, sent or chosen: this runner starts it as `newGame()` does, with a fresh log.
     if (result.newGame) return ok(startOver({}))
-    const prior = snapshot()
+    const prior = here()
     state = result.state
     log = { ...log, commands: [...log.commands, command] }
     fresh = true
     // What led to the new screen, when a UI drew the one before: kept while the screen stays the same.
     if (!drawn) pressed = null
     else if (viewOf(state).scene.key !== drawn.scene.key) pressed = pressedIn(drawn, command)
-    if (backlogLimit && !ticking) {
-      // Each scene as it was shown, with the choice made in it: the scene on
-      // screen before the command goes in first if it isn't there yet (the
-      // opening scene, say), the choice is written on it, then whatever new
-      // scene the command opened goes in after.
-      // Each entry is dated by the screen it was on.
-      const entry = (screen: View): BacklogEntry => ({
-        turn: screen.turn,
-        when: screen.when,
-        sceneId: screen.scene.id!,
-        title: screen.scene.title,
-        beats: pastBeats(screen.scene.beats),
-      })
-      const shown = fromView()
-      let next = backlog
-      // A pick at a decision of a flowing scene is in the scene's own words from then on, as a `chose` beat:
-      // the visit's entry grows rather than closing with the choice.
-      const flowed = Boolean(
-        state.flow && state.flow.scene === shown.scene.id && state.flow.path.length > (before.flow?.scene === state.flow.scene ? before.flow.path.length : 0),
-      )
-      // A minigame drawn over a scene is not the scene: it goes in neither before nor after.
-      if (shown.scene.id && !shown.minigame) {
-        const last = next.at(-1)
-        const showing = last && last.sceneId === shown.scene.id && last.chose === undefined
-        // A flowing visit's entry is kept as the screen last read it, so what the flow added since (past a minigame, say) is there too.
-        if (!showing) next = [...next, entry(shown)]
-        else if (before.flow?.scene === shown.scene.id) next = [...next.slice(0, -1), entry(shown)]
-        if (command.type === 'choose' && !flowed) {
-          const label = [...shown.scene.choices, ...inlineChoices(shown.scene.beats)].find((choice) => choice.id === command.id)?.label
-          if (label) next = [...next.slice(0, -1), { ...next.at(-1)!, chose: label }]
-        }
-      }
-      const after = viewOf(state)
-      if (after.scene.id && !after.minigame && flowed) next = [...next.slice(0, -1), entry(after)]
-      else if (after.scene.id && !after.minigame && (after.scene.id !== shown.scene.id || command.type === 'choose')) next = [...next, entry(after)]
-      backlog = next.slice(-backlogLimit)
-    }
-    if (history) {
-      if (barrier(before, state, command, fromView)) {
-        undoStack = []
-        redoStack = []
-      }
-      // A tick is no step of its own: one undo goes back to before the last command that wasn't one.
-      else if (!ticking) {
-        undoStack = [...undoStack, prior].slice(-depth)
-        redoStack = []
-      }
-    }
+    if (limit && !ticking) backlog = backlogAfter(backlog, { before, after: state, command, from: fromView(), to: () => viewOf(state) }, limit)
+    steps.ran(prior, before, state, command, fromView)
     // A tick is written to the profile only when it ends the minigame or runs a timer out, not ten times a second.
-    if (!ticking || (before.minigame && !state.minigame) || ranOut(before, state)) recordInProfile(before, state, command)
+    if (!ticking || (before.minigame && !state.minigame) || ranOut(before, state)) kept.record(before, state, command)
     changed(before, ticking)
     return ok(state)
   }
@@ -662,83 +421,45 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     },
     apply: run,
     undo(): boolean {
-      const step = undoStack.at(-1)
-      if (!step) return false
-      const before = state
-      undoStack = undoStack.slice(0, -1)
-      redoStack = [...redoStack, snapshot()]
-      ;({ state, backlog } = step)
-      log = { ...log, commands: step.commands }
-      pressed = null
-      fresh = false
-      changed(before)
-      return true
+      const step = steps.undo(here())
+      if (step) goTo(step)
+      return step !== undefined
     },
     redo(): boolean {
-      const step = redoStack.at(-1)
-      if (!step) return false
-      const before = state
-      redoStack = redoStack.slice(0, -1)
-      undoStack = [...undoStack, snapshot()].slice(-depth)
-      ;({ state, backlog } = step)
-      log = { ...log, commands: step.commands }
-      pressed = null
-      fresh = false
-      changed(before)
-      return true
+      const step = steps.redo(here())
+      if (step) goTo(step)
+      return step !== undefined
     },
     log(): CommandLog {
       return log
     },
     played,
-    saves: store,
-    offers: { undo: Boolean(history), backlog: backlogLimit > 0 },
-    async save(slot: string, name?: string): Promise<Result<SaveMeta>> {
-      if (!store) return fail(stringOf(game, 'noSaves'))
-      const policy = savingIn(state, game, holds)
-      if (!policy.allowed) return fail(policy.reason!)
-      const saves = store
-      const toSave = state
-      await saving
-      try {
-        return ok(await saves.write(slot, toSave, { name, played: played() }))
-      } catch (error) {
-        options.onSaveError?.(error)
-        return fail(stringOf(game, 'notSaved'))
-      }
-    },
+    saves: saving.store,
+    offers: { undo: steps.on, backlog: limit > 0 },
+    save: (slot: string, name?: string) => saving.save(slot, state, name, played()),
     restore,
     async load(slot: string): Promise<Result<LoadedSave>> {
-      if (!store) return fail(stringOf(game, 'noSaves'))
-      const read = await store.read(slot)
+      if (!saving.store) return fail(stringOf(game, 'noSaves'))
+      const read = await saving.store.read(slot)
       if (!read.ok) return read
       if (!read.value) return fail(stringOf(game, 'emptySlot'))
       restore(read.value)
       return ok(read.value)
     },
     async settled(): Promise<void> {
-      await remembering
-      await saving
+      await kept.settled()
+      await saving.settled()
     },
     profile: options.profile,
     setSetting(id: string, to: KvValue): Result<KvValue> {
-      const setting = settingOf(game, id)
-      if (!setting) return fail(stringOf(game, 'noSuchSetting'))
-      if (settingAffects(setting) === 'play') {
-        const applied = run({ type: 'setting', id, to })
-        return applied.ok ? ok(to) : fail(applied.reason)
-      }
-      if (!options.profile) return fail(stringOf(game, 'noProfile'))
-      const refused = settingRefusal(game, id, to, 'runner')
-      if (refused) return fail(refused)
-      // Shown at once; the profile catches up in order.
-      settingsSeen({ ...storedSettings, [id]: to })
-      remember((profile) => profile.update<Record<string, KvValue>>('core:settings', (stored) => ({ ...stored, [id]: to })))
-      return ok(to)
+      const change = settings.change(id, to)
+      if (!('command' in change)) return change
+      const applied = run(change.command)
+      return applied.ok ? ok(to) : fail(applied.reason)
     },
-    async newGame(start: StartOptions = {}): Promise<GameState> {
-      await remembering
-      return startOver(start)
+    async newGame(given: StartOptions = {}): Promise<GameState> {
+      await kept.settled()
+      return startOver(given)
     },
     snapshot: snapshotNow,
     subscribe(listener: (snapshot: RunnerSnapshot) => void): () => void {
@@ -754,32 +475,20 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
   }
 }
 
+/** Whether a timer ran out (or started again) between two states. */
+function ranOut(before: GameState, after: GameState): boolean {
+  return Object.entries(before.timers).some(([id, timer]) => {
+    const now = after.timers[id]
+    return !now || now.left > timer.left
+  })
+}
+
 /** The choice, inline action or button of a view that sends this command, if any does. */
 function pressedIn(shown: View, command: Command): RenderedChoice | null {
   const offered = [...shown.scene.choices, ...inlineChoices(shown.scene.beats), ...shown.actions]
   if (command.type === 'choose') return offered.find((choice) => choice.command.type === 'choose' && choice.id === command.id) ?? null
   const sent = JSON.stringify(command)
   return offered.find((choice) => JSON.stringify(choice.command) === sent) ?? null
-}
-
-/** Saves as `saves.list()` orders them: newest first, then the ones that can't be read, by slot. */
-function sortedSaves(entries: readonly SaveListing[]): SaveListing[] {
-  const readable = entries.filter((entry): entry is SaveMeta => !('broken' in entry)).sort((a, b) => b.savedAt - a.savedAt)
-  const broken = entries.filter((entry) => 'broken' in entry).sort((a, b) => a.slot.localeCompare(b.slot))
-  return [...readable, ...broken]
-}
-
-/** A deep, frozen copy of a JSON value from the profile, so a view can read it and never change what is stored. */
-function frozenCopy(value: unknown): unknown {
-  if (value === undefined) return undefined
-  const freeze = (entry: unknown): unknown => {
-    if (entry && typeof entry === 'object') {
-      for (const inner of Object.values(entry)) freeze(inner)
-      Object.freeze(entry)
-    }
-    return entry
-  }
-  return freeze(JSON.parse(JSON.stringify(value)))
 }
 
 function randomSeed(): number {

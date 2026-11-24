@@ -65,4 +65,8 @@ export const saving = defineFeature<SavingShape>({
     ;(game.saveable ?? []).forEach((entry, index) => tools.check({ list: 'saveable', id: String(index) }, 'saveable', [{ when: entry.when }]))
   },
   view: (state, game, _shown, cx) => ({ saving: savingIn(state, game, cx.holds) }),
+  runner: {
+    // The runner refuses `save`, and skips its autosave, while the game's `saveable` refuses saving.
+    refusesSave: (state, game, cx) => savingIn(state, game, cx.holds).reason ?? undefined,
+  },
 })

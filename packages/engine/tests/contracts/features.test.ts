@@ -195,3 +195,20 @@ describe('the registry', () => {
     ).toThrow('Two features are named "stats"')
   })
 })
+
+describe('the runner', () => {
+  // The runner reaches the features only through the registry's runner hooks, so what settings or saving
+  // mean stays in those features, and a feature can join the runner without the runner changing.
+  it('names no feature: it imports from features/ only the registry and, for types, the feature base', () => {
+    const RUNNER = Object.keys(SOURCES).filter((file) => file === `${SRC}runner.ts` || file.startsWith(`${SRC}runner/`))
+    expect(RUNNER.length).toBeGreaterThan(1)
+    const named = RUNNER.flatMap((file) =>
+      importsOf(SOURCES[file])
+        .filter(({ spec }) => spec.startsWith('.'))
+        .map(({ spec, typeOnly }) => ({ target: landsAt(file, spec), typeOnly }))
+        .filter(({ target, typeOnly }) => target.startsWith(`${SRC}features/`) && target !== REGISTRY && !(typeOnly && target === `${SRC}features/feature.ts`))
+        .map(({ target }) => `${file} → ${target}`),
+    )
+    expect(named).toEqual([])
+  })
+})

@@ -22,7 +22,7 @@ import type { DataScene, RenderedScene } from '../scene.ts'
 import type { StatModifier } from '../plugin.ts'
 import type { Profile } from '../profile.ts'
 import type { Reference } from '../references.ts'
-import type { Amount, Command, Condition, Effect, GameState, StartOptions } from '../types.ts'
+import type { Amount, Command, Condition, Effect, GameState, KvValue, StartOptions } from '../types.ts'
 import type { WordPart, WordWalk } from '../words.ts'
 
 /** The core's helpers a feature can call. The core hands one to every hook that needs it. */
@@ -349,10 +349,33 @@ type FeatureParts<T extends FeatureShape> = {
   runner?: RunnerHooks
 }
 
-/** A feature's part in a runner. */
+/** A feature's part in a runner. The runner names no feature: it asks these, in the features' order. */
 export type RunnerHooks = {
   /** After a command took. `remember` queues a write to the profile; only a runner with a profile calls this. */
   afterCommand?: (command: Command, remember: (write: (profile: Profile) => Promise<unknown>) => void) => void
+  /** Why the runner can't save this state now: `save` is refused with it, and an autosave waits for the next one due. Undefined when it can. */
+  refusesSave?: (state: GameState, game: Game, cx: FeatureContext) => string | undefined
+  /** The player's settings as a runner keeps them. One feature gives it. */
+  settings?: PlayerSettings
+}
+
+/** How a setting changes in a runner: sent as `command` (the game in play keeps it), written to the profile as `stored`, or refused, with why. */
+export type SettingChange = { command: Command } | { stored: KvValue } | { refused: string }
+
+/**
+ * The player's settings as a runner keeps them: some in the game in play,
+ * some only in the profile, under `namespace`. The runner reads and writes
+ * the profile; this says what the values are and how one changes.
+ */
+export type PlayerSettings = {
+  /** The profile namespace the player's settings are kept under. */
+  namespace: string
+  /** Every setting's value now: from `state` for one the game in play keeps, else from `stored` (the profile's, or nothing without one), else its default. */
+  values: (game: Game, state: GameState, stored: Record<string, unknown> | undefined) => Record<string, KvValue>
+  /** The values that come from `stored` alone, so a runner tells listeners when a write to the profile changes one. */
+  fromStored: (game: Game, stored: Record<string, unknown> | undefined) => Record<string, KvValue>
+  /** How changing setting `id` to `to` goes. `profile` says whether the runner has a profile to keep it in. */
+  change: (game: Game, id: string, to: KvValue, profile: boolean) => SettingChange
 }
 
 /** A feature as the registry holds it: every table there, empty if it declares none. */

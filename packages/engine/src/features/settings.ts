@@ -81,6 +81,9 @@ export type SettingsShape = {
   }
 }
 
+/** The profile namespace the player's settings are kept under: `ui` settings, and the `play` settings a new game starts with. */
+const SETTINGS_NAMESPACE = 'core:settings'
+
 /** The setting with this id, if the game declares it. */
 export function settingOf(game: Game, id: string): SettingDef | undefined {
   return game.settings?.find((setting) => setting.id === id)
@@ -299,7 +302,30 @@ export const settings = defineFeature<SettingsShape>({
     afterCommand: (command, remember) => {
       if (command.type !== 'setting') return
       const { id, to } = command
-      remember((profile) => profile.update<Record<string, KvValue>>('core:settings', (stored) => ({ ...stored, [id]: to })))
+      remember((profile) => profile.update<Record<string, KvValue>>(SETTINGS_NAMESPACE, (stored) => ({ ...stored, [id]: to })))
+    },
+    settings: {
+      namespace: SETTINGS_NAMESPACE,
+      values: (game, state, stored) => {
+        const values: Record<string, KvValue> = {}
+        for (const setting of game.settings ?? []) {
+          values[setting.id] =
+            settingAffects(setting) === 'play' ? (state.settings?.[setting.id] ?? setting.default) : (settingValue(game, stored, setting.id) ?? setting.default)
+        }
+        return values
+      },
+      fromStored: (game, stored) =>
+        Object.fromEntries(
+          (game.settings ?? []).filter((setting) => settingAffects(setting) === 'ui').map((setting) => [setting.id, settingValue(game, stored, setting.id)!]),
+        ),
+      change: (game, id, to, profile) => {
+        const setting = settingOf(game, id)
+        if (!setting) return { refused: stringOf(game, 'noSuchSetting') }
+        if (settingAffects(setting) === 'play') return { command: { type: 'setting', id, to } }
+        if (!profile) return { refused: stringOf(game, 'noProfile') }
+        const refused = settingRefusal(game, id, to, 'runner')
+        return refused ? { refused } : { stored: to }
+      },
     },
   },
 })

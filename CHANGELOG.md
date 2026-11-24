@@ -6,6 +6,12 @@ IFLoom is before 1.0, so nothing is a stable API yet: a new minor version, such 
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-24
+
+### Fixed
+
+- A game made with `yarn create ifloom` from the `react`, `next`, `novel`, `cafe` or `town` template builds. Yarn doesn't install the packages the React UI needs beside it, `@ifloom/audio` and `@ifloom/browser`, as npm and pnpm do, so those templates and the `plugin` template now list them. [Set up the React UI](/docs/how-to/react/set-up-the-react-ui) and [Build with Next](/docs/how-to/build-with-next) install them too.
+
 ## [0.1.0] - 2026-11-24
 
 **Things are entities.** The engine no longer has items or collections of its own. A sandwich, a scarf, a note, a photo, a person and a place are all [entities](/docs/reference/entities) of a kind: what each is stays in your content, and the save keeps only what play changed. Kinds can be `unique` and say whether they're `listed`. Entities carry [traits](/docs/explanation/entities-and-traits#traits-give-entities-meaning) that plugins read. The player and unique entities [hold](/docs/reference/entities#holder-and-placement) things, and `'you'` is whoever the player is playing. The inventory, shop, wardrobe, cast, places and generators all work on them, alone or together (see [Things: carrying, selling, wearing](/docs/explanation/entities-and-traits)). Old saves, packs and mods are carried forward; your own content isn't, so `ifloom check` reports what to rewrite. The details are in the lists below.

@@ -206,7 +206,10 @@ describe('ifloom new', () => {
     })
     expect(pkg.private).toBeUndefined()
     expect(pkg.dependencies).toBeUndefined()
+    // The React UI's own @ifloom peers too, which Yarn wouldn't install for it.
     expect(Object.keys(pkg.devDependencies)).toEqual([
+      '@ifloom/audio',
+      '@ifloom/browser',
       '@ifloom/engine',
       '@ifloom/react',
       '@types/node',

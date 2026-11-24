@@ -39,25 +39,25 @@ Its scripts are `dev`, `build` and `start` from Next, `check` and `playtest` fro
 
 ## Add the packages
 
-The @ifloom packages are compiled JavaScript with their type declarations, so Next uses them like any other package, with no `transpilePackages` or other setting. Add `@ifloom/engine`, `@ifloom/browser` and `@ifloom/react` to the app, any plugins your game uses, and `@ifloom/cli` as a dev dependency for `check` and `playtest`, and for `@ifloom/cli/game`, which `src/game.ts` imports `defineGame` from:
+The @ifloom packages are compiled JavaScript with their type declarations, so Next uses them like any other package, with no `transpilePackages` or other setting. Add `@ifloom/engine`, `@ifloom/audio`, `@ifloom/browser` and `@ifloom/react` to the app, any plugins your game uses, and `@ifloom/cli` as a dev dependency for `check` and `playtest`, and for `@ifloom/cli/game`, which `src/game.ts` imports `defineGame` from:
 
 ```sh tab="npm" tab-group="package-manager"
-npm install @ifloom/engine @ifloom/browser @ifloom/react
+npm install @ifloom/engine @ifloom/audio @ifloom/browser @ifloom/react
 npm install --save-dev @ifloom/cli
 ```
 
 ```sh tab="pnpm" tab-group="package-manager"
-pnpm add @ifloom/engine @ifloom/browser @ifloom/react
+pnpm add @ifloom/engine @ifloom/audio @ifloom/browser @ifloom/react
 pnpm add --save-dev @ifloom/cli
 ```
 
 ```sh tab="yarn" tab-group="package-manager"
-yarn add @ifloom/engine @ifloom/browser @ifloom/react
+yarn add @ifloom/engine @ifloom/audio @ifloom/browser @ifloom/react
 yarn add --dev @ifloom/cli
 ```
 
 ```sh tab="bun" tab-group="package-manager"
-bun add @ifloom/engine @ifloom/browser @ifloom/react
+bun add @ifloom/engine @ifloom/audio @ifloom/browser @ifloom/react
 bun add --dev @ifloom/cli
 ```
 

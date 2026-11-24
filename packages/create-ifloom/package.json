@@ -1,6 +1,6 @@
 {
   "name": "create-ifloom",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "description": "Start a new IFLoom game: npm create ifloom@latest my-game.",
   "keywords": [
@@ -45,6 +45,6 @@
     "provenance": true
   },
   "devDependencies": {
-    "@ifloom/cli": "^0.1.0"
+    "@ifloom/cli": "^0.1.1"
   }
 }

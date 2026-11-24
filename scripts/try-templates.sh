@@ -164,22 +164,16 @@ import { readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 const [checkout, dir, packs, pm] = process.argv.slice(2)
 
-// Each @ifloom package the game lists, from its tarball. Until they're on npm, a
-// required peer the game doesn't list (the React UI's @ifloom/audio, say) is
-// listed too, as no package manager could fetch it from the registry.
+// Each @ifloom package the game lists, from its tarball, and nothing more: a
+// required peer the game leaves out fails here as it would from the registry
+// with Yarn, which installs no peer for it.
 const manifest = (name) => JSON.parse(readFileSync(join(checkout, 'packages', name.slice('@ifloom/'.length), 'package.json'), 'utf8'))
 const tarball = (name) => `file:${join(packs, readdirSync(packs).find((file) => file === `ifloom-${name.slice('@ifloom/'.length)}-${manifest(name).version}.tgz`))}`
 const file = join(dir, 'package.json')
 const pkg = JSON.parse(readFileSync(file, 'utf8'))
-const listed = new Set()
+const wanted = []
 for (const field of ['dependencies', 'devDependencies'])
-  for (const name of Object.keys(pkg[field] ?? {})) if (name.startsWith('@ifloom/')) listed.add(name)
-const wanted = [...listed]
-for (const name of wanted) {
-  const { peerDependencies = {}, peerDependenciesMeta = {} } = manifest(name)
-  for (const peer of Object.keys(peerDependencies))
-    if (peer.startsWith('@ifloom/') && !peerDependenciesMeta[peer]?.optional && !wanted.includes(peer)) wanted.push(peer)
-}
+  for (const name of Object.keys(pkg[field] ?? {})) if (name.startsWith('@ifloom/')) wanted.push(name)
 for (const name of wanted) {
   const field = Object.keys(pkg.devDependencies ?? {}).includes(name) ? 'devDependencies' : 'dependencies'
   pkg[field] = { ...pkg[field], [name]: tarball(name) }

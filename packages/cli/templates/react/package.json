@@ -11,13 +11,15 @@
     "playtest": "ifloom playtest --turns 5 --out playtest/run.txt"
   },
   "dependencies": {
-    "@ifloom/engine": "^0.1.0",
-    "@ifloom/react": "^0.1.0",
+    "@ifloom/audio": "^0.1.1",
+    "@ifloom/browser": "^0.1.1",
+    "@ifloom/engine": "^0.1.1",
+    "@ifloom/react": "^0.1.1",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
   "devDependencies": {
-    "@ifloom/cli": "^0.1.0",
+    "@ifloom/cli": "^0.1.1",
     "@tailwindcss/vite": "4.3.3",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",

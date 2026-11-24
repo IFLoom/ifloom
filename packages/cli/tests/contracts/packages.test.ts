@@ -8,8 +8,10 @@ import { describe, expect, it } from 'vitest'
  * other"): an `@ifloom/*` package is a peer of any other that uses it, never a
  * dependency, so a game has one copy of each, but for the two that run the CLI
  * on their own; and every reference to one, in a package, an example, a template
- * or the docs' snippets, is the caret range of its version. And how each is
- * published ("Packaging"): built to dist/, public, with its folder, a README and the LICENSE.
+ * or the docs' snippets, is the caret range of its version. A game lists every
+ * @ifloom package it needs, the ones the packages it lists require as peers
+ * included, since Yarn installs no peer for it. And how each is published
+ * ("Packaging"): built to dist/, public, with its folder, a README and the LICENSE.
  */
 const root = fileURLToPath(new URL('../../../../', import.meta.url))
 
@@ -20,6 +22,7 @@ type Manifest = {
   engines?: { node?: string }
   publishConfig?: { access?: string; provenance?: boolean }
   repository?: { type?: string; url?: string; directory?: string }
+  peerDependenciesMeta?: Record<string, { optional?: boolean }>
 } & Partial<Record<'dependencies' | 'devDependencies' | 'peerDependencies', Record<string, string>>>
 
 function manifestsIn(dir: string): [string, Manifest][] {
@@ -69,6 +72,28 @@ describe('how the packages depend on each other', () => {
       ),
     )
     expect(wrong).toEqual([])
+  })
+
+  it('has every template and example list the @ifloom peers its packages require, which Yarn leaves out', () => {
+    const manifest = new Map(packages.map(([, pkg]) => [pkg.name!, pkg]))
+    // The required @ifloom peers of a package, and theirs in turn.
+    const required = (name: string, seen = new Set<string>()): Set<string> => {
+      const pkg = manifest.get(name)
+      for (const [peer] of Object.entries(pkg?.peerDependencies ?? {}))
+        if (versions.has(peer) && !pkg?.peerDependenciesMeta?.[peer]?.optional && !seen.has(peer)) {
+          seen.add(peer)
+          required(peer, seen)
+        }
+      return seen
+    }
+    const games = [...manifestsIn('examples'), ...manifestsIn('packages/cli/templates')]
+    const missing = games.flatMap(([dir, pkg]) => {
+      const listed = new Set(Object.keys({ ...pkg.dependencies, ...pkg.devDependencies }))
+      return [...listed]
+        .filter((name) => versions.has(name))
+        .flatMap((name) => [...required(name)].filter((peer) => !listed.has(peer)).map((peer) => `${dir} needs ${peer}, for ${name}`))
+    })
+    expect([...new Set(missing)].sort()).toEqual([])
   })
 
   it('builds each package to dist/, and names its source by the ifloom-source condition (ADR 0012)', () => {

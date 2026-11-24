@@ -44,11 +44,11 @@ A first-party plugin is a package of its own that imports only `@ifloom/engine` 
 
 ## How packages depend on each other
 
-- **An `@ifloom/*` package another one uses is its peer dependency, never a dependency.** A plugin peers on the engine, `@ifloom/react` on the engine, `@ifloom/audio` and `@ifloom/browser` (and on no plugin), and a plugin's `/react` subpath on `@ifloom/react`, `react` and `react-dom` as optional peers, with `@ifloom/react` a dev dependency for the workspace. So a game has one copy of each, at the version it chose. npm 7 and later installs a required peer the game doesn't list.
+- **An `@ifloom/*` package another one uses is its peer dependency, never a dependency.** A plugin peers on the engine, `@ifloom/react` on the engine, `@ifloom/audio` and `@ifloom/browser` (and on no plugin), and a plugin's `/react` subpath on `@ifloom/react`, `react` and `react-dom` as optional peers, with `@ifloom/react` a dev dependency for the workspace. So a game has one copy of each, at the version it chose. npm 7 and later and pnpm install a required peer the game doesn't list, but Yarn doesn't, so every template and example lists the `@ifloom` peers its packages require (`@ifloom/react` needs `@ifloom/audio` and `@ifloom/browser`).
 - **Every reference to an `@ifloom/*` package is `^` and its version**, such as `^0.1.0`: in peers and dev dependencies, the examples, the templates and the docs' snippets. A caret on `0.0.x` matches that version only, on `0.x` the same minor, and from 1.0 the same major, so it accepts what semver calls compatible. Every package has the same version, and a release bumps the versions and the ranges together with `node scripts/version.ts <version>`.
 - **Other libraries:** what a package runs on its own (Radix, `clsx`) is a dependency. What the game's build or typecheck must share with it is a peer: `react`, `react-dom`, `tailwindcss` and React's types for `@ifloom/react`, whose `.d.ts` files a game's typecheck reads. A game lists its framework's Vite plugins itself.
 - Two packages use another without peering on it, since each has to run on its own: `create-ifloom` has `@ifloom/cli` as a dev dependency it bundles at build time, and `ifloom` has `@ifloom/cli` as its one dependency, whose bin it runs. There are no others.
-- `packages/cli/tests/contracts/packages.test.ts` holds the first two rules, the two exceptions, and the packaging below.
+- `packages/cli/tests/contracts/packages.test.ts` holds the first two rules, the templates' required peers, the two exceptions, and the packaging below.
 
 ## Packaging
 

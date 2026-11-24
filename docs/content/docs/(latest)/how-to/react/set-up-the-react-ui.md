@@ -11,26 +11,26 @@ Use this to render a game with the React UI in a project that doesn't have it ye
 Install the UI beside the engine, with React and the tools that build its stylesheet:
 
 ```sh tab="npm" tab-group="package-manager"
-npm install @ifloom/react react react-dom
+npm install @ifloom/react @ifloom/audio @ifloom/browser react react-dom
 npm install --save-dev @vitejs/plugin-react @tailwindcss/vite tailwindcss @types/react @types/react-dom
 ```
 
 ```sh tab="pnpm" tab-group="package-manager"
-pnpm add @ifloom/react react react-dom
+pnpm add @ifloom/react @ifloom/audio @ifloom/browser react react-dom
 pnpm add -D @vitejs/plugin-react @tailwindcss/vite tailwindcss @types/react @types/react-dom
 ```
 
 ```sh tab="yarn" tab-group="package-manager"
-yarn add @ifloom/react react react-dom
+yarn add @ifloom/react @ifloom/audio @ifloom/browser react react-dom
 yarn add -D @vitejs/plugin-react @tailwindcss/vite tailwindcss @types/react @types/react-dom
 ```
 
 ```sh tab="bun" tab-group="package-manager"
-bun add @ifloom/react react react-dom
+bun add @ifloom/react @ifloom/audio @ifloom/browser react react-dom
 bun add -d @vitejs/plugin-react @tailwindcss/vite tailwindcss @types/react @types/react-dom
 ```
 
-The UI needs React 19, react-dom and Tailwind CSS v4, which are its peer dependencies. React's types are peers too, and your own `.tsx` files use them. A game that uses the [prebuilt stylesheet](/docs/how-to/react/theme-the-react-ui#use-the-prebuilt-stylesheet) needs neither Tailwind package. Install each plugin your game uses beside it, as [Add a plugin](/docs/how-to/add-a-plugin) shows.
+The UI needs `@ifloom/audio` and `@ifloom/browser`, React 19, react-dom and Tailwind CSS v4, which are its peer dependencies. npm and pnpm would install the two `@ifloom` packages for you, but Yarn doesn't, so the commands name them. React's types are peers too, and your own `.tsx` files use them. A game that uses the [prebuilt stylesheet](/docs/how-to/react/theme-the-react-ui#use-the-prebuilt-stylesheet) needs neither Tailwind package. Install each plugin your game uses beside it, as [Add a plugin](/docs/how-to/add-a-plugin) shows.
 
 ## Set up TypeScript
 

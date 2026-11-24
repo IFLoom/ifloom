@@ -1,6 +1,6 @@
 {
   "name": "@ifloom/plugin-generators",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "description": "Generators for IFLoom: named pools of values and templates that make new entities from them, seeded and replay-exact.",
   "keywords": [
@@ -42,6 +42,6 @@
     "provenance": true
   },
   "peerDependencies": {
-    "@ifloom/engine": "^0.1.0"
+    "@ifloom/engine": "^0.1.1"
   }
 }

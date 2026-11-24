@@ -26,7 +26,7 @@ Uses: [`ActionDef`](/docs/api/engine#actiondef), [`Reference`](#reference).
 
 ## AnyCalls
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#plugincalls-and-anycalls).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#plugincalls-and-anycalls).
 
 Any plugin's `PluginCalls`, with each call's full name and arguments, by table.
 
@@ -62,7 +62,7 @@ Uses: [`EntityRef`](/docs/api/engine#entityref).
 
 ## Arg
 
-Type.
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#arg).
 
 One argument of a plugin's call, made with `arg`. `In` is the type content writes, and `Out` the type the
 implementation gets, read from whatever content wrote.
@@ -100,7 +100,7 @@ type Arg<In = unknown, Out = In, Optional extends boolean = boolean> = {
 
 ## arg
 
-Const. Explained in [Writing a plugin](/docs/reference/plugins#arg).
+Const. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#arg-1).
 
 The makers of the `Arg`s a call can take, for `defineCalls`. Each reads content's value into the value the
 implementation gets, whatever content wrote, and the checker reports a value of the wrong shape.
@@ -148,7 +148,7 @@ const arg: {
 
 ## ArgIn
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#argin-argout-argsin-and-argsout).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#argin-argout-argsin-and-argsout).
 
 The type content writes for an `Arg`.
 
@@ -161,7 +161,7 @@ Uses: [`Arg`](#arg).
 
 ## ArgOut
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#argin-argout-argsin-and-argsout).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#argin-argout-argsin-and-argsout).
 
 The type the implementation gets for an `Arg`.
 
@@ -174,7 +174,7 @@ Uses: [`Arg`](#arg).
 
 ## ArgShape
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#argshape-and-callshapes).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#callshapes-and-argshape).
 
 The arguments one call takes, by name. It is `{}` for a call with none, which content writes as `true`.
 
@@ -187,7 +187,7 @@ type ArgShape = {
 
 ## ArgsIn
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#argin-argout-argsin-and-argsout).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#argin-argout-argsin-and-argsout).
 
 The arguments content writes for a call of an `ArgShape`, as an object.
 
@@ -199,7 +199,7 @@ Uses: [`ArgIn`](#argin).
 
 ## ArgsOut
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#argin-argout-argsin-and-argsout).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#argin-argout-argsin-and-argsout).
 
 The arguments the implementation of a call of an `ArgShape` gets, every one read.
 
@@ -212,7 +212,7 @@ type ArgsOut<S extends ArgShape> = {
 
 ## Asked
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#asked-and-refusal).
+Type. Explained in [Plugin API](/docs/reference/plugin-api#asked-and-refusal).
 
 The question a plugin's `guard` gets, a command with the effects it would apply.
 
@@ -249,7 +249,7 @@ Uses: [`Condition`](/docs/api/engine#condition), [`EffectRef`](/docs/api/engine#
 
 ## CallArgs
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#callargs).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#callargs).
 
 The arguments the implementation of each call in a table gets, by name.
 
@@ -261,7 +261,7 @@ Uses: [`ArgShape`](#argshape), [`ArgOut`](#argout).
 
 ## CallForm
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#callform).
+Type. Explained in [Plugin migrations](/docs/reference/plugin-migrations#callform).
 
 The form a plugin call is written in, `short`, `long` or `command`. See `ContentTools.calls`.
 
@@ -272,7 +272,7 @@ type CallForm = 'short' | 'long' | 'command'
 
 ## CallIn
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#callin).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#callin).
 
 A call in the short form, type-checked against registry `R` when its name is declared there and loose otherwise.
 
@@ -287,7 +287,7 @@ Uses: [`PluginCall`](/docs/api/engine#plugincall).
 
 ## CallShapes
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#argshape-and-callshapes).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#callshapes-and-argshape).
 
 The arguments a plugin's calls take, by table and name, as `defineCalls` is given them.
 
@@ -308,7 +308,7 @@ type CallShapes = {
 
 ## CallTable
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#pluginreferences-calltable-and-contentreferences).
+Type. Explained in [A plugin's content checks](/docs/reference/plugin-checks#pluginreferences-calltable-and-contentreferences).
 
 The name of a plugin's table of calls, `conditions`, `effects` or `commands`.
 
@@ -319,7 +319,7 @@ type CallTable = 'conditions' | 'effects' | 'commands'
 
 ## CallWriter
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#callwriter).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#callwriter).
 
 A function that writes one call in the short form from its arguments, such as `{ 'places/at': { location } }`.
 
@@ -331,7 +331,7 @@ Uses: [`ArgIn`](#argin), [`WrittenAs`](#writtenas), [`ArgOut`](#argout).
 
 ## CastContact
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#castcontact-and-senderview).
+Type. Explained in [Queries and partners](/docs/reference/plugin-queries#castcontact-and-senderview).
 
 A character the player can call, as the cast's `cast/contacts` query answers.
 
@@ -360,7 +360,7 @@ type CastContact = {
 
 ## CheckTools
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#checktools).
+Type. Explained in [A plugin's content checks](/docs/reference/plugin-checks#checktools).
 
 The tools the content checker gives a plugin's `check`.
 
@@ -377,7 +377,7 @@ type CheckTools = {
 
 ## CommandsOf
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#conditionsof-effectsof-and-commandsof).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#conditionsof-effectsof-and-commandsof).
 
 The arguments a plugin's commands take, by full name, for its `CommandRegistry`. Use it as `ConditionsOf` is used.
 
@@ -389,7 +389,7 @@ Uses: [`PluginCalls`](#plugincalls), [`CallShapes`](#callshapes), [`ArgShape`](#
 
 ## CommandStep
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#commandstep).
+Type. Explained in [Plugin migrations](/docs/reference/plugin-migrations#commandstep).
 
 A step of a plugin's `commandMigrations`, which returns a log's command reshaped from one command version to the
 next. It gets every command, so it returns the ones that aren't its own unchanged.
@@ -403,7 +403,7 @@ Uses: [`RawCommand`](#rawcommand).
 
 ## ConditionsOf
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#conditionsof-effectsof-and-commandsof).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#conditionsof-effectsof-and-commandsof).
 
 The arguments a plugin's conditions take, by full name, for its `ConditionRegistry`. Extend the registry from it.
 
@@ -421,7 +421,7 @@ Uses: [`PluginCalls`](#plugincalls), [`CallShapes`](#callshapes), [`ArgShape`](#
 
 ## ContentReferences
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#pluginreferences-calltable-and-contentreferences).
+Type. Explained in [A plugin's content checks](/docs/reference/plugin-checks#pluginreferences-calltable-and-contentreferences).
 
 The references one entry of a plugin's content makes.
 
@@ -442,7 +442,7 @@ type ContentReferences = {
 
 ## ContentStep
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#contentstep).
+Type. Explained in [Plugin migrations](/docs/reference/plugin-migrations#contentstep).
 
 A step of a plugin's `contentMigrations`, which returns the whole pack reshaped from one content version to the
 next. It returns a new pack and never changes the one it was given.
@@ -458,7 +458,7 @@ Uses: [`RawPack`](/docs/api/engine#rawpack), [`ContentTools`](#contenttools).
 
 ## ContentTools
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#contenttools).
+Type. Explained in [Plugin migrations](/docs/reference/plugin-migrations#contenttools).
 
 The tools a plugin's content step gets beside the pack, which rewrite a pack without walking it by hand. Each returns
 a new pack.
@@ -491,7 +491,7 @@ type ContentTools = {
 
 ## DataList
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#datalist).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#datalist).
 
 One of a plugin's data lists as `defineData` declares it, kept at `data.<plugin>.<list>`, with its noun, its words and
 its lookups.
@@ -525,7 +525,7 @@ type DataList<T extends { id: string } = PluginEntry> = {
 
 ## defineCalls
 
-Function. Explained in [Writing a plugin](/docs/reference/plugins#definecalls).
+Function. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#definecalls).
 
 Returns the `PluginCalls` declaration of a plugin's conditions, effects and commands, each by name with its
 arguments built from `arg`.
@@ -555,7 +555,7 @@ Uses: [`CallShapes`](#callshapes), [`PluginCalls`](#plugincalls).
 
 ## defineData
 
-Function. Explained in [Writing a plugin](/docs/reference/plugins#definedata).
+Function. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#definedata-and-list).
 
 Returns the `PluginData` declaration of a plugin's data lists, each by name with its entry's type, its noun and
 its word fields.
@@ -580,7 +580,7 @@ Uses: [`ListSpec`](#listspec), [`PluginData`](#plugindata).
 
 ## DefinedPlugin
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#definedplugin).
+Type. Explained in [Plugin API](/docs/reference/plugin-api#definedplugin).
 
 A plugin returned by `definePlugin`, with typed `read` and `write` for its own state.
 
@@ -673,7 +673,7 @@ type DefinedPlugin<S, V = unknown> = {
 
 ## definePlugin
 
-Function. Explained in [Writing a plugin](/docs/reference/plugins#defineplugin).
+Function. Explained in [Plugin API](/docs/reference/plugin-api#defineplugin).
 
 Returns a plugin with `read` and `write` for its own state, for code outside it such as tests. It throws when a
 declared call has no implementation or an implemented one has no declaration.
@@ -690,7 +690,7 @@ Uses: [`AnyCalls`](#anycalls), [`PluginDef`](#plugindef), [`DefinedPlugin`](#def
 
 ## defineTraitKind
 
-Function.
+Function. Explained in [A plugin's view, scene and actions](/docs/reference/plugin-views#definetraitkind).
 
 Returns the `TraitKind` of a kind of entity a plugin's trait makes. Declare each such kind once, with this.
 
@@ -713,7 +713,7 @@ Uses: [`TraitKindSpec`](#traitkindspec), [`TraitKind`](#traitkind).
 
 ## EffectsOf
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#conditionsof-effectsof-and-commandsof).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#conditionsof-effectsof-and-commandsof).
 
 The arguments a plugin's effects take, by full name, for its `EffectRegistry`. Use it as `ConditionsOf` is used.
 
@@ -739,7 +739,7 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 ## list
 
-Function.
+Function. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#definedata-and-list).
 
 Returns the `ListSpec` of one of a plugin's data lists, for `defineData`, with the entry's type, its noun and its words.
 
@@ -752,7 +752,7 @@ Uses: [`WordShape`](/docs/api/engine#wordshape), [`ListSpec`](#listspec).
 
 ## ListSpec
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#listspec).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#listspec).
 
 One list of a plugin's data as `list` declares it, such as `list<JobDef>({ noun: 'job', words: { name: true } })`. The
 type argument is an entry's type.
@@ -917,7 +917,7 @@ Uses: [`SpeakerFinder`](#speakerfinder), [`SceneBeat`](/docs/api/engine#scenebea
 
 ## PartnerQueries
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#partnerqueries).
+Type. Explained in [Queries and partners](/docs/reference/plugin-queries#partnerqueries).
 
 The queries first-party plugins answer for other plugins, by full name. `QueryRegistry` includes them, so they are
 typed wherever a query is asked.
@@ -972,7 +972,7 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 ## Plugin
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#plugin).
+Type. Explained in [Plugin API](/docs/reference/plugin-api#plugin).
 
 A system added to the engine, with its own state and the conditions, effects, commands, hooks and view that work on
 it. A game lists its plugins in `plugins` and never loads one later.
@@ -1071,7 +1071,7 @@ type Plugin<S = any, V = unknown> = {
 
 ## PluginArgs
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#pluginargs).
+Type. Explained in [Plugin API](/docs/reference/plugin-api#pluginargs).
 
 The arguments content passes to a plugin's condition, effect or command, as an object.
 
@@ -1084,7 +1084,7 @@ type PluginArgs = {
 
 ## PluginCalls
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#plugincalls-and-anycalls).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#plugincalls-and-anycalls).
 
 A plugin's calls as `defineCalls` declares them, with a `CallWriter` for each, by table, such as
 `calls.conditions.at({ location })`. Give it to `definePlugin` as `calls`, and derive the registries from it.
@@ -1107,7 +1107,7 @@ type PluginCalls<Id extends string = string, D extends CallShapes = CallShapes> 
 
 ## PluginCommand
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#plugincommand).
+Type. Explained in [Plugin API](/docs/reference/plugin-api#plugincommand).
 
 A command a plugin declares in its `commands`, with its refusal, its run and what it would apply.
 
@@ -1132,7 +1132,7 @@ type PluginCommand<S = any, A = PluginArgs> = {
 
 ## PluginContext
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#plugincontext).
+Type. Explained in [Plugin API](/docs/reference/plugin-api#plugincontext).
 
 The context every plugin function gets besides the game state. It adds the plugin's own state, typed, to the
 `CustomContext` a game's own functions get.
@@ -1172,7 +1172,7 @@ type PluginContext<S> = {
 
 ## PluginData
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#plugindata).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#plugindata).
 
 A plugin's `DataList`s as `defineData` declares them, by name. Give them to `definePlugin` as `data`.
 
@@ -1184,7 +1184,7 @@ Uses: [`DataList`](#datalist).
 
 ## PluginDef
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#plugindef).
+Type. Explained in [Plugin API](/docs/reference/plugin-api#plugindef).
 
 The plugin `definePlugin` takes. When it declares its `calls`, its conditions, effects, macros and commands must be
 exactly the declared ones, each given its arguments typed.
@@ -1273,7 +1273,7 @@ type PluginDef<S, V, C extends AnyCalls> = {
 
 ## PluginEntry
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#pluginentry).
+Type. Explained in [A plugin's content checks](/docs/reference/plugin-checks#pluginentry).
 
 One entry of a plugin's content in a pack, with an id and the fields the plugin reads.
 
@@ -1292,7 +1292,7 @@ It also takes any other key: `[key: string]: unknown`.
 
 ## PluginProblem
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#pluginproblem).
+Type. Explained in [A plugin's content checks](/docs/reference/plugin-checks#pluginproblem).
 
 A fault a plugin's `check` finds in its content, with the list and entry it is in.
 
@@ -1313,7 +1313,7 @@ type PluginProblem = {
 
 ## PluginReferences
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#pluginreferences-calltable-and-contentreferences).
+Type. Explained in [A plugin's content checks](/docs/reference/plugin-checks#pluginreferences-calltable-and-contentreferences).
 
 The references a plugin's calls and content make. The content checker resolves each against the game and reports
 what is missing, worded and placed as its own problems are.
@@ -1335,7 +1335,7 @@ type PluginReferences = {
 
 ## PluginSlice
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#pluginslice).
+Type. Explained in [Plugin migrations](/docs/reference/plugin-migrations#pluginslice).
 
 The state a save keeps for one plugin, with the version of its shape.
 
@@ -1371,7 +1371,7 @@ Uses: [`Game`](/docs/api/engine#game), [`Price`](/docs/api/engine#price).
 
 ## QueryAnswer
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#queryargs-and-queryanswer).
+Type. Explained in [Queries and partners](/docs/reference/plugin-queries#queryargs-and-queryanswer).
 
 The answer a query gives, as `QueryRegistry` declares it, or `unknown` for an undeclared name.
 
@@ -1384,7 +1384,7 @@ Uses: [`QueryRegistry`](/docs/api/engine#queryregistry).
 
 ## QueryArgs
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#queryargs-and-queryanswer).
+Type. Explained in [Queries and partners](/docs/reference/plugin-queries#queryargs-and-queryanswer).
 
 The arguments a query takes, as `QueryRegistry` declares them, or an optional object for an undeclared name.
 
@@ -1397,7 +1397,7 @@ Uses: [`QueryRegistry`](/docs/api/engine#queryregistry), [`PluginArgs`](#plugina
 
 ## RawCall
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#rawcall).
+Type. Explained in [Plugin migrations](/docs/reference/plugin-migrations#rawcall).
 
 A plugin call passed to a `ContentTools.calls` rewrite.
 
@@ -1418,7 +1418,7 @@ type RawCall = {
 
 ## RawCommand
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#rawcommand).
+Type. Explained in [Plugin migrations](/docs/reference/plugin-migrations#rawcommand).
 
 A command from a command log, in the shape of the engine or plugin version that wrote it.
 
@@ -1501,7 +1501,7 @@ Uses: [`Effect`](/docs/api/engine#effect), [`SceneMedia`](/docs/api/engine#scene
 
 ## Refusal
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#asked-and-refusal).
+Type. Explained in [Plugin API](/docs/reference/plugin-api#asked-and-refusal).
 
 A plugin guard's reason for refusing a command. A string refuses it as a lock does, and the button is disabled with
 that reason.
@@ -1534,7 +1534,7 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 ## RoomScene
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#roomscene).
+Type. Explained in [A plugin's view, scene and actions](/docs/reference/plugin-views#roomscene).
 
 The screen shown while no scene is open, from a plugin's `scene` provider.
 
@@ -1557,7 +1557,7 @@ type RoomScene = {
 
 ## SenderView
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#castcontact-and-senderview).
+Type. Explained in [Queries and partners](/docs/reference/plugin-queries#castcontact-and-senderview).
 
 The sender of a message or a post, as the cast's `cast/sender` query answers.
 
@@ -1607,7 +1607,7 @@ Uses: [`EntityRef`](/docs/api/engine#entityref).
 
 ## speakerOf
 
-Function. Explained in [Writing a plugin](/docs/reference/plugins#speakerof).
+Function. Explained in [A plugin's view, scene and actions](/docs/reference/plugin-views#speakerof).
 
 Returns the speaker a speaker id names, with their entity's name, picture and hints. Returns null when the id names
 no entity in the game.
@@ -1623,7 +1623,7 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 ## StatModifier
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#statmodifier).
+Type. Explained in [Plugin API](/docs/reference/plugin-api#statmodifier).
 
 A change to what one of the player's stats reads, from a plugin's `statModifiers`. The stat reads
 `(value + adds) × multipliers`, held to its range, with its adds summed and its multipliers multiplied together.
@@ -1662,7 +1662,7 @@ Uses: [`SceneBeat`](/docs/api/engine#scenebeat).
 
 ## TraitDef
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#traitdef).
+Type. Explained in [A plugin's view, scene and actions](/docs/reference/plugin-views#traitdef).
 
 A trait a plugin declares in its `traits`, a named piece of data entities carry that the plugin gives meaning. The
 game declares its own in `rules.traits`, with ids that have no `/`.
@@ -1691,7 +1691,7 @@ type TraitDef<K extends string = string, S = unknown> = {
 
 ## TraitEntityDef
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#traitentitydef).
+Type. Explained in [A plugin's view, scene and actions](/docs/reference/plugin-views#traitentitydef).
 
 The definition a `TraitKind`'s `define` takes, with an entity's fields and the trait's side by side. A field
 both have, such as a location's `ui`, goes to the trait.
@@ -1709,7 +1709,7 @@ type TraitEntityDef<K extends string> = {
 
 ## TraitKind
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#traitkind).
+Type. Explained in [A plugin's view, scene and actions](/docs/reference/plugin-views#traitkind).
 
 A kind of entity a plugin's trait makes, as `defineTraitKind` declares it, such as the places plugin's locations.
 
@@ -1750,7 +1750,7 @@ type TraitKind<K extends string> = {
 
 ## TraitKindSpec
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#traitkindspec).
+Type. Explained in [A plugin's view, scene and actions](/docs/reference/plugin-views#traitkindspec).
 
 Settings for `defineTraitKind`.
 
@@ -1787,7 +1787,7 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 ## TraitTools
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#traittools).
+Type. Explained in [A plugin's view, scene and actions](/docs/reference/plugin-views#traittools).
 
 The tools a trait's `check` and `references` get beside the data.
 
@@ -1846,7 +1846,7 @@ type TurnContext<S = any> = {
 
 ## WrittenAs
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#writtenas).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#writtenas).
 
 The value content writes for a call of an `ArgShape`. It is the arguments, `true` or `{}` for a call with none,
 and either for a call whose arguments may all be left out.

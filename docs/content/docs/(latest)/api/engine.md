@@ -871,7 +871,7 @@ Uses: [`KvValue`](#kvvalue).
 
 ## CommandCall
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#conditioncall-effectcall-and-commandcall).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#conditioncall-effectcall-and-commandcall).
 
 A plugin's or the game's command in the short form, type-checked against `CommandRegistry`.
 
@@ -938,7 +938,7 @@ Uses: [`Command`](#command), [`CommandCall`](#commandcall).
 
 ## CommandRegistry
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#conditionregistry-effectregistry-commandregistry-queryregistry-and-viewregistry).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#conditionregistry-effectregistry-commandregistry-queryregistry-and-viewregistry).
 
 The registry of commands plugins and the game add, by full name, with each one's arguments. It works as `ConditionRegistry` does.
 
@@ -990,7 +990,7 @@ Uses: [`KvValue`](#kvvalue), [`Range`](#range), [`Select`](#select), [`Condition
 
 ## ConditionCall
 
-Type. Explained in [Conditions](/docs/reference/conditions#conditioncall).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#conditioncall-effectcall-and-commandcall).
 
 A plugin's or the game's condition in the short form, type-checked against `ConditionRegistry`.
 
@@ -1003,7 +1003,7 @@ Uses: [`CallIn`](/docs/api/engine-plugin#callin), [`ConditionRegistry`](#conditi
 
 ## ConditionRegistry
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#conditionregistry-effectregistry-commandregistry-queryregistry-and-viewregistry).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#conditionregistry-effectregistry-commandregistry-queryregistry-and-viewregistry).
 
 The registry of conditions plugins and the game add, by full name, with each one's arguments, or `true` for none.
 A plugin augments it, and a call to a declared name is type-checked against it.
@@ -1392,7 +1392,7 @@ Uses: [`KvValue`](#kvvalue), [`Amount`](#amount), [`Dice`](#dice), [`CreateField
 
 ## EffectCall
 
-Type. Explained in [Effects](/docs/reference/effects#effectcall).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#conditioncall-effectcall-and-commandcall).
 
 A plugin's or the game's effect in the short form, type-checked against `EffectRegistry`.
 
@@ -1418,7 +1418,7 @@ Uses: [`Effect`](#effect).
 
 ## EffectRegistry
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#conditionregistry-effectregistry-commandregistry-queryregistry-and-viewregistry).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#conditionregistry-effectregistry-commandregistry-queryregistry-and-viewregistry).
 
 The registry of effects plugins and the game add, by full name, with each one's arguments. It works as `ConditionRegistry` does.
 
@@ -3759,7 +3759,7 @@ type PluginCall = {
 
 ## pluginQuery
 
-Function. Explained in [Writing a plugin](/docs/reference/plugins#pluginquery).
+Function. Explained in [Queries and partners](/docs/reference/plugin-queries#pluginquery).
 
 Returns a plugin's query by full name, ready to ask, or undefined when the game doesn't have it.
 
@@ -3970,7 +3970,7 @@ Uses: [`GameState`](#gamestate), [`Holder`](#holder).
 
 ## Query
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#query).
+Type. Explained in [Queries and partners](/docs/reference/plugin-queries#query).
 
 A function that asks a plugin or the game a query by full name. It returns undefined when the game has no such query.
 
@@ -3986,7 +3986,7 @@ Uses: [`QueryRegistry`](#queryregistry), [`QueryArgs`](/docs/api/engine-plugin#q
 
 ## QueryRegistry
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#conditionregistry-effectregistry-commandregistry-queryregistry-and-viewregistry).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#conditionregistry-effectregistry-commandregistry-queryregistry-and-viewregistry).
 
 The registry of queries plugins and the game answer, by full name, each typed as a function from its arguments to
 its answer (`'loyalty/stampsLeft': () => number`). `context.query` and `pluginQuery` read it.
@@ -4049,7 +4049,7 @@ type Range = {
 
 ## RawPack
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#rawpack).
+Type. Explained in [Plugin migrations](/docs/reference/plugin-migrations#rawpack).
 
 A pack as it arrived, in the shape of the schema it records, which may be older than `SCHEMA`.
 
@@ -6032,7 +6032,7 @@ type ViewOptions = {
 
 ## ViewRegistry
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#conditionregistry-effectregistry-commandregistry-queryregistry-and-viewregistry).
+Type. Explained in [Declaring a plugin's calls](/docs/reference/plugin-calls#conditionregistry-effectregistry-commandregistry-queryregistry-and-viewregistry).
 
 The registry of each plugin's view by plugin id (`shop: ShopView`), which types `view.plugins`. The game's own
 `rules.view` is under `game`.
@@ -6049,7 +6049,7 @@ Plugins add fields of their own to it, which their pages list.
 
 ## ViewsIn
 
-Type. Explained in [Writing a plugin](/docs/reference/plugins#viewsin).
+Type. Explained in [A plugin's view, scene and actions](/docs/reference/plugin-views#viewsin).
 
 The plugins' views by plugin id, in `view.plugins`. Each plugin that declares its view in `ViewRegistry` is typed.
 

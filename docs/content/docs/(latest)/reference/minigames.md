@@ -171,8 +171,6 @@ type MinigameTransition = {
   to?: MinigameTarget[]
   effects?: EffectRef[]
 }
-
-type MinigameTarget = string | { state: string; weight?: number }
 ```
 
 | Field | What it does |
@@ -182,6 +180,14 @@ type MinigameTarget = string | { state: string; weight?: number }
 | `effects` | What it does before it moves. Any [effect](/docs/reference/effects), or a call to a plugin's or the game's own, can go here, including a `turn`. |
 
 The state from `to` is drawn before the effects run, so they can't change the draw. If the effects end the minigame or start one, the transition goes no further.
+
+### MinigameTarget
+
+Where a minigame state's input goes: a state by name, or one drawn among several by `weight`, as in the `to` field above.
+
+```ts shape
+type MinigameTarget = string | { state: string; weight?: number }
+```
 
 ## MinigameSceneFields
 
@@ -233,12 +239,6 @@ type MinigameView = {
   kv: Record<string, number>
   keys: Record<string, string[]>
 }
-
-type MinigameInput = {
-  id: string    // the input's name: 'up'
-  label: string // its words: 'Up'
-  command: { type: 'minigame'; input: string }
-}
 ```
 
 What [`view.minigame`](/docs/reference/view#minigame) holds while one runs.
@@ -256,6 +256,24 @@ What [`view.minigame`](/docs/reference/view#minigame) holds while one runs.
 An input's `label` comes from the first live `on` entry for it in the running state that has a `label`. Without one it's the game's `minigame.<input>` [string](/docs/reference/strings#buttons-and-labels). The engine has `Up`, `Down`, `Left`, `Right` and `Space` for `up`, `down`, `left`, `right` and `space`. Any other input with no string is its own name with a capital, so name yours in `strings`: `{ 'minigame.jump': 'Jump' }`.
 
 A UI sends ticks while `timeLeft` isn't `null`, and also while [`view.timers`](/docs/reference/view#timers) isn't empty. A tick with nothing counting down is refused with `Nothing is counting down.`
+
+### MinigameInput
+
+One live input of a running minigame, as `view.minigame.inputs` lists it, with the command that sends it.
+
+```ts shape
+type MinigameInput = {
+  id: string
+  label: string
+  command: { type: 'minigame'; input: string }
+}
+```
+
+| Field | Type | What it holds |
+|---|---|---|
+| `id` | `string` | The input's name, such as `'up'`. |
+| `label` | `string` | Its words, such as `'Up'`. |
+| `command` | `{ type: 'minigame'; input: string }` | The command a press sends. |
 
 ## Drawing it
 

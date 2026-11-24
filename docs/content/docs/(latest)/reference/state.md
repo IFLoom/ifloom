@@ -94,14 +94,15 @@ Each choice the player has picked, keyed `scene#choice`, as a [`Times`](#times):
 type Times = { n: number; first: number; last: number }
 ```
 
-How many times something happened (`n`), and the [turn](#turn) of the first time and the last. What [`seen`](#seen) keeps for each scene and [`chosen`](#chosen) for each choice. Save version 18 made each one a record, from the counts and the four records of turns beside them that older saves kept (`seenOn`, `lastSeenOn`, `chosenOn` and `lastChosenOn`).
+How many times something happened (`n`), and the [turn](#turn) of the first time and the last. What [`seen`](#seen) keeps for each scene and [`chosen`](#chosen) for each choice.
 
 ### stats
 
 ```ts shape
-type StatKey = string
 type Stats = Record<StatKey, number>
 ```
+
+`StatKey` is a stat's id, a plain `string` (see [StatKey](#statkey)).
 
 One number per stat the game [declares](/docs/reference/stats), by id. Every effect, cost and payment that changes a stat keeps it within the stat's declared range. Every number the player has lives here. The engine has no `money` or `energy` of its own, so a game that wants coins or energy declares them as stats. A new game starts each at its `start`, and a game that declares no stats has `{}`.
 
@@ -155,26 +156,16 @@ The declared [entities](/docs/reference/entities) that were [removed](/docs/refe
 
 ### storylines
 
-```ts shape
-type StorylineState = {
-  closedUntil: number | null
-  kv: Record<string, KvValue>
-}
+```ts fragment
+storylines: Record<string, StorylineState>
 ```
 
-One entry per storyline declared in `game.storylines`.
-
-| Field | What it holds |
-|---|---|
-| `closedUntil` | A [turn](#turn). While `turn` is below this, the storyline is closed, and the [cast](/docs/plugins/cast) won't let the player talk to or call a character who belongs to it. `null` means open. Set by [`closeStoryline`](/docs/reference/effects#closestoryline). |
-| `kv` | The storyline's own kv store. The [`kv` effect](/docs/reference/effects#whose-key-it-is) with `of: 'storyline:<id>'` sets its keys, and the [`kv` condition](/docs/reference/conditions#kv) with the same `of` reads them. |
-
-Reading a storyline that isn't in the save gives an empty one (open, nothing set), so an undeclared id doesn't crash. A storyline doesn't keep a number for how well the player is liked. A game keeps that as a [stat](/docs/reference/stats#entity-stats) on the cast's characters (see [Storylines](/docs/reference/storylines)).
+One [`StorylineState`](/docs/reference/storylines#storylinestate) per storyline declared in `game.storylines`: whether it's closed, until which turn, and its own kv store. Reading a storyline that isn't in the save gives an empty one (open, nothing set), so an undeclared id doesn't crash. A storyline doesn't keep a number for how well the player is liked. A game keeps that as a [stat](/docs/reference/stats#entity-stats) on the cast's characters (see [Storylines](/docs/reference/storylines)).
 
 ### kv
 
-```ts shape
-type KvValue = boolean | number | string
+```ts fragment
+kv: Record<string, KvValue>
 ```
 
 The kv store: keys with a true/false, number or text value, such as `metAva: true`, `visits: 3` or `playerName: 'Robin'`. It's where a game keeps anything that isn't a stat or a thing. Keys need no declaring. A key nobody has set counts as 0: `{ kv: 'visits', is: 0 }` and `{ kv: 'visits', lt: 1 }` hold for it, and a bare `{ kv: 'visits' }` doesn't.
@@ -183,9 +174,7 @@ A new game starts with the content's starting `kv`, with the `kv` given to [`sta
 
 #### phase
 
-The stretch of the game the player is in, such as `'arrival'`, `'first-day'` or `'open'`, is the kv key `phase`. Your game names the stretches and the engine gives the names no meaning. Give a new game its first one in the content's starting `kv` (`kv: { phase: 'arrival' }`), set it with `{ kv: 'phase', to: 'open' }` and read it with `{ kv: 'phase', is: ['arrival'] }`, as [locks](/docs/reference/locks) often do. Save version 19 moved a save's old `phase` field here.
-
-Save version 12 renamed it from `flags`, and an older save's flags load here.
+The stretch of the game the player is in, such as `'arrival'`, `'first-day'` or `'open'`, is the kv key `phase`. Your game names the stretches and the engine gives the names no meaning. Give a new game its first one in the content's starting `kv` (`kv: { phase: 'arrival' }`), set it with `{ kv: 'phase', to: 'open' }` and read it with `{ kv: 'phase', is: ['arrival'] }`, as [locks](/docs/reference/locks) often do.
 
 The engine writes some keys here itself, so don't use these prefixes for your own:
 
@@ -211,11 +200,11 @@ The [turn](#turn) each [trigger](/docs/reference/triggers) last fired, by trigge
 
 ### plugins
 
-```ts shape
-type PluginSlice = { version: number; state: unknown }
+```ts fragment
+plugins: Record<string, PluginSlice>
 ```
 
-Each [plugin](/docs/reference/plugins)'s own state, by plugin id, with the version of its shape, as in `{ quests: { version: 1, state: { ... } } }`. [`startingState`](/docs/reference/commands#startingstate) fills it from each plugin's `start`. A plugin with no state has no entry.
+Each [plugin](/docs/reference/plugins)'s own state, by plugin id, as a [`PluginSlice`](/docs/reference/plugins#pluginslice): the plugin's state with the version of its shape. [`startingState`](/docs/reference/commands#startingstate) fills it from each plugin's `start`. A plugin with no state has no entry.
 
 Read and write it through the plugin, not by hand. Inside the plugin, use its context's `slice` and `set`. Outside it, use [`definePlugin`](/docs/reference/plugins#defineplugin)'s `read` and `write`. An older save's entry is carried forward when the save [loads](/docs/reference/plugins#when-a-save-loads), and the entry of a plugin the game no longer has is kept untouched.
 
@@ -312,6 +301,10 @@ const done = await runner.profile?.get<{ at: number }>('core:finished')
 if (done) await runner.newGame({ carry: runner.state })
 ```
 
+### CarryOver
+
+What the content's `carryOver` lists to copy from a finished game into a New Game+.
+
 ```ts shape
 type CarryOver = {
   stats?: string[]
@@ -332,45 +325,27 @@ A thing the player made in play, such as a photo, comes with its record, so it's
 
 The [content checker](/docs/reference/checks) reports a stat in `carryOver` that the game doesn't declare, a stat that belongs to a kind rather than the player, and a thing in `held` that isn't written `kind:id` or whose kind the game doesn't declare.
 
-## Constants
+## Types
 
-### SAVE_VERSION
+### KvValue
 
-```ts
-const SAVE_VERSION = 24
+What a key of a [kv store](#kv) holds, and what a `play` [setting](#settings) holds.
+
+```ts shape
+type KvValue = boolean | number | string
 ```
 
-The save format this engine writes. [`loadState`](/docs/reference/saves#loadstate) carries older ones forward. The version goes up only when a field older saves already have changes shape. A new field doesn't bump it: a save that lacks the field gets its load default when it loads, as [`minigame`](#minigame) does. See [SAVE_VERSION](/docs/reference/saves#save_version) for the rule.
+### StatKey
 
-The versions so far:
+A stat's id, as [`stats`](#stats) is keyed by it. It's a plain string.
 
-| Version | Change |
-|---|---|
-| 2 | Moved the player's name into `flags` and added `chosen`. |
-| 3 | Added [`turn`](#turn) and dated everything in turns instead of days. |
-| 4 | Added [`entities`](#entities) and [`created`](#created). |
-| 5 | Moved the clock, `time`, into the [calendar plugin](/docs/plugins/calendar)'s state. |
-| 6 | Moved `locationId` into the [places plugin](/docs/plugins/places#placesstate)'s state, as `{ at }`. |
-| 7 | Added [`removed`](#removed). |
-| 8 | Took `standing` and `rapport` off each [storyline](#storylines). |
-| 9 | Added [`settings`](#settings). |
-| 10 | Added [`audio`](#audio). |
-| 11 | Added [`media`](#media). |
-| 12 | Renamed `flags` to [`kv`](#kv), on the state, on each storyline and on each entity. |
-| 13 | Moved the timed-effects plugin's state from `plugins.effects` to `plugins.statuses`, its new name. |
-| 14 | Keyed [`chosen`](#chosen) by `scene#choice`. |
-| 15 | Made each record in [`entities`](#entities) keep only what play changed. |
-| 16 | Took out `items` and `collections`: the player's items are counts in [`held`](#held), and collection entries are entities made in play that the player holds. |
-| 17 | Took out `transition`, which a `transition` effect set. How a screen comes in is the UI's now, from [presentation hints](/docs/reference/ui-hints). |
-| 18 | Made [`seen`](#seen) and [`chosen`](#chosen) one [`Times`](#times) record per id, in place of `seenOn`, `lastSeenOn`, `chosenOn` and `lastChosenOn`, and dropped the `turn:` kv keys that capped a choice's `once`. |
-| 19 | Moved `phase` into the [kv store](#kv), as the key `phase`. |
-| 20 | Renamed a running [minigame](#minigame)'s `vars` to `kv`. |
-| 21 | Made a [notice](#notices)'s `text` its words, not a prose key. |
-| 22 | Renamed what an entity made in play was given as `desc` to `description`. |
-| 23 | Kept a [pool pick](/docs/reference/media#remembered-picks) for a layered picture's layer under the slot `picture:<index>`, not `stage:<index>`. |
-| 24 | Added [`changes`](#changes), the stats the last command moved. Its step gives an older save an empty list. |
+```ts shape
+type StatKey = string
+```
 
-The versions that only added a field (4, 7, 9, 10 and 11) are from before the rule above. Version 24 also only added one, with a step as well as a load default. A field added now usually gets a load default and no new version.
+## SAVE_VERSION
+
+`state.version` is always [`SAVE_VERSION`](/docs/reference/saves#save_version), the save format this engine writes. [`loadState`](/docs/reference/saves#loadstate) carries older ones forward, and [The engine's steps](/docs/reference/saves#the-engines-steps) lists what each version changed.
 
 ## See it in an example
 

@@ -107,16 +107,29 @@ It lists the fields of every storyline, trigger, scene, minigame, timer, action,
 
 ```ts shape
 type WordField = {
-  key: string    // its key in a pack's `words` table: 'action.wait.label'
-  text: string   // the words it has, as written, tokens and markup included
-  where: string  // where it is, as a problem names it: 'scene cafe.counter', 'quests coffee'
+  key: string
+  text: string
+  where: string
 }
 ```
+
+| Field | Type | What it holds |
+|---|---|---|
+| `key` | `string` | Its key in a pack's `words` table, such as `'action.wait.label'`. |
+| `text` | `string` | The words it has, as written, tokens and markup included. |
+| `where` | `string` | Where it is, as a problem names it: `'scene cafe.counter'`, `'quests coffee'`. |
 
 ## WordShape
 
 ```ts shape
 type WordShape = { readonly [field: string]: WordPart }
+```
+
+### WordPart
+
+What one field of a `WordShape` says its field holds, as the table below lists.
+
+```ts shape
 type WordPart = true | 'blocks' | 'effects' | 'button' | WordShape | readonly [WordPart]
 ```
 

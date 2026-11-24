@@ -184,14 +184,23 @@ How many entries the backlog keeps. The oldest drop off first. The default is `2
 
 ```ts shape
 type BacklogEntry = {
-  turn: number          // the turn it was shown in, from 0
-  when: string | null   // view.when on that screen
+  turn: number
+  when: string | null
   sceneId: string
   title: string
   beats: SceneBeat[]
-  chose?: string        // the label of the choice the player made in this scene
+  chose?: string
 }
 ```
+
+| Field | Type | Meaning |
+|---|---|---|
+| `turn` | `number` | The turn it was shown in, from 0. |
+| `when` | `string \| null` | [`view.when`](/docs/reference/view#the-clock-and-the-player) on that screen. |
+| `sceneId` | `string` | The scene shown. |
+| `title` | `string` | The scene's title as shown. |
+| `beats` | `SceneBeat[]` | What the player read, as the [view's beats](/docs/reference/prose#scenebeat). |
+| `chose` | `string`, optional | The label of the choice the player made in this scene. |
 
 One scene as the player saw it, for a "what did she just say?" screen. `beats` are the [view's beats](/docs/reference/prose#scenebeat), already parsed. `chose` is the label of the choice the player made in this scene, not the one that led to it. It's missing while the scene is still waiting for a choice, or when the player left it some other way.
 
@@ -262,14 +271,41 @@ The engine's own [`apply`](/docs/reference/commands#apply) answers in the same s
 
 ## The runner's members
 
-`Runner` is an interface. Every member is listed here.
+### Runner
+
+What [`createRunner`](#createrunner) and [`browserRunner`](/docs/browser#browserrunner) return. `Runner` is an interface, and these are all its members:
+
+```ts shape
+interface Runner {
+  readonly game: Game
+  readonly state: GameState
+  view(): View
+  apply(ref: CommandRef): Result<GameState>
+  undo(): boolean
+  redo(): boolean
+  log(): CommandLog
+  played(): number
+  readonly saves: Saves | undefined
+  readonly offers: { undo: boolean; backlog: boolean }
+  save(slot: string, name?: string): Promise<Result<SaveMeta>>
+  restore(loaded: LoadedSave): void
+  load(slot: string): Promise<Result<LoadedSave>>
+  settled(): Promise<void>
+  readonly profile: Profile | undefined
+  setSetting(id: string, to: KvValue): Result<KvValue>
+  newGame(start?: StartOptions): Promise<GameState>
+  snapshot(): RunnerSnapshot
+  subscribe(listener: (snapshot: RunnerSnapshot) => void): () => void
+  setHelper<K extends string>(id: K, value: (K extends keyof HelperRegistry ? HelperRegistry[K] : unknown) | undefined): void
+}
+```
 
 | Member | What it does |
 |---|---|
 | `game` | The game it plays. |
 | `state` | The current [`GameState`](/docs/reference/state). It's read-only, so change it through `apply`. |
 | `view()` | [`view(state, game)`](/docs/reference/view) for the current state, built once per state, with the plugins' views shown the profile. See [The view cache](#the-view-cache). |
-| `apply(command)` | Runs a command. Returns a [`Result`](#result) with the next state as its `value`, or the `reason` it was refused. A refused command changes nothing. It adds no history or log entry and calls no listeners. A [`newGame`](/docs/reference/commands#newgame) command, on its own or sent by a choice, starts a new game as [`newGame()`](#newgame) does (see [Starting over from content](#starting-over-from-content)). |
+| `apply(ref)` | Runs a command, given as a [`Command`](/docs/reference/commands) or a plugin's call written in short form (a [`CommandRef`](/docs/reference/custom#commandref)). Returns a [`Result`](#result) with the next state as its `value`, or the `reason` it was refused. A refused command changes nothing. It adds no history or log entry and calls no listeners. A [`newGame`](/docs/reference/commands#newgame) command, on its own or sent by a choice, starts a new game as [`newGame()`](#newgame) does (see [Starting over from content](#starting-over-from-content)). |
 | `undo()` / `redo()` | Steps back or forward one command. Returns `false` when there's nothing to do. A new command after an undo clears redo. |
 | `snapshot()` | The [`RunnerSnapshot`](#runnersnapshot): everything a UI draws, in one value. The same object until any part of it changes. |
 | `log()` | The [`CommandLog`](#commandlog): the start state and every command since. Always kept. |
@@ -282,7 +318,7 @@ The engine's own [`apply`](/docs/reference/commands#apply) answers in the same s
 | `settled()` | Resolves when every autosave and profile write so far has been written, or has failed and been reported, the profile has been read for the settings and the plugins' views, and the saves have been listed. |
 | `profile` | The [`Profile`](/docs/reference/profile) the runner was made with, or `undefined`. |
 | `setSetting(id, to)` | Changes a setting of either kind. See [below](#setsetting). |
-| `newGame(options?)` | Starts a new game in place. See [below](#newgame). |
+| `newGame(start?)` | Starts a new game in place, with [`StartOptions`](/docs/reference/commands#startoptions). See [below](#newgame). |
 | `subscribe(listener)` | Calls `listener(snapshot)` with each new [snapshot](#runnersnapshot): after every change of state (a command, an undo, a redo, a load or a new game), and with the same state when a `ui` setting changes, when what the plugins' views show of the profile changes, when the saves list changes and when a helper reports. Returns a function that stops it. |
 | `setHelper(id, value)` | Puts what a helper reports in the snapshot's `helpers`. See [below](#sethelper). |
 
@@ -301,7 +337,7 @@ if (!loaded.ok) alert(loaded.reason)
 else if (loaded.value.missingPacks.length) alert(`Made with mods you don't have: ${loaded.value.missingPacks.join(', ')}`)
 ```
 
-**Gotcha:** a `load` starts the command log again from the loaded state. A bug report should carry the log together with the save it started from, or only `log()`, whose `start` is that state.
+**Gotcha.** A `load` starts the command log again from the loaded state. A bug report should carry the log together with the save it started from, or only `log()`, whose `start` is that state.
 
 ### The view cache
 
@@ -362,10 +398,7 @@ if (!result.ok) alert(result.reason)
 ### setHelper
 
 ```ts fragment
-runner.setHelper(id: string, value: unknown): void
-
-interface HelperRegistry {}
-type HelpersIn = { readonly [K in keyof HelperRegistry]?: HelperRegistry[K] } & Readonly<Record<string, unknown>>
+runner.setHelper<K extends string>(id: K, value: (K extends keyof HelperRegistry ? HelperRegistry[K] : unknown) | undefined): void
 ```
 
 Puts what a helper started beside the runner reports in the snapshot's `helpers`, under its id, and tells listeners. `undefined` takes it out. Setting the same value again does nothing. A helper is code that works on the runner from outside it and has something for the player to see, such as the unlocks plugin's [`startUnlocks`](/docs/plugins/unlocks#startunlocks), which reports whether a code is being checked as `helpers.unlocks`. So every UI reads it the same way, from the snapshot.
@@ -382,12 +415,26 @@ declare module '@ifloom/engine' {
 }
 ```
 
-`HelpersIn` is the snapshot's `helpers`: typed for each id in the registry, and `unknown` for any other.
+#### HelperRegistry
+
+The registry a helper adds its id to, with the type of what it reports. Empty in the engine.
+
+```ts shape
+interface HelperRegistry {}
+```
+
+#### HelpersIn
+
+The snapshot's `helpers`: typed for each id in the registry, and `unknown` for any other.
+
+```ts shape
+type HelpersIn = { readonly [K in keyof HelperRegistry]?: HelperRegistry[K] } & Readonly<Record<string, unknown>>
+```
 
 ### newGame
 
 ```ts fragment
-runner.newGame(options?: StartOptions): Promise<GameState>
+runner.newGame(start?: StartOptions): Promise<GameState>
 ```
 
 Starts a new game in place, with a fresh history, backlog and log and no time played, and tells listeners. It takes the same options as [`startingState`](/docs/reference/commands#startingstate). If you leave out `settings`, it uses the player's: the profile's, or without a profile the ones in the game in play. If you leave out `seed`, it picks a random one.

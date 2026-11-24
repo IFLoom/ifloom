@@ -42,8 +42,6 @@ type StatDef = {
   round?: StatRound
   ui?: Ui<StatUi>
 }
-
-type StatRound = 'none' | 'floor' | 'round' | 'ceil'
 ```
 
 | Field | Default | What it does |
@@ -70,6 +68,14 @@ type StatRound = 'none' | 'floor' | 'round' | 'ceil'
 - Declaration order is display order. `view().stats` lists listed, visible stats in the order you declared them, and a scene choice's price lists its stats in that order too.
 - `spendable` changes what's shown, not what's allowed. Any stat can be in an action's `cost`, and the action's price lists it either way.
 - An id is unique across the whole game, counting the player's stats and every kind's together. One `skill` can't be both the player's and the staff's.
+
+### StatRound
+
+How a stat's value is rounded when it changes, the `round` field above: not at all, down, to the nearest or up.
+
+```ts shape
+type StatRound = 'none' | 'floor' | 'round' | 'ceil'
+```
 
 ### Rounding
 

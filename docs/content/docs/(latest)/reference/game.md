@@ -66,8 +66,8 @@ type Game = {
 | `rules` | The game's own code: its hooks, the functions content calls as `game/…`, its commands, `saveName` and `migrations`. See [Rules and hooks](/docs/reference/rules). |
 | `scenes` | Every scene, as [data scenes](/docs/reference/scenes#datascene). |
 | `introScene` | The scene on screen on the first frame. It counts as seen once, at turn 0, before any command runs. Leave it out and the game opens on its idle screen (see [below](#game)) with nothing seen. |
-| `storylines` | The storylines. None if left out. See [`StorylineDef`](#storylinedef). |
-| `prose` | The words data scenes draw on. See [`ProseStore`](#prosestore). [`loadGame`](/docs/reference/loader#loadgame) sets it. If you build a game by hand, give it an object with these functions. |
+| `storylines` | The storylines. None if left out. See [`StorylineDef`](/docs/reference/storylines#storylinedef). |
+| `prose` | The words data scenes draw on. See [`ProseStore`](/docs/reference/prose#prosestore). [`loadGame`](/docs/reference/loader#loadgame) sets it. If you build a game by hand, give it an object with these functions. |
 | `strings` | Your game's wording for what the engine and its plugins say to the player, by key: `{ finishFirst: 'Not yet.', 'quests/notDoing': 'Not on your list.' }`. Any key you leave out keeps its English. `loadGame` sets it from the content's and the packs' `strings`, with later ones winning. See [Strings](/docs/reference/strings). |
 | `stats` | Every stat the game keeps. The engine has none of its own. See [Stats](/docs/reference/stats). |
 | `kv` | The [kv store](/docs/reference/state#kv) a new game starts with, such as `{ phase: 'arrival', lives: 3 }`. [`startingState`](/docs/reference/commands#startingstate)'s `kv` goes over it. |
@@ -86,7 +86,7 @@ type Game = {
 | `changes` | The stats whose changes [`view.changes`](/docs/reference/changes) lists, as `{ stats }`, from every file and pack together. Left out, nothing is tracked. See [changes](/docs/reference/changes#changes). |
 | `saveable` | When saving is refused, and why. Saving is always allowed if left out. See [`saveable`](#saveable). |
 | `finished` | A [condition](/docs/reference/conditions) that says the game is finished. The runner records the first time it holds in the [profile](/docs/reference/profile), so a title screen can offer New Game+. See [New Game+](/docs/reference/state#new-game). |
-| `carryOver` | What a New Game+ takes from the game before: `{ stats?, kv?, held? }`, lists of stat ids, kv keys and the things the player holds, and `held` can be `'all'`. See [New Game+](/docs/reference/state#new-game). |
+| `carryOver` | What a New Game+ takes from the game before: a [`CarryOver`](/docs/reference/state#carryover): lists of stat ids, kv keys and the things the player holds, and `held` can be `'all'`. See [New Game+](/docs/reference/state#new-game). |
 | `audio` | The game's sounds: its tracks and playlists, its channels, its volume and mute settings and what plays by default. A [`GameAudio`](/docs/reference/audio#gameaudio). `loadGame` merges the content's and every pack's by id. Leave it out and the game is silent. See [Audio](/docs/reference/audio). |
 | `media` | The game's pools of pictures and videos, which content picks from by tags: `{ pools: { door: [{ src: 'door/red-night.jpg', tags: ['red', 'night'] }] } }`. A [`GameMedia`](/docs/reference/media#gamemedia). `loadGame` merges the content's and every pack's pools by id. Leave it out and there are no pools. See [Media](/docs/reference/media). |
 | `ui` | [Presentation hints](/docs/reference/ui-hints) for the whole game, such as the React UI's default [`transition`](/docs/react/hints#transition) for every screen. The engine carries them as written and gives them no meaning. A pack's hints replace the content's key by key. |
@@ -149,38 +149,6 @@ const { game, problems } = loadGame([movingDay], {
 ```
 
 The town's locations and its people are entities, in `entities`, written with the places plugin's `places.location()` and the cast's `cast.person()`. `loadGame` fills in `game.entities` from the content. To build a game from several files, with mods layered on top, see [Content, packs and loading](/docs/reference/loader).
-
-## StorylineDef
-
-```ts shape
-type StorylineDef = { id: string; name: string }
-```
-
-A storyline is a thread of the story. It's followed by its kv store, and can be closed for a while if need be. Each declared storyline gets a [`StorylineState`](/docs/reference/state#storylines) in a new game, and an older save that lacks one gets an empty one the next time a command runs on it. A [cast](/docs/plugins/cast#person-1) character can belong to one through their `storyline` field, but a storyline doesn't need a character. See [Storylines](/docs/reference/storylines).
-
-```ts
-storylines: [
-  { id: 'ava', name: 'Ava' },
-  { id: 'sam', name: 'Sam' },
-]
-```
-
-The view draws no storylines of its own. A game or a plugin shows them, as the [quests](/docs/plugins/quests) plugin does when it groups quests by storyline.
-
-## ProseStore
-
-```ts shape
-type ProseStore = {
-  line: (key: string, state?: GameState) => string | undefined
-  variants: (name: string) => string[]
-  weight?: (name: string, key: string) => number
-  keys?: () => string[]
-}
-```
-
-The words a data scene draws on. `line` gives the text for a key, filled in for this save. `variants` gives the member keys of a named set of variants, in order. `weight` gives a member's [weight](/docs/reference/prose#variantmember) in a set, 1 if it has none, and every member weighs 1 if it's left out. `keys` lists every key the store has words for, so the [content checker](/docs/reference/checks) can read the markup in all of them. Without it, the checker reads only the keys content names. Data scenes read it as they're [drawn](/docs/reference/scenes#running-data-scenes). See [Prose and markup](/docs/reference/prose).
-
-**Gotcha.** A game with data scenes and no `prose` renders them empty, because every line counts as unwritten. [`loadGame`](/docs/reference/loader#loadgame) sets it. A game built by hand sets it itself.
 
 ## Ids and separators
 

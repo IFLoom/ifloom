@@ -12,10 +12,6 @@ import { apply, startingState, type Command } from '@ifloom/engine'
 
 ```ts shape
 function apply(state: GameState | null, game: Game, command: CommandRef): Applied
-
-type Applied =
-  | { ok: true; state: GameState; newGame?: true }
-  | { ok: false; state: GameState; reason: string }
 ```
 
 Runs a command and says whether it took. On a refusal, `ok` is `false`, `state` is the state you passed in, and `reason` says why. It's the shape of a [`Result`](/docs/reference/runner#result), with the state on both sides. The runner's `apply` gives a plain `Result` with the new state as its `value`.
@@ -32,6 +28,16 @@ const next = out.state                // the new state, or the same one when ref
 Use `apply` wherever the answer matters, because a refused command and one that changed nothing leave the same state behind. It takes a [`CommandRef`](/docs/reference/custom#commandref), so a plugin's command in short works too.
 
 `refused` is always a sentence you can show the player. It's the same line [`whyNot`](/docs/reference/actions#whynot) gives, and the view greys the button out with it. The lines quoted on this page are the engine's English from the [strings table](/docs/reference/strings#refusals), and a game, a pack or a translation can reword them (`finishFirst`, `noSuchScene` and so on). Lines your game wrote, such as a lock's or a `blocked` entry's `reason`, are printed as written.
+
+### Applied
+
+What [`apply`](#apply) answers: whether the command took, with the state on both sides, and `newGame: true` when it asked for a new game.
+
+```ts shape
+type Applied =
+  | { ok: true; state: GameState; newGame?: true }
+  | { ok: false; state: GameState; reason: string }
+```
 
 ### What happens, in order
 
@@ -69,13 +75,6 @@ Locks are checked before the game's own handler, so a lock can stop a command th
 
 ```ts shape
 function startingState(game: Game, options?: StartOptions): GameState
-
-type StartOptions = {
-  seed?: number
-  kv?: Record<string, KvValue>
-  settings?: Record<string, unknown>
-  carry?: GameState
-}
 ```
 
 Returns a new game at turn 0, with the content's `introScene` open and counted as seen. Every other state, such as a save, comes in through [`loadState`](/docs/reference/saves#loadstate). `apply` expects a state from one of the two and doesn't check its shape itself. A game without `introScene` starts with no scene open and nothing seen, on its [idle screen](/docs/reference/view#the-idle-screen).
@@ -111,6 +110,19 @@ let fixed = startingState(game)
 **Gotcha.** If you leave the seed out, it's the same for every new game of the same game, so every playthrough draws the same [variants](/docs/reference/random) and [rolls](/docs/reference/rolls). That's what a test wants, but a UI should pass a fresh seed for each new game.
 
 The engine keeps no player name. A name is a key in the kv store like any other, so pass it in `kv` or ask for it with an [input](/docs/reference/inputs). Prose reads it back with `{{playerName}}`, and [`SaveMeta.playerName`](/docs/reference/saves#savemeta) shows whatever the game's [`rules.saveName`](/docs/reference/rules#savename) makes of it.
+
+### StartOptions
+
+The options [`startingState`](#startingstate) and [`runner.newGame`](/docs/reference/runner#newgame) take, each described in the table above.
+
+```ts shape
+type StartOptions = {
+  seed?: number
+  kv?: Record<string, KvValue>
+  settings?: Record<string, unknown>
+  carry?: GameState
+}
+```
 
 ## Command
 

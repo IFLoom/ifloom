@@ -102,6 +102,10 @@ export const tasks = definePlugin<null>({
 
 ## A scene's panel
 
+### ScenePanel
+
+A data scene's `panel`: the panel's name and what it's opened with.
+
 ```ts shape
 type ScenePanel = { panel: string; with?: Record<string, unknown> }
 ```

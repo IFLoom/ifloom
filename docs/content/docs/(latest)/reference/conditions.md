@@ -474,10 +474,16 @@ With no condition, it returns `{ holds: true, why: 'no condition' }`.
 ```ts shape
 type Explanation = {
   holds: boolean
-  why: string               // one line: what this part checked and what it found
-  parts?: Explanation[]     // the parts of an all, any or not
+  why: string
+  parts?: Explanation[]
 }
 ```
+
+| Field | Type | Meaning |
+|---|---|---|
+| `holds` | `boolean` | Whether this part holds. |
+| `why` | `string` | One line saying what this part checked and what it found. |
+| `parts` | `Explanation[]`, optional | The parts of an `all`, `any` or `not`. |
 
 ### explainText
 

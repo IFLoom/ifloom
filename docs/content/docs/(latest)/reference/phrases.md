@@ -34,9 +34,6 @@ With the suit on, the player reads "The mirror says you look sharp." Otherwise i
 
 ```ts shape
 type Phrases = { [name: string]: Phrase | Phrases }
-type Phrase = string | PhraseRow[] | PhraseWithArgs
-type PhraseRow = { when?: Condition; text: string }
-type PhraseWithArgs = { args: string[]; rows: PhraseRow[] }
 ```
 
 The `phrases` key of [`Content`](/docs/reference/loader#content) and of a [`Pack`](/docs/reference/loader#pack).
@@ -45,6 +42,16 @@ The `phrases` key of [`Content`](/docs/reference/loader#content) and of a [`Pack
 - **A plain string** is a phrase with one row and no condition, for words you might change later or a mod might replace.
 - **An object with `args` and `rows`** is a phrase that takes arguments. See [Arguments](#arguments).
 - **Any other object** is a group. Its keys are phrases, or more groups, as deep as you like.
+
+### Phrase, PhraseRow and PhraseWithArgs
+
+One phrase as content writes it, one of its rows, and a phrase that takes arguments.
+
+```ts shape
+type Phrase = string | PhraseRow[] | PhraseWithArgs
+type PhraseRow = { when?: Condition; text: string }
+type PhraseWithArgs = { args: string[]; rows: PhraseRow[] }
+```
 
 A phrase's name is its path through the groups, joined with `.`: `outfit.verdict` above. Print it as `{{outfit.verdict}}`.
 

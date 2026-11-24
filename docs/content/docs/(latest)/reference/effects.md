@@ -222,7 +222,11 @@ The engine keeps no time of day, so this effect is how a turn ends, whether a tu
 { create: 'food', like: 'food:cake', with: { stats: { fresh: 3 } }, at: 'you' }
 ```
 
-Adds an [entity](/docs/reference/entities) of the kind `create` names, after the ones already there. The save keeps a record of it with what `with` gives:
+Adds an [entity](/docs/reference/entities) of the kind `create` names, after the ones already there. The save keeps a record of it with what `with` gives, a `CreatedEntity`:
+
+#### CreatedEntity
+
+What a `create` effect's `with` holds, and what the save records for the thing made.
 
 ```ts shape
 type CreatedEntity = {
@@ -439,11 +443,7 @@ The [content checker](/docs/reference/checks#in-an-effect) reports dice it can't
 
 ## Computed effects
 
-Most effects are fixed data. When one has to be worked out from the state, such as "one more than the counter is now" or "the next rung of this ladder", declare a [macro](/docs/reference/custom#macros) in the game's [`rules`](/docs/reference/rules) and call it with `game/` in front. It returns the effects it stands for:
-
-```ts shape
-type Macro<S = any> = (state: GameState, args: PluginArgs, context: PluginContext<S>) => EffectRef[]
-```
+Most effects are fixed data. When one has to be worked out from the state, such as "one more than the counter is now" or "the next rung of this ladder", declare a [macro](/docs/reference/custom#macros) in the game's [`rules`](/docs/reference/rules) and call it with `game/` in front. It returns the effects it stands for, as a [`Macro`](/docs/reference/custom#macro):
 
 ```ts
 import type { GameRules } from '@ifloom/engine'

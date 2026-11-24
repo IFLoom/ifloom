@@ -56,27 +56,11 @@ state.flow                        // { scene: 'cafe.counter', path: [{ chose: 't
 
 ## The blocks
 
-A flowing scene uses the same [`Block`](/docs/reference/scenes#block) list as any scene, with these kinds beside `text`, `prose`, `variants` and `media`:
-
-```ts shape
-type Block = (
-  | { text: string; id?: string; when?: Condition }
-  | { prose: string; when?: Condition }
-  | { variants: string; when?: Condition; gate?: Record<string, Condition>; image?: Record<string, string> }
-  | { media: SceneMedia; when?: Condition }
-  | { say: string; speaker: string; voice?: string; id?: string; when?: Condition }
-  | { blocks: Block[]; when?: Condition }
-  | { cases: Block[]; when?: Condition }
-  | { decide: string; choices: FlowChoice[]; when?: Condition }
-  | { point: string }
-  | { minigame: string; when?: Condition }
-  | { panel: string; with?: PluginArgs; when?: Condition }
-) & { ui?: Ui<BlockUi> }
-```
+A flowing scene uses the same [`Block`](/docs/reference/scenes#block) list as any scene, defined there in full. Beside `text`, `prose`, `variants` and `media`, it uses these kinds:
 
 | Block | What it does |
 |---|---|
-| `{ text }` | Words written in place, one paragraph or several, read as prose is: spoken lines, pictures, [inline markup](/docs/reference/prose#markup) and tokens. `id` names it for a translation's [words table](/docs/reference/words). Before schema 25 this was `{ words }`, and `{ text }` named a prose key, which is `{ prose }` now. |
+| `{ text }` | Words written in place, one paragraph or several, read as prose is: spoken lines, pictures, [inline markup](/docs/reference/prose#markup) and tokens. `id` names it for a translation's [words table](/docs/reference/words). |
 | `{ say, speaker }` | A spoken line, under who says it, by id as `@id: "…"` names them in [prose](/docs/reference/prose#speech): an entity (`'ava'`, `'character:ava'`), `'you'` for whoever the player is playing, or `'player'`. Its beat is a `say` with that `speaker` and their `name`. |
 | `{ blocks }` | A section: its blocks show together while `when` holds. A section can hold anything a body can, decisions included. Its `ui` hints go on every beat it makes, as the beat's `section`. |
 | `{ cases }` | The first that fits: only the first of its blocks whose own `when` holds, or that has none, is shown. See [The first that fits](#the-first-that-fits). |
@@ -136,17 +120,31 @@ The flow is drawn from the state now, along the path the save keeps. So a sectio
 
 ## state.flow
 
+[`state.flow`](/docs/reference/state#flow) is the open scene's visit, a [`FlowState`](#flowstate). It's `null` with no scene open, and for a visit that has nothing to keep yet, such as a scene with no decisions. Every pick is a logged `choose` command, so [replay](/docs/reference/runner#replay), undo and the [backlog](/docs/reference/runner#backlogentry) are exact. The backlog keeps a flowing visit as one entry, which grows with each pick.
+
+### FlowState
+
 ```ts shape
 type FlowState = {
   scene: string
   path: FlowStep[]
   waiting: { minigame: string } | { panel: string } | null
 }
-
-type FlowStep = { chose: string } | { point: string } | { minigame: string } | { panel: string }
 ```
 
-[`state.flow`](/docs/reference/state#flow) is the open scene's visit: every pick (`chose`), jump (`point`) and minigame or panel passed, in order, and what the flow is waiting on now. It's `null` with no scene open, and for a visit that has nothing to keep yet, such as a scene with no decisions. Every pick is a logged `choose` command, so [replay](/docs/reference/runner#replay), undo and the [backlog](/docs/reference/runner#backlogentry) are exact. The backlog keeps a flowing visit as one entry, which grows with each pick.
+| Field | Type | Meaning |
+|---|---|---|
+| `scene` | `string` | The scene the visit is in. |
+| `path` | `FlowStep[]` | Every pick, jump, and minigame or panel passed, in order. |
+| `waiting` | `{ minigame } \| { panel } \| null` | The minigame or panel the flow is waiting on now, or `null` when it waits on a pick or is done. |
+
+### FlowStep
+
+One step of the path: a pick (`chose`, the choice's id), a jump (`point`), or a minigame or panel the flow went past.
+
+```ts shape
+type FlowStep = { chose: string } | { point: string } | { minigame: string } | { panel: string }
+```
 
 ## Drawing it
 
@@ -171,22 +169,45 @@ A UI that only draws "beats, then choices" draws a flowing scene with no change.
 import { cases, choice, decide, fold, image, jump, minigame, panel, point, say, text, when } from '@ifloom/engine'
 ```
 
+```ts shape
+function text(words: string, extras?: BlockExtras & { id?: string }): Block
+function say(who: string, words: string, extras?: BlockExtras & { id?: string; voice?: string }): Block
+function when(condition: Condition, blocks: Block[], extras?: Omit<BlockExtras, 'when'>): Block
+function cases(blocks: Block[], extras?: BlockExtras): Block
+function decide(id: string, choices: FlowChoice[], extras?: BlockExtras): Block
+function choice(id: string, label: string, fields?: Omit<FlowChoice, 'id' | 'label'>): FlowChoice
+function image(src: string, media?: Omit<SceneMedia, 'src'> & BlockExtras): Block
+function minigame(id: string, extras?: BlockExtras): Block
+function panel(name: string, args?: PluginArgs, extras?: BlockExtras): Block
+function fold(label: string, blocks: Block[], extras?: BlockExtras): Block
+function point(id: string): Block
+function jump(id: string): { point: string }
+```
+
 | Builder | Writes |
 |---|---|
-| `text(words, { id?, when?, ui? })` | `{ text }`. The indentation every line shares is taken off, and blank lines at either end go, so the words can sit indented in your code. A blank line starts a new paragraph. |
-| `say(who, words, { id?, when?, ui?, voice? })` | `{ say, speaker }`. `who` is an id: `'ava'`, `'character:ava'`, `'you'` or `'player'`. |
-| `when(condition, blocks, { ui? })` | `{ when, blocks }`: a section shown while `condition` holds. |
-| `cases(blocks, { when?, ui? })` | `{ cases: blocks }`: only the first of `blocks` that fits is shown. |
-| `decide(id, choices, { when?, ui? })` | `{ decide, choices }`. |
-| `choice(id, label, fields)` | `{ id, label, ...fields }`, a [`FlowChoice`](#flowchoice). `label` is the words. |
-| `image(src, { alt?, size?, ...media, when?, ui? })` | `{ media: { src, ... } }`. |
-| `minigame(id, { when?, ui? })` | `{ minigame }`. |
-| `panel(name, args?, { when?, ui? })` | `{ panel, with }`. |
-| `fold(label, blocks, { when?, ui? })` | `{ blocks, ui: { fold: label } }`: a section the React UI draws as a part the player opens and shuts, with its [`fold`](/docs/react/hints#fold) hint. It keeps no state. |
-| `point(id)` | `{ point }`. |
-| `jump(id)` | `{ point }`, the effect. |
+| `text` | `{ text }`. The indentation every line shares is taken off, and blank lines at either end go, so the words can sit indented in your code. A blank line starts a new paragraph. |
+| `say` | `{ say, speaker }`. `who` is an id: `'ava'`, `'character:ava'`, `'you'` or `'player'`. Its indentation is taken off as `text`'s is. |
+| `when` | `{ when, blocks }`: a section shown while `condition` holds. |
+| `cases` | `{ cases: blocks }`: only the first of `blocks` that fits is shown. |
+| `decide` | `{ decide, choices }`. |
+| `choice` | `{ id, label, ...fields }`, a [`FlowChoice`](#flowchoice). `label` is the words. |
+| `image` | `{ media: { src, ... } }`, with the [`SceneMedia`](/docs/reference/scenes#scenemedia) fields you give, and `when` and `ui` on the block. |
+| `minigame` | `{ minigame }`. |
+| `panel` | `{ panel, with }`, with `with` left out when you pass no `args`. |
+| `fold` | `{ blocks, ui: { fold: label } }`: a section the React UI draws as a part the player opens and shuts, with its [`fold`](/docs/react/hints#fold) hint. It keeps no state. |
+| `point` | `{ point }`, the block. |
+| `jump` | `{ point }`, the [effect](/docs/reference/effects#point) a choice jumps with. |
 
-The `{ when?, ui? }` most builders take last is `BlockExtras`: the condition the block shows under and its [presentation hints](/docs/reference/ui-hints). The builders write the [`Block`](/docs/reference/scenes#block), `Choice` and [`FlowChoice`](#flowchoice) types.
+The builders write the [`Block`](/docs/reference/scenes#block), `Choice` and [`FlowChoice`](#flowchoice) types.
+
+### BlockExtras
+
+What most builders take last: the condition the block shows under and its [presentation hints](/docs/reference/ui-hints). `text` and `say` take an `id` with it for the [words table](/docs/reference/words), `say` a `voice`, and `when` everything but `when`, which it takes first.
+
+```ts shape
+type BlockExtras = { when?: Condition; ui?: Ui<BlockUi> }
+```
 
 A switch that matters to the story, such as a light the player turns on, is a choice or an [input](/docs/reference/inputs) that sets a kv key, not a fold, so it saves and replays.
 

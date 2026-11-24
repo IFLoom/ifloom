@@ -45,7 +45,19 @@ An entity's hints are its kind's with its own laid over them, field by field. A 
 ## Ui and the hint interfaces
 
 ```ts shape
-import type { BlockUi, ChoiceUi, EntityUi, GameUi, SceneUi, StatUi, Ui } from '@ifloom/engine'
+import type { Ui } from '@ifloom/engine'
+
+type Ui<T> = T & { readonly [hint: string]: unknown }
+```
+
+Every `ui` field is a `Ui<…>` of the interface for where it's written. A hint interface's own keys are typed, and any other key is let through as `unknown`.
+
+### SceneUi, ChoiceUi, BlockUi, EntityUi, StatUi and GameUi
+
+The hints each place takes: a scene's (and a place's room), a choice's (and an action's), a block's, an entity's (and a kind's), a stat's and the game's.
+
+```ts shape
+import type { BlockUi, ChoiceUi, EntityUi, GameUi, SceneUi, StatUi } from '@ifloom/engine'
 
 interface SceneUi {}
 interface ChoiceUi {}
@@ -53,11 +65,9 @@ interface BlockUi {}
 interface EntityUi {}
 interface StatUi {}
 interface GameUi {}
-
-type Ui<T> = T & { readonly [hint: string]: unknown }
 ```
 
-Every `ui` field is a `Ui<…>` of the interface for where it's written. The interfaces are empty in the engine. A UI package fills them in by augmenting them, the way a plugin types its [traits](/docs/reference/entities#traits):
+The interfaces are empty in the engine. A UI package fills them in by augmenting them, the way a plugin types its [traits](/docs/reference/entities#traits):
 
 ```ts
 declare module '@ifloom/engine' {
@@ -73,11 +83,9 @@ Once a game's code imports that package, `ui: { display: 'bar' }` on a stat is t
 ## InlineUi
 
 ```ts shape
-import type { InlineUi, InlineUiArgs } from '@ifloom/engine'
+import type { InlineUi } from '@ifloom/engine'
 
 interface InlineUi {}
-
-type InlineUiArgs<N extends string> = N extends keyof InlineUi ? InlineUi[N] : readonly string[]
 ```
 
 The pieces a UI draws inside a line of prose, from [`[[ui:name|words|arg|…]]`](/docs/reference/prose#ui-pieces), by name, each with the arguments it takes after the words. Like the hint interfaces, it's empty in the engine and a UI package augments it. The React UI declares its two built-in pieces this way:
@@ -92,6 +100,14 @@ declare module '@ifloom/engine' {
 ```
 
 A game that adds a piece of its own declares it the same way, so its component's `args` are typed. `InlineUiArgs<'modal'>` is `[key: string, title?: string]` once the React UI is imported, and a name nobody declared takes any text.
+
+### InlineUiArgs
+
+The arguments a piece takes after its words: what `InlineUi` declares for the name, else any text. A component that draws a piece types its `args` with it.
+
+```ts shape
+type InlineUiArgs<N extends string> = N extends keyof InlineUi ? InlineUi[N] : readonly string[]
+```
 
 The engine never reads `InlineUi`. A `ui` [span](/docs/reference/prose#inlinespan) has `name: string` and `args: string[]` whatever was declared, because the markup is prose and a mod or a second UI can write a name of its own. Nothing checks that the arguments a line gives match the tuple, so a component should cope with one missing. The React UI's [`checkUiHints`](/docs/react/hints#checkuihints) reports a built-in piece with too few or too many.
 
@@ -108,14 +124,9 @@ An entity's hints as the view gives them: its kind's, then the one it was made `
 ## uiInContent
 
 ```ts shape
-import { uiInContent, type UiInContent, type UiField, type TextLine, type UiTarget } from '@ifloom/engine'
+import { uiInContent } from '@ifloom/engine'
 
 function uiInContent(game: Game): UiInContent
-
-type UiInContent = { fields: UiField[]; lines: TextLine[] }
-type UiField = { on: UiTarget; id?: string; where: string; ui: unknown }
-type TextLine = { where: string; text: string }
-type UiTarget = 'scene' | 'choice' | 'block' | 'stat' | 'entity' | 'game'
 ```
 
 Every `ui` field in a game's content, and every line of words a player reads, found by the [content checker](/docs/reference/checks)'s own walk. It's for a UI package's checker, so it can check its own hints without walking the content itself. The React UI's [`checkUiHints`](/docs/react/hints#checkuihints) is built on it.
@@ -129,6 +140,50 @@ import { uiInContent } from '@ifloom/engine'
 
 const { fields } = uiInContent(game)
 const reveals = fields.filter((field) => field.on === 'block' && 'reveal' in (field.ui as object))
+```
+
+### UiInContent
+
+What `uiInContent` finds.
+
+```ts shape
+type UiInContent = { fields: UiField[]; lines: TextLine[] }
+```
+
+| Field | Type | Meaning |
+|---|---|---|
+| `fields` | `UiField[]` | Every `ui` field in the content, each once. |
+| `lines` | `TextLine[]` | Every prose line and every block of words written in place. |
+
+### UiField
+
+One `ui` field and where it's written.
+
+```ts shape
+type UiField = { on: UiTarget; id?: string; where: string; ui: unknown }
+```
+
+| Field | Type | Meaning |
+|---|---|---|
+| `on` | `UiTarget` | What it's written on. |
+| `id` | `string`, optional | That thing's id, where it has one. |
+| `where` | `string` | Where it is, as a problem names it, such as `scene park choice skim`. |
+| `ui` | `unknown` | The hints as written. Check them before you read them. |
+
+### TextLine
+
+One line of words a player reads, with where it is.
+
+```ts shape
+type TextLine = { where: string; text: string }
+```
+
+### UiTarget
+
+The kinds of thing a `ui` field is written on.
+
+```ts shape
+type UiTarget = 'scene' | 'choice' | 'block' | 'stat' | 'entity' | 'game'
 ```
 
 ## What the engine does with them

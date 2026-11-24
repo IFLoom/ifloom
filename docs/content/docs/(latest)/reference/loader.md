@@ -186,20 +186,18 @@ A pack written before this split may still have `overrides: true`, which told th
 
 ## SCHEMA
 
-```ts
-const SCHEMA = 30
+```ts shape
+const SCHEMA: number
 ```
 
-The format of packs this engine reads. Write `schema: SCHEMA` in a pack you write in TypeScript so it always matches. Your content has no schema.
+The format of packs this engine reads. Every pack records the schema it was written for, and the number goes up with the engine. Write `schema: SCHEMA` in a pack you write in TypeScript so it always matches. Your content has no schema.
 
-A pack written for an older schema still loads. [`loadGame`](#loadgame) upgrades it first with [`upgradePack`](#upgradepack), mods included, so a mod file made for an earlier version of your game keeps working after you update the engine or a plugin. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema 31, this engine reads 30`, and a mod like that is refused when the player adds it.
+A pack written for an older schema still loads. [`loadGame`](#loadgame) upgrades it first with [`upgradePack`](#upgradepack), mods included, so a mod file made for an earlier version of your game keeps working after you update the engine or a plugin. A pack written for a newer schema than this engine reads is refused rather than half-loaded. `loadGame` skips it with the problem `written for schema <n>, this engine reads <SCHEMA>`, and a mod like that is refused when the player adds it.
 
 ## upgradePack
 
 ```ts shape
 function upgradePack(pack: { schema: number; plugins?: Record<string, number> }, plugins: readonly Plugin[], context?: PackContext): Result<Pack>
-
-type PackContext = { entities?: readonly unknown[]; you?: readonly string[]; prose?: Readonly<Record<string, string>> }
 ```
 
 Brings a pack written for an older [`SCHEMA`](#schema) up to this one, and for older versions of the game's plugins up to theirs, or says why it can't, as a [`Result`](/docs/reference/runner#result). Pass the game's plugins, the same list as the base's `plugins`. The engine keeps one step for each schema change, and a pack goes through them in order until it reaches `SCHEMA`. Each step rewrites what that change renamed or reshaped, such as an old name for a condition, in every scene, choice and effect of the pack.
@@ -236,15 +234,13 @@ What a plugin reads (its `data`, its calls' arguments, its strings and its trait
 | 27 to 28 | "Stage" means only a quest's stage. A data scene's layered picture with hotspots, `stage`, is its [`picture`](/docs/reference/scenes#the-picture), and the `words` table's `scene.<id>.stage.hotspots.<hotspot>.label` is `scene.<id>.picture.hotspots.<hotspot>.label`. The [places plugin](/docs/plugins/places#the-picture)'s own step (content version 28) does the same for a place's `stage`, wherever the `places/location` trait is written, and its words keys. |
 | 29 to 30 | Values print with a bare token. In every string of the pack but its code, `{{v:game/payroll}}` becomes `{{payroll}}` and `{{v:messages/unread channel=texts}}` becomes `{{messages/unread channel=texts}}` (see [Tokens](/docs/reference/prose#tokens)). A game's value whose name starts with a digit or a `-` keeps its `{{v:…}}`, which still prints. [Phrases](/docs/reference/phrases), the `cases` block and a minigame input's `label` came in this schema too, and need no step. |
 
-Schema 4 is the oldest a pack can be.
-
 It returns the pack at `SCHEMA`, with `plugins` recording each plugin's version, or one of these reasons:
 
 | When | Returns |
 |---|---|
-| `schema` is newer than `SCHEMA` | `written for schema 31, this engine reads 30` |
-| `schema` is older than the oldest schema there's a step from | `written for schema 3, too old for this engine to read (it reads 25)` |
-| `plugins` gives a newer version of a plugin's content than the game has | `written for version 14 of the shop plugin's content, this game's reads 13` |
+| `schema` is newer than `SCHEMA` | `written for schema <n>, this engine reads <SCHEMA>` |
+| `schema` is older than the oldest schema there's a step from | `written for schema <n>, too old for this engine to read (it reads <SCHEMA>)` |
+| `plugins` gives a newer version of a plugin's content than the game has | `written for version <n> of the shop plugin's content, this game's reads <m>` |
 
 A pack with nothing to do comes back unchanged, as the same object. The pack you pass in is never changed, so keep the result.
 
@@ -263,23 +259,18 @@ You rarely call it yourself, because `loadGame` does. Use it when you read a pac
 
 **Gotcha.** Steps only cover packs: data scenes, plugin content and the rest of what JSON can hold. Your content is compiled against the current types, so when a schema changes, you update it by hand. See [Content and packs](#content-and-packs).
 
+### PackContext
+
+What [`upgradePack`](#upgradepack) needs to know of the game a pack goes over: the entities its content and plugins declare, the game's string `you`, and the prose under the pack.
+
+```ts shape
+type PackContext = { entities?: readonly unknown[]; you?: readonly string[]; prose?: Readonly<Record<string, string>> }
+```
+
 ## loadGame
 
 ```ts shape
 function loadGame(content: readonly Content[], base: GameBase, options?: LoadOptions): Loaded
-
-type GameBase = Pick<Game, 'id' | 'title' | 'version' | 'plugins' | 'rules'>
-
-type LoadOptions = {
-  packs?: readonly Pack[]
-}
-
-type Loaded = {
-  game: Game
-  prose: Record<string, string>
-  variants: Record<string, string[]>
-  problems: Problem[]
-}
 ```
 
 Merges each plugin's own [`content`](/docs/reference/plugins#kinds-and-entities) first, then `content` in order, then each of `options.packs` over it in order, builds `game.prose` from the prose and variants, and checks the game with [`checkGame`](/docs/reference/checks#checkgame). See [What the loader adds](#what-the-loader-adds). The game that comes back is ready to run. Data scenes are [drawn](/docs/reference/scenes#running-data-scenes) with no further wiring.
@@ -345,16 +336,60 @@ export default defineGame({ build: ({ unlocked }) => smallTown({ unlocked }) })
 
 The real file is `examples/showcase/src/game.ts`, which lists all of the town's content files from `world/` and `story/`, with the phone's content first. It also adds the phone, quests, wardrobe and debug plugins. Its `main.tsx` calls `smallTown` with the player's mods, logs the problems as warnings with `describeProblem`, and starts the game anyway.
 
-**Gotchas:**
+**Gotchas.**
 - `loadGame` never throws on bad content. It returns problems, and it's up to you whether to refuse to start.
 - `game.scenes` holds `DataScene`s exactly as declared. The engine works out how to draw each one the first time it's shown.
-- `game.prose` is a [`ProseStore`](/docs/reference/game#prosestore) over the merged prose and variants. `Loaded.prose` and `Loaded.variants` are the same merged records, for tools that want the raw text.
+- `game.prose` is a [`ProseStore`](/docs/reference/prose#prosestore) over the merged prose and variants. `Loaded.prose` and `Loaded.variants` are the same merged records, for tools that want the raw text.
 - `game.packs` lists the packs' ids in order, and nothing for your content. [Saves](/docs/reference/saves#savemeta) record it, so loading a save made with a mod the player has since removed names that mod.
 - The game's own functions are its [`rules`](/docs/reference/rules), on `base` and only there. Content and packs can't hold code.
 - [Plugins](/docs/reference/plugins) go on `base`, as `plugins`, and only there. Content and packs can't add one. Plugin content can sit in content and in packs.
 - Each plugin's own [`content`](/docs/reference/plugins#kinds-and-entities) is merged first, under the game's, and isn't counted as declared by your content. Your content can redeclare one of its kinds, keeping the plugin's fields it leaves out (such as `listed`), and a pack can replace anything in it by id. The entities a plugin makes from its content are added only where the game hasn't declared one with the same kind and id.
 
+### GameBase
+
+The second argument of `loadGame`: what the game is and its code, and nothing a mod could change. Its keys are in the table above.
+
+```ts shape
+type GameBase = Pick<Game, 'id' | 'title' | 'version' | 'plugins' | 'rules'>
+```
+
+### LoadOptions
+
+The third argument of `loadGame`.
+
+```ts shape
+type LoadOptions = {
+  packs?: readonly Pack[]
+}
+```
+
+| Field | Type | Default | What it is |
+|---|---|---|---|
+| `packs` | `readonly Pack[]` | `[]` | Packs laid over the content in order, each [upgraded](#upgradepack) first: mods, unlocked content, a translation. |
+
+### Loaded
+
+What `loadGame` returns.
+
+```ts shape
+type Loaded = {
+  game: Game
+  prose: Record<string, string>
+  variants: Record<string, string[]>
+  problems: Problem[]
+}
+```
+
+| Field | Type | What it is |
+|---|---|---|
+| `game` | [`Game`](/docs/reference/game#game) | The game, ready to run. |
+| `prose` | `Record<string, string>` | The merged prose, by key, as `game.prose` reads it. |
+| `variants` | `Record<string, string[]>` | The merged sets of variants: each name's member keys, in order. |
+| `problems` | [`Problem[]`](/docs/reference/checks#problem-and-describeproblem) | What the loader and [`checkGame`](/docs/reference/checks#checkgame) found. A game with problems still loads, so show them or fail your build on them. |
+
 ## Patches
+
+### Patch
 
 ```ts shape
 type Patch =
@@ -377,7 +412,7 @@ const mod: Pack = {
 }
 ```
 
-**Gotchas:**
+**Gotchas.**
 - A patch applies to the scene as it stands when its pack is read. A later pack that redeclares the scene replaces it, patch and all.
 - A `before` that names a choice that isn't there adds the choice at the end, without a problem. A `replaceChoice` with no matching id is a problem.
 

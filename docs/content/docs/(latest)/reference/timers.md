@@ -68,11 +68,18 @@ A [minigame](/docs/reference/minigames)'s `after` is a timer too, but it belongs
 ```ts shape
 type TimerDef = {
   id: string
-  label?: string         // what a UI calls it
-  ms: number             // how long it runs when started
-  effects?: EffectRef[]  // what happens when it runs out
+  label?: string
+  ms: number
+  effects?: EffectRef[]
 }
 ```
+
+| Field | Type | Meaning |
+|---|---|---|
+| `id` | `string` | The timer's id, which the `timer` effect and condition name. |
+| `label` | `string`, optional | What a UI calls it, shown as written. |
+| `ms` | `number` | How long it runs when started. |
+| `effects` | `EffectRef[]`, optional | What happens when it runs out. |
 
 A timer as your content's `timers` and a [pack](/docs/reference/loader)'s declare it. Packs merge timers by id, so a mod can change how long one runs or what it does. The `label` is shown as written, in [`TimerView`](#timerview). The effects are any effects, [calls](/docs/reference/custom) to the game's own and plugins' included.
 

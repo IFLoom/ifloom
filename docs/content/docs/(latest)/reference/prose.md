@@ -103,7 +103,7 @@ The engine has no player name of its own. A game that wants one sets a kv key, w
 
 Tokens used to name values as `{{v:game/coffeePrice}}` and `{{v:quests/updates}}`. Those still print, and [`upgradePack`](/docs/reference/loader#upgradepack) rewrites them to the short form in a pack written for schema 29 or older. In your game's own content the [content checker](/docs/reference/checks) asks you to write the short form.
 
-**Gotchas:**
+**Gotchas.**
 - A token is unset when its kv key is unset or is `true` or `false`, its phrase has no row that fits, or its value is missing or gives `''`. Then it shows its fallback, the words after a `|`, as written. The fallback can't hold a token of its own.
 - An unset bare name with no fallback, such as `{{flatmateName}}`, prints nothing. Any other token that names nothing, such as `{{kv:visits of=storyline:nobody}}` or a plugin's value the game doesn't have, is left in place, braces and all, so the missing name shows on screen.
 - The checker warns about a bare token with no fallback that may print nothing: a kv key the game's `kv` doesn't start, or a phrase with no row that always fits. A block that shows only under a `kv` or `roll` condition on the key isn't warned about. A warning doesn't fail `ifloom check`. Give the token a fallback, start the key in `kv`, or keep the line behind a [`{ kv }`](/docs/reference/conditions#kv) condition.
@@ -180,7 +180,7 @@ Ava wipes her hands on her apron.
 
 That's text, character, player, character.
 
-**Gotchas:**
+**Gotchas.**
 - A line under an id or a label must use straight quotes and end with one. `@ava: “…”` is plain text.
 - A pack written before schema 23 wrote speech under names, `Ava: "…"`. [`upgradePack`](/docs/reference/loader#upgradepack) rewrites a line whose name is exactly one entity's into `@ava:`, and `You:` (or the game's string `you`) into `@you:`. A name no entity has, or that two entities share, stays a labelled line.
 - A paragraph that starts and ends with a quote is all drawn as speech, even with narration in the middle. `"Morning," Ava says. "Beans are in."` is drawn as speech, `Ava says` included. Put the narration in a paragraph of its own:
@@ -222,7 +222,7 @@ A bare name is an `.mp4` (`clips/kettle` is `art/clips/kettle.mp4`). A path endi
 
 The React UI draws video beats with [`Video`](/docs/react/components#video). A UI of your own reads the flags off the beat.
 
-**Gotchas:**
+**Gotchas.**
 - Only one part can be the alt text. The loader reports a second one, because it's usually a misspelt flag (`contols`).
 - A `name=value` part with a name that isn't a flag, such as `speed=2`, is reported as an unknown flag.
 - The loader reports a video flag on a picture, and `rot`, which turned a picture before schema 22 and is now read as alt text.
@@ -239,7 +239,7 @@ Instead of a path, write `@` and the name of a [pool](/docs/reference/media#pool
 
 The engine picks a file with every tag. If no file has them all, it drops the last tag and tries again, down to any file in the pool. The pick is drawn from the save's seed and remembered, so the same markup in the same place shows the same file on every visit and after a reload. See [Media](/docs/reference/media#pools) for the details.
 
-**Gotchas:**
+**Gotchas.**
 - The tags part comes first even when it's empty. Write `[[img:@door||A front door]]` for alt text with no tags, because `[[img:@door|A front door]]` asks for a tag called "A front door".
 - If the pool has nothing to give, the markup is left out.
 - The loader reports an unknown pool and a tag no file in the pool has.
@@ -258,7 +258,7 @@ The phone buzzes on the table.
 
 The open scene's sound and voice beats are in [`view.audio.cues`](/docs/reference/audio#sounds-and-voices), in beat order, each with a key that changes only when the scene is entered again. Voices go to the `voice` channel. `@ifloom/audio` plays them, one voice after another.
 
-**Gotchas:**
+**Gotchas.**
 - `[[voice:id]]` only counts at the end of a [spoken line](#speech). Anywhere else it stays in the text, brackets included.
 - In a place's body (its [room scene](/docs/reference/plugins#scene)), `[[sound:id]]` becomes a beat but isn't cued, because no scene is open.
 - The loader reports an unknown track, a playlist, and a track on a background channel such as `music`.
@@ -300,7 +300,7 @@ const kitchen: DataScene = {
 }
 ```
 
-**Gotchas:**
+**Gotchas.**
 - A choice left off the screen (its `when` fails, or a `blocked` entry with `hide` holds) is drawn as its words, with no link. So is one the scene doesn't have, and the loader reports it.
 - One choice is drawn inline once. A second `[[act:]]` for it shows as words, and the loader reports it when both can be on screen together. Two blocks that each have a `when` are taken to be alternatives and aren't reported.
 - A tooltip whose key has no prose shows its words with no note, and the loader reports it. `[[tip:key]]` with no words is shown as written.
@@ -341,7 +341,7 @@ The paragraph's beat gets `spans`, with a `bold` or `italic` span for the styled
 
 To show a star as it is, write `\*`: `Five \* three` shows "Five * three". You rarely need to, because a star only opens when a space doesn't follow it and only closes when a space doesn't come before it. `5 * 3 = 15` and a line of `* * *` stay as written.
 
-**Gotchas:**
+**Gotchas.**
 - Bold and italics don't go inside each other, and `***words***` isn't read. The stars are shown as written, and the loader reports them.
 - A star that opens and never closes, such as `*sigh`, is shown as written, and the loader reports it. Close it, or write `\*`.
 - Stars around an inline action or a tooltip (`**[[act:go]]**`), or inside their words, are shown as written, and the loader reports the first kind.
@@ -477,14 +477,6 @@ The React UI's [`InlineModal`](/docs/react/components#inlinemodal) draws the lin
 import { inlineMarkup, type InlinePart } from '@ifloom/engine'
 
 function inlineMarkup(text: string): InlinePart[] | null
-
-type InlinePart =
-  | { type: 'text'; text: string }
-  | { type: 'act'; id: string; text?: string; markup: string }
-  | { type: 'tip'; key: string; text: string; markup: string }
-  | { type: 'ui'; name: string; text: string; args: string[]; markup: string }
-  | { type: 'bold'; text: string; markup: string }
-  | { type: 'italic'; text: string; markup: string }
 ```
 
 A line cut at its `[[act:]]`, `[[tip:]]`, `[[ui:]]`, bold and italic markup, as written, or `null` when it has none. `markup` is the markup itself, and a bold or italic part's `text` is its words without the stars. Malformed markup (no id or key, a tooltip or UI piece with no words, a UI piece whose name isn't an id or with an empty argument, a star that never closes) stays in the text around it, and each `\*` in a text part is already a plain star. The view uses it to make [`InlineSpan`](#inlinespan)s, and an editor can use it to preview a line.
@@ -494,6 +486,20 @@ import { inlineMarkup } from '@ifloom/engine'
 
 inlineMarkup('Ring. [[act:answer|Pick up]]')
 // [{ type: 'text', text: 'Ring. ' }, { type: 'act', id: 'answer', text: 'Pick up', markup: '[[act:answer|Pick up]]' }]
+```
+
+### InlinePart
+
+One part of a line as `inlineMarkup` cuts it: plain text, or a piece of markup with its words.
+
+```ts shape
+type InlinePart =
+  | { type: 'text'; text: string }
+  | { type: 'act'; id: string; text?: string; markup: string }
+  | { type: 'tip'; key: string; text: string; markup: string }
+  | { type: 'ui'; name: string; text: string; args: string[]; markup: string }
+  | { type: 'bold'; text: string; markup: string }
+  | { type: 'italic'; text: string; markup: string }
 ```
 
 ## artSrc

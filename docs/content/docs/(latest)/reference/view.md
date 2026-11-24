@@ -11,6 +11,8 @@ The engine has no UI of its own. It hands your UI one object, a `View`, that say
 
 Every button in a `View` already carries its command and its price. If it can't be pressed, it also carries the reason, worded for the player. The reducer refuses with the same reasons, so the screen and the rules can't disagree. Show greyed-out buttons with their reason rather than hiding them.
 
+The whole `View`, field by field, is under [View](#view), with a map of where each part is explained.
+
 Any framework can draw from the view, or none at all. [The React UI](/docs/react), `@ifloom/react`, is a ready-made one that draws all of this. To use something else, such as Vue, Svelte or plain DOM, see [Your own UI in any framework](/docs/guide/frameworks). The rest of this page is for writing your own.
 
 ```ts
@@ -101,9 +103,32 @@ type Screen = {
   picks: Record<string, string>
   audio: AudioView & { tracks: Record<string, string | null> }
 }
+```
 
+| Field | Meaning |
+|---|---|
+| `scene` | The open scene as rendered, or the room when none is open. The same fields as [`view.scene`](#the-scene) without `picture` and `choices`. While a [minigame](#minigame) runs, it's drawn over either. |
+| `choices` | The open scene's visible choices, except those its prose draws inline. Each is a [`RenderedChoice`](#renderedchoice) with `effects`: what choosing it would apply. Empty for the room, and while a minigame runs. |
+| `actions` | The room's buttons while no scene or minigame is open, except those its prose draws inline, as [`view.actions`](#the-idle-screen), each with the effects its command would apply (see [`effectsOf`](/docs/reference/actions#effectsof)). |
+| `picture` | The open scene's picture, resolved as [`pictureView`](#pictureview) does. `null` for the room, and while a minigame runs. |
+| `plugins` | Every plugin's view, by plugin id, as [`view.plugins`](#plugins). |
+| `picks` | The [pool picks](/docs/reference/media#remembered-picks) this state shows that `state.media.picks` doesn't hold yet, by pick key. The reducer records them. Empty once they're recorded. |
+| `audio` | [`view.audio`](#audio), plus `tracks`: the track each background channel resolves to, or `null` for silence. The reducer records a channel's track as started when it changes. |
+
+
+#### ScreenChoice
+
+A choice or button as `screen` has it: a [`RenderedChoice`](#renderedchoice) with the effects choosing it would apply. `view` drops `effects`.
+
+```ts shape
 type ScreenChoice = RenderedChoice & { effects: Effect[] }
+```
 
+#### ScreenScene
+
+The open scene or the room as `screen` renders it: [`view.scene`](#the-scene) without `picture` and `choices`, which `Screen` keeps beside it.
+
+```ts shape
 type ScreenScene = {
   id: string | null
   key: string
@@ -118,19 +143,69 @@ type ScreenScene = {
 }
 ```
 
-| Field | Meaning |
-|---|---|
-| `scene` | The open scene as rendered, or the room when none is open. The same fields as [`view.scene`](#the-scene) without `picture` and `choices`. While a [minigame](#minigame) runs, it's drawn over either. |
-| `choices` | The open scene's visible choices, except those its prose draws inline. Each is a [`RenderedChoice`](#renderedchoice) with `effects`: what choosing it would apply. Empty for the room, and while a minigame runs. |
-| `actions` | The room's buttons while no scene or minigame is open, except those its prose draws inline, as [`view.actions`](#the-idle-screen), each with the effects its command would apply (see [`effectsOf`](/docs/reference/actions#effectsof)). |
-| `picture` | The open scene's picture, resolved as [`pictureView`](#pictureview) does. `null` for the room, and while a minigame runs. |
-| `plugins` | Every plugin's view, by plugin id, as [`view.plugins`](#plugins). |
-| `picks` | The [pool picks](/docs/reference/media#remembered-picks) this state shows that `state.media.picks` doesn't hold yet, by pick key. The reducer records them. Empty once they're recorded. |
-| `audio` | [`view.audio`](#audio), plus `tracks`: the track each background channel resolves to, or `null` for silence. The reducer records a channel's track as started when it changes. |
-
 `view` drops `effects` from each choice, `tracks` from the audio and `picks` altogether. Everything else it takes as it is.
 
 ## View
+
+```ts shape
+type View = {
+  title: string
+  turn: number
+  when: string | null
+  scene: {
+    id: string | null
+    key: string
+    title: string
+    body: string
+    beats: SceneBeat[]
+    fresh: number
+    tags: string[]
+    speaker: SpeakerView | null
+    image: string | null
+    picture: PictureView | null
+    choices: RenderedChoice[]
+    ui?: Ui<SceneUi>
+  }
+  actions: RenderedChoice[]
+  stats: StatView[]
+  statsById: Record<string, StatView>
+  entities: EntitiesView[]
+  held: HeldView[]
+  notices: NoticesView
+  inputs: InputView[]
+  settings: SettingView[]
+  minigame: MinigameView | null
+  audio: AudioView
+  panel: OpenPanel | null
+  rolls: Roll[]
+  changes: ChangeView[]
+  timers: TimerView[]
+  saving: SavingView
+  plugins: ViewsIn
+}
+```
+
+Where each part is explained:
+
+| Fields | Where |
+|---|---|
+| `title`, `turn`, `when` | [The clock and the player](#the-clock-and-the-player) |
+| `actions` | [The idle screen](#the-idle-screen), each a [`RenderedChoice`](#renderedchoice) |
+| `scene` | [The scene](#the-scene). Its `beats` and their spans are on [Prose](/docs/reference/prose#scenebeat), its `picture` on [Media](/docs/reference/media#pictureview), its `choices` under [`RenderedChoice`](#renderedchoice) |
+| `stats`, `statsById` | [The player's numbers and things](#the-players-numbers-and-things), each a [`StatView`](#statview) |
+| `entities` | [entities](#entities), [`EntitiesView`](#entitiesview-and-entityview) |
+| `held` | [held](#held), [`HeldView`](#heldview) |
+| `notices` | [notices](#notices), [`NoticesView`](#noticesview-and-noticeview) |
+| `inputs` | [inputs](#inputs), [`InputView`](#inputview) |
+| `settings` | [settings](#settings), [`SettingView`](#settingview) |
+| `minigame` | [minigame](#minigame), [`MinigameView`](/docs/reference/minigames#minigameview) |
+| `audio` | [audio](#audio), [`AudioView`](/docs/reference/audio#audioview) |
+| `panel` | [panel](#panel), [`OpenPanel`](/docs/reference/panels#openpanel) |
+| `rolls` | [rolls](#rolls), [`Roll`](/docs/reference/rolls#roll) |
+| `changes` | [changes](#changes), [`ChangeView`](/docs/reference/changes#changeview) |
+| `timers` | [timers](#timers), [`TimerView`](/docs/reference/timers#timerview) |
+| `saving` | [saving](#saving), [`SavingView`](#savingview) |
+| `plugins` | [plugins](#plugins), [`ViewsIn`](/docs/reference/plugins#viewsin) |
 
 `View` has a fixed set of fields, plus [`plugins`](#plugins), where each plugin adds its own slice. What the player wears, for example, is the [wardrobe plugin](/docs/plugins/wardrobe)'s slice. The engine has no phone of its own, but it has the parts one is built from: the [things you hold](#held), such as notes and photos, [notices](#notices) and [inputs](#inputs). [Messages](/docs/plugins/messages), [feeds](/docs/plugins/feed) and [devices](/docs/plugins/devices) are plugins, each with its own slice, and [A phone](/docs/recipes/phone) puts them together.
 
@@ -352,15 +427,25 @@ A timer only shows in the view while it runs. Once it runs out or is stopped, it
 
 | Field | Type | Meaning |
 |---|---|---|
-| `saving` | `SavingView` | Whether the player can save now, by the game's [`saveable`](/docs/reference/game#saveable). |
+| `saving` | [`SavingView`](#savingview) | Whether the player can save now, by the game's [`saveable`](/docs/reference/game#saveable). |
+
+#### SavingView
+
+Whether saving is allowed now, and why not.
 
 ```ts shape
 type SavingView = {
-  allowed: boolean        // false while a `saveable` entry holds
-  reason: string | null   // that entry's reason, or null when allowed
-  visible: boolean        // false while that entry has `hide`
+  allowed: boolean
+  reason: string | null
+  visible: boolean
 }
 ```
+
+| Field | Type | Meaning |
+|---|---|---|
+| `allowed` | `boolean` | `false` while a `saveable` entry's `when` holds. |
+| `reason` | `string \| null` | That entry's reason, worded for the player, or `null` when saving is allowed. |
+| `visible` | `boolean` | `false` while that entry has `hide: true`, so the UI leaves its Save button off. |
 
 Grey out your Save button with `reason` while `allowed` is `false`, and leave it off while `visible` is `false`. [`runner.save`](/docs/reference/runner#the-runners-members) refuses with the same reason, so the view only saves the player a press. Loading is always allowed.
 
@@ -583,17 +668,23 @@ const { energy } = view(state, game).statsById
 drawGauge(energy.value / energy.max, energy.label)
 ```
 
-**Gotcha:** `statsById` ignores `visible`, so a UI that draws a stat from it decides for itself when to show it.
+**Gotcha.** `statsById` ignores `visible`, so a UI that draws a stat from it decides for itself when to show it.
 
 ## Price
 
 ```ts shape
 type Price = {
   stats?: { id: string; amount: number; text: string }[]
-  notes?: string[] // what plugins say it costs: '2 dishes to wash', 'until evening'
-  text: string     // the whole price in one line: '2 coins · until evening'
+  notes?: string[]
+  text: string
 }
 ```
+
+| Field | Type | Meaning |
+|---|---|---|
+| `stats` | `{ id: string; amount: number; text: string }[]`, optional | Each stat spent: its id, the amount, and the amount worded through the stat's `format`. |
+| `notes` | `string[]`, optional | What plugins say it costs, such as `'until evening'`. |
+| `text` | `string` | The whole price in one line, such as `'2 coins · until evening'`. |
 
 What pressing a button will cost, to show on it beforehand. A `price` sits on any [`RenderedChoice`](#renderedchoice). `text` is ready to print: each stat's `text`, then the notes, joined by the [`priceSeparator`](/docs/reference/strings#buttons-and-labels) string, ` · ` in English, so a translation rewords it once for every UI.
 
@@ -604,7 +695,7 @@ Each entry in `stats` is a stat spent, its amount, and the amount written throug
 
 `notes` are every plugin's [price](/docs/reference/plugins#prices) for the button's effects, in the order `game.plugins` lists them. Time passing, for example, is the [calendar](/docs/plugins/calendar#price-notes)'s note `until evening`. A button with notes and no cost has a price of only `{ notes, text }`, and a button with neither has no `price`.
 
-**Gotcha:** it only shows costs. What a choice pays is deliberately left off, because a payout printed on a button tells the player which button is the right one.
+**Gotcha.** It only shows costs. What a choice pays is deliberately left off, because a payout printed on a button tells the player which button is the right one.
 
 ### priceView
 

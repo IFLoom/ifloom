@@ -88,14 +88,11 @@ const body: Block[] = [
 
 ```ts fragment
 macros?: Record<string, Macro<S>>
-
-type Macro<S = any> = (state: GameState, args: PluginArgs, context: PluginContext<S>) => EffectRef[]
-type EffectRef = Effect
 ```
 
 A macro is an effect that stands for other effects. Its function works out from the state which effects to apply and returns them. Content calls it as any effect, `{ 'game/tip': { by: 2 } }`. Most of the game's own effects are macros, because what they return can be seen before they run.
 
-One runs in its turn: when the effects before it in the list have applied, its function is called with the state they left, and the effects it returns apply there and then. The list it returns can hold anything content can write: plain effects, a plugin's effect such as `{ 'quests/start': { quest: 'letter' } }`, or another macro. `EffectRef` is another name for [`Effect`](/docs/reference/effects#effect), kept for code written when the two differed.
+One runs in its turn: when the effects before it in the list have applied, its function is called with the state they left, and the effects it returns apply there and then. The list it returns can hold anything content can write: plain effects, a plugin's effect such as `{ 'quests/start': { quest: 'letter' } }`, or another macro.
 
 ```ts
 import type { Effect, GameRules } from '@ifloom/engine'
@@ -131,6 +128,22 @@ const effects: Effect[] = [{ stat: 'coins', by: 4 }, { 'game/double': true }, { 
 - A macro that returns another runs that one in its turn too. This stops at 10 deep, so a macro that names itself does nothing past that rather than hanging.
 
 The showcase has one: [`postLatest`](/docs/guide/showcase#feeds-and-an-effect-worked-out-in-code) posts the newest photo and rolls its likes.
+
+### Macro
+
+The function behind a macro, in the game's or a plugin's `macros`. It's handed the state, the arguments content wrote and the [context](/docs/reference/plugins#plugincontext), and returns the effects the macro stands for.
+
+```ts shape
+type Macro<S = any> = (state: GameState, args: PluginArgs, context: PluginContext<S>) => EffectRef[]
+```
+
+### EffectRef
+
+Another name for [`Effect`](/docs/reference/effects#effect), kept for code written when the two differed.
+
+```ts shape
+type EffectRef = Effect
+```
 
 ## Effects
 
@@ -228,7 +241,6 @@ commandOf({ 'places/go': { id: 'cafe' } })
 
 ```ts fragment
 values?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => string | number>
-type ValueRef = { value: string; with?: PluginArgs }
 ```
 
 A number or a word the prose needs to print, such as a price that moves or today's special. A value can also be the ceiling of a stat that grows, an app's [badge](/docs/plugins/devices#appdef) or an achievement's [progress](/docs/plugins/achievements). Like a condition, it's asked with arguments.
@@ -247,6 +259,14 @@ export const rules: GameRules = {
 Prose writes `A loaf is {{breadPrice}} today.`, with any arguments after the name as `key=value`: `{{messages/unread channel=texts}}`. Anywhere else, a value is a `ValueRef`, its name and its `with`: a stat writes `max: { value: 'game/energyCeiling', with: { per: 2 } }`.
 
 **Gotcha.** An unknown name in prose is left on screen as `{{breadPrice}}`, so you can see what's missing. An unknown stat ceiling quietly gives 100, but the [content checker](/docs/reference/checks) reports it as `no game value named "…"`.
+
+### ValueRef
+
+A value named outside prose: the value's full name and its arguments.
+
+```ts shape
+type ValueRef = { value: string; with?: PluginArgs }
+```
 
 ## Reading them in code
 

@@ -4,23 +4,33 @@ description: "Storylines: threads of the story with their own kv store, closed f
 ---
 A storyline is one thread of your story, such as a friendship with Ava or the business of a lost cat. For each one, the engine keeps a kv store of its own and whether it's closed for a while.
 
+Declare your storylines in your [content](/docs/reference/loader#content)'s `storylines`. A new game starts each one open and with an empty kv store.
+
+## StorylineDef
+
 ```ts shape
 type StorylineDef = { id: string; name: string }
+```
 
+A storyline as content declares it. Each declared storyline gets a [`StorylineState`](#storylinestate) in a new game, and an older save that lacks one gets an empty one the next time a command runs on it. A [cast](/docs/plugins/cast#person-1) character can belong to one through their `storyline` field, but a storyline doesn't need a character. The view draws no storylines of its own. A game or a plugin shows them, as the [quests](/docs/plugins/quests) plugin does when it groups quests by storyline.
+
+## StorylineState
+
+```ts shape
 type StorylineState = {
   closedUntil: number | null
   kv: Record<string, KvValue>
 }
 ```
 
-`StorylineDef` is listed with the rest of the game on [The game](/docs/reference/game#storylinedef). This page is about how storylines behave.
-
-Declare your storylines in your [content](/docs/reference/loader#content)'s `storylines`. A new game starts each one open and with an empty kv store. Its live state is `state.storylines[id]`:
+A storyline's live state, `state.storylines[id]`. Reading a storyline that isn't in the save gives an empty one (open, nothing set), so an undeclared id doesn't crash.
 
 | Field | Meaning |
 |---|---|
 | `closedUntil` | A [turn](/docs/reference/state#turn). While `state.turn` is below it, the storyline is closed. [`{ closeStoryline: storyline, turns }`](/docs/reference/effects#closestoryline) sets it to the current turn plus `turns`. `null` means open. |
 | `kv` | The storyline's own kv store. Set its keys with the [`kv` effect](/docs/reference/effects#whose-key-it-is) and `of: 'storyline:<id>'`, as in `{ kv: 'visits', by: 1, of: 'storyline:ava' }`, read them with the [`kv` condition](/docs/reference/conditions#kv) and the same `of`, add to them with the effect's `by`, and show them with the `{{kv:visits of=storyline:ava}}` token. |
+
+## Using them
 
 ```ts fragment
 storylines: [{ id: 'ava', name: 'Ava' }]
@@ -54,7 +64,7 @@ import { storylineOpen } from '@ifloom/engine'
 storylineOpen(state, 'ava') // true on a new game
 ```
 
-**Gotcha:** a storyline the game doesn't declare isn't an error here. It reads as empty and open. The [content checker](/docs/reference/checks) reports a condition, a `kv` effect with `of: 'storyline:…'` or a `closeStoryline` effect that names an unknown storyline.
+**Gotcha.** A storyline the game doesn't declare isn't an error here. It reads as empty and open. The [content checker](/docs/reference/checks) reports a condition, a `kv` effect with `of: 'storyline:…'` or a `closeStoryline` effect that names an unknown storyline.
 
 ## See it in an example
 

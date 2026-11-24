@@ -29,19 +29,31 @@ The speaker's picture is the entity's `image`. With none, there's no picture. Th
 import type { SceneMedia } from '@ifloom/engine'
 
 type SceneMedia = {
-  src?: string                       // resolved with artSrc
-  pool?: string                      // or a pick from this pool
-  tags?: string[]                    // the tags the pick should have
+  src?: string
+  pool?: string
+  tags?: string[]
   alt?: string
-  size?: 'inline' | 'wide'           // default 'inline'
+  size?: 'inline' | 'wide'
   at?: 'lead' | 'end'
-  video?: boolean                    // a .mp4 or .webm is a video anyway
+  video?: boolean
   controls?: boolean
   once?: boolean
   sound?: boolean
   poster?: string
 }
 ```
+
+| Field | Type | Default | What it is |
+|---|---|---|---|
+| `src` | `string` | | The file, resolved with [`artSrc`](/docs/reference/prose#artsrc). |
+| `pool` | `string` | | A [pool](/docs/reference/media#pools) to pick the file from instead. |
+| `tags` | `string[]` | `[]` | The tags the pool's pick should have. |
+| `alt` | `string` | | The alt text. |
+| `size` | `'inline' \| 'wide'` | `'inline'` | How wide it's drawn, as for [images in prose](/docs/reference/prose#images). |
+| `at` | `'lead' \| 'end'` | where it stands | Before the body, after it, or in place (see below). |
+| `video` | `boolean` | `false` | Draw it as a video. A file ending in `.mp4` or `.webm` is one anyway. |
+| `controls`, `once`, `sound` | `boolean` | `false` | The [video flags](/docs/reference/prose#videos). |
+| `poster` | `string` | | A video's poster picture. |
 
 A picture or a video, in a data scene's [`{ media }` block](#block). Give a file as `src`, which goes through [`artSrc`](/docs/reference/prose#artsrc) (`'scene/market-morning'` becomes `art/scene/market-morning.jpg`), or ask a [pool](/docs/reference/media#pools) for one with `pool` and `tags`. `size` is `inline` or `wide`, as for [images in prose](/docs/reference/prose#images).
 
@@ -71,18 +83,35 @@ type DataScene = {
   title?: string
   speaker?: string
   tags?: string[]
-  panel?: ScenePanel      // a panel held open while the scene is: { panel, with }
-  audio?: Record<string, string | null>   // background audio by channel while it's open
-  picture?: PictureDef    // a layered picture with hotspots
-  drawnFrom?: string[]    // the storylet sets it can be drawn from
-  weight?: number         // how often a draw picks it, 1 if left out
-  when?: Condition        // only drawn while this holds
-  minigame?: string       // a minigame that starts when it's entered
-  ui?: Ui<SceneUi>        // presentation hints, carried to the view as written
+  panel?: ScenePanel
+  audio?: Record<string, string | null>
+  picture?: PictureDef
+  drawnFrom?: string[]
+  weight?: number
+  when?: Condition
+  minigame?: string
+  ui?: Ui<SceneUi>
   body: Block[]
   choices: Choice[]
 }
 ```
+
+| Field | Type | Meaning |
+|---|---|---|
+| `id` | `string` | The scene's id, unique in the game. |
+| `title` | `string`, optional | Its heading. Left out, the room's or the game's title shows. |
+| `speaker` | `string`, optional | Who's talking, by id, as [Speakers](#speakers) says. |
+| `tags` | `string[]`, optional | Tags for the UI to style the scene by. The engine gives them no meaning. |
+| `panel` | `ScenePanel`, optional | A panel held open while the scene is, as [`panel`](#panel) says. |
+| `audio` | `Record<string, string \| null>`, optional | Background audio by channel while it's open, as [`audio`](#audio) says. |
+| `picture` | `PictureDef`, optional | A layered picture with hotspots. See [The picture](#the-picture). |
+| `drawnFrom` | `string[]`, optional | The [storylet](/docs/reference/storylets) sets it can be drawn from. |
+| `weight` | `number`, optional | How often a storylet draw picks it. 1 if left out. |
+| `when` | `Condition`, optional | A storylet is only drawn while this holds. |
+| `minigame` | `string`, optional | A [minigame](/docs/reference/minigames) that starts when the scene is entered. |
+| `ui` | `Ui<SceneUi>`, optional | [presentation hints](/docs/reference/ui-hints), carried to the view as written. |
+| `body` | `Block[]` | Its words, as [blocks](#block). |
+| `choices` | `Choice[]` | What the player can pick at the end, each a [`Choice`](#choice). |
 
 A scene written as data. You build its body from blocks, each its own piece of the words, rather than one text for the whole body. That way a conditional line is one more block, not another copy of the scene. Put it in your [content](/docs/reference/loader#content)'s `scenes`, and the engine [draws](#running-data-scenes) it when it's shown.
 
@@ -158,7 +187,7 @@ Blocks render in order, and a block whose `when` fails is dropped. Rendered bloc
 - **`ui`**, on any block, holds [presentation hints](/docs/reference/ui-hints) for the UI, and the view puts them on the first [beat](/docs/reference/prose#scenebeat) the block makes. The React UI's [`reveal`](/docs/react/hints#reveal) makes the block wait before it appears: `{ text: 'Tonight you unpack.', ui: { reveal: { delay: 1200 } } }`. A block that isn't shown takes its hints with it.
 
 **Gotchas.**
-- A `{ text }` block that names prose, as content wrote one before schema 25 (`{ text: 'cafe.counter' }` with that key in the prose), is reported, because it would show the key itself: write the words, or `{ prose: 'cafe.counter' }`. So is a `{ words }` block, which is `{ text }` now. A pack of an older schema is rewritten when it loads.
+- A `{ text }` block that names prose, as older content did (`{ text: 'cafe.counter' }` with that key in the prose), is reported, because it would show the key itself: write the words, or `{ prose: 'cafe.counter' }`. So is a `{ words }` block, which is `{ text }` now. An older pack is rewritten when it loads.
 - If every member of a set of variants is gated out, the block renders nothing and there's no error.
 - In a [place's body](/docs/plugins/places#the-room-scene), or any plugin's [room scene](/docs/reference/plugins#scene), a `variants` block has no choice to record its draw, so the count never moves. The member is picked by the save's seed and the [turn](/docs/reference/state#turn). A room deals a fresh line each turn and the same line every time the player looks in that turn, and it can deal the same line two turns running.
 

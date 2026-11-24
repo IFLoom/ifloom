@@ -92,7 +92,7 @@ draw(6, state.seed, state.turn, 'dice') // 0 to 5
 
 For dice in content, a check against a target or a total the prose prints, use the [`roll` effect](/docs/reference/effects#roll) instead. It draws its dice this way and records the roll for the view. See [Dice rolls](/docs/reference/rolls).
 
-**Gotcha:** the parts are joined into one string, so `draw(6, 'a:b')` and `draw(6, 'a', 'b')` are the same draw. Keep `:` out of the names you draw with.
+**Gotcha.** The parts are joined into one string, so `draw(6, 'a:b')` and `draw(6, 'a', 'b')` are the same draw. Keep `:` out of the names you draw with.
 
 ## drawOne
 
@@ -126,7 +126,7 @@ import { chance } from '@ifloom/engine'
 chance(1, 3, state.seed, state.turn, 'park.ducks') // one turn in three
 ```
 
-**Gotcha:** the same parts give the same answer every time. If you want a chance to come up fresh on each visit, put something in its parts that changes per visit, such as a count of visits.
+**Gotcha.** The same parts give the same answer every time. If you want a chance to come up fresh on each visit, put something in its parts that changes per visit, such as a count of visits.
 
 ## weighted
 

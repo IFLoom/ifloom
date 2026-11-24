@@ -53,15 +53,26 @@ Notation is a count, `d`, the sides, and an optional number to add or take away:
 ```ts shape
 type Roll = {
   key: string
-  dice: string                // '2d6': the dice thrown, without what's added
-  faces: number[]             // what each die showed, in order
-  plus: number                // the notation's own number and the effect's `plus`, together
-  total: number               // the faces added up, plus `plus`
-  against?: number            // the target, when the effect gave one
-  passed?: boolean            // whether the total reached it; only with a target
-  critical?: 'max' | 'min'    // every die on its top face, or every die on 1
+  dice: string
+  faces: number[]
+  plus: number
+  total: number
+  against?: number
+  passed?: boolean
+  critical?: 'max' | 'min'
 }
 ```
+
+| Field | Type | Meaning |
+|---|---|---|
+| `key` | `string` | The key the roll was made under, which the kv store keeps its total at. |
+| `dice` | `string` | The dice thrown, such as `'2d6'`, without what's added. |
+| `faces` | `number[]` | What each die showed, in order. |
+| `plus` | `number` | The notation's own number and the effect's `plus`, together. |
+| `total` | `number` | The faces added up, plus `plus`. |
+| `against` | `number`, optional | The target, when the effect gave one. |
+| `passed` | `boolean`, optional | Whether the total reached the target. Only there with one. |
+| `critical` | `'max' \| 'min'`, optional | Every die on its top face, or every die on 1. |
 
 One roll as it was made. [`view.rolls`](/docs/reference/view#rolls) lists the last command's, and `state.rolls.latest` keeps the latest under each key. It holds only what happened, so it's safe to show: the faces, what was added, the total, the target and the outcome.
 

@@ -96,7 +96,7 @@ Slots are names your game picks, such as `'auto'` for the runner's autosave, `'q
 | Member | What it does |
 |---|---|
 | `driver` | The [driver](#savedriver) the store was made with. Read its `name` to show where saves are kept, or pass it to [`profile`](/docs/reference/profile) or [`mods`](/docs/reference/mods) to keep their data in the same place. |
-| `write(slot, state, extra?)` | Writes a [`SaveFile`](#savefile) to the slot, replacing what was there, and returns its [`SaveMeta`](#savemeta). `extra` is a `SaveExtra`, `{ name?, played?, savedAt? }`: the save's name, the time played and when it was written, each made up if left out. It rejects only if the driver fails. |
+| `write(slot, state, extra?)` | Writes a [`SaveFile`](#savefile) to the slot, replacing what was there, and returns its [`SaveMeta`](#savemeta). `extra` is a [`SaveExtra`](#saveextra): the save's name, the time played and when it was written, each made up if left out. It rejects only if the driver fails. |
 | `read(slot)` | The slot read back, as a `Result` whose value is the [`LoadedSave`](#loadedsave), or `null` if the slot is empty. It fails with the reason a save can't be read. |
 | `list()` | Every save this game has, as [`SaveListing`](#savelisting)s: the `SaveMeta` of each one that can be read, newest first by `savedAt`, then each one that can't, as `{ slot, broken }`, by slot. |
 | `remove(slot)` | Empties a slot. |
@@ -132,9 +132,27 @@ These are the engine's English. A game rewords them in the [strings table](/docs
 
 The state inside the file is loaded with [`loadState`](#loadstate), which carries it forward or refuses it with one of these reasons.
 
-**Gotchas:**
+**Gotchas.**
 - `write` without `played` records `0`. The runner passes the time played for you. When you write an imported save yourself, pass `loaded.meta.played` on.
 - `write` without `name` makes one from the state, so an imported save written that way loses the player's name for it. Pass `loaded.meta.name`.
+
+### SaveExtra
+
+What `write` is given besides the state. Each field is made up when it's left out.
+
+```ts shape
+type SaveExtra = {
+  name?: string
+  played?: number
+  savedAt?: number
+}
+```
+
+| Field | Type | Default | What it is |
+|---|---|---|---|
+| `name` | `string` | One made from when and where, as [`SaveMeta.name`](#savemeta) says | The player's name for the save. |
+| `played` | `number` | `0` | Time played, in milliseconds. |
+| `savedAt` | `number` | `Date.now()` | When it was written, epoch milliseconds. |
 
 ### Keys
 
@@ -160,10 +178,17 @@ A save as it's written, as JSON: the tag `ifloom: 1`, the save's details, and th
 
 ```ts shape
 type SaveListing = SaveMeta | BrokenSave
-type BrokenSave = { slot: string; broken: string }
 ```
 
-One entry of [`list()`](#saves). A save that's there but can't be read, because it isn't valid JSON, belongs to another game or is from a newer engine, is a `BrokenSave`: its slot, and why, in the words `read` gives. List it so the player can delete it with `remove(slot)`. Tell the two apart with `'broken' in entry`.
+One entry of [`list()`](#saves): a save's [`SaveMeta`](#savemeta), or a `BrokenSave` for one that can't be read. Tell the two apart with `'broken' in entry`.
+
+### BrokenSave
+
+A save that's there but can't be read, because it isn't valid JSON, belongs to another game or is from a newer engine: its slot, and why, in the words `read` gives. List it so the player can delete it with `remove(slot)`.
+
+```ts shape
+type BrokenSave = { slot: string; broken: string }
+```
 
 ## SaveMeta
 
@@ -194,7 +219,7 @@ What a save says about itself, which is enough to draw a row on a load screen wi
 | `played` | Time played, in milliseconds, as the [runner](/docs/reference/runner) counted it. |
 | `turn` | How many turns had passed: [`state.turn`](/docs/reference/state#turn), from 0. |
 | `when` | When and where the game was, in its plugins' [labels](/docs/reference/plugins#labels), as the view shows it in [`view.when`](/docs/reference/view#the-clock-and-the-player): `'Day 5 · Friday evening · The Corner Café'` with the calendar and the places plugin, `'Day 5 · Friday evening'` with the calendar alone. `null` when no plugin says. |
-| `playerName` | What the first `saveName` that answers returns for the state, the game's [`rules.saveName`](/docs/reference/rules#savename) before any plugin's, or `null` when none does. A save written before version 18 called it `player`, and reading it gives it as `playerName`. The engine keeps no name of its own, so a game that asks the player's name declares `saveName` to show it on its load screen. |
+| `playerName` | What the first `saveName` that answers returns for the state, the game's [`rules.saveName`](/docs/reference/rules#savename) before any plugin's, or `null` when none does. The engine keeps no name of its own, so a game that asks the player's name declares `saveName` to show it on its load screen. |
 | `packs` | The ids of the [packs](/docs/reference/loader#content-and-packs) the game was loaded with ([`game.packs`](/docs/reference/game)), such as mods and unlocked content. Your own content has no id, so it isn't recorded. |
 | `plugins` | Each [plugin](/docs/reference/plugins) the game was built with, by id, and the version of its state: `{ quests: 1 }`. |
 | `gameVersion` | The game's own [version](#the-games-own-migrations) the save was made with. 1 for a game that declares none, and for a save from before game versions. |
@@ -287,6 +312,9 @@ These are the changes to the save format so far, with what loading a save from b
 - **17 → 18** folds what the player has seen and chosen into one record per id, `{ n, first, last }`, in [`seen`](/docs/reference/state#seen) and [`chosen`](/docs/reference/state#chosen). The count comes from the old `seen` or `chosen`, `first` from `seenOn` or `chosenOn`, and `last` from `lastSeenOn` or `lastChosenOn`, falling back to `first`. A record a save kept no turn for, from before the turns were kept, is dated the turn the save is at. A choice's `once` now reads `chosen`, so the `turn:<scene>#<choice>` kv keys that capped the game's choices go (and `turn:<key>` for a choice with a [`once.key`](/docs/reference/scenes#choice)). One that still caps the save's turn makes that choice's `last` the turn, so the cap holds. Other `turn:` keys, such as [`oncePerTurn`](/docs/reference/scenes#choice)'s, are kept.
 - **18 → 19** moves the phase into the kv store. The stretch of the game the player is in is the kv key `phase` now, not a field of the state, so the save's `phase` becomes `kv.phase`. A save in no phase (`''`) gets no key, and one that already has a `phase` key keeps its own.
 - **19 → 20** calls a running minigame's numbers its kv store: `minigame.vars` becomes `minigame.kv`. A flowing scene's visit, [`flow`](/docs/reference/state#flow), came in this version too, from its load default of `null`.
+- **20 → 21** makes a [notice](/docs/reference/state#notices)'s `text` its words rather than a prose key. A notice from an older save gets that key's words.
+- **21 → 22** renames what an entity made in play was given as `desc` to `description`.
+- **22 → 23** keeps a [pool pick](/docs/reference/media#remembered-picks) for a layered picture's layer under the slot `picture:<index>`, not `stage:<index>`.
 - **23 → 24** gives a save [`changes`](/docs/reference/state#changes), the stats the last command moved, as an empty list. Its `SaveMeta` no longer repeats the state's version as `version`; a file that still has it reads as before, and the field is dropped from the meta it gives back.
 
 A save from version 0 doesn't load.
@@ -296,16 +324,16 @@ A save from version 0 doesn't load.
 ## SAVE_VERSION
 
 ```ts shape
-const SAVE_VERSION: 24
+const SAVE_VERSION: number
 ```
 
-The current save format. Every new state carries it in `state.version`.
+The current save format. Every new state carries it in `state.version`, so each save records the version it was written in. Read it from the package rather than writing the number down, since it goes up with the engine.
 
-It only goes up when something an existing save already has changes shape, such as a field that's renamed, moved or holds a different kind of value. That bump ships with a step that reshapes the old field, which [`loadState`](#loadstate) runs on older saves.
+It only goes up when something an existing save already has changes shape, such as a field that's renamed, moved or holds a different kind of value. That bump ships with a step that reshapes the old field, which [`loadState`](#loadstate) runs on older saves. [The engine's steps](#the-engines-steps) lists each one.
 
-A field added to `GameState` doesn't bump it. The engine declares the new field's load default next to its new-game value, and a save that lacks the field gets the default when it loads, whatever its version. [`minigame`](/docs/reference/state#minigame) was added this way, so a save from before minigames loads with `null` and the version stayed at 11. Version 12 renamed a field, so it has a step.
+A field added to `GameState` doesn't bump it. The engine declares the new field's load default next to its new-game value, and a save that lacks the field gets the default when it loads, whatever its version. [`minigame`](/docs/reference/state#minigame) was added this way, so a save from before minigames loads with `null`.
 
-Versions 4, 7, 9, 10 and 11 only added fields. They're from before this rule and have no step of their own, so loading an older save gives those fields their defaults too.
+A few early versions only added fields. They're from before this rule and have no step of their own, so loading an older save gives those fields their defaults too.
 
 ## The game's own migrations
 

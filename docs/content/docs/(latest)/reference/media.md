@@ -91,6 +91,12 @@ The game's `media` field. A pool is a named list of files content can pick from.
 type PoolFile = { src: string; tags?: string[]; weight?: number }
 ```
 
+| Field | Type | Default | What it is |
+|---|---|---|---|
+| `src` | `string` | | The file, through [`artSrc`](/docs/reference/prose#artsrc). |
+| `tags` | `string[]` | `[]` | The words a request picks it by. |
+| `weight` | `number` | `1` | How often it's picked against the other files that fit. |
+
 One file in a pool. `src` is a path, as any picture's, through [`artSrc`](/docs/reference/prose#artsrc). A `.mp4` or `.webm` file is drawn as a video. `tags` are whatever words your game sorts its files by: a colour, the time of day, who's in it.
 
 `weight` is how often the file is picked against the other files that fit a request, 1 if left out. A file of weight 3 is picked three times as often as one of weight 1:
@@ -160,7 +166,11 @@ The visit isn't part of the key. A scene shows the same door every time it opens
 type MediaState = { picks: Record<string, string> }
 ```
 
-What a save keeps at `state.media`: the file (as its pool's `src`) each pick key was given. A new game starts with `{ picks: {} }`, and a save from before version 11 [loads](/docs/reference/saves#loadstate) with that.
+| Field | Type | What it holds |
+|---|---|---|
+| `picks` | `Record<string, string>` | The file each [pick key](#pick-keys) was given, as its pool's `src`. |
+
+What a save keeps at `state.media`: the file (as its pool's `src`) each pick key was given. A new game starts with `{ picks: {} }`, and so does an older save that [loads](/docs/reference/saves#loadstate) without it.
 
 ## Layered pictures
 
@@ -173,6 +183,12 @@ type PictureDef = {
   aspect?: string
 }
 ```
+
+| Field | Type | Default | What it is |
+|---|---|---|---|
+| `layers` | `PictureLayer[]` | | The layers, bottom first. |
+| `hotspots` | `HotspotDef[]` | `[]` | The clickable areas. |
+| `aspect` | `string` | the UI's choice | Width over height, as CSS writes it, such as `'16/9'`. |
 
 A layered picture with hotspots. A [data scene](/docs/reference/scenes#the-picture) and a [place](/docs/plugins/places#the-picture) can each have one. `layers` are drawn bottom first. `aspect` is the width over the height as CSS writes it, such as `'16/9'`. Leave it out and the UI picks one.
 
@@ -193,6 +209,15 @@ type PictureLayer = {
 }
 ```
 
+| Field | Type | Default | What it is |
+|---|---|---|---|
+| `id` | `string` | | What a hotspot's `layer` names to go with this layer. |
+| `src` | `string` | | The file, through `artSrc`. |
+| `pool`, `tags` | `string`, `string[]` | | A pool to pick the file from instead, and the tags the pick should have. |
+| `when` | `Condition` | always | Shown while it holds. |
+| `video` | `boolean` | by the file's extension | Draw it as a video. |
+| `controls`, `once`, `sound`, `poster` | | | The [video flags](#videoflags). |
+
 One layer. Give a file as `src`, or a pool and tags. It's shown while `when` holds. `id` is what a hotspot names to go with this layer. A layer is a video when `video` is `true` or its file is a `.mp4` or `.webm`, and the [video flags](#videoflags) apply.
 
 ### HotspotDef
@@ -208,6 +233,16 @@ type HotspotDef = {
   layer?: string
 }
 ```
+
+| Field | Type | Default | What it is |
+|---|---|---|---|
+| `id` | `string` | | The hotspot's id. |
+| `rect` | `[number, number, number, number]` | | `[x, y, width, height]` in percent of the picture, from the top left. |
+| `label` | `string` | | What a screen reader reads and the tooltip shows. |
+| `command` | `CommandRef` | | The command it sends. Give this or `choice`. |
+| `choice` | `string` | | A choice of the open scene, by id. Give this or `command`. |
+| `when` | `Condition` | always | Shown while it holds. |
+| `layer` | `string` | | A layer's `id`: shown only while that layer is. |
 
 A clickable area. `rect` is `[x, y, width, height]` in percent of the picture, from the top left, so `[0, 0, 100, 100]` is the whole picture. `label` is what a screen reader reads and the tooltip shows. Give exactly one of:
 
@@ -226,6 +261,12 @@ type PictureView = {
 }
 ```
 
+| Field | Type | What it holds |
+|---|---|---|
+| `aspect` | `string \| null` | The picture's `aspect`, or `null` for the UI to choose. |
+| `layers` | `PictureLayerView[]` | The layers shown now, bottom first. |
+| `hotspots` | `HotspotView[]` | The hotspots that can be shown, each a button. |
+
 A picture as the UI draws it, from [`pictureView`](/docs/reference/view#pictureview). It's in [`view.scene.picture`](/docs/reference/view#the-scene) for the open scene, and in a place's `location.picture` in [`PlacesView`](/docs/plugins/places#placesview). `layers` has only the layers shown now, bottom first. `hotspots` has only the ones that can be shown, each resolved to a button.
 
 ### PictureLayerView
@@ -237,6 +278,12 @@ type PictureLayerView = {
   video?: VideoView
 }
 ```
+
+| Field | Type | What it holds |
+|---|---|---|
+| `id` | `string \| null` | The layer's `id`, or `null` when it has none. |
+| `src` | `string` | The file, through `artSrc`, or the pool's pick. |
+| `video` | `VideoView`, optional | How it plays. Only there for a video layer. |
 
 A layer that's shown. `src` has been through [`artSrc`](/docs/reference/prose#artsrc), and a pool layer's is the pick. `video` is there only for a video layer.
 
@@ -254,6 +301,16 @@ type HotspotView = {
 }
 ```
 
+| Field | Type | What it holds |
+|---|---|---|
+| `id` | `string` | The hotspot's id. |
+| `rect` | `[number, number, number, number]` | Where it is, in percent of the picture. |
+| `label` | `string` | Its words, for a screen reader and the tooltip. |
+| `command` | `Command` | What to send when it's pressed. |
+| `disabled` | `string`, optional | Why it can't be pressed now. |
+| `warning` | `string`, optional | A warning to show, though it can be pressed. |
+| `layer` | `string`, optional | The layer it goes with. |
+
 A hotspot as a button. Send `command` when it's pressed. `disabled` and `warning` mean what they do on a [`RenderedChoice`](/docs/reference/view#renderedchoice): greyed out with a reason, or pressable with a warning the reducer refuses all the same.
 
 ## Video
@@ -269,6 +326,13 @@ type VideoFlags = {
 }
 ```
 
+| Field | Type | Default | What it is |
+|---|---|---|---|
+| `controls` | `boolean` | `false` | Shows the player's controls, and waits for a press to play. |
+| `once` | `boolean` | `false` | Plays once instead of looping. |
+| `sound` | `boolean` | `false` | Plays with sound instead of muted. |
+| `poster` | `string` | | A still shown before it plays, through `artSrc`. |
+
 The flags a video can carry, on a `{ media }` block or a picture layer. They're the same as the [markup flags](/docs/reference/prose#videos): `controls` shows the player's controls, `once` plays once, `sound` plays with sound, and `poster` is a still shown before it plays.
 
 ### VideoView
@@ -282,6 +346,14 @@ type VideoView = {
   poster?: string
 }
 ```
+
+| Field | Type | What it holds |
+|---|---|---|
+| `autoplay` | `boolean` | Whether it starts by itself: `false` with `controls`. |
+| `loop` | `boolean` | Whether it loops: `false` with `once`. |
+| `muted` | `boolean` | Whether it's muted: `false` with `sound`. |
+| `controls` | `boolean` | Whether it shows the player's controls. |
+| `poster` | `string`, optional | The still, through `artSrc`. |
 
 How a video layer plays, with the defaults filled in. A `video` [beat](/docs/reference/prose#scenebeat) carries the same fields. Without flags, a video plays by itself, loops, is muted and has no controls, like a GIF. `controls` turns `autoplay` off, so a clip with controls waits for the player. `poster` has been through `artSrc`.
 

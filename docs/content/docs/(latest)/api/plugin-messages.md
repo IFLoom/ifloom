@@ -11,7 +11,7 @@ Generated from the source of `@ifloom/plugin-messages` and `@ifloom/plugin-messa
 
 ### Arrival
 
-Type. Explained in [Messages](/docs/plugins/messages#arrival).
+Type. Explained in [Messages](/docs/reference/plugins/messages#arrival).
 
 The record a save keeps of one arrival of a message, in `MessagesState`'s `arrived`. A message drawn from a
 pool can arrive again, and each arrival has its own reply and read mark.
@@ -35,7 +35,7 @@ type Arrival = {
 
 ### Channel
 
-Type. Explained in [Messages](/docs/plugins/messages#channel).
+Type. Explained in [Messages](/docs/reference/plugins/messages#channel).
 
 A channel the game declares in `data.messages.channels`, such as texts, email or the doormat.
 
@@ -54,7 +54,7 @@ type Channel = {
 
 ### channelsOf
 
-Function. Explained in [Messages](/docs/plugins/messages#channelsof).
+Function. Explained in [Messages](/docs/reference/plugins/messages#channelsof).
 
 Returns the game's channels in order, from `data.messages.channels` in its content and packs.
 
@@ -67,7 +67,7 @@ Uses: [`Game`](/docs/api/engine#game), [`Channel`](#channel).
 
 ### ChannelView
 
-Type. Explained in [Messages](/docs/plugins/messages#channelview).
+Type. Explained in [Messages](/docs/reference/plugins/messages#channelview).
 
 A channel as the player sees it, in `view.plugins.messages.channels`.
 
@@ -92,7 +92,7 @@ type ChannelView = {
 
 ### MessageDef
 
-Type. Explained in [Messages](/docs/plugins/messages#messagedef).
+Type. Explained in [Messages](/docs/reference/plugins/messages#messagedef).
 
 A message the game declares in `data.messages.messages`. It arrives once by its `when`, or each time `messages/draw` draws it from a pool.
 
@@ -131,7 +131,7 @@ type MessageDef = {
 
 ### messages
 
-Function. Explained in [Messages](/docs/plugins/messages#messages).
+Function. Explained in [Messages](/docs/reference/plugins/messages#messages).
 
 The messages plugin's factory, with its helpers as properties. `messages()` returns the plugin for the game's
 `plugins`, and content calls helpers such as `messages.reply('hi', 'wave')`.
@@ -155,7 +155,7 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`MessagesState`
 
 ### messagesOf
 
-Function. Explained in [Messages](/docs/plugins/messages#messagesof).
+Function. Explained in [Messages](/docs/reference/plugins/messages#messagesof).
 
 Returns the game's messages, from `data.messages.messages` in its content and packs.
 
@@ -168,7 +168,7 @@ Uses: [`Game`](/docs/api/engine#game), [`MessageDef`](#messagedef).
 
 ### MessagesState
 
-Type. Explained in [Messages](/docs/plugins/messages#messagesstate).
+Type. Explained in [Messages](/docs/reference/plugins/messages#messagesstate).
 
 The messages a save keeps for the player, their arrivals, replies and reads. Messages themselves are read from content.
 
@@ -193,7 +193,7 @@ type MessagesState = {
 
 ### MessagesView
 
-Type. Explained in [Messages](/docs/plugins/messages#messagesview).
+Type. Explained in [Messages](/docs/reference/plugins/messages#messagesview).
 
 The messages as the player sees them, in `view.plugins.messages`.
 
@@ -214,7 +214,7 @@ type MessagesView = {
 
 ### MessageView
 
-Type. Explained in [Messages](/docs/plugins/messages#messageview).
+Type. Explained in [Messages](/docs/reference/plugins/messages#messageview).
 
 One arrival of a message as the player sees it, in a `ThreadView`'s `messages`.
 
@@ -249,7 +249,7 @@ type MessageView = {
 
 ### ReplyDef
 
-Type. Explained in [Messages](/docs/plugins/messages#replydef).
+Type. Explained in [Messages](/docs/reference/plugins/messages#replydef).
 
 A reply the game declares in a `MessageDef`'s `replies`. The player can send one reply to each arrival.
 
@@ -272,7 +272,7 @@ type ReplyDef = {
 
 ### ThreadView
 
-Type. Explained in [Messages](/docs/plugins/messages#threadview).
+Type. Explained in [Messages](/docs/reference/plugins/messages#threadview).
 
 A thread of messages as the player sees it, in a `ChannelView`'s `threads`.
 
@@ -354,7 +354,7 @@ type MessagesControls = {
 
 ### MessagesSection
 
-Const. Explained in [Messages](/docs/plugins/messages#messagessection).
+Const. Explained in [Messages](/docs/reference/plugins/messages#messagessection).
 
 Renders one messages channel from `view.plugins.messages.channels` as a device's app section, in the style of a
 phone. It shows the list of threads first, and opening a thread shows its messages and marks it read.
@@ -376,7 +376,7 @@ Uses: [`SectionProps`](/docs/api/react#sectionprops).
 
 ### messagesUi
 
-Const. Explained in [Messages](/docs/plugins/messages#messagesui).
+Const. Explained in [Messages](/docs/reference/plugins/messages#messagesui).
 
 The messages plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It renders a `MessagesSection`
 wherever a device's app has a `messages` section, and adds the plugin's words.
@@ -390,7 +390,7 @@ Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
 
 ### useMessages
 
-Function. Explained in [Messages](/docs/plugins/messages#usemessages).
+Function. Explained in [Messages](/docs/reference/plugins/messages#usemessages).
 
 Returns the messages plugin's view and read command from the running game, or null in a game without the plugin. It re-renders when the view changes.
 

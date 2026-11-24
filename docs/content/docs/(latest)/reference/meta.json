@@ -59,6 +59,8 @@
     "audio",
     "media",
     "panels",
+    "---Packages---",
+    "plugins",
     "---Other tools---",
     "twine-phrasebook"
   ]

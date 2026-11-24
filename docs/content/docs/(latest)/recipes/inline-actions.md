@@ -28,7 +28,7 @@ const prose = {
 
 The choice is drawn in the line and left out of the list under it, so Go out is the only button. Everything else about it stays the same. It's still a choice: the `choose` command, its `blocked` reasons, its price, `once`, `irreversible`, the replay and the content checker all treat it as one. `[[act:answer]]` with no words uses the choice's own label.
 
-A choice can send a command as well as its effects, so an inline action can do anything a button can. This one opens the phone's messages through the [devices plugin](/docs/plugins/devices):
+A choice can send a command as well as its effects, so an inline action can do anything a button can. This one opens the phone's messages through the [devices plugin](/docs/reference/plugins/devices):
 
 ```ts
 import type { ActionDef } from '@ifloom/engine'

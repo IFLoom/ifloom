@@ -11,7 +11,7 @@ Generated from the source of `@ifloom/plugin-feed` and `@ifloom/plugin-feed/reac
 
 ### Comment
 
-Type. Explained in [Feed](/docs/plugins/feed#comment).
+Type. Explained in [Feed](/docs/reference/plugins/feed#comment).
 
 A comment on a post, one entry of a post's comments in `FeedState`.
 
@@ -30,7 +30,7 @@ type Comment = {
 
 ### feed
 
-Function. Explained in [Feed](/docs/plugins/feed#feed).
+Function. Explained in [Feed](/docs/reference/plugins/feed#feed).
 
 Returns the feed plugin, for the game's `plugins`. It cooperates with the cast, which gives posters their names and
 faces.
@@ -54,7 +54,7 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`FeedState`](#f
 
 ### FeedDef
 
-Type. Explained in [Feed](/docs/plugins/feed#feeddef).
+Type. Explained in [Feed](/docs/reference/plugins/feed#feeddef).
 
 A feed the game declares in `data.feed.feeds`, such as a social app, a notice board or a paper. Posts name it in their `feed`.
 
@@ -73,7 +73,7 @@ type FeedDef = {
 
 ### feedsOf
 
-Function. Explained in [Feed](/docs/plugins/feed#feedsof).
+Function. Explained in [Feed](/docs/reference/plugins/feed#feedsof).
 
 Returns the game's feeds, `data.feed.feeds` from its content and packs, in declared order.
 
@@ -86,7 +86,7 @@ Uses: [`Game`](/docs/api/engine#game), [`FeedDef`](#feeddef).
 
 ### FeedState
 
-Type. Explained in [Feed](/docs/plugins/feed#feedstate).
+Type. Explained in [Feed](/docs/reference/plugins/feed#feedstate).
 
 The feeds a save keeps for the player. Feeds and other people's posts are read from content, so only what play changed is kept.
 
@@ -109,7 +109,7 @@ type FeedState = {
 
 ### FeedsView
 
-Type. Explained in [Feed](/docs/plugins/feed#feedsview).
+Type. Explained in [Feed](/docs/reference/plugins/feed#feedsview).
 
 The feeds as the player sees them, in `view.plugins.feed`.
 
@@ -128,7 +128,7 @@ type FeedsView = {
 
 ### FeedView
 
-Type. Explained in [Feed](/docs/plugins/feed#feedview).
+Type. Explained in [Feed](/docs/reference/plugins/feed#feedview).
 
 A feed as the player sees it, in `view.plugins.feed.feeds`. Its `unread` counts other people's posts the player hasn't seen.
 
@@ -153,7 +153,7 @@ type FeedView = {
 
 ### OwnPost
 
-Type. Explained in [Feed](/docs/plugins/feed#ownpost).
+Type. Explained in [Feed](/docs/reference/plugins/feed#ownpost).
 
 A post the player made with the `feed/post` effect, as `FeedState` keeps it.
 
@@ -184,7 +184,7 @@ type OwnPost = {
 
 ### PostDef
 
-Type. Explained in [Feed](/docs/plugins/feed#postdef).
+Type. Explained in [Feed](/docs/reference/plugins/feed#postdef).
 
 Someone else's post, which the game declares in `data.feed.posts`. It appears the first time its `when` holds after a command.
 
@@ -215,7 +215,7 @@ type PostDef = {
 
 ### postsOf
 
-Function. Explained in [Feed](/docs/plugins/feed#postsof).
+Function. Explained in [Feed](/docs/reference/plugins/feed#postsof).
 
 Returns the game's posts, `data.feed.posts` from its content and packs, in declared order.
 
@@ -228,7 +228,7 @@ Uses: [`Game`](/docs/api/engine#game), [`PostDef`](#postdef).
 
 ### PostView
 
-Type. Explained in [Feed](/docs/plugins/feed#postview).
+Type. Explained in [Feed](/docs/reference/plugins/feed#postview).
 
 A post as the player sees it, in a `FeedView`'s `posts`.
 
@@ -305,7 +305,7 @@ type FeedControls = {
 
 ### FeedSection
 
-Const. Explained in [Feed](/docs/plugins/feed#feedsection).
+Const. Explained in [Feed](/docs/reference/plugins/feed#feedsection).
 
 Renders the feed named by an app section's `with.feed`, from `view.plugins.feed`, newest post first. A preset styles
 its `feed`, `post` and `post-*` parts.
@@ -323,7 +323,7 @@ Uses: [`SectionProps`](/docs/api/react#sectionprops).
 
 ### feedUi
 
-Const. Explained in [Feed](/docs/plugins/feed#feedui).
+Const. Explained in [Feed](/docs/reference/plugins/feed#feedui).
 
 The feed plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It registers `FeedSection` for a
 device app's `feed` section, and adds the plugin's words.
@@ -337,7 +337,7 @@ Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
 
 ### useFeed
 
-Function. Explained in [Feed](/docs/plugins/feed#usefeed).
+Function. Explained in [Feed](/docs/reference/plugins/feed#usefeed).
 
 Returns the feed plugin's view and its command from the running game, or null in a game without the plugin. It
 re-renders when the view changes. `FeedSection` renders from it.

@@ -43,7 +43,7 @@ ifloom build
 
 The game lands in `dist/` (or the folder `--out` names), and the command checks it: there is an `index.html`, every script and stylesheet it loads is beside it, and every picture, video and sound the game names has its file there. It prints what is wrong and exits with `1`, so a CI job fails on a build that would not open from disk. Run [`ifloom check`](/docs/cli#ifloom-check) beside it to catch content problems before you build.
 
-Leave the [debug plugin](/docs/plugins/debug#leave-it-out-of-release-builds) out of the build: `import.meta.env.DEV` is `false` under `ifloom build`.
+Leave the [debug plugin](/docs/reference/plugins/debug#leave-it-out-of-release-builds) out of the build: `import.meta.env.DEV` is `false` under `ifloom build`.
 
 Put pictures in `public/art/`. Vite copies `public/` into the build as it is, so they land in `dist/art/` beside the page.
 

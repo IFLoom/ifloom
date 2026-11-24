@@ -12,7 +12,7 @@ A message is like a scene that arrives instead of one the player walks into. It 
 import { messages, messagesOf, channelsOf, type Channel, type MessageDef, type ReplyDef, type MessagesState, type Arrival, type MessagesView, type ChannelView, type ThreadView, type MessageView } from '@ifloom/plugin-messages'
 ```
 
-The plugin knows nothing about phones. Your game decides what the channels are and where they're shown, such as a pile of post in the hall. With the [devices plugin](/docs/plugins/devices) a channel can be an app instead, as in [A phone](/docs/recipes/phone).
+The plugin knows nothing about phones. Your game decides what the channels are and where they're shown, such as a pile of post in the hall. With the [devices plugin](/docs/reference/plugins/devices) a channel can be an app instead, as in [A phone](/docs/recipes/phone).
 
 ## Install
 
@@ -27,7 +27,7 @@ List the package in your game's `package.json`, beside the engine:
 }
 ```
 
-Then add `messages()` to the game's `plugins`. [Adding one](/docs/plugins#adding-one) has the details.
+Then add `messages()` to the game's `plugins`. [Adding one](/docs/reference/plugins#adding-one) has the details.
 
 ## messages
 
@@ -72,7 +72,7 @@ data: {
 }
 ```
 
-The plugin lists `cooperates: ['cast']` (see [`cooperates`](/docs/reference/plugins#cooperates)). A sender who is an [entity](/docs/reference/entities), such as one of the [cast](/docs/plugins/cast)'s characters, is shown with their name and picture, which the plugin reads with [`speakerOf`](/docs/reference/plugins#speakerof), and with the game's cast their face for avatars, the person's [`portrait`](/docs/plugins/cast#person), which it asks with the `cast/portrait` query. Anyone else is shown as written.
+The plugin lists `cooperates: ['cast']` (see [`cooperates`](/docs/reference/plugins#cooperates)). A sender who is an [entity](/docs/reference/entities), such as one of the [cast](/docs/reference/plugins/cast)'s characters, is shown with their name and picture, which the plugin reads with [`speakerOf`](/docs/reference/plugins#speakerof), and with the game's cast their face for avatars, the person's [`portrait`](/docs/reference/plugins/cast#person), which it asks with the `cast/portrait` query. Anyone else is shown as written.
 
 ### Channel
 
@@ -197,7 +197,7 @@ const smallTalk: MessageDef[] = ['rain', 'beans', 'river'].map((topic) => ({
 const chat: TriggerDef = { id: 'ava.chat', once: { per: 'turn' }, when: messages.replied('ava.text'), effects: [messages.draw('ava.chat')] }
 ```
 
-`messages.since(id, { lt: 3 })` holds while fewer than three days have passed since that message last arrived, so `{ not: … }` keeps it out of the draw for three days. Days are the [calendar](/docs/plugins/calendar)'s days, or turns in a game without the calendar. It's false for a message that has never come, so a fresh one is always in the draw.
+`messages.since(id, { lt: 3 })` holds while fewer than three days have passed since that message last arrived, so `{ not: … }` keeps it out of the draw for three days. Days are the [calendar](/docs/reference/plugins/calendar)'s days, or turns in a game without the calendar. It's false for a message that has never come, so a fresh one is always in the draw.
 
 The draw is seeded by the save, the turn and how many messages have arrived, so a replay or an undo draws the same message. When no message in the pool can be drawn, nothing arrives.
 
@@ -229,7 +229,7 @@ The time is counted from when the message starts waiting, which is when the one 
 
 A cut-down Small Town. The player meets Ava at the café, and she texts the next morning. Saying yes brings a second text. A letter from the town council lands on the mat on the second afternoon. There's no phone here. The texts and the letters are two channels, and the flat has a button to pick up the post.
 
-The time of day comes from the [calendar](/docs/plugins/calendar), the map from [places](/docs/plugins/places) and Ava from the [cast](/docs/plugins/cast). The calendar goes first in `plugins`, so the messages plugin sees the new day when one begins.
+The time of day comes from the [calendar](/docs/reference/plugins/calendar), the map from [places](/docs/reference/plugins/places) and Ava from the [cast](/docs/reference/plugins/cast). The calendar goes first in `plugins`, so the messages plugin sees the new day when one begins.
 
 ```ts
 import { loadGame, type Content } from '@ifloom/engine'
@@ -506,9 +506,9 @@ type ThreadView = {
 | Field | What it is |
 |---|---|
 | `id` | The messages' `thread`, or their sender. |
-| `name` | The [cast](/docs/plugins/cast) character's name if `id` is one, or `id` as written. |
+| `name` | The [cast](/docs/reference/plugins/cast) character's name if `id` is one, or `id` as written. |
 | `image` | The sender's entity's `image`, through `artSrc`. It's `null` if `id` names no entity, or one with no picture. |
-| `portrait` | The sender's face for an avatar: with the [cast](/docs/plugins/cast), a person's [`portrait`](/docs/plugins/cast#person), else `image`. The React UI draws this one. |
+| `portrait` | The sender's face for an avatar: with the [cast](/docs/reference/plugins/cast), a person's [`portrait`](/docs/reference/plugins/cast#person), else `image`. The React UI draws this one. |
 | `messages` | Oldest first. |
 | `unread` | Unread messages in the thread. |
 | `read` | The button that marks the thread read, labelled with the `messages/markRead` string, or `null` while nothing in it is unread. |
@@ -536,10 +536,10 @@ type MessageView = {
 | `id` | The message's id. A message drawn twice is in the thread twice, with the same id. |
 | `key` | This arrival's [key](#arrival). Use it as the list key when you draw the thread. |
 | `from` | The sender, as written. |
-| `name` | The sender's name if they're a [cast](/docs/plugins/cast) character, or `from` as written. |
+| `name` | The sender's name if they're a [cast](/docs/reference/plugins/cast) character, or `from` as written. |
 | `text` | The words of its beats, joined, for a UI that draws no beats. |
 | `beats` | The body drawn as [beats](/docs/reference/prose#scenebeat) for the current state with [`context.beats`](/docs/reference/plugins#beats), as a scene's body is: the blocks whose `when` holds, tokens filled in, spoken lines with their speakers, and [bold and italics](/docs/reference/prose#bold-and-italics) as spans. Draw these when the message can hold pictures or videos: Ava's photo of the ducks is an `image` beat, and a clip of them a `video` beat, in the order she wrote them. |
-| `turn` | The [turn](/docs/reference/state#turn) it arrived on. With the [calendar](/docs/plugins/calendar#what-a-turn-is)'s default, a turn is a day. |
+| `turn` | The [turn](/docs/reference/state#turn) it arrived on. With the [calendar](/docs/reference/plugins/calendar#what-a-turn-is)'s default, a turn is a day. |
 | `read` | Opened with `messages/read`, or replied to. |
 | `replies` | The replies on offer now, each a button like a scene's choices ([`RenderedChoice`](/docs/reference/view#renderedchoice)) with its `label` and the `command` that sends it. Empty once one is sent. |
 | `replied` | The label of the reply sent, or `null`. |
@@ -555,15 +555,15 @@ The React UI's [`MessagesSection`](#messagessection) draws each message's beats 
 
 ## Drawing it
 
-`view.plugins.messages` is a [`MessagesView`](#messagesview): each channel's threads and their messages, with how many are unread. A message's `replies` are ready-made buttons, and `replied` is the reply once it's sent. A thread's `read` and a channel's `read` are ready buttons that mark them read, and a thread's `typing` says whether to draw the sender typing. Messages usually show inside an app on a [device](/docs/plugins/devices), as a list of conversations that each open into a thread.
+`view.plugins.messages` is a [`MessagesView`](#messagesview): each channel's threads and their messages, with how many are unread. A message's `replies` are ready-made buttons, and `replied` is the reply once it's sent. A thread's `read` and a channel's `read` are ready buttons that mark them read, and a thread's `typing` says whether to draw the sender typing. Messages usually show inside an app on a [device](/docs/reference/plugins/devices), as a list of conversations that each open into a thread.
 
-`@ifloom/plugin-messages/react` draws a channel inside an app, for a game drawn with [`@ifloom/react`](/docs/react). List `messagesUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a [`MessagesSection`](#messagessection) is drawn wherever a [device](/docs/plugins/devices)'s app shows a messages channel. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+`@ifloom/plugin-messages/react` draws a channel inside an app, for a game drawn with [`@ifloom/react`](/docs/react). List `messagesUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a [`MessagesSection`](#messagessection) is drawn wherever a [device](/docs/reference/plugins/devices)'s app shows a messages channel. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-::include[../../../../snippets/plain/messages.ts]{meta='tab="Plain JS" tab-group="framework"'}
+::include[../../../../../snippets/plain/messages.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-::include[../../../../snippets/react/mount-messages.tsx]{meta='tab="React" tab-group="framework"'}
+::include[../../../../../snippets/react/mount-messages.tsx]{meta='tab="React" tab-group="framework"'}
 
-::include[../../../../snippets/vue/Messages.vue]{meta='tab="Vue" tab-group="framework"'}
+::include[../../../../../snippets/vue/Messages.vue]{meta='tab="Vue" tab-group="framework"'}
 
 The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.messages`, or from [`useMessages`](#usemessages) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
@@ -573,7 +573,7 @@ The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.
 const messagesUi: PluginUi
 ```
 
-The plugin's [`PluginUi`](/docs/react/kit#pluginui): a [`MessagesSection`](#messagessection) is drawn wherever a [device](/docs/plugins/devices)'s app shows a messages channel.
+The plugin's [`PluginUi`](/docs/react/kit#pluginui): a [`MessagesSection`](#messagessection) is drawn wherever a [device](/docs/reference/plugins/devices)'s app shows a messages channel.
 
 Its words are in `MESSAGES_WORDS`. A game rewords any of them with `ui.<key>` in its strings, as it does the React UI's own: `{ 'ui.noMessages': 'Nothing yet.' }`. The back button is the React UI's own `ui.back`.
 
@@ -591,11 +591,11 @@ The other buttons say what the view's buttons say, the plugin's [strings](#strin
 const MessagesSection: PluginSectionComponent
 ```
 
-A [messages](/docs/plugins/messages) channel, the one named by the section's `with.channel` (`data-channel`), drawn the way a phone draws one.
+A [messages](/docs/reference/plugins/messages) channel, the one named by the section's `with.channel` (`data-channel`), drawn the way a phone draws one.
 
 It opens on the conversation list. Each thread is a row with the sender's portrait, their name, the last line (the newest message's first line, the reply the player sent to it, or `typing…` while they're typing) and a dot while anything in it is unread. The thread with the newest message is at the top. While the channel has unread messages, the channel's **Mark all read** button from the view is above the list. A channel with nothing in it yet shows `ui.noMessages` instead.
 
-A tap on a row opens that thread. Its heading has a back arrow to the list (labelled `ui.back`), then the sender's portrait and name. Its messages follow as bubbles. A message's [`beats`](/docs/plugins/messages#messageview) are drawn with [`Beat`](/docs/react/components#beat), so a picture or a clip in it shows in the bubble and opens in the viewer. Under each message is the reply the player sent, or the replies on offer as buttons. While the thread's `typing` is on, a typing bubble with three dots comes after the last message. A message from a [pool](/docs/plugins/messages#messages-that-come-again) that arrives again is a new bubble each time, and each `message` carries its arrival's key as `data-message`.
+A tap on a row opens that thread. Its heading has a back arrow to the list (labelled `ui.back`), then the sender's portrait and name. Its messages follow as bubbles. A message's [`beats`](/docs/reference/plugins/messages#messageview) are drawn with [`Beat`](/docs/react/components#beat), so a picture or a clip in it shows in the bubble and opens in the viewer. Under each message is the reply the player sent, or the replies on offer as buttons. While the thread's `typing` is on, a typing bubble with three dots comes after the last message. A message from a [pool](/docs/reference/plugins/messages#messages-that-come-again) that arrives again is a new bubble each time, and each `message` carries its arrival's key as `data-message`.
 
 An open thread is read: opening it sends the thread's `read` command, and anything that arrives while it's open is marked read as it comes. Its notices stay until they're dismissed. It draws nothing if the channel isn't in the view.
 
@@ -609,7 +609,7 @@ function useMessages(): MessagesControls | null
 type MessagesControls = MessagesView & { read: (channel: string) => Result<GameState> }
 ```
 
-The [messages](/docs/plugins/messages) plugin's view (its channels, each with threads and an unread count, and the unread count over all) with its command, or `null` in a game without the plugin. `read(channel)` sends `messages/read`. A reply on offer has its own `command`. Send it with [`useGame`](/docs/react/components#usegame)'s `send`. [`MessagesSection`](#messagessection) is drawn from it.
+The [messages](/docs/reference/plugins/messages) plugin's view (its channels, each with threads and an unread count, and the unread count over all) with its command, or `null` in a game without the plugin. `read(channel)` sends `messages/read`. A reply on offer has its own `command`. Send it with [`useGame`](/docs/react/components#usegame)'s `send`. [`MessagesSection`](#messagessection) is drawn from it.
 
 ## The state
 
@@ -711,16 +711,16 @@ A `messages/arrived`, `messages/since`, `messages/replied` or `messages/read` co
 ## Gotchas
 
 - **Messages arrive only after a command.** The plugin delivers them in its `onCommand` [hook](/docs/reference/plugins#hooks-and-providers), which runs after every command that went through, never on `start`. A message whose `when` already holds when the game starts arrives after the player's first command. To open the game with one, have the first command bring it, or put the words in the intro scene.
-- **`when` is tested at the end of each command.** A message whose `when` held only partway through a command, or only before it, waits for a later command that ends while it holds. A message with the [calendar](/docs/plugins/calendar#conditions)'s `calendar.period('morning')` as its `when` doesn't arrive if the player's first command of the day ends in the afternoon. It arrives at the end of the next command that ends in a morning, which may be days later. If it matters when a message comes, write `when` for something that stays true, such as a kv key, a day (`calendar.day({ gte: 2 })`) or a scene seen.
+- **`when` is tested at the end of each command.** A message whose `when` held only partway through a command, or only before it, waits for a later command that ends while it holds. A message with the [calendar](/docs/reference/plugins/calendar#conditions)'s `calendar.period('morning')` as its `when` doesn't arrive if the player's first command of the day ends in the afternoon. It arrives at the end of the next command that ends in a morning, which may be days later. If it matters when a message comes, write `when` for something that stays true, such as a kv key, a day (`calendar.day({ gte: 2 })`) or a scene seen.
 - **A trigger on an arrival runs a command late.** The engine tests [triggers](/docs/reference/triggers#when-triggers-fire) before the plugins' hooks, and the plugin delivers messages in its hook, so a trigger whose `when` is `messages.arrived('ava.hi')` fires on the command after the one the message came in. To do something as a message comes, such as start a timer, put it in the message's `effects`, or in the effect that brings the message.
 - **A message arrives once, unless it's in a pool.** After that it stays, whatever `when` does. A message with `drawnFrom` never arrives by `when` alone; only a draw brings it, as often as it's drawn. See [Messages that come again](#messages-that-come-again).
 - **A reply's label is its words.** In older content it was the prose line `<message>#<reply>`. An older pack gets those words as the reply's `label` when it loads, and the checker reports a reply in your own content with no label whose old prose has words.
 - **One reply, once.** After the player sends one, the others are gone and `messages/reply` refuses. To let the player say more, send a new message with replies of its own.
-- **A channel the game doesn't have counts nothing.** `messages/unread` with `{ channel: 'post' }` is 0 when there's no `post` channel, so a badge that names a renamed channel stops counting. A [devices](/docs/plugins/devices) app badge that names a value nobody has is reported when the game loads.
+- **A channel the game doesn't have counts nothing.** `messages/unread` with `{ channel: 'post' }` is 0 when there's no `post` channel, so a badge that names a renamed channel stops counting. A [devices](/docs/reference/plugins/devices) app badge that names a value nobody has is reported when the game loads.
 - **The notice is the engine's.** Each arrival raises a [notice](/docs/reference/notices) with the id `messages.<key>`, the [arrival's key](#arrival), the sender's name as its `title`, the message's first line as its `text` (cut to 80 characters) and the channel as its `tag`. A message that arrives in a thread whose last notice is still unseen replaces that notice, so a burst of five texts is one notice showing the newest line, not five. So `view.notices.byTag.texts` counts threads with news the player hasn't dismissed, rather than every message. Reading a message doesn't dismiss its notice, and dismissing doesn't read the message. If your UI wants them to go together, send both commands.
 - **The sender is matched by id.** A `from` that names an entity shows its name and picture. A typo shows the typo, and the loader doesn't report it, because any name is allowed. In a game with no `ava` entity, `from: 'ava'` shows `ava`.
 - **A waiting message needs the clock.** A message with `after` arrives only when `tick` commands run its timer out. In a test, or with a UI of your own that sends no ticks, send `{ type: 'tick', ms }` yourself. `ifloom playtest`'s explorer waits for a running timer when it has nothing new to do, so a burst arrives there too.
-- **A message doesn't need a device.** You can show `view.plugins.messages` anywhere, such as letters on the mat or a pigeonhole at work. The [devices](/docs/plugins/devices) plugin is one way to show a channel, not a requirement.
+- **A message doesn't need a device.** You can show `view.plugins.messages` anywhere, such as letters on the mat or a pigeonhole at work. The [devices](/docs/reference/plugins/devices) plugin is one way to show a channel, not a requirement.
 
 ## See it in an example
 

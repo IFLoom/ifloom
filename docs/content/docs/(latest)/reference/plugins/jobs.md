@@ -23,12 +23,12 @@ List the package in your game's `package.json`, beside the engine:
 }
 ```
 
-Then add `jobs()` to the game's `plugins`. [Adding one](/docs/plugins#adding-one) has the details.
+Then add `jobs()` to the game's `plugins`. [Adding one](/docs/reference/plugins#adding-one) has the details.
 
-The plugin works on its own. It cooperates with the [calendar](/docs/plugins/calendar) and [places](/docs/plugins/places) when the game has them:
+The plugin works on its own. It cooperates with the [calendar](/docs/reference/plugins/calendar) and [places](/docs/reference/plugins/places) when the game has them:
 
 - **Calendar.** A job's `days` are the calendar's weekdays and its `hours` are periods. A shift's `passes` moves the clock on, and "a day" for one shift a day and for missed shifts is the calendar's day.
-- **Places.** A workplace is a [`places.onlyAt()`](/docs/plugins/places#helpers) entry in the shift's `blocked`, so a shift is worked only there.
+- **Places.** A workplace is a [`places.onlyAt()`](/docs/reference/plugins/places#helpers) entry in the shift's `blocked`, so a shift is worked only there.
 
 Without the calendar, every day has a shift, a day is a turn, and a shift takes no time. Without places, a `places.onlyAt()` entry never holds, so a shift can be worked anywhere.
 
@@ -114,7 +114,7 @@ type ShiftDef = { blocked?: Blocked[]; cost?: Record<string, number>; passes?: n
 |---|---|
 | `blocked` | Why a shift is refused, as [`Blocked`](/docs/reference/actions#blocked) entries. The first whose `when` holds refuses `jobs/work` with its `reason`. A workplace is one: `places.onlyAt(['cafe'], { string: 'jobs/notHere' })` refuses a shift anywhere but the café with `You aren’t at work.` With no reason it's places' `Not here.`. |
 | `cost` | Stats a shift spends, such as `{ energy: 25 }`. Checked against what the stat reads, as an action's cost is, and shown as the button's price. |
-| `passes` | How many of the calendar's periods it takes, applied as [`calendar/pass`](/docs/plugins/calendar#effects). The calendar's [price note](/docs/plugins/calendar#price-notes), such as `until afternoon`, shows on the button. |
+| `passes` | How many of the calendar's periods it takes, applied as [`calendar/pass`](/docs/reference/plugins/calendar#effects). The calendar's [price note](/docs/reference/plugins/calendar#price-notes), such as `until afternoon`, shows on the button. |
 | `effects` | More effects, applied after the cost and the time and before the pay, such as a performance stat going up. |
 
 ### RankDef
@@ -234,7 +234,7 @@ A day is the calendar's day, or a turn in a game without the calendar. `jobs.shi
 
 ## Opening the job board
 
-Nothing about a job is drawn by itself. Content opens the job board in the `jobs` [panel](/docs/reference/panels) with `jobs.open`, from anything that runs effects: a town hall's action, a choice in a person's scene, a newspaper the [inventory](/docs/plugins/inventory) makes usable, a job site's button on a laptop. Give it job ids to show only those, as a newspaper's ads would.
+Nothing about a job is drawn by itself. Content opens the job board in the `jobs` [panel](/docs/reference/panels) with `jobs.open`, from anything that runs effects: a town hall's action, a choice in a person's scene, a newspaper the [inventory](/docs/reference/plugins/inventory) makes usable, a job site's button on a laptop. Give it job ids to show only those, as a newspaper's ads would.
 
 ```ts
 import type { ActionDef, EntityDef } from '@ifloom/engine'
@@ -270,7 +270,7 @@ Give it a fallback for when they don't: `You work as {{jobs/rank job=cafe|nothin
 | `jobs/alreadyHired` | `You already work there.` |
 | `jobs/wasFired` | `They won’t have you back.` |
 | `jobs/notHired` | `You don’t work there.` |
-| `jobs/notHere` | `You aren’t at work.`, for a shift's [`places.onlyAt()`](/docs/plugins/places#helpers) entry: `{ string: 'jobs/notHere' }`. The plugin doesn't use it itself. |
+| `jobs/notHere` | `You aren’t at work.`, for a shift's [`places.onlyAt()`](/docs/reference/plugins/places#helpers) entry: `{ string: 'jobs/notHere' }`. The plugin doesn't use it itself. |
 | `jobs/noShiftToday` | `No shift today.` |
 | `jobs/notNow` | `Not a time for a shift.` |
 | `jobs/workedToday` | `You’ve done today’s shift.` |
@@ -341,11 +341,11 @@ Nothing about a job is drawn until content opens the board with [`jobs.open`](#o
 
 `@ifloom/plugin-jobs/react` draws the job board, for a game drawn with [`@ifloom/react`](/docs/react). List `jobsUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the `jobs` panel, which [`jobs.open`](#opening-the-job-board) opens, is drawn as the [`JobBoard`](#jobboard), only the jobs it was opened with if it names any. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-::include[../../../../snippets/plain/jobs.ts]{meta='tab="Plain JS" tab-group="framework"'}
+::include[../../../../../snippets/plain/jobs.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-::include[../../../../snippets/react/mount-jobs.tsx]{meta='tab="React" tab-group="framework"'}
+::include[../../../../../snippets/react/mount-jobs.tsx]{meta='tab="React" tab-group="framework"'}
 
-::include[../../../../snippets/vue/JobBoard.vue]{meta='tab="Vue" tab-group="framework"'}
+::include[../../../../../snippets/vue/JobBoard.vue]{meta='tab="Vue" tab-group="framework"'}
 
 The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.jobs`, or from [`useJobs`](#usejobs) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
@@ -381,7 +381,7 @@ Its words are in `JOBS_WORDS`. A game rewords any of them with `ui.<key>` in its
 function JobBoard(props: { className?: string; title?: string | false; jobs?: readonly string[] }): JSX.Element | null
 ```
 
-Every [job](/docs/plugins/jobs), held or not, from [`JobView`](/docs/plugins/jobs#jobview)s, under the heading `ui.jobs` or `title` (`false` leaves it out). `jobs` shows only those, by id, as the `jobs` panel does for `with.job`. Each job (`data-job`, with `data-hired` while it's held and `data-fired` once the player was fired) shows its title, the rank held on a badge (unless it has the job's own title), its description, and:
+Every [job](/docs/reference/plugins/jobs), held or not, from [`JobView`](/docs/reference/plugins/jobs#jobview)s, under the heading `ui.jobs` or `title` (`false` leaves it out). `jobs` shows only those, by id, as the `jobs` panel does for `with.job`. Each job (`data-job`, with `data-hired` while it's held and `data-fired` once the player was fired) shows its title, the rank held on a badge (unless it has the job's own title), its description, and:
 
 - what a shift pays (`ui.jobPay`, `Pays 12 coins a shift`)
 - the next shift (`ui.shiftToday`, `ui.shiftTomorrow` or `ui.shiftInDays`), for a job held
@@ -408,9 +408,9 @@ type JobsControls = JobsView & {
 }
 ```
 
-The jobs plugin's view ([`JobsView`](/docs/plugins/jobs#jobsview): `jobs`), the jobs held as `held`, and its commands, or `null` in a game without the plugin. `apply`, `work` and `quit` send `jobs/apply`, `jobs/work` and `jobs/quit`. [`JobBoard`](#jobboard) is drawn from it.
+The jobs plugin's view ([`JobsView`](/docs/reference/plugins/jobs#jobsview): `jobs`), the jobs held as `held`, and its commands, or `null` in a game without the plugin. `apply`, `work` and `quit` send `jobs/apply`, `jobs/work` and `jobs/quit`. [`JobBoard`](#jobboard) is drawn from it.
 
-::include[../../../../snippets/react/use-jobs.tsx]
+::include[../../../../../snippets/react/use-jobs.tsx]
 
 ## The state
 

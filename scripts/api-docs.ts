@@ -101,7 +101,7 @@ const SPECS: PageSpec[] = [
     title: `@ifloom/plugin-${plugin}`,
     description: `Every export of @ifloom/plugin-${plugin} and its /react subpath, if it has one: its signature and its fields.`,
     entries: [`@ifloom/plugin-${plugin}`, `@ifloom/plugin-${plugin}/react`],
-    home: [`plugins/${plugin}.md`, 'plugins/'],
+    home: [`reference/plugins/${plugin}.md`, 'reference/plugins/'],
   })),
 ]
 
@@ -194,7 +194,9 @@ function explained(headings: Map<string, Heading[]>, name: string, spec: PageSpe
   const all = headings.get(name)
   if (!all) return undefined
   const rank = (heading: Heading) => {
-    const home = spec.home.findIndex((prefix) => heading.page === prefix || (prefix.endsWith('/') && heading.page.startsWith(prefix)))
+    // A folder holds the pages directly in it, so `reference/` doesn't take the plugins' pages in `reference/plugins/`.
+    const inFolder = (prefix: string) => prefix.endsWith('/') && heading.page.startsWith(prefix) && !heading.page.slice(prefix.length).includes('/')
+    const home = spec.home.findIndex((prefix) => heading.page === prefix || inFolder(prefix))
     return home < 0 ? spec.home.length : home
   }
   // A page named after the export comes first, so a reference page's fixed `## View` section never takes `View` from `reference/view.md`.
@@ -821,7 +823,7 @@ function indexOf(counts: Map<PageSpec, number>): string {
     'title: "API"',
     'description: "Every export of every IFLoom package, with its exact signature and fields, generated from the source and its TSDoc."',
     '---',
-    "These pages list every export of every entry point, with its signature and, for an object type, each field with its type, whether it's optional, its default and its TSDoc. They're generated from the source by `npm run api-docs`, so they can't drift from it. The [Reference](/docs/reference), [React UI](/docs/react), [Browser](/docs/browser), [CLI](/docs/cli) and [Plugins](/docs/plugins) sections explain when and how to use each one, and each export here links to its explanation.",
+    "These pages list every export of every entry point, with its signature and, for an object type, each field with its type, whether it's optional, its default and its TSDoc. They're generated from the source by `npm run api-docs`, so they can't drift from it. The [Reference](/docs/reference), [React UI](/docs/react), [Browser](/docs/browser), [CLI](/docs/cli) and [Plugins](/docs/reference/plugins) sections explain when and how to use each one, and each export here links to its explanation.",
     '',
     '| Page | Entries | Exports |',
     '|---|---|---|',

@@ -11,7 +11,7 @@ import { PLUGIN_NAMES, factoryOf } from './first-party.ts'
  */
 const SOURCES = import.meta.glob('../../../plugin-*/src/**/*.{ts,tsx}', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
 
-const PAGES = import.meta.glob('../../../../docs/content/docs/\\(latest\\)/plugins/*.{md,mdx}', {
+const PAGES = import.meta.glob('../../../../docs/content/docs/\\(latest\\)/reference/plugins/*.{md,mdx}', {
   query: '?raw',
   import: 'default',
   eager: true,
@@ -49,7 +49,7 @@ function sourcesOf(name: string): Record<string, string> {
 }
 
 const pageOf = (name: string) =>
-  PAGES[`../../../../docs/content/docs/(latest)/plugins/${name}.md`] ?? PAGES[`../../../../docs/content/docs/(latest)/plugins/${name}.mdx`]
+  PAGES[`../../../../docs/content/docs/(latest)/reference/plugins/${name}.md`] ?? PAGES[`../../../../docs/content/docs/(latest)/reference/plugins/${name}.mdx`]
 
 it('finds every first-party plugin', () => {
   expect(PLUGIN_NAMES.length).toBeGreaterThanOrEqual(17)
@@ -78,7 +78,7 @@ describe.each(PLUGIN_NAMES)('plugin-%s', (name) => {
     const entries = [index, ui].filter((source): source is string => source !== undefined)
     expect(new Set(entries.flatMap(exportedNames)).size, `MIN_EXPORTS.${name}`).toBeGreaterThanOrEqual(MIN_EXPORTS[name] ?? 1)
     const page = pageOf(name) ?? ''
-    expect(page.length, `docs/content/docs/(latest)/plugins/${name}.md`).toBeGreaterThan(0)
+    expect(page.length, `docs/content/docs/(latest)/reference/plugins/${name}.md`).toBeGreaterThan(0)
     expect(undocumentedExports(entries, page)).toEqual([])
   })
 })

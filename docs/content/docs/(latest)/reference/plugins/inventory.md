@@ -23,9 +23,9 @@ List the package in your game's `package.json`, beside the engine:
 }
 ```
 
-Then add `inventory()` to the game's `plugins`. [Adding one](/docs/plugins#adding-one) has the details.
+Then add `inventory()` to the game's `plugins`. [Adding one](/docs/reference/plugins#adding-one) has the details.
 
-It needs no other plugin. It cooperates with [places](/docs/plugins/places) for where a dropped thing goes (see [Dropping and giving](#dropping-and-giving)).
+It needs no other plugin. It cooperates with [places](/docs/reference/plugins/places) for where a dropped thing goes (see [Dropping and giving](#dropping-and-giving)).
 
 ## inventory
 
@@ -93,7 +93,7 @@ All three go through [locks](/docs/reference/locks) like any command, so a lock 
 
 ## Dropping and giving
 
-`inventory/drop` takes one away from you. With [places](/docs/plugins/places), it asks for somewhere to put it where you are, through the `places/holder` [query](/docs/reference/plugins#queries), and moves it there when the answer is a holder that can hold things. Places answers with the room's [entity](/docs/plugins/places#each-place-is-an-entity), so the thing lies in the room, listed in the places view with a button to [pick it up](/docs/plugins/places#things-lying-in-a-place) again. Without places, or with the player nowhere, a dropped thing is gone. It's refused with `There is no such thing.` and `You have no <name>.` as `use` is.
+`inventory/drop` takes one away from you. With [places](/docs/reference/plugins/places), it asks for somewhere to put it where you are, through the `places/holder` [query](/docs/reference/plugins#queries), and moves it there when the answer is a holder that can hold things. Places answers with the room's [entity](/docs/reference/plugins/places#each-place-is-an-entity), so the thing lies in the room, listed in the places view with a button to [pick it up](/docs/reference/plugins/places#things-lying-in-a-place) again. Without places, or with the player nowhere, a dropped thing is gone. It's refused with `There is no such thing.` and `You have no <name>.` as `use` is.
 
 ```ts
 import { apply, type Game, type GameState } from '@ifloom/engine'
@@ -121,7 +121,7 @@ const gift: Choice = { id: 'gift', label: 'Give her the scarf', when: holding('c
 
 ## With the shop and the wardrobe
 
-The inventory, the [shop](/docs/plugins/shop) and the [wardrobe](/docs/plugins/wardrobe) know nothing about each other. Each one reads what you hold from the engine and its own trait on each thing, and ignores the others' traits. So you can use any of them alone, or all three, and a thing can carry a trait for each:
+The inventory, the [shop](/docs/reference/plugins/shop) and the [wardrobe](/docs/reference/plugins/wardrobe) know nothing about each other. Each one reads what you hold from the engine and its own trait on each thing, and ignores the others' traits. So you can use any of them alone, or all three, and a thing can carry a trait for each:
 
 ```ts
 import type { Content } from '@ifloom/engine'
@@ -224,11 +224,11 @@ The checker reports a kind the game doesn't have.
 
 `@ifloom/plugin-inventory/react` draws what the player carries with the plugin's buttons, for a game drawn with [`@ifloom/react`](/docs/react). List `inventoryUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and [`InventoryCard`](#inventorycard) is drawn wherever the React UI's own [`Inventory`](/docs/react/components#inventory) is, with a button that uses each usable thing. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-::include[../../../../snippets/plain/inventory.ts]{meta='tab="Plain JS" tab-group="framework"'}
+::include[../../../../../snippets/plain/inventory.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-::include[../../../../snippets/react/mount-inventory.tsx]{meta='tab="React" tab-group="framework"'}
+::include[../../../../../snippets/react/mount-inventory.tsx]{meta='tab="React" tab-group="framework"'}
 
-::include[../../../../snippets/vue/Inventory.vue]{meta='tab="Vue" tab-group="framework"'}
+::include[../../../../../snippets/vue/Inventory.vue]{meta='tab="Vue" tab-group="framework"'}
 
 The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.inventory`, or from [`useInventory`](#useinventory) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
@@ -268,9 +268,9 @@ type InventoryControls = InventoryView & {
 }
 ```
 
-The [inventory](/docs/plugins/inventory) plugin's view ([`InventoryView`](/docs/plugins/inventory#inventoryview): `things`, each with its `use` and `drop` buttons) and its commands, or `null` in a game without the plugin. `use`, `drop` and `give` send `inventory/use`, `inventory/drop` and `inventory/give`. [`Inventory`](/docs/react/components#inventory) is drawn from it.
+The [inventory](/docs/reference/plugins/inventory) plugin's view ([`InventoryView`](/docs/reference/plugins/inventory#inventoryview): `things`, each with its `use` and `drop` buttons) and its commands, or `null` in a game without the plugin. `use`, `drop` and `give` send `inventory/use`, `inventory/drop` and `inventory/give`. [`Inventory`](/docs/react/components#inventory) is drawn from it.
 
-::include[../../../../snippets/react/use-inventory.tsx]
+::include[../../../../../snippets/react/use-inventory.tsx]
 
 ## For code
 

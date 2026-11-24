@@ -12,7 +12,7 @@ import { cheats, cheatsOf, type CheatDef, type CheatUse, type CheatsState, type 
 
 ## Cheats or debug?
 
-The [debug plugin](/docs/plugins/debug) is for you while you build the game. Its commands set any stat, scene or clock by hand, it has no words for the player, and you leave it out of release builds.
+The [debug plugin](/docs/reference/plugins/debug) is for you while you build the game. Its commands set any stat, scene or clock by hand, it has no words for the player, and you leave it out of release builds.
 
 Cheats are part of the game the player gets. You write each one as content, with a name, effects and the reasons it's refused, and the plugin's React UI draws a panel for them. A game can have both: the showcase adds `cheats()` always and `debug()` only in development.
 
@@ -29,7 +29,7 @@ List the package in your game's `package.json`, beside the engine:
 }
 ```
 
-Then add `cheats()` to the game's `plugins`. [Adding one](/docs/plugins#adding-one) has the details. The plugin cooperates with `unlocks` by name, so a cheat can name the `unlocks/has` condition even in a game without that plugin. It works on its own too.
+Then add `cheats()` to the game's `plugins`. [Adding one](/docs/reference/plugins#adding-one) has the details. The plugin cooperates with `unlocks` by name, so a cheat can name the `unlocks/has` condition even in a game without that plugin. It works on its own too.
 
 ## cheats
 
@@ -110,9 +110,9 @@ const gold: CheatDef = {
 }
 ```
 
-`unlocks/has` is the condition of the [unlocks plugin](/docs/plugins/unlocks), which checks a code the player enters. Its helper `unlocks.has('supporter')` writes the same condition. The cheats plugin doesn't know about it. It only asks the condition, as any `blocked` entry does, so you can gate a cheat on anything: a kv key, a finished storyline, an achievement. In a game without the unlocks plugin, `unlocks/has` is false, so the cheat above stays refused.
+`unlocks/has` is the condition of the [unlocks plugin](/docs/reference/plugins/unlocks), which checks a code the player enters. Its helper `unlocks.has('supporter')` writes the same condition. The cheats plugin doesn't know about it. It only asks the condition, as any `blocked` entry does, so you can gate a cheat on anything: a kv key, a finished storyline, an achievement. In a game without the unlocks plugin, `unlocks/has` is false, so the cheat above stays refused.
 
-Add `hide: true` to leave the cheat off the panel instead of greyed out. A gate like this deters casual players, but it isn't protection: anyone who reads the game's code can find the cheat. To keep content from people without the code, put it in an unlock's [locked content](/docs/plugins/unlocks#locked-content), which ships encrypted. [Supporter content and cheats](/docs/recipes/supporter-content) compares the two.
+Add `hide: true` to leave the cheat off the panel instead of greyed out. A gate like this deters casual players, but it isn't protection: anyone who reads the game's code can find the cheat. To keep content from people without the code, put it in an unlock's [locked content](/docs/reference/plugins/unlocks#locked-content), which ships encrypted. [Supporter content and cheats](/docs/recipes/supporter-content) compares the two.
 
 ## Using a cheat
 
@@ -213,11 +213,11 @@ type CheatView = {
 
 `@ifloom/plugin-cheats/react` draws the cheats, for a game drawn with [`@ifloom/react`](/docs/react). List `cheatsUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a [`CheatsButton`](#cheatsbutton) in the side column opens the [`CheatPanel`](#cheatpanel). The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-::include[../../../../snippets/plain/cheats.ts]{meta='tab="Plain JS" tab-group="framework"'}
+::include[../../../../../snippets/plain/cheats.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-::include[../../../../snippets/react/mount-cheats.tsx]{meta='tab="React" tab-group="framework"'}
+::include[../../../../../snippets/react/mount-cheats.tsx]{meta='tab="React" tab-group="framework"'}
 
-::include[../../../../snippets/vue/Cheats.vue]{meta='tab="Vue" tab-group="framework"'}
+::include[../../../../../snippets/vue/Cheats.vue]{meta='tab="Vue" tab-group="framework"'}
 
 ```svelte tab="Svelte" tab-group="framework"
 <!-- src/Cheats.svelte -->
@@ -268,7 +268,7 @@ Its words are in `CHEATS_WORDS`. A game rewords any of them with `ui.<key>` in i
 function CheatPanel(props: { className?: string }): JSX.Element | null
 ```
 
-The [cheats](/docs/plugins/cheats) the player can see, from [`CheatsView`](/docs/plugins/cheats#cheatsview). The ones with no `group` come first, with no heading, then each group under its name, in the order the groups first appear. Each cheat (`data-cheat`) is a [`ChoiceButton`](/docs/react/components#choicebutton) from its `button`, greyed out with its reason while it's refused, such as `For supporters.` or `Already used.` for a `once` cheat. Under it are its description and, once used, a badge saying how often (`ui.cheatUsedOnce`, `ui.cheatUsedTimes`).
+The [cheats](/docs/reference/plugins/cheats) the player can see, from [`CheatsView`](/docs/reference/plugins/cheats#cheatsview). The ones with no `group` come first, with no heading, then each group under its name, in the order the groups first appear. Each cheat (`data-cheat`) is a [`ChoiceButton`](/docs/react/components#choicebutton) from its `button`, greyed out with its reason while it's refused, such as `For supporters.` or `Already used.` for a `once` cheat. Under it are its description and, once used, a badge saying how often (`ui.cheatUsedOnce`, `ui.cheatUsedTimes`).
 
 It draws nothing in a game without the plugin, or while every cheat is hidden.
 
@@ -297,9 +297,9 @@ type CheatsControls = CheatsView & {
 type CheatGroup = { name: string | null; cheats: CheatView[] }
 ```
 
-The cheats plugin's view ([`CheatsView`](/docs/plugins/cheats#cheatsview): `cheats` and `used`), the cheats by group as `groups`, and `use`, which sends `cheats/use`. `null` in a game without the plugin. `groups` has the cheats with no group first, as a group named `null`. [`CheatPanel`](#cheatpanel) and the button are drawn from it.
+The cheats plugin's view ([`CheatsView`](/docs/reference/plugins/cheats#cheatsview): `cheats` and `used`), the cheats by group as `groups`, and `use`, which sends `cheats/use`. `null` in a game without the plugin. `groups` has the cheats with no group first, as a group named `null`. [`CheatPanel`](#cheatpanel) and the button are drawn from it.
 
-::include[../../../../snippets/react/use-cheats.tsx]
+::include[../../../../../snippets/react/use-cheats.tsx]
 
 ## The state
 

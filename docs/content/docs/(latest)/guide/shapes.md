@@ -13,8 +13,8 @@ They all use the same core: the turn, scenes and choices, conditions and effects
 | Shape | The game | Plugins | Layout | Example |
 |---|---|---|---|---|
 | A linear novel | the core alone | none | its own: a `Story` with no side column, one column to read | [The Letter](#a-linear-novel-the-letter), `examples/novel` |
-| A management game | the core, with [entities](/docs/reference/entities) | none, or [`calendar({ turn: 'week' })`](/docs/plugins/calendar) for days and weeks | its own: the tables in the story | [The Corner Café](#a-management-game-the-corner-café), `examples/cafe` |
-| A life sim | the core | [calendar](/docs/plugins/calendar), [places](/docs/plugins/places) and the [cast](/docs/plugins/cast) | [`DefaultLayout`](/docs/react/components#defaultlayout)'s, the side column and the story, with the wardrobe shown at home | [Small Town](#a-life-sim-small-town), `examples/showcase` |
+| A management game | the core, with [entities](/docs/reference/entities) | none, or [`calendar({ turn: 'week' })`](/docs/reference/plugins/calendar) for days and weeks | its own: the tables in the story | [The Corner Café](#a-management-game-the-corner-café), `examples/cafe` |
+| A life sim | the core | [calendar](/docs/reference/plugins/calendar), [places](/docs/reference/plugins/places) and the [cast](/docs/reference/plugins/cast) | [`DefaultLayout`](/docs/react/components#defaultlayout)'s, the side column and the story, with the wardrobe shown at home | [Small Town](#a-life-sim-small-town), `examples/showcase` |
 
 Each example is a whole game you can play and ship. In its folder, `npm run dev` serves it in a browser, `npm run check` lists any problems in its content, and `npm run build` makes it one HTML file that opens from disk (see the [CLI](/docs/cli)).
 
@@ -36,7 +36,7 @@ Every game has a turn. It's `state.turn`, 0 in a new game, and `view.turn` for t
 
 Your game decides how long a turn is. A turn ends when the [`turn` effect](/docs/reference/effects#turn), `{ turn: true }`, runs, and any choice or action can carry it (`by` ends several). A novel ends one per chapter.
 
-A game that keeps a [calendar](/docs/plugins/calendar) lets the calendar end turns. The calendar says whether a turn is a period, a day or a week, and ends one each time its clock passes that boundary, through the same effect. With a turn of a day, going to bed with its `sleep` command moves the clock to the next morning and ends the turn. Small Town works that way.
+A game that keeps a [calendar](/docs/reference/plugins/calendar) lets the calendar end turns. The calendar says whether a turn is a period, a day or a week, and ends one each time its clock passes that boundary, through the same effect. With a turn of a day, going to bed with its `sleep` command moves the clock to the next morning and ends the turn. Small Town works that way.
 
 Either way, the end of a turn runs the same steps. The counter goes up, the game's `resets` are put back, and its turn [rules](/docs/reference/rules) and the plugins' `onTurn` hooks run.
 
@@ -55,7 +55,7 @@ The base handed to [`loadGame`](/docs/reference/content) needs only an `id` and 
 loadGame([stats, ch1, ch2, ch3], { id: 'the-letter', title: 'The Letter', version: 2, rules: { migrations, saveName } })
 ```
 
-With no [places plugin](/docs/plugins/places) there's no map, so there are no exits and nobody present. The only buttons are plugins' and the game's own `actions`, and The Letter has none of either. The [React UI](/docs/react)'s location panel draws nothing. If you leave out `introScene` too, a new game opens with no scene at all, and the screen is the game's title with an empty body.
+With no [places plugin](/docs/reference/plugins/places) there's no map, so there are no exits and nobody present. The only buttons are plugins' and the game's own `actions`, and The Letter has none of either. The [React UI](/docs/react)'s location panel draws nothing. If you leave out `introScene` too, a new game opens with no scene at all, and the screen is the game's title with an empty body.
 
 ### A name the player types
 
@@ -539,7 +539,7 @@ In the React layout, the [`EntityTable`](/docs/react/components#entitytable) dra
 
 ### A calendar, if the game wants one
 
-The café has no clock. A turn is a week because the `end-week` action ends one with `{ turn: true }`. A management game that wants days and a weekday too adds the [calendar](/docs/plugins/calendar) with a turn of a week. The calendar then ends a turn each time its clock passes into a new week, so the week's button moves the clock on rather than carrying a `{ turn: true }` of its own:
+The café has no clock. A turn is a week because the `end-week` action ends one with `{ turn: true }`. A management game that wants days and a weekday too adds the [calendar](/docs/reference/plugins/calendar) with a turn of a week. The calendar then ends a turn each time its clock passes into a new week, so the week's button moves the clock on rather than carrying a `{ turn: true }` of its own:
 
 ```ts
 import { calendar } from '@ifloom/plugin-calendar'
@@ -554,9 +554,9 @@ With it, `'title'` shows the day under the game's title, and the transcript of a
 
 A life sim is the core with three plugins:
 
-- [`@ifloom/plugin-calendar`](/docs/plugins/calendar) for the periods of a day, the weekday, a bed and a curfew, and how long a turn is.
-- [`@ifloom/plugin-places`](/docs/plugins/places) for the map, walking, and where the player is.
-- [`@ifloom/plugin-cast`](/docs/plugins/cast) for the people, their hours, who is in the room, talking and calling.
+- [`@ifloom/plugin-calendar`](/docs/reference/plugins/calendar) for the periods of a day, the weekday, a bed and a curfew, and how long a turn is.
+- [`@ifloom/plugin-places`](/docs/reference/plugins/places) for the map, walking, and where the player is.
+- [`@ifloom/plugin-cast`](/docs/reference/plugins/cast) for the people, their hours, who is in the room, talking and calling.
 
 The game lists the calendar first, so the header reads the day before the place, as in `Day 1 · Monday morning · High Street`:
 
@@ -569,7 +569,7 @@ import { cast } from '@ifloom/plugin-cast'
 plugins: [calendar(), places({ start: 'flat' }), cast()]
 ```
 
-A place is an [entity](/docs/reference/entities) you write with [`places.location()`](/docs/plugins/places#location), as a character is written with `cast.person()`, and both go in the content's `entities`. A place keeps hours with its `blocked` list and the calendar's conditions. Something to do in one place is an action in that place's own `actions`, and a game action that belongs somewhere lists [`places.onlyAt(['cafe'])`](/docs/plugins/places#helpers) in its `blocked`. A character's [schedule](/docs/plugins/cast#where-people-are) says where they are while each condition holds, and they're in the room when the places plugin's `places/here` says the player is there too.
+A place is an [entity](/docs/reference/entities) you write with [`places.location()`](/docs/reference/plugins/places#location), as a character is written with `cast.person()`, and both go in the content's `entities`. A place keeps hours with its `blocked` list and the calendar's conditions. Something to do in one place is an action in that place's own `actions`, and a game action that belongs somewhere lists [`places.onlyAt(['cafe'])`](/docs/reference/plugins/places#helpers) in its `blocked`. A character's [schedule](/docs/reference/plugins/cast#where-people-are) says where they are while each condition holds, and they're in the room when the places plugin's `places/here` says the player is there too.
 
 Each character is an [entity](/docs/reference/entities) of the kind `character`, so a relationship is a stat the game declares on that kind, `{ id: 'friendship', label: 'Friendship', of: 'character' }`. Content reads it with `{ stat: 'friendship', of: cast.character('ava'), gte: 25 }`. [Small Town](/docs/guide/showcase) is a small life sim made that way, where a turn is a day. [A game with a world](/docs/guide/first-game) builds a smaller one step by step.
 

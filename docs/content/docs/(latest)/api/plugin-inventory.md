@@ -11,7 +11,7 @@ Generated from the source of `@ifloom/plugin-inventory` and `@ifloom/plugin-inve
 
 ### inventory
 
-Function. Explained in [Inventory](/docs/plugins/inventory#inventory).
+Function. Explained in [Inventory](/docs/reference/plugins/inventory#inventory).
 
 The inventory plugin's factory, with its helpers as properties. `inventory()` returns the plugin for the game's
 `plugins`, and content calls helpers such as `inventory.usable('Eat', effects)` and `inventory.use('food:apple')`.
@@ -32,7 +32,7 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`InventoryView`
 
 ### InventoryData
 
-Type. Explained in [Inventory](/docs/plugins/inventory#inventorydata).
+Type. Explained in [Inventory](/docs/reference/plugins/inventory#inventorydata).
 
 The inventory plugin's content, which the game declares in `data.inventory`.
 
@@ -49,7 +49,7 @@ type InventoryData = {
 
 ### inventoryKindsOf
 
-Function. Explained in [Inventory](/docs/plugins/inventory#inventorykindsof).
+Function. Explained in [Inventory](/docs/reference/plugins/inventory#inventorykindsof).
 
 Returns the kinds the inventory shows, from `data.inventory.kinds` in the game's content and packs. Returns undefined when every kind is shown.
 
@@ -62,7 +62,7 @@ Uses: [`Game`](/docs/api/engine#game).
 
 ### InventoryThing
 
-Type. Explained in [Inventory](/docs/plugins/inventory#inventorything).
+Type. Explained in [Inventory](/docs/reference/plugins/inventory#inventorything).
 
 A thing the player holds as the player sees it, in `view.plugins.inventory.things`.
 
@@ -93,7 +93,7 @@ type InventoryThing = {
 
 ### InventoryView
 
-Type. Explained in [Inventory](/docs/plugins/inventory#inventoryview).
+Type. Explained in [Inventory](/docs/reference/plugins/inventory#inventoryview).
 
 The inventory as the player sees it, in `view.plugins.inventory`.
 
@@ -110,7 +110,7 @@ type InventoryView = {
 
 ### Usable
 
-Type. Explained in [Inventory](/docs/plugins/inventory#usable).
+Type. Explained in [Inventory](/docs/reference/plugins/inventory#usable).
 
 The data of the `inventory/usable` trait, which makes a thing usable. It gives the button's label, the effects of using one and whether one is kept.
 
@@ -131,7 +131,7 @@ type Usable = {
 
 ### usableOf
 
-Function. Explained in [Inventory](/docs/plugins/inventory#usableof).
+Function. Explained in [Inventory](/docs/reference/plugins/inventory#usableof).
 
 Returns a thing's `inventory/usable` trait, read through the entity it was made `like`. Returns undefined for a thing with no use.
 
@@ -161,7 +161,7 @@ const INVENTORY_WORDS: { readonly drop: 'Drop'; }
 
 ### InventoryCard
 
-Const. Explained in [Inventory](/docs/plugins/inventory#inventorycard).
+Const. Explained in [Inventory](/docs/reference/plugins/inventory#inventorycard).
 
 Renders the things the player holds from `view.plugins.inventory`, each usable one with a button. It replaces the
 core `Inventory`, and falls back to `view.held` without the plugin.
@@ -204,7 +204,7 @@ type InventoryControls = {
 
 ### inventoryUi
 
-Const. Explained in [Inventory](/docs/plugins/inventory#inventoryui).
+Const. Explained in [Inventory](/docs/reference/plugins/inventory#inventoryui).
 
 The inventory plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It renders `InventoryCard` wherever
 the core `Inventory` goes, in the sidebar and the `inventory` panel, and adds the plugin's words.
@@ -218,7 +218,7 @@ Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
 
 ### useInventory
 
-Function. Explained in [Inventory](/docs/plugins/inventory#useinventory).
+Function. Explained in [Inventory](/docs/reference/plugins/inventory#useinventory).
 
 Returns the inventory plugin's view and commands from the running game, or null in a game without the plugin. It re-renders when the view changes.
 

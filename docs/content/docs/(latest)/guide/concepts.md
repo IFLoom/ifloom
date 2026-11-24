@@ -23,7 +23,7 @@ The player changes the game only through commands. A command is a plain object, 
 - `input` sends a value the player typed, such as their name.
 - `newGame` starts over, and `setting` changes a setting.
 
-[Commands](/docs/reference/commands) lists the rest. Plugins add their own, written by the plugin's helpers. The [places plugin](/docs/plugins/places#commands) has one for walking to a place, and the [cast](/docs/plugins/cast#commands) one for talking to someone. Using a thing the player holds is the [inventory plugin](/docs/plugins/inventory)'s `use` command, not the core's.
+[Commands](/docs/reference/commands) lists the rest. Plugins add their own, written by the plugin's helpers. The [places plugin](/docs/reference/plugins/places#commands) has one for walking to a place, and the [cast](/docs/reference/plugins/cast#commands) one for talking to someone. Using a thing the player holds is the [inventory plugin](/docs/reference/plugins/inventory)'s `use` command, not the core's.
 
 `apply(state, game, command)` returns the next state, whether the command took (`ok`), and if not, why (`reason`). A refused command returns the state unchanged.
 
@@ -123,7 +123,7 @@ The view holds different things in each:
 | `actions` | Empty | The room's buttons, then the game's own `actions` |
 | `plugins` | The plugins' parts, with no exits or people to talk to | The ways out, who is here and what lies here, from the places and cast plugins |
 
-A game with the [places plugin](/docs/plugins/places) spends most of its time in the room, and opens a scene for a conversation or an event. A story with no places, such as [Your first story](/docs/guide/first-story), has no room to go back to, so it keeps a scene open from the first one to an ending: every choice opens the next scene, and its page offers no `leave`. With no scene open, its screen would have only the game's title. See [The idle screen](/docs/reference/view#the-idle-screen).
+A game with the [places plugin](/docs/reference/plugins/places) spends most of its time in the room, and opens a scene for a conversation or an event. A story with no places, such as [Your first story](/docs/guide/first-story), has no room to go back to, so it keeps a scene open from the first one to an ending: every choice opens the next scene, and its page offers no `leave`. With no scene open, its screen would have only the game's title. See [The idle screen](/docs/reference/view#the-idle-screen).
 
 ## The turn
 
@@ -133,7 +133,7 @@ At the end of a turn the counter goes up by one, the kv keys the content lists i
 
 Reach for the turn whenever something should happen once per stretch of the game, such as a choice that can be taken once a day (`once: { per: 'turn' }`) or a scene that waits three turns after another.
 
-The core has no time of day. A game that wants days, the periods of a day and a weekday adds the [calendar plugin](/docs/plugins/calendar), which ends a turn each time its clock passes a period, a day or a week, whichever the game picks.
+The core has no time of day. A game that wants days, the periods of a day and a weekday adds the [calendar plugin](/docs/reference/plugins/calendar), which ends a turn each time its clock passes a period, a day or a week, whichever the game picks.
 
 See [Shapes of game](/docs/guide/shapes) and [Game state: turn](/docs/reference/state#turn).
 
@@ -221,7 +221,7 @@ flowchart TD
   cast -. "query by name:<br/>where is the player?" .-> places
 ```
 
-See [Plugins](/docs/plugins) for the first-party ones, and [Writing a plugin](/docs/reference/plugins).
+See [Plugins](/docs/reference/plugins) for the first-party ones, and [Writing a plugin](/docs/reference/plugins).
 
 ## The UI is separate
 

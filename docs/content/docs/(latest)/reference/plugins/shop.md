@@ -23,12 +23,12 @@ List the package in your game's `package.json`, beside the engine:
 }
 ```
 
-Then add `shop()` to the game's `plugins`. [Adding one](/docs/plugins#adding-one) has the details.
+Then add `shop()` to the game's `plugins`. [Adding one](/docs/reference/plugins#adding-one) has the details.
 
-The plugin works on its own, and needs neither the [inventory](/docs/plugins/inventory) nor the [wardrobe](/docs/plugins/wardrobe): what it sells is held by the engine. It cooperates with the [calendar](/docs/plugins/calendar) and [places](/docs/plugins/places) when the game has them:
+The plugin works on its own, and needs neither the [inventory](/docs/reference/plugins/inventory) nor the [wardrobe](/docs/reference/plugins/wardrobe): what it sells is held by the engine. It cooperates with the [calendar](/docs/reference/plugins/calendar) and [places](/docs/reference/plugins/places) when the game has them:
 
 - **Calendar.** A vendor's opening hours, written with [`shop.hours()`](#opening-hours), are the calendar's periods, and "a day" for restocking and discounts is the calendar's day.
-- **Places.** A vendor that stands somewhere lists [`places.onlyAt()`](/docs/plugins/places#helpers) in its `blocked`, and the player can only buy there. See [Where it stands](#where-it-stands).
+- **Places.** A vendor that stands somewhere lists [`places.onlyAt()`](/docs/reference/plugins/places#helpers) in its `blocked`, and the player can only buy there. See [Where it stands](#where-it-stands).
 
 Without the calendar, a vendor with opening hours is always open and a day is a turn. Without places, a vendor's `places.onlyAt()` entry never holds, so the vendor is everywhere.
 
@@ -146,7 +146,7 @@ const shop: {
 }
 ```
 
-A `blocked` entry that closes a vendor outside these periods of the [calendar](/docs/plugins/calendar)'s day. Its reason is `reason`, or the [`shop/closed`](#strings) string, `Closed.`, so a game rewords every closed counter in its strings at once. It's `{ when: shop.outside(...periods), reason }`.
+A `blocked` entry that closes a vendor outside these periods of the [calendar](/docs/reference/plugins/calendar)'s day. Its reason is `reason`, or the [`shop/closed`](#strings) string, `Closed.`, so a game rewords every closed counter in its strings at once. It's `{ when: shop.outside(...periods), reason }`.
 
 ```ts
 import { calendar } from '@ifloom/plugin-calendar'
@@ -164,7 +164,7 @@ Without the calendar there is no period of the day, so the vendor is never close
 
 ### Where it stands
 
-With the [places](/docs/plugins/places) plugin, a vendor that stands somewhere lists [`places.onlyAt()`](/docs/plugins/places#helpers) in its `blocked`, with `hide`:
+With the [places](/docs/reference/plugins/places) plugin, a vendor that stands somewhere lists [`places.onlyAt()`](/docs/reference/plugins/places#helpers) in its `blocked`, with `hide`:
 
 ```ts
 import { places } from '@ifloom/plugin-places'
@@ -301,7 +301,7 @@ const actions: ActionDef[] = [
 
 ## Opening a counter
 
-Nothing about a vendor is drawn by itself. Content opens a vendor's counter in the `shop` [panel](/docs/reference/panels) with `shop.open`, from anything that runs effects: a place's action, a choice in a person's scene, a thing's [use](/docs/plugins/inventory), an app's button.
+Nothing about a vendor is drawn by itself. Content opens a vendor's counter in the `shop` [panel](/docs/reference/panels) with `shop.open`, from anything that runs effects: a place's action, a choice in a person's scene, a thing's [use](/docs/reference/plugins/inventory), an app's button.
 
 ```ts
 import type { ActionDef } from '@ifloom/engine'
@@ -335,7 +335,7 @@ The checker reports an `shop.open` for a vendor the game doesn't have (`unknown 
 | Content writes | Helper | Holds when |
 |---|---|---|
 | `{ 'shop/open': { vendor } }` | `shop.vendorOpen(vendor)` | The vendor is open now: none of its `blocked` entries without `hide` holds. So where the player is doesn't matter. |
-| `{ 'shop/outside': { period } }` | `shop.outside(...periods)` | The [calendar](/docs/plugins/calendar)'s period of the day is none of these. Never, in a game without the calendar. [`shop.hours()`](#opening-hours) closes a vendor with it. |
+| `{ 'shop/outside': { period } }` | `shop.outside(...periods)` | The [calendar](/docs/reference/plugins/calendar)'s period of the day is none of these. Never, in a game without the calendar. [`shop.hours()`](#opening-hours) closes a vendor with it. |
 | `{ 'shop/inStock': { vendor, entity } }` | `shop.inStock(vendor, entity)` | The vendor offers the thing now and has at least one left. Always, for a good that never runs out. |
 
 An unknown vendor or thing is false.
@@ -426,11 +426,11 @@ Nothing about a vendor is drawn until content opens its counter with [`shop.open
 
 With the React UI, list `shopUi` in `plugins` and the panel is drawn for you as a [`ShopCounter`](#shopcounter) in a dialog. In plain JS or Vue, draw the vendor when the open panel is `shop`. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, and the Vue tab the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-::include[../../../../snippets/plain/shop.ts]{meta='tab="Plain JS" tab-group="framework"'}
+::include[../../../../../snippets/plain/shop.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-::include[../../../../snippets/react/mount-shop.tsx]{meta='tab="React" tab-group="framework"'}
+::include[../../../../../snippets/react/mount-shop.tsx]{meta='tab="React" tab-group="framework"'}
 
-::include[../../../../snippets/vue/ShopCounter.vue]{meta='tab="Vue" tab-group="framework"'}
+::include[../../../../../snippets/vue/ShopCounter.vue]{meta='tab="Vue" tab-group="framework"'}
 
 The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.shop`, or from [`useShop`](#useshop) with your own markup, and nothing of ours is drawn. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads `@ifloom/plugin-shop/react`.
 
@@ -461,9 +461,9 @@ function ShopDialog(props: ShopDialogProps): JSX.Element
 type ShopDialogProps = { vendorId: string | null; onClose: () => void }
 ```
 
-The vendor with this id in a [`Dialog`](/docs/react/components#dialog), titled with its name and drawn as a [`ShopCounter`](#shopcounter). It's closed while `vendorId` is `null` or names no vendor. It sends no command and keeps nothing in the state, so content usually opens a counter with [`shop.open`](/docs/plugins/shop#opening-a-counter) instead. Use it for a button that is only UI:
+The vendor with this id in a [`Dialog`](/docs/react/components#dialog), titled with its name and drawn as a [`ShopCounter`](#shopcounter). It's closed while `vendorId` is `null` or names no vendor. It sends no command and keeps nothing in the state, so content usually opens a counter with [`shop.open`](/docs/reference/plugins/shop#opening-a-counter) instead. Use it for a button that is only UI:
 
-::include[../../../../snippets/react/shop-dialog.tsx]
+::include[../../../../../snippets/react/shop-dialog.tsx]
 
 Replaceable as `ShopDialog` in [`components`](/docs/react/components#components). Parts: `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close`.
 
@@ -475,7 +475,7 @@ function ShopCounter(props: ShopCounterProps): JSX.Element
 type ShopCounterProps = { vendor: VendorView; className?: string }
 ```
 
-A vendor's goods, from its [`VendorView`](/docs/plugins/shop#vendorview). A closed vendor shows why above its goods (`data-closed`). Each good (`data-good`, the thing's reference) shows its picture when it has one, its name and description, today's discount (`ui.percentOff`) with the full price struck out, how many are left (`ui.stockLeft`) for a good with a stock, and how many the player has (`ui.owned`). Then:
+A vendor's goods, from its [`VendorView`](/docs/reference/plugins/shop#vendorview). A closed vendor shows why above its goods (`data-closed`). Each good (`data-good`, the thing's reference) shows its picture when it has one, its name and description, today's discount (`ui.percentOff`) with the full price struck out, how many are left (`ui.stockLeft`) for a good with a stock, and how many the player has (`ui.owned`). Then:
 
 - **Buy** (`ui.buy`), a [`ChoiceButton`](/docs/react/components#choicebutton) built from the good's `buy` button, so it shows today's price and, when it's greyed out, the reason on it: `Sold out.`, `You need 10 coins.` or the vendor's closed line.
 - **Sell for 2 coins** (`ui.sellFor`), from the good's `sell` button, when the vendor buys back and the player has one.
@@ -496,9 +496,9 @@ type ShopControls = ShopView & {
 }
 ```
 
-The shop plugin's view ([`ShopView`](/docs/plugins/shop#shopview): `vendors`), the vendors at the player's location as `here`, and its commands, or `null` in a game without the plugin. `buy` and `sell` send `shop/buy` and `shop/sell`, one if `count` is left out. [`ShopDialog`](#shopdialog), [`ShopCounter`](#shopcounter) and the `shop` panel are drawn from it. `here` is what a layout of your own can show where the player is.
+The shop plugin's view ([`ShopView`](/docs/reference/plugins/shop#shopview): `vendors`), the vendors at the player's location as `here`, and its commands, or `null` in a game without the plugin. `buy` and `sell` send `shop/buy` and `shop/sell`, one if `count` is left out. [`ShopDialog`](#shopdialog), [`ShopCounter`](#shopcounter) and the `shop` panel are drawn from it. `here` is what a layout of your own can show where the player is.
 
-::include[../../../../snippets/react/use-shop.tsx]
+::include[../../../../../snippets/react/use-shop.tsx]
 
 ## The state
 
@@ -591,7 +591,7 @@ A pack that still lists vendors in `data.shop.vendors`, as older content did, is
 ## Gotchas
 
 - **A traits row replaces the whole trait.** A mod that changes a vendor's goods with a `traits` row gives every field the vendor needs, its `blocked` included.
-- **A place's opening hours and a vendor's are separate.** A location's [`blocked`](/docs/plugins/places#the-location-trait) stops the player getting in, and a vendor's `blocked` stops it selling. The showcase sets both, so the café and its counter close together.
+- **A place's opening hours and a vendor's are separate.** A location's [`blocked`](/docs/reference/plugins/places#the-location-trait) stops the player getting in, and a vendor's `blocked` stops it selling. The showcase sets both, so the café and its counter close together.
 - **For days of the week, add an entry.** `shop.hours()` reads the period of the day. A counter shut at weekends adds `{ when: calendar.weekend(), reason: 'Closed at weekends.' }` beside it.
 - **The price on a button is today's.** A discount drawn for today changes the price on the button, and tomorrow it may be back to full.
 - **Selling back pays from the full price,** not today's discounted one.

@@ -12,7 +12,7 @@ Other people's posts are content, and each appears the first time its [condition
 import { feed, feedsOf, postsOf, type FeedDef, type PostDef, type OwnPost, type Comment, type FeedState, type FeedsView, type FeedView, type PostView } from '@ifloom/plugin-feed'
 ```
 
-The plugin knows nothing about devices. Your game decides where a feed is shown, such as a board on the high street. With the [devices plugin](/docs/plugins/devices) a feed can be an app instead, as in [A phone](/docs/recipes/phone).
+The plugin knows nothing about devices. Your game decides where a feed is shown, such as a board on the high street. With the [devices plugin](/docs/reference/plugins/devices) a feed can be an app instead, as in [A phone](/docs/recipes/phone).
 
 ## Install
 
@@ -27,7 +27,7 @@ List the package in your game's `package.json`, beside the engine:
 }
 ```
 
-Then add `feed(...)` to the game's `plugins`. [Adding one](/docs/plugins#adding-one) has the details.
+Then add `feed(...)` to the game's `plugins`. [Adding one](/docs/reference/plugins#adding-one) has the details.
 
 ## feed
 
@@ -72,7 +72,7 @@ data: {
 }
 ```
 
-The plugin lists `cooperates: ['cast']` (see [`cooperates`](/docs/reference/plugins#cooperates)). A poster or commenter who is an [entity](/docs/reference/entities), such as one of the [cast](/docs/plugins/cast)'s characters, is shown with their name, and a poster with their face too. The plugin reads these with [`speakerOf`](/docs/reference/plugins#speakerof), and with the game's cast it asks the `cast/portrait` query for a person's [`portrait`](/docs/plugins/cast#person), falling back to their entity's picture. Anyone else is shown as written, with no portrait.
+The plugin lists `cooperates: ['cast']` (see [`cooperates`](/docs/reference/plugins#cooperates)). A poster or commenter who is an [entity](/docs/reference/entities), such as one of the [cast](/docs/reference/plugins/cast)'s characters, is shown with their name, and a poster with their face too. The plugin reads these with [`speakerOf`](/docs/reference/plugins#speakerof), and with the game's cast it asks the `cast/portrait` query for a person's [`portrait`](/docs/reference/plugins/cast#person), falling back to their entity's picture. Anyone else is shown as written, with no portrait.
 
 ### FeedDef
 
@@ -118,7 +118,7 @@ type PostDef = {
 |---|---|
 | `id` | Unique among posts, and among the player's own posts too, because `feed/react` and `feed/likes` find a post by id. |
 | `feed` | The [feed](#feeddef) it appears in. |
-| `from` | Who posted it. Either a [cast](/docs/plugins/cast) character's id, or any name as it should be shown (`'Town council'`). |
+| `from` | Who posted it. Either a [cast](/docs/reference/plugins/cast) character's id, or any name as it should be shown (`'Town council'`). |
 | `when` | It appears the first time this holds at the end of a command. |
 | `body` | Its words, as [prose blocks](/docs/reference/scenes#block). |
 | `image` | A picture, as a path in the game's `art/` folder (`'photo/fete.jpg'` or `'art/photo/fete.jpg'`) or a URL. The view gives it through [`artSrc`](/docs/reference/prose#artsrc), as every picture in the view is. |
@@ -169,7 +169,7 @@ How a post does is usually rolled. Put the roll in one of the game's own [macros
 
 A cut-down Small Town with a social feed and a notice board on the high street. Ava posts on the second day, and the town council pins up a notice the same day. The player can photograph the river from the park and post it. That takes a period of the day, and the game rolls the likes. The notice board needs no phone, because the high street has a button to read it.
 
-The time of day comes from the [calendar](/docs/plugins/calendar), the map from [places](/docs/plugins/places) and Ava and Sam from the [cast](/docs/plugins/cast). The calendar goes first in `plugins`, so the feed sees the new day when one begins.
+The time of day comes from the [calendar](/docs/reference/plugins/calendar), the map from [places](/docs/reference/plugins/places) and Ava and Sam from the [cast](/docs/reference/plugins/cast). The calendar goes first in `plugins`, so the feed sees the new day when one begins.
 
 ```ts
 import { loadGame, type Content, type GameRules } from '@ifloom/engine'
@@ -317,7 +317,7 @@ An unknown post is false for `feed/appeared`, and has 0 likes for `feed/likes`.
 | `{ 'feed/post': { feed, post, text?, image?, video?, likes? } }` | `feed.post(feed, id, { text?, image?, video?, likes? })` | The player posts to `feed`, as the post `post`, stamped with this turn. `text` is its words, as written. An id already posted, or a feed the plugin wasn't given, does nothing. |
 | `{ 'feed/react': { post, likes?, from?, text? } }` | `feed.react(post, { likes?, from?, text? })` | Adds `likes` to a post, and a comment if `text` is given. `text` is the comment's words and `from` is a character id or a name. A post that hasn't appeared does nothing. |
 
-They work in any effect list: a data scene choice's, an action's, a thing's use in the [inventory](/docs/plugins/inventory), a message reply's, a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), and what one of the game's own macros returns. Written out, a post is `{ 'feed/post': { feed: 'social', post: 'river' } }` (see [plugin calls](/docs/reference/custom#plugincall)).
+They work in any effect list: a data scene choice's, an action's, a thing's use in the [inventory](/docs/reference/plugins/inventory), a message reply's, a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), and what one of the game's own macros returns. Written out, a post is `{ 'feed/post': { feed: 'social', post: 'river' } }` (see [plugin calls](/docs/reference/custom#plugincall)).
 
 ## Commands
 
@@ -406,28 +406,28 @@ type PostView = {
 | Field | What it is |
 |---|---|
 | `from` | The poster, as written. `''` for the player's own. |
-| `name` | The poster's name if they're a [cast](/docs/plugins/cast) character, or `from` as written. On the player's own posts it's the `playerName` key in the game's [kv store](/docs/reference/state#kv) when that's a string, and otherwise the [`feed/you`](#strings) string, `You`. |
-| `portrait` | The poster's face for an avatar: with the [cast](/docs/plugins/cast), a person's [`portrait`](/docs/plugins/cast#person), else their entity's `image`, through `artSrc`, or `null`. Always `null` for the player's own. |
+| `name` | The poster's name if they're a [cast](/docs/reference/plugins/cast) character, or `from` as written. On the player's own posts it's the `playerName` key in the game's [kv store](/docs/reference/state#kv) when that's a string, and otherwise the [`feed/you`](#strings) string, `You`. |
+| `portrait` | The poster's face for an avatar: with the [cast](/docs/reference/plugins/cast), a person's [`portrait`](/docs/reference/plugins/cast#person), else their entity's `image`, through `artSrc`, or `null`. Always `null` for the player's own. |
 | `text` | The words of its beats, joined, for a UI that draws no beats. |
 | `beats` | The words as [beats](/docs/reference/prose#scenebeat), as a scene's body is drawn: someone else's post's body drawn for the current state with [`context.beats`](/docs/reference/plugins#beats), and the player's own post's prose line, so a picture or video written into a post's words with [markup](/docs/reference/prose#videos) sits in order with them. [Bold and italics](/docs/reference/prose#bold-and-italics) come as spans. |
 | `image` | The post's picture, through `artSrc`, or `null`. |
 | `video` | The post's video, through `artSrc`, or `null`. The React UI's [`FeedSection`](#feedsection) draws it under the image with [`Video`](/docs/react/components#video). |
-| `turn` | The [turn](/docs/reference/state#turn) it appeared or was posted on. With the [calendar](/docs/plugins/calendar#what-a-turn-is)'s default, a turn is a day. |
+| `turn` | The [turn](/docs/reference/state#turn) it appeared or was posted on. With the [calendar](/docs/reference/plugins/calendar#what-a-turn-is)'s default, a turn is a day. |
 | `likes` | The likes it started with, plus every `feed/react` since. |
 | `comments` | Oldest first, each with the commenter's name and the comment's words filled in. |
 | `mine` | The player's own. |
 
 ## Drawing it
 
-`view.plugins.feed` is a [`FeedsView`](#feedsview): each feed's posts, with their likes and comments, and how many are new. A feed's `seen` is a ready button that marks it seen. A feed usually shows inside an app on a [device](/docs/plugins/devices).
+`view.plugins.feed` is a [`FeedsView`](#feedsview): each feed's posts, with their likes and comments, and how many are new. A feed's `seen` is a ready button that marks it seen. A feed usually shows inside an app on a [device](/docs/reference/plugins/devices).
 
-`@ifloom/plugin-feed/react` draws a feed inside an app, for a game drawn with [`@ifloom/react`](/docs/react). List `feedUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a [`FeedSection`](#feedsection) is drawn wherever a [device](/docs/plugins/devices)'s app shows a feed. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+`@ifloom/plugin-feed/react` draws a feed inside an app, for a game drawn with [`@ifloom/react`](/docs/react). List `feedUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a [`FeedSection`](#feedsection) is drawn wherever a [device](/docs/reference/plugins/devices)'s app shows a feed. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-::include[../../../../snippets/plain/feed.ts]{meta='tab="Plain JS" tab-group="framework"'}
+::include[../../../../../snippets/plain/feed.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-::include[../../../../snippets/react/mount-feed.tsx]{meta='tab="React" tab-group="framework"'}
+::include[../../../../../snippets/react/mount-feed.tsx]{meta='tab="React" tab-group="framework"'}
 
-::include[../../../../snippets/vue/Feed.vue]{meta='tab="Vue" tab-group="framework"'}
+::include[../../../../../snippets/vue/Feed.vue]{meta='tab="Vue" tab-group="framework"'}
 
 The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.feed`, or from [`useFeed`](#usefeed) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
@@ -437,7 +437,7 @@ The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.
 const feedUi: PluginUi
 ```
 
-The plugin's [`PluginUi`](/docs/react/kit#pluginui): a [`FeedSection`](#feedsection) is drawn wherever a [device](/docs/plugins/devices)'s app shows a feed.
+The plugin's [`PluginUi`](/docs/react/kit#pluginui): a [`FeedSection`](#feedsection) is drawn wherever a [device](/docs/reference/plugins/devices)'s app shows a feed.
 
 Its words are in `FEED_WORDS`. A game rewords any of them with `ui.<key>` in its strings, as it does the React UI's own: `{ 'ui.likes': '…' }`.
 
@@ -451,7 +451,7 @@ Its words are in `FEED_WORDS`. A game rewords any of them with `ui.<key>` in its
 const FeedSection: PluginSectionComponent
 ```
 
-A [feed](/docs/plugins/feed), the one named by `with.feed` (`data-feed`). Each post (`data-post`) shows the poster's name and portrait, its picture, its `video` (a [`Video`](/docs/react/components#video), playing like a GIF), its words, its likes (`ui.likes`) and its comments. The words are the post's [`beats`](/docs/plugins/feed#postview), drawn with [`Beat`](/docs/react/components#beat), so pictures and clips in them show in order.
+A [feed](/docs/reference/plugins/feed), the one named by `with.feed` (`data-feed`). Each post (`data-post`) shows the poster's name and portrait, its picture, its `video` (a [`Video`](/docs/react/components#video), playing like a GIF), its words, its likes (`ui.likes`) and its comments. The words are the post's [`beats`](/docs/reference/plugins/feed#postview), drawn with [`Beat`](/docs/react/components#beat), so pictures and clips in them show in order.
 
 Opening the feed marks nothing seen. While it has unseen posts, the feed's **Mark all seen** button from the view marks it seen. It draws nothing if the feed isn't in the view.
 
@@ -465,7 +465,7 @@ function useFeed(): FeedControls | null
 type FeedControls = FeedsView & { seen: (feed: string) => Result<GameState> }
 ```
 
-The [feed](/docs/plugins/feed) plugin's view (its feeds, each with posts and an unread count) with its command, or `null` in a game without the plugin. `seen(feed)` sends `feed/seen`. [`FeedSection`](#feedsection) is drawn from it.
+The [feed](/docs/reference/plugins/feed) plugin's view (its feeds, each with posts and an unread count) with its command, or `null` in a game without the plugin. `seen(feed)` sends `feed/seen`. [`FeedSection`](#feedsection) is drawn from it.
 
 ## The state
 
@@ -570,13 +570,13 @@ The player's own posts and reactions are made by effects, and those are checked 
 - **Posts appear only after a command.** The plugin looks for new posts in its `onCommand` [hook](/docs/reference/plugins#hooks-and-providers), which runs after every command that went through, never on `start`. A post whose `when` holds when the game starts appears after the player's first command.
 - **`when` is tested at the end of each command.** A post whose `when` held only partway through a command waits for a later command that ends while it holds. A post with the calendar's `calendar.period('morning')` as its `when` doesn't appear if the player's first command of the day ends in the afternoon. It appears at the end of the next command that ends in a morning, which may be days later. If it matters when a post comes, write `when` for something that stays true, such as a kv key, a day (the calendar's `calendar.day({ gte: 2 })`) or a scene seen.
 - **A post appears once.** After that it stays, whatever `when` does.
-- **No notice.** Unlike a [message](/docs/plugins/messages), a post raises no [notice](/docs/reference/notices) when it appears. Badge a feed from `feed/unread` with `{ feed }`, or add a [trigger](/docs/reference/triggers) with a `notify` effect for a post that should pop up.
+- **No notice.** Unlike a [message](/docs/reference/plugins/messages), a post raises no [notice](/docs/reference/notices) when it appears. Badge a feed from `feed/unread` with `{ feed }`, or add a [trigger](/docs/reference/triggers) with a `notify` effect for a post that should pop up.
 - **A feed the game doesn't have counts nothing.** `feed/unread` with `{ feed: 'board' }` is 0 when there's no `board` feed, so a badge that names a renamed feed stops counting.
 - **A post's words are kept in the save.** A post the player made, and a comment, keep the words they were made with, so a translation loaded later doesn't change them. An older save, which kept a prose key, gets that key's words when it loads. A `text` that is a prose key the game has is reported where content writes it.
 - **Ids are shared.** `feed/react` and `feed/likes` look for the player's own post with that id first, then someone else's. Give the player's posts ids that no `PostDef` uses.
 - **Posting twice still reacts twice.** A second `feed/post` with an id the player has used makes no new post, but any `feed/react` after it in the same list still lands on the old post. If an action can run more than once, guard it with a `blocked` entry, as the showcase does with its `postedToday` kv key.
 - **React after posting.** `feed/react` on a post that isn't there yet does nothing. Put the reaction after the `feed/post` in the list, or in a later command.
-- **A feed doesn't need a device.** You can show `view.plugins.feed` anywhere, such as the notice board in the example. The [devices](/docs/plugins/devices) plugin is one way to show a feed, not a requirement.
+- **A feed doesn't need a device.** You can show `view.plugins.feed` anywhere, such as the notice board in the example. The [devices](/docs/reference/plugins/devices) plugin is one way to show a feed, not a requirement.
 
 ## See it in an example
 

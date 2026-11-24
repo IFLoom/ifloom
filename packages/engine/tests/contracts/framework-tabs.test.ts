@@ -65,8 +65,8 @@ const PAGES = import.meta.glob('../../../../docs/content/docs/**/*.{md,mdx}', {
 const TABS = ['Plain JS', 'React', 'Vue', 'Svelte']
 const REQUIRED = ['Plain JS', 'React', 'Vue']
 const GROUP = 'framework'
-/** The section whose React-only blocks document the React UI's default. */
-const DRAWING = ['Drawing it']
+/** The sections whose React-only blocks document the React UI's default: a plugin page's `## React UI`, and `## Drawing it` until the last one goes. */
+const DRAWING = ['Drawing it', 'React UI']
 
 /** Pages that may show a UI snippet in one framework only. */
 const ALLOWED = [/\/react\//, /\/guide\/ui-from-scratch\.md$/, /\/recipes\/next\.md$/, /\/api\//]

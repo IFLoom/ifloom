@@ -2,11 +2,11 @@
 title: "Debug"
 description: "Commands for testing that ignore locks: set a stat, a kv key, what someone holds, the scene, the turn, the clock or the place."
 ---
-`@ifloom/plugin-debug` lets you change the game state by hand while you test. You can set a stat (the player's, or a character's or any entity's), set a key in the kv store, set how many of a thing the player (or anyone who can hold things) holds, put a scene on screen, set the [calendar](/docs/plugins/calendar)'s clock or the turn, and put the player anywhere on the [places](/docs/plugins/places) map.
+`@ifloom/plugin-debug` lets you change the game state by hand while you test. You can set a stat (the player's, or a character's or any entity's), set a key in the kv store, set how many of a thing the player (or anyone who can hold things) holds, put a scene on screen, set the [calendar](/docs/reference/plugins/calendar)'s clock or the turn, and put the player anywhere on the [places](/docs/reference/plugins/places) map.
 
 You'd want it while you build and test a game, so you can get straight to the state you want to look at without playing up to it. It's for you, not the player, so leave it out of release builds.
 
-To give the player cheats in the released game, such as +20 coins or a supporter-only shortcut, use the [cheats plugin](/docs/plugins/cheats) instead. Its cheats are content you write, with effects and reasons the player reads, and its log records each use.
+To give the player cheats in the released game, such as +20 coins or a supporter-only shortcut, use the [cheats plugin](/docs/reference/plugins/cheats) instead. Its cheats are content you write, with effects and reasons the player reads, and its log records each use.
 
 To add it, list `@ifloom/plugin-debug` in your game's `package.json` and add `debug()` to the game's `plugins` in development builds only. [Leave it out of release builds](#leave-it-out-of-release-builds) shows how.
 
@@ -18,7 +18,7 @@ Every command it adds sets [`ignoresLocks`](/docs/reference/plugins#commands-out
 
 ## Install
 
-Add the package beside the engine. See [Adding one](/docs/plugins#adding-one).
+Add the package beside the engine. See [Adding one](/docs/reference/plugins#adding-one).
 
 ```json
 {
@@ -66,7 +66,7 @@ function debug(): DefinedPlugin<null, DebugView>
 
 The plugin, with the id `debug`. It has no state of its own. Call it once, when you build the game.
 
-It lists `cooperates: ['calendar', 'places']` (see [`cooperates`](/docs/reference/plugins#cooperates)). `debug/time` sets the [calendar](/docs/plugins/calendar)'s clock when the game has one, and `debug/go` moves the player on the [places](/docs/plugins/places) map when the game has it. Each is refused when its partner is missing.
+It lists `cooperates: ['calendar', 'places']` (see [`cooperates`](/docs/reference/plugins#cooperates)). `debug/time` sets the [calendar](/docs/reference/plugins/calendar)'s clock when the game has one, and `debug/go` moves the player on the [places](/docs/reference/plugins/places) map when the game has it. Each is refused when its partner is missing.
 
 ## Commands
 
@@ -76,9 +76,9 @@ It lists `cooperates: ['calendar', 'places']` (see [`cooperates`](/docs/referenc
 | `{ 'debug/kv': { key, to } }` | `debug.kv(key, to)` | Sets a key in the [kv store](/docs/reference/state#kv) to `true`, `false`, a number or a word. |
 | `{ 'debug/held': { entity, to, at? } }` | `debug.held(entity, to, at?)` | Sets how many of a [thing](/docs/reference/entities#holding-things) a holder holds, `'you'` if `at` is left out, through the [`entity`](/docs/reference/effects#entity) effect with `to`. Below 0 counts as 0, and a unique thing is taken from whoever had it. |
 | `{ 'debug/scene': { id } }` | `debug.scene(scene?)` | Puts the scene `id` on screen. With no `id`, it closes the one that's open. |
-| `{ 'debug/time': { day?, period? } }` | `debug.time({ day?, period? })` | Sets the [calendar](/docs/plugins/calendar)'s clock, through its [`calendar/set`](/docs/plugins/calendar#effects) effect. `day` counts from 0. A half you leave out stays as it is. |
+| `{ 'debug/time': { day?, period? } }` | `debug.time({ day?, period? })` | Sets the [calendar](/docs/reference/plugins/calendar)'s clock, through its [`calendar/set`](/docs/reference/plugins/calendar#effects) effect. `day` counts from 0. A half you leave out stays as it is. |
 | `{ 'debug/turn': { to } }` | `debug.turn(turn)` | Sets [`state.turn`](/docs/reference/state#turn), how many turns have passed. |
-| `{ 'debug/go': { id } }` | `debug.go(location)` | Puts the player in the place `id`, through the places plugin's [`places/move`](/docs/plugins/places#effects) effect, which closes any scene. |
+| `{ 'debug/go': { id } }` | `debug.go(location)` | Puts the player in the place `id`, through the places plugin's [`places/move`](/docs/reference/plugins/places#effects) effect, which closes any scene. |
 
 A command is refused, with a line from [Strings](#strings), when:
 
@@ -88,9 +88,9 @@ A command is refused, with a line from [Strings](#strings), when:
 - the number given to `debug/stat` or `debug/held` isn't a finite number
 - a kv key's value isn't one the kv store can hold
 - the turn isn't a whole number from 0
-- the day isn't a whole number from 0, or the period isn't one of the calendar's own periods (its [`calendar/periods`](/docs/plugins/calendar#queries) query)
+- the day isn't a whole number from 0, or the period isn't one of the calendar's own periods (its [`calendar/periods`](/docs/reference/plugins/calendar#queries) query)
 
-In a game with no calendar, `debug/time` is refused with `This game has no calendar.` In a game without the places plugin, `debug/go` is refused with `This game has no places.` Whether a place exists is asked of the places plugin's [`places/known`](/docs/plugins/places#queries) query.
+In a game with no calendar, `debug/time` is refused with `This game has no calendar.` In a game without the places plugin, `debug/go` is refused with `This game has no places.` Whether a place exists is asked of the places plugin's [`places/known`](/docs/reference/plugins/places#queries) query.
 
 ### What they skip
 
@@ -98,8 +98,8 @@ The commands set the state and nothing else, so you can get to the state you wan
 
 - **No cost.** Nothing is paid, and no time passes except what `debug/time` and `debug/turn` set.
 - **No locks.** A [lock](/docs/reference/locks) never stops them, even one that denies `'*'`.
-- **No exit for `debug/go`.** It ignores a place's [`blocked`](/docs/plugins/places#the-location-trait) entries, opening hours included, and runs nothing on arrival. It's a [`places/move`](/docs/plugins/places#effects), so the place's [`arrive`](/docs/plugins/places#arrival) doesn't run.
-- **No turn ends.** `debug/time` moves the calendar's clock and leaves [`state.turn`](/docs/reference/state#turn) alone. `debug/turn` changes the counter and leaves the calendar's clock alone. Neither runs [`rules.onTurn`](/docs/reference/rules#onturn) or any plugin's `onTurn` [hook](/docs/reference/plugins#hooks-and-providers), and neither puts the [`resets`](/docs/reference/rules#resets) kv keys back. To test a night, use the calendar's real [`calendar.sleep()`](/docs/plugins/calendar#commands) or a [`turn`](/docs/reference/effects#turn) effect.
+- **No exit for `debug/go`.** It ignores a place's [`blocked`](/docs/reference/plugins/places#the-location-trait) entries, opening hours included, and runs nothing on arrival. It's a [`places/move`](/docs/reference/plugins/places#effects), so the place's [`arrive`](/docs/reference/plugins/places#arrival) doesn't run.
+- **No turn ends.** `debug/time` moves the calendar's clock and leaves [`state.turn`](/docs/reference/state#turn) alone. `debug/turn` changes the counter and leaves the calendar's clock alone. Neither runs [`rules.onTurn`](/docs/reference/rules#onturn) or any plugin's `onTurn` [hook](/docs/reference/plugins#hooks-and-providers), and neither puts the [`resets`](/docs/reference/rules#resets) kv keys back. To test a night, use the calendar's real [`calendar.sleep()`](/docs/reference/plugins/calendar#commands) or a [`turn`](/docs/reference/effects#turn) effect.
 - **`debug/scene` replaces any open scene.** The [`scene`](/docs/reference/commands#scene) command refuses while a scene is open, but this one doesn't.
 
 They still go through [`apply`](/docs/reference/commands#apply) like any command. Once one has run, [triggers](/docs/reference/triggers) fire, the scene left on screen is counted as seen, and every plugin's `onCommand` hook runs. Setting a kv key that a trigger watches fires that trigger.
@@ -212,11 +212,11 @@ type DebugView = {
 
 `@ifloom/plugin-debug/react` draws the debug card, for a game drawn with [`@ifloom/react`](/docs/react). List `debugUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the [`DebugCard`](#debugcard) goes at the end of the story. It does nothing in a build without the plugin, so it can be listed in every build. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-::include[../../../../snippets/plain/debug.ts]{meta='tab="Plain JS" tab-group="framework"'}
+::include[../../../../../snippets/plain/debug.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-::include[../../../../snippets/react/mount-debug.tsx]{meta='tab="React" tab-group="framework"'}
+::include[../../../../../snippets/react/mount-debug.tsx]{meta='tab="React" tab-group="framework"'}
 
-::include[../../../../snippets/vue/Debug.vue]{meta='tab="Vue" tab-group="framework"'}
+::include[../../../../../snippets/vue/Debug.vue]{meta='tab="Vue" tab-group="framework"'}
 
 The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.debug`, or from [`useDebug`](#usedebug) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
@@ -259,11 +259,11 @@ Its words are in `DEBUG_WORDS`. A game rewords any of them with `ui.<key>` in it
 function DebugCard(props: { className?: string }): JSX.Element | null
 ```
 
-A panel for the person testing the game, when the game has the [debug plugin](/docs/plugins/debug). It draws nothing in a game without the plugin, so a release build that [leaves the plugin out](/docs/plugins/debug#leave-it-out-of-release-builds) shows no panel.
+A panel for the person testing the game, when the game has the [debug plugin](/docs/reference/plugins/debug). It draws nothing in a game without the plugin, so a release build that [leaves the plugin out](/docs/reference/plugins/debug#leave-it-out-of-release-builds) shows no panel.
 
 | Tab | What it has |
 |---|---|
-| **Set** | A form each for a stat, a kv key, how many of a thing you hold, an entity's stat, a location, a scene, the time and the turn, each sending a debug command. The entity's stat form (**Stat of**) takes the stat, the entity as content names it (such as `character:ava`) and the value. The location form appears only when the game has the [places](/docs/plugins/places) plugin, and the time form only when it has the [calendar](/docs/plugins/calendar). There's also a button to close the scene (`ui.closeScene`). A refusal shows beside its form. Typing `true`, `false` or a number into the kv key form sends that value as itself. |
+| **Set** | A form each for a stat, a kv key, how many of a thing you hold, an entity's stat, a location, a scene, the time and the turn, each sending a debug command. The entity's stat form (**Stat of**) takes the stat, the entity as content names it (such as `character:ava`) and the value. The location form appears only when the game has the [places](/docs/reference/plugins/places) plugin, and the time form only when it has the [calendar](/docs/reference/plugins/calendar). There's also a button to close the scene (`ui.closeScene`). A refusal shows beside its form. Typing `true`, `false` or a number into the kv key form sends that value as itself. |
 | **Why not** | The locks that are on, with what each denies, and every greyed-out action, choice and person's button on screen with its reason. |
 | **State** | The whole game state, as JSON. |
 | **Log** | The [command log](/docs/reference/runner#commandlog), one command a line. |
@@ -295,7 +295,7 @@ type DebugControls = DebugView & {
 }
 ```
 
-The [debug](/docs/plugins/debug) plugin's view (the locks on, the triggers fired and the seed) with what the debug card shows, or `null` in a game built without the plugin. `greyed` is every greyed-out action, choice and person's button on screen. The debug commands are the plugin's helpers: send one with [`useGame`](/docs/react/components#usegame)'s `send`, so `send(debug.stat('coins', 50))` sets a stat. [`DebugCard`](#debugcard) is drawn from it.
+The [debug](/docs/reference/plugins/debug) plugin's view (the locks on, the triggers fired and the seed) with what the debug card shows, or `null` in a game built without the plugin. `greyed` is every greyed-out action, choice and person's button on screen. The debug commands are the plugin's helpers: send one with [`useGame`](/docs/react/components#usegame)'s `send`, so `send(debug.stat('coins', 50))` sets a stat. [`DebugCard`](#debugcard) is drawn from it.
 
 ## Gotchas
 

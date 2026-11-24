@@ -233,7 +233,7 @@ const atHome = computed(() => view.value && holds(runner.state, runner.game, pla
 {/if}
 ```
 
-You can also decide in plain code, from a hook. This draws the exits as a list only outdoors, using the [places](/docs/plugins/places) plugin's view through [`usePlaces`](/docs/plugins/places#useplaces):
+You can also decide in plain code, from a hook. This draws the exits as a list only outdoors, using the [places](/docs/reference/plugins/places) plugin's view through [`usePlaces`](/docs/reference/plugins/places#useplaces):
 
 ```ts fragment tab="Plain JS" tab-group="framework"
 const places = view.plugins.places

@@ -8,7 +8,7 @@ The running example is Ava, who runs the café in Small Town. Her storyline is `
 
 ## Pay once a turn
 
-Talking usually costs no time, so a choice that pays and can be picked again is an endless farm. Give it `once`, and it pays once a [turn](/docs/reference/state#turn), which is once a day with the [calendar](/docs/plugins/calendar)'s default:
+Talking usually costs no time, so a choice that pays and can be picked again is an endless farm. Give it `once`, and it pays once a [turn](/docs/reference/state#turn), which is once a day with the [calendar](/docs/reference/plugins/calendar)'s default:
 
 ```ts
 import type { Choice } from '@ifloom/engine'
@@ -50,7 +50,7 @@ Every [range](/docs/reference/common#range) takes `gte`, `gt`, `lte` and `lt` to
 
 ## Stages in order, with days between
 
-The [quests plugin](/docs/plugins/quests) already keeps stages in order: a stage is done the first time its `done` holds, once the stages before it are done, and it is never taken back. Pace a stage with [`since`](/docs/reference/conditions#since), the whole turns since a scene was first seen, so a high stat alone can't rush it:
+The [quests plugin](/docs/reference/plugins/quests) already keeps stages in order: a stage is done the first time its `done` holds, once the stages before it are done, and it is never taken back. Pace a stage with [`since`](/docs/reference/conditions#since), the whole turns since a scene was first seen, so a high stat alone can't rush it:
 
 ```ts
 import { cast } from '@ifloom/plugin-cast'
@@ -69,7 +69,7 @@ const friend = {
 }
 ```
 
-Then open the next scene only once the stage before it is done, with [`quests.reached`](/docs/plugins/quests#conditions):
+Then open the next scene only once the stage before it is done, with [`quests.reached`](/docs/reference/plugins/quests#conditions):
 
 ```ts
 import type { Choice } from '@ifloom/engine'

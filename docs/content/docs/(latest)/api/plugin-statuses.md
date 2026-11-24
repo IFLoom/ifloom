@@ -11,7 +11,7 @@ Generated from the source of `@ifloom/plugin-statuses` and `@ifloom/plugin-statu
 
 ### ActiveRecord
 
-Type. Explained in [Statuses](/docs/plugins/statuses#activerecord).
+Type. Explained in [Statuses](/docs/reference/plugins/statuses#activerecord).
 
 The record a save keeps for one active status, in `StatusesState`'s `active`. The status's definition is read from content.
 
@@ -30,7 +30,7 @@ type ActiveRecord = {
 
 ### ActiveStatus
 
-Type. Explained in [Statuses](/docs/plugins/statuses#activestatus).
+Type. Explained in [Statuses](/docs/reference/plugins/statuses#activestatus).
 
 An active status as the player sees it, in `view.plugins.statuses.active`.
 
@@ -57,7 +57,7 @@ type ActiveStatus = {
 
 ### Reapply
 
-Type. Explained in [Statuses](/docs/plugins/statuses#reapply).
+Type. Explained in [Statuses](/docs/reference/plugins/statuses#reapply).
 
 The rule for applying a status that is already active. `'refresh'` starts its turns again, and `'stack'` adds another stack.
 
@@ -68,7 +68,7 @@ type Reapply = 'refresh' | 'stack'
 
 ### StatusDef
 
-Type. Explained in [Statuses](/docs/plugins/statuses#statusdef).
+Type. Explained in [Statuses](/docs/reference/plugins/statuses#statusdef).
 
 A timed status the game declares in `data.statuses.statuses`. It lasts `turns` turns from the turn it is applied in.
 
@@ -99,7 +99,7 @@ type StatusDef = {
 
 ### statuses
 
-Function. Explained in [Statuses](/docs/plugins/statuses#statuses).
+Function. Explained in [Statuses](/docs/reference/plugins/statuses#statuses).
 
 The statuses plugin's factory, with its helpers as properties. `statuses()` returns the plugin for the game's
 `plugins`, and content calls helpers such as `statuses.apply('caffeinated')`.
@@ -119,7 +119,7 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`StatusesState`
 
 ### statusesOf
 
-Function. Explained in [Statuses](/docs/plugins/statuses#statusesof-and-statusof).
+Function. Explained in [Statuses](/docs/reference/plugins/statuses#statusesof-and-statusof).
 
 Returns the game's timed statuses, from `data.statuses.statuses` in its content and packs.
 
@@ -132,7 +132,7 @@ Uses: [`Game`](/docs/api/engine#game), [`StatusDef`](#statusdef).
 
 ### StatusesState
 
-Type. Explained in [Statuses](/docs/plugins/statuses#statusesstate).
+Type. Explained in [Statuses](/docs/reference/plugins/statuses#statusesstate).
 
 The active statuses a save keeps for the player. Statuses themselves are read from content.
 
@@ -149,7 +149,7 @@ type StatusesState = {
 
 ### StatusesView
 
-Type. Explained in [Statuses](/docs/plugins/statuses#statusesview).
+Type. Explained in [Statuses](/docs/reference/plugins/statuses#statusesview).
 
 The active statuses as the player sees them, in `view.plugins.statuses`.
 
@@ -166,7 +166,7 @@ type StatusesView = {
 
 ### StatusModifier
 
-Type. Explained in [Statuses](/docs/plugins/statuses#statusmodifier).
+Type. Explained in [Statuses](/docs/reference/plugins/statuses#statusmodifier).
 
 A change a status makes to the value one of the player's stats reads, per stack.
 
@@ -182,7 +182,7 @@ Plugins add fields of their own to it, which their pages list.
 
 ### statusOf
 
-Function. Explained in [Statuses](/docs/plugins/statuses#statusesof-and-statusof).
+Function. Explained in [Statuses](/docs/reference/plugins/statuses#statusesof-and-statusof).
 
 Returns the status with this id, or undefined when the game has none.
 
@@ -227,7 +227,7 @@ const STATUSES_WORDS: {
 
 ### statusesUi
 
-Const. Explained in [Statuses](/docs/plugins/statuses#statusesui).
+Const. Explained in [Statuses](/docs/reference/plugins/statuses#statusesui).
 
 The statuses plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It renders the `StatusList` under
 the stats in the sidebar and as the `statuses` panel, and adds the plugin's words.
@@ -241,7 +241,7 @@ Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
 
 ### StatusList
 
-Const. Explained in [Statuses](/docs/plugins/statuses#statuslist).
+Const. Explained in [Statuses](/docs/reference/plugins/statuses#statuslist).
 
 Renders the active statuses from `view.plugins.statuses.active`, each with its name, stacks, turns left,
 description and changes to the stats. It renders nothing while no status is active or without the plugin.
@@ -256,7 +256,7 @@ const StatusList: ComponentType<{ className?: string; title?: string | false; }>
 
 ### useStatuses
 
-Function. Explained in [Statuses](/docs/plugins/statuses#usestatuses).
+Function. Explained in [Statuses](/docs/reference/plugins/statuses#usestatuses).
 
 Returns the statuses plugin's view from the running game, or null in a game without the plugin. It re-renders when the view changes.
 

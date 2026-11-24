@@ -27,9 +27,9 @@ List the package in your game's `package.json`, beside the engine:
 }
 ```
 
-Then add `wardrobe()` to the game's `plugins`, put the slots in your content, and give the things that can be worn the `wearable` trait. [Adding one](/docs/plugins#adding-one) has the details.
+Then add `wardrobe()` to the game's `plugins`, put the slots in your content, and give the things that can be worn the `wearable` trait. [Adding one](/docs/reference/plugins#adding-one) has the details.
 
-It needs no other plugin. Things can come from the [shop](/docs/plugins/shop), or from any effect that gives them, and be given away with the [inventory](/docs/plugins/inventory); the wardrobe only reads what you hold.
+It needs no other plugin. Things can come from the [shop](/docs/reference/plugins/shop), or from any effect that gives them, and be given away with the [inventory](/docs/reference/plugins/inventory); the wardrobe only reads what you hold.
 
 ## wardrobe
 
@@ -80,7 +80,7 @@ const wardrobe: {
 type Wearable = { slot: string }
 ```
 
-The slot a thing is worn in. It's a [trait](/docs/reference/entities#traits), so you can write it on a kind (every uniform goes on the body), on an entity, or in content's `traits` table, where a mod can move a piece to another slot. `wearable` writes it, to spread into `traits` beside others, such as the shop's [`sellable`](/docs/plugins/shop#the-sellable-trait). A thing made in play [`like`](/docs/reference/effects#create) a wearable one is wearable too.
+The slot a thing is worn in. It's a [trait](/docs/reference/entities#traits), so you can write it on a kind (every uniform goes on the body), on an entity, or in content's `traits` table, where a mod can move a piece to another slot. `wearable` writes it, to spread into `traits` beside others, such as the shop's [`sellable`](/docs/reference/plugins/shop#the-sellable-trait). A thing made in play [`like`](/docs/reference/effects#create) a wearable one is wearable too.
 
 ### A place to change
 
@@ -116,7 +116,7 @@ places.location({
 
 The button is among the room's actions, with the id `open` and the command `{ type: 'action', id: 'wardrobe/open' }`. It's labelled with the `wardrobe/open` string (`Wardrobe`), or the trait's own `label`, such as `wardrobe.closet({ label: 'Coat rack' })`. Its effect is `{ panel: 'wardrobe' }`, which you can also write on any choice or action to open the same panel from anywhere.
 
-Where the player is comes from the [places](/docs/plugins/places) plugin, so a closet needs it. In a game without places the trait does nothing.
+Where the player is comes from the [places](/docs/reference/plugins/places) plugin, so a closet needs it. In a game without places the trait does nothing.
 
 ### WardrobeSlot
 
@@ -134,7 +134,7 @@ Slots are content. List them in your content's `data.wardrobe.slots`, in the ord
 
 ## A worked example
 
-A cut-down Small Town. The player starts in the raincoat, which people in the café notice. A scarf is for sale on the high street, and the bench by the river is too cold without one. The map comes from the [places](/docs/plugins/places) plugin, and there's no calendar, so the café never closes.
+A cut-down Small Town. The player starts in the raincoat, which people in the café notice. A scarf is for sale on the high street, and the bench by the river is too cold without one. The map comes from the [places](/docs/reference/plugins/places) plugin, and there's no calendar, so the café never closes.
 
 ```ts
 import { give, need, type Content } from '@ifloom/engine'
@@ -319,11 +319,11 @@ What you wear is also in the engine's [`view.held`](/docs/reference/view#held), 
 
 `@ifloom/plugin-wardrobe/react` draws what the player wears, for a game drawn with [`@ifloom/react`](/docs/react). List `wardrobeUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the `wardrobe` panel draws the [`WardrobeCard`](#wardrobecard), in a dialog titled `ui.wardrobe` (`Wearing`). A [closet](#a-place-to-change) place's button opens it, and so does any `{ panel: 'wardrobe' }`. It adds nothing to the side column. To keep what the player wears in view there, place [`WardrobeSection`](#wardrobesection) in your layout's `Sidebar`. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-::include[../../../../snippets/plain/wardrobe.ts]{meta='tab="Plain JS" tab-group="framework"'}
+::include[../../../../../snippets/plain/wardrobe.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-::include[../../../../snippets/react/mount-wardrobe.tsx]{meta='tab="React" tab-group="framework"'}
+::include[../../../../../snippets/react/mount-wardrobe.tsx]{meta='tab="React" tab-group="framework"'}
 
-::include[../../../../snippets/vue/Wardrobe.vue]{meta='tab="Vue" tab-group="framework"'}
+::include[../../../../../snippets/vue/Wardrobe.vue]{meta='tab="Vue" tab-group="framework"'}
 
 The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.wardrobe`, or from [`useWardrobe`](#usewardrobe) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
@@ -352,7 +352,7 @@ function WardrobeSection(): JSX.Element
 
 A folding [`Section`](/docs/react/components#section) with the id `wardrobe`, titled `ui.wardrobe`, holding the `WardrobeCard`. `wardrobeUi` doesn't place it, so put it in your layout's `Sidebar` to show what the player wears all the time:
 
-::include[../../../../snippets/react/wardrobe-sidebar.tsx]
+::include[../../../../../snippets/react/wardrobe-sidebar.tsx]
 
 For one that shows only in some rooms, draw your own `Section` with `when` round a `WardrobeCard`, as the showcase does.
 
@@ -362,7 +362,7 @@ For one that shows only in some rooms, draw your own `Section` with `when` round
 function WardrobeCard(props: { className?: string; title?: string | false }): JSX.Element | null
 ```
 
-The [wardrobe plugin](/docs/plugins/wardrobe)'s view. Each slot (`data-slot-id`, with `data-worn` holding the reference of what's in it) shows its label and what's in it, or `ui.nothingOn`. When something is in a slot, it has the slot's **Take off** button. Each spare wearable thing for that slot gets its **Wear …** button. Both are the view's, with its words and its refusals.
+The [wardrobe plugin](/docs/reference/plugins/wardrobe)'s view. Each slot (`data-slot-id`, with `data-worn` holding the reference of what's in it) shows its label and what's in it, or `ui.nothingOn`. When something is in a slot, it has the slot's **Take off** button. Each spare wearable thing for that slot gets its **Wear …** button. Both are the view's, with its words and its refusals.
 
 A button that can't be used now is greyed out, with [`whyNot`](/docs/reference/actions#whynot)'s reason in its `title`. The heading is `ui.wardrobe`, or `title`, and `false` leaves it out. It draws nothing in a game without the plugin.
 
@@ -385,7 +385,7 @@ type WardrobeSlotControls = WardrobeView['slots'][number] & {
 }
 ```
 
-The [wardrobe](/docs/plugins/wardrobe) plugin's view, with a button for each thing the player can do, or `null` in a game without the plugin. Each slot has the view's `takeOff` (`null` when it's empty), and `wear`, the view's `wear` button of each spare wearable thing for that slot. Each is greyed out with the engine's reason when it can't be done now. `wardrobe.wear(entity)` (a reference, `'clothing:scarf'`) and `wardrobe.takeOff(slot)` send the commands directly. [`WardrobeCard`](#wardrobecard) is drawn from it.
+The [wardrobe](/docs/reference/plugins/wardrobe) plugin's view, with a button for each thing the player can do, or `null` in a game without the plugin. Each slot has the view's `takeOff` (`null` when it's empty), and `wear`, the view's `wear` button of each spare wearable thing for that slot. Each is greyed out with the engine's reason when it can't be done now. `wardrobe.wear(entity)` (a reference, `'clothing:scarf'`) and `wardrobe.takeOff(slot)` send the commands directly. [`WardrobeCard`](#wardrobecard) is drawn from it.
 
 ## The state
 

@@ -23,7 +23,7 @@ List the package in your game's `package.json`, beside the engine:
 }
 ```
 
-Then add `statuses()` to the game's `plugins`. [Adding one](/docs/plugins#adding-one) has the details. The plugin works on its own and cooperates with no other.
+Then add `statuses()` to the game's `plugins`. [Adding one](/docs/reference/plugins#adding-one) has the details. The plugin works on its own and cooperates with no other.
 
 ## statuses
 
@@ -165,7 +165,7 @@ const medicine = statuses.remove('cold')        // gone, nothing else happens
 const recovered = statuses.remove('cold', true) // gone, and "You feel a bit better."
 ```
 
-Applying or removing a status the game doesn't have does nothing. Both work in any effect list, a thing's use in the [inventory](/docs/plugins/inventory) included. So does a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does). Written out, `statuses.apply('tired')` is `{ 'statuses/apply': { status: 'tired' } }`.
+Applying or removing a status the game doesn't have does nothing. Both work in any effect list, a thing's use in the [inventory](/docs/reference/plugins/inventory) included. So does a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does). Written out, `statuses.apply('tired')` is `{ 'statuses/apply': { status: 'tired' } }`.
 
 ## Commands
 
@@ -225,11 +225,11 @@ The stats in `view.stats` already include the modifiers, so a UI shows the stat 
 
 `@ifloom/plugin-statuses/react` draws the statuses in play, for a game drawn with [`@ifloom/react`](/docs/react). List `statusesUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and the [`StatusList`](#statuslist) goes under the stats in the side column, and the `statuses` panel draws it too. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-::include[../../../../snippets/plain/statuses.ts]{meta='tab="Plain JS" tab-group="framework"'}
+::include[../../../../../snippets/plain/statuses.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-::include[../../../../snippets/react/mount-statuses.tsx]{meta='tab="React" tab-group="framework"'}
+::include[../../../../../snippets/react/mount-statuses.tsx]{meta='tab="React" tab-group="framework"'}
 
-::include[../../../../snippets/vue/Statuses.vue]{meta='tab="Vue" tab-group="framework"'}
+::include[../../../../../snippets/vue/Statuses.vue]{meta='tab="Vue" tab-group="framework"'}
 
 The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.statuses`, or from [`useStatuses`](#usestatuses) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
@@ -258,7 +258,7 @@ Its words are in `STATUSES_WORDS`. A game rewords any of them with `ui.<key>` in
 function StatusList(props: { className?: string; title?: string | false }): JSX.Element | null
 ```
 
-The [statuses](/docs/plugins/statuses) active now, from [`StatusesView`](/docs/plugins/statuses#the-view). Each status (`data-status`) shows its name, its stacks when there's more than one (`ui.statusStacks`, `×2`), the turns left on its longest stack (`ui.turnsLeft`, or `ui.turnLeft` for the last one), its summary, and what it does to the stats, such as `+10 Energy` (`ui.modifierAdd` and `ui.modifierMultiply`, with the stat's label). The heading is `ui.statuses`, or `title`, and `false` leaves it out.
+The [statuses](/docs/reference/plugins/statuses) active now, from [`StatusesView`](/docs/reference/plugins/statuses#the-view). Each status (`data-status`) shows its name, its stacks when there's more than one (`ui.statusStacks`, `×2`), the turns left on its longest stack (`ui.turnsLeft`, or `ui.turnLeft` for the last one), its summary, and what it does to the stats, such as `+10 Energy` (`ui.modifierAdd` and `ui.modifierMultiply`, with the stat's label). The heading is `ui.statuses`, or `title`, and `false` leaves it out.
 
 It draws nothing while no status is active, so the side column has no empty box most of the time, and nothing in a game without the plugin.
 
@@ -270,9 +270,9 @@ Replaceable as `StatusList` in [`components`](/docs/react/components#components)
 function useStatuses(): StatusesView | null
 ```
 
-The statuses plugin's view, `active`, each an [`ActiveStatus`](/docs/plugins/statuses#statusesview) with its `name`, `description`, `turnsLeft`, `stacks` and `modifiers`. `null` in a game without the plugin. [`StatusList`](#statuslist) is drawn from it.
+The statuses plugin's view, `active`, each an [`ActiveStatus`](/docs/reference/plugins/statuses#statusesview) with its `name`, `description`, `turnsLeft`, `stacks` and `modifiers`. `null` in a game without the plugin. [`StatusList`](#statuslist) is drawn from it.
 
-::include[../../../../snippets/react/use-statuses.tsx]
+::include[../../../../../snippets/react/use-statuses.tsx]
 
 ## The state
 
@@ -331,7 +331,7 @@ A call that names a status the game doesn't have gives `unknown status "…"` wh
 - **A cost is checked against the changed value but paid from the kept one.** With 5 energy kept and a boost of 10, something that costs 12 is allowed, and the kept value goes to 0.
 - **Values can have fractions.** `multiply` doesn't round, so `energy × 0.8` can read as 39.2. Give the stat a [`round`](/docs/reference/stats#rounding), as Small Town's energy has, or round in your UI.
 - **Only the player's stats.** An entity's stats are never changed by a status.
-- **Turns are the game's.** With the [calendar](/docs/plugins/calendar#what-a-turn-is)'s default, a turn is a day, so `turns: 2` lasts until the player has slept twice.
+- **Turns are the game's.** With the [calendar](/docs/reference/plugins/calendar#what-a-turn-is)'s default, a turn is a day, so `turns: 2` lasts until the player has slept twice.
 
 ## See it in an example
 

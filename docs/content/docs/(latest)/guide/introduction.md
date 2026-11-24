@@ -8,7 +8,7 @@ IFLoom is a TypeScript engine for interactive fiction. You can write a linear no
 
 IFLoom is for people who write games in TypeScript and want the bookkeeping handled for them. The core keeps the turn, scenes and choices, stats, entities and what the player holds, a [kv store](/docs/guide/concepts#the-kv-store) for named values such as a name or a count, storylines, triggers, notices, inputs, and saves that survive a game update. It also works out what the player can do right now, and why not.
 
-Time of day, places and people aren't in the core. If your game needs them, the [calendar](/docs/plugins/calendar), [places](/docs/plugins/places) and [cast](/docs/plugins/cast) plugins add them. A linear novel needs none of them.
+Time of day, places and people aren't in the core. If your game needs them, the [calendar](/docs/reference/plugins/calendar), [places](/docs/reference/plugins/places) and [cast](/docs/reference/plugins/cast) plugins add them. A linear novel needs none of them.
 
 IFLoom is a library with no UI in its engine, and [How the pieces fit](/docs/guide/how-it-fits) shows how the engine, plugins, a UI of your choice and the build tools go together.
 
@@ -32,7 +32,7 @@ Start with [Installation](/docs/guide/installation), then write [your first stor
 - **Guide.** Tutorials to read in order. After the first story they split into an Engine track (running a game, the view, saves, a game with plugins, a UI from scratch, testing) and a UI track (choosing between the React UI and your own, in any framework).
 - **Recipes.** How to build one piece, such as a [title screen](/docs/recipes/title-screen) or a HUD, and how to build with [Next](/docs/recipes/next), webpack or esbuild.
 - **Reference.** Everything the engine exports, starting at [the game](/docs/reference/game).
-- **Plugins.** The [first-party plugins](/docs/plugins), such as the calendar, places and the cast.
+- **Plugins.** The [first-party plugins](/docs/reference/plugins), such as the calendar, places and the cast.
 - **Browser.** [`@ifloom/browser`](/docs/browser) and the [audio player](/docs/browser/audio-player), helpers for any UI.
 - **React UI.** The ready-made [React UI](/docs/react) and how to make it your own.
 - **CLI.** The [`ifloom` command](/docs/cli) and its Vite preset.

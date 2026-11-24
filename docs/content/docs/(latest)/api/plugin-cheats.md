@@ -11,7 +11,7 @@ Generated from the source of `@ifloom/plugin-cheats` and `@ifloom/plugin-cheats/
 
 ### CheatDef
 
-Type. Explained in [Cheats](/docs/plugins/cheats#cheatdef).
+Type. Explained in [Cheats](/docs/reference/plugins/cheats#cheatdef).
 
 A cheat the game declares in `data.cheats.cheats`. Using it runs its effects at once, in any scene and through any
 lock, and ends no turn unless its effects do.
@@ -41,7 +41,7 @@ type CheatDef = {
 
 ### cheatOf
 
-Function. Explained in [Cheats](/docs/plugins/cheats#cheatsof-and-cheatof).
+Function. Explained in [Cheats](/docs/reference/plugins/cheats#cheatsof-and-cheatof).
 
 Returns the game's cheat with the id `id`, or undefined when there is none.
 
@@ -54,7 +54,7 @@ Uses: [`Game`](/docs/api/engine#game), [`CheatDef`](#cheatdef).
 
 ### cheats
 
-Function. Explained in [Cheats](/docs/plugins/cheats#cheats).
+Function. Explained in [Cheats](/docs/reference/plugins/cheats#cheats).
 
 Returns the cheats plugin, for the game's `plugins`. It cooperates with unlocks, whose `unlocks/has` condition a
 supporter-only cheat names in `blocked`.
@@ -75,7 +75,7 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`CheatsState`](
 
 ### cheatsOf
 
-Function. Explained in [Cheats](/docs/plugins/cheats#cheatsof-and-cheatof).
+Function. Explained in [Cheats](/docs/reference/plugins/cheats#cheatsof-and-cheatof).
 
 Returns the game's cheats, `data.cheats.cheats` from its content and packs, in declared order.
 
@@ -88,7 +88,7 @@ Uses: [`Game`](/docs/api/engine#game), [`CheatDef`](#cheatdef).
 
 ### CheatsState
 
-Type. Explained in [Cheats](/docs/plugins/cheats#cheatsstate).
+Type. Explained in [Cheats](/docs/reference/plugins/cheats#cheatsstate).
 
 The log of cheat uses a save keeps. Definitions are read from content, so only the uses are kept.
 
@@ -105,7 +105,7 @@ type CheatsState = {
 
 ### CheatsView
 
-Type. Explained in [Cheats](/docs/plugins/cheats#cheatsview).
+Type. Explained in [Cheats](/docs/reference/plugins/cheats#cheatsview).
 
 The cheats as the player sees them, in `view.plugins.cheats`.
 
@@ -124,7 +124,7 @@ type CheatsView = {
 
 ### CheatUse
 
-Type. Explained in [Cheats](/docs/plugins/cheats#cheatuse).
+Type. Explained in [Cheats](/docs/reference/plugins/cheats#cheatuse).
 
 A use of a cheat, one entry of `CheatsState.used`.
 
@@ -143,7 +143,7 @@ type CheatUse = {
 
 ### CheatView
 
-Type. Explained in [Cheats](/docs/plugins/cheats#cheatview).
+Type. Explained in [Cheats](/docs/reference/plugins/cheats#cheatview).
 
 A cheat as the player sees it, in `view.plugins.cheats.cheats`.
 
@@ -197,7 +197,7 @@ type CheatGroup = {
 
 ### CheatPanel
 
-Const. Explained in [Cheats](/docs/plugins/cheats#cheatpanel).
+Const. Explained in [Cheats](/docs/reference/plugins/cheats#cheatpanel).
 
 Renders the cheats from `view.plugins.cheats` under their groups' headings, each with its button, its description
 and its use count. A preset styles its `cheats`, `cheats-group`, `cheats-group-title`, `cheat`, `cheat-text` and
@@ -234,7 +234,7 @@ const CHEATS_WORDS: {
 
 ### CheatsButton
 
-Const. Explained in [Cheats](/docs/plugins/cheats#cheatsbutton).
+Const. Explained in [Cheats](/docs/reference/plugins/cheats#cheatsbutton).
 
 Renders the button that opens the `CheatPanel` in a dialog. A preset styles its `cheats-button` part.
 
@@ -270,7 +270,7 @@ type CheatsControls = {
 
 ### cheatsUi
 
-Const. Explained in [Cheats](/docs/plugins/cheats#cheatsui).
+Const. Explained in [Cheats](/docs/reference/plugins/cheats#cheatsui).
 
 The cheats plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It adds the `CheatsButton` to the
 sidebar, which opens the `CheatPanel`, and the plugin's words.
@@ -284,7 +284,7 @@ Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
 
 ### useCheats
 
-Function. Explained in [Cheats](/docs/plugins/cheats#usecheats).
+Function. Explained in [Cheats](/docs/reference/plugins/cheats#usecheats).
 
 Returns the cheats plugin's view, its groups and its command from the running game, or null in a game without the
 plugin. It re-renders when the view changes. `CheatPanel` renders from it.

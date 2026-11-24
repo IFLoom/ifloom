@@ -12,7 +12,7 @@ Generated from the source of `@ifloom/plugin-cast` and `@ifloom/plugin-cast/reac
 
 ### AWAY
 
-Const. Explained in [Cast](/docs/plugins/cast#away).
+Const. Explained in [Cast](/docs/reference/plugins/cast#away).
 
 The location id a person is at when they are at no location, `'away'`. A person without `home` is here when no schedule entry holds.
 
@@ -23,7 +23,7 @@ const AWAY: 'away'
 
 ### cast
 
-Function. Explained in [Cast](/docs/plugins/cast#cast).
+Function. Explained in [Cast](/docs/reference/plugins/cast#cast).
 
 Returns the cast plugin, for the game's `plugins`. It cooperates with places, which says where the player is, and
 with the calendar, which a schedule can ask.
@@ -49,7 +49,7 @@ Uses: [`CastOptions`](#castoptions), [`DefinedPlugin`](/docs/api/engine-plugin#d
 
 ### CastOptions
 
-Type. Explained in [Cast](/docs/plugins/cast#castoptions).
+Type. Explained in [Cast](/docs/reference/plugins/cast#castoptions).
 
 Settings for `cast()`. Every field is optional and has the default its comment gives.
 
@@ -66,7 +66,7 @@ type CastOptions = {
 
 ### CastView
 
-Type. Explained in [Cast](/docs/plugins/cast#castview).
+Type. Explained in [Cast](/docs/reference/plugins/cast#castview).
 
 The cast as the player sees it, in `view.plugins.cast`.
 
@@ -85,7 +85,7 @@ type CastView = {
 
 ### peopleOf
 
-Function. Explained in [Cast](/docs/plugins/cast#helpers).
+Function. Explained in [Cast](/docs/reference/plugins/cast#peopleof).
 
 Returns the entity references of every person in the game now, the entities carrying the `cast/person` trait.
 Content's people come first in declared order, then those made in play.
@@ -99,7 +99,7 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 ### Person
 
-Type. Explained in [Cast](/docs/plugins/cast#person-1).
+Type. Explained in [Cast](/docs/reference/plugins/cast#person).
 
 The data the `cast/person` trait holds, which makes an entity a person the player can meet, find and talk to.
 `cast.person({ ... })` writes it beside the entity's own fields.
@@ -133,7 +133,7 @@ type Person = {
 
 ### PersonDef
 
-Type. Explained in [Cast](/docs/plugins/cast#persondef).
+Type. Explained in [Cast](/docs/reference/plugins/cast#persondef).
 
 A person the game declares in `entities` with `cast.person({ ... })`. It holds an entity's fields and the
 `cast/person` trait's side by side.
@@ -175,7 +175,7 @@ Plugins add fields of their own to it, which their pages list.
 
 ### personOf
 
-Function. Explained in [Cast](/docs/plugins/cast#helpers).
+Function. Explained in [Cast](/docs/reference/plugins/cast#personof).
 
 Returns the `cast/person` trait of the entity `ref`, or undefined when it isn't a person. It reads through an entity
 made in play `like` another.
@@ -189,7 +189,7 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 ### PersonView
 
-Type. Explained in [Cast](/docs/plugins/cast#personview).
+Type. Explained in [Cast](/docs/reference/plugins/cast#personview).
 
 A person as the player sees them, in `view.plugins.cast`. Names and descriptions have their prose tokens filled in.
 
@@ -228,7 +228,7 @@ type PersonView = {
 
 ### TalkOption
 
-Type. Explained in [Cast](/docs/plugins/cast#talkoption).
+Type. Explained in [Cast](/docs/reference/plugins/cast#talkoption).
 
 A way a conversation with a person can open, one entry of a person's `talk`. The first entry whose `when` holds opens.
 
@@ -255,7 +255,7 @@ type TalkOption = {
 
 ### CAST_WORDS
 
-Const.
+Const. Explained in [Cast](/docs/reference/plugins/cast#cast_words).
 
 The cast plugin's words in English, keyed by name. A game rewords any of them with `ui.<key>` in its strings.
 
@@ -266,7 +266,7 @@ const CAST_WORDS: { readonly people: 'People'; }
 
 ### castUi
 
-Const. Explained in [Cast](/docs/plugins/cast#castui).
+Const. Explained in [Cast](/docs/reference/plugins/cast#castui).
 
 The cast plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It adds `PeopleSection` to the sidebar,
 `PeopleHere` to the story after the room's actions, the `people` panel and the plugin's words.
@@ -280,7 +280,7 @@ Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
 
 ### PeopleHere
 
-Const. Explained in [Cast](/docs/plugins/cast#peoplehere).
+Const. Explained in [Cast](/docs/reference/plugins/cast#peoplehere).
 
 Renders the people at the player's location from `view.plugins.cast.present`, each with their actions. A preset
 styles its `people`, `person`, `person-portrait`, `person-name`, `person-desc` and `person-actions` parts.
@@ -294,7 +294,7 @@ const PeopleHere: ComponentType<{ className?: string; }>
 
 ### PeopleSection
 
-Component. Explained in [Cast](/docs/plugins/cast#peoplesection).
+Component. Explained in [Cast](/docs/reference/plugins/cast#peoplesection).
 
 Renders the default layout's People section, a button that opens `Relationships` in a dialog. Its title is the `people` word.
 
@@ -305,7 +305,7 @@ function PeopleSection(): JSX.Element
 
 ### Relationships
 
-Const. Explained in [Cast](/docs/plugins/cast#relationships).
+Const. Explained in [Cast](/docs/reference/plugins/cast#relationships).
 
 Renders everyone the player has met from `view.plugins.cast.people`, each with the stats the view lists on their
 entity, such as friendship. A preset styles its `relationships`, `relationship`, `relationship-header` and
@@ -320,7 +320,7 @@ const Relationships: ComponentType<{ className?: string; }>
 
 ### usePeople
 
-Function. Explained in [Cast](/docs/plugins/cast#usepeople).
+Function. Explained in [Cast](/docs/reference/plugins/cast#usepeople).
 
 Returns the cast plugin's view from the running game, or null in a game without the plugin. It re-renders when the
 view changes.

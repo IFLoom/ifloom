@@ -11,7 +11,7 @@ Generated from the source of `@ifloom/plugin-quests` and `@ifloom/plugin-quests/
 
 ### advance
 
-Function. Explained in [Quests](/docs/plugins/quests#advance).
+Function. Explained in [Quests](/docs/reference/plugins/quests#advance).
 
 Returns the quests record brought up to date with the game state. It never takes progress back.
 
@@ -24,7 +24,7 @@ Uses: [`QuestsState`](#questsstate), [`GameState`](/docs/api/engine#gamestate), 
 
 ### QuestDef
 
-Type. Explained in [Quests](/docs/plugins/quests#questdef).
+Type. Explained in [Quests](/docs/reference/plugins/quests#questdef).
 
 A quest the game declares in `data.quests.quests`. It needs at least one stage.
 
@@ -53,7 +53,7 @@ type QuestDef = {
 
 ### QuestEntry
 
-Type. Explained in [Quests](/docs/plugins/quests#questentry).
+Type. Explained in [Quests](/docs/reference/plugins/quests#questentry).
 
 A started quest as the player sees it, in `view.plugins.quests.active` and `done`.
 
@@ -92,7 +92,7 @@ type QuestEntry = {
 
 ### questOf
 
-Function. Explained in [Quests](/docs/plugins/quests#questsof-and-questof).
+Function. Explained in [Quests](/docs/reference/plugins/quests#questsof-and-questof).
 
 Returns the quest with this id, or undefined when the game has none.
 
@@ -105,7 +105,7 @@ Uses: [`Game`](/docs/api/engine#game), [`QuestDef`](#questdef).
 
 ### quests
 
-Function. Explained in [Quests](/docs/plugins/quests#quests).
+Function. Explained in [Quests](/docs/reference/plugins/quests#quests).
 
 The quests plugin's factory, with its helpers as properties. `quests()` returns the plugin for the game's
 `plugins`, and content calls helpers such as `quests.done('bread')`.
@@ -128,7 +128,7 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`QuestsState`](
 
 ### questsOf
 
-Function. Explained in [Quests](/docs/plugins/quests#questsof-and-questof).
+Function. Explained in [Quests](/docs/reference/plugins/quests#questsof-and-questof).
 
 Returns the game's quests, from `data.quests.quests` in its content and packs.
 
@@ -141,7 +141,7 @@ Uses: [`Game`](/docs/api/engine#game), [`QuestDef`](#questdef).
 
 ### QuestsState
 
-Type. Explained in [Quests](/docs/plugins/quests#questsstate).
+Type. Explained in [Quests](/docs/reference/plugins/quests#questsstate).
 
 The quests a save keeps for the player, their progress, tracking and news. Quests themselves are read from content.
 
@@ -166,7 +166,7 @@ type QuestsState = {
 
 ### QuestStage
 
-Type. Explained in [Quests](/docs/plugins/quests#queststage).
+Type. Explained in [Quests](/docs/reference/plugins/quests#queststage).
 
 A stage the game declares in a `QuestDef`'s `stages`. The stage is done the first time its `done` holds after the stages before it.
 
@@ -187,7 +187,7 @@ type QuestStage = {
 
 ### QuestsView
 
-Type. Explained in [Quests](/docs/plugins/quests#questsview).
+Type. Explained in [Quests](/docs/reference/plugins/quests#questsview).
 
 The quests as the player sees them, in `view.plugins.quests`.
 
@@ -219,7 +219,7 @@ type QuestsView = {
 
 ### QuestLog
 
-Const. Explained in [Quests](/docs/plugins/quests#questlog).
+Const. Explained in [Quests](/docs/reference/plugins/quests#questlog).
 
 Renders the quest log from `view.plugins.quests`, the active quests with their hints and track buttons, then the
 finished ones. `title` sets the heading, such as "Journal", and `title={false}` leaves it off.
@@ -282,7 +282,7 @@ type QuestsControls = {
 
 ### QuestsSection
 
-Component. Explained in [Quests](/docs/plugins/quests#questssection).
+Component. Explained in [Quests](/docs/reference/plugins/quests#questssection).
 
 Renders the default layout's Quests section, a button with the count of news from `view.plugins.quests.updates` that opens the `QuestLog` in a dialog.
 
@@ -293,7 +293,7 @@ function QuestsSection(): JSX.Element
 
 ### questsUi
 
-Const. Explained in [Quests](/docs/plugins/quests#questsui).
+Const. Explained in [Quests](/docs/reference/plugins/quests#questsui).
 
 The quests plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It adds the `QuestsSection` to the
 sidebar, renders the `quests` panel as a `QuestLog`, and adds the plugin's words.
@@ -307,7 +307,7 @@ Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
 
 ### useQuests
 
-Function. Explained in [Quests](/docs/plugins/quests#usequests).
+Function. Explained in [Quests](/docs/reference/plugins/quests#usequests).
 
 Returns the quests plugin's view and track command from the running game, or null in a game without the plugin. It re-renders when the view changes.
 

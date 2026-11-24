@@ -23,7 +23,7 @@ List the package in your game's `package.json`, beside the engine:
 }
 ```
 
-Then add `generators()` to the game's `plugins`. [Adding one](/docs/plugins#adding-one) has the details. The plugin works on its own, cooperates with no other, and keeps no state of its own. What it makes are ordinary entities in the game state.
+Then add `generators()` to the game's `plugins`. [Adding one](/docs/reference/plugins#adding-one) has the details. The plugin works on its own, cooperates with no other, and keeps no state of its own. What it makes are ordinary entities in the game state.
 
 ## generators
 
@@ -120,7 +120,7 @@ A template has the fields of the engine's [`create`](/docs/reference/effects#cre
 | `description` | Where its description comes from, drawn as the name is. | The `like`'s, or none. |
 | `image` | Where its picture comes from, through [`artSrc`](/docs/reference/prose#artsrc): a path, or `{ pool: 'faces' }` to pick one. | The `like`'s, or none. |
 | `tags` | Words it has, after its kind's and its `like`'s. | None of its own. |
-| `traits` | [Trait](/docs/reference/entities#traits) data, by trait id, laid over its `like`'s or its kind's: `{ 'cast/person': { home: 'park', talk: 'visitor.hi' } }` makes someone the [cast](/docs/plugins/cast) can find. | None of its own. |
+| `traits` | [Trait](/docs/reference/entities#traits) data, by trait id, laid over its `like`'s or its kind's: `{ 'cast/person': { home: 'park', talk: 'visitor.hi' } }` makes someone the [cast](/docs/reference/plugins/cast) can find. | None of its own. |
 | `at` | Who [holds](/docs/reference/entities#holding-things) it once made: a holder, such as `'player'` or `'location:park'`, or how many each holds. | Nobody. |
 | `stats` | Where its stats come from, by id. Each must be a stat the game declares for the kind. A drawn value that's what it would read anyway (its `like`'s, or else the stat's `start`) isn't kept, so the save holds only what differs. | Its `like`'s, else each stat's `start`, as a `create` effect's. |
 | `kv` | Where the keys of its kv store come from, by name. | Its `like`'s, or none. |
@@ -160,7 +160,7 @@ type FieldDef = KvValue | { pool: string } | { between: [number, number] } | { j
 |---|---|---|
 | `{ 'generators/generate': { template, count? } }` | `generators.generate(template, count?)` | Makes `count` new entities (1 if left out) from the template, one after another. |
 
-Each is made with the engine's [`create`](/docs/reference/effects#create) effect, so it gets the next free id of its kind (`visitor:#1`, `visitor:#2` and so on), reads what it isn't given from its `like` or its kind, and goes to the template's `at`. It works in any effect list, a thing's use in the [inventory](/docs/plugins/inventory) included. In a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), which lists plain effects, write the long form, `{ 'generators/generate': { template, count } }`.
+Each is made with the engine's [`create`](/docs/reference/effects#create) effect, so it gets the next free id of its kind (`visitor:#1`, `visitor:#2` and so on), reads what it isn't given from its `like` or its kind, and goes to the template's `at`. It works in any effect list, a thing's use in the [inventory](/docs/reference/plugins/inventory) included. In a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does), which lists plain effects, write the long form, `{ 'generators/generate': { template, count } }`.
 
 A template the game doesn't have makes nothing.
 

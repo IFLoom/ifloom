@@ -11,7 +11,7 @@ Generated from the source of `@ifloom/plugin-calendar` and `@ifloom/plugin-calen
 
 ### calendar
 
-Function. Explained in [Calendar](/docs/plugins/calendar#calendar).
+Function. Explained in [Calendar](/docs/reference/plugins/calendar#calendar).
 
 Returns the calendar plugin, for the game's `plugins`. List it before other plugins, so their hooks see the new day
 when a turn ends.
@@ -36,7 +36,7 @@ Uses: [`CalendarOptions`](#calendaroptions), [`DefinedPlugin`](/docs/api/engine-
 
 ### CalendarOptions
 
-Type. Explained in [Calendar](/docs/plugins/calendar#calendaroptions).
+Type. Explained in [Calendar](/docs/reference/plugins/calendar#calendaroptions).
 
 Settings for `calendar()`. Every field is optional and has the default its comment gives.
 
@@ -65,7 +65,7 @@ type CalendarOptions = {
 
 ### CalendarState
 
-Type. Explained in [Calendar](/docs/plugins/calendar#calendarstate).
+Type. Explained in [Calendar](/docs/reference/plugins/calendar#calendarstate).
 
 The clock a save keeps for the calendar. Periods and the week are read from the options, so only the day and period are kept.
 
@@ -84,7 +84,7 @@ type CalendarState = {
 
 ### CalendarView
 
-Type. Explained in [Calendar](/docs/plugins/calendar#calendarview).
+Type. Explained in [Calendar](/docs/reference/plugins/calendar#calendarview).
 
 The calendar as the player sees it, in `view.plugins.calendar`. Its `label` is the line a UI's clock shows.
 
@@ -113,7 +113,7 @@ type CalendarView = {
 
 ### PeriodDef
 
-Type. Explained in [Calendar](/docs/plugins/calendar#perioddef).
+Type. Explained in [Calendar](/docs/reference/plugins/calendar#perioddef).
 
 A period of the day, one entry of `CalendarOptions.periods`. A bare string in `periods` is a period with only an id.
 
@@ -137,7 +137,7 @@ type PeriodDef = {
 
 ### CalendarClock
 
-Const. Explained in [Calendar](/docs/plugins/calendar#calendarclock).
+Const. Explained in [Calendar](/docs/reference/plugins/calendar#calendarclock).
 
 Renders the game's time, such as "Day 3 · Wednesday morning", from `view.when`. A preset styles its `clock` part.
 
@@ -151,7 +151,7 @@ const CalendarClock: ComponentType<{ className?: string; }>
 
 ### calendarUi
 
-Const. Explained in [Calendar](/docs/plugins/calendar#calendarui).
+Const. Explained in [Calendar](/docs/reference/plugins/calendar#calendarui).
 
 The calendar plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It replaces the core `Clock` with
 `CalendarClock`, in the sidebar and in the top bar on a phone.
@@ -165,7 +165,7 @@ Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
 
 ### useCalendar
 
-Function. Explained in [Calendar](/docs/plugins/calendar#usecalendar).
+Function. Explained in [Calendar](/docs/reference/plugins/calendar#usecalendar).
 
 Returns the calendar plugin's view from the running game, or null in a game without the plugin. It re-renders when
 the view changes.

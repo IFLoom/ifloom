@@ -88,7 +88,7 @@ describe('the community plugins list', () => {
 
   it('is on the community page', () => {
     const page = Object.entries(PAGES).find(([path]) => path.includes('/(latest)/'))?.[1] ?? ''
-    expect(page).toMatch(/^::community-plugins\[\.\.\/\.\.\/\.\.\/community-plugins\.json\]$/m)
+    expect(page).toMatch(/^::community-plugins\[\.\.\/\.\.\/\.\.\/\.\.\/community-plugins\.json\]$/m)
   })
 
   // The list starts empty, so the checks are tried on entries made up here.

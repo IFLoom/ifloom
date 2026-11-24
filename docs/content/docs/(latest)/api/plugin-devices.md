@@ -11,7 +11,7 @@ Generated from the source of `@ifloom/plugin-devices` and `@ifloom/plugin-device
 
 ### AppDef
 
-Type. Explained in [Devices](/docs/plugins/devices#appdef).
+Type. Explained in [Devices](/docs/reference/plugins/devices#appdef).
 
 An app the game declares in `data.devices.apps`. Opening it changes no location and passes no time.
 
@@ -42,7 +42,7 @@ type AppDef = {
 
 ### appsOf
 
-Function. Explained in [Devices](/docs/plugins/devices#devicesof-and-appsof).
+Function. Explained in [Devices](/docs/reference/plugins/devices#devicesof-and-appsof).
 
 Returns the game's apps on every device, `data.devices.apps` from its content and packs, in declared order.
 
@@ -55,7 +55,7 @@ Uses: [`Game`](/docs/api/engine#game), [`AppDef`](#appdef).
 
 ### AppView
 
-Type. Explained in [Devices](/docs/plugins/devices#appview).
+Type. Explained in [Devices](/docs/reference/plugins/devices#appview).
 
 An app as the player sees it, in a `DeviceView`'s `apps` and `open`.
 
@@ -84,7 +84,7 @@ type AppView = {
 
 ### DeviceDef
 
-Type. Explained in [Devices](/docs/plugins/devices#devicedef).
+Type. Explained in [Devices](/docs/reference/plugins/devices#devicedef).
 
 A device the game declares in `data.devices.devices`, such as a phone or a laptop. Its apps name it in their `on`.
 
@@ -109,7 +109,7 @@ type DeviceDef = {
 
 ### devices
 
-Function. Explained in [Devices](/docs/plugins/devices#devices).
+Function. Explained in [Devices](/docs/reference/plugins/devices#devices).
 
 Returns the devices plugin, for the game's `plugins`. It cooperates with the cast, whose people a `contacts` section
 lists.
@@ -133,7 +133,7 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`DevicesView`](
 
 ### devicesOf
 
-Function. Explained in [Devices](/docs/plugins/devices#devicesof-and-appsof).
+Function. Explained in [Devices](/docs/reference/plugins/devices#devicesof-and-appsof).
 
 Returns the game's devices, `data.devices.devices` from its content and packs, in declared order.
 
@@ -146,7 +146,7 @@ Uses: [`Game`](/docs/api/engine#game), [`DeviceDef`](#devicedef).
 
 ### DevicesState
 
-Type. Explained in [Devices](/docs/plugins/devices#devicesstate).
+Type. Explained in [Devices](/docs/reference/plugins/devices#devicesstate).
 
 The devices a save keeps out, each mapped to its open app, or null on its home screen. A device left out of `shown`
 is put away.
@@ -166,7 +166,7 @@ type DevicesState = {
 
 ### DevicesView
 
-Type. Explained in [Devices](/docs/plugins/devices#devicesview).
+Type. Explained in [Devices](/docs/reference/plugins/devices#devicesview).
 
 The devices as the player sees them, in `view.plugins.devices`.
 
@@ -183,7 +183,7 @@ type DevicesView = {
 
 ### DeviceView
 
-Type. Explained in [Devices](/docs/plugins/devices#deviceview).
+Type. Explained in [Devices](/docs/reference/plugins/devices#deviceview).
 
 A device as the player sees it, in `view.plugins.devices.devices`.
 
@@ -220,7 +220,7 @@ type DeviceView = {
 
 ### Section
 
-Type. Explained in [Devices](/docs/plugins/devices#section).
+Type. Explained in [Devices](/docs/reference/plugins/devices#section).
 
 A section of an app, one entry of an app's `sections`. Each form is told apart by its key.
 
@@ -233,7 +233,7 @@ Uses: [`Block`](/docs/api/engine#block), [`ActionDef`](/docs/api/engine#actionde
 
 ### SectionView
 
-Type. Explained in [Devices](/docs/plugins/devices#sectionview).
+Type. Explained in [Devices](/docs/reference/plugins/devices#sectionview).
 
 An app's section as the player sees it, in an `AppView`'s `sections`. Each form is told apart by its `type`.
 
@@ -252,7 +252,7 @@ Uses: [`SceneBeat`](/docs/api/engine#scenebeat), [`RenderedChoice`](/docs/api/en
 
 ### AppSection
 
-Const. Explained in [Devices](/docs/plugins/devices#appsection).
+Const. Explained in [Devices](/docs/reference/plugins/devices#appsection).
 
 Renders one section of an open app by its `type`. A preset styles its `app-prose`, `app-entries`, `app-entry` and
 related parts.
@@ -269,7 +269,7 @@ Uses: [`SectionView`](#sectionview).
 
 ### DeviceButtons
 
-Const. Explained in [Devices](/docs/plugins/devices#devicebuttons).
+Const. Explained in [Devices](/docs/reference/plugins/devices#devicebuttons).
 
 Renders a button for each device with `sidebar` set, from `view.plugins.devices`, each with its badge. A preset
 styles its `devices`, `device-button` and `device-badge` parts.
@@ -283,7 +283,7 @@ const DeviceButtons: ComponentType<object>
 
 ### DeviceDialog
 
-Const. Explained in [Devices](/docs/plugins/devices#devicedialog).
+Const. Explained in [Devices](/docs/reference/plugins/devices#devicedialog).
 
 Renders the device that's out in a dialog, with its frame in `data-frame` for a preset to style a phone or a
 laptop. With `deviceId`, it renders only that device.
@@ -297,7 +297,7 @@ const DeviceDialog: ComponentType<{ deviceId?: string | null; onClose?: (() => v
 
 ### DeviceScreen
 
-Const. Explained in [Devices](/docs/plugins/devices#devicescreen).
+Const. Explained in [Devices](/docs/reference/plugins/devices#devicescreen).
 
 Renders a device's screen, its home screen of apps or the open app with a back button. A preset styles its
 `device-screen`, `app-launcher`, `app-button`, `app-icon`, `app-badge`, `app` and `app-header` parts.
@@ -311,7 +311,7 @@ Uses: [`DeviceView`](#deviceview).
 
 ### DevicesState
 
-Type. Explained in [Devices](/docs/plugins/devices#devicesstate).
+Type. Explained in [Devices](/docs/reference/plugins/devices#devicesstate).
 
 The devices in `view.plugins.devices.devices`, as `useDevices` returns them. The list is empty in a game without the plugin.
 
@@ -348,7 +348,7 @@ type DeviceState = {
 
 ### DeviceStrip
 
-Const. Explained in [Devices](/docs/plugins/devices#devicestrip).
+Const. Explained in [Devices](/docs/reference/plugins/devices#devicestrip).
 
 Renders a button in the `NoticeStrip` for each app with a badge that can open, with its count or a dot. A preset
 styles its `notice-strip-item` and `badge` parts.
@@ -362,7 +362,7 @@ const DeviceStrip: ComponentType<object>
 
 ### devicesUi
 
-Const. Explained in [Devices](/docs/plugins/devices#devicesui).
+Const. Explained in [Devices](/docs/reference/plugins/devices#devicesui).
 
 The devices plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It adds the `DeviceButtons` to the
 sidebar, the `DeviceStrip` to the notice strip and one `DeviceDialog` for the device that's out.
@@ -397,7 +397,7 @@ type OpenAppState = {
 
 ### useDevice
 
-Function. Explained in [Devices](/docs/plugins/devices#usedevice).
+Function. Explained in [Devices](/docs/reference/plugins/devices#usedevice).
 
 Returns the device that's out and the controls to open and close devices, from the running game. It re-renders when the view changes.
 
@@ -410,7 +410,7 @@ Uses: [`DeviceState`](#devicestate).
 
 ### useDevices
 
-Function. Explained in [Devices](/docs/plugins/devices#usedevices).
+Function. Explained in [Devices](/docs/reference/plugins/devices#usedevices).
 
 Returns the devices from the running game, or an empty list in a game without the plugin. It re-renders when the view changes.
 
@@ -421,7 +421,7 @@ function useDevices(): DevicesState
 
 ### useOpenApp
 
-Function. Explained in [Devices](/docs/plugins/devices#useopenapp).
+Function. Explained in [Devices](/docs/reference/plugins/devices#useopenapp).
 
 Returns the open app a section renders in, with its device, or null outside an open app. It re-renders when the
 open app changes.

@@ -11,7 +11,7 @@ Generated from the source of `@ifloom/plugin-jobs` and `@ifloom/plugin-jobs/reac
 
 ### FireDef
 
-Type. Explained in [Jobs](/docs/plugins/jobs#firedef).
+Type. Explained in [Jobs](/docs/reference/plugins/jobs#firedef).
 
 The rules that get the player fired from a job, which the game declares in a `JobDef`'s `fire`.
 
@@ -30,7 +30,7 @@ type FireDef = {
 
 ### HeldJob
 
-Type. Explained in [Jobs](/docs/plugins/jobs#heldjob).
+Type. Explained in [Jobs](/docs/reference/plugins/jobs#heldjob).
 
 The record a save keeps for a job the player holds, in `JobsState`'s `held`. The job's definition is read from content.
 
@@ -55,7 +55,7 @@ type HeldJob = {
 
 ### JobDef
 
-Type. Explained in [Jobs](/docs/plugins/jobs#jobdef).
+Type. Explained in [Jobs](/docs/reference/plugins/jobs#jobdef).
 
 A job the game declares in `data.jobs.jobs`. It needs at least one rank.
 
@@ -88,7 +88,7 @@ type JobDef = {
 
 ### jobOf
 
-Function. Explained in [Jobs](/docs/plugins/jobs#jobsof-and-jobof).
+Function. Explained in [Jobs](/docs/reference/plugins/jobs#jobsof-and-jobof).
 
 Returns the job with this id, or undefined when the game has none.
 
@@ -101,7 +101,7 @@ Uses: [`Game`](/docs/api/engine#game), [`JobDef`](#jobdef).
 
 ### jobs
 
-Function. Explained in [Jobs](/docs/plugins/jobs#jobs).
+Function. Explained in [Jobs](/docs/reference/plugins/jobs#jobs).
 
 The jobs plugin's factory, with its helpers as properties. `jobs()` returns the plugin for the game's `plugins`,
 and content calls helpers such as `jobs.apply('cafe')` and `jobs.fire('cafe')`.
@@ -128,7 +128,7 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`JobsState`](#j
 
 ### jobsOf
 
-Function. Explained in [Jobs](/docs/plugins/jobs#jobsof-and-jobof).
+Function. Explained in [Jobs](/docs/reference/plugins/jobs#jobsof-and-jobof).
 
 Returns the game's jobs, from `data.jobs.jobs` in its content and packs.
 
@@ -141,7 +141,7 @@ Uses: [`Game`](/docs/api/engine#game), [`JobDef`](#jobdef).
 
 ### JobsState
 
-Type. Explained in [Jobs](/docs/plugins/jobs#jobsstate).
+Type. Explained in [Jobs](/docs/reference/plugins/jobs#jobsstate).
 
 The jobs a save keeps for the player, held and fired. Jobs themselves are read from content.
 
@@ -160,7 +160,7 @@ type JobsState = {
 
 ### JobsView
 
-Type. Explained in [Jobs](/docs/plugins/jobs#jobsview).
+Type. Explained in [Jobs](/docs/reference/plugins/jobs#jobsview).
 
 The jobs as the player sees them, in `view.plugins.jobs`.
 
@@ -179,7 +179,7 @@ type JobsView = {
 
 ### JobView
 
-Type. Explained in [Jobs](/docs/plugins/jobs#jobview).
+Type. Explained in [Jobs](/docs/reference/plugins/jobs#jobview).
 
 A job as the player sees it, in `view.plugins.jobs.jobs`.
 
@@ -222,7 +222,7 @@ type JobView = {
 
 ### RankDef
 
-Type. Explained in [Jobs](/docs/plugins/jobs#rankdef).
+Type. Explained in [Jobs](/docs/reference/plugins/jobs#rankdef).
 
 A rank on a job's ladder, which the game declares in a `JobDef`'s `ranks`. The player starts at the first.
 
@@ -245,7 +245,7 @@ type RankDef = {
 
 ### RankView
 
-Type. Explained in [Jobs](/docs/plugins/jobs#rankview).
+Type. Explained in [Jobs](/docs/reference/plugins/jobs#rankview).
 
 A rank as the player sees it, in a `JobView`'s `rank` and `next`.
 
@@ -266,7 +266,7 @@ type RankView = {
 
 ### ShiftDef
 
-Type. Explained in [Jobs](/docs/plugins/jobs#shiftdef).
+Type. Explained in [Jobs](/docs/reference/plugins/jobs#shiftdef).
 
 A job's shift, which the game declares in a `JobDef`'s `shift`. It sets what one shift costs, takes and does.
 
@@ -295,7 +295,7 @@ type ShiftDef = {
 
 ### JobBoard
 
-Const. Explained in [Jobs](/docs/plugins/jobs#jobboard).
+Const. Explained in [Jobs](/docs/reference/plugins/jobs#jobboard).
 
 Renders the job board from `view.plugins.jobs.jobs`, each job with its rank, pay, next shift, promotion and record.
 The `jobs` prop shows only those jobs by id, and `title={false}` leaves the heading off.
@@ -380,7 +380,7 @@ type JobsControls = {
 
 ### jobsUi
 
-Const. Explained in [Jobs](/docs/plugins/jobs#jobsui).
+Const. Explained in [Jobs](/docs/reference/plugins/jobs#jobsui).
 
 The jobs plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It renders the `jobs` panel, which
 `jobs.open()` opens, as a `JobBoard` of the jobs it was opened with, and adds the plugin's words.
@@ -396,7 +396,7 @@ Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
 
 ### useJobs
 
-Function. Explained in [Jobs](/docs/plugins/jobs#usejobs).
+Function. Explained in [Jobs](/docs/reference/plugins/jobs#usejobs).
 
 Returns the jobs plugin's view and commands from the running game, or null in a game without the plugin. It re-renders when the view changes.
 

@@ -132,7 +132,7 @@ If you use the React UI and a plain bar is all you need, you don't have to write
 
 ## A strip of unread counts
 
-Unseen notices are in `view.notices.unseen`, newest first. A plugin's counts are in its slice of `view.plugins`, which you read by its type from the plugin's package. The [messages](/docs/plugins/messages) plugin keeps an `unread` count:
+Unseen notices are in `view.notices.unseen`, newest first. A plugin's counts are in its slice of `view.plugins`, which you read by its type from the plugin's package. The [messages](/docs/reference/plugins/messages) plugin keeps an `unread` count:
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/hud.ts
@@ -230,11 +230,11 @@ const texts = computed(() => view.value.plugins.messages?.unread ?? 0)
 </div>
 ```
 
-A count of 0 draws nothing. The bell shows the newest notices, and sending `{ type: 'dismiss' }` with `runner.apply` marks them all seen (see [`dismiss`](/docs/reference/commands#dismiss)). In the React tab, the texts button opens the phone with [`useDevice`](/docs/plugins/devices#usedevice) and a [`DeviceDialog`](/docs/plugins/devices#devicedialog), the same pair the built-in device buttons use. In the others it's a count, which you can turn into a button that opens your own messages panel.
+A count of 0 draws nothing. The bell shows the newest notices, and sending `{ type: 'dismiss' }` with `runner.apply` marks them all seen (see [`dismiss`](/docs/reference/commands#dismiss)). In the React tab, the texts button opens the phone with [`useDevice`](/docs/reference/plugins/devices#usedevice) and a [`DeviceDialog`](/docs/reference/plugins/devices#devicedialog), the same pair the built-in device buttons use. In the others it's a count, which you can turn into a button that opens your own messages panel.
 
 ## An objective line
 
-The [quests](/docs/plugins/quests) plugin lists the active quests in `view.plugins.quests.active`, with the tracked one first. Each has its `title` and the `hint` for the stage the player is on:
+The [quests](/docs/reference/plugins/quests) plugin lists the active quests in `view.plugins.quests.active`, with the tracked one first. Each has its `title` and the `hint` for the stage the player is on:
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/hud.ts

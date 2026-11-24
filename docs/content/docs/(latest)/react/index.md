@@ -37,24 +37,24 @@ A game that only mounts the UI and restyles it never imports the kit. A plugin's
 
 The default layout, [`DefaultLayout`](#layouts), puts these on the page. A section shows only when the game has something for it. What comes from a plugin shows when the game lists that plugin's UI in [`plugins`](#plugins).
 
-- **The story.** The main column. The scene on screen, or the room when no scene is open (a plugin's [room scene](/docs/reference/plugins#scene), such as the [places](/docs/plugins/places) plugin's), with its pictures, spoken lines and choices. The prose, choices and the rest of the text keep to a readable measure (`--width-prose`), centred on a wide screen.
-- **The bottom of the story.** With the [places](/docs/plugins/places) plugin, where the player is and the exits. Then the room's and the game's actions, and who is here with what you can do with them (the [cast](/docs/plugins/cast)).
+- **The story.** The main column. The scene on screen, or the room when no scene is open (a plugin's [room scene](/docs/reference/plugins#scene), such as the [places](/docs/reference/plugins/places) plugin's), with its pictures, spoken lines and choices. The prose, choices and the rest of the text keep to a readable measure (`--width-prose`), centred on a wide screen.
+- **The bottom of the story.** With the [places](/docs/reference/plugins/places) plugin, where the player is and the exits. Then the room's and the game's actions, and who is here with what you can do with them (the [cast](/docs/reference/plugins/cast)).
 - **Inputs**, when the game asks for one: a name to type, a number, or options to pick from. While a scene is open they come after its words and before its choices. Otherwise they're under the room.
-- **The side column.** The game's title and the clock, when a plugin such as the [calendar](/docs/plugins/calendar) says what time it is, then the player's menu. Under them come its sections:
-  - **Stats**, which folds, with the active statuses (the [statuses plugin](/docs/plugins/statuses)) and the turns each has left.
-  - **Quests**, a button that opens the [quest](/docs/plugins/quests) log in a dialog, with a count of quests with news.
-  - **People**, a button that opens everyone the player has met (the [cast](/docs/plugins/cast)), with the stats the game keeps on each of them, such as friendship.
+- **The side column.** The game's title and the clock, when a plugin such as the [calendar](/docs/reference/plugins/calendar) says what time it is, then the player's menu. Under them come its sections:
+  - **Stats**, which folds, with the active statuses (the [statuses plugin](/docs/reference/plugins/statuses)) and the turns each has left.
+  - **Quests**, a button that opens the [quest](/docs/reference/plugins/quests) log in a dialog, with a count of quests with news.
+  - **People**, a button that opens everyone the player has met (the [cast](/docs/reference/plugins/cast)), with the stats the game keeps on each of them, such as friendship.
   - **Carrying**, which folds, with the things the player holds.
-  - Buttons for the [achievements](/docs/plugins/achievements), the [cheats](/docs/plugins/cheats) and the [devices](/docs/plugins/devices).
+  - Buttons for the [achievements](/docs/reference/plugins/achievements), the [cheats](/docs/reference/plugins/cheats) and the [devices](/docs/reference/plugins/devices).
 - **On a phone**, the side column becomes a drawer. A slim bar across the top holds the title, the clock and a button that slides the column in.
 - **Notices**, in the bottom corner (the layout's overlay), each with a button to dismiss it. On a phone only the newest shows, with a button for the rest.
 - **Panels**, in a dialog, when content opens one with the [`panel` effect](/docs/reference/panels), such as a shop's counter from a place or the job board from a newspaper.
 - **A title screen**, if you turn on [`pages`](#pages): the title, New game, Continue, Load, Settings and Credits, before the game itself.
 - **Saves, the backlog and mods**, each in a dialog opened from the player's menu. The saves dialog lists every slot to load, overwrite, export or delete. The backlog shows every scene so far with the choice made in it. The mods dialog lists the player's [mods](/docs/reference/mods), each on, off or removed, with a button to restart the game with the change.
-- **Devices**, in a dialog, when the game has the [devices plugin](/docs/plugins/devices), such as a [phone](/docs/recipes/phone). This covers the home screen and each app's sections, including [messages](/docs/plugins/messages) and [feeds](/docs/plugins/feed).
-- **A debug card**, at the foot of the story, when the game has the [debug plugin](/docs/plugins/debug).
+- **Devices**, in a dialog, when the game has the [devices plugin](/docs/reference/plugins/devices), such as a [phone](/docs/recipes/phone). This covers the home screen and each app's sections, including [messages](/docs/reference/plugins/messages) and [feeds](/docs/reference/plugins/feed).
+- **A debug card**, at the foot of the story, when the game has the [debug plugin](/docs/reference/plugins/debug).
 - **Achievements**: a page with `pages` on, otherwise a dialog. Earned ones are marked, secret ones show as `???`, and counts have a progress bar.
-- **A code box**, on the settings page (or in the menu without pages), when the game has the [unlocks plugin](/docs/plugins/unlocks). It lists the unlocks, and a code that opens new content offers to restart.
+- **A code box**, on the settings page (or in the menu without pages), when the game has the [unlocks plugin](/docs/reference/plugins/unlocks). It lists the unlocks, and a code that opens new content offers to restart.
 - **Cheats**, in a dialog with each cheat as a button, under its group's heading, greyed out with its reason while it's refused.
 
 Everything from a plugin (the shop, the devices, the debug card, the achievements, the code box, the cheats, the quests and the rest) comes from that plugin's own React UI, which you list in [`plugins`](#plugins). A [layout](#layouts) of your own can move, fold or drop any of them, or show one only in some rooms.
@@ -75,7 +75,7 @@ import module from './game.ts'
 mountGame(module.build(), { plugins: [placesUi, questsUi, shopUi] })
 ```
 
-Each brings its panels, its words, a page or settings if it has them, and the parts the default layout places, in the order of the list. One for a plugin the game doesn't have does nothing. A plugin you leave out of the list draws nothing of ours, so you can draw it yourself: from `view.plugins.<id>`, or from the hook its UI exports, such as [`useShop`](/docs/plugins/shop#useshop), which gives the same data and actions with no markup. That's as much a way to use a plugin as ours. [Plugin UIs and the kit](/docs/react/kit) has the whole of it, and each plugin's page has its React UI under **Drawing it**, beside the same thing drawn in plain JS and Vue. So does every engine page for something the player sees, such as [stats](/docs/reference/stats#drawing-it) and [notices](/docs/reference/notices#drawing-it).
+Each brings its panels, its words, a page or settings if it has them, and the parts the default layout places, in the order of the list. One for a plugin the game doesn't have does nothing. A plugin you leave out of the list draws nothing of ours, so you can draw it yourself: from `view.plugins.<id>`, or from the hook its UI exports, such as [`useShop`](/docs/reference/plugins/shop#useshop), which gives the same data and actions with no markup. That's as much a way to use a plugin as ours. [Plugin UIs and the kit](/docs/react/kit) has the whole of it, and each plugin's page has its React UI under **Drawing it**, beside the same thing drawn in plain JS and Vue. So does every engine page for something the player sees, such as [stats](/docs/reference/stats#drawing-it) and [notices](/docs/reference/notices#drawing-it).
 
 ## Install
 
@@ -97,7 +97,7 @@ yarn add @ifloom/react
 bun add @ifloom/react
 ```
 
-On top of the engine, the UI needs React 19 and react-dom, and Tailwind CSS v4 with its Vite plugin, unless you use the [prebuilt stylesheet](/docs/react/customising#without-tailwind). The `react` template's `vite.config.ts` adds React's and Tailwind's Vite plugins beside the [CLI's preset](/docs/cli#the-vite-preset). Like the engine, the UI is compiled JavaScript with type declarations. Add the plugins your game uses beside it, such as `@ifloom/plugin-quests` (see [Adding one](/docs/plugins#adding-one)).
+On top of the engine, the UI needs React 19 and react-dom, and Tailwind CSS v4 with its Vite plugin, unless you use the [prebuilt stylesheet](/docs/react/customising#without-tailwind). The `react` template's `vite.config.ts` adds React's and Tailwind's Vite plugins beside the [CLI's preset](/docs/cli#the-vite-preset). Like the engine, the UI is compiled JavaScript with type declarations. Add the plugins your game uses beside it, such as `@ifloom/plugin-quests` (see [Adding one](/docs/reference/plugins#adding-one)).
 
 Your `tsconfig.json` needs JSX, the DOM and Vite's client types, beside the settings the [`react` template](/docs/guide/installation#whats-in-the-new-game) starts with:
 
@@ -478,7 +478,7 @@ export const words: Content = {
 }
 ```
 
-The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/docs/reference/view#the-clock-and-the-player), which a plugin writes. In a game with the [calendar](/docs/plugins/calendar), reword it with the calendar's own string, such as `'calendar/label': '{weekday} {period}, day {day}'`. See the calendar's [strings](/docs/plugins/calendar#strings).
+The clock in the sidebar doesn't use the UI's words. It prints [`view.when`](/docs/reference/view#the-clock-and-the-player), which a plugin writes. In a game with the [calendar](/docs/reference/plugins/calendar), reword it with the calendar's own string, such as `'calendar/label': '{weekday} {period}, day {day}'`. See the calendar's [strings](/docs/reference/plugins/calendar#strings).
 
 | Key | English | Fills |
 |---|---|---|
@@ -565,7 +565,7 @@ Which component uses which keys:
 
 Everything else on screen comes from the view, in the game's own words: titles, prose, labels, the reasons on greyed-out buttons, warnings, price notes and the clock. Those come from the game, the engine's [strings](/docs/reference/strings) and its plugins' strings.
 
-Each plugin UI's words are on its plugin's page, and in a table it exports, such as the debug card's `DEBUG_WORDS` on the [debug plugin](/docs/plugins/debug#debugui)'s page.
+Each plugin UI's words are on its plugin's page, and in a table it exports, such as the debug card's `DEBUG_WORDS` on the [debug plugin](/docs/reference/plugins/debug#debugui)'s page.
 
 In code, [`UiStringKey`](/docs/react/components#uistringkey-words-and-say) is one of this table's keys, and [`useWords`](/docs/react/components#usewords) reads a word for the game inside a component.
 

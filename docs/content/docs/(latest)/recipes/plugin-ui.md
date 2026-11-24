@@ -2,9 +2,9 @@
 title: "Building UI for plugins"
 description: "Draw the achievements, shop and jobs plugins from the view: an achievements page, a shop counter and a job board, in plain DOM, React, Vue or Svelte."
 ---
-The [achievements](/docs/plugins/achievements), [shop](/docs/plugins/shop) and [jobs](/docs/plugins/jobs) plugins are UI-free. Each puts what a UI needs in its slice of the [view](/docs/reference/view#plugins), at `view.plugins.<id>`, and you draw it however your game looks.
+The [achievements](/docs/reference/plugins/achievements), [shop](/docs/reference/plugins/shop) and [jobs](/docs/reference/plugins/jobs) plugins are UI-free. Each puts what a UI needs in its slice of the [view](/docs/reference/view#plugins), at `view.plugins.<id>`, and you draw it however your game looks.
 
-If you use the React UI, you don't have to build any of this. Each of these plugins ships its own React UI, in its `/react` subpath, and you list the ones you want in [`plugins`](/docs/react/kit#the-plugins-option): `achievementsUi` for an [achievements page](/docs/plugins/achievements#achievementlist), `shopUi` for a [shop dialog](/docs/plugins/shop#shopcounter), `jobsUi` for a [job board](/docs/plugins/jobs#jobboard) and `statusesUi` for the [active statuses](/docs/plugins/statuses#statuslist). Each comes with a hook, such as [`useShop`](/docs/plugins/shop#useshop), that gives the same data and actions with no markup. Read on to build your own: for Vue, Svelte or plain JS, or for a React game that wants a different shape. Drawing a plugin yourself is as much a way to use it as ours: leave its UI out of `plugins`, and nothing of ours is drawn for it.
+If you use the React UI, you don't have to build any of this. Each of these plugins ships its own React UI, in its `/react` subpath, and you list the ones you want in [`plugins`](/docs/react/kit#the-plugins-option): `achievementsUi` for an [achievements page](/docs/reference/plugins/achievements#achievementlist), `shopUi` for a [shop dialog](/docs/reference/plugins/shop#shopcounter), `jobsUi` for a [job board](/docs/reference/plugins/jobs#jobboard) and `statusesUi` for the [active statuses](/docs/reference/plugins/statuses#statuslist). Each comes with a hook, such as [`useShop`](/docs/reference/plugins/shop#useshop), that gives the same data and actions with no markup. Read on to build your own: for Vue, Svelte or plain JS, or for a React game that wants a different shape. Drawing a plugin yourself is as much a way to use it as ours: leave its UI out of `plugins`, and nothing of ours is drawn for it.
 
 To give a plugin of your own a React UI that games can list the same way, see [Writing a plugin's UI](/docs/react/kit#writing-a-plugins-ui).
 
@@ -133,7 +133,7 @@ The plugin also raises a [notice](/docs/reference/notices) tagged `achievements`
 
 ## A shop counter
 
-The shop's view lists every vendor, with `here` and `open` already worked out from the [places](/docs/plugins/places) map and the [calendar](/docs/plugins/calendar). Each good carries a ready-made `buy` button, a [`RenderedChoice`](/docs/reference/view#renderedchoice) built by the engine as any button is. Its `price` is today's, discount included, and its `disabled` is the reason buying is refused, such as `Sold out.` or `You need 4 coins.`:
+The shop's view lists every vendor, with `here` and `open` already worked out from the [places](/docs/reference/plugins/places) map and the [calendar](/docs/reference/plugins/calendar). Each good carries a ready-made `buy` button, a [`RenderedChoice`](/docs/reference/view#renderedchoice) built by the engine as any button is. Its `price` is today's, discount included, and its `disabled` is the reason buying is refused, such as `Sold out.` or `You need 4 coins.`:
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/counter.ts
@@ -286,7 +286,7 @@ const vendor = computed(() => view.value.plugins.shop?.vendors.find((entry) => e
 
 `fullPrice` is only there on the day a good is marked down, so the struck-out price shows only then. A greyed-out button keeps its reason in `title`, so the player can see why.
 
-You don't need a counter for a simple shop. A location's actions can send [`buy`](/docs/plugins/shop#helpers) directly, and they come in `view.actions` with the price and the greyed-out reason like any button. Small Town's café uses the React UI's own counter instead.
+You don't need a counter for a simple shop. A location's actions can send [`buy`](/docs/reference/plugins/shop#helpers) directly, and they come in `view.actions` with the price and the greyed-out reason like any button. Small Town's café uses the React UI's own counter instead.
 
 ## A job board
 
@@ -567,6 +567,6 @@ In the React UI, the counter and the board go in your [layout](/docs/react#layou
 
 ## The same for any plugin
 
-Every first-party plugin works this way. Read its slice of `view.plugins`, typed by the plugin's `ViewRegistry` entry, draw it, and send the commands it gives you. Where a slice offers a [`RenderedChoice`](/docs/reference/view#renderedchoice), use its `disabled` and `price` rather than working them out again, so your buttons say what the engine will do. The [HUD recipe](/docs/recipes/hud) builds an objective line from the quests plugin the same way, and [Statuses](/docs/plugins/statuses#the-view) has a view to list active statuses beside the stats. [Cheats](/docs/plugins/cheats#drawing-it) builds a cheat panel, with its groups, in all four frameworks.
+Every first-party plugin works this way. Read its slice of `view.plugins`, typed by the plugin's `ViewRegistry` entry, draw it, and send the commands it gives you. Where a slice offers a [`RenderedChoice`](/docs/reference/view#renderedchoice), use its `disabled` and `price` rather than working them out again, so your buttons say what the engine will do. The [HUD recipe](/docs/recipes/hud) builds an objective line from the quests plugin the same way, and [Statuses](/docs/reference/plugins/statuses#the-view) has a view to list active statuses beside the stats. [Cheats](/docs/reference/plugins/cheats#drawing-it) builds a cheat panel, with its groups, in all four frameworks.
 
 In the React UI, a piece that should look like the plugins' own in every preset marks its parts with the kit's, through [`useKitPart`](/docs/react/kit#usekitpart). Each kit part brings its own look, so a job drawn as `useKitPart('card', 'job')` is boxed like a vendor's good or an achievement with no preset loaded, and each preset restyles all of them at once. You add only where the part sits, from the layout classes in [`KIT_LAYOUT`](/docs/react/kit#kit_layout). [Styling a plugin's UI](/docs/react/kit#styling-a-plugins-ui) lists the kit's parts and their looks.

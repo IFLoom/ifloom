@@ -210,7 +210,7 @@ import { places } from '@ifloom/plugin-places'
 </Section>
 ```
 
-**Gotcha.** The cards inside have titles of their own. Pass `title={false}` to [`QuestLog`](/docs/plugins/quests#questlog), [`Inventory`](#inventory), [`WardrobeCard`](/docs/plugins/wardrobe#wardrobecard) and the rest, or the title is there twice.
+**Gotcha.** The cards inside have titles of their own. Pass `title={false}` to [`QuestLog`](/docs/reference/plugins/quests#questlog), [`Inventory`](#inventory), [`WardrobeCard`](/docs/reference/plugins/wardrobe#wardrobecard) and the rest, or the title is there twice.
 
 Replaceable as `Section` in [`components`](#components). Parts: `section` (with `data-section`, `data-open` when it folds and `data-dialog` when it opens a dialog), `section-title`, `section-toggle`, `section-body` and `section-badge`.
 
@@ -667,7 +667,7 @@ Where each one goes: `close` on dialogs and notices, `back` in an open app, `war
 function Scene(props: { className?: string }): JSX.Element
 ```
 
-The main column. It shows the scene on screen, or the room when no scene is open. The room is a plugin's [room scene](/docs/reference/plugins#scene), such as the [places](/docs/plugins/places) plugin's. Without one, the room is the game's title and an empty body.
+The main column. It shows the scene on screen, or the room when no scene is open. The room is a plugin's [room scene](/docs/reference/plugins#scene), such as the [places](/docs/reference/plugins/places) plugin's. Without one, the room is the game's title and an empty body.
 
 From top to bottom, it draws:
 
@@ -899,7 +899,7 @@ import { Beat } from '@ifloom/react'
 <Beat beat={{ type: 'say', who: 'character', speaker: 'character:ava', name: 'Ava', text: '“Morning. What can I get you?”' }} />
 ```
 
-The [`Backlog`](#backlog), [`MessagesSection`](/docs/plugins/messages#messagessection) and [`FeedSection`](/docs/plugins/feed#feedsection) draw their beats with `Beat` too, so a replacement `Beat` changes them all.
+The [`Backlog`](#backlog), [`MessagesSection`](/docs/reference/plugins/messages#messagessection) and [`FeedSection`](/docs/reference/plugins/feed#feedsection) draw their beats with `Beat` too, so a replacement `Beat` changes them all.
 
 While the viewer is on, a picture or a clip sits inside a `viewer-open` button whose `aria-label` is `ui.zoom` ("Enlarge"), followed by the beat's alt text when it has some. A picture whose file is missing draws nothing, button included.
 
@@ -1039,7 +1039,7 @@ Draws the pictures inside it whatever the pictures setting says. `LayeredPicture
 function Video(props: VideoProps): JSX.Element | null
 ```
 
-A video clip. [`Beat`](#beat) draws `video` beats with it, [`LayeredPicture`](#layeredpicture) draws video layers with it, and [`FeedSection`](/docs/plugins/feed#feedsection) draws a post's `video`. The flags are the ones on a [`video` beat](/docs/reference/prose#videos) or a [`VideoView`](/docs/reference/media#videoview), so you can spread either in. It's a `<video playsinline>`, and `alt` becomes its `aria-label`.
+A video clip. [`Beat`](#beat) draws `video` beats with it, [`LayeredPicture`](#layeredpicture) draws video layers with it, and [`FeedSection`](/docs/reference/plugins/feed#feedsection) draws a post's `video`. The flags are the ones on a [`video` beat](/docs/reference/prose#videos) or a [`VideoView`](/docs/reference/media#videoview), so you can spread either in. It's a `<video playsinline>`, and `alt` becomes its `aria-label`.
 
 ```tsx
 import { Video } from '@ifloom/react'
@@ -1095,7 +1095,7 @@ type VideoProps = Omit<ComponentProps<'video'>, 'src' | 'poster' | 'autoPlay' | 
 function LayeredPicture(props: { picture: PictureView; className?: string }): JSX.Element
 ```
 
-A layered picture with hotspots, from a [`PictureView`](/docs/reference/media#pictureview). [`Scene`](#scene) draws `view.scene.picture` with it, and [`LocationCard`](/docs/plugins/places#locationcard) draws a place's `location.picture`.
+A layered picture with hotspots, from a [`PictureView`](/docs/reference/media#pictureview). [`Scene`](#scene) draws `view.scene.picture` with it, and [`LocationCard`](/docs/reference/plugins/places#locationcard) draws a place's `location.picture`.
 
 ```tsx
 import { LayeredPicture, useGame } from '@ifloom/react'
@@ -1176,7 +1176,7 @@ assetUrl('art/place/cafe.jpg')   // 'data:image/jpeg;base64,…' in a one-file b
 assetUrl('./art/place/cafe.jpg') // the same
 ```
 
-[`Picture`](#picture) and [`Video`](#video) call it, and so does [`DeviceScreen`](/docs/plugins/devices#devicescreen) for a device's wallpaper, so everything the React UI draws is covered.
+[`Picture`](#picture) and [`Video`](#video) call it, and so does [`DeviceScreen`](/docs/reference/plugins/devices#devicescreen) for a device's wallpaper, so everything the React UI draws is covered.
 
 **Gotcha.** A component of your own that draws a picture from a path, with an `<img>` or a CSS `background-image`, must call `assetUrl` too or use a `Picture`. In a one-file build the `art/` folder is gone, so the bare path points at nothing.
 
@@ -1264,7 +1264,7 @@ Replaceable as `RoomActions` in [`components`](#components). Parts: `actions`.
 function Clock(): JSX.Element | null
 ```
 
-Where the game is in time: [`view.when`](/docs/reference/view#the-clock-and-the-player), as its plugins wrote it, such as the [calendar](/docs/plugins/calendar#the-label)'s `Day 3 · Wednesday afternoon`. It draws nothing when no plugin says what time it is, as in a game without a calendar. To reword it, change the calendar's `calendar/label` string. The calendar plugin's UI draws its [`CalendarClock`](/docs/plugins/calendar#calendarclock) in this one's place, with the day and the period marked for a stylesheet.
+Where the game is in time: [`view.when`](/docs/reference/view#the-clock-and-the-player), as its plugins wrote it, such as the [calendar](/docs/reference/plugins/calendar#the-label)'s `Day 3 · Wednesday afternoon`. It draws nothing when no plugin says what time it is, as in a game without a calendar. To reword it, change the calendar's `calendar/label` string. The calendar plugin's UI draws its [`CalendarClock`](/docs/reference/plugins/calendar#calendarclock) in this one's place, with the day and the period marked for a stylesheet.
 
 Replaceable as `Clock` in [`components`](#components). Parts: `clock`.
 
@@ -1274,7 +1274,7 @@ Replaceable as `Clock` in [`components`](#components). Parts: `clock`.
 function useClock(): ClockState
 ```
 
-Where the game is in time, with no markup. `when` is [`view.when`](/docs/reference/view#the-clock-and-the-player), or `null` when no plugin says. [`Clock`](#clock) draws it. For the calendar's pieces (the day, the weekday, the period), use the calendar plugin's [`useCalendar`](/docs/plugins/calendar#usecalendar).
+Where the game is in time, with no markup. `when` is [`view.when`](/docs/reference/view#the-clock-and-the-player), or `null` when no plugin says. [`Clock`](#clock) draws it. For the calendar's pieces (the day, the weekday, the period), use the calendar plugin's [`useCalendar`](/docs/reference/plugins/calendar#usecalendar).
 
 ```tsx
 import { useClock } from '@ifloom/react'
@@ -1349,7 +1349,7 @@ Replaceable as `EntityTable` in [`components`](#components). Parts: `entities`, 
 function Inventory(props: InventoryProps): JSX.Element | null
 ```
 
-What the player carries: the things you hold, from the engine's [`view.held`](/docs/reference/view#held). Each shows its name, `×n` (`ui.heldCount`) when there's more than one, and its description. The [inventory](/docs/plugins/inventory) plugin's UI draws its [`InventoryCard`](/docs/plugins/inventory#inventorycard) in this one's place, with the same props: a thing that has a use gets a button such as "Eat the sandwich", and with `drop` each gets a **Drop** button. This one has no buttons, and ignores `drop`.
+What the player carries: the things you hold, from the engine's [`view.held`](/docs/reference/view#held). Each shows its name, `×n` (`ui.heldCount`) when there's more than one, and its description. The [inventory](/docs/reference/plugins/inventory) plugin's UI draws its [`InventoryCard`](/docs/reference/plugins/inventory#inventorycard) in this one's place, with the same props: a thing that has a use gets a button such as "Eat the sandwich", and with `drop` each gets a **Drop** button. This one has no buttons, and ignores `drop`.
 
 The heading is `ui.inventory`, or `title`, and `false` leaves it out, as the `inventory` panel does. Each thing carries `data-thing` (its reference) and `data-at` (who holds it). It draws nothing when the player carries nothing.
 
@@ -1682,7 +1682,7 @@ With `pages` on (see [mountGame](/docs/react#mountgame)), the game opens on a ti
 - `title`, the title screen
 - `game`, the shell with the story
 - `load`, `settings` and `credits`
-- any page a plugin UI adds, such as the [achievements plugin](/docs/plugins/achievements)'s `achievements`
+- any page a plugin UI adds, such as the [achievements plugin](/docs/reference/plugins/achievements)'s `achievements`
 - any page you add in `PagesOptions.pages`, by its id.
 
 The title screen leads to every other page, and the [game menu](#gamemenu) leads back to it. [The title screen and settings](/docs/recipes/title-screen) walks through setting it up.
@@ -1965,7 +1965,7 @@ function NoticeStrip(props: { className?: string }): JSX.Element | null
 A row of counts for what's waiting for the player, each a button that opens where it is:
 
 - **Notices** (`ui.notices`) with the number of unseen [notices](/docs/reference/notices). It opens them all in a dialog, each a [`Notice`](#notice), with a **Mark all seen** button (`ui.allSeen`) that sends [`dismiss`](/docs/reference/commands#dismiss) with no id.
-- What the plugin UIs place at its `strip` spot: the devices plugin's [`DeviceStrip`](/docs/plugins/devices#devicestrip), a count for each app with a badge, such as the phone's Messages, which opens the device on that app.
+- What the plugin UIs place at its `strip` spot: the devices plugin's [`DeviceStrip`](/docs/reference/plugins/devices#devicestrip), a count for each app with a badge, such as the phone's Messages, which opens the device on that app.
 
 It's a `<nav>` labelled `ui.unread`, hidden while nothing in it is drawn. The default layout doesn't include it, so add it to your layout where you want it, such as at the top of the story:
 
@@ -2224,7 +2224,7 @@ The panels [`PanelHost`](#panelhost) draws by name for what the engine itself ke
 
 | Name | Draws |
 |---|---|
-| `inventory` | [`Inventory`](#inventory), without its heading, or the inventory plugin's [`InventoryCard`](/docs/plugins/inventory#inventorycard) when the game lists its UI |
+| `inventory` | [`Inventory`](#inventory), without its heading, or the inventory plugin's [`InventoryCard`](/docs/reference/plugins/inventory#inventorycard) when the game lists its UI |
 | `stats` | [`StatList`](#statlist) |
 
 The first-party plugins' panels are on their pages: `shop`, `jobs`, `wardrobe`, `quests`, `people`, `achievements` and `statuses`.
@@ -2436,7 +2436,7 @@ type DialogContentProps = ComponentProps<typeof DialogPrimitive.Content> & {
 | `overlayProps` | Attributes for the overlay behind the box, such as a `className` or a `data-part`. |
 | `closeProps` | Attributes for the close button. |
 
-The [`GameMenu`](#gamemenu) and [`DeviceDialog`](/docs/plugins/devices#devicedialog) use `bare`, with the attributes from [`usePart`](#usepart), so their dialogs follow `classes` and `unstyled` like everything else.
+The [`GameMenu`](#gamemenu) and [`DeviceDialog`](/docs/reference/plugins/devices#devicedialog) use `bare`, with the attributes from [`usePart`](#usepart), so their dialogs follow `classes` and `unstyled` like everything else.
 
 ```tsx
 import { Button, Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@ifloom/react/kit'

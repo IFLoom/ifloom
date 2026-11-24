@@ -9,7 +9,7 @@ Generated from the source of `@ifloom/plugin-generators` and its TSDoc by `npm r
 
 ## drawEntity
 
-Function. Explained in [Generators](/docs/plugins/generators#drawentity).
+Function. Explained in [Generators](/docs/reference/plugins/generators#drawentity).
 
 Returns the values a template draws for the `n`th entity of its kind made in play in this save. The same save,
 template and `n` always draw the same values.
@@ -26,7 +26,7 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 ## FieldDef
 
-Type. Explained in [Generators](/docs/plugins/generators#fielddef).
+Type. Explained in [Generators](/docs/reference/plugins/generators#fielddef).
 
 A field of a template, which gives one value of a new entity. Each form is told apart by its shape.
 
@@ -46,7 +46,7 @@ Uses: [`KvValue`](/docs/api/engine#kvvalue).
 
 ## GeneratedEntity
 
-Type. Explained in [Generators](/docs/plugins/generators#generatedentity).
+Type. Explained in [Generators](/docs/reference/plugins/generators#generatedentity).
 
 The values a template draws for one entity, as `drawEntity` returns them. They're the fields of the engine's
 `create` effect that come from pools and ranges.
@@ -72,7 +72,7 @@ type GeneratedEntity = {
 
 ## generators
 
-Function. Explained in [Generators](/docs/plugins/generators#generators).
+Function. Explained in [Generators](/docs/reference/plugins/generators#generators).
 
 Returns the generators plugin, for the game's `plugins`. Content declares pools and templates in
 `data.generators.pools` and `data.generators.templates`.
@@ -92,7 +92,7 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin).
 
 ## PoolDef
 
-Type. Explained in [Generators](/docs/plugins/generators#pooldef).
+Type. Explained in [Generators](/docs/reference/plugins/generators#pooldef).
 
 A pool the game declares in `data.generators.pools`, a named list of values a template picks from. At least one entry must weigh more than 0.
 
@@ -111,7 +111,7 @@ type PoolDef = {
 
 ## PoolEntry
 
-Type. Explained in [Generators](/docs/plugins/generators#poolentry).
+Type. Explained in [Generators](/docs/reference/plugins/generators#poolentry).
 
 An entry of a pool, a value or a value with a weight. A bare value, or a weight left out, weighs 1.
 
@@ -124,7 +124,7 @@ Uses: [`KvValue`](/docs/api/engine#kvvalue).
 
 ## poolsOf
 
-Function. Explained in [Generators](/docs/plugins/generators#poolsof-and-templatesof).
+Function. Explained in [Generators](/docs/reference/plugins/generators#poolsof-and-templatesof).
 
 Returns the game's pools, `data.generators.pools` from its content and packs, in declared order.
 
@@ -137,7 +137,7 @@ Uses: [`Game`](/docs/api/engine#game), [`PoolDef`](#pooldef).
 
 ## TemplateDef
 
-Type. Explained in [Generators](/docs/plugins/generators#templatedef).
+Type. Explained in [Generators](/docs/reference/plugins/generators#templatedef).
 
 A template the game declares in `data.generators.templates`, which makes entities of one kind through the engine's
 `create` effect. It needs an `of` or a `like`, and a `name` or a `like`.
@@ -175,7 +175,7 @@ type TemplateDef = {
 
 ## templateKind
 
-Function. Explained in [Generators](/docs/plugins/generators#templatekind).
+Function. Explained in [Generators](/docs/reference/plugins/generators#templatekind).
 
 Returns the kind a template makes, its `of`, else its `like`'s kind. It's undefined when the template has neither.
 
@@ -188,7 +188,7 @@ Uses: [`TemplateDef`](#templatedef).
 
 ## templatesOf
 
-Function. Explained in [Generators](/docs/plugins/generators#poolsof-and-templatesof).
+Function. Explained in [Generators](/docs/reference/plugins/generators#poolsof-and-templatesof).
 
 Returns the game's templates, `data.generators.templates` from its content and packs, in declared order.
 

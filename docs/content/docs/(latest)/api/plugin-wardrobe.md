@@ -11,7 +11,7 @@ Generated from the source of `@ifloom/plugin-wardrobe` and `@ifloom/plugin-wardr
 
 ### Closet
 
-Type. Explained in [Wardrobe](/docs/plugins/wardrobe#closet).
+Type. Explained in [Wardrobe](/docs/reference/plugins/wardrobe#closet).
 
 The data of the `wardrobe/closet` trait, which makes a location somewhere the player can change clothes. While the
 player is there, the room offers a button that opens the `wardrobe` panel.
@@ -31,7 +31,7 @@ type Closet = {
 
 ### slotsOf
 
-Function. Explained in [Wardrobe](/docs/plugins/wardrobe#slotsof).
+Function. Explained in [Wardrobe](/docs/reference/plugins/wardrobe#slotsof).
 
 Returns the game's slots in order, from `data.wardrobe.slots` in its content and packs.
 
@@ -44,7 +44,7 @@ Uses: [`Game`](/docs/api/engine#game), [`WardrobeSlot`](#wardrobeslot).
 
 ### wardrobe
 
-Function. Explained in [Wardrobe](/docs/plugins/wardrobe#wardrobe).
+Function. Explained in [Wardrobe](/docs/reference/plugins/wardrobe#wardrobe).
 
 The wardrobe plugin's factory, with its helpers as properties. `wardrobe()` returns the plugin for the game's
 `plugins`, and content calls helpers such as `wardrobe.wearable('coat')` and `wardrobe.wear('clothing:scarf')`.
@@ -67,7 +67,7 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`WardrobeState`
 
 ### WardrobeSlot
 
-Type. Explained in [Wardrobe](/docs/plugins/wardrobe#wardrobeslot).
+Type. Explained in [Wardrobe](/docs/reference/plugins/wardrobe#wardrobeslot).
 
 A slot the game declares in `data.wardrobe.slots`, a part of the body where a thing can be worn.
 
@@ -88,7 +88,7 @@ type WardrobeSlot = {
 
 ### WardrobeState
 
-Type. Explained in [Wardrobe](/docs/plugins/wardrobe#wardrobestate).
+Type. Explained in [Wardrobe](/docs/reference/plugins/wardrobe#wardrobestate).
 
 The clothes a save keeps for each body. Slots and wearable things are read from content.
 
@@ -105,7 +105,7 @@ type WardrobeState = {
 
 ### WardrobeView
 
-Type. Explained in [Wardrobe](/docs/plugins/wardrobe#wardrobeview).
+Type. Explained in [Wardrobe](/docs/reference/plugins/wardrobe#wardrobeview).
 
 The wardrobe of whoever the player is playing as the player sees it, in `view.plugins.wardrobe`.
 
@@ -124,7 +124,7 @@ type WardrobeView = {
 
 ### Wearable
 
-Type. Explained in [Wardrobe](/docs/plugins/wardrobe#wearable).
+Type. Explained in [Wardrobe](/docs/reference/plugins/wardrobe#wearable).
 
 The data of the `wardrobe/wearable` trait, which makes a thing wearable in one slot.
 
@@ -141,7 +141,7 @@ type Wearable = {
 
 ### wearableOf
 
-Function. Explained in [Wardrobe](/docs/plugins/wardrobe#wearableof).
+Function. Explained in [Wardrobe](/docs/reference/plugins/wardrobe#wearableof).
 
 Returns a thing's `wardrobe/wearable` trait, read through the entity it was made `like`. Returns undefined for a thing that can't be worn.
 
@@ -161,7 +161,7 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 ### useWardrobe
 
-Function. Explained in [Wardrobe](/docs/plugins/wardrobe#usewardrobe).
+Function. Explained in [Wardrobe](/docs/reference/plugins/wardrobe#usewardrobe).
 
 Returns the wardrobe plugin's view and commands from the running game, or null in a game without the plugin. It re-renders when the view changes.
 
@@ -185,7 +185,7 @@ const WARDROBE_WORDS: { readonly nothingOn: 'Nothing'; readonly wardrobe: 'Weari
 
 ### WardrobeCard
 
-Const. Explained in [Wardrobe](/docs/plugins/wardrobe#wardrobecard).
+Const. Explained in [Wardrobe](/docs/reference/plugins/wardrobe#wardrobecard).
 
 Renders what the player has on from `view.plugins.wardrobe`, slot by slot, with the other things they could wear.
 It renders nothing without the plugin.
@@ -224,7 +224,7 @@ type WardrobeControls = {
 
 ### WardrobeSection
 
-Component. Explained in [Wardrobe](/docs/plugins/wardrobe#wardrobesection).
+Component. Explained in [Wardrobe](/docs/reference/plugins/wardrobe#wardrobesection).
 
 Renders a Wearing section that folds, holding the `WardrobeCard`. `wardrobeUi` doesn't place it, so put it in your
 layout's `<Sidebar>` to keep what the player wears on screen.
@@ -263,7 +263,7 @@ type WardrobeSlotControls = {
 
 ### wardrobeUi
 
-Const. Explained in [Wardrobe](/docs/plugins/wardrobe#wardrobeui).
+Const. Explained in [Wardrobe](/docs/reference/plugins/wardrobe#wardrobeui).
 
 The wardrobe plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It renders the `wardrobe` panel,
 which a closet's button or any `{ panel: 'wardrobe' }` opens, as a `WardrobeCard`, and adds the plugin's words.

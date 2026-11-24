@@ -13,7 +13,7 @@ To change how the built-in screens look, or to replace one, see [Make it your ow
 A panel is a screen your game draws itself, in place of the usual one. There are three places a panel can go:
 
 - **A scene's panel** is drawn instead of the scene's choices, for a market stall with prices, a card game or a map. The scene names it with [`panel`](/docs/reference/panels#a-scenes-panel).
-- **An app's panel section** is drawn inside an app, such as an inbox or a radio dial. The app has a [`{ panel }` section](/docs/plugins/devices#section).
+- **An app's panel section** is drawn inside an app, such as an inbox or a radio dial. The app has a [`{ panel }` section](/docs/reference/plugins/devices#section).
 - **An open panel** is drawn in a dialog over the story when content opens it with the [`panel` effect](/docs/reference/effects#panel). [`PanelHost`](/docs/react/components#panelhost) draws it, and has [built-in ones](/docs/react/components#built-in-panels) such as `shop` and `jobs` that yours replace by name. See [Panels](/docs/reference/panels).
 
 In each case the component is a [`PanelComponent`](/docs/react/components#panelcomponent). It gets `data`, which is what the panel was given in `with`, and it can read anything else it needs with [`useGame`](/docs/react/components#usegame). You pass your panels to the UI by name in the `panels` prop.
@@ -92,7 +92,7 @@ const panels = { StallPanel, inbox: Inbox }
 
 ## Plugin sections
 
-An app's `{ plugin: 'loyalty' }` section asks the UI to draw a plugin's view inside the app. The [messages](/docs/plugins/messages) and [feed](/docs/plugins/feed) plugins' UIs bring renderers for theirs, when the game lists `messagesUi` and `feedUi` in `plugins`. For any other plugin, including your own, you pass one in the `sections` prop, keyed by plugin id, or your plugin's UI brings it in its [`sections`](/docs/react/kit#pluginui).
+An app's `{ plugin: 'loyalty' }` section asks the UI to draw a plugin's view inside the app. The [messages](/docs/reference/plugins/messages) and [feed](/docs/reference/plugins/feed) plugins' UIs bring renderers for theirs, when the game lists `messagesUi` and `feedUi` in `plugins`. For any other plugin, including your own, you pass one in the `sections` prop, keyed by plugin id, or your plugin's UI brings it in its [`sections`](/docs/react/kit#pluginui).
 
 The component is a [`PluginSectionComponent`](/docs/react/components#pluginsectioncomponent). It gets `data`, the plugin's whole view at [`view.plugins[id]`](/docs/reference/view#plugins), and `with`, the section's `with`, which says which part to show.
 

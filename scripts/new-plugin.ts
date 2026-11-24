@@ -29,7 +29,7 @@ const pkgDir = join(root, 'packages', `plugin-${name}`)
 const at = (path: string) => relative(root, path)
 
 /** The latest docs' plugins folder: the page goes here and its name in meta.json. */
-const docsDir = join(root, 'docs', 'content', 'docs', '(latest)', 'plugins')
+const docsDir = join(root, 'docs', 'content', 'docs', '(latest)', 'reference', 'plugins')
 const nav = join(docsDir, 'meta.json')
 const page = join(docsDir, `${name}.md`)
 
@@ -156,6 +156,58 @@ import type { ${Pascal}Entry, ${Pascal}State, ${Pascal}View } from '@ifloom/plug
 import { ${camel}Ui, use${Pascal}, ${Pascal}List, ${Pascal}Section, ${CONSTANT}_WORDS } from '@ifloom/plugin-${name}/react'
 import type { ${Pascal}Controls } from '@ifloom/plugin-${name}/react'
 \`\`\`
+
+## ${camel}
+
+TODO(new-plugin): the factory and its options.
+
+## Content
+
+### ${Pascal}Entry
+
+TODO(new-plugin): one entry per list of its \`data\`, linking \`/docs/api/plugin-${name}#${Pascal.toLowerCase()}entry\`.
+
+## Conditions
+
+## Effects
+
+## Commands
+
+## State
+
+### ${Pascal}State
+
+## View
+
+### ${Pascal}View
+
+TODO(new-plugin): end with a link to its section on a \`how-to/render/\` page.
+
+## React UI
+
+The React UI is optional: the \`@ifloom/plugin-${name}/react\` subpath renders the plugin for a game that uses [\`@ifloom/react\`](/docs/reference/react).
+
+### ${camel}Ui
+
+### ${Pascal}List
+
+### ${Pascal}Section
+
+### use${Pascal}
+
+### ${Pascal}Controls
+
+### ${CONSTANT}_WORDS
+
+## Functions
+
+### entriesOf
+
+### entryOf
+
+## Checks
+
+## Strings
 `,
 )
 console.log(`Made ${at(page)}`)

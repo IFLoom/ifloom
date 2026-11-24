@@ -54,7 +54,7 @@ const avaHi = {
 
 ## From a thing the player uses
 
-With the [inventory plugin](/docs/plugins/inventory), a thing's use runs effects too. Using one spends it unless it's kept, so give a newspaper `keep` to let the player read it again.
+With the [inventory plugin](/docs/reference/plugins/inventory), a thing's use runs effects too. Using one spends it unless it's kept, so give a newspaper `keep` to let the player read it again.
 
 ```ts
 import type { EntityDef } from '@ifloom/engine'
@@ -73,7 +73,7 @@ const paper: EntityDef = {
 
 ## From a phone or a laptop
 
-An app's actions section has buttons that run effects too. A vendor with a [`places.onlyAt()`](/docs/plugins/shop#where-it-stands) entry won't sell anywhere else, even with its counter open, so leave that entry out of an online shop.
+An app's actions section has buttons that run effects too. A vendor with a [`places.onlyAt()`](/docs/reference/plugins/shop#where-it-stands) entry won't sell anywhere else, even with its counter open, so leave that entry out of an online shop.
 
 ```ts
 import type { AppDef } from '@ifloom/plugin-devices'
@@ -93,7 +93,7 @@ The player can buy several things or apply for a job with the panel open. It clo
 
 ## Drawing it
 
-The shop's and the jobs' React UIs draw both panels for you, as a [`ShopCounter`](/docs/plugins/shop#shopcounter) and a [`JobBoard`](/docs/plugins/jobs#jobboard) in a dialog, when the game lists `shopUi` and `jobsUi` in [`plugins`](/docs/react/kit#the-plugins-option). In Vue, Svelte or plain JS, the templates start with a panel that shows its name, and [Drawing it](/docs/reference/panels#drawing-it) shows how to draw it by name in each.
+The shop's and the jobs' React UIs draw both panels for you, as a [`ShopCounter`](/docs/reference/plugins/shop#shopcounter) and a [`JobBoard`](/docs/reference/plugins/jobs#jobboard) in a dialog, when the game lists `shopUi` and `jobsUi` in [`plugins`](/docs/react/kit#the-plugins-option). In Vue, Svelte or plain JS, the templates start with a panel that shows its name, and [Drawing it](/docs/reference/panels#drawing-it) shows how to draw it by name in each.
 
 ## Checking it
 

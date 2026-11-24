@@ -7,10 +7,10 @@ A thing in IFLoom is an [entity](/docs/reference/entities) that someone [holds](
 | You want the player to | Add | The thing carries |
 |---|---|---|
 | Have things, count them and lose them in the story | nothing | no trait: the `entity` and `move` effects and `{ entity, at }` are the engine's |
-| Use, drop and give things away | [inventory](/docs/plugins/inventory) | `inventory/usable` for a use button (drop and give need no trait) |
-| Buy and sell things | [shop](/docs/plugins/shop) | `shop/sellable` for a price, or the good's own `price` |
-| Wear things in slots | [wardrobe](/docs/plugins/wardrobe) | `wardrobe/wearable` with its slot |
-| Find things in rooms and pick them up | [places](/docs/plugins/places) | nothing: put it `at` a `location:<id>` |
+| Use, drop and give things away | [inventory](/docs/reference/plugins/inventory) | `inventory/usable` for a use button (drop and give need no trait) |
+| Buy and sell things | [shop](/docs/reference/plugins/shop) | `shop/sellable` for a price, or the good's own `price` |
+| Wear things in slots | [wardrobe](/docs/reference/plugins/wardrobe) | `wardrobe/wearable` with its slot |
+| Find things in rooms and pick them up | [places](/docs/reference/plugins/places) | nothing: put it `at` a `location:<id>` |
 
 Without any of them, the React UI's [`Inventory`](/docs/react/components#inventory) still lists what you hold from [`view.held`](/docs/reference/view#held).
 
@@ -66,13 +66,13 @@ So a mod changes any of them the same way: it replaces the entity by its referen
 
 ## Three setups
 
-- **The shop alone.** Vendors sell things the player then holds, and the React UI's `Inventory` shows them. Nothing is used or worn. See [Writing vendors](/docs/plugins/shop#writing-vendors).
-- **The wardrobe alone.** Clothes the player starts with or is given in the story, put on and taken off. See [Writing clothes](/docs/plugins/wardrobe#writing-clothes).
-- **All together.** A stall that sells a scarf and a pie, a scarf to wear and a pie to eat, and the scarf given back to the stall. See [With the shop and the wardrobe](/docs/plugins/inventory#with-the-shop-and-the-wardrobe).
+- **The shop alone.** Vendors sell things the player then holds, and the React UI's `Inventory` shows them. Nothing is used or worn. See [Writing vendors](/docs/reference/plugins/shop#writing-vendors).
+- **The wardrobe alone.** Clothes the player starts with or is given in the story, put on and taken off. See [Writing clothes](/docs/reference/plugins/wardrobe#writing-clothes).
+- **All together.** A stall that sells a scarf and a pie, a scarf to wear and a pie to eat, and the scarf given back to the stall. See [With the shop and the wardrobe](/docs/reference/plugins/inventory#with-the-shop-and-the-wardrobe).
 
 ## Dropping and picking up
 
-The inventory's drop asks places where the player is, through the `places/holder` query, and puts the thing down there. Neither plugin needs the other: with only places, things that content puts in rooms can be picked up but not dropped, and with only the inventory, a dropped thing is gone. See [Dropping and giving](/docs/plugins/inventory#dropping-and-giving) and [Things lying in a place](/docs/plugins/places#things-lying-in-a-place).
+The inventory's drop asks places where the player is, through the `places/holder` query, and puts the thing down there. Neither plugin needs the other: with only places, things that content puts in rooms can be picked up but not dropped, and with only the inventory, a dropped thing is gone. See [Dropping and giving](/docs/reference/plugins/inventory#dropping-and-giving) and [Things lying in a place](/docs/reference/plugins/places#things-lying-in-a-place).
 
 ## See it in an example
 

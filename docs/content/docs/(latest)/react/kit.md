@@ -21,7 +21,7 @@ mountGame(module.build(), { plugins: [questsUi, shopUi] })
 
 `plugins` is the same on [`mountGame`](/docs/react#mountgame), [`GameShell`](/docs/react#gameshell) and [`GameProvider`](/docs/react/components#gameprovider). It's a plain list, in the order you want things placed. Nothing is found by itself: a plugin UI you don't list is never drawn.
 
-- **One for a plugin the game doesn't have does nothing.** The [debug plugin](/docs/plugins/debug)'s `debugUi` can be listed in every build, and draws nothing in a release built without the plugin.
+- **One for a plugin the game doesn't have does nothing.** The [debug plugin](/docs/reference/plugins/debug)'s `debugUi` can be listed in every build, and draws nothing in a release built without the plugin.
 - **The game's own go over a plugin UI's.** Your `panels`, `sections`, `inline` and `components` win over what a plugin UI brings under the same name.
 - **Define the list once**, outside a component that re-renders, as the other options are. A new list on each render draws everything under the provider again.
 

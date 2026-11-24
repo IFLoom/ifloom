@@ -27,7 +27,7 @@ List the package in your game's `package.json`, beside the engine:
 }
 ```
 
-Then add `quests()` to the game's `plugins`. [Adding one](/docs/plugins#adding-one) has the details.
+Then add `quests()` to the game's `plugins`. [Adding one](/docs/reference/plugins#adding-one) has the details.
 
 ```ts
 import { loadGame, type Content } from '@ifloom/engine'
@@ -101,7 +101,7 @@ type QuestStage = { id: string; hint: string; done: Condition }
 
 ## A worked example
 
-Two quests from a cut-down Small Town, the [showcase](/docs/guide/showcase)'s world. "Settle in" starts when the player has unpacked (the kv key `phase` moves from `arrival` to `open`). "Something warm" starts only when an action says so. The town's map comes from the [places](/docs/plugins/places) plugin.
+Two quests from a cut-down Small Town, the [showcase](/docs/guide/showcase)'s world. "Settle in" starts when the player has unpacked (the kv key `phase` moves from `arrival` to `open`). "Something warm" starts only when an action says so. The town's map comes from the [places](/docs/reference/plugins/places) plugin.
 
 ```ts
 import type { Content } from '@ifloom/engine'
@@ -230,7 +230,7 @@ An unknown quest or stage is false.
 |---|---|---|
 | `{ 'quests/start': { quest } }` | `quests.start(quest)` | Starts the quest this turn, if it hasn't started, and moves it through any stages already done. |
 
-It works in any effect list: a data scene choice's, an action's, a thing's use in the [inventory](/docs/plugins/inventory), or a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does). Starting a quest that has already started, or that doesn't exist, does nothing.
+It works in any effect list: a data scene choice's, an action's, a thing's use in the [inventory](/docs/reference/plugins/inventory), or a plugin's [`effectsOf`](/docs/reference/plugins#saying-what-a-command-does). Starting a quest that has already started, or that doesn't exist, does nothing.
 
 ## Commands
 
@@ -324,11 +324,11 @@ type QuestEntry = {
 
 `@ifloom/plugin-quests/react` draws the quest log, for a game drawn with [`@ifloom/react`](/docs/react). List `questsUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a Quests section (`ui.quests`) in the side column opens the [`QuestLog`](#questlog) in a dialog, with the count of news on its button, and the `quests` panel draws it too. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-::include[../../../../snippets/plain/quests.ts]{meta='tab="Plain JS" tab-group="framework"'}
+::include[../../../../../snippets/plain/quests.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-::include[../../../../snippets/react/mount-quests.tsx]{meta='tab="React" tab-group="framework"'}
+::include[../../../../../snippets/react/mount-quests.tsx]{meta='tab="React" tab-group="framework"'}
 
-::include[../../../../snippets/vue/Quests.vue]{meta='tab="Vue" tab-group="framework"'}
+::include[../../../../../snippets/vue/Quests.vue]{meta='tab="Vue" tab-group="framework"'}
 
 The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.quests`, or from [`useQuests`](#usequests) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
@@ -364,7 +364,7 @@ What `questsUi` puts in the side column: a [`Section`](/docs/react/components#se
 function QuestLog(props: { className?: string; title?: string | false }): JSX.Element | null
 ```
 
-The [quests plugin](/docs/plugins/quests)'s view. Each active quest (`data-quest`) shows its description, the hint for what to do next, and how far it has got (`ui.questStage`). It has a **New** badge when it has changed, and its **Track** or **Untrack** button from the view. The finished quests follow, struck through. While anything is new, the heading shows a count and the view's **Mark all seen** button follows the list.
+The [quests plugin](/docs/reference/plugins/quests)'s view. Each active quest (`data-quest`) shows its description, the hint for what to do next, and how far it has got (`ui.questStage`). It has a **New** badge when it has changed, and its **Track** or **Untrack** button from the view. The finished quests follow, struck through. While anything is new, the heading shows a count and the view's **Mark all seen** button follows the list.
 
 `title` replaces the heading, `ui.quests`, for this one list, and `false` leaves it out with its count. It draws nothing in a game without the plugin.
 
@@ -380,9 +380,9 @@ type QuestsControls = QuestsView & {
 }
 ```
 
-The [quests](/docs/plugins/quests) plugin's view ([`QuestsView`](/docs/plugins/quests#the-view): `active`, `done`, `toFind`, `updates` and its buttons) with a command, or `null` in a game without the plugin. `track(id)` sends `quests/track`, and `track(null)` tracks none. Send the view's `seen` button to mark the news seen. [`QuestLog`](#questlog) is drawn from it.
+The [quests](/docs/reference/plugins/quests) plugin's view ([`QuestsView`](/docs/reference/plugins/quests#the-view): `active`, `done`, `toFind`, `updates` and its buttons) with a command, or `null` in a game without the plugin. `track(id)` sends `quests/track`, and `track(null)` tracks none. Send the view's `seen` button to mark the news seen. [`QuestLog`](#questlog) is drawn from it.
 
-::include[../../../../snippets/react/use-quests.tsx]
+::include[../../../../../snippets/react/use-quests.tsx]
 
 ## The state
 
@@ -465,7 +465,7 @@ A quest condition, effect or command that names a quest the game doesn't have gi
 - **A quest with no `starts` only starts by effect.** Nothing in the state starts it, so put [`quests.start`](#effects) on the choice or action that begins it.
 - **Progress latches.** Once a stage is done, it stays done even if its condition stops holding, and a finished quest stays finished. Write `done` for the moment something happens, such as `places.at('high-street')`, not for something that has to stay true.
 - **Progress is recorded after each command.** The record in the save moves on in the plugin's `onCommand` [hook](/docs/reference/plugins#hooks-and-providers), at the end of every command that went through. The conditions and the view work it out fresh, so they're right on the first frame. A condition that held only partway through a command, and no longer holds at its end, is never seen.
-- **Turn numbers are the state's.** `startedOn` and `doneOn` are `state.turn`, so the first turn is `0`. With the [calendar](/docs/plugins/calendar#what-a-turn-is)'s default, a turn is a day, so they read as days.
+- **Turn numbers are the state's.** `startedOn` and `doneOn` are `state.turn`, so the first turn is `0`. With the [calendar](/docs/reference/plugins/calendar#what-a-turn-is)'s default, a turn is a day, so they read as days.
 - **Finishing the tracked quest unpins it.**
 
 ## See it in an example

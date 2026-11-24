@@ -31,7 +31,7 @@ List the package in your game's `package.json`, beside the engine:
 }
 ```
 
-Then add `unlocks()` to the game's `plugins`. [Adding one](/docs/plugins#adding-one) has the details. It needs no other plugin. The [cheats plugin](/docs/plugins/cheats#supporter-cheats) cooperates with it by name.
+Then add `unlocks()` to the game's `plugins`. [Adding one](/docs/reference/plugins#adding-one) has the details. It needs no other plugin. The [cheats plugin](/docs/reference/plugins/cheats#supporter-cheats) cooperates with it by name.
 
 Codes are checked with WebCrypto (`crypto.subtle`), which every current browser has, on a page opened from disk too, and Node 20 and later.
 
@@ -346,7 +346,7 @@ type Entered = { unlock: string; name: string; already: boolean; restart: boolea
 |---|---|---|
 | `{ 'unlocks/has': { unlock } }` | `unlocks.has(id)` | The unlock is recorded in this save. |
 
-Use it anywhere a condition goes: a [cheat's](/docs/plugins/cheats#supporter-cheats) `blocked`, a choice's `when`, a storylet's `when`.
+Use it anywhere a condition goes: a [cheat's](/docs/reference/plugins/cheats#supporter-cheats) `blocked`, a choice's `when`, a storylet's `when`.
 
 ```ts
 import { unlocks } from '@ifloom/plugin-unlocks'
@@ -418,11 +418,11 @@ type UnlockView = { id: string; name: string; description: string; unlocked: boo
 
 `@ifloom/plugin-unlocks/react` draws the code box, for a game drawn with [`@ifloom/react`](/docs/react). List `unlocksUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and codes start on the runner, and the [`UnlocksPanel`](#unlockspanel) is on the settings page with pages on, or behind an **Enter a code** button in the menu without them. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-::include[../../../../snippets/plain/unlocks.ts]{meta='tab="Plain JS" tab-group="framework"'}
+::include[../../../../../snippets/plain/unlocks.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-::include[../../../../snippets/react/mount-unlocks.tsx]{meta='tab="React" tab-group="framework"'}
+::include[../../../../../snippets/react/mount-unlocks.tsx]{meta='tab="React" tab-group="framework"'}
 
-::include[../../../../snippets/vue/Unlocks.vue]{meta='tab="Vue" tab-group="framework"'}
+::include[../../../../../snippets/vue/Unlocks.vue]{meta='tab="Vue" tab-group="framework"'}
 
 ```svelte tab="Svelte" tab-group="framework"
 <script lang="ts">
@@ -484,7 +484,7 @@ type UnlocksUiOptions = {
 | `onChange` | Builds the game again with the content a code has just opened, usually `() => location.reload()`. Without it, the box never offers to restart. |
 | `start` | How codes start on the runner. [`startUnlocks`](#startunlocks) if left out. A test passes its own locked content here. |
 
-::include[../../../../snippets/react/mount-unlocks-with.tsx]
+::include[../../../../../snippets/react/mount-unlocks-with.tsx]
 
 The codes start when the game is drawn, and stop when it goes.
 
@@ -498,7 +498,7 @@ What [`unlocksUiWith`](#unlocksuiwith) takes, above.
 function UnlocksPanel(props: { className?: string }): JSX.Element | null
 ```
 
-Entering a code, and the game's [unlocks](/docs/plugins/unlocks). Under an **Enter a code** heading (`ui.enterCode`) are a text box (`ui.code`) and an **Unlock** button (`ui.unlock`), which says **Checking…** (`ui.checkingCode`) while the code is checked. A wrong code shows the plugin's reason as an alert. One that works says **Unlocked: Supporter edition.** (`ui.unlockedNow`, or `ui.unlockedAlready`), and when it opened content the game in play doesn't have, a **Restart to add it** button (`ui.restartForUnlock`) calls `onChange` from [`unlocksUiWith`](#unlocksuiwith). The `problems` it was given follow, then each unlock (`data-unlock`, and `data-unlocked` once it's unlocked) with its label, a **Locked** or **Unlocked** badge (`ui.locked`, `ui.unlocked`) and its description.
+Entering a code, and the game's [unlocks](/docs/reference/plugins/unlocks). Under an **Enter a code** heading (`ui.enterCode`) are a text box (`ui.code`) and an **Unlock** button (`ui.unlock`), which says **Checking…** (`ui.checkingCode`) while the code is checked. A wrong code shows the plugin's reason as an alert. One that works says **Unlocked: Supporter edition.** (`ui.unlockedNow`, or `ui.unlockedAlready`), and when it opened content the game in play doesn't have, a **Restart to add it** button (`ui.restartForUnlock`) calls `onChange` from [`unlocksUiWith`](#unlocksuiwith). The `problems` it was given follow, then each unlock (`data-unlock`, and `data-unlocked` once it's unlocked) with its label, a **Locked** or **Unlocked** badge (`ui.locked`, `ui.unlocked`) and its description.
 
 The box shows only when the game lists the unlocks UI and its codes have started. Without it the list still shows. It draws nothing in a game without the plugin, or with no unlocks. The settings page and the menu draw it for you.
 
@@ -520,19 +520,19 @@ type UnlocksControls = UnlocksView & {
 }
 ```
 
-The unlocks plugin's view ([`UnlocksView`](/docs/plugins/unlocks#unlocksview): `unlocks`, `unlocked` and `total`) and the code box's state, or `null` in a game without the plugin.
+The unlocks plugin's view ([`UnlocksView`](/docs/reference/plugins/unlocks#unlocksview): `unlocks`, `unlocked` and `total`) and the code box's state, or `null` in a game without the plugin.
 
 | Field | What it is |
 |---|---|
 | `available` | Whether codes can be entered: codes have started on the runner, which the unlocks UI does. |
-| `enter` | Tries a code with [`enterCode`](/docs/plugins/unlocks#entercode). Resolves to whether it worked. |
+| `enter` | Tries a code with [`enterCode`](/docs/reference/plugins/unlocks#entercode). Resolves to whether it worked. |
 | `checking` | True while a code is being checked: the snapshot's `helpers.unlocks.status` is `checking`. |
-| `entered` | What the last code that worked unlocked, as [`Entered`](/docs/plugins/unlocks#entered), or `null`. |
+| `entered` | What the last code that worked unlocked, as [`Entered`](/docs/reference/plugins/unlocks#entered), or `null`. |
 | `message` | Why the last code didn't work, or `null`. |
 | `restart` | `onChange` from `unlocksUiWith`, when the last code opened content that needs it. Otherwise undefined. |
 | `problems` | The `problems` given to `unlocksUiWith`. |
 
-::include[../../../../snippets/react/use-unlocks.tsx]
+::include[../../../../../snippets/react/use-unlocks.tsx]
 
 ## The state and the profile
 

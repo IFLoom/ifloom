@@ -11,7 +11,7 @@ Generated from the source of `@ifloom/plugin-achievements` and `@ifloom/plugin-a
 
 ### AchievementDef
 
-Type. Explained in [Achievements](/docs/plugins/achievements#achievementdef).
+Type. Explained in [Achievements](/docs/reference/plugins/achievements#achievementdef).
 
 An achievement the game declares in `data.achievements.achievements`. The player earns it once, by its condition, its progress or an effect.
 
@@ -40,7 +40,7 @@ type AchievementDef = {
 
 ### AchievementEntry
 
-Type. Explained in [Achievements](/docs/plugins/achievements#achievemententry).
+Type. Explained in [Achievements](/docs/reference/plugins/achievements#achievemententry).
 
 An achievement as the player sees it, in `view.plugins.achievements.achievements`. A secret one not yet earned
 shows no name, description, picture or progress.
@@ -72,7 +72,7 @@ type AchievementEntry = {
 
 ### achievements
 
-Function. Explained in [Achievements](/docs/plugins/achievements#achievements).
+Function. Explained in [Achievements](/docs/reference/plugins/achievements#achievements).
 
 Returns the achievements plugin, for the game's `plugins`. Its helpers write its calls, such as
 `achievements.earned('first-loaf')`.
@@ -93,7 +93,7 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`AchievementsSt
 
 ### achievementsOf
 
-Function. Explained in [Achievements](/docs/plugins/achievements#achievementsof).
+Function. Explained in [Achievements](/docs/reference/plugins/achievements#achievementsof).
 
 Returns the game's achievements, `data.achievements.achievements` from its content and packs, in declared order.
 
@@ -106,7 +106,7 @@ Uses: [`Game`](/docs/api/engine#game), [`AchievementDef`](#achievementdef).
 
 ### AchievementsProfile
 
-Type. Explained in [Achievements](/docs/plugins/achievements#achievementsprofile).
+Type. Explained in [Achievements](/docs/reference/plugins/achievements#achievementsprofile).
 
 The achievements the player's profile keeps under the plugin's id. The profile outlives saves, so it lists achievements earned in any save.
 
@@ -123,7 +123,7 @@ type AchievementsProfile = {
 
 ### AchievementsState
 
-Type. Explained in [Achievements](/docs/plugins/achievements#achievementsstate).
+Type. Explained in [Achievements](/docs/reference/plugins/achievements#achievementsstate).
 
 The achievements a save keeps for the player. Definitions are read from content, so only the earned ones are kept.
 
@@ -140,7 +140,7 @@ type AchievementsState = {
 
 ### AchievementsView
 
-Type. Explained in [Achievements](/docs/plugins/achievements#achievementsview).
+Type. Explained in [Achievements](/docs/reference/plugins/achievements#achievementsview).
 
 The achievements as the player sees them, in `view.plugins.achievements`. Earned counts take in the profile when the runner has one.
 
@@ -161,7 +161,7 @@ type AchievementsView = {
 
 ### ProgressDef
 
-Type. Explained in [Achievements](/docs/plugins/achievements#progressdef).
+Type. Explained in [Achievements](/docs/reference/plugins/achievements#progressdef).
 
 A count towards an achievement, an achievement's `progress`. The player's progress is `value` out of `target`.
 
@@ -188,7 +188,7 @@ type ProgressDef = {
 
 ### AchievementList
 
-Const. Explained in [Achievements](/docs/plugins/achievements#achievementlist).
+Const. Explained in [Achievements](/docs/reference/plugins/achievements#achievementlist).
 
 Renders the list of achievements from `view.plugins.achievements`, marking earned ones. A preset styles its
 `achievements`, `achievement`, `achievement-title`, `achievement-progress` and related parts.
@@ -229,7 +229,7 @@ const ACHIEVEMENTS_WORDS: {
 
 ### AchievementsButton
 
-Const. Explained in [Achievements](/docs/plugins/achievements#achievementsbutton).
+Const. Explained in [Achievements](/docs/reference/plugins/achievements#achievementsbutton).
 
 Renders the button that opens the achievements, with the number earned. A preset styles its `achievements-button`
 part.
@@ -244,7 +244,7 @@ const AchievementsButton: ComponentType<{ className?: string; }>
 
 ### AchievementsPage
 
-Const. Explained in [Achievements](/docs/plugins/achievements#achievementspage).
+Const. Explained in [Achievements](/docs/reference/plugins/achievements#achievementspage).
 
 Renders the achievements page, one of the pages around the game, with an `AchievementList` and a back button. A
 preset styles its `achievements-page` part.
@@ -256,7 +256,7 @@ const AchievementsPage: ComponentType<{ className?: string; }>
 
 ### achievementsUi
 
-Const. Explained in [Achievements](/docs/plugins/achievements#achievementsui).
+Const. Explained in [Achievements](/docs/reference/plugins/achievements#achievementsui).
 
 The achievements plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It adds the
 `AchievementsButton` to the sidebar, the `achievements` page and panel, and the plugin's words.
@@ -273,7 +273,7 @@ Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
 
 ### useAchievements
 
-Function. Explained in [Achievements](/docs/plugins/achievements#useachievements).
+Function. Explained in [Achievements](/docs/reference/plugins/achievements#useachievements).
 
 Returns the achievements plugin's view from the running game, or null in a game without the plugin. It re-renders
 when the view changes.

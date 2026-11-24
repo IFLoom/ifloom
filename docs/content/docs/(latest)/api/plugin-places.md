@@ -12,7 +12,7 @@ Generated from the source of `@ifloom/plugin-places` and `@ifloom/plugin-places/
 
 ### Arrival
 
-Type. Explained in [Places](/docs/plugins/places#arrival).
+Type. Explained in [Places](/docs/reference/plugins/places#arrival).
 
 The effects that run as the player walks into a location by an exit, in a `Place`'s `arrive`.
 
@@ -31,7 +31,7 @@ type Arrival = {
 
 ### ExitView
 
-Type. Explained in [Places](/docs/plugins/places#exitview).
+Type. Explained in [Places](/docs/reference/plugins/places#exitview).
 
 An exit from the location the player is at as the player sees it, in `view.plugins.places.exits`. It is a
 `RenderedChoice` labelled with the destination's name, so its `command` takes the exit.
@@ -61,7 +61,7 @@ Plugins add fields of their own to it, which their pages list.
 
 ### LOCATION
 
-Const. Explained in [Places](/docs/plugins/places#helpers).
+Const. Explained in [Places](/docs/reference/plugins/places#location).
 
 The id of the kind the plugin brings for its locations, `location`, as in `'location:park'`. The kind is unique, so each location can hold things.
 
@@ -72,7 +72,7 @@ const LOCATION: 'location'
 
 ### locationOf
 
-Function. Explained in [Places](/docs/plugins/places#helpers).
+Function. Explained in [Places](/docs/reference/plugins/places#locationof).
 
 Returns the `places/location` trait of a location, named by its id (`'park'`) or reference, read through the
 entity it was made `like`. Returns undefined for anything that isn't a location.
@@ -86,7 +86,7 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 ### locationsOf
 
-Function. Explained in [Places](/docs/plugins/places#helpers).
+Function. Explained in [Places](/docs/reference/plugins/places#locationsof).
 
 Returns the references of every location in the game now, each entity with the `places/location` trait. Those
 content declares come first in its order, then those made in play.
@@ -100,7 +100,7 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 ### LyingView
 
-Type. Explained in [Places](/docs/plugins/places#lyingview).
+Type. Explained in [Places](/docs/reference/plugins/places#lyingview).
 
 A thing lying at the location the player is at as the player sees it, in `view.plugins.places.things`.
 
@@ -125,7 +125,7 @@ type LyingView = {
 
 ### Place
 
-Type.
+Type. Explained in [Places](/docs/reference/plugins/places#place).
 
 The data of the `places/location` trait, which makes an entity a location the player can be at. The location's
 name, `description`, `image` and `tags` are the entity's.
@@ -159,7 +159,7 @@ type Place = {
 
 ### PlaceDef
 
-Type. Explained in [Places](/docs/plugins/places#placedef).
+Type. Explained in [Places](/docs/reference/plugins/places#placedef).
 
 A location the game declares in `entities` with `places.location()`. It has an entity's fields and the
 `places/location` trait's side by side, and its `ui` is the trait's room hints.
@@ -198,7 +198,7 @@ Plugins add fields of their own to it, which their pages list.
 
 ### places
 
-Function. Explained in [Places](/docs/plugins/places#places).
+Function. Explained in [Places](/docs/reference/plugins/places#places).
 
 The places plugin's factory, with its helpers as properties. `places(options)` returns the plugin for the game's
 `plugins`, and content calls helpers such as `places.location({ ... })`, `places.go('park')` and `places.at('cafe')`.
@@ -225,7 +225,7 @@ Uses: [`PlacesOptions`](#placesoptions), [`DefinedPlugin`](/docs/api/engine-plug
 
 ### PlacesOptions
 
-Type. Explained in [Places](/docs/plugins/places#placesoptions).
+Type. Explained in [Places](/docs/reference/plugins/places#placesoptions).
 
 Settings for `places()`.
 
@@ -242,7 +242,7 @@ type PlacesOptions = {
 
 ### PlacesState
 
-Type. Explained in [Places](/docs/plugins/places#placesstate).
+Type. Explained in [Places](/docs/reference/plugins/places#placesstate).
 
 The location a save keeps for the player. Locations themselves are read from content.
 
@@ -259,7 +259,7 @@ type PlacesState = {
 
 ### PlacesView
 
-Type. Explained in [Places](/docs/plugins/places#placesview).
+Type. Explained in [Places](/docs/reference/plugins/places#placesview).
 
 The player's location, its exits and the things lying there as the player sees them, in `view.plugins.places`.
 
@@ -280,7 +280,7 @@ type PlacesView = {
 
 ### PlaceView
 
-Type. Explained in [Places](/docs/plugins/places#placeview).
+Type. Explained in [Places](/docs/reference/plugins/places#placeview).
 
 The location the player is at as the player sees it, in `view.plugins.places.location`.
 
@@ -315,7 +315,7 @@ type PlaceView = {
 
 ### Exits
 
-Const. Explained in [Places](/docs/plugins/places#exits).
+Const. Explained in [Places](/docs/reference/plugins/places#exits).
 
 Renders the exits from `view.plugins.places.exits`, each a button that is disabled with its reason when refused. It
 renders nothing without the places plugin, and a preset can style the parts `exits` and `exit`.
@@ -327,7 +327,7 @@ const Exits: ComponentType<{ className?: string; }>
 
 ### LocationCard
 
-Const. Explained in [Places](/docs/plugins/places#locationcard).
+Const. Explained in [Places](/docs/reference/plugins/places#locationcard).
 
 Renders the player's location from `view.plugins.places.location`, its name and `description` under its layered
 picture, with the things lying there and a button to pick each up. `Exits` renders the exits.
@@ -342,7 +342,7 @@ const LocationCard: ComponentType<object>
 
 ### PlacesControls
 
-Type.
+Type. Explained in [Places](/docs/reference/plugins/places#placescontrols).
 
 The places plugin's view with functions that take an exit and pick up a thing, as `usePlaces` returns it.
 
@@ -367,7 +367,7 @@ type PlacesControls = {
 
 ### placesUi
 
-Const. Explained in [Places](/docs/plugins/places#placesui).
+Const. Explained in [Places](/docs/reference/plugins/places#placesui).
 
 The places plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It renders the `LocationCard` and
 the `Exits` in the room, before the room's actions.
@@ -381,7 +381,7 @@ Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
 
 ### usePlaces
 
-Function. Explained in [Places](/docs/plugins/places#useplaces).
+Function. Explained in [Places](/docs/reference/plugins/places#useplaces).
 
 Returns the places plugin's view and commands from the running game, or null in a game without the plugin. It re-renders when the view changes.
 

@@ -13,9 +13,9 @@ There's more to take in here than in the first story. Each step says what's new 
 :::tip[Before you start]
 Follow [Installation](/docs/guide/installation) first. The game uses the engine, `@ifloom/engine`, and three plugins:
 
-- [`@ifloom/plugin-calendar`](/docs/plugins/calendar) keeps the days and the time of day.
-- [`@ifloom/plugin-places`](/docs/plugins/places) keeps the map and where the player is.
-- [`@ifloom/plugin-cast`](/docs/plugins/cast) keeps the people.
+- [`@ifloom/plugin-calendar`](/docs/reference/plugins/calendar) keeps the days and the time of day.
+- [`@ifloom/plugin-places`](/docs/reference/plugins/places) keeps the map and where the player is.
+- [`@ifloom/plugin-cast`](/docs/reference/plugins/cast) keeps the people.
 
 To build it as you read, start a new game with the template for the way you draw it, then add the three plugins:
 
@@ -99,11 +99,11 @@ const locations = [
 
 `exits` are one-way, so the street lists the café and the café lists the street.
 
-A block with a `when` only shows while its [condition](/docs/reference/conditions) holds. The cast's [`cast.here('ruth')`](/docs/plugins/cast#conditions) holds while Ruth's schedule puts her in the room the player is in, so the café reads differently with her behind the counter.
+A block with a `when` only shows while its [condition](/docs/reference/conditions) holds. The cast's [`cast.here('ruth')`](/docs/reference/plugins/cast#conditions) holds while Ruth's schedule puts her in the room the player is in, so the café reads differently with her behind the counter.
 
 `actions` is the list of buttons the room offers. Each is an [action](/docs/reference/actions): an id, the label on its button, what it costs and its effects. The places plugin offers them while the player is in the room, and [step 9](#9-time-moves) shows how one is sent. The coffee costs 3 coins, passes a period of time with the calendar's `calendar.pass(1)`, and gives 20 energy. Step 3 declares the coins and the energy. The engine charges the cost before the effects apply, and refuses the action, with the stat's `lacking` line, when the player can't pay. `{ not: … }` turns the calendar's condition round, so the door is locked for the rest of the day.
 
-The locations are content, entities like any other. In step 5 they go into the game's content, in `entities`. There's more in [Places](/docs/plugins/places#the-location-trait) and the calendar's [conditions](/docs/plugins/calendar#conditions).
+The locations are content, entities like any other. In step 5 they go into the game's content, in `entities`. There's more in [Places](/docs/reference/plugins/places#the-location-trait) and the calendar's [conditions](/docs/reference/plugins/calendar#conditions).
 
 ## 2. A character with a schedule
 
@@ -135,7 +135,7 @@ const ruth = cast.person({
 
 A `when` is any [condition](/docs/reference/conditions), so a schedule can follow the story as well as the clock. `talk` names the scene the Talk button opens. It can also be a list of scenes, each with its own `when`, for a conversation that changes as the story does.
 
-Like the locations, Ruth is content. In step 5 she goes into the game's content, under `entities`. Every field is in [`person`](/docs/plugins/cast#person), and [Where people are](/docs/plugins/cast#where-people-are) explains how a place and a time put someone in the room.
+Like the locations, Ruth is content. In step 5 she goes into the game's content, under `entities`. Every field is in [`person`](/docs/reference/plugins/cast#person), and [Where people are](/docs/reference/plugins/cast#where-people-are) explains how a place and a time put someone in the room.
 
 She's an entity of the kind `character`, which the cast declares, so anything the game keeps about her can be a stat of her own. The next step gives her a friendship stat.
 
@@ -165,7 +165,7 @@ const stats: StatDef[] = [
 
 `format` is how the number is written for the player. `spendable` says the stat is spent on things, so it shows in prices. `lacking` is the line the player reads when a cost needs more than they have.
 
-`of: 'character'` makes `friendship` a stat that every character keeps for themselves, starting at 0, rather than one the player has. Content says whose it is with `of: cast.character('ruth')`. There's more in [Stats](/docs/reference/stats) and the cast's [entities](/docs/plugins/cast#each-one-is-an-entity).
+`of: 'character'` makes `friendship` a stat that every character keeps for themselves, starting at 0, rather than one the player has. Content says whose it is with `of: cast.character('ruth')`. There's more in [Stats](/docs/reference/stats) and the cast's [entities](/docs/reference/plugins/cast#each-one-is-an-entity).
 
 An [action](/docs/reference/actions) can also belong to the game rather than a room. One in the content's `actions` is offered in every room, after the room's own:
 
@@ -179,7 +179,7 @@ const actions: ActionDef[] = [
 ]
 ```
 
-`wait` does nothing but pass a period. `bed` sends a command rather than running effects: `calendar.sleep()` is the calendar's command for going to bed. An action can also have a `blocked` list, each entry a condition with the reason the player reads while it holds, and the engine refuses the action with that reason. See [Actions](/docs/reference/actions), and the calendar's [effects](/docs/plugins/calendar#effects).
+`wait` does nothing but pass a period. `bed` sends a command rather than running effects: `calendar.sleep()` is the calendar's command for going to bed. An action can also have a `blocked` list, each entry a condition with the reason the player reads while it holds, and the engine refuses the action with that reason. See [Actions](/docs/reference/actions), and the calendar's [effects](/docs/reference/plugins/calendar#effects).
 
 ## 4. Scenes
 
@@ -280,7 +280,7 @@ The loader checks the whole game once it has merged it, plugins' content include
 
 Put `problems` in a test, so a broken id fails before anybody plays. `ifloom check` prints them too. A game you build by hand, without `loadGame`, is checked with [`checkGame`](/docs/reference/checks#checkgame) in the same way.
 
-List the calendar first in `plugins`. It moves the clock on when a turn ends, and plugins listed after it see the new day. The places come after it, so the header reads the day first and then the place. The cast can go anywhere in the list, because it asks the places plugin where the player is by name. See [Calendar](/docs/plugins/calendar#install), [Places](/docs/plugins/places#install) and [Cast](/docs/plugins/cast#install).
+List the calendar first in `plugins`. It moves the clock on when a turn ends, and plugins listed after it see the new day. The places come after it, so the header reads the day first and then the place. The cast can go anywhere in the list, because it asks the places plugin where the player is by name. See [Calendar](/docs/reference/plugins/calendar#install), [Places](/docs/reference/plugins/places#install) and [Cast](/docs/reference/plugins/cast#install).
 
 ## 6. Start a game
 
@@ -334,7 +334,7 @@ statValue(state, game, 'friendship', cast.character('ruth')) // 5
 
 `state.turn` counts from 0, so moving day is turn 0 and Tuesday, after the first night's sleep, is turn 1. What the player reads counts from 1, like the calendar's `Day 2`, and the [playtest](/docs/cli#ifloom-playtest) transcript heads Tuesday's screens `Turn 2`.
 
-`go(id)` is the places plugin's command for walking through an exit, one step at a time. From the house, going to the café is refused with `You cannot get there from here.` `cast.talk(id)` is the cast's [command](/docs/plugins/cast#commands) for talking to someone in the room. Anywhere Ruth isn't, it's refused with `Ruth is not here.`
+`go(id)` is the places plugin's command for walking through an exit, one step at a time. From the house, going to the café is refused with `You cannot get there from here.` `cast.talk(id)` is the cast's [command](/docs/reference/plugins/cast#commands) for talking to someone in the room. Anywhere Ruth isn't, it's refused with `Ruth is not here.`
 
 Try the same choice twice in one day and it is refused:
 
@@ -384,7 +384,7 @@ function press(choice: { command: Command }) {
 }
 ```
 
-The body arrives already split into `beats` (narration, spoken lines and pictures), so the UI doesn't parse text. A paragraph wrapped in quotes is a spoken line, a `say` beat, so a UI that draws only `text` beats leaves Ruth's line out. Her name isn't on the line, because the quote doesn't say who speaks. It's on the scene, as `scene.speaker`. `when` is the header, joined from the plugins' labels in the order the game lists them: the calendar's day and time, then the places plugin's room. What a plugin hands the UI is under `plugins`, by its id. The room and its exits are at `plugins.places`, and who is in it at `plugins.cast`. See [The view](/docs/reference/view), the places plugin's [view](/docs/plugins/places#the-view) and the cast's [view](/docs/plugins/cast#the-view).
+The body arrives already split into `beats` (narration, spoken lines and pictures), so the UI doesn't parse text. A paragraph wrapped in quotes is a spoken line, a `say` beat, so a UI that draws only `text` beats leaves Ruth's line out. Her name isn't on the line, because the quote doesn't say who speaks. It's on the scene, as `scene.speaker`. `when` is the header, joined from the plugins' labels in the order the game lists them: the calendar's day and time, then the places plugin's room. What a plugin hands the UI is under `plugins`, by its id. The room and its exits are at `plugins.places`, and who is in it at `plugins.cast`. See [The view](/docs/reference/view), the places plugin's [view](/docs/reference/plugins/places#the-view) and the cast's [view](/docs/reference/plugins/cast#the-view).
 
 ## 9. Time moves
 
@@ -427,7 +427,7 @@ apply(state, game, places.go('cafe')).reason
 // 'Closed. Opens tomorrow morning.'
 ```
 
-Nobody wrote "Ruth goes home in the evening" as an event, or moved her. Her schedule, read against the calendar's clock, puts her somewhere else, and the café's lock shuts the door the same way. See the [calendar](/docs/plugins/calendar), the [places](/docs/plugins/places) and the [cast](/docs/plugins/cast#where-people-are).
+Nobody wrote "Ruth goes home in the evening" as an event, or moved her. Her schedule, read against the calendar's clock, puts her somewhere else, and the café's lock shuts the door the same way. See the [calendar](/docs/reference/plugins/calendar), the [places](/docs/reference/plugins/places) and the [cast](/docs/reference/plugins/cast#where-people-are).
 
 ## 10. Drive it with a runner
 

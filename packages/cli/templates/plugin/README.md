@@ -64,17 +64,17 @@ npm run typecheck   # tsc --noEmit
 npm run build       # dist/, what npm publish packs
 ```
 
-[Writing a plugin](https://ifloom.dev/docs/reference/plugins) explains every part a plugin can have: hooks, guards, prices, the view, migrations, the profile and checks.
+[Writing a plugin](https://ifloom.dev/docs/reference/plugin-api) explains every part a plugin can have: hooks, guards, prices, the view, migrations, the profile and checks.
 
 ## Getting it listed
 
-The docs list plugins other people have written on [Community plugins](https://ifloom.dev/docs/plugins/community). A plugin is listed after someone has read it, when:
+The docs list plugins other people have written on [Community plugins](https://ifloom.dev/docs/reference/plugins/community). A plugin is listed after someone has read it, when:
 
 - it imports only the public API of `@ifloom/engine`, and reaches other plugins only by name (`cooperates`, their conditions, effects and `query`);
 - its engine side needs no UI: it gives a view, and works in a game with no UI package. A React UI, if it has one, is its `/react` subpath, built only from `@ifloom/react`'s public exports;
 - `@ifloom/engine` is a peer dependency, named with `^` and a version;
 - it has tests that play it in a small game, and they pass;
-- content it reads lives in `data`, and its conditions, effects and commands follow the [naming rules](https://ifloom.dev/docs/reference/plugins#naming);
+- content it reads lives in `data`, and its conditions, effects and commands follow the [naming rules](https://ifloom.dev/docs/reference/plugin-api#id);
 - it has an open-source licence, in its repository and `package.json`;
 - it's on npm, with this README saying what it adds and how to use it.
 

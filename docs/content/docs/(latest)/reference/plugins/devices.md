@@ -19,12 +19,12 @@ You build an app from sections, and each section is something the engine already
 - words, as a scene's blocks
 - actions, the same buttons a room has, with prices and reasons
 - a list, either the [things of a kind](/docs/reference/entities#notes-photos-and-other-things-made-in-play) you hold, such as notes or photos, or the people the player can call
-- another plugin's view, such as a [messages](/docs/plugins/messages) channel or a [feed](/docs/plugins/feed)
+- another plugin's view, such as a [messages](/docs/reference/plugins/messages) channel or a [feed](/docs/reference/plugins/feed)
 - a panel the game draws itself
 
 ## Install
 
-Add the package beside the engine, then add `devices()` to the game's `plugins`. See [Adding one](/docs/plugins#adding-one).
+Add the package beside the engine, then add `devices()` to the game's `plugins`. See [Adding one](/docs/reference/plugins#adding-one).
 
 ```json
 {
@@ -43,7 +43,7 @@ function devices(): DefinedPlugin<DevicesState, DevicesView>
 
 Builds the plugin, with the id `devices`. Call it once, when you build the game. It takes no options: the devices and the apps on them are content, in your content's `data.devices`, so a mod can add a device or an app.
 
-It lists `cooperates: ['cast']` (see [`cooperates`](/docs/reference/plugins#cooperates)). A [contacts](#contacts) section lists the [cast](/docs/plugins/cast)'s people when the game has the cast, and nobody when it doesn't.
+It lists `cooperates: ['cast']` (see [`cooperates`](/docs/reference/plugins#cooperates)). A [contacts](#contacts) section lists the [cast](/docs/reference/plugins/cast)'s people when the game has the cast, and nobody when it doesn't.
 
 ```ts
 import { loadGame, type Content } from '@ifloom/engine'
@@ -155,8 +155,8 @@ type Section =
 | `{ blocks }` | Words, as [blocks](/docs/reference/scenes#block), written as a scene's body is. They're the same blocks as a scene's body, with tokens and `when`s, so a [value](/docs/reference/custom#values) of the game's own in a token can print a balance or the weather. |
 | `{ actions }` | Buttons, the same [`ActionDef`](/docs/reference/actions#actiondef)s as a room's, rendered with [`renderAction`](/docs/reference/view#renderaction), so each has its price, `blocked` and the reason it can't be done. An action whose `when` doesn't hold is left out. One with a cost or effects is done as `{ type: 'action', id: 'devices/<id>' }`, so give each an id no other app's action has. |
 | `{ things: { of, at? } }` | The [things](/docs/reference/entities#notes-photos-and-other-things-made-in-play) of the kind `of` that a holder holds, newest first, such as photos or notes. `at` is `'you'` if left out, or name `'player'` or a unique entity. Each entry is the thing's reference, name, description and picture, and has no buttons. |
-| `{ contacts: true }` | The [cast](/docs/plugins/cast)'s people the player can call and has met, each with a Call button that sends the cast's [`call`](/docs/plugins/cast#commands) command. See [Contacts](#contacts). |
-| `{ plugin, with? }` | Another plugin's view, for the UI to draw with that plugin's own renderer. `with` says which part, such as `{ channel: 'texts' }` for [messages](/docs/plugins/messages) or `{ feed: 'social' }` for a [feed](/docs/plugins/feed). |
+| `{ contacts: true }` | The [cast](/docs/reference/plugins/cast)'s people the player can call and has met, each with a Call button that sends the cast's [`call`](/docs/reference/plugins/cast#commands) command. See [Contacts](#contacts). |
+| `{ plugin, with? }` | Another plugin's view, for the UI to draw with that plugin's own renderer. `with` says which part, such as `{ channel: 'texts' }` for [messages](/docs/reference/plugins/messages) or `{ feed: 'social' }` for a [feed](/docs/reference/plugins/feed). |
 | `{ panel, with? }` | A [panel](/docs/reference/panels) the UI draws by name, as one the `panel` effect opens is, with what it's opened with in `with`. |
 
 ```ts
@@ -178,12 +178,12 @@ const mail: AppDef = {
 
 ### Contacts
 
-A `{ contacts: true }` section lists the [cast](/docs/plugins/cast)'s contacts, which it gets from the cast's [`cast/contacts`](/docs/plugins/cast#queries) query. That's everyone the player has [met](/docs/plugins/cast#meeting-people) who has a [`call`](/docs/plugins/cast#calls). Each entry has:
+A `{ contacts: true }` section lists the [cast](/docs/reference/plugins/cast)'s contacts, which it gets from the cast's [`cast/contacts`](/docs/reference/plugins/cast#queries) query. That's everyone the player has [met](/docs/reference/plugins/cast#meeting-people) who has a [`call`](/docs/reference/plugins/cast#calls). Each entry has:
 
 - their `name` as its title
 - their `description` as its text, or `''` when they have none
 - their portrait as its image
-- one action, labelled with the [`devices/call`](#strings) string ("Call"), which sends [`cast.call(id)`](/docs/plugins/cast#commands)
+- one action, labelled with the [`devices/call`](#strings) string ("Call"), which sends [`cast.call(id)`](/docs/reference/plugins/cast#commands)
 
 The button is greyed out with the call's own refusal, such as the character's `busy` line.
 
@@ -490,13 +490,13 @@ type SectionView =
 
 `view.plugins.devices` is a [`DevicesView`](#devicesview): each device with its apps, whether it's out, and the app that's open, if one is. That's the game's state, so every UI draws the same thing. An app's `command` opens it, a device's `home` button brings it out on its home screen or back from an app, and its `close` button puts it away. The open app's `sections` are words, buttons, lists, or another plugin's part, such as a messages channel.
 
-`@ifloom/plugin-devices/react` draws the devices and their apps, for a game drawn with [`@ifloom/react`](/docs/react). List `devicesUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a button for each device goes in the side column, and each app with news goes in the [`NoticeStrip`](/docs/react/components#noticestrip). An app's plugin sections are drawn by the UI of the plugin they name, so list [`messagesUi`](/docs/plugins/messages#messagesui) and [`feedUi`](/docs/plugins/feed#feedui) too. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
+`@ifloom/plugin-devices/react` draws the devices and their apps, for a game drawn with [`@ifloom/react`](/docs/react). List `devicesUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and a button for each device goes in the side column, and each app with news goes in the [`NoticeStrip`](/docs/react/components#noticestrip). An app's plugin sections are drawn by the UI of the plugin they name, so list [`messagesUi`](/docs/reference/plugins/messages#messagesui) and [`feedUi`](/docs/reference/plugins/feed#feedui) too. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 
-::include[../../../../snippets/plain/devices.ts]{meta='tab="Plain JS" tab-group="framework"'}
+::include[../../../../../snippets/plain/devices.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
-::include[../../../../snippets/react/mount-devices.tsx]{meta='tab="React" tab-group="framework"'}
+::include[../../../../../snippets/react/mount-devices.tsx]{meta='tab="React" tab-group="framework"'}
 
-::include[../../../../snippets/vue/Devices.vue]{meta='tab="Vue" tab-group="framework"'}
+::include[../../../../../snippets/vue/Devices.vue]{meta='tab="Vue" tab-group="framework"'}
 
 The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.devices`, or from [`useDevices`](#usedevices) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
 
@@ -506,7 +506,7 @@ The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.
 const devicesUi: PluginUi
 ```
 
-The plugin's [`PluginUi`](/docs/react/kit#pluginui): a button for each device goes in the side column, each app with news goes in the [`NoticeStrip`](/docs/react/components#noticestrip), and its provider draws the [`DeviceDialog`](#devicedialog) for the device that's out, once for the whole game. An app's plugin sections are drawn by the UI of the plugin they name, so list [`messagesUi`](/docs/plugins/messages#messagesui) and [`feedUi`](/docs/plugins/feed#feedui) too.
+The plugin's [`PluginUi`](/docs/react/kit#pluginui): a button for each device goes in the side column, each app with news goes in the [`NoticeStrip`](/docs/react/components#noticestrip), and its provider draws the [`DeviceDialog`](#devicedialog) for the device that's out, once for the whole game. An app's plugin sections are drawn by the UI of the plugin they name, so list [`messagesUi`](/docs/reference/plugins/messages#messagesui) and [`feedUi`](/docs/reference/plugins/feed#feedui) too.
 
 ### DeviceStrip
 
@@ -536,7 +536,7 @@ function DeviceDialog(props: { deviceId?: string | null; onClose?: () => void })
 
 The device that's out, in a [`Dialog`](/docs/react/components#dialog), titled with its name and drawn as a [`DeviceScreen`](#devicescreen). With `deviceId`, only that device, while it's out. It's closed while no device is out. Closing it sends the device's `close` command, which puts it away, then calls `onClose` if you gave one. `devicesUi` draws one for you; without it, place one yourself. The content carries `data-frame` with the device's frame, and a phone's dialog is narrower.
 
-::include[../../../../snippets/react/device-dialog.tsx]
+::include[../../../../../snippets/react/device-dialog.tsx]
 
 Replaceable as `DeviceDialog` in [`components`](/docs/react/components#components). Parts: `dialog` (with `data-frame`), `dialog-overlay`, `dialog-title` and `dialog-close`.
 
@@ -550,7 +550,7 @@ A device, open. With no app open, it shows the home screen: the wallpaper (throu
 
 With an app open (`data-app`), it shows a **Back** button (`ui.back`, sending the device's `home` command), the app's name, and each of the app's sections as an [`AppSection`](#appsection).
 
-`device` is one entry of [`useDevices`](#usedevices), a [`DeviceView`](/docs/plugins/devices#deviceview).
+`device` is one entry of [`useDevices`](#usedevices), a [`DeviceView`](/docs/reference/plugins/devices#deviceview).
 
 Replaceable as `DeviceScreen` in [`components`](/docs/react/components#components). Parts: `device-screen`, `app` (with `data-app`), `app-header`, `app-back`, `app-title`, `app-launcher`, `app-button` (with `data-open-app`), `app-icon` (with `data-icon`) and `app-badge`.
 
@@ -560,7 +560,7 @@ Replaceable as `DeviceScreen` in [`components`](/docs/react/components#component
 function AppSection(props: { section: SectionView }): JSX.Element | null
 ```
 
-One [`SectionView`](/docs/plugins/devices#sectionview) of an open app, drawn by its type:
+One [`SectionView`](/docs/reference/plugins/devices#sectionview) of an open app, drawn by its type:
 
 | Type | Drawn as |
 |---|---|
@@ -580,9 +580,9 @@ function useDevices(): DevicesState
 type DevicesState = DeviceView[]
 ```
 
-The devices in the view, `view.plugins.devices.devices`, as [`DeviceView`](/docs/plugins/devices#deviceview)s. It returns `[]` in a game without the plugin. Use it for a device button of your own:
+The devices in the view, `view.plugins.devices.devices`, as [`DeviceView`](/docs/reference/plugins/devices#deviceview)s. It returns `[]` in a game without the plugin. Use it for a device button of your own:
 
-::include[../../../../snippets/react/use-devices.tsx]
+::include[../../../../../snippets/react/use-devices.tsx]
 
 ### useDevice
 
@@ -605,7 +605,7 @@ Which device is out, from the view, and how to bring one out and put it away. Ev
 | `open` | `open(id)` sends that device's `home` command. |
 | `close` | Sends the `close` command of the device that's out. |
 
-::include[../../../../snippets/react/use-device.tsx]
+::include[../../../../../snippets/react/use-device.tsx]
 
 ### useOpenApp
 
@@ -688,11 +688,11 @@ phone · apps mail · no plugin value named "messages/unread"; the game has no p
 - **Opening an app is free and doesn't leave the room.** No time passes and the player stays where they are, so what the room shows, who's there and the actions on offer don't change. What the player does inside the app costs what each action says.
 - **Section data is filled in for the open app only.** `apps[i].sections` is always `[]`. Draw the home screen from `apps`, and the screen of an app from `open`.
 - **A `plugin` section only names the slice.** It carries the plugin's id and `with`, not the plugin's data. The UI draws `view.plugins[section.plugin]` with that plugin's renderer, picking out the part `with` names, such as one channel or one feed.
-- **Contacts come from the cast.** They're the people with a `call` whom the player has [met](/docs/plugins/cast#meeting-people), which by default means one of their talk or call scenes has been on screen. On a new game, contacts are empty. To list someone from the start, give them a `met` condition that holds from the start. Without the cast, contacts are always empty.
+- **Contacts come from the cast.** They're the people with a `call` whom the player has [met](/docs/reference/plugins/cast#meeting-people), which by default means one of their talk or call scenes has been on screen. On a new game, contacts are empty. To list someone from the start, give them a `met` condition that holds from the start. Without the cast, contacts are always empty.
 - **An app closes as soon as it couldn't be opened.** The plugin checks after every command. If an effect undoes the app's `when`, or one of its `blocked` entries or a [lock](/docs/reference/locks) on `devices/open` starts to hold (no phone at work), the device goes back to its home screen. That way its buttons aren't left live.
 - **Any lock that stops opening greys out the whole device.** `deny: ['devices/*']`, `['devices/open']`, `['custom']` and `'*'` all stop `devices/open`, so every app reads the lock's `reason` and an open one closes. An intro that locks `'*'` keeps the device shut too, unless its `except` lists `devices/open`.
 - **Actions in an app are ordinary actions.** A lock on `devices/*` doesn't stop the `action` command an app's button sends. If that action must not happen at work, put the condition in its `blocked`, or lock `action`.
-- **A count badge reads a value by name, with arguments.** The [messages](/docs/plugins/messages) and [feed](/docs/plugins/feed) plugins' values take the channel or feed as an argument, such as `{ value: 'feed/unread', with: { feed: 'social' } }`. A value that isn't a number counts as `0`.
+- **A count badge reads a value by name, with arguments.** The [messages](/docs/reference/plugins/messages) and [feed](/docs/reference/plugins/feed) plugins' values take the channel or feed as an argument, such as `{ value: 'feed/unread', with: { feed: 'social' } }`. A value that isn't a number counts as `0`.
 - **One app open per device.** Opening another app on the same device closes the first. Apps on different devices stay open side by side.
 
 ## See it in an example

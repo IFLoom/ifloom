@@ -99,7 +99,7 @@ A few commands come from things that aren't buttons. You build those yourself:
 | `{ type: 'tick', ms }` | Time passed during a minigame. [`startClock`](/docs/browser#startclock) sends it for you in a browser. |
 | `{ type: 'dismiss' }` | The player cleared the notices. |
 
-[Commands](/docs/reference/commands) lists them all. A plugin's own commands are made by its helpers, such as `places.go('cafe')` from the [places plugin](/docs/plugins/places#commands), and its buttons in the view carry them like any other.
+[Commands](/docs/reference/commands) lists them all. A plugin's own commands are made by its helpers, such as `places.go('cafe')` from the [places plugin](/docs/reference/plugins/places#commands), and its buttons in the view carry them like any other.
 
 ## What's in the view
 

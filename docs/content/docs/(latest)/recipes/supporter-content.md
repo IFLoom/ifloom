@@ -2,7 +2,7 @@
 title: "Supporter content and cheats"
 description: "Give the people who fund your game a code that unlocks cheats and extra scenes, and know exactly what each kind of gate protects."
 ---
-Many games in this genre are funded by supporters on a membership site, who get something extra: cheats, an extra scene, a gallery. This recipe sets that up with the [unlocks plugin](/docs/plugins/unlocks) and the [cheats plugin](/docs/plugins/cheats). Supporters get a code, enter it once in the game, and keep what it opens across saves and new games.
+Many games in this genre are funded by supporters on a membership site, who get something extra: cheats, an extra scene, a gallery. This recipe sets that up with the [unlocks plugin](/docs/reference/plugins/unlocks) and the [cheats plugin](/docs/reference/plugins/cheats). Supporters get a code, enter it once in the game, and keep what it opens across saves and new games.
 
 Your game ships as files the player runs on their own machine, so anything in the build can be read. Before you start, decide what you're protecting.
 
@@ -163,7 +163,7 @@ const { game } = module.build({ unlocked: opened.packs })
 // <GameShell runner={runner} pages={{}} plugins={[unlocksUiWith({ problems: opened.problems, onChange: () => location.reload() })]} />
 ```
 
-The settings page then has an "Enter a code" box. A code that works records the unlock at once, so the cheat opens. When it has locked content, a "Restart to add it" button reloads the page, which builds the game with the content. [Entering codes](/docs/plugins/unlocks#entering-codes) has the same in plain JS, Vue and Svelte.
+The settings page then has an "Enter a code" box. A code that works records the unlock at once, so the cheat opens. When it has locked content, a "Restart to add it" button reloads the page, which builds the game with the content. [Entering codes](/docs/reference/plugins/unlocks#entering-codes) has the same in plain JS, Vue and Svelte.
 
 ### 6. Build and check
 

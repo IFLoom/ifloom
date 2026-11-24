@@ -481,8 +481,8 @@ The menus have hooks that give you their state and actions without their look, s
 | [`useSaves`](/docs/react/components#usesaves) | The save slots, and saving, loading, deleting, exporting and importing them. |
 | [`useBacklog`](/docs/react/components#usebacklog) | The backlog's entries, kept current. |
 | [`useMods`](/docs/react/components#usemods) | The player's mods, and adding, toggling and removing them. |
-| [`useDevices`](/docs/plugins/devices#usedevices) | The devices in the view. |
-| [`useDevice`](/docs/plugins/devices#usedevice) | Which device is out, and how to bring one out and put it away. |
+| [`useDevices`](/docs/reference/plugins/devices#usedevices) | The devices in the view. |
+| [`useDevice`](/docs/reference/plugins/devices#usedevice) | Which device is out, and how to bring one out and put it away. |
 | [`useWords`](/docs/react/components#usewords) | The UI's words in the game's language. |
 
 Your own components can also join the override system, so the next game that uses them can restyle or replace them the same way. See [Your own components](/docs/react/extending#your-own-components-in-the-system).
@@ -732,7 +732,7 @@ Each plugin's React UI, from its `/react`, draws parts of its own when the game 
 
 #### Places
 
-From [`@ifloom/plugin-places/react`](/docs/plugins/places#drawing-it).
+From [`@ifloom/plugin-places/react`](/docs/reference/plugins/places#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -748,7 +748,7 @@ From [`@ifloom/plugin-places/react`](/docs/plugins/places#drawing-it).
 
 #### Cast
 
-From [`@ifloom/plugin-cast/react`](/docs/plugins/cast#drawing-it).
+From [`@ifloom/plugin-cast/react`](/docs/reference/plugins/cast#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -758,14 +758,14 @@ From [`@ifloom/plugin-cast/react`](/docs/plugins/cast#drawing-it).
 | `person-name` | Their name. |
 | `person-desc` | Their `description`, under the name, such as `Runs the café`. |
 | `person-actions` | Their buttons. |
-| `relationships` | Everyone the player has met, in [`Relationships`](/docs/plugins/cast#relationships). |
+| `relationships` | Everyone the player has met, in [`Relationships`](/docs/reference/plugins/cast#relationships). |
 | `relationship` | One of them. Carries `data-person`. Their portrait, name and description use the `person-` parts. |
 | `relationship-header` | The row with their portrait, name and description. |
 | `relationship-stats` | The stats the game keeps on them, each with the `stat-` parts. |
 
 #### Quests
 
-From [`@ifloom/plugin-quests/react`](/docs/plugins/quests#drawing-it).
+From [`@ifloom/plugin-quests/react`](/docs/reference/plugins/quests#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -781,7 +781,7 @@ From [`@ifloom/plugin-quests/react`](/docs/plugins/quests#drawing-it).
 
 #### Inventory
 
-From [`@ifloom/plugin-inventory/react`](/docs/plugins/inventory#drawing-it).
+From [`@ifloom/plugin-inventory/react`](/docs/reference/plugins/inventory#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -789,7 +789,7 @@ From [`@ifloom/plugin-inventory/react`](/docs/plugins/inventory#drawing-it).
 
 #### Wardrobe
 
-From [`@ifloom/plugin-wardrobe/react`](/docs/plugins/wardrobe#drawing-it).
+From [`@ifloom/plugin-wardrobe/react`](/docs/reference/plugins/wardrobe#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -801,7 +801,7 @@ From [`@ifloom/plugin-wardrobe/react`](/docs/plugins/wardrobe#drawing-it).
 
 #### Statuses
 
-From [`@ifloom/plugin-statuses/react`](/docs/plugins/statuses#drawing-it).
+From [`@ifloom/plugin-statuses/react`](/docs/reference/plugins/statuses#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -816,7 +816,7 @@ From [`@ifloom/plugin-statuses/react`](/docs/plugins/statuses#drawing-it).
 
 #### Achievements
 
-From [`@ifloom/plugin-achievements/react`](/docs/plugins/achievements#drawing-it).
+From [`@ifloom/plugin-achievements/react`](/docs/reference/plugins/achievements#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -835,7 +835,7 @@ From [`@ifloom/plugin-achievements/react`](/docs/plugins/achievements#drawing-it
 
 #### Cheats
 
-From [`@ifloom/plugin-cheats/react`](/docs/plugins/cheats#drawing-it).
+From [`@ifloom/plugin-cheats/react`](/docs/reference/plugins/cheats#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -849,7 +849,7 @@ From [`@ifloom/plugin-cheats/react`](/docs/plugins/cheats#drawing-it).
 
 #### Unlocks
 
-From [`@ifloom/plugin-unlocks/react`](/docs/plugins/unlocks#drawing-it).
+From [`@ifloom/plugin-unlocks/react`](/docs/reference/plugins/unlocks#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -868,7 +868,7 @@ From [`@ifloom/plugin-unlocks/react`](/docs/plugins/unlocks#drawing-it).
 
 #### Shop
 
-From [`@ifloom/plugin-shop/react`](/docs/plugins/shop#drawing-it).
+From [`@ifloom/plugin-shop/react`](/docs/reference/plugins/shop#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -889,7 +889,7 @@ From [`@ifloom/plugin-shop/react`](/docs/plugins/shop#drawing-it).
 
 #### Jobs
 
-From [`@ifloom/plugin-jobs/react`](/docs/plugins/jobs#drawing-it).
+From [`@ifloom/plugin-jobs/react`](/docs/reference/plugins/jobs#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -909,7 +909,7 @@ From [`@ifloom/plugin-jobs/react`](/docs/plugins/jobs#drawing-it).
 
 #### Devices
 
-From [`@ifloom/plugin-devices/react`](/docs/plugins/devices#drawing-it).
+From [`@ifloom/plugin-devices/react`](/docs/reference/plugins/devices#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -934,7 +934,7 @@ From [`@ifloom/plugin-devices/react`](/docs/plugins/devices#drawing-it).
 
 #### Messages
 
-From [`@ifloom/plugin-messages/react`](/docs/plugins/messages#drawing-it).
+From [`@ifloom/plugin-messages/react`](/docs/reference/plugins/messages#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -956,7 +956,7 @@ From [`@ifloom/plugin-messages/react`](/docs/plugins/messages#drawing-it).
 
 #### Feed
 
-From [`@ifloom/plugin-feed/react`](/docs/plugins/feed#drawing-it).
+From [`@ifloom/plugin-feed/react`](/docs/reference/plugins/feed#drawing-it).
 
 | Part | What it is |
 |---|---|
@@ -972,7 +972,7 @@ From [`@ifloom/plugin-feed/react`](/docs/plugins/feed#drawing-it).
 
 #### Debug
 
-From [`@ifloom/plugin-debug/react`](/docs/plugins/debug#drawing-it).
+From [`@ifloom/plugin-debug/react`](/docs/reference/plugins/debug#drawing-it).
 
 | Part | What it is |
 |---|---|

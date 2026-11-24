@@ -12,7 +12,7 @@ IFLoom hasn't reached 1.0, so there's no stable API yet. Names, shapes and defau
 import { loadGame, startingState, apply, view, type DataScene, type StorylineDef } from '@ifloom/engine'
 ```
 
-Each [first-party plugin](/docs/plugins) is a package of its own, imported the same way, and so is the [CLI](/docs/cli), `@ifloom/cli`.
+Each [first-party plugin](/docs/reference/plugins) is a package of its own, imported the same way, and so is the [CLI](/docs/cli), `@ifloom/cli`.
 
 The engine has no DOM and no framework. The React UI is its own package, `@ifloom/react`, so that a UI for another framework can be a package of its own too. Until one exists, the `vue`, `svelte` and `vanilla` templates draw a game without it, and [Your own UI in any framework](/docs/guide/frameworks) walks through them.
 

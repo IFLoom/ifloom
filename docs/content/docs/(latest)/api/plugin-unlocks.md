@@ -12,7 +12,7 @@ Generated from the source of `@ifloom/plugin-unlocks` and `@ifloom/plugin-unlock
 
 ### codeFits
 
-Function. Explained in [Unlocks](/docs/plugins/unlocks#the-functions-behind-it).
+Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#the-functions-behind-it).
 
 Returns true when the code is the unlock's code.
 
@@ -25,7 +25,7 @@ Uses: [`UnlockDef`](#unlockdef).
 
 ### contentScript
 
-Function. Explained in [Unlocks](/docs/plugins/unlocks#the-functions-behind-it).
+Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#the-functions-behind-it).
 
 Returns the script `ifloom build` puts in the page's head, which holds the encrypted content by unlock.
 
@@ -38,7 +38,7 @@ Uses: [`LockedContent`](#lockedcontent).
 
 ### enterCode
 
-Function. Explained in [Unlocks](/docs/plugins/unlocks#entercode).
+Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#entercode).
 
 Returns the unlock a code opens, checked against every unlock on a runner `startUnlocks` was started on, or the
 reason it opens none. It never throws.
@@ -55,7 +55,7 @@ Uses: [`Runner`](/docs/api/engine#runner), [`Result`](/docs/api/engine#result), 
 
 ### Entered
 
-Type. Explained in [Unlocks](/docs/plugins/unlocks#entered).
+Type. Explained in [Unlocks](/docs/reference/plugins/unlocks#entered).
 
 The unlock a code opened, as `enterCode` returns it.
 
@@ -78,7 +78,7 @@ type Entered = {
 
 ### envName
 
-Function. Explained in [Unlocks](/docs/plugins/unlocks#the-functions-behind-it).
+Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#the-functions-behind-it).
 
 Returns the name of the environment variable `ifloom build` reads an unlock's code from, such as `IFLOOM_UNLOCK_SUPPORTER` for `supporter`.
 
@@ -100,7 +100,7 @@ const ITERATIONS: 600000
 
 ### lockContent
 
-Function. Explained in [Unlocks](/docs/plugins/unlocks#the-functions-behind-it).
+Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#the-functions-behind-it).
 
 Returns an unlock's packs encrypted under its code, for the page, as `ifloom build` does with each file in
 `src/unlocks/`. The packs must be data, as a mod's are.
@@ -117,7 +117,7 @@ Uses: [`UnlockDef`](#unlockdef), [`Pack`](/docs/api/engine#pack), [`LockedConten
 
 ### LockedContent
 
-Type. Explained in [Unlocks](/docs/plugins/unlocks#lockedcontent).
+Type. Explained in [Unlocks](/docs/reference/plugins/unlocks#lockedcontent).
 
 An unlock's encrypted packs as `ifloom build` writes them into the page.
 
@@ -142,7 +142,7 @@ type LockedContent = {
 
 ### lockedContent
 
-Function. Explained in [Unlocks](/docs/plugins/unlocks#the-functions-behind-it).
+Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#the-functions-behind-it).
 
 Returns the encrypted content `ifloom build` put in the page, by unlock. Returns an empty record in a page without any.
 
@@ -167,7 +167,7 @@ function normaliseCode(code: string): string
 
 ### startUnlocks
 
-Function. Explained in [Unlocks](/docs/plugins/unlocks#startunlocks).
+Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#startunlocks).
 
 Starts code entry on a runner and returns the function that stops it. Start it once per runner, which needs a
 `profile`.
@@ -186,7 +186,7 @@ Uses: [`Runner`](/docs/api/engine#runner), [`LockedContent`](#lockedcontent).
 
 ### UnlockDef
 
-Type. Explained in [Unlocks](/docs/plugins/unlocks#unlockdef).
+Type. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlockdef).
 
 An unlock the game declares in `data.unlocks.unlocks`. It holds the code's hash, never the code.
 
@@ -213,7 +213,7 @@ type UnlockDef = {
 
 ### unlockedPacks
 
-Function. Explained in [Unlocks](/docs/plugins/unlocks#unlockedpacks).
+Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlockedpacks).
 
 Returns the packs of every unlock the profile remembers, decrypted and checked that this engine can read them. Call
 it before building the game, and pass them as `loadGame(content, base, { packs: unlocked.packs })`.
@@ -230,7 +230,7 @@ Uses: [`Profile`](/docs/api/engine#profile), [`LockedContent`](#lockedcontent), 
 
 ### unlockHash
 
-Function. Explained in [Unlocks](/docs/plugins/unlocks#the-functions-behind-it).
+Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#the-functions-behind-it).
 
 Returns the hash of a code for an unlock, in hex, the value for the unlock's `hash`. `ifloom unlock-hash` prints
 it, so you never write the code into the game.
@@ -244,7 +244,7 @@ Uses: [`UnlockDef`](#unlockdef).
 
 ### unlocks
 
-Function. Explained in [Unlocks](/docs/plugins/unlocks#unlocks).
+Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlocks).
 
 The unlocks plugin's factory, with its helpers as properties. `unlocks()` returns the plugin for the game's
 `plugins`, and content calls helpers such as `unlocks.has('supporter')`.
@@ -263,7 +263,7 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`UnlocksState`]
 
 ### unlocksOf
 
-Function. Explained in [Unlocks](/docs/plugins/unlocks#the-functions-behind-it).
+Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#the-functions-behind-it).
 
 Returns the game's unlocks, from `data.unlocks.unlocks` in its content and packs.
 
@@ -276,7 +276,7 @@ Uses: [`Game`](/docs/api/engine#game), [`UnlockDef`](#unlockdef).
 
 ### UnlocksProfile
 
-Type. Explained in [Unlocks](/docs/plugins/unlocks#unlocksprofile).
+Type. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlocksprofile).
 
 The record the plugin keeps in the player's profile, under `unlocks`. It never holds a code.
 
@@ -293,7 +293,7 @@ type UnlocksProfile = {
 
 ### UnlocksState
 
-Type. Explained in [Unlocks](/docs/plugins/unlocks#unlocksstate).
+Type. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlocksstate).
 
 The unlocks a save keeps. Unlocks themselves are read from content.
 
@@ -310,7 +310,7 @@ type UnlocksState = {
 
 ### UnlockStatus
 
-Type. Explained in [Unlocks](/docs/plugins/unlocks#unlockstatus).
+Type. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlockstatus).
 
 The state of code entry that `startUnlocks` reports in the runner's snapshot, at `snapshot.helpers.unlocks`.
 
@@ -331,7 +331,7 @@ type UnlockStatus = {
 
 ### UnlocksView
 
-Type. Explained in [Unlocks](/docs/plugins/unlocks#unlocksview).
+Type. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlocksview).
 
 The unlocks as the player sees them, in `view.plugins.unlocks`.
 
@@ -352,7 +352,7 @@ type UnlocksView = {
 
 ### UnlockView
 
-Type. Explained in [Unlocks](/docs/plugins/unlocks#unlockview).
+Type. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlockview).
 
 An unlock as the player sees it, in `view.plugins.unlocks.unlocks`.
 
@@ -449,7 +449,7 @@ type UnlocksControls = {
 
 ### UnlocksPanel
 
-Const. Explained in [Unlocks](/docs/plugins/unlocks#unlockspanel).
+Const. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlockspanel).
 
 Renders the code box and the list of unlocks from `view.plugins.unlocks`. It shows the unlock a code opened, or why
 the code failed.
@@ -467,7 +467,7 @@ const UnlocksPanel: ComponentType<{ className?: string; }>
 
 ### unlocksUi
 
-Const. Explained in [Unlocks](/docs/plugins/unlocks#unlocksui).
+Const. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlocksui).
 
 The unlocks plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It renders the `UnlocksPanel` on the
 settings page, or behind a menu button without pages.
@@ -485,7 +485,7 @@ Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
 
 ### UnlocksUiOptions
 
-Type. Explained in [Unlocks](/docs/plugins/unlocks#unlocksuioptions).
+Type. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlocksuioptions).
 
 Settings for `unlocksUiWith`. Without them, the UI shows no problems and offers no restart.
 
@@ -506,7 +506,7 @@ type UnlocksUiOptions = {
 
 ### unlocksUiWith
 
-Function. Explained in [Unlocks](/docs/plugins/unlocks#unlocksuiwith).
+Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlocksuiwith).
 
 Returns the unlocks plugin's React UI with settings. It shows the `problems` from `unlockedPacks` under the code box.
 
@@ -521,7 +521,7 @@ Uses: [`UnlocksUiOptions`](#unlocksuioptions), [`PluginUi`](/docs/api/react-kit#
 
 ### useUnlocks
 
-Function. Explained in [Unlocks](/docs/plugins/unlocks#useunlocks).
+Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#useunlocks).
 
 Returns the unlocks plugin's view and the code box's state from the running game, or null in a game without the
 plugin. It re-renders when the view or the snapshot's `helpers.unlocks` changes.

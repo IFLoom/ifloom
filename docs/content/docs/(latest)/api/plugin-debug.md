@@ -11,7 +11,7 @@ Generated from the source of `@ifloom/plugin-debug` and `@ifloom/plugin-debug/re
 
 ### debug
 
-Function. Explained in [Debug](/docs/plugins/debug#debug).
+Function. Explained in [Debug](/docs/reference/plugins/debug#debug).
 
 Returns the debug plugin, for the game's `plugins` in development builds only. Its commands ignore locks, need no
 exit and pay no cost, and a release build leaves the plugin out.
@@ -38,7 +38,7 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`DebugView`](#d
 
 ### DebugView
 
-Type. Explained in [Debug](/docs/plugins/debug#debugview).
+Type. Explained in [Debug](/docs/reference/plugins/debug#debugview).
 
 The debug readout as the developer sees it, in `view.plugins.debug`. It lists the locks that are on, the triggers that have fired and the seed.
 
@@ -120,7 +120,7 @@ const DEBUG_WORDS: {
 
 ### DebugCard
 
-Const. Explained in [Debug](/docs/plugins/debug#debugcard).
+Const. Explained in [Debug](/docs/reference/plugins/debug#debugcard).
 
 Renders the debug card from `view.plugins.debug`, with forms for the debug commands, the locks, the disabled
 buttons' reasons, the state, the log and undo and redo. A preset styles its `debug` and `debug-*` parts.
@@ -170,7 +170,7 @@ type DebugControls = {
 
 ### debugUi
 
-Const. Explained in [Debug](/docs/plugins/debug#debugui).
+Const. Explained in [Debug](/docs/reference/plugins/debug#debugui).
 
 The debug plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It adds the `DebugCard` to the end of
 the story, and the plugin's words.
@@ -186,7 +186,7 @@ Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
 
 ### useDebug
 
-Function. Explained in [Debug](/docs/plugins/debug#usedebug).
+Function. Explained in [Debug](/docs/reference/plugins/debug#usedebug).
 
 Returns the debug plugin's view with the runner's state, log and undo controls from the running game, or null in a
 game without the plugin. It re-renders when the snapshot changes. `DebugCard` renders from it.

@@ -13,7 +13,7 @@ description: "The ifloom command: new, dev, build, check, playtest, snapshot, wo
 | `ifloom playtest [module] [--turns n] [--out file]` | Plays the game for some turns with no one at the keyboard, and writes down every screen and each turn's numbers. |
 | `ifloom snapshot [module] [--out file] [--update]` | Renders every scene and every place in a few chosen states, and compares the result with the last run. |
 | `ifloom words [module] [--out file]` | Lists every field a player reads, by its key in a translation's [words table](/docs/reference/words#keys), or writes them to a file as a table to translate from. |
-| `ifloom unlock-hash <unlock> [module]` | Prints the hash of an unlock's code, for the [unlocks plugin](/docs/plugins/unlocks), without printing the code. |
+| `ifloom unlock-hash <unlock> [module]` | Prints the hash of an unlock's code, for the [unlocks plugin](/docs/reference/plugins/unlocks), without printing the code. |
 
 Start a game with `npm create ifloom`, which runs `ifloom new`, and run the others from the game's folder. They use the `vite.config.ts` there, which is where the [preset](#the-vite-preset) goes. [Small Town](/docs/guide/showcase) is built with them.
 
@@ -128,7 +128,7 @@ npm test
 | `tests/react.test.tsx` | A test of its React UI, drawn to a string. |
 | `tests/contracts.test.ts` | The plugin rules, read from the source: it imports only `@ifloom/engine` and its own files, its React UI only the kit, and the README names every export. |
 | `tsconfig.json` | Complete, extending nothing. |
-| `README.md` | How a game uses the plugin, how to work on it, and what [Community plugins](/docs/plugins/community) needs before it lists it. |
+| `README.md` | How a game uses the plugin, how to work on it, and what [Community plugins](/docs/reference/plugins/community) needs before it lists it. |
 
 The names follow the [naming rules](/docs/reference/plugins#naming), and the `TODO` comments mark what to replace with your plugin's own behaviour. The package has no UI. A UI draws its view from `view.plugins.weather`.
 
@@ -144,7 +144,7 @@ Starts Vite's dev server with the game's `vite.config.ts` and prints its address
 
 `ifloom dev` takes no flags, and ignores any you pass, such as `--port`. To change the port or anything else about the server, set it in `vite.config.ts` through the preset's `vite` option, for example `ifloom({ vite: { server: { port: 5180 } } })`. Without that, Vite picks its default port.
 
-Under `ifloom dev`, `import.meta.env.DEV` is `true`, so it's where the [debug plugin](/docs/plugins/debug#leave-it-out-of-release-builds) belongs.
+Under `ifloom dev`, `import.meta.env.DEV` is `true`, so it's where the [debug plugin](/docs/reference/plugins/debug#leave-it-out-of-release-builds) belongs.
 
 A game with [locked content](#locked-content) gets it encrypted into the page under `ifloom dev` too, so you can enter a code and play it. An unlock whose code isn't set is left out, with a warning, rather than stopping the server.
 
@@ -427,7 +427,7 @@ Wind down the street, rattling the bakery sign.
 
 `[>]` is a button the player can press, `[ ]` is one that's greyed out (with its reason after the dash), and `->` is a way out. A button's price is in brackets after it. A person's buttons carry their name, as in `Sam: Talk`, because otherwise every person's would read `Talk`.
 
-After the stats, the numbers have a column for each kind of [entity](/docs/reference/entities) the game [lists](/docs/reference/entities#listing), with how many of it there are as the turn ends. A game with the cast has a `character` column, the [cast](/docs/plugins/cast)'s kind, counting everyone in it, met or not. Small Town has two characters. The friendship declared on them is a stat of that kind, so it isn't a column. `visitor` is the kind of the park's visitors, whom the [generators](/docs/plugins/generators) make in play. The places' `location` kind isn't [listed](/docs/reference/entities#listing), so it isn't counted.
+After the stats, the numbers have a column for each kind of [entity](/docs/reference/entities) the game [lists](/docs/reference/entities#listing), with how many of it there are as the turn ends. A game with the cast has a `character` column, the [cast](/docs/reference/plugins/cast)'s kind, counting everyone in it, met or not. Small Town has two characters. The friendship declared on them is a stat of that kind, so it isn't a column. `visitor` is the kind of the park's visitors, whom the [generators](/docs/reference/plugins/generators) make in play. The places' `location` kind isn't [listed](/docs/reference/entities#listing), so it isn't counted.
 
 **How to use it.** Run it before and after a change to pacing, such as a price, a reward, a door's opening hours or a gate, and read both transcripts. The numbers tell you when things happened, such as the turn the coins stopped climbing or the turn a scene first opened. Only the transcript tells you whether a week of play is worth reading. Look for a line that prints on every screen, a scene dealt the same variant five days running, or a gate meant for the second week that's open on day two. None of those is a wrong value, so no test will find them. Small Town has a weekly rent because its first playtest showed the coins only ever climbing.
 
@@ -452,7 +452,7 @@ export default defineGame({
 
 - **The explorer doesn't know your game.** It shows what a player poking at every button meets, and won't find a route through the story. To reach a scene that needs good choices, write a policy of your own.
 - **There's one row per turn played.** A `--turns 7` run that plays them all has seven rows, each taken as that turn ended. A run that stops early ends with a row for the turn it stopped in, which may have only just begun. A run stops early when the policy gives up, at the step limit, in a refusal loop, or when it goes round in circles.
-- **A turn only ends when the game ends one.** The count moves on with a [`turn`](/docs/reference/effects#turn) effect, which the [calendar](/docs/plugins/calendar#what-a-turn-is) applies as time passes and when the player goes to bed. In a game that never ends a turn, the run never reaches its turns. It stops at the policy or the step limit instead.
+- **A turn only ends when the game ends one.** The count moves on with a [`turn`](/docs/reference/effects#turn) effect, which the [calendar](/docs/reference/plugins/calendar#what-a-turn-is) applies as time passes and when the player goes to bed. In a game that never ends a turn, the run never reaches its turns. It stops at the policy or the step limit instead.
 - **Notices are in the transcript once each.** A notice raised along the way (a payday, a promotion, rent taken) is written as `! <title>: <text>` under the first screen it shows on. The explorer never dismisses one, so it isn't written again. The stat list isn't in the transcript: read the `.metrics` file for the numbers.
 - **Going round in circles stops the run.** When the same screen, with the same stats, kv, holdings and plugin state, comes round with the same command three times in one turn, nothing is moving, so the run ends with `going round in circles` rather than walking between two rooms until the step limit. The explorer also counts a place as seen as soon as it sets out for it, so a place that sends the player straight back isn't headed for again that turn.
 - **A policy that keeps getting refused stops the run.** When the same command is refused on two steps in a row, with nothing in between, the play ends there rather than looping to the step limit. The same command refused twice with other steps in between isn't a loop, so the run goes on. Both refusals are still listed, and the exit code is still `1`.
@@ -574,7 +574,7 @@ ifloom unlock-hash supporter                   # the code from IFLOOM_UNLOCK_SUP
 ifloom unlock-hash supporter < code.txt        # or piped in, when the variable isn’t set
 ```
 
-Prints the hash of an unlock's code, for the unlock's `hash` in the [unlocks plugin](/docs/plugins/unlocks#writing-unlocks). It reads the code from `IFLOOM_UNLOCK_<UNLOCK>`, in the environment or a `.env` file, or from what's piped in when that isn't set. It never prints the code.
+Prints the hash of an unlock's code, for the unlock's `hash` in the [unlocks plugin](/docs/reference/plugins/unlocks#writing-unlocks). It reads the code from `IFLOOM_UNLOCK_<UNLOCK>`, in the environment or a `.env` file, or from what's piped in when that isn't set. It never prints the code.
 
 The hash is salted with the game's id and the unlock's, so it loads the game module (`src/game.ts`, or the module you name) to find the id. If the unlock is already declared, its `salt` and `iterations` are used, and the command says whether the hash it has matches.
 
@@ -954,14 +954,14 @@ function explorer(): Policy
 The default policy: a curious player who knows nothing about the game. Each call returns a new explorer with its own memory. On each screen, it takes the first of these that applies:
 
 1. **In a scene**, a choice it hasn't made yet in this playtest, so a scene it comes back to takes another branch. Once every choice has been made, it takes the first open one. A choice that's greyed out or carries a `warning` is never open. With no open choice, it sends `leave`.
-2. **At bedtime**, bed. That's an action here whose command is the [calendar](/docs/plugins/calendar#commands)'s `sleep` (`{ type: 'custom', name: 'calendar/sleep' }`), or else the first step on the shortest walk to a place that has one. It's bedtime when the calendar's [`calendar/bedtime`](/docs/plugins/calendar#queries) query says so, by default in the evening, night and late periods. The explorer asks by name with [`pluginQuery`](/docs/reference/plugins#pluginquery), so in a game with no calendar it never goes to bed.
-3. **Someone to talk to**, then **something to do**, each once a turn. Someone to talk to is a person's button in the [cast](/docs/plugins/cast#the-view)'s view, `view.plugins.cast.present`, read by its shape. Something to do is an action sending any command except bed, or one whose effects do something besides pass time (`calendar/pass`). Something to do never ends the turn. Buttons that would end it wait for the last step.
+2. **At bedtime**, bed. That's an action here whose command is the [calendar](/docs/reference/plugins/calendar#commands)'s `sleep` (`{ type: 'custom', name: 'calendar/sleep' }`), or else the first step on the shortest walk to a place that has one. It's bedtime when the calendar's [`calendar/bedtime`](/docs/reference/plugins/calendar#queries) query says so, by default in the evening, night and late periods. The explorer asks by name with [`pluginQuery`](/docs/reference/plugins#pluginquery), so in a game with no calendar it never goes to bed.
+3. **Someone to talk to**, then **something to do**, each once a turn. Someone to talk to is a person's button in the [cast](/docs/reference/plugins/cast#the-view)'s view, `view.plugins.cast.present`, read by its shape. Something to do is an action sending any command except bed, or one whose effects do something besides pass time (`calendar/pass`). Something to do never ends the turn. Buttons that would end it wait for the last step.
 4. **The first step toward the nearest place** it hasn't been to this turn.
 5. **Ending the turn**, with an action that ends the turn. Failing that, it takes an action not done this turn, or else the first action there is. An action that only passes time counts as waiting, and waits until this step.
 
 To tell which buttons end the turn, it tries each one. It runs the button's command on the current state with [`apply`](/docs/reference/commands#apply) and checks whether `turn` went up. `apply` is deterministic and the state carries its seed, so trying a button gives the same result as pressing it, and the explorer doesn't have to know anything about the game. So even in a game with no calendar, it does everything else there is to do before pressing the button that moves the week on.
 
-Where the player is, the map and the exits come from the [places](/docs/plugins/places) plugin, asked by name. The explorer uses the `places/here` and `places/all` [queries](/docs/plugins/places#queries), and the exits in the plugin's [view](/docs/plugins/places#the-view), taking each exit by sending its own `command`. In a game without the places plugin, the explorer never walks. In a game without the cast, it has nobody to talk to.
+Where the player is, the map and the exits come from the [places](/docs/reference/plugins/places) plugin, asked by name. The explorer uses the `places/here` and `places/all` [queries](/docs/reference/plugins/places#queries), and the exits in the plugin's [view](/docs/reference/plugins/places#the-view), taking each exit by sending its own `command`. In a game without the places plugin, the explorer never walks. In a game without the cast, it has nobody to talk to.
 
 It never presses a button with a [`warning`](/docs/reference/view#renderedchoice), such as the calendar's `That would run past dawn.` When there's nothing left to press, it returns `null` and the play stops.
 
@@ -1007,11 +1007,11 @@ function screenText(screen: View): string
 
 A screen as plain text, as the transcript shows it. In order, it writes:
 
-- a header line, `== Turn N · <when>`, with the turn (counted from 1) and [`view.when`](/docs/reference/view#the-clock-and-the-player) in the plugins' words. In Small Town that's the calendar's `Day 2 · Tuesday morning`, then the [places](/docs/plugins/places#the-label) plugin's place, `High Street`. The `<when>` part is left out when no plugin sets it.
+- a header line, `== Turn N · <when>`, with the turn (counted from 1) and [`view.when`](/docs/reference/view#the-clock-and-the-player) in the plugins' words. In Small Town that's the calendar's `Day 2 · Tuesday morning`, then the [places](/docs/reference/plugins/places#the-label) plugin's place, `High Street`. The `<when>` part is left out when no plugin sets it.
 - `#` and the scene's title.
 - the scene's body.
-- every button: the scene's choices, then the actions, then each present person's buttons from the [cast](/docs/plugins/cast#the-view)'s `present`, labelled `<Name>: <label>`. Each is `[>]`, or `[ ]` when greyed out. Its price follows in brackets, separated by commas: the stats' text, then the plugins' [notes](/docs/reference/view#price), such as the calendar's `until afternoon`. A greyed-out button ends with `— ` and the reason.
-- each exit in the places plugin's [view](/docs/plugins/places#the-view), as `->`, with its reason if it's closed.
+- every button: the scene's choices, then the actions, then each present person's buttons from the [cast](/docs/reference/plugins/cast#the-view)'s `present`, labelled `<Name>: <label>`. Each is `[>]`, or `[ ]` when greyed out. Its price follows in brackets, separated by commas: the stats' text, then the plugins' [notes](/docs/reference/view#price), such as the calendar's `until afternoon`. A greyed-out button ends with `— ` and the reason.
+- each exit in the places plugin's [view](/docs/reference/plugins/places#the-view), as `->`, with its reason if it's closed.
 - while a scene is open, each [input](/docs/reference/inputs) as `[input] <label>: <value>`, with `—` for one that holds nothing yet.
 
 `playtest` writes each new notice under the screen text, as `! <title>: <text>`; `screenText` itself doesn't, since a notice shows on every screen until it's dismissed.
@@ -1060,7 +1060,7 @@ Ava is behind the counter, flour to the elbows, and nods you in.
 
 Every block comes from the engine's [`view`](/docs/reference/view#view), so it reads as the player's screen does. A scene's block is the probe's state with `sceneId` set to the scene, written as `view(...).scene`: its body, then each visible choice as `[>]`, or as `[ ]` with `— ` and the reason it's greyed out. That reason is the choice's own `disabled`, or else what a [lock](/docs/reference/locks) or a plugin's guard would refuse it with, as on screen. If a scene throws, the block records `!! threw: <message>` instead of stopping the run.
 
-The places are the ones the [places](/docs/plugins/places) plugin's `places/all` [query](/docs/plugins/places#queries) returns, asked by name with [`pluginQuery`](/docs/reference/plugins#pluginquery). A game without the plugin has no places here. A place's block is headed `place:<id>`. The player is moved there by the plugin's own [`places/move`](/docs/plugins/places#effects) effect, with `sceneId` cleared, and the block holds the room's body as `view(...).scene` draws it when no scene is open.
+The places are the ones the [places](/docs/reference/plugins/places) plugin's `places/all` [query](/docs/reference/plugins/places#queries) returns, asked by name with [`pluginQuery`](/docs/reference/plugins#pluginquery). A game without the plugin has no places here. A place's block is headed `place:<id>`. The player is moved there by the plugin's own [`places/move`](/docs/reference/plugins/places#effects) effect, with `sceneId` cleared, and the block holds the room's body as `view(...).scene` draws it when no scene is open.
 
 Draws come from the save's seed, so the same game and the same probes give the same text every time. Compare it in a test, as Small Town does:
 

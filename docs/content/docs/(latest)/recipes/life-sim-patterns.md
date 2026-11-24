@@ -4,7 +4,7 @@ description: "Short worked examples for a life sim built from features the engin
 ---
 A life sim asks for the same handful of things again and again: something that happens each morning, a scene that shouldn't come back too soon, wages paid on a Friday. IFLoom has no life sim mode. Each of these is a few lines on top of features you already have, and this page shows one way to write each.
 
-The examples use Small Town's world and its plugins: the [calendar](/docs/plugins/calendar), [places](/docs/plugins/places), the [cast](/docs/plugins/cast), [jobs](/docs/plugins/jobs) and [messages](/docs/plugins/messages). Take what you need. None of them depends on another.
+The examples use Small Town's world and its plugins: the [calendar](/docs/reference/plugins/calendar), [places](/docs/reference/plugins/places), the [cast](/docs/reference/plugins/cast), [jobs](/docs/reference/plugins/jobs) and [messages](/docs/reference/plugins/messages). Take what you need. None of them depends on another.
 
 ## New-day work
 
@@ -55,7 +55,7 @@ const crossword: DataScene = {
 const chat = { id: 'chat', blocked: [{ when: { since: 'cafe.counter#chat', last: true, lt: 2 }, reason: 'You only just talked.' }], effects: [] }
 ```
 
-A message that comes again works the same way, with the messages plugin's own record of when it last arrived: `{ not: messages.since('ava.chat.rain', { lt: 3 }) }`. See [Messages that come again](/docs/plugins/messages#messages-that-come-again).
+A message that comes again works the same way, with the messages plugin's own record of when it last arrived: `{ not: messages.since('ava.chat.rain', { lt: 3 }) }`. See [Messages that come again](/docs/reference/plugins/messages#messages-that-come-again).
 
 ## Deferred pay
 
@@ -90,7 +90,7 @@ const rules: GameRules = {
 }
 ```
 
-The check runs at the end of every turn, so wages earned on a Friday are paid at the end of that Friday's next turn. Once `owed` is 0 the rule does nothing for the rest of the day. No price names `owed`, so the player can't spend it. To show it, read `view.statsById.owed` in your UI. The [jobs page](/docs/plugins/jobs#a-weekly-payday) has the same idea with `rules.onTurn`.
+The check runs at the end of every turn, so wages earned on a Friday are paid at the end of that Friday's next turn. Once `owed` is 0 the rule does nothing for the rest of the day. No price names `owed`, so the player can't spend it. To show it, read `view.statsById.owed` in your UI. The [jobs page](/docs/reference/plugins/jobs#a-weekly-payday) has the same idea with `rules.onTurn`.
 
 ## Who's behind an exit
 
@@ -206,7 +206,7 @@ const people = computed(() => whoIsWhere(runner, view.value))
 </ul>
 ```
 
-Only people the player has met are listed, so the labels don't give away a stranger. To list everyone, read [`peopleOf(runner.state, runner.game)`](/docs/plugins/cast#helpers) instead of `people`, and each one's name with [`entityName`](/docs/reference/entities#entityname). For a line in the room's prose instead of a label, use the cast's `cast.at` condition in a block (see [Who's where](/docs/plugins/places#whos-where)). In the React UI you can also put this in place of the built-in exits, as `Exits` in [`components`](/docs/react/components#components).
+Only people the player has met are listed, so the labels don't give away a stranger. To list everyone, read [`peopleOf(runner.state, runner.game)`](/docs/reference/plugins/cast#helpers) instead of `people`, and each one's name with [`entityName`](/docs/reference/entities#entityname). For a line in the room's prose instead of a label, use the cast's `cast.at` condition in a block (see [Who's where](/docs/reference/plugins/places#whos-where)). In the React UI you can also put this in place of the built-in exits, as `Exits` in [`components`](/docs/react/components#components).
 
 ## Shared header lines across places
 
@@ -228,7 +228,7 @@ const locations = [
 ]
 ```
 
-When the line should vary rather than repeat, make it a set of [variants](/docs/reference/prose#variantmember) and put the same `{ variants: 'street.weather' }` block at the top of each body. A room draws one member each turn, the same one each time the player looks in that turn. [Lines on every place](/docs/plugins/places#lines-on-every-place) on the places page has more.
+When the line should vary rather than repeat, make it a set of [variants](/docs/reference/prose#variantmember) and put the same `{ variants: 'street.weather' }` block at the top of each body. A room draws one member each turn, the same one each time the player looks in that turn. [Lines on every place](/docs/reference/plugins/places#lines-on-every-place) on the places page has more.
 
 ## An art placeholder
 
@@ -316,7 +316,7 @@ When the player can't do something, they see one reason. [`whyNot`](/docs/refere
 3. **Guards.** The game's own [`rules.guard`](/docs/reference/rules#gamerules), then each plugin's hard [guard](/docs/reference/plugins#guards-prices-and-labels), such as the calendar's curfew.
 4. **The command's own checks.** For an action, these are an open scene, a lock on it, its `blocked` entries in the order written, then its `cost`, one stat at a time. For a choice, see [How `choose` checks a choice](/docs/reference/scenes#how-choose-checks-a-choice). A plugin command has its own `whyNot`, such as jobs' "You've done today's shift." before "No shift today."
 
-A command that ignores locks, such as a setting or a [cheat](/docs/plugins/cheats), skips the first three steps. After all that, a guard's soft warning, such as "That would run past dawn.", can still refuse the command, but the button stays pressable (see [guards](/docs/reference/plugins#guards)).
+A command that ignores locks, such as a setting or a [cheat](/docs/reference/plugins/cheats), skips the first three steps. After all that, a guard's soft warning, such as "That would run past dawn.", can still refuse the command, but the button stays pressable (see [guards](/docs/reference/plugins#guards)).
 
 To put your own reason where you want it:
 
@@ -345,4 +345,4 @@ const coffee: ActionDef = {
 
 ## See it in the showcase
 
-In Small Town, Ava's small talk is a [pool of messages](/docs/plugins/messages#messages-that-come-again), drawn each day by a trigger, with a three-day rest for each line. The office's `blocked` entries show the order at work: on a Friday evening "Closed. Back on Monday." is listed first, so it wins over "Closed. Opens tomorrow morning.", which also holds. Ava's content is in [`examples/showcase/src/story/ava.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/ava.ts) and the office's in [`examples/showcase/src/story/office.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/office.ts).
+In Small Town, Ava's small talk is a [pool of messages](/docs/reference/plugins/messages#messages-that-come-again), drawn each day by a trigger, with a three-day rest for each line. The office's `blocked` entries show the order at work: on a Friday evening "Closed. Back on Monday." is listed first, so it wins over "Closed. Opens tomorrow morning.", which also holds. Ava's content is in [`examples/showcase/src/story/ava.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/ava.ts) and the office's in [`examples/showcase/src/story/office.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/office.ts).

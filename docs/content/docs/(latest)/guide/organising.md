@@ -61,7 +61,7 @@ The two folders split the game in different ways on purpose.
 
 What an area is depends on the shape of your game:
 
-- **A place**, in a game with the [places plugin](/docs/plugins/places): the flat, the high street, the café. Its file holds the location, the actions you can do there, its scenes, and the plugin content that belongs to it, such as its shop's vendor or the jobs based there.
+- **A place**, in a game with the [places plugin](/docs/reference/plugins/places): the flat, the high street, the café. Its file holds the location, the actions you can do there, its scenes, and the plugin content that belongs to it, such as its shop's vendor or the jobs based there.
 - **A chapter**, in a linear story: The Letter has `story/ch1.ts`, `ch2.ts` and `ch3.ts`.
 - **A character's arc**, for a story that follows one person across places: Small Town's `story/ava.ts` holds her scenes, her texts, her quest and her achievement.
 

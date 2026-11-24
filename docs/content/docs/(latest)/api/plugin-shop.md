@@ -11,7 +11,7 @@ Generated from the source of `@ifloom/plugin-shop` and `@ifloom/plugin-shop/reac
 
 ### DiscountDef
 
-Type. Explained in [Shop](/docs/plugins/shop#discountdef).
+Type. Explained in [Shop](/docs/reference/plugins/shop#discountdef).
 
 A vendor's daily discounts, which the game declares in its `discounts`. The vendor marks `count` goods down each day, drawn from the save's seed.
 
@@ -30,7 +30,7 @@ type DiscountDef = {
 
 ### GoodDef
 
-Type. Explained in [Shop](/docs/plugins/shop#gooddef).
+Type. Explained in [Shop](/docs/reference/plugins/shop#gooddef).
 
 A good the game declares in a vendor's `goods`, a thing the vendor sells with its price and stock.
 
@@ -55,7 +55,7 @@ type GoodDef = {
 
 ### GoodView
 
-Type. Explained in [Shop](/docs/plugins/shop#goodview).
+Type. Explained in [Shop](/docs/reference/plugins/shop#goodview).
 
 A good as the player sees it, in a `VendorView`'s `goods`.
 
@@ -92,7 +92,7 @@ type GoodView = {
 
 ### Restock
 
-Type. Explained in [Shop](/docs/plugins/shop#restock).
+Type. Explained in [Shop](/docs/reference/plugins/shop#restock).
 
 The interval a good's stock is topped up at, every turn or every calendar day. `'day'` means every turn in a game without the calendar.
 
@@ -103,7 +103,7 @@ type Restock = 'turn' | 'day'
 
 ### Sellable
 
-Type. Explained in [Shop](/docs/plugins/shop#sellable).
+Type. Explained in [Shop](/docs/reference/plugins/shop#sellable).
 
 The data of the `shop/sellable` trait, a thing's price wherever a vendor sells it without a price of its own.
 
@@ -120,7 +120,7 @@ type Sellable = {
 
 ### sellableOf
 
-Function. Explained in [Shop](/docs/plugins/shop#sellableof).
+Function. Explained in [Shop](/docs/reference/plugins/shop#sellableof).
 
 Returns a thing's `shop/sellable` trait, its price where a good gives none. Returns undefined for a thing without the trait.
 
@@ -133,7 +133,7 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 ### shop
 
-Function. Explained in [Shop](/docs/plugins/shop#shop).
+Function. Explained in [Shop](/docs/reference/plugins/shop#shop).
 
 The shop plugin's factory, with its helpers as properties. `shop()` returns the plugin for the game's `plugins`, and
 content calls helpers such as `shop.vendor({ ... })` and `shop.buy('counter', 'food:bun')`.
@@ -160,7 +160,7 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`ShopState`](#s
 
 ### ShopState
 
-Type. Explained in [Shop](/docs/plugins/shop#shopstate).
+Type. Explained in [Shop](/docs/reference/plugins/shop#shopstate).
 
 The restocks a save keeps for the vendors. The stock itself is what each vendor holds, and goods are read from content.
 
@@ -177,7 +177,7 @@ type ShopState = {
 
 ### ShopView
 
-Type. Explained in [Shop](/docs/plugins/shop#shopview).
+Type. Explained in [Shop](/docs/reference/plugins/shop#shopview).
 
 The vendors as the player sees them, in `view.plugins.shop`.
 
@@ -196,7 +196,7 @@ type ShopView = {
 
 ### StockRecord
 
-Type. Explained in [Shop](/docs/plugins/shop#stockrecord).
+Type. Explained in [Shop](/docs/reference/plugins/shop#stockrecord).
 
 The record a save keeps of a vendor's last restock of a good, in `ShopState`'s `stocked`.
 
@@ -215,7 +215,7 @@ type StockRecord = {
 
 ### Vendor
 
-Type. Explained in [Shop](/docs/plugins/shop#vendor-1).
+Type. Explained in [Shop](/docs/reference/plugins/shop#vendor-1).
 
 The data of the `shop/vendor` trait, which makes an entity a vendor the player buys from. The vendor's name, such as "The counter", is the entity's.
 
@@ -238,7 +238,7 @@ type Vendor = {
 
 ### VendorDef
 
-Type. Explained in [Shop](/docs/plugins/shop#vendordef).
+Type. Explained in [Shop](/docs/reference/plugins/shop#vendordef).
 
 A vendor the game declares in `entities` with `shop.vendor()`. It has an entity's fields and the `shop/vendor` trait's side by side.
 
@@ -266,7 +266,7 @@ Plugins add fields of their own to it, which their pages list.
 
 ### vendorOf
 
-Function. Explained in [Shop](/docs/plugins/shop#vendorsof-vendorof-and-vendorref).
+Function. Explained in [Shop](/docs/reference/plugins/shop#vendorsof-vendorof-and-vendorref).
 
 Returns the `shop/vendor` trait of a vendor, named by its id (`'counter'`) or reference, without any good that names
 no thing. Returns undefined for anything that isn't a vendor.
@@ -280,7 +280,7 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 ### vendorsOf
 
-Function. Explained in [Shop](/docs/plugins/shop#vendorsof-vendorof-and-vendorref).
+Function. Explained in [Shop](/docs/reference/plugins/shop#vendorsof-vendorof-and-vendorref).
 
 Returns the references of every vendor in the game now, each entity with the `shop/vendor` trait. Those content
 declares come first in its order, then those made in play.
@@ -294,7 +294,7 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 ### VendorView
 
-Type. Explained in [Shop](/docs/plugins/shop#vendorview).
+Type. Explained in [Shop](/docs/reference/plugins/shop#vendorview).
 
 A vendor as the player sees it, in `view.plugins.shop.vendors`.
 
@@ -381,7 +381,7 @@ type ShopControls = {
 
 ### ShopCounter
 
-Const. Explained in [Shop](/docs/plugins/shop#shopcounter).
+Const. Explained in [Shop](/docs/reference/plugins/shop#shopcounter).
 
 Renders a vendor's goods from a `VendorView`, each with its picture, name, price, stock and a buy button. A
 sell button shows when the vendor buys back and the player holds one.
@@ -419,7 +419,7 @@ type ShopCounterProps = {
 
 ### ShopDialog
 
-Const. Explained in [Shop](/docs/plugins/shop#shopdialog).
+Const. Explained in [Shop](/docs/reference/plugins/shop#shopdialog).
 
 Renders the vendor with this id from `view.plugins.shop.vendors` as a `ShopCounter` in a dialog titled with its name.
 The dialog is closed while `vendorId` is null or names no vendor.
@@ -452,7 +452,7 @@ type ShopDialogProps = {
 
 ### shopUi
 
-Const. Explained in [Shop](/docs/plugins/shop#shopui).
+Const. Explained in [Shop](/docs/reference/plugins/shop#shopui).
 
 The shop plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It renders the `shop` panel, which
 `shop.open(vendor)` opens, as that vendor's `ShopCounter` titled with its name, and adds the plugin's words.
@@ -468,7 +468,7 @@ Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
 
 ### useShop
 
-Function. Explained in [Shop](/docs/plugins/shop#useshop).
+Function. Explained in [Shop](/docs/reference/plugins/shop#useshop).
 
 Returns the shop plugin's view and commands from the running game, or null in a game without the plugin. It re-renders when the view changes.
 

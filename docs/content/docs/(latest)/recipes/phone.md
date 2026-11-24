@@ -2,7 +2,7 @@
 title: "A phone: devices, messages and feeds together"
 description: "Put a smartphone in a game from three plugins and some content: an app per message channel and feed with unread badges, contacts, a gallery of photos, and apps of your own."
 ---
-A phone in a game set in the present day is three plugins working together. The [devices](/docs/plugins/devices) plugin draws a device with apps on it, the [messages](/docs/plugins/messages) plugin keeps the texts, and the [feed](/docs/plugins/feed) plugin keeps the social posts. None of them knows about the others. You put them together with content: a device called `phone`, and an app on it for each channel and each feed.
+A phone in a game set in the present day is three plugins working together. The [devices](/docs/reference/plugins/devices) plugin draws a device with apps on it, the [messages](/docs/reference/plugins/messages) plugin keeps the texts, and the [feed](/docs/reference/plugins/feed) plugin keeps the social posts. None of them knows about the others. You put them together with content: a device called `phone`, and an app on it for each channel and each feed.
 
 This page builds the phone in the [showcase](/docs/guide/showcase), which has:
 
@@ -16,7 +16,7 @@ The whole of it is in [`examples/showcase/src/world/phone.ts`](https://github.co
 
 ## The plugins
 
-List the three packages in your game's `package.json`, beside the engine (see [Adding one](/docs/plugins#adding-one)):
+List the three packages in your game's `package.json`, beside the engine (see [Adding one](/docs/reference/plugins#adding-one)):
 
 ```json
 {
@@ -29,7 +29,7 @@ List the three packages in your game's `package.json`, beside the engine (see [A
 }
 ```
 
-Then add them to the game's `plugins`. Contacts come from the [cast](/docs/plugins/cast), so add that too if you want them:
+Then add them to the game's `plugins`. Contacts come from the [cast](/docs/reference/plugins/cast), so add that too if you want them:
 
 ```ts
 import { loadGame, type Content } from '@ifloom/engine'
@@ -107,10 +107,10 @@ export const phone: Content = {
 
 Each piece does one thing:
 
-- **The device.** `frame: 'phone'` tells a UI to draw it as a phone (the React UI makes its dialog narrower), and `sidebar: true` offers it from the side column. Add a `wallpaper` for a picture behind the home screen. See [`DeviceDef`](/docs/plugins/devices#devicedef).
-- **A messages app.** Its section `{ plugin: 'messages', with: { channel } }` doesn't hold any messages. It names the messages plugin's slice of the view and the channel to show, and the UI draws that. Its badge asks the messages plugin's `messages/unread` value for that channel. Write the messages themselves wherever the story needs them, in `data.messages.messages` with `channel: 'texts'` (see [Messages](/docs/plugins/messages)).
-- **A social app.** It's the same as a messages app, with the feed plugin's section and its `feed/unread` value. Posts go in `data.feed.posts` with `feed: 'social'` (see [Feed](/docs/plugins/feed)).
-- **Contacts.** `{ contacts: true }` lists the cast's people the player has [met](/docs/plugins/cast#meeting-people) who have a [`call`](/docs/plugins/cast#calls), each with a Call button. Without the cast it's empty.
+- **The device.** `frame: 'phone'` tells a UI to draw it as a phone (the React UI makes its dialog narrower), and `sidebar: true` offers it from the side column. Add a `wallpaper` for a picture behind the home screen. See [`DeviceDef`](/docs/reference/plugins/devices#devicedef).
+- **A messages app.** Its section `{ plugin: 'messages', with: { channel } }` doesn't hold any messages. It names the messages plugin's slice of the view and the channel to show, and the UI draws that. Its badge asks the messages plugin's `messages/unread` value for that channel. Write the messages themselves wherever the story needs them, in `data.messages.messages` with `channel: 'texts'` (see [Messages](/docs/reference/plugins/messages)).
+- **A social app.** It's the same as a messages app, with the feed plugin's section and its `feed/unread` value. Posts go in `data.feed.posts` with `feed: 'social'` (see [Feed](/docs/reference/plugins/feed)).
+- **Contacts.** `{ contacts: true }` lists the cast's people the player has [met](/docs/reference/plugins/cast#meeting-people) who have a [`call`](/docs/reference/plugins/cast#calls), each with a Call button. Without the cast it's empty.
 - **The gallery.** `{ things: { of: 'photo' } }` lists the `photo` things `'you'` hold, newest first. The phone's content declares the `photo` kind itself, since neither the engine nor these plugins has one.
 
 The phone's own badge, on the sidebar button, is every app's count added up, so a new text and two new posts show 3.
@@ -144,7 +144,7 @@ export const evening: Content = { data: { messages: { messages: burst } } }
 
 The first text arrives when the phase turns to evening. The second starts waiting in the same command, and arrives 1.5 seconds later. Then the third waits 2.5 seconds. Each raises a notice, and the newest replaces the one before while it's unseen, so the player sees one notice with the latest line.
 
-The waits run on the engine's timers, so a UI's clock has to send `tick` commands. The React UI and [`startClock`](/docs/browser#startclock) do that whenever a timer runs. See [Messages that take a moment](/docs/plugins/messages#messages-that-take-a-moment).
+The waits run on the engine's timers, so a UI's clock has to send `tick` commands. The React UI and [`startClock`](/docs/browser#startclock) do that whenever a timer runs. See [Messages that take a moment](/docs/reference/plugins/messages#messages-that-take-a-moment).
 
 ## Taking photos
 
@@ -156,11 +156,11 @@ import type { EffectRef } from '@ifloom/engine'
 const snap: EffectRef = { create: 'photo', with: { id: 'ava', name: 'Ava at work', image: 'photo/ava.svg' }, at: 'player' }
 ```
 
-The inventory would list photos too. To keep them in the phone only, list the kinds the inventory shows in its [`data.inventory.kinds`](/docs/plugins/inventory).
+The inventory would list photos too. To keep them in the phone only, list the kinds the inventory shows in its [`data.inventory.kinds`](/docs/reference/plugins/inventory).
 
 ## An app of your own
 
-Any app is built from the same [sections](/docs/plugins/devices#section), so an app of your own is another `AppDef` on the phone. The showcase's Camera is one section of actions. It can photograph Ava or Sam while they're in the room, and post the latest photo once a day:
+Any app is built from the same [sections](/docs/reference/plugins/devices#section), so an app of your own is another `AppDef` on the phone. The showcase's Camera is one section of actions. It can photograph Ava or Sam while they're in the room, and post the latest photo once a day:
 
 ```ts
 import type { AppDef } from '@ifloom/plugin-devices'
@@ -202,7 +202,7 @@ const notes: AppDef = { id: 'notes', name: 'Notes', icon: 'notes', on: 'phone', 
 
 Add them to the end of `apps`. The camera's buttons are priced and refused like any action, and one is done as `{ type: 'action', id: 'devices/photo-ava' }`, so give each an id no other app's action has. Opening an app is free and doesn't leave the room, so the camera at the café photographs whoever is at the café.
 
-Other apps follow the same pattern. A bank is a `{ blocks }` section that prints a balance, and a shop that delivers is a section of actions. [Writing apps](/docs/plugins/devices#writing-apps) has the full list of sections.
+Other apps follow the same pattern. A bank is a `{ blocks }` section that prints a balance, and a shop that delivers is a section of actions. [Writing apps](/docs/reference/plugins/devices#writing-apps) has the full list of sections.
 
 ## No phone at work
 
@@ -247,7 +247,7 @@ Take out what your game doesn't need:
 - **No feed.** Drop `feed()` from `plugins`, the social apps and `data.feed`. Leave nothing behind that names the feed plugin: an app whose badge asks `feed/unread` or whose section names `feed` is reported when the game loads, as `no plugin value named "feed/unread"` or `the game has no plugin named "feed"`.
 - **No gallery.** Drop the Gallery app. If nothing else makes photos, drop the `photo` kind too. A `things` section or a `create` naming a kind the game doesn't declare is reported as `unknown kind "photo"`.
 - **No contacts.** Drop the Contacts app. In a game without the cast it's always empty, so drop it there.
-- **No messages.** Then it isn't much of a phone. A device with your own apps needs only the devices plugin, as the [laptop](/docs/plugins/devices#a-worked-example) on the devices page shows.
+- **No messages.** Then it isn't much of a phone. A device with your own apps needs only the devices plugin, as the [laptop](/docs/reference/plugins/devices#a-worked-example) on the devices page shows.
 
 ## Drawing the phone
 
@@ -349,12 +349,12 @@ const feed = (section: SectionView & { type: 'plugin' }) => view.value.plugins.f
 </template>
 ```
 
-These draw only the words. A message's `beats` and a post's `image` and `video` hold its pictures and clips, and a message's `replies` are buttons like any choice, each sending its `command`. The [Messages](/docs/plugins/messages#the-view) and [Feed](/docs/plugins/feed#the-view) pages list what each view holds, and [Building UI for plugins](/docs/recipes/plugin-ui) shows the same approach for other plugins.
+These draw only the words. A message's `beats` and a post's `image` and `video` hold its pictures and clips, and a message's `replies` are buttons like any choice, each sending its `command`. The [Messages](/docs/reference/plugins/messages#the-view) and [Feed](/docs/reference/plugins/feed#the-view) pages list what each view holds, and [Building UI for plugins](/docs/recipes/plugin-ui) shows the same approach for other plugins.
 
 ## Gotchas
 
 - **Channels, feeds and apps share one list of ids.** The `.map` gives each app its channel's or feed's id, so a channel and a feed with the same id, or an app of yours called `contacts`, replace one another. Give each its own id.
 - **A badge names its channel or feed.** Renaming a channel's id means renaming it in its app's badge and section too. The `.map` above does that for you.
-- **Messages and posts arrive only after a command.** One whose `when` holds on a new game arrives after the player's first command. See [Messages](/docs/plugins/messages#gotchas).
+- **Messages and posts arrive only after a command.** One whose `when` holds on a new game arrives after the player's first command. See [Messages](/docs/reference/plugins/messages#gotchas).
 - **A lock on `'*'` shuts the phone too.** An intro that locks everything greys out every app, unless its `except` lists `devices/open`.
 - **Problems are pinned on the phone's content.** With `name: 'phone'` on it, the loader reports a broken app as `phone · apps gallery · …`, so you know where to look.

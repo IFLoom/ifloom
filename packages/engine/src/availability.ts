@@ -1,6 +1,6 @@
 import { stringOf } from './strings.ts'
-import { sceneContext } from './context.ts'
-import { bakedScene, type Game, type SceneView } from './game.ts'
+import { sceneOf, type Game } from './game.ts'
+import { defaultRuntime, renderScene, type RenderedScene } from './scene.ts'
 import { pluginGuards, pluginsWatch } from './plugin.ts'
 import { commandContext, commandEntry, featureContext } from './core.ts'
 import { refusals } from './features/registry.ts'
@@ -29,13 +29,13 @@ export function whyNot(state: GameState, game: Game, command: CommandRef): strin
 /** A rendering of this state's open scene, done when first asked for. `picks` collects a data scene's new pool picks. */
 export function rendering(state: GameState, game: Game, picks?: Record<string, string>): Rendering {
   let done = false
-  let view: SceneView | undefined
+  let view: RenderedScene | undefined
   return {
     scene: () => {
       if (!done) {
         done = true
-        const scene = state.sceneId ? bakedScene(game, state.sceneId) : undefined
-        view = scene?.render(state, sceneContext(state, game, picks))
+        const scene = state.sceneId ? sceneOf(game, state.sceneId) : undefined
+        view = scene && renderScene(scene, state, defaultRuntime(game), picks)
       }
       return view
     },

@@ -10,30 +10,21 @@
 import { amountOf } from './amount.ts'
 import { reasonOf, stringOf } from './strings.ts'
 import { pluginActions, pluginCommand, pluginPrices, pluginScene, pluginsWatch, pluginViews } from './plugin.ts'
-import { defaultRuntime, renderScene, type RenderedScene } from './scene.ts'
+import { defaultRuntime, renderScene } from './scene.ts'
 import { blockBeats } from './beats.ts'
 import { lineSpeakers, speakerOf, type SpeakerView } from './speakers.ts'
 import { effectsIn, rendering, warningIn, whyNotIn, type Rendering } from './availability.ts'
 import { formatStat, statOf } from './features/stats.ts'
 import { holds } from './condition.ts'
 import { lockIn, lockedOut } from './locks.ts'
-import { bakedScene, type ActionDef, type Blocked, type Game, type SceneMedia } from './game.ts'
+import { sceneOf, type ActionDef, type Blocked, type Game, type SceneMedia } from './game.ts'
 import { actionOf } from './action.ts'
 import { costEffects, runsAsAction } from './features/actions.ts'
 import { artSrc, beatsOfParts, inlineMarkup, mediaType, parseBeats, videoView, type BodyPart, type InlineSpan, type SceneBeat } from './sceneBody.ts'
-import {
-  mediaMarkup,
-  poolPick,
-  resolveMedia,
-  resolvePoolMarkup,
-  type HotspotView,
-  type PictureDef,
-  type PictureLayerView,
-  type PictureView,
-} from './features/media.ts'
+import { mediaMarkup, poolPick, resolveMedia, type HotspotView, type PictureDef, type PictureLayerView, type PictureView } from './features/media.ts'
 import { audioTracks, audioView, type AudioView } from './features/audio.ts'
 import { minigameOf } from './features/minigames.ts'
-import { withUi, type BlockUi, type ChoiceUi, type SceneUi, type Ui } from './features/ui.ts'
+import { withUi, type ChoiceUi, type SceneUi, type Ui } from './features/ui.ts'
 import { commandEntry, featureContext } from './core.ts'
 import type { Command, Effect, GameState } from './types.ts'
 import type { OpenPanel } from './features/panels.ts'
@@ -230,17 +221,15 @@ function playingScene(state: GameState, game: Game, under: ScreenScene, drawing:
 }
 
 /**
- * A body's beats, with media that opens or closes it around them. Media with no
- * `at` in a hand-built scene's list goes at the end, as it always has; a data
- * scene's `{ media }` blocks are already in the body, in place. `body` is a
- * data scene's parts, or a hand-built scene's text with where its hinted
- * blocks start.
+ * A body's beats, from its parts, with the media that opens (`lead`) or closes
+ * (`end`) it around them. A `{ media }` block with no `at` is already among
+ * the parts, in place.
  */
 function beatsOf(
   state: GameState,
   game: Game,
   owner: string,
-  body: { parts: readonly BodyPart[]; fresh?: number } | { text: string; hints?: readonly { at: number; ui: Ui<BlockUi> }[] },
+  body: { parts: readonly BodyPart[]; fresh?: number },
   media: readonly SceneMedia[] | undefined,
   picks: Record<string, string>,
 ): { beats: SceneBeat[]; fresh: number } {
@@ -250,9 +239,9 @@ function beatsOf(
   })
   const find = lineSpeakers(state, game)
   const lead = placed.filter((item) => item.at === 'lead').flatMap((item) => item.beats)
-  const made = 'parts' in body ? beatsOfParts(body.parts, find) : { beats: parseBeats(body.text, body.hints, find), starts: [] }
+  const made = beatsOfParts(body.parts, find)
   // Where the part the flow's last step brought first starts among the beats, after the lead media.
-  const from = 'parts' in body && body.fresh ? (made.starts[body.fresh] ?? made.beats.length) : 0
+  const from = body.fresh ? (made.starts[body.fresh] ?? made.beats.length) : 0
   return {
     beats: [...lead, ...made.beats, ...placed.filter((item) => item.at !== 'lead').flatMap((item) => item.beats)],
     fresh: from ? lead.length + from : 0,
@@ -267,7 +256,7 @@ function beatsOf(
  */
 export function panelOf(state: GameState, game: Game): OpenPanel | null {
   if (state.panel) return state.panel
-  const held = state.sceneId ? bakedScene(game, state.sceneId)?.panel : undefined
+  const held = state.sceneId ? sceneOf(game, state.sceneId)?.panel : undefined
   return held ? { panel: held.panel, with: { ...held.with }, scene: state.sceneId! } : null
 }
 
@@ -472,7 +461,7 @@ type Dialogue = {
 /** The open scene as the screen draws it, and what it puts on the audio channels. */
 function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogue | null {
   if (!state.sceneId) return null
-  const scene = bakedScene(game, state.sceneId)
+  const scene = sceneOf(game, state.sceneId)
   if (!scene) {
     return {
       scene: {
@@ -490,22 +479,9 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
       picture: null,
     }
   }
-  // Markdown is laid over legacy scenes by `bake` in the content pack. Doing it
-  // again here would overwrite a declarative scene's composed body with
-  // whatever single block happens to share the scene's id.
   const rendered = drawing.rendered.scene()!
-  const { parts, fresh } = rendered as Partial<RenderedScene>
-  // A hand-built scene's body may still ask pools for files; a data scene's has had them filled in.
-  const body = parts ? (rendered.body ?? '') : resolvePoolMarkup(rendered.body ?? '', state, game, state.sceneId, 'body', featureContext(), drawing.picks)
-  // A block's hints say where it starts in the body; a hand-built body whose pools were just filled has none.
-  const drawn = beatsOf(
-    state,
-    game,
-    state.sceneId,
-    parts ? { parts, fresh } : { text: body, hints: body === rendered.body ? rendered.blockUi : undefined },
-    rendered.media,
-    drawing.picks,
-  )
+  const body = rendered.body
+  const drawn = beatsOf(state, game, state.sceneId, rendered, rendered.media, drawing.picks)
   const beats = drawn.beats
   const choices: ScreenChoice[] = rendered.choices
     .filter((choice) => choice.visible !== false)
@@ -535,25 +511,22 @@ function renderDialogue(state: GameState, game: Game, drawing: Drawing): Dialogu
     })
   // Choices the prose holds inline are drawn there, and leave the list. A picture's hotspot may still name one.
   // A choice picked earlier in the visit is named by its words, as the flow showed it.
-  const labels = new Map([
-    ...Object.entries((rendered as Partial<RenderedScene>).picked ?? {}),
-    ...rendered.choices.map((choice) => [choice.id, choice.label] as const),
-  ])
+  const labels = new Map([...Object.entries(rendered.picked), ...rendered.choices.map((choice) => [choice.id, choice.label] as const)])
   const inline = inlineBeats(beats, choices, (id) => labels.get(id), state, game)
-  const named = rendered.speaker ?? scene.speaker
+  const named = scene.speaker
   const speaker = named ? speakerOf(state, game, named) : null
   return {
     audio: rendered.audio,
     scene: {
       id: state.sceneId,
       key: `scene:${state.sceneId}`,
-      title: rendered.title ?? scene.title ?? pluginScene(game, state)?.title ?? game.title,
+      title: scene.title ?? pluginScene(game, state)?.title ?? game.title,
       body,
       beats: inline.beats,
       fresh: drawn.fresh,
-      tags: rendered.tags ?? scene.tags ?? [],
+      tags: scene.tags ?? [],
       speaker,
-      image: rendered.image ?? speaker?.image ?? null,
+      image: speaker?.image ?? null,
       ...withUi(scene.ui),
     },
     choices: inline.offered,

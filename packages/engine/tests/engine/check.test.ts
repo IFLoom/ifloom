@@ -5,7 +5,6 @@ import { definePlugin } from '../../src/plugin.ts'
 import { proseStore } from '../../src/prose.ts'
 import { startingState } from '../../src/intake.ts'
 import type { Game } from '../../src/game.ts'
-import { baked } from '../fixtures/baked.ts'
 import { fixture, loadWhole } from '../fixtures/town.ts'
 import { problemsOf } from '../fixtures/checked.ts'
 
@@ -98,17 +97,18 @@ describe('checkGame', () => {
   })
 
   it('renders every scene against each probe, and reports one that throws', () => {
+    // The game's own condition, which only a render asks, throws from turn 3.
+    const town = fixture({
+      conditions: {
+        dark: (state) => {
+          if (state.turn >= 3) throw new Error('too dark')
+          return true
+        },
+      },
+    })
     const game: Game = {
-      ...fixture(),
-      scenes: [
-        ...fixture().scenes,
-        baked({
-          id: 'cellar',
-          render: () => {
-            throw new Error('too dark')
-          },
-        }),
-      ],
+      ...town,
+      scenes: [...town.scenes, { id: 'cellar', body: [{ text: 'The cellar.', when: { 'game/dark': true } }], choices: [] }],
     }
     expect(problemsOf(game)).toEqual([])
     const later = { ...startingState(game), turn: 3 }

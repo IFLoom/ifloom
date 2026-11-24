@@ -272,12 +272,12 @@ export function audioTracks(state: GameState, game: Game, scene: Record<string, 
  * Record what each background channel has started playing, and when. Called
  * after every command with what `screen` resolved (`screen.audio.tracks`), so
  * a shuffled playlist draws its order from the turn it started, and replays
- * exactly. Without `tracks`, the open scene is rendered to work them out.
+ * exactly. Without `tracks`, they are worked out from the open scene's `audio`.
  */
 export function noteStarted(state: GameState, game: Game, tracks: Record<string, string | null> | undefined, cx: FeatureContext): GameState {
   if (!game.audio) return state
   const audio = state.audio ?? emptyAudio()
-  const now = tracks ?? resolve(state, game, cx.sceneView(state, game)?.audio, cx)
+  const now = tracks ?? resolve(state, game, state.sceneId ? cx.sceneOf(game, state.sceneId)?.audio : undefined, cx)
   let started = audio.started
   for (const [channel, track] of Object.entries(now)) {
     if (track === null) {

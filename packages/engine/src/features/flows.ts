@@ -279,11 +279,10 @@ export function stepped(state: GameState, scene: string, ...steps: FlowStep[]): 
   return { ...state, flow: { ...flow, path: [...flow.path, ...steps] } }
 }
 
-/** The open data scene, if it has a flow that can wait: a minigame or a panel somewhere in it. */
+/** The open scene, if it has a flow that can wait: a minigame or a panel somewhere in it. */
 function waitingScene(state: GameState, game: Game): DataScene | undefined {
   const scene = state.sceneId ? game.scenes.find((entry) => entry.id === state.sceneId) : undefined
-  if (!scene || !('body' in scene) || !Array.isArray(scene.body)) return undefined
-  return canWait(scene as DataScene) ? (scene as DataScene) : undefined
+  return scene && canWait(scene) ? scene : undefined
 }
 
 const waits = new WeakMap<DataScene, boolean>()
@@ -453,7 +452,7 @@ export const flowsFeature = defineFeature<FlowsShape>({
     },
   },
   check: (game, tools) => {
-    for (const scene of game.scenes) if ('body' in scene && Array.isArray(scene.body)) checkFlow(scene as DataScene, tools)
+    for (const scene of game.scenes) checkFlow(scene, tools)
   },
   resolve: () => ({
     jump: (ref) => [`jumps to point "${ref.jump}", but a jump only works as a choice's effect in the scene that has that point`],

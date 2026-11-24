@@ -14,9 +14,9 @@
 import { stringOf } from './strings.ts'
 import { holds } from './condition.ts'
 import { buildEffects, customCall, customCondition, customValue } from './custom.ts'
-import { bakedScene } from './game.ts'
+import { sceneOf } from './game.ts'
 import { actionOf } from './action.ts'
-import { sceneContext } from './context.ts'
+import { defaultRuntime, renderScene } from './scene.ts'
 import { fillTokens } from './prose.ts'
 import { amountOf } from './amount.ts'
 import {
@@ -58,9 +58,9 @@ export function featureContext(): FeatureContext {
     fillTokens,
     pluginAudio,
     statModifiers: (state, game) => pluginStatModifiers(game, state),
-    bakedScene,
+    sceneOf,
     actionOf: (state, game, id) => actionOf(state, game, id),
-    sceneView: (state, game) => (state.sceneId ? bakedScene(game, state.sceneId)?.render(state, sceneContext(state, game)) : undefined),
+    renderScene: (state, game, scene) => renderScene(scene, state, defaultRuntime(game)),
   })
 }
 

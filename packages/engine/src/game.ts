@@ -2,17 +2,13 @@ import type { Plugin, PluginEntry } from './plugin.ts'
 import type { Condition } from './condition.ts'
 import type { EffectRef } from './custom.ts'
 import type { CommandRef } from './calls.ts'
-import type { PictureDef } from './features/media.ts'
 import type { ActionCost } from './features/actions.ts'
-import type { ScenePanel } from './features/panels.ts'
-import type { StoryletFields } from './features/scenes.ts'
-import type { MinigameSceneFields } from './features/minigames.ts'
-import type { BlockUi, ChoiceUi, SceneUi, Ui } from './features/ui.ts'
+import type { ChoiceUi, Ui } from './features/ui.ts'
 import type { FeatureGame } from './features/registry.ts'
 import type { VideoFlags } from './sceneBody.ts'
-import { bakeScene, isDataScene, type DataScene } from './scene.ts'
+import type { DataScene } from './scene.ts'
 import type { MigrationTools } from './intake.ts'
-import type { Effect, Flat, KvValue, GameState } from './types.ts'
+import type { Effect, Flat, GameState } from './types.ts'
 
 export type { SettingDef } from './features/settings.ts'
 export type { StoryletFields } from './features/scenes.ts'
@@ -134,9 +130,8 @@ export type SceneChoice = {
 }
 
 /**
- * A picture or a video in a scene's body, as a `{ media }` block or in
- * `SceneView.media`. Give a file as `src`, or ask a pool for one with `pool`
- * and `tags`.
+ * A picture or a video in a scene's body, as a `{ media }` block. Give a file
+ * as `src`, or ask a pool for one with `pool` and `tags`.
  */
 export type SceneMedia = {
   src?: string
@@ -150,62 +145,12 @@ export type SceneMedia = {
   /**
    * Where it sits. Left out, a `{ media }` block sits where it is in the body,
    * in order with the prose. `lead` opens the scene, which is where an
-   * establishing still belongs; `end` follows the body. In a hand-built
-   * scene's `media`, left out means `end`.
+   * establishing still belongs; `end` follows the body.
    */
   at?: 'lead' | 'end'
   /** Draw it as a video. A `.mp4` or `.webm` file is one anyway. */
   video?: boolean
 } & VideoFlags
-
-export type SceneView = {
-  title?: string
-  speaker?: string
-  /** Words the UI can style the scene by: `['letter']`, `['flashback']`. The engine gives them no meaning. */
-  tags?: string[]
-  /** The big picture to draw with it, through `artSrc`. Left out, the speaker's. */
-  image?: string
-  /** The scene's prose, with its markup. Left out, the scene has no body text. */
-  body?: string
-  media?: SceneMedia[]
-  /** A layered picture with hotspots, drawn over the scene. See `view.scene.picture`. */
-  picture?: PictureDef
-  /** What plays on background channels while the scene is open, by channel. Null silences one. */
-  audio?: Record<string, string | null>
-  /**
-   * Where each block that has `ui` hints starts in `body`, by character, for
-   * the screen to put them on the beats. A data scene's render fills it; a
-   * hand-built scene leaves it out.
-   */
-  blockUi?: { at: number; ui: Ui<BlockUi> }[]
-  choices: SceneChoice[]
-}
-
-/** What a hand-built scene's `render` can read besides the state. */
-export type SceneCtx = {
-  /** A key in the player's kv store, or with `of: 'storyline:<id>'`, a storyline's. */
-  kv: (key: string, of?: string) => KvValue | undefined
-  /**
-   * Where the render's new pool picks go, when the engine is drawing a screen
-   * and wants them recorded. Pass it to `renderScene` when a hand-built scene
-   * wraps a data scene. Undefined otherwise.
-   */
-  picks?: Record<string, string>
-}
-
-export type Scene = StoryletFields &
-  MinigameSceneFields & {
-    id: string
-    title?: string
-    speaker?: string
-    /** Words the UI can style the scene by: `['letter']`, `['flashback']`. The engine gives them no meaning. */
-    tags?: string[]
-    /** A panel open for as long as the scene is. See `DataScene.panel`. */
-    panel?: ScenePanel
-    /** Presentation hints for the UI, carried to `view.scene.ui` as written. See `SceneUi`. */
-    ui?: Ui<SceneUi>
-    render: (state: GameState, ctx: SceneCtx) => SceneView
-  }
 
 /** Prose and variants members the declarative scenes draw on. */
 export type ProseStore = {
@@ -317,15 +262,4 @@ export type Game = Flat<CoreGame & FeatureGame>
 /** The scene with this id, as content declares it, or undefined. */
 export function sceneOf(game: Game, id: string): DataScene | undefined {
   return game.scenes.find((scene) => scene.id === id)
-}
-
-/**
- * A scene ready to render, by id: the data scene baked the first time it is
- * asked for. Internal; the engine's own tests also hand in scenes already
- * baked, which pass through as they are.
- */
-export function bakedScene(game: Game, id: string): Scene | undefined {
-  const found: Scene | DataScene | undefined = game.scenes.find((scene) => scene.id === id)
-  if (!found) return undefined
-  return isDataScene(found) ? bakeScene(game, found) : found
 }

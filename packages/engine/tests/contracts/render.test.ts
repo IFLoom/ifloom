@@ -1,20 +1,21 @@
 import { callOf } from '../../src/custom.ts'
 import { describe, expect, it } from 'vitest'
-import type { Game, Scene } from '../../src/game.ts'
+import type { Game } from '../../src/game.ts'
 import { definePlugin } from '../../src/plugin.ts'
+import type { DataScene } from '../../src/scene.ts'
 import { apply } from '../../src/reduce.ts'
 import { createRunner } from '../../src/runner.ts'
 import { memoryDriver } from '../../src/drivers.ts'
 import { profile } from '../../src/profile.ts'
 import { screen, pictureView } from '../../src/screen.ts'
 import type { GameState } from '../../src/types.ts'
-import { baked } from '../fixtures/baked.ts'
 import { begin, fixture } from '../fixtures/town.ts'
 
 /**
  * A state's open scene is rendered once per screen of it, not once per
- * question asked about it. These tests count renders by wrapping each scene's
- * `render`, keyed by the state object it was handed.
+ * question asked about it. These tests count renders by the game's own
+ * condition on each scene's one block, which a render asks once, keyed by the
+ * state object it was handed.
  */
 
 /** The tide: guards and prices every command, so each choice's effects are asked for, and draws a pool on its own picture. */
@@ -34,35 +35,36 @@ const tide = definePlugin<{ height: number }>({
 function counted(): { game: Game; renders: Map<GameState, number> } {
   const renders = new Map<GameState, number>()
   const count = (state: GameState) => renders.set(state, (renders.get(state) ?? 0) + 1)
-  const porch: Scene = {
+  // Each scene's one block asks it, so it is asked once per render.
+  const rendered = { 'game/rendered': true } as const
+  const porch: DataScene = {
     id: 'porch',
-    render: (state) => {
-      count(state)
-      return {
-        body: 'The porch.\n\n[[img:@door|red]]',
-        audio: { music: 'calm' },
-        choices: [
-          { id: 'knock', label: 'Knock', effects: [{ kv: 'knocked', by: 1 }] },
-          { id: 'wade', label: 'Wade in', effects: [{ 'tide/rise': true }] },
-          { id: 'in', label: 'Go in', effects: [{ scene: 'hall' }] },
-        ],
-      }
-    },
+    body: [{ text: 'The porch.\n\n[[img:@door|red]]', when: rendered }],
+    audio: { music: 'calm' },
+    choices: [
+      { id: 'knock', label: 'Knock', effects: [{ kv: 'knocked', by: 1 }] },
+      { id: 'wade', label: 'Wade in', effects: [{ 'tide/rise': true }] },
+      { id: 'in', label: 'Go in', effects: [{ scene: 'hall' }] },
+    ],
   }
-  const hall: Scene = {
+  const hall: DataScene = {
     id: 'hall',
-    render: (state) => {
-      count(state)
-      return { body: 'The hall.', choices: [{ id: 'out', label: 'Go out', effects: [{ scene: 'porch' }] }] }
-    },
+    body: [{ text: 'The hall.', when: rendered }],
+    choices: [{ id: 'out', label: 'Go out', effects: [{ scene: 'porch' }] }],
   }
   const town = fixture({
     // Never stops anything, but asks every choice what it would apply.
     locks: [{ when: { kv: 'at', is: 'house' }, deny: ['choose'], effect: 'tide/ebb', reason: 'The tide is out.' }],
+    conditions: {
+      rendered: (state) => {
+        count(state)
+        return true
+      },
+    },
   })
   const game: Game = {
     ...town,
-    scenes: [...town.scenes, baked(porch), baked(hall)],
+    scenes: [...town.scenes, porch, hall],
     plugins: [tide],
     media: {
       pools: {
@@ -89,7 +91,7 @@ describe('one render per state', () => {
       ['wade', 1, ['the tide rises']],
       ['in', 1, []],
     ])
-    expect(shown.picks).toEqual({ 'door|red|porch|body.0': 'door/red.jpg', 'sea||tide|picture:0': 'sea/calm.jpg' })
+    expect(shown.picks).toEqual({ 'door|red|porch|0.0': 'door/red.jpg', 'sea||tide|picture:0': 'sea/calm.jpg' })
     expect(shown.audio.tracks).toEqual({ music: 'calm', ambience: null })
   })
 
@@ -106,7 +108,7 @@ describe('one render per state', () => {
       state = result.state
     }
     // What the screens showed was recorded, the plugin's picture included.
-    expect(state.media.picks).toEqual({ 'door|red|porch|body.0': 'door/red.jpg', 'sea||tide|picture:0': 'sea/calm.jpg' })
+    expect(state.media.picks).toEqual({ 'door|red|porch|0.0': 'door/red.jpg', 'sea||tide|picture:0': 'sea/calm.jpg' })
     expect(state.audio.started.music).toEqual({ track: 'calm', turn: state.turn })
   })
 

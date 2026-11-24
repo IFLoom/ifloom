@@ -547,19 +547,9 @@ export function beatsOfParts(parts: readonly BodyPart[], find: SpeakerFinder = b
 }
 
 /**
- * A body's beats, in order. `hints` puts each block's `ui` on the first beat
- * that block made: `at` is where the block starts in `body`, by character, as
- * a hand-built scene's render gives it in `SceneView.blockUi`. `find` says
- * who a line under `@id` is; left out, `@you` and `@player` are the player's.
+ * A body's beats, in order. `find` says who a line under `@id` is; left out,
+ * `@you` and `@player` are the player's.
  */
-export function parseBeats(body: string, hints?: readonly { at: number; ui: Ui<BlockUi> }[], find?: SpeakerFinder): SceneBeat[] {
-  const sorted = [...(hints ?? [])].sort((a, b) => a.at - b.at)
-  if (!sorted.length) return beatsOfParts([{ text: body }], find).beats
-  // Cut the body where each hinted block starts, so its hints go on the first beat it made.
-  const cuts = [0, ...sorted.map((hint) => hint.at)]
-  const parts: BodyPart[] = cuts.map((from, index) => {
-    const text = body.slice(from, cuts[index + 1] ?? body.length)
-    return index === 0 ? { text } : { text, ui: sorted[index - 1].ui }
-  })
-  return beatsOfParts(parts, find).beats
+export function parseBeats(body: string, find?: SpeakerFinder): SceneBeat[] {
+  return beatsOfParts([{ text: body }], find).beats
 }

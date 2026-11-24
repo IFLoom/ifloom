@@ -422,12 +422,11 @@ import { parseBeats } from '@ifloom/engine'
 
 function parseBeats(
   body: string,
-  hints?: readonly { at: number; ui: Ui<BlockUi> }[],
   find?: (id: string) => { who: 'character' | 'player'; speaker?: EntityRef; name: string },
 ): SceneBeat[]
 ```
 
-The parser described above. `hints` puts each block's `ui` on the first beat of the block that starts at its `at`, a character offset into `body`. `find` says who a line under `@id` is, and the name to show. Left out, `@you` and `@player` are the player's, under `You`, and any other id is a character's under the id, with no `speaker`. [`view`](/docs/reference/view) already calls it, so you only need it to parse text outside a scene. It leaves `[[act:]]`, `[[tip:]]`, `[[ui:]]` and the stars of bold and italics in the text: the view draws them, and only the view knows the choices and the prose.
+The parser described above. `find` says who a line under `@id` is, and the name to show. Left out, `@you` and `@player` are the player's, under `You`, and any other id is a character's under the id, with no `speaker`. [`view`](/docs/reference/view) already calls it, so you only need it to parse text outside a scene. It leaves `[[act:]]`, `[[tip:]]`, `[[ui:]]` and the stars of bold and italics in the text: the view draws them, and only the view knows the choices and the prose.
 
 ## styledBeats
 

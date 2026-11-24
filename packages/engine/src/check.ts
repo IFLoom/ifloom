@@ -55,8 +55,9 @@ export function describeProblem(problem: Problem): string {
 /**
  * Everything wrong with a game's content, and every file it names. Runs on
  * any `Game`, hand-built or loaded. Give `probes` to also render every scene
- * against each state, which is the only way to look inside a hand-built
- * scene. A hand-built game's problems name the pack `game`.
+ * against each state, so a scene that throws for one (through the game's own
+ * conditions or values) is reported. A hand-built game's problems name the
+ * pack `game`.
  */
 export function checkGame(game: Game, options: { probes?: readonly Probe[] } = {}): Checked {
   return checkContent(game, options.probes ?? [], () => 'game')

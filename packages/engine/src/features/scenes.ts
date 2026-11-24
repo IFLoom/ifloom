@@ -4,11 +4,9 @@
  * effect draws at random from a named set (ADR 0005).
  */
 import { stringOf } from '../strings.ts'
-import { sceneContext } from '../context.ts'
-import type { Game, Scene } from '../game.ts'
+import type { Game } from '../game.ts'
 import type { Reference } from '../references.ts'
-import type { Block, Choice, DataScene, RenderedScene } from '../scene.ts'
-import type { SceneView } from '../game.ts'
+import type { Block, Choice, DataScene } from '../scene.ts'
 import type { Condition, GameState, Range } from '../types.ts'
 import { emphasis, INLINE_MARKUP, inlineMarkup } from '../sceneBody.ts'
 import { commandOf } from '../calls.ts'
@@ -141,10 +139,6 @@ export type ScenesShape = {
      */
     actionsIn: { actionsIn: readonly Block[] | string | undefined; offers: readonly string[] }
   }
-}
-
-function isDataScene(scene: Scene | DataScene): scene is DataScene {
-  return 'body' in scene && Array.isArray((scene as DataScene).body)
 }
 
 /**
@@ -460,7 +454,7 @@ export const scenes = defineFeature<ScenesShape>({
     scene: {
       whyNot: (state, command, game, cx) => {
         if (state.sceneId) return stringOf(game, 'finishFirst')
-        return cx.bakedScene(game, command.id) ? undefined : stringOf(game, 'noSuchScene')
+        return cx.sceneOf(game, command.id) ? undefined : stringOf(game, 'noSuchScene')
       },
       run: (state, command) => ({ ...state, sceneId: command.id, flow: null }),
       references: (command) => [{ scene: command.id, as: 'open' }],
@@ -469,7 +463,7 @@ export const scenes = defineFeature<ScenesShape>({
       whyNot: (state, command, game, cx) => {
         if (!state.sceneId) return stringOf(game, 'nothingToChoose')
         // A scene the game no longer has is let through: choosing closes it.
-        if (!cx.bakedScene(game, state.sceneId)) return undefined
+        if (!cx.sceneOf(game, state.sceneId)) return undefined
         const choice = cx.rendered.scene()!.choices.find((entry) => entry.id === command.id)
         if (!choice || choice.visible === false) return stringOf(game, 'notOnOffer')
         if (choice.disabled) return choice.disabled
@@ -481,9 +475,9 @@ export const scenes = defineFeature<ScenesShape>({
         return undefined
       },
       run: (state, command, game, cx) => {
-        const scene = cx.bakedScene(game, state.sceneId!)
+        const scene = cx.sceneOf(game, state.sceneId!)
         if (!scene) return { ...state, sceneId: null }
-        const rendered = cx.rendered.scene()! as Partial<RenderedScene> & SceneView
+        const rendered = cx.rendered.scene()!
         const choice = rendered.choices.find((entry) => entry.id === command.id)!
         const key = `${scene.id}#${choice.id}`
         // Counted on the turn it was picked in, before its effects can end the turn.
@@ -539,9 +533,8 @@ export const scenes = defineFeature<ScenesShape>({
       'scenes',
       game.scenes.map((entry) => entry.id),
     )
-    // A data scene's content.
+    // Each scene's content.
     for (const scene of game.scenes) {
-      if (!isDataScene(scene)) continue
       const source = { list: 'scene', id: scene.id }
       const where = `scene ${scene.id}`
       tools.check(source, where, dataSceneReferences(scene))
@@ -566,14 +559,11 @@ export const scenes = defineFeature<ScenesShape>({
   },
   // Render every scene against a probe state: a scene that throws for it is a problem. Its content is checked already.
   probe: (game, { name, state }, tools, cx) => {
-    const ctx = sceneContext(state, game)
-    for (const listed of game.scenes) {
-      const scene = cx.bakedScene(game, listed.id)
-      if (!scene) continue
-      const source = { list: 'scene', id: listed.id }
-      const where = `scene ${listed.id} (${name})`
+    for (const scene of game.scenes) {
+      const source = { list: 'scene', id: scene.id }
+      const where = `scene ${scene.id} (${name})`
       try {
-        scene.render(state, ctx)
+        cx.renderScene(state, game, scene)
       } catch (error) {
         tools.problem(source, where, `render threw: ${(error as Error).message}`)
       }
@@ -594,9 +584,7 @@ export const scenes = defineFeature<ScenesShape>({
         const cut = ref.choice.lastIndexOf('#')
         const scene = cut > 0 ? scenesById.get(ref.choice.slice(0, cut)) : undefined
         if (!scene) return [`gated on a choice in unknown scene "${ref.choice}"`]
-        // Only a data scene's choices are known before it runs; a hand-built one is taken at its word.
-        if (isDataScene(scene) && !sceneChoices(scene).some((choice) => choice.id === ref.choice.slice(cut + 1)))
-          return [`gated on unknown choice "${ref.choice}"`]
+        if (!sceneChoices(scene).some((choice) => choice.id === ref.choice.slice(cut + 1))) return [`gated on unknown choice "${ref.choice}"`]
         return []
       },
       drawnFrom: (ref) => (drawnFrom.has(ref.drawnFrom) ? [] : [`draws from "${ref.drawnFrom}", but no scene is drawn from it`]),

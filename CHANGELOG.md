@@ -468,6 +468,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Removed
 
+- **Breaking:** [`parseBeats`](/docs/reference/prose#parsebeats) no longer takes `hints`: its second argument is `find`, who a line under `@id` is. A block's `ui` hints reach its beats through the scene's view, so nothing needed them.
 - **Breaking:** `mountGame`'s `app` option is gone. Pass your own component as `layout` instead: any component works as a layout, with the sound, the text size and the pages as the default layout has them. The `Game` region's `pages` prop is gone too: `GameShell` and `mountGame` draw the pages, or wrap your page in `WithPages` under a `GameProvider` of your own.
 - **Breaking:** `@ifloom/phone` and its `phone()` are gone. A phone is the devices, messages and feed plugins listed in your game's `plugins`, with a little content of your own: the device, an app for each channel and feed, contacts, a gallery and the `photo` kind. [A phone](/docs/recipes/phone) shows the whole of it, ready to copy, and the showcase's is in `examples/showcase/src/world/phone.ts`. Drop `@ifloom/phone` from your `package.json`, put the three plugins where `...kit.plugins` was, and the recipe's content where `kit.content` was.
 

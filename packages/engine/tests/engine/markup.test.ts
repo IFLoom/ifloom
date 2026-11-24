@@ -55,7 +55,7 @@ describe('scene body', () => {
   })
 
   it('reads a label in any alphabet, and asks who an id is', () => {
-    const beats = parseBeats(['Zoë: "Hola."', '@character:zoe: "Hola."', '@you: "Hola, Zoë."'].join('\n\n'), undefined, (id) =>
+    const beats = parseBeats(['Zoë: "Hola."', '@character:zoe: "Hola."', '@you: "Hola, Zoë."'].join('\n\n'), (id) =>
       id === 'you' ? { who: 'player', name: 'Tú' } : { who: 'character', speaker: 'character:zoe', name: 'Zoë' },
     )
     expect(beats).toEqual([

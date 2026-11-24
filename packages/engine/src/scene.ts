@@ -1,5 +1,5 @@
 import { holds, type Condition } from './condition.ts'
-import type { ButtonDef, Game, MinigameSceneFields, Once, Scene, SceneChoice, SceneMedia, SceneView, StoryletFields } from './game.ts'
+import type { ButtonDef, Game, MinigameSceneFields, Once, SceneChoice, SceneMedia, StoryletFields } from './game.ts'
 import { onceSpent } from './features/actions.ts'
 import { reasonOf } from './strings.ts'
 import { draw, weighted } from './random.ts'
@@ -217,8 +217,20 @@ function blockText(
   }
 }
 
-/** A data scene as its render gives it: its view, its body as parts, and where its flow stands, for the screen. Internal. */
-export type RenderedScene = SceneView & {
+/** A data scene as its render gives it: its words, its body as parts, its choices, and where its flow stands, for the screen. Internal. */
+export type RenderedScene = {
+  title?: string
+  speaker?: string
+  /** Words the UI can style the scene by. The engine gives them no meaning. */
+  tags?: string[]
+  /** The body's prose with its markup, the parts joined. */
+  body: string
+  /** Media blocks that open (`lead`) or close (`end`) the scene, rather than sitting in the body. */
+  media?: SceneMedia[]
+  picture?: PictureDef
+  /** What plays on background channels while the scene is open, by channel. Null silences one. */
+  audio?: Record<string, string | null>
+  choices: SceneChoice[]
   parts: BodyPart[]
   /** Where the flow stopped: at a decision (its choices are offered), waiting on a minigame or a panel, or at the end (the ending choices). */
   stop: FlowStop['at']
@@ -404,39 +416,4 @@ export function defaultRuntime(game: Game): SceneRuntime {
       draw: (state, name, members) => drawVariant(state, name, members, (key) => game.prose?.weight?.(name, key)),
     },
   }
-}
-
-/** Baked scenes, per game: one data scene listed in two games runs with each game's own functions. */
-const baked = new WeakMap<Game, WeakMap<DataScene, Scene>>()
-
-/** A data scene as the engine runs it. Built once per scene and game, and kept. */
-export function bakeScene(game: Game, scene: DataScene): Scene {
-  let forGame = baked.get(game)
-  if (!forGame) {
-    forGame = new WeakMap()
-    baked.set(game, forGame)
-  }
-  const known = forGame.get(scene)
-  if (known) return known
-  const runtime = defaultRuntime(game)
-  const done: Scene = {
-    id: scene.id,
-    title: scene.title,
-    speaker: scene.speaker,
-    tags: scene.tags,
-    panel: scene.panel,
-    ...(scene.drawnFrom ? { drawnFrom: scene.drawnFrom } : {}),
-    ...(scene.weight !== undefined ? { weight: scene.weight } : {}),
-    ...(scene.when ? { when: scene.when } : {}),
-    ...(scene.minigame !== undefined ? { minigame: scene.minigame } : {}),
-    ...(scene.ui !== undefined ? { ui: scene.ui } : {}),
-    // `screen` passes a context with `picks`, to collect the pool picks the render makes.
-    render: (state, ctx) => renderScene(scene, state, runtime, ctx?.picks),
-  }
-  forGame.set(scene, done)
-  return done
-}
-
-export function isDataScene(scene: Scene | DataScene): scene is DataScene {
-  return 'body' in scene && Array.isArray((scene as DataScene).body)
 }

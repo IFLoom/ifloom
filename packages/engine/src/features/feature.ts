@@ -17,7 +17,8 @@
  * features aren't plugins: see ADR 0007.
  */
 import type { EffectRef } from '../custom.ts'
-import type { ActionDef, CarryOver, Game, Scene, SceneView } from '../game.ts'
+import type { ActionDef, CarryOver, Game } from '../game.ts'
+import type { DataScene, RenderedScene } from '../scene.ts'
 import type { StatModifier } from '../plugin.ts'
 import type { Profile } from '../profile.ts'
 import type { Reference } from '../references.ts'
@@ -56,10 +57,10 @@ export type FeatureContext = {
   pluginAudio: (game: Game, state: GameState) => Record<string, string | null>
   /** An action by the id the `action` command names it by: the game's, or a plugin's as `'<plugin>/<id>'`, in this state. */
   actionOf: (state: GameState, game: Game, id: string) => ActionDef | undefined
-  /** A scene ready to render, by id, as `bakedScene` gives it. */
-  bakedScene: (game: Game, id: string) => Scene | undefined
-  /** The open scene rendered, for a caller with no screen; undefined with none open. */
-  sceneView: (state: GameState, game: Game) => SceneView | undefined
+  /** The scene with this id, as content declares it, as `sceneOf` gives it. */
+  sceneOf: (game: Game, id: string) => DataScene | undefined
+  /** A scene rendered in this state, for a caller with no screen, such as a probe. */
+  renderScene: (state: GameState, game: Game, scene: DataScene) => RenderedScene
 }
 
 /** A feature's context while effects apply: `ending` while a turn is ending. */
@@ -70,7 +71,7 @@ export type EffectContext = FeatureContext & { ending: boolean }
  * one state: `scene()` renders it the first time and hands back the same view
  * after. `screen` makes one and shares it between every choice.
  */
-export type Rendering = { scene: () => SceneView | undefined }
+export type Rendering = { scene: () => RenderedScene | undefined }
 
 /**
  * A feature's context while a command is asked about or run: the open scene,

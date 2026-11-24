@@ -3,7 +3,6 @@ import { loadGame, type Content } from '../../src/loader.ts'
 import { describeProblem } from '../../src/check.ts'
 import { apply } from '../../src/reduce.ts'
 import { startingState } from '../../src/intake.ts'
-import { parseBeats } from '../../src/sceneBody.ts'
 import { view } from '../../src/view.ts'
 import type { Game } from '../../src/game.ts'
 import type { DataScene } from '../../src/scene.ts'
@@ -74,20 +73,6 @@ describe('ui hints', () => {
       ['A swing creaks.', { reveal: { delay: 1200 } }],
       ['Then it stops.', undefined],
       ['Somebody hums.', { style: 'whisper' }],
-    ])
-  })
-
-  it('put hints on beats by where each block starts in the body', () => {
-    const beats = parseBeats('One.\n\nTwo.\n\n[[ui:mail|Hi.\n\nBye.|From: Ava]]\n\nThree.', [
-      { at: 6, ui: { a: 1 } },
-      { at: 12, ui: { b: 2 } },
-      { at: 45, ui: { c: 3 } },
-    ])
-    expect(beats.map((beat) => ['text' in beat ? beat.text : beat.type, beat.ui])).toEqual([
-      ['One.', undefined],
-      ['Two.', { a: 1 }],
-      ['[[ui:mail|Hi.\n\nBye.|From: Ava]]', { b: 2 }],
-      ['Three.', { c: 3 }],
     ])
   })
 

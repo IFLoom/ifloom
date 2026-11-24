@@ -1,0 +1,22 @@
+name: Site
+
+# The website (IFLoom/ifloom-site) shows the docs from this repo, so a change
+# to them on main rebuilds it, through a Vercel deploy hook. SITE_DEPLOY_HOOK
+# is the hook's URL: anyone with it can start a deployment, so it's a secret.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'CHANGELOG.md'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl --fail --silent --show-error -X POST "$HOOK" > /dev/null
+        env:
+          HOOK: ${{ secrets.SITE_DEPLOY_HOOK }}

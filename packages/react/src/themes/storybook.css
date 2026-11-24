@@ -28,6 +28,8 @@
   --border: oklch(0.85 0.05 70);
   --speech: oklch(0.3 0.05 45);
   --player-speech: oklch(0.99 0.01 85);
+  /* Dark enough to read at a small size on the pill buttons' fill. */
+  --price: oklch(0.45 0.1 55);
 }
 
 [data-part="title"] {
@@ -85,7 +87,10 @@
   box-shadow: none;
 }
 
+/* The number and the label as one centred unit: the label is as wide as its words, so the key sits beside them. */
 [data-part="choice-label"] {
+  width: auto;
+  max-width: 100%;
   justify-content: center;
 }
 
@@ -387,15 +392,6 @@
   color: var(--primary);
 }
 
-[data-part="section"][data-dialog] [data-part="section-toggle"] {
-  border-radius: 999px;
-  border-width: 0;
-  background: var(--secondary);
-  color: var(--secondary-foreground);
-  font-weight: 700;
-  box-shadow: var(--shadow-card);
-}
-
 [data-part="section-badge"] {
   background: var(--primary);
   color: var(--primary-foreground);
@@ -449,6 +445,11 @@
   border-radius: var(--radius);
   background: var(--card);
   box-shadow: var(--shadow-card);
+}
+
+/* On the side card a card would vanish into it: there it takes the page's colour instead. */
+[data-part="sidebar"] :is([data-kit="card"], [data-part="thing"]) {
+  background: var(--background);
 }
 
 /* Dice: chunky and round, like a board game's. */

@@ -184,7 +184,7 @@ type SectionProps = {
 A titled part of a layout, in the side column or the story. It hides itself when its children draw nothing, so a section for a plugin the game doesn't have takes no room.
 
 - **`collapsible`** puts a button on its title that folds it. Each player's choice is kept in the [profile](/docs/reference/profile)'s `ui:sections`, by `id`, so it's the same next time. `open` is how it starts before the player has chosen, `true` if you leave it out. Without a profile, as with a bare [`createRunner`](/docs/reference/runner#createrunner), it's remembered until the page closes.
-- **`dialog`** draws a button instead, with `badge` after the title, that opens the children in a [`PartDialog`](#partdialog) titled `title`.
+- **`dialog`** makes its title, with `badge` after it, a button that opens the children in a [`PartDialog`](#partdialog) titled `title`. It looks as a folding section's title does, with its chevron pointing out instead of down.
 - **`when`** is a [condition](/docs/reference/conditions): the section shows only while it holds, as [`When`](#when) does.
 
 ```tsx
@@ -520,7 +520,7 @@ function Icon(props: { name: IconName; label?: string }): JSX.Element
 type IconName = 'close' | 'back' | 'warning' | 'voice' | 'zoom' | 'menu' | 'chevron'
 ```
 
-One of the UI's icons, by what it's for: `close` on dialogs and notices, `back` in an open app, `warning` on a choice or a hotspot with a warning, `voice` on a spoken line's replay button, `zoom` for enlarging a picture, `menu` on the button that opens the side column on a phone, and `chevron` on a folding section. With a `label` it's labelled for screen readers. Without one it's hidden from them. The built-in icons are [Lucide](https://lucide.dev)'s. Replace `Icon` in `components` to use your own set everywhere.
+One of the UI's icons, by what it's for: `close` on dialogs and notices, `back` in an open app, `warning` on a choice or a hotspot with a warning, `voice` on a spoken line's replay button, `zoom` for enlarging a picture, `menu` on the button that opens the side column on a phone, and `chevron` on a section's title, down on one that folds and turned to point out on one that opens a dialog. With a `label` it's labelled for screen readers. Without one it's hidden from them. The built-in icons are [Lucide](https://lucide.dev)'s. Replace `Icon` in `components` to use your own set everywhere.
 
 ## The scene
 
@@ -1076,7 +1076,7 @@ The stats the view lists, each label beside its value written the way the game [
 
 A stat that declares [`levels`](/docs/reference/stats#levels) also shows its level inside its label, as "Level 2" (the word `ui.statLevel`). Under the row is a bar towards the next level, drawn from [`StatView.level`](/docs/reference/view#statview). The bar is a `progressbar` from 0 to 100, and its label for screen readers is the word `ui.statProgress`, such as "Cooking: 50% of the way to level 2". At the top level there's no bar, only the level. A stat without levels shows as before.
 
-A stat whose [`display`](/docs/react/hints#display) hint is `'bar'` gets a bar under its row, filled from its `min` to its `max`. One with `'pips'` gets a row of pips instead, one for each point between `min` and `max`, with as many filled as the value is above `min`. A stat with a range of more than 20 is drawn as a bar even if it asks for pips. Both are a `meter` for screen readers, labelled with the stat's label, with `aria-valuemin`, `aria-valuemax`, `aria-valuenow` and the formatted value as `aria-valuetext`. Each filled pip carries `data-filled`. The value is still written beside the label.
+A stat whose [`display`](/docs/react/hints#display) hint is `'bar'` gets a bar under its row, filled from its `min` to its `max`. One with `'pips'` gets pips instead, one for each point between `min` and `max`, with as many filled as the value is above `min`. They come in rows of ten at most, all of one length: 20 pips are two rows of ten, 15 are rows of 8 and 7. The row's length is the `--pips-per-row` custom property on `stat-pips`. A stat with a range of more than 20 is drawn as a bar even if it asks for pips. Both are a `meter` for screen readers, labelled with the stat's label, with `aria-valuemin`, `aria-valuemax`, `aria-valuenow` and the formatted value as `aria-valuetext`. Each filled pip carries `data-filled`. The value is still written beside the label.
 
 ```ts
 stats: [

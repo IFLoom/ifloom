@@ -305,11 +305,10 @@ function SectionImpl({ id, title, collapsible = false, dialog = false, open: ini
   const [body, empty] = useDrewNothing()
   const section = usePart('section', 'flex flex-col gap-2', className)
   const heading = usePart('section-title', 'font-heading font-semibold')
+  // A dialog's button is drawn as a folding section's title is, its chevron pointing out to say it opens.
   const toggle = usePart(
     'section-toggle',
-    dialog
-      ? buttonVariants({ size: 'sm', variant: 'outline', className: 'justify-between' })
-      : 'flex w-full items-center justify-between gap-2 text-left font-heading font-semibold [&[aria-expanded=false]>svg]:-rotate-90 [&>svg]:size-4 [&>svg]:transition-transform',
+    'flex w-full items-center justify-between gap-2 text-left font-heading font-semibold [&[aria-expanded=false]>svg]:-rotate-90 [&[aria-haspopup]>svg]:-rotate-90 [&>svg]:size-4 [&>svg]:transition-transform',
   )
   const contents = usePart('section-body', 'flex flex-col gap-3')
   const badgePart = usePart('section-badge', badgeVariants({ variant: 'secondary' }))
@@ -319,8 +318,11 @@ function SectionImpl({ id, title, collapsible = false, dialog = false, open: ini
     return (
       <section {...section} data-section={id} data-dialog="" hidden={empty || undefined}>
         <button type="button" {...toggle} aria-haspopup="dialog" onClick={() => setDialogOpen(true)}>
-          <span>{title}</span>
-          {badgeDrawn}
+          <span {...heading} className={cn(heading.className, 'flex items-center gap-2')}>
+            {title}
+            {badgeDrawn}
+          </span>
+          <Icon name="chevron" />
         </button>
         {/* Drawn out of sight while the dialog is shut, so a section with nothing in it can hide. */}
         {dialogOpen ? null : (
@@ -365,8 +367,9 @@ function SectionImpl({ id, title, collapsible = false, dialog = false, open: ini
  *
  * - `collapsible` folds it in place with a button on its title. Each player's
  *   choice is remembered per `id` in the profile's `ui:sections`.
- * - `dialog` draws a button, with `badge` if given, that opens the children
- *   in a dialog.
+ * - `dialog` draws its title, with `badge` if given, as a button that opens
+ *   the children in a dialog, looking as a folding section's title does
+ *   with its chevron pointing out.
  * - `when` shows it only while a condition holds.
  */
 export const Section = overridable('Section', SectionImpl)

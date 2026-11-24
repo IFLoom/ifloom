@@ -479,17 +479,6 @@
   color: var(--muted-foreground);
 }
 
-[data-part="section"][data-dialog] [data-part="section-toggle"] {
-  all: unset;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-  font-variant: small-caps;
-  letter-spacing: 0.06em;
-  color: var(--primary);
-}
-
 [data-part="section"][data-dialog] [data-part="section-toggle"]:hover {
   text-decoration: underline;
   text-underline-offset: 0.2em;

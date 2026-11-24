@@ -32,7 +32,7 @@ A preset is a stylesheet that changes the fonts, the sizes, the colours and the 
 |---|---|
 | `paper` | A printed book. A serif page in one centred column, chapter titles in small caps, choices as underlined lines of text rather than buttons, and the stats as a quiet line at the foot. The Letter (`examples/novel`) uses it. |
 | `terminal` | A green-screen text adventure. Monospace throughout, light text on black, no rounded corners, choices as a numbered prompt list, and notices as a status line across the top of the page, which pushes the rest down rather than covering it. |
-| `studio` | A clean, modern app. Cards on a soft grey page, the side column on the right, generous spacing, bold headings and choices as raised cards. The Corner Café (`examples/cafe`) uses it. |
+| `studio` | A clean, modern app. Cards on a soft grey page, the side column on the right, generous spacing, bold headings and choices as raised cards, with the reading column kept to the start of the story. The Corner Café (`examples/cafe`) uses it. |
 | `storybook` | Soft and friendly. Rounded type, a warm tinted page, big pill buttons, and dialogue in speech bubbles. Small Town (`examples/showcase`) uses it. |
 
 [`ifloom new`](/docs/cli#ifloom-new) writes this import for you. Pass `--theme paper` (or any of the four) to choose one. Leave it out and a `react` game gets one at random, so two new games don't start out looking the same.

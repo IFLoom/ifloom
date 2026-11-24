@@ -12,6 +12,8 @@
   --text-scene-title: 2rem;
   --leading-prose: 1.7;
   --width-reading: 44rem;
+  /* The reading column keeps to the start: the scene card's words begin at its padding, and the tables and buttons under it at its edge. */
+  --margin-prose: 0 auto;
   --width-sidebar: 19rem;
   --gap-page: 2rem;
   --gap-beats: 1rem;
@@ -349,16 +351,6 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--muted-foreground);
-}
-
-[data-part="section"][data-dialog] [data-part="section-toggle"] {
-  width: 100%;
-  height: 2.5rem;
-  border-radius: var(--radius);
-  font-size: 0.875rem;
-  letter-spacing: 0;
-  text-transform: none;
-  color: var(--foreground);
 }
 
 [data-part="section-badge"] {

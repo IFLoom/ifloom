@@ -329,7 +329,7 @@ How each kit part looks with no preset, in the theme's tokens: the classes [`use
 
 | Kit part | Its look |
 |---|---|
-| `card` | A column with a gap, a rounded border and padding. Edged in the primary colour while `data-state="done"`, faded a little while `"open"`. |
+| `card` | A column with a gap, a rounded border and padding. Edged in the primary colour while `data-state="done"`, dashed while `"open"`. |
 | `item` | A column with a small gap, no border. |
 | `title` | A row that wraps, medium weight. |
 | `heading` | A row in the heading font, semibold. |
@@ -372,7 +372,7 @@ The `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close` parts every di
 function StatGauge(props: { stat: StatView }): JSX.Element
 ```
 
-A stat's value as a bar from its `min` to its `max`, or as pips, one per point, by its [`ui.display`](/docs/react/hints#display) hint: the `<dd>` [`StatList`](/docs/react/components#statlist) draws under a stat. The cast's UI draws it under each relationship. Parts: `stat-bar`, `stat-pips` and `stat-pip`.
+A stat's value as a bar from its `min` to its `max`, or as pips, one per point in rows of ten at most, by its [`ui.display`](/docs/react/hints#display) hint: the `<dd>` [`StatList`](/docs/react/components#statlist) draws under a stat. The cast's UI draws it under each relationship. Parts: `stat-bar`, `stat-pips` and `stat-pip`.
 
 ### PageHeading and BackButton
 

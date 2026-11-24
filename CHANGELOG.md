@@ -256,6 +256,12 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Changed
 
+- A [`Section`](/docs/react/components#section) that opens a dialog, such as the quests' To do, looks like the sections that fold: its title as a heading with the count beside it, and a chevron pointing out. It used to be a filled button unlike its neighbours.
+- Pips for a stat with `ui.display: 'pips'` come in rows of ten at most, all of one length, so a charm out of 20 is two rows of ten rather than 14 and 6.
+- The Studio preset keeps the reading column to the start of the story (`--margin-prose: 0 auto`), so the scene card's words begin at its padding and the tables and buttons under it line up with the card. Set `--margin-prose: auto` or `<Story align="center">` to centre it again.
+- In the Storybook preset a choice's number sits beside its centred label rather than at the button's far edge, and cards in the side column take the page's colour so they stand out from it.
+- A kit `card` that isn't done yet (`data-state="open"`), such as an achievement still to earn, has a dashed edge instead of being faded, so its words keep enough contrast to read. The Storybook preset's prices are a shade darker for the same reason.
+- A kit `badge` inside a button, such as the achievements button's count, is centred with its label rather than pushed to the top.
 - **Breaking:** the React UI has a second entry, [`@ifloom/react/kit`](/docs/react#the-two-entries), for building components of your own. `@ifloom/react` keeps what a game uses (`mountGame`, `GameShell`, the layout's regions, every component and hook, `UiOptions`, `Components`, `Classes`, `usePart`, `checkUiHints`). Import these from `@ifloom/react/kit` now: `PluginUi`, `pluginKit`, `usePlugin` and their types, `useKitPart` and `KIT_PARTS`, `KIT_LOOKS`, `KIT_LAYOUT`, `overridable` and `Override`, `PartDialog`, `useDialogParts`, `PageHeading`, `BackButton`, `usePageParts`, `PROSE`, `Icon`, `cn` and the shadcn/ui primitives (`Button`, `Badge`, `Card`, `Dialog`, `Tabs` and the rest).
 - `UiOptions` is now `StyleOptions & BehaviourOptions`: `components`, `classes` and `unstyled` say how the UI looks, and `viewer`, `keys` and `motion` how it behaves. You still pass them as one object.
 - `useMinigame` no longer runs the game's clock itself. `GameProvider` already does.

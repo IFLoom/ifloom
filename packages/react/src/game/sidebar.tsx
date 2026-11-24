@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react'
 import type { StatView } from '@ifloom/engine'
 import { useGame } from './context.tsx'
 import { overridable, usePart } from './overrides.tsx'
@@ -26,14 +27,19 @@ function ClockImpl() {
 /** Where the game is in time, as its plugins say (`view.when`): nothing in a game with no calendar. A thin default on `useClock`. */
 export const Clock = overridable('Clock', ClockImpl)
 
+/** The most pips in a row; more wrap into rows of equal length. */
+const PIPS_PER_ROW = 10
+
 /**
  * A stat's value as a bar from its `min` to its `max`, or as pips, one per
- * point, by its `ui.display` hint: the `<dd>` `StatList` draws under a stat.
+ * point, in rows of ten at most and of equal length, by its `ui.display`
+ * hint: the `<dd>` `StatList` draws under a stat. The row's length is the
+ * `--pips-per-row` custom property on the `stat-pips` part.
  * A plugin's UI that lists stats of its own draws it too.
  */
 export function StatGauge({ stat }: { stat: StatView }) {
   const bar = usePart('stat-bar', 'col-span-2 h-1.5 overflow-hidden rounded-full bg-muted [&>span]:block [&>span]:h-full [&>span]:bg-primary')
-  const pips = usePart('stat-pips', 'col-span-2 flex flex-wrap gap-1')
+  const pips = usePart('stat-pips', 'col-span-2 grid w-fit grid-cols-[repeat(var(--pips-per-row),max-content)] gap-1')
   const full = usePart('stat-pip', 'size-2.5 rounded-full border border-primary bg-primary')
   const empty = usePart('stat-pip', 'size-2.5 rounded-full border border-primary')
   const range = stat.max - stat.min
@@ -47,8 +53,10 @@ export function StatGauge({ stat }: { stat: StatView }) {
   } as const
   if (stat.ui?.display === 'pips' && range > 0 && range <= MAX_PIPS) {
     const filled = Math.max(0, Math.min(range, Math.round(stat.value - stat.min)))
+    // Rows of equal length, ten at most: 20 pips are two rows of ten, 15 are 8 and 7.
+    const perRow = Math.ceil(range / Math.ceil(range / PIPS_PER_ROW))
     return (
-      <dd {...pips} {...meter}>
+      <dd {...pips} {...meter} style={{ '--pips-per-row': perRow } as CSSProperties}>
         {Array.from({ length: range }, (_, index) => (
           <span key={index} {...(index < filled ? full : empty)} data-filled={index < filled ? '' : undefined} />
         ))}

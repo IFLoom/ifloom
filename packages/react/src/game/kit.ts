@@ -36,12 +36,13 @@ export type KitPart = (typeof KIT_PARTS)[number]
 /**
  * How each kit part looks with no preset, in the theme's tokens: the classes
  * `useKitPart` starts from. A card is boxed, edged in the primary colour once
- * done and faded while still open; a note is small and muted; a meter is a
- * thin bar; an opener is a small outlined button; and so on. A preset
+ * done and dashed while still open (never faded, so its words keep their
+ * contrast); a note is small and muted; a meter is a thin bar; an opener is
+ * a small outlined button; and so on. A preset
  * restyles them by `data-kit`, and a game by `classes` or its own CSS.
  */
 export const KIT_LOOKS: Readonly<Record<KitPart, string>> = {
-  card: 'flex flex-col gap-2 rounded-lg border p-3 data-[state=done]:border-primary data-[state=open]:opacity-70',
+  card: 'flex flex-col gap-2 rounded-lg border p-3 data-[state=done]:border-primary data-[state=open]:border-dashed',
   item: 'flex flex-col gap-0.5',
   title: 'flex flex-wrap items-center gap-2 font-medium',
   heading: 'flex items-center gap-2 font-heading font-semibold',
@@ -51,7 +52,7 @@ export const KIT_LOOKS: Readonly<Record<KitPart, string>> = {
   opener: `${buttonVariants({ size: 'sm', variant: 'outline' })} self-start`,
   form: 'flex flex-wrap items-center gap-2',
   input: 'h-9 min-w-0 flex-1 rounded-md border bg-background px-3 text-sm',
-  badge: `${badgeVariants({ variant: 'secondary' })} self-start`,
+  badge: `${badgeVariants({ variant: 'secondary' })} w-fit`,
   thumb: 'size-12 shrink-0 rounded-md object-cover',
   label: 'text-muted-foreground',
 }

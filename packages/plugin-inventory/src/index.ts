@@ -184,7 +184,7 @@ function useEffects(state: GameState, game: Game, ref: EntityRef): Effect[] {
 
 /** Where a dropped thing goes: the holder places names for where you are, if it names one that can hold; nowhere otherwise. */
 function dropHolder(state: GameState, cx: Ctx): Holder | undefined {
-  const holder = cx.query<string | null>('places/holder')
+  const holder = cx.query('places/holder')
   return typeof holder === 'string' && canHold(state, cx.game, holder) ? holder : undefined
 }
 

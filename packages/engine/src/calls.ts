@@ -5,6 +5,7 @@
  * the core.
  */
 import type { PluginArgs } from './plugin.ts'
+import type { PartnerQueries } from './partners.ts'
 import type { Command, Effect } from './types.ts'
 
 /**
@@ -52,10 +53,11 @@ export interface CommandRegistry {}
 
 /**
  * The queries plugins and the game answer, by full name, each as a function
- * from its arguments to its answer, which `context.query` reads:
- * `'places/here': (args?: {}) => string | null`.
+ * from its arguments to its answer, which `context.query` and `pluginQuery`
+ * read: `'loyalty/stampsLeft': () => number`. Holds `PartnerQueries`, what
+ * first-party plugins ask each other, so those are typed in every program.
  */
-export interface QueryRegistry {}
+export interface QueryRegistry extends PartnerQueries {}
 
 /**
  * What each plugin puts in the view, by its id, which `view.plugins` reads:

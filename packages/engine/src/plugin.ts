@@ -1,6 +1,7 @@
 import type { Game } from './game.ts'
 import type { Command, Effect, GameState } from './types.ts'
 import { buildEffects, customContext, type CustomContext, type EffectRef } from './custom.ts'
+import type { QueryAnswer, QueryArgs, QueryRegistry } from './calls.ts'
 // A cycle, and a needed one: applying effects runs plugins' effects and hooks, which apply effects.
 import { runEffects } from './reduce.ts'
 import type { Block } from './scene.ts'
@@ -455,8 +456,18 @@ export function rulesContext(state: GameState, game: Game): PluginContext<undefi
   return pluginContext(rulesPlugin(game) ?? { id: GAME_ID, version: 1 }, state, game)
 }
 
-/** A plugin's query by full name, ready to ask. Undefined when the game does not have it. */
-export function pluginQuery(game: Game | undefined, name: string) {
+/**
+ * A plugin's query by full name, ready to ask. Undefined when the game does
+ * not have it. As `context.query`, a name declared in `QueryRegistry` takes
+ * its arguments and answers its type; any other takes any arguments, with the
+ * answer's type given.
+ */
+export function pluginQuery<K extends keyof QueryRegistry>(
+  game: Game | undefined,
+  name: K,
+): ((state: GameState, ...args: QueryArgs<K>) => QueryAnswer<K>) | undefined
+export function pluginQuery<T = unknown>(game: Game | undefined, name: string): ((state: GameState, args?: PluginArgs) => T) | undefined
+export function pluginQuery(game: Game | undefined, name: string): ((state: GameState, args?: PluginArgs) => unknown) | undefined {
   const found = member(game, name, 'queries')
   if (!found || !game) return undefined
   return (state: GameState, args: PluginArgs = {}) => found.fn(state, args, pluginContext(found.plugin, state, game))

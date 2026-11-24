@@ -76,7 +76,7 @@ function placesIn(game: Game, state: GameState): Place[] {
 
 /** Where the player is, asked of the places plugin by name: nowhere without it. */
 function here(game: Game, state: GameState): string | null {
-  return (pluginQuery(game, 'places/here')?.(state) as string | null | undefined) ?? null
+  return pluginQuery(game, 'places/here')?.(state) ?? null
 }
 
 /** Who is on screen, with their buttons: the cast plugin's, read by shape. Nobody without it. */

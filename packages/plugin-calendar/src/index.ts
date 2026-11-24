@@ -76,8 +76,9 @@ export type CalendarView = {
 }
 
 /**
- * What content writes for each of the plugin's calls, its queries' answers
- * and its view, so a call with a misspelled argument fails to compile.
+ * What content writes for each of the plugin's calls, and its view, so a call
+ * with a misspelled argument fails to compile. Its queries' answers are the
+ * engine's `PartnerQueries`, since other plugins ask them.
  */
 declare module '@ifloom/engine' {
   interface ConditionRegistry {
@@ -93,11 +94,6 @@ declare module '@ifloom/engine' {
   }
   interface CommandRegistry {
     'calendar/sleep': true
-  }
-  interface QueryRegistry {
-    'calendar/now': () => CalendarState
-    'calendar/periods': () => string[]
-    'calendar/bedtime': () => boolean
   }
   interface ViewRegistry {
     calendar: CalendarView

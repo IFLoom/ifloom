@@ -33,7 +33,7 @@ import type { CustomEffect } from '@ifloom/engine'
 
 // Tips are better in the evening, by the calendar plugin's clock.
 const tips: CustomEffect = (state, args, { query }) => {
-  const evening = query<{ period: string }>('calendar/now')?.period === 'evening'
+  const evening = query('calendar/now')?.period === 'evening'
   return [{ stat: 'coins', by: evening ? 4 : 2 }]
 }
 ```
@@ -50,7 +50,7 @@ type CustomContext = {
 ```
 
 - `game` is the game the function was called for, so it can call [`holds`](/docs/reference/conditions#holds) or [`statValue`](/docs/reference/stats#statvalue) with it.
-- `query` asks a plugin's [query](/docs/reference/plugins#queries) by its full name, and gives `undefined` when the game doesn't have that plugin. A query the plugin [declares](/docs/reference/plugins#typed-calls-queries-and-views) takes its arguments and answers its type: `query('calendar/now')` is a `CalendarState`. For any other, name the type yourself: `query<number>('loyalty/stamps')`.
+- `query` asks a plugin's [query](/docs/reference/plugins#queries) by its full name, and gives `undefined` when the game doesn't have that plugin. A query the plugin [declares](/docs/reference/plugins#typed-calls-queries-and-views) takes its arguments and answers its type: `query('calendar/now')` is a `{ day, period }`, typed in any program, since the engine declares the queries first-party plugins ask each other in [`PartnerQueries`](/docs/reference/plugins#partner-queries). For any other, name the type yourself: `query<number>('loyalty/stamps')`.
 - `value` reads a [value](#values) by its full name, a plugin's (`messages/unread`) or the game's own (`game/breadPrice`), asked with `args`. It's `undefined` when nobody has one by that name.
 - `roll(max, name)` draws a whole number from 0 to `max - 1`, from the save's seed, the turn and `name`. The same save on the same turn always draws the same number, so a replay plays the same. Use a different `name` for each draw.
 

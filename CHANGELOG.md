@@ -10,6 +10,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- The queries first-party plugins ask each other are typed in every program: the engine declares their answers in [`PartnerQueries`](/docs/reference/plugins#partner-queries), so `query('places/here')` is a `string | null` in a plugin of your own without naming the type. [`pluginQuery`](/docs/reference/plugins#pluginquery) is typed like a context's `query`, so `pluginQuery(game, 'calendar/bedtime')?.(state)` is a `boolean`, not `unknown`.
+- [`dayOf(state, game)`](/docs/reference/plugins#dayof), the calendar's day or the turn without one, and [`senderOf(state, game, from)`](/docs/reference/plugins#senderof), who sent a message or a post with the cast's portrait, as the shop, jobs, messages and feed plugins work them out.
 - A plugin's context has [`get(on?)`](/docs/reference/plugins#plugincontext), the read that matches `set(next, on?)`: the plugin's state in a later game state, such as one its effects have changed, or its `start` when that state has none yet. The game's own [`RulesContext`](/docs/reference/rules#rulescontext) has `get` too, and its `set` takes `on`.
 - `messages/replied` takes a range of days, counted from the day the reply was sent: `messages.replied('ava.hi', undefined, { gte: 2 })` is "two days or more after you replied". Saves keep the day of each reply (the plugin's state version 4); an older save takes each reply's day to be its arrival's.
 - A message can have `effects`, run as it arrives, in the same command. A trigger on `messages/arrived` runs a command later, since triggers are tested before the plugins deliver; the Messages page says so.
@@ -496,6 +498,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Fixed
 
+- The devices plugin's contacts list read each contact's call command with the wrong type. It now reads the cast's [`CastContact`](/docs/reference/plugins#partner-queries).
 - A scene that holds a plugin UI's panel, such as `{ panel: 'shop' }` with `shopUi` listed, draws that panel in place of its choices; it used to draw only the game's own `panels`. A scene's panel and a minigame's are found as `PanelHost` finds a panel: the game's own, else a listed plugin UI's, else a built-in one.
 - A game's text size setting (`ui.settings.textSize`) applies with a page of your own passed to `mountGame`.
 - `ifloom check` no longer reports "every choice leaves or jumps" for a decision at the end of a pick's `then` whose choices jump back, as in a hub where one question opens a few follow-ups. The other picks of the decision around it still carry on to what comes after.

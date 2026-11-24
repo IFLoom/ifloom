@@ -148,19 +148,10 @@ declare module '@ifloom/engine' {
     'cast/talk': { id: string }
     'cast/call': { id: string }
   }
+  // `cast/portrait` and `cast/contacts`, which other plugins ask, are the engine's `PartnerQueries`.
   interface QueryRegistry {
     'cast/present': () => string[]
     'cast/where': (args: { character: string }) => string | undefined
-    'cast/portrait': (args: { character: string }) => string | undefined
-    'cast/contacts': () => {
-      id: string
-      name: string
-      description: string | null
-      image: string | null
-      portrait: string | null
-      command: CommandRef
-      disabled: string | undefined
-    }[]
   }
   interface ViewRegistry {
     cast: CastView
@@ -224,7 +215,7 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
     for (const block of them.person.schedule ?? []) if (holdsFor(state, game, them, block.when)) return block.location
     return them.person.home ?? AWAY
   }
-  const playerAt = (context: PluginContext<null>) => context.query<string | null>('places/here') ?? null
+  const playerAt = (context: PluginContext<null>) => context.query('places/here') ?? null
   const isHere = (state: GameState, context: PluginContext<null>, them: One) => {
     const at = playerAt(context)
     return at !== null && placeOf(state, context.game, them) === at

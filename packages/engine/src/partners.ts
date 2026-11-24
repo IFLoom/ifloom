@@ -1,0 +1,83 @@
+/**
+ * What first-party plugins ask each other by name.
+ *
+ * A plugin imports only the engine and requires no other plugin (ADR 0003),
+ * so a partner's own registry block is never in its program. The answers
+ * partners ask for are declared here instead, as types only, and
+ * `QueryRegistry` takes them in: every caller, `context.query` and
+ * `pluginQuery` alike, reads them typed without restating them. The engine
+ * itself never asks them. They are still asked by name at run time, and
+ * undefined in a game without that plugin.
+ *
+ * The two helpers below are answers several plugins work out the same way,
+ * kept in one place: the day, and who sent something.
+ */
+import type { Game } from './game.ts'
+import type { GameState } from './types.ts'
+import type { CommandRef } from './calls.ts'
+import type { EntityRef } from './entities.ts'
+import { pluginQuery } from './plugin.ts'
+import { speakerOf } from './speakers.ts'
+
+/** Someone the player can call, as the cast's `cast/contacts` answers. */
+export type CastContact = {
+  /** Their id, as the cast names them: `'ava'`. */
+  id: string
+  name: string
+  description: string | null
+  image: string | null
+  portrait: string | null
+  /** The cast's `cast/call` command for them, in short. */
+  command: CommandRef
+  /** Why the call can't go through now; undefined when it can. */
+  disabled: string | undefined
+}
+
+/**
+ * The queries first-party plugins answer that other plugins ask, by full
+ * name. Part of `QueryRegistry`, so they are typed wherever a query is
+ * asked; a plugin's own block declares the rest of its queries.
+ */
+export interface PartnerQueries {
+  /** The calendar's day, from 0, and period. */
+  'calendar/now': () => { day: number; period: string }
+  /** The calendar's periods, in order. */
+  'calendar/periods': () => string[]
+  /** Whether it's a time the player could go to bed. */
+  'calendar/bedtime': () => boolean
+  /** The id of the place the player is in, or null for nowhere. */
+  'places/here': () => string | null
+  /** The entity of the place the player is in, which holds what is put down there; null when nowhere. */
+  'places/holder': () => EntityRef | null
+  /** Whether the game has this place. */
+  'places/known': (args: { location: string }) => boolean
+  /** A character's face, their person's `portrait`; undefined for none. */
+  'cast/portrait': (args: { character: string }) => string | undefined
+  /** Everyone met who can be called. */
+  'cast/contacts': () => CastContact[]
+}
+
+/**
+ * The day: the calendar's (`calendar/now`), counted from 0, or the turn in a
+ * game without the calendar. How plugins that count days (shifts, restocks,
+ * replies) agree on one.
+ */
+export function dayOf(state: GameState, game: Game): number {
+  return pluginQuery(game, 'calendar/now')?.(state).day ?? state.turn
+}
+
+/** Who sent something, as `senderOf` answers: a name, their picture and their face. */
+export type SenderView = { name: string; image: string | null; portrait: string | null }
+
+/**
+ * Who a message or a post is from, as their entity is (`speakerOf`): its name,
+ * picture and face. The face is the cast's portrait when the game has the
+ * cast, else the picture. An id that names no entity is the name as written,
+ * with no picture.
+ */
+export function senderOf(state: GameState, game: Game, from: string): SenderView {
+  const known = from ? speakerOf(state, game, from) : null
+  if (!known) return { name: from, image: null, portrait: null }
+  const face = pluginQuery(game, 'cast/portrait')?.(state, { character: known.ref })
+  return { name: known.name, image: known.image, portrait: face ?? known.image }
+}

@@ -57,7 +57,7 @@ export type CustomContext = {
 /**
  * Ask a plugin or the game something by full name. A name declared in
  * `QueryRegistry` takes its arguments and answers its type; any other takes any
- * arguments, with the answer's type given: `query<string | null>('places/here')`.
+ * arguments, with the answer's type given: `query<number>('loyalty/stampsLeft')`.
  * Undefined when the game does not have it.
  */
 export type Query = {

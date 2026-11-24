@@ -873,7 +873,7 @@ function worker(): Policy {
   return (screen, state, game) => {
     const work = screen.actions.find((action) => action.id === 'work' && !action.disabled)
     // The calendar's clock, asked by name: undefined in a game without one.
-    const now = pluginQuery(game, 'calendar/now')?.(state) as { period: string } | undefined
+    const now = pluginQuery(game, 'calendar/now')?.(state)
     if (work && now?.period === 'morning') return work.command
     return curious(screen, state, game)
   }

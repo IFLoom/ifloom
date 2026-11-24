@@ -232,7 +232,7 @@ import type { GameRules } from '@ifloom/engine'
 
 const rules: GameRules = {
   onTurnDone: (state, { apply, query }) => {
-    const day = query<{ day: number }>('calendar/now')?.day ?? 0
+    const day = query('calendar/now')?.day ?? 0
     // Day 0 is the one the game opens on, so it counts as done.
     if ((state.kv.lastNewDay ?? 0) === day) return state
     return apply([

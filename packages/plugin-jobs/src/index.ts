@@ -14,6 +14,7 @@
 import {
   reasonOf,
   definePlugin,
+  dayOf,
   priceView,
   holds,
   inRange,
@@ -202,11 +203,6 @@ function jobIn(game: Game, id: unknown): JobDef | undefined {
   return jobsOf(game).find((job) => job.id === String(id ?? ''))
 }
 
-/** The day: the calendar's, or the turn without one. */
-function dayOf(state: GameState, game: Game): number {
-  return (pluginQuery(game, 'calendar/now')?.(state) as { day: number } | undefined)?.day ?? state.turn
-}
-
 function hasCalendar(game: Game): boolean {
   return Boolean(pluginQuery(game, 'calendar/now'))
 }
@@ -221,7 +217,7 @@ function shiftDay(job: JobDef, day: number, state: GameState, context: PluginCon
 /** Is the player at the job's workplace? Always, without the places plugin or a job with no `at`. */
 function atWork(job: JobDef, context: PluginContext<JobsState>): boolean {
   if (!job.at) return true
-  const here = context.query<string | null>('places/here')
+  const here = context.query('places/here')
   return here === undefined || (here !== null && job.at.includes(here))
 }
 
@@ -258,7 +254,7 @@ function cantWork(state: GameState, args: PluginArgs, context: PluginContext<Job
   if (held.lastWorked === today) return stringOf(game, 'jobs/workedToday')
   if (!shiftDay(job, today, state, context)) return stringOf(game, 'jobs/noShiftToday')
   if (job.hours) {
-    const period = context.query<{ period: string }>('calendar/now')?.period
+    const period = context.query('calendar/now')?.period
     if (period !== undefined && !job.hours.includes(period)) return stringOf(game, 'jobs/notNow')
   }
   for (const [stat, amount] of Object.entries(job.shift.cost ?? {})) {

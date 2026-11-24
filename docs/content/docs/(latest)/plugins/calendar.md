@@ -294,7 +294,7 @@ While `ill` is set, the jog button and the bed button are both greyed out with `
 
 ## Queries
 
-These answer other plugins' code, through the context's [`query`](/docs/reference/plugins#queries). Content can't ask them.
+These answer other plugins' code, through the context's [`query`](/docs/reference/plugins#queries). Content can't ask them. Other plugins ask all three, so the engine declares their answers in [`PartnerQueries`](/docs/reference/plugins#partner-queries), and they're typed in any plugin's code without importing the calendar. [`dayOf`](/docs/reference/plugins#dayof) reads the day from `calendar/now`, or the turn without the calendar.
 
 | Query | Answers |
 |---|---|
@@ -314,7 +314,7 @@ const stall = definePlugin<{ stock: number }>({
   conditions: {
     // { 'stall/open': true }: open unless it's night. In a game without a calendar, always open.
     open: (_state, _args, { query }) => {
-      const now = query<{ day: number; period: string }>('calendar/now')
+      const now = query('calendar/now') // { day, period }, or undefined without a calendar
       return now ? now.period !== 'night' && now.period !== 'late' : true
     },
   },

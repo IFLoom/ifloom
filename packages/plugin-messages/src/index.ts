@@ -15,13 +15,13 @@ import {
   buildEffects,
   commandOf,
   definePlugin,
+  senderOf,
+  dayOf,
   fillTokens,
   holds,
   inRange,
   notify,
-  pluginQuery,
   renderAction,
-  speakerOf,
   stringOf,
   type Block,
   type CommandRef,
@@ -229,24 +229,10 @@ function threadOf(message: MessageDef): string {
   return message.thread ?? message.from
 }
 
-/** Who a message is from, as their entity is (`speakerOf`): a name, a picture and a face, or the name as written. */
-function senderOf(state: GameState, game: Game, from: string): { name: string; image: string | null; portrait: string | null } {
-  const known = from ? speakerOf(state, game, from) : null
-  if (!known) return { name: from, image: null, portrait: null }
-  // Their face, from the cast when the game has it (a person's `portrait`); else their picture.
-  const face = pluginQuery(game, 'cast/portrait')?.(state, { character: known.ref }) as string | undefined
-  return { name: known.name, image: known.image, portrait: face ?? known.image }
-}
-
 /** The replies on offer for an arrival now: none once one is sent. */
 function offered(state: GameState, game: Game, record: MessagesState, message: MessageDef, key: string): ReplyDef[] {
   if (record.replied[key] !== undefined) return []
   return (message.replies ?? []).filter((reply) => holds(state, game, reply.when))
-}
-
-/** The day: the calendar's, or the turn without one. */
-function dayOf(state: GameState, game: Game): number {
-  return (pluginQuery(game, 'calendar/now')?.(state) as { day: number } | undefined)?.day ?? state.turn
 }
 
 /** The latest arrival of a message, if it has come. */

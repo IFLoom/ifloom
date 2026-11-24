@@ -63,6 +63,8 @@ export type {
 export { definePlugin, pluginQuery } from './plugin.ts'
 export type { SpeakerView } from './speakers.ts'
 export { speakerOf } from './speakers.ts'
+export type { CastContact, PartnerQueries, SenderView } from './partners.ts'
+export { dayOf, senderOf } from './partners.ts'
 
 // Scenes and prose
 export type { Block, Choice, DataScene, FlowChoice } from './scene.ts'

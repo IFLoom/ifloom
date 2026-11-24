@@ -432,7 +432,7 @@ In the café's [back room](#rooms-inside-rooms), `places.at('cafe.back')` and `p
 
 ## Queries
 
-These answer other plugins' code, through the context's [`query`](/docs/reference/plugins#queries). Content can't ask them.
+These answer other plugins' code, through the context's [`query`](/docs/reference/plugins#queries). Content can't ask them. Other plugins ask `places/here`, `places/holder` and `places/known`, so the engine declares their answers in [`PartnerQueries`](/docs/reference/plugins#partner-queries), and they're typed in any plugin's code without importing places.
 
 | Query | Answers |
 |---|---|
@@ -455,7 +455,7 @@ const parcels = definePlugin<{ waiting: number }>({
     // { 'parcels/canCollect': true }: a parcel is waiting and the player is at home.
     // In a game without places, home is wherever the player is.
     canCollect: (_state, _args, { slice, query }) => {
-      const here = query<string | null>('places/here')
+      const here = query('places/here') // string | null, or undefined without places
       return slice.waiting > 0 && (here === undefined || here === 'flat')
     },
   },

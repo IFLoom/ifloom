@@ -147,7 +147,7 @@ function debugPlugin(): DefinedPlugin<null, DebugView> {
        */
       time: free({
         whyNot: (_state, args, { game, query }) => {
-          const periods = query<string[]>('calendar/periods')
+          const periods = query('calendar/periods')
           if (!periods) return sayDebug(game, 'noCalendar')
           const ok =
             (args.day === undefined || (isNumber(args.day) && Number.isInteger(args.day) && args.day >= 0)) &&
@@ -175,7 +175,7 @@ function debugPlugin(): DefinedPlugin<null, DebugView> {
        */
       go: free({
         whyNot: (_state, args, { game, query }) => {
-          const known = query<boolean>('places/known', { location: String(args.id) })
+          const known = query('places/known', { location: String(args.id) })
           if (known === undefined) return sayDebug(game, 'noPlaces')
           return known ? undefined : sayDebug(game, 'noSuchPlace', String(args.id))
         },

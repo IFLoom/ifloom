@@ -21,6 +21,7 @@
  */
 import {
   definePlugin,
+  dayOf,
   entityDescription,
   entityImage,
   entityName,
@@ -317,15 +318,10 @@ function goodOf(state: GameState, game: Game, one: One, entity: unknown): GoodDe
   return good && (!good.when || holds(state, game, good.when)) ? good : undefined
 }
 
-/** The day: the calendar's, or the turn without one. */
-function dayOf(state: GameState, { query }: Pick<Ctx, 'query'>): number {
-  return query<{ day: number }>('calendar/now')?.day ?? state.turn
-}
-
 /** What the stock is topped up against: the turn or the day it restocks on, or 0 for once only. */
-function restockKey(state: GameState, good: GoodDef, cx: Pick<Ctx, 'query'>): number {
+function restockKey(state: GameState, good: GoodDef, cx: Pick<Ctx, 'game'>): number {
   if (good.restock === 'turn') return state.turn
-  if (good.restock === 'day') return dayOf(state, cx)
+  if (good.restock === 'day') return dayOf(state, cx.game)
   return 0
 }
 
@@ -356,7 +352,7 @@ function stockLeft(state: GameState, slice: ShopState, one: One, good: GoodDef, 
 function offToday(state: GameState, one: One, good: GoodDef, cx: Ctx): number {
   const discounts = one.vendor.discounts
   if (!discounts || !(discounts.off > 0)) return 0
-  const day = dayOf(state, cx)
+  const day = dayOf(state, cx.game)
   const draw = (entity: string) => hash(`shop:discount:${state.seed}:${one.id}:${day}:${entity}`)
   const order = [...one.vendor.goods].sort((a, b) => draw(a.entity) - draw(b.entity) || (a.entity < b.entity ? -1 : 1))
   const marked = order.slice(0, Math.max(0, discounts.count ?? 1))
@@ -392,7 +388,7 @@ function times(price: Record<string, number>, count: number): Record<string, num
 /** Is the player where the vendor is? Always, without the places plugin or a vendor with no `at`. */
 function isHere(one: One, cx: Ctx): boolean {
   if (!one.vendor.at) return true
-  const here = cx.query<string | null>('places/here')
+  const here = cx.query('places/here')
   return here === undefined || (here !== null && one.vendor.at.includes(here))
 }
 
@@ -645,7 +641,7 @@ function shopPlugin(): DefinedPlugin<ShopState, ShopView> {
        * calendar. What `shop.hours()` closes a vendor by.
        */
       outside: (_state, args, { query }) => {
-        const period = query<{ period: string }>('calendar/now')?.period
+        const period = query('calendar/now')?.period
         const periods = Array.isArray(args.period) ? args.period.map(String) : [String(args.period)]
         return period !== undefined && !periods.includes(period)
       },

@@ -11,13 +11,12 @@
 import {
   artSrc,
   definePlugin,
+  senderOf,
   fillTokens,
   holds,
   parseBeats,
-  pluginQuery,
   renderAction,
   styledBeats,
-  speakerOf,
   stringOf,
   type Block,
   type CommandRef,
@@ -25,7 +24,6 @@ import {
   type Condition,
   type EffectRef,
   type Game,
-  type GameState,
   type Reference,
   type RenderedChoice,
   type SceneBeat,
@@ -142,15 +140,6 @@ const ID = 'feed'
 /** The game's posts: `data.feed.posts`, from its packs. */
 export function postsOf(game: Game): PostDef[] {
   return (game.data?.[ID]?.posts ?? []) as PostDef[]
-}
-
-/** Who posted, as their entity is (`speakerOf`): a name, a picture and a face, or the name as written. */
-function senderOf(state: GameState, game: Game, from: string): { name: string; image: string | null; portrait: string | null } {
-  const known = from ? speakerOf(state, game, from) : null
-  if (!known) return { name: from, image: null, portrait: null }
-  // Their face, from the cast when the game has it (a person's `portrait`); else their picture.
-  const face = pluginQuery(game, 'cast/portrait')?.(state, { character: known.ref }) as string | undefined
-  return { name: known.name, image: known.image, portrait: face ?? known.image }
 }
 
 /** A post's words: its beats, and their words as a line of text, for a UI that draws no beats. */

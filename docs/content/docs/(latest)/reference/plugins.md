@@ -188,7 +188,7 @@ On a new game the same command is refused with `Your card is not full yet.`, and
 
 ```ts
 import {
-  definePlugin, pluginQuery, speakerOf,
+  definePlugin, pluginQuery, speakerOf, dayOf, senderOf,
   type Plugin, type DefinedPlugin, type PluginContext, type PluginArgs,
   type PluginCommand, type PluginEntry, type PluginProblem, type PluginSlice,
   type Asked, type Refusal, type RoomScene, type SpeakerView, type CheckTools,
@@ -197,6 +197,7 @@ import {
   type CommandStep, type RawPack, type RawCommand,
   type ConditionRegistry, type EffectRegistry, type CommandRegistry, type QueryRegistry, type ViewRegistry,
   type ConditionCall, type EffectCall, type CommandCall, type Query, type ViewsIn,
+  type PartnerQueries, type CastContact, type SenderView,
 } from '@ifloom/engine'
 
 type Plugin<S = any, V = unknown> = {
@@ -478,7 +479,7 @@ Small Town declares its `game/postLatest` this way, and the café its `game/taki
 **Gotchas.**
 - The registries type content written in TypeScript. A pack loaded from JSON, or a mod, isn't compiled, so the [content checker](/docs/reference/checks) is still what reports a bad call there, through the plugin's [`references`](#references).
 - A plugin's own functions still get their arguments as [`PluginArgs`](#pluginargs), since a mod can pass them anything. Read each one as you would unchecked data.
-- A plugin sees only the declarations of the packages it imports. It can't rely on a partner's, since it never imports the partner, so its calls to a partner are loose in its own code and checked in a game that has both.
+- A plugin sees only the declarations of the packages it imports. It can't rely on a partner's, since it never imports the partner, so its calls to a partner are loose in its own code and checked in a game that has both. The queries first-party plugins ask each other are the exception: the engine declares their answers in [`PartnerQueries`](#partnerqueries), so they're typed everywhere.
 - Keep each entry true to what the plugin reads. A game that imports the plugin is checked against it, so a field you forget to declare fails to compile there.
 
 ### ConditionCall, EffectCall and CommandCall
@@ -489,7 +490,7 @@ type EffectCall = CallIn<EffectRegistry>
 type CommandCall = CallIn<CommandRegistry>
 ```
 
-A call in short, checked against its registry when its name is declared there, and loose otherwise. [`Condition`](/docs/reference/conditions#condition) and [`Effect`](/docs/reference/effects#effect) end in a `ConditionCall` and an `EffectCall`, and a [`CommandRef`](/docs/reference/custom#commandref) is a command or a `CommandCall`. The registries themselves are the interfaces `ConditionRegistry`, `EffectRegistry`, `CommandRegistry`, `QueryRegistry` and `ViewRegistry`, empty in the engine, which knows no plugin.
+A call in short, checked against its registry when its name is declared there, and loose otherwise. [`Condition`](/docs/reference/conditions#condition) and [`Effect`](/docs/reference/effects#effect) end in a `ConditionCall` and an `EffectCall`, and a [`CommandRef`](/docs/reference/custom#commandref) is a command or a `CommandCall`. The registries themselves are the interfaces `ConditionRegistry`, `EffectRegistry`, `CommandRegistry`, `QueryRegistry` and `ViewRegistry`. They're empty in the engine, except that `QueryRegistry` holds [`PartnerQueries`](#partnerqueries).
 
 ### Query
 
@@ -500,7 +501,7 @@ type Query = {
 }
 ```
 
-What a context's `query` is: a declared query takes its arguments and answers its type, and any other name answers the type you give it.
+What a context's `query` is: a declared query takes its arguments and answers its type, and any other name answers the type you give it. [`pluginQuery`](#pluginquery) is typed the same way.
 
 ### ViewsIn
 
@@ -530,7 +531,7 @@ view: (_state, { query }) => ({
 }),
 ```
 
-The asker names the answer's type, since it doesn't import the loyalty plugin. Code that does import it, such as the game's, gets the type the plugin [declares](#typed-calls-queries-and-views).
+The asker names the answer's type, since it doesn't import the loyalty plugin. Code that does import it, such as the game's, gets the type the plugin [declares](#typed-calls-queries-and-views). The queries first-party plugins answer for each other, such as `query('places/here')`, are typed in every plugin, as [Partner queries](#partner-queries) explains.
 
 **Gotchas.**
 - `query` returns `undefined` when the game lacks the plugin or the query, so always give a fallback. Name the partner in [`cooperates`](#cooperates) if content should be able to call its conditions and effects too.
@@ -541,7 +542,8 @@ The asker names the answer's type, since it doesn't import the loyalty plugin. C
 ```ts
 import { pluginQuery } from '@ifloom/engine'
 
-function pluginQuery(game: Game | undefined, name: string): ((state: GameState, args?: PluginArgs) => unknown) | undefined
+function pluginQuery<K extends keyof QueryRegistry>(game: Game | undefined, name: K): ((state: GameState, ...args: QueryArgs<K>) => QueryAnswer<K>) | undefined
+function pluginQuery<T = unknown>(game: Game | undefined, name: string): ((state: GameState, args?: PluginArgs) => T) | undefined
 ```
 
 A plugin's query by its full name, for code outside any plugin, such as a tool, a test or the [CLI](/docs/cli). It returns a function to ask it with, which runs with the owning plugin's own context for that state. It returns `undefined` when the game lacks the plugin or the query. `args` is `{}` if left out. A plugin's own code uses its context's `query` instead.
@@ -551,7 +553,71 @@ A plugin's query by its full name, for code outside any plugin, such as a tool, 
 const bedtime = pluginQuery(game, 'calendar/bedtime')?.(state) ?? false
 ```
 
-**Gotcha.** The answer is `unknown`. Cast it to what the plugin documents, and check it's there first, as `?.` does above.
+It's typed as a context's [`query`](#query) is. A query declared in [`QueryRegistry`](#typed-calls-queries-and-views) takes its arguments and answers its type, so `bedtime` above is a `boolean`. Any other name answers the type you name, `pluginQuery<number>(game, 'loyalty/stampsLeft')`, or `unknown`.
+
+**Gotcha.** The function itself is `undefined` in a game without the plugin, so check it's there first, as `?.` does above.
+
+### Partner queries
+
+```ts
+interface PartnerQueries {
+  'calendar/now': () => { day: number; period: string }
+  'calendar/periods': () => string[]
+  'calendar/bedtime': () => boolean
+  'places/here': () => string | null
+  'places/holder': () => EntityRef | null
+  'places/known': (args: { location: string }) => boolean
+  'cast/portrait': (args: { character: string }) => string | undefined
+  'cast/contacts': () => CastContact[]
+}
+
+type CastContact = {
+  id: string
+  name: string
+  description: string | null
+  image: string | null
+  portrait: string | null
+  command: CommandRef
+  disabled: string | undefined
+}
+```
+
+A plugin never imports its partner, so the partner's own declarations aren't in its program. The answers first-party plugins ask each other for are declared in the engine instead, as types only, and `QueryRegistry` extends `PartnerQueries`. So `query('places/here')` is a `string | null | undefined` in any plugin, a game's own code or a tool, with no type to restate. The queries are still asked by name, and answer `undefined` in a game without that plugin. A plugin's other queries, such as `places/all`, are declared in its own package.
+
+#### PartnerQueries
+
+The interface above. Each entry is documented on its plugin's page: [calendar](/docs/plugins/calendar#queries), [places](/docs/plugins/places#queries) and [cast](/docs/plugins/cast#queries). `CastContact` is what `cast/contacts` answers for each person the player can call. Its `command` is the cast's `cast/call` in short, ready for an action's `command`.
+
+#### dayOf
+
+```ts
+import { dayOf } from '@ifloom/engine'
+
+function dayOf(state: GameState, game: Game): number
+```
+
+The day, counted from 0: the calendar's (`calendar/now`), or the [turn](/docs/reference/state#turn) in a game without the calendar. The shop restocks by it, jobs count shifts by it, and messages date replies by it, so every plugin that counts days agrees on one.
+
+```ts
+const today = dayOf(state, game) // 3 on the calendar's fourth day
+```
+
+#### senderOf
+
+```ts
+import { senderOf } from '@ifloom/engine'
+
+function senderOf(state: GameState, game: Game, from: string): SenderView
+
+type SenderView = { name: string; image: string | null; portrait: string | null }
+```
+
+Who a message or a post is from, as their entity is: its name and picture, from [`speakerOf`](#speakerof). The `portrait` is the cast's `cast/portrait` when the game has the cast, else the picture. An id that names no entity comes back as the name as written, with no picture. The [messages](/docs/plugins/messages) and [feed](/docs/plugins/feed) plugins draw their senders with it.
+
+```ts
+senderOf(state, game, 'ava')     // { name: 'Ava', image: 'art/character/ava.svg', portrait: 'art/character/ava.svg' }
+senderOf(state, game, 'Council') // { name: 'Council', image: null, portrait: null }
+```
 
 ## Cooperates
 
@@ -785,7 +851,7 @@ export const diary = definePlugin<Diary>({
   onTurn: (_state, { slice, set }) => set({ ...slice, days: slice.days + 1 }),
   onCommand: (_before, _after, { slice, set, query }) => {
     // Where the player is now, if the game has the places plugin.
-    const here = query<string | null>('places/here') ?? null
+    const here = query('places/here') ?? null
     const places = here === null || slice.places.includes(here) ? slice.places : [...slice.places, here]
     return set({ ...slice, places, commands: slice.commands + 1 })
   },
@@ -1189,7 +1255,7 @@ It comes third of [four levels](/docs/reference/audio#what-plays-on-a-background
 
 A plugin doesn't say who a scene's speaker is. People are [entities](/docs/reference/entities), so the engine reads their name, picture and hints from the entity itself (see [Speakers](/docs/reference/scenes#speakers)). A plugin that brings people gives them as entities, in its [`content`](#kinds-and-entities), and a scene names one as its `speaker`.
 
-A plugin that shows who sent something, as the messages and feed plugins do, asks the same way with [`speakerOf`](#speakerof).
+A plugin that shows who sent something asks the same way with [`speakerOf`](#speakerof), or with [`senderOf`](#senderof), which adds the cast's portrait, as the messages and feed plugins do.
 
 ### speakerOf
 

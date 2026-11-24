@@ -8,7 +8,7 @@ The IFLoom command line, `ifloom`: `new`, `dev`, `build` (one HTML file that ope
 npm install -D @ifloom/cli
 ```
 
-It needs `@ifloom/engine` as a peer, which npm 7 and later installs for you. To start a game, run `npm create ifloom@latest my-game`. The [`ifloom`](https://www.npmjs.com/package/ifloom) package runs this command without installing it, as `npx ifloom help`.
+It needs `@ifloom/engine` as a peer, which npm 7 and later installs for you. To start a game, run `npm create ifloom@latest my-game`. The [`ifloom`](https://www.npmjs.com/package/ifloom) package runs this command outside a game, as `npx ifloom help`.
 
 ## Docs
 

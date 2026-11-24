@@ -5090,7 +5090,7 @@ type StatRound = 'none' | 'floor' | 'round' | 'ceil'
 
 ## Stats
 
-Type. Explained in [Core concepts](/docs/guide/concepts#stats).
+Type. Explained in [Entities, things and traits](/docs/explanation/entities-and-traits#stats-the-kv-store-and-storylines).
 
 The current values of the stats the save keeps, by stat id.
 

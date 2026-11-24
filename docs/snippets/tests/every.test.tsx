@@ -16,7 +16,10 @@ import { runner as plainRunner } from '../plain/runner.ts'
 import { runner as vueRunner } from '../vue/runner.ts'
 import { STATES } from './play.ts'
 
-const PLAIN = import.meta.glob(['../plain/*.ts', '!../plain/runner.ts', '!../plain/game.ts'], { eager: true }) as Record<string, Record<string, unknown>>
+const PLAIN = import.meta.glob(['../plain/*.ts', '!../plain/runner.ts', '!../plain/game.ts', '!../plain/start.ts'], { eager: true }) as Record<
+  string,
+  Record<string, unknown>
+>
 const VUE = import.meta.glob('../vue/*.vue', { eager: true, import: 'default' }) as Record<string, Component>
 // A mount-… file mounts a whole game when it's imported; react.test.tsx imports one.
 const REACT = import.meta.glob(['../react/*.tsx', '!../react/mount-*.tsx'], { eager: true }) as Record<string, Record<string, unknown>>

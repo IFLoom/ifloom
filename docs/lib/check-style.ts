@@ -55,6 +55,12 @@ export const DONE: string[] = [
   'explanation/plugins.md',
   'explanation/choosing-a-ui.md',
   'explanation/shapes-of-game.md',
+  'how-to/render/start.md',
+  'how-to/render/scene.md',
+  'how-to/render/stats-and-things.md',
+  'how-to/render/pictures-and-sound.md',
+  'how-to/render/timers-minigames-panels.md',
+  'how-to/render/saves-and-settings.md',
 ]
 
 /** One problem: where it is, the rule it breaks, and the text that breaks it. */

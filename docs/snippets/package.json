@@ -3,9 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
-  "description": "The code the docs' \"Drawing it\" sections show, as real files: type-checked with vue-tsc and rendered by the tests in tests/. Pages include them with ::include.",
+  "description": "The code the docs' Render it yourself pages show, as real files: type-checked with vue-tsc and rendered by the tests in tests/. Pages include them with ::include.",
   "type": "module",
   "dependencies": {
+    "@ifloom/audio": "^0.0.0",
     "@ifloom/browser": "^0.0.0",
     "@ifloom/engine": "^0.0.0",
     "@ifloom/plugin-achievements": "^0.0.0",

@@ -6,6 +6,7 @@
  * file fresh.
  */
 import { computed, shallowRef } from 'vue'
+import { startAudio } from '@ifloom/audio'
 import { createRunner, memoryDriver, profile, saves, startingState } from '@ifloom/engine'
 import module from './game.ts'
 
@@ -27,3 +28,6 @@ runner.subscribe((next) => {
 })
 // The view, which is most of what the components draw.
 export const view = computed(() => snapshot.value.view)
+
+// Plays what view.audio asks for, from the first click or key press. Its play() plays a file on demand.
+export const player = startAudio(runner)

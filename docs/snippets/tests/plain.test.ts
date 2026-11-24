@@ -15,6 +15,8 @@ import { drawRolls } from '../plain/rolls.ts'
 import { drawShop } from '../plain/shop.ts'
 import { drawTimers } from '../plain/timers.ts'
 import { drawChanges } from '../plain/changes.ts'
+import { drawTransition } from '../plain/transition.ts'
+import { drawFlow } from '../plain/flow.ts'
 import { atTheCounter, inTheCafe, inThePark, phoneRinging, readingTexts, steppedOut, unpacked } from './play.ts'
 
 /** The Plain JS snippets, drawn into a box and pressed, as the vanilla template would. */
@@ -149,5 +151,36 @@ describe('the Plain JS snippets', () => {
     await vi.waitFor(() => expect(runner.snapshot().helpers.unlocks?.status).toBe('wrong'))
     expect(drawn((into) => drawUnlocks(into, runner.snapshot())).querySelector('.reason')?.textContent).toBe('That code doesn’t unlock anything.')
     stop()
+  })
+
+  it('transition: the screen before goes out by its own transition, then the next comes in by its own', async () => {
+    vi.useFakeTimers()
+    try {
+      await runner.newGame()
+      const box = document.createElement('div')
+      drawTransition(box, runner.snapshot())
+      const moving = box.querySelector('article')!
+      expect(moving.dataset.transitionIn).toBe('fade')
+      // The second line waits for its reveal.
+      expect(box.querySelector('[data-reveal]')).toBeTruthy()
+      unpacked(runner)
+      drawTransition(box, runner.snapshot())
+      expect(moving.dataset.transitionOut).toBe('fade')
+      vi.advanceTimersByTime(500)
+      expect(box.querySelector('article')).not.toBe(moving)
+      expect(box.querySelector('article')?.dataset.transitionIn).toBeTruthy()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('flow: the beats and the choices, which press', async () => {
+    await runner.newGame()
+    const box = drawn((into) => drawFlow(into, runner.snapshot()))
+    expect(box.querySelector('.prose p')).toBeTruthy()
+    buttons(box)
+      .find((button) => button.textContent === 'Unpack')!
+      .click()
+    expect(runner.view().scene.title).not.toBe('Moving day')
   })
 })

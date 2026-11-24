@@ -17,10 +17,14 @@ import { codeOf, includesOf } from '../../../../docs/lib/snippets.ts'
  * `::include[path]{meta='tab="React" tab-group="framework"'}` (see
  * `docs/lib/snippets.ts`); an include counts as the code block it becomes.
  *
- * Every feature that puts something in front of the player has a
- * `## Drawing it` section: at least one full group of tabs, and every UI
- * block in it included from `docs/snippets/`, which is type-checked and
- * tested, never pasted. The one exception is a Svelte tab a page had before
+ * Every feature that puts something in front of the player has a `##`
+ * section on one of the `how-to/render/` pages: at least one full group of
+ * tabs, and every UI block in it included from `docs/snippets/`, which is
+ * type-checked and tested, never pasted.
+ *
+ * Until the reference and plugin pages are rewritten, their old
+ * `## Drawing it` sections are held to the same: a full group, every UI block
+ * from `docs/snippets/`. The one exception is a Svelte tab a page had before
  * Svelte was deferred, which stays as it was written. Its React-only blocks document the React UI's
  * default for the feature (a plugin's `/react` subpath, say), so they may
  * stand outside a group.
@@ -81,6 +85,8 @@ type Block = {
   adjacentToNext: boolean
   /** Under a `## Drawing it` heading, whose React-only blocks document the React UI's default. */
   drawing: boolean
+  /** The `##` heading it's under, or '' before the first. */
+  section: string
   /** Included from a file rather than written in the page. */
   included: string | null
 }
@@ -116,6 +122,7 @@ function blocksOf(source: string, page: string): Block[] {
         end: at,
         adjacentToNext: false,
         drawing: DRAWING.includes(section[at]),
+        section: section[at],
         included: file,
       })
       continue
@@ -135,6 +142,7 @@ function blocksOf(source: string, page: string): Block[] {
       end,
       adjacentToNext: false,
       drawing: DRAWING.includes(section[at]),
+      section: section[at],
       included: null,
     })
     at = end
@@ -237,6 +245,32 @@ describe('the docs', () => {
         }),
     )
     expect(missing).toEqual([])
+  })
+
+  it('render each feature in a section of a how-to/render/ page: a full group of tabs, every UI block from docs/snippets/', () => {
+    const problems: string[] = []
+    let sections = 0
+    for (const page of pages) {
+      if (!/(^|\/)how-to\/render\//.test(page.path)) continue
+      // The page's `##` headings, outside code.
+      const headings: string[] = []
+      let fenced = false
+      for (const line of page.source.split('\n')) {
+        if (/^ {0,3}`{3,}/.test(line)) fenced = !fenced
+        else if (!fenced && line.startsWith('## ')) headings.push(line.slice(3).trim())
+      }
+      for (const heading of headings) {
+        sections++
+        const blocks = page.blocks.filter((block) => block.section === heading)
+        if (!groupsOf(blocks).some((group) => !groupProblem(group))) problems.push(`${page.path}: "${heading}" has no full group of framework tabs`)
+        for (const block of blocks) {
+          if ((isUi(block) || TABS.includes(block.tab ?? '')) && !block.included?.startsWith(SNIPPETS))
+            problems.push(`${page.path}:${block.line}: written in the page, not included from docs/snippets/`)
+        }
+      }
+    }
+    expect(sections).toBeGreaterThanOrEqual(10)
+    expect(problems).toEqual([])
   })
 
   it('draw each feature in a "Drawing it" section: a full group of tabs, every UI block from docs/snippets/', () => {

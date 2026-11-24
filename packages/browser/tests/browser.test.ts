@@ -204,6 +204,21 @@ describe('startKeys', () => {
     expect(runner.state.minigame?.state).toBe('throw')
     stop()
   })
+
+  it('leaves an open <dialog> its own keys too', () => {
+    const runner = runnerFor()
+    const stop = startMinigameKeys(runner)
+    const dialog = document.body.appendChild(document.createElement('dialog'))
+    dialog.setAttribute('open', '')
+    runner.apply({ type: 'choose', id: 'play' })
+    press(' ')
+    expect(runner.state.minigame?.state).toBe('ready')
+    dialog.removeAttribute('open')
+    press(' ')
+    expect(runner.state.minigame?.state).toBe('throw')
+    dialog.remove()
+    stop()
+  })
 })
 
 describe('minigameInput', () => {

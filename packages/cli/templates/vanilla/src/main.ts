@@ -233,15 +233,19 @@ function drawMinigame(minigame: MinigameView): void {
  * Draw each one your game opens by its name, from what it was opened with. Closing it sends `closePanel`; a scene's own panel has no close button, since it stays while the scene is open.
  */
 function drawPanel(panel: OpenPanel): void {
-  const dialog = add(root, 'section', '', 'panel')
-  dialog.setAttribute('role', 'dialog')
-  dialog.setAttribute('aria-modal', 'true')
+  // A modal <dialog>: the browser keeps focus inside it and the page behind it out of reach while it's open.
+  const dialog = add(root, 'dialog', '', 'panel')
   dialog.setAttribute('aria-label', panel.panel)
   dialog.dataset.panel = panel.panel
-  const box = add(dialog, 'div')
-  add(box, 'h2', panel.panel)
-  add(box, 'pre', JSON.stringify(panel.with, null, 2))
-  if (!panel.scene) add(box, 'button', 'Close').onclick = () => runner.apply({ type: 'closePanel' })
+  add(dialog, 'h2', panel.panel)
+  add(dialog, 'pre', JSON.stringify(panel.with, null, 2))
+  if (!panel.scene) add(dialog, 'button', 'Close').onclick = () => runner.apply({ type: 'closePanel' })
+  // Escape closes it, as Close does. A scene's own panel stays.
+  dialog.oncancel = (event) => {
+    event.preventDefault()
+    if (!panel.scene) runner.apply({ type: 'closePanel' })
+  }
+  dialog.showModal()
 }
 
 // The runner hands every listener a new snapshot whenever anything in it changes.

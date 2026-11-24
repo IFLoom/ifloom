@@ -212,20 +212,17 @@ body {
   transition: transform 100ms linear;
 }
 
-/* A panel content opened, over the page. */
+/* A panel content opened, over the page: a modal <dialog>, which the browser centres over a backdrop. */
 .panel {
-  position: fixed;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  background: rgb(0 0 0 / 40%);
-}
-
-.panel > div {
   width: min(30rem, calc(100% - 2rem));
   max-height: calc(100dvh - 2rem);
   overflow-y: auto;
   padding: 1rem 1.5rem;
+  border: 0;
   border-radius: 0.5rem;
   background: #fff;
+}
+
+.panel::backdrop {
+  background: rgb(0 0 0 / 40%);
 }

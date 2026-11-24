@@ -811,36 +811,56 @@ The [Minigames recipe](/docs/recipes/minigames#your-own-panel) draws a panel for
 
 ## Panels
 
-Content can open a [panel](/docs/reference/panels) over the story, such as a shop's counter or a job board. `view.panel` is its name and what it was opened with, or `null`. The templates draw a placeholder dialog with the name, what it was opened with and a Close button that sends `{ type: 'closePanel' }`. Replace its body with your own drawing for each name your game opens.
+Content can open a [panel](/docs/reference/panels) over the story, such as a shop's counter or a job board. `view.panel` is its name and what it was opened with, or `null`. The templates draw a placeholder in a modal `<dialog>`, with the name, what it was opened with and a Close button that sends `{ type: 'closePanel' }`. Escape closes it too, except a scene's own panel, which stays while the scene is open. Replace its body with your own drawing for each name your game opens.
 
 ```ts fragment tab="Plain JS" tab-group="framework"
 // src/main.ts, called at the end of draw(view) when view.panel isn't null
 function drawPanel(panel: OpenPanel): void {
-  const dialog = add(root, 'section', '', 'panel')
-  dialog.setAttribute('role', 'dialog')
-  dialog.setAttribute('aria-modal', 'true')
+  // A modal <dialog>: the browser keeps focus inside it and the page behind it out of reach while it's open.
+  const dialog = add(root, 'dialog', '', 'panel')
   dialog.setAttribute('aria-label', panel.panel)
-  const box = add(dialog, 'div')
-  add(box, 'h2', panel.panel)
-  add(box, 'pre', JSON.stringify(panel.with, null, 2))
-  add(box, 'button', 'Close').onclick = () => runner.apply({ type: 'closePanel' })
+  add(dialog, 'h2', panel.panel)
+  add(dialog, 'pre', JSON.stringify(panel.with, null, 2))
+  if (!panel.scene) add(dialog, 'button', 'Close').onclick = () => runner.apply({ type: 'closePanel' })
+  // Escape closes it, as Close does. A scene's own panel stays.
+  dialog.oncancel = (event) => {
+    event.preventDefault()
+    if (!panel.scene) runner.apply({ type: 'closePanel' })
+  }
+  dialog.showModal()
 }
 ```
 
 ```tsx tab="React" tab-group="framework"
 // src/Panel.tsx, drawn by App as {view.panel ? <Panel panel={view.panel} /> : null}
+import { useEffect, useRef } from 'react'
 import type { OpenPanel } from '@ifloom/engine'
 import { runner } from './runner.ts'
 
 export function Panel({ panel }: { panel: OpenPanel }) {
+  const dialog = useRef<HTMLDialogElement>(null)
+  // A modal <dialog>: the browser keeps focus inside it and the page behind it out of reach while it's open.
+  useEffect(() => {
+    const element = dialog.current
+    if (element && !element.open) element.showModal()
+    return () => element?.close()
+  }, [])
+  const close = () => runner.apply({ type: 'closePanel' })
   return (
-    <section className="panel" role="dialog" aria-modal="true" aria-label={panel.panel}>
-      <div>
-        <h2>{panel.panel}</h2>
-        <pre>{JSON.stringify(panel.with, null, 2)}</pre>
-        <button onClick={() => runner.apply({ type: 'closePanel' })}>Close</button>
-      </div>
-    </section>
+    <dialog
+      ref={dialog}
+      className="panel"
+      aria-label={panel.panel}
+      // Escape closes it, as Close does. A scene's own panel stays.
+      onCancel={(event) => {
+        event.preventDefault()
+        if (!panel.scene) close()
+      }}
+    >
+      <h2>{panel.panel}</h2>
+      <pre>{JSON.stringify(panel.with, null, 2)}</pre>
+      {panel.scene ? null : <button onClick={close}>Close</button>}
+    </dialog>
   )
 }
 ```
@@ -848,20 +868,32 @@ export function Panel({ panel }: { panel: OpenPanel }) {
 ```vue tab="Vue" tab-group="framework"
 <!-- src/Panel.vue, drawn by App.vue as <Panel v-if="view.panel" :panel="view.panel" /> -->
 <script setup lang="ts">
+import { onBeforeUnmount, onMounted, useTemplateRef } from 'vue'
 import type { OpenPanel } from '@ifloom/engine'
 import { runner } from './runner.ts'
 
-defineProps<{ panel: OpenPanel }>()
+const props = defineProps<{ panel: OpenPanel }>()
+
+// A modal <dialog>: the browser keeps focus inside it and the page behind it out of reach while it's open.
+const dialog = useTemplateRef<HTMLDialogElement>('dialog')
+onMounted(() => {
+  if (dialog.value && !dialog.value.open) dialog.value.showModal()
+})
+onBeforeUnmount(() => dialog.value?.close())
+
+// Escape closes it, as Close does. A scene's own panel stays.
+function cancel(event: Event) {
+  event.preventDefault()
+  if (!props.panel.scene) runner.apply({ type: 'closePanel' })
+}
 </script>
 
 <template>
-  <section class="panel" role="dialog" aria-modal="true" :aria-label="panel.panel">
-    <div>
-      <h2>{{ panel.panel }}</h2>
-      <pre>{{ JSON.stringify(panel.with, null, 2) }}</pre>
-      <button @click="runner.apply({ type: 'closePanel' })">Close</button>
-    </div>
-  </section>
+  <dialog ref="dialog" class="panel" :aria-label="panel.panel" @cancel="cancel">
+    <h2>{{ panel.panel }}</h2>
+    <pre>{{ JSON.stringify(panel.with, null, 2) }}</pre>
+    <button v-if="!panel.scene" @click="runner.apply({ type: 'closePanel' })">Close</button>
+  </dialog>
 </template>
 ```
 
@@ -872,15 +904,26 @@ defineProps<{ panel: OpenPanel }>()
   import { runner } from './runner.ts'
 
   let { panel }: { panel: OpenPanel } = $props()
+
+  // A modal <dialog>: the browser keeps focus inside it and the page behind it out of reach while it's open.
+  let dialog: HTMLDialogElement
+  $effect(() => {
+    if (!dialog.open) dialog.showModal()
+    return () => dialog.close()
+  })
+
+  // Escape closes it, as Close does. A scene's own panel stays.
+  function cancel(event: Event) {
+    event.preventDefault()
+    if (!panel.scene) runner.apply({ type: 'closePanel' })
+  }
 </script>
 
-<section class="panel" role="dialog" aria-modal="true" aria-label={panel.panel}>
-  <div>
-    <h2>{panel.panel}</h2>
-    <pre>{JSON.stringify(panel.with, null, 2)}</pre>
-    <button onclick={() => runner.apply({ type: 'closePanel' })}>Close</button>
-  </div>
-</section>
+<dialog bind:this={dialog} class="panel" aria-label={panel.panel} oncancel={cancel}>
+  <h2>{panel.panel}</h2>
+  <pre>{JSON.stringify(panel.with, null, 2)}</pre>
+  {#if !panel.scene}<button onclick={() => runner.apply({ type: 'closePanel' })}>Close</button>{/if}
+</dialog>
 ```
 
 The React UI draws panels itself with [`PanelHost`](/docs/react/components#panelhost), which knows the shop's and the jobs' panels by name.

@@ -305,4 +305,4 @@ Whether shortcuts should leave a key press alone: the player typing in an input,
 function dialogOpen(): boolean
 ```
 
-Whether the page has an open dialog, an element with `role="dialog"` or `role="alertdialog"`. The shortcuts stand aside while one is, so its own keys, and Escape, are its.
+Whether the page has an open dialog: an open `<dialog>` element, or an element with `role="dialog"` or `role="alertdialog"`. The shortcuts stand aside while one is, so its own keys, and Escape, are its.

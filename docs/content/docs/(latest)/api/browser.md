@@ -45,7 +45,7 @@ type ClockOptions = {
 
 Function. Explained in [Browser helpers](/docs/browser#dialogopen).
 
-Whether a dialog is open in the page. Its own keys come first, and Escape is its own.
+Whether a dialog is open in the page: an open `<dialog>`, or an element with a dialog's role. Its own keys come first, and Escape is its own.
 
 ```ts shape
 import { dialogOpen } from '@ifloom/browser'

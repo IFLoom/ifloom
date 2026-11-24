@@ -12,9 +12,9 @@ export function ignoredKey(event: KeyboardEvent): boolean {
   return Boolean(target?.closest?.('input, textarea, select, [contenteditable="true"]'))
 }
 
-/** Whether a dialog is open in the page. Its own keys come first, and Escape is its own. */
+/** Whether a dialog is open in the page: an open `<dialog>`, or an element with a dialog's role. Its own keys come first, and Escape is its own. */
 export function dialogOpen(): boolean {
-  return typeof document !== 'undefined' && document.querySelector('[role="dialog"], [role="alertdialog"]') !== null
+  return typeof document !== 'undefined' && document.querySelector('dialog[open], [role="dialog"], [role="alertdialog"]') !== null
 }
 
 /** The choices the number keys pick, in order: the open scene's, else the room's buttons. Key 1 is the first. */

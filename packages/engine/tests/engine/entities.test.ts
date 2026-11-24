@@ -53,6 +53,20 @@ describe('entities', () => {
     expect(entityName(state, g, 'dish:soup')).toBe('Soup of the day')
   })
 
+  it('read a declared entity brought back `like` another: the record, then the declaration, then the `like`', () => {
+    const g = game()
+    // Ben is declared with a name and nothing else; brought back like Ana, he keeps his name but reads her skill.
+    let state = applyEffects(startingState(g), g, [{ remove: 'staff:ben' }])
+    state = applyEffects(state, g, [{ create: 'staff', like: 'staff:ana', with: { id: 'ben' } }])
+    expect(entityName(state, g, 'staff:ben')).toBe('Ben')
+    expect(statValue(state, g, 'skill', 'staff:ben')).toBe(4)
+    // Ana's declared skill wins over a `like` of Ben's, and what play changed wins over both.
+    state = applyEffects(state, g, [{ remove: 'staff:ana' }])
+    state = applyEffects(state, g, [{ create: 'staff', like: 'staff:ben', with: { id: 'ana', name: 'Ana B.' } }])
+    expect(entityName(state, g, 'staff:ana')).toBe('Ana B.')
+    expect(statValue(state, g, 'skill', 'staff:ana')).toBe(4)
+  })
+
   it('take the player’s effects and conditions with `of`, held to the stat’s range', () => {
     const g = game()
     const state = applyEffects(startingState(g), g, [

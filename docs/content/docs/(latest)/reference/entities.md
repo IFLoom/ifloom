@@ -72,10 +72,9 @@ A declared entity has no record until an effect changes it, and then the record 
 
 The functions on this page read each value in this order:
 
-- **A stat** reads the record, then the `like` entity, then the declaration's `stats`, then the stat's `start`.
+- **A stat** reads the record, then the declaration's `stats`, then the `like` entity, then the stat's `start`.
 - **A kv key** reads the record, then the declaration's `kv`, then the `like` entity's.
-- **The name and description** read the record, then the `like` entity, then the declaration.
-- **The picture** reads the record, then the declaration, then the `like` entity.
+- **The name, description and picture** read the record, then the declaration, then the `like` entity.
 - **Tags** are the kind's, the `like` entity's, the declaration's and the record's, each once.
 - **A trait's data** is the record's `traitData` laid over the `like` entity's trait, else over the kind's default.
 

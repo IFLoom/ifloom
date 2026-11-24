@@ -334,7 +334,7 @@ function likeOf(state: GameState, ref: string, depth: number): EntityRef | undef
 }
 
 /**
- * Returns an entity's kept stat as play left it, else as its `like` reads it, else as its definition starts it.
+ * Returns an entity's kept stat as play left it, else as its definition starts it, else as its `like` reads it.
  * Returns undefined when none has it, so the stat's `start` applies.
  */
 export function entityStat(state: GameState, game: Game | undefined, ref: string, stat: string): number | undefined {
@@ -344,8 +344,10 @@ export function entityStat(state: GameState, game: Game | undefined, ref: string
 function entityStatThrough(state: GameState, game: Game | undefined, ref: string, stat: string, depth: number): number | undefined {
   const own = recordOf(state, ref)?.stats?.[stat]
   if (own !== undefined) return own
+  const declared = entityDef(game, ref)?.stats?.[stat]
+  if (declared !== undefined) return declared
   const like = likeOf(state, ref, depth)
-  return (like !== undefined ? entityStatThrough(state, game, like, stat, depth + 1) : undefined) ?? entityDef(game, ref)?.stats?.[stat]
+  return like !== undefined ? entityStatThrough(state, game, like, stat, depth + 1) : undefined
 }
 
 /**
@@ -380,7 +382,7 @@ function entityTagsThrough(state: GameState, game: Game, ref: string, depth: num
 
 /**
  * Returns an entity's name or description before its tokens are filled. It reads the one the entity was made with,
- * then its `like`'s, then its definition's.
+ * then its definition's, then its `like`'s, as `entityImage` does.
  *
  * `entityName` and `entityDescription` return them filled.
  */
@@ -391,8 +393,10 @@ export function entityText(state: GameState, game: Game | undefined, ref: string
 function textThrough(state: GameState, game: Game | undefined, ref: string, field: 'name' | 'description', depth: number): string | undefined {
   const given = recordOf(state, ref)?.[field]
   if (given !== undefined) return given
+  const declared = entityDef(game, ref)?.[field]
+  if (declared !== undefined) return declared
   const like = likeOf(state, ref, depth)
-  return (like !== undefined ? textThrough(state, game, like, field, depth + 1) : undefined) ?? entityDef(game, ref)?.[field]
+  return like !== undefined ? textThrough(state, game, like, field, depth + 1) : undefined
 }
 
 /** Returns an entity's picture before `artSrc`, the one it was made with, else its definition's, else its `like`'s. */

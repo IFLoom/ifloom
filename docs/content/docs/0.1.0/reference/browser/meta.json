@@ -1,8 +1,0 @@
-{
-  "title": "Browser",
-  "description": "@ifloom/browser and @ifloom/audio",
-  "pages": [
-    "index",
-    "audio-player"
-  ]
-}

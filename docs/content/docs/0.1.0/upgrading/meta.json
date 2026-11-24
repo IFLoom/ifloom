@@ -1,6 +1,0 @@
-{
-  "title": "Upgrading",
-  "description": "Moving a game to a newer engine, and what changed in each schema",
-  "root": true,
-  "pages": ["index", "schema-history", "old-saves", "migrate-your-saves", "status"]
-}

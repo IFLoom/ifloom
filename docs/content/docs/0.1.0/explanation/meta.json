@@ -1,6 +1,0 @@
-{
-  "title": "Explanation",
-  "description": "How IFLoom works and why",
-  "root": true,
-  "pages": ["architecture", "design", "state-and-commands", "turns-and-time", "content-and-packs", "entities-and-traits", "plugins", "choosing-a-ui", "shapes-of-game"]
-}

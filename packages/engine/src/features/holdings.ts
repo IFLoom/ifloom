@@ -58,7 +58,7 @@ export type HoldingsShape = {
      * The counts play has changed, by holder and then thing, such as `held.player['food:apple']`. A count stays once
      * written, 0 included.
      *
-     * A count play hasn't changed is read from the entity's `at` in content.
+     * For a count play hasn't changed, the engine reads the entity's `at` in content.
      */
     held: Record<string, Record<string, number>>
     /** The protagonist the player is playing, which `'you'` names. Null while the player plays themselves. */

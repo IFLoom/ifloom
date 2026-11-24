@@ -2,7 +2,7 @@
 import { runner, view } from './runner.ts'
 
 // The story: the scene's title, its beats and its choices. With no scene open it's the room, whose buttons are view.actions.
-// The vue template's Beat.vue draws each beat with its spans; here they're written out.
+// The vue template's Beat.vue renders each beat with its spans; here they're written out.
 </script>
 
 <template>

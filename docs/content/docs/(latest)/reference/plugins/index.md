@@ -23,7 +23,7 @@ Each package's page documents its factory, its content, its calls and its view.
 | [Inventory](/docs/reference/plugins/inventory) | `@ifloom/plugin-inventory` adds using, dropping and giving away the things the player holds. |
 | [Shop](/docs/reference/plugins/shop) | `@ifloom/plugin-shop` adds vendors that sell things for spendable stats, with stock, restocking, selling back and seeded daily discounts. |
 | [Jobs](/docs/reference/plugins/jobs) | `@ifloom/plugin-jobs` adds jobs with hiring requirements, shifts that pay a wage, promotions, missed shifts and firing. |
-| [Generators](/docs/reference/plugins/generators) | `@ifloom/plugin-generators` makes entities from templates whose fields are drawn from pools, ranges and fixed values, seeded so a replay makes the same ones. |
+| [Generators](/docs/reference/plugins/generators) | `@ifloom/plugin-generators` makes entities from templates that draw each field from a pool, a range or a fixed value, seeded so a replay makes the same ones. |
 | [Wardrobe](/docs/reference/plugins/wardrobe) | `@ifloom/plugin-wardrobe` adds slots, the wearable things that go in them, and what each body has on. |
 | [Messages](/docs/reference/plugins/messages) | `@ifloom/plugin-messages` adds channels and threads of messages that arrive when the story allows, with replies that work as choices. |
 | [Feed](/docs/reference/plugins/feed) | `@ifloom/plugin-feed` adds feeds of posts, the player's own posts, likes and comments. |

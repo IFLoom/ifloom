@@ -32,7 +32,7 @@ type FireDef = {
 
 Type. Explained in [Jobs](/docs/reference/plugins/jobs#heldjob).
 
-The record a save keeps for a job the player holds, in `JobsState`'s `held`. The job's definition is read from content.
+The record a save keeps for a job the player holds, in `JobsState`'s `held`. The plugin reads the job's definition from content.
 
 ```ts shape
 import type { HeldJob } from '@ifloom/plugin-jobs'
@@ -143,7 +143,7 @@ Uses: [`Game`](/docs/api/engine#game), [`JobDef`](#jobdef).
 
 Type. Explained in [Jobs](/docs/reference/plugins/jobs#jobsstate).
 
-The jobs a save keeps for the player, held and fired. Jobs themselves are read from content.
+The jobs a save keeps for the player, held and fired. The plugin reads the jobs from content.
 
 ```ts shape
 import type { JobsState } from '@ifloom/plugin-jobs'

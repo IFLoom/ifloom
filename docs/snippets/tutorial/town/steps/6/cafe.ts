@@ -24,7 +24,7 @@ export const cafe: Content = {
       id: 'ruth.talk',
       speaker: 'ruth',
       body: [
-        text('"Morning. What can I get you?"'),
+        text('"Hello, love. What can I get you?"'),
         text('She is already reaching for your usual cup.', { when: { stat: 'friendship', of: cast.character('ruth'), gte: 5 } }),
       ],
       choices: [

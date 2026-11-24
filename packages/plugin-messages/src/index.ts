@@ -132,7 +132,7 @@ export type Arrival = {
   day: number
 }
 
-/** The messages a save keeps for the player, their arrivals, replies and reads. Messages themselves are read from content. */
+/** The messages a save keeps for the player, their arrivals, replies and reads. The plugin reads the messages from content. */
 export type MessagesState = {
   /** The arrivals so far, oldest first. */
   arrived: Arrival[]

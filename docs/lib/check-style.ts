@@ -17,6 +17,7 @@
  *
  * and outside front matter and code:
  *
+ *   - the first paragraph doesn't open with "This page": it opens with the idea itself;
  *   - no sentence has two colons or more;
  *   - none says one of the banned phrases above;
  *   - no heading or title is in Title Case (more than one capitalised word, not counting code, acronyms, names like
@@ -190,8 +191,13 @@ export function checkPage(page: string, source: string): StyleProblem[] {
   // A run of prose lines, checked as one text from the line it starts on.
   let run: string[] = []
   let start = 0
+  let opened = false
   const flush = () => {
-    if (run.length) prose(start, run.join(' '))
+    if (!run.length) return
+    // The first paragraph opens with the idea itself, never with what the page is.
+    if (!opened && /^\s*this page\b/i.test(run[0])) report(start, 'opens with "This page"', run[0])
+    opened = true
+    prose(start, run.join(' '))
     run = []
   }
   const prose = (line: number, text: string) => {

@@ -61,7 +61,7 @@ export type CalendarOptions = {
   curfew?: Condition | false
 }
 
-/** The clock a save keeps for the calendar. Periods and the week are read from the options, so only the day and period are kept. */
+/** The clock a save keeps for the calendar. The plugin reads the periods and the week from its options, so the save keeps only the day and period. */
 export type CalendarState = {
   /** The day, counting from 0. */
   day: number

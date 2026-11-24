@@ -121,7 +121,7 @@ export type AppDef = {
  * The devices a save keeps out, each mapped to its open app, or null on its home screen. A device left out of `shown`
  * is put away.
  *
- * Definitions are read from content.
+ * The plugin reads definitions from content.
  */
 export type DevicesState = {
   /** The devices out, each id mapped to the open app's id, or null on the home screen. */

@@ -88,7 +88,7 @@ Uses: [`Game`](/docs/api/engine#game), [`FeedDef`](#feeddef).
 
 Type. Explained in [Feed](/docs/reference/plugins/feed#feedstate).
 
-The feeds a save keeps for the player. Feeds and other people's posts are read from content, so only what play changed is kept.
+The feeds a save keeps for the player. The plugin reads feeds and other people's posts from content, so the save keeps only what play changed.
 
 ```ts shape
 import type { FeedState } from '@ifloom/plugin-feed'

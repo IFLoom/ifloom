@@ -372,8 +372,8 @@ function partText(part: BodyPart): string {
  * list with no members.
  *
  * When `weightOf` gives any member a weight other than 1, each draw is a weighted pick seeded by the save, the turn and
- * the list's count of draws. Otherwise the list rotates on every use from an offset drawn each turn, so a scene doesn't
- * repeat itself and two playthroughs draw different lines.
+ * the list's count of draws. Otherwise the list rotates on every use from an offset drawn each turn, so draws in one turn
+ * don't repeat until every member has shown, and two playthroughs draw different lines.
  *
  * @remarks The offset and the count of uses stay separate on purpose. One sum of seed, turn and uses taken modulo the
  * list's length beats against a fixed calendar, so a list of three drawn every second and fifth turn would come back

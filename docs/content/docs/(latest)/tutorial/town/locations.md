@@ -71,7 +71,7 @@ The places plugin puts the exits in the view, the data the page renders, at `vie
 // src/main.ts: add this line under the other imports
 import { townButtons } from './town.ts'
 
-// src/main.ts: in draw(), add this line under the one that draws view.scene.choices
+// src/main.ts: in draw(), add this line under the one that renders view.scene.choices
 drawChoices(add(story, 'nav', '', 'choices'), townButtons(view))
 ```
 

@@ -427,7 +427,7 @@ export function clampStat(state: GameState, game: Game, id: string, value: numbe
   return Math.max(statMin(state, game, id, cx), Math.min(statMax(state, game, id, cx), value))
 }
 
-/** Returns the refusal for a cost the player can't cover, from the stat's `lacking`, else "Not enough" and the label. */
+/** Returns the refusal for a cost the player can't cover, from the stat's `lacking`, else the `notEnough` string with the stat's label in lower case. */
 export function lackingLine(game: Game, id: string, amount: number): string {
   const def = statOf(game, id)
   if (def?.lacking) return counted(def.lacking, amount)

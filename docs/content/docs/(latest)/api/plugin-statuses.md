@@ -13,7 +13,7 @@ Generated from the source of `@ifloom/plugin-statuses` and `@ifloom/plugin-statu
 
 Type. Explained in [Statuses](/docs/reference/plugins/statuses#activerecord).
 
-The record a save keeps for one active status, in `StatusesState`'s `active`. The status's definition is read from content.
+The record a save keeps for one active status, in `StatusesState`'s `active`. The plugin reads the status's definition from content.
 
 ```ts shape
 import type { ActiveRecord } from '@ifloom/plugin-statuses'
@@ -134,7 +134,7 @@ Uses: [`Game`](/docs/api/engine#game), [`StatusDef`](#statusdef).
 
 Type. Explained in [Statuses](/docs/reference/plugins/statuses#statusesstate).
 
-The active statuses a save keeps for the player. Statuses themselves are read from content.
+The active statuses a save keeps for the player. The plugin reads each status's definition from content.
 
 ```ts shape
 import type { StatusesState } from '@ifloom/plugin-statuses'

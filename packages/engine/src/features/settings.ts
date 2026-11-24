@@ -39,8 +39,8 @@ export type SettingView = {
   /** The setting's type, a `toggle` (on or off), a `choice` among `options`, or a `range` from `min` to `max`. */
   type: 'toggle' | 'choice' | 'range'
   /**
-   * The setting's reach. A `play` setting is kept in the save and changes the game, and a `ui` setting is kept in the
-   * profile and changes only how the game is shown.
+   * The setting's reach. The save keeps a `play` setting, which changes the game, and the profile keeps a `ui`
+   * setting, which changes only how the game is shown.
    */
   affects: 'play' | 'ui'
   /** The options of a `choice` setting, each a value with its label. */

@@ -58,7 +58,7 @@ export type AchievementDef = {
   progress?: ProgressDef
 }
 
-/** The achievements a save keeps for the player. Definitions are read from content, so only the earned ones are kept. */
+/** The achievements a save keeps for the player. The plugin reads definitions from content, so the save keeps only the earned ones. */
 export type AchievementsState = {
   /** The save's earned achievements, each id mapped to the turn it was earned. */
   earned: Record<string, number>

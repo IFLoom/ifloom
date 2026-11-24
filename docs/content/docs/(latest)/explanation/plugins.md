@@ -2,7 +2,7 @@
 title: "How plugins work"
 description: "A plugin adds one system to the engine, and the rules every plugin keeps let a game combine any of them."
 ---
-This page explains what a plugin is, how it plugs into the core, and why the first-party plugins never import each other. A plugin adds one system to the engine, such as a calendar, locations or quests. The rules each plugin keeps are what let a game take any combination of them.
+A plugin adds one system to the engine, such as a calendar, locations or quests. The rules each plugin keeps, such as never importing another plugin, are what let a game take any combination of them.
 
 ## The core and the plugins a game chooses
 

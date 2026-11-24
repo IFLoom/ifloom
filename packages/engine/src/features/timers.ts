@@ -35,7 +35,7 @@ export type TimerDef = {
   effects?: EffectRef[]
 }
 
-/** A running timer a save keeps, with the milliseconds left and its whole length. Its effects are read from content when it runs out. */
+/** A running timer a save keeps, with the milliseconds left and its whole length. The engine reads its effects from content when it runs out. */
 export type RunningTimer = {
   /** The milliseconds the timer has left. At 0 it runs out on the next tick. */
   left: number

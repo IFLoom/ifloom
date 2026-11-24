@@ -140,7 +140,7 @@ export type StockRecord = {
   left?: number
 }
 
-/** The restocks a save keeps for the vendors. The stock itself is what each vendor holds, and goods are read from content. */
+/** The restocks a save keeps for the vendors. The stock itself is what each vendor holds, and the plugin reads goods from content. */
 export type ShopState = {
   /** The last restock of each good, by vendor and then by thing. */
   stocked: Record<string, Record<EntityRef, StockRecord>>

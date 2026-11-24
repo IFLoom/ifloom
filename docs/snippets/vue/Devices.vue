@@ -3,7 +3,7 @@ import { runner, view } from './runner.ts'
 
 // Each device: a button that brings it out, and while it's out, its open app or else its home screen of apps, with Home and Close.
 // Whether it's out, and on what, is the game's state, so every UI shows the same.
-// A `plugin` section is the messages' or the feed's, drawn as their pages show.
+// A `plugin` section is the messages' or the feed's, rendered as their pages show.
 </script>
 
 <template>

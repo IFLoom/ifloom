@@ -69,6 +69,7 @@ describe('the town tutorial, step by step', () => {
     expect(view(state, game).scene.body).toContain('You know where the tea bags are now.')
     state = play(state, game, choose('tea'))
     expect(statValue(state, game, 'energy')).toBe(60)
+    expect(button(view(state, game).scene.choices, 'Make a cup of tea')?.disabled).toBe('One cup is plenty.')
     expect(state.kv.kitchenVisits).toBe(2)
   })
 
@@ -152,7 +153,7 @@ const pressed = (root: HTMLElement) => async (label: string) => {
   await nextTick()
 }
 
-/** The template's draw loop, cut down: the scene's choices, the room's and game's actions, then the line step 5 adds. */
+/** The template's render loop, cut down: the scene's choices, the room's and game's actions, then the line step 5 adds. */
 function drawPage(root: HTMLElement, game: Game, get: () => GameState, send: (state: GameState) => void): void {
   const shown = view(get(), game)
   root.replaceChildren()

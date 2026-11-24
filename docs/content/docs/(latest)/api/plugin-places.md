@@ -244,7 +244,7 @@ type PlacesOptions = {
 
 Type. Explained in [Places](/docs/reference/plugins/places#placesstate).
 
-The location a save keeps for the player. Locations themselves are read from content.
+The location a save keeps for the player. The plugin reads the locations from content.
 
 ```ts shape
 import type { PlacesState } from '@ifloom/plugin-places'

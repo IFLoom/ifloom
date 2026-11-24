@@ -2,7 +2,7 @@
 title: "The React UI"
 description: "The optional React UI, @ifloom/react, with mountGame and its options, its two entries, its pages and its strings."
 ---
-This page documents `@ifloom/react`, the optional React UI, and stays React only. To render a game in plain DOM, Vue or React by hand, see [Start your own UI](/docs/how-to/render/start). [Choosing a UI](/docs/explanation/choosing-a-ui) says when to use which.
+`@ifloom/react` is the optional React UI, so everything here is React only. To render a game in plain DOM, Vue or React by hand, see [Start your own UI](/docs/how-to/render/start). [Choosing a UI](/docs/explanation/choosing-a-ui) says when to use which.
 
 `@ifloom/react` renders a game in the browser with React components built on [shadcn/ui](https://ui.shadcn.com). It reads the [view](/docs/reference/view) and sends [commands](/docs/reference/commands) through a [runner](/docs/reference/runner), as a UI of your own would, and nothing in the engine depends on it. [Set up the React UI](/docs/how-to/react/set-up-the-react-ui) installs it and writes the files a game needs. In the showcase: `examples/showcase/src/main.tsx`.
 

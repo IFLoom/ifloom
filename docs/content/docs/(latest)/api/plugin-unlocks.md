@@ -295,7 +295,7 @@ type UnlocksProfile = {
 
 Type. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlocksstate).
 
-The unlocks a save keeps. Unlocks themselves are read from content.
+The unlocks a save keeps. The plugin reads the unlocks from content.
 
 ```ts shape
 import type { UnlocksState } from '@ifloom/plugin-unlocks'

@@ -25,9 +25,9 @@ Use this when the game is ready for players, as a folder to zip, upload to itch.
 
 5. **Give the game an id of its own.** `saves` keys every save with the game's `id`, as in `corner-cafe.save.auto`, so two games on one origin don't overwrite each other. Changing the id later loses every player's saves.
 
-## Pick where saves go
+## Choose where saves go
 
-[`browserRunner`](/docs/reference/browser#browserrunner), which every template uses, keeps saves in `localStorage`. Pick a driver for how the game ships:
+[`browserRunner`](/docs/reference/browser#browserrunner), which every template uses, keeps saves in `localStorage`. Choose a driver for how the game ships:
 
 - **A short game in a browser or on itch.io** keeps `localStorageDriver()`, with about 5MB.
 - **A long game, or one with big backlogs or mods,** passes `indexedDbDriver()`, which has much more room.

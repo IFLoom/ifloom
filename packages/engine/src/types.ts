@@ -20,7 +20,7 @@ export type StatKey = string
 /** The current values of the stats the save keeps, by stat id. */
 export type Stats = Record<StatKey, number>
 
-/** The state a save keeps for one storyline. Its definition is read from content. */
+/** The state a save keeps for one storyline. The engine reads its definition from content. */
 export type StorylineState = {
   /** The storyline's turn to open again, or null while it is open. */
   closedUntil: number | null
@@ -50,7 +50,7 @@ type CoreState = {
 }
 
 /**
- * The state a save keeps, the core's fields and each feature's. Definitions are read from content, so the save holds
+ * The state a save keeps, the core's fields and each feature's. The engine reads definitions from content, so the save holds
  * only what play changed.
  *
  * Each field declares its new-game value and load default once, in `FIELDS` or in its feature's `state`.
@@ -64,8 +64,8 @@ export type StartOptions = {
   /** The kv keys written before the first scene, such as a name from a title page or a difficulty. */
   kv?: Record<string, KvValue>
   /**
-   * The player's stored values for the game's `play` settings, usually the profile's `core:settings`. A missing or
-   * invalid value starts at its default, and an undeclared id is ignored.
+   * The player's stored values for the game's `play` settings, such as the profile's `core:settings`, which
+   * `browserRunner` passes. A missing or invalid value starts at its default, and an undeclared id is ignored.
    */
   settings?: Record<string, unknown>
   /**

@@ -50,7 +50,7 @@ export type QuestDef = {
   stages: QuestStage[]
 }
 
-/** The quests a save keeps for the player, their progress, tracking and news. Quests themselves are read from content. */
+/** The quests a save keeps for the player, their progress, tracking and news. The plugin reads the quests from content. */
 export type QuestsState = {
   /** The turn each started quest started on, by quest id. */
   started: Record<string, number>

@@ -82,7 +82,7 @@ The first run writes the file, so commit it. After that, each run compares and p
 
 ## Choose the probes
 
-Give the game module `probes`, a function that returns the states every scene is read in. Make each with [`probe`](/docs/reference/cli#probe), by playing commands and effects from the start, so each is a state a player could be in:
+Give the game module `probes`, a function that returns the states `ifloom snapshot` reads every scene in. Make each with [`probe`](/docs/reference/cli#probe), by playing commands and effects from the start, so each is a state a player could be in:
 
 ```ts
 // src/game.ts

@@ -177,7 +177,7 @@ export function moveHeld(state: GameState, game: Game, ref: string, from: string
 
 /**
  * Returns the state with an entity's holdings released before it is removed. No one holds it any more, and the things
- * it held go to its own holder, or leave with it when it had none.
+ * it held go to its own holder, or are held by nobody when it had none.
  */
 export function releaseHeld(state: GameState, game: Game, ref: string): GameState {
   const owner = holderOf(state, game, ref)

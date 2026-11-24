@@ -143,7 +143,7 @@ Uses: [`Game`](/docs/api/engine#game), [`QuestDef`](#questdef).
 
 Type. Explained in [Quests](/docs/reference/plugins/quests#questsstate).
 
-The quests a save keeps for the player, their progress, tracking and news. Quests themselves are read from content.
+The quests a save keeps for the player, their progress, tracking and news. The plugin reads the quests from content.
 
 ```ts shape
 import type { QuestsState } from '@ifloom/plugin-quests'

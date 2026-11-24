@@ -42,7 +42,7 @@ Settings for [`startingState`](#startingstate) and the runner's `newGame`. Every
 |---|---|
 | `seed` | The save's [seed](/docs/reference/state#seed). A hash of `game.id` if left out, so every new game draws the same. |
 | `kv` | Keys written to the [kv store](/docs/reference/state#kv) over the content's `kv`, such as a name typed on a title page. |
-| `settings` | The player's stored values for the game's `play` [settings](/docs/reference/settings), usually the profile's `core:settings`. An unknown id, a `ui` setting or a value a setting can't take is ignored. |
+| `settings` | The player's stored values for the game's `play` [settings](/docs/reference/settings), such as the profile's `core:settings`, which `browserRunner` passes. An unknown id, a `ui` setting or a value a setting can't take is ignored. |
 | `carry` | The state a finished game ended on, for a New Game+. The engine copies what the content's [`carryOver`](/docs/reference/state#carryover) lists from it. |
 
 ## Commands

@@ -27,7 +27,7 @@ import { minigameOf, startMinigame } from './minigames.ts'
  */
 export type FlowStep = { chose: string } | { point: string } | { minigame: string } | { panel: string }
 
-/** The visit a save keeps for the open scene, with its path so far and the wait the flow stands at. The scene's body is read from content. */
+/** The visit a save keeps for the open scene, with its path so far and the wait the flow stands at. The engine reads the scene's body from content. */
 export type FlowState = {
   /** The id of the scene the visit is of. */
   scene: string

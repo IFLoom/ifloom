@@ -83,7 +83,7 @@ voice: queue scene:1234:3:1:ava.hello ava.hello
 music: play refused for audio/music/calm.ogg (NotAllowedError)
 ```
 
-A `play refused` line is the browser refusing, usually before the first click. The player notes it, carries on, and tries refused music again on the next click (`music: try … again`). It logs a file paused before it started, by a quick change of track, as `stopped … before it started`.
+A `play refused` line is the browser refusing to play sound before the page's first click or key press. The player notes it, carries on, and tries refused music again on the next click (`music: try … again`). It logs a file paused before it started, by a quick change of track, as `stopped … before it started`.
 
 ## AudioPlayer
 

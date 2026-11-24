@@ -61,7 +61,7 @@ Stop the dev server, then build the game:
 npm run build
 ```
 
-The build writes the game into `dist/` as one `index.html`, and checks that the folder opens from disk. Open `dist/` in your file manager and double-click `index.html`. The game runs from the file, with no server, because it loads nothing at runtime ([Why IFLoom works this way](/docs/explanation/design#nothing-loads-at-runtime)).
+The build writes the game into `dist/` as one `index.html`, then checks that `index.html` loads its script and styles only from files beside it, which a page opened from disk needs. It prints the largest files with their sizes, and a line for each problem it finds. Open `dist/` in your file manager and double-click `index.html`. The game runs from the file, with no server, because it loads nothing at runtime ([Why IFLoom works this way](/docs/explanation/design#nothing-loads-at-runtime)).
 
 :::tip[Checkpoint]
 The built game opens from `dist/index.html` in your browser, at "Chapter one: the stop" (after **New game** in the React template). Type your name, share the umbrella and pay the fare, then wave the man in. The page shows "The end", and **Start again** takes you back to the stop.

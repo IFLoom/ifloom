@@ -49,7 +49,7 @@ One state of a minigame, with its words, its timer, the inputs it listens for an
 - **`always`** is taken as the state is entered, the first entry whose `when` holds, for a state that only decides where to go, such as counting rounds.
 - **`final`** ends the minigame on entering the state. The engine writes its `copy` to the game's kv store, as `{ score: 'arrows.best' }`, closes the minigame, then applies its `effects`. When no final effect opens another scene, the scene that was open shows again with its choices.
 
-The `after` timer is kept in the minigame as `elapsed`, not among the game's named [timers](/docs/reference/timers), and entering a state starts it from 0. One `tick` runs both kinds down. Whatever would run out first goes first, and on the same millisecond the minigame's `after` goes before a named timer. The game's timers keep running while a minigame plays, and a transition's effects can start or stop one. A tick runs the clock of the minigame that was playing when it began, so one that a transition starts counts from the next tick.
+The minigame keeps its `after` timer as `elapsed`, not among the game's named [timers](/docs/reference/timers), and entering a state starts it from 0. One `tick` runs both kinds down. Whatever would run out first goes first, and on the same millisecond the minigame's `after` goes before a named timer. The game's timers keep running while a minigame plays, and a transition's effects can start or stop one. A tick runs the clock of the minigame that was playing when it began, so one that a transition starts counts from the next tick.
 
 ## MinigameTransition
 

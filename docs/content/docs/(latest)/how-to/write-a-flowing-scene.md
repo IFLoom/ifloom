@@ -134,4 +134,4 @@ In the showcase, Small Town, the evening by the river (`ava.river` in [`examples
 
 - [Flows](/docs/reference/flows), with every builder and the checks.
 - [Scenes](/docs/reference/scenes) and [blocked](/docs/reference/actions#blocked).
-- [How the engine runs a scene](/docs/explanation/turns-and-time#how-the-engine-runs-a-scene).
+- [A scene and the room](/docs/explanation/turns-and-time#a-scene-and-the-room).

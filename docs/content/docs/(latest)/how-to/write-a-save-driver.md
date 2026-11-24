@@ -4,7 +4,7 @@ description: "Keep saves your own way with a save driver, such as compressed sav
 ---
 Use this when the browser's storage needs handling the built-in drivers don't do. A save driver is a name and four async functions that store strings by key. The save store, the [profile](/docs/reference/profile) and the [mod store](/docs/reference/mods) all write through the driver you give them, so one driver covers everything your game keeps.
 
-Most games need none of their own. Pick one of these first:
+Most games need none of their own. Choose one of these first:
 
 - **`memoryDriver()`**, from `@ifloom/engine`, keeps saves in a `Map` that goes with the page. Use it for tests and previews.
 - **`localStorageDriver()`**, from [`@ifloom/browser`](/docs/reference/browser#save-drivers), keeps them in `localStorage`, about 5MB shared by every game on one origin. Use it for short games. [`browserRunner`](/docs/reference/browser#browserrunner) uses it unless told otherwise.
@@ -123,7 +123,7 @@ await moveSaves(game.id, localStorageDriver(), driver).catch(() => {})
 const runner = await browserRunner(game, { saves: saves(game, driver), profile: profile(game, driver) })
 ```
 
-The React UI's [`mountGame`](/docs/reference/react#mountgame) takes the same two in its `runner` option, as [Ship your game](/docs/how-to/ship-your-game#pick-where-saves-go) shows. A game with [mods](/docs/how-to/let-players-add-mods) passes the driver to `mods(game.id, driver)` too.
+The React UI's [`mountGame`](/docs/reference/react#mountgame) takes the same two in its `runner` option, as [Ship your game](/docs/how-to/ship-your-game#choose-where-saves-go) shows. A game with [mods](/docs/how-to/let-players-add-mods) passes the driver to `mods(game.id, driver)` too.
 
 ## Test it
 
@@ -161,4 +161,4 @@ For more, see:
 
 - [Saves](/docs/reference/saves), with [`SaveDriver`](/docs/reference/saves#savedriver) and [`memoryDriver`](/docs/reference/saves#memorydriver).
 - [Save drivers](/docs/reference/browser#save-drivers) in `@ifloom/browser`.
-- [Ship your game](/docs/how-to/ship-your-game#pick-where-saves-go), to pick a driver for a game in the browser.
+- [Ship your game](/docs/how-to/ship-your-game#choose-where-saves-go), to choose a driver for a game in the browser.

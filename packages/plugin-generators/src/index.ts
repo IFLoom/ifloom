@@ -58,7 +58,7 @@ export type TemplateDef = {
   id: string
   /** The kind of entity the template makes. The `like`'s kind if left out. */
   of?: string
-  /** The entity the new ones are made like. Fields the template doesn't give, such as the name, picture, traits and stats, are read from it. */
+  /** The entity the new ones are made like. The engine reads from it the fields the template doesn't give, such as the name, picture, traits and stats. */
   like?: EntityRef
   /** The new entity's name. The `like`'s name if left out. */
   name?: FieldDef

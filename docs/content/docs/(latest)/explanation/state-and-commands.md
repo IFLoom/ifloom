@@ -2,7 +2,7 @@
 title: "State, commands and the view"
 description: "The loop at the heart of a game, where commands change one plain state and a UI renders a view of it."
 ---
-This page explains how a game moves from one moment to the next. The engine keeps a game in progress as one plain state. The player changes it only by sending commands, and a UI only ever renders a view of it. Every other part of the engine hangs off that loop.
+The engine keeps a game in progress as one plain state. The player changes it only by sending commands, and a UI only ever renders a view of it. Every other part of the engine hangs off that loop.
 
 ## One plain state
 
@@ -10,7 +10,7 @@ A game in progress is one [`GameState`](/docs/reference/state). It holds the tur
 
 The engine never changes a state in place. Every command returns a new state and leaves the old one as it was. So undo needs nothing more than the previous state, and a test can keep two states side by side and compare them.
 
-The state also keeps less than you might expect. It never copies a definition from content. A new game's state has no stats for Ana the cook, because her stats are read from content until play changes one. [Entities, things and traits](/docs/explanation/entities-and-traits#definitions-stay-in-content) explains why.
+The state also keeps less than you might expect. It never copies a definition from content. A new game's state has no stats for Ana the cook, because the engine reads her stats from content until play changes one. [Entities, things and traits](/docs/explanation/entities-and-traits#definitions-stay-in-content) explains why.
 
 ## Commands go through apply
 

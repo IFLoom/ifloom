@@ -86,7 +86,7 @@ export type MinigameDef = {
   states: Record<string, MinigameStateDef>
 }
 
-/** The running minigame a save keeps, in `state.minigame`. Its states are read from content. */
+/** The running minigame a save keeps, in `state.minigame`. The engine reads its states from content. */
 export type MinigameState = {
   /** The minigame's id. */
   id: string

@@ -12,7 +12,9 @@ A scene is one screen of story: a title, the words the player reads, and the cho
 
 `introScene` names the scene a new game opens on. Each scene has an `id`, which the rest of the game uses to name it, a `title`, and a `body`, which is a list of blocks read top to bottom. `text('…')` is a block of words, written in the place the player reads them.
 
-The file still exports `opening`, so `src/game.ts` picks it up without a change. The template's stat, Courage, stays in the side column until step 3 replaces it.
+The file still exports `opening`, so `src/game.ts` picks it up. Delete one thing from `src/game.ts`, though: the `probes` line, and `probe` from its import. The template's probes press the old story's `knock` choice, which is gone now, so `ifloom snapshot` would stop with an error. [Playtest and snapshot from the command line](/docs/how-to/playtest-and-snapshot) says what probes are for.
+
+The template's stat, Courage, stays in the side column until step 3 replaces it.
 
 ## Move between scenes with choices
 

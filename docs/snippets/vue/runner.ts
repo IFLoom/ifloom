@@ -26,7 +26,7 @@ export const snapshot = shallowRef(runner.snapshot())
 runner.subscribe((next) => {
   snapshot.value = next
 })
-// The view, which is most of what the components draw.
+// The view, which is most of what the components render.
 export const view = computed(() => snapshot.value.view)
 
 // Plays what view.audio asks for, from the first click or key press. Its play() plays a file on demand.

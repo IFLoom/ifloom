@@ -125,7 +125,7 @@ type AchievementsProfile = {
 
 Type. Explained in [Achievements](/docs/reference/plugins/achievements#achievementsstate).
 
-The achievements a save keeps for the player. Definitions are read from content, so only the earned ones are kept.
+The achievements a save keeps for the player. The plugin reads definitions from content, so the save keeps only the earned ones.
 
 ```ts shape
 import type { AchievementsState } from '@ifloom/plugin-achievements'

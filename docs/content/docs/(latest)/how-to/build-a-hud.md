@@ -2,7 +2,7 @@
 title: "Build a HUD"
 description: "Build a heads-up display of your own with a stat bar, unread counts and the tracked quest's objective, in plain JS, React or Vue."
 ---
-Use this when the React UI's stat list, notice strip and quest log are too plain for your game. Each piece of a HUD reads the [view](/docs/reference/view), which is the same whatever renders it, so each tab below reads the same fields. Set up the runner first, as [Start your own UI](/docs/how-to/render/start) shows. In React, each piece reads the view with [`useGame`](/docs/reference/react/components#usegame) and sits in your layout beside the React UI's parts. The examples use the showcase's stats and plugins.
+Use this when the React UI's stat list, notice strip and quest log are too plain for your game. Set up the runner first, as [Start your own UI](/docs/how-to/render/start) shows. Each piece of a HUD reads the [view](/docs/reference/view), which is the same whatever renders it, so each tab below reads the same fields. The examples use the showcase's stats and plugins.
 
 ## Add a stat bar
 
@@ -35,6 +35,7 @@ export function statBar(view: View, key: string): HTMLElement | null {
 
 ```tsx tab="React" tab-group="framework"
 // src/hud/StatBar.tsx
+// Each piece reads the view with useGame, and goes in your layout beside the React UI's parts.
 import { useGame } from '@ifloom/react'
 
 /** A bar for one of the game's stats, by its key: <StatBar stat="energy" />. */
@@ -102,7 +103,7 @@ import type { View } from '@ifloom/engine'
 
 let showNotices = false
 
-/** The unread counts. The bell shows the notices; `redraw` draws the page again with the list open or shut. */
+/** The unread counts. The bell shows the notices; `redraw` renders the page again with the list open or shut. */
 export function unread(view: View, redraw: () => void): HTMLElement {
   const strip = document.createElement('div')
   strip.className = 'unread'
@@ -142,7 +143,7 @@ export function Unread() {
       {notices ? <button onClick={() => setShowNotices(!showNotices)}>🔔 {notices}</button> : null}
       {texts ? <button onClick={() => phone.open('phone')}>✉ {texts}</button> : null}
       {showNotices ? <Notices limit={10} /> : null}
-      {/* Without devicesUi in `plugins`, which draws it for you: the phone once it's out. */}
+      {/* Renders the phone once it's open. Leave it out when `devicesUi` is in `plugins`. */}
       <DeviceDialog />
     </div>
   )
@@ -246,35 +247,20 @@ function draw(view: View): void {
 ```
 
 ```tsx tab="React" tab-group="framework"
-// src/layout.tsx: the react template's, with the HUD over the story and no stat list at the side
-import { Game, GameMenu, Notices, Overlay, PanelHost, RoomActions, Scene, Sidebar, Story, Title } from '@ifloom/react'
-import { StatBar } from './hud/StatBar.tsx'
-import { Objective } from './hud/Objective.tsx'
-import { Unread } from './hud/Unread.tsx'
+// src/hud/Hud.tsx
+import { StatBar } from './StatBar.tsx'
+import { Objective } from './Objective.tsx'
+import { Unread } from './Unread.tsx'
 
-export function Layout() {
+export function Hud() {
   return (
-    <Game>
-      <Sidebar>
-        <Title />
-        <GameMenu />
-      </Sidebar>
-      <Story>
-        <div className="flex flex-col gap-2 rounded-lg border p-3">
-          <div className="flex items-center justify-between gap-4">
-            <Objective />
-            <Unread />
-          </div>
-          <StatBar stat="energy" />
-        </div>
-        <Scene />
-        <RoomActions />
-      </Story>
-      <PanelHost />
-      <Overlay>
-        <Notices />
-      </Overlay>
-    </Game>
+    <div className="flex flex-col gap-2 rounded-lg border p-3">
+      <div className="flex items-center justify-between gap-4">
+        <Objective />
+        <Unread />
+      </div>
+      <StatBar stat="energy" />
+    </div>
   )
 }
 ```
@@ -297,7 +283,20 @@ import Unread from './Unread.vue'
 </template>
 ```
 
-In plain JS, the pieces render again with the rest of the page on every change. In Vue and React, each component renders again when the view changes. In the React UI, your components go anywhere in your [layout](/docs/reference/react/components#defaultlayout), among the built-in parts: here they make a bar across the top of the story and take the place of the stat list at the side. For a bar fixed across the top of the window, see [Rearrange or replace the React UI's parts](/docs/how-to/react/replace-parts). The components work anywhere inside the game's provider.
+In plain JS, the pieces render again with the rest of the page on every change. In Vue and React, each component renders again when the view changes.
+
+In the React UI, your components go anywhere in your [layout](/docs/reference/react/components#defaultlayout) among the built-in parts, inside the game's provider. Put `<Hud />` at the top of the `Story` in the react template's `src/layout.tsx`, and delete its `StatList` from the side column:
+
+```tsx fragment
+// src/layout.tsx: the react template's, with <Hud /> at the top of the story
+<Story>
+  <Hud />
+  <Scene />
+  <RoomActions />
+</Story>
+```
+
+For a bar fixed across the top of the window, see [Rearrange or replace the React UI's parts](/docs/how-to/react/replace-parts).
 
 ## Check it worked
 

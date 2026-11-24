@@ -12,7 +12,7 @@ import type { StoryletFields } from '@ifloom/engine'
 
 ## StoryletFields
 
-The fields that make a scene a storylet, the sets it is drawn from, its weight and its condition. Every field is in [`StoryletFields`](/docs/api/engine#storyletfields).
+The fields that make a scene a storylet, the sets a draw takes it from, its weight and its condition. Every field is in [`StoryletFields`](/docs/api/engine#storyletfields).
 
 A storylet is an ordinary scene in `game.scenes`. It renders, counts as [seen](/docs/reference/state#seen) and stays on screen as any other scene does, and the only difference is that an effect can draw it.
 
@@ -70,7 +70,7 @@ The [content checker](/docs/reference/checks) checks every storylet and every dr
 
 | Problem | Cause |
 |---|---|
-| `draws from "cafe", but no scene is drawn from it` | No scene names the set in its `drawnFrom`, which is usually a typo. |
+| `draws from "cafe", but no scene is drawn from it` | No scene names the set in its `drawnFrom`, as when the draw or a scene misspells it. |
 | `goes to unknown scene "cafe.quiet"` | `otherwise` names a scene the game doesn't have. |
 | `weight must be above 0` | A scene's `weight` is 0 or less, or isn't a number. |
 | `has a weight but no drawnFrom, so it is never drawn` | A scene has a `weight` and is in no set. |

@@ -38,6 +38,8 @@ turn	energy	coins	character	scenes	refused
 3	100	2	1	0	0
 ```
 
+The template's `playtest` script asks for 5 turns, but the table stops at turn 3: the playtest then goes to bed, and sleeping from the evening to the morning ends turns 4 and 5 at once.
+
 Every screen it saw is in `playtest/run.txt`, a turn at a time, with the command it sent from each. The playtest picks its buttons in its own way, so your numbers can differ from these. [Playtest and snapshot from the command line](/docs/how-to/playtest-and-snapshot) runs one on every change.
 
 ## Build it
@@ -48,7 +50,7 @@ Stop the dev server, then build the game:
 npm run build
 ```
 
-The build writes the game into `dist/`, as one `index.html` with Ruth's picture in `art/` beside it, and checks that the folder opens from disk. Open `dist/` in your file manager and double-click `index.html`. The game runs from the file, with no server, because it loads nothing at runtime ([Why IFLoom works this way](/docs/explanation/design#nothing-loads-at-runtime)).
+The build writes the game into `dist/`, as one `index.html` with Ruth's picture at `dist/art/character/ruth.svg`. Then it checks that `index.html` loads its script and styles only from files beside it, which a page opened from disk needs, and that every file the game names is in the folder. It prints the largest files with their sizes, and a line for each problem it finds. Open `dist/` in your file manager and double-click `index.html`. The game runs from the file, with no server, because it loads nothing at runtime ([Why IFLoom works this way](/docs/explanation/design#nothing-loads-at-runtime)).
 
 :::tip[Checkpoint]
 The built game opens from `dist/index.html` in your browser. Walk to the café and buy a coffee. Then keep your place:

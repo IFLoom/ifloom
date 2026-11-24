@@ -103,8 +103,8 @@ export type Select = {
 }
 
 /**
- * The fields a `create` effect gives a new entity in its `with`. Each one left out is read from the entity it's made
- * `like`, else from its kind.
+ * The fields a `create` effect gives a new entity in its `with`. The engine reads each one left out from the entity it's
+ * made `like`, else from its kind.
  */
 export type CreatedEntity = {
   /** The entity's id within its kind. The next free number (`#1`, `#2`) if left out. */

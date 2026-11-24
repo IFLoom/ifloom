@@ -281,7 +281,7 @@ entities: [
 ],
 ```
 
-The same effects and conditions reach them with `of`, such as `{ stat: 'price', by: 1, of: 'dish:soup' }`. Entities are kept in the save, content can create and remove them in play, and the checker knows their kinds and stats.
+The same effects and conditions reach them with `of`, such as `{ stat: 'price', by: 1, of: 'dish:soup' }`. The save keeps what play changes about entities, content can create and remove them in play, and the checker knows their kinds and stats.
 
 ### `StoryInterface`, `PassageHeader` and the UI bar
 

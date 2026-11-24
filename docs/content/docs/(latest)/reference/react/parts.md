@@ -2,7 +2,7 @@
 title: "React UI parts"
 description: "Every data-part the React UI and the plugins' React UIs render, with its data attributes, for a stylesheet, the classes option or a test."
 ---
-This page documents `@ifloom/react`, the optional React UI, and stays React only. To render a game in plain DOM, Vue or React by hand, see [Start your own UI](/docs/how-to/render/start).
+`@ifloom/react`, the optional React UI, renders these parts, so everything here is React only. To render a game in plain DOM, Vue or React by hand, see [Start your own UI](/docs/how-to/render/start).
 
 Every element the React UI renders carries a `data-part` attribute that names what it is, such as `choice` or `stat-value`. Each name is a [`PartKey`](/docs/reference/react/components#partkey), which is also a key of the [`classes`](/docs/reference/react/components#classes) option, and a stylesheet selects it as `[data-part="choice"]`. [Theme the React UI](/docs/how-to/react/theme-the-react-ui) styles parts, and [Rearrange or replace the React UI's parts](/docs/how-to/react/replace-parts) replaces the components that render them. The four presets in `packages/react/src/themes/` style these parts.
 

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * Every snippet, drawn in a few states of Small Town without throwing: each
+ * Every snippet, rendered in a few states of Small Town without throwing: each
  * Plain JS `draw…(parent, view)`, each Vue component and each React component
  * that takes no props. The other test files press their buttons; this one
  * makes sure none of them is left untried.

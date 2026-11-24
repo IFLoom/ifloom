@@ -170,7 +170,7 @@ Uses: [`Game`](/docs/api/engine#game), [`MessageDef`](#messagedef).
 
 Type. Explained in [Messages](/docs/reference/plugins/messages#messagesstate).
 
-The messages a save keeps for the player, their arrivals, replies and reads. Messages themselves are read from content.
+The messages a save keeps for the player, their arrivals, replies and reads. The plugin reads the messages from content.
 
 ```ts shape
 import type { MessagesState, Arrival } from '@ifloom/plugin-messages'

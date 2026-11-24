@@ -79,7 +79,7 @@ export type WardrobeSlot = {
   start?: EntityRef
 }
 
-/** The clothes a save keeps for each body. Slots and wearable things are read from content. */
+/** The clothes a save keeps for each body. The plugin reads slots and wearable things from content. */
 export type WardrobeState = {
   /** The thing worn in each slot, by body (`'player'` or a protagonist such as `'character:sam'`) and then by slot id. */
   worn: Record<string, Record<string, EntityRef | null>>

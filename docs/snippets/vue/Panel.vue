@@ -2,8 +2,8 @@
 import { runner, view } from './runner.ts'
 import ShopCounter from './ShopCounter.vue'
 
-// The panel open over the story, drawn by its name, with a Close button unless a scene holds it open.
-// The vue template's App.vue draws <Panel v-if="view.panel" :panel="view.panel" />; this one reads view.panel itself.
+// The panel open over the story, rendered by its name, with a Close button unless a scene holds it open.
+// The vue template's App.vue renders <Panel v-if="view.panel" :panel="view.panel" />; this one reads view.panel itself.
 </script>
 
 <template>

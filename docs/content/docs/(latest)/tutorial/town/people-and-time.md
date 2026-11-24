@@ -53,7 +53,7 @@ Replace `src/game.ts` with this, which lists the two new files and the three plu
 
 ::include[../../../../../snippets/tutorial/town/game.ts]
 
-`calendar({ turn: 'period' })` makes each period of the day one turn, so **Wait a while** ends a turn and Unpack a box comes back. The calendar comes first in `plugins`, so the plugins after it see the new time when a turn ends. The game starts on day 1, a Monday, in the morning. [Turns, scenes and the room](/docs/explanation/turns-and-time#the-calendar-makes-a-turn-a-period-a-day-or-a-week) explains how the calendar moves turns on.
+`calendar({ turn: 'period' })` makes each period of the day one turn, so **Wait a while** ends a turn, and a choice marked `once: { per: 'turn' }` can be chosen again. The calendar comes first in `plugins`, so the plugins after it see the new time when a turn ends. The game starts on day 1, a Monday, in the morning. [Turns, scenes and the room](/docs/explanation/turns-and-time#the-calendar-makes-a-turn-a-period-a-day-or-a-week) explains how the calendar moves turns on.
 
 ## Render the people
 

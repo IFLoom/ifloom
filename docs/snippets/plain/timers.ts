@@ -7,7 +7,7 @@ export function drawTimers(parent: HTMLElement, { view }: RunnerSnapshot): void 
   for (const timer of view.timers) {
     const box = add(parent, 'div', '', 'timer')
     box.dataset.timer = timer.id
-    // A quarter or less left: draw it as urgent.
+    // A quarter or less left: render it as urgent.
     if (timer.left <= timer.total / 4) box.dataset.urgent = ''
     if (timer.label) add(box, 'span', timer.label, 'timer-label')
     Object.assign(add(box, 'progress'), { max: timer.total, value: timer.left })

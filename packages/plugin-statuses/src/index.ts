@@ -54,7 +54,7 @@ export type StatusDef = {
   max?: number
 }
 
-/** The record a save keeps for one active status, in {@link StatusesState}'s `active`. The status's definition is read from content. */
+/** The record a save keeps for one active status, in {@link StatusesState}'s `active`. The plugin reads the status's definition from content. */
 export type ActiveRecord = {
   /** The status's id. */
   id: string
@@ -62,7 +62,7 @@ export type ActiveRecord = {
   left: number[]
 }
 
-/** The active statuses a save keeps for the player. Statuses themselves are read from content. */
+/** The active statuses a save keeps for the player. The plugin reads each status's definition from content. */
 export type StatusesState = {
   /** The active statuses, in the order they were first applied. */
   active: ActiveRecord[]

@@ -14,7 +14,7 @@ Time of day, places and people aren't in the core. The [calendar](/docs/referenc
 
 Twine and Ink walk a graph of passages, and Ren'Py gives you a full visual-novel screen. IFLoom keeps game state as well as story, and its conditions and effects are data the engine can check ([Differences from Twine, Ink and Ren'Py](/docs/explanation/design#differences-from-twine-ink-and-renpy)). The engine also keeps a few rules, such as seeded randomness and nothing loaded at runtime, which [Why IFLoom works this way](/docs/explanation/design) explains.
 
-## Pick a tutorial
+## Choose a tutorial
 
 Each tutorial starts from `npm create ifloom` and ends with a game in a folder that opens from disk. Each step is one page and ends with a checkpoint, so you can see the game work before you move on.
 

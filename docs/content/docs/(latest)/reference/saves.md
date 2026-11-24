@@ -20,7 +20,7 @@ Most games never call the store directly. They hand it to the [runner](/docs/ref
 
 A store of strings by key, which keeps whatever the save store, the [profile](/docs/reference/profile) and the [mod store](/docs/reference/mods) give it. Every field is in [`SaveDriver`](/docs/api/engine#savedriver).
 
-The engine has no default driver, so a game picks one and passes it to `saves`. The engine has [`memoryDriver`](#memorydriver), and [`@ifloom/browser`](/docs/reference/browser) has [`localStorageDriver`](/docs/reference/browser#localstoragedriver), for about 5MB per origin, and [`indexedDbDriver`](/docs/reference/browser#indexeddbdriver), for up to the browser's quota. Every driver is asynchronous, even over storage that isn't, so one swaps for another without changing the code that calls it. `name` says where the data goes, such as `'indexedDB'`, for a debug screen or an error report.
+The engine has no default driver, so a game chooses one and passes it to `saves`. The engine has [`memoryDriver`](#memorydriver), and [`@ifloom/browser`](/docs/reference/browser) has [`localStorageDriver`](/docs/reference/browser#localstoragedriver), for about 5MB per origin, and [`indexedDbDriver`](/docs/reference/browser#indexeddbdriver), for up to the browser's quota. Every driver is asynchronous, even over storage that isn't, so one swaps for another without changing the code that calls it. `name` says where the data goes, such as `'indexedDB'`, for a debug screen or an error report.
 
 A driver keeps these rules, or saves go missing in ways that are hard to trace:
 
@@ -39,13 +39,13 @@ One driver can serve everything a game stores, because each user keeps its own k
 | `<game id>.profile` | The game's [profile](/docs/reference/profile). |
 | `<game id>.mod.<mod id>` | One installed [mod](/docs/reference/mods). |
 
-The keys carry the game's id because every game opened from disk in one browser shares a storage origin, and so do the games a host such as itch.io serves from one domain. So pick a `game.id` unique to your game and never change it. The keys don't carry the save format's version, which each save keeps inside it, so an update to the engine never loses a save.
+The keys carry the game's id because every game opened from disk in one browser shares a storage origin, and so do the games a host such as itch.io serves from one domain. So choose a `game.id` unique to your game and never change it. The keys don't carry the save format's version, which each save keeps inside it, so an update to the engine never loses a save.
 
 ## Saves
 
 One game's saves, kept wherever its driver keeps them, as [`saves`](#saves-1) returns them. Every member is in [`Saves`](/docs/api/engine#saves).
 
-Each member answers a [`Result`](/docs/reference/common#result) and never rejects, so a UI calls it without a `catch`. Slots are names the game picks, such as `'auto'` for the runner's autosave or `'1'`, `'2'` and `'3'` for a save screen, with no fixed number of them.
+Each member answers a [`Result`](/docs/reference/common#result) and never rejects, so a UI calls it without a `catch`. Slots are names the game chooses, such as `'auto'` for the runner's autosave or `'1'`, `'2'` and `'3'` for a save screen, with no fixed number of them.
 
 | Field | Meaning |
 |---|---|

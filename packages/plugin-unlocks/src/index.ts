@@ -78,7 +78,7 @@ export type UnlockDef = {
   iterations?: number
 }
 
-/** The unlocks a save keeps. Unlocks themselves are read from content. */
+/** The unlocks a save keeps. The plugin reads the unlocks from content. */
 export type UnlocksState = {
   /** The ids of the unlocks recorded in this save, in the order they were recorded. */
   unlocked: string[]

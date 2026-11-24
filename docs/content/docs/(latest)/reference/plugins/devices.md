@@ -189,7 +189,7 @@ One device as the player sees it, an entry of `devices`. Every field is in [`Dev
 
 One app as the player sees it, an entry of a device's `apps` or its `open`. Every field is in [`AppView`](/docs/api/plugin-devices#appview).
 
-`badge` is a count, `true` for a dot that shows, or `0` or `false` for none. `disabled` is the reason `devices/open` would be refused, and it's left out while the app can open. `command` is the `devices/open` command that opens the app. `sections` is filled in only for the app in `open`, and it's `[]` in `apps`, so a UI renders the home screen from `apps` and the open app from `open`.
+`badge` is a count, `true` for a dot that shows, or `0` or `false` for none. `disabled` is the reason `devices/open` would be refused, and it's left out while the app can open. `command` is the `devices/open` command that opens the app. The plugin fills in `sections` only for the app in `open`, and leaves it `[]` in `apps`, so a UI renders the home screen from `apps` and the open app from `open`.
 
 ### SectionView
 

@@ -22,7 +22,13 @@ export const opening: Content = {
         text('You know where the tea bags are now.', { when: { kv: 'kitchenVisits', gte: 2 } }),
       ],
       choices: [
-        { id: 'tea', label: 'Make a cup of tea', when: { kv: 'kitchenVisits', gte: 2 }, effects: [{ stat: 'energy', by: 10 }] },
+        {
+          id: 'tea',
+          label: 'Make a cup of tea',
+          when: { kv: 'kitchenVisits', gte: 2 },
+          once: { per: 'turn', reason: 'One cup is plenty.' },
+          effects: [{ stat: 'energy', by: 10 }],
+        },
         { id: 'up', label: 'Go back upstairs', effects: [{ scene: 'bedroom' }] },
         { id: 'out', label: 'Step outside', effects: [{ scene: null }] },
       ],

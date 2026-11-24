@@ -2,7 +2,7 @@
 title: "Plugin UIs and the kit"
 description: "The kit in @ifloom/react/kit that plugin UIs are built from, with pluginKit, usePlugin, its parts and the shadcn/ui primitives."
 ---
-This page documents `@ifloom/react`, the optional React UI, and stays React only. To render a game in plain DOM, Vue or React by hand, see [Start your own UI](/docs/how-to/render/start).
+The kit is part of `@ifloom/react`, the optional React UI, so everything here is React only. To render a game in plain DOM, Vue or React by hand, see [Start your own UI](/docs/how-to/render/start).
 
 A plugin UI is the React UI a plugin ships in its `/react` subpath, such as `@ifloom/plugin-shop/react`. A game lists the ones it wants in `plugins`, and each brings its panels, words, pages and the parts the layout places. `@ifloom/react/kit` is the entry a plugin UI, or a game's own component, is built from. [Show plugins in the React UI](/docs/how-to/react/show-plugin-uis) lists them in a game, and [Write a plugin's React UI](/docs/how-to/react/write-a-plugins-react-ui) builds one. In the showcase: `examples/showcase/src/ui.ts`.
 

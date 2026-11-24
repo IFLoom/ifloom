@@ -90,7 +90,7 @@ Uses: [`Game`](/docs/api/engine#game), [`CheatDef`](#cheatdef).
 
 Type. Explained in [Cheats](/docs/reference/plugins/cheats#cheatsstate).
 
-The log of cheat uses a save keeps. Definitions are read from content, so only the uses are kept.
+The log of cheat uses a save keeps. The plugin reads definitions from content, so the save keeps only the uses.
 
 ```ts shape
 import type { CheatsState } from '@ifloom/plugin-cheats'

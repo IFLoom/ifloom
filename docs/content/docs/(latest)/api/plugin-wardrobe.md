@@ -90,7 +90,7 @@ type WardrobeSlot = {
 
 Type. Explained in [Wardrobe](/docs/reference/plugins/wardrobe#wardrobestate).
 
-The clothes a save keeps for each body. Slots and wearable things are read from content.
+The clothes a save keeps for each body. The plugin reads slots and wearable things from content.
 
 ```ts shape
 import type { WardrobeState } from '@ifloom/plugin-wardrobe'

@@ -4,7 +4,7 @@ import type { InputView } from '@ifloom/engine'
 import { runner, view } from './runner.ts'
 
 // The inputs on offer now, such as the cat's name. What the player enters goes back as an `input` command.
-// The vue template's InputField.vue draws one; here they're all in one component.
+// The vue template's InputField.vue renders one; here they're all in one component.
 const typed = ref<Record<string, string>>({})
 const refused = ref<Record<string, string>>({})
 

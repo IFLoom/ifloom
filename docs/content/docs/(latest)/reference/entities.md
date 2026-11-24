@@ -2,7 +2,7 @@
 title: "Entities"
 description: "Kinds, entities, holders and traits, and the functions that read an entity, its traits and what each holder holds."
 ---
-An entity is one of a kind of thing a game keeps, such as a member of staff, a dish, a person or a sandwich, and a kind names the sort (`staff`, `dish`, `character`). Your content declares the kinds in `kinds` and the entities there are at the start in `entities`, and the save keeps only what play changes. [Entities, things and traits](/docs/explanation/entities-and-traits) explains kinds, holders and traits, and [Give the player things to hold and use](/docs/how-to/give-the-player-things) adds things to a game. The [`create`](/docs/reference/effects#create), [`remove`](/docs/reference/effects#remove), [`each`](/docs/reference/effects#each), [`entity`](/docs/reference/effects#entity) and [`move`](/docs/reference/effects#move) effects change entities, and the [`entity`](/docs/reference/conditions#entity) and [`count`](/docs/reference/conditions#count) conditions ask about them.
+An entity is one of a kind of thing a game keeps, such as a member of staff, a dish, a person or a sandwich, and a kind names the sort (`staff`, `dish`, `character`). Your content declares the kinds in `kinds` and the entities there are at the start in `entities`, and the save keeps only what play changes. [Entities, things and traits](/docs/explanation/entities-and-traits) explains kinds, holders and traits, and [Give the player things to hold and use](/docs/how-to/give-the-player-things) adds things to a game.
 
 In the showcase: `examples/showcase/src/world/things.ts`, which declares clothing as a unique kind and food and the newspaper as kinds that stack.
 
@@ -60,7 +60,7 @@ import type { EntityDef } from '@ifloom/engine'
 export const staff: EntityDef[] = [
   { id: 'ana', of: 'staff', name: 'Ana', description: 'Has run the kitchen since the day you opened.', stats: { skill: 5, wage: 12 } },
   { id: 'ben', of: 'staff', name: 'Ben', visible: { kv: 'benStarted' } },
-  { id: 'apple', of: 'food', name: 'Apple', at: { player: 2, 'place:larder': 6 } },
+  { id: 'apple', of: 'food', name: 'Apple', at: { player: 2, 'location:larder': 6 } },
 ]
 ```
 
@@ -74,7 +74,8 @@ The functions on this page read each value in this order:
 
 - **A stat** reads the record, then the `like` entity, then the declaration's `stats`, then the stat's `start`.
 - **A kv key** reads the record, then the declaration's `kv`, then the `like` entity's.
-- **The name, description and picture** read the record, then the `like` entity, then the declaration.
+- **The name and description** read the record, then the `like` entity, then the declaration.
+- **The picture** reads the record, then the declaration, then the `like` entity.
 - **Tags** are the kind's, the `like` entity's, the declaration's and the record's, each once.
 - **A trait's data** is the record's `traitData` laid over the `like` entity's trait, else over the kind's default.
 
@@ -96,7 +97,7 @@ A holder is one of three:
 
 A placement is one holder for one of the thing, or a record of how many each holder has, such as `{ player: 2, 'location:larder': 6 }`. A unique thing starts with one holder. Nothing holds itself, however far round, so the gift box can't go into the scarf it holds.
 
-A new game's [`state.held`](/docs/reference/state#held) is empty, and holdings read from each entity's `at` until play changes them. Once an effect writes a count, the save keeps it, 0 included. A thing that was used up stays used up, while a thing an update places for the first time reaches every save that never touched it. Removing a holder with `remove` hands what it held to whoever held it, or removes it too when nobody did.
+A new game's [`state.held`](/docs/reference/state#held) is empty, and holdings read from each entity's `at` until play changes them. Once an effect writes a count, the save keeps it, 0 included. A thing that was used up stays used up, while a thing an update places for the first time reaches every save that never touched it. Removing a holder with `remove` hands what it held to whoever held it. When nobody held it, the things it held stay in the game, held by nobody.
 
 ```ts
 import type { Content } from '@ifloom/engine'
@@ -397,3 +398,5 @@ The [content checker](/docs/reference/checks) and [`loadGame`](/docs/reference/c
 - A moving `max` on a stat kept on entities is worked out against the whole state, so it is the same for every entity.
 - A declaration's or a `create`'s `stats` aren't held to the range until the next effect moves them.
 - An entity the game no longer declares stays in a save that has a record of it, after the declared ones, as if created in play.
+
+The [`create`](/docs/reference/effects#create), [`remove`](/docs/reference/effects#remove), [`each`](/docs/reference/effects#each), [`entity`](/docs/reference/effects#entity) and [`move`](/docs/reference/effects#move) effects change entities, and the [`entity`](/docs/reference/conditions#entity) and [`count`](/docs/reference/conditions#count) conditions ask about them.

@@ -9,7 +9,7 @@ export function drawProse(parent: HTMLElement, { view }: RunnerSnapshot): void {
   }
 }
 
-/** A line's words. Without spans it's plain text; with them, each span is drawn by its type. */
+/** A line's words. Without spans it's plain text; with them, each span is rendered by its type. */
 function drawLine(line: HTMLElement, text: string, spans: InlineSpan[] | undefined): void {
   if (!spans) {
     line.textContent = text
@@ -37,7 +37,7 @@ function drawLine(line: HTMLElement, text: string, spans: InlineSpan[] | undefin
         add(line, 'abbr', span.text, 'tip').title = span.tip
         break
       case 'ui':
-        // A UI piece, [[ui:name|words|arg]]: draw it by name, or show its words.
+        // A UI piece, [[ui:name|words|arg]]: render it by name, or show its words.
         add(line, 'span', span.text, 'ui').dataset.ui = span.name
         break
     }

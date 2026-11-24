@@ -29,7 +29,7 @@ export type GameMedia = {
   pools?: Record<string, PoolFile[]>
 }
 
-/** The media a save keeps, in `state.media`. The pools themselves are read from content. */
+/** The media a save keeps, in `state.media`. The engine reads the pools from content. */
 export type MediaState = {
   /** The file each pool request was given, by the key `pickKey` returns. */
   picks: Record<string, string>

@@ -10,7 +10,7 @@ export function drawScene(parent: HTMLElement, { view }: RunnerSnapshot): void {
   drawChoices(add(parent, 'div', '', 'choices'), view.scene.choices)
 }
 
-/** One paragraph of a scene. A sound beat is heard, not drawn. */
+/** One paragraph of a scene. A sound beat is heard, not rendered. */
 function drawBeat(parent: HTMLElement, beat: SceneBeat): void {
   switch (beat.type) {
     case 'text':

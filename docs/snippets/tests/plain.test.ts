@@ -21,7 +21,7 @@ import { drawBackground } from '../plain/background.ts'
 import { drawVoices } from '../plain/audio.ts'
 import { atTheCounter, atTheDoor, inTheCafe, inThePark, phoneRinging, readingTexts, steppedOut, unpacked } from './play.ts'
 
-/** The Plain JS snippets, drawn into a box and pressed, as the vanilla template would. */
+/** The Plain JS snippets, rendered into a box and pressed, as the vanilla template would. */
 function drawn(draw: (box: HTMLElement) => void): HTMLElement {
   const box = document.createElement('div')
   draw(box)

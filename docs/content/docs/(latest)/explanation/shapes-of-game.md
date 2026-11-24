@@ -2,7 +2,7 @@
 title: "Three shapes of game"
 description: "One small core makes a linear novel, a management game and a life sim, as the three example games show."
 ---
-This page explains how one small core makes three quite different games, by showing what each of the repository's examples uses and what it leaves out. All three run on the same engine: the turn, scenes and choices, conditions and effects, stats, entities and their holders, the kv store, saves and the view. They differ in how much world each one declares, and in which plugins it adds.
+One small core makes three quite different games, and each of the repository's examples shows what it uses and what it leaves out. All three run on the same engine: the turn, scenes and choices, conditions and effects, stats, entities and their holders, the kv store, saves and the view. They differ in how much world each one declares, and in which plugins it adds.
 
 The three examples are whole games you can play, check and ship:
 

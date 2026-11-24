@@ -133,7 +133,7 @@ export type PlacesOptions = {
   start?: string
 }
 
-/** The location a save keeps for the player. Locations themselves are read from content. */
+/** The location a save keeps for the player. The plugin reads the locations from content. */
 export type PlacesState = {
   /** The id of the location the player is at, its full reference for a location of another kind, or null when at none. */
   at: string | null

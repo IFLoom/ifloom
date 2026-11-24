@@ -1,6 +1,6 @@
 import { useMinigame } from '@ifloom/react'
 
-// Scene draws a MinigameCard while one runs, and runs its clock. For one minigame of your own, give mountGame's
+// Scene renders a MinigameCard while one runs, and runs its clock. For one minigame of your own, give mountGame's
 // `panels` a component under the minigame's id, such as `{ arrows: ArrowPad }`.
 export function ArrowPad() {
   // With keys: true, the arrow keys press the inputs too.

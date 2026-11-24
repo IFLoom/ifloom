@@ -2,7 +2,7 @@
 title: "Why IFLoom works this way"
 description: "The rules the engine keeps, such as seeded randomness and nothing loaded at runtime, with the reason for each and its cost."
 ---
-This page gives the reasons behind the rules the engine keeps, and what each one costs. Each rule turned down an easier design, and knowing why helps you write a game that works with the engine rather than against it.
+Each rule the engine keeps turned down an easier design, and each has a cost. Knowing why helps you write a game that works with the engine rather than against it.
 
 ## The state is data
 

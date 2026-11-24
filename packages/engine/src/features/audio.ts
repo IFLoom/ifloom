@@ -75,7 +75,7 @@ export type GameAudio = {
   default?: Record<string, string>
 }
 
-/** The audio a save keeps, in `state.audio`. The tracks and channels themselves are read from content. */
+/** The audio a save keeps, in `state.audio`. The engine reads the tracks and channels from content. */
 export type AudioState = {
   /**
    * The tracks `audio` effects have put on background channels, by channel. Null is silence, and a channel missing

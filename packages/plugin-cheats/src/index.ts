@@ -113,7 +113,7 @@ export type CheatUse = {
   turn: number
 }
 
-/** The log of cheat uses a save keeps. Definitions are read from content, so only the uses are kept. */
+/** The log of cheat uses a save keeps. The plugin reads definitions from content, so the save keeps only the uses. */
 export type CheatsState = {
   /** The save's uses of cheats, oldest first. */
   used: CheatUse[]

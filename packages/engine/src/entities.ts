@@ -151,7 +151,7 @@ export type EntityDef = {
  * changes it, and reads every other field from content.
  */
 export type EntityState = {
-  /** The name the entity was made with in play. A declared entity's name is read from content. */
+  /** The name the entity was made with in play. The engine reads a declared entity's name from content. */
   name?: string
   /** The description the entity was made with in play. */
   description?: string
@@ -159,16 +159,16 @@ export type EntityState = {
   image?: string
   /**
    * The entity the entity was made like. The fields it doesn't have itself (name, description, picture, tags, stats,
-   * kv and traits) are read from that one.
+   * kv and traits), the engine reads from that one.
    */
   like?: EntityRef
   /** The tags the entity was made with, after its kind's and its `like`'s. */
   tags?: string[]
   /** The trait data the entity was made with, by trait id, over its `like`'s or its kind's. Its traits' state is in `traits`. */
   traitData?: Record<string, unknown>
-  /** The entity's stats changed in play, by id. Others are read from its definition, then from the stat's `start`. */
+  /** The entity's stats changed in play, by id. The engine reads the others from its definition, then from the stat's `start`. */
   stats?: Stats
-  /** The entity's kv keys set in play. Others are read from its definition. */
+  /** The entity's kv keys set in play. The engine reads the others from its definition. */
   kv?: Record<string, KvValue>
   /** The state of the entity's traits that keep one, by trait id, once play changed it. See `traitState`. */
   traits?: Record<string, unknown>

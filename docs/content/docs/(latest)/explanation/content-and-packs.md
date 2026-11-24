@@ -2,7 +2,7 @@
 title: "Content, packs and the base"
 description: "Why loadGame takes a game as content, packs and a base, and what a mod, a save and an upgrade can change in each."
 ---
-This page explains why `loadGame` takes a game in three parts, and what belongs in each. A game is its content, merged, plus a base. Packs from outside the game's code go over the top. The split decides what a mod can change, what a save records, and what the engine upgrades when it moves on.
+`loadGame` takes a game in three parts: its content, merged, a base, and packs from outside the game's code over the top. The split decides what a mod can change, what a save records, and what the engine upgrades when it moves on.
 
 ## Three inputs to loadGame
 
@@ -34,7 +34,7 @@ Your own files and a mod both hold scenes and stats, and the engine could have t
 - **What a save records.** Content has no id, so renaming a file or splitting one in two changes nothing a player can see. A pack has an `id`, and saves record the packs they were made with, so loading a save tells the player about a mod they've since removed.
 - **What the engine upgrades.** Content is compiled with the engine you build it with, so TypeScript reports anything the engine renamed. A pack was written for some older engine and arrives as data, so it carries a `schema`, and [`upgradePack`](/docs/reference/content#upgradepack) carries it forward when it loads.
 
-So the game's own files are never called packs, and a pack never lives in your `src/world/` or `src/story/`. Content a supporter code unlocks is a pack too. It sits in `src/unlocks/`, and `ifloom build` encrypts it into the page.
+So the game's own files are never called packs, and your `src/world/` and `src/story/` hold no packs. Content a supporter code unlocks is a pack too. It sits in `src/unlocks/`, and `ifloom build` encrypts it into the page.
 
 ## How merging works
 

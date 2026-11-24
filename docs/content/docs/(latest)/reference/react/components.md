@@ -2,7 +2,7 @@
 title: "Components"
 description: "Every component and hook @ifloom/react exports, from GameShell to the pages around the game, with what each renders."
 ---
-This page documents `@ifloom/react`, the optional React UI, and stays React only. To render a game in plain DOM, Vue or React by hand, see [Start your own UI](/docs/how-to/render/start). [Choosing a UI](/docs/explanation/choosing-a-ui) says when to use which.
+These are the components and hooks of `@ifloom/react`, the optional React UI, so everything here is React only. To render a game in plain DOM, Vue or React by hand, see [Start your own UI](/docs/how-to/render/start). [Choosing a UI](/docs/explanation/choosing-a-ui) says when to use which.
 
 Every game component reads the [view](/docs/reference/view) through [`useGame`](#usegame), so it renders only inside a [`GameProvider`](#gameprovider), and [`GameShell`](#gameshell) is one. A game replaces any of them by name in [`components`](#components), and each entry names the `data-part`s it renders, which [React UI parts](/docs/reference/react/parts) lists. Each plugin's own React UI, such as the shop's counter, is under `## React UI` on that plugin's page. The [shadcn/ui primitives](/docs/reference/react/kit#shadcnui-primitives) are on the kit's page and need no provider. In the showcase: `examples/showcase/src/layout.tsx`.
 
@@ -684,7 +684,7 @@ Parts: `inputs`.
 
 `Changes` renders the stats the last command moved, [`view.changes`](/docs/reference/changes#view), as [`ChangeItem`](#changeitem) pills such as `+30 coins`. Its props are in [`Changes`](/docs/api/react#changes).
 
-It lists only the stats named in content's [`changes.stats`](/docs/reference/changes#changesdef), and renders nothing when the last command moved none. A `tick` that moved nothing keeps the list. The default layout leaves it out, so a layout places it, usually after the scene:
+It lists only the stats named in content's [`changes.stats`](/docs/reference/changes#changesdef), and renders nothing when the last command moved none. A `tick` that moved nothing keeps the list. The default layout leaves it out, so a layout places it, here after the scene:
 
 ::include[../../../../../snippets/react/changes.tsx]
 

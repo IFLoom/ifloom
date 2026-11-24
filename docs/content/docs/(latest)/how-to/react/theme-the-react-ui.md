@@ -6,7 +6,7 @@ This how-to is for `@ifloom/react`, the optional React UI. To render a game in p
 
 Use this to change how the React UI looks without changing what it renders. The steps go from the smallest change to the biggest, so stop when the game looks right. The first five are CSS in `src/styles.css`. To move parts or replace components, see [Rearrange or replace the React UI's parts](/docs/how-to/react/replace-parts).
 
-## Pick a preset
+## Choose a preset
 
 A preset is a stylesheet that sets the fonts, the sizes, the colours and the shape of the page. Import one after the UI's own stylesheet:
 
@@ -248,7 +248,7 @@ Then take `tailwindcss()` out of `vite.config.ts`, and `tailwindcss` and `@tailw
 
 A new colour on the same shapes still looks like the same game. Shape and type make a game look like itself:
 
-- **Pick a preset that fits the game**, or copy one into `src/styles.css` and change it.
+- **Choose a preset that fits the game**, or copy one into `src/styles.css` and change it.
 - **Change the fonts.** A serif, a rounded face or a monospace changes the feel more than any colour. Bundle a font file if no system font fits.
 - **Change the layout.** Move the side column, drop it, put the stats under the scene, or move the notices. [Rearrange or replace the React UI's parts](/docs/how-to/react/replace-parts#change-the-shape-of-the-page) changes the shape of the page.
 - **Change how choices look.** The player looks at them most. Lines of text, numbered prompts, cards and pills each make a different game.

@@ -8,7 +8,7 @@ The story is short. You wait for the last bus in the rain beside a stranger, fin
 
 ## Check your Node version
 
-The `ifloom` command needs Node 20.19 or later, or 22.12 or later, and Node 24 is the one to pick if you're installing it now. Run this to see the version you have:
+The `ifloom` command needs Node 20.19 or later, or 22.12 or later, and Node 24 is the one to choose if you're installing it now. Run this to see the version you have:
 
 ```sh
 node --version
@@ -16,7 +16,7 @@ node --version
 
 ## Create the game
 
-Pick the tab for the way you want to render the game. The React tab's template renders it with the ready-made React UI. The Plain JS and Vue templates render it with their own code, and this tutorial never needs you to change it. Your choice follows you through the rest of the docs.
+Choose the tab for the way you want to render the game. The React tab's template renders it with the ready-made React UI. The Plain JS and Vue templates render it with their own code, and this tutorial never needs you to change it. Your choice follows you through the rest of the docs.
 
 ```sh tab="Plain JS" tab-group="framework"
 npm create ifloom@latest last-bus -- --template vanilla

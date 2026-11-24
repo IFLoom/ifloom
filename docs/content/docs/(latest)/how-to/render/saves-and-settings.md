@@ -30,7 +30,7 @@ Save with `runner.save(slot)`, in a new numbered slot from [`nextSlot`](/docs/ap
 
 ::include[../../../../../snippets/vue/Settings.vue]{meta='tab="Vue" tab-group="framework"'}
 
-Read each setting's value from `snapshot.settings`, which holds both kinds. A `play` setting is part of the game state, and a `ui` setting is kept in the [profile](/docs/reference/profile) and never in the state. Change either kind with `runner.setSetting(id, to)`, which checks the value against the declaration and answers a `Result`. A `ui` setting does only what your UI makes of it, so copy it where your stylesheet can read it, such as `document.documentElement.dataset.textSize`. The runner calls your listener when a setting changes, so the screen renders again.
+Read each setting's value from `snapshot.settings`, which holds both kinds. A `play` setting is part of the game state, and the [profile](/docs/reference/profile) keeps a `ui` setting, never the state. Change either kind with `runner.setSetting(id, to)`, which checks the value against the declaration and answers a `Result`. A `ui` setting does only what your UI makes of it, so copy it where your stylesheet can read it, such as `document.documentElement.dataset.textSize`. The runner calls your listener when a setting changes, so the screen renders again.
 
 ## Render the backlog and undo
 

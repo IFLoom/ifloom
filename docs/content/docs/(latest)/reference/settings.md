@@ -19,7 +19,7 @@ A setting the game declares in `settings`, a toggle, a choice of options or a nu
 - **A play setting**, `affects: 'play'` or left out, is part of the game. Its value is in [`state.settings`](/docs/reference/state#settings), the save keeps it, and the [`setting`](/docs/reference/conditions#setting) condition reads it.
 - **A ui setting**, `affects: 'ui'`, never enters the state. The player's [profile](/docs/reference/profile) keeps it, and only a UI reads it, as for a text size or a volume.
 
-The player's last value for either sort is kept in the profile's `core:settings`, so it carries over to their next game. A `default` is the value until the player changes it, and it has to be one the setting can take. A `range` steps by `step` from `min` when `step` is given.
+The profile's `core:settings` keeps the player's last value for either sort, so it carries over to their next game. A `default` is the value until the player changes it, and it has to be one the setting can take. A `range` steps by `step` from `min` when `step` is given.
 
 [`runner.setSetting`](/docs/reference/runner#setsetting) changes either sort, and refuses an unknown id or a value the setting can't take. A play setting goes through the [`setting`](/docs/reference/commands#setting) command, so the log keeps it and a replay gives the same game, and no lock stops it. A ui setting is written to the profile and leaves the state alone.
 

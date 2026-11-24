@@ -1,6 +1,6 @@
 import { Game, Scene, Sidebar, Story, Timers, useTimer } from '@ifloom/react'
 
-// Scene draws a Countdown under a block whose `timer` hint names a timer. A layout of your own can put them anywhere.
+// Scene renders a Countdown under a block whose `timer` hint names a timer. A layout of your own can put them anywhere.
 export function Layout() {
   return (
     <Game>

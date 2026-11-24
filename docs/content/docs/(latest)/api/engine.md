@@ -264,7 +264,7 @@ function audioSrc(path: string): string
 
 Type. Explained in [Audio](/docs/reference/audio#audiostate).
 
-The audio a save keeps, in `state.audio`. The tracks and channels themselves are read from content.
+The audio a save keeps, in `state.audio`. The engine reads the tracks and channels from content.
 
 ```ts shape
 import type { AudioState } from '@ifloom/engine'
@@ -1109,8 +1109,8 @@ type Content = {
 
 Type. Explained in [Effects](/docs/reference/effects#createdentity).
 
-The fields a `create` effect gives a new entity in its `with`. Each one left out is read from the entity it's made
-`like`, else from its kind.
+The fields a `create` effect gives a new entity in its `with`. The engine reads each one left out from the entity it's
+made `like`, else from its kind.
 
 ```ts shape
 import type { CreatedEntity } from '@ifloom/engine'
@@ -1634,14 +1634,14 @@ type EntityState = {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
-| `name` | `string` | yes |  | The name the entity was made with in play. A declared entity's name is read from content. |
+| `name` | `string` | yes |  | The name the entity was made with in play. The engine reads a declared entity's name from content. |
 | `description` | `string` | yes |  | The description the entity was made with in play. |
 | `image` | `string` | yes |  | The picture the entity was made with in play. |
-| `like` | [`EntityRef`](#entityref) | yes |  | The entity the entity was made like. The fields it doesn't have itself (name, description, picture, tags, stats, kv and traits) are read from that one. |
+| `like` | [`EntityRef`](#entityref) | yes |  | The entity the entity was made like. The fields it doesn't have itself (name, description, picture, tags, stats, kv and traits), the engine reads from that one. |
 | `tags` | `string[]` | yes |  | The tags the entity was made with, after its kind's and its `like`'s. |
 | `traitData` | `Record<string, unknown>` | yes |  | The trait data the entity was made with, by trait id, over its `like`'s or its kind's. Its traits' state is in `traits`. |
-| `stats` | [`Stats`](#stats) | yes |  | The entity's stats changed in play, by id. Others are read from its definition, then from the stat's `start`. |
-| `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | The entity's kv keys set in play. Others are read from its definition. |
+| `stats` | [`Stats`](#stats) | yes |  | The entity's stats changed in play, by id. The engine reads the others from its definition, then from the stat's `start`. |
+| `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | The entity's kv keys set in play. The engine reads the others from its definition. |
 | `traits` | `Record<string, unknown>` | yes |  | The state of the entity's traits that keep one, by trait id, once play changed it. See `traitState`. |
 
 ## entityTags
@@ -1869,7 +1869,7 @@ type FlowChoice = {
 
 Type. Explained in [Flowing scenes](/docs/reference/flows#flowstate).
 
-The visit a save keeps for the open scene, with its path so far and the wait the flow stands at. The scene's body is read from content.
+The visit a save keeps for the open scene, with its path so far and the wait the flow stands at. The engine reads the scene's body from content.
 
 ```ts shape
 import type { FlowState } from '@ifloom/engine'
@@ -2165,7 +2165,7 @@ type GameRules<S = any> = {
 
 Type. Explained in [Game state](/docs/reference/state#gamestate).
 
-The state a save keeps, the core's fields and each feature's. Definitions are read from content, so the save holds
+The state a save keeps, the core's fields and each feature's. The engine reads definitions from content, so the save holds
 only what play changed.
 
 Each field declares its new-game value and load default once, in `FIELDS` or in its feature's `state`.
@@ -2212,7 +2212,7 @@ type GameState = {
 | `entities` | `Record<string, Record<string,` [`EntityState`](#entitystate)`>>` |  |  | The changes play has made to the game's entities, by kind and id, such as `entities.staff.ana`. A declared entity has no record until something changes it. An entity created in play has a record from the start. |
 | `created` | `Record<string, number>` |  |  | The number of entities of each kind created in play, for the next one's id. |
 | `removed` | `string[]` |  |  | The references of declared entities removed in play. A `create` with the same id brings one back. |
-| `held` | `Record<string, Record<string, number>>` |  |  | The counts play has changed, by holder and then thing, such as `held.player['food:apple']`. A count stays once written, 0 included. A count play hasn't changed is read from the entity's `at` in content. |
+| `held` | `Record<string, Record<string, number>>` |  |  | The counts play has changed, by holder and then thing, such as `held.player['food:apple']`. A count stays once written, 0 included. For a count play hasn't changed, the engine reads the entity's `at` in content. |
 | `you` | [`EntityRef`](#entityref) `\| null` |  |  | The protagonist the player is playing, which `'you'` names. Null while the player plays themselves. |
 | `turn` | `number` |  |  | The number of turns that have passed, the engine's one clock. It starts at 0. The game decides how long a turn is (a day, an hour, a week or a chapter). The engine dates `seen`, `fired` and notices in turns. |
 | `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` |  |  | The player's kv store, keys with a true/false, number or text value. |
@@ -2807,7 +2807,7 @@ type KvValue = boolean | number | string
 
 Function. Explained in [Stats](/docs/reference/stats#lackingline).
 
-Returns the refusal for a cost the player can't cover, from the stat's `lacking`, else "Not enough" and the label.
+Returns the refusal for a cost the player can't cover, from the stat's `lacking`, else the `notEnough` string with the stat's label in lower case.
 
 ```ts shape
 import { lackingLine, type Game } from '@ifloom/engine'
@@ -2918,7 +2918,7 @@ Uses: [`Game`](#game), [`Result`](#result), [`GameState`](#gamestate).
 
 Type. Explained in [Media](/docs/reference/media#mediastate).
 
-The media a save keeps, in `state.media`. The pools themselves are read from content.
+The media a save keeps, in `state.media`. The engine reads the pools from content.
 
 ```ts shape
 import type { MediaState } from '@ifloom/engine'
@@ -3056,7 +3056,7 @@ type MinigameSceneFields = {
 
 Type. Explained in [Minigames](/docs/reference/minigames#minigamestate).
 
-The running minigame a save keeps, in `state.minigame`. Its states are read from content.
+The running minigame a save keeps, in `state.minigame`. The engine reads its states from content.
 
 ```ts shape
 import type { MinigameState } from '@ifloom/engine'
@@ -4356,7 +4356,7 @@ type RunnerSnapshot = {
 
 Type. Explained in [Timers](/docs/reference/timers#runningtimer).
 
-A running timer a save keeps, with the milliseconds left and its whole length. Its effects are read from content when it runs out.
+A running timer a save keeps, with the milliseconds left and its whole length. The engine reads its effects from content when it runs out.
 
 ```ts shape
 import type { RunningTimer } from '@ifloom/engine'
@@ -4895,7 +4895,7 @@ type SettingView = {
 | `id` | `string` |  |  | The setting's id. |
 | `label` | `string` |  |  | The setting's label. |
 | `type` | `'toggle' \| 'choice' \| 'range'` |  |  | The setting's type, a `toggle` (on or off), a `choice` among `options`, or a `range` from `min` to `max`. |
-| `affects` | `'play' \| 'ui'` |  |  | The setting's reach. A `play` setting is kept in the save and changes the game, and a `ui` setting is kept in the profile and changes only how the game is shown. |
+| `affects` | `'play' \| 'ui'` |  |  | The setting's reach. The save keeps a `play` setting, which changes the game, and the profile keeps a `ui` setting, which changes only how the game is shown. |
 | `options` | `{ value: string; label: string }[]` | yes |  | The options of a `choice` setting, each a value with its label. |
 | `min` | `number` | yes |  | The lowest value of a `range` setting. |
 | `max` | `number` | yes |  | The highest value of a `range` setting. |
@@ -4964,7 +4964,7 @@ type StartOptions = {
 |---|---|---|---|---|
 | `seed` | `number` | yes |  | The new game's random seed. Hashed from the game's id if left out, so tests draw the same. |
 | `kv` | `Record<string,` [`KvValue`](#kvvalue)`>` | yes |  | The kv keys written before the first scene, such as a name from a title page or a difficulty. |
-| `settings` | `Record<string, unknown>` | yes |  | The player's stored values for the game's `play` settings, usually the profile's `core:settings`. A missing or invalid value starts at its default, and an undeclared id is ignored. |
+| `settings` | `Record<string, unknown>` | yes |  | The player's stored values for the game's `play` settings, such as the profile's `core:settings`, which `browserRunner` passes. A missing or invalid value starts at its default, and an undeclared id is ignored. |
 | `carry` | [`GameState`](#gamestate) | yes |  | The state a finished game ended on, for a New Game+. The engine copies the stats, kv keys and things the game's `carryOver` lists from it. |
 
 ## StatDef
@@ -5234,7 +5234,7 @@ Uses: [`GameState`](#gamestate).
 
 Type. Explained in [Storylines](/docs/reference/storylines#storylinestate).
 
-The state a save keeps for one storyline. Its definition is read from content.
+The state a save keeps for one storyline. The engine reads its definition from content.
 
 ```ts shape
 import type { StorylineState } from '@ifloom/engine'

@@ -25,7 +25,7 @@ export function drawDevices(parent: HTMLElement, { view }: RunnerSnapshot): void
   }
 }
 
-/** The open app's sections. A `plugin` section is the messages' or the feed's, drawn as their pages show. */
+/** The open app's sections. A `plugin` section is the messages' or the feed's, rendered as their pages show. */
 function drawApp(screen: HTMLElement, device: DeviceView): void {
   for (const section of device.open?.sections ?? []) {
     if (section.type === 'prose') add(screen, 'p', section.text)

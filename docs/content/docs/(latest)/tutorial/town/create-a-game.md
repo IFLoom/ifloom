@@ -6,7 +6,7 @@ By the end of this step you'll have a new game running in your browser, and you'
 
 ## Check your Node version
 
-The `ifloom` command needs Node 20.19 or later, or 22.12 or later, and Node 24 is the one to pick if you're installing it now. Run this to see the version you have:
+The `ifloom` command needs Node 20.19 or later, or 22.12 or later, and Node 24 is the one to choose if you're installing it now. Run this to see the version you have:
 
 ```sh
 node --version

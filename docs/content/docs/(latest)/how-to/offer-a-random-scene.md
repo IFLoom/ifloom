@@ -132,7 +132,7 @@ export const rainyDays: Pack = {
 
 ## Check it worked
 
-Run `npm run check`. It reports a draw from a set no scene is in, which is usually a typo, and a `weight` or `when` on a scene that is in no set. Then sit a while several times in a row with `npm run dev`. A test can sit down with many seeds and check that each scene comes up, as the showcase's test `draws something to happen when you sit a while at the café, and a quiet table when nothing can` does.
+Run `npm run check`. It reports a draw from a set no scene is in, such as a set name misspelt in the draw or in `drawnFrom`, and a `weight` or `when` on a scene that is in no set. Then sit a while several times in a row with `npm run dev`. A test can sit down with many seeds and check that each scene comes up, as the showcase's test `draws something to happen when you sit a while at the café, and a quiet table when nothing can` does.
 
 In the showcase, Small Town, the `sit` action and the `cafe.*` scenes are in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts). For more, see:
 

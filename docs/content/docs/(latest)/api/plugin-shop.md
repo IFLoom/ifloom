@@ -162,7 +162,7 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`ShopState`](#s
 
 Type. Explained in [Shop](/docs/reference/plugins/shop#shopstate).
 
-The restocks a save keeps for the vendors. The stock itself is what each vendor holds, and goods are read from content.
+The restocks a save keeps for the vendors. The stock itself is what each vendor holds, and the plugin reads goods from content.
 
 ```ts shape
 import type { ShopState } from '@ifloom/plugin-shop'

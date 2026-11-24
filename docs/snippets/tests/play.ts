@@ -1,5 +1,5 @@
 /**
- * Puts a runner of Small Town where a snippet has something to draw: played as
+ * Puts a runner of Small Town where a snippet has something to render: played as
  * the player would where that's short, and with the debugger's commands, which
  * ignore locks, where it isn't.
  */
@@ -79,7 +79,7 @@ export function atTheJobBoard(runner: Runner): void {
   withEffects(runner, [jobs.open()])
 }
 
-/** The states every snippet is drawn in by every.test.tsx. */
+/** The states every snippet is rendered in by every.test.tsx. */
 export const STATES: { name: string; play: (runner: Runner) => void }[] = [
   { name: 'moving day', play: () => {} },
   { name: 'stepped out', play: steppedOut },

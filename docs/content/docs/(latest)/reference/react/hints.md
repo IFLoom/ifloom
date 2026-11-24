@@ -2,7 +2,7 @@
 title: "Presentation hints"
 description: "The ui hints and inline pieces the React UI reads from content, such as transitions, reveals, dice and stat bars, and checkUiHints."
 ---
-This page documents `@ifloom/react`, the optional React UI, and stays React only. To render a game in plain DOM, Vue or React by hand, see [Start your own UI](/docs/how-to/render/start).
+`@ifloom/react`, the optional React UI, reads these hints, so everything here is React only. To render a game in plain DOM, Vue or React by hand, see [Start your own UI](/docs/how-to/render/start).
 
 A ui hint is a `ui` field content writes on a scene, a choice, a block, a stat, a kind, an entity, a location or the game, which the engine carries to the view as written. [Presentation hints](/docs/reference/ui-hints) explains the mechanism, and this page lists the hints the React UI reads. [Add a transition or reveal lines](/docs/how-to/add-a-transition) uses them. In the showcase: `examples/showcase/src/story/moving-day.ts`.
 

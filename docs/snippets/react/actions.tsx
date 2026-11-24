@@ -13,7 +13,7 @@ export function Layout() {
   )
 }
 
-// Or only some of them: ChoiceList draws any list of buttons the same way.
+// Or only some of them: ChoiceList renders any list of buttons the same way.
 export function FreeThings() {
   const { view } = useGame()
   return <ChoiceList choices={view.actions.filter((action) => !action.price?.stats?.length)} part="actions" />

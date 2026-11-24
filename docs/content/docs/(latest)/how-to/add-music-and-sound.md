@@ -93,7 +93,7 @@ The React UI's `mountGame` starts the player when the game lists any tracks, and
 
 Nothing plays until the player first clicks or presses a key, because browsers allow no sound sooner. Then the music for where the player is starts. A game with a start button of its own calls the player's `unlock()` from its handler. Start only one player per runner, or everything plays twice. In React, `useAudio` takes over from `mountGame`'s player instead of adding a second.
 
-The player reads each channel's volume from the setting its `volume` names, so moving a slider changes the volume at once. A range is read from its `min` to its `max` as 0 to 1, times the track's own `volume`. For a box ticked for sound, name it in `audio.sound` instead of `mute`.
+The player reads each channel's volume from the setting its `volume` names, so moving a slider changes the volume at once. It reads a range from its `min` to its `max` as 0 to 1, times the track's own `volume`. For a box ticked for sound, name it in `audio.sound` instead of `mute`.
 
 ## Check it worked
 

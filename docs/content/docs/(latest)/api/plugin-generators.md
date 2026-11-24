@@ -163,7 +163,7 @@ type TemplateDef = {
 |---|---|---|---|---|
 | `id` | `string` |  |  | The template's id, which `generators/generate` names. |
 | `of` | `string` | yes |  | The kind of entity the template makes. The `like`'s kind if left out. |
-| `like` | [`EntityRef`](/docs/api/engine#entityref) | yes |  | The entity the new ones are made like. Fields the template doesn't give, such as the name, picture, traits and stats, are read from it. |
+| `like` | [`EntityRef`](/docs/api/engine#entityref) | yes |  | The entity the new ones are made like. The engine reads from it the fields the template doesn't give, such as the name, picture, traits and stats. |
 | `name` | [`FieldDef`](#fielddef) | yes |  | The new entity's name. The `like`'s name if left out. |
 | `description` | [`FieldDef`](#fielddef) | yes |  | The new entity's description, drawn as the name is. |
 | `image` | [`FieldDef`](#fielddef) | yes |  | The new entity's picture, a path in the game's `art/` folder, drawn as the name is, such as `{ pool: 'faces' }`. |

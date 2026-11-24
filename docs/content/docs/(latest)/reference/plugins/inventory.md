@@ -14,7 +14,7 @@ import { inventory, usableOf, inventoryKindsOf, type Usable, type InventoryData,
 
 The plugin's factory, which returns the plugin with the id `inventory`. It takes no options and keeps no state. Every field of its result is in [`inventory`](/docs/api/plugin-inventory#inventory), and its helpers are listed under [Functions](#functions).
 
-The inventory, the [shop](/docs/reference/plugins/shop) and the [wardrobe](/docs/reference/plugins/wardrobe) never name each other. Each reads what the player holds from the engine and its own trait on each thing, so a game uses any of them alone or all three, and one thing can carry a trait for each. With all three, the player buys a scarf, wears it, and gives it back to the stall with `inventory.give('clothing:scarf', 'vendor:stall')`, which takes it off and returns it to the stall's stock.
+The inventory, the [shop](/docs/reference/plugins/shop) and the [wardrobe](/docs/reference/plugins/wardrobe) never name each other. Each reads what the player holds from the engine and its own trait on each thing, so a game uses any of them alone or all three, and one thing can carry a trait for each. With all three, a scarf bought from a stall can be worn, and `inventory.give('clothing:scarf', 'vendor:stall')` takes it off and returns it to the stall's stock.
 
 ```ts
 import { loadGame, type Content } from '@ifloom/engine'
@@ -131,7 +131,7 @@ The plugin's [`PluginUi`](/docs/reference/react/kit#pluginui), listed in `mountG
 
 ### INVENTORY_WORDS
 
-The words the inventory UI uses, by key, which a game rewords as `ui.<key>` in its strings as it does the React UI's own. Its value is in [`INVENTORY_WORDS`](/docs/api/plugin-inventory#inventory_words). It holds one key, `ui.drop`, `Drop`.
+The words the inventory UI uses, by key, which a game rewords as `ui.<key>` in its strings as it does the React UI's own. Its value is in [`INVENTORY_WORDS`](/docs/api/plugin-inventory#inventory_words). It holds one key, `drop`, `Drop`, which a game rewords as `ui.drop`.
 
 ### InventoryCard
 

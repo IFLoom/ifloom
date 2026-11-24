@@ -58,6 +58,9 @@ describe('the docs style', () => {
       'wrong.md:19 says "in short"',
     ])
     expect(rules(checkPage('bare.md', '---\ntitle: "Stats"\n---\nText.'))).toEqual(['no description'])
+    expect(
+      rules(checkPage('opens.md', '---\ntitle: "Stats"\ndescription: "A stat is a number."\n---\nThis page explains stats.\n\nThis page is fine here.')),
+    ).toEqual(['opens with "This page"'])
 
     // A description is one plain sentence for the reader: no label, no colon, no second sentence, 30 words at most.
     expect(descriptionProblems('Add a location the player can walk to, with exits and opening hours.')).toEqual([])

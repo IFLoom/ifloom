@@ -2,7 +2,7 @@
 title: "Entities, things and traits"
 description: "The engine keeps one list of entities, each of a kind, carrying traits and holding others, so plugins share them without knowing each other."
 ---
-This page explains how a game keeps the people, places and things in its world, and why plugins can share them without knowing each other. The engine keeps one list of entities. Each is of a kind, carries data called traits, and can hold others. The places plugin, the cast, the shop, the wardrobe and the inventory all work on that one list.
+The engine keeps the people, places and things of a game's world in one list of entities, so plugins can share them without knowing each other. Each is of a kind, carries data called traits, and can hold others. The places plugin, the cast, the shop, the wardrobe and the inventory all work on that one list.
 
 ## Kinds and entities
 

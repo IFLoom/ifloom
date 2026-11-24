@@ -2,7 +2,7 @@
 title: "Add a settings page"
 description: "Let the player change settings such as hints or the text size, on the React UI's settings page or one of your own."
 ---
-Use this to let the player change things such as hints or the text size. The engine has no settings of its own, so your content declares each one, and the player's choices are kept in their [profile](/docs/reference/profile), so a new game starts with them.
+Use this to let the player change things such as hints or the text size. The engine has no settings of its own, so your content declares each one, and their [profile](/docs/reference/profile) keeps the player's choices, so a new game starts with them.
 
 ## Declare the settings
 

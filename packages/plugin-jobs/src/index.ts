@@ -109,7 +109,7 @@ export type JobDef = {
   fire?: FireDef
 }
 
-/** The record a save keeps for a job the player holds, in {@link JobsState}'s `held`. The job's definition is read from content. */
+/** The record a save keeps for a job the player holds, in {@link JobsState}'s `held`. The plugin reads the job's definition from content. */
 export type HeldJob = {
   /** The index of the rank the player holds, from 0. */
   rank: number
@@ -123,7 +123,7 @@ export type HeldJob = {
   lastWorked: number | null
 }
 
-/** The jobs a save keeps for the player, held and fired. Jobs themselves are read from content. */
+/** The jobs a save keeps for the player, held and fired. The plugin reads the jobs from content. */
 export type JobsState = {
   /** The jobs the player holds, by job id. */
   held: Record<string, HeldJob>

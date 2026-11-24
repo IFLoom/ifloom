@@ -2,7 +2,7 @@
 title: "Choosing a UI"
 description: "Compare the ready-made React UI with a UI of your own in any framework, and see what each gives you and costs."
 ---
-This page compares the two ways to put a game on screen, so you can pick one. The engine has no UI. A UI has to render the [view](/docs/reference/glossary#view) and send the player's commands, and it's either the ready-made React UI or code of your own. Both run on the same [runner](/docs/reference/runner), so you can start with one and move to the other later without touching your game's content.
+A game goes on screen through the ready-made React UI or through code of your own, since the engine has no UI. Either one renders the [view](/docs/reference/glossary#view) and sends the player's commands. Both run on the same [runner](/docs/reference/runner), so you can start with one and move to the other later without touching your game's content.
 
 ## The React UI renders the whole game
 

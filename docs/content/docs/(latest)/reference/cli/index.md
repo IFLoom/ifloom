@@ -258,7 +258,7 @@ changed: place:flat @ first-morning
 2 scene renders changed. If you meant it, run again with --update.
 ```
 
-Every pick comes from the save's seed, so the same game and probes give the same text each run. A room has no choices to record a pick, so a location's variants are drawn from the probe's seed and `turn`.
+Every pick comes from the save's seed, so the same game and probes give the same text each run. A room has no choices to record a pick, so the engine draws a location's variants from the probe's seed and `turn`.
 
 ## ifloom words
 

@@ -4,7 +4,7 @@ description: "The tracks, playlists and channels a game declares, and the music 
 ---
 A game's audio is the tracks, playlists and channels it declares in its content's `audio`, which scenes, locations, effects and prose name by id. The engine plays nothing itself. It works out what each channel should play and which one-shot sounds are due, and lists them in `view.audio` for an audio player such as [`@ifloom/audio`](/docs/reference/browser/audio-player) to play. [Add music and sound](/docs/how-to/add-music-and-sound) gives the café music and a doorbell.
 
-In the showcase: none yet. The showcase, The Letter and The Corner Café declare no tracks, so [Add music and sound](/docs/how-to/add-music-and-sound) is the example.
+No example game declares audio, so [Add music and sound](/docs/how-to/add-music-and-sound) is the example.
 
 ```ts
 import {
@@ -17,7 +17,13 @@ import {
 
 The game's audio, declared in its content's `audio`. Every field is in [`GameAudio`](/docs/api/engine#gameaudio).
 
-`tracks` holds every [track](#trackdef) and [playlist](#playlistdef) by id, and `channels` the game's [channels](#channeldef), merged over the four defaults field by field. `default` says what each background channel plays when nothing else names one. `mute` names a `ui` toggle [setting](/docs/reference/settings) that silences everything while it's on, and `sound` names one that plays sound only while it's on, so a settings page can offer whichever reads right. With both, either one silences. A game with no `audio` has no tracks, and `view.audio` lists no channels and no cues.
+- **`tracks`** holds every [track](#trackdef) and [playlist](#playlistdef) by id.
+- **`channels`** holds the game's [channels](#channeldef), merged over the four defaults field by field.
+- **`default`** says what each background channel plays when nothing else names one.
+- **`mute`** names a `ui` toggle [setting](/docs/reference/settings) that silences everything while it's on.
+- **`sound`** names a `ui` toggle setting that plays sound only while it's on, so a settings page can offer whichever reads right. With both `mute` and `sound`, either one silences.
+
+A game with no `audio` has no tracks, and `view.audio` lists no channels and no cues.
 
 [`loadGame`](/docs/reference/content#loadgame) merges the content's and every pack's `audio`. A pack's track replaces one with the same id, a pack's channel is merged field by field, and its `mute`, `sound` and `default` entries win. This content gives the town calm music, a café murmur, a knock and a voiced line, with volume and mute settings:
 
@@ -109,7 +115,7 @@ Plays a track once on its own channel, kept among the save's last 20 cues. The [
 
 The music and sounds a save keeps in [`state.audio`](/docs/reference/state#audio). Every field is in [`AudioState`](/docs/api/engine#audiostate).
 
-`channels` holds what `audio` effects put on channels, and a channel not listed is left to the location and the default. `cues` holds the last 20 `sound` effects, each numbered by `seq`, the running count of them. `shown` counts every time a scene is entered, and `started` holds what each background channel is playing and the turn it started, which a shuffle is drawn from. The engine updates `started` after every command.
+`channels` holds what `audio` effects put on channels, and a channel not listed is left to the location and the default. `cues` holds the last 20 `sound` effects, each numbered by `seq`, the running count of them. `shown` counts every time a scene is entered, and `started` holds what each background channel is playing and the turn it started, which seeds a shuffle. The engine updates `started` after every command.
 
 ## View
 
@@ -179,9 +185,9 @@ The [content checker](/docs/reference/checks) checks everything content names ag
 | `"…" is a playlist; a playlist holds tracks` | A playlist names another playlist. |
 | `"…" has a weight of …; a weight must be above 0` | A playlist entry's `weight` is 0 or less. |
 | `"…" has a weight, but only a shuffled playlist uses weights` | A playlist entry has a `weight` in a playlist that doesn't shuffle. |
-| `unknown setting "…"` | A channel's `volume`, or `game.audio.mute`, names a setting the game doesn't declare. |
+| `unknown setting "…"` | A channel's `volume`, `game.audio.mute` or `game.audio.sound` names a setting the game doesn't declare. |
 | `setting "…" is not a ui range setting` | A channel's `volume` names a setting that isn't a `ui` range. |
-| `setting "…" is not a ui toggle setting` | `game.audio.mute` names a setting that isn't a `ui` toggle. |
+| `setting "…" is not a ui toggle setting` | `game.audio.mute` or `game.audio.sound` names a setting that isn't a `ui` toggle. |
 | `ducks under unknown channel "…"` | A channel's `duck.under` names a channel the game doesn't have. |
 | `duck.to is not between 0 and 1` | A channel's `duck.to` is out of range. |
 | `mode is not "background" or "cue"` | A channel's `mode` is neither. |

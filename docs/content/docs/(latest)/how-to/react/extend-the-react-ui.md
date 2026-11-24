@@ -150,7 +150,7 @@ export function Purse() {
 }
 ```
 
-The name has to be a [`PartKey`](/docs/reference/react/components#partkey), so pick the built-in part your element is most like. For a kind of element the UI doesn't have, set `data-part` yourself, such as `<div data-part="weather">`, and style it with CSS.
+The name has to be a [`PartKey`](/docs/reference/react/components#partkey), so choose the built-in part your element is most like. For a kind of element the UI doesn't have, set `data-part` yourself, such as `<div data-part="weather">`, and style it with CSS.
 
 To let a game replace your component by name, make it with [`overridable`](/docs/reference/react/components#overridable). It takes a built-in name, so use it for a component that stands in for a built-in one, such as a one-line stats bar you share between games:
 

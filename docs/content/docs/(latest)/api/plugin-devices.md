@@ -151,7 +151,7 @@ Type. Explained in [Devices](/docs/reference/plugins/devices#devicesstate).
 The devices a save keeps out, each mapped to its open app, or null on its home screen. A device left out of `shown`
 is put away.
 
-Definitions are read from content.
+The plugin reads definitions from content.
 
 ```ts shape
 import type { DevicesState } from '@ifloom/plugin-devices'

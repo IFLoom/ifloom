@@ -3,7 +3,7 @@ import type { RunnerSnapshot } from '@ifloom/engine'
 import { add, runner } from './runner.ts'
 import { drawShop } from './shop.ts'
 
-/** The panel open over the story, drawn by its name, with a Close button unless a scene holds it open. */
+/** The panel open over the story, rendered by its name, with a Close button unless a scene holds it open. */
 export function drawPanel(parent: HTMLElement, snapshot: RunnerSnapshot): void {
   const { view } = snapshot
   if (!view.panel) return

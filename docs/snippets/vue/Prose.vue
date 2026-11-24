@@ -25,7 +25,7 @@ import { runner, view } from './runner.ts'
         </button>
         <!-- A tooltip: the words, with the note on hover. -->
         <abbr v-else-if="span.type === 'tip'" class="tip" :title="span.tip">{{ span.text }}</abbr>
-        <!-- A UI piece, [[ui:name|words|arg]]: draw it by name, or show its words. -->
+        <!-- A UI piece, [[ui:name|words|arg]]: render it by name, or show its words. -->
         <span v-else class="ui" :data-ui="span.name">{{ span.text }}</span>
       </template>
     </p>

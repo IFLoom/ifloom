@@ -16,10 +16,10 @@ The bedroom's **Go down to the kitchen** now runs `{ kv: 'kitchenVisits', by: 1 
 
 The kitchen's new line and its **Make a cup of tea** choice each have a `when`: `{ kv: 'kitchenVisits', gte: 2 }`. That's a condition, which holds while the key is 2 or more. A block with a `when` shows only while its condition holds, and so does a choice. Before the second visit the line and the choice aren't on the page at all.
 
-The tea gives back 10 energy, so a player who unpacked a box can win it back on the second trip. [Conditions](/docs/reference/conditions#kv) lists the ranges a condition can test, such as `lt`, `is` and `gte`.
+The tea gives back 10 energy, so a player who unpacked a box can win it back on the second trip. Like the box, it has a `once: { per: 'turn' }`, so one cup a turn is all the player gets. [Conditions](/docs/reference/conditions#kv) lists the ranges a condition can test, such as `lt`, `is` and `gte`.
 
 The engine also remembers every choice the player made, without a key of your own. To make a line read differently after one choice, follow [step 3 of the story tutorial](/docs/tutorial/story/remember-and-end).
 
 :::tip[Checkpoint]
-Press **Go down to the kitchen**. The kitchen offers only **Go back upstairs**. Press it, then go down again. The kitchen now says "You know where the tea bags are now." and offers **Make a cup of tea**. Press it and your energy goes up by 10.
+Press **Go down to the kitchen**. The kitchen offers only **Go back upstairs**. Press it, then go down again. The kitchen now says "You know where the tea bags are now." and offers **Make a cup of tea**. Press it and your energy goes up by 10, and the button greys out with "One cup is plenty."
 :::

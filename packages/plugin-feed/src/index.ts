@@ -101,7 +101,7 @@ export type OwnPost = {
   comments: Comment[]
 }
 
-/** The feeds a save keeps for the player. Feeds and other people's posts are read from content, so only what play changed is kept. */
+/** The feeds a save keeps for the player. The plugin reads feeds and other people's posts from content, so the save keeps only what play changed. */
 export type FeedState = {
   /** The posts that have appeared, each id mapped to the turn it appeared on. */
   appeared: Record<string, number>

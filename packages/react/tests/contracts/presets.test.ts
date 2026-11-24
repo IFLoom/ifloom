@@ -1,7 +1,7 @@
 /// <reference types="node" />
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { KIT_PARTS } from '../../src/index.ts'
+import { KIT_LAYOUT, KIT_LOOKS, KIT_PARTS } from '../../src/index.ts'
 
 const CORE = import.meta.glob('../../src/**/*.{ts,tsx}', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
 const UIS = import.meta.glob('../../../plugin-*/src/react/**/*.tsx', { query: '?raw', import: 'default', eager: true }) as Record<string, string>
@@ -25,6 +25,11 @@ function classesIn(source: string): string[] {
   ]
   // A template's `${buttonVariants(...)}` is the kit's own classes.
   return strings.flatMap((text) => text.replace(/\$\{(?:[^{}]|\{[^{}]*\})*\}/g, ' ').split(/\s+/)).filter(Boolean)
+}
+
+/** The layout a UI's source puts over a kit part's look: `useKitPart`'s third argument. */
+function kitLayoutsIn(source: string): string[] {
+  return [...source.matchAll(/useKitPart\(\s*'[\w-]+',\s*'[\w-]+',\s*'([^']*)'/g)].flatMap((match) => match[1].split(/\s+/)).filter(Boolean)
 }
 
 /** The four presets, as a game imports them from `@ifloom/react/themes/`. */
@@ -92,5 +97,22 @@ describe('the plugins’ React UIs', () => {
         .map((token) => `${file.replace(/^.*\/packages\//, '')}: ${token}`),
     )
     expect(missing).toEqual([])
+  })
+
+  // A kit part brings its own look, so a plugin's UI adds only layout, from the classes the kit promises.
+  it('put only the kit’s layout classes over a kit part’s look', () => {
+    const layout = new Set<string>(KIT_LAYOUT)
+    const outside = Object.entries(UIS).flatMap(([file, source]) =>
+      kitLayoutsIn(source)
+        .filter((token) => !layout.has(token))
+        .map((token) => `${file.replace(/^.*\/packages\//, '')}: ${token}`),
+    )
+    expect(outside).toEqual([])
+  })
+})
+
+describe('the kit', () => {
+  it('gives every kit part a look', () => {
+    for (const kit of KIT_PARTS) expect(KIT_LOOKS[kit], kit).toBeTruthy()
   })
 })

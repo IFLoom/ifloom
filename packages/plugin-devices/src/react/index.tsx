@@ -104,7 +104,7 @@ function DeviceButtonsImpl() {
   const { send } = useGame()
   const devices = useDevices().filter((device) => device.sidebar)
   const row = usePart('devices', 'flex gap-2')
-  const button = useKitPart('opener', 'device-button', buttonVariants({ variant: 'outline', size: 'sm' }))
+  const button = useKitPart('opener', 'device-button')
   const badge = usePart('device-badge', badgeVariants())
   if (!devices.length) return null
   return (
@@ -126,10 +126,10 @@ function AppSectionImpl({ section }: { section: SectionView }) {
   const { view, panels, sections } = useGame()
   const prose = usePart('app-prose', 'flex flex-col gap-2 leading-relaxed')
   const entries = usePart('app-entries', 'flex flex-col gap-2')
-  const entry = usePart('app-entry', 'flex items-start gap-3 rounded-lg border p-2')
-  const image = usePart('app-entry-image', 'size-12 rounded object-cover')
-  const title = usePart('app-entry-title', 'font-medium')
-  const text = usePart('app-entry-text', 'text-sm text-muted-foreground')
+  const entry = useKitPart('card', 'app-entry', 'flex-row items-start gap-3')
+  const image = useKitPart('thumb', 'app-entry-image')
+  const title = useKitPart('title', 'app-entry-title')
+  const text = useKitPart('note', 'app-entry-text')
   switch (section.type) {
     case 'prose':
       return (

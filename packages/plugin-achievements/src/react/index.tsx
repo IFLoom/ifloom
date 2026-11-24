@@ -9,8 +9,6 @@ import type { AchievementsView } from '../index.ts'
 import { useState, type ComponentProps } from 'react'
 import {
   BackButton,
-  badgeVariants,
-  buttonVariants,
   overridable,
   type Override,
   PageHeading,
@@ -42,6 +40,7 @@ declare module '@ifloom/react' {
   }
   interface PartNames {
     'achievement': true
+    'achievement-earned': true
     'achievement-image': true
     'achievement-progress': true
     'achievement-progress-text': true
@@ -70,16 +69,15 @@ export function useAchievements(): AchievementsView | null {
 function AchievementListImpl({ className, title }: { className?: string; title?: string | false }) {
   const words = useWords(ACHIEVEMENTS_WORDS)
   const list = usePart('achievements', 'flex flex-col gap-3', className)
-  const heading = useKitPart('heading', 'achievements-title', 'flex items-center gap-2 font-heading font-semibold')
+  const heading = useKitPart('heading', 'achievements-title')
   const count = usePart('achievements-count', 'text-sm font-normal text-muted-foreground tabular-nums')
-  // Earned ones edged in the primary colour, the rest faded a little.
-  const earnedCard = useKitPart('card', 'achievement', 'flex items-start gap-3 rounded-lg border border-primary p-3')
-  const openCard = useKitPart('card', 'achievement', 'flex items-start gap-3 rounded-lg border p-3 opacity-70')
-  const image = useKitPart('thumb', 'achievement-image', 'size-12 shrink-0 rounded object-cover')
-  const name = useKitPart('title', 'achievement-title', 'flex flex-wrap items-center gap-2 font-medium')
-  const earnedBadge = usePart('badge', badgeVariants())
-  const text = usePart('achievement-text', 'text-sm text-muted-foreground')
-  const bar = useKitPart('meter', 'achievement-progress', 'h-1.5 overflow-hidden rounded-full bg-muted [&>span]:block [&>span]:h-full [&>span]:bg-primary')
+  // A card edged in the primary colour once earned and faded a little before: its `data-state`.
+  const card = useKitPart('card', 'achievement', 'flex-row items-start gap-3')
+  const image = useKitPart('thumb', 'achievement-image')
+  const name = useKitPart('title', 'achievement-title')
+  const earnedBadge = useKitPart('badge', 'achievement-earned')
+  const text = useKitPart('note', 'achievement-text')
+  const bar = useKitPart('meter', 'achievement-progress')
   const barText = usePart('achievement-progress-text', 'text-xs text-muted-foreground tabular-nums')
   const empty = usePart('achievements-empty', 'text-sm text-muted-foreground')
   const data = useAchievements()
@@ -100,7 +98,7 @@ function AchievementListImpl({ className, title }: { className?: string; title?:
             return (
               <li
                 key={entry.id}
-                {...(entry.earned ? earnedCard : openCard)}
+                {...card}
                 data-achievement={entry.id}
                 data-earned={entry.earned ? '' : undefined}
                 data-state={entry.earned ? 'done' : 'open'}
@@ -171,8 +169,8 @@ function AchievementsButtonImpl({ className }: { className?: string }) {
   const pages = usePage()
   const data = useAchievements()
   const [open, setOpen] = useState(false)
-  const button = useKitPart('opener', 'achievements-button', `${buttonVariants({ size: 'sm', variant: 'outline' })} self-start`, className)
-  const count = usePart('badge', badgeVariants({ variant: 'secondary' }))
+  const button = useKitPart('opener', 'achievements-button', '', className)
+  const count = useKitPart('badge', 'badge')
   if (!data) return null
   // With pages on and the achievements page there, they're a page; otherwise they open over the game.
   const asPage = pages.enabled && Boolean(pages.added.achievements)

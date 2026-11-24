@@ -4,19 +4,7 @@
  * panel drawn as a vendor's counter, or draw it yourself from `useShop`.
  */
 import type { GameState, Result } from '@ifloom/engine'
-import {
-  badgeVariants,
-  ChoiceButton,
-  ENTRY_CLASSES,
-  overridable,
-  type Override,
-  PartDialog,
-  type PluginUi,
-  useGame,
-  useKitPart,
-  usePart,
-  useWords,
-} from '@ifloom/react'
+import { ChoiceButton, overridable, type Override, PartDialog, type PluginUi, useGame, useKitPart, usePart, useWords } from '@ifloom/react'
 import type { ShopView, VendorView } from '../index.ts'
 
 /** The shop's words, in English. A game rewords any with `ui.<key>` in its strings: `{ 'ui.buy': 'Get' }`. */
@@ -84,16 +72,16 @@ function ShopCounterImpl({ vendor, className }: ShopCounterProps) {
   const closed = usePart('shop-closed', 'text-sm text-muted-foreground')
   const empty = usePart('shop-empty', 'text-sm text-muted-foreground')
   const list = usePart('goods', 'flex flex-col gap-2')
-  const row = useKitPart('card', 'good', ENTRY_CLASSES.row)
-  const name = useKitPart('title', 'good-name', 'font-medium')
-  const description = useKitPart('note', 'good-desc', 'text-xs text-muted-foreground')
-  const image = useKitPart('thumb', 'good-image', 'size-12 shrink-0 rounded-md object-cover')
+  const row = useKitPart('card', 'good', 'sm:flex-row sm:items-start')
+  const name = useKitPart('title', 'good-name')
+  const description = useKitPart('note', 'good-desc')
+  const image = useKitPart('thumb', 'good-image')
   const details = usePart('good-details', 'flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground')
   const stock = usePart('good-stock', '')
   const owned = usePart('good-owned', '')
-  const off = useKitPart('badge', 'good-off', badgeVariants())
+  const off = useKitPart('badge', 'good-off')
   const full = usePart('good-full-price', '')
-  const actions = useKitPart('commands', 'good-actions', ENTRY_CLASSES.actions)
+  const actions = useKitPart('commands', 'good-actions', 'sm:w-44 sm:shrink-0')
   return (
     <div {...box} data-vendor={vendor.id} data-closed={vendor.closed ? '' : undefined}>
       {vendor.closed ? <p {...closed}>{vendor.closed}</p> : null}
@@ -102,7 +90,7 @@ function ShopCounterImpl({ vendor, className }: ShopCounterProps) {
           {vendor.goods.map((good) => (
             <li key={good.entity} {...row} data-good={good.entity}>
               {good.image ? <img {...image} src={good.image} alt="" /> : null}
-              <div className={ENTRY_CLASSES.body}>
+              <div className="flex min-w-0 flex-1 flex-col gap-1">
                 <p {...name}>{good.name}</p>
                 {good.description ? <p {...description}>{good.description}</p> : null}
                 <p {...details}>

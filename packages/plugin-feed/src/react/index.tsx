@@ -7,7 +7,7 @@
 import type { ComponentProps } from 'react'
 import type { GameState, Result, SceneBeat } from '@ifloom/engine'
 import type { FeedsView } from '../index.ts'
-import { Beat, buttonVariants, overridable, type Override, Picture, type PluginUi, useGame, usePart, useWords, Video } from '@ifloom/react'
+import { Beat, buttonVariants, overridable, type Override, Picture, type PluginUi, useGame, useKitPart, usePart, useWords, Video } from '@ifloom/react'
 
 /** The feed plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const FEED_WORDS = {
@@ -65,13 +65,13 @@ function FeedSectionImpl({ data, with: options }: SectionProps) {
   const words = useWords(FEED_WORDS)
   const box = usePart('feed', 'flex flex-col gap-3')
   const seenAll = usePart('button', buttonVariants({ size: 'sm', variant: 'ghost' }))
-  const card = usePart('post', 'flex flex-col gap-2 rounded-lg border p-3')
+  const card = useKitPart('card', 'post')
   const author = usePart('post-author', 'flex items-center gap-2 text-sm font-medium')
   const portrait = usePart('post-portrait', 'size-6 rounded-full object-cover')
   const image = usePart('post-image', 'w-full rounded')
   const text = usePart('post-text', 'flex flex-col gap-2 text-sm')
   const clip = usePart('post-image', 'w-full rounded')
-  const meta = usePart('post-meta', 'text-xs text-muted-foreground')
+  const meta = useKitPart('note', 'post-meta', 'text-xs')
   const comment = usePart('post-comment', 'text-xs')
   const commenter = usePart('post-comment-name', 'font-medium')
   const feed = ((data as FeedsView | undefined) ?? feeds)?.feeds.find((entry) => entry.id === options.feed)

@@ -7,7 +7,7 @@
 import type { ComponentProps } from 'react'
 import type { GameState, Result } from '@ifloom/engine'
 import type { JobView, JobsView } from '../index.ts'
-import { badgeVariants, buttonVariants, ChoiceButton, overridable, type Override, type PluginUi, useGame, useKitPart, usePart, useWords } from '@ifloom/react'
+import { buttonVariants, ChoiceButton, overridable, type Override, type PluginUi, useGame, useKitPart, usePart, useWords } from '@ifloom/react'
 
 /** The jobs plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const JOBS_WORDS = {
@@ -78,18 +78,18 @@ function JobBoardImpl({ className, title, jobs: only }: { className?: string; ti
   const { send } = useGame()
   const words = useWords(JOBS_WORDS)
   const board = usePart('jobs', 'flex flex-col gap-3', className)
-  const heading = useKitPart('heading', 'jobs-title', 'font-heading font-semibold')
-  const card = useKitPart('card', 'job', 'flex flex-col gap-2 rounded-lg border p-3')
-  const jobTitle = useKitPart('title', 'job-title', 'flex flex-wrap items-center gap-2 font-medium')
-  const rank = useKitPart('badge', 'job-rank', badgeVariants({ variant: 'secondary' }))
-  const fired = useKitPart('badge', 'job-fired', badgeVariants({ variant: 'outline' }))
-  const text = usePart('job-text', 'text-sm text-muted-foreground')
+  const heading = useKitPart('heading', 'jobs-title')
+  const card = useKitPart('card', 'job')
+  const jobTitle = useKitPart('title', 'job-title')
+  const rank = useKitPart('badge', 'job-rank')
+  const fired = useKitPart('badge', 'job-fired')
+  const text = useKitPart('note', 'job-text')
   const details = usePart('job-details', 'flex flex-col gap-0.5 text-sm')
   const pay = usePart('job-pay', '')
   const shift = usePart('job-shift', '')
-  const next = useKitPart('note', 'job-next', 'text-muted-foreground')
-  const record = usePart('job-record', 'text-xs text-muted-foreground')
-  const actions = useKitPart('commands', 'job-actions', 'flex flex-col gap-1.5')
+  const next = useKitPart('note', 'job-next')
+  const record = useKitPart('note', 'job-record')
+  const actions = useKitPart('commands', 'job-actions')
   const quit = usePart('button', `${buttonVariants({ size: 'sm', variant: 'ghost' })} self-start`)
   const jobs = useJobs()
   const shown = only ? (jobs?.jobs ?? []).filter((job) => only.includes(job.id)) : (jobs?.jobs ?? [])

@@ -6,18 +6,7 @@
  */
 import type { GameState, Result } from '@ifloom/engine'
 import type { ComponentProps } from 'react'
-import {
-  buttonVariants,
-  ChoiceButton,
-  type InventoryProps,
-  overridable,
-  type Override,
-  type PluginUi,
-  useGame,
-  useKitPart,
-  usePart,
-  useWords,
-} from '@ifloom/react'
+import { buttonVariants, ChoiceButton, type InventoryProps, overridable, type Override, type PluginUi, useGame, usePart, useWords } from '@ifloom/react'
 import type { InventoryThing, InventoryView } from '../index.ts'
 
 /** The inventory plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
@@ -70,7 +59,7 @@ function InventoryCardImpl({ className, title: titleText, drop: showDrop = false
   const name = usePart('thing-name', 'font-medium')
   const count = usePart('thing-count', 'text-muted-foreground')
   const text = usePart('thing-text', 'text-xs text-muted-foreground')
-  const dropButton = useKitPart('label', 'thing-drop', `${buttonVariants({ size: 'sm', variant: 'ghost' })} self-start`)
+  const dropButton = usePart('thing-drop', `${buttonVariants({ size: 'sm', variant: 'ghost' })} self-start`)
   const held: Shown[] = plugin ? plugin.things : view.held.map((thing) => ({ ...thing }))
   if (!held.length) return null
   return (

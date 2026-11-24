@@ -7,7 +7,7 @@
  */
 import type { Runner } from '@ifloom/engine'
 import { createContext, useContext, useEffect, useState, type ComponentProps, type ReactNode, type SyntheticEvent } from 'react'
-import { badgeVariants, buttonVariants, overridable, type Override, type PluginUi, useGame, useKitPart, usePart, useWords } from '@ifloom/react'
+import { buttonVariants, overridable, type Override, type PluginUi, useGame, useKitPart, usePart, useWords } from '@ifloom/react'
 import { enterCode, startUnlocks, type Entered, type UnlocksView } from '../index.ts'
 
 /** The unlocks plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
@@ -109,18 +109,18 @@ function UnlocksPanelImpl({ className }: { className?: string }) {
   const unlocks = useUnlocks()
   const [code, setCode] = useState('')
   const section = usePart('unlocks', 'flex flex-col gap-3 text-sm', className)
-  const title = useKitPart('heading', 'unlocks-title', 'font-heading font-semibold')
-  const form = useKitPart('form', 'unlock-form', 'flex flex-wrap items-center gap-2')
-  const input = useKitPart('input', 'unlock-input', 'h-9 min-w-0 flex-1 rounded-md border bg-background px-3 text-sm')
+  const title = useKitPart('heading', 'unlocks-title')
+  const form = useKitPart('form', 'unlock-form')
+  const input = useKitPart('input', 'unlock-input')
   const submit = usePart('button', buttonVariants({ size: 'sm' }))
   const said = usePart('unlocks-message', 'text-destructive')
   const done = usePart('unlocks-entered', 'text-foreground')
   const restart = usePart('button', `${buttonVariants({ size: 'sm', variant: 'outline' })} self-start`)
   const list = usePart('unlocks-list', 'flex flex-col gap-2')
-  const row = useKitPart('card', 'unlock', 'flex flex-col gap-1 rounded-lg border p-2')
-  const name = useKitPart('title', 'unlock-name', 'flex flex-wrap items-center gap-2 font-medium')
-  const state = useKitPart('badge', 'unlock-state', badgeVariants({ variant: 'secondary' }))
-  const text = useKitPart('note', 'unlock-text', 'text-muted-foreground')
+  const row = useKitPart('card', 'unlock')
+  const name = useKitPart('title', 'unlock-name')
+  const state = useKitPart('badge', 'unlock-state')
+  const text = useKitPart('note', 'unlock-text')
   const problem = usePart('unlock-problem', 'text-xs text-destructive')
   if (!unlocks?.total) return null
   const send = async (event: SyntheticEvent) => {

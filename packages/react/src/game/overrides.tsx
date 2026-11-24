@@ -387,36 +387,6 @@ export function usePart(name: PartKey, defaults: string, extra?: string): { 'dat
   return { 'data-part': name, className }
 }
 
-/**
- * What a part is like, whatever drew it, carried as `data-kit` beside its own
- * `data-part`: a plugin's goods, jobs and achievements are all `card`s. The
- * presets style these and the theme's tokens, never a plugin's own parts, so
- * a plugin's UI looks right in each preset without a stylesheet of its own,
- * and a game's stylesheet can restyle every card at once.
- *
- * - `card`: an entry in a list, boxed: a vendor's good, a job, an achievement.
- * - `item`: an entry in a list, not boxed: a status.
- * - `title`: an entry's name. `heading`: a list's heading.
- * - `note`: a line about an entry, quieter than its title.
- * - `meter`: a bar of progress, with a `<span>` inside as wide as it's got.
- * - `commands`: buttons that do something, not choices the story offers.
- * - `opener`: a button that opens something over the page, such as a dialog.
- * - `form` and `input`: where the player types something, such as a code.
- * - `badge`: a small label on an entry. `thumb`: a small picture of it.
- * - `label`: a short word beside a value, such as a slot's name.
- *
- * An entry that can be done says how it stands in `data-state`: `"done"`, or
- * `"open"` while it isn't yet. One the player hasn't found yet carries `data-secret`.
- */
-export const KIT_PARTS = ['card', 'item', 'title', 'heading', 'note', 'meter', 'commands', 'opener', 'form', 'input', 'badge', 'thumb', 'label'] as const
-
-export type KitPart = (typeof KIT_PARTS)[number]
-
-/** `usePart` for a part that's one of the kit's: its `data-part`, its `data-kit` and its classes. */
-export function useKitPart(kit: KitPart, name: PartKey, defaults: string, extra?: string): { 'data-part': PartKey; 'data-kit': KitPart; className: string } {
-  return { ...usePart(name, defaults, extra), 'data-kit': kit }
-}
-
 /** The `motion` option in effect: true unless the game turned transitions off. See `useMotion` for the player's setting too. */
 export function useMotionOption(): boolean {
   return useContext(UiContext).motion

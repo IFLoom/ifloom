@@ -5,14 +5,15 @@
  * `use__Pascal__`. A game with another UI never loads this file.
  *
  * It's built only from `@ifloom/react`'s public exports, the same kit a
- * game's own UI uses, and styled by the kit's classes, parts and theme
- * tokens, so it looks right in every preset with no stylesheet of its own.
+ * game's own UI uses, and styled by the kit's parts (each with its own look),
+ * the kit's layout classes and the theme's tokens, so it looks right in
+ * every preset with no stylesheet of its own.
  *
  * How a plugin UI is made: https://ifloom.dev/docs/react/kit
  */
 import type { GameState, Result } from '@ifloom/engine'
 import type { ComponentProps } from 'react'
-import { badgeVariants, overridable, Section, useGame, usePart, useWords, type Override, type PluginUi } from '@ifloom/react'
+import { overridable, Section, useGame, useKitPart, usePart, useWords, type Override, type PluginUi } from '@ifloom/react'
 import type { __Pascal__View } from '../index.ts'
 
 /** The plugin's words, in English. A game rewords any with `ui.<key>` in its strings: `{ 'ui.__camel__Marked': 'Done' }`. */
@@ -29,6 +30,7 @@ declare module '@ifloom/react' {
   interface PartNames {
     '__id__': true
     '__id__-entry': true
+    '__id__-marked': true
   }
 }
 
@@ -50,8 +52,9 @@ function __Pascal__ListImpl({ className }: { className?: string }) {
   const words = useWords(__CONSTANT___WORDS)
   const data = use__Pascal__()
   const list = usePart('__id__', 'flex flex-col gap-2 text-sm', className)
-  const row = usePart('__id__-entry', 'flex items-center gap-2')
-  const badge = usePart('badge', badgeVariants({ variant: 'secondary' }))
+  // Kit parts bring their own look, so a preset styles them as it does every plugin's: add only layout.
+  const row = useKitPart('item', '__id__-entry', 'flex-row items-center gap-2')
+  const badge = useKitPart('badge', '__id__-marked')
   if (!data?.entries.length) return null
   return (
     <ul {...list}>

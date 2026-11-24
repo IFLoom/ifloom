@@ -763,11 +763,11 @@ From [`@ifloom/plugin-quests/react`](/docs/plugins/quests#drawing-it).
 | Part | What it is |
 |---|---|
 | `quests` | The quest log. |
-| `quests-title` | Its heading. |
-| `quest` | One active quest. Carries `data-quest`. |
-| `quest-title` | The quest's title. |
-| `quest-stage` | How far it has got (`2 of 3`). |
-| `quest-summary` | Its summary. |
+| `quests-title` | Its heading. Kit part: `heading`. |
+| `quest` | One active quest. Carries `data-quest`. Kit part: `card`. |
+| `quest-title` | The quest's title. Kit part: `title`. |
+| `quest-stage` | How far it has got (`2 of 3`). Kit part: `note`. |
+| `quest-summary` | Its summary. Kit part: `note`. |
 | `quest-hint` | The hint for what to do next. |
 | `quests-done` | The list of finished quests. |
 | `quest-done` | One finished quest. |
@@ -778,7 +778,7 @@ From [`@ifloom/plugin-inventory/react`](/docs/plugins/inventory#drawing-it).
 
 | Part | What it is |
 |---|---|
-| `thing-drop` | Its drop button, with `drop` on. Kit part: `label`. |
+| `thing-drop` | Its drop button, with `drop` on. |
 
 #### Wardrobe
 
@@ -787,7 +787,7 @@ From [`@ifloom/plugin-wardrobe/react`](/docs/plugins/wardrobe#drawing-it).
 | Part | What it is |
 |---|---|
 | `wardrobe` | The wardrobe card. |
-| `wardrobe-title` | Its heading. |
+| `wardrobe-title` | Its heading. Kit part: `heading`. |
 | `wardrobe-slot` | One slot. Carries `data-slot-id`, and `data-worn` with what's in it. |
 | `wardrobe-slot-name` | The slot's label. Kit part: `label`. |
 | `wardrobe-worn` | What's in the slot. |
@@ -820,8 +820,9 @@ From [`@ifloom/plugin-achievements/react`](/docs/plugins/achievements#drawing-it
 | `achievements-empty` | What it says when the game has none. |
 | `achievement` | One achievement. Carries `data-achievement`, and `data-earned` or `data-secret`. Kit part: `card`. |
 | `achievement-image` | Its picture. Kit part: `thumb`. |
-| `achievement-title` | Its title, or `???`, with the **Earned** `badge`. Kit part: `title`. |
-| `achievement-text` | Its description. |
+| `achievement-title` | Its title, or `???`, with the **Earned** badge. Kit part: `title`. |
+| `achievement-earned` | The **Earned** badge. Kit part: `badge`. |
+| `achievement-text` | Its description. Kit part: `note`. |
 | `achievement-progress` | The progress bar. Fill it with `> span`. Kit part: `meter`. |
 | `achievement-progress-text` | The count under it (`5 of 20`). |
 
@@ -891,12 +892,12 @@ From [`@ifloom/plugin-jobs/react`](/docs/plugins/jobs#drawing-it).
 | `job-title` | Its title, with the rank and **Let go** badges. Kit part: `title`. |
 | `job-rank` | The rank held. Kit part: `badge`. |
 | `job-fired` | The **Let go** badge. Kit part: `badge`. |
-| `job-text` | Its description. |
+| `job-text` | Its description. Kit part: `note`. |
 | `job-details` | The lines about pay, the next shift and the next rank. |
 | `job-pay` | What a shift pays. |
 | `job-shift` | When the next shift is. |
 | `job-next` | The next rank, and how far off it is. Kit part: `note`. |
-| `job-record` | The shifts worked and missed. |
+| `job-record` | The shifts worked and missed. Kit part: `note`. |
 | `job-actions` | The **Apply** or **Work a shift** button (a `choice`) and **Quit** (a `button`). Kit part: `commands`. |
 
 #### Devices
@@ -919,10 +920,10 @@ From [`@ifloom/plugin-devices/react`](/docs/plugins/devices#drawing-it).
 | `app-badge` | Its badge. |
 | `app-prose` | A `prose` section of an app. |
 | `app-entries` | A `list` section of an app. |
-| `app-entry` | One entry in it. Carries `data-entry`. |
-| `app-entry-image` | The entry's picture. |
-| `app-entry-title` | Its title. |
-| `app-entry-text` | Its text. |
+| `app-entry` | One entry in it. Carries `data-entry`. Kit part: `card`. |
+| `app-entry-image` | The entry's picture. Kit part: `thumb`. |
+| `app-entry-title` | Its title. Kit part: `title`. |
+| `app-entry-text` | Its text. Kit part: `note`. |
 
 #### Messages
 
@@ -953,12 +954,12 @@ From [`@ifloom/plugin-feed/react`](/docs/plugins/feed#drawing-it).
 | Part | What it is |
 |---|---|
 | `feed` | A feed. Carries `data-feed`. |
-| `post` | One post. Carries `data-post`. |
+| `post` | One post. Carries `data-post`. Kit part: `card`. |
 | `post-author` | The poster's name and portrait. |
 | `post-portrait` | The poster's portrait. |
 | `post-image` | The post's picture. |
 | `post-text` | Its words, as beats. |
-| `post-meta` | Its likes. |
+| `post-meta` | Its likes. Kit part: `note`. |
 | `post-comment` | One comment. |
 | `post-comment-name` | The commenter's name. |
 

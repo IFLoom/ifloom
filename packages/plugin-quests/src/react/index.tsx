@@ -8,7 +8,7 @@
 import type { ComponentProps } from 'react'
 import type { GameState, Result } from '@ifloom/engine'
 import type { QuestsView } from '../index.ts'
-import { badgeVariants, buttonVariants, overridable, type Override, type PluginUi, Section, useGame, usePart, useWords } from '@ifloom/react'
+import { buttonVariants, overridable, type Override, type PluginUi, Section, useGame, useKitPart, usePart, useWords } from '@ifloom/react'
 
 /** The quests plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const QUESTS_WORDS = {
@@ -55,14 +55,14 @@ function QuestLogImpl({ className, title }: { className?: string; title?: string
   const { send } = useGame()
   const words = useWords(QUESTS_WORDS)
   const log = usePart('quests', 'flex flex-col gap-3', className)
-  const heading = usePart('quests-title', 'flex items-center gap-2 font-heading font-semibold')
-  const updates = usePart('badge', badgeVariants())
-  const card = usePart('quest', 'flex flex-col gap-1 rounded-lg border p-3')
-  const questTitle = usePart('quest-title', 'flex items-center gap-2 font-medium')
-  const fresh = usePart('badge', badgeVariants({ variant: 'secondary' }))
-  const description = usePart('quest-summary', 'text-sm text-muted-foreground')
+  const heading = useKitPart('heading', 'quests-title')
+  const updates = useKitPart('badge', 'badge')
+  const card = useKitPart('card', 'quest', 'gap-1')
+  const questTitle = useKitPart('title', 'quest-title')
+  const fresh = useKitPart('badge', 'badge')
+  const description = useKitPart('note', 'quest-summary')
   const hint = usePart('quest-hint', 'text-sm')
-  const stage = usePart('quest-stage', 'text-xs text-muted-foreground')
+  const stage = useKitPart('note', 'quest-stage', 'text-xs')
   const tracked = usePart('button', buttonVariants({ size: 'sm', variant: 'secondary' }))
   const untracked = usePart('button', buttonVariants({ size: 'sm', variant: 'outline' }))
   const doneList = usePart('quests-done', 'text-sm text-muted-foreground')

@@ -7,19 +7,7 @@
 import type { GameState, Result } from '@ifloom/engine'
 import type { CheatView, CheatsView } from '../index.ts'
 import { useState, type ComponentProps } from 'react'
-import {
-  badgeVariants,
-  buttonVariants,
-  ChoiceButton,
-  overridable,
-  type Override,
-  PartDialog,
-  type PluginUi,
-  useGame,
-  useKitPart,
-  usePart,
-  useWords,
-} from '@ifloom/react'
+import { ChoiceButton, overridable, type Override, PartDialog, type PluginUi, useGame, useKitPart, usePart, useWords } from '@ifloom/react'
 
 /** The cheats plugin's words, in English. A game rewords any with `ui.<key>` in its strings. */
 export const CHEATS_WORDS = {
@@ -80,12 +68,12 @@ export function useCheats(): CheatsControls | null {
 
 function CheatPanelImpl({ className }: { className?: string }) {
   const words = useWords(CHEATS_WORDS)
-  const panel = useKitPart('commands', 'cheats', 'flex flex-col gap-4', className)
+  const panel = useKitPart('commands', 'cheats', 'gap-4', className)
   const section = usePart('cheats-group', 'flex flex-col gap-2')
-  const heading = useKitPart('heading', 'cheats-group-title', 'font-heading text-sm font-semibold')
-  const card = useKitPart('card', 'cheat', 'flex flex-col gap-1')
-  const text = useKitPart('note', 'cheat-text', 'text-sm text-muted-foreground')
-  const used = useKitPart('badge', 'cheat-used', `${badgeVariants({ variant: 'secondary' })} self-start`)
+  const heading = useKitPart('heading', 'cheats-group-title')
+  const card = useKitPart('card', 'cheat', 'gap-1')
+  const text = useKitPart('note', 'cheat-text')
+  const used = useKitPart('badge', 'cheat-used')
   const cheats = useCheats()
   if (!cheats?.cheats.length) return null
   return (
@@ -118,7 +106,7 @@ function CheatsButtonImpl({ className }: { className?: string }) {
   const words = useWords(CHEATS_WORDS)
   const cheats = useCheats()
   const [open, setOpen] = useState(false)
-  const button = useKitPart('opener', 'cheats-button', `${buttonVariants({ size: 'sm', variant: 'outline' })} self-start`, className)
+  const button = useKitPart('opener', 'cheats-button', '', className)
   // Nothing to open in a game without the plugin, or while every cheat is hidden.
   if (!cheats?.cheats.length) return null
   return (

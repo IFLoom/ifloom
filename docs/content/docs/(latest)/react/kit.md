@@ -155,8 +155,8 @@ A plugin's React UI is built from `@ifloom/react`'s own exports, the same ones a
 | Words | [`useWords`](/docs/react/components#usewords) with the module's table, [`uiSay`](/docs/react/components#uisay), `Words`, `Say` |
 | Buttons and prices | [`ChoiceButton`](/docs/react/components#choicebutton), [`ChoiceList`](/docs/react/components#choicelist), [`PriceTag`](/docs/react/components#pricetag), [`buttonVariants`](/docs/react/components#button), [`badgeVariants`](/docs/react/components#badge) |
 | Dialogs | [`PartDialog`](/docs/react/components#partdialog), [`useDialogParts`](#usedialogparts), [`DIALOG_CLASSES`](#usedialogparts), [`Dialog`](/docs/react/components#dialog) |
-| The page | [`Section`](/docs/react/components#section), [`PROSE`](#prose), [`ENTRY_CLASSES`](#entry_classes), [`StatGauge`](#statgauge), [`PageHeading`](#pageheading-and-backbutton), [`BackButton`](#pageheading-and-backbutton), [`usePageParts`](#pageheading-and-backbutton) |
-| Parts and overrides | [`usePart`](/docs/react/components#usepart), [`useKitPart`](#usekitpart), [`KIT_PARTS`](#kit_parts), [`overridable`](/docs/react/components#overridable), `Override`, [`OverridableComponents`](#overridablecomponents-and-partnames), [`PartNames`](#overridablecomponents-and-partnames) |
+| The page | [`Section`](/docs/react/components#section), [`PROSE`](#prose), [`StatGauge`](#statgauge), [`PageHeading`](#pageheading-and-backbutton), [`BackButton`](#pageheading-and-backbutton), [`usePageParts`](#pageheading-and-backbutton) |
+| Parts and overrides | [`usePart`](/docs/react/components#usepart), [`useKitPart`](#usekitpart), [`KIT_PARTS`](#kit_parts), [`KIT_LOOKS`](#kit_looks), [`KIT_LAYOUT`](#kit_layout), [`overridable`](/docs/react/components#overridable), `Override`, [`OverridableComponents`](#overridablecomponents-and-partnames), [`PartNames`](#overridablecomponents-and-partnames) |
 | Pictures and prose | [`Picture`](/docs/react/components#picture), [`Video`](/docs/react/components#video), [`Icon`](/docs/react/components#icon), [`Beat`](/docs/react/components#beat), [`LayeredPicture`](/docs/react/components#layeredpicture), [`assetUrl`](/docs/react/components#asseturl) |
 
 ## Writing a plugin's UI
@@ -188,7 +188,7 @@ function ForecastImpl({ className }: { className?: string }) {
   const words = useWords(WEATHER_WORDS)
   const weather = useGame().view.plugins.weather as WeatherView | undefined
   const list = usePart('forecast', 'flex flex-col gap-2 text-sm', className)
-  const day = useKitPart('card', 'forecast-day', 'rounded-lg border p-3')
+  const day = useKitPart('card', 'forecast-day')
   if (!weather) return null
   return (
     <ul {...list}>
@@ -213,8 +213,9 @@ Prefix your word keys with something of your plugin's, as the template does (`ra
 
 A plugin's UI is styled the way the React UI's own parts are: by Tailwind classes on its parts, the theme's [tokens](/docs/react/customising#2-set-tokens-and-colours), and the kit's parts. The [presets](/docs/react/customising#1-pick-a-theme-preset) style the kit's parts and the tokens, and never a plugin's own parts by name, so a plugin's UI looks right in each preset as long as it marks what its parts are like.
 
-- **Mark each part with what it's like**, with [`useKitPart`](#usekitpart): a vendor's good, a job and an achievement are all `card`s, their names `title`s, a line about them a `note`. A preset that rules its cards as a book's index rules every plugin's, first-party or not.
-- **Use the classes the React UI already has.** The prebuilt `styles.min.css` holds the classes `@ifloom/react`'s own source uses, and a game with Tailwind finds the same through `@ifloom/react/styles.css`. Neither looks inside a plugin. So a class only your plugin uses isn't there. The first-party plugins use no class of their own, and a contract test holds them to it. [`ENTRY_CLASSES`](#entry_classes), [`DIALOG_CLASSES`](#usedialogparts), [`PROSE`](#prose), `buttonVariants` and `badgeVariants` cover the usual shapes.
+- **Mark each part with what it's like**, with [`useKitPart`](#usekitpart): a vendor's good, a job and an achievement are all `card`s, their names `title`s, a line about them a `note`. Each kit part brings its own look ([`KIT_LOOKS`](#kit_looks)), so `useKitPart('card', 'forecast-day')` is boxed like every other plugin's card with no preset loaded, and a preset that rules its cards as a book's index rules every plugin's, first-party or not.
+- **Add only layout.** What you put over a kit part's look is where it sits: `useKitPart('card', 'good', 'sm:flex-row sm:items-start')` puts a good's buttons beside its words on a wider screen. [`KIT_LAYOUT`](#kit_layout) lists the layout classes the React UI's stylesheet always has. With those, `buttonVariants`, `badgeVariants`, [`PROSE`](#prose) and [`DIALOG_CLASSES`](#usedialogparts), a plugin's UI needs no class of its own.
+- **Why it matters.** The prebuilt `styles.min.css` holds the classes `@ifloom/react`'s own source uses, and a game with Tailwind finds the same through `@ifloom/react/styles.css`. Neither looks inside a plugin, so a class only your plugin uses isn't there, and the part shows unstyled. The first-party plugins use no class of their own, and a contract test holds them to it.
 - **Anything more ships with the plugin.** If your UI needs classes or rules of its own, publish a stylesheet beside `/react`: its Tailwind source, with an `@source` line pointing at your `dist/react/`, for a game with its own Tailwind, and a prebuilt copy for a game without, as `@ifloom/react` publishes `styles.css` and `styles.min.css`. A game then imports yours after the React UI's:
 
 ```css
@@ -230,10 +231,18 @@ A plugin's UI is styled the way the React UI's own parts are: by Tailwind classe
 ### useKitPart
 
 ```ts
-function useKitPart(kit: KitPart, name: PartKey, defaults: string, extra?: string): { 'data-part': PartKey; 'data-kit': KitPart; className: string }
+function useKitPart(kit: KitPart, name: PartKey, layout?: string, className?: string): { 'data-part': PartKey; 'data-kit': KitPart; className: string }
 ```
 
-[`usePart`](/docs/react/components#usepart) for a part that's one of the kit's: it carries `data-kit` beside its own `data-part`, so a preset or a game's stylesheet styles it with every part like it.
+The attributes for a part that's one of the kit's: its `data-part`, its `data-kit` and its classes. The classes are the kit part's look from [`KIT_LOOKS`](#kit_looks), then `layout` over it, then the game's [`classes`](/docs/react/components#classes) for the part, then `className`, a caller's. Where two clash, the later one wins, as in [`cn`](/docs/react/components#cn). With [`unstyled`](/docs/react/customising#unstyled) on, the look and the layout go, as every built-in class does, and `className` stays.
+
+```tsx
+const day = useKitPart('card', 'forecast-day')                               // a card, as every plugin's
+const good = useKitPart('card', 'good', 'sm:flex-row sm:items-start')        // its buttons beside it from sm up
+const button = useKitPart('opener', 'almanac-button', undefined, className)  // a caller's className last
+```
+
+A preset or a game's stylesheet styles a kit part with every part like it:
 
 ```css
 /* Every card any plugin draws, square. */
@@ -251,10 +260,10 @@ What a part can be like, as `data-kit` says.
 
 | Kit part | What it is | First-party examples |
 |---|---|---|
-| `card` | An entry in a list, boxed. | A vendor's good, a job, an achievement, a cheat, an unlock. |
+| `card` | An entry in a list, boxed. | A vendor's good, a job, an achievement, a cheat, an unlock, a quest, a post, an app's entry. |
 | `item` | An entry in a list, not boxed. | A status. |
 | `title` | An entry's name. | A good's name, an achievement's title, a status's label. |
-| `heading` | A list's heading. | The achievements', the jobs' and the statuses' headings, a cheats group's name. |
+| `heading` | A list's heading. | The achievements', the jobs', the quests' and the statuses' headings, a cheats group's name. |
 | `note` | A line about an entry, quieter than its title. | A good's description, a job's next rank, a status's summary. |
 | `meter` | A bar of progress, with a `<span>` inside as wide as it has got. | An achievement's progress. |
 | `commands` | Buttons that do something, not choices the story offers. | A good's Buy and Sell, a job's buttons, the cheats. |
@@ -262,17 +271,40 @@ What a part can be like, as `data-kit` says.
 | `form`, `input` | Where the player types something, and its box. | The code box. |
 | `badge` | A small label on an entry. | A job's rank, a discount, a cheat's count of uses. |
 | `thumb` | A small picture of an entry. | A good's picture, an achievement's. |
-| `label` | A short word beside a value. | A wardrobe slot's name, the Drop button. |
+| `label` | A short word beside a value. | A wardrobe slot's name. |
 
 An entry that can be done says how it stands in `data-state`, `"done"` or `"open"`, as an achievement does, and one the player hasn't found yet carries `data-secret`. The presets read those too: the terminal preset ticks a done entry's title.
 
-### ENTRY_CLASSES
+### KIT_LOOKS
 
 ```ts
-const ENTRY_CLASSES: { row: string; body: string; actions: string }
+const KIT_LOOKS: Readonly<Record<KitPart, string>>
 ```
 
-The classes a list entry with buttons of its own starts from, as a vendor's goods do: a bordered `row`, a column on a phone with the buttons beside the words from Tailwind's `sm` up; the `body`, with the words; and the `actions`, a column of buttons.
+How each kit part looks with no preset, in the theme's tokens: the classes [`useKitPart`](#usekitpart) starts from. They're in `@ifloom/react`'s own source, so its stylesheet always has them.
+
+| Kit part | Its look |
+|---|---|
+| `card` | A column with a gap, a rounded border and padding. Edged in the primary colour while `data-state="done"`, faded a little while `"open"`. |
+| `item` | A column with a small gap, no border. |
+| `title` | A row that wraps, medium weight. |
+| `heading` | A row in the heading font, semibold. |
+| `note` | Small, muted text. |
+| `meter` | A thin rounded bar in the muted colour, its `<span>` filled in the primary colour. |
+| `commands` | A column of buttons with a small gap. |
+| `opener` | A small outlined button, at the start of its row. |
+| `form`, `input` | A row that wraps; a box with a border, as tall as a small button. |
+| `badge` | A secondary [badge](/docs/react/components#badge). |
+| `thumb` | A 3rem square picture, rounded, cropped to fit. |
+| `label` | Muted text. |
+
+### KIT_LAYOUT
+
+```ts
+const KIT_LAYOUT: readonly string[]
+```
+
+The layout classes the React UI's stylesheet always has, for laying out a plugin's parts: `flex`, `grid`, `contents`, `hidden`, the flex directions, `flex-wrap`, `flex-1`, `shrink-0`, `min-w-0`, `w-full`, alignment (`items-*`, `justify-between`, `justify-end`, `self-*`), gaps from `gap-0.5` to `gap-4`, `text-left`, `text-right`, `text-xs`, `text-sm`, `font-normal`, `font-medium`, `tabular-nums`, `truncate`, and `sm:flex-row`, `sm:items-start`, `sm:w-44` and `sm:shrink-0` for an entry's buttons beside its words on a wider screen. A first-party plugin puts only these over a kit part's look, and a contract test holds it to that. A class not listed may still be in the stylesheet today, because the React UI happens to use it, but nothing promises it stays.
 
 ### PROSE
 

@@ -23,7 +23,7 @@ import {
   PanelHost, BUILT_IN_PANELS, PartDialog, useDialogParts, DIALOG_CLASSES,
   useAudio,
   UI_STRINGS, uiSay, useWords,
-  PART_KEYS, KIT_PARTS, UiProvider, usePart, useKitPart, overridable, PROSE, ENTRY_CLASSES,
+  PART_KEYS, KIT_PARTS, KIT_LOOKS, KIT_LAYOUT, UiProvider, usePart, useKitPart, overridable, PROSE,
   type GameShellProps, type GameProps, type SidebarProps, type StoryProps, type SectionProps, type GameProviderProps, type GameContextValue, type ModsOption,
   type PanelComponent, type PluginSectionComponent, type InlineComponent, type InlineComponents, type InlineProps, type UiStringKey, type Words, type Say, type IconName,
   type PluginUi, type PluginPanel, type PluginPage, type PluginSpot,

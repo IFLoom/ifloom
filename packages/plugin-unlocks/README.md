@@ -1,6 +1,6 @@
 # @ifloom/plugin-unlocks
 
-Unlock codes for IFLoom: codes a player enters, checked against a slow hash, that open cheats and scenes, and content the build encrypts under the code. It is part of [IFLoom](https://ifloom.dev), an interactive fiction engine whose games build to one HTML file that opens from disk.
+Unlock codes for IFLoom: codes a player enters, checked against a slow hash, that open scenes and content the build encrypts under the code, and extras the player can use at any time, such as +20 coins, free or kept for an unlock. It is part of [IFLoom](https://ifloom.dev), an interactive fiction engine whose games build to one HTML file that opens from disk.
 
 ## Install
 

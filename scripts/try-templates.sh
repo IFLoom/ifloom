@@ -18,9 +18,20 @@
 # (an install per template and package manager), so run it when a template, the
 # Vite preset, the build or a package's dependencies change, not on every commit.
 #
-#   scripts/try-templates.sh [--pm npm|pnpm|yarn|bun|all] [--create template] [template...]
+# With --registry it checks a release instead, from npm itself: nothing is built
+# or packed, and each game is made by the package manager's own create command
+# (`npm create ifloom@<version>`, `pnpm create`, `yarn create`, `bun create`) as
+# the docs say, its @ifloom packages installed from the registry. It checks the
+# game names the root package.json's version, so run it after that version is
+# published. With npm it also runs `npx ifloom help` in an empty folder, and
+# installs the engine, the browser helpers, a plugin and the CLI into a bare
+# project, as "Add IFLoom to a project" does. pnpm runs through Corepack when
+# it isn't installed.
 #
-# npm if no --pm; react vue svelte vanilla next plugin if no template is named.
+#   scripts/try-templates.sh [--pm npm|pnpm|yarn|bun|all] [--create template] [--registry] [template...]
+#
+# npm if no --pm; react vue svelte vanilla next plugin if no template is named,
+# and every template with --registry.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 checkout=$(pwd)
@@ -28,42 +39,82 @@ checkout=$(pwd)
 unset NODE_OPTIONS
 
 managers=(npm)
-if [[ "${1:-}" == "--pm" ]]; then
-  [[ "${2:-}" == all ]] && managers=(npm pnpm yarn bun) || managers=("${2:?--pm takes npm, pnpm, yarn, bun or all}")
-  shift 2
-fi
 create=react
-if [[ "${1:-}" == "--create" ]]; then
-  create="${2:?--create takes a template}"
-  shift 2
-fi
+registry=
+while [[ "${1:-}" == --* ]]; do
+  case $1 in
+    --pm)
+      [[ "${2:-}" == all ]] && managers=(npm pnpm yarn bun) || managers=("${2:?--pm takes npm, pnpm, yarn, bun or all}")
+      shift 2
+      ;;
+    --create)
+      create="${2:?--create takes a template}"
+      shift 2
+      ;;
+    --registry)
+      registry=$(node -p 'require("./package.json").version')
+      shift
+      ;;
+    *) echo "Unknown option: $1" >&2; exit 1 ;;
+  esac
+done
 templates=("$@")
-(( ${#templates[@]} )) || templates=(react vue svelte vanilla next plugin)
+if (( ! ${#templates[@]} )); then
+  [[ -n $registry ]] && templates=(react vanilla vue svelte next novel cafe town plugin) || templates=(react vue svelte vanilla next plugin)
+fi
 
+# The command that runs a package manager: pnpm through Corepack when it isn't installed.
+pmc() { if [[ $1 == pnpm ]] && ! command -v pnpm >/dev/null; then echo 'corepack pnpm'; else echo "$1"; fi; }
+export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 for pm in "${managers[@]}"; do
   case $pm in
-    npm | pnpm | yarn | bun) command -v "$pm" >/dev/null || { echo "$pm isn't installed." >&2; exit 1; } ;;
+    npm | yarn | bun) command -v "$pm" >/dev/null || { echo "$pm isn't installed." >&2; exit 1; } ;;
+    pnpm) command -v pnpm >/dev/null || command -v corepack >/dev/null || { echo "Neither pnpm nor Corepack is installed." >&2; exit 1; } ;;
     *) echo "Unknown package manager: $pm (npm, pnpm, yarn, bun or all)" >&2; exit 1 ;;
   esac
 done
 
 out=$(mktemp -d "${TMPDIR:-/tmp}/ifloom-templates-XXXXXX")
 trap 'rm -rf "$out"' EXIT
+failed=()
+
+# A game made by a package manager's create command, from create-ifloom on npm.
+# Yarn 1 adds create-ifloom to its global folder, so it gets one of its own here.
+created() {
+  local pm=$1 name=$2 template=$3
+  case $pm in
+    npm) npm_config_yes=true npm create "ifloom@$registry" "$name" -- --template "$template" ;;
+    pnpm) $(pmc pnpm) create "ifloom@$registry" "$name" --template "$template" ;;
+    yarn) YARN_GLOBAL_FOLDER="$out/yarn-global" YARN_CACHE_FOLDER="$out/yarn-cache" yarn create ifloom "$name" --template "$template" ;;
+    bun) bun create ifloom "$name" --template "$template" ;;
+  esac
+}
+
+if [[ -n $registry ]]; then
+  printf '\n== @ifloom %s from the npm registry\n' "$registry"
+fi
 
 # Each package built and packed as npm would publish it, a tarball of its `files`, as `npm run pack` makes them.
 # A fresh folder each run, so no package manager's cache hands back an older tarball of the same name.
-printf '\n== npm run pack\n'
-node scripts/pack.ts "$out/packs" >/dev/null
-echo "Built and packed every package."
+if [[ -z $registry ]]; then
+  printf '\n== npm run pack\n'
+  node scripts/pack.ts "$out/packs" >/dev/null
+  echo "Built and packed every package."
 
-# create-ifloom's tarball, unpacked: its bin bundles what it needs, so nothing is installed for it.
-mkdir -p "$out/create-ifloom"
-tar xzf "$out/packs/create-ifloom-$(node -p 'require("./packages/create-ifloom/package.json").version').tgz" -C "$out/create-ifloom"
+  # create-ifloom's tarball, unpacked: its bin bundles what it needs, so nothing is installed for it.
+  mkdir -p "$out/create-ifloom"
+  tar xzf "$out/packs/create-ifloom-$(node -p 'require("./packages/create-ifloom/package.json").version').tgz" -C "$out/create-ifloom"
+fi
 
-failed=()
 for pm in "${managers[@]}"; do
-  for template in "${templates[@]}" "create:$create"; do
-    if [[ $template == create:* ]]; then
+  # From the registry every game is made by the create command, so there's no separate create-ifloom game.
+  extra=("create:$create")
+  [[ -n $registry ]] && extra=()
+  for template in "${templates[@]}" "${extra[@]}"; do
+    if [[ -n $registry ]]; then
+      name="try-$template"
+      label="$pm create ifloom --template $template"
+    elif [[ $template == create:* ]]; then
       template=${template#create:}
       name="try-create-$template"
       label="npm create ifloom --template $template"
@@ -74,7 +125,24 @@ for pm in "${managers[@]}"; do
     dir="$out/$pm/$name"
     printf '\n== %s with %s in %s\n' "$label" "$pm" "$dir"
     mkdir -p "$out/$pm"
-    if [[ $name == try-create-* ]]; then
+    if [[ -n $registry ]]; then
+      if ! said=$(cd "$out/$pm" && created "$pm" "$name" "$template"); then
+        failed+=("$label")
+        continue
+      fi
+      echo "$said"
+      if ! grep -q "  $pm install" <<<"$said"; then
+        echo "create-ifloom's next steps don't say \"$pm install\"." >&2
+        failed+=("$label")
+        continue
+      fi
+      # The create command fetched the release being checked, not an older create-ifloom.
+      if ! grep -q "\"@ifloom/[a-z-]*\": \"\^$registry\"" "$dir/package.json"; then
+        echo "The game doesn't name @ifloom $registry: was create-ifloom $registry fetched?" >&2
+        failed+=("$label")
+        continue
+      fi
+    elif [[ $name == try-create-* ]]; then
       agent="$pm/$($pm --version) npm/? node/$(node --version) $(uname -s | tr '[:upper:]' '[:lower:]')"
       if ! said=$(cd "$out/$pm" && npm_config_user_agent=$agent node "$out/create-ifloom/package/bin.js" "$name" --template "$template"); then
         failed+=("$label ($pm)")
@@ -91,7 +159,7 @@ for pm in "${managers[@]}"; do
         "$checkout/packages/cli/dist/index.js" "$name" "$template" "$dir"
     fi
 
-    node --input-type=module - "$checkout" "$dir" "$out/packs" "$pm" <<'EOF'
+    [[ -n $registry ]] || node --input-type=module - "$checkout" "$dir" "$out/packs" "$pm" <<'EOF'
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 const [checkout, dir, packs, pm] = process.argv.slice(2)
@@ -123,13 +191,13 @@ writeFileSync(file, JSON.stringify(pkg, null, 2) + '\n')
 EOF
     case $pm in
       npm) install='npm install --no-audit --no-fund --loglevel=error' ;;
-      pnpm) install='pnpm install --reporter=append-only --config.strict-dep-builds=false' ;;
+      pnpm) install="$(pmc pnpm) install --reporter=append-only --config.strict-dep-builds=false" ;;
       # Yarn 1, or Yarn 2 and later with node_modules (create-ifloom writes the .yarnrc.yml itself), since Vite doesn't support Plug'n'Play.
       # Yarn 1 caches a tarball by name and version, so it gets a fresh cache: a pack keeps its version, whatever it holds.
       yarn) [[ $(yarn --version) == 1.* ]] && install="yarn install --non-interactive --silent --cache-folder $out/yarn-cache" || install='echo "nodeLinker: node-modules" > .yarnrc.yml && yarn install' ;;
       bun) install='bun install' ;;
     esac
-    run="$pm run"
+    run="$(pmc "$pm") run"
     if [[ $template == plugin ]]; then
       steps="$install && $run build && $run test && $run typecheck"
       result='installs, builds, tests and typechecks'
@@ -145,8 +213,34 @@ EOF
   done
 done
 
+if [[ -n $registry ]]; then
+  # npx ifloom, with nothing installed: the `ifloom` package runs @ifloom/cli's bin.
+  printf '\n== npx ifloom help in an empty folder\n'
+  mkdir -p "$out/npx"
+  if (cd "$out/npx" && npm_config_yes=true npx "ifloom@$registry" help | grep -q 'ifloom new'); then
+    echo "-- npx ifloom help: prints the commands"
+  else
+    failed+=('npx ifloom help')
+  fi
+
+  # The packages added to a project of its own, as how-to/add-to-a-project does.
+  printf '\n== npm install into a bare project\n'
+  mkdir -p "$out/project"
+  if (
+    cd "$out/project" && npm init -y >/dev/null &&
+      npm install --no-audit --no-fund --loglevel=error "@ifloom/engine@$registry" "@ifloom/browser@$registry" "@ifloom/plugin-quests@$registry" &&
+      npm install --no-audit --no-fund --loglevel=error -D "@ifloom/cli@$registry" &&
+      node --input-type=module -e "await import('@ifloom/engine'); await import('@ifloom/engine/plugin'); await import('@ifloom/browser'); await import('@ifloom/plugin-quests'); await import('@ifloom/cli/game')" &&
+      npx ifloom help | grep -q 'ifloom new'
+  ); then
+    echo "-- npm install into a project: the engine, browser helpers, a plugin and the CLI import and run"
+  else
+    failed+=('npm install into a project')
+  fi
+fi
+
 if (( ${#failed[@]} )); then
   printf '\nFailed: %s\n' "${failed[*]}"
   exit 1
 fi
-printf '\n== every template works beside the checkout\n'
+[[ -n $registry ]] && printf '\n== @ifloom %s works from the registry\n' "$registry" || printf '\n== every template works beside the checkout\n'

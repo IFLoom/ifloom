@@ -67,7 +67,7 @@ Small Town, in `examples/showcase`, is a first week in a new town. You move into
 | [Generators](/docs/reference/plugins/generators) | `src/story/park.ts` makes two visitors each day from the town's pools. |
 | [Wardrobe](/docs/reference/plugins/wardrobe) | `src/world/things.ts` declares the `coat` and `neck` slots, the raincoat and the scarf. |
 | [Messages](/docs/reference/plugins/messages), [feed](/docs/reference/plugins/feed) and [devices](/docs/reference/plugins/devices) | `src/world/phone.ts` builds the phone and its apps, and `src/story/ava.ts` and `src/story/sam.ts` hold their texts and posts. |
-| [Cheats](/docs/reference/plugins/cheats) and [unlocks](/docs/reference/plugins/unlocks) | `src/world/cheats.ts` declares a free cheat and a supporter one, and the unlock whose code is in `.env`. `src/unlocks/supporter.ts` is the content the code opens. |
+| [Unlocks and cheats](/docs/reference/plugins/unlocks) | `src/world/cheats.ts` declares a free cheat and a supporter one, and the unlock whose code is in `.env`. `src/unlocks/supporter.ts` is the content the code opens. |
 | [Debug](/docs/reference/plugins/debug) | `src/game.ts` adds the debug plugin only when `withDebug` is set, which `src/main.tsx` sets in development. |
 | [The game module](/docs/reference/cli) | `src/game.ts` exports the release build and three probes, which `ifloom snapshot` renders every scene in. `tests/build.test.ts` runs the check, the build check and the snapshot comparison. |
 

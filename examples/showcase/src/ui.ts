@@ -9,7 +9,6 @@ import type { PluginUi } from '@ifloom/react/kit'
 import { achievementsUi } from '@ifloom/plugin-achievements/react'
 import { calendarUi } from '@ifloom/plugin-calendar/react'
 import { castUi } from '@ifloom/plugin-cast/react'
-import { cheatsUi } from '@ifloom/plugin-cheats/react'
 import { debugUi } from '@ifloom/plugin-debug/react'
 import { devicesUi } from '@ifloom/plugin-devices/react'
 import { feedUi } from '@ifloom/plugin-feed/react'
@@ -34,7 +33,6 @@ export function townUi(unlocks: UnlocksUiOptions = {}): PluginUi[] {
     inventoryUi,
     wardrobeUi,
     achievementsUi,
-    cheatsUi,
     devicesUi,
     messagesUi,
     feedUi,

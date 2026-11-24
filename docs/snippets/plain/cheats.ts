@@ -4,7 +4,7 @@ import { add, runner } from './runner.ts'
 
 /** The cheats under their groups, each a button that says how often it's been used, greyed out with why when it's refused. */
 export function drawCheats(parent: HTMLElement, { view }: RunnerSnapshot): void {
-  const cheats = view.plugins.cheats?.cheats ?? []
+  const cheats = view.plugins.unlocks?.cheats ?? []
   for (const group of new Set(cheats.map((cheat) => cheat.group))) {
     if (group) add(parent, 'h3', group)
     for (const cheat of cheats.filter((entry) => entry.group === group)) {

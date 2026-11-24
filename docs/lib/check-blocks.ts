@@ -176,7 +176,6 @@ export const ENTRIES = [
     'achievements',
     'calendar',
     'cast',
-    'cheats',
     'debug',
     'devices',
     'feed',

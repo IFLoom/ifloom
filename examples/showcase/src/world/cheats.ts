@@ -1,10 +1,10 @@
-/** Cheats for the player, and the supporter code that opens one of them. */
+/** Cheats for the player, and the supporter code that opens one of them: both the unlocks plugin's. */
 import type { Content } from '@ifloom/engine'
 import { unlocks } from '@ifloom/plugin-unlocks'
 
 export const cheats: Content = {
   data: {
-    cheats: {
+    unlocks: {
       cheats: [
         // Free for everyone.
         { id: 'coins', name: '+20 coins', description: 'A little help with the rent.', effects: [{ stat: 'coins', by: 20 }] },
@@ -18,8 +18,6 @@ export const cheats: Content = {
           effects: [{ stat: 'energy', to: 100 }],
         },
       ],
-    },
-    unlocks: {
       unlocks: [
         // The code's hash, from `ifloom unlock-hash supporter`; the code is in .env, never here.
         // It opens the cheat above and src/unlocks/supporter.ts, a scene in the café.

@@ -6,13 +6,117 @@ Generated from the source of `@ifloom/plugin-unlocks` and `@ifloom/plugin-unlock
 
 ## @ifloom/plugin-unlocks
 
-- Functions: [`codeFits`](#codefits), [`contentScript`](#contentscript), [`enterCode`](#entercode), [`envName`](#envname), [`lockContent`](#lockcontent), [`lockedContent`](#lockedcontent-1), [`normaliseCode`](#normalisecode), [`startUnlocks`](#startunlocks), [`unlockedPacks`](#unlockedpacks), [`unlockHash`](#unlockhash), [`unlocks`](#unlocks), [`unlocksOf`](#unlocksof)
+- Functions: [`cheatOf`](#cheatof), [`cheatsOf`](#cheatsof), [`codeFits`](#codefits), [`contentScript`](#contentscript), [`enterCode`](#entercode), [`envName`](#envname), [`lockContent`](#lockcontent), [`lockedContent`](#lockedcontent-1), [`normaliseCode`](#normalisecode), [`startUnlocks`](#startunlocks), [`unlockedPacks`](#unlockedpacks), [`unlockHash`](#unlockhash), [`unlocks`](#unlocks), [`unlocksOf`](#unlocksof)
 - Constants: [`ITERATIONS`](#iterations)
-- Types: [`Entered`](#entered), [`LockedContent`](#lockedcontent), [`UnlockDef`](#unlockdef), [`UnlocksProfile`](#unlocksprofile), [`UnlocksState`](#unlocksstate), [`UnlockStatus`](#unlockstatus), [`UnlocksView`](#unlocksview), [`UnlockView`](#unlockview)
+- Types: [`CheatDef`](#cheatdef), [`CheatUse`](#cheatuse), [`CheatView`](#cheatview), [`Entered`](#entered), [`LockedContent`](#lockedcontent), [`UnlockDef`](#unlockdef), [`UnlocksProfile`](#unlocksprofile), [`UnlocksState`](#unlocksstate), [`UnlockStatus`](#unlockstatus), [`UnlocksView`](#unlocksview), [`UnlockView`](#unlockview)
+
+### CheatDef
+
+Type. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#cheatdef).
+
+A cheat the game declares in `data.unlocks.cheats`. Using it runs its effects at once, in any scene and through any
+lock, and ends no turn unless its effects do.
+
+```ts shape
+import type { CheatDef } from '@ifloom/plugin-unlocks'
+type CheatDef = {
+  id: string
+  name: string
+  description?: string
+  effects: EffectRef[]
+  blocked?: Blocked[]
+  group?: string
+  once?: Once
+}
+```
+
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `id` | `string` |  |  | The cheat's id, unique among the game's cheats. |
+| `name` | `string` |  |  | The cheat's name, which its button shows, such as "+20 coins". |
+| `description` | `string` | yes |  | The cheat's line in the cheats panel. |
+| `effects` | [`EffectRef[]`](/docs/api/engine#effectref) |  |  | The cheat's effects, run in order. It must have at least one. |
+| `blocked` | [`Blocked[]`](/docs/api/engine#blocked) | yes |  | The cheat's refusals. The first entry whose `when` holds refuses the button with its reason, or leaves the cheat out of the view with `hide`. A supporter-only cheat is `{ when: { not: { 'unlocks/has': { unlock: 'supporter' } } }, reason: 'For supporters' }`. |
+| `group` | `string` | yes |  | The heading the cheat is listed under in the panel. Cheats with none come first. |
+| `once` | [`Once`](/docs/api/engine#once) | yes |  | The cheat's limit, once in a save (`{ per: 'game' }`) or once a turn (`{ per: 'turn' }`), as a choice's `once` is. `reason` is the refusal once it's used. The `unlocks/usedOnce` string, "Already used.", if left out. |
+
+### cheatOf
+
+Function. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#cheatof).
+
+Returns the game's cheat with the id `id`, or undefined when there is none.
+
+```ts shape
+import { cheatOf } from '@ifloom/plugin-unlocks'
+function cheatOf(game: Game, id: string): CheatDef | undefined
+```
+
+Uses: [`Game`](/docs/api/engine#game), [`CheatDef`](#cheatdef).
+
+### cheatsOf
+
+Function. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#cheatsof).
+
+Returns the game's cheats, `data.unlocks.cheats` from its content and packs, in declared order.
+
+```ts shape
+import { cheatsOf } from '@ifloom/plugin-unlocks'
+function cheatsOf(game: Game): CheatDef[]
+```
+
+Uses: [`Game`](/docs/api/engine#game), [`CheatDef`](#cheatdef).
+
+### CheatUse
+
+Type. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#cheatuse).
+
+A use of a cheat, one entry of `UnlocksState.cheated`.
+
+```ts shape
+import type { CheatUse } from '@ifloom/plugin-unlocks'
+type CheatUse = {
+  cheat: string
+  turn: number
+}
+```
+
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `cheat` | `string` |  |  | The id of the cheat used. |
+| `turn` | `number` |  |  | The turn the cheat was used on. |
+
+### CheatView
+
+Type. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#cheatview).
+
+A cheat as the player sees it, in `view.plugins.unlocks.cheats`.
+
+```ts shape
+import type { CheatView } from '@ifloom/plugin-unlocks'
+type CheatView = {
+  id: string
+  name: string
+  description: string
+  group: string | null
+  once: 'game' | 'turn' | null
+  used: number
+  button: RenderedChoice
+}
+```
+
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `id` | `string` |  |  | The cheat's id. |
+| `name` | `string` |  |  | The cheat's name. |
+| `description` | `string` |  |  | The cheat's description, or `''` when it has none. |
+| `group` | `string \| null` |  |  | The heading the cheat goes under, or null when it has none. |
+| `once` | `'game' \| 'turn' \| null` |  |  | The cheat's `once` limit, `'game'` or `'turn'`, or null when it can be used any number of times. |
+| `used` | `number` |  |  | The number of times this save has used the cheat. |
+| `button` | [`RenderedChoice`](/docs/api/engine#renderedchoice) |  |  | The cheat's button. It's refused with its reason while a `blocked` entry holds, or once a `once` cheat is used. |
 
 ### codeFits
 
-Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#codefits).
+Function. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#codefits).
 
 Returns true when the code is the unlock's code.
 
@@ -25,7 +129,7 @@ Uses: [`UnlockDef`](#unlockdef).
 
 ### contentScript
 
-Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#contentscript).
+Function. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#contentscript).
 
 Returns the script `ifloom build` puts in the page's head, which holds the encrypted content by unlock.
 
@@ -38,7 +142,7 @@ Uses: [`LockedContent`](#lockedcontent).
 
 ### enterCode
 
-Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#entercode).
+Function. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#entercode).
 
 Returns the unlock a code opens, checked against every unlock on a runner `startUnlocks` was started on, or the
 reason it opens none. It never throws.
@@ -55,7 +159,7 @@ Uses: [`Runner`](/docs/api/engine#runner), [`Result`](/docs/api/engine#result), 
 
 ### Entered
 
-Type. Explained in [Unlocks](/docs/reference/plugins/unlocks#entered).
+Type. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#entered).
 
 The unlock a code opened, as `enterCode` returns it.
 
@@ -78,7 +182,7 @@ type Entered = {
 
 ### envName
 
-Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#envname).
+Function. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#envname).
 
 Returns the name of the environment variable `ifloom build` reads an unlock's code from, such as `IFLOOM_UNLOCK_SUPPORTER` for `supporter`.
 
@@ -89,7 +193,7 @@ function envName(unlock: string): string
 
 ### ITERATIONS
 
-Const. Explained in [Unlocks](/docs/reference/plugins/unlocks#iterations).
+Const. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#iterations).
 
 The number of PBKDF2 rounds for an unlock without its own `iterations`. It makes guessing codes one by one take a long time.
 
@@ -100,7 +204,7 @@ const ITERATIONS: 600000
 
 ### lockContent
 
-Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#lockcontent).
+Function. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#lockcontent).
 
 Returns an unlock's packs encrypted under its code, for the page, as `ifloom build` does with each file in
 `src/unlocks/`. The packs must be data, as a mod's are.
@@ -117,7 +221,7 @@ Uses: [`UnlockDef`](#unlockdef), [`Pack`](/docs/api/engine#pack), [`LockedConten
 
 ### LockedContent
 
-Type. Explained in [Unlocks](/docs/reference/plugins/unlocks#lockedcontent-1).
+Type. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#lockedcontent-1).
 
 An unlock's encrypted packs as `ifloom build` writes them into the page.
 
@@ -142,7 +246,7 @@ type LockedContent = {
 
 ### lockedContent
 
-Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#lockedcontent).
+Function. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#lockedcontent).
 
 Returns the encrypted content `ifloom build` put in the page, by unlock. Returns an empty record in a page without any.
 
@@ -155,7 +259,7 @@ Uses: [`LockedContent`](#lockedcontent).
 
 ### normaliseCode
 
-Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#normalisecode).
+Function. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#normalisecode).
 
 Returns a code in the form the plugin checks, Unicode-normalised, without spaces or hyphens, in capitals. So
 `bread-2026`, `BREAD 2026` and `Bread2026` are one code.
@@ -167,7 +271,7 @@ function normaliseCode(code: string): string
 
 ### startUnlocks
 
-Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#startunlocks).
+Function. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#startunlocks).
 
 Starts code entry on a runner and returns the function that stops it. Start it once per runner, which needs a
 `profile`.
@@ -186,7 +290,7 @@ Uses: [`Runner`](/docs/api/engine#runner), [`LockedContent`](#lockedcontent).
 
 ### UnlockDef
 
-Type. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlockdef).
+Type. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#unlockdef).
 
 An unlock the game declares in `data.unlocks.unlocks`. It holds the code's hash, never the code.
 
@@ -213,7 +317,7 @@ type UnlockDef = {
 
 ### unlockedPacks
 
-Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlockedpacks).
+Function. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#unlockedpacks).
 
 Returns the packs of every unlock the profile remembers, decrypted and checked that this engine can read them. Call
 it before building the game, and pass them as `loadGame(content, base, { packs: unlocked.packs })`.
@@ -230,7 +334,7 @@ Uses: [`Profile`](/docs/api/engine#profile), [`LockedContent`](#lockedcontent), 
 
 ### unlockHash
 
-Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlockhash).
+Function. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#unlockhash).
 
 Returns the hash of a code for an unlock, in hex, the value for the unlock's `hash`. `ifloom unlock-hash` prints
 it, so you never write the code into the game.
@@ -244,10 +348,10 @@ Uses: [`UnlockDef`](#unlockdef).
 
 ### unlocks
 
-Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlocks).
+Function. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#unlocks).
 
 The unlocks plugin's factory, with its helpers as properties. `unlocks()` returns the plugin for the game's
-`plugins`, and content calls helpers such as `unlocks.has('supporter')`.
+`plugins`, and content calls helpers such as `unlocks.has('supporter')` and `unlocks.cheat('rich')`.
 
 ```ts shape
 import { unlocks } from '@ifloom/plugin-unlocks'
@@ -260,10 +364,12 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`UnlocksState`]
 |---|---|---|
 | `unlocks.has` | `(unlock: string):` [`Condition`](/docs/api/engine#condition) | Returns the `unlocks/has` condition, which holds once this save records the unlock. |
 | `unlocks.record` | `(unlock: string):` [`CommandRef`](/docs/api/engine#commandref) | Returns the `unlocks/record` command, which records the unlock in this save. `startUnlocks` sends it. |
+| `unlocks.cheat` | `(cheat: string):` [`CommandRef`](/docs/api/engine#commandref) | Returns the `unlocks/cheat` command, which runs the cheat's effects through any lock and logs the use. |
+| `unlocks.cheated` | `(cheat?: string):` [`Condition`](/docs/api/engine#condition) | Returns the `unlocks/cheated` condition, which holds once this save has used the cheat, or any cheat when none is named. |
 
 ### unlocksOf
 
-Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlocksof).
+Function. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#unlocksof).
 
 Returns the game's unlocks, from `data.unlocks.unlocks` in its content and packs.
 
@@ -276,7 +382,7 @@ Uses: [`Game`](/docs/api/engine#game), [`UnlockDef`](#unlockdef).
 
 ### UnlocksProfile
 
-Type. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlocksprofile).
+Type. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#unlocksprofile).
 
 The record the plugin keeps in the player's profile, under `unlocks`. It never holds a code.
 
@@ -293,24 +399,26 @@ type UnlocksProfile = {
 
 ### UnlocksState
 
-Type. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlocksstate).
+Type. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#unlocksstate).
 
-The unlocks a save keeps. The plugin reads the unlocks from content.
+The unlocks and cheat uses a save keeps. The plugin reads the unlocks and cheats themselves from content.
 
 ```ts shape
 import type { UnlocksState } from '@ifloom/plugin-unlocks'
 type UnlocksState = {
   unlocked: string[]
+  cheated: CheatUse[]
 }
 ```
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
 | `unlocked` | `string[]` |  |  | The ids of the unlocks recorded in this save, in the order they were recorded. |
+| `cheated` | [`CheatUse[]`](#cheatuse) |  |  | The save's uses of cheats, oldest first. |
 
 ### UnlockStatus
 
-Type. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlockstatus).
+Type. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#unlockstatus).
 
 The state of code entry that `startUnlocks` reports in the runner's snapshot, at `snapshot.helpers.unlocks`.
 
@@ -331,9 +439,9 @@ type UnlockStatus = {
 
 ### UnlocksView
 
-Type. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlocksview).
+Type. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#unlocksview).
 
-The unlocks as the player sees them, in `view.plugins.unlocks`.
+The unlocks and cheats as the player sees them, in `view.plugins.unlocks`.
 
 ```ts shape
 import type { UnlocksView } from '@ifloom/plugin-unlocks'
@@ -341,6 +449,8 @@ type UnlocksView = {
   unlocks: UnlockView[]
   unlocked: number
   total: number
+  cheats: CheatView[]
+  cheated: number
 }
 ```
 
@@ -349,10 +459,12 @@ type UnlocksView = {
 | `unlocks` | [`UnlockView[]`](#unlockview) |  |  | The game's unlocks, in the order the game declares them. |
 | `unlocked` | `number` |  |  | The number of unlocks this save records. |
 | `total` | `number` |  |  | The number of unlocks the game declares. |
+| `cheats` | [`CheatView[]`](#cheatview) |  |  | The cheats the player can see, in the order the game declares them. A cheat refused by an entry with `hide` is left out. |
+| `cheated` | `number` |  |  | The number of cheat uses in this save, counting every cheat. |
 
 ### UnlockView
 
-Type. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlockview).
+Type. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#unlockview).
 
 An unlock as the player sees it, in `view.plugins.unlocks.unlocks`.
 
@@ -375,19 +487,93 @@ type UnlockView = {
 
 ## @ifloom/plugin-unlocks/react
 
-- Functions: [`unlocksUiWith`](#unlocksuiwith), [`useUnlocks`](#useunlocks)
-- Constants: [`UNLOCKS_WORDS`](#unlocks_words), [`UnlocksPanel`](#unlockspanel), [`unlocksUi`](#unlocksui)
-- Types: [`UnlocksControls`](#unlockscontrols), [`UnlocksUiOptions`](#unlocksuioptions)
+- Functions: [`unlocksUiWith`](#unlocksuiwith), [`useCheats`](#usecheats), [`useUnlocks`](#useunlocks)
+- Constants: [`CheatPanel`](#cheatpanel), [`CheatsButton`](#cheatsbutton), [`UNLOCKS_WORDS`](#unlocks_words), [`UnlocksPanel`](#unlockspanel), [`unlocksUi`](#unlocksui)
+- Types: [`CheatGroup`](#cheatgroup), [`CheatsControls`](#cheatscontrols), [`UnlocksControls`](#unlockscontrols), [`UnlocksUiOptions`](#unlocksuioptions)
+
+### CheatGroup
+
+Type. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#cheatgroup).
+
+A group of the cheats panel, a heading and the cheats under it. The cheats with no group form one with a null name.
+
+```ts shape
+import type { CheatGroup } from '@ifloom/plugin-unlocks/react'
+type CheatGroup = {
+  name: string | null
+  cheats: CheatView[]
+}
+```
+
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `name` | `string \| null` |  |  | The group's heading, or null for the cheats with no group. |
+| `cheats` | [`CheatView[]`](#cheatview) |  |  | The group's cheats, in the order the game declares them. |
+
+### CheatPanel
+
+Const. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#cheatpanel).
+
+Renders the cheats from `view.plugins.unlocks.cheats` under their groups' headings, each with its button, its
+description and its use count. A preset styles its `cheats`, `cheats-group`, `cheats-group-title`, `cheat`,
+`cheat-text` and `cheat-used` parts.
+
+A refused cheat's button is disabled with its reason, such as a supporter cheat before the unlock or a `once`
+cheat after its use. It renders nothing while the player can see no cheat.
+
+```ts shape
+import { CheatPanel } from '@ifloom/plugin-unlocks/react'
+const CheatPanel: ComponentType<{ className?: string; }>
+```
+
+### CheatsButton
+
+Const. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#cheatsbutton).
+
+Renders the button that opens the `CheatPanel` in a dialog. A preset styles its `cheats-button` part.
+
+It renders nothing in a game without the plugin, or while the player can see no cheat.
+
+```ts shape
+import { CheatsButton } from '@ifloom/plugin-unlocks/react'
+const CheatsButton: ComponentType<{ className?: string; }>
+```
+
+### CheatsControls
+
+Type. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#cheatscontrols).
+
+The cheats from the unlocks plugin's view, grouped, with a way to use one, as `useCheats` returns them.
+
+```ts shape
+import type { CheatsControls } from '@ifloom/plugin-unlocks/react'
+type CheatsControls = {
+  cheats: CheatView[]
+  cheated: number
+  groups: CheatGroup[]
+  use: (cheat: string) => Result<GameState>
+}
+```
+
+| Field | Type | Optional | Default | Description |
+|---|---|---|---|---|
+| `cheats` | [`CheatView[]`](#cheatview) |  |  | The cheats the player can see, in the order the game declares them. |
+| `cheated` | `number` |  |  | The number of cheat uses in this save, counting every cheat. |
+| `groups` | [`CheatGroup[]`](#cheatgroup) |  |  | The cheats grouped by their `group`, the ungrouped ones first, then each group in the order it first appears. |
+| `use` | `(cheat: string) =>` [`Result`](/docs/api/engine#result)`<`[`GameState`](/docs/api/engine#gamestate)`>` |  |  | Sends the `unlocks/cheat` command for the cheat. A refused use returns the reason its button gives. |
 
 ### UNLOCKS_WORDS
 
-Const. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlocks_words).
+Const. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#unlocks_words).
 
 The unlocks plugin's UI words, in English. A game rewords any of them with `ui.<key>` in its strings.
 
 ```ts shape
 import { UNLOCKS_WORDS } from '@ifloom/plugin-unlocks/react'
 const UNLOCKS_WORDS: {
+  cheatUsedOnce: 'Used once'
+  cheatUsedTimes: 'Used {n} times'
+  cheats: 'Cheats'
   checkingCode: 'Checking…'
   code: 'Code'
   enterCode: 'Enter a code'
@@ -402,6 +588,9 @@ const UNLOCKS_WORDS: {
 
 | Field | Type | Optional | Default | Description |
 |---|---|---|---|---|
+| `cheatUsedOnce` | `'Used once'` |  |  | The note on a cheat the player has used once. |
+| `cheatUsedTimes` | `'Used {n} times'` |  |  | The note on a cheat the player has used more than once, with `{n}` uses. |
+| `cheats` | `'Cheats'` |  |  | The label of the cheats button and the title of its dialog. |
 | `checkingCode` | `'Checking…'` |  |  | The label of the unlock button while a code is checked. |
 | `code` | `'Code'` |  |  | The placeholder and the screen readers' label of the code box. |
 | `enterCode` | `'Enter a code'` |  |  | The heading over the code box, and the label of the menu button that opens it without pages. |
@@ -414,7 +603,7 @@ const UNLOCKS_WORDS: {
 
 ### UnlocksControls
 
-Type. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlockscontrols).
+Type. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#unlockscontrols).
 
 The unlocks plugin's view with the code box's state and a function that enters a code, as `useUnlocks` returns it.
 
@@ -424,6 +613,8 @@ type UnlocksControls = {
   unlocks: UnlockView[]
   unlocked: number
   total: number
+  cheats: CheatView[]
+  cheated: number
   available: boolean
   enter: (code: string) => Promise<boolean>
   checking: boolean
@@ -439,6 +630,8 @@ type UnlocksControls = {
 | `unlocks` | [`UnlockView[]`](#unlockview) |  |  | The game's unlocks, in the order the game declares them. |
 | `unlocked` | `number` |  |  | The number of unlocks this save records. |
 | `total` | `number` |  |  | The number of unlocks the game declares. |
+| `cheats` | [`CheatView[]`](#cheatview) |  |  | The cheats the player can see, in the order the game declares them. A cheat refused by an entry with `hide` is left out. |
+| `cheated` | `number` |  |  | The number of cheat uses in this save, counting every cheat. |
 | `available` | `boolean` |  |  | True when code entry has started on the runner, which the unlocks UI does. |
 | `enter` | `(code: string) => Promise<boolean>` |  |  | Checks a code with `enterCode` and resolves true when it opened an unlock. `entered` then names it, or `message` gives the reason it didn't. |
 | `checking` | `boolean` |  |  | True while a code is checked, slowly on purpose, from the snapshot's `helpers.unlocks.status`. |
@@ -449,7 +642,7 @@ type UnlocksControls = {
 
 ### UnlocksPanel
 
-Const. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlockspanel).
+Const. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#unlockspanel).
 
 Renders the code box and the list of unlocks from `view.plugins.unlocks`. It shows the unlock a code opened, or why
 the code failed.
@@ -467,12 +660,13 @@ const UnlocksPanel: ComponentType<{ className?: string; }>
 
 ### unlocksUi
 
-Const. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlocksui).
+Const. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#unlocksui).
 
-The unlocks plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It renders the `UnlocksPanel` on the
-settings page, or behind a menu button without pages.
+The unlocks plugin's React UI, for `plugins` on `mountGame` or `GameProvider`. It puts the `UnlocksPanel` on the
+settings page, and the `CheatsButton` in the sidebar.
 
-It also starts code entry on the runner.
+Without pages, the `UnlocksPanel` is behind a menu button. The `CheatsButton` opens the `CheatPanel`. Each renders
+nothing while the game has no unlocks, or the player can see no cheat. It also starts code entry on the runner.
 
 `unlocksUiWith` returns the same UI with problems and a restart.
 
@@ -485,7 +679,7 @@ Uses: [`PluginUi`](/docs/api/react-kit#pluginui).
 
 ### UnlocksUiOptions
 
-Type. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlocksuioptions).
+Type. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#unlocksuioptions).
 
 Settings for `unlocksUiWith`. Without them, the UI shows no problems and offers no restart.
 
@@ -506,7 +700,7 @@ type UnlocksUiOptions = {
 
 ### unlocksUiWith
 
-Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#unlocksuiwith).
+Function. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#unlocksuiwith).
 
 Returns the unlocks plugin's React UI with settings. It shows the `problems` from `unlockedPacks` under the code box.
 
@@ -519,9 +713,23 @@ function unlocksUiWith(options?: UnlocksUiOptions): PluginUi
 
 Uses: [`UnlocksUiOptions`](#unlocksuioptions), [`PluginUi`](/docs/api/react-kit#pluginui).
 
+### useCheats
+
+Function. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#usecheats).
+
+Returns the cheats from the unlocks plugin's view, their groups and their command from the running game, or null in
+a game without the plugin. It re-renders when the view changes. `CheatPanel` renders from it.
+
+```ts shape
+import { useCheats } from '@ifloom/plugin-unlocks/react'
+function useCheats(): CheatsControls | null
+```
+
+Uses: [`CheatsControls`](#cheatscontrols).
+
 ### useUnlocks
 
-Function. Explained in [Unlocks](/docs/reference/plugins/unlocks#useunlocks).
+Function. Explained in [Unlocks and cheats](/docs/reference/plugins/unlocks#useunlocks).
 
 Returns the unlocks plugin's view and the code box's state from the running game, or null in a game without the
 plugin. It re-renders when the view or the snapshot's `helpers.unlocks` changes.

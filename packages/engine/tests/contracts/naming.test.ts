@@ -4,7 +4,6 @@ import { CONDITION_KEYS, EFFECT_KEYS } from '../../src/core.ts'
 import type { Plugin } from '../../src/plugin.ts'
 import { PLUGIN_NAMES, firstPartyPlugins } from './first-party.ts'
 import { achievements } from '@ifloom/plugin-achievements'
-import { cheats } from '@ifloom/plugin-cheats'
 import { unlocks } from '@ifloom/plugin-unlocks'
 import { calendar } from '@ifloom/plugin-calendar'
 import { cast } from '@ifloom/plugin-cast'
@@ -203,8 +202,8 @@ const SAMPLES: Record<string, Call> = {
   'conditions:jobs/worked': jobs.worked('barista'),
   'effects:jobs/hire': jobs.hire('barista'),
   'effects:jobs/fire': jobs.fire('barista'),
-  'conditions:cheats/used': cheats.used('coins'),
-  'commands:cheats/use': cheats.use('coins'),
+  'conditions:unlocks/cheated': unlocks.cheated('coins'),
+  'commands:unlocks/cheat': unlocks.cheat('coins'),
   'conditions:unlocks/has': unlocks.has('supporter'),
   'commands:unlocks/record': unlocks.record('supporter'),
   'commands:jobs/apply': jobs.apply('barista'),

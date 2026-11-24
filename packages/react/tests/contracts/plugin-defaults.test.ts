@@ -21,7 +21,6 @@ const DEFAULTS: Record<string, { component: string; hook: string; panel?: string
   quests: { component: 'QuestLog', hook: 'useQuests' },
   statuses: { component: 'StatusList', hook: 'useStatuses' },
   achievements: { component: 'AchievementList', hook: 'useAchievements' },
-  cheats: { component: 'CheatPanel', hook: 'useCheats' },
   unlocks: { component: 'UnlocksPanel', hook: 'useUnlocks' },
   shop: { component: 'ShopCounter', hook: 'useShop', panel: 'shop' },
   jobs: { component: 'JobBoard', hook: 'useJobs', panel: 'jobs' },

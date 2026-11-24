@@ -28,8 +28,7 @@ Each package's page documents its factory, its content, its calls and its view.
 | [Messages](/docs/reference/plugins/messages) | `@ifloom/plugin-messages` adds channels and threads of messages that arrive when the story allows, with replies that work as choices. |
 | [Feed](/docs/reference/plugins/feed) | `@ifloom/plugin-feed` adds feeds of posts, the player's own posts, likes and comments. |
 | [Devices](/docs/reference/plugins/devices) | `@ifloom/plugin-devices` adds devices with apps built from sections, badges, and opening an app without leaving the room. |
-| [Cheats](/docs/reference/plugins/cheats) | `@ifloom/plugin-cheats` adds cheats that work in any scene and through any lock, refused until a condition holds if the game says so, with a log of each use. |
-| [Unlocks](/docs/reference/plugins/unlocks) | `@ifloom/plugin-unlocks` adds codes the player enters, checked against a slow hash, which unlock cheats, choices and encrypted packs. |
+| [Unlocks and cheats](/docs/reference/plugins/unlocks) | `@ifloom/plugin-unlocks` adds codes the player enters, checked against a slow hash, which unlock choices and encrypted packs, and cheats that work in any scene and through any lock, refused until a condition holds if the game says so, with a log of each use. |
 | [Debug](/docs/reference/plugins/debug) | `@ifloom/plugin-debug` adds testing commands that ignore locks, for development builds only. |
 
 A phone is no plugin of its own. A game builds one from devices, messages and feed in its content, as [Build a phone](/docs/how-to/build-a-phone) shows. Plugins other people have written are on [Community plugins](/docs/reference/plugins/community).

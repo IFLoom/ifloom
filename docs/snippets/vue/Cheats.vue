@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { runner, view } from './runner.ts'
 
 // The cheats under their groups, each a button that says how often it's been used, greyed out with why when it's refused.
-const cheats = computed(() => view.value.plugins.cheats?.cheats ?? [])
+const cheats = computed(() => view.value.plugins.unlocks?.cheats ?? [])
 const groups = computed(() => [...new Set(cheats.value.map((cheat) => cheat.group))])
 </script>
 

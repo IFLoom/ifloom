@@ -3,14 +3,12 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { act, cleanup, fireEvent, render, renderHook, screen, within } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { createRunner, loadGame, startingState, type Game, type Runner } from '@ifloom/engine'
-import { definePlugin } from '@ifloom/engine/plugin'
-import { cheats } from '../src/index.ts'
+import { unlocks } from '../src/index.ts'
 import { GameMenu, GameProvider, Scene, GameShell, type Components, Game as GamePage, Story } from '@ifloom/react'
-import { CheatPanel, useCheats } from '../src/react/index.tsx'
-import { cheatsUi } from '../src/react/index.tsx'
+import { CheatPanel, unlocksUi, useCheats } from '../src/react/index.tsx'
 
 /** The plugin UIs every game here is drawn with. */
-const UIS = [cheatsUi]
+const UIS = [unlocksUi]
 
 /** A layout of just a story with these children, and nothing over it. */
 function storyOf(children: ReactNode) {
@@ -30,13 +28,6 @@ afterEach(() => {
 
 const supporter = { not: { 'unlocks/has': { unlock: 'supporter' } } }
 
-/** A stand-in for the unlocks plugin: `unlocks/has` holds while the kv key `unlock.<id>` is true. */
-const unlocksStub = definePlugin<null>({
-  id: 'unlocks',
-  version: 1,
-  conditions: { has: (state, args) => state.kv[`unlock.${String(args.unlock)}`] === true },
-})
-
 function game(options: { plugins?: boolean; hideAll?: boolean } = {}): Game {
   const hide = Boolean(options.hideAll)
   return loadGame(
@@ -45,7 +36,8 @@ function game(options: { plugins?: boolean; hideAll?: boolean } = {}): Game {
         name: 'street',
         stats: [{ id: 'coins', label: 'Coins', start: 5, max: 9999 }],
         data: {
-          cheats: {
+          unlocks: {
+            unlocks: [{ id: 'supporter', name: 'Supporter edition', hash: 'a'.repeat(64) }],
             cheats: [
               {
                 id: 'coins',
@@ -74,7 +66,7 @@ function game(options: { plugins?: boolean; hideAll?: boolean } = {}): Game {
         },
       },
     ],
-    { id: 'cheats-ui', title: 'High Street', plugins: options.plugins === false ? [] : [cheats(), unlocksStub] },
+    { id: 'cheats-ui', title: 'High Street', plugins: options.plugins === false ? [] : [unlocks()] },
   ).game
 }
 
@@ -120,10 +112,10 @@ describe('the cheat panel', () => {
     expect(again.textContent).toContain('Already used.')
   })
 
-  it('opens the supporter cheat once the unlock holds', () => {
+  it('opens the supporter cheat once the unlock is recorded', () => {
     const g = game()
-    const start = startingState(g)
-    const unlocked = createRunner(g, { ...start, kv: { ...start.kv, 'unlock.supporter': true } })
+    const unlocked = createRunner(g, startingState(g))
+    unlocked.apply(unlocks.record('supporter'))
     render(<GameShell plugins={UIS} runner={unlocked} />)
     const dialog = openPanel()
     const gold = within(dialog.querySelector('[data-cheat="gold"]') as HTMLElement).getByRole('button') as HTMLButtonElement
@@ -185,7 +177,7 @@ describe('useCheats', () => {
     ])
     act(() => void result.current!.use('coins'))
     expect(runner.state.stats.coins).toBe(25)
-    expect(result.current!.used).toBe(1)
+    expect(result.current!.cheated).toBe(1)
     expect(result.current!.use('gold')).toMatchObject({ ok: false, reason: 'For supporters.' })
   })
 

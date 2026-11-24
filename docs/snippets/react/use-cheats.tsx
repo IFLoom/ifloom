@@ -1,4 +1,4 @@
-import { useCheats } from '@ifloom/plugin-cheats/react'
+import { useCheats } from '@ifloom/plugin-unlocks/react'
 
 export function QuickCoins() {
   const cheats = useCheats()

@@ -52,7 +52,7 @@ const pageOf = (name: string) =>
   PAGES[`../../../../docs/content/docs/(latest)/reference/plugins/${name}.md`] ?? PAGES[`../../../../docs/content/docs/(latest)/reference/plugins/${name}.mdx`]
 
 it('finds every first-party plugin', () => {
-  expect(PLUGIN_NAMES.length).toBeGreaterThanOrEqual(17)
+  expect(PLUGIN_NAMES.length).toBeGreaterThanOrEqual(16)
 })
 
 describe.each(PLUGIN_NAMES)('plugin-%s', (name) => {

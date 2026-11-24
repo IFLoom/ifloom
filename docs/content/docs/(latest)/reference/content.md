@@ -60,16 +60,16 @@ export const cafe: Content = {
 
 ### data
 
-Content for the game's plugins, under the plugin's id and then each of its lists by name. Every plugin keeps its lists by name, even a plugin with one list, so it can add a list later without moving the first. That's why the cheats are at `data.cheats.cheats`: the plugin `cheats`, then its list of cheats.
+Content for the game's plugins, under the plugin's id and then each of its lists by name. Every plugin keeps its lists by name, even a plugin with one list, so it can add a list later without moving the first. That's why the unlocks are at `data.unlocks.unlocks`: the plugin `unlocks`, then its list of unlocks. Its other list, the cheats, is beside it at `data.unlocks.cheats`.
 
-Each list merges by entry `id`, as scenes do, and the merged list is at `game.data.cheats.cheats`. The [words table](/docs/reference/words) names an entry the same way, as in `cheats/cheats.coins.name`, and each plugin's [reference page](/docs/reference/plugins) names the lists it reads. Locations, vendors and characters are entities in `entities`, not `data`.
+Each list merges by entry `id`, as scenes do, and the merged list is at `game.data.unlocks.cheats`. The [words table](/docs/reference/words) names an entry the same way, as in `unlocks/cheats.coins.name`, and each plugin's [reference page](/docs/reference/plugins) names the lists it reads. Locations, vendors and characters are entities in `entities`, not `data`.
 
 ```ts
 import type { Content } from '@ifloom/engine'
 
 export const town: Content = {
   data: {
-    cheats: { cheats: [{ id: 'coins', name: '+20 coins', effects: [{ stat: 'coins', by: 20 }] }] },
+    unlocks: { cheats: [{ id: 'coins', name: '+20 coins', effects: [{ stat: 'coins', by: 20 }] }] },
     messages: { channels: [{ id: 'texts', name: 'Texts' }], messages: [] },
   },
 }

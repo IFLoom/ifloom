@@ -15,7 +15,6 @@ import { quests } from '@ifloom/plugin-quests'
 import { shop } from '@ifloom/plugin-shop'
 import { statuses } from '@ifloom/plugin-statuses'
 import { wardrobe } from '@ifloom/plugin-wardrobe'
-import { cheats } from '@ifloom/plugin-cheats'
 import { generators } from '@ifloom/plugin-generators'
 import { unlocks } from '@ifloom/plugin-unlocks'
 import { withCafe } from '../fixtures/cafe.ts'
@@ -864,7 +863,6 @@ describe('content migrations', () => {
         },
         achievements: { achievements: [{ id: 'first', title: 'First loaf', description: 'Bake one.' }] },
         jobs: { jobs: [{ id: 'cafe', title: 'Weekend help', ranks: [{ id: 'help', title: 'Help', pay: {} }] }] },
-        cheats: { cheats: [{ id: 'coins', label: '+20 coins', effects: [] }] },
         unlocks: { unlocks: [{ id: 'supporter', label: 'Supporter edition', hash: 'ab' }] },
         generators: { templates: [{ id: 'regular', of: 'visitor', desc: { pool: 'lines' } }] },
       },
@@ -879,11 +877,10 @@ describe('content migrations', () => {
         'jobs/jobs.cafe.title': 'Aide du week-end',
         'jobs/jobs.cafe.ranks.help.title': 'Aide',
         'jobs/jobs.cafe.notify.abc123.title': 'Payé',
-        'cheats/cheats.coins.label': '+20 pièces',
         'unlocks/unlocks.supporter.label': 'Édition soutien',
       },
     }
-    const plugins = [places(), cast(), quests(), statuses(), achievements(), jobs(), cheats(), unlocks(), generators()] as Plugin[]
+    const plugins = [places(), cast(), quests(), statuses(), achievements(), jobs(), unlocks(), generators()] as Plugin[]
     const out = unwrap(upgradePack(v25, plugins)) as unknown as Record<string, unknown>
     expect(out).toMatchObject({
       schema: SCHEMA,
@@ -914,7 +911,6 @@ describe('content migrations', () => {
         },
         achievements: { achievements: [{ id: 'first', name: 'First loaf', description: 'Bake one.' }] },
         jobs: { jobs: [{ id: 'cafe', name: 'Weekend help', ranks: [{ id: 'help', name: 'Help', pay: {} }] }] },
-        cheats: { cheats: [{ id: 'coins', name: '+20 coins', effects: [] }] },
         unlocks: { unlocks: [{ id: 'supporter', name: 'Supporter edition', hash: 'ab' }] },
         generators: { templates: [{ id: 'regular', of: 'visitor', description: { pool: 'lines' } }] },
       },
@@ -931,7 +927,6 @@ describe('content migrations', () => {
       'jobs/jobs.cafe.ranks.help.name',
       // A notice's words keep their key.
       'jobs/jobs.cafe.notify.abc123.title',
-      'cheats/cheats.coins.name',
       'unlocks/unlocks.supporter.name',
     ])
     const data = out.data as { statuses: { statuses: Record<string, unknown>[] } }
@@ -958,17 +953,11 @@ describe('content migrations', () => {
         { of: 'vendor', id: 'stall', name: 'The stall', traits: { 'shop/vendor': { hours: ['morning'], goods: [] } } },
       ],
       data: {
-        cheats: {
-          cheats: [
-            { id: 'map', name: 'Map', once: true, effects: [] },
-            { id: 'rich', name: 'Rich', once: false, effects: [] },
-          ],
-        },
         devices: { apps: [{ id: 'notes', name: 'Notes', icon: 'notes', on: 'phone', sections: [{ prose: [{ prose: 'notes.top' }] }] }] },
       },
       words: { 'entity.vendor:counter.traits.shop/vendor.closed': 'Le rideau est baissé.' },
     }
-    const plugins = [places(), cast(), shop(), cheats(), feed(), devices()] as Plugin[]
+    const plugins = [places(), cast(), shop(), feed(), devices()] as Plugin[]
     const out = unwrap(upgradePack(v26, plugins)) as unknown as Record<string, unknown>
     expect(out).toMatchObject({
       schema: SCHEMA,
@@ -997,14 +986,12 @@ describe('content migrations', () => {
         },
       ],
       data: {
-        cheats: { cheats: [{ id: 'map', once: { per: 'game' } }, { id: 'rich' }] },
         devices: { apps: [{ id: 'notes', sections: [{ blocks: [{ prose: 'notes.top' }] }] }] },
       },
     })
     const counter = (out.entities as { traits: { 'shop/vendor': Record<string, unknown> } }[])[0].traits['shop/vendor']
     expect(counter).not.toHaveProperty('hours')
     expect(counter).not.toHaveProperty('closed')
-    expect((out.data as { cheats: { cheats: Record<string, unknown>[] } }).cheats.cheats[1]).not.toHaveProperty('once')
     // The closed line's translation is the blocked entries' reason now, named by its words as written.
     expect(Object.keys(out.words as Record<string, string>)[0]).toMatch(/^entity\.vendor:counter\.traits\.shop\/vendor\.blocked\.[0-9a-f]{6}\.reason$/)
   })

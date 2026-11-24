@@ -11,7 +11,6 @@ import { achievements } from '@ifloom/plugin-achievements'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
-import { cheats } from '@ifloom/plugin-cheats'
 import { debug } from '@ifloom/plugin-debug'
 import { statuses } from '@ifloom/plugin-statuses'
 import { generators } from '@ifloom/plugin-generators'
@@ -103,9 +102,7 @@ export function smallTown({ withDebug = false, unlocked = [] as Pack[], mods = [
         wardrobe(),
         // Using, dropping and giving away what you hold: the sandwich, the paper.
         inventory(),
-        // Cheats are for players; the debugger below is for the developer.
-        cheats(),
-        // Supporter codes: one opens a cheat and a scene.
+        // Cheats and supporter codes, for players: one code opens a cheat and a scene. The debugger below is for the developer.
         unlocks(),
         ...(withDebug ? [debug()] : []),
       ],

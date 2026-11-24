@@ -2,11 +2,11 @@
 title: "Render cheats, unlocks and debug"
 description: "Render a cheat menu, a box for supporter codes and a debug readout in a UI of your own, in plain JS, React or Vue."
 ---
-Render the tools that sit outside the story: the player's cheats from [cheats](/docs/reference/plugins/cheats), a box for codes from [unlocks](/docs/reference/plugins/unlocks), and a readout for yourself from [debug](/docs/reference/plugins/debug). Set up the runner first, as [Start your own UI](/docs/how-to/render/start) shows. In the React tabs, each plugin's UI comes from its `/react` subpath and goes in `mountGame`'s `plugins`, as [Show plugins in the React UI](/docs/how-to/react/show-plugin-uis) explains.
+Render the tools that sit outside the story: the player's cheats and a box for codes, both from [unlocks](/docs/reference/plugins/unlocks), and a readout for yourself from [debug](/docs/reference/plugins/debug). Set up the runner first, as [Start your own UI](/docs/how-to/render/start) shows. In the React tabs, each plugin's UI comes from its `/react` subpath and goes in `mountGame`'s `plugins`, as [Show plugins in the React UI](/docs/how-to/react/show-plugin-uis) explains.
 
 ## Render the cheats
 
-`view.plugins.cheats` holds the cheats the player can see as a [`CheatsView`](/docs/api/plugin-cheats#cheatsview), each a [`CheatView`](/docs/api/plugin-cheats#cheatview) with its group, how often this save has used it, and a ready `button`. The React UI's `cheatsUi` puts a [`CheatsButton`](/docs/api/plugin-cheats#cheatsbutton) in the side column that opens the [`CheatPanel`](/docs/api/plugin-cheats#cheatpanel).
+`view.plugins.unlocks.cheats` holds the cheats the player can see, each a [`CheatView`](/docs/api/plugin-unlocks#cheatview) with its group, how often this save has used it, and a ready `button`. The React UI's `unlocksUi` puts a [`CheatsButton`](/docs/api/plugin-unlocks#cheatsbutton) in the side column that opens the [`CheatPanel`](/docs/api/plugin-unlocks#cheatpanel).
 
 ::include[../../../../../snippets/plain/cheats.ts]{meta='tab="Plain JS" tab-group="framework"'}
 
@@ -14,7 +14,7 @@ Render the tools that sit outside the story: the player's cheats from [cheats](/
 
 ::include[../../../../../snippets/vue/Cheats.vue]{meta='tab="Vue" tab-group="framework"'}
 
-Group the cheats by `group`, in the order the game declares them. A cheat's `button` has the reason it's refused in `disabled`, such as a supporter cheat before its code is entered, so render it greyed out with the reason. `used` counts the times this save has used the cheat, and the view's `used` counts them all. A cheat runs in any scene and through any lock, so the menu can stay on screen. [`useCheats`](/docs/api/plugin-cheats#usecheats) gives the cheats' view to a React component of your own.
+Group the cheats by `group`, in the order the game declares them. A cheat's `button` has the reason it's refused in `disabled`, such as a supporter cheat before its code is entered, so render it greyed out with the reason. `used` counts the times this save has used the cheat, and the view's `cheated` counts them all. A cheat runs in any scene and through any lock, so the menu can stay on screen. [`useCheats`](/docs/api/plugin-unlocks#usecheats) gives the cheats to a React component of your own.
 
 ## Render a box for codes
 
@@ -48,6 +48,6 @@ The plugin's commands, such as `debug.stat('coins', 100)` and `debug.scene()`, i
 
 For more on what these sections render, see:
 
-- [Cheats](/docs/reference/plugins/cheats), [Unlocks](/docs/reference/plugins/unlocks) and [Debug](/docs/reference/plugins/debug).
+- [Unlocks and cheats](/docs/reference/plugins/unlocks) and [Debug](/docs/reference/plugins/debug).
 - [The runner](/docs/reference/runner), for the snapshot's `helpers`.
 - [Sell supporter content](/docs/how-to/sell-supporter-content) and [Debug a game](/docs/how-to/debug-a-game).

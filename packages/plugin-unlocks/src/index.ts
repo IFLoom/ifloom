@@ -1,24 +1,50 @@
 /**
- * The unlocks plugin, which checks codes the player enters to unlock things, such as the codes a game's supporters get.
+ * The unlocks plugin: codes the player enters to unlock things, such as the codes a game's supporters get, and cheats
+ * the player uses from a panel, such as "+20 coins" or "skip to chapter 3".
  *
- * An unlock can open a cheat or a scene through the `unlocks/has` condition. It can also carry packs of its own, which
+ * An unlock opens a cheat or a scene through the `unlocks/has` condition. It can also carry packs of its own, which
  * `ifloom build` encrypts with a key only the code can make, so the shipped game can't be read or patched open
- * without it.
+ * without it. The game ships no codes, only a slow hash of each. The player's profile remembers a code that works as a
+ * proof made from it, never the code, so it outlives saves. The save records the unlock through the `unlocks/record`
+ * command, so a replay plays the same.
  *
- * The game ships no codes, only a slow hash of each. The player's profile remembers a code that works as a proof made
- * from it, never the code, so it outlives saves. The save records the unlock through the `unlocks/record` command, so
- * a replay plays the same. The plugin requires no other plugin.
+ * A cheat runs its effects at once, in any scene and through any lock, costs nothing and ends no turn unless its
+ * effects say so. It's offered to everyone, or refused with a reason (or hidden) while one of its `blocked` conditions
+ * holds: an unlock, a finished game or a kv key the game sets. A game can have cheats and no codes. The save keeps a
+ * log of the cheats used and on which turn, so a replay shows them and content can ask `unlocks/cheated`.
+ *
+ * Unlike `@ifloom/plugin-debug`, which is for the developer and left out of a release build, this is part of the game
+ * the player gets. The plugin requires no other plugin.
  */
-import { stringOf, upgradePack, type CommandRef, type Condition, type Game, type Pack, type Profile, type Result, type Runner } from '@ifloom/engine'
+import {
+  holds,
+  reasonOf,
+  stringOf,
+  upgradePack,
+  type Blocked,
+  type CommandRef,
+  type Condition,
+  type EffectRef,
+  type Game,
+  type GameState,
+  type Once,
+  type Pack,
+  type Profile,
+  type RenderedChoice,
+  type Result,
+  type Runner,
+} from '@ifloom/engine'
 import {
   arg,
   defineCalls,
   defineData,
   definePlugin,
   list,
+  renderAction,
   type CommandsOf,
   type ConditionsOf,
   type DefinedPlugin,
+  type PluginContext,
   type PluginProblem,
 } from '@ifloom/engine/plugin'
 import { ITERATIONS, fromHex, hashOfProof, normaliseCode, proofOf, saltOf, seal, toHex, unseal } from './crypto.ts'
@@ -44,18 +70,28 @@ declare module '@ifloom/engine' {
 
 const ID = 'unlocks'
 
-/** The plugin's one list, `unlocks`, as content writes it in `data.unlocks.unlocks` (a plugin's `data` holds its lists by name), with the words a player reads in each, for a translation's `words` table. */
-const DATA = defineData(ID, { unlocks: list<UnlockDef>({ noun: 'unlock', words: { name: true, description: true } }) })
+/**
+ * The plugin's two lists, as content writes them in `data.unlocks` (a plugin's `data` holds its lists by name):
+ * `unlocks` and `cheats`, with the words a player reads in each, for a translation's `words` table.
+ */
+const DATA = defineData(ID, {
+  unlocks: list<UnlockDef>({ noun: 'unlock', words: { name: true, description: true } }),
+  cheats: list<CheatDef>({ noun: 'cheat', words: { name: true, description: true, blocked: [{ reason: true }], effects: 'effects' } }),
+})
 
 /** The plugin's calls, and what each takes. */
 const CALLS = defineCalls(ID, {
   conditions: {
     /** The unlock is recorded in this save. */
     has: { unlock: arg.entry(DATA.unlocks) },
+    /** This save has used the cheat, or any cheat when `cheat` is left out. */
+    cheated: { cheat: arg.entry(DATA.cheats).optional() },
   },
   commands: {
     /** Record the unlock in this save. */
     record: { id: arg.entry(DATA.unlocks) },
+    /** Use the cheat `id`. */
+    cheat: { id: arg.entry(DATA.cheats) },
   },
 })
 
@@ -78,10 +114,50 @@ export type UnlockDef = {
   iterations?: number
 }
 
-/** The unlocks a save keeps. The plugin reads the unlocks from content. */
+/**
+ * A cheat the game declares in `data.unlocks.cheats`. Using it runs its effects at once, in any scene and through any
+ * lock, and ends no turn unless its effects do.
+ */
+export type CheatDef = {
+  /** The cheat's id, unique among the game's cheats. */
+  id: string
+  /** The cheat's name, which its button shows, such as "+20 coins". */
+  name: string
+  /** The cheat's line in the cheats panel. */
+  description?: string
+  /** The cheat's effects, run in order. It must have at least one. */
+  effects: EffectRef[]
+  /**
+   * The cheat's refusals. The first entry whose `when` holds refuses the button with its reason, or leaves the cheat
+   * out of the view with `hide`.
+   *
+   * A supporter-only cheat is `{ when: { not: { 'unlocks/has': { unlock: 'supporter' } } }, reason: 'For supporters' }`.
+   */
+  blocked?: Blocked[]
+  /** The heading the cheat is listed under in the panel. Cheats with none come first. */
+  group?: string
+  /**
+   * The cheat's limit, once in a save (`{ per: 'game' }`) or once a turn (`{ per: 'turn' }`), as a choice's `once` is.
+   *
+   * `reason` is the refusal once it's used. The `unlocks/usedOnce` string, "Already used.", if left out.
+   */
+  once?: Once
+}
+
+/** A use of a cheat, one entry of `UnlocksState.cheated`. */
+export type CheatUse = {
+  /** The id of the cheat used. */
+  cheat: string
+  /** The turn the cheat was used on. */
+  turn: number
+}
+
+/** The unlocks and cheat uses a save keeps. The plugin reads the unlocks and cheats themselves from content. */
 export type UnlocksState = {
   /** The ids of the unlocks recorded in this save, in the order they were recorded. */
   unlocked: string[]
+  /** The save's uses of cheats, oldest first. */
+  cheated: CheatUse[]
 }
 
 /** The record the plugin keeps in the player's profile, under `unlocks`. It never holds a code. */
@@ -116,7 +192,25 @@ export type UnlockView = {
   unlocked: boolean
 }
 
-/** The unlocks as the player sees them, in `view.plugins.unlocks`. */
+/** A cheat as the player sees it, in `view.plugins.unlocks.cheats`. */
+export type CheatView = {
+  /** The cheat's id. */
+  id: string
+  /** The cheat's name. */
+  name: string
+  /** The cheat's description, or `''` when it has none. */
+  description: string
+  /** The heading the cheat goes under, or null when it has none. */
+  group: string | null
+  /** The cheat's `once` limit, `'game'` or `'turn'`, or null when it can be used any number of times. */
+  once: 'game' | 'turn' | null
+  /** The number of times this save has used the cheat. */
+  used: number
+  /** The cheat's button. It's refused with its reason while a `blocked` entry holds, or once a `once` cheat is used. */
+  button: RenderedChoice
+}
+
+/** The unlocks and cheats as the player sees them, in `view.plugins.unlocks`. */
 export type UnlocksView = {
   /** The game's unlocks, in the order the game declares them. */
   unlocks: UnlockView[]
@@ -124,6 +218,10 @@ export type UnlocksView = {
   unlocked: number
   /** The number of unlocks the game declares. */
   total: number
+  /** The cheats the player can see, in the order the game declares them. A cheat refused by an entry with `hide` is left out. */
+  cheats: CheatView[]
+  /** The number of cheat uses in this save, counting every cheat. */
+  cheated: number
 }
 
 /** The unlock a code opened, as `enterCode` returns it. */
@@ -157,6 +255,56 @@ export type UnlockStatus = {
 /** Returns the game's unlocks, from `data.unlocks.unlocks` in its content and packs. */
 export function unlocksOf(game: Game): UnlockDef[] {
   return DATA.unlocks.all(game)
+}
+
+/** Returns the game's cheats, `data.unlocks.cheats` from its content and packs, in declared order. */
+export function cheatsOf(game: Game): CheatDef[] {
+  return DATA.cheats.all(game)
+}
+
+/** Returns the game's cheat with the id `id`, or undefined when there is none. */
+export function cheatOf(game: Game, id: string): CheatDef | undefined {
+  return DATA.cheats.get(game, id)
+}
+
+function timesUsed(slice: UnlocksState, cheat?: string): number {
+  return cheat === undefined ? slice.cheated.length : slice.cheated.filter((use) => use.cheat === cheat).length
+}
+
+/** Has a cheat with `once` been used as often as it can: ever, or this turn? */
+function spent(state: GameState, slice: UnlocksState, cheat: CheatDef): boolean {
+  return slice.cheated.some((use) => use.cheat === cheat.id && (cheat.once?.per !== 'turn' || use.turn === state.turn))
+}
+
+/** The first `blocked` entry of a cheat that holds now, or undefined. */
+function blockedBy(cheat: CheatDef, state: GameState, game: Game): Blocked | undefined {
+  return (cheat.blocked ?? []).find((entry) => holds(state, game, entry.when))
+}
+
+/** Why the player can't use the cheat now, or undefined. */
+function cantCheat(state: GameState, { id }: { id: string }, context: PluginContext<UnlocksState>): string | undefined {
+  const { game, slice } = context
+  const cheat = cheatOf(game, id)
+  if (!cheat) return stringOf(game, 'unlocks/noCheat')
+  const blocked = blockedBy(cheat, state, game)
+  if (blocked) return reasonOf(game, blocked.reason)
+  if (cheat.once && spent(state, slice, cheat)) return reasonOf(game, cheat.once.reason ?? { string: 'unlocks/usedOnce' })
+  return undefined
+}
+
+/** The cheats the player can see, each with its button. */
+function cheatViews(state: GameState, { game, slice }: PluginContext<UnlocksState>): CheatView[] {
+  return cheatsOf(game)
+    .filter((cheat) => !blockedBy(cheat, state, game)?.hide)
+    .map((cheat) => ({
+      id: cheat.id,
+      name: cheat.name,
+      description: cheat.description ?? '',
+      group: cheat.group ?? null,
+      once: cheat.once?.per ?? null,
+      used: timesUsed(slice, cheat.id),
+      button: renderAction(state, game, { id: `cheat.${cheat.id}`, label: cheat.name, command: cheatCommand(cheat.id) }),
+    }))
 }
 
 /** Returns the name of the environment variable `ifloom build` reads an unlock's code from, such as `IFLOOM_UNLOCK_SUPPORTER` for `supporter`. */
@@ -403,18 +551,20 @@ export function enterCode(runner: Runner, code: string): Promise<Result<Entered>
 }
 
 /**
- * Returns the unlocks plugin for the game's `plugins`. The game declares its unlocks in `data.unlocks.unlocks`, and
- * `startUnlocks` starts code entry.
+ * Returns the unlocks plugin for the game's `plugins`. The game declares its unlocks in `data.unlocks.unlocks` and its
+ * cheats in `data.unlocks.cheats`, and `startUnlocks` starts code entry.
  */
 function unlocksPlugin(): DefinedPlugin<UnlocksState, UnlocksView> {
   return definePlugin<UnlocksState, UnlocksView, typeof CALLS>({
     id: ID,
     calls: CALLS,
     data: DATA,
-    version: 1,
+    version: 2,
+    // 1 → 2: the plugin keeps the log of cheat uses too.
+    migrations: { 1: (old) => ({ ...(old as Omit<UnlocksState, 'cheated'>), cheated: [] }) },
     contentVersion: CONTENT_VERSION,
     contentMigrations,
-    start: () => ({ unlocked: [] }),
+    start: () => ({ unlocked: [], cheated: [] }),
     strings: {
       wrong: 'That code doesn’t unlock anything.',
       empty: 'Type a code first.',
@@ -423,10 +573,18 @@ function unlocksPlugin(): DefinedPlugin<UnlocksState, UnlocksView> {
       unknown: 'There’s no such unlock.',
       already: 'That’s unlocked already.',
       notStarted: 'Codes can’t be entered here.',
+      noCheat: 'There’s no such cheat.',
+      usedOnce: 'Already used.',
     },
     conditions: {
       /** `{ 'unlocks/has': { unlock } }`: the unlock is recorded in this save. */
       has: (_state, { unlock }, { slice }) => slice.unlocked.includes(unlock),
+      /** `{ 'unlocks/cheated': { cheat? } }`: this save has used the cheat, or any cheat when `cheat` is left out. */
+      cheated: (_state, { cheat }, { slice }) => timesUsed(slice, cheat) > 0,
+    },
+    values: {
+      /** `{{unlocks/cheated}}`: how many times this save has used a cheat; with `cheat`, that one. */
+      cheated: (_state, args, { slice }) => timesUsed(slice, typeof args.cheat === 'string' ? args.cheat : undefined),
     },
     commands: {
       /**
@@ -440,17 +598,46 @@ function unlocksPlugin(): DefinedPlugin<UnlocksState, UnlocksView> {
           if (!DATA.unlocks.get(game, id)) return stringOf(game, 'unlocks/unknown')
           return slice.unlocked.includes(id) ? stringOf(game, 'unlocks/already') : undefined
         },
-        run: (_state, { id }, { slice, set }) => set({ unlocked: [...slice.unlocked, id] }),
+        run: (_state, { id }, { slice, set }) => set({ ...slice, unlocked: [...slice.unlocked, id] }),
+      },
+      /**
+       * `{ 'unlocks/cheat': { id } }`: use the cheat `id`. Works in any scene and through any lock, costs nothing, and
+       * ends no turn unless its effects do.
+       */
+      cheat: {
+        ignoresLocks: true,
+        whyNot: cantCheat,
+        run: (state, { id }, context) => {
+          const cheat = cheatOf(context.game, id)!
+          const next = context.apply(cheat.effects ?? [], state)
+          const slice = context.get(next)
+          return context.set({ ...slice, cheated: [...slice.cheated, { cheat: cheat.id, turn: state.turn }] }, next)
+        },
       },
     },
-    view: (_state, { slice, game }): UnlocksView => {
+    view: (state, context): UnlocksView => {
+      const { slice, game } = context
       const list = unlocksOf(game).map((def) => ({
         id: def.id,
         name: def.name,
         description: def.description ?? '',
         unlocked: slice.unlocked.includes(def.id),
       }))
-      return { unlocks: list, unlocked: list.filter((entry) => entry.unlocked).length, total: list.length }
+      return {
+        unlocks: list,
+        unlocked: list.filter((entry) => entry.unlocked).length,
+        total: list.length,
+        cheats: cheatViews(state, context),
+        cheated: slice.cheated.length,
+      }
+    },
+    references: {
+      content: (game) =>
+        DATA.cheats.content(game, (cheat) => [
+          { effects: cheat.effects },
+          { reason: cheat.once?.reason },
+          ...(cheat.blocked ?? []).map((entry) => ({ within: 'blocked', refs: [{ when: entry.when }, { reason: entry.reason }] })),
+        ]),
     },
     check: (game) => {
       const problems: PluginProblem[] = []
@@ -463,6 +650,16 @@ function unlocksPlugin(): DefinedPlugin<UnlocksState, UnlocksView> {
         if (typeof def.hash !== 'string' || !/^[0-9a-f]{64}$/i.test(def.hash)) problem('its hash isn’t one ifloom unlock-hash printed (64 hex digits)')
         if (def.iterations !== undefined && !(Number.isInteger(def.iterations) && def.iterations > 0)) problem('iterations must be a whole number above 0')
       }
+      const cheats = new Set<string>()
+      for (const cheat of cheatsOf(game)) {
+        const problem = (what: string) => problems.push(DATA.cheats.problem(cheat.id, what))
+        if (cheats.has(cheat.id)) problem('two cheats share this id')
+        cheats.add(cheat.id)
+        if (typeof cheat.name !== 'string' || !cheat.name.trim()) problem('has no name')
+        if (!Array.isArray(cheat.effects) || !cheat.effects.length) problem('has no effects')
+        for (const entry of cheat.blocked ?? [])
+          if (typeof entry.reason === 'string' ? !entry.reason.trim() : typeof entry.reason?.string !== 'string') problem('a blocked entry has no reason')
+      }
       return problems
     },
   })
@@ -472,14 +669,22 @@ function unlocksPlugin(): DefinedPlugin<UnlocksState, UnlocksView> {
 const hasUnlock = (unlock: string): Condition => CALLS.conditions.has({ unlock })
 /** Returns the `unlocks/record` command, which records the unlock in this save. `startUnlocks` sends it, so a game seldom needs it. */
 const recordUnlock = (unlock: string): CommandRef => CALLS.commands.record({ id: unlock })
+/** Returns the `unlocks/cheat` command, which uses the cheat. */
+const cheatCommand = (cheat: string): CommandRef => CALLS.commands.cheat({ id: cheat })
+/** Returns the `unlocks/cheated` condition, which holds once this save has used the cheat, or any cheat when none is named. */
+const cheated = (cheat?: string): Condition => CALLS.conditions.cheated(cheat === undefined ? undefined : { cheat })
 
 /**
  * The unlocks plugin's factory, with its helpers as properties. `unlocks()` returns the plugin for the game's
- * `plugins`, and content calls helpers such as `unlocks.has('supporter')`.
+ * `plugins`, and content calls helpers such as `unlocks.has('supporter')` and `unlocks.cheat('rich')`.
  */
 export const unlocks = Object.assign(unlocksPlugin, {
   /** Returns the `unlocks/has` condition, which holds once this save records the unlock. */
   has: hasUnlock,
   /** Returns the `unlocks/record` command, which records the unlock in this save. `startUnlocks` sends it. */
   record: recordUnlock,
+  /** Returns the `unlocks/cheat` command, which runs the cheat's effects through any lock and logs the use. */
+  cheat: cheatCommand,
+  /** Returns the `unlocks/cheated` condition, which holds once this save has used the cheat, or any cheat when none is named. */
+  cheated,
 })

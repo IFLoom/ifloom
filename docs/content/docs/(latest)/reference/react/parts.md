@@ -386,7 +386,7 @@ From [`@ifloom/plugin-achievements/react`](/docs/reference/plugins/achievements#
 
 ### Cheats
 
-From [`@ifloom/plugin-cheats/react`](/docs/reference/plugins/cheats#react-ui).
+From [`@ifloom/plugin-unlocks/react`](/docs/reference/plugins/unlocks#react-ui).
 
 | Key | Meaning |
 |---|---|

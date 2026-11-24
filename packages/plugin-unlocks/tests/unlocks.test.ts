@@ -121,6 +121,8 @@ describe('the plugin', () => {
       unlocks: [{ id: 'supporter', name: 'Supporter edition', description: '', unlocked: true }],
       unlocked: 1,
       total: 1,
+      cheats: [],
+      cheated: 0,
     })
     expect(apply(recorded.state, g, unlocks.record('supporter')).reason).toBe('That’s unlocked already.')
     expect(apply(fresh, g, unlocks.record('patron')).reason).toBe('There’s no such unlock.')

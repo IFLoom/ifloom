@@ -1,15 +1,22 @@
 ---
-title: "Unlocks"
-description: "The unlocks plugin checks the codes a player enters and opens the cheats, scenes and encrypted packs each code unlocks."
+title: "Unlocks and cheats"
+description: "The unlocks plugin checks the codes a player enters, opens the scenes and encrypted packs each code unlocks, and gives the player cheats."
 ---
-`@ifloom/plugin-unlocks` checks codes the player enters, such as the ones a game's supporters get, and records the unlock each code opens. An unlock opens a cheat or a scene through the `unlocks/has` condition, and it can carry packs of its own, which `ifloom build` encrypts so that only the code opens them. The game holds a slow hash of each code and never the code, and the player's [profile](/docs/reference/profile) remembers a code that worked, so it outlives saves. The plugin needs no other plugin, and the [cheats](/docs/reference/plugins/cheats) plugin cooperates with it. [Add a plugin](/docs/how-to/add-a-plugin) installs it, [Sell supporter content](/docs/how-to/sell-supporter-content) sets it up for a release, and [What an offline game can protect](/docs/explanation/design#what-an-offline-game-can-protect) explains what each kind of gate protects.
+`@ifloom/plugin-unlocks` does two things for the player, which a game uses together or apart.
 
-In the showcase: the `supporter` unlock in `examples/showcase/src/world/cheats.ts`, with its locked scene in `examples/showcase/src/unlocks/supporter.ts`.
+- **Codes.** It checks codes the player enters, such as the ones a game's supporters get, and records the unlock each code opens. An unlock opens a cheat or a scene through the `unlocks/has` condition, and it can carry packs of its own, which `ifloom build` encrypts so that only the code opens them. The game holds a slow hash of each code and never the code, and the player's [profile](/docs/reference/profile) remembers a code that worked, so it outlives saves.
+- **Cheats.** It gives the player cheats, such as "+20 coins", each a list of effects that runs when the player uses it, in any scene and through any [lock](/docs/reference/locks). A cheat is free for everyone, or refused or hidden while a condition holds, such as `unlocks/has`, and the save logs every use. Cheats ship in the release, where the [debug](/docs/reference/plugins/debug) plugin's commands are for you while you build the game and stay out of it. A game can have cheats and no codes.
+
+The plugin needs no other plugin. [Add a plugin](/docs/how-to/add-a-plugin) installs it, [Sell supporter content](/docs/how-to/sell-supporter-content) sets it up for a release, and [What an offline game can protect](/docs/explanation/design#what-an-offline-game-can-protect) explains what each kind of gate protects.
+
+In the showcase: `examples/showcase/src/world/cheats.ts`, with the `supporter` unlock and two cheats, `coins`, free for everyone, and `energy`, refused until the `supporter` unlock is recorded. The unlock's locked scene is in `examples/showcase/src/unlocks/supporter.ts`.
 
 ```ts
 import {
   unlocks,
   unlocksOf,
+  cheatsOf,
+  cheatOf,
   unlockedPacks,
   startUnlocks,
   enterCode,
@@ -21,6 +28,9 @@ import {
   contentScript,
   lockedContent,
   ITERATIONS,
+  type CheatDef,
+  type CheatUse,
+  type CheatView,
   type Entered,
   type LockedContent,
   type UnlockDef,
@@ -34,7 +44,7 @@ import {
 
 ## unlocks
 
-The plugin's factory, which returns the plugin with the id `unlocks`. It takes no options, because the unlocks are content. A new game has nothing unlocked. Every field of its result is in [`unlocks`](/docs/api/plugin-unlocks#unlocks), and its helpers are listed under [Functions](#functions).
+The plugin's factory, which returns the plugin with the id `unlocks`. It takes no options, because the unlocks and cheats are content a mod can change. A new game has nothing unlocked and has used no cheats. Every field of its result is in [`unlocks`](/docs/api/plugin-unlocks#unlocks), and its helpers are listed under [Functions](#functions).
 
 The plugin checks codes with WebCrypto (`crypto.subtle`), which current browsers have, on a page opened from disk too, and Node 20 and later.
 
@@ -74,6 +84,43 @@ export const supporter: UnlockDef = {
 
 An unlock's locked content is the default export of `src/unlocks/<id>.ts`, a [pack](/docs/reference/content#pack) or a list of packs. A locked pack must be data, as a [mod](/docs/reference/mods) is, with no functions. [`ifloom build`](/docs/reference/cli#ifloom-build) encrypts it under the unlock's code, puts it in the page, and refuses an import of it from the game's code. The game module's `build` receives the opened packs as `unlocked` and passes them to [`loadGame`](/docs/reference/content#loadgame) as `packs`, over the game's content. The game's own content can't name anything in a locked pack, so a locked scene is reached from inside its pack or behind `unlocks/has`.
 
+### CheatDef
+
+A cheat the game declares in `data.unlocks.cheats`, merged by id, so a pack adds a cheat or replaces one. Every field is in [`CheatDef`](/docs/api/plugin-unlocks#cheatdef).
+
+| Field | Meaning |
+|---|---|
+| `effects` | The [effects](/docs/reference/effects) the cheat runs, in order, plugins' effects in their short form included. A cheat needs at least one. |
+| `blocked` | [`Blocked`](/docs/reference/actions#blocked) entries. The first whose `when` holds refuses the cheat with its reason, or leaves it out of the view with `hide`. |
+| `group` | The heading the cheat is listed under. Cheats with no group come first. |
+| `once` | A [`Once`](/docs/reference/actions#once) limit, `{ per: 'game' }` or `{ per: 'turn' }`. A spent cheat is refused with `once.reason`, or `Already used.` if left out. The cheat has no limit if left out. |
+
+The plugin asks a `blocked` condition as any `blocked` entry does, so a cheat waits for anything a condition says, such as a kv key, a finished storyline or an unlock. The showcase's unlock and two cheats:
+
+```ts
+import type { Content } from '@ifloom/engine'
+import { unlocks } from '@ifloom/plugin-unlocks'
+
+export const supporterEdition: Content = {
+  data: {
+    unlocks: {
+      unlocks: [{ id: 'supporter', name: 'Supporter edition', hash: '7b141ff9f5210e0e3064dd089920697c712fa1b31ff56c2e42737dcd71bbed5f' }],
+      cheats: [
+        { id: 'coins', name: '+20 coins', description: 'A little help with the rent.', effects: [{ stat: 'coins', by: 20 }] },
+        {
+          id: 'energy',
+          name: 'Full energy',
+          description: 'As if you had slept.',
+          group: 'Supporters',
+          blocked: [{ when: { not: unlocks.has('supporter') }, reason: 'For supporters.' }],
+          effects: [{ stat: 'energy', to: 100 }],
+        },
+      ],
+    },
+  },
+}
+```
+
 ## Conditions
 
 The condition is a [plugin call](/docs/reference/custom#plugincall), written by the helper beside it.
@@ -84,6 +131,15 @@ Holds once this save records the unlock. It reads the save and not the profile, 
 
 ```ts fragment
 { 'unlocks/has': { unlock: 'supporter' } } // unlocks.has('supporter')
+```
+
+### unlocks/cheated
+
+Holds once this save has used the cheat, or any cheat when `cheat` is left out. An achievement or an ending uses it to set apart a save that cheated.
+
+```ts fragment
+{ 'unlocks/cheated': { cheat: 'coins' } } // unlocks.cheated('coins')
+{ 'unlocks/cheated': {} } // unlocks.cheated()
 ```
 
 ## Commands
@@ -98,11 +154,40 @@ Records the unlock in this save. `startUnlocks` sends it once a code has worked,
 
 The command sets [`ignoresLocks`](/docs/reference/plugin-api#ignoreslocks), so it works during an intro that locks everything else, and the command log records it. It checks no code, so anyone who can send commands, from the browser's console say, can record an unlock. The plugin refuses it with `There’s no such unlock.` (`unlocks/unknown`) for an unlock the game doesn't have, and with `That’s unlocked already.` (`unlocks/already`) for one this save records.
 
+### unlocks/cheat
+
+Runs the cheat's effects on the state as it is, then adds the use to the save's log with the turn it was used on.
+
+```ts fragment
+{ 'unlocks/cheat': { id: 'coins' } } // unlocks.cheat('coins')
+```
+
+The command sets `ignoresLocks`, so it works in any scene, during an intro that locks everything else, and past any plugin's guard. It costs nothing and ends no turn, unless its effects do, such as a `turn` effect. Plugins' [`onCommand`](/docs/reference/plugin-api#oncommand) hooks run after it as after any command, so an achievement whose condition a cheat meets is earned. The command log records it, and [`replay`](/docs/reference/runner#replay) plays it back.
+
+The plugin refuses it, in this order:
+
+1. With `There’s no such cheat.` (`unlocks/noCheat`) for a cheat the game doesn't have.
+2. With the reason of the cheat's first `blocked` entry that holds.
+3. With `once.reason`, or `Already used.` (`unlocks/usedOnce`), for a `once` cheat already used in the game or this turn.
+
+## Values
+
+Prose prints this as a token.
+
+| Key | Meaning |
+|---|---|
+| `{{unlocks/cheated}}` | The number of times this save has used a cheat. |
+| `{{unlocks/cheated cheat=coins}}` | The number of times this save has used that cheat. |
+
 ## State
 
 ### UnlocksState
 
-The unlocks a save records, at `state.plugins.unlocks`. Every field is in [`UnlocksState`](/docs/api/plugin-unlocks#unlocksstate). `unlocked` lists their ids in the order they were recorded, and the plugin reads the unlocks themselves from content.
+The unlocks and cheat uses a save records, at `state.plugins.unlocks`. Every field is in [`UnlocksState`](/docs/api/plugin-unlocks#unlocksstate). `unlocked` lists the unlocks' ids in the order they were recorded, and `cheated` lists every use of a cheat, oldest first. The plugin reads the unlocks and cheats themselves from content.
+
+### CheatUse
+
+One use of a cheat, an entry of `cheated`, with the cheat's id and the [turn](/docs/reference/state#turn) it was used on. Every field is in [`CheatUse`](/docs/api/plugin-unlocks#cheatuse).
 
 ### UnlocksProfile
 
@@ -114,7 +199,7 @@ The record the plugin keeps in the player's profile, under `unlocks`. Every fiel
 
 ### UnlocksView
 
-The unlocks as the player sees them, in `view.plugins.unlocks`. Every field is in [`UnlocksView`](/docs/api/plugin-unlocks#unlocksview). `unlocks` lists every unlock in the order the game declares them, `unlocked` counts the ones this save records, and `total` counts them all.
+The unlocks and cheats as the player sees them, in `view.plugins.unlocks`. Every field is in [`UnlocksView`](/docs/api/plugin-unlocks#unlocksview). `unlocks` lists every unlock in the order the game declares them, `unlocked` counts the ones this save records, and `total` counts them all. `cheats` lists the cheats in the order the game declares them, leaving out one a `hide` entry refuses, and `cheated` counts every use of a cheat in this save.
 
 ### UnlockView
 
@@ -134,13 +219,21 @@ The unlock a code opened, as [`enterCode`](#entercode) returns it and `entered` 
 
 [Render a box for codes](/docs/how-to/render/player-tools#render-a-box-for-codes) renders the view and the snapshot's `helpers.unlocks` in Plain JS, React and Vue.
 
+### CheatView
+
+One cheat as the player sees it, an entry of `cheats`. Every field is in [`CheatView`](/docs/api/plugin-unlocks#cheatview).
+
+`description` is `''` and `group` is `null` for a cheat without one. `once` is the limit's `per`, or `null` for a cheat with no limit, and `used` counts this save's uses of it. `button` is a [`RenderedChoice`](/docs/reference/view#renderedchoice) labelled with the cheat's name that sends `unlocks/cheat`, with no price, and with the reason it's refused in `disabled`.
+
+[Render the cheats](/docs/how-to/render/player-tools#render-the-cheats) renders them in Plain JS, React and Vue.
+
 ## React UI
 
-The React UI is optional: the `@ifloom/plugin-unlocks/react` subpath renders a code box for a game that uses [`@ifloom/react`](/docs/reference/react), and a game rendered another way never loads it. [Show plugins in the React UI](/docs/how-to/react/show-plugin-uis) adds it to a game.
+The React UI is optional: the `@ifloom/plugin-unlocks/react` subpath renders a code box and the cheats for a game that uses [`@ifloom/react`](/docs/reference/react), and a game rendered another way never loads it. [Show plugins in the React UI](/docs/how-to/react/show-plugin-uis) adds it to a game.
 
 ### unlocksUi
 
-The plugin's [`PluginUi`](/docs/reference/react/kit#pluginui), listed in `mountGame`'s `plugins`, the same as `unlocksUiWith()`. It starts code entry on the runner when the game renders and stops it when the game goes. It puts the [`UnlocksPanel`](#unlockspanel) on the settings page, or behind an **Enter a code** button in the menu in a game without pages. Its type is in [`unlocksUi`](/docs/api/plugin-unlocks#unlocksui).
+The plugin's [`PluginUi`](/docs/reference/react/kit#pluginui), listed in `mountGame`'s `plugins`, the same as `unlocksUiWith()`. It starts code entry on the runner when the game renders and stops it when the game goes. It puts the [`UnlocksPanel`](#unlockspanel) on the settings page, or behind an **Enter a code** button in the menu in a game without pages, and the [`CheatsButton`](#cheatsbutton) in the sidebar, which opens the [`CheatPanel`](#cheatpanel). Each renders nothing while the game has no unlocks, or the player can see no cheat. Its type is in [`unlocksUi`](/docs/api/plugin-unlocks#unlocksui).
 
 ### unlocksUiWith
 
@@ -164,6 +257,9 @@ The words the unlocks UI uses, by key, which a game rewords as `ui.<key>` in its
 
 | Key | Meaning |
 |---|---|
+| `ui.cheatUsedOnce` | `Used once`, the note on a cheat used once. |
+| `ui.cheatUsedTimes` | `Used {n} times`, the note on a cheat used more than once. |
+| `ui.cheats` | `Cheats`, the label of the cheats button and the title of its dialog. |
 | `ui.checkingCode` | `Checking…`, the button's label while a code is checked. |
 | `ui.code` | `Code`, the code box's placeholder and label. |
 | `ui.enterCode` | `Enter a code`, the heading over the box and the menu button's label without pages. |
@@ -194,12 +290,42 @@ The value `useUnlocks` returns, an [`UnlocksView`](#unlocksview) with the code b
 
 `available` is `true` once code entry has started on the runner. `enter(code)` checks a code with `enterCode` and resolves to whether it worked, and `checking` is `true` while it runs. `entered` and `message` say what the last code opened or why it didn't work. `restart` is `onChange` while the last code needs it, and `problems` are the ones given to `unlocksUiWith`.
 
+### CheatPanel
+
+Renders the cheats from [`UnlocksView`](#unlocksview) under their groups' headings, the ones with no group first. Its props are in [`CheatPanel`](/docs/api/plugin-unlocks#cheatpanel).
+
+Each cheat is a [`ChoiceButton`](/docs/reference/react/components#choicebutton) from its `button`, disabled with its reason while it's refused, such as `For supporters.`. Under it come its description and, once used, a note saying how often. It renders nothing in a game without the plugin, or while every cheat is hidden.
+
+A game replaces it as `CheatPanel` in `components`. Its parts are `cheats`, `cheats-group` (with `data-cheats-group`), `cheats-group-title`, `cheat` (with `data-cheat`, and `data-used` once used), `cheat-text`, `cheat-used` and `choice`.
+
+### CheatsButton
+
+Renders a **Cheats** button that opens the [`CheatPanel`](#cheatpanel) in a dialog, without sending a command. Its props are in [`CheatsButton`](/docs/api/plugin-unlocks#cheatsbutton).
+
+It renders nothing in a game without the plugin, or while the player can see no cheat, so a game whose cheats all wait hidden for an unlock shows no button until then. A game replaces it as `CheatsButton` in `components`. Its parts are `cheats-button`, and for its dialog `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close`.
+
+### useCheats
+
+Returns the cheats from the running game, grouped, with a `use` that sends `unlocks/cheat`, or `null` in a game without the plugin. It re-renders when the view changes. Its signature is in [`useCheats`](/docs/api/plugin-unlocks#usecheats).
+
+::include[../../../../../snippets/react/use-cheats.tsx]
+
+### CheatsControls
+
+The value `useCheats` returns: the view's `cheats` and `cheated`, with `groups` and `use(cheat)`. Every field is in [`CheatsControls`](/docs/api/plugin-unlocks#cheatscontrols). `use` returns the runner's [`Result`](/docs/reference/common#result), so a refusal comes back with its reason.
+
+### CheatGroup
+
+One group of `groups`, a heading and its cheats in the order the game declares them. Every field is in [`CheatGroup`](/docs/api/plugin-unlocks#cheatgroup). The cheats with no group form the first, with the name `null`, and each other group follows in the order it first appears.
+
 ## Functions
 
 The helpers are properties of `unlocks` and write its calls, typed:
 
 - **`unlocks.has(unlock)`** returns the [`unlocks/has`](#unlockshas) condition.
 - **`unlocks.record(unlock)`** returns the [`unlocks/record`](#unlocksrecord) command as a [`CommandRef`](/docs/reference/custom#commandref).
+- **`unlocks.cheat(cheat)`** returns the [`unlocks/cheat`](#unlockscheat) command.
+- **`unlocks.cheated(cheat?)`** returns the [`unlocks/cheated`](#unlockscheated) condition.
 
 A choice that only a supporter's save offers:
 
@@ -208,6 +334,19 @@ import type { Choice } from '@ifloom/engine'
 import { unlocks } from '@ifloom/plugin-unlocks'
 
 export const backRoom: Choice = { id: 'back-room', label: 'Go through to the back', when: unlocks.has('supporter'), effects: [{ scene: 'cafe.back-room' }] }
+```
+
+An achievement that only a save without cheats earns:
+
+```ts
+import { unlocks } from '@ifloom/plugin-unlocks'
+
+export const honest = {
+  id: 'honest',
+  name: 'By the book',
+  description: 'Finish the game without a cheat.',
+  when: { all: [{ seen: 'ending' }, { not: unlocks.cheated() }] },
+}
 ```
 
 ### unlockedPacks
@@ -237,6 +376,14 @@ On a match it stores the code's proof in the profile and records the unlock in t
 ### unlocksOf
 
 Returns the game's unlocks, `data.unlocks.unlocks` from its content and packs. Its signature is in [`unlocksOf`](/docs/api/plugin-unlocks#unlocksof).
+
+### cheatsOf
+
+Returns the game's cheats, `data.unlocks.cheats` from its content and packs, in the order they're declared. Its signature is in [`cheatsOf`](/docs/api/plugin-unlocks#cheatsof).
+
+### cheatOf
+
+Returns the game's cheat with this id, or `undefined` for one it doesn't have. Its signature is in [`cheatOf`](/docs/api/plugin-unlocks#cheatof).
 
 ### envName
 
@@ -288,7 +435,7 @@ The packs are JSON, encrypted with AES-256-GCM under the unlock's key with a fre
 
 ## Checks
 
-When the game loads, the plugin checks each unlock. An unlock's problems are pinned on the content or pack it came from, with `where` as `unlocks <id>`.
+When the game loads, the plugin checks each unlock and each cheat. An unlock's problems are pinned on the content or pack it came from, with `where` as `unlocks <id>`.
 
 | Problem | Cause |
 |---|---|
@@ -297,7 +444,17 @@ When the game loads, the plugin checks each unlock. An unlock's problems are pin
 | `iterations must be a whole number above 0` | `iterations` is set to something else. |
 | `two unlocks share this id` | Two unlocks have one id, in a game built by hand. |
 
-An `unlocks/has` condition or an `unlocks/record` command that names an unlock the game doesn't have gives `unknown unlock "early"` where it's written. [`ifloom check`](/docs/reference/cli#ifloom-check) also checks the code in the environment against each hash, and the game with its locked content.
+A cheat's problems are pinned the same way, with `where` as `cheats <id>`.
+
+| Problem | Cause |
+|---|---|
+| `has no name` | The cheat's `name` is missing or empty. |
+| `has no effects` | The cheat's `effects` is missing or empty. |
+| `a blocked entry has no reason` | A `blocked` entry has no reason, or an empty one. |
+| `two cheats share this id` | Two cheats have one id, in a game built by hand. A loaded game merges cheats by id, so it never has this. |
+| `unknown stat "luck"` | The cheat's effects, its `blocked` conditions or its `once.reason` name something the game doesn't have. |
+
+An `unlocks/has` condition or an `unlocks/record` command that names an unlock the game doesn't have gives `unknown unlock "early"` where it's written, and an `unlocks/cheat` command or an `unlocks/cheated` condition that names a cheat it doesn't have gives `unknown cheat "gold"`. [`ifloom check`](/docs/reference/cli#ifloom-check) also checks the code in the environment against each hash, and the game with its locked content.
 
 ## Strings
 
@@ -312,6 +469,8 @@ A game, a pack or a translation rewords these by their full key in its [strings]
 | `unlocks/unknown` | `There’s no such unlock.` |
 | `unlocks/already` | `That’s unlocked already.` |
 | `unlocks/notStarted` | `Codes can’t be entered here.` |
+| `unlocks/noCheat` | `There’s no such cheat.` |
+| `unlocks/usedOnce` | `Already used.`, the refusal of a spent `once` cheat that gives no reason of its own. |
 
 ## Caveats
 
@@ -319,3 +478,6 @@ A game, a pack or a translation rewords these by their full key in its [strings]
 - A save made with locked content loads in a game without it unflagged, since [`LoadedSave`](/docs/reference/saves#loadedsave)'s `missingPacks` lists only mods.
 - The build encrypts only the packs, so a picture, a sound or a video in `public/` ships as it is, even when only locked content names it.
 - Codes are checked on the player's machine, so nothing stops a code being shared, and nothing takes an unlock back.
+- A cheat's effects still follow the game's rules, so a stat stays in its range and `rules.onStat` sees each change to the player's stats.
+- A cheat that opens a scene opens it over whatever is on screen.
+- A cheat refused until a condition holds isn't protected, since anyone who reads the game's code finds it. [Locked content](#unlockdef) keeps content from players without a code.

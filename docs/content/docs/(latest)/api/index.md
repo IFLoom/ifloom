@@ -19,7 +19,6 @@ These pages list every export of every entry point, with its signature and, for 
 | [@ifloom/plugin-achievements](/docs/api/plugin-achievements) | `@ifloom/plugin-achievements`, `@ifloom/plugin-achievements/react` | 14 |
 | [@ifloom/plugin-calendar](/docs/api/plugin-calendar) | `@ifloom/plugin-calendar`, `@ifloom/plugin-calendar/react` | 8 |
 | [@ifloom/plugin-cast](/docs/api/plugin-cast) | `@ifloom/plugin-cast`, `@ifloom/plugin-cast/react` | 16 |
-| [@ifloom/plugin-cheats](/docs/api/plugin-cheats) | `@ifloom/plugin-cheats`, `@ifloom/plugin-cheats/react` | 15 |
 | [@ifloom/plugin-debug](/docs/api/plugin-debug) | `@ifloom/plugin-debug`, `@ifloom/plugin-debug/react` | 7 |
 | [@ifloom/plugin-devices](/docs/api/plugin-devices) | `@ifloom/plugin-devices`, `@ifloom/plugin-devices/react` | 23 |
 | [@ifloom/plugin-feed](/docs/api/plugin-feed) | `@ifloom/plugin-feed`, `@ifloom/plugin-feed/react` | 16 |
@@ -31,5 +30,5 @@ These pages list every export of every entry point, with its signature and, for 
 | [@ifloom/plugin-quests](/docs/api/plugin-quests) | `@ifloom/plugin-quests`, `@ifloom/plugin-quests/react` | 15 |
 | [@ifloom/plugin-shop](/docs/api/plugin-shop) | `@ifloom/plugin-shop`, `@ifloom/plugin-shop/react` | 23 |
 | [@ifloom/plugin-statuses](/docs/api/plugin-statuses) | `@ifloom/plugin-statuses`, `@ifloom/plugin-statuses/react` | 14 |
-| [@ifloom/plugin-unlocks](/docs/api/plugin-unlocks) | `@ifloom/plugin-unlocks`, `@ifloom/plugin-unlocks/react` | 28 |
+| [@ifloom/plugin-unlocks](/docs/api/plugin-unlocks) | `@ifloom/plugin-unlocks`, `@ifloom/plugin-unlocks/react` | 38 |
 | [@ifloom/plugin-wardrobe](/docs/api/plugin-wardrobe) | `@ifloom/plugin-wardrobe`, `@ifloom/plugin-wardrobe/react` | 15 |

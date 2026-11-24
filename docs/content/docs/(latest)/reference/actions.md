@@ -90,7 +90,7 @@ A reason written in place, such as `'Too tired.'`, is the game's own words. `{ s
 
 How often something can be done, once in the whole game or once a turn. Every field is in [`Once`](/docs/api/engine#once).
 
-A choice, an action and a [cheat](/docs/reference/plugins/cheats) take one as `once`, and a [trigger](/docs/reference/triggers#triggerdef) takes its `per`. `per: 'game'` is spent once it has been done, and `per: 'turn'` is spent until the turn ends. A spent one is refused with `reason`, which shows on its button, or with the engine's `done` string, `Already done.`, when `reason` is left out.
+A choice, an action and a [cheat](/docs/reference/plugins/unlocks#cheatdef) take one as `once`, and a [trigger](/docs/reference/triggers#triggerdef) takes its `per`. `per: 'game'` is spent once it has been done, and `per: 'turn'` is spent until the turn ends. A spent one is refused with `reason`, which shows on its button, or with the engine's `done` string, `Already done.`, when `reason` is left out.
 
 ```ts fragment
 once: { per: 'turn', reason: 'Once a day is plenty.' }

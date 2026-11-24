@@ -165,7 +165,7 @@ A thing's line is its `description` and a heading its `title`. An entity's `desc
 
 A `variants` block's `art`, the variants a member's picture is drawn from, becomes `image`, and a weighted variants member `{ text: key, weight }` becomes `{ prose: key, weight }`. A trigger's `once: 'game'` or `'turn'` becomes `{ per: 'game' }` or `{ per: 'turn' }`, the one [`Once`](/docs/reference/actions#once) shape. The plugins' own steps change these:
 
-- A [cheat](/docs/reference/plugins/cheats#cheatdef)'s `once: true` becomes `{ per: 'game' }`.
+- A cheat's `once: true` becomes `{ per: 'game' }`, in the cheats plugin of then. Cheats are now the [unlocks](/docs/reference/plugins/unlocks#cheatdef) plugin's, at `data.unlocks.cheats`, and a pack written for the cheats plugin isn't carried over.
 - A [vendor](/docs/reference/plugins/shop#vendor)'s `hours`, `open` and `closed` become its `blocked` entries: `{ when: { 'shop/outside': { period: hours } }, reason }` and `{ when: { not: open }, reason }`. The reason is `closed`, else `{ string: 'shop/closed' }`.
 - A [device](/docs/reference/plugins/devices#section)'s app section of words, `{ prose: [...] }`, becomes `{ blocks: [...] }`.
 

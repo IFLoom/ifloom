@@ -2,7 +2,7 @@
 title: "Sell supporter content"
 description: "Give the people who fund your game a code that opens cheats and extra scenes, and ship new codes with each release."
 ---
-Use this to give supporters, such as members on a funding site, a code that opens something extra: cheats, an extra scene, a whole route. The [unlocks plugin](/docs/reference/plugins/unlocks) checks the code and the [cheats plugin](/docs/reference/plugins/cheats) runs the cheats. A supporter enters the code once, and keeps what it opens across saves and new games.
+Use this to give supporters, such as members on a funding site, a code that opens something extra: cheats, an extra scene, a whole route. The [unlocks plugin](/docs/reference/plugins/unlocks) checks the code and runs the cheats. A supporter enters the code once, and keeps what it opens across saves and new games.
 
 ## Decide what to protect
 
@@ -16,18 +16,17 @@ No offline game stops a supporter posting the code, or copying out what it unloc
 
 ## Add the plugins
 
-Add `@ifloom/plugin-unlocks` and `@ifloom/plugin-cheats` as [Add a plugin](/docs/how-to/add-a-plugin) shows, and list both in the game. Pass `unlocked` to `loadGame` as its packs, since that's where the locked content comes in:
+Add `@ifloom/plugin-unlocks` as [Add a plugin](/docs/how-to/add-a-plugin) shows, and list it in the game. It has the codes and the cheats both. Pass `unlocked` to `loadGame` as its packs, since that's where the locked content comes in:
 
 ```ts
 // src/game.ts
 import { loadGame } from '@ifloom/engine'
 import { defineGame } from '@ifloom/cli/game'
-import { cheats } from '@ifloom/plugin-cheats'
 import { unlocks } from '@ifloom/plugin-unlocks'
 import { town } from './world/town.ts'
 
 export default defineGame({
-  build: ({ unlocked }) => loadGame([town], { id: 'small-town', title: 'Small Town', plugins: [cheats(), unlocks()] }, { packs: unlocked }),
+  build: ({ unlocked }) => loadGame([town], { id: 'small-town', title: 'Small Town', plugins: [unlocks()] }, { packs: unlocked }),
 })
 ```
 
@@ -71,7 +70,7 @@ Players type a code in any case, with or without spaces and hyphens, so `7f3a 91
 
 ## Gate the cheats
 
-Put a supporter cheat in `data.cheats.cheats` with a `blocked` entry that holds while the player lacks the unlock. [`unlocks.has`](/docs/reference/plugins/unlocks#unlockshas) writes the condition:
+Put a supporter cheat in `data.unlocks.cheats` with a `blocked` entry that holds while the player lacks the unlock. [`unlocks.has`](/docs/reference/plugins/unlocks#unlockshas) writes the condition:
 
 ```ts
 import type { Content } from '@ifloom/engine'
@@ -79,7 +78,7 @@ import { unlocks } from '@ifloom/plugin-unlocks'
 
 export const cheats: Content = {
   data: {
-    cheats: {
+    unlocks: {
       cheats: [
         { id: 'coins', name: '+20 coins', effects: [{ stat: 'coins', by: 20 }] },
         {
@@ -183,5 +182,5 @@ Players who entered last release's code see the unlock as locked again until the
 The showcase does all of this with a code that's public on purpose, `SMALL-TOWN-SUPPORTER`, in [`examples/showcase/.env`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/.env), with its cheats in `src/world/cheats.ts` and its locked scene in `src/unlocks/supporter.ts`. For more, see:
 
 - [Unlocks](/docs/reference/plugins/unlocks), with [`UnlockDef`](/docs/reference/plugins/unlocks#unlockdef), [`unlockedPacks`](/docs/reference/plugins/unlocks#unlockedpacks), [`startUnlocks`](/docs/reference/plugins/unlocks#startunlocks) and [`enterCode`](/docs/reference/plugins/unlocks#entercode).
-- [Cheats](/docs/reference/plugins/cheats), with [`CheatDef`](/docs/reference/plugins/cheats#cheatdef).
+- [Cheats](/docs/reference/plugins/unlocks#cheatdef), the same plugin's, with [`CheatDef`](/docs/reference/plugins/unlocks#cheatdef).
 - [Locked content](/docs/reference/cli#locked-content) and [`ifloom unlock-hash`](/docs/reference/cli#ifloom-unlock-hash).

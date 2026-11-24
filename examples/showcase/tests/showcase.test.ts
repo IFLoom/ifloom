@@ -42,8 +42,7 @@ import { wardrobe } from '@ifloom/plugin-wardrobe'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places, type PlacesState, type PlacesView } from '@ifloom/plugin-places'
 import { cast, type CastView } from '@ifloom/plugin-cast'
-import { cheats, type CheatsView } from '@ifloom/plugin-cheats'
-import { unlocks, enterCode, lockContent, startUnlocks, unlocksOf, unlockedPacks } from '@ifloom/plugin-unlocks'
+import { unlocks, enterCode, lockContent, startUnlocks, unlocksOf, unlockedPacks, type UnlocksView } from '@ifloom/plugin-unlocks'
 import { checkUiHints } from '@ifloom/react'
 import { readFileSync } from 'node:fs'
 import { clock, openCamera, smallTown } from '../src/game.ts'
@@ -308,18 +307,18 @@ describe('Small Town', () => {
     let state = startingState(game)
     const coins = state.stats.coins
     // Moving day locks everything but the scene; a cheat still works, and no time passes.
-    state = run(state, cheats.use('coins'))
+    state = run(state, unlocks.cheat('coins'))
     expect(state.stats.coins).toBe(coins + 20)
     expect(state.turn).toBe(0)
-    expect(holds(state, game, cheats.used('coins'))).toBe(true)
-    const shown = (s: GameState) => view(s, game).plugins.cheats as CheatsView
+    expect(holds(state, game, unlocks.cheated('coins'))).toBe(true)
+    const shown = (s: GameState) => view(s, game).plugins.unlocks as UnlocksView
     expect(shown(state).cheats.map((cheat) => [cheat.id, cheat.button.disabled ?? null])).toEqual([
       ['coins', null],
       ['energy', 'For supporters.'],
     ])
-    expect(apply(state, game, cheats.use('energy')).reason).toBe('For supporters.')
+    expect(apply(state, game, unlocks.cheat('energy')).reason).toBe('For supporters.')
     const supporter = run({ ...state, stats: { ...state.stats, energy: 10 } }, unlocks.record('supporter'))
-    expect(run(supporter, cheats.use('energy')).stats.energy).toBe(100)
+    expect(run(supporter, unlocks.cheat('energy')).stats.energy).toBe(100)
   })
 
   it('unlocks the supporter edition with the code in .env: the cheat at once, and the café scene once the game is built again', async () => {
@@ -334,7 +333,7 @@ describe('Small Town', () => {
     const entered = await enterCode(runner, code.toLowerCase())
     expect(entered).toEqual({ ok: true, value: { unlock: 'supporter', name: 'Supporter edition', already: false, restart: true } })
     expect(holds(runner.state, game, unlocks.has('supporter'))).toBe(true)
-    expect(runner.apply(cheats.use('energy')).ok).toBe(true)
+    expect(runner.apply(unlocks.cheat('energy')).ok).toBe(true)
     // Replayed, the unlock and the cheat play the same.
     const replayed = replay(game, runner.log())
     expect(replayed.ok && replayed.value).toEqual(runner.state)

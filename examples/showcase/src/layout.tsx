@@ -19,7 +19,7 @@ import {
 } from '@ifloom/react'
 import { AchievementsButton } from '@ifloom/plugin-achievements/react'
 import { PeopleHere, PeopleSection } from '@ifloom/plugin-cast/react'
-import { CheatsButton } from '@ifloom/plugin-cheats/react'
+import { CheatsButton } from '@ifloom/plugin-unlocks/react'
 import { DebugCard } from '@ifloom/plugin-debug/react'
 import { DeviceButtons } from '@ifloom/plugin-devices/react'
 import { InventoryCard } from '@ifloom/plugin-inventory/react'

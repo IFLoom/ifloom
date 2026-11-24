@@ -12,7 +12,6 @@
     "@ifloom/plugin-achievements": "^0.1.0",
     "@ifloom/plugin-calendar": "^0.1.0",
     "@ifloom/plugin-cast": "^0.1.0",
-    "@ifloom/plugin-cheats": "^0.1.0",
     "@ifloom/plugin-debug": "^0.1.0",
     "@ifloom/plugin-devices": "^0.1.0",
     "@ifloom/plugin-feed": "^0.1.0",

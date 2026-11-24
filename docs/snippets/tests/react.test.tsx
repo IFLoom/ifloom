@@ -8,7 +8,8 @@ import type { PluginUi } from '@ifloom/react/kit'
 import module from '../react/game.ts'
 import { RingingPhone } from '../react/timers.tsx'
 import { QuickSandwich } from '../react/use-shop.tsx'
-import { inTheCafe, phoneRinging } from './play.ts'
+import { SceneBackground } from '../react/background.tsx'
+import { atTheDoor, inTheCafe, phoneRinging } from './play.ts'
 
 afterEach(() => {
   cleanup()
@@ -56,5 +57,13 @@ describe('the React snippets', () => {
     expect(screen.queryByText('☎')).toBeTruthy()
     act(() => void runner.apply({ type: 'choose', id: 'answer' }))
     expect(screen.queryByText('☎')).toBeNull()
+  })
+
+  it('SceneBackground: the knock at the door has the hall behind its words', () => {
+    const runner = newRunner()
+    atTheDoor(runner)
+    const { container } = drawn(runner, <SceneBackground />)
+    expect(container.querySelector<HTMLElement>('.scene-background')?.style.backgroundImage).toBe('url("art/photo/ava.svg")')
+    expect(screen.getByText('Someone knocks, three times, not loud.')).toBeTruthy()
   })
 })

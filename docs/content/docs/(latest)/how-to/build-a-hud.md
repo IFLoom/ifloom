@@ -1,24 +1,12 @@
 ---
-title: "Building your own HUD"
-description: "Build your own HUD from the view: a stat bar, a strip of unread counts and an objective line from the tracked quest, in plain DOM, React, Vue or Svelte."
+title: "Build a HUD"
+description: "How-to for a heads-up display of your own in plain JS, React or Vue: a stat bar that turns red as it runs low, a strip of unread counts, an objective line from the tracked quest, and where to put them."
 ---
-Most games want their heads-up display to look like nothing else, so this page builds three pieces of one from the [view](/docs/reference/view):
+Use this when the React UI's stat list, notice strip and quest log are too plain for your game. Each piece of a HUD reads the [view](/docs/reference/view), which is the same whatever renders it, so each tab below reads the same fields. Set up the runner first, as [Start your own UI](/docs/how-to/render/start) shows. In React, each piece reads the view with [`useGame`](/docs/reference/react/components#usegame) and sits in your layout beside the React UI's parts. The examples use the showcase's stats and plugins.
 
-- an energy bar that turns red as it runs low
-- a strip of unread counts for notices and texts
-- an objective line from the quest the player is tracking
+## Add a stat bar
 
-The view is the same whatever draws it, so each piece reads the same fields in every framework. Each code block has a tab for plain DOM, React, Vue and Svelte:
-
-- **Plain JS** pieces are functions that return an element, called from the `draw` function in the [`vanilla` template](/docs/guide/frameworks)'s `src/main.ts`.
-- **React** pieces are components that read the view with [`useGame`](/docs/reference/react/components#usegame) from the [React UI](/docs/reference/react), whose stat list, [`NoticeStrip`](/docs/reference/react/components#noticestrip) and quest log are basic on purpose.
-- **Vue** and **Svelte** pieces are components that read the view from the [`vue` or `svelte` template](/docs/guide/frameworks)'s `src/runner.ts`.
-
-The examples use Small Town's stats and plugins, but the pattern is the same for any game.
-
-## A stat bar
-
-Every stat the game lists is in `view.stats` as a [`StatView`](/docs/reference/view#statview), with its `value`, its `min` and `max`, and its `text` as the game formats it. This bar takes the stat's key, so one piece draws a bar for any stat:
+Find the stat in `view.stats`, a list of [`StatView`](/docs/api/engine#statview)s with each one's `value`, `min`, `max` and `text`. This bar takes the stat's id, so one piece renders a bar for any stat:
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/hud.ts
@@ -100,39 +88,13 @@ const share = computed(() => (stat.value && stat.value.max > stat.value.min ? (s
 </template>
 ```
 
-```svelte tab="Svelte" tab-group="framework"
-<!-- src/StatBar.svelte -->
-<script lang="ts">
-  import { view } from './runner.ts'
+`max` is the stat's ceiling now, so a ceiling that grows during the game is already worked out. `role="meter"` and the values let a screen reader say how full it is.
 
-  // A bar for one of the game's stats, by its key: <StatBar stat="energy" />.
-  let { stat: key }: { stat: string } = $props()
-  const stat = $derived($view.stats.find((entry) => entry.key === key))
-  const share = $derived(stat && stat.max > stat.min ? (stat.value - stat.min) / (stat.max - stat.min) : 0)
-</script>
+If a plain bar is all you need in the React UI, give the stat the hint [`ui: { display: 'bar' }`](/docs/reference/react/hints#display) or `'pips'`, and the built-in [`StatList`](/docs/reference/react/components#statlist) renders it. `StatList` is plain on purpose, so write your own, as above, for a bar that changes colour. To reword a levelled stat's "Level 2" or its bar's label, set `ui.statLevel` or `ui.statProgress` in your content's [`strings`](/docs/reference/react/index#strings).
 
-{#if stat}
-  <div
-    role="meter"
-    aria-label={stat.label}
-    aria-valuemin={stat.min}
-    aria-valuemax={stat.max}
-    aria-valuenow={stat.value}
-    aria-valuetext={stat.text}
-    class="meter"
-  >
-    <div style:width={`${share * 100}%`} style:background={share < 0.25 ? 'crimson' : 'seagreen'}></div>
-  </div>
-{/if}
-```
+## Add a strip of unread counts
 
-`max` is the stat's ceiling right now, so a ceiling that grows during the game is already worked out. Give the bar `role="meter"` and the values, so a screen reader can say how full it is.
-
-If you use the React UI and a plain bar is all you need, you don't have to write one. Give the stat the hint [`ui: { display: 'bar' }`](/docs/reference/react/hints#display) or `'pips'`, and the built-in [`StatList`](/docs/reference/react/components#statlist) draws it.
-
-## A strip of unread counts
-
-Unseen notices are in `view.notices.unseen`, newest first. A plugin's counts are in its slice of `view.plugins`, which you read by its type from the plugin's package. The [messages](/docs/reference/plugins/messages) plugin keeps an `unread` count:
+Read the unseen notices from `view.notices.unseen`, newest first, and a plugin's counts from its part of `view.plugins`. The [messages](/docs/reference/plugins/messages) plugin keeps an `unread` count:
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/hud.ts
@@ -209,32 +171,11 @@ const texts = computed(() => view.value.plugins.messages?.unread ?? 0)
 </template>
 ```
 
-```svelte tab="Svelte" tab-group="framework"
-<!-- src/Unread.svelte -->
-<script lang="ts">
-  import { view } from './runner.ts'
+A count of 0 renders nothing. The bell shows the newest notices, and sending `{ type: 'dismiss' }` with `runner.apply` marks them all seen (see [`dismiss`](/docs/reference/commands#dismiss)). In the React tab, the texts button opens the phone with [`useDevice`](/docs/reference/plugins/devices#usedevice) and a [`DeviceDialog`](/docs/reference/plugins/devices#devicedialog), the pair the built-in device buttons use. In the other tabs it's a count, which you can turn into a button that opens your own messages panel.
 
-  let showNotices = $state(false)
-  const notices = $derived($view.notices.unseen)
-  const texts = $derived($view.plugins.messages?.unread ?? 0)
-</script>
+## Add an objective line
 
-<div class="unread">
-  {#if notices.length}<button onclick={() => (showNotices = !showNotices)}>🔔 {notices.length}</button>{/if}
-  {#if texts}<span>✉ {texts}</span>{/if}
-  {#if showNotices}
-    <ul>
-      {#each notices.slice(0, 10) as notice (notice.id)}<li>{notice.title}</li>{/each}
-    </ul>
-  {/if}
-</div>
-```
-
-A count of 0 draws nothing. The bell shows the newest notices, and sending `{ type: 'dismiss' }` with `runner.apply` marks them all seen (see [`dismiss`](/docs/reference/commands#dismiss)). In the React tab, the texts button opens the phone with [`useDevice`](/docs/reference/plugins/devices#usedevice) and a [`DeviceDialog`](/docs/reference/plugins/devices#devicedialog), the same pair the built-in device buttons use. In the others it's a count, which you can turn into a button that opens your own messages panel.
-
-## An objective line
-
-The [quests](/docs/reference/plugins/quests) plugin lists the active quests in `view.plugins.quests.active`, with the tracked one first. Each has its `title` and the `hint` for the stage the player is on:
+Read the active quests from `view.plugins.quests.active`, which the [quests](/docs/reference/plugins/quests) plugin lists with the tracked one first. Each has its `name` and the `hint` for the stage the player is on:
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/hud.ts
@@ -286,25 +227,9 @@ const quest = computed(() => view.value.plugins.quests?.active.find((entry) => e
 </template>
 ```
 
-```svelte tab="Svelte" tab-group="framework"
-<!-- src/Objective.svelte -->
-<script lang="ts">
-  import { view } from './runner.ts'
+The player chooses which quest to track, which sends the quests plugin's `quests/track` command. To show the newest quest when none is tracked, take `active[0]` instead.
 
-  const quest = $derived($view.plugins.quests?.active.find((entry) => entry.tracked))
-</script>
-
-{#if quest}
-  <p class="objective">
-    <strong>{quest.name}</strong>
-    {#if quest.hint}<span> · {quest.hint}</span>{/if}
-  </p>
-{/if}
-```
-
-The player picks which quest to track, which sends the quests plugin's `quests/track` command. To show the newest quest when none is tracked, take `active[0]` instead.
-
-## Putting it on screen
+## Put it on screen
 
 Put the three pieces together in a bar over the scene:
 
@@ -372,28 +297,19 @@ import Unread from './Unread.vue'
 </template>
 ```
 
-```svelte tab="Svelte" tab-group="framework"
-<!-- src/App.svelte, in the svelte template -->
-<script lang="ts">
-  import StatBar from './StatBar.svelte'
-  import Objective from './Objective.svelte'
-  import Unread from './Unread.svelte'
-</script>
+In plain JS, the pieces render again with the rest of the page on every change. In Vue and React, each component renders again when the view changes. In the React UI, your components go anywhere in your [layout](/docs/reference/react/components#defaultlayout), among the built-in parts: here they make a bar across the top of the story and take the place of the stat list at the side. For a bar fixed across the top of the window, see [Rearrange or replace the React UI's parts](/docs/how-to/react/replace-parts). The components work anywhere inside the game's provider.
 
-<div class="hud">
-  <Objective />
-  <Unread />
-  <StatBar stat="energy" />
-</div>
-<!-- …then the title, the scene and its choices, as before. -->
-```
+## Check it worked
 
-In plain DOM, the pieces are drawn again with the rest of the page on every change. In Vue and Svelte, each component redraws itself when the view changes.
+Play in `npm run dev` and work shifts at the café, which cost 25 energy each: the bar shrinks and turns red below a quarter. Meet Ava and sleep, and the strip shows ✉ 1 for her text. Start a quest and track it, and its name and hint show in the objective line.
 
-In the React UI, your components go anywhere in your [layout](/docs/reference/react#layouts), among the built-in parts. Here they make a bar across the top of the story, and take the place of the stat list at the side. For a HUD in a different place altogether, such as a bar fixed across the top of the window, change the [shape of the page](/docs/reference/react/customising#7-change-the-shape-of-the-page) or [write your own root](/docs/reference/react/customising#8-write-your-own-root). The components above work anywhere inside the game's provider.
+## Variations
 
-## What just changed
+**What just changed.** Feedback after a choice, such as `+30 coins`, is already worked out in [`view.changes`](/docs/reference/changes), for the stats your content names in `changes.stats`. The React UI's [`Changes`](/docs/reference/react/components#changes) renders it, and the default layout leaves it out, so place it after the scene. [Render what changed](/docs/how-to/render/stats-and-things#render-what-changed) has the same list in plain JS and Vue.
 
-Feedback after a choice, such as `+30 coins` or `-5% energy`, is already worked out for you in [`view.changes`](/docs/reference/changes), for the stats you name in your content's [`changes.stats`](/docs/reference/changes#changes). Each entry has its signed `text` in the stat's format and `by`, which says whether it went up or down. The React UI has a ready list for it, [`Changes`](/docs/reference/react/components#changes), that the default layout leaves out. Place it after the scene, and style its `change` parts by `data-dir`. [Changes](/docs/reference/changes#drawing-it) has the same list in plain DOM and Vue.
+For more, see:
 
-To draw a plugin that has no UI of its own, such as the shop or jobs, see [Building UI for plugins](/docs/recipes/plugin-ui).
+- [The view](/docs/reference/view) and [`StatView`](/docs/api/engine#statview).
+- [Render the stats](/docs/how-to/render/stats-and-things#render-the-stats) and [Render notices](/docs/how-to/render/stats-and-things#render-notices).
+- [Render the quest log](/docs/how-to/render/progress-plugins#render-the-quest-log).
+- [Arrange the layout](/docs/how-to/arrange-the-layout), for the rest of the page.

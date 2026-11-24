@@ -17,7 +17,9 @@ import { drawTimers } from '../plain/timers.ts'
 import { drawChanges } from '../plain/changes.ts'
 import { drawTransition } from '../plain/transition.ts'
 import { drawFlow } from '../plain/flow.ts'
-import { atTheCounter, inTheCafe, inThePark, phoneRinging, readingTexts, steppedOut, unpacked } from './play.ts'
+import { drawBackground } from '../plain/background.ts'
+import { drawVoices } from '../plain/audio.ts'
+import { atTheCounter, atTheDoor, inTheCafe, inThePark, phoneRinging, readingTexts, steppedOut, unpacked } from './play.ts'
 
 /** The Plain JS snippets, drawn into a box and pressed, as the vanilla template would. */
 function drawn(draw: (box: HTMLElement) => void): HTMLElement {
@@ -182,5 +184,17 @@ describe('the Plain JS snippets', () => {
       .find((button) => button.textContent === 'Unpack')!
       .click()
     expect(runner.view().scene.title).not.toBe('Moving day')
+  })
+
+  it('background and voices: the knock at the door has the hall behind its words and its voiced line to hear again', async () => {
+    await runner.newGame()
+    atTheDoor(runner)
+    const story = drawn((into) => drawBackground(into, runner.snapshot()))
+    expect(story.style.backgroundImage).toBe('url("art/photo/ava.svg")')
+    expect(buttons(drawn((into) => drawVoices(into, runner.snapshot()))).map((button) => button.textContent)).toEqual(['Play again'])
+    // Once the scene closes, the story has no background.
+    runner.apply({ type: 'choose', id: 'close' })
+    drawBackground(story, runner.snapshot())
+    expect(story.style.backgroundImage).toBe('')
   })
 })

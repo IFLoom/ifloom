@@ -182,6 +182,15 @@ export const DONE: string[] = [
   'how-to/build-friendships-in-stages.md',
   'how-to/schedule-daily-work.md',
   'how-to/dress-the-player.md',
+  'how-to/build-a-phone.md',
+  'how-to/add-pictures-and-backgrounds.md',
+  'how-to/add-music-and-sound.md',
+  'how-to/add-a-title-screen.md',
+  'how-to/add-a-settings-page.md',
+  'how-to/add-pages-around-the-game.md',
+  'how-to/offer-new-game-plus.md',
+  'how-to/build-a-hud.md',
+  'how-to/arrange-the-layout.md',
 ]
 
 /** One problem: where it is, the rule it breaks, and the text that breaks it. */
@@ -221,6 +230,7 @@ export const PROPER = [
   'webpack',
   'esbuild',
   'Fumadocs',
+  'New Game',
 ]
 
 /** Text with its code spans as `CODE` and each link as its words, so neither counts toward a rule. */

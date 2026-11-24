@@ -67,6 +67,12 @@ export function readingTexts(runner: Runner): void {
   send(runner, devices.open('texts'))
 }
 
+/** At home with someone at the door: the scene with a picture and a voiced line, from the docs' own pack in ../game.ts. */
+export function atTheDoor(runner: Runner): void {
+  unpacked(runner)
+  withEffects(runner, [{ scene: 'flat.knock' }])
+}
+
 /** The job board open, as Ava's Ask about weekend work opens it. */
 export function atTheJobBoard(runner: Runner): void {
   inTheCafe(runner)
@@ -84,6 +90,7 @@ export const STATES: { name: string; play: (runner: Runner) => void }[] = [
   { name: 'playing quick feet', play: playingQuickFeet },
   { name: 'reading texts', play: readingTexts },
   { name: 'at the job board', play: atTheJobBoard },
+  { name: 'at the door', play: atTheDoor },
 ]
 
 /** Presses the button on screen with this id: a scene's choice or a room's action. */

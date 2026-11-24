@@ -10,7 +10,9 @@ import Inputs from '../vue/Inputs.vue'
 import JobBoard from '../vue/JobBoard.vue'
 import ShopCounter from '../vue/ShopCounter.vue'
 import Timers from '../vue/Timers.vue'
-import { atTheCounter, atTheJobBoard, phoneRinging, unpacked } from './play.ts'
+import Background from '../vue/Background.vue'
+import Audio from '../vue/Audio.vue'
+import { atTheCounter, atTheDoor, atTheJobBoard, phoneRinging, unpacked } from './play.ts'
 
 let unmount = () => {}
 afterEach(() => unmount())
@@ -113,5 +115,15 @@ describe('the Vue snippets', () => {
     box.querySelector('form')!.requestSubmit()
     await vi.waitFor(() => expect(box.querySelector('.reason')?.textContent).toBe('That code doesn’t unlock anything.'))
     stop()
+  })
+
+  it('Background and Audio: the knock at the door has the hall behind its words and its voiced line to hear again', async () => {
+    await runner.newGame()
+    atTheDoor(runner)
+    const box = mounted(Background)
+    expect(box.querySelector<HTMLElement>('.scene-background')?.style.backgroundImage).toBe('url("art/photo/ava.svg")')
+    expect(box.querySelector('h2')?.textContent).toBe('A knock at the door')
+    unmount()
+    expect(buttons(mounted(Audio)).map((button) => button.textContent)).toEqual(['Play again'])
   })
 })

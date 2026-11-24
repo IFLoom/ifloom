@@ -4,12 +4,8 @@
   "root": true,
   "pages": [
     "---Pieces of a game---",
-    "title-screen",
-    "hud",
     "plugin-ui",
-    "phone",
     "things",
-    "layouts",
     "supporter-content",
     "save-driver",
     "life-sim-patterns"

@@ -548,6 +548,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Fixed
 
+- The `next` template uses Next.js 16.4.6. 16.4.2 has known security advisories, and `next build` now refuses to run on it.
 - The devices plugin's contacts list read each contact's call command with the wrong type. It now reads the cast's [`CastContact`](/docs/reference/plugins#partner-queries).
 - A scene that holds a plugin UI's panel, such as `{ panel: 'shop' }` with `shopUi` listed, draws that panel in place of its choices; it used to draw only the game's own `panels`. A scene's panel and a minigame's are found as `PanelHost` finds a panel: the game's own, else a listed plugin UI's, else a built-in one.
 - A game's text size setting (`ui.settings.textSize`) applies with a page of your own passed to `mountGame`.

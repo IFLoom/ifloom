@@ -46,6 +46,15 @@ export const DONE: string[] = [
   'reference/amounts.md',
   'reference/conditions.md',
   'reference/commands.md',
+  'explanation/architecture.md',
+  'explanation/design.md',
+  'explanation/state-and-commands.md',
+  'explanation/turns-and-time.md',
+  'explanation/content-and-packs.md',
+  'explanation/entities-and-traits.md',
+  'explanation/plugins.md',
+  'explanation/choosing-a-ui.md',
+  'explanation/shapes-of-game.md',
 ]
 
 /** One problem: where it is, the rule it breaks, and the text that breaks it. */
@@ -79,6 +88,8 @@ export const PROPER = [
   'Twine',
   'SugarCube',
   'Harlowe',
+  "Ren'Py",
+  'Ink',
   'Vite',
   'webpack',
   'esbuild',

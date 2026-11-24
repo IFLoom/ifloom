@@ -4,6 +4,7 @@
   "pages": [
     "guide",
     "recipes",
+    "explanation",
     "reference",
     "plugins",
     "browser",

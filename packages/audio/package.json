@@ -1,6 +1,6 @@
 {
   "name": "@ifloom/audio",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "license": "MIT",
   "description": "The IFLoom audio player: plays what view.audio asks for in the browser, with no framework.",
   "keywords": [
@@ -42,6 +42,6 @@
     "provenance": true
   },
   "peerDependencies": {
-    "@ifloom/engine": "^0.0.0"
+    "@ifloom/engine": "^0.1.0"
   }
 }

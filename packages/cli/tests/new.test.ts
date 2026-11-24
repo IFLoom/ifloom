@@ -27,6 +27,8 @@ const PAGE_FILES = (template: (typeof TEMPLATES)[number]) =>
     : ['index.html', 'vite.config.ts']
 
 const fresh = () => join(mkdtempSync(join(tmpdir(), 'ifloom-new-')), 'game')
+/** Every @ifloom package has the engine's version, and a game or plugin names each by its caret range. */
+const RANGE = `^${(JSON.parse(readFileSync(new URL('../../engine/package.json', import.meta.url), 'utf8')) as { version: string }).version}`
 
 /** The templates that make a game; `plugin` makes a plugin package. */
 const GAMES = TEMPLATES.filter((template) => template !== 'plugin')
@@ -199,7 +201,7 @@ describe('ifloom new', () => {
       files: ['dist'],
       scripts: { build: 'tsdown', test: 'vitest run', typecheck: 'tsc --noEmit', prepublishOnly: 'npm run build' },
       // The engine is the game's: a caret peer, and a dev dependency for the plugin's own tests. React and its UI are optional peers.
-      peerDependencies: { '@ifloom/engine': '^0.0.0', '@ifloom/react': '^0.0.0', react: '^19.0.0' },
+      peerDependencies: { '@ifloom/engine': RANGE, '@ifloom/react': RANGE, react: '^19.0.0' },
       peerDependenciesMeta: { '@ifloom/react': { optional: true }, react: { optional: true } },
     })
     expect(pkg.private).toBeUndefined()

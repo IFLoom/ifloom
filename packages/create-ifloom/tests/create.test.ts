@@ -6,6 +6,8 @@ import { newGame } from '@ifloom/cli'
 import { create, nextSteps, packageManager, parseArgs, type Io } from '../src/create.ts'
 
 const fresh = () => mkdtempSync(join(tmpdir(), 'create-ifloom-'))
+/** Every @ifloom package has the engine's version, and a game names each by its caret range. */
+const RANGE = `^${(JSON.parse(readFileSync(new URL('../../engine/package.json', import.meta.url), 'utf8')) as { version: string }).version}`
 
 /** Run the command in a folder, keeping what it printed. */
 function run(argv: string[], userAgent?: string) {
@@ -81,7 +83,7 @@ describe('create-ifloom', () => {
     const pkg = JSON.parse(readFileSync(join(cwd, 'my-game/package.json'), 'utf8'))
     const ifloom = Object.entries({ ...pkg.dependencies, ...pkg.devDependencies }).filter(([dep]) => dep.startsWith('@ifloom/'))
     expect(ifloom.length).toBeGreaterThan(2)
-    for (const [, range] of ifloom) expect(range).toBe('^0.0.0')
+    for (const [, range] of ifloom) expect(range).toBe(RANGE)
     expect(JSON.parse(readFileSync(join(cwd, 'my-game/tsconfig.json'), 'utf8')).extends).toBeUndefined()
   })
 

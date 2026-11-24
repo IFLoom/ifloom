@@ -11,13 +11,13 @@
     "playtest": "ifloom playtest --turns 5 --out playtest/run.txt"
   },
   "dependencies": {
-    "@ifloom/audio": "^0.0.0",
-    "@ifloom/browser": "^0.0.0",
-    "@ifloom/engine": "^0.0.0",
+    "@ifloom/audio": "^0.1.0",
+    "@ifloom/browser": "^0.1.0",
+    "@ifloom/engine": "^0.1.0",
     "svelte": "5.57.2"
   },
   "devDependencies": {
-    "@ifloom/cli": "^0.0.0",
+    "@ifloom/cli": "^0.1.0",
     "@sveltejs/vite-plugin-svelte": "7.3.1",
     "svelte-check": "4.7.7",
     "typescript": "6.0.3"

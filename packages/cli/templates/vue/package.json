@@ -11,13 +11,13 @@
     "playtest": "ifloom playtest --turns 5 --out playtest/run.txt"
   },
   "dependencies": {
-    "@ifloom/audio": "^0.0.0",
-    "@ifloom/browser": "^0.0.0",
-    "@ifloom/engine": "^0.0.0",
+    "@ifloom/audio": "^0.1.0",
+    "@ifloom/browser": "^0.1.0",
+    "@ifloom/engine": "^0.1.0",
     "vue": "3.5.44"
   },
   "devDependencies": {
-    "@ifloom/cli": "^0.0.0",
+    "@ifloom/cli": "^0.1.0",
     "@vitejs/plugin-vue": "6.0.10",
     "typescript": "6.0.3",
     "vue-tsc": "3.3.13"

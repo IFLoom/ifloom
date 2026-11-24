@@ -1,6 +1,6 @@
 {
   "name": "ifloom",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "license": "MIT",
   "description": "The IFLoom command line, for npx ifloom: runs @ifloom/cli.",
   "keywords": [
@@ -32,6 +32,6 @@
     "provenance": true
   },
   "dependencies": {
-    "@ifloom/cli": "^0.0.0"
+    "@ifloom/cli": "^0.1.0"
   }
 }

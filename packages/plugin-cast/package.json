@@ -1,6 +1,6 @@
 {
   "name": "@ifloom/plugin-cast",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "license": "MIT",
   "description": "A cast for IFLoom: characters with schedules, who is in the room, talking and calling, and relationships as stats the game declares.",
   "keywords": [
@@ -48,8 +48,8 @@
     "provenance": true
   },
   "peerDependencies": {
-    "@ifloom/engine": "^0.0.0",
-    "@ifloom/react": "^0.0.0",
+    "@ifloom/engine": "^0.1.0",
+    "@ifloom/react": "^0.1.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "@types/react": "^19.0.0"
@@ -69,7 +69,7 @@
     }
   },
   "devDependencies": {
-    "@ifloom/react": "^0.0.0",
+    "@ifloom/react": "^0.1.0",
     "@types/react": "^19.3.0"
   }
 }

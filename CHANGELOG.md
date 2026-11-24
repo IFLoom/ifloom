@@ -10,6 +10,8 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- An [API](/docs/api) section in the docs: every export of every package's entry points, with its exact signature and, for an object type, each field with its type, whether it's optional, its default and its description. It's generated from the source and its TSDoc (`npm run api-docs`), so it can't drift, and each export links to the page that explains it.
+- `@ifloom/engine` exports `ChangesDef`, `CreateFields`, `BeatSize` and `TraitSource`, and `@ifloom/engine/plugin` exports `SpeakerFinder`, `RawCall` and `CallForm`: types that the signatures of exported types already named.
 - `@ifloom/engine/plugin` exports `AnyCalls` (what `definePlugin`'s `calls` takes), `CallIn` (a call in short against a registry) and `QueryArgs` and `QueryAnswer` (a query's arguments and answer by name), the types in the signatures of [`Plugin`](/docs/reference/plugins#plugin), [`Query`](/docs/reference/plugins#query) and [`pluginQuery`](/docs/reference/plugins#pluginquery).
 - [`uiInContent(game)`](/docs/reference/ui-hints#uiincontent): every `ui` field in a game's content, with what it's on and where, and every line of words, found by the content checker's own walk. A UI package's checker reads it instead of walking the content itself.
 - A plugin's React UI can declare the `ui` hints its components read, in its `PluginUi`'s `hints`, and [`checkUiHints`](/docs/react/hints#checkuihints) checks them when you pass the same `plugins` list you give `mountGame`. It knows the plugin UIs' inline pieces too. Each is a [`UiHint`](/docs/react/hints#uihint), as the React UI declares its own.

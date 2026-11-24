@@ -547,7 +547,7 @@ function layTrait(under: unknown, over: unknown): unknown {
 }
 
 /** What a game's traits are worked out from: its kinds, its entities and its `traits` table. */
-type TraitSource = Pick<Game, 'kinds' | 'entities' | 'traits'>
+export type TraitSource = Pick<Game, 'kinds' | 'entities' | 'traits'>
 
 /** A kind's default for a trait, for an entity of that kind. */
 function kindTrait(game: TraitSource, ref: string, id: string): unknown {

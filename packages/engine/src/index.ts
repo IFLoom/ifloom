@@ -52,7 +52,7 @@ export { cases, choice, decide, fold, image, jump, minigame, panel, point, say, 
 export type { VariantMember } from './prose.ts'
 export { entityDescription, entityName, fillTokens } from './prose.ts'
 export { proseBeats } from './beats.ts'
-export type { InlinePart, InlineSpan, SceneBeat, VideoFlags, VideoView } from './sceneBody.ts'
+export type { BeatSize, InlinePart, InlineSpan, SceneBeat, VideoFlags, VideoView } from './sceneBody.ts'
 export { artSrc, inlineMarkup, mediaType } from './sceneBody.ts'
 
 // Media: pools, and the picture
@@ -96,7 +96,7 @@ export { actionOf, need } from './action.ts'
 export { effectsOf, whyNot } from './availability.ts'
 
 // Entities, holdings, notices, triggers and input
-export type { EntityDef, EntityRef, EntityState, Holder, KindDef, Placement, TraitData, TraitRegistry, TraitTable } from './entities.ts'
+export type { EntityDef, EntityRef, EntityState, Holder, KindDef, Placement, TraitData, TraitRegistry, TraitSource, TraitTable } from './entities.ts'
 export {
   PLAYER,
   YOU,
@@ -115,7 +115,7 @@ export {
   withTrait,
   writeEntity,
 } from './entities.ts'
-export type { CreatedEntity, Select } from './features/entities.ts'
+export type { CreatedEntity, CreateFields, Select } from './features/entities.ts'
 export type { HeldView } from './features/holdings.ts'
 export { canHold, give, heldBy, heldCount, holderOf, holding, move, take } from './holdings.ts'
 export type { Notice } from './notices.ts'
@@ -142,7 +142,7 @@ export type { RunningTimer, TimerDef, TimerView } from './features/timers.ts'
 export type { OpenPanel, ScenePanel } from './features/panels.ts'
 export type { SavingView } from './features/saving.ts'
 export type { Dice, Roll, RollsState } from './features/rolls.ts'
-export type { Change, ChangeView } from './features/changes.ts'
+export type { Change, ChangesDef, ChangeView } from './features/changes.ts'
 export type { Phrase, PhraseRow, PhraseWithArgs, Phrases } from './features/phrases.ts'
 
 // Storylines

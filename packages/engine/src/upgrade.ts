@@ -1149,10 +1149,10 @@ function deepArrays(value: unknown): unknown {
 }
 
 /** How a plugin call is written in content: `short`, `long` or as a `command`. See `ContentTools.calls`. */
-type CallForm = 'short' | 'long' | 'command'
+export type CallForm = 'short' | 'long' | 'command'
 
 /** A plugin call as `ContentTools.calls` hands it over: its full name, its arguments as written, and how it was written. */
-type RawCall = { name: string; with: unknown; form: CallForm }
+export type RawCall = { name: string; with: unknown; form: CallForm }
 
 /**
  * What a plugin's content step is given besides the pack: ways to rewrite

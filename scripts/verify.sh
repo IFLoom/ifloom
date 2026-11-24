@@ -3,7 +3,7 @@
 # files (staged, unstaged and untracked) and picking a tier:
 #
 #   docs      only docs pages, the changelog or other Markdown at the root: the contract tests that read the docs
-#             (and compile their code blocks), and the docs' link and include check
+#             (and compile their code blocks, and hold the API pages to the source), and the docs' link and include check
 #   snippets  the docs' code too (docs/snippets/, docs/lib/): the docs tier, plus the snippets' typecheck and tests
 #   full      anything else: every test, the format, lint and typecheck, the three examples' check, build and
 #             snapshot, and the website's full check when the docs or the changelog changed too
@@ -114,9 +114,10 @@ if [[ "$tier" == full ]]; then
 else
   # The contract tests that read the docs: each package's docs.test.ts and the plugin packages' suite (every export named
   # on its page), the pages' descriptions, the framework tabs, the community plugins list, and the pages' code blocks
-  # (each compiles, each shape matches its export: docs/lib/check-blocks.ts).
+  # (each compiles, each shape matches its export: docs/lib/check-blocks.ts), and the generated API pages, which must be
+  # what `npm run api-docs` makes from the source now (npm test runs the same test in the full tier).
   step "the docs' contract tests"
-  npx vitest run tests/contracts/docs.test.ts tests/contracts/plugin-packages tests/contracts/docs-descriptions tests/contracts/framework-tabs tests/contracts/community-plugins docs/snippets/tests/doc-blocks
+  npx vitest run tests/contracts/docs.test.ts tests/contracts/plugin-packages tests/contracts/docs-descriptions tests/contracts/framework-tabs tests/contracts/community-plugins docs/snippets/tests/doc-blocks docs/snippets/tests/api-docs
   if [[ "$tier" == snippets ]]; then
     step "the docs' snippets: typecheck and tests"
     npx vp run typecheck:snippets

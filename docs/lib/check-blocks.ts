@@ -169,7 +169,8 @@ export const ENTRIES = [
   ].flatMap((plugin) => [`@ifloom/plugin-${plugin}`, `@ifloom/plugin-${plugin}/react`]),
 ]
 
-function options(): ts.CompilerOptions {
+/** The compiler options the blocks are checked with: docs/snippets/tsconfig.json's, unused names allowed. */
+export function compilerOptions(): ts.CompilerOptions {
   const config = ts.getParsedCommandLineOfConfigFile(
     join(ROOT, 'docs/snippets/tsconfig.json'),
     {},
@@ -233,8 +234,11 @@ function unitsOf(blocks: Block[], orphans: Block[]): Unit[] {
 
 /** The entries a page's own package has, looked in first for a shape block's names. */
 function homeEntries(page: string): string[] {
-  const plugin = /\/plugins\/([a-z-]+)\.md$/.exec(page)?.[1]
+  const plugin = /\/plugins\/([a-z-]+)\.md$/.exec(page)?.[1] ?? /\/api\/plugin-([a-z-]+)\.md$/.exec(page)?.[1]
   if (plugin) return [`@ifloom/plugin-${plugin}`, `@ifloom/plugin-${plugin}/react`]
+  if (/\/api\/react(-kit)?\.md$/.test(page)) return ['@ifloom/react', '@ifloom/react/kit']
+  if (/\/api\/(browser|audio)\.md$/.test(page)) return ['@ifloom/browser', '@ifloom/audio']
+  if (/\/api\/cli(-game|-vite)?\.md$/.test(page)) return ['@ifloom/cli', '@ifloom/cli/game', '@ifloom/cli/vite']
   if (page.includes('/react/')) return ['@ifloom/react', '@ifloom/react/kit']
   if (page.includes('/browser/')) return ['@ifloom/browser', '@ifloom/audio']
   if (page.includes('/cli/')) return ['@ifloom/cli', '@ifloom/cli/game', '@ifloom/cli/vite']
@@ -394,9 +398,9 @@ export function checkBlocks(blocks: Block[] = docBlocks()): Problem[] {
       files.set(path, (before ?? '') + stub(match[3], match[2]))
     }
   }
-  const compilerOptions = options()
-  const host = ts.createCompilerHost(compilerOptions, true)
-  const disk = ts.createCompilerHost(compilerOptions, true)
+  const options = compilerOptions()
+  const host = ts.createCompilerHost(options, true)
+  const disk = ts.createCompilerHost(options, true)
   host.fileExists = (path) => files.has(path) || disk.fileExists(path)
   host.directoryExists = (path) => path.startsWith(HOME) || (disk.directoryExists?.(path) ?? true)
   host.readFile = (path) => files.get(path) ?? disk.readFile(path)
@@ -405,7 +409,7 @@ export function checkBlocks(blocks: Block[] = docBlocks()): Problem[] {
     return text !== undefined ? ts.createSourceFile(path, text, language, true) : disk.getSourceFile(path, language, onError, create)
   }
   const roots = [prelude, probe, ...units.map((unit) => unit.file)]
-  const first = ts.createProgram({ rootNames: roots, options: compilerOptions, host })
+  const first = ts.createProgram({ rootNames: roots, options, host })
   const names = exportsOf(first, probe)
   const globals = new Set(
     first
@@ -479,7 +483,7 @@ export function checkBlocks(blocks: Block[] = docBlocks()): Problem[] {
     files.set(file, [...imports, text].join('\n') + '\n')
     shapes.push({ file, block, header, source: parsed, imported, functions: new Map(), types: new Map() })
   }
-  const program = ts.createProgram({ rootNames: [...roots, ...shapes.map((shape) => shape.file)], options: compilerOptions, host, oldProgram: first })
+  const program = ts.createProgram({ rootNames: [...roots, ...shapes.map((shape) => shape.file)], options, host, oldProgram: first })
   const checker = program.getTypeChecker()
   const problems: Problem[] = orphans.map((block) => ({
     page: block.page,

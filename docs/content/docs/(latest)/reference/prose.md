@@ -395,6 +395,16 @@ A `video` beat always has all four of `autoplay`, `loop`, `muted` and `controls`
 
 A data scene's `{ media }` blocks become `image` or `video` beats where they are in the body. Media with `at: 'lead'` comes before the body, and media with `at: 'end'` comes after it.
 
+### BeatSize
+
+```ts shape
+import type { BeatSize } from '@ifloom/engine'
+
+type BeatSize = 'inline' | 'wide'
+```
+
+How wide an `image` or `video` beat is drawn: `inline` sits in the column with the words, and `wide` spans it.
+
 ## InlineSpan
 
 ```ts shape
@@ -431,6 +441,16 @@ function parseBeats(
 ```
 
 The parser described above. `find` says who a line under `@id` is, and the name to show. Left out, `@you` and `@player` are the player's, under `You`, and any other id is a character's under the id, with no `speaker`. [`view`](/docs/reference/view) already calls it, so you only need it to parse text outside a scene. It leaves `[[act:]]`, `[[tip:]]`, `[[ui:]]` and the stars of bold and italics in the text: the view draws them, and only the view knows the choices and the prose.
+
+### SpeakerFinder
+
+```ts shape
+import type { SpeakerFinder } from '@ifloom/engine/plugin'
+
+type SpeakerFinder = (id: string) => { who: 'character' | 'player'; speaker?: EntityRef; name: string }
+```
+
+The type of `parseBeats`'s `find`: given the id a line is written under, who says it and the name to show.
 
 ## styledBeats
 

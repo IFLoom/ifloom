@@ -1274,6 +1274,26 @@ Ways to rewrite a pack without walking it by hand. Each returns a new pack.
 | `wordKeys` | Every key of the pack's [`words` table](/docs/reference/words), renamed, the words kept: for a step that renames a field the table names, as one of the quests plugin's steps makes `quests/quests.settle.title` `quests/quests.settle.name`. |
 | `entries` | Each entry of one list of the plugin's `data`, named `<plugin>/<list>`: `'loyalty/cards'` is `data.loyalty.cards`. A pack without the list comes back as it is. |
 
+#### RawCall
+
+```ts shape
+import type { RawCall } from '@ifloom/engine/plugin'
+
+type RawCall = { name: string; with: unknown; form: CallForm }
+```
+
+A call as `calls` hands it to your rewrite: its full name, its arguments as written, and how it was written.
+
+#### CallForm
+
+```ts shape
+import type { CallForm } from '@ifloom/engine/plugin'
+
+type CallForm = 'short' | 'long' | 'command'
+```
+
+How a call was written in the pack: `short`, `long` or as a `command`, as the `calls` row above describes.
+
 ### CommandStep
 
 ```ts shape

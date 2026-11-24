@@ -241,6 +241,20 @@ type CreatedEntity = {
 }
 ```
 
+#### CreateFields
+
+```ts shape
+import type { CreateFields } from '@ifloom/engine'
+
+type CreateFields = {
+  like?: string
+  with?: CreatedEntity
+  at?: Placement
+}
+```
+
+The fields a `create` effect takes besides its kind: the entity it copies what it isn't given from, what it's made with, and who holds it once made (nobody if left out).
+
 Its `description` is read like a declared entity's, with tokens filled in, and its `image` goes through [`artSrc`](/docs/reference/prose#artsrc). Every other stat of its kind reads as that stat's `start`.
 
 A thing made in play this way is how a game keeps notes, photos or letters. The phone's camera makes a photo the player keeps:

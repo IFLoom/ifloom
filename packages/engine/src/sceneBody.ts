@@ -3,6 +3,7 @@ import type { BlockUi, Ui } from './features/ui.ts'
 import type { EntityRef } from './entities.ts'
 import { STRINGS } from './strings.ts'
 
+/** How wide an `image` or `video` beat is drawn: `inline` in the column with the words, `wide` across it. */
 export type BeatSize = 'inline' | 'wide'
 
 /**

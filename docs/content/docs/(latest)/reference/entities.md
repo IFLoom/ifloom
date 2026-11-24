@@ -650,6 +650,16 @@ function declaredWithTrait(game: Game, id: string): EntityRef[]
 
 Every declared entity that has the trait, in the order your content lists them, for code with no state, as [`declaredTrait`](#declaredtrait) reads.
 
+### TraitSource
+
+```ts shape
+import type { TraitSource } from '@ifloom/engine'
+
+type TraitSource = Pick<Game, 'kinds' | 'entities' | 'traits'>
+```
+
+What `declaredTrait` and `declaredWithTrait` read: a game's kinds, entities and `traits` table. A loaded [`Game`](/docs/reference/game#game) is one, and so is a [`Content`](/docs/reference/loader#content) before it's loaded.
+
 ### traitState
 
 ```ts shape

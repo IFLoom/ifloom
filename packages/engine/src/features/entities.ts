@@ -118,7 +118,7 @@ export type CreatedEntity = {
 }
 
 /** The fields `create` takes besides its kind. */
-type CreateFields = {
+export type CreateFields = {
   /** Another entity of the same kind it reads what it isn't given from. */
   like?: string
   /** What it is made with: its id, name, description, picture, tags, traits, stats and kv. */

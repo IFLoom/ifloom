@@ -72,6 +72,7 @@ export type { CallIn, QueryAnswer, QueryArgs } from './calls.ts'
 // Building its view
 export { panelOf, pictureView, priceView, renderAction } from './screen.ts'
 export { parseBeats, styledBeats } from './sceneBody.ts'
+export type { SpeakerFinder } from './sceneBody.ts'
 export { speakerOf } from './speakers.ts'
 export { anyOf, bindCurrent, entityUi, setTraitState, traitState } from './entities.ts'
 
@@ -82,4 +83,4 @@ export { actionReferences } from './action.ts'
 export type { Reference } from './references.ts'
 
 // Carrying its content and commands forward
-export type { CommandStep, ContentStep, ContentTools, PackContext, RawCommand } from './upgrade.ts'
+export type { CallForm, CommandStep, ContentStep, ContentTools, PackContext, RawCall, RawCommand } from './upgrade.ts'

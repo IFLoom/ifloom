@@ -40,6 +40,16 @@ The `changes` key of [`Content`](/docs/reference/loader#content) and of a [`Pack
 - Every file's and every pack's lists are added together, so a mod can track a stat it adds without repeating yours.
 - With no stat named anywhere, nothing is tracked and `view.changes` is always empty.
 
+### ChangesDef
+
+```ts shape
+import type { ChangesDef } from '@ifloom/engine'
+
+type ChangesDef = { stats: string[] }
+```
+
+The type of the `changes` key, exported for code that builds content.
+
 The [content checker](/docs/reference/checks) reports an id that is no stat, as `stats names "cions", which is no stat`.
 
 ## Change

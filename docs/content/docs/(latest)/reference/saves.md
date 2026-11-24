@@ -31,7 +31,7 @@ The engine never picks where saves live. There's no default driver, so your game
 | [`memoryDriver()`](#memorydriver) | A `Map`, gone with the page. | Memory. | Tests, previews. |
 | [`localStorageDriver()`](/docs/browser#localstoragedriver), from `@ifloom/browser` | `localStorage`, or any Web Storage. | About 5MB per origin, shared. | Short games. It's the simplest driver that keeps saves. |
 | [`indexedDbDriver()`](/docs/browser#indexeddbdriver), from `@ifloom/browser` | IndexedDB. | Large, up to the browser's own quota. | Long games, big backlogs, mod data. |
-| [Your own](#a-driver-of-your-own) | Anywhere: a desktop wrapper's file system, a sync service. | Whatever it has. | Games shipped outside a browser. |
+| [Your own](/docs/recipes/save-driver) | Usually a wrapper over the browser's drivers, or files in a desktop app. | Whatever it wraps. | Compressing saves, falling back when storage is refused. |
 
 Every driver is asynchronous, even over storage that isn't, so you can swap one for another without changing the code that calls it.
 
@@ -47,7 +47,23 @@ type SaveDriver = {
 }
 ```
 
-A driver stores strings by key. `name` is for diagnostics (`'localStorage'`, `'indexedDB'`). `get` returns `null` for a key that isn't there. `keys(prefix)` returns every key that starts with `prefix`, which the save store uses to list one game's saves.
+A driver stores strings by key. It knows nothing about saves: the save store decides what each key and value is, and the driver only keeps them. That's why one driver can serve everything a game stores:
+
+| Used by | Keys it reads and writes |
+|---|---|
+| [`saves(game, driver)`](#saves) | `<game id>.save.<slot>`, one per slot. |
+| [`profile(game, driver)`](/docs/reference/profile) | `<game id>.profile`, one for the game. |
+| [`mods(gameId, driver)`](/docs/reference/mods) | `<game id>.mod.<mod id>`, one per installed mod. |
+
+`name` says where the data goes, such as `'localStorage'` or `'indexedDB'`, for a debug screen or an error report. The four functions must keep these rules, or saves go missing in ways that are hard to trace:
+
+- `get` answers `null` for a key that isn't there. It doesn't throw.
+- `set` replaces any value already at the key.
+- `remove` on a key that isn't there does nothing.
+- `keys(prefix)` returns the whole key of every entry that starts with `prefix`, in any order. The save store lists a game's saves with it, and sorts them itself.
+- Values are JSON text, kept exactly as given. A save holds the whole game state, so don't put a small size limit on it.
+- Keys can hold any character, because a slot is whatever name the game gives it. A driver that turns keys into file names or URLs must escape them, and undo that in `keys`.
+- A failure rejects the promise. The save store passes the rejection on, and the [runner](/docs/reference/runner#runneroptions) reports it to `onSaveError`.
 
 ### memoryDriver
 
@@ -63,29 +79,7 @@ const store = saves(game, memoryDriver())
 
 ### A driver of your own
 
-A driver is a name and four functions over strings. This one, for a desktop wrapper, writes each save as a file:
-
-```ts
-import type { SaveDriver } from '@ifloom/engine'
-
-// `files` is whatever your wrapper exposes, such as Tauri's fs plugin or an Electron preload.
-function fileDriver(folder: string): SaveDriver {
-  const path = (key: string) => `${folder}/${key}.json`
-  return {
-    name: 'files',
-    get: async (key) => ((await files.exists(path(key))) ? files.readText(path(key)) : null),
-    set: (key, value) => files.writeText(path(key), value),
-    remove: (key) => files.remove(path(key)),
-    keys: async (prefix) =>
-      (await files.list(folder))
-        .filter((name) => name.endsWith('.json'))
-        .map((name) => name.slice(0, -'.json'.length))
-        .filter((key) => key.startsWith(prefix)),
-  }
-}
-```
-
-Keys contain dots (`corner-cafe.save.auto`), and the slot part is whatever the game named it. A driver that turns keys into file names or URLs should keep them intact, or escape them in a way it can undo.
+To keep saves somewhere the engine doesn't ship a driver for, write one that keeps the rules above. Most games don't need one. [A save driver of your own](/docs/recipes/save-driver) wraps the browser's drivers to compress saves so they fit in `localStorage`, to fall back when the browser refuses storage, and to move saves to a new driver. It also has a driver for a game wrapped as a desktop app, and a test that checks a driver against every rule.
 
 ## saves
 
@@ -99,7 +93,7 @@ Slots are names your game picks, such as `'auto'` for the runner's autosave, `'q
 
 | Member | What it does |
 |---|---|
-| `driver` | The driver it was given. |
+| `driver` | The [driver](#savedriver) the store was made with. Read its `name` to show where saves are kept, or pass it to [`profile`](/docs/reference/profile) or [`mods`](/docs/reference/mods) to keep their data in the same place. |
 | `write(slot, state, extra?)` | Writes a [`SaveFile`](#savefile) to the slot, replacing what was there, and returns its [`SaveMeta`](#savemeta). `extra` is a `SaveExtra`, `{ name?, played?, savedAt? }`: the save's name, the time played and when it was written, each made up if left out. It rejects only if the driver fails. |
 | `read(slot)` | The slot read back, as a `Result` whose value is the [`LoadedSave`](#loadedsave), or `null` if the slot is empty. It fails with the reason a save can't be read. |
 | `list()` | Every save this game has, as [`SaveListing`](#savelisting)s: the `SaveMeta` of each one that can be read, newest first by `savedAt`, then each one that can't, as `{ slot, broken }`, by slot. |

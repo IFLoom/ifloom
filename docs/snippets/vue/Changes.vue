@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { view } from './runner.ts'
 
-// What the last command moved, as pills: `Coins +30 coins`, marked up or down for styling.
+// What the last command moved, as pills: `+30 coins`, `-1 Energy`, `+4 Ava`, marked up or down for styling.
 </script>
 
 <template>
@@ -14,7 +14,7 @@ import { view } from './runner.ts'
       :data-of="change.of"
       :data-dir="change.by > 0 ? 'up' : 'down'"
     >
-      {{ change.label }} {{ change.text }}
+      {{ change.text }} {{ change.name }}
     </li>
   </ul>
 </template>

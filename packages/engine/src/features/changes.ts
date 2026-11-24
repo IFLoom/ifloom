@@ -12,10 +12,10 @@
  */
 import type { Game } from '../game.ts'
 import type { EntityRef } from '../entities.ts'
-import { hasEntity } from '../entities.ts'
+import { entityText, hasEntity, parseRef } from '../entities.ts'
 import type { Command, GameState } from '../types.ts'
 import { defineFeature, type FeatureContext, type PackMerge } from './feature.ts'
-import { formatStat, statOf, statValue } from './stats.ts'
+import { formatStat, statOf, statValue, type StatDef } from './stats.ts'
 
 /** One stat a command moved: whose, from what to what, and the change written in the stat's own words. */
 export type Change = {
@@ -33,6 +33,17 @@ export type Change = {
   label: string
   /** The change written with the stat's `format`, signed: `'+30 coins'`, `'-£5'`. */
   text: string
+}
+
+/** One stat a command moved, as the view hands it to a UI: the `Change`, and who or what it's about in words. */
+export type ChangeView = Change & {
+  /**
+   * The words to show after `text`, so the change says what moved: the
+   * entity's name for an entity's stat (`+4 Ava`), else the stat's `label`
+   * when `text` doesn't say it in words (`+1 Charm`, `+20% Mood`). Left out
+   * when the stat's format already does (`+30 coins`).
+   */
+  name?: string
 }
 
 /** Which stats `view.changes` tracks: their ids. An entity stat's id covers that stat on every entity. */
@@ -57,8 +68,8 @@ export type ChangesShape = {
     changes: Change[]
   }
   view: {
-    /** The stats the last command moved that the player can see, the player's first. See `Change`. */
-    changes: Change[]
+    /** The stats the last command moved that the player can see, the player's first, each with the words that say what moved. See `ChangeView`. */
+    changes: ChangeView[]
   }
 }
 
@@ -99,6 +110,22 @@ export function statChanges(before: GameState, after: GameState, game: Game, cx:
     for (const stat of game.stats ?? []) if (stat.of && keys.has(stat.id)) add(stat.id, ref)
   }
   return out
+}
+
+/** Whether a stat's format has words in it besides the number, so a change written with it says what it is: `{n} coins` does, `{n}%` and `£{n}` don't. */
+function wordy(format: StatDef['format']): boolean {
+  const words = typeof format === 'string' ? format : format ? format.other : ''
+  return /\p{L}/u.test(words.replaceAll('{n}', ''))
+}
+
+/** A change as the view shows it, with the words that say what moved. */
+function changeView(state: GameState, game: Game, change: Change, cx: FeatureContext): ChangeView {
+  const name = change.of
+    ? cx.fillTokens(state, game, entityText(state, game, change.of, 'name') ?? parseRef(change.of)?.id ?? change.of)
+    : wordy(statOf(game, change.stat)?.format)
+      ? undefined
+      : change.label
+  return name === undefined ? change : { ...change, name }
 }
 
 /** The tracked stats of every file and pack, together, in the order first named. */
@@ -145,5 +172,5 @@ export const changes = defineFeature<ChangesShape>({
       return { ...after, changes: moved }
     },
   },
-  view: (state) => ({ changes: state.changes }),
+  view: (state, game, _shown, cx) => ({ changes: state.changes.map((change) => changeView(state, game, change, cx)) }),
 })

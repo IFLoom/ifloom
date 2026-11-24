@@ -51,18 +51,18 @@ function play(state: GameState, ...commands: Command[]): GameState {
 }
 
 describe('view.changes', () => {
-  it('lists the player’s stats the last command moved, in their own words', () => {
+  it('lists the player’s stats the last command moved, in their own words, named when the words don’t say', () => {
     const state = play(startingState(game), act('sell'))
     expect(view(state, game).changes).toEqual([
       { stat: 'coins', from: 10, to: 40, by: 30, label: 'Coins', text: '+30 coins' },
-      { stat: 'energy', from: 5, to: 4, by: -1, label: 'Energy', text: '-1' },
+      { stat: 'energy', from: 5, to: 4, by: -1, label: 'Energy', text: '-1', name: 'Energy' },
     ])
     expect(view(play(state, act('pay')), game).changes).toEqual([{ stat: 'coins', from: 40, to: 39, by: -1, label: 'Coins', text: '-1 coin' }])
   })
 
-  it('lists an entity’s stat, with whose it is', () => {
+  it('lists an entity’s stat, with whose it is, named by them', () => {
     expect(view(play(startingState(game), act('train')), game).changes).toEqual([
-      { stat: 'skill', of: 'staff:ana', from: 2, to: 5, by: 3, label: 'Skill', text: '+3' },
+      { stat: 'skill', of: 'staff:ana', from: 2, to: 5, by: 3, label: 'Skill', text: '+3', name: 'Ana' },
     ])
   })
 
@@ -79,7 +79,7 @@ describe('view.changes', () => {
     expect(view(ticked, game).changes).toEqual(view(again, game).changes)
     // A tick that moves a stat replaces the list.
     const rang = play(ticked, { type: 'tick', ms: 1000 })
-    expect(view(rang, game).changes).toEqual([{ stat: 'energy', from: 3, to: 4, by: 1, label: 'Energy', text: '+1' }])
+    expect(view(rang, game).changes).toEqual([{ stat: 'energy', from: 3, to: 4, by: 1, label: 'Energy', text: '+1', name: 'Energy' }])
     expect(view(play(rang, act('look')), game).changes).toEqual([])
   })
 

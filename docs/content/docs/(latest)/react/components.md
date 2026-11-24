@@ -223,7 +223,9 @@ Replaceable as `When` in [`components`](#components).
 function useHolds(condition: Condition | undefined): boolean
 ```
 
-Whether `condition` holds now, with the engine's [`holds`](/docs/reference/conditions#holds) on the runner's state. No condition always holds. [`When`](#when) and `Section`'s `when` use it.
+Whether `condition` holds now, with the engine's [`holds`](/docs/reference/conditions#holds) on the state on show. No condition always holds. [`When`](#when) and `Section`'s `when` use it.
+
+It's an escape hatch for placing parts of your own layout. The [view](/docs/reference/view) already says what the player can see, and what the story shows belongs in content, where the [content checker](/docs/reference/checks) reads it. Reach for `useHolds` only when the view has no field for what you want, such as showing a section of the sidebar once the player has been somewhere.
 
 ```tsx
 import { useHolds } from '@ifloom/react'
@@ -656,7 +658,7 @@ The words of an [inline piece](/docs/react/hints#inline-pieces) as a button in t
 function InlineModal(props: InlineProps<'modal'>): JSX.Element
 ```
 
-The built-in `modal`, from `[[ui:modal|words|key]]` or `[[ui:modal|words|key|title]]`. The words are an [`InlineTrigger`](#inlinetrigger) that opens a [`PartDialog`](#partdialog) with the prose line `key`, filled in for this save and drawn as a scene's paragraphs are, inside an `inline-modal` part. The dialog is titled `title`, or the words when there's none. Escape, the close button or a click outside close it, and focus goes back to the words. A key with no prose shows the words alone. Replace it with a `modal` of your own in `inline`.
+The built-in `modal`, from `[[ui:modal|words|key]]` or `[[ui:modal|words|key|title]]`. The words are an [`InlineTrigger`](#inlinetrigger) that opens a [`PartDialog`](#partdialog) with the prose line `key`, as the engine's [`proseBeats`](/docs/reference/prose#prosebeats) gives it for this save, drawn as a scene's paragraphs are, inside an `inline-modal` part. The dialog is titled `title`, or the words when there's none. Escape, the close button or a click outside close it, and focus goes back to the words. A key with no prose shows the words alone. Replace it with a `modal` of your own in `inline`.
 
 ### InlineImage
 
@@ -1107,10 +1109,10 @@ Replaceable as `Changes` in [`components`](#components). Parts: `changes`, with 
 ### ChangeItem
 
 ```tsx
-function ChangeItem(props: { change: Change }): JSX.Element
+function ChangeItem(props: { change: ChangeView }): JSX.Element
 ```
 
-One [`Change`](/docs/reference/changes#change) as a pill. It shows the change's `text`, signed and in the stat's own format, then who or what it's about: the entity's name for an entity's stat, or else the stat's `label`, unless the stat's `format` already has words in it. So `+30 coins` stands alone, while `+1` reads `+1 Mood` and `+20%` reads `+20% Energy`. Its `title` says the stat's label, from what to what.
+One [`ChangeView`](/docs/reference/changes#changeview) as a pill. It shows the change's `text`, signed and in the stat's own format, then its `name` when the view gives one: the entity's name for an entity's stat, or else the stat's `label`, unless the stat's `format` already has words in it. So `+30 coins` stands alone, while `+1` reads `+1 Mood` and `+20%` reads `+20% Energy`. Its `title` says the stat's label, from what to what.
 
 It carries `data-stat` with the stat's id, `data-of` with the entity for an entity's stat, and `data-dir` set to `up` or `down`, for your CSS:
 

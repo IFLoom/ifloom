@@ -23,7 +23,7 @@ import {
   type ReactNode,
 } from 'react'
 import { createPortal } from 'react-dom'
-import { artSrc, parseBeats, styledBeats, type InlineSpan } from '@ifloom/engine'
+import { artSrc, proseBeats, type InlineSpan } from '@ifloom/engine'
 import { useGame, useGameIfAny, type InlineComponent, type InlineComponents, type InlineProps } from './context.tsx'
 import { PriceTag } from './choices.tsx'
 import { PartDialog } from './dialog.tsx'
@@ -270,7 +270,7 @@ export function InlineTrigger({
 /**
  * The built-in `modal`, from `[[ui:modal|words|key]]` or
  * `[[ui:modal|words|key|title]]`: the words as an `InlineTrigger` that opens
- * a dialog with the prose line `key`, filled in for this save and drawn as a
+ * a dialog with the prose line `key`, as `proseBeats` gives it for this save, drawn as a
  * scene's paragraphs are, in an `inline-modal` part. The dialog is titled
  * `title`, else the words. Escape, the close button or a click outside close
  * it, and focus goes back to the words. A key with no prose shows the words.
@@ -281,9 +281,9 @@ export function InlineModal({ text, args }: InlineProps<'modal'>) {
   const [open, setOpen] = useState(false)
   const body = usePart('inline-modal', 'grid gap-3 leading-relaxed')
   const [key, title] = args
-  // The line as it reads in this save, cut into paragraphs like a scene's body.
-  const line = key && game ? game.runner.game.prose?.line(key, game.runner.state) : undefined
-  if (line === undefined) return <>{text}</>
+  // The line as it reads in this save, as beats like a scene's body.
+  const beats = key && game ? proseBeats(game.snapshot.state, game.runner.game, key) : null
+  if (!beats) return <>{text}</>
   return (
     <>
       <InlineTrigger name="modal" open={open} onOpen={() => setOpen(true)}>
@@ -291,7 +291,7 @@ export function InlineModal({ text, args }: InlineProps<'modal'>) {
       </InlineTrigger>
       <PartDialog open={open} onClose={() => setOpen(false)} title={title ?? text}>
         <div {...body}>
-          {styledBeats(parseBeats(line)).map((beat, index) => (
+          {beats.map((beat, index) => (
             <Beat key={index} beat={beat} />
           ))}
         </div>

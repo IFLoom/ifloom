@@ -153,6 +153,26 @@ describe('the runner snapshot', () => {
     expect(runner.snapshot().saves.map((entry) => entry.slot)).toEqual(['1', 'auto'])
   })
 
+  it('says which choice led to the screen on show, kept while the screen stays, and none after an undo', () => {
+    const { game } = withCafe()
+    const counter = game.scenes!.find((scene) => scene.id === 'cafe.counter')!
+    counter.choices = counter.choices!.map((choice) => (choice.id === 'leave' ? { ...choice, ui: { transition: 'fade' } } : choice))
+    const runner = createRunner(game, begin(game, { sceneId: 'cafe.counter' }), { history: true })
+    runner.subscribe(() => {})
+    expect(runner.snapshot()).toMatchObject({ pressed: null, fresh: false })
+    // A choice that keeps the screen leads nowhere new.
+    runner.apply({ type: 'choose', id: 'chat' })
+    expect(runner.snapshot()).toMatchObject({ pressed: null, fresh: true })
+    runner.apply({ type: 'choose', id: 'leave' })
+    expect(runner.snapshot().pressed).toMatchObject({ id: 'leave', command: { type: 'choose', id: 'leave' }, ui: { transition: 'fade' } })
+    // A command on the same screen keeps what led to it.
+    runner.apply({ type: 'action', id: 'wait' })
+    expect(runner.snapshot().pressed?.id).toBe('leave')
+    runner.undo()
+    runner.undo()
+    expect(runner.snapshot()).toMatchObject({ pressed: null, fresh: false })
+  })
+
   it('carries what helpers report, by id, and tells listeners only when it changes', () => {
     const game = fixture()
     const runner = createRunner(game, begin(game))

@@ -3,40 +3,30 @@
  * `+4 Ava`. The default layout leaves it out; a layout places `<Changes />`
  * where it wants the feedback, after `<Scene />` say.
  */
-import { entityName, statOf, type Change, type StatDef } from '@ifloom/engine'
+import type { ChangeView } from '@ifloom/engine'
 import { useGame } from './context.tsx'
 import { overridable, usePart } from './overrides.tsx'
 import { cn, PROSE } from '../lib/utils.ts'
 import { useWords } from './words.ts'
 
-/** Whether a stat's format has words in it, so a change written with it says what it is: `{n} coins` does, `{n}%` and `£{n}` don't. */
-function wordy(format: StatDef['format']): boolean {
-  const words = typeof format === 'string' ? format : format ? format.other : ''
-  return /\p{L}/u.test(words.replaceAll('{n}', ''))
-}
-
-function ChangeImpl({ change }: { change: Change }) {
-  const { runner } = useGame()
+function ChangeImpl({ change }: { change: ChangeView }) {
   const item = usePart('change', cn('rounded-full border px-2.5 py-0.5 text-sm font-medium', change.by > 0 ? 'text-foreground' : 'text-destructive'))
   const text = usePart('change-text', '')
   const name = usePart('change-label', 'ml-1')
-  // Who it's about: an entity's name, or the stat's label unless its format already says in words (`+30 coins` does; `+1` and `+20%` don't).
-  const label = change.of ? entityName(runner.state, runner.game, change.of) : wordy(statOf(runner.game, change.stat)?.format) ? null : change.label
   return (
     <li {...item} data-stat={change.stat} data-of={change.of} data-dir={change.by > 0 ? 'up' : 'down'} title={`${change.label}: ${change.from} → ${change.to}`}>
       <span {...text}>{change.text}</span>
-      {label ? <span {...name}>{label}</span> : null}
+      {change.name ? <span {...name}>{change.name}</span> : null}
     </li>
   )
 }
 
 /**
  * One stat the last command moved, as a `change` part: its signed text in the
- * stat's format (`change-text`), then an entity's name, or the stat's label
- * when its format doesn't say what it is (`change-label`). It carries
- * `data-stat`, `data-of` for an entity's stat and `data-dir="up"` or `"down"`.
- * A stat's format "says what it is" when it has words in it besides the
- * number, such as `{n} coins`; `{n}%` and `£{n}` don't, so they get the label.
+ * stat's format (`change-text`), then the change's `name` when the view
+ * gives one (`change-label`): an entity's name, or the stat's label when its
+ * format doesn't say what it is. It carries `data-stat`, `data-of` for an
+ * entity's stat and `data-dir="up"` or `"down"`.
  */
 export const ChangeItem = overridable('ChangeItem', ChangeImpl)
 

@@ -24,7 +24,7 @@
  * `[[ui:image|words|path|alt]]`, and the paper the story shows:
  * `[[ui:mail|body|header|…]]`, `[[ui:prop|words|face]]` and `[[ui:mono|words]]`.
  */
-import type { Game, RenderedChoice, Roll, SceneBeat, View } from '@ifloom/engine'
+import type { Game, Roll, SceneBeat, View } from '@ifloom/engine'
 
 /** The transitions the React UI's styles draw. A game can add its own names in `game.ui.transitionNames`, with CSS of its own. */
 export const TRANSITIONS = ['fade', 'slide-up', 'slide-left', 'zoom', 'none'] as const
@@ -144,14 +144,6 @@ export function leavingOf(pressed: Transition | TransitionName | undefined): { o
   return typeof pressed === 'object'
     ? { ...(pressed.out !== undefined ? { out: pressed.out } : {}), ...(pressed.ms !== undefined ? { ms: pressed.ms } : {}) }
     : {}
-}
-
-/** Every choice and button a view offers: its choices, those its prose holds inline, and the room's buttons. */
-export function offeredIn(view: View): RenderedChoice[] {
-  const inline = view.scene.beats.flatMap((beat) =>
-    (beat.type === 'text' || beat.type === 'say') && beat.spans ? beat.spans.flatMap((span) => (span.type === 'action' ? [span.choice] : [])) : [],
-  )
-  return [...view.scene.choices, ...inline, ...view.actions]
 }
 
 /** A reveal as the React UI plays it: where the prose holds back, and when what follows comes, from the scene coming on. */

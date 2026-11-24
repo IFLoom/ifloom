@@ -95,6 +95,7 @@ export type { BlockExtras } from './flow.ts'
 export { cases, choice, decide, fold, image, jump, minigame, panel, point, say, text, when } from './flow.ts'
 export type { VariantMember } from './prose.ts'
 export { entityDescription, entityName, fillTokens } from './prose.ts'
+export { proseBeats } from './beats.ts'
 export type { InlinePart, InlineSpan, SceneBeat, VideoFlags, VideoView } from './sceneBody.ts'
 export { artSrc, inlineMarkup, mediaType, parseBeats, styledBeats } from './sceneBody.ts'
 
@@ -193,7 +194,7 @@ export type { RunningTimer, TimerDef, TimerView } from './features/timers.ts'
 export type { OpenPanel, ScenePanel } from './features/panels.ts'
 export type { SavingView } from './features/saving.ts'
 export type { Dice, Roll, RollsState } from './features/rolls.ts'
-export type { Change } from './features/changes.ts'
+export type { Change, ChangeView } from './features/changes.ts'
 export type { Phrase, PhraseRow, PhraseWithArgs, Phrases } from './features/phrases.ts'
 
 // Storylines

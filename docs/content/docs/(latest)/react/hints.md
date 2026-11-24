@@ -88,7 +88,7 @@ export const town: Content = { ui: { transitionNames: ['curtain'] } }
 
 How the screen this choice leads to comes in, whatever that screen says. A bare name is only the `in`. An `out` changes how the screen the choice leaves goes off. It works the same on an [action](/docs/reference/actions), a room's button.
 
-The React UI works out which choice was pressed from the command it sent, so a click, a number key, an inline action and a hotspot all count. It plays the hint once, for the screen the choice leads to. When the choice keeps the same screen, nothing plays.
+The runner says which choice led to the screen, in its snapshot's [`pressed`](/docs/reference/runner#what-led-here), from the command it ran, so a click, a number key, an inline action and a hotspot all count. It plays the hint once, for the screen the choice leads to. When the choice keeps the same screen, nothing plays.
 
 ### screenTransition
 

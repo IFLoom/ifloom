@@ -85,6 +85,8 @@
  * stats `view.changes` tracks. Features declare their reference kinds:
  * `Reference` is built from the core's kinds and each feature's, and
  * `FrozenReference` holds it to the union it was written as before.
+ * The view words what it can: `View.changes` is a `ChangeView`, each change
+ * with the `name` that says what moved.
  */
 import type { Block } from '../../src/scene.ts'
 import type {
@@ -126,6 +128,7 @@ import type {
   Dice,
   Roll,
   Change,
+  ChangeView,
   PhraseRow,
   PhraseWithArgs,
   Phrases,
@@ -621,8 +624,8 @@ export type FrozenView = {
   rolls: Roll[]
   /** The running timers. */
   timers: TimerView[]
-  /** The stats the last command moved. */
-  changes: Change[]
+  /** The stats the last command moved, each with the words that say what moved. */
+  changes: ChangeView[]
   /** Whether the player can save now. */
   saving: SavingView
 }

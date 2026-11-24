@@ -13,7 +13,7 @@ import { stringOf } from './strings.ts'
 import type { SceneBeat } from './sceneBody.ts'
 import type { Command, KvValue, GameState } from './types.ts'
 import { view, type View } from './view.ts'
-import { inlineChoices, pastBeats } from './screen.ts'
+import { inlineChoices, pastBeats, type RenderedChoice } from './screen.ts'
 import { commandUpgrade, commandVersions } from './upgrade.ts'
 import { commandOf, type CommandRef } from './custom.ts'
 
@@ -165,6 +165,22 @@ export type RunnerSnapshot = {
   readonly saves: readonly SaveListing[]
   /** What the helpers started beside the runner report, by id, such as `unlocks`. See `setHelper`. */
   readonly helpers: HelpersIn
+  /**
+   * The choice or button that led to the screen on show, as it was offered:
+   * its `id`, its `command` and its `ui` hints as written, so a UI can play
+   * the transition a choice asks for. Set when a command the runner runs
+   * changes the screen (`view.scene.key`), from the choices, inline actions
+   * and buttons of the view it was sent from, and kept while the screen
+   * stays. Null when nothing pressed led here: a tick, a command sent by
+   * hand, an undo, a redo, a load or a new game.
+   */
+  readonly pressed: RenderedChoice | null
+  /**
+   * Whether the state on show came from a command the runner just ran, rather
+   * than an undo, a redo, a load or a new game. A UI animates what the
+   * player just did only while it's true, such as the dice of `view.rolls`.
+   */
+  readonly fresh: boolean
 }
 
 /**
@@ -299,6 +315,9 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
   let listed: readonly SaveListing[] = []
   // What the helpers report, by id.
   let helpers: HelpersIn = {}
+  // The choice or button that led to the screen on show, and whether the state came from a command just run.
+  let pressed: RenderedChoice | null = null
+  let fresh = false
   // The last snapshot built: the same object until a part of it changes.
   let built: RunnerSnapshot | null = null
   // The last view built, and the state it was built for: the same state object gives the same view.
@@ -354,6 +373,8 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
       canRedo: redoStack.length > 0,
       saves: listed,
       helpers,
+      pressed,
+      fresh,
     }
     const last = built
     if (last && (Object.keys(next) as (keyof RunnerSnapshot)[]).every((key) => last[key] === next[key])) return last
@@ -518,6 +539,8 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     redoStack = []
     playedBefore = playedAlready
     since = now()
+    pressed = null
+    fresh = false
     changed(before)
   }
 
@@ -528,9 +551,9 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
    */
   function startOver(start: StartOptions): GameState {
     const settings = start.settings ?? (options.profile ? storedSettings : state.settings)
-    const fresh = startingState(game, { seed: randomSeed(), ...start, settings })
-    begin(fresh, 0)
-    return fresh
+    const started = startingState(game, { seed: randomSeed(), ...start, settings })
+    begin(started, 0)
+    return started
   }
 
   /** Put a loaded save in play: fresh history, backlog and log, and its time played. */
@@ -561,7 +584,8 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     const before = state
     const ticking = command.type === 'tick'
     // The view the command was sent from: usually built already, for the UI that sent it.
-    let from: View | undefined
+    const drawn = cached?.state === before ? cached.view : undefined
+    let from: View | undefined = drawn
     const fromView = () => (from ??= viewOf(before))
     const result = apply(before, game, command)
     if (!result.ok) return fail(result.reason)
@@ -570,6 +594,10 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     const prior = snapshot()
     state = result.state
     log = { ...log, commands: [...log.commands, command] }
+    fresh = true
+    // What led to the new screen, when a UI drew the one before: kept while the screen stays the same.
+    if (!drawn) pressed = null
+    else if (viewOf(state).scene.key !== drawn.scene.key) pressed = pressedIn(drawn, command)
     if (backlogLimit && !ticking) {
       // Each scene as it was shown, with the choice made in it: the scene on
       // screen before the command goes in first if it isn't there yet (the
@@ -641,6 +669,8 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
       redoStack = [...redoStack, snapshot()]
       ;({ state, backlog } = step)
       log = { ...log, commands: step.commands }
+      pressed = null
+      fresh = false
       changed(before)
       return true
     },
@@ -652,6 +682,8 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
       undoStack = [...undoStack, snapshot()].slice(-depth)
       ;({ state, backlog } = step)
       log = { ...log, commands: step.commands }
+      pressed = null
+      fresh = false
       changed(before)
       return true
     },
@@ -720,6 +752,14 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
       notify()
     },
   }
+}
+
+/** The choice, inline action or button of a view that sends this command, if any does. */
+function pressedIn(shown: View, command: Command): RenderedChoice | null {
+  const offered = [...shown.scene.choices, ...inlineChoices(shown.scene.beats), ...shown.actions]
+  if (command.type === 'choose') return offered.find((choice) => choice.command.type === 'choose' && choice.id === command.id) ?? null
+  const sent = JSON.stringify(command)
+  return offered.find((choice) => JSON.stringify(choice.command) === sent) ?? null
 }
 
 /** Saves as `saves.list()` orders them: newest first, then the ones that can't be read, by slot. */

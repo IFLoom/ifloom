@@ -5,6 +5,7 @@ import { apply } from '../../src/reduce.ts'
 import { startingState } from '../../src/intake.ts'
 import { definePlugin } from '../../src/plugin.ts'
 import { createRunner, replay } from '../../src/runner.ts'
+import { proseBeats } from '../../src/beats.ts'
 import { inlineMarkup, parseBeats, styledBeats } from '../../src/sceneBody.ts'
 import { inlineChoices, screen } from '../../src/screen.ts'
 import { view } from '../../src/view.ts'
@@ -355,5 +356,25 @@ describe('UI pieces', () => {
     // A name no UI knows is the UI's to report, not the engine's.
     const fine = make({ prose: { ...prose, 'hall.ring': 'A [[ui:anything|piece|a|b]].' } })
     expect(checkGame(fine.game).problems).toEqual([])
+  })
+})
+
+describe('proseBeats', () => {
+  it('formats a prose line by key as a scene body is: tokens filled, paragraphs cut, markup in spans', () => {
+    const { game } = make({ prose: { ...prose, 'hall.note': 'From **{{friend}}**.\n\nSee you soon.' } })
+    const state = start(game, { friend: 'Ava' })
+    expect(proseBeats(state, game, 'hall.note')).toEqual([
+      {
+        type: 'text',
+        text: 'From Ava.',
+        spans: [
+          { type: 'text', text: 'From ' },
+          { type: 'bold', text: 'Ava' },
+          { type: 'text', text: '.' },
+        ],
+      },
+      { type: 'text', text: 'See you soon.' },
+    ])
+    expect(proseBeats(state, game, 'hall.none')).toBeNull()
   })
 })

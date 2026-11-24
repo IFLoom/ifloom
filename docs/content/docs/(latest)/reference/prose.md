@@ -445,6 +445,24 @@ styledBeats(parseBeats('The sign says **Closed**.'))
 
 `[[act:]]` and `[[tip:]]` stay in the words as written, because only the view knows the choices and the prose. A beat that already has `spans` is left as it is.
 
+## proseBeats
+
+```ts
+import { proseBeats } from '@ifloom/engine'
+
+function proseBeats(state: GameState, game: Game, key: string): SceneBeat[] | null
+```
+
+The prose line `key` as beats, formatted as a scene's body is: its tokens filled for this save, cut into paragraphs and spoken lines with each speaker named from their entity, and its bold, italics and [UI pieces](#ui-pieces) in [spans](#inlinespan). Use it when your UI shows a line by key away from the scene, such as the dialog a UI piece opens. `null` when the game has no line by that key.
+
+```ts
+// prose: { 'notice.welcome': 'Welcome to **{{town}}**.' }
+proseBeats(runner.state, runner.game, 'notice.welcome')
+// [{ type: 'text', text: 'Welcome to Small Town.', spans: [...] }]
+```
+
+The React UI's [`InlineModal`](/docs/react/components#inlinemodal) draws the line its `[[ui:modal|words|key]]` names this way. Like `styledBeats`, it leaves `[[act:]]` and `[[tip:]]` in the words, since a line away from the scene has no choices to press.
+
 ## inlineMarkup
 
 ```ts

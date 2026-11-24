@@ -13,7 +13,7 @@
  * by screen readers once it's there.
  */
 import { useEffect, useRef, useState } from 'react'
-import type { Roll, SceneBeat, View } from '@ifloom/engine'
+import type { GameState, Roll, SceneBeat } from '@ifloom/engine'
 import { DICE_ROLL_MS } from '../hints.ts'
 import { useGame } from './context.tsx'
 import { Icon } from './icon.tsx'
@@ -164,19 +164,17 @@ function named(beats: readonly SceneBeat[], roll: Roll): boolean {
 
 /**
  * The rolls the last command made, while they're new: empty for rolls a
- * loaded save or an undo brings back, so only the rolls the player just made
- * tumble: those that came with one command more than the view before. `at`
- * counts each new set, to start them afresh.
+ * loaded save, an undo or a redo brings back (the snapshot isn't `fresh`), so
+ * only the rolls the player just made tumble. `at` counts each new set, to
+ * start them afresh.
  */
 export function useFreshRolls(): { rolls: Roll[]; at: number } {
-  const { view, runner } = useGame()
-  const count = runner.log().commands.length
-  const seen = useRef<{ count: number; view: View; rolls: Roll[]; at: number } | null>(null)
-  if (!seen.current) seen.current = { count, view, rolls: [], at: 0 }
-  else if (seen.current.view !== view) {
-    // One command more than the view before: the player's (or a redo). A load or an undo moves the log some other way.
-    const fresh = count === seen.current.count + 1 && view.rolls.length > 0
-    seen.current = { count, view, rolls: fresh ? view.rolls : [], at: fresh ? seen.current.at + 1 : seen.current.at }
+  const { snapshot } = useGame()
+  const seen = useRef<{ state: GameState; rolls: Roll[]; at: number } | null>(null)
+  if (!seen.current) seen.current = { state: snapshot.state, rolls: [], at: 0 }
+  else if (seen.current.state !== snapshot.state) {
+    const fresh = snapshot.fresh && snapshot.view.rolls.length > 0
+    seen.current = { state: snapshot.state, rolls: fresh ? snapshot.view.rolls : [], at: fresh ? seen.current.at + 1 : seen.current.at }
   }
   return { rolls: seen.current.rolls, at: seen.current.at }
 }

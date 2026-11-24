@@ -65,6 +65,22 @@ type Change = {
 | `label` | The stat's `label`. |
 | `text` | The change in the stat's own [`format`](/docs/reference/stats#statdef), with a sign: `+30 coins`, `-1 coin`, `-5%`. Just the number with no format. |
 
+## ChangeView
+
+```ts
+type ChangeView = Change & { name?: string }
+```
+
+What [`view.changes`](/docs/reference/view#changes) lists: each [`Change`](#change) with the words to show after its `text`, so the change says what moved.
+
+| `name` is | When |
+|---|---|
+| The entity's name, such as `Ava` | For a stat kept on an entity (`of`), filled for this save as the view names entities. |
+| The stat's `label`, such as `Energy` | For the player's stat when `text` doesn't say what it is: its format has no words besides the number, such as `{n}%` or `£{n}`, or it has no format. |
+| Left out | When the stat's format already says it in words, such as `{n} coins`. |
+
+So `+30 coins`, `-1 Energy` and `+4 Ava` are each a change's `text` followed by its `name`. The save keeps the bare `Change`, and the view works out `name` each time it's drawn, so a translation or a renamed entity shows straight away.
+
 ## Which stats are listed
 
 - Only the stats named in [`changes.stats`](#changes) are listed.
@@ -81,7 +97,7 @@ The save keeps the list in [`state.changes`](/docs/reference/state#changes), so 
 
 ## Drawing it
 
-`view.changes` is a list of [`Change`](#change), ready to draw: each has its `label`, its signed `text` and `by`, which says whether it went up or down. It's empty when the last command moved nothing. A UI usually draws them as small pills under the scene, and lets them fade.
+`view.changes` is a list of [`ChangeView`](#changeview), ready to draw: each has its signed `text`, the `name` that says what moved when the text doesn't, and `by`, which says whether it went up or down. It's empty when the last command moved nothing. A UI usually draws them as small pills under the scene, and lets them fade.
 
 The React UI has a ready list for it, [`Changes`](/docs/react/components#changes), which the default layout leaves out. The React tab places it after [`Scene`](/docs/react/components#scene) in a story you write. The Plain JS tab uses `runner` and `add` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
 

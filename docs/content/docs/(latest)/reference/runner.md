@@ -57,6 +57,8 @@ type RunnerSnapshot = {
   readonly canRedo: boolean
   readonly saves: readonly SaveListing[]
   readonly helpers: HelpersIn
+  readonly pressed: RenderedChoice | null
+  readonly fresh: boolean
 }
 ```
 
@@ -71,6 +73,8 @@ Everything a UI draws from the runner, in one value. `runner.snapshot()` gives t
 | `canUndo` / `canRedo` | Whether `undo()` or `redo()` would do anything, for greying out the buttons. Always `false` with history off. |
 | `saves` | Every save in the runner's [`saves`](/docs/reference/saves#saves), as [`saves.list()`](/docs/reference/saves#saves) gives them: newest first, then any that can't be read. See [The saves list](#the-saves-list). Empty without `saves`. |
 | `helpers` | What a helper started beside the runner reports, by its id, such as the unlocks plugin's [`startUnlocks`](/docs/plugins/unlocks#startunlocks) under `unlocks`. See [setHelper](#sethelper). |
+| `pressed` | The choice, inline action or button that led to the screen on show, as the [`RenderedChoice`](/docs/reference/view#renderedchoice) it was offered as, with its `id`, `command` and `ui` hints as written. See [What led here](#what-led-here). |
+| `fresh` | Whether the state on show came from a command the runner just ran. False after an undo, a redo, a load or a new game. |
 
 The snapshot is a new object whenever any part of it changes, and the same object until then. A UI that keeps it whole draws again exactly when something changed: Vue's `shallowRef`, React's `useSyncExternalStore` and a Svelte store all compare it by identity.
 
@@ -82,6 +86,21 @@ runner.snapshot() === shown  // false: a new state, so a new view, backlog and c
 ```
 
 The snapshot is frozen, and so are its parts as the runner hands them over. Change things through the runner's members.
+
+### What led here
+
+A UI often wants to know how the player got to the screen it's drawing, such as to play the transition a choice's `ui` hints ask for. `snapshot.pressed` says so. When a command the runner runs changes the screen (its [`view.scene.key`](/docs/reference/view#the-scene)), the runner finds the choice, inline action or button in the view the command was sent from that sends the same command, and keeps it until the screen changes again.
+
+```ts
+runner.apply({ type: 'choose', id: 'leave' })
+runner.snapshot().pressed  // { id: 'leave', label: 'Leave', command: { type: 'choose', id: 'leave' }, ui: { transition: 'fade' } }
+runner.apply({ type: 'action', id: 'wait' })
+runner.snapshot().pressed  // the same: waiting kept the screen
+```
+
+It's `null` when nothing the player pressed led to the screen: a command no choice or button on screen sends, a `tick` that ran a timer out, an undo, a redo, a load or a new game. The runner works it out from the view a UI drew, so a runner nothing has drawn yet (with no listener and no `view()` asked for) has none.
+
+`fresh` is the other half. It's true while the state on show came from a command just run, so a UI animates only what the player just did, such as tumbling the dice in [`view.rolls`](/docs/reference/rolls#drawing-it), and shows them settled after an undo or a load.
 
 ### The saves list
 

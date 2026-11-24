@@ -1,6 +1,6 @@
-import { Fragment, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { Fragment, useCallback, useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { audioSrc, type Roll, type SceneBeat, type View } from '@ifloom/engine'
-import { leavingOf, offeredIn, rollFor, screenTransition, type ScreenTransition, type Transition, type TransitionName } from '../hints.ts'
+import { leavingOf, rollFor, screenTransition, type ScreenTransition } from '../hints.ts'
 import { cn, PROSE } from '../lib/utils.ts'
 import { usePlayer } from './audio.ts'
 import { ChoiceList } from './choices.tsx'
@@ -364,38 +364,12 @@ function SceneArticle({ className, motion, transition, rolls }: { className?: st
   )
 }
 
-type Seen = { key: string; view: View; commands: number; pressed: Transition | TransitionName | undefined }
-
-/**
- * The `ui.transition` of the choice or button that led to this screen, if one
- * did: when the screen changes after exactly one more command, the one of the
- * screen before's choices, inline actions or buttons that sends that command.
- * Worked out while rendering, once per screen, so the copy of the screen
- * before can go out the way the choice says.
- */
-function usePressed(view: View): Transition | TransitionName | undefined {
-  const { runner } = useGame()
-  const seen = useRef<Seen | null>(null)
-  const commands = runner.log().commands
-  const before = seen.current
-  if (before && before.key === view.scene.key) {
-    if (before.view !== view) seen.current = { ...before, view, commands: commands.length }
-    return before.pressed
-  }
-  let pressed: Transition | TransitionName | undefined
-  if (before && commands.length === before.commands + 1) {
-    const sent = JSON.stringify(commands.at(-1))
-    pressed = offeredIn(before.view).find((choice) => JSON.stringify(choice.command) === sent)?.ui?.transition
-  }
-  seen.current = { key: view.scene.key, view, commands: commands.length, pressed }
-  return pressed
-}
-
 function SceneImpl({ className }: { className?: string }) {
-  const { view, runner } = useGame()
+  const { view, runner, snapshot } = useGame()
   const motion = useMotion()
   const frame = usePart('scene-transition', '')
-  const pressed = usePressed(view)
+  // The transition of the choice or button that led to this screen, as the runner says.
+  const pressed = snapshot.pressed?.ui?.transition
   const transition = screenTransition(view, runner.game, pressed)
   const fresh = useFreshRolls()
   const rolls = { all: view.rolls, fresh: fresh.rolls, at: fresh.at }

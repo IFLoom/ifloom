@@ -228,13 +228,18 @@ function OverlayImpl({ className, children }: { className?: string; children?: R
 export const Overlay = overridable('Overlay', OverlayImpl)
 
 /**
- * Whether a condition holds now, against the game's current state: any
- * condition content can write, `{ 'places/at': { location: 'home' } }` say.
- * It only reads, so saves and replays are as they were.
+ * Whether a condition holds now, against the state on show: any condition
+ * content can write, `{ 'places/at': { location: 'home' } }` say. It only
+ * reads, so saves and replays are as they were.
+ *
+ * An escape hatch for a layout: the view already says what the player can
+ * see, so reach for it only to place a part of your own by a condition the
+ * view has no field for, as `Section`'s `when` and `When` do. What the story
+ * shows belongs in content, where the engine checks it.
  */
 export function useHolds(condition: Condition | undefined): boolean {
-  const { runner } = useGame()
-  return holds(runner.state, runner.game, condition)
+  const { runner, snapshot } = useGame()
+  return holds(snapshot.state, runner.game, condition)
 }
 
 function WhenImpl({ condition, children }: { condition: Condition; children?: ReactNode }) {

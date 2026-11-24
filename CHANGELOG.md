@@ -10,6 +10,10 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- The runner's [snapshot](/docs/reference/runner#what-led-here) says which choice or button led to the screen on show, in `pressed` (its id, command and `ui` hints as written), and whether the state came from a command just run, in `fresh`. A UI of any framework plays a choice's transition and tumbles only new dice from them, with no replay of the command log.
+- Each of [`view.changes`](/docs/reference/changes#changeview) has a `name` when its `text` doesn't say what moved: the entity's name for an entity's stat, else the stat's label when its format has no words (`+1 Charm`, `+4 Ava`). **Breaking** only in the type: `View.changes` is now `ChangeView[]`.
+- [`proseBeats(state, game, key)`](/docs/reference/prose#prosebeats): a prose line by key as beats, formatted as a scene's body is, for a UI that shows one away from the scene. The React UI's `modal` piece draws its line with it, so speakers in it are named now.
+
 - A plugin's React UI declares itself once with [`pluginKit(id, words)`](/docs/react/kit#pluginkit) and reads the plugin in each component with [`usePlugin`](/docs/react/kit#useplugin): the plugin's view typed by its `ViewRegistry` entry, its words with the game's rewording over them, and a `send` for the commands its helpers write. Spread the kit into the `PluginUi`, `{ ...SHOP, panels }`, and the words are written in one place. Every first-party plugin's `/react` is built this way, and the plugin template too.
 - `messages.read({ channel })` writes the command that marks a whole channel read.
 - Each of the React UI's [kit parts](/docs/react/kit#kit_looks) has a look of its own, `KIT_LOOKS`, so a `card` from any plugin is boxed the same way with no preset loaded, a `note` is small and muted, and a done card is edged in the primary colour. [`KIT_LAYOUT`](/docs/react/kit#kit_layout) lists the layout classes the React UI's stylesheet always has, so a plugin's UI built from the kit needs no stylesheet of its own.

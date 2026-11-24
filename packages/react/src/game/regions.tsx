@@ -26,7 +26,7 @@ import { useGame } from './context.tsx'
 import { DIALOG_CLASSES, PartDialog } from './dialog.tsx'
 import { Icon } from './icon.tsx'
 import { overridable, usePart } from './overrides.tsx'
-import { WithPages, usePage, useProfile, type PagesOptions } from './pages.tsx'
+import { useProfile } from './pages.tsx'
 import { Clock } from './sidebar.tsx'
 import { useWords } from './words.ts'
 
@@ -52,27 +52,15 @@ function useWide(): boolean {
   )
 }
 
-/** What `GameShell` and `mountGame` pass down to the layout's `Game`: their `pages` option. */
-const LayoutOptions = createContext<{ pages?: boolean | PagesOptions }>({})
-
-/** Gives a layout's `Game` the shell's `pages`. `GameShell` uses it. */
-export function LayoutOptionsProvider({ pages, children }: { pages?: boolean | PagesOptions; children: ReactNode }) {
-  return <LayoutOptions.Provider value={{ pages }}>{children}</LayoutOptions.Provider>
-}
-
 /** How a `Sidebar` tells the `Game` it's there. */
 const SidebarSlot = createContext<((present: boolean) => void) | null>(null)
 
 export type GameProps = {
   className?: string
-  /** The pages around the game. Left out, the shell's `pages` (from `GameShell` or `mountGame`). */
-  pages?: boolean | PagesOptions
   children?: ReactNode
 }
 
-function GameImpl({ className, pages, children }: GameProps) {
-  const options = useContext(LayoutOptions)
-  const inPages = usePage().enabled
+function GameImpl({ className, children }: GameProps) {
   const [sidebars, setSidebars] = useState(0)
   const register = useCallback((present: boolean) => setSidebars((count) => count + (present ? 1 : -1)), [])
   const hasSidebar = sidebars > 0
@@ -84,24 +72,21 @@ function GameImpl({ className, pages, children }: GameProps) {
     ),
     className,
   )
-  const drawn = (
+  return (
     <SidebarSlot.Provider value={register}>
       <div {...page} data-has-sidebar={hasSidebar ? '' : undefined}>
         {children}
       </div>
     </SidebarSlot.Provider>
   )
-  // Inside the pages already (`mountGame`'s `app` puts them round it): don't add them twice.
-  if (inPages) return drawn
-  return <WithPages pages={pages ?? options.pages}>{drawn}</WithPages>
 }
 
 /**
  * The page: the root of a layout, inside the game's provider. It draws the
  * `page` part, a grid with the side column and the story side by side when it
  * has a `Sidebar` (it then carries `data-has-sidebar`), or one centred column
- * when it doesn't. With `pages` on, it's drawn on the `game` page, and the
- * title screen, settings and the rest in its place.
+ * when it doesn't. With `pages` on, `GameShell` and `mountGame` draw it on
+ * the `game` page, and the title screen, settings and the rest in its place.
  */
 export const Game = overridable('Game', GameImpl)
 

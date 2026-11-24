@@ -7,7 +7,7 @@
 import { useEffect, useState } from 'react'
 import { browserRunner } from '@ifloom/browser'
 import type { Runner } from '@ifloom/engine'
-import { GameShell, useAudio, type PluginUi } from '@ifloom/react'
+import { GameShell, type PluginUi } from '@ifloom/react'
 import module from '../src/game.ts'
 import { Layout } from '../src/layout.tsx'
 
@@ -35,12 +35,11 @@ export function Game() {
 }
 
 function Playing({ runner }: { runner: Runner }) {
-  // Plays what the game's `audio` asks for, from the first click or key press.
-  useAudio({ runner })
   // `layout` is the page, in `src/layout.tsx`. `pages` opens on a title
   // screen with New game, Continue, Load and Settings. Leave it out to start
   // straight in the story. `plugins` lists the UIs of the plugins in
   // src/game.ts, such as `shopUi` from `@ifloom/plugin-shop/react`; leave one
-  // out to draw that plugin yourself.
+  // out to draw that plugin yourself. The shell plays what the game's `audio`
+  // asks for, from the first click or key press.
   return <GameShell runner={runner} layout={Layout} pages plugins={PLUGINS} />
 }

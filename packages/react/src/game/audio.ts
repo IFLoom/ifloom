@@ -3,8 +3,16 @@ import { startAudio, type AudioOptions, type AudioPlayer } from '@ifloom/audio'
 import type { Game, Runner } from '@ifloom/engine'
 import { useGameIfAny } from './context.tsx'
 
-/** The player each runner has, so a voice line's replay button can find it. */
-const players = new Map<Runner, AudioPlayer>()
+/**
+ * Who asked for each runner's sound, in the order they asked. One player plays
+ * a runner at a time: the first `useAudio`'s if any asked, else the first of
+ * the automatic ones (`GameShell`'s and `mountGame`'s), so a game that calls
+ * `useAudio` beside them never hears its sound twice.
+ */
+type Request = { options?: AudioOptions; explicit: boolean }
+const requests = new Map<Runner, Request[]>()
+/** The player each runner has, and whose request it plays, so a voice line's replay button can find it. */
+const players = new Map<Runner, { player: AudioPlayer; request: Request }>()
 const listeners = new Set<() => void>()
 
 function changed(): void {
@@ -16,17 +24,38 @@ export function hasAudio(game: Game): boolean {
   return Object.keys(game.audio?.tracks ?? {}).length > 0
 }
 
-/** Start a player for a runner and remember it; the way to stop it forgets it again. */
-export function startPlayer(runner: Runner, options?: AudioOptions): () => void {
-  const player = startAudio(runner, options)
-  players.set(runner, player)
+/** Start or stop the runner's player so that it plays the request that wins now, and only that one. */
+function settle(runner: Runner): void {
+  const list = requests.get(runner) ?? []
+  if (!list.length) requests.delete(runner)
+  const wanted = list.find((request) => request.explicit) ?? list[0]
+  const now = players.get(runner)
+  if (now?.request === wanted) return
+  if (now) {
+    now.player()
+    players.delete(runner)
+  }
+  if (wanted) players.set(runner, { player: startAudio(runner, wanted.options), request: wanted })
   changed()
+}
+
+/**
+ * Ask for a runner's sound; the way to stop takes the request back. `explicit`
+ * is a `useAudio`'s, which goes over an automatic one.
+ */
+export function startPlayer(runner: Runner, options?: AudioOptions, explicit = true): () => void {
+  const request: Request = { options, explicit }
+  requests.set(runner, [...(requests.get(runner) ?? []), request])
+  settle(runner)
+  let stopped = false
   return () => {
-    player()
-    if (players.get(runner) === player) {
-      players.delete(runner)
-      changed()
-    }
+    if (stopped) return
+    stopped = true
+    requests.set(
+      runner,
+      (requests.get(runner) ?? []).filter((other) => other !== request),
+    )
+    settle(runner)
   }
 }
 
@@ -37,14 +66,16 @@ export function usePlayer(runner: Runner | undefined): AudioPlayer | null {
       listeners.add(listener)
       return () => listeners.delete(listener)
     },
-    () => (runner ? (players.get(runner) ?? null) : null),
+    () => (runner ? (players.get(runner)?.player ?? null) : null),
   )
 }
 
 /**
  * Play the game's sound while the component is mounted, with `@ifloom/audio`.
  * Inside a `GameProvider` it plays that game; outside, pass `runner`. Returns
- * the player once it has started. `mountGame` does this for you.
+ * the player once it has started. `GameShell` and `mountGame` play the
+ * game's sound themselves; a `useAudio` beside them takes over from theirs,
+ * with its options, so the sound never plays twice.
  */
 export function useAudio(options: AudioOptions & { runner?: Runner } = {}): AudioPlayer | null {
   const context = useGameIfAny()

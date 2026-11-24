@@ -78,7 +78,7 @@ Every element the UI draws carries a `data-part` naming what kind of thing it is
 function GameShell(props: GameShellProps): JSX.Element
 ```
 
-The whole UI. It's a [`GameProvider`](#gameprovider) around the `layout` component, or [`DefaultLayout`](#defaultlayout) if you leave it out. The props, `GameShellProps`, are described on [The React UI](/docs/react#gameshell). It passes `pages` to the layout's [`Game`](#game), and [`components`](#components), [`classes`](#classes) and `unstyled` to the provider.
+The whole UI, and the one root every entry draws: `mountGame` draws it too. It's a [`GameProvider`](#gameprovider) with the game's sound, its [text size](#textsize) and, with `pages` on, the [pages](#pages), around the `layout` component, or [`DefaultLayout`](#defaultlayout) if you leave it out. The props, `GameShellProps`, are described on [The React UI](/docs/react#gameshell). It passes [`components`](#components), [`classes`](#classes), `unstyled` and the rest to the provider.
 
 ```tsx
 import { GameShell } from '@ifloom/react'
@@ -113,12 +113,12 @@ Each `<Plugins at="…" />` draws what the game's [plugin UIs](/docs/react/kit#w
 ```tsx
 function Game(props: GameProps): JSX.Element
 
-type GameProps = { className?: string; pages?: boolean | PagesOptions; children?: ReactNode }
+type GameProps = { className?: string; children?: ReactNode }
 ```
 
 The page: a layout's root, inside the game's provider. With a [`Sidebar`](#sidebar) anywhere inside it, it's a grid, the side column `--width-sidebar` wide beside the story, which fills the rest of the window, and it carries `data-has-sidebar`. Without one, it's a single column up to `--width-reading` wide, centred. Its children are drawn in order.
 
-With `pages` on, it's drawn on the `game` page and the title screen, settings and the rest in its place. `pages` comes from `GameShell` or `mountGame` if you leave it out here.
+With `pages` on in `GameShell` or `mountGame`, it's drawn on the `game` page and the title screen, settings and the rest in its place.
 
 Replaceable as `Game` in [`components`](#components). Parts: `page` (with `data-has-sidebar`).
 
@@ -239,7 +239,7 @@ function RainBanner() {
 function WithPages(props: { pages?: boolean | PagesOptions; children: ReactNode }): JSX.Element | null
 ```
 
-Its children, or with `pages` on, the [pages](#pages) around them: the children show only on the `game` page. [`Game`](#game) uses it, so a layout doesn't need to. Use it for a page of your own that doesn't use `Game`.
+Its children, or with `pages` on, the [pages](#pages) around them: the children show only on the `game` page. [`GameShell`](#gameshell) uses it round the layout, so a layout doesn't need to. Use it under a `GameProvider` of your own.
 
 ### GameProvider
 
@@ -266,7 +266,7 @@ Connects everything under it to a [runner](/docs/reference/runner). It subscribe
 
 `plugins` are the [plugin UIs](/docs/react/kit#the-plugins-option) to draw, each from a plugin's `/react` subpath, such as `shopUi` from `@ifloom/plugin-shop/react`. `panels`, `inline` and `sections` are the same as on [`GameShell`](/docs/react#gameshell), and go over what the plugin UIs bring under the same names. `mods` turns on the [mod manager](#modmanager). See [`ModsOption`](#modsoption). `components`, `classes`, `unstyled`, `viewer` and `keys` are the [`UiOptions`](#uioptions), handed to a [`UiProvider`](#uiprovider) inside it. With `keys` on, the provider also listens for the [keyboard shortcuts](#keyoptions).
 
-Use it on its own to build [your own layout](/docs/react/extending#your-own-layout).
+Use it on its own to build [your own layout](/docs/react/extending#your-own-layout). On its own it plays no sound, sizes no text and draws no pages. [`GameShell`](#gameshell) adds those, and takes any component as its `layout`, so you rarely need the provider alone.
 
 **Gotcha.** Define `plugins`, `panels`, `inline`, `sections`, `mods`, `components` and `classes` once, outside your component. Don't write them inline, as in `panels={{ StallPanel }}`, in a component that re-renders. A new object on each render makes every component under the provider draw again. Leaving them out is fine, because the defaults are the same objects every time.
 
@@ -1539,7 +1539,7 @@ function Story({ children }: { children: React.ReactNode }) {
 function TextSize(): null
 ```
 
-Copies the setting the game names in the [`settings`](/docs/react/hints#settings) hint's `textSize` to `data-text-size` on `<html>`, now and whenever it changes, and takes it off when it's unmounted. It draws nothing. `GameShell` has one, so you only need it under a `GameProvider` of your own.
+Copies the setting the game names in the [`settings`](/docs/react/hints#settings) hint's `textSize` to `data-text-size` on `<html>`, now and whenever it changes, and takes it off when it's unmounted. It draws nothing. `GameShell` (and so `mountGame`) has one, so you only need it under a `GameProvider` of your own.
 
 ### useProfile
 
@@ -1885,13 +1885,20 @@ Parts: `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close`.
 function useAudio(options?: AudioOptions & { runner?: Runner }): AudioPlayer | null
 ```
 
-Plays the game's sound with the [audio player](/docs/browser/audio-player) while the component is mounted, and stops it on unmount. Inside a [`GameProvider`](#gameprovider) it uses that runner. Outside one, pass `runner`. The other options go to [`startAudio`](/docs/browser/audio-player#audiooptions) once, when it starts. It returns the player, or `null` until it has started. [`mountGame`](/docs/react#mountgame) starts the player itself, so use this only with a `GameShell` you draw yourself. See [Sound](/docs/react#sound).
+Plays the game's sound with the [audio player](/docs/browser/audio-player) while the component is mounted, and stops it on unmount. Inside a [`GameProvider`](#gameprovider) it uses that runner. Outside one, pass `runner`. The other options go to [`startAudio`](/docs/browser/audio-player#audiooptions) once, when it starts. It returns the player, or `null` until it has started.
+
+[`GameShell`](/docs/react#gameshell) and [`mountGame`](/docs/react#mountgame) start a player themselves, set with their `audio` option, so you need this only under a `GameProvider` of your own. One beside them takes over from theirs, so nothing plays twice. See [Sound](/docs/react#sound).
 
 ```tsx
-function App() {
-  useAudio({ runner, log: console.debug })
-  return <GameShell runner={runner} />
+function Sound() {
+  useAudio({ log: console.debug })
+  return null
 }
+
+<GameProvider runner={runner}>
+  <Sound />
+  <MyPage />
+</GameProvider>
 ```
 
 ## Words

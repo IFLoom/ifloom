@@ -115,7 +115,7 @@ The game runs in the browser only. Its runner reads saves and settings from `loc
 import { useEffect, useState } from 'react'
 import { browserRunner } from '@ifloom/browser'
 import type { Runner } from '@ifloom/engine'
-import { GameShell, useAudio } from '@ifloom/react'
+import { GameShell } from '@ifloom/react'
 import module from '../src/game.ts'
 import { Layout } from '../src/layout.tsx'
 
@@ -139,7 +139,6 @@ export function Game() {
 }
 
 function Playing({ runner }: { runner: Runner }) {
-  useAudio({ runner })
   return <GameShell runner={runner} layout={Layout} pages />
 }
 ```
@@ -155,7 +154,7 @@ export default function Page() {
 
 `browserRunner` is async, because it reads the player's settings before the first frame, so the effect waits for it. The `live` flag drops a runner that arrives after the component has gone, which happens in development, where React mounts each component twice.
 
-This draws [`GameShell`](/docs/react#gameshell) rather than calling [`mountGame`](/docs/react#mountgame). `mountGame` starts a React root of its own in an element, which a React app doesn't need. [`useAudio`](/docs/react#useaudio) plays the game's sound, as `mountGame` would. `GameShell` takes the same options as `mountGame`, such as `layout`, `pages` and `components`.
+This draws [`GameShell`](/docs/react#gameshell) rather than calling [`mountGame`](/docs/react#mountgame). `mountGame` starts a React root of its own in an element, which a React app doesn't need. `GameShell` plays the game's sound and takes the same options as `mountGame`, such as `layout`, `pages`, `audio` and `components`.
 
 The page around the game is an ordinary Next page. Put the game on any route, beside the rest of the site.
 

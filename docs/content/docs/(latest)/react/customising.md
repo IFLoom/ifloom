@@ -432,7 +432,7 @@ A section hides itself when nothing in it draws anything, and `when` shows it on
 
 ## 8. Write your own root
 
-For a page that isn't a side column and a story at all, give `mountGame` your own root component as `app`. It's drawn inside the game's provider, so [`useGame`](/docs/react/components#usegame), the hooks and every built-in component work in it. `components`, `classes` and `unstyled` still apply to any built-in part you use:
+For a page that isn't a side column and a story at all, give `mountGame` your own component as `layout`. Any component works. It's drawn inside the game's provider, with the sound, the text size and the pages as the default layout has them, so [`useGame`](/docs/react/components#usegame), the hooks and every built-in component work in it. `components`, `classes` and `unstyled` still apply to any built-in part you use:
 
 ```tsx
 // src/main.tsx
@@ -462,10 +462,10 @@ function TownApp() {
   )
 }
 
-mountGame(module.build(), { app: TownApp })
+mountGame(module.build(), { layout: TownApp })
 ```
 
-`layout` is ignored when you pass `app`, since there's no `GameShell` to use it. An `app` is a layout too: it can use `Game`, `Sidebar` and `Story` like any other.
+It doesn't need `Game`, `Sidebar` or `Story`, but it can use them like any other layout.
 
 The menus have hooks that give you their state and actions without their look, so your own screens don't have to talk to the runner directly:
 

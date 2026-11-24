@@ -160,12 +160,10 @@ type MountOptions = Omit<GameShellProps, 'runner'> & {
   root?: string | Element
   start?: GameState
   runner?: RunnerOptions
-  app?: ComponentType
-  audio?: false | AudioOptions
 }
 ```
 
-`mountGame` makes a runner for the game with `@ifloom/browser`'s [`browserRunner`](/docs/browser#browserrunner) and draws [`GameShell`](#gameshell) into the page, or your own `app`, inside React's `StrictMode`. It's async because `browserRunner` reads the player's profile first, so the game starts with their settings. It resolves to the runner, so your own code can still send commands or read the state. Most games don't need it and call `mountGame` without waiting.
+`mountGame` makes a runner for the game with `@ifloom/browser`'s [`browserRunner`](/docs/browser#browserrunner) and draws [`GameShell`](#gameshell) into the page, inside React's `StrictMode`. It's async because `browserRunner` reads the player's profile first, so the game starts with their settings. It resolves to the runner, so your own code can still send commands or read the state. Most games don't need it and call `mountGame` without waiting.
 
 It sets up what most games want:
 
@@ -175,7 +173,6 @@ It sets up what most games want:
 | `start` | A new game, `startingState(game, { seed, settings })`, with a random seed so each playthrough draws its own variants, and the player's stored play settings. |
 | `runner` | `browserRunner`'s defaults: `{ history: { depth: 50 }, saves: saves(game, localStorageDriver()), profile: profile(game, localStorageDriver()), autosave: { every: 'turn' } }`. Whatever you pass is merged over these. |
 | `pages` | Off, so the game starts straight away. `true`, or [`PagesOptions`](/docs/react/components#pagesoptions), opens on a title screen. See [Pages](#pages). |
-| `app` | None, so `GameShell` is drawn. Your own root component, drawn inside a [`GameProvider`](/docs/react/components#gameprovider) instead. `useGame`, the hooks and every built-in component work in it. With `pages` on, it's drawn on the `game` page. See [Write your own root](/docs/react/customising#8-write-your-own-root). |
 | `components` | None. Your own components in place of built-in ones, by name. See [Replace a component](/docs/react/customising#6-replace-a-component). |
 | `classes` | None. Tailwind classes for any part, by its `data-part` name. See [Change the built-in classes](/docs/react/customising#4-change-the-built-in-classes). |
 | `unstyled` | `false`. `true` drops every built-in class. |
@@ -183,7 +180,7 @@ It sets up what most games want:
 | `keys` | Off. `true` turns on the keyboard shortcuts: 1 to 9 for the choices on screen, each showing its number, and Escape for the menu. [`KeyOptions`](/docs/react/components#keyoptions) adds keys of your own with `map`. A minigame's own keys work either way. |
 | `audio` | On when the game lists any tracks in [`game.audio`](/docs/reference/audio). `false` turns sound off, and an object is passed to [`startAudio`](/docs/browser/audio-player#startaudio) as its [options](/docs/browser/audio-player#audiooptions). See [Sound](#sound). |
 
-Any other option goes to `GameShell` as a prop, such as `layout`, `panels` or `mods`. With `app`, `layout` is ignored, and the rest go to the provider.
+Any other option goes to `GameShell` as a prop, such as `layout`, `panels` or `mods`. `layout` takes any component, so a page that isn't a side column and a story at all is a layout too. See [Write your own root](/docs/react/customising#8-write-your-own-root).
 
 ```ts
 import { mountGame } from '@ifloom/react'
@@ -239,6 +236,7 @@ type GameShellProps = {
   keys?: boolean | KeyOptions
   layout?: ComponentType
   pages?: boolean | PagesOptions
+  audio?: false | AudioOptions
 }
 ```
 
@@ -253,8 +251,9 @@ type GameShellProps = {
 | `components`, `classes`, `unstyled` | How the UI looks, below the theme. See [Make it your own](/docs/react/customising). |
 | `viewer` | Whether clicking a picture in the story opens it large. On if you leave it out. |
 | `keys` | Keyboard shortcuts for choices and the menu. Off if you leave it out. See [`KeyOptions`](/docs/react/components#keyoptions). |
-| `layout` | The page, as a component: your `layout.tsx`. If you leave it out, you get [`DefaultLayout`](/docs/react/components#defaultlayout). See [Layouts](#layouts). |
-| `pages` | The title screen and the pages around the game. Off if you leave it out. The layout's [`Game`](/docs/react/components#game) draws them. See [Pages](#pages). |
+| `layout` | The page, as a component: your `layout.tsx`, or any component of your own. If you leave it out, you get [`DefaultLayout`](/docs/react/components#defaultlayout). See [Layouts](#layouts). |
+| `pages` | The title screen and the pages around the game. Off if you leave it out. The layout is drawn on the `game` page. See [Pages](#pages). |
+| `audio` | On when the game lists any tracks in [`game.audio`](/docs/reference/audio). `false` turns sound off, and an object is passed to [`startAudio`](/docs/browser/audio-player#startaudio) as its options. See [Sound](#sound). |
 
 ### Layouts
 
@@ -356,7 +355,7 @@ Each button shows only when it has something to do. Continue needs a save, Setti
 
 ## Sound
 
-When the game lists any tracks in [`game.audio`](/docs/reference/audio), `mountGame` starts the [audio player](/docs/browser/audio-player) for you. Music starts on the player's first click or key press, and each sound plays once. You don't need to add anything to the page, and the settings page already draws the game's volume and mute settings.
+When the game lists any tracks in [`game.audio`](/docs/reference/audio), `GameShell` (and so `mountGame`) starts the [audio player](/docs/browser/audio-player) for you. Music starts on the player's first click or key press, and each sound plays once. You don't need to add anything to the page, and the settings page already draws the game's volume and mute settings.
 
 To see what it's doing, pass it a log:
 
@@ -374,18 +373,23 @@ A spoken line with a voice, `@ava: "Morning!" [[voice:ava.morning]]`, gets a sma
 function useAudio(options?: AudioOptions & { runner?: Runner }): AudioPlayer | null
 ```
 
-If you draw [`GameShell`](#gameshell) yourself rather than with `mountGame`, start the player with `useAudio`. It starts when the component mounts and stops when it unmounts. Inside a [`GameProvider`](/docs/react/components#gameprovider) it plays that game. Outside one, pass the `runner`. The other options go to [`startAudio`](/docs/browser/audio-player#audiooptions), and are read once, when the player starts.
+`GameShell` and `mountGame` play the sound themselves, so you need `useAudio` only for a page built on a [`GameProvider`](/docs/react/components#gameprovider) of your own. It starts when the component mounts and stops when it unmounts. Inside a `GameProvider` it plays that game. Outside one, pass the `runner`. The other options go to [`startAudio`](/docs/browser/audio-player#audiooptions), and are read once, when the player starts.
 
 ```tsx
-import { useAudio, GameShell } from '@ifloom/react'
+import { GameProvider, useAudio } from '@ifloom/react'
 
-function App() {
-  useAudio({ runner })
-  return <GameShell runner={runner} />
+function Sound() {
+  useAudio()
+  return null
 }
+
+<GameProvider runner={runner}>
+  <Sound />
+  <MyPage />
+</GameProvider>
 ```
 
-It returns the [player](/docs/browser/audio-player#audioplayer) once it has started, and `null` before then. Use one or the other: `mountGame` with `useAudio` inside it would play every sound twice.
+It returns the [player](/docs/browser/audio-player#audioplayer) once it has started, and `null` before then. A runner has one player at a time: a `useAudio` inside `GameShell` or `mountGame` takes over from theirs, with its own options, so no sound plays twice.
 
 ## Pictures and video
 

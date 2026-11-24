@@ -296,7 +296,7 @@ Fades and ducking move in steps on `setTimeout`, so a test with fake timers can 
 
 - **The opening scene's sounds don't play.** They're in the view when the player starts, so they count as heard. Start a scene's sound from a choice, or put music on its channel, which plays as soon as sound is unlocked.
 - **Sound files stay beside the page.** [`ifloom build --inline-assets`](/docs/cli#one-file-pictures-and-all) puts pictures into `index.html` but never sound, which would make the page too big to load quickly. Ship the `audio/` folder with it.
-- **One player per runner.** Two players on the same runner play everything twice. The React UI starts one in `mountGame`, so don't also call `startAudio` or `useAudio` there.
+- **One player per runner.** Two players on the same runner play everything twice. The React UI's `GameShell` and `mountGame` start one, so don't also call `startAudio` there. A `useAudio` beside them takes their place rather than adding a second player.
 - **Ducking follows what's playing, not the view.** A channel ducks while a sound under it is actually playing, and comes back up when that sound ends, over 300 ms.
 
 ## See it in an example

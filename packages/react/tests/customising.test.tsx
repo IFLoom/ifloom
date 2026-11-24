@@ -143,8 +143,8 @@ describe('classes and data-part', () => {
   })
 })
 
-describe('mountGame with an app of your own', () => {
-  it('draws your component inside the game, where useGame works', async () => {
+describe('mountGame with a page of your own', () => {
+  it('draws any component as the layout, inside the game, where useGame works', async () => {
     const root = document.createElement('div')
     root.id = 'root'
     document.body.append(root)
@@ -152,7 +152,7 @@ describe('mountGame with an app of your own', () => {
       const { view } = useGame()
       return <h1 data-own>{view.scene.title}</h1>
     }
-    await act(async () => void mountGame(letter(), { app: App }))
+    await act(async () => void mountGame(letter(), { layout: App }))
     expect(document.querySelector('[data-own]')?.textContent).toBe('The mat')
     expect(document.querySelector('[data-part="page"]')).toBeNull()
   })

@@ -1,11 +1,7 @@
-import { StrictMode, type ComponentType } from 'react'
+import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import type { AudioOptions } from '@ifloom/audio'
 import { browserRunner } from '@ifloom/browser'
 import { describeProblem, type Game, type GameState, type Problem, type Runner, type RunnerOptions } from '@ifloom/engine'
-import { hasAudio, startPlayer } from './audio.ts'
-import { GameProvider } from './context.tsx'
-import { WithPages } from './pages.tsx'
 import { GameShell, type GameShellProps } from './shell.tsx'
 
 export type MountOptions = Omit<GameShellProps, 'runner'> & {
@@ -15,18 +11,6 @@ export type MountOptions = Omit<GameShellProps, 'runner'> & {
   start?: GameState
   /** Merged over the defaults: undo 50 deep, saves in localStorage, an autosave each turn. */
   runner?: RunnerOptions
-  /**
-   * Your own root component, drawn instead of `GameShell`. It sits inside the
-   * game's provider, so `useGame()` and every built-in component work in it.
-   * With `pages` on, it's drawn on the `game` page.
-   */
-  app?: ComponentType
-  /**
-   * Sound, through `@ifloom/audio`. It starts on its own when the game lists
-   * any tracks in `game.audio`; `false` turns it off, and an object is passed
-   * to `startAudio` as its options.
-   */
-  audio?: false | AudioOptions
 }
 
 /** A loader problem in the loader's own words; anything else as a string. */
@@ -37,34 +21,24 @@ function problemText(problem: unknown): string {
 /**
  * Start a game in the page: a runner with undo, saves and autosave (from
  * `browserRunner`, so it starts with the player's stored settings), the
- * whole React UI drawn into `#root`, or your own `app`, and the game's sound
- * playing if it has any. Takes a game, or what `loadGame` returns, whose
+ * whole React UI (`GameShell`, with your `layout`) drawn into `#root`, and
+ * the game's sound playing if it has any. Takes a game, or what `loadGame` returns, whose
  * problems are logged as warnings. Resolves to the runner once the game is
  * drawn, for anything the game wants to drive itself.
  */
 export async function mountGame(loaded: Game | { game: Game; problems?: readonly unknown[] }, options: MountOptions = {}): Promise<Runner> {
-  const { root = '#root', start, runner: runnerOptions, app: App, audio, ...shell } = options
+  const { root: where = '#root', start, runner: runnerOptions, ...shell } = options
   const game = 'game' in loaded && typeof loaded.game === 'object' ? loaded.game : (loaded as Game)
   const problems = 'game' in loaded && typeof loaded.game === 'object' ? (loaded.problems ?? []) : []
   if (problems.length) console.warn(problems.map(problemText).join('\n'))
 
-  const element = typeof root === 'string' ? document.querySelector(root) : root
-  if (!element) throw new Error(`mountGame: nothing in the page matches ${String(root)}.`)
+  const element = typeof where === 'string' ? document.querySelector(where) : where
+  if (!element) throw new Error(`mountGame: nothing in the page matches ${String(where)}.`)
 
   const runner = await browserRunner(game, { start, ...runnerOptions })
-  if (audio !== false && hasAudio(game)) startPlayer(runner, audio)
-  const { layout: _layout, pages, ...provider } = shell
   createRoot(element).render(
     <StrictMode>
-      {App ? (
-        <GameProvider runner={runner} {...provider}>
-          <WithPages pages={pages}>
-            <App />
-          </WithPages>
-        </GameProvider>
-      ) : (
-        <GameShell runner={runner} {...shell} />
-      )}
+      <GameShell runner={runner} {...shell} />
     </StrictMode>,
   )
   return runner

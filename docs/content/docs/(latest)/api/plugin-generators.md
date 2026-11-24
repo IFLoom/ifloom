@@ -124,7 +124,7 @@ Uses: [`KvValue`](/docs/api/engine#kvvalue).
 
 ## poolsOf
 
-Function. Explained in [Generators](/docs/reference/plugins/generators#poolsof-and-templatesof).
+Function. Explained in [Generators](/docs/reference/plugins/generators#poolsof).
 
 Returns the game's pools, `data.generators.pools` from its content and packs, in declared order.
 
@@ -188,7 +188,7 @@ Uses: [`TemplateDef`](#templatedef).
 
 ## templatesOf
 
-Function. Explained in [Generators](/docs/reference/plugins/generators#poolsof-and-templatesof).
+Function. Explained in [Generators](/docs/reference/plugins/generators#templatesof).
 
 Returns the game's templates, `data.generators.templates` from its content and packs, in declared order.
 

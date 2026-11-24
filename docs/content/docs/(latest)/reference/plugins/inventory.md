@@ -1,321 +1,201 @@
 ---
 title: "Inventory"
-description: "Using, dropping and giving away the things you hold: a usable trait with a label and effects, and buttons for each thing in the view."
+description: "Reference for @ifloom/plugin-inventory: the usable trait, the use, drop and give commands, the kinds it shows, the view with a button per thing, React UI, helpers, checks and strings."
 ---
-`@ifloom/plugin-inventory` lets the player do things with what they hold. A thing with the `inventory/usable` trait gets a button, such as "Eat the sandwich", that runs its effects and spends one. The plugin also drops things and gives them to someone who can hold them, such as a character.
+`@ifloom/plugin-inventory` lets the player use, drop and give away the [things](/docs/reference/glossary#thing) they hold. A thing with the `inventory/usable` trait gets a button, such as "Eat the sandwich", that runs its effects and spends one. The engine keeps who holds what (the `give`, `take` and `move` effects and `view.held`), so the plugin keeps nothing in the save. The inventory needs no other plugin, and it cooperates with [places](/docs/reference/plugins/places), which says where a dropped thing goes. [Entities, things and traits](/docs/explanation/entities-and-traits#things-and-holders) explains holding, [Add a plugin](/docs/how-to/add-a-plugin) installs it, and [Give the player things to hold and use](/docs/how-to/give-the-player-things) builds things with it.
 
-What you hold is the engine's: things are [entities](/docs/reference/entities), and [`give`](/docs/reference/entities#give-take-move-and-holding), `take` and `move` change who [holds](/docs/reference/entities#holding-things) them. [`view.held`](/docs/reference/view#held) lists them without this plugin. Add it when holding things isn't enough and the player should use them.
+In the showcase: `examples/showcase/src/world/things.ts`, where the sandwich and the flapjack restore energy and the newspaper opens the job board with only its ads, kept so the player can read it again.
 
 ```ts
 import { inventory, usableOf, inventoryKindsOf, type Usable, type InventoryData, type InventoryThing, type InventoryView } from '@ifloom/plugin-inventory'
 ```
 
-## Install
-
-List the package in your game's `package.json`, beside the engine:
-
-```json
-{
-  "dependencies": {
-    "@ifloom/engine": "^0.0.0",
-    "@ifloom/plugin-inventory": "^0.0.0"
-  }
-}
-```
-
-Then add `inventory()` to the game's `plugins`. [Adding one](/docs/reference/plugins#adding-one) has the details.
-
-It needs no other plugin. It cooperates with [places](/docs/reference/plugins/places) for where a dropped thing goes (see [Dropping and giving](#dropping-and-giving)).
-
 ## inventory
 
-```ts shape
-function inventory(): DefinedPlugin<null, InventoryView>
+The plugin's factory, which returns the plugin with the id `inventory`. It takes no options and keeps no state. Every field of its result is in [`inventory`](/docs/api/plugin-inventory#inventory), and its helpers are listed under [Functions](#functions).
+
+The inventory, the [shop](/docs/reference/plugins/shop) and the [wardrobe](/docs/reference/plugins/wardrobe) never name each other. Each reads what the player holds from the engine and its own trait on each thing, so a game uses any of them alone or all three, and one thing can carry a trait for each. With all three, the player buys a scarf, wears it, and gives it back to the stall with `inventory.give('clothing:scarf', 'vendor:stall')`, which takes it off and returns it to the stall's stock.
+
+```ts
+import { loadGame, type Content } from '@ifloom/engine'
+import { inventory } from '@ifloom/plugin-inventory'
+import { places } from '@ifloom/plugin-places'
+
+declare const town: Content
+
+export const { game } = loadGame([town], { id: 'small-town', title: 'Small Town', plugins: [places({ start: 'flat' }), inventory()] })
 ```
 
-Builds the plugin, with the id `inventory`. It takes no options and keeps nothing in the save: what you hold is the engine's, and what a thing does is its trait.
+## Content
 
-## Making things usable
+### InventoryData
 
-Give a thing the `inventory/usable` trait. `usable` writes it, to spread into an entity's or a kind's `traits`:
+The plugin's content, in `data.inventory`. Every field is in [`InventoryData`](/docs/api/plugin-inventory#inventorydata).
+
+`kinds` lists the kinds whose things the view shows, each as an entry with the kind's id so a mod can add one. With `kinds` left out, the view shows things of every kind. A game that keeps clothes in the wardrobe shows only its `item` kind:
 
 ```ts
 import type { Content } from '@ifloom/engine'
-import { jobs } from '@ifloom/plugin-jobs'
-import { inventory } from '@ifloom/plugin-inventory'
 
-const things: Content = {
+export const bag: Content = { data: { inventory: { kinds: [{ id: 'item' }] } } }
+```
+
+## Traits
+
+### Usable
+
+The data of the `inventory/usable` trait, which makes a thing usable. Every field is in [`Usable`](/docs/api/plugin-inventory#usable).
+
+`label` is the use button's label. `effects` are any [effects](/docs/reference/effects), a plugin's included, and they read the state as it was before one was spent, as an action's effects read it before its cost. With `keep: true`, using the thing spends none, for a book read again or a torch switched on.
+
+`inventory.usable(label, effects, { keep })` writes the trait, to spread into `traits` beside other plugins' traits. As a [trait](/docs/reference/glossary#trait), it goes on a kind as a default, on an entity, or in content's [`traits`](/docs/reference/content#traits) table, where a mod can change what a thing does. A thing made in play `like` a usable one is usable too.
+
+```ts
+import type { Content } from '@ifloom/engine'
+import { inventory } from '@ifloom/plugin-inventory'
+import { jobs } from '@ifloom/plugin-jobs'
+
+export const things: Content = {
   stats: [{ id: 'energy', label: 'Energy', start: 50, max: 100 }],
   kinds: [{ id: 'item', label: 'Thing', plural: 'Things', listed: false }],
   entities: [
-    { id: 'sandwich', of: 'item', name: 'sandwich', description: 'Cheese and pickle.', at: 'player', traits: { ...inventory.usable('Eat the sandwich', [{ stat: 'energy', by: 25 }]) } },
-    // Kept: reading the paper doesn't use it up.
+    { id: 'sandwich', of: 'item', name: 'sandwich', at: 'player', traits: { ...inventory.usable('Eat the sandwich', [{ stat: 'energy', by: 25 }]) } },
     { id: 'paper', of: 'item', name: 'newspaper', at: 'player', traits: { ...inventory.usable('Read the job ads', [jobs.open(['dogs'])], { keep: true }) } },
   ],
 }
 ```
 
-### Usable
+## Commands
 
-```ts shape
-const inventory: {
-  usable(label: string, effects: EffectRef[], options?: { keep?: boolean }): { 'inventory/usable': Usable }
-}
+Each command takes the thing from the protagonist being played while they hold one, and otherwise from the player, so what the player kept across a switch is still theirs to use. Each goes through [locks](/docs/reference/locks) like any command, so a lock with `deny: ['inventory/use']` stops eating during a scene where it would be rude. Each is a [plugin call](/docs/reference/custom#plugincall), and its [`effectsOf`](/docs/reference/plugin-api#effectsof) lists what it would do, so a [guard](/docs/reference/plugin-api#guard) sees the effects.
 
-type Usable = { label: string; effects: EffectRef[]; keep?: boolean }
+### inventory/use
+
+Runs the thing's `inventory/usable` effects and, unless the trait has `keep`, takes one away. The plugin refuses it in this order:
+
+1. With `There is no such thing.` ([`noSuchThing`](/docs/reference/strings#refusals)) when the thing isn't in the game.
+2. With `You have no <name>.` (`inventory/haveNone`) when the player holds none.
+3. With `The <name> does not do anything.` (`inventory/doesNothing`) when the thing has no `inventory/usable` trait.
+
+```ts fragment
+{ 'inventory/use': { id: 'item:sandwich' } } // inventory.use('item:sandwich')
 ```
 
-| Field | What it is |
-|---|---|
-| `label` | The button's label: "Eat the sandwich". |
-| `effects` | What using one does: any [effects](/docs/reference/effects), a plugin's included, such as opening a panel. They read the state as it was before one was spent, as an action's effects read it before its cost. |
-| `keep` | Using it doesn't spend one: a book you read again, a torch you switch on. One is spent if left out. |
+### inventory/drop
 
-It's a [trait](/docs/reference/entities#traits), so you can write it on a kind as a default (every kind of fruit is eaten), on an entity, or in content's `traits` table, where a mod can change what a thing does. A thing made in play [`like`](/docs/reference/effects#create) a usable one is usable too.
+Takes one away from the player. The plugin asks for the [`places/holder`](/docs/reference/plugins/places#queries) query, and when the answer is a holder that can hold things, it moves the thing there. Places answers with the location's entity, so the dropped thing lies at the location, listed in the places view with a [pick-up](/docs/reference/plugins/places#placespickup) button. Without places, or with the player nowhere, a dropped thing is gone. The plugin refuses it as it refuses `inventory/use`, for a thing not in the game or one the player doesn't hold.
 
-## Using
-
-| Command | Helper | Does |
-|---|---|---|
-| `{ 'inventory/use': { id } }` | `inventory.use(ref)` | Runs the thing's `inventory/usable` effects and, unless it's kept, takes one away from you. |
-| `{ 'inventory/drop': { id } }` | `inventory.drop(ref)` | Drops one. See [Dropping and giving](#dropping-and-giving). |
-| `{ 'inventory/give': { id, to } }` | `inventory.give(ref, to)` | Moves one from you to `to`, a holder: a unique entity such as `'character:ava'`. |
-
-"You" is whoever the player is playing (see [Protagonists](/docs/reference/entities#protagonists-you-and-player)). Each command takes the thing from the protagonist while they hold one, and otherwise from the player, so what the player keeps across a switch is still theirs to use.
-
-`inventory/use` is refused with:
-
-- `There is no such thing.` (the engine's [`noSuchThing`](/docs/reference/strings#refusals)) when the thing isn't in the game.
-- `You have no <name>.` (`inventory/haveNone`) when you hold none.
-- `The <name> does not do anything.` (`inventory/doesNothing`) when it has no `inventory/usable` trait.
-
-All three go through [locks](/docs/reference/locks) like any command, so a lock can say `deny: ['inventory/use']` during a scene where eating would be rude. A button for `inventory/use` greys out with the reason, and a [guard](/docs/reference/plugins#guards) sees the effects it would run.
-
-## Dropping and giving
-
-`inventory/drop` takes one away from you. With [places](/docs/reference/plugins/places), it asks for somewhere to put it where you are, through the `places/holder` [query](/docs/reference/plugins#queries), and moves it there when the answer is a holder that can hold things. Places answers with the room's [entity](/docs/reference/plugins/places#each-place-is-an-entity), so the thing lies in the room, listed in the places view with a button to [pick it up](/docs/reference/plugins/places#things-lying-in-a-place) again. Without places, or with the player nowhere, a dropped thing is gone. It's refused with `There is no such thing.` and `You have no <name>.` as `use` is.
-
-```ts
-import { apply, type Game, type GameState } from '@ifloom/engine'
-import { inventory } from '@ifloom/plugin-inventory'
-import { places } from '@ifloom/plugin-places'
-
-declare const game: Game
-declare const inFlat: GameState   // in the flat, holding the paper
-
-const dropped = apply(inFlat, game, inventory.drop('item:paper')).state
-dropped.held['location:flat']   // { 'item:paper': 1 }: it lies in the flat
-apply(dropped, game, places.pickUp('item:paper')).state.held.player   // { 'item:paper': 1 }: back with you
+```ts fragment
+{ 'inventory/drop': { id: 'item:paper' } } // inventory.drop('item:paper')
 ```
 
-`inventory/give` moves one to `to`. It's refused when you hold none, with `You already have it.` when `to` is you or the player, and with `You can’t give things to <name>.` when `to` can't hold things: a kind that isn't [`unique`](/docs/reference/entities#kinddef), or an entity that isn't in the game. Who you can give to in the story is yours to say, by where you put the button: a choice in Ava's scene, say.
+### inventory/give
+
+Moves one to `to`, a [holder](/docs/reference/glossary#holder) such as `'character:ava'`. Besides the two refusals `inventory/drop` has, the plugin refuses it with `You already have it.` (`inventory/giveToSelf`) when `to` is the player or the protagonist being played. It refuses it with `You can’t give things to <name>.` (`inventory/cantGiveTo`) when `to` can't hold things, such as an entity of a kind that isn't [`unique`](/docs/reference/entities#unique) or one not in the game. The game decides who the player can give to by where it offers the command, such as a choice in Ava's scene.
 
 ```ts
 import { holding, type Choice } from '@ifloom/engine'
-import { inventory } from '@ifloom/plugin-inventory'
 import { cast } from '@ifloom/plugin-cast'
-
-// in Ava's scene
-const gift: Choice = { id: 'gift', label: 'Give her the scarf', when: holding('clothing:scarf'), command: inventory.give('clothing:scarf', cast.character('ava')) }
-```
-
-## With the shop and the wardrobe
-
-The inventory, the [shop](/docs/reference/plugins/shop) and the [wardrobe](/docs/reference/plugins/wardrobe) know nothing about each other. Each one reads what you hold from the engine and its own trait on each thing, and ignores the others' traits. So you can use any of them alone, or all three, and a thing can carry a trait for each:
-
-```ts
-import type { Content } from '@ifloom/engine'
 import { inventory } from '@ifloom/plugin-inventory'
-import { shop } from '@ifloom/plugin-shop'
-import { wardrobe } from '@ifloom/plugin-wardrobe'
 
-const market: Content = {
-  stats: [
-    { id: 'coins', label: 'Coins', start: 20, spendable: true },
-    { id: 'energy', label: 'Energy', start: 50, max: 100 },
-  ],
-  kinds: [
-    { id: 'clothing', label: 'Clothing', unique: true, listed: false },
-    { id: 'food', label: 'Food', listed: false },
-  ],
-  entities: [
-    { id: 'scarf', of: 'clothing', name: 'scarf', traits: { ...wardrobe.wearable('neck'), ...shop.sellable({ coins: 8 }) } },
-    { id: 'pie', of: 'food', name: 'pie', traits: { ...inventory.usable('Eat the pie', [{ stat: 'energy', by: 20 }]), ...shop.sellable({ coins: 3 }) } },
-    shop.vendor({ id: 'stall', name: 'Stall', buysBack: 0.5, goods: [{ entity: 'clothing:scarf', stock: 1 }, { entity: 'food:pie' }] }),
-  ],
-  data: {
-    wardrobe: { slots: [{ id: 'neck', label: 'Neck' }] },
-  },
-}
+export const gift: Choice = { id: 'gift', label: 'Give her the scarf', when: holding('clothing:scarf'), command: inventory.give('clothing:scarf', cast.character('ava')) }
 ```
 
-With all three, the player buys the scarf from the stall, wears it, eats a pie, and gives the scarf back to the stall with `inventory.give('clothing:scarf', 'vendor:stall')`. It comes off as it goes, and the stall has it to sell again. With only the shop, the same content sells both, and nothing is worn or eaten. With only the wardrobe, the scarf can be worn once something gives it to the player. A game without a plugin leaves its `data` out, since the loader reports data for a plugin the game doesn't have.
-
-## Strings
-
-| Key | English |
-|---|---|
-| `inventory/haveNone` | `You have no {thing}.` |
-| `inventory/doesNothing` | `The {thing} does not do anything.` |
-| `inventory/cantGiveTo` | `You can’t give things to {to}.` |
-| `inventory/giveToSelf` | `You already have it.` |
-
-`{thing}` is the thing's name. A thing the game doesn't have is refused with the engine's own [`noSuchThing`](/docs/reference/strings#refusals).
-
-## The view
-
-`view(state, game).plugins.inventory` is an `InventoryView`: what you hold, with a button to use each thing that has a use and one to drop it, built with the engine's [`renderAction`](/docs/reference/view#renderaction) so a UI draws them like any other button.
-
-Its [React UI](#drawing-it) draws it with [`InventoryCard`](#inventorycard), in place of the React UI's own [`Inventory`](/docs/react/components#inventory), and [`useInventory`](#useinventory) gives the same data and the commands with no markup. Without this UI, `Inventory` draws `view.held` with no buttons.
+## View
 
 ### InventoryView
 
-```ts shape
-type InventoryView = { things: InventoryThing[] }
-```
+The things the player holds as the player sees them, in `view.plugins.inventory`. Every field is in [`InventoryView`](/docs/api/plugin-inventory#inventoryview).
 
-| Field | What it is |
-|---|---|
-| `things` | What you hold: the protagonist's things while one is played, then the player's, each in the game's order of its entities. A thing whose `visible` doesn't hold is left out, as in `view.held`. |
+`things` lists the protagonist's things while one is played, then the player's, each in the game's order of its entities. It leaves out things of a kind `data.inventory.kinds` doesn't list, and things whose [`visible`](/docs/reference/entities#entitydef) condition doesn't hold, as [`view.held`](/docs/reference/view#heldview) does. A thing both the protagonist and the player hold is listed once for each.
 
 ### InventoryThing
 
-One thing you hold, with its buttons.
+One thing the player holds, with its buttons, an entry of `things`. Every field is in [`InventoryThing`](/docs/api/plugin-inventory#inventorything).
 
-```ts shape
-type InventoryThing = {
-  ref: EntityRef
-  name: string
-  description: string | null
-  image: string | null
-  count: number
-  at: Holder
-  use: RenderedChoice | null
-  drop: RenderedChoice
-}
+`name` and `description` have their tokens filled, and `description` is `null` when the thing has none. `image` goes through [`artSrc`](/docs/reference/prose#artsrc). `count` is how many `at` holds. `use` is a [`RenderedChoice`](/docs/reference/view#renderedchoice) labelled by the trait, or `null` for a thing with no use. `drop` is a button labelled with the thing's name. Each button carries the engine's refusal in `disabled` when it can't be pressed now.
+
+```ts fragment
+{ things: [{ ref: 'item:sandwich', name: 'sandwich', description: 'Cheese and pickle.', image: null, count: 1, at: 'player', use: { label: 'Eat the sandwich', … }, drop: { label: 'sandwich', … } }] }
 ```
 
-| Field | What it is |
-|---|---|
-| `ref` | The thing, such as `'item:sandwich'`. |
-| `name`, `description` | Its name and description, with prose tokens filled in. `description` is `null` when it has none. |
-| `image` | Its picture's path, through `artSrc`, or `null`. |
-| `count`, `at` | How many are held, and who holds them: the protagonist or `'player'`. |
-| `use` | The button that uses one, labelled by its trait, or `null` for a thing that does nothing. |
-| `drop` | The button that drops one, labelled with its name. |
+[Render things to use and drop](/docs/how-to/render/things-plugins#render-things-to-use-and-drop) renders this view in Plain JS, React and Vue.
 
-### InventoryData
+## React UI
 
-```ts shape
-type InventoryData = { kinds?: { id: string }[] }
-```
-
-The plugin's content, in `data.inventory`. `kinds` is the kinds whose things the view shows, every kind if left out. Each is an entry with the kind's id, as plugin content always is, so a mod can add one. A game with clothes in the wardrobe and keepsakes on a shelf might show only its `item` kind:
-
-```ts
-data: { inventory: { kinds: [{ id: 'item' }] } }
-```
-
-The checker reports a kind the game doesn't have.
-
-## Drawing it
-
-`view.plugins.inventory` is an [`InventoryView`](#inventoryview): what you hold, each thing with a `use` button when it has a use and a `drop` button, ready to draw like any other button.
-
-`@ifloom/plugin-inventory/react` draws what the player carries with the plugin's buttons, for a game drawn with [`@ifloom/react`](/docs/react). List `inventoryUi` in the game's [`plugins`](/docs/react/kit#the-plugins-option) and [`InventoryCard`](#inventorycard) is drawn wherever the React UI's own [`Inventory`](/docs/react/components#inventory) is, with a button that uses each usable thing. The Plain JS tab uses `runner`, `add` and `drawChoices` from the vanilla template's `src/main.ts`, whose `draw` hands each part the runner's [snapshot](/docs/reference/runner#runnersnapshot), and the Vue tab reads `view`, `snapshot` and `runner` from the vue template's `src/runner.ts` (see [Start the runner](/docs/guide/frameworks#start-the-runner)).
-
-::include[../../../../../snippets/plain/inventory.ts]{meta='tab="Plain JS" tab-group="framework"'}
-
-::include[../../../../../snippets/react/mount-inventory.tsx]{meta='tab="React" tab-group="framework"'}
-
-::include[../../../../../snippets/vue/Inventory.vue]{meta='tab="Vue" tab-group="framework"'}
-
-The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.inventory`, or from [`useInventory`](#useinventory) with your own markup, and nothing of ours is drawn: that's as much a way to use the plugin as ours. React and `@ifloom/react` are optional peers of the plugin, and a game drawn with another UI never loads this subpath.
+The React UI is optional: the `@ifloom/plugin-inventory/react` subpath renders the inventory for a game that uses [`@ifloom/react`](/docs/reference/react), and a game rendered another way never loads it. [Show plugins in the React UI](/docs/how-to/react/show-plugin-uis) adds it to a game.
 
 ### inventoryUi
 
-```ts shape
-const inventoryUi: PluginUi
-```
+The plugin's [`PluginUi`](/docs/reference/react/kit#pluginui), listed in `mountGame`'s `plugins`. It renders [`InventoryCard`](#inventorycard) wherever the React UI's own [`Inventory`](/docs/reference/react/components#inventory) goes, in the side column and the `inventory` panel. Its type is in [`inventoryUi`](/docs/api/plugin-inventory#inventoryui). Without it, `Inventory` renders `view.held` with no buttons.
 
-The plugin's [`PluginUi`](/docs/react/kit#pluginui): [`InventoryCard`](#inventorycard) is drawn wherever the React UI's own [`Inventory`](/docs/react/components#inventory) is, with a button that uses each usable thing.
+### INVENTORY_WORDS
 
-Its words are in `INVENTORY_WORDS`. A game rewords any of them with `ui.<key>` in its strings, as it does the React UI's own: `{ 'ui.drop': '…' }`.
-
-| Key | English |
-|---|---|
-| `ui.drop` | `Drop` |
+The words the inventory UI uses, by key, which a game rewords as `ui.<key>` in its strings as it does the React UI's own. Its value is in [`INVENTORY_WORDS`](/docs/api/plugin-inventory#inventory_words). It holds one key, `ui.drop`, `Drop`.
 
 ### InventoryCard
 
-```tsx shape
-function InventoryCard(props: InventoryProps): JSX.Element | null
-```
+Renders the things in `view.plugins.inventory`, each usable one with its use button, disabled with the engine's reason while it can't be used. It takes the props of the React UI's own `Inventory`, which are in [`InventoryCard`](/docs/api/plugin-inventory#inventorycard).
 
-What the player carries, with this plugin's buttons. It takes the same props as the React UI's own [`Inventory`](/docs/react/components#inventory), and `inventoryUi` draws it in that one's place, in the side column and the `inventory` panel. Each thing you hold (`data-thing`) has a button that uses it when it's [usable](#making-things-usable), greyed out with the engine's reason when it can't be used now. With `drop`, each has a **Drop** button (`ui.drop`) too, which sends `inventory/drop`.
-
-Replaceable as `InventoryCard` in [`components`](/docs/react/components#components). Parts: `inventory`, `inventory-title`, `thing`, `thing-name`, `thing-count`, `thing-text`, `thing-drop` and `choice`.
+With `drop`, each thing also has a **Drop** button (`ui.drop`) that sends `inventory/drop`. Without the plugin, it renders `view.held`. A game replaces it as `InventoryCard` in [`components`](/docs/reference/react/components#components). Its parts are `inventory`, `inventory-title`, `thing` (with `data-thing`), `thing-name`, `thing-count`, `thing-text`, `thing-drop` and `choice`.
 
 ### useInventory
 
-```ts shape
-function useInventory(): InventoryControls | null
+Returns the inventory view from the running game with a `use`, a `drop` and a `give` that send the plugin's commands, or `null` in a game without the plugin. It re-renders when the view changes. Its signature is in [`useInventory`](/docs/api/plugin-inventory#useinventory).
 
-type InventoryControls = InventoryView & {
-  use: (ref: EntityRef) => Result<GameState>
-  drop: (ref: EntityRef) => Result<GameState>
-  give: (ref: EntityRef, to: Holder) => Result<GameState>
-}
-```
+### InventoryControls
 
-The [inventory](/docs/reference/plugins/inventory) plugin's view ([`InventoryView`](/docs/reference/plugins/inventory#inventoryview): `things`, each with its `use` and `drop` buttons) and its commands, or `null` in a game without the plugin. `use`, `drop` and `give` send `inventory/use`, `inventory/drop` and `inventory/give`. [`Inventory`](/docs/react/components#inventory) is drawn from it.
+The value `useInventory` returns, an [`InventoryView`](#inventoryview) with `use(ref)`, `drop(ref)` and `give(ref, to)`. Every field is in [`InventoryControls`](/docs/api/plugin-inventory#inventorycontrols). Each returns the runner's [`Result`](/docs/reference/common#result), so a refusal comes back with its reason.
 
 ::include[../../../../../snippets/react/use-inventory.tsx]
 
-## For code
+## Functions
 
-### Helpers
+The helpers are properties of `inventory` and write its trait and calls, typed:
 
-```ts shape
-const inventory: {
-  (): DefinedPlugin<null, InventoryView>
-  usable(label: string, effects: EffectRef[], options?: { keep?: boolean }): { 'inventory/usable': Usable }
-  use(ref: EntityRef): CommandRef
-  drop(ref: EntityRef): CommandRef
-  give(ref: EntityRef, to: Holder): CommandRef
-}
-```
+- **`inventory.usable(label, effects, { keep }?)`** returns the [`inventory/usable`](#usable) trait, to spread into `traits`.
+- **`inventory.use(ref)`**, **`inventory.drop(ref)`** and **`inventory.give(ref, to)`** return the [commands](#commands) as a [`CommandRef`](/docs/reference/custom#commandref).
 
 ### usableOf
 
-```ts shape
-function usableOf(state: GameState, game: Game, ref: EntityRef): Usable | undefined
-```
+Returns the thing's `inventory/usable` trait, read through the thing it was made `like`, or `undefined` for a thing with no use. Its signature is in [`usableOf`](/docs/api/plugin-inventory#usableof).
 
-The thing's `inventory/usable` trait, read through what it was made `like`, or undefined when it does nothing.
+```ts given
+import { usableOf } from '@ifloom/plugin-inventory'
+
+usableOf(state, game, 'item:sandwich')?.label // 'Eat the sandwich'
+```
 
 ### inventoryKindsOf
 
-```ts shape
-function inventoryKindsOf(game: Game): { id: string }[] | undefined
-```
-
-The game's `data.inventory.kinds`, merged from its content and packs, or `undefined` when it lists none, for every kind.
+Returns the kinds in `data.inventory.kinds`, merged from the game's content and packs, or `undefined` when it lists none and the view shows every kind. Its signature is in [`inventoryKindsOf`](/docs/api/plugin-inventory#inventorykindsof).
 
 ## Checks
 
-When the game loads, the checker reports:
+When the game loads, the checker reports problems with the trait on each usable thing, with `where` as `trait inventory/usable on <ref>`, and with the plugin's calls and content:
 
-- A usable thing with no label, or effects that aren't a list (`trait inventory/usable on <ref>`).
-- Anything a usable thing's effects name that the game doesn't have, such as an unknown stat.
-- A command naming a thing the game doesn't have (`unknown entity "…"`), or a `give` to something that can't hold things.
-- A kind in `data.inventory.kinds` the game doesn't have.
+| Problem | Cause |
+|---|---|
+| `a usable thing needs a label for its button` | The trait's `label` is missing or empty. |
+| `a usable thing needs its effects, a list` | The trait's `effects` isn't a list. |
+| `unknown stat "focus"` | A usable thing's effects name something the game doesn't have. |
+| `unknown entity "item:pear"` | A command names a thing the game doesn't have. |
+| `"item:paper" can't hold itself` | An `inventory/give` names the thing as its own `to`. |
+| `unknown kind "keepsake"` | An entry of `data.inventory.kinds` names a kind the game doesn't have. |
 
-## Gotchas
+## Strings
 
-- **The view lists a thing once for each holder.** While a protagonist is played, a thing both they and the player hold is listed twice, and its button uses the protagonist's first.
-- **Dropping is for good, for now.** Without somewhere to put it, a dropped thing leaves the game's holdings. To keep a quest's key, give the player no drop button for it: the React `InventoryCard` shows drop buttons only with `drop`.
+A game, a pack or a translation rewords these by their full key in its [strings](/docs/reference/strings#stringkey-and-strings). `{thing}` is the thing's name, and `{to}` is the name of the holder given to. A thing the game doesn't have gets the engine's [`noSuchThing`](/docs/reference/strings#refusals).
 
-## See it in an example
+| Key | Meaning |
+|---|---|
+| `inventory/haveNone` | `You have no {thing}.`, the refusal of a thing the player doesn't hold. |
+| `inventory/doesNothing` | `The {thing} does not do anything.`, the refusal of [`inventory/use`](#inventoryuse) for a thing with no use. |
+| `inventory/cantGiveTo` | `You can’t give things to {to}.`, the refusal of [`inventory/give`](#inventorygive) to something that can't hold things. |
+| `inventory/giveToSelf` | `You already have it.`, the refusal of `inventory/give` to the player. |
 
-Small Town: [`examples/showcase/src/world/things.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/world/things.ts) gives the sandwich and the flapjack a use that restores energy, and the newspaper one that opens the job board with only the paper's ads, kept so you can read it again.
+## Caveats
+
+- While a protagonist is played, a thing both they and the player hold is listed twice, and both buttons use the protagonist's first.
+- A dropped thing in a game without places leaves the game's holdings for good. To keep a quest's key, give the player no drop button for it, and the React `InventoryCard` shows drop buttons only with `drop`.
+- A game without the shop or the wardrobe leaves their `data` out, because the loader reports data for a plugin the game doesn't have.

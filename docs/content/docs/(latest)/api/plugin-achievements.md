@@ -204,7 +204,7 @@ const AchievementList: ComponentType<{ className?: string; title?: string | fals
 
 ### ACHIEVEMENTS_WORDS
 
-Const.
+Const. Explained in [Achievements](/docs/reference/plugins/achievements#achievements_words).
 
 The achievements plugin's words in English, keyed by name. A game rewords any of them with `ui.<key>` in its strings.
 

@@ -92,7 +92,7 @@ type QuestEntry = {
 
 ### questOf
 
-Function. Explained in [Quests](/docs/reference/plugins/quests#questsof-and-questof).
+Function. Explained in [Quests](/docs/reference/plugins/quests#questof).
 
 Returns the quest with this id, or undefined when the game has none.
 
@@ -128,7 +128,7 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`QuestsState`](
 
 ### questsOf
 
-Function. Explained in [Quests](/docs/reference/plugins/quests#questsof-and-questof).
+Function. Explained in [Quests](/docs/reference/plugins/quests#questsof).
 
 Returns the game's quests, from `data.quests.quests` in its content and packs.
 
@@ -234,7 +234,7 @@ const QuestLog: ComponentType<{ className?: string; title?: string | false; }>
 
 ### QUESTS_WORDS
 
-Const.
+Const. Explained in [Quests](/docs/reference/plugins/quests#quests_words).
 
 The quests plugin's UI words, in English. A game rewords any of them with `ui.<key>` in its strings.
 
@@ -255,7 +255,7 @@ const QUESTS_WORDS: {
 
 ### QuestsControls
 
-Type.
+Type. Explained in [Quests](/docs/reference/plugins/quests#questscontrols).
 
 The quests plugin's view with a function that tracks any quest, as `useQuests` returns it.
 

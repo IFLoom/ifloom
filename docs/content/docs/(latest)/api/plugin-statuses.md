@@ -119,7 +119,7 @@ Uses: [`DefinedPlugin`](/docs/api/engine-plugin#definedplugin), [`StatusesState`
 
 ### statusesOf
 
-Function. Explained in [Statuses](/docs/reference/plugins/statuses#statusesof-and-statusof).
+Function. Explained in [Statuses](/docs/reference/plugins/statuses#statusesof).
 
 Returns the game's timed statuses, from `data.statuses.statuses` in its content and packs.
 
@@ -182,7 +182,7 @@ Plugins add fields of their own to it, which their pages list.
 
 ### statusOf
 
-Function. Explained in [Statuses](/docs/reference/plugins/statuses#statusesof-and-statusof).
+Function. Explained in [Statuses](/docs/reference/plugins/statuses#statusof).
 
 Returns the status with this id, or undefined when the game has none.
 
@@ -200,7 +200,7 @@ Uses: [`Game`](/docs/api/engine#game), [`StatusDef`](#statusdef).
 
 ### STATUSES_WORDS
 
-Const.
+Const. Explained in [Statuses](/docs/reference/plugins/statuses#statuses_words).
 
 The statuses plugin's UI words, in English. A game rewords any of them with `ui.<key>` in its strings.
 

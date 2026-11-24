@@ -150,7 +150,7 @@ Uses: [`GameState`](/docs/api/engine#gamestate), [`Game`](/docs/api/engine#game)
 
 ### INVENTORY_WORDS
 
-Const.
+Const. Explained in [Inventory](/docs/reference/plugins/inventory#inventory_words).
 
 The inventory plugin's UI words, in English. A game rewords any of them with `ui.<key>` in its strings.
 
@@ -181,7 +181,7 @@ Uses: [`InventoryProps`](/docs/api/react#inventoryprops).
 
 ### InventoryControls
 
-Type.
+Type. Explained in [Inventory](/docs/reference/plugins/inventory#inventorycontrols).
 
 The inventory plugin's view with functions that send its commands, as `useInventory` returns it.
 

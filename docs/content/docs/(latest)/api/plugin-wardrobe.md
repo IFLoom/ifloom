@@ -174,7 +174,7 @@ Uses: [`WardrobeControls`](#wardrobecontrols).
 
 ### WARDROBE_WORDS
 
-Const.
+Const. Explained in [Wardrobe](/docs/reference/plugins/wardrobe#wardrobe_words).
 
 The wardrobe plugin's UI words, in English. A game rewords any of them with `ui.<key>` in its strings.
 
@@ -201,7 +201,7 @@ const WardrobeCard: ComponentType<{ className?: string; title?: string | false; 
 
 ### WardrobeControls
 
-Type.
+Type. Explained in [Wardrobe](/docs/reference/plugins/wardrobe#wardrobecontrols).
 
 The wardrobe plugin's view, slot by slot with its buttons, and functions that send its commands, as `useWardrobe` returns it.
 
@@ -236,7 +236,7 @@ function WardrobeSection(): JSX.Element
 
 ### WardrobeSlotControls
 
-Type.
+Type. Explained in [Wardrobe](/docs/reference/plugins/wardrobe#wardrobeslotcontrols).
 
 A slot as `useWardrobe` returns it, with the thing in it and the buttons that take it off or put another thing on.
 

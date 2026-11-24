@@ -50,7 +50,7 @@ It declares no plugins, places, characters or clock. Its tests, `examples/novel/
 
 The base handed to [`loadGame`](/docs/reference/loader) needs only an `id` and a `title`. The Letter's first scene is content, `introScene: 'ch1.mat'` in `story/ch1.ts`, and its base adds only its `version` and the game's own code in `rules`, a migration and a save name:
 
-```ts
+```ts fragment
 // src/game.ts, with the rules written out there
 loadGame([stats, ch1, ch2, ch3], { id: 'the-letter', title: 'The Letter', version: 2, rules: { migrations, saveName } })
 ```
@@ -61,7 +61,7 @@ With no [places plugin](/docs/plugins/places) there's no map, so there are no ex
 
 An [input](/docs/reference/inputs) asks for a name, and only until one is given:
 
-```ts
+```ts fragment
 inputs: [{ id: 'playerName', label: 'Your name', type: 'text', maxLength: 20, when: { not: { kv: 'playerName' } } }],
 ```
 
@@ -69,13 +69,13 @@ The first chapter's choices wait on it with `when: { kv: 'playerName' }`, so the
 
 ### One stat
 
-```ts
+```ts fragment
 stats: [{ id: 'courage', label: 'Courage', start: 1, max: 5 }],
 ```
 
 Opening the letter and telling the truth each pay `{ stat: 'courage', by: 1 }`. The braver ending is a choice that's only offered to a reader with enough courage:
 
-```ts
+```ts fragment
 { id: 'hand', when: { stat: 'courage', gte: 3 }, effects: [{ scene: 'end.kept' }] },
 ```
 
@@ -83,7 +83,7 @@ Opening the letter and telling the truth each pay `{ stat: 'courage', by: 1 }`. 
 
 The engine counts every choice taken, by `scene#choice`, so a later chapter can ask about an earlier one with [`{ chose }`](/docs/reference/conditions#chose). Nobody has to set a kv key for it:
 
-```ts
+```ts fragment
 when({ chose: 'ch1.mat#open' }, [text(`You think of the postcard tucked inside, and the phone number written on it twice.`)]),
 when({ chose: 'ch1.mat#shelf' }, [text(`You think of the letter on the shelf, still sealed.`)]),
 ```
@@ -94,7 +94,7 @@ The same condition can hide a choice. `blame` ("Only something that came open in
 
 Each lie adds to a kv key with `{ kv: 'fibs', by: 1 }` (`blame` adds 2), and the last chapter reads the count back as a range:
 
-```ts
+```ts fragment
 { text: 'You already told Mrs Okafor everything, and it shows: she smiles before you speak.', when: { kv: 'fibs', lt: 1 } },
 { text: 'Mrs Okafor is behind her on the stairs, not quite looking at you.', when: { kv: 'fibs', is: 1 } },
 { text: 'Mrs Okafor is behind her on the stairs, and she has clearly been talking.', when: { kv: 'fibs', gte: 2 } },
@@ -106,7 +106,7 @@ A kv key that was never set counts as 0, so the honest reader's line needs nothi
 
 Every choice that moves on to the next chapter ends a turn before it changes the scene:
 
-```ts
+```ts fragment
 { id: 'truth', effects: [{ stat: 'courage', by: 1 }, { turn: true }, { scene: 'ch3.door' }] },
 ```
 
@@ -117,6 +117,10 @@ So `state.turn` is the chapter the reader has reached, counting from 0. Anything
 `src/game.ts`'s default export is its [game module](/docs/cli#the-game-module). Its `build` is `theLetter`, and its `start` gives [`ifloom playtest`](/docs/cli#ifloom-playtest) a reader who has already typed a name:
 
 ```ts
+import { defineGame } from '@ifloom/cli/game'
+import { startingState } from '@ifloom/engine'
+import { theLetter } from './the-letter.ts'
+
 export default defineGame({
   build: theLetter,
   start: (game) => startingState(game, { kv: { playerName: 'Sam' } }),
@@ -252,13 +256,13 @@ Like The Letter, it has no places, characters or clock. What it adds is [entitie
 
 The café keeps two kinds of thing, staff and dishes. Each is declared once, with what the player calls one and what they call several:
 
-```ts
+```ts fragment
 kinds: [{ id: 'staff', label: 'Member of staff', plural: 'Staff' }, { id: 'dish', label: 'Dish', plural: 'Menu' }],
 ```
 
 A stat with `of` belongs to a kind instead of to the player. The player has coins and a reputation. Every member of staff has a skill, a morale and a wage, and every dish has a price and a quality:
 
-```ts
+```ts fragment
 stats: [
   { id: 'coins', label: 'Coins', start: 120, min: -9999, max: 99999, format: '£{n}', spendable: true, lacking: 'Not enough in the till.' },
   { id: 'reputation', label: 'Reputation', start: 20 },
@@ -272,7 +276,7 @@ stats: [
 
 The game opens with one cook and two dishes. Each entity starts with its kind's stats at their `start`, except where it says otherwise:
 
-```ts
+```ts fragment
 entities: [
   { id: 'ana', of: 'staff', name: 'Ana', stats: { skill: 5, wage: 12 } },
   { id: 'toast', of: 'dish', name: 'Cheese on toast', stats: { price: 4, quality: 2 } },
@@ -286,7 +290,7 @@ So a new game has `state.stats` of `{ coins: 120, reputation: 20 }`, and Ana has
 
 The same effects and conditions that change and test the player's stats take an `of` naming an entity. Better ingredients for the soup cost 40 coins, until it couldn't be any better:
 
-```ts
+```ts fragment
 {
   id: 'soup',
   label: 'Better ingredients for the soup',
@@ -302,7 +306,7 @@ The quality is held to its range, 1 to 5, as a player's stat would be.
 
 Putting a card in the window opens a scene of interviews, while there's room behind the counter. [`{ count }`](/docs/reference/conditions#count) asks how many of a kind there are:
 
-```ts
+```ts fragment
 {
   id: 'hire',
   label: 'Put a card in the window',
@@ -313,7 +317,7 @@ Putting a card in the window opens a scene of interviews, while there's room beh
 
 Each choice in the scene hires someone with a [`create`](/docs/reference/effects#create) effect, which gives a name and the stats that differ from their `start`:
 
-```ts
+```ts fragment
 choices: [
   { id: 'dev', effects: [{ create: 'staff', with: { name: 'Dev', stats: { skill: 2, wage: 8, morale: 80 } } }, { scene: null }] },
   { id: 'fen', effects: [{ create: 'staff', with: { name: 'Fen', stats: { skill: 7, wage: 18 } } }, { scene: null }] },
@@ -327,7 +331,7 @@ Someone created without an id gets the next number. Dev is `staff:#1`, and Fen, 
 
 A single action, the game's Count the till and end the week button, runs the week:
 
-```ts
+```ts fragment
 {
   id: 'end-week',
   label: 'Count the till and end the week',
@@ -347,7 +351,7 @@ It runs four steps, in order:
 
 1. **Takings and wages.** Two of the game's own [macros](/docs/reference/effects#computed-effects), in its `rules`, work these out from the state. Takings multiply every dish's price by its quality, and work out how many covers the kitchen gets out from everyone's skill and the reputation. Wages add up every wage. Both go through [`entitiesOf`](/docs/reference/entities#entitiesof) and [`statValue`](/docs/reference/stats#statvalue):
 
-   ```ts
+   ```ts fragment
    function total(state: GameState, game: Game, kind: string, stat: string): number {
      return entitiesOf(state, game, kind).reduce((sum, ref) => sum + statValue(state, game, stat, ref), 0)
    }
@@ -366,7 +370,7 @@ In the first week there's only Ana. The kitchen gets out 24 covers, and the menu
 
 [Triggers](/docs/reference/triggers) watch a condition and act the first time it holds. With `{ count }`, a trigger can watch a kind:
 
-```ts
+```ts fragment
 { id: 'empty', once: { per: 'turn' }, when: { count: 'staff', lt: 1 }, effects: [{ notify: 'Nobody to open up tomorrow.', tag: 'staff' }] },
 {
   id: 'review',
@@ -571,7 +575,7 @@ Each character is an [entity](/docs/reference/entities) of the kind `character`,
 
 The React UI's default layout is made for a life sim, so Small Town's `src/layout.tsx` is [`DefaultLayout`](/docs/react#layouts) with the plugins' parts placed by hand and two changes. It puts the [notice strip](/docs/react/components#noticestrip) at the top of the story, and it shows what you're wearing only at home, with `when`:
 
-```tsx
+```tsx fragment
 // WardrobeCard and WARDROBE_WORDS come from '@ifloom/plugin-wardrobe/react', with const words = useWords(WARDROBE_WORDS)
 <Section id="wardrobe" title={words('wardrobe')} collapsible when={places.at('flat')}>
   <WardrobeCard title={false} />
@@ -580,7 +584,7 @@ The React UI's default layout is made for a life sim, so Small Town's `src/layou
 
 Out and about, you get to it with the flat's Open the wardrobe action. Its effect is `{ panel: 'wardrobe' }`, which opens the built-in wardrobe [panel](/docs/reference/panels). `src/main.tsx` passes the layout to `GameShell`:
 
-```tsx
+```tsx fragment
 <GameShell runner={runner} layout={Layout} mods={{ store: modStore, problems, onChange: () => location.reload() }} />
 ```
 

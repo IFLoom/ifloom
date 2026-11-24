@@ -133,9 +133,11 @@ export type EntityDef = {
   at?: Placement
   /**
    * Its traits, by trait id: `{ 'laundry/washable': { temp: 30 } }`.
-   * Over its kind's, and under a row for it in content's `traits` table.
+   * Over its kind's, and under a row for it in content's `traits` table. An
+   * object is laid over its kind's field by field, so it gives only the
+   * fields that differ.
    */
-  traits?: { [K in keyof TraitRegistry]?: TraitRegistry[K] } & Record<string, unknown>
+  traits?: { [K in keyof TraitRegistry]?: Partial<TraitRegistry[K]> } & Record<string, unknown>
   /** Presentation hints for the UI, laid over its kind's field by field, carried to the view as written. See `EntityUi`. */
   ui?: Ui<EntityUi>
 }

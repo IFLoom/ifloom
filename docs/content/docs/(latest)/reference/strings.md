@@ -21,12 +21,11 @@ Lines your game writes itself aren't in the table, because they're already your 
 Say you want the town to sound a little friendlier:
 
 ```ts
-import { apply, whyNot, type Game } from '@ifloom/engine'
+import { apply, whyNot, type Content } from '@ifloom/engine'
 import { places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
 
-const game: Game = {
-  // ...
+export const town: Content = {
   strings: {
     finishFirst: 'Not yet, love.',
     'cast/talk': 'Chat',
@@ -34,7 +33,8 @@ const game: Game = {
   },
 }
 
-// `busy` is a state with a scene open
+// A state with a scene open
+const busy = { ...state, sceneId: 'cafe.counter' }
 whyNot(busy, game, { type: 'action', id: 'coffee' })     // 'Not yet, love.'
 apply(busy, game, places.go('high-street')).reason              // 'Not yet, love.' (the places plugin says it too)
 whyNot(busy, game, cast.talk('ava'))                           // 'Not yet, love.' (and so does the cast)
@@ -150,7 +150,7 @@ The engine keeps no time of day, places or people, so it has no words for them. 
 
 `Game.strings` holds the game's lines, by key:
 
-```ts
+```ts fragment
 strings?: Record<string, string>
 ```
 
@@ -163,8 +163,8 @@ Your [content](/docs/reference/loader#content) can carry `strings` too. [`loadGa
 ```ts
 import { loadGame, type Content } from '@ifloom/engine'
 
-const town: Content = { strings: { finishFirst: 'Not yet. Finish this first.' }, entities: people, data: { places: { locations } } /* ... */ }
-const { game } = loadGame([town], base)
+const town: Content = { strings: { finishFirst: 'Not yet. Finish this first.' } }
+const { game } = loadGame([town], { id: 'small-town', title: 'Small Town' })
 ```
 
 ### As a translation mod
@@ -173,6 +173,7 @@ A translation is a [pack](/docs/reference/loader#pack). Its `strings` reword the
 
 ```ts
 import { loadGame, stringOf, SCHEMA, type Pack } from '@ifloom/engine'
+import { town } from './world/town.ts'
 
 const dutch: Pack = {
   id: 'mod:nl',
@@ -187,7 +188,7 @@ const dutch: Pack = {
 }
 const fixes: Pack = { id: 'mod:nl-fixes', schema: SCHEMA, strings: { finishFirst: 'Maak dit eerst af.' } }
 
-const { game } = loadGame([town], base, { packs: [dutch, fixes] })
+const { game } = loadGame([town], { id: 'small-town', title: 'Small Town' }, { packs: [dutch, fixes] })
 stringOf(game, 'turnLabel', { turn: 3 }) // 'Beurt 3'
 stringOf(game, 'finishFirst') // 'Maak dit eerst af.' (the later pack wins over the earlier one and the content)
 ```
@@ -196,13 +197,13 @@ You override a plugin's lines the same way, by the plugin's id, a `/` and the li
 
 ## STRINGS
 
-```ts
+```ts shape
 const STRINGS: { readonly finishFirst: 'Finish this first.'; /* ... */ }
 ```
 
 The engine's English, with every key in [the table](#the-table). Read it to list the keys a translation must cover:
 
-```ts
+```ts continues
 import { STRINGS } from '@ifloom/engine'
 
 const missing = Object.keys(STRINGS).filter((key) => !(key in dutch.strings!))
@@ -210,7 +211,7 @@ const missing = Object.keys(STRINGS).filter((key) => !(key in dutch.strings!))
 
 ## StringKey and Strings
 
-```ts
+```ts shape
 type StringKey = keyof typeof STRINGS
 type Strings = Partial<Record<StringKey, string>> & Record<string, string>
 ```
@@ -227,7 +228,7 @@ const dutch: Strings = { finishFirst: 'Eerst dit afmaken.' }
 
 ## stringOf
 
-```ts
+```ts shape
 function stringOf(game: Game | undefined, key: StringKey | (string & {}), vars?: Record<string, string | number>): string
 ```
 
@@ -257,7 +258,7 @@ Use it in your own UI for the words it shares with the engine, and in a plugin f
 
 ## reasonOf
 
-```ts
+```ts shape
 function reasonOf(game: Game | undefined, reason: Reason): string
 ```
 

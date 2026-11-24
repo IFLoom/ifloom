@@ -34,7 +34,7 @@ Without the calendar, a vendor with opening hours is always open and a day is a 
 
 ## shop
 
-```ts
+```ts shape
 function shop(): DefinedPlugin<ShopState, ShopView>
 ```
 
@@ -83,7 +83,7 @@ The kind is unlisted (`listed: false`) because what the player holds already rea
 
 ### vendor
 
-```ts
+```ts shape
 const shop: {
   vendor(def: VendorDef): EntityDef
 }
@@ -94,6 +94,8 @@ type VendorDef = Omit<EntityDef, 'of'> & Vendor & { of?: string }
 Writes a vendor for your content's `entities`. You give it the entity's fields and the `shop/vendor` trait's fields side by side, and it returns an [`EntityDef`](/docs/reference/entities#entitydef) of the kind `vendor` with the trait's fields in `traits['shop/vendor']`.
 
 ```ts
+import { shop } from '@ifloom/plugin-shop'
+
 shop.vendor({ id: 'kiosk', name: 'The kiosk', goods: [{ entity: 'food:paper', price: { coins: 1 } }] })
 // { id: 'kiosk', of: 'vendor', name: 'The kiosk', traits: { 'shop/vendor': { goods: [{ entity: 'food:paper', price: { coins: 1 } }] } } }
 ```
@@ -108,7 +110,7 @@ The entity's other fields work as on any entity.
 
 ### The vendor trait
 
-```ts
+```ts shape
 type Vendor = {
   blocked?: Blocked[]
   goods: GoodDef[]
@@ -128,7 +130,7 @@ What the `shop/vendor` trait holds. The plugin declares the trait and types it, 
 
 ### Opening hours
 
-```ts
+```ts shape
 const shop: {
   hours(periods: readonly string[], reason?: Reason): Blocked
 }
@@ -137,6 +139,9 @@ const shop: {
 A `blocked` entry that closes a vendor outside these periods of the [calendar](/docs/plugins/calendar)'s day. Its reason is `reason`, or the [`shop/closed`](#strings) string, `Closed.`, so a game rewords every closed counter in its strings at once. It's `{ when: shop.outside(...periods), reason }`.
 
 ```ts
+import { calendar } from '@ifloom/plugin-calendar'
+import { shop } from '@ifloom/plugin-shop'
+
 shop.vendor({
   id: 'stall',
   name: 'The fruit stall',
@@ -152,6 +157,9 @@ Without the calendar there is no period of the day, so the vendor is never close
 With the [places](/docs/plugins/places) plugin, a vendor that stands somewhere lists [`places.onlyAt()`](/docs/plugins/places#helpers) in its `blocked`, with `hide`:
 
 ```ts
+import { places } from '@ifloom/plugin-places'
+import { shop } from '@ifloom/plugin-shop'
+
 shop.vendor({
   id: 'counter',
   name: 'The counter',
@@ -166,7 +174,7 @@ The entry's `when` is `places.away('cafe')`, which never holds in a game without
 
 ### GoodDef
 
-```ts
+```ts shape
 type GoodDef = {
   entity: EntityRef
   price?: Record<string, number>
@@ -202,7 +210,7 @@ A unique thing is always sold from the vendor's stock, since there's only one of
 
 ### The sellable trait
 
-```ts
+```ts shape
 const shop: {
   sellable(price: Record<string, number>): { 'shop/sellable': Sellable }
 }
@@ -212,7 +220,7 @@ type Sellable = { price: Record<string, number> }
 
 A thing's price, for every vendor that lists it without a `price` of its own. It's a [trait](/docs/reference/entities#traits), so you can write it on a kind as a default, on the entity, or in content's `traits` table, where a mod can change it. `shop.sellable` writes it, to spread into `traits`:
 
-```ts
+```ts fragment
 kinds: [{ id: 'fruit', label: 'Fruit', listed: false, traits: { ...sellable({ coins: 1 }) } }],
 entities: [
   { id: 'apple', of: 'fruit', name: 'apple' },
@@ -224,7 +232,7 @@ The checker reports a good with neither a price nor the trait.
 
 ### Discounts
 
-```ts
+```ts shape
 type DiscountDef = { off: number; count?: number }
 ```
 
@@ -269,10 +277,11 @@ const actions: ActionDef[] = [
 Nothing about a vendor is drawn by itself. Content opens a vendor's counter in the `shop` [panel](/docs/reference/panels) with `shop.open`, from anything that runs effects: a place's action, a choice in a person's scene, a thing's [use](/docs/plugins/inventory), an app's button.
 
 ```ts
+import type { ActionDef } from '@ifloom/engine'
 import { shop } from '@ifloom/plugin-shop'
 
-// In the café's location. shop.open('counter') is { panel: 'shop', with: { vendor: 'counter' } }.
-actions: [{ id: 'counter', label: 'Go to the counter', effects: [shop.open('counter')] }],
+// In the café's location's actions. shop.open('counter') is { panel: 'shop', with: { vendor: 'counter' } }.
+const counter: ActionDef = { id: 'counter', label: 'Go to the counter', effects: [shop.open('counter')] }
 ```
 
 The counter stays open while the player buys and sells, and closes when a turn ends or the scene changes. See [How long a panel stays open](/docs/reference/panels#how-long-a-panel-stays-open).
@@ -280,6 +289,9 @@ The counter stays open while the player buys and sells, and closes when a turn e
 Opening a counter doesn't move the player. A vendor with a [`places.onlyAt()`](#where-it-stands) entry still sells only there, so a counter opened from somewhere else greys its buttons out with that entry's reason. For a shop on a phone or a laptop, leave the entry out:
 
 ```ts
+import type { AppDef } from '@ifloom/plugin-devices'
+import { shop } from '@ifloom/plugin-shop'
+
 // An online shop: nothing in its `blocked`, so it sells wherever the player is.
 const webshop = shop.vendor({ id: 'webshop', name: 'Pinecone Online', goods: [{ entity: 'clothing:scarf', price: { coins: 10 } }] })
 // A laptop app's actions section has a button that opens it.
@@ -320,7 +332,7 @@ Its [React UI](#drawing-it) draws the `shop` panel as a [`ShopCounter`](#shopcou
 
 ### ShopView
 
-```ts
+```ts shape
 type ShopView = { vendors: VendorView[]; panel: VendorView | null }
 ```
 
@@ -328,7 +340,7 @@ type ShopView = { vendors: VendorView[]; panel: VendorView | null }
 
 ### VendorView
 
-```ts
+```ts shape
 type VendorView = {
   id: string
   ref: EntityRef
@@ -352,7 +364,7 @@ type VendorView = {
 
 ### GoodView
 
-```ts
+```ts shape
 type GoodView = {
   entity: EntityRef
   name: string
@@ -397,7 +409,7 @@ The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.
 
 ### shopUi
 
-```ts
+```ts shape
 const shopUi: PluginUi
 ```
 
@@ -416,7 +428,7 @@ Its words are in `SHOP_WORDS`. A game rewords any of them with `ui.<key>` in its
 
 ### ShopDialog
 
-```tsx
+```tsx shape
 function ShopDialog(props: ShopDialogProps): JSX.Element
 
 type ShopDialogProps = { vendorId: string | null; onClose: () => void }
@@ -430,7 +442,7 @@ Replaceable as `ShopDialog` in [`components`](/docs/react/components#components)
 
 ### ShopCounter
 
-```tsx
+```tsx shape
 function ShopCounter(props: ShopCounterProps): JSX.Element
 
 type ShopCounterProps = { vendor: VendorView; className?: string }
@@ -447,7 +459,7 @@ Replaceable as `ShopCounter` in [`components`](/docs/react/components#components
 
 ### useShop
 
-```ts
+```ts shape
 function useShop(): ShopControls | null
 
 type ShopControls = ShopView & {
@@ -465,7 +477,7 @@ The shop plugin's view ([`ShopView`](/docs/plugins/shop#shopview): `vendors`), t
 
 ### ShopState
 
-```ts
+```ts shape
 type ShopState = { stocked: Record<string, Record<EntityRef, StockRecord>> }
 type StockRecord = { at: number; left?: number }
 ```
@@ -478,7 +490,7 @@ A save from before the plugin was added loads with every stock full. A save from
 
 ### Helpers
 
-```ts
+```ts shape
 const shop: {
   (): DefinedPlugin<ShopState, ShopView>
   buy(vendor: string, entity: EntityRef, count?: number): CommandRef
@@ -496,7 +508,7 @@ const shop: {
 
 ### vendorsOf, vendorOf and vendorRef
 
-```ts
+```ts shape
 const shop: {
   vendorRef(vendor: string): EntityRef
 }
@@ -513,7 +525,7 @@ function vendorOf(state: GameState, game: Game, ref: string | null | undefined):
 
 ### sellableOf
 
-```ts
+```ts shape
 function sellableOf(state: GameState, game: Game, ref: EntityRef): Sellable | undefined
 ```
 

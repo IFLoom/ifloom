@@ -24,7 +24,7 @@ Put your sound files in the game's `public/audio/` folder. A track's `src` is re
 
 ## startAudio
 
-```ts
+```ts shape
 function startAudio(runner: Runner, options?: AudioOptions): AudioPlayer
 ```
 
@@ -67,7 +67,7 @@ While it runs, it tells play going on apart from a jump. One more command is pla
 
 Volume comes from the `ui` [settings](/docs/reference/settings) the game names in `game.audio`:
 
-```ts
+```ts fragment
 settings: [
   { id: 'musicVolume', label: 'Music', affects: 'ui', type: 'range', min: 0, max: 100, default: 70 },
   { id: 'muted', label: 'Mute', affects: 'ui', type: 'toggle', default: false },
@@ -85,7 +85,7 @@ A range setting is read from its `min` to its `max` as 0 to 1, so 70 of 0 to 100
 
 ## AudioOptions
 
-```ts
+```ts shape
 type AudioOptions = {
   createAudio?: (src: string) => AudioLike
   log?: (message: string) => void
@@ -116,7 +116,7 @@ A `play refused` line is the browser saying no, usually before the first click. 
 
 ## AudioPlayer
 
-```ts
+```ts shape
 type AudioPlayer = (() => void) & {
   unlock(): void
   play(src: string, channel?: string, volume?: number): void
@@ -132,8 +132,10 @@ type AudioPlayer = (() => void) & {
 `play` is for sounds the view doesn't ask for, such as the React UI's button that plays a spoken line again. Its `src` is a path from the page, as [`audioSrc`](/docs/reference/audio#audiosrc) returns:
 
 ```ts
+import { startAudio } from '@ifloom/audio'
 import { audioSrc } from '@ifloom/engine'
 
+const player = startAudio(runner)
 player.play(audioSrc('voice/ava-hello.ogg'), 'voice')
 ```
 
@@ -143,6 +145,7 @@ The React UI puts a button on each spoken line that has a voice. With the other 
 
 ```ts tab="Plain JS" tab-group="framework"
 // src/main.ts, in the vanilla template: keep the player
+import { startAudio } from '@ifloom/audio'
 import { audioSrc } from '@ifloom/engine'
 
 const player = startAudio(runner)
@@ -220,7 +223,7 @@ function replay() {
 
 Draw it inside the spoken line, when the beat has a voice:
 
-```ts tab="Plain JS" tab-group="framework"
+```ts fragment tab="Plain JS" tab-group="framework"
 // src/main.ts, in drawBeat()
 case 'say': {
   const line = add(root, 'p', beat.text, 'beat-say')
@@ -230,7 +233,7 @@ case 'say': {
 }
 ```
 
-```tsx tab="React" tab-group="framework"
+```tsx fragment tab="React" tab-group="framework"
 // src/Beat.tsx
 case 'say':
   return (
@@ -259,7 +262,7 @@ case 'say':
 
 ## AudioLike
 
-```ts
+```ts shape
 type AudioLike = {
   play(): Promise<void> | void
   pause(): void

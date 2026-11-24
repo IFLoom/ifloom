@@ -33,7 +33,7 @@ Keyed prose blocks, `{ prose: 'ava.river' }`, still work beside these, so you ca
 
 `decide()` puts a decision partway through. The flow waits there until the player picks. The pick's `then` comes next, then the blocks after the decision:
 
-```ts
+```ts fragment
 body: [
   text(`Ava is on the bench with her shoes off, feeding the ducks.`),
   decide('evening', [
@@ -53,7 +53,7 @@ Either pick ends with the walk back, then the scene's own `choices`, Say goodnig
 
 A conversation often has questions the player can ask in any order before moving on. Mark a `point()` before the decision, give each question `jump()` back to it, and hide each once it's asked:
 
-```ts
+```ts fragment
 const asked = (id: string) => [{ when: { chose: `ava.river#${id}` }, reason: 'You asked.', hide: true }]
 
 body: [
@@ -74,7 +74,7 @@ A jump is only ever a choice's effect, so the flow goes round again only when th
 
 A point doesn't have to be behind you. Put one inside a section or a choice's `then`, and a jump goes straight there and reads on from it. Here the shortcut skips the climb and joins the walk at the gate:
 
-```ts
+```ts fragment
 body: [
   decide('way', [
     choice('hill', 'Over the hill', { then: [text(`It's steep. Your legs complain.`), point('gate'), text(`The gate is open.`)] }),
@@ -90,7 +90,7 @@ Taking the lane reads "The lane is muddy but flat.", "The gate is open." and the
 
 `minigame('skim')` starts the [minigame](/docs/reference/minigames) when the flow reaches it, and the flow waits until it ends. `panel('prices', { stall: 'bread' })` opens a [panel](/docs/reference/panels) the same way and waits until the player closes it. What comes after either reads on once it's done:
 
-```ts
+```ts fragment
 body: [
   text(`Ava finds a flat stone and holds it out.`),
   minigame('skim'),
@@ -104,6 +104,8 @@ body: [
 `fold()` puts blocks in a part the player can open and shut, such as a letter they might not want to read again. It's presentation only and keeps no state:
 
 ```ts
+import { fold, text } from '@ifloom/engine'
+
 fold('Read the postcard', [text(`Wish you were here. The sea is cold and the chips are good. J.`)])
 ```
 
@@ -122,8 +124,9 @@ A flowing scene comes to your UI as beats and choices, like any other, so a UI t
 // src/main.ts: draw the beats in runs, a fold's together.
 import type { SceneBeat } from '@ifloom/engine'
 
-function drawBeats(parent: HTMLElement, beats: SceneBeat[]): void {
-  let fold: { label: string; body: HTMLElement } | null = null
+// `drawBeat` is the template's, which draws one beat.
+function drawBeats(parent: HTMLElement, beats: SceneBeat[], drawBeat: (parent: HTMLElement, beat: SceneBeat) => void): void {
+  let fold = null as { label: string; body: HTMLElement } | null
   for (const beat of beats) {
     const label = beat.section?.fold
     if (typeof label !== 'string') fold = null

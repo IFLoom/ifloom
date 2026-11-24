@@ -41,6 +41,7 @@ export { definePlugin } from './plugin.ts'
 
 // A plugin's calls, data lists and trait kinds, declared once
 export type {
+  AnyCalls,
   Arg,
   ArgIn,
   ArgOut,
@@ -66,6 +67,7 @@ export type { TraitDef, TraitTools } from './entities.ts'
 
 // Cooperating with other plugins by name
 export type { CastContact, PartnerQueries, SenderView } from './partners.ts'
+export type { CallIn, QueryAnswer, QueryArgs } from './calls.ts'
 
 // Building its view
 export { panelOf, pictureView, priceView, renderAction } from './screen.ts'

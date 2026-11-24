@@ -51,7 +51,7 @@ state.fired  // { welcome: 1, rent: 6 }: the turn each one last fired in
 
 ## TriggerDef
 
-```ts
+```ts shape
 type TriggerDef = {
   id: string
   when: Condition

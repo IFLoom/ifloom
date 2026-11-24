@@ -15,6 +15,11 @@
  * region isn't there, and `framework-tabs.test.ts` reads includes as the code
  * blocks they become. The snippets live in `docs/snippets/`.
  *
+ * A block written in the page rather than included is type-checked by
+ * `check-blocks.ts`, whose words in the fence's meta (`shape`, `fragment`,
+ * `continues`) say how; an include's `meta` needs none of them, since the
+ * snippets have a typecheck of their own.
+ *
  * Nothing here reads a file, so the engine's tests can use it too: callers
  * resolve `path` against the page (`new URL(path, pageUrl)`) and read it.
  */

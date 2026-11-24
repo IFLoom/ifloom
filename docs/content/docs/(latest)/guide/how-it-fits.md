@@ -47,9 +47,9 @@ A [runner](/docs/reference/runner) wraps those three in one object, with undo, s
 
 ```ts
 import { createRunner, startingState } from '@ifloom/engine'
-import loaded from './src/game.ts'
+import module from './src/game.ts'
 
-const { game } = loaded
+const { game } = module.build() // src/game.ts exports a game module; build() loads it
 const runner = createRunner(game, startingState(game))
 
 runner.view().scene.title                       // 'The door'

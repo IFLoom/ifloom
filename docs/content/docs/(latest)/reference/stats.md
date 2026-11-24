@@ -5,7 +5,7 @@ description: "Declaring stats: ranges, moving ceilings, derived stats with formu
 A stat is a number the game keeps for the player, such as coins, energy or charm. The engine doesn't define any stats itself, so you declare every one your game uses on the [game](/docs/reference/game#game). If your game declares none, its view has no stat list and its buttons show no prices.
 
 ```ts
-import type { StatDef } from '@ifloom/engine'
+import type { Content, StatDef } from '@ifloom/engine'
 
 const stats: StatDef[] = [
   { id: 'charm', label: 'Charm', start: 4, levels: { at: [10, 20, 30], hidden: true } },
@@ -13,7 +13,7 @@ const stats: StatDef[] = [
   { id: 'baking', label: 'Baking', visible: { kv: 'joinedTheBakery' } },
 ]
 
-const game = { /* … */, stats }
+export const town: Content = { stats }
 ```
 
 A player's stat lives in `state.stats[id]`. You change it with a [`stat` effect](/docs/reference/effects#stat), which changes it `by` an amount or sets it `to` a value. A [`{ stat }` condition](/docs/reference/conditions#stat) tests it, and an action's [cost](/docs/reference/actions#actioncost) spends it.
@@ -24,7 +24,7 @@ A stat declared with `of` is kept on each [entity](/docs/reference/entities) of 
 
 ## StatDef
 
-```ts
+```ts shape
 type StatDef = {
   id: string
   of?: string
@@ -75,7 +75,7 @@ type StatRound = 'none' | 'floor' | 'round' | 'ceil'
 
 A stat with `round` reads as a whole number everywhere it's read: conditions, costs, formulas, the view and its `text`. Use it when a [plugin's modifier](/docs/reference/plugins#stat-modifiers) or a formula can leave a fraction, such as energy at 65 with a 1.15 boost:
 
-```ts
+```ts fragment
 { id: 'energy', label: 'Energy', start: 80, spendable: true, format: '{n}%', round: 'round' }
 ```
 
@@ -158,7 +158,7 @@ The `stat` effect's `to` asks for more than any ceiling, so it's held to `energy
 
 ## statOf
 
-```ts
+```ts shape
 function statOf(game: Game, id: string): StatDef | undefined
 ```
 
@@ -166,7 +166,7 @@ The declaration for a stat, or `undefined` if the game declares none by that id.
 
 ## clampStat
 
-```ts
+```ts shape
 function clampStat(state: GameState, game: Game, id: string, value: number): number
 ```
 
@@ -176,7 +176,7 @@ Returns `value` held between the stat's declared `min` and its `max`, each worke
 
 ## lackingLine
 
-```ts
+```ts shape
 function lackingLine(game: Game, id: string, amount: number): string
 ```
 
@@ -195,7 +195,7 @@ lackingLine(game, 'charm', 5)   // 'Not enough charm.'
 
 ## StatWords
 
-```ts
+```ts shape
 type StatWords = string | { one: string; other: string }
 ```
 
@@ -241,7 +241,7 @@ A derived stat isn't in `state.stats`, so one of the game's functions that reads
 
 ### Formula
 
-```ts
+```ts shape
 import type { Formula } from '@ifloom/engine'
 
 type Formula =
@@ -270,7 +270,7 @@ A formula is data, so the loader can check it and a mod can change it. Formulas 
 
 A bigger one, an average of two skills plus a bonus for patience above 5:
 
-```ts
+```ts fragment
 {
   id: 'service',
   label: 'Service',
@@ -290,6 +290,8 @@ Formulas don't round. `{ scale: 'patience', by: 0.5 }` with patience at 5 gives 
 A derived stat with `of` is worked out for each [entity](/docs/reference/entities) of that kind, from the same entity's stats:
 
 ```ts
+import type { StatDef } from '@ifloom/engine'
+
 const stats: StatDef[] = [
   { id: 'skill', label: 'Skill', of: 'staff', start: 30 },
   { id: 'morale', label: 'Morale', of: 'staff', start: 60 },
@@ -305,7 +307,7 @@ A formula can only read stats with the same owner. A stat of the player's reads 
 
 A derived stat is held to its own range like any other stat, after the formula is worked out. That's `min` 0 and `max` 100 unless the stat says otherwise. So a formula that comes out at 140 reads 100, and one that comes out negative reads 0. Give the stat a `max` (or a `min`) when it can go past those:
 
-```ts
+```ts fragment
 { id: 'worth', label: 'Worth', max: 99999, format: '£{n}', derive: { sum: ['coins', { product: ['stock', 3] }] } }
 ```
 
@@ -343,7 +345,7 @@ Levels are optional, stat by stat. A stat without `levels` has none, and the vie
 
 ### StatLevels
 
-```ts
+```ts shape
 import type { StatLevels } from '@ifloom/engine'
 
 type StatLevels = {
@@ -369,7 +371,7 @@ type StatLevels = {
 
 When a command takes one of the player's stats up one or more levels, and the stat's `levels` has a `notice`, the engine raises a [notice](/docs/reference/notices) after the command. With the cooking stat above, a command that takes cooking from 28 to 31 raises:
 
-```ts
+```ts fragment
 { id: 'level.cooking', title: 'Cooking is now level 2.', tag: 'level' }
 ```
 
@@ -394,7 +396,7 @@ The [content checker](/docs/reference/checks) reports, against `stat <id>`:
 
 ## statValue
 
-```ts
+```ts shape
 function statValue(state: GameState, game: Game, id: string, of?: string): number
 ```
 
@@ -408,7 +410,7 @@ statValue(state, game, 'service', 'staff:ana')
 
 ## statLevel
 
-```ts
+```ts shape
 function statLevel(
   state: GameState,
   game: Game,

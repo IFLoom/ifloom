@@ -12,7 +12,7 @@ For a walkthrough, see [Your first story](/docs/guide/first-story). For what hap
 
 A scene's `speaker` says who is talking, and the view draws them as [`view.scene.speaker`](/docs/reference/view#speakerview): their name, picture and [hints](/docs/reference/ui-hints). People are [entities](/docs/reference/entities), so the engine reads these from the entity itself, with no plugin to ask.
 
-```ts
+```ts fragment
 { id: 'cafe.counter', speaker: 'ava', body: [text('Ava wipes down the counter.')], choices: [] }
 ```
 
@@ -25,7 +25,7 @@ The speaker's picture is the entity's `image`. With none, there's no picture. Th
 
 ## SceneMedia
 
-```ts
+```ts shape
 import type { SceneMedia } from '@ifloom/engine'
 
 type SceneMedia = {
@@ -53,7 +53,7 @@ It's a video when `video` is `true` or the file ends in `.mp4` or `.webm`. `cont
 - **`lead`** puts it before the body, as an establishing still.
 - **`end`** puts it after the body.
 
-```ts
+```ts fragment
 { media: { src: 'scene/market-morning', size: 'wide', at: 'lead' } }
 { media: { src: 'clips/kettle.mp4', alt: 'The kettle coming to the boil' } }
 { media: { pool: 'door', tags: ['red', 'night'], alt: 'The front door' } }
@@ -63,7 +63,7 @@ It's a video when `video` is `true` or the file ends in `.mp4` or `.webm`. `cont
 
 ## DataScene
 
-```ts
+```ts shape
 import type { DataScene, Block, Choice } from '@ifloom/engine'
 
 type DataScene = {
@@ -120,7 +120,7 @@ Its words are in place: two blocks of text and the choices' labels. The line in 
 
 A data scene's `audio` names what plays on [background channels](/docs/reference/audio#channels) while it's open. Here the flat goes quiet for a letter:
 
-```ts
+```ts fragment
 { id: 'flat.letter', audio: { music: null, ambience: 'rain' }, body: [text('A letter, in Gran’s hand.')], choices: [/* ... */] }
 ```
 
@@ -128,7 +128,7 @@ A channel the scene doesn't name keeps playing whatever an effect, the place or 
 
 ### Block
 
-```ts
+```ts shape
 type Block = (
   | { text: string; id?: string; when?: Condition }
   | { prose: string; when?: Condition }
@@ -167,6 +167,8 @@ Blocks render in order, and a block whose `when` fails is dropped. Rendered bloc
 A scene can have a layered picture: a picture made of layers, with hotspots on it that the player can click. The flat in the showcase has a room, a lamp that only shows in the evening, and the front door as a hotspot that takes the scene's `leave` choice.
 
 ```ts
+import { text, type DataScene } from '@ifloom/engine'
+
 const flat: DataScene = {
   id: 'flat.morning',
   picture: {
@@ -203,7 +205,7 @@ The view resolves the picture into [`view.scene.picture`](/docs/reference/view#t
 
 ### Choice
 
-```ts
+```ts shape
 type Choice = ButtonDef & {
   once?: Once & { key?: string }
 }
@@ -227,7 +229,7 @@ A choice is a [`ButtonDef`](/docs/reference/actions#buttondef), the same fields 
 
 A label is never looked up as a prose key: content from before schema 25 that wrote `label: 'ava.hi.chat'`, or left a label out for the prose `ava.hi#chat`, is reported with the words to write. A pack of an older schema is rewritten from its prose when it loads. A translation gives a label other words with the [words table](/docs/reference/words), under `scene.<scene>.choice.<id>.label`.
 
-```ts
+```ts fragment
 {
   id: 'ask',
   labels: [{ when: { seen: 'ava.river' }, label: 'Ask about the river again' }],
@@ -238,7 +240,7 @@ A label is never looked up as a prose key: content from before schema 25 that wr
 
 **In the text.** A choice the scene's prose names with `[[act:id]]` is drawn there, as a link inside the line, and left out of `view.scene.choices`. It's still a choice in every other way: the same `choose` command, `blocked` reasons, price and checks. See [Inline actions and tooltips](/docs/reference/prose#inline-actions-and-tooltips).
 
-```ts
+```ts fragment
 // body: [text('Your phone buzzes. [[act:answer|Pick it up]], or leave it.')]
 { id: 'answer', label: 'Answer the phone', command: devices.open('texts'), effects: [{ kv: 'answered', to: true }] }
 ```
@@ -262,7 +264,7 @@ Otherwise `choose` runs the choice's `command`, if it has one, then applies its 
 
 ### panel
 
-```ts
+```ts fragment
 { id: 'market.stall', title: 'The stall', panel: { panel: 'prices', with: { stall: 'bread' } }, body: [text('Loaves in rows, still warm.')], choices: [] }
 ```
 
@@ -272,7 +274,7 @@ A [`ScenePanel`](/docs/reference/panels#a-scenes-panel), `{ panel, with }`, hold
 
 An ending is a scene the story doesn't move on from. Give it a choice that starts over with the [`newGame`](/docs/reference/commands#newgame) command, and every UI draws it like any other choice:
 
-```ts
+```ts fragment
 {
   id: 'end.posted',
   title: 'The end',
@@ -290,7 +292,7 @@ A scene with `choices: []` is an ending too, with nothing on it to press. While 
 
 For a game over that the rest of the game should respect too, set the kv key [`phase`](/docs/reference/effects#the-phase) with the ending and add a [lock](/docs/reference/locks) that denies `'*'` in that phase, so a stray command (a debug button, a message reply) can't carry on playing:
 
-```ts
+```ts fragment
 // in the effects that end the game
 [{ kv: 'phase', to: 'over' }, { scene: 'ending.evicted' }]
 
@@ -302,7 +304,7 @@ Give the game a [`finished`](/docs/reference/state#new-game) condition only for 
 
 ## StoryletFields
 
-```ts
+```ts shape
 import type { StoryletFields } from '@ifloom/engine'
 
 type StoryletFields = {

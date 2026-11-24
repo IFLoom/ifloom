@@ -39,7 +39,7 @@ export function achievements(view: View): HTMLElement | null {
   for (const entry of all.achievements) {
     const item = list.appendChild(document.createElement('li'))
     if (!entry.earned) item.className = 'unearned'
-    item.appendChild(document.createElement('strong')).textContent = `${entry.earned ? '★ ' : ''}${entry.title}`
+    item.appendChild(document.createElement('strong')).textContent = `${entry.earned ? '★ ' : ''}${entry.name}`
     if (entry.description) item.appendChild(document.createElement('p')).textContent = entry.description
     if (entry.progress) Object.assign(item.appendChild(document.createElement('progress')), { max: entry.progress.target, value: entry.progress.value })
   }
@@ -64,7 +64,7 @@ export function Achievements() {
       <ul className="space-y-3">
         {all.achievements.map((entry) => (
           <li key={entry.id} className={entry.earned ? '' : 'opacity-60'}>
-            <strong>{entry.earned ? '★ ' : ''}{entry.title}</strong>
+            <strong>{entry.earned ? '★ ' : ''}{entry.name}</strong>
             {entry.description ? <p className="text-sm">{entry.description}</p> : null}
             {entry.progress ? (
               <progress className="w-full" value={entry.progress.value} max={entry.progress.target}>
@@ -94,7 +94,7 @@ const all = computed(() => view.value.plugins.achievements)
     <h1>Achievements · {{ all.earned }} of {{ all.total }}</h1>
     <ul>
       <li v-for="entry in all.achievements" :key="entry.id" :class="{ unearned: !entry.earned }">
-        <strong>{{ entry.earned ? '★ ' : '' }}{{ entry.title }}</strong>
+        <strong>{{ entry.earned ? '★ ' : '' }}{{ entry.name }}</strong>
         <p v-if="entry.description">{{ entry.description }}</p>
         <progress v-if="entry.progress" :value="entry.progress.value" :max="entry.progress.target" />
       </li>
@@ -117,7 +117,7 @@ const all = computed(() => view.value.plugins.achievements)
     <ul>
       {#each all.achievements as entry (entry.id)}
         <li class:unearned={!entry.earned}>
-          <strong>{entry.earned ? '★ ' : ''}{entry.title}</strong>
+          <strong>{entry.earned ? '★ ' : ''}{entry.name}</strong>
           {#if entry.description}<p>{entry.description}</p>{/if}
           {#if entry.progress}<progress value={entry.progress.value} max={entry.progress.target}></progress>{/if}
         </li>
@@ -314,11 +314,11 @@ function line(parent: HTMLElement, text: string): void {
 
 function jobCard(runner: Runner, job: JobView): HTMLElement {
   const article = document.createElement('article')
-  article.appendChild(document.createElement('h3')).textContent = job.rank ? `${job.title} · ${job.rank.title}` : job.title
+  article.appendChild(document.createElement('h3')).textContent = job.rank ? `${job.name} · ${job.rank.name}` : job.name
   line(article, job.description)
   const shift = job.nextShift ? ` · next shift ${job.nextShift.inDays === 0 ? 'today' : `in ${job.nextShift.inDays} days`}` : ''
   line(article, `Pays ${payText(job.pay)} a shift${shift}`)
-  if (job.next) line(article, `${job.next.title} after ${job.next.shiftsToGo} more shifts`)
+  if (job.next) line(article, `${job.next.name} after ${job.next.shiftsToGo} more shifts`)
   if (job.firedOn !== null) line(article, 'You were let go.')
   if (job.apply) article.append(press(runner, job.apply, 'Apply'))
   if (job.work) article.append(press(runner, job.work, 'Work a shift'))
@@ -359,8 +359,8 @@ export function JobBoard() {
       {board.jobs.map((job) => (
         <article key={job.id} className="space-y-1">
           <h3 className="font-medium">
-            {job.title}
-            {job.rank ? <small className="text-muted-foreground"> · {job.rank.title}</small> : null}
+            {job.name}
+            {job.rank ? <small className="text-muted-foreground"> · {job.rank.name}</small> : null}
           </h3>
           <p className="text-sm">{job.description}</p>
           <p className="text-sm">
@@ -369,7 +369,7 @@ export function JobBoard() {
           </p>
           {job.next ? (
             <p className="text-sm text-muted-foreground">
-              {job.next.title} after {job.next.shiftsToGo} more shifts
+              {job.next.name} after {job.next.shiftsToGo} more shifts
             </p>
           ) : null}
           {job.firedOn !== null ? <p className="text-sm">You were let go.</p> : null}
@@ -397,13 +397,13 @@ const jobs = computed(() => view.value.plugins.jobs?.jobs ?? [])
   <section v-if="jobs.length">
     <h2>Jobs</h2>
     <article v-for="job in jobs" :key="job.id">
-      <h3>{{ job.title }}<small v-if="job.rank"> · {{ job.rank.title }}</small></h3>
+      <h3>{{ job.name }}<small v-if="job.rank"> · {{ job.rank.name }}</small></h3>
       <p>{{ job.description }}</p>
       <p>
         Pays {{ payText(job.pay) }} a shift
         <template v-if="job.nextShift">· next shift {{ job.nextShift.inDays === 0 ? 'today' : `in ${job.nextShift.inDays} days` }}</template>
       </p>
-      <p v-if="job.next">{{ job.next.title }} after {{ job.next.shiftsToGo }} more shifts</p>
+      <p v-if="job.next">{{ job.next.name }} after {{ job.next.shiftsToGo }} more shifts</p>
       <p v-if="job.firedOn !== null">You were let go.</p>
       <button v-if="job.apply" :disabled="Boolean(job.apply.disabled)" :title="job.apply.disabled" @click="runner.apply(job.apply.command)">
         Apply
@@ -435,13 +435,13 @@ const jobs = computed(() => view.value.plugins.jobs?.jobs ?? [])
     <h2>Jobs</h2>
     {#each jobs as job (job.id)}
       <article>
-        <h3>{job.title}{#if job.rank}<small> · {job.rank.title}</small>{/if}</h3>
+        <h3>{job.name}{#if job.rank}<small> · {job.rank.name}</small>{/if}</h3>
         <p>{job.description}</p>
         <p>
           Pays {payText(job.pay)} a shift
           {#if job.nextShift}· next shift {job.nextShift.inDays === 0 ? 'today' : `in ${job.nextShift.inDays} days`}{/if}
         </p>
-        {#if job.next}<p>{job.next.title} after {job.next.shiftsToGo} more shifts</p>{/if}
+        {#if job.next}<p>{job.next.name} after {job.next.shiftsToGo} more shifts</p>{/if}
         {#if job.firedOn !== null}<p>You were let go.</p>{/if}
         {#if job.apply}{@render press(job.apply, 'Apply')}{/if}
         {#if job.work}{@render press(job.work, 'Work a shift')}{/if}
@@ -457,7 +457,7 @@ const jobs = computed(() => view.value.plugins.jobs?.jobs ?? [])
 
 Each piece goes wherever your game draws it. Here the counter goes under the scene, the job board after it, and the achievements page opens from a button:
 
-```ts tab="Plain JS" tab-group="framework"
+```ts fragment tab="Plain JS" tab-group="framework"
 // src/main.ts, in the vanilla template
 import { achievements } from './achievements.ts'
 import { counter } from './counter.ts'

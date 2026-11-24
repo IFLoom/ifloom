@@ -30,6 +30,8 @@ A plugin UI is a plain object, so to leave out one thing it brings, spread it wi
 ```tsx
 import { achievementsUi } from '@ifloom/plugin-achievements/react'
 
+import { mountGame } from '@ifloom/react'
+
 // The achievements in a dialog even with pages on: no achievements page.
 mountGame(game, { pages: true, plugins: [{ ...achievementsUi, pages: undefined }] })
 ```
@@ -72,7 +74,7 @@ A panel, a page, a section in an app and the settings a plugin UI brings don't n
 
 ### Plugins
 
-```tsx
+```tsx shape
 function Plugins(props: { at: PluginSpot }): JSX.Element
 ```
 
@@ -80,7 +82,7 @@ What the game's plugin UIs place at one spot, in the order of its `plugins` list
 
 ### PluginSpot
 
-```ts
+```ts shape
 type PluginSpot = 'stats' | 'sidebar' | 'room' | 'story' | 'strip'
 ```
 
@@ -88,7 +90,7 @@ The spots a layout has for plugin UIs, as the table above says.
 
 ### usePluginUis
 
-```ts
+```ts shape
 function usePluginUis(): readonly PluginUi[]
 ```
 
@@ -96,7 +98,7 @@ The plugin UIs the game in context has: the provider's `plugins` whose plugin is
 
 ## PluginUi
 
-```ts
+```ts shape
 type PluginUi = {
   id: string
   words?: Words
@@ -130,7 +132,7 @@ What a plugin's `/react` exports as `<id>Ui`. Every field but `id` is optional.
 
 ### PluginPanel
 
-```ts
+```ts shape
 type PluginPanel = {
   component: PanelComponent
   title?: string | ((data: Readonly<Record<string, unknown>>, view: View) => string | undefined)
@@ -141,7 +143,7 @@ A panel a plugin UI draws by name. `component` gets what the panel was opened wi
 
 ### PluginPage
 
-```ts
+```ts shape
 type PluginPage = { label: string; component: ComponentType; showOnTitle?: boolean }
 ```
 
@@ -173,7 +175,19 @@ These are the parts a plugin UI reaches for most.
 - **Lives in `src/react/`**, exported as `./react` beside `.` in its `package.json`, built to `dist/react/`. `react`, `react-dom` and `@ifloom/react` are optional peers, so a game that draws the plugin another way installs none of them for it.
 - **Declares itself once**, with [`pluginKit`](#pluginkit): the plugin's id and its words. Each component reads the plugin through [`usePlugin`](#useplugin), which gives its view typed, its words with the game's rewording over them, and a `send` that takes the commands the plugin's helpers write. The `<id>Ui` spreads the same declaration, so the words are written in one place.
 - **Exports `<id>Ui`**, a `PluginUi`, with its components and hooks as named exports beside it: a default component a game gets by listing the module, and a hook that gives the same data and the plugin's commands with no markup.
-- **Names its parts and components** by augmenting the React UI's interfaces, so a game's `classes` and `components` take them typed:
+- **Names its parts and components** by augmenting the React UI's interfaces, so a game's `classes` and `components` take them typed.
+
+Here is a weather plugin's UI. Its engine side, `src/index.ts`, declares the view it puts at `view.plugins.weather`:
+
+```ts
+declare module '@ifloom/engine' {
+  interface ViewRegistry {
+    weather: { days: { day: number; label: string; rain: boolean }[] }
+  }
+}
+```
+
+Its `src/react/index.tsx` draws that view:
 
 ```tsx
 import type { ComponentProps } from 'react'
@@ -223,7 +237,7 @@ Prefix your word keys with something of your plugin's, as the template does (`ra
 
 ### pluginKit
 
-```ts
+```ts shape
 function pluginKit<const Id extends string, const W extends Words = Record<never, string>>(id: Id, words?: W): PluginKit<Id, W>
 
 type PluginKit<Id extends string = string, W extends Words = Words> = { readonly id: Id; readonly words: W }
@@ -233,7 +247,7 @@ Declares a plugin's UI once: the plugin's id, as its engine side names it, and i
 
 ### usePlugin
 
-```ts
+```ts shape
 function usePlugin<Id extends string, W extends Words>(kit: PluginKit<Id, W>): PluginControls<Id, W>
 
 type PluginControls<Id extends string, W extends Words> = {
@@ -274,13 +288,13 @@ A plugin's UI is styled the way the React UI's own parts are: by Tailwind classe
 
 ### useKitPart
 
-```ts
+```ts shape
 function useKitPart(kit: KitPart, name: PartKey, layout?: string, className?: string): { 'data-part': PartKey; 'data-kit': KitPart; className: string }
 ```
 
 The attributes for a part that's one of the kit's: its `data-part`, its `data-kit` and its classes. The classes are the kit part's look from [`KIT_LOOKS`](#kit_looks), then `layout` over it, then the game's [`classes`](/docs/react/components#classes) for the part, then `className`, a caller's. Where two clash, the later one wins, as in [`cn`](/docs/react/components#cn). With [`unstyled`](/docs/react/customising#unstyled) on, the look and the layout go, as every built-in class does, and `className` stays.
 
-```tsx
+```tsx fragment
 const day = useKitPart('card', 'forecast-day')                               // a card, as every plugin's
 const good = useKitPart('card', 'good', 'sm:flex-row sm:items-start')        // its buttons beside it from sm up
 const button = useKitPart('opener', 'almanac-button', undefined, className)  // a caller's className last
@@ -295,7 +309,7 @@ A preset or a game's stylesheet styles a kit part with every part like it:
 
 ### KIT_PARTS
 
-```ts
+```ts shape
 const KIT_PARTS: readonly KitPart[]
 type KitPart = 'card' | 'item' | 'title' | 'heading' | 'note' | 'meter' | 'commands' | 'opener' | 'form' | 'input' | 'badge' | 'thumb' | 'label'
 ```
@@ -321,7 +335,7 @@ An entry that can be done says how it stands in `data-state`, `"done"` or `"open
 
 ### KIT_LOOKS
 
-```ts
+```ts shape
 const KIT_LOOKS: Readonly<Record<KitPart, string>>
 ```
 
@@ -344,7 +358,7 @@ How each kit part looks with no preset, in the theme's tokens: the classes [`use
 
 ### KIT_LAYOUT
 
-```ts
+```ts shape
 const KIT_LAYOUT: readonly string[]
 ```
 
@@ -352,7 +366,7 @@ The layout classes the React UI's stylesheet always has, for laying out a plugin
 
 ### PROSE
 
-```ts
+```ts shape
 const PROSE: string
 ```
 
@@ -360,15 +374,15 @@ The reading column's classes: as wide as `--width-prose`, placed by `--margin-pr
 
 ### useDialogParts
 
-```ts
-function useDialogParts(extra?: string): { dialog; overlay; title; close }
+```ts shape
+function useDialogParts(extra?: string): Record<'dialog' | 'overlay' | 'title' | 'close', { 'data-part': PartKey; className: string }>
 ```
 
-The `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close` parts every dialog of the UI is drawn with, for a [`Dialog`](/docs/react/components#dialog) of your own that should look like the rest, with `extra` classes on the dialog: the devices' UI makes a phone's narrower. [`PartDialog`](/docs/react/components#partdialog) is the whole dialog, done for you.
+The attributes for the `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close` parts every dialog of the UI is drawn with, for a [`Dialog`](/docs/react/components#dialog) of your own that should look like the rest, with `extra` classes on the dialog: the devices' UI makes a phone's narrower. [`PartDialog`](/docs/react/components#partdialog) is the whole dialog, done for you.
 
 ### StatGauge
 
-```tsx
+```tsx shape
 function StatGauge(props: { stat: StatView }): JSX.Element
 ```
 
@@ -376,7 +390,7 @@ A stat's value as a bar from its `min` to its `max`, or as pips, one per point i
 
 ### PageHeading and BackButton
 
-```tsx
+```tsx shape
 function PageHeading(props: { children: ReactNode }): JSX.Element
 function BackButton(): JSX.Element
 function usePageParts(className?: string, part?: PartKey): { 'data-part': PartKey; className: string }
@@ -400,9 +414,14 @@ function AlmanacPage() {
 
 ### OverridableComponents and PartNames
 
-```ts
-interface OverridableComponents { Game: Override<GameProps>; /* … every built-in component */ }
-interface PartNames {}
+```ts shape
+interface OverridableComponents {
+  Game: Override<GameProps>
+  // …
+}
+interface PartNames {
+  // …
+}
 ```
 
 The components a game's [`components`](/docs/react/components#components) can replace, and the parts a plugin UI adds to [`PartKey`](/docs/react/components#partkey). A plugin's `/react` augments both, as [above](#writing-a-plugins-ui), so `components` and `classes` take its names typed and `overridable` and `usePart` accept them.

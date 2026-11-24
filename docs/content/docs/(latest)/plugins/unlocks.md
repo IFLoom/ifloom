@@ -37,7 +37,7 @@ Codes are checked with WebCrypto (`crypto.subtle`), which every current browser 
 
 ## unlocks
 
-```ts
+```ts shape
 function unlocks(): DefinedPlugin<UnlocksState, UnlocksView>
 ```
 
@@ -64,7 +64,7 @@ const town: Content = { data: { unlocks: { unlocks: [supporter] } } }
 
 ### UnlockDef
 
-```ts
+```ts shape
 type UnlockDef = {
   id: string
   name: string
@@ -276,7 +276,7 @@ The plugin's [React UI](#drawing-it) draws the code box for you with [`UnlocksPa
 
 ### unlockedPacks
 
-```ts
+```ts shape
 function unlockedPacks(
   game: string,
   profile: Profile,
@@ -292,7 +292,7 @@ Content that won't open is left out and listed in `problems` as `unlock:<id> · 
 
 ### startUnlocks
 
-```ts
+```ts shape
 function startUnlocks(runner: Runner, options?: { content?: Readonly<Record<string, LockedContent>> }): () => void
 ```
 
@@ -302,7 +302,7 @@ Stopping it ends the recording into new games and loaded saves, takes `helpers.u
 
 ### enterCode
 
-```ts
+```ts shape
 function enterCode(runner: Runner, code: string): Promise<Result<Entered>>
 ```
 
@@ -312,7 +312,7 @@ It refuses an empty code with `Type a code first.`, a code that matches nothing 
 
 ### UnlockStatus
 
-```ts
+```ts shape
 type UnlockStatus = {
   status: 'idle' | 'checking' | 'wrong' | 'unlocked'
   reason: string | null
@@ -330,7 +330,7 @@ Where entering codes stands, at `snapshot.helpers.unlocks` while codes are start
 
 ### Entered
 
-```ts
+```ts shape
 type Entered = { unlock: string; name: string; already: boolean; restart: boolean }
 ```
 
@@ -384,7 +384,7 @@ It checks no code. Anyone who can run commands, from the browser's console say, 
 
 ### UnlocksView
 
-```ts
+```ts shape
 type UnlocksView = {
   unlocks: UnlockView[]
   unlocked: number
@@ -432,7 +432,7 @@ The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.
 
 ### unlocksUi
 
-```ts
+```ts shape
 const unlocksUi: PluginUi
 ```
 
@@ -454,7 +454,7 @@ Its words are in `UNLOCKS_WORDS`. A game rewords any of them with `ui.<key>` in 
 
 ### unlocksUiWith
 
-```ts
+```ts shape
 function unlocksUiWith(options?: UnlocksUiOptions): PluginUi
 
 type UnlocksUiOptions = {
@@ -482,7 +482,7 @@ What [`unlocksUiWith`](#unlocksuiwith) takes, above.
 
 ### UnlocksPanel
 
-```tsx
+```tsx shape
 function UnlocksPanel(props: { className?: string }): JSX.Element | null
 ```
 
@@ -494,7 +494,7 @@ Replaceable as `UnlocksPanel` in [`components`](/docs/react/components#component
 
 ### useUnlocks
 
-```ts
+```ts shape
 function useUnlocks(): UnlocksControls | null
 
 type UnlocksControls = UnlocksView & {
@@ -526,7 +526,7 @@ The unlocks plugin's view ([`UnlocksView`](/docs/plugins/unlocks#unlocksview): `
 
 ### UnlocksState
 
-```ts
+```ts shape
 type UnlocksState = { unlocked: string[] }
 ```
 
@@ -534,7 +534,7 @@ What the plugin keeps in a save, at `state.plugins.unlocks`: the unlocks recorde
 
 ### UnlocksProfile
 
-```ts
+```ts shape
 type UnlocksProfile = { unlocked: Record<string, { proof: string }> }
 ```
 
@@ -556,7 +556,7 @@ Even so, a short code can be guessed. Every guess costs the same slow step, but 
 
 These are what the CLI and `startUnlocks` use. A game rarely calls them itself.
 
-```ts
+```ts shape
 const ITERATIONS: 600000
 function normaliseCode(code: string): string
 function envName(unlock: string): string
@@ -580,7 +580,7 @@ function unlocksOf(game: Game): UnlockDef[]
 
 ### LockedContent
 
-```ts
+```ts shape
 type LockedContent = { ifloomUnlock: 1; game: string; unlock: string; iv: string; data: string }
 ```
 

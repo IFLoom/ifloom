@@ -9,6 +9,8 @@ Sometimes a choice reads better as part of the sentence than as a button under i
 Write `[[act:id|words]]` where the link should go. `id` is one of the scene's choices, and `words` are what the link says:
 
 ```ts
+import type { DataScene } from '@ifloom/engine'
+
 const hall: DataScene = {
   id: 'hall.phone',
   title: 'The hall',
@@ -29,16 +31,17 @@ The choice is drawn in the line and left out of the list under it, so Go out is 
 A choice can send a command as well as its effects, so an inline action can do anything a button can. This one opens the phone's messages through the [devices plugin](/docs/plugins/devices):
 
 ```ts
+import type { ActionDef } from '@ifloom/engine'
 import { devices } from '@ifloom/plugin-devices'
 
-{ id: 'read', command: devices.open('texts'), effects: [{ kv: 'readText', to: true }] }
+const read: ActionDef = { id: 'read', command: devices.open('texts'), effects: [{ kv: 'readText', to: true }] }
 ```
 
 The command runs first, then the effects. While the command would be refused (no phone at work, say), the choice is greyed out with that reason, in the line or in the list.
 
 In a room, with no scene open, `[[act:id]]` names one of the room's buttons: a place's `actions` or the game's. Small Town's flat does this when a message has come:
 
-```ts
+```ts fragment
 {
   id: 'flat',
   body: [{ prose: 'place.flat' }, { prose: 'place.flat.text', when: textWaiting }],
@@ -77,7 +80,7 @@ Because the note is a prose line, a translation or a mod can change it like any 
 
 A paragraph that holds either kind of markup gets `spans` on its `text` or `say` beat: the same words in pieces. `text` still has every word, without the markup.
 
-```ts
+```ts fragment
 {
   type: 'text',
   text: 'Your phone is ringing on the hall table. Pick it up, or let it ring.',

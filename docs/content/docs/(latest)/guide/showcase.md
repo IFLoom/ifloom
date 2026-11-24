@@ -139,7 +139,7 @@ Any kind of location can be locked this way.
 
 `story/cafe.ts`, the `cafe` location's `picture`. While Ava is on shift, the café shows her photo, `art/photo/ava.svg`, as a [layered picture](/docs/plugins/places#the-picture)'s layer, with a hotspot on her that sends the cast's `cast.talk('ava')`:
 
-```ts
+```ts fragment
 picture: {
   aspect: '16/10',
   layers: [{ id: 'counter', src: 'photo/ava.svg', when: cast.here('ava') }],
@@ -155,7 +155,7 @@ The layer has a `when`, and the hotspot names the layer, so both go when Ava doe
 
 Ava's [schedule](/docs/plugins/cast#where-people-are) puts her at the café Monday to Saturday, mornings and afternoons:
 
-```ts
+```ts fragment
 { location: 'cafe', when: { all: [calendar.weekday(0, 1, 2, 3, 4, 5), calendar.period('morning', 'afternoon')] } }
 ```
 
@@ -187,7 +187,7 @@ Her small talk comes straight after that line, so each of the three lines is wri
 
 `story/cafe.ts`, the `sit` action and the four `cafe.*` scenes. The café has a "Sit a while" button, a room action whose one effect draws a [storylet](/docs/reference/storylets):
 
-```ts
+```ts fragment
 { id: 'sit', label: 'Sit a while', effects: [{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }] }
 ```
 
@@ -219,7 +219,7 @@ Friendship says how well the player knows her, and [`since`](/docs/reference/con
 
 Talking to Ava opens the first of her [`talk`](/docs/plugins/cast#talkoption) options whose `when` holds. The first one is:
 
-```ts
+```ts fragment
 { scene: 'ava.river', when: { all: [places.at('park'), { stat: 'friendship', of: '$', gte: 25 }] } }
 ```
 

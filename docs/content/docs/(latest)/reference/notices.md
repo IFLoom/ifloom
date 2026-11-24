@@ -33,21 +33,21 @@ const town: Content = {
 ```ts
 import { apply, view } from '@ifloom/engine'
 
-state = apply(state, game, { type: 'action', id: 'pay-rent' }).state
+let next = apply(state, game, { type: 'action', id: 'pay-rent' }).state
 
-const { unseen, byTag } = view(state, game).notices
+const { unseen, byTag } = view(next, game).notices
 unseen[0]  // { id: 'rent', title: 'Rent paid: 30 coins', text: 'The landlord sends a receipt. Same again next Sunday.', image: null, tag: 'money', turn: 6 }
 byTag      // { money: 1 }, for a badge on the purse
 
-state = apply(state, game, { type: 'dismiss', id: 'rent' }).state
-view(state, game).notices.unseen  // []
+next = apply(next, game, { type: 'dismiss', id: 'rent' }).state
+view(next, game).notices.unseen  // []
 ```
 
 Notices go well with [triggers](/docs/reference/triggers). The trigger decides when something happens, and the notice tells the player. The showcase's rent is a trigger.
 
 ## Notice
 
-```ts
+```ts shape
 type Notice = {
   id: string
   title: string
@@ -73,7 +73,7 @@ A notice as the state keeps it in [`state.notices`](/docs/reference/state#notice
 
 ## notify
 
-```ts
+```ts shape
 import { notify } from '@ifloom/engine'
 
 function notify(
@@ -89,12 +89,14 @@ Returns the state with a notice raised. It goes in as the newest, unseen, and st
 - **Only the newest 50 are kept.** When a 51st is raised, the oldest goes, seen or not.
 
 ```ts
+import { notify } from '@ifloom/engine'
+
 const next = notify(state, { title: 'A parcel at the post office', tag: 'post' })
 ```
 
 ## dismiss
 
-```ts
+```ts shape
 import { dismiss } from '@ifloom/engine'
 
 function dismiss(state: GameState, id?: string): GameState

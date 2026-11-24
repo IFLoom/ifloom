@@ -47,7 +47,7 @@ const plugins = [calendar({ start: { day: 0, period: 'night' } }), places({ star
 
 ## calendar
 
-```ts
+```ts shape
 function calendar(options?: CalendarOptions): DefinedPlugin<CalendarState, CalendarView>
 ```
 
@@ -69,7 +69,7 @@ clock.read(startingState(game), game)   // { day: 0, period: 'morning' }
 
 ### CalendarOptions
 
-```ts
+```ts shape
 type CalendarOptions = {
   periods?: (string | PeriodDef)[]
   week?: number
@@ -95,7 +95,7 @@ The options are code, not content, so a mod can't change them.
 
 ### PeriodDef
 
-```ts
+```ts shape
 type PeriodDef = { id: string; label?: string }
 ```
 
@@ -204,10 +204,10 @@ const { game } = loadGame([town], {
 
 Played through, the Monday goes like this. `button` finds an idle-screen button by id, and `walk` takes several exits in turn. A room's action is done as `{ type: 'action', id: 'places/<id>' }`, which is what its button sends:
 
-```ts
+```ts continues
 let state: GameState = startingState(game)
 const button = (id: string) => view(state, game).actions.find((action) => action.id === id)!
-const walk = (...to: string[]) => { for (const id of to) state = apply(state, game, go(id)).state }
+const walk = (...to: string[]) => { for (const id of to) state = apply(state, game, places.go(id)).state }
 
 view(state, game).when            // 'Day 1 · Monday morning · Your flat'
 game.prose!.line('diary', state)  // 'Day 1, a Monday morning.'
@@ -404,7 +404,7 @@ The [React UI](/docs/react) shows `view.when`, the calendar's label, with [`Cloc
 
 ### CalendarView
 
-```ts
+```ts shape
 type CalendarView = {
   day: number
   weekday: string
@@ -428,7 +428,7 @@ type CalendarView = {
 
 On a new game with the defaults:
 
-```ts
+```ts fragment
 { day: 1, weekday: 'Monday', weekdayIndex: 0, period: 'morning', periodLabel: 'morning', label: 'Day 1 · Monday morning', curfew: false }
 ```
 
@@ -448,7 +448,7 @@ The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.
 
 ### calendarUi
 
-```ts
+```ts shape
 const calendarUi: PluginUi
 ```
 
@@ -456,7 +456,7 @@ The plugin's [`PluginUi`](/docs/react/kit#pluginui): [`CalendarClock`](#calendar
 
 ### CalendarClock
 
-```tsx
+```tsx shape
 function CalendarClock(props: { className?: string }): JSX.Element | null
 ```
 
@@ -470,7 +470,7 @@ Replaceable as `CalendarClock` in [`components`](/docs/react/components#componen
 
 ### useCalendar
 
-```ts
+```ts shape
 function useCalendar(): CalendarView | null
 ```
 
@@ -482,7 +482,7 @@ The calendar plugin's view, [`CalendarView`](#the-view), piece by piece: the day
 
 ### CalendarState
 
-```ts
+```ts shape
 type CalendarState = { day: number; period: string }
 ```
 
@@ -498,7 +498,7 @@ The helpers are properties of `calendar`, the plugin's factory, and write the co
 
 ### Helpers
 
-```ts
+```ts shape
 const calendar: {
   (options?: CalendarOptions): DefinedPlugin<CalendarState, CalendarView>
   sleep(): CommandRef

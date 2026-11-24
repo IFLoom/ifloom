@@ -135,7 +135,7 @@ export const view = shallowRef(runner.view())
 runner.subscribe((snapshot) => (view.value = snapshot.view))
 ```
 
-```ts tab="Svelte" tab-group="framework"
+```ts fragment tab="Svelte" tab-group="framework"
 // src/runner.ts
 import { readable } from 'svelte/store'
 import { browserRunner, indexedDbDriver } from '@ifloom/browser'

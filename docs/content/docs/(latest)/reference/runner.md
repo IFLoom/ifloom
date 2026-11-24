@@ -18,7 +18,7 @@ If you use the React UI, you usually don't call `createRunner` yourself. [`mount
 
 ## createRunner
 
-```ts
+```ts shape
 function createRunner(game: Game, start: GameState, options?: RunnerOptions): Runner
 ```
 
@@ -26,8 +26,12 @@ Starts a runner on `start`, which is usually [`startingState`](/docs/reference/c
 
 ```ts
 import { localStorageDriver } from '@ifloom/browser'
-import { createRunner, saves, startingState } from '@ifloom/engine'
+import { createRunner, saves, startingState, type RunnerSnapshot } from '@ifloom/engine'
 import { places } from '@ifloom/plugin-places'
+
+function render(snapshot: RunnerSnapshot) {
+  document.title = snapshot.view.scene?.title ?? 'Small Town'
+}
 
 const runner = createRunner(game, startingState(game, { seed: Math.floor(Math.random() * 2 ** 31) }), {
   history: { depth: 50 },
@@ -47,7 +51,7 @@ runner.apply(places.go('high-street'))
 
 ## RunnerSnapshot
 
-```ts
+```ts shape
 type RunnerSnapshot = {
   readonly state: GameState
   readonly view: View
@@ -117,7 +121,7 @@ A save written to the same store from somewhere else, such as another tab, shows
 
 ## RunnerOptions
 
-```ts
+```ts shape
 type RunnerOptions = {
   saves?: Saves
   history?: HistoryOptions | boolean
@@ -141,7 +145,7 @@ type RunnerOptions = {
 
 ## HistoryOptions
 
-```ts
+```ts shape
 type HistoryOptions = {
   depth?: number
   stopAtIrreversible?: boolean
@@ -170,7 +174,7 @@ Undo can't re-roll anything. Every draw is seeded from the save, the turn and a 
 
 ## BacklogOptions
 
-```ts
+```ts shape
 type BacklogOptions = { limit?: number }
 ```
 
@@ -178,7 +182,7 @@ How many entries the backlog keeps. The oldest drop off first. The default is `2
 
 ## BacklogEntry
 
-```ts
+```ts shape
 type BacklogEntry = {
   turn: number          // the turn it was shown in, from 0
   when: string | null   // view.when on that screen
@@ -201,11 +205,11 @@ This is how the backlog grows, command by command:
 - **Leaving adds nothing.** A choice that closes the scene adds no entry, and neither does walking between places with no scene open (the [places plugin](/docs/plugins/places)'s `go`).
 
 ```ts
-import { createRunner } from '@ifloom/engine'
+import { createRunner, startingState } from '@ifloom/engine'
 import { places } from '@ifloom/plugin-places'
 
 // Ava's scene is open. Chat, then say goodbye.
-const runner = createRunner(game, start, { backlog: true })
+const runner = createRunner(game, startingState(game), { backlog: true })
 runner.apply({ type: 'choose', id: 'chat' })
 runner.apply({ type: 'choose', id: 'bye' })
 runner.snapshot().backlog.map((entry) => [entry.sceneId, entry.chose])
@@ -218,7 +222,7 @@ The choice came at the end of the scene, so in the order the player saw them, an
 
 ## AutosaveOptions
 
-```ts
+```ts shape
 type AutosaveOptions = {
   slot?: string
   every: 'command' | 'scene' | 'turn'
@@ -243,7 +247,7 @@ A write that fails is reported to `onSaveError`, and doesn't stop the writes aft
 
 ## Result
 
-```ts
+```ts shape
 type Result<T> = { ok: true; value: T } | { ok: false; reason: string }
 ```
 
@@ -251,7 +255,7 @@ What the runner, the [save store](/docs/reference/saves#saves), the [mod store](
 
 ```ts
 const result = runner.apply({ type: 'choose', id: 'chat' })
-if (!result.ok) showMessage(result.reason) // 'She has a queue.'
+if (!result.ok) alert(result.reason) // 'She has a queue.'
 ```
 
 The engine's own [`apply`](/docs/reference/commands#apply) answers in the same shape, with the state on both sides. [`checkGame`](/docs/reference/checks#checkgame) is different: its problems are a report on content that works, not a failure.
@@ -285,15 +289,16 @@ The engine's own [`apply`](/docs/reference/commands#apply) answers in the same s
 `save` and `load` are async, and answer with a [`Result`](#result) rather than throwing:
 
 ```ts
+declare const undoButton: HTMLButtonElement // your page's undo button
 undoButton.disabled = !runner.snapshot().canUndo
 undoButton.onclick = () => runner.undo()
 
 const saved = await runner.save('quick')
-if (!saved.ok) showMessage(saved.reason)
+if (!saved.ok) alert(saved.reason)
 
 const loaded = await runner.load('quick')
-if (!loaded.ok) showMessage(loaded.reason)
-else if (loaded.value.missingPacks.length) showMessage(`Made with mods you don't have: ${loaded.value.missingPacks.join(', ')}`)
+if (!loaded.ok) alert(loaded.reason)
+else if (loaded.value.missingPacks.length) alert(`Made with mods you don't have: ${loaded.value.missingPacks.join(', ')}`)
 ```
 
 **Gotcha:** a `load` starts the command log again from the loaded state. A bug report should carry the log together with the save it started from, or only `log()`, whose `start` is that state.
@@ -322,7 +327,7 @@ A UI that redraws only when `runner.state` changes misses these. Draw from the s
 
 ### settings
 
-```ts
+```ts fragment
 runner.snapshot().settings: Readonly<Record<string, KvValue>>
 ```
 
@@ -340,7 +345,7 @@ It's the same object until a value changes, so you can compare it. A runner from
 
 ### setSetting
 
-```ts
+```ts fragment
 runner.setSetting(id: string, to: KvValue): Result<KvValue>
 ```
 
@@ -351,12 +356,12 @@ Changes a setting of either kind, after checking the value against the setting's
 
 ```ts
 const result = runner.setSetting('textSize', 'large')
-if (!result.ok) showMessage(result.reason)
+if (!result.ok) alert(result.reason)
 ```
 
 ### setHelper
 
-```ts
+```ts fragment
 runner.setHelper(id: string, value: unknown): void
 
 interface HelperRegistry {}
@@ -368,6 +373,8 @@ Puts what a helper started beside the runner reports in the snapshot's `helpers`
 A helper types what it reports by adding its id to `HelperRegistry`, as a plugin types its view in [`ViewRegistry`](/docs/reference/plugins#typed-calls-queries-and-views):
 
 ```ts
+import type { UnlockStatus } from '@ifloom/plugin-unlocks'
+
 declare module '@ifloom/engine' {
   interface HelperRegistry {
     unlocks: UnlockStatus
@@ -379,13 +386,15 @@ declare module '@ifloom/engine' {
 
 ### newGame
 
-```ts
+```ts fragment
 runner.newGame(options?: StartOptions): Promise<GameState>
 ```
 
 Starts a new game in place, with a fresh history, backlog and log and no time played, and tells listeners. It takes the same options as [`startingState`](/docs/reference/commands#startingstate). If you leave out `settings`, it uses the player's: the profile's, or without a profile the ones in the game in play. If you leave out `seed`, it picks a random one.
 
 ```ts
+declare const newGameButton: HTMLButtonElement // your page's buttons
+declare const newGamePlusButton: HTMLButtonElement
 newGameButton.onclick = () => runner.newGame()
 newGamePlusButton.onclick = () => runner.newGame({ carry: runner.state })
 ```
@@ -394,7 +403,7 @@ newGamePlusButton.onclick = () => runner.newGame({ carry: runner.state })
 
 A choice can start a new game itself by sending the [`newGame`](/docs/reference/commands#newgame) command, such as an ending's "Play again":
 
-```ts
+```ts fragment
 { id: 'again', command: { type: 'newGame' }, effects: [] }
 ```
 
@@ -413,7 +422,7 @@ After a command, the runner also gives each plugin with a [`profile`](/docs/refe
 
 ## CommandLog
 
-```ts
+```ts shape
 type CommandLog = {
   game: string
   start: GameState
@@ -429,7 +438,7 @@ Everything you need to play a game back exactly: the game's id, the state it sta
 
 ## replay
 
-```ts
+```ts shape
 function replay(game: Game, log: CommandLog): Result<GameState>
 ```
 
@@ -438,16 +447,19 @@ Plays a command log back and returns the state it leads to, as a [`Result`](#res
 The log's `start` goes through [`loadState`](/docs/reference/saves#loadstate) first, so a log made with an older engine or an older version of the game still plays. Its commands are carried forward from the versions the log records: the engine's own steps from its `schema`, and each plugin's [`commandMigrations`](/docs/reference/plugins#content-and-command-migrations) from its version, so only the steps the log needs run. A log with no versions is read as the oldest, so every step runs, and commands written with names an older engine used are read with today's: `{ type: 'use', itemId: 'tea' }`, from when items were the engine's, is the [inventory plugin](/docs/plugins/inventory)'s `inventory/use` on `item:tea`. If the start can't be loaded, or the log was written for a newer engine or a newer version of a plugin than the game has, `replay` fails with the reason, such as `written for version 7 of the cast plugin's commands, this game's reads 6`.
 
 ```ts
+import { readFileSync } from 'node:fs'
 import { replay, type CommandLog } from '@ifloom/engine'
+import lastWeek from './old/src/game.ts'
+import thisWeek from './src/game.ts'
 
 // A player's bug report: the log, as JSON.
-const report: CommandLog = JSON.parse(text)
+const report: CommandLog = JSON.parse(readFileSync('report.json', 'utf8'))
 const played = replay(game, report)
 if (played.ok) console.log(played.value.turn)
 
 // Two versions of a game, played the same way.
-const before = replay(oldGame, report)
-const after = replay(newGame, report)
+const before = replay(lastWeek.build().game, report)
+const after = replay(thisWeek.build().game, report)
 ```
 
 A [`newGame`](/docs/reference/commands#newgame) in a log replays as [`apply`](/docs/reference/commands#apply) runs it: a new game with a seed drawn from the state before, the same every time. A runner's own log never holds one, because a runner starts a new log at each new game.

@@ -31,7 +31,7 @@ Then add `messages()` to the game's `plugins`. [Adding one](/docs/plugins#adding
 
 ## messages
 
-```ts
+```ts shape
 function messages(): DefinedPlugin<MessagesState, MessagesView>
 ```
 
@@ -60,7 +60,7 @@ const { game } = loadGame([town], {
 
 The channels go in the content beside the messages:
 
-```ts
+```ts fragment
 data: {
   messages: {
     channels: [
@@ -76,7 +76,7 @@ The plugin lists `cooperates: ['cast']` (see [`cooperates`](/docs/reference/plug
 
 ### Channel
 
-```ts
+```ts shape
 type Channel = { id: string; name: string }
 ```
 
@@ -89,7 +89,7 @@ Channels are content. List them in your content's `data.messages.channels`, in t
 
 ### channelsOf
 
-```ts
+```ts shape
 function channelsOf(game: Game): Channel[]
 ```
 
@@ -101,7 +101,7 @@ Messages are content. List them in your content's [`data`](/docs/reference/loade
 
 ### MessageDef
 
-```ts
+```ts shape
 type MessageDef = {
   id: string
   channel: string
@@ -135,9 +135,10 @@ type MessageDef = {
 
 ### ReplyDef
 
-```ts
+```ts shape
 type ReplyDef = {
   id: string
+  label?: string
   when?: Condition
   effects?: EffectRef[]
 }
@@ -459,7 +460,7 @@ Its [React UI](#drawing-it) draws a channel with [`MessagesSection`](#messagesse
 
 ### MessagesView
 
-```ts
+```ts shape
 type MessagesView = { channels: ChannelView[]; unread: number; waiting: boolean }
 ```
 
@@ -471,7 +472,7 @@ type MessagesView = { channels: ChannelView[]; unread: number; waiting: boolean 
 
 ### ChannelView
 
-```ts
+```ts shape
 type ChannelView = {
   id: string
   name: string
@@ -489,7 +490,7 @@ type ChannelView = {
 
 ### ThreadView
 
-```ts
+```ts shape
 type ThreadView = {
   id: string
   name: string
@@ -515,7 +516,7 @@ type ThreadView = {
 
 ### MessageView
 
-```ts
+```ts shape
 type MessageView = {
   id: string
   key: string
@@ -545,7 +546,7 @@ type MessageView = {
 
 A message has no picture field of its own. Put pictures and videos in its body, where they sit in order with the words:
 
-```ts
+```ts fragment
 // prose 'ava.ducks': 'Look who turned up at the pond!\n\n[[video:clips/ducks|Two ducks on the pond]]'
 { id: 'ava.ducks', channel: 'texts', from: 'ava', when: { kv: 'parkVisit' }, body: [{ prose: 'ava.ducks' }] }
 ```
@@ -568,7 +569,7 @@ The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.
 
 ### messagesUi
 
-```ts
+```ts shape
 const messagesUi: PluginUi
 ```
 
@@ -586,7 +587,7 @@ The other buttons say what the view's buttons say, the plugin's [strings](#strin
 
 ### MessagesSection
 
-```tsx
+```tsx shape
 const MessagesSection: PluginSectionComponent
 ```
 
@@ -602,7 +603,7 @@ Replaceable as `MessagesSection` in [`components`](/docs/react/components#compon
 
 ### useMessages
 
-```ts
+```ts shape
 function useMessages(): MessagesControls | null
 
 type MessagesControls = MessagesView & { read: (channel: string) => Result<GameState> }
@@ -614,7 +615,7 @@ The [messages](/docs/plugins/messages) plugin's view (its channels, each with th
 
 ### MessagesState
 
-```ts
+```ts shape
 type MessagesState = {
   arrived: Arrival[]
   replied: Record<string, string>
@@ -634,7 +635,7 @@ A save from before pools (the plugin's state version 1) kept one arrival per mes
 
 ### Arrival
 
-```ts
+```ts shape
 type Arrival = {
   key: string
   message: string
@@ -651,7 +652,7 @@ The helpers write the content objects for you, typed. `messages.arrived`, `messa
 
 ### Helpers
 
-```ts
+```ts shape
 const messages: {
   (): DefinedPlugin<MessagesState, MessagesView>
   reply(message: string, reply: string): CommandRef
@@ -666,7 +667,7 @@ const messages: {
 
 ### messagesOf
 
-```ts
+```ts shape
 function messagesOf(game: Game): MessageDef[]
 ```
 

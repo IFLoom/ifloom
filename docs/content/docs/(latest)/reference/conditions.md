@@ -33,7 +33,7 @@ When a choice is greyed out or a line is missing and you can't see why, [`explai
 
 ## Range
 
-```ts
+```ts shape
 type Range = { gte?: Amount; gt?: Amount; lte?: Amount; lt?: Amount }
 ```
 
@@ -41,7 +41,7 @@ Many conditions compare a number against a range: at least `gte`, above `gt`, at
 
 A range with no bounds at all means "any of it", so the value has to be above 0. That's why `{ entity: 'clothing:scarf', at: 'you' }` means "has a scarf", and `{ seen: 'ava.hi' }` means "has seen it at least once".
 
-```ts
+```ts fragment
 { stat: 'charm', gte: 10 }          // 10 or more
 { stat: 'charm', gt: 10 }           // more than 10
 { stat: 'charm', lt: 10 }           // below 10
@@ -52,7 +52,7 @@ A range with no bounds at all means "any of it", so the value has to be above 0.
 
 ## Condition
 
-```ts
+```ts shape
 type Condition =
   | { all: Condition[] }
   | { any: Condition[] }
@@ -78,19 +78,13 @@ A condition names what it reads by its noun, as effects do: `{ stat: 'coins', gt
 
 Effects use the same keys, so `{ kv: 'met' }` asks about what `{ kv: 'met', to: true }` sets. Which one an object is depends on where it's written: in `when` it's a condition, in `effects` an effect.
 
-### ConditionKey
-
-```ts
-import type { ConditionKey } from '@ifloom/engine'
-```
-
-The keys that tell the engine's conditions apart: `all`, `any`, `not`, `kv`, `setting`, `stat` and the rest above.
+The keys that tell the engine's conditions apart are `all`, `any`, `not`, `kv`, `setting`, `stat` and the rest above.
 
 **Gotcha.** Put one key that says what it asks in each object. A condition with two, such as `{ kv: 'x', stat: 'coins' }`, never holds, because the engine can't tell which one you meant. One with none, such as `{}`, never holds either. The [content checker](/docs/reference/checks#in-a-condition) reports both, so combine them with `all` instead. A [call by name](#calls) has no key of the engine's, only its name.
 
 ### all, any, not
 
-```ts
+```ts fragment
 { all: [{ kv: 'marketDay' }, { entity: 'clothing:scarf', at: 'you' }] }   // on market day, with a scarf
 { any: [{ entity: 'clothing:scarf', at: 'you' }, { entity: 'clothing:raincoat', at: 'you' }] }
 { not: { kv: 'phase', is: 'arrival' } }
@@ -100,7 +94,7 @@ The keys that tell the engine's conditions apart: `all`, `any`, `not`, `kv`, `se
 
 ### kv
 
-```ts
+```ts fragment
 { kv: 'marketOpen' }                       // set to anything truthy
 { kv: 'errand', is: 'bread' }              // exactly this value
 { kv: 'phase', is: ['arrival', 'open'] }   // one of these values
@@ -117,7 +111,7 @@ To count something, use the [`kv`](/docs/reference/effects#kv) effect's `by` for
 
 With `of`, it tests a key in another kv store. The same three tests apply.
 
-```ts
+```ts fragment
 { kv: 'role', of: 'staff:ana', is: 'cook' }       // an entity's
 { kv: 'visits', of: 'storyline:ava', gte: 3 }     // a storyline's
 { kv: 'score', of: 'minigame', gte: 3 }           // the running minigame's
@@ -129,7 +123,7 @@ With `of`, it tests a key in another kv store. The same three tests apply.
 
 #### The phase
 
-```ts
+```ts fragment
 { kv: 'phase', is: ['arrival', 'first-day'] }
 ```
 
@@ -139,7 +133,7 @@ The stretch of the game the player is in is the kv key `phase`, set with the [`k
 
 ### setting
 
-```ts
+```ts fragment
 { setting: 'hints' }                    // a toggle that is on
 { setting: 'difficulty', is: 'hard' }   // exactly this option
 { setting: 'patience', gte: 6 }         // a range, 6 or more
@@ -147,7 +141,7 @@ The stretch of the game the player is in is the kv key `phase`, set with the [`k
 
 Tests a `play` [setting](/docs/reference/settings), the value in [`state.settings`](/docs/reference/state#settings). It reads the same way as [`kv`](#kv): `is` tests strict equality, a range bound tests the number, and neither tests whether it's truthy.
 
-```ts
+```ts fragment
 // A hint only for players who keep hints on.
 { id: 'ask-rosa', label: 'bakery#ask-rosa', when: { setting: 'hints' }, effects: [] }
 ```
@@ -156,7 +150,7 @@ Tests a `play` [setting](/docs/reference/settings), the value in [`state.setting
 
 ### chose
 
-```ts
+```ts fragment
 { chose: 'ava.hi#compliment' }          // picked at least once
 { chose: 'ava.hi#compliment', gte: 3 }  // three times or more
 { chose: 'ava.hi#compliment', lt: 1 }   // never
@@ -168,7 +162,7 @@ How many times the player has picked a choice. The key is the scene's id, a `#` 
 
 ### seen
 
-```ts
+```ts fragment
 { seen: 'ava.river' }          // entered at least once
 { seen: 'ava.hi', gte: 3 }     // three times or more
 { seen: 'ava.river', lt: 1 }   // never
@@ -178,7 +172,7 @@ How many times the player has entered a scene (see [`seen`](/docs/reference/stat
 
 ### since
 
-```ts
+```ts fragment
 { since: 'ava.river', gte: 3 }               // three or more whole turns after first seeing it
 { since: 'ava.river', lt: 2 }                // within two turns of it
 { since: 'ava.river', last: true, gte: 3 }   // three or more turns after the latest visit
@@ -191,7 +185,7 @@ With `last: true` it counts from the latest time instead, the record's `last`. T
 
 **A cooldown.** The bench by the river can be visited again three days after the last time. Put it on whatever opens the scene, here an action:
 
-```ts
+```ts fragment
 {
   id: 'sit-by-the-river',
   blocked: [{ when: { since: 'river.bench', last: true, lt: 3 }, reason: 'You sat there only recently.' }],
@@ -209,7 +203,7 @@ Before the first visit, `since` fails every range, so the `blocked` entry doesn'
 
 ### stat
 
-```ts
+```ts fragment
 { stat: 'charm', gte: 6 }
 { stat: 'coins', gte: 4 }     // can afford a 4c sandwich
 { stat: 'energy', lt: 20 }    // flagging
@@ -221,7 +215,7 @@ It reads the stat with [`statValue`](/docs/reference/stats#statvalue), so a [der
 
 With `of`, it tests an [entity](/docs/reference/entities)'s stat. `of` is an [entity reference](/docs/reference/entities#entityref), or `'$'` inside an [`each`](/docs/reference/effects#each) or a [`count`](#count)'s `where`. `of: 'you'` is the [protagonist](/docs/reference/entities#protagonists-you-and-player) being played, or the player when there's none, and `of: 'player'` is the player.
 
-```ts
+```ts fragment
 { stat: 'quality', of: 'dish:soup', lt: 5 }    // the soup could still be better
 { stat: 'morale', of: '$', lt: 20 }             // in an each: this one is ready to quit
 ```
@@ -232,7 +226,7 @@ With `of`, it tests an [entity](/docs/reference/entities)'s stat. `of` is an [en
 
 ### count
 
-```ts
+```ts fragment
 { count: 'staff' }                                                        // anyone at all
 { count: 'staff', lt: 4 }                                                 // room for one more
 { count: 'staff', where: { stat: 'morale', of: '$', gte: 75 }, gte: 2 }   // two happy people
@@ -250,7 +244,7 @@ The [content checker](/docs/reference/checks) checks the kind, the holder, the t
 
 ### entity
 
-```ts
+```ts fragment
 { entity: 'staff:ana' }                          // Ana works here
 { entity: 'food:apple', at: 'you' }              // you have an apple
 { entity: 'food:apple', at: 'place:larder', lt: 3 }   // fewer than three in the larder
@@ -267,7 +261,7 @@ The [content checker](/docs/reference/checks) reports a kind the game doesn't de
 
 ### level
 
-```ts
+```ts fragment
 { level: 'cooking' }                        // level 1 or more
 { level: 'cooking', gte: 2 }                // level 2 or more
 { level: 'cooking', lt: 3 }                 // not yet level 3
@@ -278,7 +272,7 @@ Tests the level a stat with [`levels`](/docs/reference/stats#levels) is at, agai
 
 With `of`, it reads an [entity](/docs/reference/entities)'s level, as [`{ stat }`](#stat) does. An entity that isn't there fails every range, `lt` included.
 
-```ts
+```ts fragment
 // declared with the stat:
 { id: 'cooking', label: 'Cooking', levels: { at: [10, 30, 60] } }
 ```
@@ -290,7 +284,7 @@ With `of`, it reads an [entity](/docs/reference/entities)'s level, as [`{ stat }
 
 ### storyline
 
-```ts
+```ts fragment
 { storyline: 'ava' }                // open
 { storyline: 'ava', open: false }   // closed for now
 ```
@@ -303,7 +297,7 @@ Whether a [storyline](/docs/reference/storylines) is open, meaning it isn't clos
 
 ### roll
 
-```ts
+```ts fragment
 { roll: 'skim' }                     // a roll has been made under this key
 { roll: 'skim', passed: true }       // it reached its target
 { roll: 'skim', passed: false }      // it missed
@@ -321,7 +315,7 @@ A roll is kept until another roll under the same key replaces it, across turns a
 
 ### timer
 
-```ts
+```ts fragment
 { timer: 'phone' }               // it's running
 { timer: 'phone', lte: 3000 }    // running, with 3 seconds or less left
 { not: { timer: 'phone' } }      // not running: never started, stopped, or run out
@@ -364,7 +358,7 @@ It doesn't keep characters either. With the [cast](/docs/plugins/cast#conditions
 
 ### Calls
 
-```ts
+```ts fragment
 { 'game/marketDay': true }
 { 'game/priceBelow': { coins: 4 } }
 { 'quests/done': { quest: 'bread' } }
@@ -388,7 +382,7 @@ export const rules: GameRules = {
 
 ## holds
 
-```ts
+```ts shape
 function holds(state: GameState, game: Game, condition: Condition | undefined): boolean
 ```
 
@@ -399,16 +393,16 @@ import { holds } from '@ifloom/engine'
 import { places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
 
-holds(state, town, { kv: 'metAva' })          // true once you've met Ava
-holds(state, town, places.at('cafe'))                // a plugin's condition
-holds(state, town, cast.here('ava'))               // the cast's
+holds(state, game, { kv: 'metAva' })          // true once you've met Ava
+holds(state, game, places.at('cafe'))          // a plugin's condition
+holds(state, game, cast.here('ava'))           // the cast's
 ```
 
 The state comes first and the game second, as in every function that reads the game in play. A `count`'s `where` is tested with the same game.
 
 ## inRange
 
-```ts
+```ts shape
 function inRange(state: GameState, game: Game, value: number, range: Range): boolean
 ```
 
@@ -418,14 +412,22 @@ The engine works out the bounds at the top of a call's arguments before it asks 
 
 ```ts
 import { inRange, type Range } from '@ifloom/engine'
+import { definePlugin } from '@ifloom/engine/plugin'
 
 // A plugin condition: { 'dishes/dirty': { gte: 3 } }, or { 'dishes/dirty': true } for "any at all".
-conditions: {
-  dirty: (state, args, { slice, game }) => inRange(state, game, slice.dirty, args as Range),
-},
+export const dishes = definePlugin<{ dirty: number }>({
+  id: 'dishes',
+  version: 1,
+  start: () => ({ dirty: 0 }),
+  conditions: {
+    dirty: (state, args, { slice, game }) => inRange(state, game, slice.dirty, args as Range),
+  },
+})
 ```
 
 ```ts
+import { inRange } from '@ifloom/engine'
+
 inRange(state, game, 4, { gte: 3 })   // true
 inRange(state, game, 0, {})           // false: no bounds asks for above 0
 ```
@@ -438,7 +440,7 @@ inRange(state, game, 0, {})           // false: no bounds asks for above 0
 
 ### explain
 
-```ts
+```ts shape
 function explain(state: GameState, game: Game, condition: Condition | undefined): Explanation
 ```
 
@@ -448,7 +450,7 @@ Walks the whole condition against the state. Every part of an `all`, `any` or `n
 import { explain } from '@ifloom/engine'
 import { places } from '@ifloom/plugin-places'
 
-const why = explain(state, town, {
+const why = explain(state, game, {
   all: [
     { kv: 'metAva' },
     { any: [{ stat: 'coins', gte: 5 }, { level: 'charm', gte: 1 }] },
@@ -469,7 +471,7 @@ With no condition, it returns `{ holds: true, why: 'no condition' }`.
 
 ### Explanation
 
-```ts
+```ts shape
 type Explanation = {
   holds: boolean
   why: string               // one line: what this part checked and what it found
@@ -479,13 +481,13 @@ type Explanation = {
 
 ### explainText
 
-```ts
+```ts shape
 function explainText(explanation: Explanation, depth?: number): string
 ```
 
 Turns an explanation into indented lines, with ✓ or ✗ on each and two spaces per level, for a log, a test failure message or a debug panel. `depth` (default 0) indents the whole tree.
 
-```ts
+```ts continues
 import { explainText } from '@ifloom/engine'
 
 console.log(explainText(why))

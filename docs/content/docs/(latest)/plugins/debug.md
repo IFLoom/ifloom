@@ -60,7 +60,7 @@ A save made with the plugin loads in a build without it. The plugin keeps no sta
 
 ## debug
 
-```ts
+```ts shape
 function debug(): DefinedPlugin<null, DebugView>
 ```
 
@@ -106,7 +106,7 @@ They still go through [`apply`](/docs/reference/commands#apply) like any command
 
 ### Helpers
 
-```ts
+```ts shape
 const debug: {
   (): DefinedPlugin<null, DebugView>
   stat(stat: string, to: number, of?: string): CommandRef
@@ -192,7 +192,7 @@ Its [React UI](#drawing-it) draws it with [`DebugCard`](#debugcard), and [`useDe
 
 ### DebugView
 
-```ts
+```ts shape
 type DebugView = {
   locks: { reason: string; deny: string[] }[]
   fired: Record<string, number>
@@ -222,7 +222,7 @@ The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.
 
 ### debugUi
 
-```ts
+```ts shape
 const debugUi: PluginUi
 ```
 
@@ -255,7 +255,7 @@ Its words are in `DEBUG_WORDS`. A game rewords any of them with `ui.<key>` in it
 
 ### DebugCard
 
-```tsx
+```tsx shape
 function DebugCard(props: { className?: string }): JSX.Element | null
 ```
 
@@ -281,7 +281,7 @@ Replaceable as `DebugCard` in [`components`](/docs/react/components#components).
 
 ### useDebug
 
-```ts
+```ts shape
 function useDebug(): DebugControls | null
 
 type DebugControls = DebugView & {

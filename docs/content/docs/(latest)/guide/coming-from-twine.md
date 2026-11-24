@@ -88,7 +88,7 @@ So the café above would be `src/story/cafe.ts`, with its scenes and their words
 
 Each change is an [effect](/docs/reference/effects), and a choice runs its list of effects in order when the player picks it:
 
-```ts
+```ts fragment
 { stat: 'coins', by: 2 }
 { stat: 'coins', to: 5 }
 { kv: 'metAva', to: true }
@@ -108,7 +108,7 @@ There's no temporary `_variable`. A value you only need while a scene is on scre
 
 A scene's body is a list of blocks, and each block can have a `when`. A block whose [condition](/docs/reference/conditions) fails is left out:
 
-```ts
+```ts fragment
 body: [
   text('The café is warm and smells of toast.'),
   text('Ava has your cup out before you reach the counter.', { when: { kv: 'visits', gte: 3 } }),
@@ -125,7 +125,7 @@ cases([
   text('You could buy the whole cake cabinet.', { when: { stat: 'coins', gte: 20 } }),
   text('Enough for a coffee and a bun.', { when: { stat: 'coins', gte: 5 } }),
   text('Your pockets feel light.'),
-]),
+])
 ```
 
 ### `<<if>>` in the middle of a line, `<<print>>` and `$var`
@@ -137,7 +137,7 @@ Coins: <<print $coins>>. Hello, $name.
 
 A few words that change in the middle of a sentence are a [phrase](/docs/reference/phrases). Declare it once in your content's `phrases`, with rows tried in order, and print it with a token:
 
-```ts
+```ts fragment
 phrases: {
   outfit: {
     verdict: [{ when: { kv: 'outfit', is: 'suit' }, text: 'sharp' }, { text: 'fine, probably' }],
@@ -152,7 +152,7 @@ A `<<print>>` with a ternary, such as `<<print $tired ? "slowly" : "briskly">>`,
 
 `and`, `or` and `not` are `all`, `any` and `not`:
 
-```ts
+```ts fragment
 { all: [{ stat: 'coins', gte: 3 }, { not: { kv: 'hadCoffee' } }] }
 { any: [{ entity: 'item:umbrella', at: 'you' }, { entity: 'item:raincoat', at: 'you' }] }
 { kv: 'errand', is: 'bread' }
@@ -163,7 +163,7 @@ An `<<if>>` around a link becomes one of two things on the choice:
 - **`when`** hides the choice while it fails, as an `<<if>>` around the link does.
 - **`blocked`** keeps it on screen, greyed out, with a reason. Most of the time this is what you want, because the player learns what they're missing.
 
-```ts
+```ts fragment
 {
   id: 'cake',
   when: { seen: 'ava.hi' },
@@ -174,7 +174,7 @@ An `<<if>>` around a link becomes one of two things on the choice:
 
 A link whose text changes with the state, such as `<<if $visits gte 3>>[[The usual|Order]]<<else>>[[Order|Order]]<</if>>`, is one choice with `labels`. The first entry whose `when` holds gives its words, and `label` is the rest of the time:
 
-```ts
+```ts fragment
 { id: 'order', label: 'Order', labels: [{ when: { kv: 'visits', gte: 3 }, label: 'The usual' }], effects: [/* ... */] }
 ```
 
@@ -193,7 +193,7 @@ The high street, busy with the market.
 
 A passage is a [scene](/docs/reference/scenes), and each link is a choice whose effects include `{ scene: 'cafe' }`:
 
-```ts
+```ts fragment
 {
   id: 'street',
   body: [text('The high street, busy with the market.')],
@@ -217,14 +217,14 @@ A passage that carries on after a link, with the text the link brings below it, 
 
 Both are choices. A choice with a `scene` effect moves on, and one without stays on the scene, which is redrawn with the new state:
 
-```ts
+```ts fragment
 { id: 'coffee', effects: [{ stat: 'coins', by: -3 }, { scene: 'cafe' }] }
 { id: 'tip', effects: [{ stat: 'coins', by: -1 }, { kv: 'tipped', to: true }] }
 ```
 
 A `<<button>>` in the StoryCaption or PassageFooter, offered on every screen, is an [action](/docs/reference/actions#actiondef). Actions are the game's own buttons, shown while no scene is open. One can have a cost, effects, and `blocked` entries that refuse it with a reason:
 
-```ts
+```ts fragment
 // in the content
 actions: [
   {
@@ -256,7 +256,7 @@ triggers: [{ id: 'broke', when: { stat: 'coins', lt: 1 }, effects: [{ scene: 'br
 
 `<<include>>` is a line of prose kept by key and read by more than one scene. A `{ prose }` block names a key in the `prose` table, and any number of scenes can name the same one:
 
-```ts
+```ts fragment
 { id: 'cafe.morning', body: [{ prose: 'cafe.menu' }, { prose: 'cafe.morning' }], choices: [] },
 { id: 'cafe.evening', body: [{ prose: 'cafe.menu' }, { prose: 'cafe.evening' }], choices: [] },
 ```
@@ -276,6 +276,8 @@ A widget that changes the state is one of the game's own [macros](/docs/referenc
 
 ```ts
 // src/rules.ts
+import type { GameRules } from '@ifloom/engine'
+
 export const rules: GameRules = {
   macros: {
     payFor: (_state, args) => {
@@ -292,7 +294,7 @@ export const rules: GameRules = {
 }
 ```
 
-```ts
+```ts fragment
 {
   id: 'cake',
   when: { 'game/canAfford': { price: 4 } },
@@ -314,7 +316,7 @@ A set of widgets that keeps its own state, such as a loyalty card or an inventor
 
 There's no init passage. You declare what the game keeps, and each declaration carries its starting value. What every part of the story uses goes in `src/world/`, a file for each kind:
 
-```ts
+```ts fragment
 // src/world/stats.ts and src/world/things.ts, shown together
 stats: [
   { id: 'coins', label: 'Coins', start: 5, max: 999, spendable: true },
@@ -342,7 +344,7 @@ In IFLoom the whole game is one [state](/docs/reference/state) object, and it's 
 
 Data in `setup` that never changes is content: it stays in your TypeScript, beside the scenes. When you'd keep several of something, each with numbers that change in play, declare a kind and its [entities](/docs/reference/entities):
 
-```ts
+```ts fragment
 kinds: [{ id: 'dish', label: 'Dish', plural: 'Menu' }],
 stats: [{ id: 'price', label: 'Price', of: 'dish', start: 4 }],
 entities: [
@@ -353,7 +355,7 @@ entities: [
 
 The same effects and conditions reach them with `of`:
 
-```ts
+```ts fragment
 { stat: 'price', by: 1, of: 'dish:soup' }
 { stat: 'price', of: 'dish:soup', gte: 6 }
 ```
@@ -366,7 +368,7 @@ SugarCube draws the UI bar, and the special passages (StoryCaption, StoryMenu, P
 
 With the `vanilla`, `vue` and `svelte` [templates](/docs/guide/frameworks), the page is yours, so you put each part where SugarCube's UI bar and passage would go. The [React UI](/docs/react) is the ready-made one, and its [layouts](/docs/react#layouts) name the parts of the screen and where they go:
 
-```ts tab="Plain JS" tab-group="framework"
+```ts fragment tab="Plain JS" tab-group="framework"
 // src/main.ts, in the vanilla template: a bar at the side and the passage beside it
 function draw(view: View): void {
   const bar = document.createElement('aside')
@@ -477,7 +479,7 @@ Setting.addToggle("hints", { label: "Show hints", default: true });
 
 Settings are declared on the game, and the React UI draws a settings page from them. A `play` setting is part of the game, and conditions read it. A `ui` setting only changes how things look, so it's kept in the player's profile and never in the state. See [Settings](/docs/reference/settings).
 
-```ts
+```ts fragment
 settings: [
   { id: 'hints', label: 'Show hints', type: 'toggle', default: true },
   { id: 'textSize', label: 'Text size', type: 'choice', affects: 'ui', options: [{ value: 'small', label: 'Small' }, { value: 'large', label: 'Large' }], default: 'small' },
@@ -485,6 +487,8 @@ settings: [
 ```
 
 ```ts
+import { text } from '@ifloom/engine'
+
 text('The board above the till has today’s specials.', { when: { setting: 'hints' } })
 ```
 
@@ -502,6 +506,7 @@ In SugarCube, when an update renames a variable, you set a save version and patc
 ```ts
 import { loadGame, type GameRules } from '@ifloom/engine'
 import { defineGame } from '@ifloom/cli/game'
+import { cafe } from './story/cafe.ts'
 
 const rules: GameRules = {
   migrations: {
@@ -523,6 +528,8 @@ Saving itself needs no setup. [`mountGame`](/docs/react#mountgame) keeps saves i
 `Config.saves.isAllowed` is the content's [`saveable`](/docs/reference/game#saveable): a list of conditions, each with the reason the player reads, and saving is refused while one holds. The React UI greys out its Save button with that reason, and the runner skips its autosave too.
 
 ```ts
+import type { Content } from '@ifloom/engine'
+
 export const cafe: Content = {
   saveable: [{ when: { not: { kv: 'playerName' } }, reason: 'Type your name first.' }],
 }
@@ -540,7 +547,7 @@ Autosave only writes when its moment comes, so with `autosave: { every: 'turn' }
 
 Tracks are declared once in `game.audio`, each on a channel. A scene names what plays on each background channel while it's open, and effects play a sound or change the music:
 
-```ts
+```ts fragment
 audio: {
   tracks: {
     calm: { src: 'music/calm.ogg', channel: 'music' },
@@ -551,7 +558,7 @@ audio: {
 },
 ```
 
-```ts
+```ts fragment
 { id: 'cafe', audio: { ambience: 'cafe.murmur' }, body: [text('The café hums.')], choices: [] }
 { sound: 'bell' }
 { audio: 'music', to: null }
@@ -588,7 +595,7 @@ IFLoom has no runtime randomness. Every draw is worked out from the save's seed 
 
 **A line that varies** is a set of variants. Each time the block shows, it draws a member, and it rotates so the player doesn't read the same line twice running:
 
-```ts
+```ts fragment
 body: [text('The café hums.'), { variants: 'cafe.chatter' }],
 // in the content: the lines are kept by key in `prose`, and the variants list them
 variants: { 'cafe.chatter': ['cafe.chatter.rain', 'cafe.chatter.market', 'cafe.chatter.cat'] },
@@ -621,7 +628,7 @@ export const rules: GameRules = {
 }
 ```
 
-```ts
+```ts fragment
 'cafe.special': "Today's cake is {{cake}}.",
 ```
 
@@ -636,7 +643,7 @@ The kettle starts to rattle.
 
 The engine has no clock that runs by itself, and prose is drawn all at once. A timer belongs to a [minigame](/docs/reference/minigames), a small game inside the story with states, inputs and timers. This one waits three seconds for the kettle, unless the player pours early:
 
-```ts
+```ts fragment
 minigames: [
   {
     id: 'kettle',
@@ -707,7 +714,7 @@ Hooks are the biggest difference. Harlowe changes parts of a passage in place. I
 (link: "Ask for the usual")[(replace: ?order)[Ava is already reaching for your cup.]]
 ```
 
-```ts
+```ts fragment
 {
   id: 'cafe',
   body: [

@@ -34,7 +34,7 @@ Without the calendar, every day has a shift, a day is a turn, and a shift takes 
 
 ## jobs
 
-```ts
+```ts shape
 function jobs(): DefinedPlugin<JobsState, JobsView>
 ```
 
@@ -78,7 +78,7 @@ const buttons = [
 
 ### JobDef
 
-```ts
+```ts shape
 type JobDef = {
   id: string
   name: string
@@ -106,7 +106,7 @@ type JobDef = {
 
 ### ShiftDef
 
-```ts
+```ts shape
 type ShiftDef = { blocked?: Blocked[]; cost?: Record<string, number>; passes?: number; effects?: EffectRef[] }
 ```
 
@@ -119,7 +119,7 @@ type ShiftDef = { blocked?: Blocked[]; cost?: Record<string, number>; passes?: n
 
 ### RankDef
 
-```ts
+```ts shape
 type RankDef = {
   id: string
   name: string
@@ -139,7 +139,7 @@ The player is promoted after any command once the next rank's `requires` are met
 
 ### FireDef
 
-```ts
+```ts shape
 type FireDef = { missed?: number; when?: Condition }
 ```
 
@@ -203,11 +203,12 @@ Days missed add nothing to `owed`, so the week's pay is the wage times the days 
 `jobs.worked(job)` holds once a shift at the job is done today, for the rest of the day. It reads the same record as the refusal "You’ve done today’s shift.", so the two always agree. Without a job it holds for any job the player holds. Use it for a reminder such as "Work is due" on every screen:
 
 ```ts
+import type { Block } from '@ifloom/engine'
 import { jobs } from '@ifloom/plugin-jobs'
 import { calendar } from '@ifloom/plugin-calendar'
 
 // a line in a place's body
-{ prose: 'warn.work', when: { all: [jobs.hired('weekend'), calendar.weekday(5), { not: jobs.worked('weekend') }] } }
+const reminder: Block = { prose: 'warn.work', when: { all: [jobs.hired('weekend'), calendar.weekday(5), { not: jobs.worked('weekend') }] } }
 ```
 
 A day is the calendar's day, or a turn in a game without the calendar. `jobs.shifts` counts every shift instead.
@@ -233,15 +234,20 @@ A day is the calendar's day, or a turn in a game without the calendar. `jobs.shi
 
 ## Opening the job board
 
-Nothing about a job is drawn by itself. Content opens the job board in the `jobs` [panel](/docs/reference/panels) with `jobs.open`, from anything that runs effects: a town hall's action, a choice in a person's scene, a newspaper's `use`, a job site's button on a laptop. Give it job ids to show only those, as a newspaper's ads would.
+Nothing about a job is drawn by itself. Content opens the job board in the `jobs` [panel](/docs/reference/panels) with `jobs.open`, from anything that runs effects: a town hall's action, a choice in a person's scene, a newspaper the [inventory](/docs/plugins/inventory) makes usable, a job site's button on a laptop. Give it job ids to show only those, as a newspaper's ads would.
 
 ```ts
+import type { ActionDef, EntityDef } from '@ifloom/engine'
+import { inventory } from '@ifloom/plugin-inventory'
 import { jobs } from '@ifloom/plugin-jobs'
 
 // Every job: { panel: 'jobs' }
-{ id: 'work', effects: [{ scene: null }, jobs.open()] }
+const board: ActionDef = { id: 'work', label: 'Look for work', effects: [{ scene: null }, jobs.open()] }
 // Only the paper's ads: { panel: 'jobs', with: { job: ['dogs'] } }
-{ id: 'paper', name: 'newspaper', description: 'Today’s Gazette.', use: { label: 'Read the job ads', effects: [jobs.open(['dogs'])] } }
+const paper: EntityDef = {
+  id: 'paper', of: 'item', name: 'newspaper', description: 'Today’s Gazette.', at: 'player',
+  traits: { ...inventory.usable('Read the job ads', [jobs.open(['dogs'])], { keep: true }) },
+}
 ```
 
 The board stays open while the player applies, and closes when a turn ends or the scene changes, so working a shift that passes time closes it. See [How long a panel stays open](/docs/reference/panels#how-long-a-panel-stays-open).
@@ -282,7 +288,7 @@ Its [React UI](#drawing-it) draws the `jobs` panel as a [`JobBoard`](#jobboard) 
 
 ### JobsView
 
-```ts
+```ts shape
 type JobsView = { jobs: JobView[]; panel: JobView[] | null }
 ```
 
@@ -290,7 +296,7 @@ type JobsView = { jobs: JobView[]; panel: JobView[] | null }
 
 ### JobView
 
-```ts
+```ts shape
 type JobView = {
   id: string
   name: string
@@ -338,7 +344,7 @@ The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.
 
 ### jobsUi
 
-```ts
+```ts shape
 const jobsUi: PluginUi
 ```
 
@@ -364,7 +370,7 @@ Its words are in `JOBS_WORDS`. A game rewords any of them with `ui.<key>` in its
 
 ### JobBoard
 
-```tsx
+```tsx shape
 function JobBoard(props: { className?: string; title?: string | false; jobs?: readonly string[] }): JSX.Element | null
 ```
 
@@ -384,7 +390,7 @@ Replaceable as `JobBoard` in [`components`](/docs/react/components#components). 
 
 ### useJobs
 
-```ts
+```ts shape
 function useJobs(): JobsControls | null
 
 type JobsControls = JobsView & {
@@ -403,7 +409,7 @@ The jobs plugin's view ([`JobsView`](/docs/plugins/jobs#jobsview): `jobs`), the 
 
 ### JobsState
 
-```ts
+```ts shape
 type JobsState = { held: Record<string, HeldJob>; fired: Record<string, number> }
 type HeldJob = { rank: number; shifts: number; missed: number; hiredOn: number; lastWorked: number | null }
 ```
@@ -414,7 +420,7 @@ What the plugin keeps in a save, at `state.plugins.jobs`: each job the player ho
 
 ### Helpers
 
-```ts
+```ts shape
 const jobs: {
   (): DefinedPlugin<JobsState, JobsView>
   apply(job: string): CommandRef
@@ -434,7 +440,7 @@ const jobs: {
 
 ### jobsOf and jobOf
 
-```ts
+```ts shape
 function jobsOf(game: Game): JobDef[]
 function jobOf(game: Game, id: string): JobDef | undefined
 ```
@@ -462,4 +468,4 @@ A command that names a job the game doesn't have gives `unknown job "…"` where
 
 ## See it in an example
 
-Small Town: `weekend` in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts) is Saturday mornings at the café, with a promotion after three shifts and firing after two missed. Ava's "Ask about weekend work" choice opens the whole board with `jobs.open()`. `dogs`, walking dogs in the park on weekday evenings ([`examples/showcase/src/story/park.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/park.ts)), is in the newspaper's ads, whose `use` opens the board with only that job.
+Small Town: `weekend` in [`examples/showcase/src/story/cafe.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/cafe.ts) is Saturday mornings at the café, with a promotion after three shifts and firing after two missed. Ava's "Ask about weekend work" choice opens the whole board with `jobs.open()`. `dogs`, walking dogs in the park on weekday evenings ([`examples/showcase/src/story/park.ts`](https://github.com/IFLoom/ifloom/blob/main/examples/showcase/src/story/park.ts)), is in the newspaper's ads, whose `inventory/usable` trait opens the board with only that job.

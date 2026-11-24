@@ -22,7 +22,7 @@ Each effect is told apart by its key, as a [condition](/docs/reference/condition
 
 ## applyEffects
 
-```ts
+```ts shape
 function applyEffects(state: GameState, game: Game, effects: readonly EffectRef[]): GameState
 ```
 
@@ -45,7 +45,7 @@ It takes effects as content writes them, so a plugin's helper such as `quests.st
 
 An effect's key names what it changes (`stat`, `kv`, `entity`, `scene`, `timer` and so on) and holds the target. `by` changes a number, `to` sets a value, and `of` says whose it is when it isn't the player's.
 
-```ts
+```ts shape
 type Effect =
   | { stat: StatKey; by: Amount; of?: string }
   | { stat: StatKey; to: Amount; of?: string }
@@ -80,19 +80,11 @@ Where an effect takes an [`Amount`](/docs/reference/amounts#amount), it can be a
 
 Conditions use the same keys, so `{ stat: 'coins', gte: 4 }` asks about what `{ stat: 'coins', by: -4 }` changes. Which one an object is depends on where it's written: in `when` it's a condition, in `effects` an effect.
 
-### EffectKey
-
-```ts
-import type { EffectKey } from '@ifloom/engine'
-
-type EffectKey = 'stat' | 'kv' | 'create' | 'remove' | 'each' | 'entity' | 'move' | 'you' | 'scene' | 'closeStoryline' | 'turn' | 'notify' | 'audio' | 'sound' | 'minigame' | 'timer' | 'roll' | 'panel' | 'point'
-```
-
-The keys that tell the engine's effects apart. Narrow an `Effect` by one with `in`: inside `if ('stat' in effect)`, `effect.stat` is the stat's key.
+Each effect is told apart by its key: `stat`, `kv`, `create`, `remove`, `each`, `entity`, `move`, `you`, `scene`, `closeStoryline`, `turn`, `notify`, `audio`, `sound`, `minigame`, `timer`, `roll`, `panel` or `point`. Narrow an `Effect` by one with `in`: inside `if ('stat' in effect)`, `effect.stat` is the stat's key.
 
 ### stat
 
-```ts
+```ts fragment
 { stat: 'fitness', by: 1 }
 { stat: 'energy', to: 100 }
 ```
@@ -105,7 +97,7 @@ A [derived stat](/docs/reference/stats#derived-stats) is never written, so a `st
 
 #### An entity's stat
 
-```ts
+```ts fragment
 { stat: 'quality', by: 1, of: 'dish:soup' }
 { each: 'staff', effects: [{ stat: 'morale', by: -8, of: '$' }] }
 ```
@@ -125,7 +117,7 @@ With `to` in place of `by`, the stat is set to `to`, held to its declared range.
 
 ### Calls
 
-```ts
+```ts fragment
 { 'loyalty/stamp': true }
 { 'quests/start': { quest: 'letter' } }
 { 'game/payRent': { by: 2 } }
@@ -137,7 +129,7 @@ Runs a [plugin](/docs/reference/plugins)'s effect by its full name, or one of th
 
 ### kv
 
-```ts
+```ts fragment
 { kv: 'hadCoffee', to: true }
 { kv: 'coffeesBought', by: 1 }
 ```
@@ -150,7 +142,7 @@ With `random`, it's set to a whole number drawn between the two ends, both inclu
 
 #### Whose key it is
 
-```ts
+```ts fragment
 { kv: 'role', to: 'cook', of: 'staff:ana' }
 { kv: 'visits', by: 1, of: 'storyline:ava' }
 { kv: 'score', by: 1, of: 'minigame' }
@@ -164,7 +156,7 @@ Without `of`, the key is the player's. `of` names another kv store, the same way
 
 #### The phase
 
-```ts
+```ts fragment
 { kv: 'phase', to: 'open' }
 ```
 
@@ -183,7 +175,7 @@ Puts a scene on screen, or closes it with `null`. The id isn't checked when the 
 
 #### Drawing a storylet
 
-```ts
+```ts fragment
 { scene: { from: 'cafe' } }
 { scene: { from: 'cafe', otherwise: 'cafe.quiet' } }
 ```
@@ -196,7 +188,7 @@ The engine has no effect that moves the player. The [places plugin](/docs/plugin
 
 ### closeStoryline
 
-```ts
+```ts fragment
 { closeStoryline: 'ava', turns: 2 }
 ```
 
@@ -213,7 +205,7 @@ Ends the turn once with `true`, or `by` times. Each time, the [turn](/docs/refer
 
 The engine keeps no time of day, so this effect is how a turn ends, whether a turn is a chapter of a novel or a week of running the café. Put it on the choice that closes a chapter. A plugin can end turns the same way. The [calendar](/docs/plugins/calendar#what-a-turn-is)'s `pass` and `sleep` end one at each day they cross, and its `onTurn` hook moves its clock on when this effect ends one.
 
-```ts
+```ts fragment
 { id: 'lock-up', effects: [{ turn: true }, { scene: 'cafe.monday' }] }
 ```
 
@@ -224,7 +216,7 @@ The engine keeps no time of day, so this effect is how a turn ends, whether a tu
 
 ### create
 
-```ts
+```ts fragment
 { create: 'staff', with: { name: 'Dev', stats: { skill: 2, wage: 8, morale: 80 } } }
 { create: 'staff', with: { id: 'cleo', name: 'Cleo' } }
 { create: 'food', like: 'food:cake', with: { stats: { fresh: 3 } }, at: 'you' }
@@ -232,7 +224,7 @@ The engine keeps no time of day, so this effect is how a turn ends, whether a tu
 
 Adds an [entity](/docs/reference/entities) of the kind `create` names, after the ones already there. The save keeps a record of it with what `with` gives:
 
-```ts
+```ts shape
 type CreatedEntity = {
   id?: string
   name?: string
@@ -249,7 +241,7 @@ Its `description` is read like a declared entity's, with tokens filled in, and i
 
 A thing made in play this way is how a game keeps notes, photos or letters. The phone's camera makes a photo the player keeps:
 
-```ts
+```ts fragment
 { create: 'photo', with: { id: 'ava', name: 'Ava at work', image: 'photo/ava.svg' }, at: 'player' }
 ```
 
@@ -278,7 +270,7 @@ choices: [
 
 ### remove
 
-```ts
+```ts fragment
 { remove: 'staff:ana' }
 { each: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ remove: '$' }] }
 ```
@@ -291,7 +283,7 @@ Nobody holds it any more, and what it [held](/docs/reference/entities#holding-th
 
 ### each
 
-```ts
+```ts fragment
 { each: 'staff', effects: [{ stat: 'morale', by: -8, of: '$' }] }
 { each: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ remove: '$' }] }
 { each: { of: 'food', at: 'you' }, effects: [{ stat: 'fresh', by: -1, of: '$' }] }
@@ -312,7 +304,7 @@ The [content checker](/docs/reference/checks) looks inside an `each`, with `'$'`
 
 ### entity
 
-```ts
+```ts fragment
 { entity: 'food:apple', by: 2 }                       // two more apples for you
 { entity: 'food:apple', at: 'place:larder', to: 6 }   // the larder restocked
 { entity: 'gift:scarf', at: 'character:ava', to: 1 }  // Ava has the scarf now
@@ -324,7 +316,7 @@ It does nothing if the thing isn't in the game, or the holder can't hold things:
 
 ### move
 
-```ts
+```ts fragment
 { move: 'food:apple', to: 'character:ava', by: 1 }    // hand Ava an apple
 { move: 'food:bread', from: 'place:larder', to: 'you' }
 { move: 'gift:scarf', to: 'gift:box' }               // wrap it
@@ -347,7 +339,7 @@ Switches who `'you'` is: the [protagonist](/docs/reference/entities#protagonists
 
 ### notify
 
-```ts
+```ts fragment
 { notify: 'Rent is due on Friday', id: 'rent', text: 'notice.rent', tag: 'money' }
 ```
 
@@ -355,7 +347,7 @@ Raises a [notice](/docs/reference/notices), which is something the game tells th
 
 ### audio
 
-```ts
+```ts fragment
 { audio: 'music', to: 'radio' }
 ```
 
@@ -364,7 +356,7 @@ Puts the background [channel](/docs/reference/audio#channels) that `audio` names
 - **`to: null`** silences the channel, place and default included.
 - **Leave `to` out** to hand the channel back, so the place's audio or the game's default plays again.
 
-```ts
+```ts fragment
 { audio: 'music', to: null }  // the music stops
 { audio: 'music' }            // back to whatever the flat or the default plays
 ```
@@ -391,7 +383,7 @@ It also adds 1 to the kv key `minigame:<id>`, which counts how many times the mi
 
 ### timer
 
-```ts
+```ts fragment
 { timer: 'phone' }             // start it, for its own ms
 { timer: 'phone', to: 5000 }   // start it for 5 seconds
 { timer: 'phone', to: null }   // stop it; its effects don't run
@@ -405,7 +397,7 @@ When a tick runs a timer out, the timer stops and its `effects` run. See [When a
 
 ### panel
 
-```ts
+```ts fragment
 { panel: 'shop', with: { vendor: 'counter' } }
 { panel: 'jobs' }
 { panel: null }
@@ -427,7 +419,7 @@ The checker allows any name. A plugin that knows a panel checks its `with`, so t
 In a choice of a [flowing scene](/docs/reference/flows): once the choice's `then` is done, the flow carries on from the point `{ point: 'questions' }` marks, instead of after the decision. The point can be anywhere in the scene, in a section or another choice's `then` too. It's only a choice's effect, in the scene that has the point, so a flow loops only through a pick. Anywhere else it does nothing, and the loader reports it.
 ### roll
 
-```ts
+```ts fragment
 { roll: 'skim', dice: '2d6', against: 8 }
 { roll: 'climb', dice: '1d20', plus: { stat: 'strength' }, against: 12 }
 { roll: 'ducks', dice: { count: 1, sides: 6 }, plus: 2 }
@@ -449,7 +441,7 @@ The [content checker](/docs/reference/checks#in-an-effect) reports dice it can't
 
 Most effects are fixed data. When one has to be worked out from the state, such as "one more than the counter is now" or "the next rung of this ladder", declare a [macro](/docs/reference/custom#macros) in the game's [`rules`](/docs/reference/rules) and call it with `game/` in front. It returns the effects it stands for:
 
-```ts
+```ts shape
 type Macro<S = any> = (state: GameState, args: PluginArgs, context: PluginContext<S>) => EffectRef[]
 ```
 

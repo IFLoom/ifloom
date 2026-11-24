@@ -5,7 +5,7 @@ description: The ui field on scenes, choices, blocks, kinds, entities, stats, ac
 
 Some things in a game are about how it looks, not how it plays: a scene that fades in, a paragraph that waits a moment, energy drawn as a bar, a character whose lines are blue. None of that changes the state, the rules or a replay, and each UI draws it differently. So the engine doesn't define any of it. Content writes it in a `ui` field, the engine carries that field to the view unchanged, and a UI package decides what the hints mean.
 
-```ts
+```ts fragment
 {
   id: 'ava.river',
   title: 'By the river',
@@ -44,7 +44,7 @@ An entity's hints are its kind's with its own laid over them, field by field. A 
 
 ## Ui and the hint interfaces
 
-```ts
+```ts shape
 import type { BlockUi, ChoiceUi, EntityUi, GameUi, SceneUi, StatUi, Ui } from '@ifloom/engine'
 
 interface SceneUi {}
@@ -72,7 +72,7 @@ Once a game's code imports that package, `ui: { display: 'bar' }` on a stat is t
 
 ## InlineUi
 
-```ts
+```ts shape
 import type { InlineUi, InlineUiArgs } from '@ifloom/engine'
 
 interface InlineUi {}
@@ -97,7 +97,7 @@ The engine never reads `InlineUi`. A `ui` [span](/docs/reference/prose#inlinespa
 
 ## entityUi
 
-```ts
+```ts shape
 import { entityUi } from '@ifloom/engine/plugin'
 
 function entityUi(state: GameState, game: Game, ref: EntityRef): Ui<EntityUi> | undefined
@@ -107,7 +107,7 @@ An entity's hints as the view gives them: its kind's, then the one it was made `
 
 ## uiInContent
 
-```ts
+```ts shape
 import { uiInContent, type UiInContent, type UiField, type TextLine, type UiTarget } from '@ifloom/engine'
 
 function uiInContent(game: Game): UiInContent
@@ -125,6 +125,8 @@ Each field says what it's written on (`on`), that thing's `id` where it has one,
 `lines` holds every prose line and every block of words written in place, with where it is, for a UI to read its [UI pieces](/docs/reference/prose#ui-pieces) in. The same hints or line reached twice are listed once.
 
 ```ts
+import { uiInContent } from '@ifloom/engine'
+
 const { fields } = uiInContent(game)
 const reveals = fields.filter((field) => field.on === 'block' && 'reveal' in (field.ui as object))
 ```

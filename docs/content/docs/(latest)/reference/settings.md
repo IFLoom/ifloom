@@ -43,7 +43,7 @@ Whichever type it is, the player's last choice is stored in the profile's `core:
 
 ## SettingDef
 
-```ts
+```ts shape
 type SettingDef = {
   id: string
   label: string
@@ -67,7 +67,7 @@ type SettingDef = {
 
 Content reads a play setting with the [`{ setting }`](/docs/reference/conditions#setting) condition, which works like `{ kv }`:
 
-```ts
+```ts fragment
 // Rosa offers a hint only to players who keep hints on.
 { id: 'ask-rosa', label: 'bakery#ask-rosa', when: { setting: 'hints' }, effects: [] }
 

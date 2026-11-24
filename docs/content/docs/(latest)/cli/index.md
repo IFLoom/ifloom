@@ -259,7 +259,7 @@ See https://ifloom.dev/docs/cli#the-game-module
 
 ### defineGame
 
-```ts
+```ts shape
 function defineGame(def: GameModuleDef): GameModule
 
 type GameModuleDef = {
@@ -285,7 +285,7 @@ type GameModule = Omit<GameModuleDef, 'build'> & {
 
 ### probe
 
-```ts
+```ts shape
 function probe(name: string, game: Game, steps: readonly ProbeStep[], from?: Probe | GameState): Probe
 
 type ProbeStep = Effect | { play: CommandRef }
@@ -299,9 +299,12 @@ A probe made by playing. It starts from the game's [starting state](/docs/refere
 So a probe never writes the state's own shape, and it stays a whole state when the game or a plugin adds a field.
 
 ```ts
+import { probe, type Probe } from '@ifloom/cli/game'
+import type { Game } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 
-probes: (game) => {
+// defineGame({ build, probes })
+function probes(game: Game): Probe[] {
   // The first night, played: unpack, then go to bed.
   const morning = probe('first-morning', game, [{ play: { type: 'choose', id: 'unpack' } }, { play: calendar.sleep() }])
   // Six days on from there, in the afternoon, with the cat named.
@@ -426,6 +429,7 @@ The module's [`start`](#definegame), where the play begins, and its `policy`, wh
 // src/game.ts
 import { loadGame, startingState } from '@ifloom/engine'
 import { defineGame, explorer } from '@ifloom/cli/game'
+import { content } from './content.ts'
 
 export default defineGame({
   build: () => loadGame(content, { id: 'my-story', title: 'My Story' }),
@@ -475,6 +479,7 @@ Pick probes that differ in what the content looks at: the first screen, an ordin
 ```ts
 // examples/showcase/src/game.ts
 import { probe, type Probe, type ProbeStep } from '@ifloom/cli/game'
+import type { Game } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { statuses } from '@ifloom/plugin-statuses'
 
@@ -575,7 +580,9 @@ It needs `@ifloom/plugin-unlocks` among the game's dependencies, since the hash 
 
 ## The Vite preset
 
-```ts
+```ts shape
+import type { UserConfig } from 'vite'
+
 function ifloom(options?: IfloomViteOptions): UserConfig
 
 type IfloomViteOptions = {
@@ -619,6 +626,7 @@ export default ifloom({ vite: { plugins: [react(), tailwindcss()], resolve: { de
 
 ```ts
 import { ifloom } from '@ifloom/cli/vite'
+import { myPlugin } from './my-plugin.ts'
 
 export default ifloom({ vite: { server: { port: 5180 }, plugins: [myPlugin()] } })
 ```
@@ -641,7 +649,7 @@ import type { BuildOptions, GameModule, GameModuleDef, NewGameOptions, Playtest,
 
 ### newGame
 
-```ts
+```ts shape
 function newGame(options: NewGameOptions): { dir: string; files: string[]; theme: ThemeName | null }
 
 type NewGameOptions = {
@@ -671,7 +679,7 @@ const { theme } = newGame({ name: 'market-day', theme: 'paper', into: '/tmp/mark
 
 ### checkBuild
 
-```ts
+```ts shape
 function checkBuild(dir: string, files?: readonly FileRef[]): string[]
 ```
 
@@ -685,6 +693,7 @@ With no `index.html`, the one problem is `no index.html in <dir>`.
 
 ```ts
 import { checkBuild } from '@ifloom/cli'
+import { checkGame } from '@ifloom/engine'
 
 checkBuild('dist') // []
 checkBuild('dist') // ['index.html loads /assets/index.js, which is not beside it']
@@ -695,7 +704,7 @@ Only stylesheets count among the `<link>`s. An icon at `/favicon.ico` isn't repo
 
 ### buildFiles
 
-```ts
+```ts shape
 function buildFiles(dir: string, at?: string): { file: string; bytes: number }[]
 ```
 
@@ -709,7 +718,7 @@ buildFiles('dist') // [{ file: 'index.html', bytes: 434640 }, { file: 'art/place
 
 ### inlineAssets
 
-```ts
+```ts shape
 function inlineAssets(dir: string, folder?: string): { files: number; bytes: number; videos: number }
 ```
 
@@ -733,7 +742,7 @@ checkBuild('dist')   // []
 
 ### checkGame
 
-```ts
+```ts shape
 function checkGame(module: Record<string, unknown>, publicDir?: string): string[]
 ```
 
@@ -753,7 +762,7 @@ In a test, this is `ifloom check` without the command line. Small Town's own bui
 
 ### checkFiles
 
-```ts
+```ts shape
 function checkFiles(files: readonly FileRef[], dir: string, inlined?: ReadonlySet<string>): string[]
 ```
 
@@ -777,7 +786,7 @@ checkFiles(files, 'dist')   // []
 
 ### gameFrom
 
-```ts
+```ts shape
 function gameFrom(module: Record<string, unknown>, unlocked?: Pack[]): { game: Game; problems: string[]; files: FileRef[] }
 ```
 
@@ -785,13 +794,14 @@ The game a [game module](#the-game-module) builds, and its problems as text, eac
 
 ```ts
 import { gameFrom } from '@ifloom/cli'
+import * as module from './src/game.ts'
 
-const { game, problems, files } = gameFrom(await import('./src/game.ts'))
+const { game, problems, files } = gameFrom(module)
 ```
 
 ### playtest
 
-```ts
+```ts shape
 function playtest(game: Game, start: GameState, policy?: Policy, options?: PlaytestOptions): Playtest
 
 type PlaytestOptions = {
@@ -827,7 +837,7 @@ it('charges rent on Sunday', () => {
 
 ### Playtest
 
-```ts
+```ts shape
 type Playtest = {
   transcript: string
   turns: TurnMetrics[]
@@ -844,7 +854,7 @@ What [`playtest`](#playtest) returns.
 
 ### TurnMetrics
 
-```ts
+```ts shape
 type TurnMetrics = { turn: number; stats: Record<string, number>; scenes: string[]; refused: number }
 ```
 
@@ -859,7 +869,7 @@ There's one entry for each turn played through. A run that stopped before its `t
 
 ### Policy
 
-```ts
+```ts shape
 type Policy = (screen: View, state: GameState, game: Game) => Command | null
 ```
 
@@ -886,7 +896,7 @@ function worker(): Policy {
 
 ### explorer
 
-```ts
+```ts shape
 function explorer(): Policy
 ```
 
@@ -940,7 +950,7 @@ It takes on Dev, then Fen, then turns the next applicant away, taking a differen
 
 ### screenText
 
-```ts
+```ts shape
 function screenText(screen: View): string
 ```
 
@@ -964,7 +974,7 @@ screenText(view(state, game)).split('\n')[0] // '== Turn 2 · Day 2 · Tuesday m
 
 ### metricsText
 
-```ts
+```ts shape
 function metricsText(turns: TurnMetrics[]): string
 ```
 
@@ -972,7 +982,7 @@ The turns as a tab-separated table. The header is `turn`, each key of the first 
 
 ### snapshot
 
-```ts
+```ts shape
 function snapshot(game: Game, probes: Probe[]): string
 ```
 
@@ -1022,7 +1032,7 @@ it('every scene and place reads as it did', () => {
 
 ### Probe
 
-```ts
+```ts shape
 type Probe = { name: string; state: GameState }
 ```
 

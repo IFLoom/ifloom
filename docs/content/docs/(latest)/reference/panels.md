@@ -52,7 +52,7 @@ The café's location lists the counter among its actions, `{ id: 'counter', labe
 
 ## OpenPanel
 
-```ts
+```ts shape
 type OpenPanel = {
   panel: string
   with: Record<string, unknown>
@@ -74,28 +74,41 @@ const board = view.plugins.jobs?.panel // null, or the jobs the board was opened
 
 ### panelOf
 
-```ts
+```ts shape
 function panelOf(state: GameState, game: Game): OpenPanel | null
 ```
 
 The panel open now, as `view.panel` shows it: one the `panel` effect opened, else the open scene's own, else `null`. A plugin's `view` reads it to fill its own `panel`. A plugin of your own with a panel does the same:
 
 ```ts
-view: (state, { game }) => {
-  const open = panelOf(state, game)
-  return { panel: open?.panel === 'tasks' ? tasksIn(open.with) : null }
-}
+import { definePlugin, panelOf } from '@ifloom/engine/plugin'
+
+const TASKS = [
+  { id: 'dishes', label: 'Wash up' },
+  { id: 'floor', label: 'Sweep the floor' },
+]
+
+export const tasks = definePlugin<null>({
+  id: 'tasks',
+  version: 1,
+  view: (state, { game }) => {
+    const open = panelOf(state, game)
+    if (open?.panel !== 'tasks') return { panel: null }
+    // { panel: 'tasks', with: { task: 'dishes' } } opens the board on one task.
+    return { panel: TASKS.filter((task) => open.with.task === undefined || open.with.task === task.id) }
+  },
+})
 ```
 
 ## A scene's panel
 
-```ts
+```ts shape
 type ScenePanel = { panel: string; with?: Record<string, unknown> }
 ```
 
 A [data scene](/docs/reference/scenes#datascene) can hold a panel open for as long as it's on screen, with `panel`:
 
-```ts
+```ts fragment
 { id: 'market.stall', title: 'The stall', panel: { panel: 'prices', with: { stall: 'bread' } }, body: [{ prose: 'market.stall' }], choices: [] }
 ```
 

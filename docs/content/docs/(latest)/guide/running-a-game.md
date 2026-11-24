@@ -39,7 +39,7 @@ const runner = createRunner(game, startingState(game), { history: true })
 
 A UI needs three things from the runner:
 
-```ts
+```ts fragment
 runner.snapshot()          // RunnerSnapshot: what to draw right now, its view and the rest
 runner.apply(command)      // run a command, such as a choice the player pressed
 runner.subscribe(listener) // hand listener each new snapshot; returns a function that stops it
@@ -83,6 +83,7 @@ for (const choice of runner.view().scene.choices) {
   // choice.disabled: why it can't be pressed, or undefined
 }
 
+const choice = runner.view().scene.choices[0]
 const result = runner.apply(choice.command)
 if (!result.ok) console.warn(result.reason)
 ```
@@ -148,9 +149,9 @@ Nothing above needs a page. This script plays the `ifloom new` template's game i
 ```ts
 // play.ts
 import { createRunner, startingState, type View } from '@ifloom/engine'
-import loaded from './src/game.ts'
+import module from './src/game.ts'
 
-const { game } = loaded
+const { game } = module.build()
 const runner = createRunner(game, startingState(game))
 
 function print(view: View): void {

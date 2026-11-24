@@ -8,7 +8,7 @@ The page's layout lives in one file. In the React UI it's `src/layout.tsx`, a co
 
 A long side column is easier to read when the player can fold away what they don't need. In React, wrap the parts in a [`Section`](/docs/react/components#section) with `collapsible`. The player's choice is kept in the profile, per `id`, so a folded section stays folded next time. The other templates use a `<details>`, which folds with no code.
 
-```ts tab="Plain JS" tab-group="framework"
+```ts fragment tab="Plain JS" tab-group="framework"
 // src/main.ts, with section() from the vanilla template's src/layout.ts
 import { layout, section } from './layout.ts'
 
@@ -93,13 +93,13 @@ A `Section` hides itself when nothing in it draws anything. A Stats section in a
 
 Some things are looked at now and then, not all the time: the quest log, the people the player has met. Give the `Section` `dialog` instead, and it's a button that opens its children in a dialog. `badge` puts a count on the button.
 
-```ts tab="Plain JS" tab-group="framework"
-// A button that opens a <dialog> with the quests' titles.
+```ts fragment tab="Plain JS" tab-group="framework"
+// A button that opens a <dialog> with the quests' names.
 
 const quests = view.plugins.quests
 if (quests) {
   const dialog = add(sidebar, 'dialog')
-  for (const quest of quests.active) add(dialog, 'p', quest.title)
+  for (const quest of quests.active) add(dialog, 'p', quest.name)
   add(dialog, 'button', 'Close').onclick = () => dialog.close()
   add(sidebar, 'button', quests.updates ? `Quests (${quests.updates})` : 'Quests').onclick = () => dialog.showModal()
 }
@@ -166,7 +166,7 @@ const dialog = ref<HTMLDialogElement | null>(null)
 
 A wardrobe is something you look in at home. To show a section only in some rooms, give it `when`, any [condition](/docs/reference/conditions) content could write. [`When`](/docs/react/components#when) does the same for anything else, and [`useHolds`](/docs/react/components#useholds) answers in a hook. They read the state and change nothing, so saves and replays aren't affected. In the other frameworks, ask the engine's [`holds`](/docs/reference/conditions#holds) when you draw.
 
-```ts tab="Plain JS" tab-group="framework"
+```ts fragment tab="Plain JS" tab-group="framework"
 import { holds } from '@ifloom/engine'
 import { places } from '@ifloom/plugin-places'
 
@@ -182,13 +182,18 @@ import { Section, When } from '@ifloom/react'
 import { WardrobeCard } from '@ifloom/plugin-wardrobe/react'
 import { places } from '@ifloom/plugin-places'
 
-<Section id="wardrobe" title="Wearing" collapsible when={places.at('flat')}>
-  <WardrobeCard title={false} />
-</Section>
-
-<When condition={{ kv: 'raining' }}>
-  <p>Rain runs down the window.</p>
-</When>
+export function AtHome() {
+  return (
+    <>
+      <Section id="wardrobe" title="Wearing" collapsible when={places.at('flat')}>
+        <WardrobeCard title={false} />
+      </Section>
+      <When condition={{ kv: 'raining' }}>
+        <p>Rain runs down the window.</p>
+      </When>
+    </>
+  )
+}
 ```
 
 ```vue tab="Vue" tab-group="framework"
@@ -230,7 +235,7 @@ const atHome = computed(() => view.value && holds(runner.state, runner.game, pla
 
 You can also decide in plain code, from a hook. This draws the exits as a list only outdoors, using the [places](/docs/plugins/places) plugin's view through [`usePlaces`](/docs/plugins/places#useplaces):
 
-```ts tab="Plain JS" tab-group="framework"
+```ts fragment tab="Plain JS" tab-group="framework"
 const places = view.plugins.places
 if (places?.location?.tags.includes('outdoors')) {
   const list = add(story, 'ul')
@@ -294,6 +299,8 @@ const places = computed(() => view.value.plugins.places)
 Some things shouldn't be on screen at all until the story asks for them, such as the wardrobe when the player opens the wardrobe door, or a shop's counter. Content opens them with the [`panel` effect](/docs/reference/panels), from a place's action, a choice, a thing the player uses or an app, and the UI draws the panel by its name:
 
 ```ts
+import { places } from '@ifloom/plugin-places'
+
 const flat = places.location({
   id: 'flat', name: 'Your flat', description: 'Home', exits: ['high-street'],
   body: [{ prose: 'place.flat' }],

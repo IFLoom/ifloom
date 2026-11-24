@@ -4,7 +4,7 @@ description: "Amount, the one way content names a number worked out in play: in 
 ---
 Most places that take a number in your content also take an `Amount`: a number worked out when it's read, such as another stat, a kv key or a count of entities. So "coins at least the rent" needs no code:
 
-```ts
+```ts fragment
 { stat: 'coins', gte: { stat: 'rent' } }
 ```
 
@@ -14,7 +14,7 @@ import { amountOf, type Amount } from '@ifloom/engine'
 
 ## Amount
 
-```ts
+```ts shape
 type Amount =
   | number
   | StatKey
@@ -55,7 +55,7 @@ type Amount =
 | [Achievements](/docs/plugins/achievements#achievementdef) | a progress `value` |
 | [Devices](/docs/plugins/devices#appdef) | an app's `badge` |
 
-```ts
+```ts fragment
 // Pay the rent, whatever it is this week.
 { stat: 'coins', by: { scale: 'rent', by: -1 } }
 
@@ -78,7 +78,7 @@ An amount is worked out when it's read: as an effect applies, as a condition is 
 
 ## amountOf
 
-```ts
+```ts shape
 function amountOf(state: GameState, game: Game, amount: Amount): number
 ```
 

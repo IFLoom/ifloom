@@ -188,6 +188,7 @@ const intro: DataScene = {
 Ruth's talk scene has a line that only appears once you're a regular, and a choice that pays once a turn. In this game a turn is a day, so that's once a day:
 
 ```ts
+import { text, type DataScene } from '@ifloom/engine'
 import { cast } from '@ifloom/plugin-cast'
 
 const ruthTalk: DataScene = {
@@ -230,7 +231,7 @@ The content's `introScene` is on screen from the first frame. A story that opens
 
 A story with no places leaves out the places plugin, and one with nobody to talk to leaves out the cast.
 
-```ts
+```ts fragment
 import { describeProblem, loadGame } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
@@ -280,7 +281,7 @@ The new game starts on turn 0, in the house (the places plugin's `start`). The c
 
 Everything the player does is a [command](/docs/reference/commands). `apply` runs one and tells you whether it took:
 
-```ts
+```ts continues
 import { apply } from '@ifloom/engine'
 
 const tried = apply(state, game, { type: 'action', id: 'wait' })
@@ -292,8 +293,8 @@ A refused command leaves the state untouched, so `apply` is how you tell a refus
 
 When you don't need to know, take the next state from what `apply` returns:
 
-```ts
-import { apply, statValue } from '@ifloom/engine'
+```ts continues
+import { statValue } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
 import { cast } from '@ifloom/plugin-cast'
@@ -312,7 +313,7 @@ statValue(state, game, 'friendship', cast.character('ruth')) // 5
 
 Try the same choice twice in one day and it is refused:
 
-```ts
+```ts continues
 state = apply(state, game, cast.talk('ruth')).state
 apply(state, game, { type: 'choose', id: 'chat' }).reason // 'She has a queue.'
 ```
@@ -321,7 +322,7 @@ apply(state, game, { type: 'choose', id: 'chat' }).reason // 'She has a queue.'
 
 `view` turns the state into everything a UI needs to draw. You never read the state to decide what's on screen. You read the view.
 
-```ts
+```ts continues
 import { view } from '@ifloom/engine'
 
 const screen = view(state, game)
@@ -341,10 +342,10 @@ screen.statsById.coins.text   // '5c'
 
 Every button in the view carries the `command` it sends. Your UI's whole loop is to render the view, and when a button is pressed, `apply` its command and render again.
 
-```ts
+```ts continues
 import type { Command } from '@ifloom/engine'
+import { render } from './ui.ts' // your UI: React, Svelte, plain DOM, a terminal
 
-// `render` is your UI: React, Svelte, plain DOM, a terminal.
 function press(choice: { command: Command }) {
   state = apply(state, game, choice.command).state
   render(view(state, game))
@@ -357,7 +358,7 @@ The body arrives already split into `beats` (narration, spoken lines and picture
 
 Leave the counter and the room comes back. The places plugin puts its body on screen while no scene is open, with its buttons: the café's coffee, then the game's Wait a while and Go to bed. The coffee button carries its price, written for the player, before anything is spent:
 
-```ts
+```ts continues
 state = apply(state, game, { type: 'choose', id: 'bye' }).state
 const room = view(state, game)
 room.scene.body                // 'Steam on the windows.\n\nRuth is behind the counter, flour to the elbows.'
@@ -369,7 +370,7 @@ room.actions[2].disabled         // 'Too early.'
 
 The stats in the price are the engine's, and the note is the calendar's, which prices every button that passes time. Bed is greyed out with the calendar's reason until the evening. Buying a coffee costs three coins and a period, and five coins don't stretch to a second one. A button sends its action by id, and a room's action has the places plugin's id in front, `places/coffee`:
 
-```ts
+```ts continues
 state = apply(state, game, { type: 'action', id: 'places/coffee' }).state // afternoon
 state.stats                                                           // { coins: 2, energy: 70 }
 apply(state, game, { type: 'action', id: 'places/coffee' }).reason   // 'Not enough on you.'
@@ -377,7 +378,7 @@ apply(state, game, { type: 'action', id: 'places/coffee' }).reason   // 'Not eno
 
 Wait another period and it's evening. Ruth has gone for the day and the café has shut.
 
-```ts
+```ts continues
 state = apply(state, game, { type: 'action', id: 'wait' }).state   // evening
 view(state, game).when       // 'Day 2 · Tuesday evening · The corner café'
 view(state, game).plugins.cast!.present // []
@@ -398,7 +399,8 @@ Saves need somewhere to live. A driver says where, and the engine has no default
 
 ```ts
 import { localStorageDriver } from '@ifloom/browser'
-import { createRunner, saves } from '@ifloom/engine'
+import { createRunner, saves, startingState, type Command } from '@ifloom/engine'
+import { render } from './ui.ts'
 
 const runner = createRunner(game, startingState(game, { kv: { playerName: 'Sam' } }), {
   saves: saves(game, localStorageDriver()),
@@ -409,7 +411,7 @@ const runner = createRunner(game, startingState(game, { kv: { playerName: 'Sam' 
 
 The UI's loop becomes sending each button's command to the runner, and drawing again whenever it says the state has changed.
 
-```ts
+```ts continues
 runner.subscribe(({ view }) => render(view))
 
 function press(button: { command: Command }) {
@@ -421,6 +423,9 @@ function press(button: { command: Command }) {
 Play the first morning again. Going to bed moves the calendar to the next morning and ends the turn, and with `stopAtNewTurn` that's as far back as undo reaches:
 
 ```ts
+import { calendar } from '@ifloom/plugin-calendar'
+import { places } from '@ifloom/plugin-places'
+
 runner.apply({ type: 'choose', id: 'bed' })
 runner.apply(calendar.sleep())                              // Tuesday morning: turn 1
 runner.snapshot().canUndo                                     // false: a new turn is a barrier
@@ -456,7 +461,7 @@ function draw(view: View): void {
   // The scene's choices, or the room's buttons and its exits when no scene is open.
   const exits = view.plugins.places?.exits ?? []
   for (const button of [...view.scene.choices, ...view.actions, ...exits]) {
-    const element = add('button', 'label' in button ? button.label : `Go to ${button.name}`)
+    const element = add('button', button.label)
     element.disabled = Boolean(button.disabled)
     element.title = button.disabled ?? ''
     element.onclick = () => runner.apply(button.command)
@@ -464,7 +469,7 @@ function draw(view: View): void {
   add('p', view.stats.map((stat) => `${stat.label}: ${stat.text}`).join(' · '))
 }
 
-runner.subscribe(({ view }) => draw(view))
+runner.subscribe(() => draw(runner.view()))
 draw(runner.view())
 ```
 
@@ -554,6 +559,9 @@ With React, [`mountGame`](/docs/react#mountgame) is a shortcut for all of this. 
 Save to a slot of your own, and load it back. Slots are names you pick:
 
 ```ts
+import { places } from '@ifloom/plugin-places'
+import { cast } from '@ifloom/plugin-cast'
+
 await runner.save('1', 'Before the café')
 
 runner.apply(places.go('cafe'))

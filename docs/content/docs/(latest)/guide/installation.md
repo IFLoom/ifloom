@@ -192,7 +192,7 @@ import { runner, view } from './runner.ts'
 </template>
 ```
 
-```ts tab="Svelte" tab-group="framework"
+```ts fragment tab="Svelte" tab-group="framework"
 // src/runner.ts
 import { readable } from 'svelte/store'
 import { browserRunner } from '@ifloom/browser'

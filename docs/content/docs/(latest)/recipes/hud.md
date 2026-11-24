@@ -240,13 +240,13 @@ The [quests](/docs/plugins/quests) plugin lists the active quests in `view.plugi
 // src/hud.ts
 import type { View } from '@ifloom/engine'
 
-/** The tracked quest's title and hint, or null when none is tracked. */
+/** The tracked quest's name and hint, or null when none is tracked. */
 export function objective(view: View): HTMLElement | null {
   const quest = view.plugins.quests?.active.find((entry) => entry.tracked)
   if (!quest) return null
   const line = document.createElement('p')
   line.className = 'objective'
-  line.appendChild(document.createElement('strong')).textContent = quest.title
+  line.appendChild(document.createElement('strong')).textContent = quest.name
   if (quest.hint) line.append(` · ${quest.hint}`)
   return line
 }
@@ -262,7 +262,7 @@ export function Objective() {
   if (!quest) return null
   return (
     <p className="text-sm">
-      <strong>{quest.title}</strong>
+      <strong>{quest.name}</strong>
       {quest.hint ? <span className="text-muted-foreground"> · {quest.hint}</span> : null}
     </p>
   )
@@ -280,7 +280,7 @@ const quest = computed(() => view.value.plugins.quests?.active.find((entry) => e
 
 <template>
   <p v-if="quest" class="objective">
-    <strong>{{ quest.title }}</strong>
+    <strong>{{ quest.name }}</strong>
     <span v-if="quest.hint"> · {{ quest.hint }}</span>
   </p>
 </template>
@@ -296,7 +296,7 @@ const quest = computed(() => view.value.plugins.quests?.active.find((entry) => e
 
 {#if quest}
   <p class="objective">
-    <strong>{quest.title}</strong>
+    <strong>{quest.name}</strong>
     {#if quest.hint}<span> · {quest.hint}</span>{/if}
   </p>
 {/if}
@@ -308,7 +308,7 @@ The player picks which quest to track, which sends the quests plugin's `quests/t
 
 Put the three pieces together in a bar over the scene:
 
-```ts tab="Plain JS" tab-group="framework"
+```ts fragment tab="Plain JS" tab-group="framework"
 // src/main.ts, in the vanilla template
 import { objective, statBar, unread } from './hud.ts'
 

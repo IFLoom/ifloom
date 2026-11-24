@@ -80,7 +80,7 @@ A test that works on states rather than a runner can take these ready-made from 
 
 Check what the player sees through `runner.view()`, and what the game keeps through `runner.state`: [`stats`](/docs/reference/state#stats), the [kv store](/docs/reference/state#kv), [`seen`](/docs/reference/state#seen) scenes and [`chosen`](/docs/reference/state#chosen) choices. Test greyed-out buttons by their reason, because that's what the player reads. In [A game with a world](/docs/guide/first-game), a second coffee is too dear:
 
-```ts
+```ts continues
 const buy = runner.view().actions.find((action) => action.id === 'coffee')
 expect(buy?.disabled).toBe('Not enough on you.')
 ```
@@ -90,7 +90,8 @@ expect(buy?.disabled).toBe('Not enough on you.')
 A scene nothing leads to is easy to miss. This helper tries every button on screen, then every button after each of those, and so on, until it reaches the scene or runs out of steps. It returns the commands that got there:
 
 ```ts
-import { apply, view, type Command, type Game, type GameState } from '@ifloom/engine'
+import { expect, it } from 'vitest'
+import { apply, startingState, view, type Command, type Game, type GameState } from '@ifloom/engine'
 
 /** The shortest route of presses from `start` to `scene`, or null within `depth` steps. */
 function routeTo(game: Game, start: GameState, scene: string, depth = 12): Command[] | null {
@@ -132,6 +133,7 @@ When a player reports a bug, ask for their save. The [save store](/docs/referenc
 
 ```ts
 import { readFileSync } from 'node:fs'
+import { expect, it } from 'vitest'
 import { createRunner, memoryDriver, saves } from '@ifloom/engine'
 
 it('lets the player leave the room they got stuck in', () => {
@@ -150,6 +152,8 @@ it('lets the player leave the room they got stuck in', () => {
 A [command log](/docs/reference/runner#commandlog) is even better than a save, since it shows how the player got there. `runner.log()` is the state the game started from and every command since. [`replay`](/docs/reference/runner#replay) plays it back, the same every time, because every random draw is seeded:
 
 ```ts
+import { readFileSync } from 'node:fs'
+import { expect } from 'vitest'
 import { replay, type CommandLog } from '@ifloom/engine'
 
 const log: CommandLog = JSON.parse(readFileSync(new URL('./saves/stuck.log.json', import.meta.url), 'utf8'))
@@ -168,7 +172,10 @@ Both read what they need from the game module in `src/game.ts`: playtest its `st
 
 ```ts
 // src/game.ts
+import { loadGame } from '@ifloom/engine'
 import { defineGame, probe } from '@ifloom/cli/game'
+import { stats } from './world/stats.ts'
+import { opening } from './story/opening.ts'
 
 export default defineGame({
   build: () => loadGame([stats, opening], { id: 'my-story', title: 'My Story' }),
@@ -180,7 +187,11 @@ export default defineGame({
 Both are functions too, from `@ifloom/cli`, so a test can call them:
 
 ```ts
+import { readFileSync } from 'node:fs'
+import { expect, it } from 'vitest'
 import { explorer, playtest, snapshot } from '@ifloom/cli'
+import { startingState } from '@ifloom/engine'
+import module from '../src/game.ts'
 
 it('plays five turns with nothing refused', () => {
   const result = playtest(game, startingState(game), explorer(), { turns: 5 })

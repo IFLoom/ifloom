@@ -84,7 +84,7 @@ Import the UI's stylesheet from a global stylesheet, and that from the root layo
 @import "@ifloom/react/themes/paper.css";
 ```
 
-```tsx
+```tsx fragment
 // app/layout.tsx
 import type { Metadata } from 'next'
 import type { ReactNode } from 'react'

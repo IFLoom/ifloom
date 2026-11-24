@@ -30,7 +30,7 @@ runner.view().changes
 
 ## changes
 
-```ts
+```ts fragment
 changes?: { stats: string[] }
 ```
 
@@ -44,7 +44,7 @@ The [content checker](/docs/reference/checks) reports an id that is no stat, as 
 
 ## Change
 
-```ts
+```ts shape
 type Change = {
   stat: string
   of?: EntityRef
@@ -67,7 +67,7 @@ type Change = {
 
 ## ChangeView
 
-```ts
+```ts shape
 type ChangeView = Change & { name?: string }
 ```
 

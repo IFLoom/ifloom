@@ -10,7 +10,7 @@ None of this is the engine's. How a screen moves doesn't change the game, so con
 
 Give a scene a `ui.transition`. A name on its own is used both ways:
 
-```ts
+```ts fragment
 {
   id: 'ava.river',
   title: 'By the river',
@@ -22,7 +22,7 @@ Give a scene a `ui.transition`. A name on its own is used both ways:
 
 Or say how it comes in and goes out separately, and how long each takes in milliseconds (300 if you leave `ms` out):
 
-```ts
+```ts fragment
 ui: { transition: { in: 'slide-up', out: 'fade', ms: 500 } }
 ```
 
@@ -31,12 +31,16 @@ The built-in names are `fade`, `slide-up`, `slide-left`, `zoom` and `none`, list
 A place takes one too, for the room while no scene is open, so walking between places can slide:
 
 ```ts
+import { places } from '@ifloom/plugin-places'
+
 places.location({ id: 'high-street', name: 'High Street', description: 'Town', exits: ['flat', 'cafe'], body: [{ prose: 'place.high-street' }], ui: { transition: 'slide-left' } })
 ```
 
 For the whole game, set a default in the content's `ui`. Any scene or place that says nothing uses it, and one that sets only `in` takes `out` and `ms` from it:
 
 ```ts
+import type { Content } from '@ifloom/engine'
+
 export const town: Content = {
   ui: { transition: { in: 'fade', ms: 250 } },
   scenes: [/* ... */],
@@ -45,7 +49,7 @@ export const town: Content = {
 
 A choice can say how the screen it leads to comes in, whatever that screen declares. The React UI knows which choice was pressed, by a click or a number key, and plays it once:
 
-```ts
+```ts fragment
 { id: 'unpack', ui: { transition: { in: 'slide-up', ms: 400 } }, effects: [{ scene: null }] }
 ```
 
@@ -88,6 +92,8 @@ Your rules win over the base styles, which sit in a cascade layer. [Components](
 List a name in the content's `ui.transitionNames`, use it like a built-in one, and draw it with CSS. [`checkUiHints`](/docs/react/hints#checkuihints) reports a name that is neither built in nor listed, which catches typos.
 
 ```ts
+import type { Content } from '@ifloom/engine'
+
 export const town: Content = { ui: { transitionNames: ['curtain'] } }
 ```
 
@@ -134,22 +140,13 @@ This CSS draws `fade` and `slide-up`. Add rules for the other names you use:
 }
 ```
 
-These helpers read the hints, and are the same in every framework. The `declare module` block types the two hints for a game without `@ifloom/react`. A game that has it gets them from there, so leave the block out.
+These helpers read the hints, and are the same in every framework:
 
 ```ts
 // src/hints.ts
 import type { SceneBeat, View } from '@ifloom/engine'
 
 type Transition = { in?: string; out?: string; ms?: number }
-
-declare module '@ifloom/engine' {
-  interface SceneUi {
-    transition?: Transition | string
-  }
-  interface BlockUi {
-    reveal?: { delay?: number; as?: string }
-  }
-}
 
 /** The screen in a view, and how it comes in and goes out, from its scene's `ui.transition`. */
 export function transitionOf(view: View): { key: string; in: string; out: string; ms: number } {
@@ -170,6 +167,19 @@ export function withReveals(beats: readonly SceneBeat[]): { beat: SceneBeat; rev
     }
     return { beat, reveal }
   })
+}
+```
+
+A game with `@ifloom/react` gets the two hints typed from there. A game without it types them itself, in the same file:
+
+```ts fragment
+declare module '@ifloom/engine' {
+  interface SceneUi {
+    transition?: Transition | string
+  }
+  interface BlockUi {
+    reveal?: { delay?: number; as?: string }
+  }
 }
 ```
 
@@ -224,7 +234,7 @@ export function drawScene(box: HTMLElement, view: View): void {
 }
 ```
 
-```tsx tab="React" tab-group="framework"
+```tsx fragment tab="React" tab-group="framework"
 // src/Scene.tsx: React with the runner, without @ifloom/react.
 import { useEffect, useState, useSyncExternalStore, type CSSProperties } from 'react'
 import type { Runner } from '@ifloom/engine'

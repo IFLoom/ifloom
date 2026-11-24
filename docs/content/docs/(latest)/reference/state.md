@@ -10,7 +10,7 @@ import type { GameState } from '@ifloom/engine'
 
 ## GameState
 
-```ts
+```ts shape
 type GameState = {
   version: typeof SAVE_VERSION
   seed: number
@@ -64,7 +64,7 @@ There is no player name in the state. A game that asks for one keeps it in the [
 
 ### turn
 
-```ts
+```ts fragment
 turn: number
 ```
 
@@ -90,7 +90,7 @@ Each choice the player has picked, keyed `scene#choice`, as a [`Times`](#times):
 
 ### Times
 
-```ts
+```ts shape
 type Times = { n: number; first: number; last: number }
 ```
 
@@ -98,7 +98,7 @@ How many times something happened (`n`), and the [turn](#turn) of the first time
 
 ### stats
 
-```ts
+```ts shape
 type StatKey = string
 type Stats = Record<StatKey, number>
 ```
@@ -109,7 +109,7 @@ A stat declared `of` a [kind](/docs/reference/entities) isn't here. Each entity 
 
 ### entities
 
-```ts
+```ts fragment
 entities: Record<string, Record<string, EntityState>>
 ```
 
@@ -121,7 +121,7 @@ The [`create`](/docs/reference/effects#create), [`remove`](/docs/reference/effec
 
 ### held
 
-```ts
+```ts fragment
 held: Record<Holder, Record<EntityRef, number>>
 ```
 
@@ -131,7 +131,7 @@ Read it with [`heldCount`](/docs/reference/entities#heldcount), [`heldBy`](/docs
 
 ### you
 
-```ts
+```ts fragment
 you: EntityRef | null
 ```
 
@@ -139,7 +139,7 @@ The [protagonist](/docs/reference/entities#protagonists-you-and-player) being pl
 
 ### created
 
-```ts
+```ts fragment
 created: Record<string, number>
 ```
 
@@ -147,7 +147,7 @@ For each kind, the last number given to an entity created in play without an id 
 
 ### removed
 
-```ts
+```ts fragment
 removed: string[]
 ```
 
@@ -155,7 +155,7 @@ The declared [entities](/docs/reference/entities) that were [removed](/docs/refe
 
 ### storylines
 
-```ts
+```ts shape
 type StorylineState = {
   closedUntil: number | null
   kv: Record<string, KvValue>
@@ -173,7 +173,7 @@ Reading a storyline that isn't in the save gives an empty one (open, nothing set
 
 ### kv
 
-```ts
+```ts shape
 type KvValue = boolean | number | string
 ```
 
@@ -195,7 +195,7 @@ The engine writes some keys here itself, so don't use these prefixes for your ow
 
 ### notices
 
-```ts
+```ts fragment
 notices: Notice[]
 ```
 
@@ -203,7 +203,7 @@ What the game has told the player outside scenes, oldest first, whether seen or 
 
 ### fired
 
-```ts
+```ts fragment
 fired: Record<string, number>
 ```
 
@@ -211,7 +211,7 @@ The [turn](#turn) each [trigger](/docs/reference/triggers) last fired, by trigge
 
 ### plugins
 
-```ts
+```ts shape
 type PluginSlice = { version: number; state: unknown }
 ```
 
@@ -221,7 +221,7 @@ Read and write it through the plugin, not by hand. Inside the plugin, use its co
 
 ### settings
 
-```ts
+```ts fragment
 settings: Record<string, KvValue>
 ```
 
@@ -229,7 +229,7 @@ The value of each `play` [setting](/docs/reference/settings) the game declares, 
 
 ### audio
 
-```ts
+```ts fragment
 audio: AudioState
 ```
 
@@ -237,7 +237,7 @@ What [`audio`](/docs/reference/effects#audio) effects have put on channels, the 
 
 ### media
 
-```ts
+```ts fragment
 media: MediaState   // { picks: Record<string, string> }
 ```
 
@@ -245,7 +245,7 @@ The file each [pool](/docs/reference/media#pools) request was given, by pick key
 
 ### minigame
 
-```ts
+```ts fragment
 minigame: MinigameState | null   // { id, state, elapsed, kv, steps }
 ```
 
@@ -254,14 +254,14 @@ The [minigame](/docs/reference/minigames) being played, or `null`. See [`Minigam
 
 ### flow
 
-```ts
+```ts fragment
 flow: FlowState | null   // { scene, path, waiting }
 ```
 
 The open scene's visit of its [flow](/docs/reference/flows): each pick, jump and minigame or panel passed, in order, and what the flow is waiting on. It's `null` with no scene open, and for a visit with nothing to keep, such as one of a scene with no decisions. Entering a scene sets it back to `null`. See [`FlowState`](/docs/reference/flows#stateflow). A save from before flowing scenes loads with `null`. Like `minigame`, the field came with a load default and nothing a save had changed shape for it.
 ### panel
 
-```ts
+```ts fragment
 panel: OpenPanel | null   // { panel: 'shop', with: { vendor: 'counter' } }
 ```
 
@@ -269,7 +269,7 @@ The [panel](/docs/reference/panels) open over the story, with what it was opened
 
 ### rolls
 
-```ts
+```ts fragment
 rolls: RollsState   // { made: 3, last: [/* this command's */], latest: { skim: { /* ... */ } } }
 ```
 
@@ -277,7 +277,7 @@ The [dice rolls](/docs/reference/rolls) the save has made. `made` counts every r
 
 ### timers
 
-```ts
+```ts fragment
 timers: Record<string, RunningTimer>   // { phone: { left: 4200, total: 10000 } }
 ```
 
@@ -285,7 +285,7 @@ The [timers](/docs/reference/timers) running now, by id, in the order they start
 
 ### changes
 
-```ts
+```ts fragment
 changes: Change[]   // [{ stat: 'coins', from: 10, to: 40, by: 30, label: 'Coins', text: '+30 coins' }]
 ```
 
@@ -312,7 +312,7 @@ const done = await runner.profile?.get<{ at: number }>('core:finished')
 if (done) await runner.newGame({ carry: runner.state })
 ```
 
-```ts
+```ts shape
 type CarryOver = {
   stats?: string[]
   kv?: string[]

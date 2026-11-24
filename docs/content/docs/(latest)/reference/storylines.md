@@ -4,7 +4,7 @@ description: "Storylines: threads of the story with their own kv store, closed f
 ---
 A storyline is one thread of your story, such as a friendship with Ava or the business of a lost cat. For each one, the engine keeps a kv store of its own and whether it's closed for a while.
 
-```ts
+```ts shape
 type StorylineDef = { id: string; name: string }
 
 type StorylineState = {
@@ -22,7 +22,7 @@ Declare your storylines in your [content](/docs/reference/loader#content)'s `sto
 | `closedUntil` | A [turn](/docs/reference/state#turn). While `state.turn` is below it, the storyline is closed. [`{ closeStoryline: storyline, turns }`](/docs/reference/effects#closestoryline) sets it to the current turn plus `turns`. `null` means open. |
 | `kv` | The storyline's own kv store. Set its keys with the [`kv` effect](/docs/reference/effects#whose-key-it-is) and `of: 'storyline:<id>'`, as in `{ kv: 'visits', by: 1, of: 'storyline:ava' }`, read them with the [`kv` condition](/docs/reference/conditions#kv) and the same `of`, add to them with the effect's `by`, and show them with the `{{kv:visits of=storyline:ava}}` token. |
 
-```ts
+```ts fragment
 storylines: [{ id: 'ava', name: 'Ava' }]
 
 // Ava has had enough of you for three turns.
@@ -40,7 +40,7 @@ The core has no characters. People, who's in the room, and talking and calling c
 
 ## storylineOpen
 
-```ts
+```ts shape
 import { storylineOpen } from '@ifloom/engine'
 
 function storylineOpen(state: GameState, id: string): boolean
@@ -49,6 +49,8 @@ function storylineOpen(state: GameState, id: string): boolean
 Whether a storyline is open: `closedUntil === null || state.turn >= closedUntil`, so a storyline closed until turn 5 is open again on turn 5. A storyline the save has no record of is open. Its kv keys are read like any others, with `{ kv: 'met', of: 'storyline:ava' }` in a condition.
 
 ```ts
+import { storylineOpen } from '@ifloom/engine'
+
 storylineOpen(state, 'ava') // true on a new game
 ```
 

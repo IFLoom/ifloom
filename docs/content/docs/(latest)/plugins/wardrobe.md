@@ -33,7 +33,7 @@ It needs no other plugin. Things can come from the [shop](/docs/plugins/shop), o
 
 ## wardrobe
 
-```ts
+```ts shape
 function wardrobe(): DefinedPlugin<WardrobeState, WardrobeView>
 ```
 
@@ -68,7 +68,7 @@ The raincoat has `at: 'player'`, so the player starts holding it, which the coat
 
 ### The wearable trait
 
-```ts
+```ts shape
 const wardrobe: {
   wearable(slot: string): { 'wardrobe/wearable': Wearable }
 }
@@ -80,7 +80,7 @@ The slot a thing is worn in. It's a [trait](/docs/reference/entities#traits), so
 
 ### A place to change
 
-```ts
+```ts shape
 const wardrobe: {
   closet(options?: Closet): { 'wardrobe/closet': Closet }
 }
@@ -110,7 +110,7 @@ Where the player is comes from the [places](/docs/plugins/places) plugin, so a c
 
 ### WardrobeSlot
 
-```ts
+```ts shape
 type WardrobeSlot = { id: string; label: string; start?: EntityRef }
 ```
 
@@ -184,6 +184,7 @@ Build the game and play it. `town` is the content above:
 import { apply, heldCount, holds, loadGame, startingState, view, whyNot, type GameState } from '@ifloom/engine'
 import { places } from '@ifloom/plugin-places'
 import { wardrobe, type WardrobeView } from '@ifloom/plugin-wardrobe'
+import { town } from './town.ts'   // the content above
 
 const { game } = loadGame([town], {
   id: 'small-town',
@@ -286,7 +287,7 @@ Its [React UI](#drawing-it) draws it with [`WardrobeCard`](#wardrobecard), and [
 
 ### WardrobeView
 
-```ts
+```ts shape
 type WardrobeView = {
   slots: { id: string; label: string; entity: EntityRef | null; name: string | null; takeOff: RenderedChoice | null }[]
   spare: { entity: EntityRef; name: string; slot: string; wear: RenderedChoice }[]
@@ -318,7 +319,7 @@ The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.
 
 ### wardrobeUi
 
-```ts
+```ts shape
 const wardrobeUi: PluginUi
 ```
 
@@ -335,7 +336,7 @@ The buttons say what the view's buttons say, the plugin's [strings](#strings) `w
 
 ### WardrobeSection
 
-```tsx
+```tsx shape
 function WardrobeSection(): JSX.Element
 ```
 
@@ -347,7 +348,7 @@ For one that shows only in some rooms, draw your own `Section` with `when` round
 
 ### WardrobeCard
 
-```tsx
+```tsx shape
 function WardrobeCard(props: { className?: string; title?: string | false }): JSX.Element | null
 ```
 
@@ -361,7 +362,7 @@ Replaceable as `WardrobeCard` in [`components`](/docs/react/components#component
 
 ### useWardrobe
 
-```ts
+```ts shape
 function useWardrobe(): WardrobeControls | null
 
 type WardrobeControls = Omit<WardrobeView, 'slots'> & {
@@ -380,7 +381,7 @@ The [wardrobe](/docs/plugins/wardrobe) plugin's view, with a button for each thi
 
 ### WardrobeState
 
-```ts
+```ts shape
 type WardrobeState = { worn: Record<Holder, Record<string, EntityRef | null>> }
 ```
 
@@ -413,7 +414,7 @@ The helpers above are properties of `wardrobe`, the plugin's factory, and write 
 
 ### Helpers
 
-```ts
+```ts shape
 const wardrobe: {
   (): DefinedPlugin<WardrobeState, WardrobeView>
   wearable(slot: string): { 'wardrobe/wearable': Wearable }
@@ -427,7 +428,7 @@ const wardrobe: {
 
 ### slotsOf
 
-```ts
+```ts shape
 function slotsOf(game: Game): WardrobeSlot[]
 ```
 
@@ -435,7 +436,7 @@ The game's slots, merged from its content and packs, in order.
 
 ### wearableOf
 
-```ts
+```ts shape
 function wearableOf(state: GameState, game: Game, ref: EntityRef): Wearable | undefined
 ```
 

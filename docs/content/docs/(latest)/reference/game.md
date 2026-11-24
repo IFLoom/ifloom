@@ -8,7 +8,7 @@ A game is one `Game` object. It holds every scene, storyline and thing, plus the
 import type { Game } from '@ifloom/engine'
 ```
 
-Every type on this page comes from the package root: `Game`, `StorylineDef` and the rest. `KindDef`, `EntityDef`, `TriggerDef`, `InputDef` and `ActionDef` have pages of their own.
+The types on this page come from the package root, `Game`, `StorylineDef` and the rest, except `Plugin`, `PluginEntry` and `Lock`, which come from [`@ifloom/engine/plugin`](/docs/reference/plugins). `KindDef`, `EntityDef`, `TriggerDef`, `InputDef` and `ActionDef` have pages of their own.
 
 You don't usually write a `Game` by hand. [`loadGame`](/docs/reference/loader#loadgame) builds one from your content and a base: the base says what the game is and holds its code (`id`, `title`, `version`, `plugins` and `rules`), and everything else comes from the content and packs, so a mod can reach it.
 
@@ -16,7 +16,7 @@ The core has no places and no characters. Locations, exits, walking and where th
 
 ## Game
 
-```ts
+```ts shape
 type Game = {
   // From the base
   id: string
@@ -25,7 +25,7 @@ type Game = {
   plugins?: readonly Plugin[]
   rules?: GameRules
   // From the content and packs
-  scenes: (Scene | DataScene)[]
+  scenes: DataScene[]
   introScene?: string
   storylines?: StorylineDef[]
   prose?: ProseStore
@@ -103,7 +103,7 @@ The name a save is listed under is worked out by the game's code, so it's [`rule
 
 ### saveable
 
-```ts
+```ts fragment
 saveable?: Blocked[]   // { when: Condition; reason: string; hide?: boolean }[]
 ```
 
@@ -152,7 +152,7 @@ The town's locations and its people are entities, in `entities`, written with th
 
 ## StorylineDef
 
-```ts
+```ts shape
 type StorylineDef = { id: string; name: string }
 ```
 
@@ -169,7 +169,7 @@ The view draws no storylines of its own. A game or a plugin shows them, as the [
 
 ## ProseStore
 
-```ts
+```ts shape
 type ProseStore = {
   line: (key: string, state?: GameState) => string | undefined
   variants: (name: string) => string[]
@@ -197,7 +197,7 @@ So keep `/`, `#` and `:` out of your own ids and prose keys. A name with a `/` i
 
 ## Looking things up
 
-```ts
+```ts shape
 function sceneOf(game: Game, id: string): DataScene | undefined
 ```
 

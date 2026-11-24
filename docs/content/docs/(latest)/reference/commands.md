@@ -10,7 +10,7 @@ import { apply, startingState, type Command } from '@ifloom/engine'
 
 ## apply
 
-```ts
+```ts shape
 function apply(state: GameState | null, game: Game, command: CommandRef): Applied
 
 type Applied =
@@ -26,7 +26,7 @@ import { places } from '@ifloom/plugin-places'
 
 const out = apply(state, game, places.go('cafe'))
 if (!out.ok) console.log(out.reason) // the reason, such as a place's `blocked` line
-state = out.state
+const next = out.state                // the new state, or the same one when refused
 ```
 
 Use `apply` wherever the answer matters, because a refused command and one that changed nothing leave the same state behind. It takes a [`CommandRef`](/docs/reference/custom#commandref), so a plugin's command in short works too.
@@ -67,7 +67,7 @@ Locks are checked before the game's own handler, so a lock can stop a command th
 
 ## startingState
 
-```ts
+```ts shape
 function startingState(game: Game, options?: StartOptions): GameState
 
 type StartOptions = {
@@ -114,7 +114,7 @@ The engine keeps no player name. A name is a key in the kv store like any other,
 
 ## Command
 
-```ts
+```ts shape
 type Command =
   | { type: 'start'; seed?: number; kv?: Record<string, KvValue> }
   | { type: 'newGame' }
@@ -151,7 +151,7 @@ Starts a new game, with this seed and these kv keys if given. It's never refused
 
 Starts over: a new game in place of the one in play. Content sends it from a choice, such as an ending's "Play again":
 
-```ts
+```ts fragment
 { id: 'again', command: { type: 'newGame' }, effects: [] }
 ```
 
@@ -168,7 +168,7 @@ When a choice sends it, the run ends there: the choice isn't counted in [`chosen
 
 ### action
 
-```ts
+```ts fragment
 { type: 'action', id: 'coffee' }
 { type: 'action', id: 'places/coffee' }
 ```
@@ -202,7 +202,7 @@ Closes the scene on screen. It's never refused by the engine, even with no scene
 
 ### dismiss
 
-```ts
+```ts fragment
 { type: 'dismiss', id: 'rent' }   // that notice
 { type: 'dismiss' }               // all of them
 ```
@@ -211,7 +211,7 @@ Marks one [notice](/docs/reference/notices), or every notice, as seen. It has no
 
 ### input
 
-```ts
+```ts fragment
 { type: 'input', id: 'catName', to: 'Biscuit' }
 ```
 
@@ -221,7 +221,7 @@ After a lock, it's refused with [why the value can't be entered](/docs/reference
 
 ### setting
 
-```ts
+```ts fragment
 { type: 'setting', id: 'difficulty', to: 'hard' }
 ```
 
@@ -237,7 +237,7 @@ No lock or plugin guard stops it, because changing a setting is the menu's busin
 
 ### tick
 
-```ts
+```ts fragment
 { type: 'tick', ms: 100 }
 ```
 
@@ -249,7 +249,7 @@ Ticks go in the runner's [log](/docs/reference/runner#commandlog), so [`replay`]
 
 ### minigame
 
-```ts
+```ts fragment
 { type: 'minigame', input: 'left' }
 ```
 
@@ -265,7 +265,7 @@ Closes the open [panel](/docs/reference/panels). A UI sends it when the player d
 
 ### custom
 
-```ts
+```ts fragment
 { type: 'custom', name: 'quests/track', with: { id: 'bread' } }
 ```
 

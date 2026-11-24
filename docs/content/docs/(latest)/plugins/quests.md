@@ -42,7 +42,7 @@ The plugin works on its own. Its stages often use other plugins' conditions, suc
 
 ## quests
 
-```ts
+```ts shape
 function quests(): DefinedPlugin<QuestsState, QuestsView>
 ```
 
@@ -65,7 +65,7 @@ const town: Content = {
 
 ### QuestDef
 
-```ts
+```ts shape
 type QuestDef = {
   id: string
   name: string
@@ -89,7 +89,7 @@ type QuestDef = {
 
 ### QuestStage
 
-```ts
+```ts shape
 type QuestStage = { id: string; hint: string; done: Condition }
 ```
 
@@ -162,7 +162,8 @@ const town: Content = {
 ```ts
 import { apply, holds, loadGame, startingState, view, whyNot, type GameState } from '@ifloom/engine'
 import { places } from '@ifloom/plugin-places'
-import { quests, type QuestsView } from '@ifloom/plugin-quests'
+import { quests } from '@ifloom/plugin-quests'
+import { town } from './town.ts'   // the content above
 
 const { game } = loadGame([town], {
   id: 'small-town',
@@ -175,7 +176,7 @@ const run = (state: GameState, id: string) => apply(state, game, { type: 'action
 
 Playing it through:
 
-```ts
+```ts continues
 let state = startingState(game)
 journal(state)                   // { active: [], done: [], toFind: 2, updates: 0 }
 
@@ -269,7 +270,7 @@ Its [React UI](#drawing-it) draws it with [`QuestLog`](#questlog), and [`useQues
 
 ### QuestsView
 
-```ts
+```ts shape
 type QuestsView = {
   active: QuestEntry[]
   done: QuestEntry[]
@@ -289,7 +290,7 @@ type QuestsView = {
 
 ### QuestEntry
 
-```ts
+```ts shape
 type QuestEntry = {
   id: string
   name: string
@@ -333,7 +334,7 @@ The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.
 
 ### questsUi
 
-```ts
+```ts shape
 const questsUi: PluginUi
 ```
 
@@ -351,7 +352,7 @@ The track and seen buttons say what the view's buttons say, the plugin's [string
 
 ### QuestsSection
 
-```tsx
+```tsx shape
 function QuestsSection(): JSX.Element
 ```
 
@@ -359,7 +360,7 @@ What `questsUi` puts in the side column: a [`Section`](/docs/react/components#se
 
 ### QuestLog
 
-```tsx
+```tsx shape
 function QuestLog(props: { className?: string; title?: string | false }): JSX.Element | null
 ```
 
@@ -371,7 +372,7 @@ Replaceable as `QuestLog` in [`components`](/docs/react/components#components). 
 
 ### useQuests
 
-```ts
+```ts shape
 function useQuests(): QuestsControls | null
 
 type QuestsControls = QuestsView & {
@@ -387,7 +388,7 @@ The [quests](/docs/plugins/quests) plugin's view ([`QuestsView`](/docs/plugins/q
 
 ### QuestsState
 
-```ts
+```ts shape
 type QuestsState = {
   started: Record<string, number>
   reached: Record<string, number>
@@ -405,7 +406,7 @@ The helpers above write the content objects for you, typed. `quests.active`, `qu
 
 ### Helpers
 
-```ts
+```ts shape
 const quests: {
   (): DefinedPlugin<QuestsState, QuestsView>
   active(quest: string): Condition
@@ -419,7 +420,7 @@ const quests: {
 
 ### questsOf and questOf
 
-```ts
+```ts shape
 function questsOf(game: Game): QuestDef[]
 function questOf(game: Game, id: string): QuestDef | undefined
 ```
@@ -428,7 +429,7 @@ The game's quests, merged from its content and packs: `game.data.quests.quests`.
 
 ### advance
 
-```ts
+```ts shape
 function advance(record: QuestsState, state: GameState, game: Game): QuestsState
 ```
 

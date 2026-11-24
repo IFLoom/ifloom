@@ -8,7 +8,7 @@ A game's words are written where they're read: a scene's blocks of text, its cho
 
 Most words go straight into the content, as a `{ text }` block, a `say` line, a `label` or a `name`:
 
-```ts
+```ts fragment
 body: [text('Ava looks up from the till.'), say('ava', 'Morning. The usual?')],
 choices: [{ id: 'tea', label: 'A pot of tea', effects: [] }],
 ```
@@ -36,17 +36,18 @@ Variants are named lists of keys, and one of them is drawn each time. The [loade
 
 ## ProseStore
 
-```ts
+```ts shape
 import type { ProseStore } from '@ifloom/engine'
 
 type ProseStore = {
   line: (key: string, state?: GameState) => string | undefined
   variants: (name: string) => string[]
   weight?: (name: string, key: string) => number
+  keys?: () => string[]
 }
 ```
 
-The game's `prose` field, where `{ prose }` blocks, variants and markup read lines by key. `line` returns the words for a key, filled in for this save, or `undefined` if nobody has written them. `variants` returns the member keys of a named set of variants, in declaration order. `weight` returns a member's weight in a set, 1 if it has none. Leave `weight` out and every member weighs 1.
+The game's `prose` field, where `{ prose }` blocks, variants and markup read lines by key. `line` returns the words for a key, filled in for this save, or `undefined` if nobody has written them. `variants` returns the member keys of a named set of variants, in declaration order. `weight` returns a member's weight in a set, 1 if it has none. Leave `weight` out and every member weighs 1. `keys` returns every key the store has words for, so the [content checker](/docs/reference/checks) can read the markup in all the prose. Leave it out and the checker reads only the keys content names.
 
 You rarely write one by hand. [`loadGame`](/docs/reference/loader#loadgame) sets `game.prose` from the content's and packs' prose and variants.
 
@@ -54,7 +55,7 @@ You rarely write one by hand. [`loadGame`](/docs/reference/loader#loadgame) sets
 
 ## VariantMember
 
-```ts
+```ts shape
 import type { VariantMember } from '@ifloom/engine'
 
 type VariantMember = string | { text: string; weight?: number }
@@ -62,7 +63,7 @@ type VariantMember = string | { text: string; weight?: number }
 
 One member of a variants list, in your [content](/docs/reference/loader#content)'s `variants`: a prose key, or `{ text, weight }` for a key that should come up more or less often than the rest. A plain key weighs 1, and so does `{ text }` with no weight.
 
-```ts
+```ts fragment
 variants: {
   // Sun three times as often as drizzle or wind.
   'street.weather': [{ prose: 'street.weather.sun', weight: 3 }, 'street.weather.drizzle', 'street.weather.wind'],
@@ -116,7 +117,7 @@ Tokens used to name values as `{{v:game/coffeePrice}}` and `{{v:quests/updates}}
 
 ## fillTokens
 
-```ts
+```ts shape
 function fillTokens(state: GameState, game: Game, text: string): string
 ```
 
@@ -286,6 +287,9 @@ The view gives the paragraph's beat a `spans` list: the same words in pieces, in
 A choice can send any command as well as its effects, with its [`command`](/docs/reference/scenes#choice) field, so an inline action can open the phone or buy something from a shop:
 
 ```ts
+import { text, type DataScene } from '@ifloom/engine'
+import { devices } from '@ifloom/plugin-devices'
+
 const kitchen: DataScene = {
   id: 'kitchen.phone',
   body: [text('Your phone buzzes on the counter. [[act:answer|Pick it up]], or leave it.')],
@@ -360,7 +364,7 @@ A UI piece's words can run over blank lines, so a letter's body can have paragra
 
 ## SceneBeat
 
-```ts
+```ts shape
 import type { SceneBeat } from '@ifloom/engine'
 
 type SceneBeat = (
@@ -393,7 +397,7 @@ A data scene's `{ media }` blocks become `image` or `video` beats where they are
 
 ## InlineSpan
 
-```ts
+```ts shape
 import type { InlineSpan } from '@ifloom/engine'
 
 type InlineSpan =
@@ -417,7 +421,7 @@ A UI draws an `action` as a button in the line, a `tip` as a button that shows i
 
 ## parseBeats
 
-```ts
+```ts shape
 import { parseBeats } from '@ifloom/engine/plugin'
 
 function parseBeats(
@@ -430,7 +434,7 @@ The parser described above. `find` says who a line under `@id` is, and the name 
 
 ## styledBeats
 
-```ts
+```ts shape
 import { parseBeats, styledBeats } from '@ifloom/engine/plugin'
 
 function styledBeats(beats: readonly SceneBeat[]): SceneBeat[]
@@ -439,6 +443,8 @@ function styledBeats(beats: readonly SceneBeat[]): SceneBeat[]
 Draws the [bold and italics](#bold-and-italics) and the [UI pieces](#ui-pieces) in `text` and `say` beats that don't go through a scene's view: each gets `bold`, `italic` and `ui` [spans](#inlinespan), and its `text` has the words alone. The view does this for a scene and a room, and a plugin's [`context.beats`](/docs/reference/plugins#beats) does it for the blocks it draws. Call it on beats you parse yourself:
 
 ```ts
+import { parseBeats, styledBeats } from '@ifloom/engine/plugin'
+
 styledBeats(parseBeats('The sign says **Closed**.'))
 // [{ type: 'text', text: 'The sign says Closed.', spans: [{ type: 'text', text: 'The sign says ' }, { type: 'bold', text: 'Closed' }, { type: 'text', text: '.' }] }]
 ```
@@ -447,7 +453,7 @@ styledBeats(parseBeats('The sign says **Closed**.'))
 
 ## proseBeats
 
-```ts
+```ts shape
 import { proseBeats } from '@ifloom/engine'
 
 function proseBeats(state: GameState, game: Game, key: string): SceneBeat[] | null
@@ -456,6 +462,8 @@ function proseBeats(state: GameState, game: Game, key: string): SceneBeat[] | nu
 The prose line `key` as beats, formatted as a scene's body is: its tokens filled for this save, cut into paragraphs and spoken lines with each speaker named from their entity, and its bold, italics and [UI pieces](#ui-pieces) in [spans](#inlinespan). Use it when your UI shows a line by key away from the scene, such as the dialog a UI piece opens. `null` when the game has no line by that key.
 
 ```ts
+import { proseBeats } from '@ifloom/engine'
+
 // prose: { 'notice.welcome': 'Welcome to **{{town}}**.' }
 proseBeats(runner.state, runner.game, 'notice.welcome')
 // [{ type: 'text', text: 'Welcome to Small Town.', spans: [...] }]
@@ -465,7 +473,7 @@ The React UI's [`InlineModal`](/docs/react/components#inlinemodal) draws the lin
 
 ## inlineMarkup
 
-```ts
+```ts shape
 import { inlineMarkup, type InlinePart } from '@ifloom/engine'
 
 function inlineMarkup(text: string): InlinePart[] | null
@@ -482,13 +490,15 @@ type InlinePart =
 A line cut at its `[[act:]]`, `[[tip:]]`, `[[ui:]]`, bold and italic markup, as written, or `null` when it has none. `markup` is the markup itself, and a bold or italic part's `text` is its words without the stars. Malformed markup (no id or key, a tooltip or UI piece with no words, a UI piece whose name isn't an id or with an empty argument, a star that never closes) stays in the text around it, and each `\*` in a text part is already a plain star. The view uses it to make [`InlineSpan`](#inlinespan)s, and an editor can use it to preview a line.
 
 ```ts
+import { inlineMarkup } from '@ifloom/engine'
+
 inlineMarkup('Ring. [[act:answer|Pick up]]')
 // [{ type: 'text', text: 'Ring. ' }, { type: 'act', id: 'answer', text: 'Pick up', markup: '[[act:answer|Pick up]]' }]
 ```
 
 ## artSrc
 
-```ts
+```ts shape
 import { artSrc } from '@ifloom/engine'
 
 function artSrc(path: string, type?: 'image' | 'video'): string
@@ -497,6 +507,8 @@ function artSrc(path: string, type?: 'image' | 'video'): string
 Resolves a picture's or a video's path. Everything in the engine resolves media through it, and every picture and video in the view has been through it: a scene's, an entity's, a notice's and every plugin's. It strips a leading `/`, `art/` or `/art/`, and puts `art/` in front. If the path doesn't already end in `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`, `.avif`, `.svg`, `.mp4` or `.webm`, it adds `.jpg`, or `.mp4` when `type` is `'video'`. A URL, such as `https://…` or `data:…`, is left as it is.
 
 ```ts
+import { artSrc } from '@ifloom/engine'
+
 artSrc('place/cafe')             // 'art/place/cafe.jpg'
 artSrc('/art/place/cafe.png')    // 'art/place/cafe.png'
 artSrc('clips/kettle', 'video')  // 'art/clips/kettle.mp4'
@@ -509,7 +521,7 @@ The result is relative on purpose. A built game is a folder opened from disk or 
 
 ## mediaType
 
-```ts
+```ts shape
 import { mediaType } from '@ifloom/engine'
 
 function mediaType(src: string): 'image' | 'video'
@@ -518,6 +530,8 @@ function mediaType(src: string): 'image' | 'video'
 Whether a file is drawn as a picture or a video, by its extension. `.mp4` and `.webm` are videos, and everything else is a picture, animated `.gif` and `.webp` included.
 
 ```ts
+import { mediaType } from '@ifloom/engine'
+
 mediaType('clips/kettle.mp4') // 'video'
 mediaType('place/cafe.webp')  // 'image'
 ```

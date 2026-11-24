@@ -14,10 +14,9 @@ import { pictureView } from '@ifloom/engine/plugin'
 Say someone knocks at the showcase's flat in the evening. (Small Town has no pools or video yet, so this is an example of what one would look like.) The front door is picked from a pool of doors, the window behind it is a short clip of rain, and the door itself is a hotspot that takes the scene's `answer` choice.
 
 ```ts
-import type { DataScene, Game } from '@ifloom/engine'
+import type { Content, DataScene } from '@ifloom/engine'
 
-const game: Game = {
-  // ...
+export const flat: Content = {
   media: {
     pools: {
       door: [
@@ -60,6 +59,8 @@ Someone knocks, three times, not loud.
 With the scene open, the view has the picked door among the beats and the picture resolved:
 
 ```ts
+import { view } from '@ifloom/engine'
+
 view(state, game).scene.picture
 // {
 //   aspect: '16/9',
@@ -76,7 +77,7 @@ view(state, game).scene.picture
 
 ## GameMedia
 
-```ts
+```ts shape
 type GameMedia = {
   pools?: Record<string, PoolFile[]>
 }
@@ -86,7 +87,7 @@ The game's `media` field. A pool is a named list of files content can pick from.
 
 ## PoolFile
 
-```ts
+```ts shape
 type PoolFile = { src: string; tags?: string[]; weight?: number }
 ```
 
@@ -94,7 +95,7 @@ One file in a pool. `src` is a path, as any picture's, through [`artSrc`](/docs/
 
 `weight` is how often the file is picked against the other files that fit a request, 1 if left out. A file of weight 3 is picked three times as often as one of weight 1:
 
-```ts
+```ts fragment
 media: {
   pools: {
     // The usual blue door most days, the red one now and then.
@@ -155,7 +156,7 @@ The visit isn't part of the key. A scene shows the same door every time it opens
 
 ## MediaState
 
-```ts
+```ts shape
 type MediaState = { picks: Record<string, string> }
 ```
 
@@ -165,7 +166,7 @@ What a save keeps at `state.media`: the file (as its pool's `src`) each pick key
 
 ### PictureDef
 
-```ts
+```ts shape
 type PictureDef = {
   layers: PictureLayer[]
   hotspots?: HotspotDef[]
@@ -177,7 +178,7 @@ A layered picture with hotspots. A [data scene](/docs/reference/scenes#the-pictu
 
 ### PictureLayer
 
-```ts
+```ts shape
 type PictureLayer = {
   id?: string
   src?: string
@@ -196,12 +197,12 @@ One layer. Give a file as `src`, or a pool and tags. It's shown while `when` hol
 
 ### HotspotDef
 
-```ts
+```ts shape
 type HotspotDef = {
   id: string
   rect: [number, number, number, number]
   label: string
-  command?: Command
+  command?: CommandRef
   choice?: string
   when?: Condition
   layer?: string
@@ -217,7 +218,7 @@ It's left out while its `when` fails, and while its `layer` isn't shown.
 
 ### PictureView
 
-```ts
+```ts shape
 type PictureView = {
   aspect: string | null
   layers: PictureLayerView[]
@@ -229,7 +230,7 @@ A picture as the UI draws it, from [`pictureView`](/docs/reference/view#picturev
 
 ### PictureLayerView
 
-```ts
+```ts shape
 type PictureLayerView = {
   id: string | null
   src: string
@@ -241,7 +242,7 @@ A layer that's shown. `src` has been through [`artSrc`](/docs/reference/prose#ar
 
 ### HotspotView
 
-```ts
+```ts shape
 type HotspotView = {
   id: string
   rect: [number, number, number, number]
@@ -259,7 +260,7 @@ A hotspot as a button. Send `command` when it's pressed. `disabled` and `warning
 
 ### VideoFlags
 
-```ts
+```ts shape
 type VideoFlags = {
   controls?: boolean
   once?: boolean
@@ -272,7 +273,7 @@ The flags a video can carry, on a `{ media }` block or a picture layer. They're 
 
 ### VideoView
 
-```ts
+```ts shape
 type VideoView = {
   autoplay: boolean
   loop: boolean

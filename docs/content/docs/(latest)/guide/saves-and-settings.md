@@ -40,6 +40,8 @@ The [profile](/docs/reference/profile) keeps what outlives a single save, such a
 ## Save and load
 
 ```ts
+import { showMessage } from './messages.ts' // your own
+
 const saved = await runner.save('quick')
 if (!saved.ok) showMessage(saved.reason)
 
@@ -54,6 +56,8 @@ Both are async and answer with a [`Result`](/docs/reference/runner#result) rathe
 A game can refuse saving for a while, such as until the player has typed a name, with [`saveable`](/docs/reference/game#saveable). `runner.save` then fails with the game's reason, and autosave waits. [`view.saving`](/docs/reference/view#saving) says so before the player presses anything, so grey the button out with it:
 
 ```ts
+import { saveButton } from './menu.ts' // your own save button
+
 const { allowed, reason } = runner.view().saving
 saveButton.disabled = !allowed
 saveButton.title = reason ?? ''
@@ -83,6 +87,8 @@ await runner.save(nextSlot(listing))
 Settings are what the player can change, such as whether hints are shown or how large the text is. The engine has none of its own, so your content declares each one:
 
 ```ts
+import type { Content } from '@ifloom/engine'
+
 const story: Content = {
   settings: [
     { id: 'hints', label: 'Show hints', type: 'toggle', default: true },
@@ -110,6 +116,8 @@ A setting is one of two sorts:
 Read every setting's value now with [`runner.snapshot().settings`](/docs/reference/runner#settings), and change one with [`runner.setSetting`](/docs/reference/runner#setsetting):
 
 ```ts
+import { showMessage } from './messages.ts' // your own
+
 // Copy the text size onto the page now, and whenever it changes.
 function showTextSize() {
   document.documentElement.dataset.textSize = String(runner.snapshot().settings.textSize)

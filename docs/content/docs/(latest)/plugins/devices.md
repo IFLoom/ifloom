@@ -37,7 +37,7 @@ Add the package beside the engine, then add `devices()` to the game's `plugins`.
 
 ## devices
 
-```ts
+```ts shape
 function devices(): DefinedPlugin<DevicesState, DevicesView>
 ```
 
@@ -72,7 +72,7 @@ const { game } = loadGame([town], {
 
 ### DeviceDef
 
-```ts
+```ts shape
 type DeviceDef = {
   id: string
   name: string
@@ -94,7 +94,7 @@ Devices are content. List them in your content's `data.devices.devices`, in the 
 
 ### devicesOf and appsOf
 
-```ts
+```ts shape
 function devicesOf(game: Game): DeviceDef[]
 function appsOf(game: Game): AppDef[]
 ```
@@ -107,7 +107,7 @@ Apps are content, in your content's [`data`](/docs/reference/loader#content) und
 
 ### AppDef
 
-```ts
+```ts shape
 import type { Condition } from '@ifloom/engine'
 import type { Section } from '@ifloom/plugin-devices'
 
@@ -413,7 +413,7 @@ It lists every device, in the order you gave them to `devices(...)`.
 
 ### DeviceView
 
-```ts
+```ts shape
 import type { AppView } from '@ifloom/plugin-devices'
 
 type DeviceView = {
@@ -467,7 +467,7 @@ type AppView = {
 
 ### SectionView
 
-```ts
+```ts shape
 import type { RenderedChoice } from '@ifloom/engine'
 
 type SectionView =
@@ -502,7 +502,7 @@ The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.
 
 ### devicesUi
 
-```ts
+```ts shape
 const devicesUi: PluginUi
 ```
 
@@ -510,7 +510,7 @@ The plugin's [`PluginUi`](/docs/react/kit#pluginui): a button for each device go
 
 ### DeviceStrip
 
-```tsx
+```tsx shape
 function DeviceStrip(): JSX.Element | null
 ```
 
@@ -520,7 +520,7 @@ Replaceable as `DeviceStrip` in [`components`](/docs/react/components#components
 
 ### DeviceButtons
 
-```tsx
+```tsx shape
 function DeviceButtons(): JSX.Element | null
 ```
 
@@ -530,7 +530,7 @@ Replaceable as `DeviceButtons` in [`components`](/docs/react/components#componen
 
 ### DeviceDialog
 
-```tsx
+```tsx shape
 function DeviceDialog(props: { deviceId?: string | null; onClose?: () => void }): JSX.Element
 ```
 
@@ -542,7 +542,7 @@ Replaceable as `DeviceDialog` in [`components`](/docs/react/components#component
 
 ### DeviceScreen
 
-```tsx
+```tsx shape
 function DeviceScreen(props: { device: DeviceView }): JSX.Element
 ```
 
@@ -556,7 +556,7 @@ Replaceable as `DeviceScreen` in [`components`](/docs/react/components#component
 
 ### AppSection
 
-```tsx
+```tsx shape
 function AppSection(props: { section: SectionView }): JSX.Element | null
 ```
 
@@ -574,7 +574,7 @@ Replaceable as `AppSection` in [`components`](/docs/react/components#components)
 
 ### useDevices
 
-```ts
+```ts shape
 function useDevices(): DevicesState
 
 type DevicesState = DeviceView[]
@@ -586,7 +586,7 @@ The devices in the view, `view.plugins.devices.devices`, as [`DeviceView`](/docs
 
 ### useDevice
 
-```ts
+```ts shape
 function useDevice(): DeviceState
 
 type DeviceState = {
@@ -603,7 +603,7 @@ Which device is out, from the view, and how to bring one out and put it away. `o
 
 ### useOpenApp
 
-```ts
+```ts shape
 function useOpenApp(): OpenAppState | null
 
 type OpenAppState = { device: DeviceView; app: AppView }
@@ -611,7 +611,7 @@ type OpenAppState = { device: DeviceView; app: AppView }
 
 The app a section is being drawn in, with all of its sections, and its device. It's `null` outside an open app. A `{ panel }` section's component is given only the section's `with` as `data`, so it reads the rest of the app here. For example, a card can draw the buttons of the app's `actions` section on itself, refused buttons included:
 
-```tsx
+```tsx fragment
 function MatchCard({ data }: { data: unknown }) {
   const open = useOpenApp()
   const buttons = open?.app.sections.flatMap((section) => (section.type === 'actions' ? section.actions : [])) ?? []
@@ -630,7 +630,7 @@ A UI in another framework reads the same thing from the view: the device's `open
 
 ### DevicesState
 
-```ts
+```ts shape
 type DevicesState = { shown: Record<string, string | null> }
 ```
 
@@ -644,7 +644,7 @@ The helpers build the content objects for you, typed, in the [short form](/docs/
 
 ### Helpers
 
-```ts
+```ts shape
 const devices: {
   (): DefinedPlugin<DevicesState, DevicesView>
   open(app: string): CommandRef

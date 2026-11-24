@@ -69,14 +69,14 @@ The park offers it as a room action whose effects apply [`{ minigame: 'arrows' }
 ```ts
 import { apply, view } from '@ifloom/engine'
 
-state = apply(state, game, { type: 'action', id: 'places/arrows' }).state
-view(state, game).minigame
+let next = apply(state, game, { type: 'action', id: 'places/arrows' }).state
+view(next, game).minigame
 // { id: 'arrows', title: 'Quick feet', state: 'left', label: 'She points at the river. Left!',
 //   timeLeft: 1500, timeTotal: 1500, inputs: ['up', 'down', 'left', 'right'],
 //   kv: { round: 1, arrow: 3, score: 0 }, keys: { up: ['ArrowUp', 'w'], ... } }
 
-state = apply(state, game, { type: 'tick', ms: 400 }).state           // time passing
-state = apply(state, game, { type: 'minigame', input: 'left' }).state // the player pressed left
+next = apply(next, game, { type: 'tick', ms: 400 }).state           // time passing
+next = apply(next, game, { type: 'minigame', input: 'left' }).state // the player pressed left
 ```
 
 The full example is in the showcase's `src/story/park.ts`, and its test plays it through with ticks and inputs.
@@ -121,7 +121,7 @@ Ticks are commands like any other, so they're in the runner's [log](/docs/refere
 
 ## MinigameDef
 
-```ts
+```ts shape
 type MinigameDef = {
   id: string
   title?: string
@@ -145,7 +145,7 @@ Declare minigames in your [content](/docs/reference/loader#content)'s `minigames
 
 ## MinigameStateDef
 
-```ts
+```ts shape
 type MinigameStateDef = {
   label?: string
   after?: { ms: number } & MinigameTransition
@@ -165,7 +165,7 @@ type MinigameStateDef = {
 
 ## MinigameTransition
 
-```ts
+```ts shape
 type MinigameTransition = {
   go?: string
   to?: MinigameTarget[]
@@ -185,7 +185,7 @@ The state from `to` is drawn before the effects run, so they can't change the dr
 
 ## MinigameSceneFields
 
-```ts
+```ts shape
 type MinigameSceneFields = {
   minigame?: string
 }
@@ -193,7 +193,7 @@ type MinigameSceneFields = {
 
 A field on a [scene](/docs/reference/scenes). The minigame starts when the scene is entered, in the same command, after the scene is counted as [seen](/docs/reference/state#seen). Redrawing the scene that's already open doesn't start it again. If a new game opens on a scene with one, it's running from the first frame.
 
-```ts
+```ts fragment
 {
   id: 'fair.coconut',
   title: 'The coconut shy',
@@ -207,7 +207,7 @@ When the minigame ends, the scene shows again with its choices, unless a final e
 
 ## MinigameState
 
-```ts
+```ts shape
 type MinigameState = {
   id: string
   state: string
@@ -221,7 +221,7 @@ The minigame being played, as the save keeps it in [`state.minigame`](/docs/refe
 
 ## MinigameView
 
-```ts
+```ts shape
 type MinigameView = {
   id: string
   title: string | null

@@ -17,7 +17,7 @@ await stored.get('core:settings') // { hints: false, textSize: 'large' }
 
 ## profile
 
-```ts
+```ts shape
 function profile(game: Pick<Game, 'id'>, driver: SaveDriver): Profile
 ```
 
@@ -29,7 +29,7 @@ Reads and writes run one at a time, in the order you make them. The first one re
 
 ## Profile
 
-```ts
+```ts shape
 type Profile = {
   get: <T = unknown>(namespace: string) => Promise<T | undefined>
   set: (namespace: string, value: unknown) => Promise<void>
@@ -47,7 +47,7 @@ type Profile = {
 
 Use `update` whenever the new value depends on the old one, so two writes at once don't lose each other:
 
-```ts
+```ts continues
 await stored.update<Record<string, unknown>>('core:settings', (current) => ({ ...current, textSize: 'large' }))
 ```
 

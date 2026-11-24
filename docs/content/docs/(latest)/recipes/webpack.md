@@ -119,7 +119,7 @@ import './styles.css'
 createApp(App).mount('#root')
 ```
 
-```ts tab="Svelte" tab-group="framework"
+```ts fragment tab="Svelte" tab-group="framework"
 // src/main.ts: the svelte template's. Add svelte-loader for the .svelte files.
 import { mount } from 'svelte'
 import App from './App.svelte'

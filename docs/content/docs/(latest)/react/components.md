@@ -68,7 +68,7 @@ Every element the UI draws carries a `data-part` naming what kind of thing it is
 
 ### GameShell
 
-```tsx
+```tsx shape
 function GameShell(props: GameShellProps): JSX.Element
 ```
 
@@ -77,8 +77,9 @@ The whole UI, and the one root every entry draws: `mountGame` draws it too. It's
 ```tsx
 import { GameShell } from '@ifloom/react'
 import { Layout } from './layout.tsx'
+import { panels } from './panels.tsx'
 
-<GameShell runner={runner} panels={panels} layout={Layout} pages />
+export const App = () => <GameShell runner={runner} panels={panels} layout={Layout} pages />
 ```
 
 ## Layouts
@@ -87,7 +88,7 @@ A layout is a component that draws the page from these regions and the parts bel
 
 ### DefaultLayout
 
-```tsx
+```tsx shape
 function DefaultLayout(): JSX.Element
 ```
 
@@ -104,7 +105,7 @@ Each `<Plugins at="…" />` draws what the game's [plugin UIs](/docs/react/kit#w
 
 ### Game
 
-```tsx
+```tsx shape
 function Game(props: GameProps): JSX.Element
 
 type GameProps = { className?: string; children?: ReactNode }
@@ -118,7 +119,7 @@ Replaceable as `Game` in [`components`](#components). Parts: `page` (with `data-
 
 ### Sidebar
 
-```tsx
+```tsx shape
 function Sidebar(props: SidebarProps): JSX.Element
 
 type SidebarProps = { className?: string; children?: ReactNode }
@@ -132,7 +133,7 @@ Replaceable as `Sidebar` in [`components`](#components). Parts: `sidebar`, `top-
 
 ### Story
 
-```tsx
+```tsx shape
 function Story(props: StoryProps): JSX.Element
 
 type StoryProps = { align?: 'center' | 'start'; className?: string; children?: ReactNode }
@@ -145,7 +146,7 @@ The scene's title, its prose, the choices, the inputs, the place's name, the exi
 - `align` places the reading column: `'center'` or `'start'`. It's written to the `<main>` as `data-align` and wins over the stylesheet.
 - Left out, the [`--margin-prose`](/docs/react/customising#2-set-tokens-and-colours) token decides. It centres the column unless a preset or your stylesheet changes it.
 
-```tsx
+```tsx fragment
 <Story align="start">
   <Scene />
 </Story>
@@ -155,7 +156,7 @@ Replaceable as `Story` in [`components`](#components). Parts: `story`.
 
 ### Overlay
 
-```tsx
+```tsx shape
 function Overlay(props: { className?: string; children?: ReactNode }): JSX.Element
 ```
 
@@ -165,7 +166,7 @@ Replaceable as `Overlay` in [`components`](#components). Parts: `overlay`.
 
 ### Section
 
-```tsx
+```tsx shape
 function Section(props: SectionProps): JSX.Element | null
 
 type SectionProps = {
@@ -203,7 +204,7 @@ Replaceable as `Section` in [`components`](#components). Parts: `section` (with 
 
 ### When
 
-```tsx
+```tsx shape
 function When(props: { condition: Condition; children?: ReactNode }): JSX.Element | null
 ```
 
@@ -213,7 +214,7 @@ Replaceable as `When` in [`components`](#components).
 
 ### useHolds
 
-```ts
+```ts shape
 function useHolds(condition: Condition | undefined): boolean
 ```
 
@@ -231,7 +232,7 @@ function RainBanner() {
 
 ### WithPages
 
-```tsx
+```tsx shape
 function WithPages(props: { pages?: boolean | PagesOptions; children: ReactNode }): JSX.Element | null
 ```
 
@@ -239,7 +240,7 @@ Its children, or with `pages` on, the [pages](#pages) around them: the children 
 
 ### GameProvider
 
-```tsx
+```tsx shape
 function GameProvider(props: GameProviderProps): JSX.Element
 
 type GameProviderProps = {
@@ -254,13 +255,14 @@ type GameProviderProps = {
   unstyled?: boolean
   viewer?: boolean
   keys?: boolean | KeyOptions
+  motion?: boolean
   children: ReactNode
 }
 ```
 
 Connects everything under it to a [runner](/docs/reference/runner). It subscribes to the runner, reads `runner.view()` again only when the state changes or what the plugins' views show of the profile does, and hands both down through [`useGame`](#usegame).
 
-`plugins` are the [plugin UIs](/docs/react/kit#the-plugins-option) to draw, each from a plugin's `/react` subpath, such as `shopUi` from `@ifloom/plugin-shop/react`. `panels`, `inline` and `sections` are the same as on [`GameShell`](/docs/react#gameshell), and go over what the plugin UIs bring under the same names. `mods` turns on the [mod manager](#modmanager). See [`ModsOption`](#modsoption). `components`, `classes`, `unstyled`, `viewer` and `keys` are the [`UiOptions`](#uioptions), handed to a [`UiProvider`](#uiprovider) inside it. With `keys` on, the provider also listens for the [keyboard shortcuts](#keyoptions).
+`plugins` are the [plugin UIs](/docs/react/kit#the-plugins-option) to draw, each from a plugin's `/react` subpath, such as `shopUi` from `@ifloom/plugin-shop/react`. `panels`, `inline` and `sections` are the same as on [`GameShell`](/docs/react#gameshell), and go over what the plugin UIs bring under the same names. `mods` turns on the [mod manager](#modmanager). See [`ModsOption`](#modsoption). `components`, `classes`, `unstyled`, `viewer`, `keys` and `motion` are the [`UiOptions`](#uioptions), handed to a [`UiProvider`](#uiprovider) inside it. With `keys` on, the provider also listens for the [keyboard shortcuts](#keyoptions).
 
 Use it on its own to build [your own layout](/docs/react/extending#your-own-layout). On its own it plays no sound, sizes no text and draws no pages. [`GameShell`](#gameshell) adds those, and takes any component as its `layout`, so you rarely need the provider alone.
 
@@ -268,7 +270,7 @@ Use it on its own to build [your own layout](/docs/react/extending#your-own-layo
 
 ### useGame
 
-```ts
+```ts shape
 function useGame(): GameContextValue
 
 type GameContextValue = {
@@ -276,7 +278,7 @@ type GameContextValue = {
   mods?: ModsOption
   snapshot: RunnerSnapshot
   view: View
-  send: (command: CommandRef) => Applied
+  send: (command: CommandRef) => Result<GameState>
   panels: Record<string, PanelComponent>
   inline: InlineComponents
   sections: Record<string, PluginSectionComponent>
@@ -284,7 +286,7 @@ type GameContextValue = {
 }
 ```
 
-Returns the runner, its [snapshot](/docs/reference/runner#runnersnapshot), the current [`View`](/docs/reference/view) (the snapshot's `view`) and `send`. Every component under the provider draws again when the runner hands a new snapshot: after a command, a setting, a save written or a helper's report. `send` runs a command through `runner.apply` and returns what [`apply`](/docs/reference/commands#apply) returned, so you can show a refusal. It takes a plain command or a plugin's as its helpers write it, a [`CommandRef`](/docs/reference/custom#commandref), so `send(shop.buy('counter', 'item:sandwich'))` works. `panels` are what the provider was given. `inline` and `sections` are the provider's over what the plugin UIs bring. `plugins` are the [plugin UIs](/docs/react/kit#usepluginuis) whose plugin the game has, in their order. `mods` is the provider's `mods`, if any. It throws outside a `GameProvider`.
+Returns the runner, its [snapshot](/docs/reference/runner#runnersnapshot), the current [`View`](/docs/reference/view) (the snapshot's `view`) and `send`. Every component under the provider draws again when the runner hands a new snapshot: after a command, a setting, a save written or a helper's report. `send` runs a command through `runner.apply` and returns what it returned, a [`Result`](/docs/reference/runner#result) with the next state or the reason it was refused, so you can show a refusal. It takes a plain command or a plugin's as its helpers write it, a [`CommandRef`](/docs/reference/custom#commandref), so `send(shop.buy('counter', 'item:sandwich'))` works. `panels` are what the provider was given. `inline` and `sections` are the provider's over what the plugin UIs bring. `plugins` are the [plugin UIs](/docs/react/kit#usepluginuis) whose plugin the game has, in their order. `mods` is the provider's `mods`, if any. It throws outside a `GameProvider`.
 
 ```tsx
 import { useState } from 'react'
@@ -313,7 +315,7 @@ Use the runner for what the view doesn't cover, such as `runner.undo()`, `runner
 
 ### ModsOption
 
-```ts
+```ts shape
 type ModsOption = {
   store: Mods
   problems?: string[]
@@ -331,7 +333,7 @@ The game's [mods](/docs/reference/mods), for the [mod manager](#modmanager). Pas
 
 ### PanelComponent
 
-```ts
+```ts shape
 type PanelComponent = ComponentType<{ data: unknown }>
 ```
 
@@ -339,7 +341,7 @@ A game's own panel: a scene's bespoke panel, an app's panel section, or a [panel
 
 ### InlineComponents
 
-```ts
+```ts shape
 type InlineProps<N extends string = string> = { name: N; text: string; args: InlineUiArgs<N> }
 type InlineComponent<N extends string = string> = ComponentType<InlineProps<N>>
 type InlineComponents = { [N in keyof InlineUi]?: InlineComponent<N> } & { [name: string]: ComponentType<InlineProps<never>> | undefined }
@@ -349,7 +351,7 @@ A game's own components for [UI pieces](/docs/reference/prose#ui-pieces) in its 
 
 ### PluginSectionComponent
 
-```ts
+```ts shape
 type PluginSectionComponent = ComponentType<{ data: unknown; with: Record<string, unknown> }>
 ```
 
@@ -361,7 +363,7 @@ How a game makes the UI look its own, below the theme's variables. [Make it your
 
 ### UiOptions
 
-```ts
+```ts shape
 type UiOptions = StyleOptions & BehaviourOptions
 
 type StyleOptions = {
@@ -381,7 +383,7 @@ What [`mountGame`](/docs/react#mountgame), [`GameShell`](#gameshell) and [`GameP
 
 ### KeyOptions
 
-```ts
+```ts shape
 type KeyOptions = {
   map?: Record<string, Command>
 }
@@ -409,17 +411,17 @@ While a [minigame](#minigamecard) runs, its own keys come first, and they work w
 
 ### Components
 
-```ts
+```ts shape
 type Components = Partial<OverridableComponents>
 
 interface OverridableComponents {
   Section: Override<SectionProps>
   Beat: Override<{ beat: SceneBeat }>
-  // … one for each name below, and each a plugin UI adds
+  // …
 }
 ```
 
-Your own components in place of built-in ones, by name. Each replacement is drawn everywhere the UI draws that component, with the same props plus `Default`, the built-in one. The names are `Game`, `Sidebar`, `Story`, `Overlay`, `Section`, `When`, `Title`, `Clock`, `StatList`, `RoomActions`, `Scene`, `Beat`, `SceneHeader`, `BeatGroup`, `Fold`, `InlineAction`, `Tip`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `NoticeStrip`, `MinigameCard`, `DiceRoll`, `DiceOverlay`, `Countdown`, `Timers`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `PanelHost`, `Inventory`, `EntityTable`, `InputFields`, `InputField`, `Picture`, `Video`, `LayeredPicture`, `Hotspot`, `MediaViewer`, `Icon`, `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` and `GatePage`. A plugin's UI adds its own to [`OverridableComponents`](/docs/react/kit#overridablecomponents-and-partnames), such as `ShopCounter` and `QuestLog`, so `components` takes them typed once you import the plugin's `/react`.
+Your own components in place of built-in ones, by name. Each replacement is drawn everywhere the UI draws that component, with the same props plus `Default`, the built-in one. The names are `Game`, `Sidebar`, `Story`, `Overlay`, `Section`, `When`, `Title`, `Clock`, `StatList`, `RoomActions`, `Scene`, `Beat`, `SceneHeader`, `BeatGroup`, `Fold`, `InlineAction`, `Tip`, `ChoiceList`, `ChoiceButton`, `PriceTag`, `Notices`, `Notice`, `NoticeStrip`, `MinigameCard`, `DiceRoll`, `DiceOverlay`, `Countdown`, `Timers`, `Changes`, `ChangeItem`, `GameMenu`, `SavesMenu`, `Backlog`, `ModManager`, `PanelHost`, `Inventory`, `EntityTable`, `InputFields`, `InputField`, `Picture`, `Video`, `LayeredPicture`, `Hotspot`, `MediaViewer`, `Icon`, `TitlePage`, `SettingsPage`, `LoadPage`, `CreditsPage` and `GatePage`. A plugin's UI adds its own to [`OverridableComponents`](/docs/react/kit#overridablecomponents-and-partnames), such as `ShopCounter` and `QuestLog`, so `components` takes them typed once you import the plugin's `/react`.
 
 ```tsx
 import type { Components } from '@ifloom/react'
@@ -438,7 +440,7 @@ const components: Components = {
 
 ### Override
 
-```ts
+```ts shape
 type Override<P> = ComponentType<P & { Default: ComponentType<P> }>
 ```
 
@@ -446,7 +448,7 @@ The type of one replacement in [`Components`](#components): a component that tak
 
 ### Classes
 
-```ts
+```ts shape
 type Classes = Partial<Record<PartKey, string | ((defaults: string) => string)>>
 ```
 
@@ -463,7 +465,7 @@ const classes: Classes = {
 
 ### PartKey
 
-```ts
+```ts shape
 type PartKey = 'page' | 'sidebar' | 'story' | 'overlay' | 'title' | 'clock' | 'stats' | /* … */ 'gate-decline' | keyof PartNames
 ```
 
@@ -471,7 +473,7 @@ A `data-part` name: one the React UI itself draws, or one a plugin UI adds throu
 
 ### UiProvider
 
-```tsx
+```tsx shape
 function UiProvider(props: UiOptions & { children: ReactNode }): JSX.Element
 ```
 
@@ -488,7 +490,7 @@ import { QuestLog } from '@ifloom/plugin-quests/react'
 
 ### usePart
 
-```ts
+```ts shape
 function usePart(name: PartKey, defaults: string, extra?: string): { 'data-part': PartKey; className: string }
 ```
 
@@ -506,7 +508,7 @@ function Purse() {
 
 ### overridable
 
-```ts
+```ts shape
 function overridable<P extends object>(name: keyof Components, Default: ComponentType<P>): ComponentType<P>
 ```
 
@@ -514,7 +516,7 @@ Wraps a component so a game can replace it by `name` in [`components`](#componen
 
 ### Icon
 
-```tsx
+```tsx shape
 function Icon(props: { name: IconName; label?: string }): JSX.Element
 
 type IconName = 'close' | 'back' | 'warning' | 'voice' | 'zoom' | 'menu' | 'chevron'
@@ -526,7 +528,7 @@ One of the UI's icons, by what it's for: `close` on dialogs and notices, `back` 
 
 ### Scene
 
-```tsx
+```tsx shape
 function Scene(props: { className?: string }): JSX.Element
 ```
 
@@ -566,7 +568,7 @@ Replaceable as `Scene` in [`components`](#components). Parts: `scene-transition`
 
 ### useScene
 
-```tsx
+```tsx shape
 function useScene(): SceneTiming
 
 type SceneTiming = {
@@ -631,13 +633,15 @@ function PlainScene() {
 
 ### SceneHeader
 
-```tsx
+```tsx shape
 function SceneHeader(props: { scene: View['scene'] }): JSX.Element
 ```
 
 The scene's heading: the speaker's portrait, when the scene has a speaker with a picture, and its title. `scene` is [`view.scene`](/docs/reference/view#the-scene). Replace it in `components` to draw the heading your own way, and it still comes in with the scene:
 
 ```tsx
+import type { Components } from '@ifloom/react'
+
 const components: Components = {
   SceneHeader: ({ scene }) => <h2 className="chapter">{scene.title}</h2>,
 }
@@ -647,7 +651,7 @@ Replaceable as `SceneHeader` in [`components`](#components). Parts: `scene-heade
 
 ### BeatGroup
 
-```tsx
+```tsx shape
 function BeatGroup(props: { section: Ui<BlockUi>; children: ReactNode }): JSX.Element
 ```
 
@@ -659,7 +663,7 @@ Replaceable as `BeatGroup` in [`components`](#components). Parts: `group`.
 
 ### Fold
 
-```tsx
+```tsx shape
 function Fold(props: { label: string; children: ReactNode }): JSX.Element
 ```
 
@@ -669,7 +673,7 @@ Replaceable as `Fold` in [`components`](#components). Parts: `fold`, `fold-summa
 
 ### useMotion
 
-```tsx
+```tsx shape
 function useMotion(): boolean
 function useReducedMotion(): boolean
 ```
@@ -688,7 +692,7 @@ function SceneTitle() {
 
 ### Beat
 
-```tsx
+```tsx shape
 function Beat(props: { beat: SceneBeat }): JSX.Element
 ```
 
@@ -723,7 +727,7 @@ A paragraph's [bold and italics](/docs/reference/prose#bold-and-italics) are a `
 
 ### InlineAction
 
-```tsx
+```tsx shape
 function InlineAction(props: { text: string; choice: RenderedChoice; className?: string }): JSX.Element
 ```
 
@@ -737,7 +741,7 @@ Replaceable as `InlineAction` in [`components`](#components). Parts: `inline-act
 
 ### Tip
 
-```tsx
+```tsx shape
 function Tip(props: { text: string; tip: string; className?: string }): JSX.Element
 ```
 
@@ -749,7 +753,7 @@ Replaceable as `Tip` in [`components`](#components). Parts: `tip` and `tip-conte
 
 ### InlineTrigger
 
-```tsx
+```tsx shape
 function InlineTrigger(props: { name: string; open: boolean; onOpen: () => void; className?: string; children: ReactNode }): JSX.Element
 ```
 
@@ -757,7 +761,7 @@ The words of an [inline piece](/docs/react/hints#inline-pieces) as a button in t
 
 ### InlineModal
 
-```tsx
+```tsx shape
 function InlineModal(props: InlineProps<'modal'>): JSX.Element
 ```
 
@@ -765,7 +769,7 @@ The built-in `modal`, from `[[ui:modal|words|key]]` or `[[ui:modal|words|key|tit
 
 ### InlineImage
 
-```tsx
+```tsx shape
 function InlineImage(props: InlineProps<'image'>): JSX.Element
 ```
 
@@ -773,7 +777,7 @@ The built-in `image`, from `[[ui:image|words|path]]` or `[[ui:image|words|path|a
 
 ### InlineMail
 
-```tsx
+```tsx shape
 function InlineMail(props: InlineProps<'mail'>): JSX.Element
 ```
 
@@ -781,7 +785,7 @@ The built-in `mail`, from `[[ui:mail|body|From: Ava|Subject: Hello]]`: a letter 
 
 ### InlineProp
 
-```tsx
+```tsx shape
 function InlineProp(props: InlineProps<'prop'>): JSX.Element
 ```
 
@@ -789,7 +793,7 @@ The built-in `prop`, from `[[ui:prop|words|face]]`: a note in the story's world,
 
 ### InlineMono
 
-```tsx
+```tsx shape
 function InlineMono(props: InlineProps<'mono'>): JSX.Element
 ```
 
@@ -797,7 +801,7 @@ The built-in `mono`, from `[[ui:mono|words]]`: the words in a monospace face, th
 
 ### Picture
 
-```tsx
+```tsx shape
 function Picture(props: ComponentProps<'img'>): JSX.Element | null
 ```
 
@@ -805,7 +809,7 @@ An `<img>` that draws nothing, and takes no space, when its file is missing or `
 
 It loads lazily, with `loading="lazy"` and `decoding="async"`, so a picture far down a long scene or a feed waits until the player scrolls near it. Pass `loading="eager"` to load one straight away.
 
-```tsx
+```tsx fragment
 import { Picture } from '@ifloom/react'
 
 <Picture src={person.portrait} alt={person.name} className="size-8 rounded-full object-cover" />
@@ -821,7 +825,7 @@ Replaceable as `Picture` in [`components`](#components). Parts: none of its own.
 
 ### usePicturesShown
 
-```ts
+```ts shape
 function usePicturesShown(): boolean
 ```
 
@@ -837,7 +841,7 @@ function Postcard({ src }: { src: string }) {
 
 ### KeepPicturesOn
 
-```tsx
+```tsx shape
 function KeepPicturesOn(props: { children: ReactNode }): JSX.Element
 ```
 
@@ -845,7 +849,7 @@ Draws the pictures inside it whatever the pictures setting says. `LayeredPicture
 
 ### Video
 
-```tsx
+```tsx shape
 function Video(props: VideoProps): JSX.Element | null
 
 type VideoProps = Omit<ComponentProps<'video'>, 'src' | 'poster' | 'autoPlay' | 'loop' | 'muted' | 'controls'> & {
@@ -885,7 +889,7 @@ Its `src` and `poster` go through [`assetUrl`](#asseturl). Replaceable as `Video
 
 ### LayeredPicture
 
-```tsx
+```tsx shape
 function LayeredPicture(props: { picture: PictureView; className?: string }): JSX.Element
 ```
 
@@ -908,7 +912,7 @@ Replaceable as `LayeredPicture` in [`components`](#components). Parts: `picture`
 
 ### Hotspot
 
-```tsx
+```tsx shape
 function Hotspot(props: { hotspot: HotspotView }): JSX.Element
 ```
 
@@ -923,7 +927,7 @@ Replaceable as `Hotspot` in [`components`](#components). Parts: `hotspot` and `h
 
 ### MediaViewer
 
-```tsx
+```tsx shape
 function MediaViewer(props: MediaViewerProps): JSX.Element
 
 type MediaViewerProps = { media: ViewerMedia; open: boolean; onOpenChange: (open: boolean) => void }
@@ -935,14 +939,17 @@ A picture or a clip from the story, shown large over the page. [`Beat`](#beat) o
 Turn it off for the whole game with `viewer: false` in [`UiOptions`](#uioptions):
 
 ```ts
-mountGame(loadGame(content, base), { viewer: false })
+import { mountGame } from '@ifloom/react'
+import module from './game.ts'
+
+mountGame(module.build(), { viewer: false })
 ```
 
 Replaceable as `MediaViewer` in [`components`](#components). Parts: `viewer` (the dialog), `viewer-close` and `dialog-overlay`.
 
 ### assetUrl
 
-```ts
+```ts shape
 function assetUrl(src: string): string
 ```
 
@@ -969,7 +976,7 @@ function Postcard({ src }: { src: string }) {
 
 ### ChoiceButton
 
-```tsx
+```tsx shape
 function ChoiceButton(props: { choice: RenderedChoice; className?: string }): JSX.Element
 ```
 
@@ -988,7 +995,7 @@ Replaceable as `ChoiceButton` in [`components`](#components). Parts: `choice` (w
 
 ### ChoiceList
 
-```tsx
+```tsx shape
 function ChoiceList(props: { choices: RenderedChoice[]; className?: string; part?: 'choices' | 'actions' }): JSX.Element | null
 ```
 
@@ -1007,7 +1014,7 @@ Replaceable as `ChoiceList` in [`components`](#components). Parts: `choices`, or
 
 ### PriceTag
 
-```tsx
+```tsx shape
 function PriceTag(props: { price: Price; className?: string }): JSX.Element | null
 ```
 
@@ -1019,7 +1026,7 @@ Replaceable as `PriceTag` in [`components`](#components). Parts: `choice-price`.
 
 ### Title
 
-```tsx
+```tsx shape
 function Title(props: { className?: string }): JSX.Element
 ```
 
@@ -1029,7 +1036,7 @@ Replaceable as `Title` in [`components`](#components). Parts: `title`.
 
 ### RoomActions
 
-```tsx
+```tsx shape
 function RoomActions(props: { className?: string }): JSX.Element | null
 ```
 
@@ -1039,7 +1046,7 @@ Replaceable as `RoomActions` in [`components`](#components). Parts: `actions`.
 
 ### Clock
 
-```tsx
+```tsx shape
 function Clock(): JSX.Element | null
 ```
 
@@ -1049,7 +1056,7 @@ Replaceable as `Clock` in [`components`](#components). Parts: `clock`.
 
 ### useClock
 
-```ts
+```ts shape
 function useClock(): ClockState
 
 type ClockState = { when: string | null }
@@ -1068,7 +1075,7 @@ function TopLine() {
 
 ### StatList
 
-```tsx
+```tsx shape
 function StatList(): JSX.Element | null
 ```
 
@@ -1089,7 +1096,7 @@ They're deliberately plain. For anything more, such as a bar that changes colour
 
 To reword them, set the words in the game's [`strings`](/docs/react#words):
 
-```ts
+```ts fragment
 strings: { 'ui.statLevel': 'Lv {level}', 'ui.statProgress': '{label}: {percent}% to level {next}' }
 ```
 
@@ -1097,7 +1104,7 @@ Replaceable as `StatList` in [`components`](#components). Parts: `stats`, `stat`
 
 ### EntityTable
 
-```tsx
+```tsx shape
 function EntityTable(props: { kinds?: string[]; className?: string }): JSX.Element | null
 ```
 
@@ -1118,7 +1125,7 @@ Replaceable as `EntityTable` in [`components`](#components). Parts: `entities`, 
 
 ### Inventory
 
-```tsx
+```tsx shape
 function Inventory(props: InventoryProps): JSX.Element | null
 
 type InventoryProps = { className?: string; title?: string | false; drop?: boolean }
@@ -1140,7 +1147,7 @@ Replaceable as `Inventory` in [`components`](#components). Parts: `inventory`, `
 
 ### InputField
 
-```tsx
+```tsx shape
 function InputField(props: { input: InputView }): JSX.Element
 ```
 
@@ -1157,7 +1164,7 @@ Replaceable as `InputField` in [`components`](#components). Parts: `input` (with
 
 ### InputFields
 
-```tsx
+```tsx shape
 function InputFields(props: { className?: string }): JSX.Element | null
 ```
 
@@ -1176,7 +1183,7 @@ Replaceable as `InputFields` in [`components`](#components). Parts: `inputs`.
 
 ### Changes
 
-```tsx
+```tsx shape
 function Changes(props: { className?: string }): JSX.Element | null
 ```
 
@@ -1190,7 +1197,7 @@ Replaceable as `Changes` in [`components`](#components). Parts: `changes`, with 
 
 ### ChangeItem
 
-```tsx
+```tsx shape
 function ChangeItem(props: { change: ChangeView }): JSX.Element
 ```
 
@@ -1209,7 +1216,7 @@ Replaceable as `ChangeItem` in [`components`](#components). Parts: `change`, `ch
 
 ### GameMenu
 
-```tsx
+```tsx shape
 function GameMenu(props: { className?: string }): JSX.Element | null
 ```
 
@@ -1243,7 +1250,7 @@ Replaceable as `GameMenu` in [`components`](#components). Parts: `menu`, `menu-b
 
 ### SavesMenu
 
-```tsx
+```tsx shape
 function SavesMenu(props: { className?: string; onLoaded?: () => void }): JSX.Element | null
 ```
 
@@ -1281,7 +1288,7 @@ Replaceable as `SavesMenu` in [`components`](#components). Parts: `saves`, `save
 
 ### useSaves
 
-```ts
+```ts shape
 function useSaves(): SavesState
 
 type SavesState = {
@@ -1334,7 +1341,7 @@ function QuickSave() {
 
 ### Backlog
 
-```tsx
+```tsx shape
 function Backlog(props: { className?: string }): JSX.Element
 ```
 
@@ -1346,7 +1353,7 @@ Replaceable as `Backlog` in [`components`](#components). Parts: `backlog`, `back
 
 ### useBacklog
 
-```ts
+```ts shape
 function useBacklog(): readonly BacklogEntry[]
 ```
 
@@ -1363,7 +1370,7 @@ function LastChoice() {
 
 ### ModManager
 
-```tsx
+```tsx shape
 function ModManager(props: { className?: string }): JSX.Element | null
 ```
 
@@ -1375,7 +1382,7 @@ The mods screen, over the [`ModsOption`](#modsoption) given to the provider:
 
 The screen carries `data-mods`. It draws nothing when the provider has no `mods`. [`GameMenu`](#gamemenu) opens it in a dialog, and with [`pages`](#pages) on, the [`SettingsPage`](#settingspage) shows it too.
 
-```tsx
+```tsx fragment
 import { GameProvider, ModManager } from '@ifloom/react'
 
 <GameProvider runner={runner} mods={{ store, problems, onChange: () => location.reload() }}>
@@ -1392,7 +1399,7 @@ Replaceable as `ModManager` in [`components`](#components). Parts: `mods`, `mod`
 
 ### useMods
 
-```ts
+```ts shape
 function useMods(): ModsState
 
 type ModsState = {
@@ -1437,7 +1444,7 @@ The title screen leads to every other page, and the [game menu](#gamemenu) leads
 
 ### PagesOptions
 
-```ts
+```ts shape
 type PagesOptions = {
   subtitle?: string
   art?: string
@@ -1485,7 +1492,7 @@ mountGame(game, {
 
 ### usePage
 
-```ts
+```ts shape
 function usePage(): PageState
 
 type Page = 'gate' | 'title' | 'game' | 'load' | 'settings' | 'credits' | (string & {})
@@ -1517,7 +1524,7 @@ Where the player is among the pages, and how to move between them.
 
 ### TitlePage
 
-```tsx
+```tsx shape
 function TitlePage(props: { className?: string }): JSX.Element
 ```
 
@@ -1537,7 +1544,7 @@ Replaceable as `TitlePage` in [`components`](#components). Parts: `title-page`, 
 
 ### SettingsPage
 
-```tsx
+```tsx shape
 function SettingsPage(props: { className?: string }): JSX.Element
 ```
 
@@ -1556,7 +1563,7 @@ Replaceable as `SettingsPage` in [`components`](#components). Parts: `settings-p
 
 ### LoadPage
 
-```tsx
+```tsx shape
 function LoadPage(props: { className?: string }): JSX.Element
 ```
 
@@ -1566,7 +1573,7 @@ Replaceable as `LoadPage` in [`components`](#components). Parts: `load-page`, `p
 
 ### CreditsPage
 
-```tsx
+```tsx shape
 function CreditsPage(props: { className?: string }): JSX.Element
 ```
 
@@ -1576,13 +1583,15 @@ Replaceable as `CreditsPage` in [`components`](#components). Parts: `credits-pag
 
 ### GatePage
 
-```tsx
+```tsx shape
 function GatePage(props: { className?: string }): JSX.Element | null
 ```
 
 A notice the player has to confirm before they reach the title screen, from `PagesOptions.gate`. Use it for a content note or an age check. Every word on it is yours: `title`, the `text` split into paragraphs on blank lines, and the `confirm` and `decline` labels.
 
 ```ts
+import { mountGame } from '@ifloom/react'
+
 mountGame(game, {
   pages: {
     gate: {
@@ -1603,7 +1612,7 @@ Replaceable as `GatePage` in [`components`](#components). Parts: `gate-page`, `g
 
 ### useSetting
 
-```ts
+```ts shape
 function useSetting(id: string): KvValue | undefined
 ```
 
@@ -1620,7 +1629,7 @@ function Story({ children }: { children: React.ReactNode }) {
 
 ### TextSize
 
-```tsx
+```tsx shape
 function TextSize(): null
 ```
 
@@ -1628,13 +1637,13 @@ Copies the setting the game names in the [`settings`](/docs/react/hints#settings
 
 ### useProfile
 
-```ts
+```ts shape
 function useProfile<T = unknown>(namespace: string): T | undefined
 ```
 
 What the [profile](/docs/reference/profile) holds in a namespace, kept up to date as it's written. It's `undefined` before the first read and when the runner has no profile. The title screen uses `useProfile('core:finished')` to decide whether to offer New Game+.
 
-```tsx
+```tsx fragment
 const settings = useProfile<Record<string, unknown>>('core:settings')
 ```
 
@@ -1642,7 +1651,7 @@ const settings = useProfile<Record<string, unknown>>('core:settings')
 
 ### Notices
 
-```tsx
+```tsx shape
 function Notices(props: { className?: string; limit?: number }): JSX.Element | null
 ```
 
@@ -1660,8 +1669,8 @@ Replaceable as `Notices` in [`components`](#components). Parts: `notices`.
 
 ### Notice
 
-```tsx
-Notice: (props: { notice: NoticeView }) => JSX.Element
+```tsx shape
+function Notice(props: { notice: NoticeView }): JSX.Element
 ```
 
 One [notice](/docs/reference/notices): its picture, title and text, and a button with the close [`Icon`](#icon), labelled `ui.dismiss`, that sends [`dismiss`](/docs/reference/commands#dismiss). It carries `data-notice` with the notice's id. [`Notices`](#notices) draws one for each.
@@ -1680,7 +1689,7 @@ Replaceable as `Notice` in [`components`](#components). Parts: `notice` (with `d
 
 ### NoticeStrip
 
-```tsx
+```tsx shape
 function NoticeStrip(props: { className?: string }): JSX.Element | null
 ```
 
@@ -1691,7 +1700,7 @@ A row of counts for what's waiting for the player, each a button that opens wher
 
 It's a `<nav>` labelled `ui.unread`, hidden while nothing in it is drawn. The default layout doesn't include it, so add it to your layout where you want it, such as at the top of the story:
 
-```tsx
+```tsx fragment
 <Story>
   <NoticeStrip />
   <Scene />
@@ -1706,7 +1715,7 @@ Replaceable as `NoticeStrip` in [`components`](#components). Parts: `notice-stri
 
 ### DiceRoll
 
-```tsx
+```tsx shape
 function DiceRoll(props: DiceRollProps): JSX.Element
 
 type DiceRollProps = { roll: Roll; animate?: boolean; className?: string }
@@ -1729,7 +1738,7 @@ Replaceable as `DiceRoll` in [`components`](#components). Parts: `dice` (with `d
 
 ### DiceOverlay
 
-```tsx
+```tsx shape
 function DiceOverlay(props: { rolls: readonly Roll[]; className?: string }): JSX.Element | null
 ```
 
@@ -1743,7 +1752,7 @@ The game's [timers](/docs/reference/timers), from [`view.timers`](/docs/referenc
 
 ### Countdown
 
-```tsx
+```tsx shape
 function Countdown(props: CountdownProps): JSX.Element | null
 
 type CountdownProps = { timer: string; label?: boolean; className?: string }
@@ -1772,7 +1781,7 @@ Replaceable as `Countdown` in [`components`](#components), which also changes th
 
 ### Timers
 
-```tsx
+```tsx shape
 function Timers(props: { className?: string }): JSX.Element | null
 ```
 
@@ -1780,7 +1789,7 @@ A `Countdown` for every running timer, in the order they started, in a `timers` 
 
 ### useTimer and useTimers
 
-```ts
+```ts shape
 function useTimer(id: string): TimerView | null
 function useTimers(): TimerView[]
 ```
@@ -1801,7 +1810,7 @@ function RingingPhone() {
 
 ### MinigameCard
 
-```tsx
+```tsx shape
 function MinigameCard(props: { className?: string }): JSX.Element | null
 ```
 
@@ -1823,13 +1832,15 @@ There are two ways to draw a minigame your own way:
 
 ```tsx
 import { GameShell, type Components, type PanelComponent } from '@ifloom/react'
+import { CoconutShy } from './coconut-shy.tsx'
 
 const Coconuts: PanelComponent = () => <CoconutShy />   // just the coconut shy
+const panels = { coconut: Coconuts }
 const components: Components = {
   MinigameCard: ({ Default }) => <div className="rounded-xl border-4 p-4"><Default /></div>,  // every other minigame
 }
 
-<GameShell runner={runner} panels={{ coconut: Coconuts }} components={components} />
+export const App = () => <GameShell runner={runner} panels={panels} components={components} />
 ```
 
 The [Minigames recipe](/docs/recipes/minigames#your-own-panel) builds a panel of your own.
@@ -1838,16 +1849,16 @@ Replaceable as `MinigameCard` in [`components`](#components). Parts: `minigame` 
 
 ### useMinigame
 
-```ts
+```ts shape
 function useMinigame(options?: { keys?: boolean }): MinigameControls
 
 type MinigameControls = {
   minigame: MinigameView | null
-  send: (input: string) => Applied
+  send: (input: string) => Result<GameState>
 }
 ```
 
-The minigame being played, as [`view.minigame`](/docs/reference/minigames#minigameview) has it, or `null`, and `send`, which presses one of its inputs and returns what [`apply`](/docs/reference/commands#apply) returned. With `keys: true`, it also maps the keyboard to the inputs the way [`MinigameCard`](#minigamecard) does. Only inside a [`GameProvider`](#gameprovider).
+The minigame being played, as [`view.minigame`](/docs/reference/minigames#minigameview) has it, or `null`, and `send`, which presses one of its inputs and returns what [`runner.apply`](/docs/reference/runner#the-runners-members) returned. With `keys: true`, it also maps the keyboard to the inputs the way [`MinigameCard`](#minigamecard) does. Only inside a [`GameProvider`](#gameprovider).
 
 Its timers run on the game's clock, which [`GameProvider`](#gameprovider) runs. Every 100 ms or so, while the running state has a timer (`timeLeft` isn't `null`) or any of the game's timers runs, it sends [`{ type: 'tick', ms }`](/docs/reference/commands#tick) with the real time since the last tick, measured with `performance.now()`. So a browser that holds the timer back sends one bigger tick when it catches up, and the minigame's time stays true. The clock stops when nothing counts down, and starts again when something does. When an input moves the minigame to a new state, the clock starts afresh from that moment.
 
@@ -1879,7 +1890,7 @@ A [panel](/docs/reference/panels) is a named piece of UI that content opens over
 
 ### PanelHost
 
-```tsx
+```tsx shape
 function PanelHost(): JSX.Element
 ```
 
@@ -1915,7 +1926,7 @@ The first-party plugins' panels are on their pages: `shop`, `jobs`, `wardrobe`, 
 
 ### PartDialog
 
-```tsx
+```tsx shape
 function PartDialog(props: { open: boolean; onClose: () => void; title: string; children: ReactNode }): JSX.Element
 ```
 
@@ -1944,7 +1955,7 @@ Parts: `dialog`, `dialog-overlay`, `dialog-title` and `dialog-close`.
 
 ### useAudio
 
-```ts
+```ts shape
 function useAudio(options?: AudioOptions & { runner?: Runner }): AudioPlayer | null
 ```
 
@@ -1953,22 +1964,27 @@ Plays the game's sound with the [audio player](/docs/browser/audio-player) while
 [`GameShell`](/docs/react#gameshell) and [`mountGame`](/docs/react#mountgame) start a player themselves, set with their `audio` option, so you need this only under a `GameProvider` of your own. One beside them takes over from theirs, so nothing plays twice. See [Sound](/docs/react#sound).
 
 ```tsx
+import { GameProvider, useAudio } from '@ifloom/react'
+import { MyPage } from './my-page.tsx'
+
 function Sound() {
   useAudio({ log: console.debug })
   return null
 }
 
-<GameProvider runner={runner}>
-  <Sound />
-  <MyPage />
-</GameProvider>
+export const App = () => (
+  <GameProvider runner={runner}>
+    <Sound />
+    <MyPage />
+  </GameProvider>
+)
 ```
 
 ## Words
 
 ### UiStringKey, Words and Say
 
-```ts
+```ts fragment
 type UiStringKey = 'stats' | 'inventory' | /* ... */
 type Words = Readonly<Record<string, string>>
 type Say<K extends string = UiStringKey> = (key: K, vars?: Record<string, string | number>) => string
@@ -1980,9 +1996,9 @@ Among them are `close` (the dialogs' close button) and `heldCount` (`×{n}` afte
 
 ### useWords
 
-```ts
+```ts shape
 function useWords(): Say
-function useWords<W extends Words>(words: W): Say<keyof W | UiStringKey>
+function useWords<W extends Words>(words: W): Say<(keyof W & string) | UiStringKey>
 ```
 
 The game's word for a key, inside a [`GameProvider`](#gameprovider): `game.strings['ui.' + key]`, or the English if the game doesn't set it. Each `{name}` is filled from `vars`, one with no value is left as written, and a key nothing has is said as it is. Given a plugin UI's table, it says that table's keys too, typed. A plugin's own UI gets its words from [`usePlugin`](/docs/react/kit#useplugin) instead, so it names its table once.
@@ -2005,7 +2021,7 @@ The game components don't use `Button` and `Badge` themselves. They draw plain `
 
 ### Button
 
-```tsx
+```tsx fragment
 function Button(props: ButtonProps): JSX.Element
 const buttonVariants: (options?: { variant?: ...; size?: ... }) => string
 
@@ -2021,13 +2037,15 @@ A button. `asChild` puts the button's look on its one child instead, such as a l
 ```tsx
 import { Button, buttonVariants } from '@ifloom/react/kit'
 
-<Button variant="outline" size="sm" onClick={() => runner.undo()}>Undo</Button>
-<a className={buttonVariants({ variant: 'link' })} href="https://example.com/credits">Credits</a>
+<>
+  <Button variant="outline" size="sm" onClick={() => runner.undo()}>Undo</Button>
+  <a className={buttonVariants({ variant: 'link' })} href="https://example.com/credits">Credits</a>
+</>
 ```
 
 ### Badge
 
-```tsx
+```tsx fragment
 function Badge(props: BadgeProps): JSX.Element
 const badgeVariants: (options?: { variant?: ... }) => string
 
@@ -2044,7 +2062,7 @@ import { Badge } from '@ifloom/react/kit'
 
 ### Card
 
-```tsx
+```tsx fragment
 Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter
 ```
 
@@ -2065,13 +2083,15 @@ import { Button, Card, CardContent, CardDescription, CardFooter, CardHeader, Car
 
 ### Dialog
 
-```tsx
+```tsx fragment
 Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogClose
 ```
 
 A modal, built on Radix's Dialog. `Dialog` takes `open` and `onOpenChange`, or opens from a `DialogTrigger`. `DialogContent` is the box, with an overlay and a close button. Give it a `DialogTitle` for screen readers.
 
-```ts
+```ts shape
+import type * as DialogPrimitive from '@radix-ui/react-dialog'
+
 type DialogContentProps = ComponentProps<typeof DialogPrimitive.Content> & {
   bare?: boolean
   closeLabel?: string
@@ -2108,7 +2128,9 @@ import { Button, Dialog, DialogClose, DialogContent, DialogDescription, DialogHe
 
 ### ScrollArea
 
-```tsx
+```tsx shape
+import type * as ScrollAreaPrimitive from '@radix-ui/react-scroll-area'
+
 function ScrollArea(props: ComponentProps<typeof ScrollAreaPrimitive.Root>): JSX.Element
 ```
 
@@ -2117,12 +2139,14 @@ A box that scrolls, with a slim scrollbar. Give it a height.
 ```tsx
 import { ScrollArea } from '@ifloom/react/kit'
 
-<ScrollArea className="h-64">{backlog}</ScrollArea>
+<ScrollArea className="h-64">{runner.snapshot().backlog.map((entry, index) => <p key={index}>{entry.title}</p>)}</ScrollArea>
 ```
 
 ### Separator
 
-```tsx
+```tsx shape
+import type * as SeparatorPrimitive from '@radix-ui/react-separator'
+
 function Separator(props: ComponentProps<typeof SeparatorPrimitive.Root>): JSX.Element
 ```
 
@@ -2130,7 +2154,7 @@ A thin rule. Its `orientation` is `'horizontal'` (the default) or `'vertical'`.
 
 ### Tabs
 
-```tsx
+```tsx fragment
 Tabs, TabsList, TabsTrigger, TabsContent
 ```
 
@@ -2151,7 +2175,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@ifloom/react/kit'
 
 ### Tooltip
 
-```tsx
+```tsx fragment
 Tooltip, TooltipProvider, TooltipTrigger, TooltipContent
 ```
 
@@ -2168,7 +2192,9 @@ import { Button, Tooltip, TooltipContent, TooltipTrigger } from '@ifloom/react/k
 
 ### cn
 
-```ts
+```ts shape
+import type { ClassValue } from 'clsx'
+
 function cn(...inputs: ClassValue[]): string
 ```
 

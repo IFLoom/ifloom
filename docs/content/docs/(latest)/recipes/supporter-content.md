@@ -65,7 +65,7 @@ Ask the CLI for its hash, and declare the unlock with it:
 ifloom unlock-hash supporter
 ```
 
-```ts
+```ts fragment
 // in town.ts
 data: {
   unlocks: {
@@ -88,22 +88,25 @@ Players type codes in any case, with or without spaces and hyphens: `7f3a 91c2 0
 A supporter cheat is refused until the unlock is recorded:
 
 ```ts
+import type { Content } from '@ifloom/engine'
 import { unlocks } from '@ifloom/plugin-unlocks'
 
-data: {
-  cheats: {
-    cheats: [
-      { id: 'coins', label: '+20 coins', effects: [{ stat: 'coins', by: 20 }] },
-      {
-        id: 'energy',
-        label: 'Full energy',
-        group: 'Supporters',
-        blocked: [{ when: { not: unlocks.has('supporter') }, reason: 'For supporters.' }],
-        effects: [{ stat: 'energy', to: 100 }],
-      },
-    ],
+export const cheats: Content = {
+  data: {
+    cheats: {
+      cheats: [
+        { id: 'coins', label: '+20 coins', effects: [{ stat: 'coins', by: 20 }] },
+        {
+          id: 'energy',
+          label: 'Full energy',
+          group: 'Supporters',
+          blocked: [{ when: { not: unlocks.has('supporter') }, reason: 'For supporters.' }],
+          effects: [{ stat: 'energy', to: 100 }],
+        },
+      ],
+    },
   },
-},
+}
 ```
 
 Add `hide: true` to the `blocked` entry to keep the cheat off the panel until then. Remember this gate only deters.
@@ -147,6 +150,12 @@ Open the remembered content before the game is built, and start taking codes onc
 
 ```ts
 // src/main.tsx (the React UI)
+import { localStorageDriver } from '@ifloom/browser'
+import { profile } from '@ifloom/engine'
+import { unlockedPacks } from '@ifloom/plugin-unlocks'
+import module from './game.ts'
+
+const driver = localStorageDriver()
 const stored = profile({ id: 'small-town' }, driver)
 const opened = await unlockedPacks('small-town', stored)
 const { game } = module.build({ unlocked: opened.packs })
@@ -178,7 +187,7 @@ Players who entered last release's code see the unlock as locked again until the
 
 For tiers, declare an unlock per tier, each with its own code, and give higher tiers every code they're due. A cheat for any supporter can ask for either:
 
-```ts
+```ts fragment
 blocked: [{ when: { not: { any: [unlocks.has('supporter'), unlocks.has('patron')] } }, reason: 'For supporters.' }]
 ```
 

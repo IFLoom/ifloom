@@ -20,7 +20,7 @@ import { renderAction, priceView } from '@ifloom/engine/plugin'
 
 ## view
 
-```ts
+```ts shape
 function view(state: GameState, game: Game, options?: ViewOptions): View
 ```
 
@@ -28,7 +28,7 @@ Builds the whole `View` from the state in one pass. It's pure, and cheap enough 
 
 `options` is a [`ViewOptions`](#viewoptions). You rarely pass it yourself: the [runner](/docs/reference/runner#the-view-cache) does, so that plugins' views can show what the player's profile holds. Called with only the state and the game, no plugin's view sees the profile.
 
-```ts
+```ts fragment
 import { view } from '@ifloom/engine'
 
 const shown = view(state, game)
@@ -38,7 +38,7 @@ for (const action of shown.actions) addButton(action.label, action.disabled, act
 
 ## screen
 
-```ts
+```ts shape
 function screen(state: GameState, game: Game, options?: ViewOptions): Screen
 ```
 
@@ -65,7 +65,7 @@ import { screen } from '@ifloom/engine'
 
 const shown = screen(state, game)
 for (const choice of shown.choices) {
-  const spends = choice.effects.filter((effect) => 'stat' in effect && 'by' in effect && effect.by < 0)
+  const spends = choice.effects.filter((effect) => 'stat' in effect && 'by' in effect && typeof effect.by === 'number' && effect.by < 0)
   console.log(choice.label, choice.disabled ?? 'open', spends.length ? 'costs something' : '')
 }
 ```
@@ -74,7 +74,7 @@ It's pure, like `view`. It builds the plugins' views too, so it costs about as m
 
 ### ViewOptions
 
-```ts
+```ts shape
 type ViewOptions = { profile?: Readonly<Record<string, unknown>> }
 ```
 
@@ -91,7 +91,7 @@ const shown = view(state, game, { profile: { achievements: { earned: ['regular']
 
 ### Screen
 
-```ts
+```ts shape
 type Screen = {
   scene: ScreenScene
   choices: ScreenChoice[]
@@ -110,6 +110,7 @@ type ScreenScene = {
   title: string
   body: string
   beats: SceneBeat[]
+  fresh: number
   tags: string[]
   speaker: SpeakerView | null
   image: string | null
@@ -163,7 +164,7 @@ Otherwise `actions` is the game's own [`rules.actions`](/docs/reference/rules#ga
 
 The engine keeps no places, so the view has no location or exits of its own. With the [places plugin](/docs/plugins/places), the room is at `view.plugins.places`, a [`PlacesView`](/docs/plugins/places#placesview), with its `location` and its `exits`. Each exit is an [`ExitView`](/docs/plugins/places#exitview) carrying the command that takes it. The room's own actions are the plugin's buttons, so they come first in `actions`. Its name is in `when`, and its description is the picture.
 
-```ts
+```ts fragment
 
 const room = shown.plugins.places
 for (const exit of room?.exits ?? []) addButton(exit.label, exit.disabled, exit.command)
@@ -171,7 +172,7 @@ for (const exit of room?.exits ?? []) addButton(exit.label, exit.disabled, exit.
 
 The engine keeps no characters either, so the view has no people of its own. With the [cast plugin](/docs/plugins/cast), who's in the room is at `view.plugins.cast`, a [`CastView`](/docs/plugins/cast#castview). Each of its `present` is a [`PersonView`](/docs/plugins/cast#personview) with a Talk button in its `actions`. Like the view's `actions`, these are empty while a scene is open or a lock stops everything.
 
-```ts
+```ts fragment
 
 const people = shown.plugins.cast?.present ?? []
 for (const person of people) for (const talk of person.actions) addButton(`${person.name}: ${talk.label}`, talk.disabled, talk.command)
@@ -216,6 +217,8 @@ What the player carries is in [`held`](#held). The [inventory plugin](/docs/plug
 | `entities` | [`EntitiesView`](#entitiesview-and-entityview)`[]` | Every [listed](/docs/reference/entities#listing) [kind](/docs/reference/entities), in the order the kinds are declared, each with its `id` and the entities whose `listed` and `visible` hold, declared ones first, and the stats the player can see on each. A listed kind with none to show is there, with no entries. A kind whose `listed` is `false` isn't here, and neither are a plugin's kinds unless the plugin lists them. |
 
 ```ts
+import { view } from '@ifloom/engine'
+
 const staff = view(state, game).entities.find((kind) => kind.id === 'staff')!
 staff.plural                                   // 'Staff'
 staff.entries.map((entry) => entry.name)       // ['Ana', 'Dev'], once Dev is hired
@@ -229,6 +232,8 @@ staff.entries[0].stats.map((stat) => stat.text) // ['5', '60', '£12']
 | `held` | [`HeldView[]`](#heldview) | What you [hold](/docs/reference/entities#holding-things): what the [protagonist](/docs/reference/entities#protagonists-you-and-player) being played holds, then what the player holds. With nobody played, just the player's. Things held by nobody else are never here, so it gives nothing away. |
 
 ```ts
+import { view } from '@ifloom/engine'
+
 view(state, game).held.map((thing) => `${thing.name} ×${thing.count}`)   // ['Apple ×2', 'A red scarf ×1']
 ```
 
@@ -238,7 +243,7 @@ view(state, game).held.map((thing) => `${thing.name} ×${thing.count}`)   // ['A
 |---|---|---|
 | `notices` | [`NoticesView`](#noticesview-and-noticeview) | The [notices](/docs/reference/notices) not yet dismissed, newest first, and how many each tag has, for badges. |
 
-```ts
+```ts fragment
 const { unseen, byTag } = shown.notices
 postBadge.textContent = String(byTag.post ?? 0)
 if (unseen[0]) toast(unseen[0].title, unseen[0].text)
@@ -264,7 +269,7 @@ That's enough to draw a whole settings screen from the view. See [`SettingView`]
 |---|---|---|
 | `minigame` | [`MinigameView`](/docs/reference/minigames#minigameview) ` \| null` | The [minigame](/docs/reference/minigames) being played, with its state, its words, the time left on its timer, the live inputs, its variables and its keys. `null` when none runs. |
 
-```ts
+```ts fragment
 const game = shown.minigame
 if (game) {
   drawText(game.label ?? '')
@@ -284,7 +289,7 @@ While it runs, send `{ type: 'tick', ms }` about every 100 ms when `timeLeft` is
 Each background channel has already been chosen by priority: the open scene, then an effect, then a plugin such as the place, then the game's default. Each cue has a key that stays the same across view calls and reloads, so a player plays it once:
 
 ```ts
-const { channels, cues, muteSetting } = shown.audio
+const { channels, cues, muteSetting } = runner.view().audio
 channels.ambience.src      // 'audio/cafe-murmur.ogg' at the café
 channels.music.volumeSetting  // 'musicVolume': read its value from the profile
 cues.map((cue) => cue.key) // ['scene:1234:3:1:knock']
@@ -308,7 +313,7 @@ Draw it over everything else by its name, and send `{ type: 'closePanel' }` when
 
 Each roll is what happened and nothing more: the key, the dice (`'2d6'`), the face each die showed, what was added, the total, and with a target, the target and whether it passed. A roll made by a [trigger](/docs/reference/triggers) or a plugin's hook in the same command is there too. Use it to show the dice as they land. The next command clears it, so a UI animates a roll once.
 
-```ts
+```ts fragment
 const shown = runner.view()
 for (const roll of shown.rolls) {
   const outcome = roll.against === undefined ? '' : roll.passed ? ' (passed)' : ' (failed)'
@@ -334,7 +339,7 @@ It's there for feedback such as a `+30 coins` or `+4 Ava` pill after a choice: p
 
 It never says what a timer does when it runs out, so it's safe to show. Draw a countdown from `left / total`, and send `{ type: 'tick', ms }` about every 100 ms while it isn't empty, as [`startClock`](/docs/browser#startclock) does.
 
-```ts
+```ts fragment
 const shown = runner.view()
 for (const timer of shown.timers) {
   drawCountdown(timer.label ?? timer.id, timer.left / timer.total, Math.ceil(timer.left / 1000))
@@ -349,7 +354,7 @@ A timer only shows in the view while it runs. Once it runs out or is stopped, it
 |---|---|---|
 | `saving` | `SavingView` | Whether the player can save now, by the game's [`saveable`](/docs/reference/game#saveable). |
 
-```ts
+```ts shape
 type SavingView = {
   allowed: boolean        // false while a `saveable` entry holds
   reason: string | null   // that entry's reason, or null when allowed
@@ -359,7 +364,7 @@ type SavingView = {
 
 Grey out your Save button with `reason` while `allowed` is `false`, and leave it off while `visible` is `false`. [`runner.save`](/docs/reference/runner#the-runners-members) refuses with the same reason, so the view only saves the player a press. Loading is always allowed.
 
-```ts tab="Plain JS" tab-group="framework"
+```ts fragment tab="Plain JS" tab-group="framework"
 // src/main.ts, in the vanilla template: in draw(view), for the side column
 const { allowed, reason, visible } = view.saving
 if (visible) {
@@ -426,7 +431,7 @@ The vanilla, Vue and Svelte templates have a Save and a Load button like these i
 
 The engine doesn't look inside a slice. A plugin that [declares its view](/docs/reference/plugins#typed-calls-queries-and-views) has it typed for you once you import the plugin's package, and every first-party plugin does:
 
-```ts
+```ts fragment
 import '@ifloom/plugin-quests'
 
 const journal = shown.plugins.quests // QuestsView | undefined
@@ -439,7 +444,7 @@ Buttons for a plugin's commands are ordinary [actions](/docs/reference/actions#a
 
 ## RenderedChoice
 
-```ts
+```ts shape
 type RenderedChoice = {
   id: string
   label: string
@@ -464,7 +469,7 @@ Every pressable thing in a `View`: scene choices, the game's and plugins' button
 
 ## inlineChoices
 
-```ts
+```ts shape
 import { inlineChoices } from '@ifloom/engine'
 
 function inlineChoices(beats: readonly SceneBeat[]): RenderedChoice[]
@@ -473,14 +478,16 @@ function inlineChoices(beats: readonly SceneBeat[]): RenderedChoice[]
 The choices or buttons a body's beats draw inline, in the order they come. With `view.scene.choices` (or `view.actions` in a room) it's everything the player can press on the screen, which a test, a bot or a text UI may want in one list.
 
 ```ts
+import { inlineChoices, view } from '@ifloom/engine'
+
 const shown = view(state, game)
 const all = [...inlineChoices(shown.scene.beats), ...shown.scene.choices]
 ```
 
 ## renderAction
 
-```ts
-function renderAction(state: GameState, game: Game, action: ActionDef): RenderedChoice
+```ts shape
+function renderAction(state: GameState, game: Game, action: ActionDef, owner?: string): RenderedChoice
 ```
 
 Turns an [action](/docs/reference/actions#actiondef) into a button, exactly as the view does for the idle screen's buttons. Use it in a [plugin](/docs/reference/plugins) that shows actions somewhere other than a room, such as an app on a device or a notice board. The button gets:
@@ -489,6 +496,8 @@ Turns an [action](/docs/reference/actions#actiondef) into a button, exactly as t
 - a `price` from its `cost` and the stats its effects and command spend, plus any notes [plugins' prices](/docs/reference/plugins#prices) give for the command's effects
 - `disabled` from the first `blocked` entry that holds, or else [`whyNot`](/docs/reference/actions#whynot) for its command
 - `warning` from the plugins' [guards](/docs/reference/plugins#guards)
+
+`owner` is the id of the plugin whose action it is. A button for an action with a cost, effects or `once` sends `{ type: 'action', id }`, and with an owner that id is `'<owner>/<id>'`, so the plugin's [`action`](/docs/reference/plugins#actions) finds it. Leave it out for one of the game's own actions.
 
 ```ts
 import { renderAction } from '@ifloom/engine/plugin'
@@ -503,7 +512,7 @@ button.disabled  // 'You cannot get there from here.'
 
 ## pictureView
 
-```ts
+```ts shape
 import { pictureView } from '@ifloom/engine/plugin'
 
 function pictureView(
@@ -525,7 +534,7 @@ Resolves a [picture](/docs/reference/scenes#the-picture) into what a UI draws, a
 
 It returns `null` when `picture` is undefined.
 
-```ts
+```ts fragment
 import { pictureView } from '@ifloom/engine/plugin'
 
 // The café's picture, as the places plugin draws it in its view:
@@ -537,7 +546,7 @@ picture?.hotspots.find((hotspot) => hotspot.id === 'door')?.disabled  // 'Staff 
 
 ## StatView
 
-```ts
+```ts shape
 type StatView = {
   key: StatKey
   label: string
@@ -561,13 +570,15 @@ One stat as the UI shows it. `min` is the stat's declared `min`, or 0, so a UI c
 | `progress` | How far the value is from this level's start to `next`, from 0 to 1. It's 1 at the top level. Level 0 starts at the stat's `min`. |
 
 ```ts
+import { view } from '@ifloom/engine'
+
 // levels: { at: [10, 30, 60] }, cooking at 20
 view(state, game).statsById.cooking.level // { level: 1, next: 30, progress: 0.5 }
 ```
 
 An entity's stats in [`entities`](#entities) get `level` the same way, worked out for that entity.
 
-```ts
+```ts fragment
 const { energy } = view(state, game).statsById
 drawGauge(energy.value / energy.max, energy.label)
 ```
@@ -576,7 +587,7 @@ drawGauge(energy.value / energy.max, energy.label)
 
 ## Price
 
-```ts
+```ts shape
 type Price = {
   stats?: { id: string; amount: number; text: string }[]
   notes?: string[] // what plugins say it costs: '2 dishes to wash', 'until evening'
@@ -597,20 +608,22 @@ Each entry in `stats` is a stat spent, its amount, and the amount written throug
 
 ### priceView
 
-```ts
+```ts shape
 function priceView(game: Game, stats: Readonly<Record<string, number>>, notes?: readonly string[]): Price | null
 ```
 
 A price as the view shows one, for a plugin's view that has a price of its own, such as what a [job](/docs/plugins/jobs) pays a shift or a [vendor](/docs/plugins/shop)'s full price before today's discount. The stats above 0 are worded as each stat's value is, in the order given, then come the `notes`, and `text` joins them. It's `null` when there's nothing to show.
 
 ```ts
+import { priceView } from '@ifloom/engine/plugin'
+
 priceView(game, { coins: 4 })                     // { stats: [{ id: 'coins', amount: 4, text: '4 coins' }], text: '4 coins' }
 priceView(game, { coins: 2 }, ['until evening'])  // ..., text: '2 coins · until evening'
 ```
 
 ## EntitiesView and EntityView
 
-```ts
+```ts shape
 type EntitiesView = {
   id: string
   label: string
@@ -652,7 +665,7 @@ A [kind](/docs/reference/entities#kinddef) of entity as the UI draws it. It has 
 
 ## HeldView
 
-```ts
+```ts shape
 type HeldView = {
   ref: EntityRef
   name: string
@@ -669,7 +682,7 @@ One thing in [`view.held`](#held). `ref` is how content names it. `name` and `de
 
 ## NoticesView and NoticeView
 
-```ts
+```ts shape
 type NoticesView = {
   unseen: NoticeView[]
   byTag: Record<string, number>
@@ -689,7 +702,7 @@ type NoticeView = {
 
 ## InputView
 
-```ts
+```ts shape
 type InputView = {
   id: string
   label: string
@@ -706,7 +719,7 @@ An [input](/docs/reference/inputs) as the UI draws a field for it. `maxLength` i
 
 ## SettingView
 
-```ts
+```ts shape
 type SettingView = {
   id: string
   label: string
@@ -725,7 +738,7 @@ A [setting](/docs/reference/settings) as a settings screen draws it. `options` i
 
 `value` is the setting's value in this game for a `play` setting, from [`state.settings`](/docs/reference/state#settings). For a `ui` setting it's `null`, because a `ui` setting isn't in the state. A runner gives both kinds with [`runner.snapshot().settings`](/docs/reference/runner#settings):
 
-```ts
+```ts fragment
 const values = runner.snapshot().settings
 for (const setting of runner.view().settings) drawSetting(setting, values[setting.id])
 ```
@@ -734,7 +747,7 @@ Send a change of either kind through [`runner.setSetting`](/docs/reference/runne
 
 ## SpeakerView
 
-```ts
+```ts shape
 type SpeakerView = {
   id: string
   ref: EntityRef

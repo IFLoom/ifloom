@@ -28,7 +28,7 @@ A loaded game's problems are already in `loadGame`'s result, each pinned on the 
 
 ## checkGame
 
-```ts
+```ts shape
 function checkGame(game: Game, options?: { probes?: readonly Probe[] }): Checked
 
 type Checked = { problems: Problem[]; warnings: Problem[]; files: FileRef[] }
@@ -51,6 +51,8 @@ It never throws on bad content. It returns the problems in the order it found th
 A probe is a state to draw every scene in, with a name for the problems it finds.
 
 ```ts
+import { checkGame, startingState } from '@ifloom/engine'
+
 const later = { ...startingState(game), turn: 5 }
 checkGame(game, { probes: [{ name: 'day five', state: later }] })
 ```
@@ -61,7 +63,7 @@ For each probe the checker draws every scene and reports `render threw: …` aga
 
 ## Problem and describeProblem
 
-```ts
+```ts shape
 type Problem = { pack: string; where: string; what: string }
 
 function describeProblem(problem: Problem): string
@@ -77,7 +79,7 @@ mod:sunday-market · scene market.stall · goes to unknown scene "market.closing
 
 ## FileRef
 
-```ts
+```ts shape
 type FileRef = { path: string; type: 'picture' | 'video' | 'audio'; where: string }
 ```
 
@@ -398,7 +400,7 @@ A plugin tells the checker what its calls and its content name, so its content i
 
 Each returns a list of `Reference`s:
 
-```ts
+```ts shape
 type Reference =
   | { scene: string; as?: 'gate' | 'go' | 'open' }
   | { choice: string }
@@ -475,7 +477,7 @@ type Reference =
 
 This is how a loyalty-card plugin says what its calls and its cards name, with `cardsOf(game)` its list of `data.loyalty.cards`. [`actionReferences`](/docs/reference/actions#actionreferences) gives what an action names:
 
-```ts
+```ts fragment
 references: {
   // A call to loyalty/stamp names the card it stamps.
   calls: (_table, name, args) => (name === 'stamp' ? [{ entry: String(args.card), plugin: 'loyalty', list: 'cards', noun: 'card' }] : []),

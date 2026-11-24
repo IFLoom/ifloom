@@ -14,7 +14,7 @@ Below are the file a player adds, the store that keeps it, and how a game loads 
 
 ## ModFile
 
-```ts
+```ts shape
 type ModFile = {
   ifloomMod: 1
   id: string
@@ -68,7 +68,7 @@ A pack in a file has only what JSON can hold: scenes, storylines, stats, the sta
 
 ## mods
 
-```ts
+```ts shape
 function mods(gameId: string, driver: SaveDriver): Mods
 
 interface Mods {
@@ -104,7 +104,7 @@ One game's installed mods, kept in a [save driver](/docs/reference/saves#drivers
 
 ### InstalledMod
 
-```ts
+```ts shape
 type InstalledMod = {
   id: string
   name: string

@@ -84,7 +84,7 @@ Where the player is comes from a [query](/docs/reference/plugins#queries) asked 
 
 ## cast
 
-```ts
+```ts shape
 function cast(options?: CastOptions): DefinedPlugin<null, CastView>
 ```
 
@@ -92,7 +92,7 @@ Builds the plugin, with the id `cast`. Call it once, when you build the game. It
 
 ### CastOptions
 
-```ts
+```ts shape
 type CastOptions = {
   kind?: string
 }
@@ -119,7 +119,7 @@ Anyone with the `cast/person` trait is a person, whatever their kind. A café ga
 
 ### person
 
-```ts
+```ts shape
 const cast: {
   person(def: PersonDef): EntityDef
 }
@@ -152,7 +152,7 @@ The entity's fields that matter most to a character:
 
 ### Person
 
-```ts
+```ts shape
 type Person = {
   fullName?: string
   pronouns?: Record<string, string>
@@ -210,7 +210,7 @@ The name is the entity's, as written, and it's filled in wherever it's read: in 
 
 ### TalkOption
 
-```ts
+```ts shape
 type TalkOption = { scene: string; when?: Condition; label?: string }
 ```
 
@@ -420,7 +420,8 @@ The [content above](#in-your-content), with the calendar and places. The game st
 import { apply, applyEffects, holds, loadGame, startingState, statValue, view, whyNot, type GameState } from '@ifloom/engine'
 import { calendar } from '@ifloom/plugin-calendar'
 import { places } from '@ifloom/plugin-places'
-import { cast, type CastView } from '@ifloom/plugin-cast'
+import { cast } from '@ifloom/plugin-cast'
+import { town } from './town.ts'   // the content above
 
 const clock = calendar()
 const { game } = loadGame([town], {
@@ -433,7 +434,7 @@ const people = (state: GameState) => view(state, game).plugins.cast!
 
 In play:
 
-```ts
+```ts continues
 let state = startingState(game)
 people(state).present.map((p) => p.id)   // ['sam']: Sam is out on the street in the morning
 whyNot(state, game, cast.talk('ava'))         // 'Ava is not here.'
@@ -537,6 +538,8 @@ const contacts = definePlugin<null>({
 A scene whose [`speaker`](/docs/reference/scenes#speakers) is a character's id is drawn as them. A character is an entity, so the engine reads their `name`, their `image` and their entity's `ui` hints itself, and puts them at `view.scene.speaker`. In the worked example, once Ava's talk scene is open:
 
 ```ts
+import { view } from '@ifloom/engine'
+
 view(state, game).scene.speaker   // { id: 'ava', ref: 'character:ava', name: 'Ava', image: 'art/character/ava.svg', ui: { hue: 20 } }
 ```
 
@@ -552,7 +555,7 @@ Its [React UI](#drawing-it) draws who's here with [`PeopleHere`](#peoplehere), a
 
 ### CastView
 
-```ts
+```ts shape
 type CastView = {
   present: PersonView[]
   people: PersonView[]
@@ -566,7 +569,7 @@ type CastView = {
 
 ### PersonView
 
-```ts
+```ts shape
 type PersonView = {
   id: string
   ref: string
@@ -600,7 +603,7 @@ type PersonView = {
 
 In the café on Monday morning, Ava's card is:
 
-```ts
+```ts fragment
 {
   id: 'ava', ref: 'character:ava', name: 'Ava', fullName: 'Ava Marsh', description: 'Runs the café', ui: { hue: 20 },
   image: 'art/character/ava.svg', portrait: 'art/character/ava.svg', here: true, closed: false, met: false,
@@ -642,7 +645,7 @@ The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.
 
 ### castUi
 
-```ts
+```ts shape
 const castUi: PluginUi
 ```
 
@@ -656,7 +659,7 @@ Its words are in `CAST_WORDS`. A game rewords any of them with `ui.<key>` in its
 
 ### PeopleSection
 
-```tsx
+```tsx shape
 function PeopleSection(): JSX.Element
 ```
 
@@ -664,7 +667,7 @@ What `castUi` puts in the side column: a [`Section`](/docs/react/components#sect
 
 ### PeopleHere
 
-```tsx
+```tsx shape
 function PeopleHere(props: { className?: string }): JSX.Element | null
 ```
 
@@ -674,7 +677,7 @@ Replaceable as `PeopleHere` in [`components`](/docs/react/components#components)
 
 ### Relationships
 
-```tsx
+```tsx shape
 function Relationships(props: { className?: string }): JSX.Element | null
 ```
 
@@ -684,7 +687,7 @@ Replaceable as `Relationships` in [`components`](/docs/react/components#componen
 
 ### usePeople
 
-```ts
+```ts shape
 function usePeople(): CastView | null
 ```
 
@@ -694,7 +697,7 @@ The [cast](/docs/plugins/cast) plugin's view: `present`, who is here with their 
 
 ### Helpers
 
-```ts
+```ts shape
 const cast: {
   (options?: CastOptions): DefinedPlugin<null, CastView>
   talk(who: string): CommandRef

@@ -20,7 +20,7 @@ After the fifth round, three or more points wins five coins and a short scene. F
 Start with the four arrows. Each one is a state that shows its words, starts a 1.5 second timer, and listens for all four inputs:
 
 ```ts
-import type { MinigameDef, MinigameStateDef } from '@ifloom/engine'
+import type { Content, MinigameDef, MinigameStateDef } from '@ifloom/engine'
 
 /** The four arrows of quick feet, in the order the minigame's `arrow` variable numbers them from 1. */
 const ARROWS = ['up', 'down', 'left', 'right'] as const
@@ -51,14 +51,14 @@ The input names are yours to choose. `up`, `down`, `left` and `right` are worth 
 
 The rest of the minigame is a few states that decide where to go next and draw nothing:
 
-```ts
+```ts continues
 /**
  * Quick feet, at the park: five rounds, each a random arrow to press in time.
  * Three or more right wins a few coins from the kids' pot.
  */
 const quickFeet: MinigameDef = {
   id: 'arrows',
-  label: 'Quick feet',
+  title: 'Quick feet',
   start: 'round',
   kv: { round: 0, arrow: 0, score: 0 },
   keys: { up: ['ArrowUp', 'w'], down: ['ArrowDown', 's'], left: ['ArrowLeft', 'a'], right: ['ArrowRight', 'd'] },
@@ -118,9 +118,8 @@ The random draw comes from the save's seed, so the same save always gets the sam
 
 Add the minigame to your content, with the two closing scenes and something that starts it. In the park, that's one of the park's actions, with the [`minigame`](/docs/reference/effects#minigame) effect:
 
-```ts
-export const town: Pack = {
-  // ...
+```ts continues
+export const park: Content = {
   minigames: [quickFeet],
   // and in the park's location: actions: [{ id: 'arrows', label: 'Play quick feet with the kids', effects: [{ minigame: 'arrows' }] }]
   scenes: [
@@ -262,7 +261,7 @@ const GLYPHS: Record<string, string> = { up: '↑', down: '↓', left: '←', ri
 
 Then draw it in place of the usual panel while quick feet is running. The React UI takes it in `panels`, under the minigame's id:
 
-```ts tab="Plain JS" tab-group="framework"
+```ts fragment tab="Plain JS" tab-group="framework"
 // src/main.ts, in the vanilla template's draw()
 if (view.minigame?.id === 'arrows') root.append(quickFeet(view.minigame, runner))
 else if (view.minigame) drawMinigame(view.minigame)
@@ -343,11 +342,12 @@ Ticks are ordinary commands, so a test can play a minigame with no browser and n
 ```ts
 import { apply, view } from '@ifloom/engine'
 
-let state = apply(atThePark, game, { type: 'action', id: 'places/arrows' }).state
-const arrow = state.minigame!.state                                        // 'left', say
-state = apply(state, game, { type: 'tick', ms: 400 }).state                 // a moment's thought
-state = apply(state, game, { type: 'minigame', input: arrow }).state       // the right arrow
-view(state, game).minigame?.kv.score                                      // 1
+// `state` is a game with the player in the park.
+let next = apply(state, game, { type: 'action', id: 'places/arrows' }).state
+const arrow = next.minigame!.state                                         // 'left', say
+next = apply(next, game, { type: 'tick', ms: 400 }).state                  // a moment's thought
+next = apply(next, game, { type: 'minigame', input: arrow }).state        // the right arrow
+view(next, game).minigame?.kv.score                                       // 1
 ```
 
 One long tick runs out every timer in its way, so `{ type: 'tick', ms: 10_000 }` plays out all five rounds with no presses. Small Town's `tests/showcase.test.ts` plays quick feet this way, and `tests/quick-feet.test.tsx` plays it in the React UI with fake timers and the arrow keys.

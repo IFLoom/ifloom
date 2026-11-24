@@ -27,7 +27,7 @@ Then add `statuses()` to the game's `plugins`. [Adding one](/docs/plugins#adding
 
 ## statuses
 
-```ts
+```ts shape
 function statuses(): DefinedPlugin<StatusesState, StatusesView>
 ```
 
@@ -60,7 +60,7 @@ const town: Content = {
 
 ### StatusDef
 
-```ts
+```ts shape
 type StatusDef = {
   id: string
   name: string
@@ -86,7 +86,7 @@ type StatusDef = {
 
 ### StatusModifier
 
-```ts
+```ts shape
 type StatusModifier = StatModifier // { stat: string; add?: number; multiply?: number }
 ```
 
@@ -94,7 +94,7 @@ The engine's [`StatModifier`](/docs/reference/plugins#statmodifier). `add` is ad
 
 ### Reapply
 
-```ts
+```ts shape
 type Reapply = 'refresh' | 'stack'
 ```
 
@@ -191,7 +191,7 @@ Its [React UI](#drawing-it) lists the active statuses under the stats with [`Sta
 
 ### StatusesView
 
-```ts
+```ts shape
 type StatusesView = { active: ActiveStatus[] }
 ```
 
@@ -199,7 +199,7 @@ The active statuses, in the order they were first applied.
 
 ### ActiveStatus
 
-```ts
+```ts shape
 type ActiveStatus = {
   id: string
   name: string
@@ -235,7 +235,7 @@ The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.
 
 ### statusesUi
 
-```ts
+```ts shape
 const statusesUi: PluginUi
 ```
 
@@ -254,7 +254,7 @@ Its words are in `STATUSES_WORDS`. A game rewords any of them with `ui.<key>` in
 
 ### StatusList
 
-```tsx
+```tsx shape
 function StatusList(props: { className?: string; title?: string | false }): JSX.Element | null
 ```
 
@@ -266,7 +266,7 @@ Replaceable as `StatusList` in [`components`](/docs/react/components#components)
 
 ### useStatuses
 
-```ts
+```ts shape
 function useStatuses(): StatusesView | null
 ```
 
@@ -278,7 +278,7 @@ The statuses plugin's view, `active`, each an [`ActiveStatus`](/docs/plugins/sta
 
 ### StatusesState
 
-```ts
+```ts shape
 type StatusesState = { active: ActiveRecord[] }
 type ActiveRecord = { id: string; left: number[] }
 ```
@@ -289,7 +289,7 @@ What the plugin keeps in a save, at `state.plugins.statuses`: each active status
 
 ### Helpers
 
-```ts
+```ts shape
 const statuses: {
   (): DefinedPlugin<StatusesState, StatusesView>
   active(id: string, stacks?: Range): Condition
@@ -300,7 +300,7 @@ const statuses: {
 
 ### statusesOf and statusOf
 
-```ts
+```ts shape
 function statusesOf(game: Game): StatusDef[]
 function statusOf(game: Game, id: string): StatusDef | undefined
 ```

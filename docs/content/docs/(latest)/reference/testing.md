@@ -40,7 +40,7 @@ describe('the loyalty card', () => {
 
 ## loadChecked
 
-```ts
+```ts shape
 function loadChecked(content: readonly Content[], base: GameBase, options?: LoadOptions): Game
 ```
 
@@ -55,7 +55,7 @@ A test of what the checker reports needs the problems themselves, so it calls `l
 
 ## freshState
 
-```ts
+```ts shape
 function freshState(game: Game, options?: StartOptions): GameState
 ```
 
@@ -63,7 +63,7 @@ A new game, as [`startingState`](/docs/reference/commands#startingstate) makes i
 
 ## play
 
-```ts
+```ts shape
 function play(state: GameState, game: Game, ...commands: readonly CommandRef[]): GameState
 ```
 
@@ -77,7 +77,7 @@ A command can be any [`CommandRef`](/docs/reference/custom#commandref), so a plu
 
 ## partnerCases
 
-```ts
+```ts shape
 function partnerCases(plugin: Plugin, partners: readonly Plugin[]): PartnerCase[]
 ```
 
@@ -85,7 +85,8 @@ The ways to load a plugin for a test: alone, then with each partner in turn. A p
 
 Suppose the loyalty card cooperates with places, and stamps only in the café when the game has places:
 
-```ts
+```ts continues
+import { partnerCases } from '@ifloom/engine/testing'
 import { places } from '@ifloom/plugin-places'
 
 for (const { name, plugins, has } of partnerCases(loyalty, [places({ start: 'cafe' })])) {
@@ -105,7 +106,7 @@ Every partner has to be in the plugin's `cooperates`, since a plugin reaches no 
 
 ### PartnerCase
 
-```ts
+```ts shape
 type PartnerCase = {
   name: string
   partner: string | null
@@ -150,7 +151,7 @@ it('names every export in the README', () => {
 
 ### boundaryProblems
 
-```ts
+```ts shape
 function boundaryProblems(sources: Readonly<Record<string, string>>): string[]
 ```
 
@@ -164,7 +165,7 @@ A line names the file and what it imported, such as `src/rain.ts → @ifloom/plu
 
 ### exportedNames
 
-```ts
+```ts shape
 function exportedNames(source: string): string[]
 ```
 
@@ -172,7 +173,7 @@ Every name a source exports, sorted: each `export function`, `const`, `let`, `cl
 
 ### undocumentedExports
 
-```ts
+```ts shape
 function undocumentedExports(sources: readonly string[], page: string): string[]
 ```
 

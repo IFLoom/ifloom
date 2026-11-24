@@ -39,7 +39,7 @@ Any [scene](/docs/reference/scenes#datascene) can be a storylet. These three fie
 
 ## Drawing one
 
-```ts
+```ts fragment
 { scene: { from: 'cafe' } }
 { scene: { from: 'cafe', otherwise: 'cafe.quiet' } }
 ```
@@ -74,7 +74,7 @@ So:
 
 There's no separate once or cooldown setting for a storylet. Its `when` covers it:
 
-```ts
+```ts fragment
 when: { not: { seen: 'cafe.crossword' } }          // once ever
 when: { not: { seen: 'cafe.window', gte: 2 } }     // at most twice
 when: cast.here('ava')                                  // only while Ava is in the café
@@ -159,14 +159,14 @@ export const rainyDays: Pack = {
 
 The [showcase](/docs/guide/showcase#sit-a-while-at-the-café) has a "Sit a while" button in the café. It's a room action on the `cafe` location whose effect draws one:
 
-```ts
+```ts fragment
 // the cafe location's actions
 { id: 'sit', label: 'Sit a while', effects: [{ scene: { from: 'cafe', otherwise: 'cafe.quiet' } }] },
 ```
 
 Three scenes are drawn from `'cafe'`, and a fourth is the quiet table for when none of them can happen:
 
-```ts
+```ts fragment
 // The café's storylets: scenes drawn from 'cafe' by "Sit a while", by weight, while their when holds.
 {
   id: 'cafe.window',

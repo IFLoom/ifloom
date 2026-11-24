@@ -13,7 +13,7 @@ import { actionReferences } from '@ifloom/engine/plugin'
 
 ## ButtonDef
 
-```ts
+```ts shape
 type ButtonDef = {
   id: string
   label?: string
@@ -34,7 +34,7 @@ Something the player can press. A scene's [`Choice`](/docs/reference/scenes#choi
 
 ## ActionDef
 
-```ts
+```ts shape
 type ActionDef = ButtonDef
 ```
 
@@ -102,7 +102,7 @@ The engine keeps no time of day. An action that takes time says so in its `effec
 
 ## ActionCost
 
-```ts
+```ts shape
 type ActionCost = {
   stats?: Record<string, number>
   reasons?: Record<string, string>
@@ -120,7 +120,7 @@ The cost shows on the button before it's pressed, as its [`Price`](/docs/referen
 
 ## Blocked
 
-```ts
+```ts shape
 type Blocked = {
   when: Condition
   reason: Reason
@@ -149,7 +149,7 @@ blocked: [
 
 ### Reason
 
-```ts
+```ts shape
 type Reason = string | { string: string }
 ```
 
@@ -157,7 +157,7 @@ The words a player reads when something is refused. Most are written in place, s
 
 ### Once
 
-```ts
+```ts shape
 type Once = { per: 'game' | 'turn'; reason?: Reason }
 ```
 
@@ -174,7 +174,7 @@ A [lock](/docs/reference/locks) in your content's `locks` is the other way to re
 
 ### need
 
-```ts
+```ts shape
 function need(reason: Reason, when: Condition): Blocked
 ```
 
@@ -190,7 +190,7 @@ For a test worked out from several values, use a [condition of your game's own](
 
 ## actionOf
 
-```ts
+```ts shape
 function actionOf(state: GameState, game: Game, id: string): ActionDef | undefined
 ```
 
@@ -233,7 +233,7 @@ If the action also costs coins, that's still checked after `blocked`, so the pla
 
 ## actionReferences
 
-```ts
+```ts shape
 function actionReferences(action: ActionDef): Reference[]
 ```
 
@@ -283,7 +283,7 @@ The view turns each action into a [`RenderedChoice`](/docs/reference/view#render
 
 ## whyNot
 
-```ts
+```ts shape
 function whyNot(state: GameState, game: Game, command: CommandRef): string | undefined
 ```
 
@@ -310,7 +310,7 @@ whyNot(state, game, cast.talk('ava'))
 
 ## effectsOf
 
-```ts
+```ts shape
 function effectsOf(state: GameState, game: Game, command: CommandRef): Effect[]
 ```
 

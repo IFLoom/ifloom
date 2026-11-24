@@ -102,7 +102,7 @@ A scene moves on through its choices. Each choice has an `id`, a `label` the pla
 
 Add a second chapter, and two ways to get there:
 
-```ts
+```ts fragment
 scenes: [
   {
     id: 'ch1.stop',
@@ -143,7 +143,7 @@ export const stats: Content = {
 
 Sharing the umbrella raises it. Back in `src/story/opening.ts`, put the stat effect before the scene change:
 
-```ts
+```ts fragment
 { id: 'share', effects: [{ stat: 'warmth', by: 1 }, { scene: 'ch2.bus' }] },
 ```
 
@@ -155,7 +155,7 @@ The engine counts every choice the player takes, by `scene#choice`. A later scen
 
 Give the second chapter a line for each choice at the stop. A block with a `when` only shows while its condition holds:
 
-```ts
+```ts fragment
 body: [
   text('The bus comes at last. At the front, the driver looks at your card and shakes her head. "That one’s run out, love."'),
   text('Behind you, the man from the stop is still drying his glasses on his scarf.', { when: { chose: 'ch1.stop#share' } }),
@@ -169,7 +169,7 @@ A choice can have a `when` too. A choice whose condition doesn't hold isn't offe
 
 Now the driver. The player can pay, make an excuse, or, if they shared the umbrella, claim the stranger is paying. Each excuse adds to a count called `excuses`, kept in the kv store: keys with a true/false, number or text value, in `state.kv`. The `kv` effect sets a key `to` a value, or changes its number `by` an amount:
 
-```ts
+```ts fragment
 choices: [
   { id: 'pay', label: 'Count out the fare in coins', effects: [{ stat: 'warmth', by: 1 }, { scene: 'ch3.home' }] },
   { id: 'excuse', label: '“It worked this morning.”', effects: [{ kv: 'excuses', by: 1 }, { scene: 'ch3.home' }] },
@@ -184,7 +184,7 @@ choices: [
 
 The third chapter reads the count back with a range. `lt`, `is` and `gte` are three of the [range](/docs/reference/conditions#range) keys:
 
-```ts
+```ts fragment
 {
   id: 'ch3.home',
   title: 'Chapter three: home',
@@ -209,13 +209,13 @@ A key that was never set counts as 0, so the honest player's line needs nothing 
 
 An [input](/docs/reference/inputs) asks the player for a value and writes it to a key in the kv store. It goes in `src/story/opening.ts`, beside the first scene, since that's where it's asked. This one asks for a name, writes it to `playerName` (the input's id), and is only offered until a name has been given:
 
-```ts
+```ts fragment
 inputs: [{ id: 'playerName', label: 'Your name', type: 'text', maxLength: 20, when: { not: { kv: 'playerName' } } }],
 ```
 
 `{ kv: 'playerName' }` holds once the key has a value, so `{ not: … }` hides the input after that. Words print any key by name with a token, `{{playerName}}`. Add a line that uses it, shown once the name is in, and hold the first chapter's choices back until then:
 
-```ts
+```ts fragment
 body: [
   text('Rain, and the last bus is late. A man in a thin jacket shelters beside you under half an umbrella.'),
   text('He nods at you, {{playerName}}, as if he knows you from somewhere.', { when: { kv: 'playerName' } }),
@@ -229,6 +229,12 @@ choices: [
 Saves can use `playerName` too. A save's [`SaveMeta`](/docs/reference/saves#savemeta) has a `playerName` field for a load screen to show, which comes from the game's `saveName`. It's code, so it goes in the game's [`rules`](/docs/reference/rules#gamerules), in the base in `src/game.ts`:
 
 ```ts
+// src/game.ts
+import { loadGame } from '@ifloom/engine'
+import { defineGame } from '@ifloom/cli/game'
+import { stats } from './world/stats.ts'
+import { opening } from './story/opening.ts'
+
 export default defineGame({
   build: () =>
     loadGame([stats, opening], {
@@ -245,7 +251,7 @@ export default defineGame({
 
 The engine dates things in turns. `state.turn` starts at 0, and the `turn` effect, `{ turn: true }`, ends one. Your game decides how long a turn is. In this story it's a chapter, so every choice that moves to the next chapter ends a turn before it changes the scene:
 
-```ts
+```ts fragment
 { id: 'keep', label: 'Keep the umbrella to yourself', when: { kv: 'playerName' }, effects: [{ turn: true }, { scene: 'ch2.bus' }] },
 ```
 
@@ -305,6 +311,7 @@ import { shallowRef } from 'vue'
 import { browserRunner } from '@ifloom/browser'
 import module from './game.ts'
 
+const { game } = module.build()
 export const runner = await browserRunner(game)
 
 // The view as Vue state, replaced after every change of state.
@@ -318,12 +325,10 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import './styles.css'
 
-const { game } = module.build()
-
 createApp(App).mount('#root')
 ```
 
-```ts tab="Svelte" tab-group="framework"
+```ts fragment tab="Svelte" tab-group="framework"
 // src/runner.ts
 import { readable } from 'svelte/store'
 import { browserRunner } from '@ifloom/browser'
@@ -357,10 +362,14 @@ If you misspelled a scene id or a key along the way, `check` names it.
 A playtest plays the game with no one at the keyboard. It needs somewhere to start, and a new game would stop at the name input. So give the game module a `start`, a player who has already typed a name:
 
 ```ts
-import { startingState } from '@ifloom/engine'
+// src/game.ts
+import { loadGame, startingState } from '@ifloom/engine'
+import { defineGame } from '@ifloom/cli/game'
+import { stats } from './world/stats.ts'
+import { opening } from './story/opening.ts'
 
 export default defineGame({
-  build: () => loadGame(/* the content and the base, as above */),
+  build: () => loadGame([stats, opening], { id: 'last-bus', title: 'The Last Bus' }),
   // Where `ifloom playtest` starts: a player who has already typed a name.
   start: (game) => startingState(game, { kv: { playerName: 'Sam' } }),
 })

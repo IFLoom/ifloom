@@ -48,7 +48,7 @@ import type { SaveDriver } from '@ifloom/engine'
 // Marks a value this driver compressed, so saves written before you added it still read.
 const MARK = 'gz:'
 
-async function pipe(bytes: Uint8Array, stream: CompressionStream | DecompressionStream): Promise<Uint8Array> {
+async function pipe(bytes: Uint8Array<ArrayBuffer>, stream: CompressionStream | DecompressionStream): Promise<Uint8Array> {
   return new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(stream)).arrayBuffer())
 }
 
@@ -58,7 +58,7 @@ function toBase64(bytes: Uint8Array): string {
   return btoa(text)
 }
 
-function fromBase64(text: string): Uint8Array {
+function fromBase64(text: string): Uint8Array<ArrayBuffer> {
   return Uint8Array.from(atob(text), (char) => char.charCodeAt(0))
 }
 
@@ -82,6 +82,9 @@ export function compressed(driver: SaveDriver): SaveDriver {
 ```
 
 ```ts
+import { localStorageDriver } from '@ifloom/browser'
+import { compressed } from './compressed.ts'
+
 const driver = compressed(localStorageDriver())
 ```
 
@@ -128,6 +131,7 @@ export function firstThatWorks(...drivers: SaveDriver[]): SaveDriver & { chosen:
 ```ts
 import { indexedDbDriver, localStorageDriver } from '@ifloom/browser'
 import { memoryDriver } from '@ifloom/engine'
+import { firstThatWorks } from './first-that-works.ts'
 
 const driver = firstThatWorks(indexedDbDriver(), localStorageDriver(), memoryDriver())
 ```
@@ -136,9 +140,9 @@ This keeps saves in IndexedDB where it can, in `localStorage` where it can't, an
 
 Saves in memory are gone when the page closes, so tell the player. `chosen()` says which driver won:
 
-```ts
+```ts continues
 if ((await driver.chosen()).name === 'memory') {
-  showNotice('This browser is not keeping saves. Export your save before you close the game.')
+  alert('This browser is not keeping saves. Export your save before you close the game.')
 }
 ```
 
@@ -161,8 +165,10 @@ export async function moveSaves(gameId: string, from: SaveDriver, to: SaveDriver
 }
 ```
 
-```ts
-await moveSaves(game.id, localStorageDriver(), driver).catch(() => {})
+```ts continues
+import { indexedDbDriver, localStorageDriver } from '@ifloom/browser'
+
+await moveSaves(game.id, localStorageDriver(), indexedDbDriver()).catch(() => {})
 ```
 
 It copies only your game's keys, and never overwrites a key the new driver already has, so running it on every start is safe. It leaves the old copies where they were, in case a player goes back to an older build. The `catch` lets the game start even where the old storage is refused.
@@ -174,6 +180,10 @@ Hand the driver to the save store and the profile, and pass both to the runner. 
 ```ts
 import { browserRunner, indexedDbDriver, localStorageDriver } from '@ifloom/browser'
 import { memoryDriver, profile, saves } from '@ifloom/engine'
+// The three functions above, each in a file of its own.
+import { compressed } from './compressed.ts'
+import { firstThatWorks } from './first-that-works.ts'
+import { moveSaves } from './move-saves.ts'
 
 const driver = firstThatWorks(indexedDbDriver(), compressed(localStorageDriver()), memoryDriver())
 await moveSaves(game.id, localStorageDriver(), driver).catch(() => {})

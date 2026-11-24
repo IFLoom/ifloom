@@ -29,7 +29,7 @@ The [Transitions recipe](/docs/recipes/transitions) walks through transitions an
 
 ## transition
 
-```ts
+```ts fragment
 {
   id: 'ava.river',
   title: 'By the river',
@@ -42,6 +42,8 @@ The [Transitions recipe](/docs/recipes/transitions) walks through transitions an
 How a screen comes on (`in`) and goes off (`out`), over `ms` milliseconds each. A name on its own means the same both ways, so `ui: { transition: 'fade' }` is `{ in: 'fade', out: 'fade' }`. On a [scene](/docs/reference/scenes#datascene) it's that scene's. On a [place](/docs/plugins/places#the-location-trait) it's the room's while no scene is open, so walking between places can slide. In the content's `ui`, the game's own hints, it's the default for every screen that says nothing, part by part: a scene that sets only `in` takes `out` and `ms` from the game's.
 
 ```ts
+import type { Content } from '@ifloom/engine'
+
 export const town: Content = {
   ui: { transition: { in: 'fade', ms: 250 } },
   scenes: [/* ... */],
@@ -54,7 +56,7 @@ With no hint anywhere, a screen comes in and goes out with `'none'`, which is an
 
 ### TransitionName
 
-```ts
+```ts shape
 import { TRANSITIONS, type TransitionName, type Transition } from '@ifloom/react'
 
 const TRANSITIONS = ['fade', 'slide-up', 'slide-left', 'zoom', 'none'] as const
@@ -77,12 +79,14 @@ A transition takes 300 milliseconds when nothing says.
 List names of your own in the content's `ui.transitionNames` and draw them with CSS keyed on `data-transition-in`, `data-transition-out` and `data-reveal`. The recipe has [an example](/docs/recipes/transitions#your-own-names). A name is lower-case letters, digits and `-`.
 
 ```ts
+import type { Content } from '@ifloom/engine'
+
 export const town: Content = { ui: { transitionNames: ['curtain'] } }
 ```
 
 ### transition on a choice
 
-```ts
+```ts fragment
 { id: 'unpack', ui: { transition: { in: 'slide-up', ms: 400 } }, effects: [{ scene: null }] }
 ```
 
@@ -117,7 +121,7 @@ body: [
 
 On a [block](/docs/reference/scenes#block): it waits `delay` milliseconds after the reveal before it, or after the scene comes on, then comes in with `as`. `delay` is 800 and `as` is `'fade'` if left out. A paragraph that should wait goes in a block of its own. The block's hint arrives on the first beat it makes, and everything from there waits, up to the next block with a reveal.
 
-```ts
+```ts shape
 import { type Reveal } from '@ifloom/react'
 
 type Reveal = { delay?: number; as?: TransitionName }
@@ -217,6 +221,9 @@ body: [
 Tell [`checkUiHints`](#checkuihints) about it with `allow`, so it isn't reported as a hint the React UI doesn't read. A plugin UI that reads a hint of its own [declares it](#uihint) instead:
 
 ```ts
+import { checkUiHints } from '@ifloom/react'
+import { expect } from 'vitest'
+
 expect(checkUiHints(game, { allow: ['card'] })).toEqual([])
 ```
 
@@ -233,7 +240,7 @@ stats: [
 
 On a [stat](/docs/reference/stats#statdef), `StatDisplay`: how the [`StatList`](/docs/react/components#statlist) and [`Relationships`](/docs/plugins/cast#relationships) draw it. `'number'` (the default) is the value as the game formats it. `'bar'` adds a bar under it from its `min` to its `max`. `'pips'` adds a row of pips, one per point, which suits a range of 20 or less. A wider range is drawn as a bar, and `checkUiHints` reports it.
 
-```ts
+```ts shape
 import type { StatDisplay } from '@ifloom/react'
 
 type StatDisplay = 'number' | 'bar' | 'pips'
@@ -258,6 +265,8 @@ On an [entity](/docs/reference/entities#entitydef), or on a [kind](/docs/referen
 ## settings
 
 ```ts
+import type { Content } from '@ifloom/engine'
+
 export const settings: Content = {
   settings: [
     {
@@ -363,8 +372,9 @@ Nothing about a piece goes in a save or the log: the engine carries the markup a
 
 ## checkUiHints
 
-```ts
+```ts shape
 import { checkUiHints, type CheckUiOptions } from '@ifloom/react'
+import type { Game } from '@ifloom/engine'
 
 function checkUiHints(game: Game, options?: CheckUiOptions): string[]
 
@@ -405,8 +415,9 @@ describe('the content', () => {
 
 ### UiHint
 
-```ts
+```ts shape
 import type { UiHint, HintCheckContext } from '@ifloom/react/kit'
+import type { Game } from '@ifloom/engine'
 
 type UiHint = {
   name: string
@@ -421,7 +432,9 @@ Each hint on this page is declared once inside the React UI as a `UiHint`: its n
 A plugin's React UI declares the hints its components read the same way, in its [`PluginUi`](/docs/react/kit#pluginui)'s `hints`. Give `checkUiHints` the same `plugins` list you give `mountGame` and it checks them too:
 
 ```ts
+import { checkUiHints } from '@ifloom/react'
 import { shopUi } from '@ifloom/plugin-shop/react'
+import { expect } from 'vitest'
 
 expect(checkUiHints(game, { plugins: [shopUi] })).toEqual([])
 ```

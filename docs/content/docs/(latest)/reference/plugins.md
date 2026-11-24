@@ -176,7 +176,7 @@ export const loyalty = definePlugin<Card, unknown, typeof CALLS>({
 
 A button sends the command, here as one of the café's actions in the places plugin's content:
 
-```ts
+```ts fragment
 { id: 'redeem', label: 'Redeem a free coffee', command: { 'loyalty/redeem': true } }
 ```
 
@@ -184,6 +184,7 @@ Five coffees later:
 
 ```ts
 import { apply, holds, view, whyNot } from '@ifloom/engine'
+import { loyalty } from './loyalty.ts'
 
 loyalty.read(state, game)                                       // { stamps: 0, free: 1 }
 holds(state, game, { 'loyalty/hasFree': true })               // true
@@ -198,7 +199,7 @@ On a new game the same command is refused with `Your card is not full yet.`, and
 
 ## Plugin
 
-```ts
+```ts shape
 import { pluginQuery, type SpeakerView, type WordShape, type RawPack, type ConditionRegistry, type EffectRegistry, type CommandRegistry, type QueryRegistry, type ViewRegistry, type ConditionCall, type EffectCall, type CommandCall, type Query, type ViewsIn } from '@ifloom/engine'
 import { definePlugin, speakerOf, type Plugin, type DefinedPlugin, type PluginContext, type TurnContext, type Macro, type PluginArgs, type PluginCommand, type PluginEntry, type PluginProblem, type PluginSlice, type Asked, type Refusal, type RoomScene, type CheckTools, type PluginReferences, type ContentReferences, type StatModifier, type TraitDef, type TraitTools, type ContentStep, type ContentTools, type CommandStep, type RawCommand, type PluginDef, type PartnerQueries, type CastContact, type SenderView } from '@ifloom/engine/plugin'
 
@@ -277,7 +278,7 @@ type Plugin<S = any, V = unknown> = {
 | `action` | One of its actions that isn't among its `actions` right now, by id, for `{ type: 'action', id: '<plugin>/<id>' }`. See [Actions](#actions). |
 | `content` | [Content](/docs/reference/loader#content) the plugin brings, such as its kinds of entity, merged under the game's. See [Kinds and entities](#kinds-and-entities). |
 | `traits` | [Traits](/docs/reference/entities#traits) the plugin gives meaning to: named data that entities carry. See [Traits](#traits). |
-| `calls` | Its conditions, effects and commands, each declared once with what it takes, made with [`defineCalls`](#definecalls). Every declared call has an implementation and every implementation a declaration. See [Declaring calls](#declaring-calls). |
+| `calls` | Its conditions, effects and commands, each declared once with what it takes, made with [`defineCalls`](#definecalls). Its type, `AnyCalls` from `@ifloom/engine/plugin`, is what any plugin's `PluginCalls` fits. Every declared call has an implementation and every implementation a declaration. See [Declaring calls](#declaring-calls). |
 | `data` | The lists of its pack `data`, each declared once with its noun and words, made with [`defineData`](#definedata). See [Data lists](#data-lists). |
 | `audio` | What plays on background audio channels, such as a place's ambience. See [Audio](#audio). |
 | `view` | What the UI needs from the plugin, at [`view.plugins[id]`](/docs/reference/view#plugins). See [The view](#the-view). |
@@ -287,7 +288,7 @@ type Plugin<S = any, V = unknown> = {
 
 ## PluginContext
 
-```ts
+```ts shape
 type PluginContext<S> = CustomContext & {
   slice: S
   get: (on?: GameState) => S
@@ -315,7 +316,7 @@ Every plugin function gets this alongside the game state, and so does every func
 
 **Gotcha.** Without `on`, `set` builds on the state the function was handed, not on one you've changed since. When a command or effect changes other parts of the game state too, make those changes first and pass the result as `on`. The `redeem` command above does this with [`applyEffects`](/docs/reference/effects#applyeffects):
 
-```ts
+```ts fragment
 // Wrong: the kv key is lost, because set builds on `state`.
 const moved = { ...state, kv: { ...state.kv, stamped: true } }
 return set({ ...slice, stamps: slice.stamps + 1 })
@@ -327,7 +328,7 @@ return set({ ...slice, stamps: slice.stamps + 1 }, moved)
 
 `slice` is still the plugin's state as it was in the state handed in. `on` only changes where the new state is written. To read the plugin's state after something else may have changed it, such as effects that run the plugin's own effects, read it with `get(next)` and write it with `set(..., next)`:
 
-```ts
+```ts fragment
 const next = apply([{ stat: 'energy', by: 15 }])
 return set({ ...get(next), free: get(next).free - 1 }, next)
 ```
@@ -336,7 +337,7 @@ Don't read `state.plugins[id]` yourself: `get` knows the plugin's starting state
 
 ## PluginArgs
 
-```ts
+```ts shape
 type PluginArgs = Record<string, unknown>
 ```
 
@@ -344,7 +345,7 @@ What content passes in `with`, unchecked. It's `{}` when `with` is left out. A c
 
 ## PluginCommand
 
-```ts
+```ts shape
 type PluginCommand<S = any, A = PluginArgs> = {
   ignoresLocks?: boolean
   whyNot?: (state: GameState, args: A, context: PluginContext<S>) => string | undefined
@@ -384,7 +385,7 @@ The reducer refuses with that reason, and the view greys out the button with it.
 
 It's for tools that stand outside the story and must work at any point in it. The [debug plugin](/docs/plugins/debug), for example, sets a stat by hand in the middle of an intro that only moves through its scenes. Never use it for something the player does in the story. A lock is how a game says "not now", and a player command that slips past it breaks the order the story is told in.
 
-```ts
+```ts fragment
 commands: {
   // A tool for the person testing the game, not a move the player makes.
   refill: {
@@ -436,8 +437,8 @@ const CALLS = defineCalls('loyalty', {
     stamps: { card: arg.entry(DATA.cards), gte: arg.number().optional(1) },
   },
   effects: {
-    // A stamp, with a note the player reads.
-    stamp: { card: arg.entry(DATA.cards), note: arg.words().optional() },
+    // A stamp on a card (the café's if left out), with a note the player reads.
+    stamp: { card: arg.entry(DATA.cards).optional('cafe'), note: arg.words().optional() },
   },
   commands: {
     redeem: { id: arg.entry(DATA.cards) },
@@ -487,7 +488,7 @@ What each part gives you:
 
 ### defineCalls
 
-```ts
+```ts shape
 function defineCalls<Id extends string, const D extends CallShapes>(id: Id, shapes: D): PluginCalls<Id, D>
 
 type CallShapes = {
@@ -502,7 +503,7 @@ Declares a plugin's calls: by table, each call's name without the prefix and wha
 
 It returns a `PluginCalls`, with a `CallWriter` for each call by table: `CALLS.effects.stamp`. A writer is a function from the arguments, as content writes them (`ArgsIn<S>`), to the call in short. It also has `call`, the full name (`'loyalty/stamp'`), `args`, its shape, and `read(args)`, which reads arguments content wrote the way the call's function is handed them (`ArgsOut<S>`), for a [guard](#guards) or a [price](#prices) that looks at a list of effects:
 
-```ts
+```ts fragment
 const call = callOf(effect)
 if (call?.name === CALLS.effects.stamp.call) total += CALLS.effects.stamp.read(call.with).gte
 ```
@@ -511,7 +512,7 @@ if (call?.name === CALLS.effects.stamp.call) total += CALLS.effects.stamp.read(c
 
 ### arg
 
-```ts
+```ts shape
 const arg: {
   string(): Arg<string, string>
   words(): Arg<string, string>
@@ -526,7 +527,7 @@ const arg: {
   range(): Arg<Range, Range>
   entry(list: DataList): Arg<string, string>
   entries(list: DataList): Arg<string | readonly string[], string[]>
-  bounds: { gte, gt, lte, lt }
+  bounds: { gte: Arg<Amount, Amount | undefined>; gt: Arg<Amount, Amount | undefined>; lte: Arg<Amount, Amount | undefined>; lt: Arg<Amount, Amount | undefined> }
 }
 ```
 
@@ -558,6 +559,11 @@ Each has three methods that return a new argument:
 Declare each list of the plugin's pack `data` once, beside its calls, with the type of an entry, what one is called in a problem and which of its fields are words:
 
 ```ts
+import type { Game } from '@ifloom/engine'
+import { defineData, list } from '@ifloom/engine/plugin'
+
+type CardDef = { id: string; name: string; perks: { id: string; label: string }[] }
+
 const DATA = defineData('loyalty', {
   cards: list<CardDef>({ noun: 'card', words: { name: true, perks: [{ label: true }] } }),
 })
@@ -570,7 +576,7 @@ Give it to `definePlugin` as `data`, so a translation reaches each list's words,
 
 ### defineData
 
-```ts
+```ts shape
 function defineData<const L extends Record<string, ListSpec>>(plugin: string, lists: L): PluginData<L>
 function list<T extends { id: string }>(spec: { noun: string; words?: WordShape }): ListSpec<T>
 
@@ -602,7 +608,14 @@ type DataList<T> = {
 A plugin says what each of its calls takes, what its queries answer and what its view holds, so content written in code is checked as it's typed. Declare them in the plugin's main entry by adding to the engine's registries, the way a plugin types its [traits](#traits). The calls' entries come from their [declaration](#declaring-calls):
 
 ```ts
-import type { CommandsOf, ConditionsOf, EffectsOf } from '@ifloom/engine/plugin'
+import { arg, defineCalls, type CommandsOf, type ConditionsOf, type EffectsOf } from '@ifloom/engine/plugin'
+
+// The calls as declared above, in short.
+const CALLS = defineCalls('loyalty', {
+  conditions: { stamps: { card: arg.string(), gte: arg.number().optional(1) } },
+  effects: { stamp: { card: arg.string().optional('cafe'), note: arg.words().optional() } },
+  commands: { redeem: { id: arg.string() } },
+})
 
 export type LoyaltyView = { stamps: number; free: number }
 
@@ -624,10 +637,13 @@ Each registry is keyed by the call's full name, and each entry is what content w
 Once a game imports the plugin's package, those calls are checked wherever a [`Condition`](/docs/reference/conditions#condition), an [`Effect`](/docs/reference/effects#effect) or a [`CommandRef`](/docs/reference/custom#commandref) goes:
 
 ```ts
+import { pluginQuery, type Condition } from '@ifloom/engine'
+
 const full: Condition = { 'loyalty/stamps': { card: 'cafe', gte: 5 } }
-const typo: Condition = { 'loyalty/stamps': { card: 'cafe', gtee: 5 } }   // fails to compile
-const left = context.query('loyalty/stampsLeft')           // number | undefined
-const card = view.plugins.loyalty                          // LoyaltyView | undefined
+// @ts-expect-error: `gtee` isn't one of its arguments
+const typo: Condition = { 'loyalty/stamps': { card: 'cafe', gtee: 5 } }
+const left = pluginQuery(game, 'loyalty/stampsLeft')?.(state)   // number | undefined
+const card = view.plugins.loyalty                               // LoyaltyView | undefined
 ```
 
 A call whose name nobody declares takes any arguments, as a [`PluginCall`](/docs/reference/custom#plugincall), so a plugin that declares nothing still compiles, and so does content naming a partner the game doesn't have. A query nobody declares answers whatever type you name, `query<number>('loyalty/stampsLeft')`. Every first-party plugin declares all of its calls, queries and its view.
@@ -663,28 +679,28 @@ Small Town declares its `game/postLatest` this way, and the café its `game/taki
 
 ### ConditionCall, EffectCall and CommandCall
 
-```ts
+```ts shape
 type ConditionCall = CallIn<ConditionRegistry>
 type EffectCall = CallIn<EffectRegistry>
 type CommandCall = CallIn<CommandRegistry>
 ```
 
-A call in short, checked against its registry when its name is declared there, and loose otherwise. [`Condition`](/docs/reference/conditions#condition) and [`Effect`](/docs/reference/effects#effect) end in a `ConditionCall` and an `EffectCall`, and a [`CommandRef`](/docs/reference/custom#commandref) is a command or a `CommandCall`. The registries themselves are the interfaces `ConditionRegistry`, `EffectRegistry`, `CommandRegistry`, `QueryRegistry` and `ViewRegistry`. They're empty in the engine, except that `QueryRegistry` holds [`PartnerQueries`](#partnerqueries).
+A call in short, checked against its registry when its name is declared there, and loose otherwise. `CallIn<R>` is that rule for any registry `R`, from `@ifloom/engine/plugin`. [`Condition`](/docs/reference/conditions#condition) and [`Effect`](/docs/reference/effects#effect) end in a `ConditionCall` and an `EffectCall`, and a [`CommandRef`](/docs/reference/custom#commandref) is a command or a `CommandCall`. The registries themselves are the interfaces `ConditionRegistry`, `EffectRegistry`, `CommandRegistry`, `QueryRegistry` and `ViewRegistry`. They're empty in the engine, except that `QueryRegistry` holds [`PartnerQueries`](#partnerqueries).
 
 ### Query
 
-```ts
+```ts shape
 type Query = {
   <K extends keyof QueryRegistry>(name: K, ...args: QueryArgs<K>): QueryAnswer<K> | undefined
   <T = unknown>(name: string, args?: PluginArgs): T | undefined
 }
 ```
 
-What a context's `query` is: a declared query takes its arguments and answers its type, and any other name answers the type you give it. [`pluginQuery`](#pluginquery) is typed the same way.
+What a context's `query` is: a declared query takes its arguments and answers its type, and any other name answers the type you give it. `QueryArgs<K>` and `QueryAnswer<K>`, from `@ifloom/engine/plugin`, are a query's arguments and answer by name: what `QueryRegistry` declares, or anything for a name it doesn't. [`pluginQuery`](#pluginquery) is typed the same way.
 
 ### ViewsIn
 
-```ts
+```ts shape
 type ViewsIn = { readonly [K in keyof ViewRegistry]?: ViewRegistry[K] } & Readonly<Record<string, unknown>>
 ```
 
@@ -692,13 +708,13 @@ The type of [`view.plugins`](/docs/reference/view#plugins): each plugin's slice 
 
 ## Queries
 
-```ts
+```ts fragment
 queries?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => unknown>
 ```
 
 Answers another plugin can ask for by full name, without importing this one. Use a query for what a condition's yes or no can't say, such as a place, a time or a list. The asker calls its context's `query`, and the answer is worked out with this plugin's own context, so it reads its own `slice`.
 
-```ts
+```ts fragment
 // The loyalty plugin answers how many stamps are left to fill the card.
 queries: {
   stampsLeft: (_state, _args, { slice }) => 5 - slice.stamps,
@@ -718,7 +734,7 @@ The asker names the answer's type, since it doesn't import the loyalty plugin. C
 
 ### pluginQuery
 
-```ts
+```ts shape
 import { pluginQuery } from '@ifloom/engine'
 
 function pluginQuery<K extends keyof QueryRegistry>(game: Game | undefined, name: K): ((state: GameState, ...args: QueryArgs<K>) => QueryAnswer<K>) | undefined
@@ -728,6 +744,9 @@ function pluginQuery<T = unknown>(game: Game | undefined, name: string): ((state
 A plugin's query by its full name, for code outside any plugin, such as a tool, a test or the [CLI](/docs/cli). It returns a function to ask it with, which runs with the owning plugin's own context for that state. It returns `undefined` when the game lacks the plugin or the query. `args` is `{}` if left out. A plugin's own code uses its context's `query` instead.
 
 ```ts
+import { pluginQuery } from '@ifloom/engine'
+import '@ifloom/plugin-calendar'
+
 // Is it late enough for bed? Only a game with the calendar can say.
 const bedtime = pluginQuery(game, 'calendar/bedtime')?.(state) ?? false
 ```
@@ -738,7 +757,7 @@ It's typed as a context's [`query`](#query) is. A query declared in [`QueryRegis
 
 ### Partner queries
 
-```ts
+```ts shape
 interface PartnerQueries {
   'calendar/now': () => { day: number; period: string }
   'calendar/periods': () => string[]
@@ -772,7 +791,7 @@ The interface above. Each entry is documented on its plugin's page: [calendar](/
 
 Nothing in `PartnerQueries` runs. The answer and any fallback stay with the plugins: an asker writes what it does without the partner after `??`, as the shop does to count days without a calendar:
 
-```ts
+```ts fragment
 const day = query('calendar/now')?.day ?? state.turn
 ```
 
@@ -780,13 +799,17 @@ A plugin that shows who sent something asks `cast/sender`, and falls back to [`s
 
 ## Cooperates
 
-```ts
+```ts fragment
 cooperates?: string[]
 ```
 
 The ids of plugins this one works with when the game has them. Content written for this plugin may then name those plugins' conditions, effects and commands, in full or [in short](/docs/reference/custom#plugincall), even in a game without them. The [content checker](/docs/reference/checks#absent-partners) doesn't report them, and in play the condition is false, the effect does nothing and the command is refused.
 
 ```ts
+import { definePlugin } from '@ifloom/engine/plugin'
+
+type Card = { stamps: number; free: number }
+
 export const loyalty = definePlugin<Card>({
   id: 'loyalty',
   version: 2,
@@ -819,7 +842,7 @@ Inside an action, every effect runs after its command and its cost and after eve
 
 ## State and migrations
 
-```ts
+```ts shape
 type PluginSlice = { version: number; state: unknown }
 ```
 
@@ -827,7 +850,7 @@ Each plugin's state lives in [`state.plugins`](/docs/reference/state#plugins), k
 
 When the shape changes, bump `version` and add a step keyed by the version it upgrades from. The engine's own [saves](/docs/reference/saves#loadstate) follow the same rule. A step gets the plugin's old state and the same [`MigrationTools`](/docs/reference/saves#migrationtools) a game's own migration gets, and returns the plugin's new state.
 
-```ts
+```ts fragment
 version: 2,
 migrations: {
   1: (old) => ({ stamps: (old as { stamps: number }).stamps, free: 0 }),
@@ -862,6 +885,8 @@ Say version 1 of the card's `loyalty/stamp` effect took `{ count }`, and version
 ```ts
 import type { RawPack } from '@ifloom/engine'
 import { definePlugin } from '@ifloom/engine/plugin'
+
+type Card = { stamps: number; free: number }
 
 const isRecord = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value)
 
@@ -924,7 +949,7 @@ Then each plugin's remaining steps run. A plugin's step for schema 12 therefore 
 
 ### ContentStep
 
-```ts
+```ts shape
 type RawPack = Record<string, unknown> & { schema: number }
 type ContentStep = (pack: RawPack, tools: ContentTools) => RawPack
 ```
@@ -933,7 +958,7 @@ A step is given the whole pack, as the version it upgrades from wrote it, and re
 
 ### ContentTools
 
-```ts
+```ts shape
 type ContentTools = {
   objects: (pack: RawPack, rewrite: (value: Record<string, unknown>) => Record<string, unknown>) => RawPack
   calls: (pack: RawPack, rewrite: (call: { name: string; with: unknown; form: 'short' | 'long' | 'command' }) => { name: string; with: unknown }) => RawPack
@@ -959,7 +984,7 @@ Ways to rewrite a pack without walking it by hand. Each returns a new pack.
 
 ### CommandStep
 
-```ts
+```ts shape
 type RawCommand = Record<string, unknown> & { type: string }
 type CommandStep = (command: RawCommand) => RawCommand
 ```
@@ -1046,7 +1071,7 @@ It's called with the state after the command, the state before it, what the plug
 
 The plugin's view can read its namespace as `context.profile`, so a UI gets everything from the view:
 
-```ts
+```ts fragment
 view: (state, { profile }) => ({ reached: (profile as string[] | undefined) ?? [] }),
 ```
 
@@ -1077,7 +1102,7 @@ export const glasses = definePlugin<{ on: boolean }>({
 
 ### StatModifier
 
-```ts
+```ts shape
 type StatModifier = { stat: string; add?: number; multiply?: number }
 ```
 
@@ -1151,7 +1176,7 @@ export const dishes = definePlugin<Sink>({
 
 The flat offers the buttons, as a location of the [places plugin](/docs/plugins/places#the-location-trait):
 
-```ts
+```ts fragment
 // on the flat, in its places.location({ ... }) in entities
 actions: [
   { id: 'cook', label: 'Cook dinner', effects: [{ stat: 'energy', by: 20 }, { 'dishes/add': { by: 2 } }] },
@@ -1180,7 +1205,7 @@ With three, Bake bread is greyed out with `Not with the sink this full.` Wash up
 
 ### Guards
 
-```ts
+```ts fragment
 guard?: (state: GameState, asked: Asked, context: PluginContext<S>) => Refusal | undefined
 
 type Asked = { command: Command; effects: readonly Effect[] }
@@ -1202,7 +1227,7 @@ The game's own `rules.guard`, then every plugin's guard, is asked about every co
 
 ### Prices
 
-```ts
+```ts fragment
 price?: (state: GameState, effects: readonly Effect[], context: PluginContext<S>) => string[] | undefined
 ```
 
@@ -1212,7 +1237,7 @@ What a button costs that the engine can't say, in the plugin's words, such as `[
 
 ### Labels
 
-```ts
+```ts fragment
 label?: (state: GameState, context: PluginContext<S>) => string | undefined
 ```
 
@@ -1224,13 +1249,13 @@ The engine only works out a command's effects for guards and prices when some pl
 
 ## Saying what a command does
 
-```ts
+```ts fragment
 effectsOf?: (state: GameState, args: PluginArgs, context: PluginContext<S>) => Effect[]
 ```
 
 The engine can't see inside a [`PluginCommand`](#plugincommand)'s `run`, so the command says what it would apply. Guards, prices and [locks with `effect`](/docs/reference/locks#lock) read this list. Without `effectsOf`, the command applies nothing they can see.
 
-```ts
+```ts fragment
 wash: {
   run: (_state, _args, { apply }) => apply([{ 'dishes/wash': true }]),
   effectsOf: () => [{ 'dishes/wash': true }],
@@ -1243,7 +1268,7 @@ wash: {
 
 ## Applying effects
 
-```ts
+```ts fragment
 apply: (effects: readonly EffectRef[], on?: GameState) => GameState
 ```
 
@@ -1251,7 +1276,7 @@ On the [context](#plugincontext), `apply` applies a list of effects as content w
 
 This is how a plugin's effect or command ends a turn. `apply([{ turn: true }])` runs the whole [end of a turn](/docs/reference/rules#the-end-of-a-turn), with the game's `rules.onTurn`, every plugin's `onTurn` hook, the game's `rules.onTurnDone` and every plugin's `onTurnDone`.
 
-```ts
+```ts fragment
 // Empty the sink first, so the turn's hooks see it empty.
 wash: (_state, _args, { set, apply }) => apply([{ turn: true }], set({ dirty: 0 })),
 ```
@@ -1273,7 +1298,7 @@ const card = view(state, game).plugins.loyalty // LoyaltyView | undefined, once 
 
 If your view draws pictures from a [pool](/docs/reference/media#pools), pass the context's `picks` to [`pictureView`](/docs/reference/view#pictureview). Words drawn with [`beats`](#beats) record their own. Each new pick is written there, and the reducer records them after the command, so the same picture shows on every visit. The places plugin does this for a room's layered picture:
 
-```ts
+```ts fragment
 view: (state, { game, slice, picks }) => {
   const place = locationOf(state, game, slice.at)
   return { picture: place && slice.at ? pictureView(state, game, place.picture, slice.at, null, picks) : null }
@@ -1282,7 +1307,7 @@ view: (state, { game, slice, picks }) => {
 
 ### beats
 
-```ts
+```ts fragment
 beats: (blocks: readonly Block[], id: string) => SceneBeat[]
 ```
 
@@ -1293,7 +1318,7 @@ Your plugin's content can hold words as a scene's [blocks](/docs/reference/scene
 - spoken lines with their [speakers](/docs/reference/prose#speech)
 - bold, italics and [UI pieces](/docs/reference/prose#ui-pieces) as spans, through [`styledBeats`](/docs/reference/prose#styledbeats)
 
-```ts
+```ts fragment
 view: (state, { beats, game }) => ({
   notes: notesOf(game).map((note) => ({ id: note.id, beats: beats(note.body, note.id) })),
 }),
@@ -1303,7 +1328,7 @@ Inline actions and tooltips stay in the words as written, because only a scene o
 
 ## Scene
 
-```ts
+```ts fragment
 scene?: (state: GameState, context: PluginContext<S>) => RoomScene | undefined
 
 type RoomScene = {
@@ -1328,6 +1353,7 @@ With no plugin answering, the screen is the game's `title` and an empty body. Th
 A market stall on the high street fills the screen while it's open:
 
 ```ts
+import type { Content } from '@ifloom/engine'
 import { definePlugin } from '@ifloom/engine/plugin'
 
 const stall = definePlugin<{ open: boolean }>({
@@ -1343,11 +1369,15 @@ const stall = definePlugin<{ open: boolean }>({
 })
 
 // in your content
-prose: { 'stall.open': 'Crates of eggs and a heap of loaves.', 'stall.cries/1': '“Fresh bread!”', 'stall.cries/2': '“Eggs, a dozen!”' },
-variants: { 'stall.cries': ['stall.cries/1', 'stall.cries/2'] },
+export const market: Content = {
+  prose: { 'stall.open': 'Crates of eggs and a heap of loaves.', 'stall.cries/1': '“Fresh bread!”', 'stall.cries/2': '“Eggs, a dozen!”' },
+  variants: { 'stall.cries': ['stall.cries/1', 'stall.cries/2'] },
+}
 ```
 
-```ts
+```ts continues
+import { view } from '@ifloom/engine'
+
 view(state, game).scene
 // { id: null, key: 'room:market', title: 'The market stall',
 //   body: 'Crates of eggs and a heap of loaves.\n\n“Fresh bread!”', choices: [], ... }
@@ -1363,13 +1393,15 @@ view(stall.write(state, { open: false }), game).scene.title // the next plugin's
 
 ## Actions
 
-```ts
+```ts fragment
 actions?: (state: GameState, context: PluginContext<S>) => readonly ActionDef[] | undefined
 ```
 
 Actions the plugin offers as buttons while no scene is open, such as the stall's Haggle. Each is an [`ActionDef`](/docs/reference/actions#actiondef), the same shape as the content's actions, so a button can carry a cost and effects of its own. The view puts the game's own `rules.actions` first, then every plugin's, in the order `game.plugins` lists them, then the content's [`actions`](/docs/reference/actions#actiondef). The [places plugin](/docs/plugins/places#the-buttons)'s are the current location's `actions`. All of them are drawn alike with [`renderAction`](/docs/reference/view#renderaction), which gives each a price, `blocked`, a [guard](#guards)'s warning and [`whyNot`](/docs/reference/actions#whynot)'s reason.
 
 ```ts
+import { view } from '@ifloom/engine'
+
 // The stall above, with an action of the content's to buy bread:
 view(state, game).actions.map((action) => action.id) // ['haggle', 'buy']
 ```
@@ -1382,26 +1414,26 @@ view(state, game).actions.map((action) => action.id) // ['haggle', 'buy']
 
 ### action
 
-```ts
+```ts fragment
 action?: (state: GameState, id: string, context: PluginContext<S>) => ActionDef | undefined
 ```
 
 One of the plugin's actions by id, for `{ type: 'action', id: '<plugin>/<id>' }`, when it isn't among the plugin's `actions` in this state. The [devices plugin](/docs/plugins/devices) answers this way for an app's buttons, which it draws in the app rather than in the room. Return `undefined` for an id that isn't yours. Without it, only the plugin's current `actions` can be done.
 
-```ts
+```ts fragment
 // An app's button, found by its id whether or not the app is open.
 action: (_state, id, { game }) => appActions(game).find((entry) => entry.id === id),
 ```
 
 ## Audio
 
-```ts
+```ts fragment
 audio?: (state: GameState, context: PluginContext<S>) => Record<string, string | null> | undefined
 ```
 
 What the plugin puts on background [audio channels](/docs/reference/audio#channels), by channel, such as `{ ambience: 'cafe.murmur' }`. Return `undefined` or `{}` to leave every channel alone. The [places plugin](/docs/plugins/places#audio) uses it to play the location's `audio` while the player is there.
 
-```ts
+```ts fragment
 // The stall rings its bell while the market is on.
 audio: (state) => (state.kv.marketOpen ? { ambience: 'market.bell' } : undefined),
 ```
@@ -1420,7 +1452,7 @@ A plugin that shows who sent something asks the same way with [`speakerOf`](#spe
 
 ### speakerOf
 
-```ts
+```ts shape
 import { speakerOf } from '@ifloom/engine/plugin'
 
 function speakerOf(state: GameState, game: Game, id: string): SpeakerView | null
@@ -1429,13 +1461,15 @@ function speakerOf(state: GameState, game: Game, id: string): SpeakerView | null
 Who an id is, as the view draws a scene's speaker: a [`SpeakerView`](/docs/reference/view#speakerview) with the entity's name (tokens filled), picture and hints, or `null` when the id names no entity. A bare id is `character:<id>`, else the one entity the game declares with that id. A reference is read as written, and `'you'` is whoever the player is playing.
 
 ```ts
+import { speakerOf } from '@ifloom/engine/plugin'
+
 speakerOf(state, game, 'ava')      // { id: 'ava', ref: 'character:ava', name: 'Ava', image: 'art/character/ava.svg', ui: { hue: 20 } }
 speakerOf(state, game, 'Council')  // null: show the name as written
 ```
 
 ## Kinds and entities
 
-```ts
+```ts fragment
 content?: Content
 ```
 
@@ -1448,7 +1482,7 @@ Content that puts several plugins together, such as a phone with an app for each
 
 The regulars above, each also an entity with a stat of their own:
 
-```ts
+```ts fragment
 const regulars = definePlugin<null>({
   id: 'regulars',
   version: 1,
@@ -1468,6 +1502,8 @@ entities: [{ id: 'mo', of: 'regular', name: 'Mo from next door', stats: { fondne
 ```
 
 ```ts
+import { startingState, view } from '@ifloom/engine'
+
 const state = startingState(game)
 view(state, game).entities.find((kind) => kind.id === 'regular')!.entries.map((entry) => [entry.name, entry.stats[0].value])
 // [['Mo from next door', 8], ['Sal', 3]]
@@ -1482,7 +1518,7 @@ The content's own Mo replaces the plugin's, in the plugin's place in the list.
 
 ## Traits
 
-```ts
+```ts fragment
 traits?: readonly TraitDef[]
 ```
 
@@ -1549,7 +1585,7 @@ const CALLS = defineCalls('laundry', {
 const machine = (def: TraitEntityDef<'laundry/machine'>): EntityDef => MACHINES.define(def)
 ```
 
-```ts
+```ts shape
 function defineTraitKind<K extends string>(spec: TraitKindSpec<K>): TraitKind<K>
 
 type TraitKindSpec<K extends string> = {
@@ -1581,7 +1617,7 @@ The kind itself is still yours to declare in the plugin's [`content.kinds`](#kin
 
 ### TraitDef
 
-```ts
+```ts shape
 type TraitDef<K extends string = string, S = unknown> = {
   id: K
   check?(data: TraitData<K>, tools: TraitTools): readonly string[]
@@ -1601,7 +1637,7 @@ type TraitDef<K extends string = string, S = unknown> = {
 
 ### TraitTools
 
-```ts
+```ts shape
 type TraitTools = { game: Game; ref: EntityRef }
 ```
 
@@ -1617,6 +1653,11 @@ What a trait's `check` and `references` get beside the data: the game, and the e
 A plugin says which fields of its content are words a player reads, so a translation can give them other words in a pack's [`words` table](/docs/reference/words). Each [data list](#data-lists) gives a [`WordShape`](/docs/reference/words#wordshape) for its entries, and a trait's `words` one for its data:
 
 ```ts
+import type { Effect } from '@ifloom/engine'
+import { defineData, definePlugin, list } from '@ifloom/engine/plugin'
+
+type CardDef = { id: string; name: string; perks: { id: string; label: string }[]; effects?: { full?: Effect[] } }
+
 const DATA = defineData('loyalty', {
   cards: list<CardDef>({ noun: 'card', words: { name: true, perks: [{ label: true }], effects: { full: 'effects' } } }),
 })
@@ -1633,7 +1674,9 @@ Each field is keyed `<plugin>/<list>.<id>.<field>`, so a card's name is `loyalty
 
 A call of the plugin's can carry words too, such as the text of a post the player makes. Declare that argument with [`arg.words()`](#arg):
 
-```ts
+```ts continues
+import { arg, defineCalls } from '@ifloom/engine/plugin'
+
 const CALLS = defineCalls('loyalty', { effects: { stamp: { card: arg.entry(DATA.cards), note: arg.words().optional() } } })
 
 // In content: { id: 'buy', label: 'Buy a coffee', effects: [{ 'loyalty/stamp': { card: 'cafe', note: 'One more for a free one!' } }] }
@@ -1658,7 +1701,7 @@ The [loader](/docs/reference/loader#content) merges `data` as it merges scenes: 
 
 ### PluginEntry
 
-```ts
+```ts shape
 type PluginEntry = { id: string; [field: string]: unknown }
 ```
 
@@ -1666,7 +1709,7 @@ One entry in a plugin's content: an `id`, and whatever fields the plugin reads. 
 
 ### References
 
-```ts
+```ts fragment
 references?: PluginReferences
 
 type PluginReferences = {
@@ -1690,7 +1733,7 @@ Each returns a list of [`Reference`](/docs/reference/checks#plugin-references)s:
 
 The loyalty plugin's cards each have a condition. Its `stamp` effect names a card too, but that comes from its declaration, `arg.entry(DATA.cards)`:
 
-```ts
+```ts fragment
 references: {
   content: (game) => DATA.cards.content(game, (card) => [{ when: card.when }]),
 },
@@ -1700,7 +1743,7 @@ references: {
 
 A rule of the plugin's own about what a call or a panel is given, which no id can say, is a `{ problem }` reference: the checker reports its words where the call is. A rule about one argument goes on the argument with [`.rule()`](#arg). One about two, or about a panel, goes here. The stall won't swap a thing for itself, and the shop needs a vendor for its panel:
 
-```ts
+```ts fragment
 references: {
   calls: (table, name, args) =>
     table === 'commands' && name === 'swap' && args.give !== undefined && args.give === args.take ? [{ problem: 'swaps a thing for itself' }] : [],
@@ -1723,19 +1766,19 @@ A `{ within: 'action dig', refs }` reference puts `action dig: ` in front of the
 
 ### check
 
-```ts
+```ts fragment
 check?: (game: Game, tools: CheckTools) => PluginProblem[]
 ```
 
 Rules of the plugin's own that a reference can't say, such as two stages of one quest with the same id, or an exit to a place that isn't there. It runs after the references, once the game is loaded. It returns a [`PluginProblem`](#pluginproblem) for each fault.
 
-```ts
+```ts fragment
 check: (game) => DATA.cards.all(game).flatMap((card) => (card.stampsToFill > 0 ? [] : [DATA.cards.problem(card.id, 'stampsToFill must be above 0')])),
 ```
 
 ### CheckTools
 
-```ts
+```ts shape
 type CheckTools = {
   problems: (refs: readonly Reference[]) => string[]
 }
@@ -1743,7 +1786,7 @@ type CheckTools = {
 
 What the content checker lends `check`. `problems` resolves references as `references` does and returns the problems, worded as the checker words its own, or an empty list. Use it for something `check` works out, which a reference list can't hold until then. The stall checks the sign it hangs and the scene its closing button opens:
 
-```ts
+```ts fragment
 check: (game, { problems }) =>
   (game.data?.stall?.signs ?? []).flatMap((sign) => {
     const { text, closing } = sign as { id: string; text: string; closing: string }
@@ -1756,7 +1799,7 @@ check: (game, { problems }) =>
 
 ### callOf
 
-```ts
+```ts shape
 import { callOf } from '@ifloom/engine'
 
 function callOf(entry: object): { name: string; with: Record<string, unknown> } | undefined
@@ -1765,13 +1808,15 @@ function callOf(entry: object): { name: string; with: Record<string, unknown> } 
 The name and arguments of a call written in short, or `undefined` for one of the engine's own effects or conditions. Use it in code that looks through a list of effects, such as a guard or a price.
 
 ```ts
+import { callOf } from '@ifloom/engine'
+
 callOf({ 'calendar/pass': { by: 2 } }) // { name: 'calendar/pass', with: { by: 2 } }
 callOf({ stat: 'coins', by: -2 })      // undefined
 ```
 
 ### PluginProblem
 
-```ts
+```ts shape
 type PluginProblem = { list: string; id: string; what: string }
 ```
 
@@ -1787,7 +1832,7 @@ A save records each plugin's version in [`meta.plugins`](/docs/reference/saves#s
 
 ## definePlugin
 
-```ts
+```ts shape
 import { definePlugin } from '@ifloom/engine/plugin'
 
 function definePlugin<S, V = unknown, C extends AnyCalls = never>(plugin: PluginDef<S, V, C>): DefinedPlugin<S, V>
@@ -1807,6 +1852,8 @@ It throws when a declared call has no function, a function has no declaration, o
 The plugin's slice of a view is `view.plugins[id]`, typed by its [`ViewRegistry`](#typed-calls-queries-and-views) entry, so `definePlugin` adds nothing for it.
 
 ```ts
+import { loyalty } from './loyalty.ts'
+
 loyalty.read(state, game).stamps
 const full = loyalty.write(state, { stamps: 0, free: 1 }) // a test that starts with a free coffee
 runner.view().plugins.loyalty?.stamps                       // a number, typed by ViewRegistry, in a UI or a test

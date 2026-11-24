@@ -11,9 +11,10 @@ The running example is Ava, who runs the café in Small Town. Her storyline is `
 Talking usually costs no time, so a choice that pays and can be picked again is an endless farm. Give it `once`, and it pays once a [turn](/docs/reference/state#turn), which is once a day with the [calendar](/docs/plugins/calendar)'s default:
 
 ```ts
+import type { Choice } from '@ifloom/engine'
 import { cast } from '@ifloom/plugin-cast'
 
-{ id: 'chat', once: { per: 'turn', reason: 'She has a queue.' }, effects: [{ stat: 'friendship', by: 5, of: cast.character('ava') }] }
+const chat: Choice = { id: 'chat', label: 'Chat', once: { per: 'turn', reason: 'She has a queue.' }, effects: [{ stat: 'friendship', by: 5, of: cast.character('ava') }] }
 ```
 
 After the first pick, the choice stays on screen with its reason and pays nothing until the next turn. Its `scene` effects still run, so it still goes where it goes. An [action](/docs/reference/actions) takes the same `once`.
@@ -22,7 +23,7 @@ After the first pick, the choice stays on screen with its reason and pays nothin
 
 A counter is a number in the storyline's own [kv store](/docs/reference/storylines). Add to it with the [`kv` effect](/docs/reference/effects#whose-key-it-is) and read it with the [`kv` condition](/docs/reference/conditions#kv), both with the storyline in `of`:
 
-```ts
+```ts fragment
 // in the choice that opens her scene
 effects: [{ kv: 'visits', of: 'storyline:ava', by: 1 }, { scene: 'ava.hi' }]
 
@@ -71,16 +72,17 @@ const friend = {
 Then open the next scene only once the stage before it is done, with [`quests.reached`](/docs/plugins/quests#conditions):
 
 ```ts
+import type { Choice } from '@ifloom/engine'
 import { quests } from '@ifloom/plugin-quests'
 
-{ id: 'river', when: quests.reached('friend', 'close'), effects: [{ scene: 'ava.river' }] }
+const river: Choice = { id: 'river', label: 'Walk to the river', when: quests.reached('friend', 'close'), effects: [{ scene: 'ava.river' }] }
 ```
 
 ## Without the quests plugin
 
 The same order and pace come from plain conditions. Record each stage with a key on the storyline when its scene plays, and gate the next one on that key and on `since`:
 
-```ts
+```ts fragment
 // the first stage's scene sets its key
 { id: 'ava.name', /* ... */ choices: [{ id: 'bye', effects: [{ kv: 'knowsName', of: 'storyline:ava', to: true }, { scene: null }] }] }
 

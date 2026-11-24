@@ -19,7 +19,7 @@ What is data stays out of `rules`, so a mod can reach it: what's locked is conte
 
 ## GameRules
 
-```ts
+```ts shape
 type GameRules<S = any> = Omit<
   Plugin<S>,
   | 'id' | 'version' | 'migrations' | 'cooperates'
@@ -59,7 +59,7 @@ The engine runs the game's code as a plugin whose id is `game`, which is why no 
 
 ## The game's own state
 
-```ts
+```ts fragment
 start?: (game: Game) => S
 ```
 
@@ -94,7 +94,7 @@ The turn hooks get a [`TurnContext`](#turncontext), which adds `before`. Name th
 
 ## commands
 
-```ts
+```ts fragment
 commands?: Record<string, PluginCommand<S>>
 ```
 
@@ -106,7 +106,7 @@ A command of the game's own, by name, a [`PluginCommand`](/docs/reference/plugin
 - `ignoresLocks` runs it through any lock. Keep it for tools outside the story.
 
 ```ts
-import type { GameRules } from '@ifloom/engine'
+import type { ActionDef, GameRules } from '@ifloom/engine'
 
 export const rules: GameRules = {
   commands: {
@@ -120,7 +120,7 @@ export const rules: GameRules = {
 }
 
 // An action that sends it
-{ id: 'nap', label: 'Take a nap', command: { 'game/nap': true } }
+const nap: ActionDef = { id: 'nap', label: 'Take a nap', command: { 'game/nap': true } }
 ```
 
 **Gotchas.**
@@ -143,7 +143,7 @@ Use `onTurn` for what should happen before the plugins move on, and `onTurnDone`
 
 ### onTurn
 
-```ts
+```ts fragment
 onTurn?: (state: GameState, context: TurnContext<S>) => GameState
 ```
 
@@ -156,16 +156,20 @@ Ending a turn doesn't touch any stat by itself, so a game whose energy fills up 
 **Without it:** nothing, and every stat stays as it was.
 
 ```ts
-onTurn: (state, { apply, before }) => {
-  const rested = apply([
-    // A late coffee costs a fifth of the night's rest.
-    { stat: 'energy', to: before.kv.lateCoffee ? 80 : 100 },
-    { kv: 'lateCoffee', to: false },
-    // In this game a turn is a day, and market day comes every seventh.
-    { kv: 'marketOpen', to: state.turn % 7 === 5 },
-  ])
-  // Moving-in week ends on the second day.
-  return rested.kv.phase === 'arrival' && rested.turn > 1 ? apply([{ kv: 'phase', to: 'open' }], rested) : rested
+import type { GameRules } from '@ifloom/engine'
+
+export const rules: GameRules = {
+  onTurn: (state, { apply, before }) => {
+    const rested = apply([
+      // A late coffee costs a fifth of the night's rest.
+      { stat: 'energy', to: before.kv.lateCoffee ? 80 : 100 },
+      { kv: 'lateCoffee', to: false },
+      // In this game a turn is a day, and market day comes every seventh.
+      { kv: 'marketOpen', to: state.turn % 7 === 5 },
+    ])
+    // Moving-in week ends on the second day.
+    return rested.kv.phase === 'arrival' && rested.turn > 1 ? apply([{ kv: 'phase', to: 'open' }], rested) : rested
+  },
 }
 ```
 
@@ -177,7 +181,7 @@ onTurn: (state, { apply, before }) => {
 
 ### onTurnDone
 
-```ts
+```ts fragment
 onTurnDone?: (state: GameState, context: TurnContext<S>) => GameState
 ```
 
@@ -193,7 +197,7 @@ onTurnDone?: (state: GameState, context: TurnContext<S>) => GameState
 
 ### TurnContext
 
-```ts
+```ts shape
 type TurnContext<S = any> = PluginContext<S> & {
   before: GameState
 }
@@ -272,7 +276,7 @@ const rules: GameRules = {
 
 ### resets
 
-```ts
+```ts fragment
 // in content
 resets?: Record<string, KvValue>
 ```
@@ -303,7 +307,7 @@ A stat's ceiling is part of its declaration, not a rule. A ceiling that moves is
 
 ### onStat
 
-```ts
+```ts fragment
 onStat?: (before: GameState, after: GameState, stat: string, by: number, context: PluginContext<S>) => GameState
 ```
 
@@ -316,8 +320,11 @@ A hook, named as the others are: it runs at an event and returns the next state.
 **Without it:** the change stands.
 
 ```ts
-onStat: (before, after, stat) =>
-  stat === 'charm' && (before.stats.energy ?? 0) < 10 ? before : after
+import type { GameRules } from '@ifloom/engine'
+
+export const rules: GameRules = {
+  onStat: (before, after, stat) => (stat === 'charm' && (before.stats.energy ?? 0) < 10 ? before : after),
+}
 ```
 
 What the player is called, and what they're like, isn't a rule either. Keep it in [stats](/docs/reference/stats) and the [kv store](/docs/reference/state#kv), and print it in prose.
@@ -328,13 +335,15 @@ The core has no characters, so it has no hooks for them. Which scene talking to 
 
 ### saveName
 
-```ts
+```ts fragment
 saveName?: (state: GameState, context: PluginContext<S>) => string | undefined
 ```
 
 The name a save is listed under, usually the name the player typed. Each save records what it returns as [`SaveMeta.playerName`](/docs/reference/saves#savemeta), so a load screen can show whose save it is. Return `undefined` for no name. A plugin can have a `saveName` too, and the first that answers names the save, the game's before any plugin's. With none, every save's `playerName` is `null`. A spoken line under `@you` or `@player` shows this name too, or the string `you` when nothing names the save (see [Speech](/docs/reference/prose#speech)).
 
 ```ts
+import type { GameRules } from '@ifloom/engine'
+
 export const rules: GameRules = {
   saveName: (state) => (typeof state.kv.playerName === 'string' ? state.kv.playerName : undefined),
 }
@@ -344,7 +353,7 @@ The engine doesn't keep a player name of its own. The usual place is a `playerNa
 
 ### migrations
 
-```ts
+```ts fragment
 migrations?: Record<number, (state: GameState, tools: MigrationTools) => GameState>
 ```
 

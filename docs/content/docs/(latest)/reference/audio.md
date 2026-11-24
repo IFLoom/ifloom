@@ -53,7 +53,7 @@ export const sound: Content = {
 
 The café names its ambience in its [location](/docs/plugins/places#the-location-trait):
 
-```ts
+```ts fragment
 { id: 'cafe', name: 'The Corner Café', /* ... */ audio: { ambience: 'cafe.murmur' } }
 ```
 
@@ -70,6 +70,8 @@ The knock is a `sound` effect on arriving at the flat, and Ava's line carries it
 Then the view says what's due:
 
 ```ts
+import { view } from '@ifloom/engine'
+
 view(state, game).audio
 // {
 //   channels: {
@@ -87,7 +89,7 @@ view(state, game).audio
 
 ## GameAudio
 
-```ts
+```ts shape
 type GameAudio = {
   tracks: Record<string, TrackDef | PlaylistDef>
   channels?: Record<string, ChannelDef>
@@ -111,7 +113,7 @@ Your [content](/docs/reference/loader#content) and packs can carry `audio` too. 
 
 ## TrackDef
 
-```ts
+```ts shape
 type TrackDef = { src: string; channel?: string; loop?: boolean; volume?: number }
 ```
 
@@ -128,7 +130,7 @@ Give music and ambience a `channel`. A track with none is a sound effect, and th
 
 ## PlaylistDef
 
-```ts
+```ts shape
 type PlaylistDef = {
   playlist: (string | { track: string; weight?: number })[]
   order?: 'inOrder' | 'loop' | 'shuffle'
@@ -149,7 +151,7 @@ A shuffled order is drawn from the seed, the channel, the playlist's id and the 
 
 In a shuffled playlist, an entry can be `{ track, weight }` instead of a plain id, to make a track more likely to come early in the order:
 
-```ts
+```ts fragment
 tracks: {
   calm: { src: 'music/calm.ogg', channel: 'music' },
   evening: { src: 'music/evening.ogg', channel: 'music', volume: 0.8 },
@@ -165,7 +167,7 @@ A playlist whose entries all weigh 1 shuffles exactly as it would with plain ids
 
 ## ChannelDef
 
-```ts
+```ts shape
 type ChannelDef = {
   mode: 'background' | 'cue'
   crossfade?: number
@@ -194,7 +196,7 @@ Every game has four channels, and yours are merged over them:
 
 A channel you add needs a `mode`. A new background channel's crossfade is 1000 if you don't give one. Nothing has a volume setting until you name one, so a game with no audio settings plays at full volume.
 
-```ts
+```ts fragment
 channels: {
   music: { mode: 'background', volume: 'musicVolume', duck: { under: ['voice'], to: 0.4 } },
   radio: { mode: 'background', crossfade: 200 },
@@ -230,7 +232,7 @@ Each cue has a `key`, and a player plays each key once. The keys are worked out 
 
 ## AudioView
 
-```ts
+```ts shape
 type AudioView = {
   channels: Record<string, AudioChannelView>
   cues: AudioCue[]
@@ -243,7 +245,7 @@ type AudioView = {
 
 ### AudioChannelView
 
-```ts
+```ts shape
 type AudioChannelView = {
   mode: 'background' | 'cue'
   track: string | null
@@ -270,7 +272,7 @@ type AudioChannelView = {
 
 ### AudioCue
 
-```ts
+```ts shape
 type AudioCue = { key: string; channel: string; track: string; src: string; volume: number }
 ```
 
@@ -278,7 +280,7 @@ One sound that's due. Play it once per `key`.
 
 ## AudioState
 
-```ts
+```ts shape
 type AudioState = {
   channels: Record<string, string | null>
   cues: { seq: number; track: string }[]
@@ -300,13 +302,15 @@ type AudioState = {
 
 ## audioSrc
 
-```ts
+```ts shape
 function audioSrc(path: string): string
 ```
 
 Where a sound file is, relative to the page. Works like [`artSrc`](/docs/reference/prose#artsrc): the path goes under `audio/`, a leading `/` or `audio/` is dropped, and a name with no extension is an `.ogg`.
 
 ```ts
+import { audioSrc } from '@ifloom/engine'
+
 audioSrc('cafe-murmur.ogg')   // 'audio/cafe-murmur.ogg'
 audioSrc('/audio/knock.mp3')  // 'audio/knock.mp3'
 audioSrc('music/calm')        // 'audio/music/calm.ogg'

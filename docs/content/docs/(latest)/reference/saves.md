@@ -37,7 +37,7 @@ Every driver is asynchronous, even over storage that isn't, so you can swap one 
 
 ### SaveDriver
 
-```ts
+```ts shape
 type SaveDriver = {
   name: string
   get: (key: string) => Promise<string | null>
@@ -67,13 +67,15 @@ A driver stores strings by key. It knows nothing about saves: the save store dec
 
 ### memoryDriver
 
-```ts
+```ts shape
 function memoryDriver(): SaveDriver
 ```
 
 Saves in memory, gone when the page is. Each call is a new, empty store.
 
 ```ts
+import { memoryDriver, saves } from '@ifloom/engine'
+
 const store = saves(game, memoryDriver())
 ```
 
@@ -83,7 +85,7 @@ To keep saves somewhere the engine doesn't ship a driver for, write one that kee
 
 ## saves
 
-```ts
+```ts shape
 function saves(game: Game, driver: SaveDriver): Saves
 ```
 
@@ -101,7 +103,7 @@ Slots are names your game picks, such as `'auto'` for the runner's autosave, `'q
 | `exportSlot(slot)` | The save as text, for the player to keep as a file. `null` if the slot is empty. |
 | `importText(text)` | Reads text from a file the player picked, with the same checks as `read`, as a `Result` with the `LoadedSave`. Synchronous, and writes nothing. |
 
-```ts
+```ts fragment
 // A load screen. A save that can't be read can still be deleted.
 for (const entry of await store.list()) {
   if ('broken' in entry) addBrokenRow(entry.broken, () => store.remove(entry.slot))
@@ -146,7 +148,7 @@ The keys don't carry the save format's version. That's stored inside each save a
 
 ## SaveFile
 
-```ts
+```ts shape
 type SaveFile = { ifloom: 1; meta: SaveMeta; state: GameState }
 ```
 
@@ -156,7 +158,7 @@ A save as it's written, as JSON: the tag `ifloom: 1`, the save's details, and th
 
 ## SaveListing
 
-```ts
+```ts shape
 type SaveListing = SaveMeta | BrokenSave
 type BrokenSave = { slot: string; broken: string }
 ```
@@ -165,7 +167,7 @@ One entry of [`list()`](#saves). A save that's there but can't be read, because 
 
 ## SaveMeta
 
-```ts
+```ts shape
 type SaveMeta = {
   game: string
   slot: string
@@ -199,7 +201,7 @@ What a save says about itself, which is enough to draw a row on a load screen wi
 
 ## LoadedSave
 
-```ts
+```ts shape
 type LoadedSave = {
   meta: SaveMeta
   state: GameState
@@ -214,24 +216,26 @@ A save read back: its details, and the state carried forward to the current vers
 
 `missingPlugins` names [plugins](/docs/reference/plugins) the save was made with that this game doesn't have. The save still loads, and the plugin's state is kept in `state.plugins`, unused, so it comes back if a later build adds the plugin again.
 
-```ts
+```ts continues
 const loaded = await store.read('1')
 if (loaded.ok && loaded.value?.missingPacks.length) {
-  showMessage(`This save used mods you do not have: ${loaded.value.missingPacks.join(', ')}.`)
+  console.warn(`This save used mods you do not have: ${loaded.value.missingPacks.join(', ')}.`)
 }
 ```
 
 ## loadState
 
-```ts
+```ts shape
 function loadState(raw: unknown, game: Game): Result<GameState>
 ```
 
 Makes a state from anywhere ready to play in this game: a save's state, the start of a [command log](/docs/reference/runner#commandlog), or a state you parsed yourself. It returns a [`Result`](/docs/reference/runner#result) with the state, or the reason it can't, as one of the [refusals](#saves) above.
 
 ```ts
+import { readFileSync } from 'node:fs'
 import { createRunner, loadState } from '@ifloom/engine'
 
+const text = readFileSync('corner-cafe.save', 'utf8')
 const loaded = loadState(JSON.parse(text), game)
 if (!loaded.ok) throw new Error(loaded.reason)
 const runner = createRunner(game, loaded.value)
@@ -291,7 +295,7 @@ A save from version 0 doesn't load.
 
 ## SAVE_VERSION
 
-```ts
+```ts shape
 const SAVE_VERSION: 24
 ```
 
@@ -308,12 +312,15 @@ Versions 4, 7, 9, 10 and 11 only added fields. They're from before this rule and
 When an update to your game changes its content in a way old saves need to know about, such as a kv key renamed or a stat added, give the game a `version` on the base and a step in its [`rules.migrations`](/docs/reference/rules#migrations) that carries older saves forward. The Letter, the novel in `examples/novel`, renamed its count of lies to `fibs` in version 2:
 
 ```ts
+import { loadGame } from '@ifloom/engine'
+import { letter } from './story/letter.ts'
+
 const { game, problems } = loadGame([letter], {
   id: 'the-letter',
   title: 'The Letter',
   // Version 2 counts `fibs` where version 1 counted `lies`. A version-1 save is carried
   // forward by the step below when it loads, so a reader mid-story keeps their count.
-    version: 2,
+  version: 2,
   rules: {
     migrations: {
       1: (state) => {
@@ -378,7 +385,7 @@ const base: GameBase = {
 
 `fill` works on the state the step was given, not on anything the step has done since. If a step fills and changes things, call `fill` first and change its result:
 
-```ts
+```ts fragment
 2: (_state, tools) => {
   const filled = tools.fill(['stats'])
   return { ...filled, kv: { ...filled.kv, metCleo: false } }
@@ -391,7 +398,7 @@ const base: GameBase = {
 
 ### MigrationTools
 
-```ts
+```ts shape
 import type { MigrationTools } from '@ifloom/engine'
 
 type MigrationTools = {
@@ -406,7 +413,7 @@ A [plugin's migration](/docs/reference/plugins#state-and-migrations) step gets t
 
 ### FillPart
 
-```ts
+```ts shape
 import type { FillPart } from '@ifloom/engine'
 
 type FillPart = 'stats' | 'kv' | 'settings'

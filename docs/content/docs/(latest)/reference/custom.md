@@ -41,7 +41,7 @@ const tips: Macro = (state, args, { query }) => {
 
 ## CustomContext
 
-```ts
+```ts shape
 type CustomContext = {
   game: Game
   query: Query
@@ -59,13 +59,15 @@ This is the part of every context that needs no plugin. A [`PluginContext`](/doc
 
 ## Conditions
 
-```ts
+```ts fragment
 conditions?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => boolean>
 ```
 
 A test worked out from several values rather than read from one. Content calls it as `{ 'game/name': true }` anywhere a [`Condition`](/docs/reference/conditions) goes, such as a block's `when`, a lock or a schedule entry. Its arguments arrive as `args`, so one function can serve several tests.
 
 ```ts
+import type { Block, GameRules } from '@ifloom/engine'
+
 export const rules: GameRules = {
   conditions: {
     isRegular: (state) => (state.seen['ava.hi']?.n ?? 0) >= 3,
@@ -73,16 +75,18 @@ export const rules: GameRules = {
   },
 }
 
-// in a data scene
-{ prose: 'ava.hi.regular', when: { 'game/isRegular': true } }
-{ prose: 'ava.hi.usual', when: { 'game/visitedAtLeast': { times: 10 } } }
+// in a data scene's body
+const body: Block[] = [
+  { prose: 'ava.hi.regular', when: { 'game/isRegular': true } },
+  { prose: 'ava.hi.usual', when: { 'game/visitedAtLeast': { times: 10 } } },
+]
 ```
 
 **Gotcha.** A name the game doesn't declare is false rather than an error, so a broken mod hides content instead of crashing. The [content checker](/docs/reference/checks) reports it.
 
 ## Macros
 
-```ts
+```ts fragment
 macros?: Record<string, Macro<S>>
 
 type Macro<S = any> = (state: GameState, args: PluginArgs, context: PluginContext<S>) => EffectRef[]
@@ -94,6 +98,8 @@ A macro is an effect that stands for other effects. Its function works out from 
 One runs in its turn: when the effects before it in the list have applied, its function is called with the state they left, and the effects it returns apply there and then. The list it returns can hold anything content can write: plain effects, a plugin's effect such as `{ 'quests/start': { quest: 'letter' } }`, or another macro. `EffectRef` is another name for [`Effect`](/docs/reference/effects#effect), kept for code written when the two differed.
 
 ```ts
+import type { Effect, GameRules } from '@ifloom/engine'
+
 export const rules: GameRules = {
   macros: {
     bumpVisits: (state, args) => {
@@ -103,18 +109,20 @@ export const rules: GameRules = {
   },
 }
 
-// a choice
-effects: [{ 'game/bumpVisits': { by: 1 } }, { scene: null }]
+// a choice's effects
+const effects: Effect[] = [{ 'game/bumpVisits': { by: 1 } }, { scene: null }]
 ```
 
 Because each one sees the effects before it, two in a row compose. Here the second `double` doubles what the first left:
 
 ```ts
+import type { Effect, GameRules } from '@ifloom/engine'
+
 export const rules: GameRules = {
   macros: { double: (state) => [{ stat: 'coins', by: state.stats.coins }] },
 }
 
-effects: [{ stat: 'coins', by: 4 }, { 'game/double': true }, { 'game/double': true }]
+const effects: Effect[] = [{ stat: 'coins', by: 4 }, { 'game/double': true }, { 'game/double': true }]
 ```
 
 **Gotchas.**
@@ -126,7 +134,7 @@ The showcase has one: [`postLatest`](/docs/guide/showcase#feeds-and-an-effect-wo
 
 ## Effects
 
-```ts
+```ts fragment
 effects?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => GameState>
 ```
 
@@ -155,7 +163,7 @@ effects: [{ 'game/keepDiary': { text: 'Met Ava at the café.' } }]
 
 ## PluginCall
 
-```ts
+```ts shape
 type PluginCall = { [name: `${string}/${string}`]: PluginArgs | true }
 ```
 
@@ -172,7 +180,7 @@ The value is always the arguments as an object, named as the [content naming rul
 | `{ 'calendar/weekend': true }` | no `with`, so `{}` |
 | `{ 'game/marketDay': true }` | the game's own, no `with` |
 
-```ts
+```ts fragment
 // in a data scene: Ava thanks you once the bread quest is done
 { prose: 'ava.hi.thanks', when: { 'quests/done': { quest: 'bread' } } }
 // a choice that starts it
@@ -187,7 +195,7 @@ The value is always the arguments as an object, named as the [content naming rul
 
 ## callOf
 
-```ts
+```ts shape
 function callOf(entry: object): { name: string; with: Record<string, unknown> } | undefined
 ```
 
@@ -195,7 +203,7 @@ The name and arguments of a call, or `undefined` for one of the engine's own eff
 
 ## CommandRef
 
-```ts
+```ts shape
 type CommandRef = Command | CommandCall
 ```
 
@@ -203,7 +211,7 @@ A command as content and code write it: any [command](/docs/reference/commands),
 
 ## commandOf
 
-```ts
+```ts shape
 function commandOf(ref: CommandRef): Command
 ```
 
@@ -218,7 +226,7 @@ commandOf({ 'places/go': { id: 'cafe' } })
 
 ## Values
 
-```ts
+```ts fragment
 values?: Record<string, (state: GameState, args: PluginArgs, context: PluginContext<S>) => string | number>
 type ValueRef = { value: string; with?: PluginArgs }
 ```
@@ -226,6 +234,8 @@ type ValueRef = { value: string; with?: PluginArgs }
 A number or a word the prose needs to print, such as a price that moves or today's special. A value can also be the ceiling of a stat that grows, an app's [badge](/docs/plugins/devices#appdef) or an achievement's [progress](/docs/plugins/achievements). Like a condition, it's asked with arguments.
 
 ```ts
+import type { GameRules } from '@ifloom/engine'
+
 export const rules: GameRules = {
   values: {
     breadPrice: (state) => (state.kv.marketDay ? 4 : 5),
@@ -245,14 +255,14 @@ To ask one of these from your own code, such as a tool or a test, go through the
 ```ts
 import { amountOf, holds } from '@ifloom/engine'
 
-holds(state, town, { 'game/marketDay': true })                                  // true on market day
-amountOf(state, town, { value: 'game/breadPrice' })                             // 4
-amountOf(state, town, { value: 'messages/unread', with: { channel: 'texts' } }) // 2
+holds(state, game, { 'game/marketDay': true })                                  // true on market day
+amountOf(state, game, { value: 'game/breadPrice' })                             // 4
+amountOf(state, game, { value: 'messages/unread', with: { channel: 'texts' } }) // 2
 ```
 
 ## buildEffects
 
-```ts
+```ts shape
 function buildEffects(game: Game, refs: readonly EffectRef[]): Effect[]
 ```
 
@@ -261,7 +271,7 @@ The effects the reducer would run: a call to an effect or a macro that neither t
 ```ts
 import { buildEffects } from '@ifloom/engine'
 
-buildEffects(town, [{ 'game/tip': { by: 2 } }, { 'game/typo': true }])
+buildEffects(game, [{ 'game/tip': { by: 2 } }, { 'game/typo': true }])
 // [{ 'game/tip': { by: 2 } }]
 ```
 

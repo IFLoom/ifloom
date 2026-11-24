@@ -27,7 +27,7 @@ Anywhere effects run. A player makes one with a choice, an [action](/docs/refere
 
 ## The effect
 
-```ts
+```ts fragment
 { roll: string, dice: Dice, plus?: Amount, against?: Amount }
 ```
 
@@ -42,7 +42,7 @@ The [effects reference](/docs/reference/effects#roll) has the details, and [Chec
 
 ## Dice
 
-```ts
+```ts shape
 type Dice = string | { count?: number; sides: number }
 ```
 
@@ -50,7 +50,7 @@ Notation is a count, `d`, the sides, and an optional number to add or take away:
 
 ## Roll
 
-```ts
+```ts shape
 type Roll = {
   key: string
   dice: string                // '2d6': the dice thrown, without what's added
@@ -69,7 +69,7 @@ A critical is every die on its top face (`'max'`) or every die on 1 (`'min'`). W
 
 ## RollsState
 
-```ts
+```ts shape
 type RollsState = { made: number; last: Roll[]; latest: Record<string, Roll> }
 ```
 

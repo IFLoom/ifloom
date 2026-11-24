@@ -37,10 +37,10 @@ import { apply, view } from '@ifloom/engine'
 view(state, game).inputs.find((input) => input.id === 'alarm')
 // { id: 'alarm', label: 'Wake at', type: 'number', maxLength: null, min: 5, max: 10, options: [], value: null }
 
-state = apply(state, game, { type: 'input', id: 'alarm', to: 7 }).state
-state = apply(state, game, { type: 'input', id: 'catName', to: '  Biscuit ' }).state
+let next = apply(state, game, { type: 'input', id: 'alarm', to: 7 }).state
+next = apply(next, game, { type: 'input', id: 'catName', to: '  Biscuit ' }).state
 
-state.kv  // { wakeAt: 7, catName: 'Biscuit', ... }
+next.kv  // { wakeAt: 7, catName: 'Biscuit', ... }
 ```
 
 Prose reads the value back like any kv key, and conditions test it with [`{ kv }`](/docs/reference/conditions#kv), such as `{ kv: 'order', is: 'tea' }`.
@@ -49,7 +49,7 @@ A button can send the command with no `to`, as `{ type: 'input', id: 'catName' }
 
 ## InputDef
 
-```ts
+```ts shape
 type InputDef = {
   id: string
   label: string
@@ -94,6 +94,8 @@ An `input` command whose value can't be entered is refused with one line, as the
 Each line is the engine's English from the [strings table](/docs/reference/strings#input) (`noSuchInput`, `notNow`, `enterSomething`, `tooLong`, `enterNumber`, `between`, `atLeast`, `atMost`, `notAnOption`), and a game can reword it.
 
 ```ts
+import { whyNot } from '@ifloom/engine'
+
 whyNot(state, game, { type: 'input', id: 'alarm', to: 11 })  // 'Between 5 and 10.'
 ```
 

@@ -32,7 +32,7 @@ The examples on this page use the [places plugin](/docs/plugins/places), where `
 
 ## Lock
 
-```ts
+```ts shape
 type Lock = {
   id?: string
   when: Condition
@@ -68,20 +68,20 @@ type Lock = {
 
 ### LockTarget
 
-```ts
+```ts shape
 type LockTarget = Command['type'] | '*' | `${string}/${string}`
 ```
 
 What `deny` and `except` can name. A plugin command's type is always `custom`, so a lock names it by its full name, or names the whole plugin with `/*`:
 
-```ts
+```ts fragment
 // No phone at work: every command of the devices plugin, while the player is in the office.
 { when: places.at('office'), deny: ['devices/*'], reason: 'Not at work.' }
 ```
 
 ## lockOn
 
-```ts
+```ts shape
 function lockOn(state: GameState, game: Game, command: Command): Lock | undefined
 ```
 
@@ -89,7 +89,7 @@ The first lock in `game.locks` that stops this command right now, or `undefined`
 
 ## lockedOut
 
-```ts
+```ts shape
 function lockedOut(state: GameState, game: Game): boolean
 ```
 
@@ -105,14 +105,14 @@ The showcase, [Small Town](/docs/guide/showcase#locks), uses the pair at the top
 
 The player starts with the kv key `phase` at `arrival`, and can only take choices until the last scene sets it to `open`.
 
-```ts
+```ts fragment
 kv: { phase: 'arrival' },
 locks: [{ id: 'intro', when: { kv: 'phase', is: 'arrival' }, deny: ['*'], except: ['choose'], reason: 'Not yet.' }],
 ```
 
 The last choice of the intro:
 
-```ts
+```ts fragment
 effects: [{ kv: 'phase', to: 'open' }, places.move('flat')]
 ```
 
@@ -130,14 +130,14 @@ locks: [
 
 Every exit shows greyed out with `Stay in tonight.` To keep the player out of the park but let them walk the high street, put the condition on the park itself, as a place's [`blocked`](/docs/plugins/places#the-location-trait) entry. Add `hide: true` for a place that shouldn't be on the map at all:
 
-```ts
+```ts fragment
 { id: 'park', /* … */ blocked: [{ when: { kv: 'phase', is: 'first-night' }, reason: 'Too far for tonight.' }] }
 { id: 'office', /* … */ blocked: [{ when: { kv: 'phase', is: 'first-night' }, reason: 'Nobody is in yet.', hide: true }] }
 ```
 
 A lock's `hide` leaves any button off the screen, not only exits. With this lock, late at night every button that does an action, such as Buy a coffee, is gone rather than greyed out, while the exits home still show:
 
-```ts
+```ts fragment
 { when: { kv: 'lateNight' }, deny: ['action'], hide: true, reason: 'Everything is shut.' }
 ```
 

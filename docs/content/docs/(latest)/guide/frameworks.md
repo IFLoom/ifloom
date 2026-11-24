@@ -28,7 +28,7 @@ The rest of this page goes through their code piece by piece, with a tab for eac
 
 A UI talks to the engine through a [runner](/docs/reference/runner). You need three things from it, and [Running a game](/docs/guide/running-a-game#the-loop) goes through them in full:
 
-```ts
+```ts fragment
 import { browserRunner } from '@ifloom/browser'
 
 const runner = await browserRunner(game)
@@ -44,7 +44,7 @@ Draw the [snapshot](/docs/reference/runner#runnersnapshot), send the `command` o
 
 Each template makes the runner once, in a module of its own, and turns the snapshot into the framework's kind of state. Components import `runner`, the snapshot and the view from there.
 
-```ts tab="Plain JS" tab-group="framework"
+```ts fragment tab="Plain JS" tab-group="framework"
 // src/main.ts
 import { browserRunner, startClock, startKeys } from '@ifloom/browser'
 import type { InputView, MinigameView, RunnerSnapshot, SceneBeat } from '@ifloom/engine'
@@ -126,7 +126,7 @@ startClock(runner)
 startKeys(runner)
 ```
 
-```ts tab="Svelte" tab-group="framework"
+```ts fragment tab="Svelte" tab-group="framework"
 // src/runner.ts
 /**
  * The game's runner, and its snapshot as a Svelte store. Components read
@@ -199,7 +199,7 @@ import './styles.css'
 createApp(App).mount('#root')
 ```
 
-```ts tab="Svelte" tab-group="framework"
+```ts fragment tab="Svelte" tab-group="framework"
 // src/main.ts
 import { mount } from 'svelte'
 import App from './App.svelte'
@@ -237,7 +237,7 @@ import { ifloom } from '@ifloom/cli/vite'
 export default ifloom({ vite: { plugins: [vue()] } })
 ```
 
-```ts tab="Svelte" tab-group="framework"
+```ts fragment tab="Svelte" tab-group="framework"
 // vite.config.ts
 import { svelte } from '@sveltejs/vite-plugin-svelte'
 import { ifloom } from '@ifloom/cli/vite'
@@ -252,7 +252,7 @@ React by hand starts from the `vanilla` template: add `react`, `react-dom` and `
 
 The app draws the title, the scene, its choices and the stats:
 
-```ts tab="Plain JS" tab-group="framework"
+```ts fragment tab="Plain JS" tab-group="framework"
 // src/main.ts
 function draw({ view }: RunnerSnapshot): void {
   root.replaceChildren()
@@ -281,7 +281,7 @@ function draw({ view }: RunnerSnapshot): void {
 }
 ```
 
-```tsx tab="React" tab-group="framework"
+```tsx fragment tab="React" tab-group="framework"
 // src/App.tsx
 import { Fragment } from 'react'
 import { runner, useView } from './runner.ts'
@@ -410,7 +410,7 @@ The templates lay this out as a page in one file of its own: `src/Layout.vue`, `
 
 A scene's prose comes as [beats](/docs/reference/prose#scenebeat): a paragraph, a spoken line, a picture or a video, and in a [flowing scene](/docs/reference/flows), a pick made earlier (`chose`). A letter or a sticky note is a [UI piece](/docs/reference/prose#letters-notes-and-signs) inside a paragraph, which the templates show as its words. Draw `view.scene.beats` rather than `view.scene.body`, which is the raw prose with its markup.
 
-```ts tab="Plain JS" tab-group="framework"
+```ts fragment tab="Plain JS" tab-group="framework"
 // src/main.ts
 /** One paragraph of a scene: narration, a spoken line, a picture, a clip, a pick made earlier. A sound beat is heard, not drawn. */
 function drawBeat(beat: SceneBeat): void {
@@ -558,7 +558,7 @@ A spoken line's `who` is `'character'` or `'player'`, which the stylesheet uses 
 
 An [input](/docs/reference/inputs) is a value the game asks the player for, such as a name. Each is an [`InputView`](/docs/reference/view#inputview) in `view.inputs`, and you send what the player enters as an `input` command:
 
-```ts tab="Plain JS" tab-group="framework"
+```ts fragment tab="Plain JS" tab-group="framework"
 // src/main.ts
 /** A value the game asks for, such as the player's name. What they enter goes back as an `input` command. */
 function drawInput(parent: HTMLElement, input: InputView): void {
@@ -711,7 +711,7 @@ An input of type `choice` has its `options`, each with a `value` and a `label`, 
 
 While a [minigame](/docs/reference/minigames) runs, `view.minigame` describes it, and the scene shows its words: `view.scene.title` is the minigame's label and `view.scene.beats` are the running state's words. The choices are empty. So the app draws the scene as usual, and adds a panel for the minigame's timer and inputs:
 
-```ts tab="Plain JS" tab-group="framework"
+```ts fragment tab="Plain JS" tab-group="framework"
 // src/main.ts
 /** The minigame being played: a bar counting down its timer, and a button for each input that does something now. */
 function drawMinigame(minigame: MinigameView): void {
@@ -813,7 +813,7 @@ The [Minigames recipe](/docs/recipes/minigames#your-own-panel) draws a panel for
 
 Content can open a [panel](/docs/reference/panels) over the story, such as a shop's counter or a job board. `view.panel` is its name and what it was opened with, or `null`. The templates draw a placeholder dialog with the name, what it was opened with and a Close button that sends `{ type: 'closePanel' }`. Replace its body with your own drawing for each name your game opens.
 
-```ts tab="Plain JS" tab-group="framework"
+```ts fragment tab="Plain JS" tab-group="framework"
 // src/main.ts, called at the end of draw(view) when view.panel isn't null
 function drawPanel(panel: OpenPanel): void {
   const dialog = add(root, 'section', '', 'panel')
@@ -903,7 +903,7 @@ If your game lists tracks in [`game.audio`](/docs/reference/audio), the template
 
 A spoken line with a voice is a `say` [beat](/docs/reference/prose#scenebeat) with a `voice` track id. To offer a button that plays it again, keep the player `startAudio` returned and call its [`play`](/docs/browser/audio-player#audioplayer) with the track's file:
 
-```ts
+```ts fragment
 import { audioSrc } from '@ifloom/engine'
 
 const player = startAudio(runner)

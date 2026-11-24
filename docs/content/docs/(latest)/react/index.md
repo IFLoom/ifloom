@@ -164,7 +164,9 @@ Here `src/layout.tsx` is the page, a copy of [the default layout](#layouts) to c
 
 ## mountGame
 
-```ts
+```ts shape
+import type { Game } from '@ifloom/engine'
+
 function mountGame(game: Game | { game: Game; problems?: readonly unknown[] }, options?: MountOptions): Promise<Runner>
 
 type MountOptions = Omit<GameShellProps, 'runner'> & {
@@ -189,6 +191,7 @@ It sets up what most games want:
 | `unstyled` | `false`. `true` drops every built-in class. |
 | `viewer` | `true`. Clicking a picture or a clip in the story opens it large in the [`MediaViewer`](/docs/react/components#mediaviewer). `false` turns that off. See [Pictures and video](#pictures-and-video). |
 | `keys` | Off. `true` turns on the keyboard shortcuts: 1 to 9 for the choices on screen, each showing its number, and Escape for the menu. [`KeyOptions`](/docs/react/components#keyoptions) adds keys of your own with `map`. A minigame's own keys work either way. |
+| `motion` | `true`. Scene transitions and prose reveals play. `false` shows every scene and every line at once. A player whose system asks for reduced motion gets them at once either way. |
 | `audio` | On when the game lists any tracks in [`game.audio`](/docs/reference/audio). `false` turns sound off, and an object is passed to [`startAudio`](/docs/browser/audio-player#startaudio) as its [options](/docs/browser/audio-player#audiooptions). See [Sound](#sound). |
 
 Any other option goes to `GameShell` as a prop, such as `layout`, `panels` or `mods`. `layout` takes any component, so a page that isn't a side column and a story at all is a layout too. See [Write your own root](/docs/react/customising#8-write-your-own-root).
@@ -230,7 +233,7 @@ The shell redraws whenever the runner's state changes, so undo, loading a save a
 
 ## GameShell
 
-```tsx
+```tsx shape
 function GameShell(props: GameShellProps): JSX.Element
 
 type GameShellProps = {
@@ -245,6 +248,7 @@ type GameShellProps = {
   unstyled?: boolean
   viewer?: boolean
   keys?: boolean | KeyOptions
+  motion?: boolean
   layout?: ComponentType
   pages?: boolean | PagesOptions
   audio?: false | AudioOptions
@@ -262,6 +266,7 @@ type GameShellProps = {
 | `components`, `classes`, `unstyled` | How the UI looks, below the theme. See [Make it your own](/docs/react/customising). |
 | `viewer` | Whether clicking a picture in the story opens it large. On if you leave it out. |
 | `keys` | Keyboard shortcuts for choices and the menu. Off if you leave it out. See [`KeyOptions`](/docs/react/components#keyoptions). |
+| `motion` | Whether scene transitions and prose reveals play. On if you leave it out. See [`UiOptions`](/docs/react/components#uioptions). |
 | `layout` | The page, as a component: your `layout.tsx`, or any component of your own. If you leave it out, you get [`DefaultLayout`](/docs/react/components#defaultlayout). See [Layouts](#layouts). |
 | `pages` | The title screen and the pages around the game. Off if you leave it out. The layout is drawn on the `game` page. See [Pages](#pages). |
 | `audio` | On when the game lists any tracks in [`game.audio`](/docs/reference/audio). `false` turns sound off, and an object is passed to [`startAudio`](/docs/browser/audio-player#startaudio) as its options. See [Sound](#sound). |
@@ -371,6 +376,8 @@ When the game lists any tracks in [`game.audio`](/docs/reference/audio), `GameSh
 To see what it's doing, pass it a log:
 
 ```ts
+import { mountGame } from '@ifloom/react'
+
 mountGame(game, { audio: { log: console.debug } })
 ```
 
@@ -380,7 +387,7 @@ A spoken line with a voice, `@ava: "Morning!" [[voice:ava.morning]]`, gets a sma
 
 ### useAudio
 
-```ts
+```ts shape
 function useAudio(options?: AudioOptions & { runner?: Runner }): AudioPlayer | null
 ```
 
@@ -388,16 +395,19 @@ function useAudio(options?: AudioOptions & { runner?: Runner }): AudioPlayer | n
 
 ```tsx
 import { GameProvider, useAudio } from '@ifloom/react'
+import { MyPage } from './my-page.tsx'
 
 function Sound() {
   useAudio()
   return null
 }
 
-<GameProvider runner={runner}>
-  <Sound />
-  <MyPage />
-</GameProvider>
+export const App = () => (
+  <GameProvider runner={runner}>
+    <Sound />
+    <MyPage />
+  </GameProvider>
+)
 ```
 
 It returns the [player](/docs/browser/audio-player#audioplayer) once it has started, and `null` before then. A runner has one player at a time: a `useAudio` inside `GameShell` or `mountGame` takes over from theirs, with its own options, so no sound plays twice.
@@ -415,6 +425,8 @@ Clips play like GIFs unless their flags say otherwise. They load and start only 
 Clicking a picture or a clip in the story opens it large in the [`MediaViewer`](/docs/react/components#mediaviewer). Escape or the close button closes it. To turn that off:
 
 ```ts
+import { mountGame } from '@ifloom/react'
+
 mountGame(game, { viewer: false })
 ```
 

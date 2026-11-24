@@ -32,7 +32,7 @@ With the suit on, the player reads "The mirror says you look sharp." Otherwise i
 
 ## Phrases
 
-```ts
+```ts shape
 type Phrases = { [name: string]: Phrase | Phrases }
 type Phrase = string | PhraseRow[] | PhraseWithArgs
 type PhraseRow = { when?: Condition; text: string }
@@ -56,7 +56,7 @@ When no row fits, the phrase prints nothing at all. Give it a last row with no `
 
 A phrase that should change with who or what it's about takes arguments. Name them in `args`, and give its rows in `rows`:
 
-```ts
+```ts fragment
 phrases: {
   mood: {
     word: {
@@ -110,7 +110,7 @@ A phrase also answers where a value is asked for by name, with `game/` in front:
 
 ## game.phrases
 
-```ts
+```ts fragment
 phrases?: Record<string, PhraseRow[] | PhraseWithArgs>
 ```
 
@@ -119,6 +119,8 @@ phrases?: Record<string, PhraseRow[] | PhraseWithArgs>
 Phrases merge by full name. Each is declared once across your content, and two files can add phrases to the same group. A pack's phrase replaces the one of that name whole, row list and arguments and all, and a pack can add new ones to a group:
 
 ```ts
+import { SCHEMA, type Pack } from '@ifloom/engine'
+
 const mod: Pack = { id: 'mod:posh', schema: SCHEMA, phrases: { outfit: { verdict: 'immaculate', hat: 'a felt cap' } } }
 ```
 

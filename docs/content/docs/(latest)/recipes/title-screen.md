@@ -35,8 +35,12 @@ export async function titleScreen(root: HTMLElement, runner: Runner, start: () =
     }
   }
 }
+```
 
+```ts fragment tab="Plain JS" tab-group="framework"
 // src/main.ts, in the vanilla template: the title screen first, then the game.
+import { titleScreen } from './title.ts'
+
 void titleScreen(root, runner, () => {
   runner.subscribe(({ view }) => draw(view))
   draw(runner.view())
@@ -55,6 +59,9 @@ mountGame(module.build(), { layout: Layout, pages: true })
 
 ```ts tab="React" tab-group="framework"
 // Or, instead of `true`, a subtitle, a picture and credits:
+import { mountGame } from '@ifloom/react'
+import { Layout } from './layout.tsx'
+
 mountGame(game, {
   layout: Layout,
   pages: {
@@ -196,6 +203,8 @@ In the React UI, draw [`GameShell`](/docs/react#gameshell) with that runner and 
 Declare settings in your content's `settings`. This declares one of each kind the [showcase](/docs/guide/showcase) uses:
 
 ```ts
+import type { Content } from '@ifloom/engine'
+
 const town: Content = {
   settings: [
     { id: 'hints', label: 'Show hints', type: 'toggle', default: true },
@@ -223,7 +232,7 @@ A setting is either part of the game or only part of how it looks. [Settings](/d
 
 `hints` leaves out `affects`, so it's a play setting. Its value is in the game state and the save, and a condition reads it like a kv key:
 
-```ts
+```ts fragment
 body: [
   { prose: 'place.high-street' },
   { prose: 'place.high-street.hint', when: { setting: 'hints' } },
@@ -240,7 +249,7 @@ A save keeps the settings it was made with, so loading an old save brings its ow
 
 Read it where you draw the story, with [`runner.snapshot().settings`](/docs/reference/runner#settings). The runner calls its listeners when the player changes it, so whatever redraws on a change picks it up. In the React UI, [`useSetting`](/docs/react/components#usesetting) reads it and redraws the component:
 
-```ts tab="Plain JS" tab-group="framework"
+```ts fragment tab="Plain JS" tab-group="framework"
 // src/main.ts, in the vanilla template. In draw():
 root.classList.toggle('large', runner.snapshot().settings.textSize === 'large')
 ```
@@ -288,6 +297,8 @@ To apply it to every page, including the title screen, put it on the page instea
 
 ```ts
 // src/world/settings.ts
+import type { Content } from '@ifloom/engine'
+
 export const settings: Content = {
   settings: [/* … textSize, as above */],
   ui: { settings: { textSize: 'textSize' } },
@@ -319,6 +330,8 @@ Then the stylesheet uses the attribute. The React UI sizes everything in `rem`, 
 New Game+ starts a new game that keeps a little of the last one. Say when the game counts as finished, and what carries over, in your [content](/docs/reference/loader#content):
 
 ```ts
+import type { Content } from '@ifloom/engine'
+
 export const endings: Content = {
   finished: { scene: ['end.kept', 'end.posted'] },
   carryOver: { kv: ['readBefore'] },
@@ -329,7 +342,7 @@ The Letter puts them in `story/ch3.ts`, beside its endings. The first time `fini
 
 The Letter sets `readBefore` as the reader reaches an ending, and its first chapter has a line that only a second reader sees:
 
-```ts
+```ts fragment
 { id: 'post', effects: [{ kv: 'readBefore', to: true }, { scene: 'end.posted' }] }
 
 body: [
@@ -364,6 +377,8 @@ export async function gate(root: HTMLElement, runner: Runner, next: () => void):
 ```
 
 ```ts tab="React" tab-group="framework"
+import { mountGame } from '@ifloom/react'
+
 mountGame(game, {
   pages: {
     gate: {

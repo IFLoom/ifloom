@@ -5,7 +5,7 @@ description: "A scene that reads on as the player chooses: decisions partway thr
 A scene's body is read top to bottom. Most scenes show their blocks and then their choices. A flowing scene stops partway through at a decision instead. Once the player picks, the pick's own text comes next, then the blocks after the decision, so the earlier text stays on the page and the scene reads on like a story. [Writing a flowing scene](/docs/recipes/flowing-scenes) walks through one.
 
 ```ts
-import { choice, decide, jump, point, say, text } from '@ifloom/engine'
+import { choice, decide, jump, point, say, text, type DataScene } from '@ifloom/engine'
 
 const counter: DataScene = {
   id: 'cafe.counter',
@@ -39,6 +39,8 @@ const counter: DataScene = {
 After the player picks the tea and asks about the beans, the view reads:
 
 ```ts
+import { view } from '@ifloom/engine'
+
 view(state, game).scene.beats
 // [{ type: 'text', text: 'Ava looks up from the till.' },
 //  { type: 'say', who: 'character', speaker: 'character:ava', name: 'Ava', text: 'Morning! What can I get you?' },
@@ -56,7 +58,7 @@ state.flow                        // { scene: 'cafe.counter', path: [{ chose: 't
 
 A flowing scene uses the same [`Block`](/docs/reference/scenes#block) list as any scene, with these kinds beside `text`, `prose`, `variants` and `media`:
 
-```ts
+```ts shape
 type Block = (
   | { text: string; id?: string; when?: Condition }
   | { prose: string; when?: Condition }
@@ -111,7 +113,7 @@ body: [
 
 ### FlowChoice
 
-```ts
+```ts shape
 type FlowChoice = Choice & { then?: Block[] }
 ```
 
@@ -134,7 +136,7 @@ The flow is drawn from the state now, along the path the save keeps. So a sectio
 
 ## state.flow
 
-```ts
+```ts shape
 type FlowState = {
   scene: string
   path: FlowStep[]

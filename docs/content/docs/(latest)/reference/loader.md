@@ -35,10 +35,10 @@ Because content has no schema, it isn't upgraded when you update the engine. In 
 
 ## Content
 
-```ts
+```ts shape
 type Content = {
   name?: string
-  scenes?: (Scene | DataScene)[]
+  scenes?: DataScene[]
   introScene?: string
   storylines?: StorylineDef[]
   stats?: StatDef[]
@@ -148,7 +148,7 @@ Packs written before traits existed have no `traits` key, so they need no upgrad
 
 ## Pack
 
-```ts
+```ts shape
 type Pack = Omit<Content, 'name'> & {
   id: string
   schema: number
@@ -196,7 +196,7 @@ A pack written for an older schema still loads. [`loadGame`](#loadgame) upgrades
 
 ## upgradePack
 
-```ts
+```ts shape
 function upgradePack(pack: { schema: number; plugins?: Record<string, number> }, plugins: readonly Plugin[], context?: PackContext): Result<Pack>
 
 type PackContext = { entities?: readonly unknown[]; you?: readonly string[]; prose?: Readonly<Record<string, string>> }
@@ -249,8 +249,10 @@ It returns the pack at `SCHEMA`, with `plugins` recording each plugin's version,
 A pack with nothing to do comes back unchanged, as the same object. The pack you pass in is never changed, so keep the result.
 
 ```ts
+import { readFileSync } from 'node:fs'
 import { upgradePack } from '@ifloom/engine'
 
+const text = readFileSync('old-pack.json', 'utf8')
 const upgraded = upgradePack(JSON.parse(text), game.plugins ?? [])
 if (!upgraded.ok) console.warn(`old-pack.json: ${upgraded.reason}`)
 ```
@@ -263,7 +265,7 @@ You rarely call it yourself, because `loadGame` does. Use it when you read a pac
 
 ## loadGame
 
-```ts
+```ts shape
 function loadGame(content: readonly Content[], base: GameBase, options?: LoadOptions): Loaded
 
 type GameBase = Pick<Game, 'id' | 'title' | 'version' | 'plugins' | 'rules'>
@@ -354,7 +356,7 @@ The real file is `examples/showcase/src/game.ts`, which lists all of the town's 
 
 ## Patches
 
-```ts
+```ts shape
 type Patch =
   | { scene: string; addChoice: Choice; before?: string }
   | { scene: string; dropChoice: string }

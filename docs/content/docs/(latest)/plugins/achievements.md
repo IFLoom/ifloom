@@ -29,7 +29,7 @@ Then add `achievements()` to the game's `plugins`. [Adding one](/docs/plugins#ad
 
 ## achievements
 
-```ts
+```ts shape
 function achievements(): DefinedPlugin<AchievementsState, AchievementsView>
 ```
 
@@ -66,7 +66,7 @@ const town: Content = {
 
 ### AchievementDef
 
-```ts
+```ts shape
 type AchievementDef = {
   id: string
   name: string
@@ -96,7 +96,7 @@ An achievement is earned:
 
 ### Progress
 
-```ts
+```ts shape
 type ProgressDef = { value: Amount; target: number }
 ```
 
@@ -127,7 +127,7 @@ After every command, the plugin's [`profile`](/docs/reference/plugins#the-profil
 
 ### AchievementsProfile
 
-```ts
+```ts shape
 type AchievementsProfile = { earned: string[] }
 ```
 
@@ -174,7 +174,7 @@ Its [React UI](#drawing-it) draws it with [`AchievementList`](#achievementlist),
 
 ### AchievementsView
 
-```ts
+```ts shape
 type AchievementsView = {
   achievements: AchievementEntry[]
   earned: number
@@ -190,7 +190,7 @@ type AchievementsView = {
 
 ### AchievementEntry
 
-```ts
+```ts shape
 type AchievementEntry = {
   id: string
   name: string
@@ -228,7 +228,7 @@ The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.
 
 ### achievementsUi
 
-```ts
+```ts shape
 const achievementsUi: PluginUi
 ```
 
@@ -246,7 +246,7 @@ Its words are in `ACHIEVEMENTS_WORDS`. A game rewords any of them with `ui.<key>
 
 ### AchievementList
 
-```tsx
+```tsx shape
 function AchievementList(props: { className?: string; title?: string | false }): JSX.Element | null
 ```
 
@@ -258,7 +258,7 @@ Replaceable as `AchievementList` in [`components`](/docs/react/components#compon
 
 ### AchievementsButton
 
-```tsx
+```tsx shape
 function AchievementsButton(props: { className?: string }): JSX.Element | null
 ```
 
@@ -268,7 +268,7 @@ Replaceable as `AchievementsButton` in [`components`](/docs/react/components#com
 
 ### AchievementsPage
 
-```tsx
+```tsx shape
 function AchievementsPage(props: { className?: string }): JSX.Element
 ```
 
@@ -278,7 +278,7 @@ Replaceable as `AchievementsPage` in [`components`](/docs/react/components#compo
 
 ### useAchievements
 
-```ts
+```ts shape
 function useAchievements(): AchievementsView | null
 ```
 
@@ -290,7 +290,7 @@ The achievements plugin's view ([`AchievementsView`](/docs/plugins/achievements#
 
 ### AchievementsState
 
-```ts
+```ts shape
 type AchievementsState = { earned: Record<string, number> }
 ```
 
@@ -300,7 +300,7 @@ What the plugin keeps in a save, at `state.plugins.achievements`: each achieveme
 
 ### Helpers
 
-```ts
+```ts shape
 const achievements: {
   (): DefinedPlugin<AchievementsState, AchievementsView>
   earned(id: string): Condition
@@ -310,7 +310,7 @@ const achievements: {
 
 ### achievementsOf
 
-```ts
+```ts shape
 function achievementsOf(game: Game): AchievementDef[]
 ```
 

@@ -61,7 +61,7 @@ statValue(state, game, 'skill', 'staff:ana')  // 5, from her declaration
 
 Content names her `'staff:ana'`:
 
-```ts
+```ts fragment
 { stat: 'quality', by: 1, of: 'dish:soup' }          // better ingredients
 { stat: 'quality', of: 'dish:soup', lt: 5 }                         // there is still room to improve it
 { each: 'staff', effects: [{ stat: 'morale', by: -8, of: '$' }] }   // a long week for everyone
@@ -70,7 +70,7 @@ Content names her `'staff:ana'`:
 
 ## KindDef
 
-```ts
+```ts shape
 type KindDef = {
   id: string
   label: string
@@ -100,7 +100,7 @@ Kinds go in [`Game.kinds`](/docs/reference/game#game). You declare them in your 
 
 ## EntityDef
 
-```ts
+```ts shape
 type EntityDef = {
   id: string
   of: string
@@ -140,7 +140,7 @@ A [plugin](/docs/reference/plugins#kinds-and-entities)'s `entities` adds more, m
 
 ## EntityState
 
-```ts
+```ts shape
 type EntityState = {
   name?: string
   description?: string
@@ -170,7 +170,7 @@ Definitions never go into a save. That's why a fix to a name or a starting value
 
 ## EntityRef
 
-```ts
+```ts shape
 type EntityRef = `${string}:${string}`
 type Holder = EntityRef | 'player' | 'you'
 ```
@@ -181,13 +181,13 @@ What the engine hands back is typed `EntityRef`, such as [`entitiesOf`](#entitie
 
 **`'$'` is the current one.** Inside an [`each`](/docs/reference/effects#each) effect's `where` and `effects`, and inside a [`{ count }`](/docs/reference/conditions#count) condition's `where`, `of: '$'` means the entity being looked at, one after another. The same goes for a kind's `listed` and `flags`, an entity's `visible` and the `visible` of a stat declared `of` a kind, which the [view](/docs/reference/view#entitiesview-and-entityview) asks for each entity. Anywhere else, `'$'` names nothing, so an effect with it does nothing and a `{ stat }` condition with it fails.
 
-```ts
+```ts fragment
 { each: 'staff', where: { stat: 'morale', of: '$', lt: 20 }, effects: [{ remove: '$' }] }
 ```
 
 A nested `each` or `count` binds its own `'$'`. Inside it, `'$'` is the inner one, and there's no way to name the outer one:
 
-```ts
+```ts fragment
 // For each member of staff: is anyone at all skilled enough to learn from? The inner $ is the inner one.
 { each: 'staff', where: { count: 'staff', where: { stat: 'skill', of: '$', gte: 4 } }, effects: [{ kv: 'learning', to: true, of: '$' }] }
 ```
@@ -240,7 +240,7 @@ withTrait(state, game, 'laundry/washable')                   // ['clothing:scarf
 
 ### TraitRegistry and TraitData
 
-```ts
+```ts shape
 interface TraitRegistry {}
 type TraitData<K extends string> = K extends keyof TraitRegistry ? TraitRegistry[K] : unknown
 ```
@@ -257,7 +257,7 @@ declare module '@ifloom/engine' {
 
 ### TraitTable
 
-```ts
+```ts shape
 type TraitTable = Record<string, Record<EntityRef, unknown>>   // typed by TraitRegistry for the ids it knows
 ```
 
@@ -300,7 +300,7 @@ The [cast plugin](/docs/plugins/cast)'s `character` kind is listed with `{ 'cast
 
 To split a list rather than shorten it, give the kind `flags`. Each is a condition asked for every listed entity, and the view hands the answers over as the entity's `flags`:
 
-```ts
+```ts fragment
 { id: 'staff', label: 'Member of staff', plural: 'Staff', flags: { senior: { stat: 'skill', of: '$', gte: 4 } } }
 
 view(state, game).entities.find((kind) => kind.id === 'staff')!.entries.map((entry) => [entry.name, entry.flags.senior])   // [['Ana', true], ['Ben', false]]
@@ -387,7 +387,7 @@ export const notes: Content = {
 
 They're held, so they're in [`view.held`](/docs/reference/view#held), and you ask about them as about anything held:
 
-```ts
+```ts fragment
 { entity: 'note:welcome', at: 'player' }          // the note is in the player's hands
 { count: { of: 'photo', at: 'player' }, gte: 3 }  // three photos taken
 ```
@@ -415,7 +415,7 @@ A game with one protagonist never runs a `you` effect, and `'you'` and `of: 'you
 
 A thing with state of its own, such as a cake that goes stale, is made in play with [`create`](/docs/reference/effects#create) and `like`. It reads whatever it isn't given (its name, description, picture, tags, stats, kv and traits) from the entity it was made like, so the save keeps only a reference:
 
-```ts
+```ts fragment
 { create: 'food', like: 'food:cake', with: { stats: { fresh: 3 } }, at: 'you' }
 ```
 
@@ -425,7 +425,7 @@ The new entity is a `food` named "Cake", held by you, with a `fresh` of its own.
 
 `{ count }` counts distinct things by default: 2 apples and a scarf are 2 things. Add `units: true` to add up how many of each are held instead, 3 here. A [`Select`](#select) picks what's counted:
 
-```ts
+```ts fragment
 { count: 'staff', gte: 2 }                                          // two members of staff: a kind, the short form
 { count: { at: 'you', tag: 'fruit' }, gte: 3 }                      // three sorts of fruit on you
 { count: { of: 'food', at: 'place:larder' }, units: true, lt: 4 }   // the larder is running low
@@ -433,7 +433,7 @@ The new entity is a `food` named "Cake", held by you, with a `fresh` of its own.
 
 ### Select
 
-```ts
+```ts shape
 type Select = { of?: string; at?: string; tag?: string; trait?: string; where?: Condition }
 ```
 
@@ -458,9 +458,9 @@ The exception is an entity that left in play. A [`remove`](/docs/reference/effec
 ```ts
 import { applyEffects, entitiesOf } from '@ifloom/engine'
 
-entitiesOf(save, game, 'staff')   // ['staff:ana', 'staff:ben']: Ben is there, record or not
+entitiesOf(state, game, 'staff')  // ['staff:ana', 'staff:ben']: Ben is there, record or not
 
-const left = applyEffects(save, game, [{ remove: 'staff:ben' }])
+const left = applyEffects(state, game, [{ remove: 'staff:ben' }])
 left.removed                      // ['staff:ben']
 entitiesOf(left, game, 'staff')   // ['staff:ana']: he stays gone
 ```
@@ -480,7 +480,7 @@ The effects, conditions and view use these. The game's own [functions](/docs/ref
 
 ### entitiesOf
 
-```ts
+```ts shape
 function entitiesOf(state: GameState, game: Game, kind: string): EntityRef[]
 ```
 
@@ -495,19 +495,23 @@ entitiesOf(state, game, 'staff')   // ['staff:ana', 'staff:#1']
 The café's own effects, in its `rules`, use it with [`statValue`](/docs/reference/stats#statvalue) to add up a stat over a kind:
 
 ```ts
-import { entitiesOf, statValue, type Game, type GameState } from '@ifloom/engine'
+import { entitiesOf, statValue, type Game, type GameRules, type GameState } from '@ifloom/engine'
 
 function total(state: GameState, game: Game, kind: string, stat: string): number {
   return entitiesOf(state, game, kind).reduce((sum, ref) => sum + statValue(state, game, stat, ref), 0)
 }
 
-// in the café's rules.macros, called as { 'game/wages': true }
-wages: (state, _args, { game }) => [{ stat: 'coins', by: -total(state, game, 'staff', 'wage') }],
+export const rules: GameRules = {
+  macros: {
+    // called as { 'game/wages': true }
+    wages: (state, _args, { game }) => [{ stat: 'coins', by: -total(state, game, 'staff', 'wage') }],
+  },
+}
 ```
 
 ### entityOf
 
-```ts
+```ts shape
 function entityOf(state: GameState, game: Game, ref: EntityRef): EntityState | undefined
 ```
 
@@ -522,7 +526,7 @@ entityOf(state, game, 'staff:cleo')   // undefined: nobody called Cleo works her
 
 ### entityName
 
-```ts
+```ts shape
 function entityName(state: GameState, game: Game, ref: EntityRef): string
 ```
 
@@ -537,7 +541,7 @@ entityName(state, game, 'character:partner') // 'Sam', when the declaration says
 
 ### entityDescription
 
-```ts
+```ts shape
 function entityDescription(state: GameState, game: Game, ref: EntityRef): string | undefined
 ```
 
@@ -545,7 +549,7 @@ An entity's description, with its tokens filled, or `undefined` if it has none. 
 
 ### entityKv
 
-```ts
+```ts shape
 function entityKv(state: GameState, game: Game, ref: EntityRef): Record<string, KvValue>
 ```
 
@@ -559,7 +563,7 @@ entityKv(state, game, 'staff:ana')   // { role: 'cook', learning: true }
 
 ### entityTags
 
-```ts
+```ts shape
 function entityTags(state: GameState, game: Game, ref: EntityRef): string[]
 ```
 
@@ -567,7 +571,7 @@ An entity's tags: its kind's, then those of the entity it was made `like`, then 
 
 ### entityImage
 
-```ts
+```ts shape
 function entityImage(state: GameState, game: Game, ref: EntityRef): string | undefined
 ```
 
@@ -575,7 +579,7 @@ An entity's picture as written, before [`artSrc`](/docs/reference/prose#artsrc):
 
 ### parseRef
 
-```ts
+```ts shape
 function parseRef(ref: EntityRef): { kind: string; id: string } | undefined
 ```
 
@@ -590,7 +594,7 @@ parseRef('$')          // undefined
 
 ### writeEntity
 
-```ts
+```ts shape
 function writeEntity(state: GameState, ref: EntityRef, next: EntityState): GameState
 ```
 
@@ -607,7 +611,7 @@ writeEntity(state, 'staff:ana', { ...ana, name: 'Ana, head cook' })
 
 ### traitOf
 
-```ts
+```ts shape
 function traitOf<K extends string>(state: GameState, game: Game, ref: EntityRef, id: K): TraitData<K> | undefined
 ```
 
@@ -622,7 +626,7 @@ traitOf(state, game, 'clothing:#1', 'laundry/washable')           // the scarf's
 
 ### declaredTrait
 
-```ts
+```ts shape
 function declaredTrait<K extends string>(game: Game, ref: EntityRef, id: K): TraitData<K> | undefined
 ```
 
@@ -632,7 +636,7 @@ The same trait as content declares it, for code with no state to hand, such as a
 
 ### withTrait
 
-```ts
+```ts shape
 function withTrait(state: GameState, game: Game, id: string): EntityRef[]
 ```
 
@@ -640,7 +644,7 @@ Every entity in the game that has the trait as play reads it: declared ones not 
 
 ### declaredWithTrait
 
-```ts
+```ts shape
 function declaredWithTrait(game: Game, id: string): EntityRef[]
 ```
 
@@ -648,7 +652,7 @@ Every declared entity that has the trait, in the order your content lists them, 
 
 ### traitState
 
-```ts
+```ts shape
 function traitState<S = unknown>(state: GameState, game: Game, ref: EntityRef, id: string): S | undefined
 ```
 
@@ -656,43 +660,51 @@ For the rare trait that keeps state of its own on each entity, such as the uses 
 
 ### setTraitState
 
-```ts
+```ts shape
 function setTraitState(state: GameState, game: Game, ref: EntityRef, id: string, next: unknown): GameState
 ```
 
 The state with one entity's state for one trait replaced, kept in its record's `traits`. An entity that isn't in the game is left alone. A plugin calls it from its own effects and commands.
 
 ```ts
-const left = traitState<{ uses: number }>(state, game, 'tool:torch', 'kit/lamp')?.uses ?? 0
-return setTraitState(state, game, 'tool:torch', 'kit/lamp', { uses: left - 1 })
+import type { Game, GameState } from '@ifloom/engine'
+import { setTraitState, traitState } from '@ifloom/engine/plugin'
+
+function useTorch(state: GameState, game: Game): GameState {
+  const left = traitState<{ uses: number }>(state, game, 'tool:torch', 'kit/lamp')?.uses ?? 0
+  return setTraitState(state, game, 'tool:torch', 'kit/lamp', { uses: left - 1 })
+}
 ```
 
 ### anyOf
 
-```ts
+```ts shape
 function anyOf(kind: string): EntityRef
 ```
 
 Returns `'<kind>:*'`, a reference that stands for any one of a kind. It isn't a real entity, so `entityOf` finds nothing by it. Use it to check content written with `'$'` before it runs. Bind `'$'` to it with [`bindCurrent`](#bindcurrent) and hand the result to the [content checker](/docs/reference/checks), which then knows whose stats a `{ stat, of: '$' }` names. A plugin's [`references`](/docs/reference/plugins#references) do this for its own conditions written per entity:
 
 ```ts
-import { anyOf, type Condition } from '@ifloom/engine'
-import { bindCurrent } from '@ifloom/engine/plugin'
+import type { Condition } from '@ifloom/engine'
+import { anyOf, bindCurrent, definePlugin } from '@ifloom/engine/plugin'
 
-// in definePlugin({ ... })
-references: {
-  content: (game) =>
-    ((game.data?.regulars?.people ?? []) as readonly { id: string; when?: Condition }[]).map((person) => ({
-      list: 'people',
-      id: person.id,
-      refs: [{ when: bindCurrent(person.when, anyOf('regular')) }],
-    })),
-},
+export const regulars = definePlugin<null>({
+  id: 'regulars',
+  version: 1,
+  references: {
+    content: (game) =>
+      ((game.data?.regulars?.people ?? []) as readonly { id: string; when?: Condition }[]).map((person) => ({
+        list: 'people',
+        id: person.id,
+        refs: [{ when: bindCurrent(person.when, anyOf('regular')) }],
+      })),
+  },
+})
 ```
 
 ### bindCurrent
 
-```ts
+```ts shape
 function bindCurrent<T extends Condition | EffectRef | readonly EffectRef[] | undefined>(value: T, ref: EntityRef): T
 ```
 
@@ -720,7 +732,7 @@ The two reserved holders, for code that would rather not write the strings.
 
 ### Holder and Placement
 
-```ts
+```ts shape
 type Holder = string
 type Placement = Holder | Record<Holder, number>
 ```
@@ -729,7 +741,7 @@ A holder is `'player'`, `'you'` or a unique entity's reference. A placement says
 
 ### heldCount
 
-```ts
+```ts shape
 function heldCount(state: GameState, game: Game, ref: EntityRef, at?: Holder): number
 ```
 
@@ -744,7 +756,7 @@ heldCount(state, game, 'food:apple', 'place:larder')   // 6
 
 ### heldBy
 
-```ts
+```ts shape
 function heldBy(state: GameState, game: Game, at?: Holder): { ref: EntityRef; count: number }[]
 ```
 
@@ -752,7 +764,7 @@ Everything a holder holds (`'you'` if left out), with how many of each, in the g
 
 ### holderOf
 
-```ts
+```ts shape
 function holderOf(state: GameState, game: Game, ref: EntityRef): Holder | undefined
 ```
 
@@ -760,7 +772,7 @@ Who holds a thing: one holder, which for a unique thing is the only one, and `un
 
 ### canHold
 
-```ts
+```ts shape
 function canHold(state: GameState, game: Game, holder: Holder): boolean
 ```
 
@@ -768,7 +780,7 @@ Whether a holder can hold things now: `'player'` always, a unique entity while i
 
 ### isUnique
 
-```ts
+```ts shape
 function isUnique(game: Game, ref: EntityRef): boolean
 ```
 
@@ -776,16 +788,16 @@ Whether an entity's kind is [`unique`](#kinddef): each one is one particular thi
 
 ### protagonist and resolveHolder
 
-```ts
+```ts shape
 function protagonist(state: GameState): Holder
-function resolveHolder(state: GameState, holder: Holder): Holder
+function resolveHolder(state: GameState, holder: string): string
 ```
 
 How `'you'` is read. `protagonist` is who's played now: [`state.you`](/docs/reference/state#you), or `'player'`. `resolveHolder` turns `'you'` into that and leaves any other holder alone.
 
 ### give, take, move and holding
 
-```ts
+```ts shape
 function give(ref: EntityRef, n?: number): Effect
 function take(ref: EntityRef, n?: number): Effect
 function move(ref: EntityRef, to: Holder, options?: { from?: Holder; by?: number }): Effect

@@ -10,6 +10,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Added
 
+- `@ifloom/engine/plugin` exports `AnyCalls` (what `definePlugin`'s `calls` takes), `CallIn` (a call in short against a registry) and `QueryArgs` and `QueryAnswer` (a query's arguments and answer by name), the types in the signatures of [`Plugin`](/docs/reference/plugins#plugin), [`Query`](/docs/reference/plugins#query) and [`pluginQuery`](/docs/reference/plugins#pluginquery).
 - [`uiInContent(game)`](/docs/reference/ui-hints#uiincontent): every `ui` field in a game's content, with what it's on and where, and every line of words, found by the content checker's own walk. A UI package's checker reads it instead of walking the content itself.
 - A plugin's React UI can declare the `ui` hints its components read, in its `PluginUi`'s `hints`, and [`checkUiHints`](/docs/react/hints#checkuihints) checks them when you pass the same `plugins` list you give `mountGame`. It knows the plugin UIs' inline pieces too. Each is a [`UiHint`](/docs/react/hints#uihint), as the React UI declares its own.
 - [`useScene`](/docs/react/components#usescene) in the React UI: the scene's timing and state with nothing drawn (its transition, the runs of beats that wait for a reveal or for dice, when the choices come, whether it's waiting and how to skip, and the new rolls). `Scene` is drawn from it, so a scene of your own keeps the same motion.
@@ -256,6 +257,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Changed
 
+- An entity's `traits` may give only some of a trait's fields, as its kind's defaults fill in the rest, so `{ 'laundry/washable': { gentle: true } }` type-checks when the kind gives the `temp`.
 - A [`Section`](/docs/react/components#section) that opens a dialog, such as the quests' To do, looks like the sections that fold: its title as a heading with the count beside it, and a chevron pointing out. It used to be a filled button unlike its neighbours.
 - Pips for a stat with `ui.display: 'pips'` come in rows of ten at most, all of one length, so a charm out of 20 is two rows of ten rather than 14 and 6.
 - The Studio preset keeps the reading column to the start of the story (`--margin-prose: 0 auto`), so the scene card's words begin at its padding and the tables and buttons under it line up with the card. Set `--margin-prose: auto` or `<Story align="center">` to centre it again.
@@ -548,6 +550,7 @@ IFLoom is pre-release, so nothing is a stable API yet and anything below can sti
 
 ### Fixed
 
+- Every code example in the docs compiles against the packages, and every type or signature they show matches the real one. Among what was wrong: `useGame().send` and `useMinigame().send` return what `runner.apply` returns, not `Applied`; `GameShell`, `mountGame` and `GameProvider` take `motion`; a reply's `label`, `ScreenScene.fresh` and `ProseStore.keys` were missing; `renderAction` takes an `owner`; `anyOf` comes from `@ifloom/engine/plugin`; and a game module's `build()` gives the game, so `const { game } = module.build()`.
 - The `next` template uses Next.js 16.4.6. 16.4.2 has known security advisories, and `next build` now refuses to run on it.
 - The devices plugin's contacts list read each contact's call command with the wrong type. It now reads the cast's [`CastContact`](/docs/reference/plugins#partner-queries).
 - A scene that holds a plugin UI's panel, such as `{ panel: 'shop' }` with `shopUi` listed, draws that panel in place of its choices; it used to draw only the game's own `panels`. A scene's panel and a minigame's are found as `PanelHost` finds a panel: the game's own, else a listed plugin UI's, else a built-in one.

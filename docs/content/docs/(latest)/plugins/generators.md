@@ -27,8 +27,8 @@ Then add `generators()` to the game's `plugins`. [Adding one](/docs/plugins#addi
 
 ## generators
 
-```ts
-function generators(): DefinedPlugin<unknown>
+```ts shape
+function generators(): DefinedPlugin<null>
 ```
 
 Builds the plugin, with the id `generators`.
@@ -72,7 +72,7 @@ const town: Content = {
 
 ### PoolDef
 
-```ts
+```ts shape
 type PoolDef = { id: string; values: PoolEntry[] }
 type PoolEntry = KvValue | { value: KvValue; weight?: number }
 ```
@@ -86,7 +86,7 @@ The draw is the engine's [`weighted`](/docs/reference/random#weighted).
 
 ### TemplateDef
 
-```ts
+```ts shape
 type TemplateDef = {
   id: string
   of?: string
@@ -136,7 +136,7 @@ const regular: TemplateDef = {
 
 ### FieldDef
 
-```ts
+```ts shape
 type FieldDef = KvValue | { pool: string } | { between: [number, number] } | { join: FieldDef[]; with?: string }
 ```
 
@@ -169,7 +169,7 @@ Every field is drawn from the save's [seed](/docs/reference/state#seed), the tem
 
 ### Helpers
 
-```ts
+```ts shape
 const generators: {
   (): DefinedPlugin<null>
   generate(template: string, count?: number): EffectRef
@@ -178,7 +178,7 @@ const generators: {
 
 ### drawEntity
 
-```ts
+```ts shape
 function drawEntity(state: GameState, game: Game, template: TemplateDef, n: number): GeneratedEntity
 type GeneratedEntity = { name?: string; description?: string; image?: string; stats: Record<string, number>; kv: Record<string, KvValue> }
 ```
@@ -187,7 +187,7 @@ What the template draws for the `n`th entity of its kind made in play, without m
 
 ### templateKind
 
-```ts
+```ts shape
 function templateKind(template: TemplateDef): string | undefined
 ```
 
@@ -195,7 +195,7 @@ The kind a template makes: its `of`, else its `like`'s kind. Undefined for a tem
 
 ### poolsOf and templatesOf
 
-```ts
+```ts shape
 function poolsOf(game: Game): PoolDef[]
 function templatesOf(game: Game): TemplateDef[]
 ```

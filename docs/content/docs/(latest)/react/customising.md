@@ -233,6 +233,8 @@ Every part named in the [reference](#the-data-part-reference) takes classes. Whe
 To start from nothing, pass `unstyled: true`. Every built-in class goes. The elements, their `data-part`s and their behaviour stay, ready for your own CSS or your own `classes`:
 
 ```ts
+import { mountGame } from '@ifloom/react'
+
 mountGame(game, {
   unstyled: true,
   classes: {
@@ -372,12 +374,13 @@ To change how the scene's heading, a section with ui hints or a fold looks, repl
 
 A replacement applies wherever the UI draws that component, not only in one spot. The `Beat` above also draws the beats in the [backlog](/docs/react/components#backlog), and a replaced `ChoiceButton` draws a scene's choices, the room's actions, and the buttons the plugins' UIs draw with it, such as each person's and the inventory's Use buttons.
 
-[`Icon`](/docs/react/components#icon) is the smallest one to replace. It draws the close, back and warning icons, so one component swaps the UI's whole icon set:
+[`Icon`](/docs/react/components#icon) is the smallest one to replace. It draws every icon the UI uses, such as close, back and warning, so one component swaps the UI's whole icon set:
 
 ```tsx
 import type { Components } from '@ifloom/react'
+import type { IconName } from '@ifloom/react/kit'
 
-const GLYPHS = { close: '×', back: '←', warning: '!' }
+const GLYPHS: Record<IconName, string> = { close: '×', back: '←', warning: '!', voice: '♪', zoom: '+', menu: '≡', chevron: '›' }
 
 const components: Components = {
   Icon: ({ name, label }) => <span aria-label={label} aria-hidden={label ? undefined : true}>{GLYPHS[name]}</span>,

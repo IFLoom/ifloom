@@ -24,10 +24,10 @@ Don't call `Math.random` in content.
 import { startingState } from '@ifloom/engine'
 
 // A UI: a fresh seed for every new game, so each playthrough deals its own variants.
-const state = startingState(town, { seed: Math.floor(Math.random() * 2 ** 31) })
+const state = startingState(game, { seed: Math.floor(Math.random() * 2 ** 31) })
 
 // A test: no seed, so every run deals the same.
-const fixed = startingState(town)
+const fixed = startingState(game)
 ```
 
 That one `Math.random` is outside the game. It picks the seed once, and the save fixes every draw after it. [`mountGame`](/docs/react#mountgame) in the React UI does this for you.
@@ -41,6 +41,8 @@ Draw each value from its own named parts. Don't draw one number and slice severa
 ```ts
 import { chance, draw, drawOne, hash } from '@ifloom/engine'
 
+const CAKES = ['lemon drizzle', 'carrot', 'chocolate']
+
 // Right: each value has its own draw.
 const special = drawOne(CAKES, state.seed, state.turn, 'cafe.special')
 const price   = 3 + draw(3, state.seed, state.turn, 'cafe.price')
@@ -48,8 +50,8 @@ const queue   = chance(1, 4, state.seed, state.turn, 'cafe.queue')
 
 // Wrong: one number, carved up.
 const n = hash(`${state.seed}:${state.turn}`)
-const special = CAKES[n % CAKES.length]
-const price   = 3 + ((n >> 8) % 3)
+const badSpecial = CAKES[n % CAKES.length]
+const badPrice   = 3 + ((n >> 8) % 3)
 ```
 
 Near-identical inputs, such as turn 4 and turn 5, must give unrelated outputs. `hash` makes sure of that for whole numbers, but values carved from parts of one number can move together and come out the same turn after turn.
@@ -58,7 +60,7 @@ The same goes for rotating through a list. To deal a different member each time,
 
 ## hash
 
-```ts
+```ts shape
 import { hash } from '@ifloom/engine'
 
 function hash(text: string): number
@@ -67,12 +69,14 @@ function hash(text: string): number
 Turns a string into a 32-bit unsigned whole number, using FNV-1a followed by the murmur3 finaliser. Changing one character changes every bit. `draw`, `drawOne` and `chance` are built on it.
 
 ```ts
+import { hash } from '@ifloom/engine'
+
 hash('market') // a number in [0, 2^32)
 ```
 
 ## draw
 
-```ts
+```ts shape
 import { draw } from '@ifloom/engine'
 
 function draw(max: number, ...parts: (string | number)[]): number
@@ -81,6 +85,8 @@ function draw(max: number, ...parts: (string | number)[]): number
 A whole number in `[0, max)`, from the parts joined with `:`. Returns `0` when `max` is `0` or less.
 
 ```ts
+import { draw } from '@ifloom/engine'
+
 draw(6, state.seed, state.turn, 'dice') // 0 to 5
 ```
 
@@ -90,7 +96,7 @@ For dice in content, a check against a target or a total the prose prints, use t
 
 ## drawOne
 
-```ts
+```ts shape
 import { drawOne } from '@ifloom/engine'
 
 function drawOne<T>(items: readonly T[], ...parts: (string | number)[]): T
@@ -99,12 +105,14 @@ function drawOne<T>(items: readonly T[], ...parts: (string | number)[]): T
 One item from the list. It returns `undefined` for an empty list, though the type doesn't say so.
 
 ```ts
+import { drawOne } from '@ifloom/engine'
+
 drawOne(['rye', 'sourdough', 'brioche'], state.seed, state.turn, 'bakery.loaf')
 ```
 
 ## chance
 
-```ts
+```ts shape
 import { chance } from '@ifloom/engine'
 
 function chance(numerator: number, outOf: number, ...parts: (string | number)[]): boolean
@@ -113,6 +121,8 @@ function chance(numerator: number, outOf: number, ...parts: (string | number)[])
 Returns `true` `numerator` times in `outOf`.
 
 ```ts
+import { chance } from '@ifloom/engine'
+
 chance(1, 3, state.seed, state.turn, 'park.ducks') // one turn in three
 ```
 
@@ -120,7 +130,7 @@ chance(1, 3, state.seed, state.turn, 'park.ducks') // one turn in three
 
 ## weighted
 
-```ts
+```ts shape
 import { weighted } from '@ifloom/engine'
 
 function weighted<T>(

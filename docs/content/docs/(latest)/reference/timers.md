@@ -65,7 +65,7 @@ A [minigame](/docs/reference/minigames)'s `after` is a timer too, but it belongs
 
 ## TimerDef
 
-```ts
+```ts shape
 type TimerDef = {
   id: string
   label?: string         // what a UI calls it
@@ -78,7 +78,7 @@ A timer as your content's `timers` and a [pack](/docs/reference/loader)'s declar
 
 ## RunningTimer
 
-```ts
+```ts shape
 type RunningTimer = { left: number; total: number }
 ```
 
@@ -86,7 +86,7 @@ A running timer as the save keeps it in [`state.timers`](/docs/reference/state#t
 
 ## TimerView
 
-```ts
+```ts shape
 type TimerView = { id: string; label: string | null; left: number; total: number }
 ```
 

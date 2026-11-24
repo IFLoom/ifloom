@@ -61,7 +61,7 @@ const StallPanel: PanelComponent = ({ data }) => {
 
 const panels = { StallPanel }
 
-<GameShell runner={runner} panels={panels} />
+export const App = () => <GameShell runner={runner} panels={panels} />
 ```
 
 The key in `panels` is the name in the scene's `panel`. The scene's title and body are drawn above the panel as usual.
@@ -70,12 +70,13 @@ The key in `panels` is the name in the scene's `panel`. The scene's title and bo
 
 An app's `{ panel: 'inbox', with }` section names a panel. The UI draws the component with the same name, passing it the section's `with`:
 
-```ts
+```ts fragment
 sections: [{ panel: 'inbox', with: { unread: 1 } }]
 ```
 
 ```tsx
 import type { PanelComponent } from '@ifloom/react'
+import { StallPanel } from './stall-panel.tsx'
 
 const Inbox: PanelComponent = ({ data }) => <p>{(data as { unread: number }).unread} unread</p>
 
@@ -97,7 +98,7 @@ The component is a [`PluginSectionComponent`](/docs/react/components#pluginsecti
 
 This puts the [loyalty card plugin](/docs/reference/plugins#a-worked-example) in an app on the laptop:
 
-```ts
+```ts fragment
 // In your content, with devices() in the game's plugins.
 data: {
   devices: {
@@ -118,7 +119,7 @@ const LoyaltyCard: PluginSectionComponent = ({ data }) => {
 
 const sections = { loyalty: LoyaltyCard }
 
-<GameShell runner={runner} sections={sections} />
+export const App = () => <GameShell runner={runner} sections={sections} />
 ```
 
 Return nothing when `data` is `undefined`. That happens in a game without the plugin.
@@ -189,6 +190,7 @@ import { createRoot } from 'react-dom/client'
 import { GameProvider, InputFields, Notices, Scene, StatList } from '@ifloom/react'
 import { TooltipProvider } from '@ifloom/react/kit'
 import { QuestLog } from '@ifloom/plugin-quests/react'
+import { panels, sections } from './panels.tsx'
 
 function MyPage() {
   return (

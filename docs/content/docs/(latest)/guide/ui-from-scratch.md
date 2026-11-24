@@ -57,7 +57,7 @@ Each returns a function that stops it, if you ever need to.
 
 ## 2. A helper for elements
 
-```ts
+```ts continues
 const root = document.querySelector<HTMLElement>('#root')!
 
 /** An element with a class and some text, added to `parent`. */
@@ -73,7 +73,7 @@ Everything the UI draws goes inside `#root`. `add` keeps the drawing code short.
 
 ## 3. Draw the screen
 
-```ts
+```ts continues
 function draw(view: View): void {
   root.replaceChildren()
   add(root, 'h1', view.title)
@@ -116,7 +116,7 @@ It never decides what can be pressed. The view has already worked that out, and 
 
 ## 4. Beats
 
-```ts
+```ts continues
 /** One paragraph of a scene: narration, a spoken line, a picture, a letter. A sound beat is heard, not drawn. */
 function drawBeat(beat: SceneBeat): void {
   switch (beat.type) {
@@ -145,7 +145,7 @@ The engine has already split the prose into [beats](/docs/reference/prose#sceneb
 
 `drawLine` writes a line's words, with any [inline actions and tooltips](/docs/reference/prose#inline-actions-and-tooltips) in it as buttons. A line with neither is just text:
 
-```ts
+```ts continues
 function drawLine(line: HTMLElement, text: string, spans: InlineSpan[] | undefined): HTMLElement {
   if (!spans) {
     line.textContent = text
@@ -167,7 +167,7 @@ An `action` span carries a choice, with its command and its reason, like the but
 
 ## 6. Inputs
 
-```ts
+```ts continues
 /** A value the game asks for, such as the player's name. What they enter goes back as an `input` command. */
 function drawInput(parent: HTMLElement, input: InputView): void {
   if (input.type === 'choice') {
@@ -196,7 +196,7 @@ An [input](/docs/reference/inputs) is a value the game asks for. It's in the vie
 
 ## 7. Minigames
 
-```ts
+```ts continues
 /** The minigame being played: a bar counting down its timer, and a button for each input that does something now. */
 function drawMinigame(minigame: MinigameView): void {
   const section = add(root, 'section', '', 'minigame')
@@ -216,7 +216,7 @@ A [minigame](/docs/reference/minigames) is a small state machine the game declar
 
 ## 8. Draw again on every change
 
-```ts
+```ts continues
 runner.subscribe(({ view }) => draw(view))
 draw(runner.view())
 ```
@@ -227,7 +227,7 @@ That's the whole loop. Every button sends a command, the runner calls the listen
 
 The template has no menu. Add one at the end of `draw`, before the stats:
 
-```ts
+```ts fragment
   const menu = add(root, 'nav', '', 'menu')
   const undo = add(menu, 'button', 'Undo')
   undo.disabled = !runner.snapshot().canUndo
@@ -263,7 +263,7 @@ const showMessage = (text: string) => (message.textContent = text)
 
 Say the game declares a `textSize` ui setting, as in [Saves and settings](/docs/guide/saves-and-settings#settings). Draw a button for it in the menu, and copy its value onto the page where the stylesheet can use it:
 
-```ts
+```ts fragment
   const large = runner.snapshot().settings.textSize === 'large'
   add(menu, 'button', large ? 'Smaller text' : 'Larger text').onclick = () => {
     const result = runner.setSetting('textSize', large ? 'normal' : 'large')
@@ -283,7 +283,7 @@ A ui setting changes no game state, but the runner still calls your listener whe
 
 `startAudio` plays everything the view asks for. Keep the player it returns if you want to play something on demand, such as a spoken line again:
 
-```ts
+```ts fragment
 import { audioSrc } from '@ifloom/engine'
 
 const player = startAudio(runner)

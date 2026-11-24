@@ -31,7 +31,7 @@ Then add `feed(...)` to the game's `plugins`. [Adding one](/docs/plugins#adding-
 
 ## feed
 
-```ts
+```ts shape
 function feed(): DefinedPlugin<FeedState, FeedsView>
 ```
 
@@ -60,7 +60,7 @@ const { game } = loadGame([town], {
 
 The feeds go in the content beside the posts:
 
-```ts
+```ts fragment
 data: {
   feed: {
     feeds: [
@@ -76,7 +76,7 @@ The plugin lists `cooperates: ['cast']` (see [`cooperates`](/docs/reference/plug
 
 ### FeedDef
 
-```ts
+```ts shape
 type FeedDef = { id: string; name: string }
 ```
 
@@ -89,7 +89,7 @@ Feeds are content. List them in your content's `data.feed.feeds`, in the order t
 
 ### feedsOf
 
-```ts
+```ts shape
 function feedsOf(game: Game): FeedDef[]
 ```
 
@@ -101,7 +101,7 @@ Other people's posts are content. List them in your content's [`data`](/docs/ref
 
 ### PostDef
 
-```ts
+```ts shape
 type PostDef = {
   id: string
   feed: string
@@ -181,7 +181,7 @@ import { feed } from '@ifloom/plugin-feed'
 const place = (id: string, name: string, exits: string[]): PlaceDef =>
   ({ id, name, description: 'Small Town', exits, body: [{ prose: `place.${id}` }] })
 
-const map = [
+const spots: PlaceDef[] = [
   { ...place('flat', 'Your flat', ['high-street']), actions: [{ id: 'bed', label: 'Go to bed', command: calendar.sleep() }] },
   {
     ...place('high-street', 'High Street', ['flat', 'park']),
@@ -197,7 +197,8 @@ const map = [
       },
     ],
   },
-].map(places.location)
+]
+const map = spots.map(places.location)
 
 const town: Content = {
   // A label-less action is no button of its own: a test or a choice sends it.
@@ -362,7 +363,7 @@ Its [React UI](#drawing-it) draws a feed with [`FeedSection`](#feedsection) in a
 
 ### FeedsView
 
-```ts
+```ts shape
 type FeedsView = { feeds: FeedView[]; unread: number }
 ```
 
@@ -373,7 +374,7 @@ type FeedsView = { feeds: FeedView[]; unread: number }
 
 ### FeedView
 
-```ts
+```ts shape
 type FeedView = { id: string; name: string; posts: PostView[]; unread: number; seen: RenderedChoice | null }
 ```
 
@@ -385,7 +386,7 @@ type FeedView = { id: string; name: string; posts: PostView[]; unread: number; s
 
 ### PostView
 
-```ts
+```ts shape
 type PostView = {
   id: string
   from: string
@@ -432,7 +433,7 @@ The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.
 
 ### feedUi
 
-```ts
+```ts shape
 const feedUi: PluginUi
 ```
 
@@ -446,7 +447,7 @@ Its words are in `FEED_WORDS`. A game rewords any of them with `ui.<key>` in its
 
 ### FeedSection
 
-```tsx
+```tsx shape
 const FeedSection: PluginSectionComponent
 ```
 
@@ -458,7 +459,7 @@ Replaceable as `FeedSection` in [`components`](/docs/react/components#components
 
 ### useFeed
 
-```ts
+```ts shape
 function useFeed(): FeedControls | null
 
 type FeedControls = FeedsView & { seen: (feed: string) => Result<GameState> }
@@ -470,7 +471,7 @@ The [feed](/docs/plugins/feed) plugin's view (its feeds, each with posts and an 
 
 ### FeedState
 
-```ts
+```ts shape
 type FeedState = {
   appeared: Record<string, number>
   own: OwnPost[]
@@ -490,7 +491,7 @@ A UI reads the view, not this.
 
 ### OwnPost
 
-```ts
+```ts shape
 type OwnPost = {
   id: string
   feed: string
@@ -509,7 +510,7 @@ The plugin's state is at version 2. A save made at version 1 kept a `day` on eac
 
 ### Comment
 
-```ts
+```ts shape
 type Comment = { from: string; text: string }
 ```
 
@@ -521,7 +522,7 @@ The helpers write the content objects for you, typed. `feed.post` and `react` re
 
 ### Helpers
 
-```ts
+```ts shape
 const feed: {
   (): DefinedPlugin<FeedState, FeedsView>
   post(feedId: string, id: string, post?: { text?: string; image?: string; video?: string; likes?: number }): EffectRef
@@ -533,7 +534,7 @@ const feed: {
 
 ### postsOf
 
-```ts
+```ts shape
 function postsOf(game: Game): PostDef[]
 ```
 

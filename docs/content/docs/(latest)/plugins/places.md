@@ -50,7 +50,7 @@ const plugins = [calendar(), places({ start: 'flat' })]
 
 ## places
 
-```ts
+```ts shape
 function places(options?: PlacesOptions): DefinedPlugin<PlacesState, PlacesView>
 ```
 
@@ -73,7 +73,7 @@ map.read(startingState(game), game)   // { at: 'flat' }
 
 ### PlacesOptions
 
-```ts
+```ts shape
 type PlacesOptions = {
   start?: string
 }
@@ -89,7 +89,7 @@ The options are code, not content, so a mod can't change them. Everything a mod 
 
 ### location
 
-```ts
+```ts shape
 const places: {
   location(def: PlaceDef): EntityDef
 }
@@ -121,7 +121,7 @@ Every other entity field (`at`, `visible`, `stats`, `kv`, `traits`) works as on 
 
 ### The location trait
 
-```ts
+```ts shape
 type Place = {
   parent?: string
   exits: readonly string[]
@@ -153,17 +153,21 @@ The plugin declares the trait and types it, so `traitOf(game, 'location:cafe', '
 
 ### Arrival
 
-```ts
+```ts shape
 type Arrival = { when?: Condition; effects: EffectRef[] }
 ```
 
 What happens as the player walks into a place, such as someone catching them on the way in. After [`places/go`](#commands) puts the player there, the place's `arrive` effects apply, in order, while its `when` holds, or always with no `when`. They're [effects](/docs/reference/effects) as content writes them, so a scene to open, a kv key or a plugin's effect all work. It doesn't run after a [`places/move`](#effects).
 
 ```ts
+import { places } from '@ifloom/plugin-places'
+
 // The first time into the park, the ducks come over.
 places.location({
   id: 'park',
-  // …
+  name: 'Riverside Park',
+  exits: ['high-street'],
+  body: [{ prose: 'place.park' }],
   arrive: { when: { not: { kv: 'sawPark' } }, effects: [{ kv: 'sawPark', to: true }, { scene: 'park.ducks' }] },
 })
 ```
@@ -364,7 +368,7 @@ const { game } = loadGame([{ ...town, actions: [phoneHome] }], {
 
 Walking it through:
 
-```ts
+```ts continues
 let state = startingState(game)
 places.where(state, game)                  // 'flat'
 view(state, game).when              // 'Day 1 · Monday morning · Your flat'
@@ -494,6 +498,8 @@ The first plugin that has a room scene fills the screen. While the player is now
 A place can give a `picture` as well as its `image`: layers of pictures or videos with hotspots on them. This café has the room, the counter from a pool, and a lamp that comes on in the evening. Small Town's own café picture is simpler, with one layer, Ava's photo, and a hotspot on her.
 
 ```ts
+import { places } from '@ifloom/plugin-places'
+
 places.location({
   id: 'cafe', name: 'The Corner Café', description: 'Café', exits: ['high-street', 'cafe.back'],
   picture: {
@@ -532,6 +538,8 @@ The place's `name`, which the view joins into [`view.when`](/docs/reference/view
 The place the player is at supplies its `audio` through the plugin's [`audio` provider](/docs/reference/plugins#audio). Here a café has its own murmur, and the music carries on from the game's default:
 
 ```ts
+import { places } from '@ifloom/plugin-places'
+
 places.location({ id: 'cafe', name: 'The Corner Café', description: 'Café', exits: ['high-street'], body: [{ prose: 'place.cafe' }], audio: { ambience: 'cafe.murmur' } })
 ```
 
@@ -545,7 +553,7 @@ Its [React UI](#drawing-it) draws it with [`LocationCard`](#locationcard), and [
 
 ### PlacesView
 
-```ts
+```ts shape
 type PlacesView = {
   location: PlaceView | null
   exits: ExitView[]
@@ -569,7 +577,7 @@ Any other exit is shown, greyed out with its refusal if it can't be taken.
 
 ### PlaceView
 
-```ts
+```ts shape
 type PlaceView = {
   id: string
   ref: EntityRef
@@ -595,7 +603,7 @@ Where the player is.
 
 ### ExitView
 
-```ts
+```ts shape
 type ExitView = RenderedChoice & {
   ref: EntityRef
   description: string | null
@@ -618,7 +626,7 @@ An exit is a button like any other, a [`RenderedChoice`](/docs/reference/view#re
 
 On a new game in the flat:
 
-```ts
+```ts fragment
 {
   location: { id: 'flat', ref: 'location:flat', name: 'Your flat', description: 'Home', tags: [], image: null, picture: null },
   exits: [
@@ -630,7 +638,7 @@ On a new game in the flat:
 
 ### LyingView
 
-```ts
+```ts shape
 type LyingView = {
   ref: EntityRef
   name: string
@@ -666,7 +674,7 @@ The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.
 
 ### placesUi
 
-```ts
+```ts shape
 const placesUi: PluginUi
 ```
 
@@ -674,7 +682,7 @@ The plugin's [`PluginUi`](/docs/react/kit#pluginui): the [`LocationCard`](#locat
 
 ### LocationCard
 
-```tsx
+```tsx shape
 function LocationCard(): JSX.Element | null
 ```
 
@@ -688,7 +696,7 @@ Replaceable as `LocationCard` in [`components`](/docs/react/components#component
 
 ### Exits
 
-```tsx
+```tsx shape
 function Exits(props: { className?: string }): JSX.Element | null
 ```
 
@@ -700,7 +708,7 @@ Replaceable as `Exits` in [`components`](/docs/react/components#components). Par
 
 ### usePlaces
 
-```ts
+```ts shape
 function usePlaces(): PlacesControls | null
 
 type PlacesControls = PlacesView & {
@@ -717,7 +725,7 @@ The [places](/docs/plugins/places) plugin's view ([`PlacesView`](/docs/plugins/p
 
 ### PlacesState
 
-```ts
+```ts shape
 type PlacesState = { at: string | null }
 ```
 
@@ -746,7 +754,7 @@ The plugin's lines go in the [strings table](/docs/reference/strings#plugins-str
 
 ### Helpers
 
-```ts
+```ts shape
 const places: {
   (options?: PlacesOptions): DefinedPlugin<PlacesState, PlacesView>
   where(state: GameState, game: Game): string | null

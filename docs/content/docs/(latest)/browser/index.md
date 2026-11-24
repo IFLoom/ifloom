@@ -17,7 +17,7 @@ Add `@ifloom/browser` beside the engine. It imports nothing but `@ifloom/engine`
 
 ## browserRunner
 
-```ts
+```ts shape
 function browserRunner(game: Game, options?: RunnerOptions & { start?: GameState }): Promise<Runner>
 ```
 
@@ -35,6 +35,7 @@ Pass `start` to begin from another state, and any [`RunnerOptions`](/docs/refere
 
 ```ts
 import { browserRunner } from '@ifloom/browser'
+import { draw } from './draw.ts' // your own drawing
 
 const runner = await browserRunner(game, { backlog: { limit: 200 } })
 
@@ -52,7 +53,7 @@ The engine's save store, [profile](/docs/reference/profile) and [mod store](/doc
 
 ### localStorageDriver
 
-```ts
+```ts shape
 function localStorageDriver(storage?: StorageLike): SaveDriver
 ```
 
@@ -62,7 +63,7 @@ The driver looks for the storage when a save is first read or written, not when 
 
 ### StorageLike
 
-```ts
+```ts shape
 type StorageLike = {
   getItem: (key: string) => string | null
   setItem: (key: string, value: string) => void
@@ -76,7 +77,7 @@ The parts of the Web Storage API the driver needs. `localStorage` and `sessionSt
 
 ### indexedDbDriver
 
-```ts
+```ts shape
 function indexedDbDriver(options?: {
   database?: string
   store?: string
@@ -87,6 +88,9 @@ function indexedDbDriver(options?: {
 Saves in IndexedDB, which has far more room. It opens one database, `database` (default `'ifloom'`), creating it if needed. That database holds one object store of strings by key, `store` (default `'saves'`). `indexedDB` defaults to `globalThis.indexedDB`. Pass another for tests, such as `fake-indexeddb`.
 
 ```ts
+import { indexedDbDriver } from '@ifloom/browser'
+import { saves } from '@ifloom/engine'
+
 const store = saves(game, indexedDbDriver())
 ```
 
@@ -96,7 +100,7 @@ Every game can share the default database, because keys carry the game's id (see
 
 ### IndexedDbLike
 
-```ts
+```ts fragment
 type IndexedDbLike = { open: (name: string, version?: number) => OpenRequest }
 ```
 
@@ -104,7 +108,7 @@ The part of `indexedDB` the driver needs, typed here so a test can pass its own.
 
 ## startClock
 
-```ts
+```ts shape
 function startClock(runner: Runner, options?: ClockOptions): () => void
 
 type ClockOptions = { every?: number }
@@ -113,7 +117,7 @@ type ClockOptions = { every?: number }
 The engine keeps no clock, so its [timers](/docs/reference/timers) and a [minigame](/docs/reference/minigames)'s timers need something to send a [`tick`](/docs/reference/commands#tick). While anything counts down (a timer in [`view.timers`](/docs/reference/view#timers), or the minigame's timer) and the page is visible, `startClock` sends one about every `every` milliseconds (100 if left out) with the real time that passed since the last.
 
 ```ts
-import { startClock } from '@ifloom/browser'
+import { browserRunner, startClock } from '@ifloom/browser'
 
 const runner = await browserRunner(game)
 startClock(runner)
@@ -127,7 +131,7 @@ Start it once, when the game starts, rather than only while something is on scre
 
 ## startKeys
 
-```ts
+```ts shape
 function startKeys(runner: Runner, options?: KeysOptions): () => void
 
 type KeysOptions = {
@@ -167,6 +171,7 @@ startKeys(runner, {
 import { useEffect, useState } from 'react'
 import { startKeys } from '@ifloom/browser'
 import { runner } from './runner.ts'
+import { Game, Menu } from './screens.tsx' // your own components
 
 export function App() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -206,7 +211,7 @@ The templates call `startKeys(runner)` with no options, so the number keys pick 
 
 ## startMinigameKeys
 
-```ts
+```ts shape
 function startMinigameKeys(runner: Runner): () => void
 ```
 
@@ -214,19 +219,21 @@ Presses the minigame's inputs from the keyboard while one is being played, as [`
 
 ## minigameInput
 
-```ts
+```ts shape
 function minigameInput(minigame: MinigameView, key: string): string | undefined
 ```
 
 The input a key presses, by `KeyboardEvent.key`, whether or not it does anything now. It's the minigame's own [`keys`](/docs/reference/minigames#minigamedef) if it gives the input any. Otherwise it's the arrow keys and space for inputs named `up`, `down`, `left`, `right` and `space`, and failing that the input's own name when it's one letter. One-letter keys match either case.
 
 ```ts
+import { minigameInput } from '@ifloom/browser'
+
 minigameInput(runner.view().minigame!, 'ArrowLeft') // 'left'
 ```
 
 ## numberedChoices
 
-```ts
+```ts shape
 function numberedChoices(view: View): RenderedChoice[]
 ```
 
@@ -234,7 +241,7 @@ The choices the number keys pick, in order: the open scene's choices, or the roo
 
 ## nextSlot
 
-```ts
+```ts shape
 function nextSlot(listing: readonly SaveListing[]): string
 ```
 
@@ -252,14 +259,17 @@ How and when prose reveals is a UI's to decide, from [presentation hints](/docs/
 
 ### startRevealSkip
 
-```ts
+```ts shape
 function startRevealSkip(skip: () => void): () => void
 ```
 
 Until stopped, the next key press calls `skip`, which should show everything the scene still holds back, and does nothing else. It listens before other shortcuts and swallows the key, so a number key can't pick a choice that isn't shown yet. Typing in a field and keys held with a modifier are left alone. Start it while reveals are pending, and stop it once they're all shown or skipped.
 
 ```ts
-let stopSkip = startRevealSkip(() => {
+import { startRevealSkip } from '@ifloom/browser'
+import { showEverything } from './reveal.ts' // your own
+
+const stopSkip = startRevealSkip(() => {
   showEverything()
   stopSkip()
 })
@@ -267,7 +277,7 @@ let stopSkip = startRevealSkip(() => {
 
 ## ignoredKey
 
-```ts
+```ts shape
 function ignoredKey(event: KeyboardEvent): boolean
 ```
 
@@ -275,7 +285,7 @@ Whether shortcuts should leave a key press alone: the player typing in an input,
 
 ## dialogOpen
 
-```ts
+```ts shape
 function dialogOpen(): boolean
 ```
 

@@ -79,6 +79,8 @@ The words table covers what's written in place. Two more tables cover the rest, 
 - **`strings`**: the engine's and plugins' own words, such as `Not enough coins.` and the calendar's day names. [Strings](/docs/reference/strings) lists every key.
 
 ```ts
+import { SCHEMA, type Pack } from '@ifloom/engine'
+
 export const french: Pack = {
   id: 'lang:fr',
   schema: SCHEMA,
@@ -96,10 +98,11 @@ Pass the pack to [`loadGame`](/docs/reference/loader#loadgame) in `packs`, after
 // src/game.ts
 import { loadGame, type Pack } from '@ifloom/engine'
 import { french } from './lang/fr.ts'
+import { town } from './world/town.ts'
 
 export function build({ language = 'en' } = {}) {
   const packs: Pack[] = language === 'fr' ? [french] : []
-  return loadGame(content, base, { packs })
+  return loadGame([town], { id: 'small-town', title: 'Small Town' }, { packs })
 }
 ```
 

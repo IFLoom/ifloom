@@ -81,7 +81,7 @@ Two blocks with the same words in one scene share a key, and a translation gives
 
 ## translatableFields
 
-```ts
+```ts shape
 function translatableFields(game: Game): WordField[]
 ```
 
@@ -89,8 +89,9 @@ Every field of a game's content a player reads, each once, by its key, with the 
 
 ```ts
 import { loadGame, translatableFields } from '@ifloom/engine'
+import { town } from './world/town.ts'
 
-const { game } = loadGame(content, base)
+const { game } = loadGame([town], { id: 'small-town', title: 'Small Town' })
 const table = Object.fromEntries(translatableFields(game).map((field) => [field.key, field.text]))
 // { 'action.wait.label': 'Wait a while', 'scene.cafe.counter.title': 'The counter', … }
 console.log(JSON.stringify(table, null, 2))
@@ -104,7 +105,7 @@ It lists the fields of every storyline, trigger, scene, minigame, timer, action,
 
 ## WordField
 
-```ts
+```ts shape
 type WordField = {
   key: string    // its key in a pack's `words` table: 'action.wait.label'
   text: string   // the words it has, as written, tokens and markup included
@@ -114,7 +115,7 @@ type WordField = {
 
 ## WordShape
 
-```ts
+```ts shape
 type WordShape = { readonly [field: string]: WordPart }
 type WordPart = true | 'blocks' | 'effects' | 'button' | WordShape | readonly [WordPart]
 ```
@@ -134,11 +135,14 @@ Which fields of a piece of content are words, for a plugin to say of its own con
 A plugin gives one for each list of its `data` in its [data lists](/docs/reference/plugins#data-lists), and a trait gives one for its data in its [`TraitDef.words`](/docs/reference/entities#traits):
 
 ```ts
+import { defineData, definePlugin, list } from '@ifloom/engine/plugin'
+import type { QuestDef } from '@ifloom/plugin-quests'
+
 const DATA = defineData('quests', {
   quests: list<QuestDef>({ noun: 'quest', words: { name: true, description: true, stages: [{ hint: true }] } }),
 })
 
-definePlugin({
+export const quests = definePlugin<null>({
   id: 'quests',
   version: 1,
   data: DATA,

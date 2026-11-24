@@ -33,7 +33,7 @@ Then add `cheats()` to the game's `plugins`. [Adding one](/docs/plugins#adding-o
 
 ## cheats
 
-```ts
+```ts shape
 function cheats(): DefinedPlugin<CheatsState, CheatsView>
 ```
 
@@ -70,7 +70,7 @@ const town: Content = {
 
 ### CheatDef
 
-```ts
+```ts shape
 type CheatDef = {
   id: string
   name: string
@@ -173,7 +173,7 @@ const honest = {
 
 ### CheatsView
 
-```ts
+```ts shape
 type CheatsView = {
   cheats: CheatView[]
   used: number
@@ -187,7 +187,7 @@ type CheatsView = {
 
 ### CheatView
 
-```ts
+```ts shape
 type CheatView = {
   id: string
   name: string
@@ -248,7 +248,7 @@ The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.
 
 ### cheatsUi
 
-```ts
+```ts shape
 const cheatsUi: PluginUi
 ```
 
@@ -264,7 +264,7 @@ Its words are in `CHEATS_WORDS`. A game rewords any of them with `ui.<key>` in i
 
 ### CheatPanel
 
-```tsx
+```tsx shape
 function CheatPanel(props: { className?: string }): JSX.Element | null
 ```
 
@@ -276,7 +276,7 @@ Replaceable as `CheatPanel` in [`components`](/docs/react/components#components)
 
 ### CheatsButton
 
-```tsx
+```tsx shape
 function CheatsButton(props: { className?: string }): JSX.Element | null
 ```
 
@@ -286,7 +286,7 @@ Replaceable as `CheatsButton` in [`components`](/docs/react/components#component
 
 ### useCheats
 
-```ts
+```ts shape
 function useCheats(): CheatsControls | null
 
 type CheatsControls = CheatsView & {
@@ -305,7 +305,7 @@ The cheats plugin's view ([`CheatsView`](/docs/plugins/cheats#cheatsview): `chea
 
 ### CheatsState
 
-```ts
+```ts shape
 type CheatsState = { used: CheatUse[] }
 type CheatUse = { cheat: string; turn: number }
 ```
@@ -316,7 +316,7 @@ What the plugin keeps in a save, at `state.plugins.cheats`: every use of a cheat
 
 ### Helpers
 
-```ts
+```ts shape
 const cheats: {
   (): DefinedPlugin<CheatsState, CheatsView>
   use(cheat: string): CommandRef
@@ -326,7 +326,7 @@ const cheats: {
 
 ### cheatsOf and cheatOf
 
-```ts
+```ts shape
 function cheatsOf(game: Game): CheatDef[]
 function cheatOf(game: Game, id: string): CheatDef | undefined
 ```

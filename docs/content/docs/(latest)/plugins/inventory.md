@@ -29,7 +29,7 @@ It needs no other plugin. It cooperates with [places](/docs/plugins/places) for 
 
 ## inventory
 
-```ts
+```ts shape
 function inventory(): DefinedPlugin<null, InventoryView>
 ```
 
@@ -57,7 +57,7 @@ const things: Content = {
 
 ### Usable
 
-```ts
+```ts shape
 const inventory: {
   usable(label: string, effects: EffectRef[], options?: { keep?: boolean }): { 'inventory/usable': Usable }
 }
@@ -111,10 +111,12 @@ apply(dropped, game, places.pickUp('item:paper')).state.held.player   // { 'item
 `inventory/give` moves one to `to`. It's refused when you hold none, with `You already have it.` when `to` is you or the player, and with `You can’t give things to <name>.` when `to` can't hold things: a kind that isn't [`unique`](/docs/reference/entities#kinddef), or an entity that isn't in the game. Who you can give to in the story is yours to say, by where you put the button: a choice in Ava's scene, say.
 
 ```ts
+import { holding, type Choice } from '@ifloom/engine'
 import { inventory } from '@ifloom/plugin-inventory'
 import { cast } from '@ifloom/plugin-cast'
 
-choices: [{ id: 'gift', when: holding('clothing:scarf'), command: inventory.give('clothing:scarf', cast.character('ava')) }],
+// in Ava's scene
+const gift: Choice = { id: 'gift', label: 'Give her the scarf', when: holding('clothing:scarf'), command: inventory.give('clothing:scarf', cast.character('ava')) }
 ```
 
 ## With the shop and the wardrobe
@@ -157,7 +159,7 @@ Its [React UI](#drawing-it) draws it with [`InventoryCard`](#inventorycard), in 
 
 ### InventoryView
 
-```ts
+```ts shape
 type InventoryView = { things: InventoryThing[] }
 type InventoryThing = {
   ref: EntityRef
@@ -183,7 +185,7 @@ type InventoryThing = {
 
 ### InventoryData
 
-```ts
+```ts shape
 type InventoryData = { kinds?: { id: string }[] }
 ```
 
@@ -211,7 +213,7 @@ The React UI is yours to leave out. Draw the plugin yourself from `view.plugins.
 
 ### inventoryUi
 
-```ts
+```ts shape
 const inventoryUi: PluginUi
 ```
 
@@ -225,7 +227,7 @@ Its words are in `INVENTORY_WORDS`. A game rewords any of them with `ui.<key>` i
 
 ### InventoryCard
 
-```tsx
+```tsx shape
 function InventoryCard(props: InventoryProps): JSX.Element | null
 ```
 
@@ -235,7 +237,7 @@ Replaceable as `InventoryCard` in [`components`](/docs/react/components#componen
 
 ### useInventory
 
-```ts
+```ts shape
 function useInventory(): InventoryControls | null
 
 type InventoryControls = InventoryView & {
@@ -253,7 +255,7 @@ The [inventory](/docs/plugins/inventory) plugin's view ([`InventoryView`](/docs/
 
 ### Helpers
 
-```ts
+```ts shape
 const inventory: {
   (): DefinedPlugin<null, InventoryView>
   usable(label: string, effects: EffectRef[], options?: { keep?: boolean }): { 'inventory/usable': Usable }
@@ -265,7 +267,7 @@ const inventory: {
 
 ### usableOf
 
-```ts
+```ts shape
 function usableOf(state: GameState, game: Game, ref: EntityRef): Usable | undefined
 ```
 
@@ -273,7 +275,7 @@ The thing's `inventory/usable` trait, read through what it was made `like`, or u
 
 ### inventoryKindsOf
 
-```ts
+```ts shape
 function inventoryKindsOf(game: Game): { id: string }[] | undefined
 ```
 

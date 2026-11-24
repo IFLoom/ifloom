@@ -88,7 +88,7 @@ You choose plugins when you build the game. They're never loaded while it runs. 
 
 Content calls a plugin's conditions, effects and commands by their full name, `<plugin>/<name>`, as the only key, with the arguments as its value. Every plugin's helpers write it for you:
 
-```ts
+```ts fragment
 { 'quests/done': { quest: 'settle' } }   // what quests.done('settle') writes
 ```
 

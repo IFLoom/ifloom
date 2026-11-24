@@ -43,7 +43,7 @@ A bakery, a launderette, a bus stop with a bench nobody sits on.
 
 `[>]` is a button the player can press, `[ ]` one that's greyed out with its reason after the dash, and `->` a way out. Run a playtest before and after a change to pacing, such as a price, a reward or a door's hours, and read both. The numbers say when things happened, such as the turn the coins stopped climbing. Only the transcript shows a line that prints on every screen, a variant dealt five days running, or a gate meant for week two that's open on day two.
 
-## Pick where it starts and what it chooses
+## Set where it starts and what it chooses
 
 Give the game module a `start` and a `policy`. Without them, it starts from `startingState(game)` with the [explorer](/docs/reference/cli#explorer), which presses a button it hasn't tried yet each time:
 
@@ -67,7 +67,7 @@ export default defineGame({
 })
 ```
 
-The explorer won't find a route through a story, because it doesn't know your game. Write a [`Policy`](/docs/reference/cli#policy) of your own to reach a scene that needs good choices. A run stops early when the policy returns `null`, goes round in circles, or sends the same refused command twice in a row.
+The explorer won't find a route through a story, because it doesn't know your game. Write a [`Policy`](/docs/reference/cli#policy) of your own to reach a scene that needs good choices. A run stops early when the policy returns `null`, goes round in circles, or sends the same refused command twice in a row. It also stops at a running minigame, because neither the explorer nor a policy can play one, so a run through Small Town ends on day 2 at the park's quick feet.
 
 ## Snapshot every scene
 

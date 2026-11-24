@@ -11,14 +11,14 @@ The examples use Small Town's world and its plugins: the [calendar](/docs/plugin
 To do something once each new day, such as drawing the day's weather, use [`rules.onTurnDone`](/docs/reference/rules#onturndone). It runs at the end of every turn, after the plugins' `onTurn` hooks, so the calendar has already moved on to the new day. Keep the last day you acted on in the kv store and compare:
 
 ```ts
-import { dayOf, type GameRules } from '@ifloom/engine'
+import type { GameRules } from '@ifloom/engine'
 
 const WEATHER = ['drizzle', 'sun', 'wind']
 
 const rules: GameRules = {
-  onTurnDone: (state, { apply, game, roll }) => {
+  onTurnDone: (state, { apply, query, roll }) => {
     // The calendar's day, or the turn in a game without one.
-    const day = dayOf(state, game)
+    const day = query('calendar/now')?.day ?? state.turn
     if (state.kv.lastNewDay === day) return state
     return apply([
       { kv: 'lastNewDay', to: day },

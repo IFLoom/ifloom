@@ -21,7 +21,7 @@
  */
 import {
   definePlugin,
-  dayOf,
+  pluginQuery,
   entityDescription,
   entityImage,
   entityName,
@@ -316,6 +316,11 @@ function everyVendor(state: GameState | undefined, game: Game): One[] {
 function goodOf(state: GameState, game: Game, one: One, entity: unknown): GoodDef | undefined {
   const good = one.vendor.goods.find((entry) => entry.entity === String(entity ?? ''))
   return good && (!good.when || holds(state, game, good.when)) ? good : undefined
+}
+
+/** The day: the calendar's, asked by name, or the turn without one. */
+function dayOf(state: GameState, game: Game): number {
+  return pluginQuery(game, 'calendar/now')?.(state).day ?? state.turn
 }
 
 /** What the stock is topped up against: the turn or the day it restocks on, or 0 for once only. */

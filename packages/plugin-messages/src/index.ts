@@ -15,8 +15,9 @@ import {
   buildEffects,
   commandOf,
   definePlugin,
-  senderOf,
-  dayOf,
+  type SenderView,
+  speakerOf,
+  pluginQuery,
   fillTokens,
   holds,
   inRange,
@@ -227,6 +228,19 @@ export function messagesOf(game: Game): MessageDef[] {
 
 function threadOf(message: MessageDef): string {
   return message.thread ?? message.from
+}
+
+/** Who a message is from: the cast's answer when the game has the cast, else their entity's name and picture, or the name as written. */
+function senderOf(state: GameState, game: Game, from: string): SenderView {
+  const asked = pluginQuery(game, 'cast/sender')?.(state, { from })
+  if (asked) return asked
+  const known = from ? speakerOf(state, game, from) : null
+  return known ? { name: known.name, image: known.image, portrait: known.image } : { name: from, image: null, portrait: null }
+}
+
+/** The day: the calendar's, asked by name, or the turn without one. */
+function dayOf(state: GameState, game: Game): number {
+  return pluginQuery(game, 'calendar/now')?.(state).day ?? state.turn
 }
 
 /** The replies on offer for an arrival now: none once one is sent. */

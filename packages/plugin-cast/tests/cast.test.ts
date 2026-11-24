@@ -163,6 +163,11 @@ describe('the cast', () => {
       'art/character/ava.jpg',
       undefined,
     ])
+    const sender = pluginQuery(g, 'cast/sender')!
+    expect([sender(park, { from: 'sam' }), sender(park, { from: 'Council' })]).toEqual([
+      { name: 'Sam', image: null, portrait: 'art/faces/sam.png' },
+      { name: 'Council', image: null, portrait: null },
+    ])
   })
 
   it('include anyone with the trait, of any kind or made in play, named by reference', () => {

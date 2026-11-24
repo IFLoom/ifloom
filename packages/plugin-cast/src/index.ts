@@ -30,6 +30,7 @@ import {
   lockedOut,
   parseRef,
   pluginQuery,
+  speakerOf,
   renderAction,
   stringOf,
   startingState,
@@ -399,6 +400,18 @@ function castPlugin(options: CastOptions = {}): DefinedPlugin<null, CastView> {
       portrait: (state, args, { game }) => {
         const them = one(state, game, who(args.character)[0])
         return them ? portraitOf(state, game, them) : undefined
+      },
+      /**
+       * Who a message or a post is from, as their entity is (`speakerOf`): its
+       * name and picture, and a person's portrait as the face, else the picture.
+       * An id that names no entity is the name as written, with no picture.
+       */
+      sender: (state, args, { game }) => {
+        const from = String(args.from ?? '')
+        const known = from ? speakerOf(state, game, from) : null
+        if (!known) return { name: from, image: null, portrait: null }
+        const them = one(state, game, known.ref)
+        return { name: known.name, image: known.image, portrait: (them ? portraitOf(state, game, them) : undefined) ?? known.image }
       },
       /** Everyone met who can be called, each with the call command and why it can't go through now. */
       contacts: (state, _args, { game }) =>

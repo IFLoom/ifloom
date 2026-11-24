@@ -6,18 +6,14 @@
  * partners ask for are declared here instead, as types only, and
  * `QueryRegistry` takes them in: every caller, `context.query` and
  * `pluginQuery` alike, reads them typed without restating them. The engine
- * itself never asks them. They are still asked by name at run time, and
- * undefined in a game without that plugin.
- *
- * The two helpers below are answers several plugins work out the same way,
- * kept in one place: the day, and who sent something.
+ * itself never asks them, and nothing here runs: they are still asked by
+ * name at run time, and undefined in a game without that plugin.
  */
-import type { Game } from './game.ts'
-import type { GameState } from './types.ts'
 import type { CommandRef } from './calls.ts'
 import type { EntityRef } from './entities.ts'
-import { pluginQuery } from './plugin.ts'
-import { speakerOf } from './speakers.ts'
+
+/** Who sent something, as the cast's `cast/sender` answers: a name, their picture and their face. */
+export type SenderView = { name: string; image: string | null; portrait: string | null }
 
 /** Someone the player can call, as the cast's `cast/contacts` answers. */
 export type CastContact = {
@@ -55,29 +51,6 @@ export interface PartnerQueries {
   'cast/portrait': (args: { character: string }) => string | undefined
   /** Everyone met who can be called. */
   'cast/contacts': () => CastContact[]
-}
-
-/**
- * The day: the calendar's (`calendar/now`), counted from 0, or the turn in a
- * game without the calendar. How plugins that count days (shifts, restocks,
- * replies) agree on one.
- */
-export function dayOf(state: GameState, game: Game): number {
-  return pluginQuery(game, 'calendar/now')?.(state).day ?? state.turn
-}
-
-/** Who sent something, as `senderOf` answers: a name, their picture and their face. */
-export type SenderView = { name: string; image: string | null; portrait: string | null }
-
-/**
- * Who a message or a post is from, as their entity is (`speakerOf`): its name,
- * picture and face. The face is the cast's portrait when the game has the
- * cast, else the picture. An id that names no entity is the name as written,
- * with no picture.
- */
-export function senderOf(state: GameState, game: Game, from: string): SenderView {
-  const known = from ? speakerOf(state, game, from) : null
-  if (!known) return { name: from, image: null, portrait: null }
-  const face = pluginQuery(game, 'cast/portrait')?.(state, { character: known.ref })
-  return { name: known.name, image: known.image, portrait: face ?? known.image }
+  /** Who a message or a post is from: the entity's name and picture, a person's `portrait` as the face. */
+  'cast/sender': (args: { from: string }) => SenderView
 }

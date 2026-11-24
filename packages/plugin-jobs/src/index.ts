@@ -14,7 +14,6 @@
 import {
   reasonOf,
   definePlugin,
-  dayOf,
   priceView,
   holds,
   inRange,
@@ -201,6 +200,11 @@ export function jobOf(game: Game, id: string): JobDef | undefined {
 /** `jobOf` for an id a call names, which may be anything. */
 function jobIn(game: Game, id: unknown): JobDef | undefined {
   return jobsOf(game).find((job) => job.id === String(id ?? ''))
+}
+
+/** The day: the calendar's, asked by name, or the turn without one. */
+function dayOf(state: GameState, game: Game): number {
+  return pluginQuery(game, 'calendar/now')?.(state).day ?? state.turn
 }
 
 function hasCalendar(game: Game): boolean {

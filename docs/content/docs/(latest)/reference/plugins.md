@@ -188,7 +188,7 @@ On a new game the same command is refused with `Your card is not full yet.`, and
 
 ```ts
 import {
-  definePlugin, pluginQuery, speakerOf, dayOf, senderOf,
+  definePlugin, pluginQuery, speakerOf,
   type Plugin, type DefinedPlugin, type PluginContext, type PluginArgs,
   type PluginCommand, type PluginEntry, type PluginProblem, type PluginSlice,
   type Asked, type Refusal, type RoomScene, type SpeakerView, type CheckTools,
@@ -569,7 +569,10 @@ interface PartnerQueries {
   'places/known': (args: { location: string }) => boolean
   'cast/portrait': (args: { character: string }) => string | undefined
   'cast/contacts': () => CastContact[]
+  'cast/sender': (args: { from: string }) => SenderView
 }
+
+type SenderView = { name: string; image: string | null; portrait: string | null }
 
 type CastContact = {
   id: string
@@ -586,38 +589,15 @@ A plugin never imports its partner, so the partner's own declarations aren't in 
 
 #### PartnerQueries
 
-The interface above. Each entry is documented on its plugin's page: [calendar](/docs/plugins/calendar#queries), [places](/docs/plugins/places#queries) and [cast](/docs/plugins/cast#queries). `CastContact` is what `cast/contacts` answers for each person the player can call. Its `command` is the cast's `cast/call` in short, ready for an action's `command`.
+The interface above. Each entry is documented on its plugin's page: [calendar](/docs/plugins/calendar#queries), [places](/docs/plugins/places#queries) and [cast](/docs/plugins/cast#queries). `CastContact` is what `cast/contacts` answers for each person the player can call. Its `command` is the cast's `cast/call` in short, ready for an action's `command`. `SenderView` is what `cast/sender` answers: who a message or a post is from.
 
-#### dayOf
-
-```ts
-import { dayOf } from '@ifloom/engine'
-
-function dayOf(state: GameState, game: Game): number
-```
-
-The day, counted from 0: the calendar's (`calendar/now`), or the [turn](/docs/reference/state#turn) in a game without the calendar. The shop restocks by it, jobs count shifts by it, and messages date replies by it, so every plugin that counts days agrees on one.
+Nothing in `PartnerQueries` runs. The answer and any fallback stay with the plugins: an asker writes what it does without the partner after `??`, as the shop does to count days without a calendar:
 
 ```ts
-const today = dayOf(state, game) // 3 on the calendar's fourth day
+const day = query('calendar/now')?.day ?? state.turn
 ```
 
-#### senderOf
-
-```ts
-import { senderOf } from '@ifloom/engine'
-
-function senderOf(state: GameState, game: Game, from: string): SenderView
-
-type SenderView = { name: string; image: string | null; portrait: string | null }
-```
-
-Who a message or a post is from, as their entity is: its name and picture, from [`speakerOf`](#speakerof). The `portrait` is the cast's `cast/portrait` when the game has the cast, else the picture. An id that names no entity comes back as the name as written, with no picture. The [messages](/docs/plugins/messages) and [feed](/docs/plugins/feed) plugins draw their senders with it.
-
-```ts
-senderOf(state, game, 'ava')     // { name: 'Ava', image: 'art/character/ava.svg', portrait: 'art/character/ava.svg' }
-senderOf(state, game, 'Council') // { name: 'Council', image: null, portrait: null }
-```
+A plugin that shows who sent something asks `cast/sender`, and falls back to [`speakerOf`](#speakerof) without the cast, as the [messages](/docs/plugins/messages) and [feed](/docs/plugins/feed) plugins do.
 
 ## Cooperates
 
@@ -1255,7 +1235,7 @@ It comes third of [four levels](/docs/reference/audio#what-plays-on-a-background
 
 A plugin doesn't say who a scene's speaker is. People are [entities](/docs/reference/entities), so the engine reads their name, picture and hints from the entity itself (see [Speakers](/docs/reference/scenes#speakers)). A plugin that brings people gives them as entities, in its [`content`](#kinds-and-entities), and a scene names one as its `speaker`.
 
-A plugin that shows who sent something asks the same way with [`speakerOf`](#speakerof), or with [`senderOf`](#senderof), which adds the cast's portrait, as the messages and feed plugins do.
+A plugin that shows who sent something asks the same way with [`speakerOf`](#speakerof). The messages and feed plugins ask the cast's `cast/sender` first, for a person's portrait, and fall back to `speakerOf` without the cast.
 
 ### speakerOf
 

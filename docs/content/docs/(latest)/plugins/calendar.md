@@ -294,7 +294,7 @@ While `ill` is set, the jog button and the bed button are both greyed out with `
 
 ## Queries
 
-These answer other plugins' code, through the context's [`query`](/docs/reference/plugins#queries). Content can't ask them. Other plugins ask all three, so the engine declares their answers in [`PartnerQueries`](/docs/reference/plugins#partner-queries), and they're typed in any plugin's code without importing the calendar. [`dayOf`](/docs/reference/plugins#dayof) reads the day from `calendar/now`, or the turn without the calendar.
+These answer other plugins' code, through the context's [`query`](/docs/reference/plugins#queries). Content can't ask them. Other plugins ask all three, so the engine declares their answers in [`PartnerQueries`](/docs/reference/plugins#partner-queries), and they're typed in any plugin's code without importing the calendar.
 
 | Query | Answers |
 |---|---|

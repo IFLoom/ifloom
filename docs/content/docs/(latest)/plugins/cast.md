@@ -507,7 +507,7 @@ In a phrase that takes `who`, `{{cast/name character=$who}}` prints the name of 
 
 ## Queries
 
-These answer other plugins' code, through the context's [`query`](/docs/reference/plugins#queries). Content can't ask them. The character is given as `{ character }`, an id or a reference. Everyone is listed in the order [`peopleOf`](#helpers) gives them, those made in play included. Other plugins ask `cast/portrait` and `cast/contacts`, so the engine declares their answers in [`PartnerQueries`](/docs/reference/plugins#partner-queries), and they're typed in any plugin's code without importing the cast.
+These answer other plugins' code, through the context's [`query`](/docs/reference/plugins#queries). Content can't ask them. The character is given as `{ character }`, an id or a reference. Everyone is listed in the order [`peopleOf`](#helpers) gives them, those made in play included. Other plugins ask `cast/portrait`, `cast/contacts` and `cast/sender`, so the engine declares their answers in [`PartnerQueries`](/docs/reference/plugins#partner-queries), and they're typed in any plugin's code without importing the cast.
 
 | Query | Answers |
 |---|---|
@@ -515,6 +515,7 @@ These answer other plugins' code, through the context's [`query`](/docs/referenc
 | `cast/where` | Where that character is: a place id or `AWAY`. `undefined` for one the game doesn't have. |
 | `cast/portrait` | That character's face for avatars: their [`portrait`](#person), else their picture as the [view](#personview) gives it, through `artSrc`. `undefined` for anyone who isn't a person. The [messages](/docs/plugins/messages) and [feed](/docs/plugins/feed) plugins ask it for a sender's face. |
 | `cast/contacts` | Everyone [met](#meeting-people) who has a `call`, each a [`CastContact`](/docs/reference/plugins#partner-queries), `{ id, name, description, image, portrait, command, disabled }`. `description` is `null` when they have none, `command` is `cast.call(id)`, and `disabled` is the [refusal](#commands) the call would get now, or `undefined`. |
+| `cast/sender` | Who a message or a post is from, given as `{ from }`, a [`SenderView`](/docs/reference/plugins#partner-queries): the entity's `name` and `image`, and its `portrait` (a person's, else the picture). An id that names no entity is `{ name: from, image: null, portrait: null }`. The [messages](/docs/plugins/messages) and [feed](/docs/plugins/feed) plugins ask it for a sender. |
 
 For example, a contacts plugin of your own might list them in its view:
 

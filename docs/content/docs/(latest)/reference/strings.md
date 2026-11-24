@@ -136,6 +136,7 @@ See [saves](/docs/reference/saves).
 | `noSaves` | `This game keeps no saves.` | The runner's `save` or `load`, in a runner with no `saves` |
 | `emptySlot` | `Nothing is saved there.` | The runner's `load`, on an empty slot |
 | `notSaved` | `The game could not be saved.` | The runner's `save`, when the driver fails |
+| `notLoaded` | `The game could not be loaded.` | The runner's `load` (and `runner.saves.read`), when the driver fails |
 | `turnLabel` | `Turn {turn}` | `{turn}` is the [turn](/docs/reference/state#turn), counted from 1. It's a save's [default name](/docs/reference/saves#savemeta) when no plugin says when or where the save is. |
 
 The engine keeps no time of day, places or people, so it has no words for them. The plugins that keep them have their own strings:

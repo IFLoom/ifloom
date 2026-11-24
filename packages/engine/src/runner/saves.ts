@@ -6,7 +6,7 @@
  */
 import type { Game } from '../game.ts'
 import { fail, ok, type Result } from '../result.ts'
-import type { SaveListing, SaveMeta, Saves } from '../save.ts'
+import type { LoadedSave, SaveListing, SaveMeta, Saves } from '../save.ts'
 import { stringOf } from '../strings.ts'
 import type { GameState } from '../types.ts'
 
@@ -27,6 +27,8 @@ export type SaveKeeper = {
   changed(before: GameState, after: GameState, ticking: boolean, played: () => number): void
   /** Save `state` to a slot now, or why not. */
   save(slot: string, state: GameState, name: string | undefined, played: number): Promise<Result<SaveMeta>>
+  /** Read a slot: the save, null when it's empty, or why it can't be read (the driver's failure reported, as a write's is). */
+  load(slot: string): Promise<Result<LoadedSave | null>>
   /** Settles when every write queued so far, and the first listing, are done. */
   settled(): Promise<void>
 }
@@ -65,16 +67,32 @@ export function saveKeeper(game: Game, options: SaveOptions): SaveKeeper {
       changedList()
       return meta
     },
-    read: (slot) => given.read(slot),
+    read: (slot) => load(slot),
     list: () => given.list(),
     async remove(slot) {
-      await given.remove(slot)
+      try {
+        await given.remove(slot)
+      } catch (error) {
+        onError?.(error)
+        return
+      }
       if (!listed.some((entry) => entry.slot === slot)) return
       listed = listed.filter((entry) => entry.slot !== slot)
       changedList()
     },
     exportSlot: (slot) => given.exportSlot(slot),
     importText: (text) => given.importText(text),
+  }
+
+  /** A slot read back. A driver that fails is reported, and answered with a reason the player can read. */
+  async function load(slot: string): Promise<Result<LoadedSave | null>> {
+    if (!given) return fail(stringOf(game, 'noSaves'))
+    try {
+      return await given.read(slot)
+    } catch (error) {
+      onError?.(error)
+      return fail(stringOf(game, 'notLoaded'))
+    }
   }
 
   // The saves as they are when the runner starts, before any write it queues; `settled` waits for them.
@@ -121,6 +139,7 @@ export function saveKeeper(game: Game, options: SaveOptions): SaveKeeper {
         return fail(stringOf(game, 'notSaved'))
       }
     },
+    load,
     async settled() {
       await queue
     },

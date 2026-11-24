@@ -59,7 +59,7 @@ function localStorageDriver(storage?: StorageLike): SaveDriver
 
 Saves in `globalThis.localStorage`, or in the Web Storage you pass. It works everywhere but it's small, around 5MB per origin. In Chromium every page opened from disk shares one origin, so every `file://` game the player has shares those 5MB.
 
-The driver looks for the storage when a save is first read or written, not when you make it. Where there's none (Node, a locked-down iframe), that read or write rejects with `localStorage is not available here`.
+The driver looks for the storage when a save is first read or written, not when you make it. Where there's none (Node, a locked-down iframe), that read or write rejects with `localStorage is not available here`. The runner's `save` and `load` answer that with `The game could not be saved.` or `The game could not be loaded.`, and tell `onSaveError`.
 
 ### StorageLike
 

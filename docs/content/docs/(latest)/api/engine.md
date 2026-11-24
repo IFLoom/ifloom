@@ -4075,11 +4075,11 @@ type Runner = {
 | `redo` | `() => boolean` |  |  | Step forward again after an undo. False when there is nothing to redo. |
 | `log` | `() => CommandLog` |  |  | The start state and every command since, for `replay`. |
 | `played` | `() => number` |  |  | Time played, in milliseconds, counting from any save loaded. |
-| `saves` | `Saves \| undefined` |  |  | The saves this runner writes to, for a menu that reads, exports or imports them. Undefined without `saves`. What it writes and removes shows in the snapshot's `saves`. |
+| `saves` | `Saves \| undefined` |  |  | The saves this runner writes to, for a menu that reads, exports or imports them. Undefined without `saves`. What it writes and removes shows in the snapshot's `saves`. Its `read` and `remove` tell `onSaveError` when the driver fails, `read` answering why and `remove` leaving the save listed; its `write`, `list` and `exportSlot` reject. |
 | `offers` | `{ undo: boolean; backlog: boolean }` |  |  | Whether the game turned on undo, and the backlog: what a menu should offer. |
 | `save` | `(slot: string, name?: string \| undefined) => Promise<Result<SaveMeta>>` |  |  | Save to a slot now: what the save says about itself, or why it wasn't written (no `saves`, the game's `saveable` refuses it now, or the driver failed). `view().saving` says beforehand whether it would be refused. |
 | `restore` | `(loaded: LoadedSave) => void` |  |  | Put a save in play that did not come from a slot, one the player imported from a file (`saves.importText`), as `load` would. |
-| `load` | `(slot: string) => Promise<Result<LoadedSave>>` |  |  | Load a slot: the state, a fresh history, backlog and log from it, and the time played it recorded. A failure says why: no `saves`, an empty slot, or a save this game can't read. |
+| `load` | `(slot: string) => Promise<Result<LoadedSave>>` |  |  | Load a slot: the state, a fresh history, backlog and log from it, and the time played it recorded. A failure says why: no `saves`, an empty slot, a save this game can't read, or the driver failed (told to `onSaveError` too). |
 | `settled` | `() => Promise<void>` |  |  | Settles when every autosave and profile write so far has been written, and the profile first read for the settings and the plugins' views. |
 | `profile` | `Profile \| undefined` |  |  | The profile this runner writes settings and `finished` to. Undefined without `profile`. |
 | `setSetting` | `(id: string, to: KvValue) => Result<KvValue>` |  |  | Change a setting of either kind, checked against its declaration. A `play` setting is sent as the `setting` command, so it changes the game in play, and the profile keeps it for the next new game. A `ui` setting is written to the profile only, and needs one. Listeners are told. The value set, or why it was refused. |
@@ -4112,7 +4112,7 @@ type RunnerOptions = {
 | `backlog` | `BacklogOptions \| boolean` | yes |  | Keep what was shown, scene by scene, for a backlog screen: `true` for 200 entries, or a `BacklogOptions`. Off if left out. |
 | `autosave` | `AutosaveOptions` | yes |  | Save to a slot of its own (`'auto'`) after every command, or when the scene or the turn changes. Needs `saves`. Off if left out. |
 | `now` | `() => number` | yes |  | The clock for time played. `Date.now` if left out; tests pass their own. |
-| `onSaveError` | `(error: unknown) => void` | yes |  | Told when an autosave, `save` or profile write fails. Later writes still run; without this, a failure is dropped. |
+| `onSaveError` | `(error: unknown) => void` | yes |  | Told when the driver fails: an autosave, `save`, `load`, a removal or a profile write. Later writes still run; without this, a failure is dropped. |
 | `profile` | `Profile` | yes |  | What outlives a save: settings, `finished`, plugins' namespaces. Without one, nothing is written there, and a `ui` setting can't be changed. |
 
 ## RunnerSnapshot
@@ -4330,10 +4330,10 @@ type Saves = {
 |---|---|---|---|---|
 | `driver` | `SaveDriver` |  |  | Where the saves are kept. |
 | `write` | `(slot: string, state: GameState, extra?: SaveExtra \| undefined) => Promise<SaveMeta>` |  |  | Write a state to a slot, and return what the save says about itself. Rejects only if the driver fails. |
-| `read` | `(slot: string) => Promise<Result<LoadedSave \| null>>` |  |  | A slot read back, carried forward and checked against this game. The value is null when the slot is empty; a failure says why the save can't be read. |
-| `list` | `() => Promise<SaveListing[]>` |  |  | Every save this game has, newest first, then any that can't be read, as `{ slot, broken }` with the reason, by slot. Tell them apart with `'broken' in entry`; a broken one can still be removed. |
-| `remove` | `(slot: string) => Promise<void>` |  |  | Delete a slot. Nothing happens if it is empty. |
-| `exportSlot` | `(slot: string) => Promise<string \| null>` |  |  | A save as text a player can keep as a file, or null if the slot is empty. |
+| `read` | `(slot: string) => Promise<Result<LoadedSave \| null>>` |  |  | A slot read back, carried forward and checked against this game. The value is null when the slot is empty; a failure says why the save can't be read. Rejects only if the driver fails. |
+| `list` | `() => Promise<SaveListing[]>` |  |  | Every save this game has, newest first, then any that can't be read, as `{ slot, broken }` with the reason, by slot. Tell them apart with `'broken' in entry`; a broken one can still be removed. Rejects if the driver fails. |
+| `remove` | `(slot: string) => Promise<void>` |  |  | Delete a slot. Nothing happens if it is empty. Rejects if the driver fails. |
+| `exportSlot` | `(slot: string) => Promise<string \| null>` |  |  | A save as text a player can keep as a file, or null if the slot is empty. Rejects if the driver fails. |
 | `importText` | `(text: string) => Result<LoadedSave>` |  |  | Text from a file a player picked, checked against this game: the save, or why it was refused. |
 
 ## saves
@@ -5089,6 +5089,7 @@ const STRINGS: {
   noSaves: 'This game keeps no saves.'
   emptySlot: 'Nothing is saved there.'
   notSaved: 'The game could not be saved.'
+  notLoaded: 'The game could not be loaded.'
   turnLabel: 'Turn {turn}'
 }
 ```
@@ -5142,6 +5143,7 @@ const STRINGS: {
 | `noSaves` | `'This game keeps no saves.'` |  |  |  |
 | `emptySlot` | `'Nothing is saved there.'` |  |  |  |
 | `notSaved` | `'The game could not be saved.'` |  |  |  |
+| `notLoaded` | `'The game could not be loaded.'` |  |  |  |
 | `turnLabel` | `'Turn {turn}'` |  |  | A save's name when no plugin says when it is. |
 
 ## Strings
@@ -5200,6 +5202,7 @@ type Strings = {
   noSaves?: string
   emptySlot?: string
   notSaved?: string
+  notLoaded?: string
   turnLabel?: string
   // …
 }

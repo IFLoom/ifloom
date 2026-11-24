@@ -63,7 +63,7 @@ A driver stores strings by key. It knows nothing about saves: the save store dec
 - `keys(prefix)` returns the whole key of every entry that starts with `prefix`, in any order. The save store lists a game's saves with it, and sorts them itself.
 - Values are JSON text, kept exactly as given. A save holds the whole game state, so don't put a small size limit on it.
 - Keys can hold any character, because a slot is whatever name the game gives it. A driver that turns keys into file names or URLs must escape them, and undo that in `keys`.
-- A failure rejects the promise. The save store passes the rejection on, and the [runner](/docs/reference/runner#runneroptions) reports it to `onSaveError`.
+- A failure rejects the promise. The save store passes the rejection on. The [runner](/docs/reference/runner#runneroptions) reports it to `onSaveError`, and its `save` and `load` answer with a reason the player can read instead.
 
 ### memoryDriver
 
@@ -89,7 +89,7 @@ To keep saves somewhere the engine doesn't ship a driver for, write one that kee
 function saves(game: Game, driver: SaveDriver): Saves
 ```
 
-One game's saves, kept wherever its driver keeps them. `Saves` is an interface with the members below. A save that can't be read is answered with a [`Result`](/docs/reference/runner#result), never thrown.
+One game's saves, kept wherever its driver keeps them. `Saves` is an interface with the members below. A save that can't be read is answered with a [`Result`](/docs/reference/runner#result), never thrown. A driver that fails is another matter: every member but `importText` rejects with the driver's error. The [runner's](/docs/reference/runner#the-runners-members) `save` and `load` turn that into a `Result`.
 
 Slots are names your game picks, such as `'auto'` for the runner's autosave, `'quick'` for a quicksave key, or `'1'`, `'2'` and `'3'` for a save screen. There's no fixed number of them.
 

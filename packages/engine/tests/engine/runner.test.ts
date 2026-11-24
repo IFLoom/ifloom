@@ -254,6 +254,28 @@ describe('the runner when saving goes wrong, or comes from elsewhere', () => {
     expect(await broken.save('1')).toEqual({ ok: false, reason: 'The game could not be saved.' })
     expect(heard).toEqual(new Error('full'))
   })
+
+  it('answers a load from a driver that fails with a reason, and reports the error', async () => {
+    const game = fixture()
+    const gone = (): Promise<never> => Promise.reject(new Error('no storage here'))
+    const driver = { ...memoryDriver(), get: gone, set: gone, remove: gone, keys: gone }
+    const errors: unknown[] = []
+    const runner = createRunner(game, begin(game), { saves: saves(game, driver), onSaveError: (error) => errors.push(error) })
+    await runner.settled()
+    expect(errors).toEqual([new Error('no storage here')])
+    expect(await runner.load('1')).toEqual({ ok: false, reason: 'The game could not be loaded.' })
+    expect(await runner.saves?.read('1')).toEqual({ ok: false, reason: 'The game could not be loaded.' })
+    await expect(runner.saves?.remove('1')).resolves.toBeUndefined()
+    expect(errors).toHaveLength(4)
+    expect(runner.state.kv.at).toBe(begin(game).kv.at)
+  })
+
+  it('words a failed load in the game’s strings', async () => {
+    const game = { ...fixture(), strings: { notLoaded: 'Your saves are out of reach.' } }
+    const driver = { ...memoryDriver(), get: () => Promise.reject(new Error('locked')) }
+    const runner = createRunner(game, begin(game), { saves: saves(game, driver) })
+    expect(await runner.load('1')).toEqual({ ok: false, reason: 'Your saves are out of reach.' })
+  })
 })
 
 describe('the game’s say in saving', () => {

@@ -35,8 +35,8 @@ export type RunnerOptions = {
   /** The clock for time played. `Date.now` if left out; tests pass their own. */
   now?: () => number
   /**
-   * Told when an autosave, `save` or profile write fails. Later writes still
-   * run; without this, a failure is dropped.
+   * Told when the driver fails: an autosave, `save`, `load`, a removal or a
+   * profile write. Later writes still run; without this, a failure is dropped.
    */
   onSaveError?: (error: unknown) => void
   /**
@@ -191,7 +191,9 @@ export interface Runner {
   /**
    * The saves this runner writes to, for a menu that reads, exports or
    * imports them. Undefined without `saves`. What it writes and removes
-   * shows in the snapshot's `saves`.
+   * shows in the snapshot's `saves`. Its `read` and `remove` tell
+   * `onSaveError` when the driver fails, `read` answering why and `remove`
+   * leaving the save listed; its `write`, `list` and `exportSlot` reject.
    */
   readonly saves: Saves | undefined
   /** Whether the game turned on undo, and the backlog: what a menu should offer. */
@@ -210,7 +212,8 @@ export interface Runner {
   /**
    * Load a slot: the state, a fresh history, backlog and log from it, and
    * the time played it recorded. A failure says why: no `saves`, an empty
-   * slot, or a save this game can't read.
+   * slot, a save this game can't read, or the driver failed (told to
+   * `onSaveError` too).
    */
   load(slot: string): Promise<Result<LoadedSave>>
   /**
@@ -445,8 +448,7 @@ export function createRunner(game: Game, start: GameState, options: RunnerOption
     save: (slot: string, name?: string) => saving.save(slot, state, name, played()),
     restore,
     async load(slot: string): Promise<Result<LoadedSave>> {
-      if (!saving.store) return fail(stringOf(game, 'noSaves'))
-      const read = await saving.store.read(slot)
+      const read = await saving.load(slot)
       if (!read.ok) return read
       if (!read.value) return fail(stringOf(game, 'emptySlot'))
       restore(read.value)

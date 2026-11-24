@@ -79,17 +79,18 @@ export interface Saves {
   /**
    * A slot read back, carried forward and checked against this game. The
    * value is null when the slot is empty; a failure says why the save can't be read.
+   * Rejects only if the driver fails.
    */
   read(slot: string): Promise<Result<LoadedSave | null>>
   /**
    * Every save this game has, newest first, then any that can't be read, as
    * `{ slot, broken }` with the reason, by slot. Tell them apart with
-   * `'broken' in entry`; a broken one can still be removed.
+   * `'broken' in entry`; a broken one can still be removed. Rejects if the driver fails.
    */
   list(): Promise<SaveListing[]>
-  /** Delete a slot. Nothing happens if it is empty. */
+  /** Delete a slot. Nothing happens if it is empty. Rejects if the driver fails. */
   remove(slot: string): Promise<void>
-  /** A save as text a player can keep as a file, or null if the slot is empty. */
+  /** A save as text a player can keep as a file, or null if the slot is empty. Rejects if the driver fails. */
   exportSlot(slot: string): Promise<string | null>
   /** Text from a file a player picked, checked against this game: the save, or why it was refused. */
   importText(text: string): Result<LoadedSave>

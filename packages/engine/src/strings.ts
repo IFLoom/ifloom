@@ -73,6 +73,7 @@ export const STRINGS = {
   noSaves: 'This game keeps no saves.',
   emptySlot: 'Nothing is saved there.',
   notSaved: 'The game could not be saved.',
+  notLoaded: 'The game could not be loaded.',
   /** A save's name when no plugin says when it is. */
   turnLabel: 'Turn {turn}',
 } as const
